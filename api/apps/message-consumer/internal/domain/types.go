@@ -49,6 +49,7 @@ type App struct {
 
 type Config struct {
 	Name    string     `json:"name"`
+	Project Project    `json:"project"`
 	Entries []CCMEntry `json:"entries"`
 }
 
@@ -60,7 +61,7 @@ type CCMEntry struct {
 type Secret struct {
 	Name    string     `json:"name"`
 	Project Project    `json:"project"`
-	Entries []CCMEntry `json:"data"`
+	Entries []CCMEntry `json:"entries"`
 }
 
 type JobVars struct {
@@ -73,15 +74,15 @@ type JobVars struct {
 }
 
 type DomainSvc interface {
-	ApplyProject(project *Project) error
-	DeleteProject(project *Project) error
+	ApplyProject(projectId string) error
+	DeleteProject(projectId string) error
 
-	ApplyApp(app *App) error
-	DeleteApp(app *App) error
+	ApplyApp(appId string) error
+	DeleteApp(appId string) error
 
-	ApplyConfig(config *Config, project *Project) error
-	DeleteConfig(config *Config) error
+	ApplyConfig(configId string) error
+	DeleteConfig(configId string) error
 
-	ApplySecret(secret *Secret) error
-	DeleteSecret(secret *Secret) error
+	ApplySecret(secretId string) error
+	DeleteSecret(secretId string) error
 }

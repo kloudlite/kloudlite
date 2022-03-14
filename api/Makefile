@@ -34,9 +34,14 @@ start.$(APP):
 
 .runner:
 	@make run.$(APP) -e APP=$(APP) -e CMD_ARGS="--dev"
+	
+dev:
+	make dev.producer
+	make dev.consumer
 
-dev.message-producer: APP=message-producer
-dev.message-producer: .runner
 
-dev.message-consumer: APP=message-consumer
-dev.message-consumer: .runner
+dev.producer: APP=message-producer
+dev.producer: .runner
+
+dev.consumer: APP=message-consumer
+dev.consumer: .runner
