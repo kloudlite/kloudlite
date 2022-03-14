@@ -16,10 +16,12 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	defer errors.HandleErr(&e)
 
 	consumer, e := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": cfg.KafkaBrokers,
-		"group.id":          cfg.ConsumerGroupId,
-		"auto.offset.reset": "earliest",
+		"bootstrap.servers":  cfg.KafkaBrokers,
+		"group.id":           cfg.ConsumerGroupId,
+		"auto.offset.reset":  "earliest",
+		"enable.auto.commit": "true",
 	})
+
 	errors.AssertNoError(e, fmt.Errorf("failed to create consumer because %v", e))
 	log.Infof("(%v) consumers connected to Kafka brokers (%v)", cfg.ConsumerGroupId, cfg.KafkaBrokers)
 
@@ -36,25 +38,20 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	appSvc := app.MakeApp(kApplier, MakeGqlClient())
 
 	fm = func() {
-		if cfg.IsDev {
-			// err := appSvc.Handle(&app.Message{
-			// 	Action:       "create",
-			// 	ProjectId:    "proj-3ytyfo-fegigkuxign8nyqztzhsp8pjz-kl",
-			// 	ResourceType: "project",
-			// })
+		// if cfg.IsDev {
+		// 	err := appSvc.Handle(&app.Message{
+		// 		Action:       "create",
+		// 		ResourceType: "app",
+		// 		ResourceId: "app-3k93m2kiei454hioh-2h9xbazytlqas4-kl",
+		// 	})
 
-			err := appSvc.Handle(&app.Message{
-				Action:       "create",
-				ProjectId:    "proj-3ytyfo-fegigkuxign8nyqztzhsp8pjz-kl",
-				ResourceType: "project",
-			})
-
-			if err != nil {
-				log.Errorf("could not handle message because %v", err)
-				return
-			}
-		}
+		// 	if err != nil {
+		// 		log.Errorf("could not handle message because %v", err)
+		// 		return
+		// 	}
+		// }
 		for {
+			fmt.Println("awaiting for new message ...")
 			msg, err := consumer.ReadMessage(-1)
 			if err != nil {
 				log.Errorf("could not read message from kafka because %v", err)
