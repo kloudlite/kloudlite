@@ -6,7 +6,7 @@ type App interface {
 
 type Message struct {
 	Action       string            `json:"action"`
-	ProjectId    string            `json:"projectId"`
 	ResourceType string            `json:"resourceType"`
+	ResourceId   string            `json:"resourceId"`
 	Metadata     map[string]string `json:"metadata"`
 }

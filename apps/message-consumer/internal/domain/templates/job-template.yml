@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Name }}
+  generateName: {{ .Name }}-
   namespace: hotspot
 spec:
   template:
@@ -13,7 +13,7 @@ spec:
           imagePullPolicy: {{.ImagePullPolicy}}
           args:
             {{- range .Args}}
-            - "{{.}}"
+            - {{.}}
             {{- end}}
           env:
           {{- range $key, $value := .Env }}

@@ -61,6 +61,7 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 			watcher, e := jobs.Watch(context.Background(), metav1.ListOptions{
 				FieldSelector: fmt.Sprintf("metadata.namespace=%s", job.ObjectMeta.Namespace),
 			})
+
 			errors.AssertNoError(e, fmt.Errorf("failed to watch job because %v", e))
 
 			for {
@@ -78,6 +79,7 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 					j := result.Object.(*batchv1.Job)
 					if j.Status.Succeeded > 0 {
 						fmt.Println("Job completed")
+						return nil
 						break
 					}
 				default:
