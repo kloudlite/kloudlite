@@ -1,4 +1,4 @@
-IMAGE_REGISTRY := "registry.gitlab.com/madhouselabs/kloudlite/api"
+IMAGE_REGISTRY := "harbor.dev.madhouselabs.io/kloudlite/hotspot/api"
 TAG :="go"
 DOCKERFILE := "./Dockerfile"
 CMD_ARGS := ""
