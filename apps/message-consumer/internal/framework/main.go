@@ -1,6 +1,7 @@
 package framework
 
 import (
+	// "encoding/json"
 	"encoding/json"
 	"fmt"
 
@@ -38,18 +39,18 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	appSvc := app.MakeApp(kApplier, MakeGqlClient())
 
 	fm = func() {
-		// if cfg.IsDev {
-		// 	err := appSvc.Handle(&app.Message{
-		// 		Action:       "create",
-		// 		ResourceType: "app",
-		// 		ResourceId: "app-3k93m2kiei454hioh-2h9xbazytlqas4-kl",
-		// 	})
+		if cfg.IsDev {
+			err := appSvc.Handle(&app.Message{
+				Action:       "create",
+				ResourceType: app.ResourceManagedRes,
+				ResourceId:   "mres-2zwm7jxrg-0mjmsmnphnlzwdfpfebabs-kl",
+			})
 
-		// 	if err != nil {
-		// 		log.Errorf("could not handle message because %v", err)
-		// 		return
-		// 	}
-		// }
+			if err != nil {
+				log.Errorf("could not handle message because %v", err)
+				return
+			}
+		}
 		for {
 			fmt.Println("awaiting for new message ...")
 			msg, err := consumer.ReadMessage(-1)

@@ -10,12 +10,11 @@ import (
 	"kloudlite.io/pkg/errors"
 )
 
-
 func readJobTemplate() *template.Template {
-	tFile := path.Join(os.Getenv("PWD"), "./apps/message-consumer/internal/domain/templates/job-template.yml")
+	tFile, ok := os.LookupEnv("JOB_TEMPLATE_FILE_PATH")
+	errors.Assert(ok, fmt.Errorf("env key 'JOB_TEMPLATE_FILE_PATH' is not defined, exiting..."))
 	t, err := template.New("job-template").ParseFiles(tFile)
 	errors.AssertNoError(err, fmt.Errorf("Failed to parse template: %v", err))
-
 	return t
 }
 
