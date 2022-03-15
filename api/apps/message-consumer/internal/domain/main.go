@@ -138,14 +138,101 @@ func (d *domain) DeleteSecret(secretId string) (e error) {
 	return d.ApplyJob(&j)
 }
 
-func (d *domain) CreateManagedRes(resId string, version int) (e error) {
+func (d *domain) InstallManagedSvc(installationId string, dockerImage string) (e error) {
 	defer errors.HandleErr(&e)
-
 	j := JobVars{
-		Name: fmt.Sprintf("create-mres-%s", resId),
-		ServiceAccount: JOB_IMAGE_SECRET,
-		Image: JOB_IMAGE_MANAGED_SVC,
+		Name:            fmt.Sprintf("install-msvc-%s", installationId),
+		ServiceAccount:  JOB_SERVICE_ACCOUNT,
+		Image:           dockerImage,
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"install",
+			"--installationId", installationId,
+		},
 	}
+
+	return d.ApplyJob(&j)
+}
+
+func (d *domain) UpdateManagedSvc(installationId string, dockerImage string) (e error) {
+	defer errors.HandleErr(&e)
+	j := JobVars{
+		Name:            fmt.Sprintf("update-msvc-%s", installationId),
+		ServiceAccount:  JOB_SERVICE_ACCOUNT,
+		Image:           dockerImage,
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"update",
+			"--installationId", installationId,
+		},
+	}
+
+	return d.ApplyJob(&j)
+}
+
+func (d *domain) UninstallManagedSvc(installationId string, dockerImage string) (e error) {
+	defer errors.HandleErr(&e)
+	j := JobVars{
+		Name:            fmt.Sprintf("uninstall-msvc-%s", installationId),
+		ServiceAccount:  JOB_SERVICE_ACCOUNT,
+		Image:           dockerImage,
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"uninstall",
+			"--installationId", installationId,
+		},
+	}
+
+	return d.ApplyJob(&j)
+}
+
+func (d *domain) CreateManagedRes(resId string, dockerImage string) (e error) {
+	defer errors.HandleErr(&e)
+	j := JobVars{
+		Name:            fmt.Sprintf("creeate-mres-%s", resId),
+		ServiceAccount:  JOB_SERVICE_ACCOUNT,
+		Image:           dockerImage,
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"create",
+			"--resId", resId,
+		},
+	}
+
+	return d.ApplyJob(&j)
+}
+func (d *domain) UpdateManagedRes(resId string, dockerImage string) (e error) {
+	defer errors.HandleErr(&e)
+	if dockerImage == "" {
+		panic(fmt.Errorf("dockerImage is empty, i.e there is no update operation on the resource"))
+	}
+	j := JobVars{
+		Name:            fmt.Sprintf("update-mres-%s", resId),
+		ServiceAccount:  JOB_SERVICE_ACCOUNT,
+		Image:           dockerImage,
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"update",
+			"--resId", resId,
+		},
+	}
+
+	return d.ApplyJob(&j)
+}
+func (d *domain) DeleteManagedRes(resId string, dockerImage string) (e error) {
+	defer errors.HandleErr(&e)
+	j := JobVars{
+		Name:            fmt.Sprintf("delete-mres-%s", resId),
+		ServiceAccount:  JOB_SERVICE_ACCOUNT,
+		Image:           dockerImage,
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"delete",
+			"--resId", resId,
+		},
+	}
+
+	return d.ApplyJob(&j)
 }
 
 func MakeDomain(kApplier *K8sApplier) DomainSvc {

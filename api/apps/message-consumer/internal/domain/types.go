@@ -73,6 +73,27 @@ type JobVars struct {
 	Env             map[string]string
 }
 
+type MsvcSource struct {
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	Operations struct {
+		Install   string `json:"install"`
+		Uninstall string `json:"uninstall"`
+		Update    string `json:"update"`
+	} `json:"operations"`
+	Resources []MsvcResource `json:"resources"`
+}
+
+type MsvcResource struct {
+	Name         string `json:"name"`
+	ResourceName string `json:"resourceName"`
+	Operations   struct {
+		Create string `json:"create"`
+		Update string `json:"delete"`
+		Delete string `json:"update"`
+	} `json:"operations"`
+}
+
 type DomainSvc interface {
 	ApplyProject(projectId string) error
 	DeleteProject(projectId string) error
@@ -85,4 +106,12 @@ type DomainSvc interface {
 
 	ApplySecret(secretId string) error
 	DeleteSecret(secretId string) error
+
+	InstallManagedSvc(installationId string, dockerImage string) error
+	UninstallManagedSvc(installationId string, dockerImage string) error
+	UpdateManagedSvc(installationId string, dockerImage string) error
+
+	CreateManagedRes(resId string, dockerImage string) error
+	DeleteManagedRes(resId string, dockerImage string) error
+	UpdateManagedRes(resId string, dockerImage string) error
 }
