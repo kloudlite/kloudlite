@@ -189,7 +189,7 @@ func (d *domain) UninstallManagedSvc(installationId string, dockerImage string) 
 func (d *domain) CreateManagedRes(resId string, dockerImage string) (e error) {
 	defer errors.HandleErr(&e)
 	j := JobVars{
-		Name:            fmt.Sprintf("creeate-mres-%s", resId),
+		Name:            fmt.Sprintf("create-mres-%s", resId),
 		ServiceAccount:  JOB_SERVICE_ACCOUNT,
 		Image:           dockerImage,
 		ImagePullPolicy: "Always",
@@ -229,6 +229,22 @@ func (d *domain) DeleteManagedRes(resId string, dockerImage string) (e error) {
 		Args: []string{
 			"delete",
 			"--resId", resId,
+		},
+	}
+
+	return d.ApplyJob(&j)
+}
+
+func (d *domain) ApplyKlJob(jobId string) (e error) {
+	defer errors.HandleErr(&e)
+	j := JobVars{
+		Name:            fmt.Sprintf("apply-job-%s", jobId),
+		ServiceAccount:  JOB_SERVICE_ACCOUNT,
+		Image:           JOB_IMAGE,
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"apply",
+			"--jobId", jobId,
 		},
 	}
 

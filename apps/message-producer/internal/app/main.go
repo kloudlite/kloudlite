@@ -43,10 +43,10 @@ func (a *app) Init(fiberServer *fiber.App) {
 		body := Json{
 			"action":       "create",
 			"resourceType": "config",
-			"projectId": "proj-oe40wrvzed6ea86xkedrdk9w3ppkow10-kl",
+			"projectId":    "proj-oe40wrvzed6ea86xkedrdk9w3ppkow10-kl",
 			"metadata": map[string]string{
-				"name":      "my-real-config-1",
-				"configId":  "cfg-cxi2ebhhnfpazewik06pkbwi0wh4w7iw-kl",
+				"name":     "my-real-config-1",
+				"configId": "cfg-cxi2ebhhnfpazewik06pkbwi0wh4w7iw-kl",
 			},
 		}
 		e := a.mc.SendMessage("hotspot-new-testing", "test-key", body)

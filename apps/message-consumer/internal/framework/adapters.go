@@ -59,7 +59,7 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 			errors.AssertNoError(e, fmt.Errorf("failed to create job because %v", e))
 
 			watcher, e := jobs.Watch(context.Background(), metav1.ListOptions{
-				FieldSelector: fmt.Sprintf("metadata.namespace=%s", job.ObjectMeta.Namespace),
+				FieldSelector: fmt.Sprintf("metadata.name=%s", job.ObjectMeta.Name),
 			})
 
 			errors.AssertNoError(e, fmt.Errorf("failed to watch job because %v", e))
