@@ -1,7 +1,6 @@
 package framework
 
 import (
-	// "encoding/json"
 	"encoding/json"
 	"fmt"
 
@@ -17,8 +16,10 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	defer errors.HandleErr(&e)
 
 	consumer, e := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  cfg.KafkaBrokers,
-		"group.id":           cfg.ConsumerGroupId,
+		"bootstrap.servers": cfg.KafkaBrokers,
+		// "group.id":           cfg.ConsumerGroupId,
+		"group.id":           "23sfd233245",
+		"client.id":          "2333334234sd",
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": "true",
 	})
@@ -27,7 +28,7 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	log.Infof("(%v) consumers connected to Kafka brokers (%v)", cfg.ConsumerGroupId, cfg.KafkaBrokers)
 
 	e = consumer.SubscribeTopics([]string{
-		fmt.Sprintf("^%s", cfg.TopicPrefix),
+		fmt.Sprintf("%s", cfg.TopicPrefix),
 	}, nil)
 
 	errors.AssertNoError(e, fmt.Errorf("failed to subscribe to topics (%v) because %v", cfg.TopicPrefix, e))
@@ -39,18 +40,6 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	appSvc := app.MakeApp(kApplier, MakeGqlClient())
 
 	fm = func() {
-		if cfg.IsDev {
-			err := appSvc.Handle(&app.Message{
-				Action:       "create",
-				ResourceType: app.ResourceManagedRes,
-				ResourceId:   "mres-2zwm7jxrg-0mjmsmnphnlzwdfpfebabs-kl",
-			})
-
-			if err != nil {
-				log.Errorf("could not handle message because %v", err)
-				return
-			}
-		}
 		for {
 			fmt.Println("awaiting for new message ...")
 			msg, err := consumer.ReadMessage(-1)

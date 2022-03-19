@@ -19,6 +19,7 @@ const (
 	ResourceRouter     = "secret"
 	ResourceManagedSvc = "managed-svc"
 	ResourceManagedRes = "managed-res"
+	ResourceJob        = "job"
 )
 
 const (
@@ -98,6 +99,9 @@ func (app *appI) getMsvcResource(resId string) (source *domain.MsvcResource, e e
 					version
 					installation {
 						name
+						project {
+							name
+						}
 						source {
 							resources {
 								name
@@ -133,7 +137,8 @@ func (app *appI) getMsvcResource(resId string) (source *domain.MsvcResource, e e
 				GetResource struct {
 					ResourceName string `json:"resourceName"`
 					Installation struct {
-						Source domain.MsvcSource `json:"source"`
+						Project domain.Project    `json:"project"`
+						Source  domain.MsvcSource `json:"source"`
 					} `json:"installation"`
 				} `json:"getResource"`
 			} `json:"managedRes"`
@@ -144,7 +149,9 @@ func (app *appI) getMsvcResource(resId string) (source *domain.MsvcResource, e e
 	errors.AssertNoError(e, fmt.Errorf("failed to unmarshal response bytes because %v", e))
 
 	// fmt.Println("response body: ", string(respB), j.Data.ManagedRes.GetResource.Installation.Source.Resources)
+	fmt.Println("ResourceId: ", resId)
 	fmt.Println("ResourceName: ", j.Data.ManagedRes.GetResource.ResourceName)
+	fmt.Println("Namespace: ", j.Data.ManagedRes.GetResource.Installation.Project.Name)
 
 	for _, resource := range j.Data.ManagedRes.GetResource.Installation.Source.Resources {
 		fmt.Println("RESOURCE: ", resource.Operations)
@@ -242,7 +249,8 @@ func (app *appI) Handle(msg *Message) (e error) {
 		default:
 			return fmt.Errorf("Unknown action (%s)", msg.Action)
 		}
-	}
+
+	case ResourceJob:
 
 	return nil
 }
