@@ -12,7 +12,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
-	"kloudlite.io/apps/message-consumer/internal/app"
 	"kloudlite.io/apps/message-consumer/internal/domain"
 	"kloudlite.io/pkg/errors"
 
@@ -68,22 +67,32 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 				result := <-watcher.ResultChan()
 
 				switch result.Type {
+
 				case watch.Added:
 					fmt.Println(watch.Added)
+
 				case watch.Deleted:
 					fmt.Println(watch.Deleted)
+
 				case watch.Error:
 					fmt.Println(watch.Error)
+					j := result.Object.(*batchv1.Job)
+					if j.Status.Failed > 0 {
+						fmt.Println("Job Failed")
+						return fmt.Errorf("Job Failed")
+					}
+
 				case watch.Modified:
 					fmt.Println(watch.Modified)
 					j := result.Object.(*batchv1.Job)
 					if j.Status.Succeeded > 0 {
 						fmt.Println("Job completed")
 						return nil
-						break
 					}
+
 				default:
 					logrus.Error("Unknown event type: %T", result.Type)
+					return nil
 				}
 			}
 		},
@@ -94,8 +103,8 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 
 type gqlClientI struct{}
 
-func MakeGqlClient() *app.GqlClient {
-	return &app.GqlClient{
+func MakeGqlClient() *domain.GqlClient {
+	return &domain.GqlClient{
 		Request: func(query string, variables map[string]interface{}) (req *http.Request, e error) {
 			defer errors.HandleErr(&e)
 			jsonBody, e := json.Marshal(map[string]interface{}{

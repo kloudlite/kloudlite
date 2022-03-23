@@ -14,7 +14,7 @@ RUN go build -o bin/$APP apps/$APP/main.go
 
 FROM golang
 WORKDIR /app
-RUN go get -u gopkg.in/confluentinc/confluent-kafka-go.v1/kafka
+# RUN go get -u gopkg.in/confluentinc/confluent-kafka-go.v1/kafka
 ARG APP
 ENV APP=$APP
 RUN mkdir bin
