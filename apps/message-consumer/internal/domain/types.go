@@ -114,4 +114,25 @@ type DomainSvc interface {
 	CreateManagedRes(resId string, dockerImage string) error
 	DeleteManagedRes(resId string, dockerImage string) error
 	UpdateManagedRes(resId string, dockerImage string) error
+
+	ApplyJob(job *Job) error
+}
+
+type Job struct {
+	Id      string `json:"id"`
+	Project struct {
+		Name string `json:"name"`
+	} `json:"project"`
+
+	Actions []JobAction
+}
+
+type JobAction struct {
+	Id           string                 `json:"id"`
+	ResourceType string                 `json:"resourceType"`
+	ResourceId   string                 `json:"resourceId"`
+	Action       string                 `json:"actions"`
+	Data         map[string]interface{} `json:"data"`
+	KubeData     map[string]interface{} `json:"kubeData"`
+	Flows        []string               `json:"flows"`
 }

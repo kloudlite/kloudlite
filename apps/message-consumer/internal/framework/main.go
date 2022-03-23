@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
@@ -16,10 +15,8 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	defer errors.HandleErr(&e)
 
 	consumer, e := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": cfg.KafkaBrokers,
-		// "group.id":           cfg.ConsumerGroupId,
-		"group.id":           "23sfd233245",
-		"client.id":          "2333334234sd",
+		"bootstrap.servers":  cfg.KafkaBrokers,
+		"group.id":           cfg.ConsumerGroupId,
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": "true",
 	})
@@ -40,28 +37,35 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	appSvc := app.MakeApp(kApplier, MakeGqlClient())
 
 	fm = func() {
-		for {
-			fmt.Println("awaiting for new message ...")
-			msg, err := consumer.ReadMessage(-1)
-			if err != nil {
-				log.Errorf("could not read message from kafka because %v", err)
-				continue
-			}
-			log.Infof("received message (topic=%v), %v", msg.TopicPartition.Topic, string(msg.Value))
+		if cfg.IsDev {
+			e := appSvc.Handle(&app.Message{
+				JobId: "job-xi9h74puory4mpcnwitwgy8xwhn4tu9x",
+			})
 
-			var msgData app.Message
-			err = json.Unmarshal(msg.Value, &msgData)
-			if err != nil {
-				log.Errorf("could not unmarshal message because %v", err)
-				continue
-			}
-
-			err = appSvc.Handle(&msgData)
-			if err != nil {
-				log.Errorf("could not handle message because %v", err)
-				continue
-			}
+			fmt.Println("err:", e)
 		}
+		// for {
+		// 	fmt.Println("awaiting for new message ...")
+		// 	msg, err := consumer.ReadMessage(-1)
+		// 	if err != nil {
+		// 		log.Errorf("could not read message from kafka because %v", err)
+		// 		continue
+		// 	}
+		// 	log.Infof("received message (topic=%v), %v", msg.TopicPartition.Topic, string(msg.Value))
+
+		// 	var msgData app.Message
+		// 	err = json.Unmarshal(msg.Value, &msgData)
+		// 	if err != nil {
+		// 		log.Errorf("could not unmarshal message because %v", err)
+		// 		continue
+		// 	}
+
+		// 	err = appSvc.Handle(&msgData)
+		// 	if err != nil {
+		// 		log.Errorf("could not handle message because %v", err)
+		// 		continue
+		// 	}
+		// }
 	}
 
 	return

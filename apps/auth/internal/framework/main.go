@@ -12,6 +12,8 @@ func MakeFramework(cfg *Config) (fm *Framework, e error) {
 	ctx := context.Background()
 	mongoCli, e := db.MakeMongoClient(ctx, cfg.MongoDB.Uri, cfg.MongoDB.Db)
 
+	mongoCli.Collection("users").Drop(ctx)
+
 	fm = &Framework{
 		start: func() error {
 			return nil
