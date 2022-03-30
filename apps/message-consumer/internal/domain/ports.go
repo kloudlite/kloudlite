@@ -12,4 +12,5 @@ type K8sApplier struct {
 
 type GqlClient struct {
 	Request func(query string, variables map[string]interface{}) (*http.Request, error)
+	DoRequest func(query string, variables map[string]interface{}) (*http.Response, []byte, error)
 }

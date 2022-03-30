@@ -1,7 +1,9 @@
 package framework
 
 import (
+	// "encoding/json"
 	"fmt"
+	"net/http"
 
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"kloudlite.io/apps/message-consumer/internal/app"
@@ -34,37 +36,40 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	kApplier, e := MakeKubeApplier(cfg.IsDev)
 	errors.AssertNoError(e, fmt.Errorf("failed to create k8sApplier because %v", e))
 
-	appSvc := app.MakeApp(kApplier, MakeGqlClient())
+	httpClient := http.DefaultClient
+	appSvc := app.MakeApp(kApplier, MakeGqlClient(httpClient), httpClient)
 
 	fm = func() {
 		if cfg.IsDev {
 			e := appSvc.Handle(&app.Message{
-				JobId: "job-xi9h74puory4mpcnwitwgy8xwhn4tu9x",
+				JobId: "job-prsgxggwr0ozh-w52vupisk55-bxgd2j",
 			})
-
-			fmt.Println("err:", e)
+			if e != nil {
+				fmt.Println("err:", e)
+			}
 		}
+
 		// for {
-		// 	fmt.Println("awaiting for new message ...")
-		// 	msg, err := consumer.ReadMessage(-1)
-		// 	if err != nil {
-		// 		log.Errorf("could not read message from kafka because %v", err)
-		// 		continue
-		// 	}
-		// 	log.Infof("received message (topic=%v), %v", msg.TopicPartition.Topic, string(msg.Value))
+		// fmt.Println("awaiting for new message ...")
+		// msg, err := consumer.ReadMessage(-1)
+		// if err != nil {
+		// 	log.Errorf("could not read message from kafka because %v", err)
+		// 	continue
+		// }
+		// log.Infof("received message (topic=%v), %v", msg.TopicPartition.Topic, string(msg.Value))
 
-		// 	var msgData app.Message
-		// 	err = json.Unmarshal(msg.Value, &msgData)
-		// 	if err != nil {
-		// 		log.Errorf("could not unmarshal message because %v", err)
-		// 		continue
-		// 	}
+		// var msgData app.Message
+		// err = json.Unmarshal(msg.Value, &msgData)
+		// if err != nil {
+		// 	log.Errorf("could not unmarshal message because %v", err)
+		// 	continue
+		// }
 
-		// 	err = appSvc.Handle(&msgData)
-		// 	if err != nil {
-		// 		log.Errorf("could not handle message because %v", err)
-		// 		continue
-		// 	}
+		// err = appSvc.Handle(&msgData)
+		// if err != nil {
+		// 	log.Errorf("could not handle message because %v", err)
+		// 	continue
+		// }
 		// }
 	}
 
