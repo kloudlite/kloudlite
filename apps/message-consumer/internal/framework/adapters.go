@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -69,29 +70,27 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 				switch result.Type {
 
 				case watch.Added:
-					fmt.Println(watch.Added)
+					fmt.Println("(job) ADDED")
 
 				case watch.Deleted:
-					fmt.Println(watch.Deleted)
-
-				case watch.Error:
-					fmt.Println(watch.Error)
-					j := result.Object.(*batchv1.Job)
-					if j.Status.Failed > 0 {
-						fmt.Println("Job Failed")
-						return fmt.Errorf("Job Failed")
-					}
+					fmt.Println("(job) DELETED")
 
 				case watch.Modified:
-					fmt.Println(watch.Modified)
+					fmt.Println("(job) MODIFIED")
 					j := result.Object.(*batchv1.Job)
+
 					if j.Status.Succeeded > 0 {
-						fmt.Println("Job completed")
+						fmt.Println("(job) COMPLETED")
 						return nil
 					}
 
+					if j.Status.Failed > 0 {
+						fmt.Println("(job) FAILED")
+						return fmt.Errorf("(job) FAILED")
+					}
+
 				default:
-					logrus.Error("Unknown event type: %T", result.Type)
+					logrus.Error("Unknown event type: %v", result.Type)
 					return nil
 				}
 			}
@@ -103,23 +102,39 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 
 type gqlClientI struct{}
 
-func MakeGqlClient() *domain.GqlClient {
+func MakeGqlClient(httpClient *http.Client) *domain.GqlClient {
+	Request := func(query string, variables map[string]interface{}) (req *http.Request, e error) {
+		defer errors.HandleErr(&e)
+		jsonBody, e := json.Marshal(map[string]interface{}{
+			"query":     query,
+			"variables": variables,
+		})
+		errors.AssertNoError(e, fmt.Errorf("failed to marshal json body because %v", e))
+
+		gatewayUrl, ok := os.LookupEnv("GATEWAY_URL")
+		errors.Assert(ok, fmt.Errorf("env 'GATEWAY_URL' not found"))
+		req, e = http.NewRequest("POST", gatewayUrl, bytes.NewBuffer(jsonBody))
+		errors.AssertNoError(e, fmt.Errorf("failed to create request because %v", e))
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Add("hotspot-ci", "true")
+
+		return req, nil
+	}
+
+	DoRequest := func(query string, variables map[string]interface{}) (res *http.Response, respB []byte, e error) {
+		defer errors.HandleErr(&e)
+		req, e := Request(query, variables)
+		errors.AssertNoError(e, fmt.Errorf("could not build graphql request"))
+		resp, e := httpClient.Do(req)
+		errors.AssertNoError(e, fmt.Errorf("failed while making graphql request"))
+
+		respB, e = io.ReadAll(resp.Body)
+		return resp, respB, e
+	}
+
 	return &domain.GqlClient{
-		Request: func(query string, variables map[string]interface{}) (req *http.Request, e error) {
-			defer errors.HandleErr(&e)
-			jsonBody, e := json.Marshal(map[string]interface{}{
-				"query":     query,
-				"variables": variables,
-			})
-			errors.AssertNoError(e, fmt.Errorf("failed to marshal json body because %v", e))
-
-			req, e = http.NewRequest("POST", "http://nxt.gateway.dev.madhouselabs.io", bytes.NewBuffer(jsonBody))
-			errors.AssertNoError(e, fmt.Errorf("failed to create request because %v", e))
-
-			req.Header.Set("Content-Type", "application/json")
-			req.Header.Add("hotspot-ci", "true")
-
-			return
-		},
+		Request,
+		DoRequest,
 	}
 }

@@ -17,13 +17,19 @@ const (
 const (
 	RESOURCE_CONFIG           = "config"
 	RESOURCE_SECRET           = "secret"
+	RESOURCE_APP              = "app"
 	RESOURCE_PROJECT          = "project"
+	RESOURCE_ROUTER           = "router"
 	RESOURCE_MANAGED_SERVICE  = "mService"
 	RESOURCE_MANAGED_RESOURCE = "mResource"
+	RESOURCE_GIT_PIPELINE     = "gitPipeline"
 )
 
 var ResourceImageMap = map[string]string{
 	RESOURCE_CONFIG: JOB_IMAGE_CONFIG,
+	RESOURCE_SECRET: JOB_IMAGE_SECRET,
+	RESOURCE_ROUTER: JOB_IMAGE_ROUTER,
+	RESOURCE_APP:    JOB_IMAGE_APP,
 }
 
 type ops struct {
@@ -52,6 +58,7 @@ var ReverseActionMap = map[string]string{
 var ResourceActionUndoMap = map[string]map[string]bool{
 	RESOURCE_CONFIG:           map[string]bool{ACTION_CREATE: true, ACTION_UPDATE: true, ACTION_DELETE: true},
 	RESOURCE_SECRET:           map[string]bool{ACTION_CREATE: true, ACTION_UPDATE: true, ACTION_DELETE: true},
+	RESOURCE_APP:              map[string]bool{ACTION_CREATE: true, ACTION_UPDATE: true, ACTION_DELETE: true},
 	RESOURCE_PROJECT:          map[string]bool{ACTION_CREATE: true, ACTION_UPDATE: true, ACTION_DELETE: false},
 	RESOURCE_MANAGED_SERVICE:  map[string]bool{ACTION_CREATE: true, ACTION_UPDATE: true, ACTION_DELETE: false},
 	RESOURCE_MANAGED_RESOURCE: map[string]bool{ACTION_CREATE: true, ACTION_UPDATE: true, ACTION_DELETE: false},

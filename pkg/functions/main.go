@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/gob"
+	"encoding/json"
 )
 
 func ToBytes(v interface{}) ([]byte, error) {
@@ -18,8 +19,10 @@ func ToBytes(v interface{}) ([]byte, error) {
 
 func ToBase64String(v interface{}) (string, error) {
 	b, e := ToBytes(v)
-	if e != nil {
-		return "", e
-	}
-	return base64.StdEncoding.EncodeToString(b), nil
+	return base64.StdEncoding.EncodeToString(b), e
+}
+
+func ToBase64StringFromJson(v interface{}) (string, error) {
+	b, e := json.Marshal(v)
+	return base64.StdEncoding.EncodeToString(b), e
 }

@@ -73,18 +73,18 @@ type JobVars struct {
 	Env             map[string]string
 }
 
-type MsvcSource struct {
+type MsvcTemplate struct {
 	Id         string `json:"id"`
 	Name       string `json:"name"`
 	Operations struct {
-		Install   string `json:"install"`
-		Uninstall string `json:"uninstall"`
-		Update    string `json:"update"`
+		Create string `json:"create"`
+		Update string `json:"update"`
+		Delete string `json:"delete"`
 	} `json:"operations"`
-	Resources []MsvcResource `json:"resources"`
+	Resources []MsvcTemplateResource `json:"resources"`
 }
 
-type MsvcResource struct {
+type MsvcTemplateResource struct {
 	Name         string `json:"name"`
 	ResourceName string `json:"resourceName"`
 	Operations   struct {
@@ -95,26 +95,6 @@ type MsvcResource struct {
 }
 
 type DomainSvc interface {
-	ApplyProject(projectId string) error
-	DeleteProject(projectId string) error
-
-	ApplyApp(appId string) error
-	DeleteApp(appId string) error
-
-	ApplyConfig(configId string) error
-	DeleteConfig(configId string) error
-
-	ApplySecret(secretId string) error
-	DeleteSecret(secretId string) error
-
-	InstallManagedSvc(installationId string, dockerImage string) error
-	UninstallManagedSvc(installationId string, dockerImage string) error
-	UpdateManagedSvc(installationId string, dockerImage string) error
-
-	CreateManagedRes(resId string, dockerImage string) error
-	DeleteManagedRes(resId string, dockerImage string) error
-	UpdateManagedRes(resId string, dockerImage string) error
-
 	ApplyJob(job *Job) error
 }
 
@@ -131,7 +111,7 @@ type JobAction struct {
 	Id           string                 `json:"id"`
 	ResourceType string                 `json:"resourceType"`
 	ResourceId   string                 `json:"resourceId"`
-	Action       string                 `json:"actions"`
+	Action       string                 `json:"action"`
 	Data         map[string]interface{} `json:"data"`
 	KubeData     map[string]interface{} `json:"kubeData"`
 	Flows        []string               `json:"flows"`
