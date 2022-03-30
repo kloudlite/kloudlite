@@ -21,3 +21,4 @@ spec:
               value: {{$value}}
           {{- end}}
       restartPolicy: OnFailure
+  backoffLimit: 2

@@ -5,9 +5,11 @@ import (
 )
 
 type Record interface{}
+type Opts map[string]interface {}
 type Query bson.M
 
-type MongoCollection interface {
-	Find(query interface{})
-	Create(query bson.M) Record
+type Repo interface {
+	Find(query Query, opts Opts) ([]Record, error)
+	FindOne(query Query, opts Opts) (Record, error)
+	Create(data Record)
 }
