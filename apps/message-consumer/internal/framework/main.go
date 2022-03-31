@@ -42,7 +42,7 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	fm = func() {
 		if cfg.IsDev {
 			e := appSvc.Handle(&app.Message{
-				JobId: "job-prsgxggwr0ozh-w52vupisk55-bxgd2j",
+				JobId: "job-ggh4-w5bei83r5lz2-1gejhmnlg6mfwu",
 			})
 			if e != nil {
 				fmt.Println("err:", e)

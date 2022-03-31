@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -90,7 +89,7 @@ func MakeKubeApplier(isDev bool) (applier *domain.K8sApplier, e error) {
 					}
 
 				default:
-					logrus.Error("Unknown event type: %v", result.Type)
+					fmt.Errorf("Unknown event type: %v", result.Type)
 					return nil
 				}
 			}
