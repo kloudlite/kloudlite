@@ -157,6 +157,7 @@ func (d *domain) ApplyJob(job *Job) (e error) {
 		memo[actionRef.Id] = Memo{Data: b64Data, KubeData: b64KubeData}
 
 		dockerImage, e := getDockerImage(actionRef)
+		fmt.Printf("ACTION %s | DI %s", actionRef.Action, dockerImage)
 		errors.AssertNoError(e, fmt.Errorf("could not get docker image for resource (type=%s, id=%s)", actionRef.ResourceType, actionRef.ResourceId))
 
 		j := JobVars{
@@ -176,6 +177,7 @@ func (d *domain) ApplyJob(job *Job) (e error) {
 		if e != nil {
 			fmt.Printf("Job at index (%d) failed because %v\n", idx, e)
 		}
+		
 
 		isUndoable := func() bool {
 			canUndo := true
@@ -195,9 +197,9 @@ func (d *domain) ApplyJob(job *Job) (e error) {
 				return nil
 			}
 
-			for _, actionRef := range job.Actions {
+			for k := 0; k < idx; k++ {
+				actionRef = job.Actions[k]
 				canUndo := ResourceActionUndoMap[actionRef.ResourceType][actionRef.Action]
-
 				if !canUndo {
 					return nil
 				}
