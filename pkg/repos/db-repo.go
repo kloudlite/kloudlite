@@ -29,6 +29,6 @@ type DbRepo[T Entity] interface {
 	FindById(ctx context.Context, id ID) (T, error)
 	Create(ctx context.Context, data T) (T, error)
 	UpdateById(ctx context.Context, id ID, updatedData T) (T, error)
-	DeleteById(ctx context.Context, id ID) (T, error)
-	Delete(ctx context.Context, query Query) error
+	DeleteById(ctx context.Context, id ID) error
+	//Delete(ctx context.Context, query Query) ([]ID, error)
 }

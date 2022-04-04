@@ -36,9 +36,12 @@ func useGrapqhl(d domain.Domain) http.Handler {
 var Module = fx.Module(
 	"app",
 	fx.Provide(graph.NewResolver),
-	fx.Provide(func(db *mongo.Database) (repos.DbRepo[entities.Cluster], repos.DbRepo[entities.Device]) {
-		deviceRepo := repos.NewMongoRepoAdapter[entities.Device](db, "devices", "dev")
-		clusterRepo := repos.NewMongoRepoAdapter[entities.Cluster](db, "clusters", "cluster")
+	fx.Provide(func(db *mongo.Database) (
+		repos.DbRepo[*entities.Cluster],
+		repos.DbRepo[*entities.Device],
+	) {
+		deviceRepo := repos.NewMongoRepoAdapter[*entities.Device](db, "devices", "dev")
+		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cluster")
 		return clusterRepo, deviceRepo
 	}),
 	fx.Provide(useGrapqhl),
