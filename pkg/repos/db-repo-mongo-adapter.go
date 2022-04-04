@@ -3,12 +3,12 @@ package repos
 import (
 	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"regexp"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/functions"
 )
 
@@ -58,8 +58,7 @@ func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64
 func (repo dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOne(ctx, &Filter{"id": id})
-	err := r.Decode(result)
-	fmt.Println(result)
+	err := r.Decode(&result)
 	return result, err
 }
 
@@ -67,15 +66,17 @@ func (repo dbRepo[T]) withId(data T) T {
 	if data.GetId() != "" {
 		return data
 	}
-	data, ok := data.SetId(repo.NewId()).(T)
-	errors.Assert(ok, fmt.Errorf("could not typecast setId() into T"))
+	data.SetId(repo.NewId())
 	return data
 }
 
 func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	var result T
-	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, repo.withId(data))
-	fmt.Printf("%+v %+v", r, e)
+	recordWithId := repo.withId(data)
+	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, recordWithId)
+	if e != nil {
+		return result, e
+	}
 	r2 := repo.db.Collection(repo.collectionName).FindOne(ctx, Filter{"_id": r.InsertedID})
 	e = r2.Decode(&result)
 	return result, e
@@ -83,22 +84,39 @@ func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 
 func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T) (T, error) {
 	var result T
-	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(ctx, &Filter{"id": id}, updatedData)
+	after := options.After
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(ctx, &Filter{"id": id}, bson.M{
+		"$set": updatedData,
+	}, &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	})
 	e := r.Decode(&result)
 	return result, e
 }
 
-func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) (T, error) {
+func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOneAndDelete(ctx, &Filter{"id": id})
 	e := r.Decode(&result)
-	return result, e
-}
-
-func (repo dbRepo[T]) Delete(ctx context.Context, query Query) error {
-	_, e := repo.db.Collection(repo.collectionName).DeleteMany(ctx, query.filter)
 	return e
 }
+
+//func (repo dbRepo[T]) Delete(ctx context.Context, query Query) error {
+//	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.filter, &options.FindOptions{
+//		Sort: query.sort,
+//	})
+//	var res []T
+//	curr.All(ctx, res)
+//	for _, v := range res {
+//		err = repo.DeleteById(ctx, v.GetId())
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	dr, e := repo.db.Collection(repo.collectionName).DeleteMany(ctx, query.filter)
+//
+//	return e
+//}
 
 func NewMongoRepoAdapter[T Entity](db *mongo.Database, collectionName string, shortName string) DbRepo[T] {
 	return &dbRepo[T]{

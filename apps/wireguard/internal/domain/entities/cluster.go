@@ -3,14 +3,14 @@ package entities
 import "kloudlite.io/pkg/repos"
 
 type Cluster struct {
-	Id           repos.ID          `json:"id" bson:"id"`
-	Name         string            `json:"name" bson:"name"`
-	Address      *string           `json:"address,omitempty" bson:"address,omitempty"`
-	ListenPort   *uint16           `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
-	PrivateKey   *string           `json:"privateKey,omitempty" bson:"privateKey,omitempty"`
-	PublicKey    *string           `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
-	Peers        map[repos.ID]Peer `json:"peers,omitempty" bson:"peers,omitempty"`
-	NetInterface *string           `json:"netInterface" bson:"netInterface,omitempty"`
+	repos.BaseEntity `bson:",inline"`
+	Name             string            `json:"name" bson:"name"`
+	Address          *string           `json:"address,omitempty" bson:"address,omitempty"`
+	ListenPort       *uint16           `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
+	PrivateKey       *string           `json:"privateKey,omitempty" bson:"privateKey,omitempty"`
+	PublicKey        *string           `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
+	Peers            map[repos.ID]Peer `json:"peers,omitempty" bson:"peers,omitempty"`
+	NetInterface     *string           `json:"netInterface" bson:"netInterface,omitempty"`
 }
 
 /*
@@ -26,12 +26,3 @@ type Cluster struct {
 	PublicKey =
 	AllowedIPs =
 */
-
-func (c Cluster) GetId() repos.ID {
-	return c.Id
-}
-
-func (c Cluster) SetId(id repos.ID) repos.Entity {
-	c.Id = id
-	return c
-}
