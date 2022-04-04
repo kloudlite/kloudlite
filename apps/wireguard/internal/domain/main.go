@@ -21,7 +21,9 @@ func (d *domain) CreateCluster(ctx context.Context, data entities.Cluster) (clus
 	pk, e := wgtypes.GeneratePrivateKey()
 	errors.AssertNoError(e, fmt.Errorf("could not generate wg privateKey"))
 	s := pk.String()
+	sPub := pk.PublicKey().String()
 	data.PrivateKey = &s
+	data.PublicKey = &sPub
 	return d.clusterRepo.Create(ctx, data)
 }
 
@@ -34,13 +36,34 @@ func (d *domain) ListClusters(ctx context.Context) ([]entities.Cluster, error) {
 	return d.clusterRepo.Find(ctx, repos.Query{})
 }
 
-func (d *domain) AddDevice(ctx context.Context, data entities.Device) (dev entities.Device, e error) {
+func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (dev *entities.Device, e error) {
 	defer errors.HandleErr(&e)
+	cluster, e := d.clusterRepo.FindById(ctx, clusterId)
+	errors.AssertNoError(e, fmt.Errorf("cluster is not ready"))
 	pk, e := wgtypes.GeneratePrivateKey()
+	pkString := pk.String()
+	pbKeyString := pk.PublicKey().String()
 	errors.AssertNoError(e, fmt.Errorf("could not generate wg private key"))
-	data.PrivateKey = pk.String()
-	data.PublicKey = pk.PublicKey().String()
-	return d.deviceRepo.Create(ctx, data)
+	device := entities.Device{
+		Name:       deviceName,
+		ClusterId:  clusterId,
+		UserId:     userId,
+		PrivateKey: &pkString,
+		PublicKey:  &pbKeyString,
+		Peers: map[string]entities.Peer{
+			string(cluster.Id): {
+				Id:        cluster.Id,
+				Address:   cluster.Address,
+				PublicKey: cluster.PublicKey,
+			},
+		},
+	}
+	newDevice, e := d.deviceRepo.Create(ctx, device)
+	errors.AssertNoError(e, fmt.Errorf("unable to create new device"))
+	cluster.Peers[device.Id] = entities.Peer{}
+	_, e = d.clusterRepo.UpdateById(ctx, cluster.Id, cluster)
+	errors.AssertNoError(e, fmt.Errorf("unable to update cluster"))
+	return &newDevice, e
 }
 
 func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
