@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	// "fmt"
 	"os"
-
-	fm "kloudlite.io/apps/message-consumer/internal/framework"
+	// fm "kloudlite.io/apps/message-consumer/internal/framework"
 )
 
 func readEnv(key string) string {
@@ -16,20 +16,27 @@ func readEnv(key string) string {
 	return value
 }
 
+type Record interface{}
+
+func Hello[T Record](msg T) T {
+	return msg
+}
+
 func main() {
 	isDevelopment := flag.Bool("dev", false, "development mode")
 	flag.Parse()
+	fmt.Println("is:", isDevelopment)
 
-	start, err := fm.MakeFramework(&fm.Config{
-		IsDev:           *isDevelopment,
-		KafkaBrokers:    readEnv("BOOTSTRAP_SERVERS"),
-		ConsumerGroupId: readEnv("CONSUMER_GROUP_ID"),
-		TopicPrefix:     readEnv("TOPIC_PREFIX"),
-	})
+	// start, err := fm.MakeFramework(&fm.Config{
+	// 	IsDev:           *isDevelopment,
+	// 	KafkaBrokers:    readEnv("BOOTSTRAP_SERVERS"),
+	// 	ConsumerGroupId: readEnv("CONSUMER_GROUP_ID"),
+	// 	TopicPrefix:     readEnv("TOPIC_PREFIX"),
+	// })
 
-	if err != nil {
-		panic(fmt.Errorf("failed to start framework because %v", err))
-	}
+	// if err != nil {
+	// 	panic(fmt.Errorf("failed to start framework because %v", err))
+	// }
 
-	start()
+	// start()
 }
