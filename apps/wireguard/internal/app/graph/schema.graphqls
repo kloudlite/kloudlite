@@ -27,4 +27,5 @@ type Query {
 type Mutation {
   createCluster(name: String!): Cluster!
   addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
+  setupCluster(clusterId: ID!, listenPort: Int!, netInterface:String): Cluster!
 }

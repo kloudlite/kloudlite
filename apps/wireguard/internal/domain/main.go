@@ -39,6 +39,7 @@ func (d *domain) ListClusters(ctx context.Context) ([]entities.Cluster, error) {
 func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (dev *entities.Device, e error) {
 	defer errors.HandleErr(&e)
 	cluster, e := d.clusterRepo.FindById(ctx, clusterId)
+	fmt.Println(cluster)
 	errors.AssertNoError(e, fmt.Errorf("cluster is not ready"))
 	pk, e := wgtypes.GeneratePrivateKey()
 	pkString := pk.String()
