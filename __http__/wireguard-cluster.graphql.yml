@@ -21,3 +21,4 @@ query: |
 
 variables:
   name: "sample cluster"
+---
