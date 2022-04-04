@@ -1,8 +1,10 @@
 package main
 
-import "kloudlite.io/apps/wireguard/internal/framework"
+import (
+	"go.uber.org/fx"
+	"kloudlite.io/apps/wireguard/internal/framework"
+)
 
 func main() {
-	fm := framework.NewFramework()
-	fm()
+	fx.New(framework.Module).Run()
 }

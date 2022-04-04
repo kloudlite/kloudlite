@@ -13,23 +13,28 @@ import (
 )
 
 type Env struct {
-	config.BaseEnv
 	HttpPort     int    `env:"PORT", required:"true"`
 	KafkaBrokers string `env:"BOOTSTRAP_SERVERS", required:"true"`
 }
 
 var Module = fx.Module("framework",
+	// Setup Logger
 	fx.Provide(logger.NewLogger),
-	fx.Provide(func() *Env {
-		var envC *Env
-		envC.Load()
-		return envC
+	// Load Env
+	fx.Provide(func() (*Env, error) {
+		var envC Env
+		err := config.LoadEnv(&envC)
+		return &envC, err
 	}),
+	// Create Producer
 	fx.Provide(func(e *Env) (messaging.Producer, error) {
 		return messaging.NewKafkaProducer(e.KafkaBrokers)
 	}),
+	// Create Server
 	fx.Provide(fiber_app.NewFiberApp),
+	// Load App
 	app.Module,
+	// Start Server with loaded app
 	fx.Invoke(func(server *fiber.App, c *Env, lifecycle fx.Lifecycle) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {

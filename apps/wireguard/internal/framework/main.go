@@ -2,96 +2,55 @@ package framework
 
 import (
 	"context"
-	"flag"
-	"fmt"
-	"net/http"
-	"time"
-
-	"github.com/codingconcepts/env"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
-	"kloudlite.io/apps/wireguard/internal/app"
-	"kloudlite.io/apps/wireguard/internal/domain"
-	"kloudlite.io/pkg/errors"
-)
+	"kloudlite.io/pkg/config"
+	gql_server "kloudlite.io/pkg/gql-server"
+	"kloudlite.io/pkg/logger"
+	mongo_db "kloudlite.io/pkg/mongo-db"
 
-type Logger struct {
-	*zap.SugaredLogger
-}
+	"go.uber.org/fx"
+	"kloudlite.io/apps/wireguard/internal/app"
+	"net/http"
+)
 
 type Env struct {
 	MongoUri    string `env:"MONGO_URI", required:"true"`
 	MongoDbName string `env:"MONGO_DB_NAME", required:"true"`
 	Port        uint32 `env:"PORT", required:"true"`
-	IsDev       bool   `env:"IS_DEV", required:"true"`
 }
 
-func getEnv(logger Logger) Env {
-	var envC Env
-	if err := env.Set(&envC); err != nil {
-		panic(err)
-	}
-
-	isDev := flag.Bool("dev", false, "isDevelopment")
-	flag.Parse()
-	envC.IsDev = *isDev
-	logger.Debugf("%+v\n", envC)
-	return envC
-}
-
-func NewLogger() Logger {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	return Logger{SugaredLogger: logger.Sugar()}
-}
-
-func NewMongoDatabase(env Env) (db *mongo.Database, e error) {
-	defer errors.HandleErr(&e)
-	client, e := mongo.NewClient(options.Client().ApplyURI(env.MongoUri))
-	errors.AssertNoError(e, fmt.Errorf("could not create mongo client"))
-	e = client.Connect(context.Background())
-	errors.AssertNoError(e, fmt.Errorf("could not connect to mongo"))
-	return client.Database(env.MongoDbName), nil
-}
-
-func NewFramework() FM {
-	app := fx.New(fx.Options(
-		fx.Provide(NewLogger),
-		fx.Provide(getEnv),
-		fx.Provide(NewMongoDatabase),
-		app.Module,
-		fx.Invoke(func(lf fx.Lifecycle, env Env, d domain.Domain, logger Logger, gqlHandler http.Handler) {
-			lf.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					errChannel := make(chan error, 1)
-					go func() {
-						errChannel <- http.ListenAndServe(fmt.Sprintf(":%v", env.Port), gqlHandler)
-					}()
-
-					ctx, cancel := context.WithTimeout(ctx, time.Second*1)
-					defer cancel()
-
-					select {
-					case status := <-errChannel:
-						return fmt.Errorf("could not start server because %v", status.Error())
-					case <-ctx.Done():
-						logger.Infof("Graphql Server started @ (port=%v)", env.Port)
-					}
-					return nil
-				},
-				OnStop: func(context.Context) error {
-					return nil
-				},
-			})
-		}),
-	))
-
-	return func() error {
-		app.Run()
-		return nil
-	}
-}
+var Module = fx.Module("framework",
+	// Setup Logger
+	fx.Provide(logger.NewLogger),
+	// Load Env
+	fx.Provide(func() (*Env, error) {
+		var envC Env
+		err := config.LoadEnv(&envC)
+		return &envC, err
+	}),
+	// Create DB Client
+	fx.Provide(func(env *Env) (*mongo.Database, error) {
+		return mongo_db.NewMongoDatabase(env.MongoUri, env.MongoDbName)
+	}),
+	// Connect DB Client
+	fx.Invoke(func(lifecycle fx.Lifecycle, db *mongo.Database) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return db.Client().Connect(context.Background())
+			},
+		})
+	}),
+	// Load App Module
+	app.Module,
+	// start http server
+	fx.Invoke(func(lf fx.Lifecycle, env *Env, logger logger.Logger, gqlHandler http.Handler) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return gql_server.StartGQLServer(ctx, env.Port, gqlHandler, logger)
+			},
+			OnStop: func(context.Context) error {
+				return nil
+			},
+		})
+	}),
+)
