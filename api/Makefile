@@ -1,3 +1,7 @@
+# consumer
+consumer.run: export BOOTSTRAP_SERVERS = kafka-kafka-bootstrap.hotspot:9092
+
+
 
 
 # producer
