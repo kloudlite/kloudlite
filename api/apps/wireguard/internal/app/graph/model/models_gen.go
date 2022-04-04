@@ -3,9 +3,9 @@
 package model
 
 type Cluster struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Endpoint string `json:"endpoint"`
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
+	Endpoint *string `json:"endpoint"`
 }
 
 type Device struct {

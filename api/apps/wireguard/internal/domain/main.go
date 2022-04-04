@@ -17,11 +17,11 @@ type domain struct {
 }
 
 func (d *domain) CreateCluster(ctx context.Context, data entities.Cluster) (cluster entities.Cluster, e error) {
-	fmt.Println("Hello");
 	defer errors.HandleErr(&e)
 	pk, e := wgtypes.GeneratePrivateKey()
 	errors.AssertNoError(e, fmt.Errorf("could not generate wg privateKey"))
-	data.PrivateKey = pk.String()
+	s := pk.String()
+	data.PrivateKey = &s
 	return d.clusterRepo.Create(ctx, data)
 }
 
