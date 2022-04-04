@@ -15,16 +15,19 @@ import (
 type Env struct {
 	HttpPort     int    `env:"PORT", required:"true"`
 	KafkaBrokers string `env:"BOOTSTRAP_SERVERS", required:"true"`
+	isProd       bool   `env:"PROD"`
 }
 
 var Module = fx.Module("framework",
-	// Setup Logger
-	fx.Provide(logger.NewLogger),
 	// Load Env
 	fx.Provide(func() (*Env, error) {
 		var envC Env
 		err := config.LoadConfigFromEnv(&envC)
 		return &envC, err
+	}),
+	// Setup Logger
+	fx.Provide(func(env *Env) logger.Logger {
+		return logger.NewLogger(env.isProd)
 	}),
 	// Create Producer
 	fx.Provide(func(e *Env) (messaging.Producer, error) {
