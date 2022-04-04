@@ -22,7 +22,9 @@ func useGrapqhl(d domain.Domain) http.Handler {
 	gqlServer := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
 			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
-		))
+		),
+	)
+
 	server.Handle("/query", gqlServer)
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:4001", "https://studio.apollographql.com"},
