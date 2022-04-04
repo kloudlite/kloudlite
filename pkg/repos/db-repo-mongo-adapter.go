@@ -59,6 +59,7 @@ func (repo dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOne(ctx, &Filter{"id": id})
 	err := r.Decode(result)
+	fmt.Println(result)
 	return result, err
 }
 
