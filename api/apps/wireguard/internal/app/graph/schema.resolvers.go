@@ -23,20 +23,20 @@ func (r *mutationResolver) CreateCluster(ctx context.Context, name string) (*mod
 	}
 
 	return &model.Cluster{
-		ID:       string(cluster.Id),
+		ID:       cluster.Id,
 		Name:     cluster.Name,
 		Endpoint: cluster.Address,
 	}, nil
 }
 
-func (r *mutationResolver) AddDevice(ctx context.Context, clusterID string, userID string, name string) (*model.Device, error) {
-	device, err := r.Domain.AddDevice(ctx, name, repos.ID(clusterID), repos.ID(userID))
+func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
+	device, err := r.Domain.AddDevice(ctx, name, clusterID, userID)
 	if err != nil {
 		return nil, err
 	}
 	return &model.Device{
-		ID:            string(device.Id),
-		UserID:        string(device.UserId),
+		ID:            device.Id,
+		UserID:        device.UserId,
 		Name:          device.Name,
 		Configuration: "",
 	}, err
@@ -46,7 +46,7 @@ func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, err
 	return make([]*model.Cluster, 0), nil
 }
 
-func (r *queryResolver) GetCluster(ctx context.Context, clusterID string) (*model.Cluster, error) {
+func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -54,7 +54,7 @@ func (r *queryResolver) ListDevices(ctx context.Context) ([]*model.Device, error
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) GetDevice(ctx context.Context, deviceID string) (*model.Device, error) {
+func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
