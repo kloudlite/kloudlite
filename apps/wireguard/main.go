@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	config.LoadEnv()
+	config.LoadDotEnv()
 	fx.New(framework.Module).Run()
 }

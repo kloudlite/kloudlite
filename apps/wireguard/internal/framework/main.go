@@ -2,14 +2,14 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/fx"
+	"kloudlite.io/apps/wireguard/internal/app"
 	"kloudlite.io/pkg/config"
 	gql_server "kloudlite.io/pkg/gql-server"
 	"kloudlite.io/pkg/logger"
 	mongo_db "kloudlite.io/pkg/mongo-db"
-
-	"go.uber.org/fx"
-	"kloudlite.io/apps/wireguard/internal/app"
 	"net/http"
 )
 
@@ -17,16 +17,23 @@ type Env struct {
 	MongoUri    string `env:"MONGO_URI", required:"true"`
 	MongoDbName string `env:"MONGO_DB_NAME", required:"true"`
 	Port        uint32 `env:"PORT", required:"true"`
+	IsDev       bool   `env:"DEV", default:"false"`
 }
 
 var Module = fx.Module("framework",
-	// Setup Logger
-	fx.Provide(logger.NewLogger),
-	// Load Env
+	// Load Config from Env
 	fx.Provide(func() (*Env, error) {
 		var envC Env
 		err := config.LoadConfigFromEnv(&envC)
+		if err != nil {
+			fmt.Println(err, "failed to load env asdkadhaskda dkjahd kashda kh")
+			return nil, fmt.Errorf("not able to load ENV: %w", err)
+		}
 		return &envC, err
+	}),
+	// Setup Logger
+	fx.Provide(func(env *Env) logger.Logger {
+		return logger.NewLogger(env.IsDev)
 	}),
 	// Create DB Client
 	fx.Provide(func(env *Env) (*mongo.Database, error) {

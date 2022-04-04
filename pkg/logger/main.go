@@ -6,8 +6,11 @@ type Logger struct {
 	*zap.SugaredLogger
 }
 
-func NewLogger() Logger {
-	logger, err := zap.NewDevelopment()
+func NewLogger(isDev bool) Logger {
+	logger, err := zap.NewProduction()
+	if isDev {
+		logger, err = zap.NewDevelopment()
+	}
 	if err != nil {
 		panic(err)
 	}

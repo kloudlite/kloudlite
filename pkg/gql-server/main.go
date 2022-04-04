@@ -16,7 +16,6 @@ func StartGQLServer(ctx context.Context, port uint32, gqlHandler http.Handler, l
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*1)
 	defer cancel()
-
 	select {
 	case status := <-errChannel:
 		return fmt.Errorf("could not start server because %v", status.Error())
