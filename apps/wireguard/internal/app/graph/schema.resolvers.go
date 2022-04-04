@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/wireguard/internal/app/graph/generated"
 	"kloudlite.io/apps/wireguard/internal/app/graph/model"
@@ -13,7 +14,7 @@ import (
 )
 
 func (r *mutationResolver) CreateCluster(ctx context.Context, name string) (*model.Cluster, error) {
-	fmt.Println("HERE")
+
 	cluster, e := r.Domain.CreateCluster(ctx, entities.Cluster{
 		Name: name,
 	})
@@ -30,7 +31,13 @@ func (r *mutationResolver) CreateCluster(ctx context.Context, name string) (*mod
 }
 
 func (r *mutationResolver) AddDevice(ctx context.Context, clusterID string, userID string, name string) (*model.Device, error) {
-	panic(fmt.Errorf("not implemented"))
+	device, err := r.Domain.AddDevice(ctx, name, repos.ID(clusterID), repos.ID(userID))
+	return &model.Device{
+		ID:            string(device.Id),
+		UserID:        string(device.UserId),
+		Name:          device.Name,
+		Configuration: "",
+	}, err
 }
 
 func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, error) {

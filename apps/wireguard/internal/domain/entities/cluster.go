@@ -3,13 +3,14 @@ package entities
 import "kloudlite.io/pkg/repos"
 
 type Cluster struct {
-	Id           repos.ID         `json:"id" bson:"id"`
-	Name         string           `json:"name" bson:"name"`
-	Address      *string          `json:"address,omitempty" bson:"address,omitempty"`
-	ListenPort   *uint16          `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
-	PrivateKey   *string          `json:"privateKey,omitempty" bson:"privateKey,omitempty"`
-	Peers        *map[string]Peer `json:"peers,omitempty" bson:"peers,omitempty"`
-	NetInterface *string          `json:"netInterface" bson:"netInterface,omitempty"`
+	Id           repos.ID          `json:"id" bson:"id"`
+	Name         string            `json:"name" bson:"name"`
+	Address      *string           `json:"address,omitempty" bson:"address,omitempty"`
+	ListenPort   *uint16           `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
+	PrivateKey   *string           `json:"privateKey,omitempty" bson:"privateKey,omitempty"`
+	PublicKey    *string           `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
+	Peers        map[repos.ID]Peer `json:"peers,omitempty" bson:"peers,omitempty"`
+	NetInterface *string           `json:"netInterface" bson:"netInterface,omitempty"`
 }
 
 /*

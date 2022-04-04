@@ -11,7 +11,7 @@ type Domain interface {
 	CreateCluster(ctx context.Context, data entities.Cluster) (entities.Cluster, error)
 	DeleteCluster(ctx context.Context, clusterId repos.ID) error
 	ListClusters(ctx context.Context) ([]entities.Cluster, error)
-	AddDevice(ctx context.Context, data entities.Device) (entities.Device, error)
+	AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (dev *entities.Device, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
 	ListDevices(ctx context.Context) ([]entities.Device, error)
 }
