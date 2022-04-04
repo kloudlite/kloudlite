@@ -23,7 +23,7 @@ var Module = fx.Module("framework",
 	// Load Env
 	fx.Provide(func() (*Env, error) {
 		var envC Env
-		err := config.LoadEnv(&envC)
+		err := config.LoadConfigFromEnv(&envC)
 		return &envC, err
 	}),
 	// Create Producer
