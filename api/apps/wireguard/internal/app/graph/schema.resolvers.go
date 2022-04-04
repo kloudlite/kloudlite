@@ -42,6 +42,18 @@ func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, us
 	}, err
 }
 
+func (r *mutationResolver) SetupCluster(ctx context.Context, clusterID repos.ID, address string, listenPort int, netInterface string) (*model.Cluster, error) {
+	clusterEntity, err := r.Domain.SetupCluster(ctx, clusterID, address, uint16(listenPort), netInterface)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Cluster{
+		ID:       clusterEntity.Id,
+		Name:     clusterEntity.Name,
+		Endpoint: clusterEntity.Address,
+	}, err
+}
+
 func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, error) {
 	return make([]*model.Cluster, 0), nil
 }
