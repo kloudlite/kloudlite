@@ -30,24 +30,24 @@ func (repo dbRepo[T]) NewId() ID {
 
 func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	results := make([]T, 0)
-	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.filter, &options.FindOptions{
-		Sort: query.sort,
+	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.Filter, &options.FindOptions{
+		Sort: query.Sort,
 	})
-	err = curr.All(ctx, results)
+	err = curr.All(ctx, &results)
 	return results, err
 }
 
 func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
 	results := make([]T, 0)
 	var offset int64 = (page - 1) * size
-	curr, e := repo.db.Collection(repo.collectionName).Find(ctx, query.filter, &options.FindOptions{
+	curr, e := repo.db.Collection(repo.collectionName).Find(ctx, query.Filter, &options.FindOptions{
 		Limit: &size,
 		Skip:  &offset,
-		Sort:  query.sort,
+		Sort:  query.Sort,
 	})
 	e = curr.All(ctx, results)
 
-	total, e := repo.db.Collection(repo.collectionName).CountDocuments(ctx, query.filter)
+	total, e := repo.db.Collection(repo.collectionName).CountDocuments(ctx, query.Filter)
 
 	return PaginatedRecord[T]{
 		results:    results,

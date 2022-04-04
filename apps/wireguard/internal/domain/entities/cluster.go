@@ -4,13 +4,12 @@ import "kloudlite.io/pkg/repos"
 
 type Cluster struct {
 	repos.BaseEntity `bson:",inline"`
-	Name             string            `json:"name" bson:"name"`
-	Address          *string           `json:"address,omitempty" bson:"address,omitempty"`
-	ListenPort       *uint16           `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
-	PrivateKey       *string           `json:"privateKey,omitempty" bson:"privateKey,omitempty"`
-	PublicKey        *string           `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
-	Peers            map[repos.ID]Peer `json:"peers,omitempty" bson:"peers,omitempty"`
-	NetInterface     *string           `json:"netInterface" bson:"netInterface,omitempty"`
+	Name             string  `json:"name" bson:"name"`
+	Address          *string `json:"address,omitempty" bson:"address,omitempty"`
+	ListenPort       *uint16 `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
+	PrivateKey       *string `json:"privateKey,omitempty" bson:"privateKey,omitempty"`
+	PublicKey        *string `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
+	NetInterface     *string `json:"netInterface" bson:"netInterface,omitempty"`
 }
 
 /*

@@ -11,8 +11,8 @@ type Opts map[string]interface{}
 type SortOpts map[string]int32
 type Filter map[string]interface{}
 type Query struct {
-	filter Filter
-	sort   map[string]interface{}
+	Filter Filter
+	Sort   map[string]interface{}
 }
 
 type ID string

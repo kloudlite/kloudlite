@@ -44,6 +44,20 @@ autobind:
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 models:
+  User:
+    fields:
+      devices:
+        resolver: true
+  Cluster:
+    fields:
+      devices:
+        resolver: true
+  Device:
+    fields:
+      user:
+        resolver: true
+      cluster:
+        resolver: true
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
