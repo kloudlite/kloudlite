@@ -6,15 +6,14 @@ package graph
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/wireguard/internal/app/graph/generated"
 	"kloudlite.io/apps/wireguard/internal/app/graph/model"
 	"kloudlite.io/apps/wireguard/internal/domain/entities"
+	"kloudlite.io/pkg/repos"
 )
 
 func (r *mutationResolver) CreateCluster(ctx context.Context, name string) (*model.Cluster, error) {
-
 	cluster, e := r.Domain.CreateCluster(ctx, entities.Cluster{
 		Name: name,
 	})
@@ -24,17 +23,17 @@ func (r *mutationResolver) CreateCluster(ctx context.Context, name string) (*mod
 	}
 
 	return &model.Cluster{
-		ID:       string(cluster.Id),
+		ID:       cluster.Id,
 		Name:     cluster.Name,
 		Endpoint: cluster.Address,
 	}, nil
 }
 
-func (r *mutationResolver) AddDevice(ctx context.Context, clusterID string, userID string, name string) (*model.Device, error) {
-	device, err := r.Domain.AddDevice(ctx, name, repos.ID(clusterID), repos.ID(userID))
+func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
+	device, err := r.Domain.AddDevice(ctx, name, clusterID, userID)
 	return &model.Device{
-		ID:            string(device.Id),
-		UserID:        string(device.UserId),
+		ID:            device.Id,
+		UserID:        device.UserId,
 		Name:          device.Name,
 		Configuration: "",
 	}, err
@@ -44,7 +43,7 @@ func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, err
 	return make([]*model.Cluster, 0), nil
 }
 
-func (r *queryResolver) GetCluster(ctx context.Context, clusterID string) (*model.Cluster, error) {
+func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -52,7 +51,7 @@ func (r *queryResolver) ListDevices(ctx context.Context) ([]*model.Device, error
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) GetDevice(ctx context.Context, deviceID string) (*model.Device, error) {
+func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

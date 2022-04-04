@@ -2,17 +2,21 @@
 
 package model
 
+import (
+	"kloudlite.io/pkg/repos"
+)
+
 type Cluster struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	Endpoint *string `json:"endpoint"`
+	ID       repos.ID `json:"id"`
+	Name     string   `json:"name"`
+	Endpoint *string  `json:"endpoint"`
 }
 
 type Device struct {
-	ID            string `json:"id"`
-	UserID        string `json:"userId"`
-	Name          string `json:"name"`
-	Configuration string `json:"configuration"`
+	ID            repos.ID `json:"id"`
+	UserID        repos.ID `json:"userId"`
+	Name          string   `json:"name"`
+	Configuration string   `json:"configuration"`
 }
 
 type Peer struct {
