@@ -1,7 +1,7 @@
 type Cluster {
   id: ID!
   name: String!
-  endpoint: String!
+  endpoint: String
 }
 
 type Device {
