@@ -15,29 +15,9 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func useGrapqhl(d domain.Domain) http.Handler {
-	server := http.NewServeMux()
-	server.HandleFunc("/", playground.Handler("Graphql playground", "/query"))
-
-	gqlServer := handler.NewDefaultServer(
-		generated.NewExecutableSchema(
-			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
-		),
-	)
-
-	server.Handle("/query", gqlServer)
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:4001", "https://studio.apollographql.com"},
-		AllowCredentials: true,
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-	})
-
-	return c.Handler(server)
-}
-
 var Module = fx.Module(
 	"app",
-	fx.Provide(graph.NewResolver),
+	// Create Repos
 	fx.Provide(func(db *mongo.Database) (
 		repos.DbRepo[*entities.Cluster],
 		repos.DbRepo[*entities.Device],
@@ -46,6 +26,26 @@ var Module = fx.Module(
 		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cluster")
 		return clusterRepo, deviceRepo
 	}),
-	fx.Provide(useGrapqhl),
+	// Load Domain
 	domain.Module,
+	// Create GQL Handler from domain
+	fx.Provide(func(d domain.Domain) http.Handler {
+		server := http.NewServeMux()
+		server.HandleFunc("/", playground.Handler("Graphql playground", "/query"))
+
+		gqlServer := handler.NewDefaultServer(
+			generated.NewExecutableSchema(
+				generated.Config{Resolvers: &graph.Resolver{Domain: d}},
+			),
+		)
+
+		server.Handle("/query", gqlServer)
+		c := cors.New(cors.Options{
+			AllowedOrigins:   []string{"http://localhost:4001", "https://studio.apollographql.com"},
+			AllowCredentials: true,
+			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		})
+
+		return c.Handler(server)
+	}),
 )

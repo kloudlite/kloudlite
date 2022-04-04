@@ -11,6 +11,7 @@ import (
 
 var Module = fx.Module(
 	"app",
+	// Setup Router
 	fx.Invoke(func(fiberServer *fiber.App, mc messaging.Producer) {
 		router := fiberServer.Group("/")
 		router.Get("/test", func(c *fiber.Ctx) error {
