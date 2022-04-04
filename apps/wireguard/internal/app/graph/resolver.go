@@ -12,11 +12,6 @@ type Resolver struct {
 	Domain domain.Domain
 }
 
-type ClusterResolver struct {
-	*Resolver
-}
-
-// Resolver Constructor
 func NewResolver(domain domain.Domain) *Resolver {
 	return &Resolver{
 		domain,

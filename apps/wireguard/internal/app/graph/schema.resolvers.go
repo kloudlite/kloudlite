@@ -6,81 +6,91 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"kloudlite.io/apps/wireguard/internal/app/graph/generated"
 	"kloudlite.io/apps/wireguard/internal/app/graph/model"
 	"kloudlite.io/apps/wireguard/internal/domain/entities"
+	err "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
 
-func (r *clusterResolver) Devices(ctx context.Context, cluster *model.Cluster) ([]*model.Device, error) {
-	devices, err := r.Domain.ListClusterDevices(ctx, cluster.ID)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*model.Device, len(devices))
-	for i, d := range devices {
-		res[i] = &model.Device{
+func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error) {
+	var e error
+	defer err.HandleErr(&e)
+	cluster := obj
+	deviceEntities, e := r.Domain.ListClusterDevices(ctx, cluster.ID)
+	err.AssertNoError(e, fmt.Errorf("not able to list devices of cluster %s", cluster.ID))
+	devices := make([]*model.Device, len(deviceEntities))
+	for i, d := range deviceEntities {
+		devices[i] = &model.Device{
 			ID:            d.Id,
 			Name:          d.Name,
 			Cluster:       cluster,
 			Configuration: "",
 		}
 	}
-	return res, err
+	return devices, e
 }
 
-func (r *deviceResolver) User(ctx context.Context, device *model.Device) (*model.User, error) {
-	deviceEntity, err := r.Domain.GetDevice(ctx, device.ID)
-	if err != nil {
-		return nil, err
-	}
+func (r *clusterResolver) Configuration(ctx context.Context, obj *model.Cluster) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.User, error) {
+	var e error
+	defer err.HandleErr(&e)
+	device := obj
+	deviceEntity, e := r.Domain.GetDevice(ctx, device.ID)
+	err.AssertNoError(e, fmt.Errorf("not able to get device"))
 	return &model.User{
 		ID: deviceEntity.UserId,
-	}, nil
+	}, e
 }
 
 func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model.Cluster, error) {
 	return r.Query().GetCluster(ctx, obj.Cluster.ID)
 }
 
+func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *mutationResolver) CreateCluster(ctx context.Context, name string) (*model.Cluster, error) {
+	var e error
+	defer err.HandleErr(&e)
 	cluster, e := r.Domain.CreateCluster(ctx, entities.Cluster{
 		Name: name,
 	})
-
-	if e != nil {
-		return nil, e
-	}
-
+	err.AssertNoError(e, fmt.Errorf("not able to create cluster"))
 	return &model.Cluster{
 		ID:       cluster.Id,
 		Name:     cluster.Name,
 		Endpoint: cluster.Address,
-	}, nil
+	}, e
 }
 
 func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
-	device, err := r.Domain.AddDevice(ctx, name, clusterID, userID)
-	if err != nil {
-		return nil, err
-	}
+	var e error
+	defer err.HandleErr(&e)
+	device, e := r.Domain.AddDevice(ctx, name, clusterID, userID)
+	err.AssertNoError(e, fmt.Errorf("not able to add device"))
 	return &model.Device{
 		ID:            device.Id,
 		Name:          device.Name,
 		Configuration: "",
-	}, err
+	}, e
 }
 
 func (r *mutationResolver) SetupCluster(ctx context.Context, clusterID repos.ID, address string, listenPort int, netInterface string) (*model.Cluster, error) {
-	clusterEntity, err := r.Domain.SetupCluster(ctx, clusterID, address, uint16(listenPort), netInterface)
-	if err != nil {
-		return nil, err
-	}
+	var e error
+	defer err.HandleErr(&e)
+	clusterEntity, e := r.Domain.SetupCluster(ctx, clusterID, address, uint16(listenPort), netInterface)
+	err.AssertNoError(e, fmt.Errorf("not able to setup cluster"))
 	return &model.Cluster{
 		ID:       clusterEntity.Id,
 		Name:     clusterEntity.Name,
 		Endpoint: clusterEntity.Address,
-	}, err
+	}, e
 }
 
 func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, error) {
@@ -88,60 +98,44 @@ func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, err
 }
 
 func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
-	clusterEntity, err := r.Domain.GetCluster(ctx, clusterID)
-	if err != nil {
-		return nil, err
-	}
+	var e error
+	defer err.HandleErr(&e)
+	clusterEntity, e := r.Domain.GetCluster(ctx, clusterID)
+	err.AssertNoError(e, fmt.Errorf("not able to get cluster"))
 	return &model.Cluster{
 		ID:       clusterEntity.Id,
 		Name:     clusterEntity.Name,
 		Endpoint: clusterEntity.Address,
-	}, err
-}
-
-func (r *queryResolver) ListUserDevices(ctx context.Context, userID repos.ID) ([]*model.Device, error) {
-	devices, err := r.Domain.ListUserDevices(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	resp := make([]*model.Device, 0)
-	for _, device := range devices {
-		resp = append(resp, &model.Device{
-			ID:            device.Id,
-			Name:          device.Name,
-			Configuration: "",
-		})
-	}
-	return resp, err
+	}, e
 }
 
 func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
-	device, err := r.Domain.GetDevice(ctx, deviceID)
-	if err != nil {
-		return nil, err
-	}
+	var e error
+	defer err.HandleErr(&e)
+	device, e := r.Domain.GetDevice(ctx, deviceID)
+	err.AssertNoError(e, fmt.Errorf("not able to get device"))
 	return &model.Device{
 		ID:            device.Id,
 		Name:          device.Name,
 		Configuration: "",
-	}, err
+	}, e
 }
 
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
-	devices, err := r.Domain.ListUserDevices(ctx, obj.ID)
-	if err != nil {
-		return nil, err
-	}
-	resp := make([]*model.Device, 0)
-	for _, device := range devices {
-		resp = append(resp, &model.Device{
+	var e error
+	defer err.HandleErr(&e)
+	user := obj
+	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID))
+	err.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
+	devices := make([]*model.Device, 0)
+	for _, device := range deviceEntities {
+		devices = append(devices, &model.Device{
 			ID:            device.Id,
 			Name:          device.Name,
 			Configuration: "",
 		})
 	}
-	fmt.Println(devices)
-	return resp, err
+	return devices, e
 }
 
 // Cluster returns generated.ClusterResolver implementation.

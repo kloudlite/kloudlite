@@ -7,11 +7,14 @@ import (
 )
 
 type Cluster struct {
-	ID       repos.ID  `json:"id"`
-	Name     string    `json:"name"`
-	Endpoint *string   `json:"endpoint"`
-	Devices  []*Device `json:"devices"`
+	ID            repos.ID  `json:"id"`
+	Name          string    `json:"name"`
+	Endpoint      *string   `json:"endpoint"`
+	Devices       []*Device `json:"devices"`
+	Configuration string    `json:"configuration"`
 }
+
+func (Cluster) IsEntity() {}
 
 type Device struct {
 	ID            repos.ID `json:"id"`
@@ -21,7 +24,11 @@ type Device struct {
 	Configuration string   `json:"configuration"`
 }
 
+func (Device) IsEntity() {}
+
 type User struct {
 	ID      repos.ID  `json:"id"`
 	Devices []*Device `json:"devices"`
 }
+
+func (User) IsEntity() {}
