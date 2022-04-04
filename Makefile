@@ -1,4 +1,13 @@
 
+
+# producer
+producer.run: export PORT = 4001
+producer.run: export BOOTSTRAP_SERVERS = kafka-kafka-bootstrap.hotspot:9092
+producer.run: export IS_DEV = true
+producer.run:
+	go run apps/wireguard/main.go
+
+
 # wireguard
 wireguard.gql:
 	cd apps/wireguard/internal/app && go run github.com/99designs/gqlgen generate

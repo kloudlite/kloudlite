@@ -1,16 +1,18 @@
-type User {
-  id: ID!
+extend type User @key(fields: "id") {
+  id: ID! @external
   devices: [Device]
 }
 
-type Cluster {
+
+type Cluster @key(fields: "id") {
   id: ID!
   name: String!
   endpoint: String
   devices: [Device]
+  configuration: String!
 }
 
-type Device {
+type Device @key(fields: "id") {
   id: ID!
   user: User!
   name: String!
@@ -18,14 +20,19 @@ type Device {
   configuration: String!
 }
 
+#extend type User @key(fields: "id"){
+#  id: String! @external
+#  devices: [Device]
+#}
 
-type Query {
+
+extend type Query {
   listClusters: [Cluster!]
   getCluster(clusterId: ID!): Cluster
   getDevice(deviceId: ID!): Device
 }
 
-type Mutation {
+extend type Mutation {
   createCluster(name: String!): Cluster!
   addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
   setupCluster(
@@ -35,3 +42,5 @@ type Mutation {
     netInterface:String!,
   ): Cluster!
 }
+
+
