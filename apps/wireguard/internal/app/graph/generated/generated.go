@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -35,8 +36,11 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Cluster() ClusterResolver
+	Device() DeviceResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -44,16 +48,18 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Cluster struct {
+		Devices  func(childComplexity int) int
 		Endpoint func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Name     func(childComplexity int) int
 	}
 
 	Device struct {
+		Cluster       func(childComplexity int) int
 		Configuration func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Name          func(childComplexity int) int
-		UserID        func(childComplexity int) int
+		User          func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -62,19 +68,27 @@ type ComplexityRoot struct {
 		SetupCluster  func(childComplexity int, clusterID repos.ID, address string, listenPort int, netInterface string) int
 	}
 
-	Peer struct {
-		AllowedIps func(childComplexity int) int
-		PublicKey  func(childComplexity int) int
+	Query struct {
+		GetCluster      func(childComplexity int, clusterID repos.ID) int
+		GetDevice       func(childComplexity int, deviceID repos.ID) int
+		ListClusters    func(childComplexity int) int
+		ListUserDevices func(childComplexity int, userID repos.ID) int
 	}
 
-	Query struct {
-		GetCluster   func(childComplexity int, clusterID repos.ID) int
-		GetDevice    func(childComplexity int, deviceID repos.ID) int
-		ListClusters func(childComplexity int) int
-		ListDevices  func(childComplexity int) int
+	User struct {
+		Devices func(childComplexity int) int
+		ID      func(childComplexity int) int
 	}
 }
 
+type ClusterResolver interface {
+	Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error)
+}
+type DeviceResolver interface {
+	User(ctx context.Context, obj *model.Device) (*model.User, error)
+
+	Cluster(ctx context.Context, obj *model.Device) (*model.Cluster, error)
+}
 type MutationResolver interface {
 	CreateCluster(ctx context.Context, name string) (*model.Cluster, error)
 	AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error)
@@ -83,8 +97,11 @@ type MutationResolver interface {
 type QueryResolver interface {
 	ListClusters(ctx context.Context) ([]*model.Cluster, error)
 	GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error)
-	ListDevices(ctx context.Context) ([]*model.Device, error)
+	ListUserDevices(ctx context.Context, userID repos.ID) ([]*model.Device, error)
 	GetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error)
+}
+type UserResolver interface {
+	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
 }
 
 type executableSchema struct {
@@ -101,6 +118,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Cluster.devices":
+		if e.complexity.Cluster.Devices == nil {
+			break
+		}
+
+		return e.complexity.Cluster.Devices(childComplexity), true
 
 	case "Cluster.endpoint":
 		if e.complexity.Cluster.Endpoint == nil {
@@ -123,6 +147,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cluster.Name(childComplexity), true
 
+	case "Device.cluster":
+		if e.complexity.Device.Cluster == nil {
+			break
+		}
+
+		return e.complexity.Device.Cluster(childComplexity), true
+
 	case "Device.configuration":
 		if e.complexity.Device.Configuration == nil {
 			break
@@ -144,12 +175,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Device.Name(childComplexity), true
 
-	case "Device.userId":
-		if e.complexity.Device.UserID == nil {
+	case "Device.user":
+		if e.complexity.Device.User == nil {
 			break
 		}
 
-		return e.complexity.Device.UserID(childComplexity), true
+		return e.complexity.Device.User(childComplexity), true
 
 	case "Mutation.addDevice":
 		if e.complexity.Mutation.AddDevice == nil {
@@ -187,20 +218,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SetupCluster(childComplexity, args["clusterId"].(repos.ID), args["address"].(string), args["listenPort"].(int), args["netInterface"].(string)), true
 
-	case "Peer.allowedIps":
-		if e.complexity.Peer.AllowedIps == nil {
-			break
-		}
-
-		return e.complexity.Peer.AllowedIps(childComplexity), true
-
-	case "Peer.publicKey":
-		if e.complexity.Peer.PublicKey == nil {
-			break
-		}
-
-		return e.complexity.Peer.PublicKey(childComplexity), true
-
 	case "Query.getCluster":
 		if e.complexity.Query.GetCluster == nil {
 			break
@@ -232,12 +249,31 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ListClusters(childComplexity), true
 
-	case "Query.listDevices":
-		if e.complexity.Query.ListDevices == nil {
+	case "Query.listUserDevices":
+		if e.complexity.Query.ListUserDevices == nil {
 			break
 		}
 
-		return e.complexity.Query.ListDevices(childComplexity), true
+		args, err := ec.field_Query_listUserDevices_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ListUserDevices(childComplexity, args["userId"].(repos.ID)), true
+
+	case "User.devices":
+		if e.complexity.User.Devices == nil {
+			break
+		}
+
+		return e.complexity.User.Devices(childComplexity), true
+
+	case "User.id":
+		if e.complexity.User.ID == nil {
+			break
+		}
+
+		return e.complexity.User.ID(childComplexity), true
 
 	}
 	return 0, false
@@ -303,29 +339,31 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `type Cluster {
+	{Name: "graph/schema.graphqls", Input: `type User {
+  id: ID!
+  devices: [Device]
+}
+
+type Cluster {
   id: ID!
   name: String!
   endpoint: String
+  devices: [Device]
 }
 
 type Device {
   id: ID!
-  userId: ID!
+  user: User!
   name: String!
+  cluster: Cluster!
   configuration: String!
 }
 
-type Peer {
-  publicKey: String
-  allowedIps: [String]
-}
 
 type Query {
   listClusters: [Cluster!]
   getCluster(clusterId: ID!): Cluster
-
-  listDevices: [Device!]
+  listUserDevices(userId: ID!): [Device!]
   getDevice(deviceId: ID!): Device
 }
 
@@ -482,6 +520,21 @@ func (ec *executionContext) field_Query_getDevice_args(ctx context.Context, rawA
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_listUserDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -622,6 +675,38 @@ func (ec *executionContext) _Cluster_endpoint(ctx context.Context, field graphql
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Cluster_devices(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Cluster().Devices(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Device)
+	fc.Result = res
+	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Device_id(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -657,7 +742,7 @@ func (ec *executionContext) _Device_id(ctx context.Context, field graphql.Collec
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Device_userId(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+func (ec *executionContext) _Device_user(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -668,14 +753,14 @@ func (ec *executionContext) _Device_userId(ctx context.Context, field graphql.Co
 		Object:     "Device",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
+		return ec.resolvers.Device().User(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -687,9 +772,9 @@ func (ec *executionContext) _Device_userId(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(repos.ID)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Device_name(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
@@ -725,6 +810,41 @@ func (ec *executionContext) _Device_name(ctx context.Context, field graphql.Coll
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_cluster(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Device().Cluster(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Cluster)
+	fc.Result = res
+	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Device_configuration(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
@@ -888,70 +1008,6 @@ func (ec *executionContext) _Mutation_setupCluster(ctx context.Context, field gr
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Peer_publicKey(ctx context.Context, field graphql.CollectedField, obj *model.Peer) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Peer",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PublicKey, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Peer_allowedIps(ctx context.Context, field graphql.CollectedField, obj *model.Peer) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Peer",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AllowedIps, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*string)
-	fc.Result = res
-	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_listClusters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1023,7 +1079,7 @@ func (ec *executionContext) _Query_getCluster(ctx context.Context, field graphql
 	return ec.marshalOCluster2ᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_listDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_listUserDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1039,9 +1095,16 @@ func (ec *executionContext) _Query_listDevices(ctx context.Context, field graphq
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_listUserDevices_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListDevices(rctx)
+		return ec.resolvers.Query().ListUserDevices(rctx, args["userId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1163,6 +1226,73 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_devices(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().Devices(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Device)
+	fc.Result = res
+	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2377,7 +2507,7 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2387,7 +2517,7 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "endpoint":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2396,6 +2526,23 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Values[i] = innerFunc(ctx)
 
+		case "devices":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Cluster_devices(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2425,18 +2572,28 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
-		case "userId":
+		case "user":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Device_userId(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Device_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			})
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Device_name(ctx, field, obj)
@@ -2445,8 +2602,28 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "cluster":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Device_cluster(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "configuration":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Device_configuration(ctx, field, obj)
@@ -2455,7 +2632,7 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -2528,41 +2705,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
-var peerImplementors = []string{"Peer"}
-
-func (ec *executionContext) _Peer(ctx context.Context, sel ast.SelectionSet, obj *model.Peer) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, peerImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Peer")
-		case "publicKey":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Peer_publicKey(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		case "allowedIps":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Peer_allowedIps(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2622,7 +2764,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "listDevices":
+		case "listUserDevices":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2631,7 +2773,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_listDevices(ctx, field)
+				res = ec._Query_listUserDevices(ctx, field)
 				return res
 			}
 
@@ -2676,6 +2818,54 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var userImplementors = []string{"User"}
+
+func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("User")
+		case "id":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._User_id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "devices":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_devices(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3199,6 +3389,20 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNUser2kloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUser2ᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -3532,6 +3736,47 @@ func (ec *executionContext) marshalOCluster2ᚖkloudliteᚗioᚋappsᚋwireguard
 	return ec._Cluster(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx context.Context, sel ast.SelectionSet, v []*model.Device) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalODevice2ᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋwireguardᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Device) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -3584,38 +3829,6 @@ func (ec *executionContext) marshalODevice2ᚖkloudliteᚗioᚋappsᚋwireguard�
 		return graphql.Null
 	}
 	return ec._Device(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

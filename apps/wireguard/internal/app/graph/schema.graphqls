@@ -1,26 +1,27 @@
+type User {
+  id: ID!
+  devices: [Device]
+}
+
 type Cluster {
   id: ID!
   name: String!
   endpoint: String
+  devices: [Device]
 }
 
 type Device {
   id: ID!
-  userId: ID!
+  user: User!
   name: String!
+  cluster: Cluster!
   configuration: String!
 }
 
-type Peer {
-  publicKey: String
-  allowedIps: [String]
-}
 
 type Query {
   listClusters: [Cluster!]
   getCluster(clusterId: ID!): Cluster
-
-  listDevices: [Device!]
   getDevice(deviceId: ID!): Device
 }
 

@@ -76,31 +76,38 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 		UserId:     userId,
 		PrivateKey: &pkString,
 		PublicKey:  &pbKeyString,
-		Peers: map[string]entities.Peer{
-			string(cluster.Id): {
-				Id:        cluster.Id,
-				Address:   cluster.Address,
-				PublicKey: cluster.PublicKey,
-			},
-		},
 	})
 	errors.AssertNoError(e, fmt.Errorf("unable to create new device"))
-	cluster.Peers[newDevice.Id] = entities.Peer{
-		Id:        newDevice.Id,
-		PublicKey: newDevice.PublicKey,
-	}
-	_, e = d.clusterRepo.UpdateById(ctx, cluster.Id, cluster)
-	errors.AssertNoError(e, fmt.Errorf("unable to update cluster"))
 	return newDevice, e
 }
 
 func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
-	//_, e := d.deviceRepo.DeleteById(ctx, deviceId)
-	return nil
+	return d.deviceRepo.DeleteById(ctx, deviceId)
 }
 
-func (d *domain) ListDevices(ctx context.Context) ([]*entities.Device, error) {
-	return d.deviceRepo.Find(ctx, repos.Query{})
+func (d *domain) ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error) {
+	return d.deviceRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"cluster_id": clusterId,
+		},
+	})
+}
+
+func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error) {
+	fmt.Println(userId)
+	return d.deviceRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"user_id": userId,
+		},
+	})
+}
+
+func (d *domain) GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error) {
+	return d.clusterRepo.FindById(ctx, id)
+}
+
+func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
+	return d.deviceRepo.FindById(ctx, id)
 }
 
 var Module = fx.Module(

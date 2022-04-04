@@ -8,6 +8,8 @@ import (
 )
 
 type Domain interface {
+	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
+	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
 	CreateCluster(
 		ctx context.Context,
 		data entities.Cluster,
@@ -27,7 +29,8 @@ type Domain interface {
 		ctx context.Context,
 		deviceId repos.ID,
 	) error
-	ListDevices(ctx context.Context) ([]*entities.Device, error)
+	ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error)
+	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
 	SetupCluster(
 		ctx context.Context,
 		clusterId repos.ID,
