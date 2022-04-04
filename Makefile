@@ -45,3 +45,18 @@ dev.producer: .runner
 
 dev.consumer: APP=message-consumer
 dev.consumer: .runner
+
+image.consumer: APP=message-consumer
+image.consumer:
+	@make image.$(APP) -e APP=$(APP)
+
+dev.wireguard: APP=wireguard
+dev.wireguard: .runner
+
+wireguard.dev: APP=wireguard
+wireguard.dev:
+	cd apps/wireguard/internal/app && go run github.com/99designs/gqlgen
+	@make .runner -e APP=$(APP)
+
+wireguard.gql:
+	cd apps/wireguard/internal/app && go run github.com/99designs/gqlgen

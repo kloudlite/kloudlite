@@ -1,0 +1,30 @@
+type Cluster {
+  id: ID!
+  name: String!
+  endpoint: String!
+}
+
+type Device {
+  id: ID!
+  userId: ID!
+  name: String!
+  configuration: String!
+}
+
+type Peer {
+  publicKey: String
+  allowedIps: [String]
+}
+
+type Query {
+  listClusters: [Cluster!]
+  getCluster(clusterId: ID!): Cluster
+
+  listDevices: [Device!]
+  getDevice(deviceId: ID!): Device
+}
+
+type Mutation {
+  createCluster(name: String!): Cluster!
+  addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
+}

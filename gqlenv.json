@@ -1,0 +1,10 @@
+{
+  "mode": "dev",
+  "dev": {
+    "url": "http://localhost:4001/query",
+    "cluster": "hotspot-01.dev",
+    "headers": {
+      "cookie": "hotspot-session=sess-ie5Ed0Dew-H6wFtNjd3RNPXphJX9MHV9; Domain=.dev.madhouselabs.io; Path=/; HttpOnly; Secure; SameSite=None"
+    }
+  }
+}
