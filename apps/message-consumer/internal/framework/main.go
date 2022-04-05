@@ -40,37 +40,29 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	appSvc := app.MakeApp(kApplier, MakeGqlClient(httpClient), httpClient)
 
 	fm = func() {
-		if cfg.IsDev {
-			e := appSvc.Handle(&app.Message{
-				JobId: "job-wotmukcq33x3gmup96dyccvhmvw6qwru",
-			})
-			if e != nil {
-				fmt.Println("err:", e)
+
+		for {
+			fmt.Println("awaiting for new message ...")
+			msg, err := consumer.ReadMessage(-1)
+			if err != nil {
+				log.Errorf("could not read message from kafka because %v", err)
+				continue
+			}
+			log.Infof("received message (topic=%v), %v", msg.TopicPartition.Topic, string(msg.Value))
+
+			var msgData app.Message
+			err = json.Unmarshal(msg.Value, &msgData)
+			if err != nil {
+				log.Errorf("could not unmarshal message because %v", err)
+				continue
+			}
+
+			err = appSvc.Handle(&msgData)
+			if err != nil {
+				log.Errorf("could not handle message because %v", err)
+				continue
 			}
 		}
-
-		// for {
-		// fmt.Println("awaiting for new message ...")
-		// msg, err := consumer.ReadMessage(-1)
-		// if err != nil {
-		// 	log.Errorf("could not read message from kafka because %v", err)
-		// 	continue
-		// }
-		// log.Infof("received message (topic=%v), %v", msg.TopicPartition.Topic, string(msg.Value))
-
-		// var msgData app.Message
-		// err = json.Unmarshal(msg.Value, &msgData)
-		// if err != nil {
-		// 	log.Errorf("could not unmarshal message because %v", err)
-		// 	continue
-		// }
-
-		// err = appSvc.Handle(&msgData)
-		// if err != nil {
-		// 	log.Errorf("could not handle message because %v", err)
-		// 	continue
-		// }
-		// }
 	}
 
 	return
