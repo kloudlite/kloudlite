@@ -1,0 +1,24 @@
+---
+label: List Clusters
+query: |
+  query ListClusters {
+    listClusters {
+      Port
+      Id
+    }
+  }
+
+---
+label: Create Cluster
+query: |
+  mutation CreateCluster($name: String!) {
+    createCluster(name: $name) {
+      id
+      name
+      endpoint
+    }
+  }
+
+variables:
+  name: "sample cluster"
+---
