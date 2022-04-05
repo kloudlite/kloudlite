@@ -10,7 +10,6 @@ import (
 func NewMongoDatabase(url string, dbName string) (db *mongo.Database, e error) {
 	defer errors.HandleErr(&e)
 	client, e := mongo.NewClient(options.Client().ApplyURI(url))
-	fmt.Println(e, url, dbName)
 	errors.AssertNoError(e, fmt.Errorf("could not create mongo client"))
 	return client.Database(dbName), nil
 }
