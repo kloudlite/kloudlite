@@ -1,3 +1,7 @@
+#infra
+infra.run:
+	cd apps/infra && go run main.go
+
 # consumer
 consumer.run: export BOOTSTRAP_SERVERS = kafka-kafka-bootstrap.hotspot:9092
 
