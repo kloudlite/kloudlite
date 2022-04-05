@@ -19,7 +19,7 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	copyTemplateDirCommand := exec.Command(
 		"cp",
 		"-r",
-		fmt.Sprintf("./internal/application/tf/create-cluster/%v", action.Provider),
+		fmt.Sprintf("./internal/application/tf/%v", action.Provider),
 		fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID),
 	)
 	copyTemplateDirCommand.Stdout = os.Stdout
