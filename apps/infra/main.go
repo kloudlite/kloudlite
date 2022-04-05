@@ -2,7 +2,7 @@ package main
 
 import (
 	"go.uber.org/fx"
-	"kloudlite.io/apps/wireguard/internal/framework"
+	"kloudlite.io/apps/infra/internal/framework"
 )
 
 func main() {

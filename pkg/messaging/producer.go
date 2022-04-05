@@ -13,11 +13,11 @@ type Producer interface {
 	SendMessage(topic string, key string, message Json) error
 }
 
-type producerImpl struct {
+type producer struct {
 	kafkaProducer *kafka.Producer
 }
 
-func (m producerImpl) SendMessage(topic string, key string, message Json) error {
+func (m producer) SendMessage(topic string, key string, message Json) error {
 	msgBody, e := json.Marshal(message)
 	errors.AssertNoError(e, fmt.Errorf("failed to marshal message"))
 	return m.kafkaProducer.Produce(&kafka.Message{
@@ -32,13 +32,13 @@ func (m producerImpl) SendMessage(topic string, key string, message Json) error 
 
 func NewKafkaProducer(kafkaBorkers string) (messenger Producer, e error) {
 	defer errors.HandleErr(&e)
-	producer, e := kafka.NewProducer(
+	p, e := kafka.NewProducer(
 		&kafka.ConfigMap{
 			"bootstrap.servers": kafkaBorkers,
 		},
 	)
 	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
-	return &producerImpl{
-		kafkaProducer: producer,
+	return &producer{
+		kafkaProducer: p,
 	}, e
 }
