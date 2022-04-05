@@ -12,7 +12,7 @@ terraform {
 }
 
 provider "digitalocean" {
-  token = var.do_token
+  token = var.do-token
 }
 
 resource "digitalocean_droplet" "masters" {
@@ -23,9 +23,10 @@ resource "digitalocean_droplet" "masters" {
   size     = "s-1vcpu-2gb"
   ssh_keys = var.ssh_keys
   user_data = templatefile("./init.sh", {
-    pubkey = file("./.keys/access.pub")
+    pubkey = file("${var.keys-path}/access.pub")
   })
 }
+
 
 resource "digitalocean_droplet" "workers" {
   count    = var.agent-nodes-count
@@ -35,7 +36,7 @@ resource "digitalocean_droplet" "workers" {
   size     = "s-1vcpu-2gb"
   ssh_keys = var.ssh_keys
   user_data = templatefile("./init.sh", {
-    pubkey = file("./.keys/access.pub")
+    pubkey = file("${var.keys-path}/access.pub")
   })
 }
 
@@ -50,7 +51,7 @@ module "k3s" {
       connection = {
         host = instance.ipv4_address
         user = "root"
-        private_key = file("${path.module}/.keys/access")
+        private_key = file("${var.keys-path}/access")
       }
     labels = {"node.kubernetes.io/type" = "master"}
     }
@@ -62,7 +63,7 @@ module "k3s" {
         connection = {
           host = instance.ipv4_address
           user = "root"
-          private_key = file("${path.module}/.keys/access")
+          private_key = file("${var.keys-path}/access")
         }
         labels = {"node.kubernetes.io/type" = "agent"}
       }

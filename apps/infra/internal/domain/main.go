@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"fmt"
 	"go.uber.org/fx"
 )
 
@@ -33,10 +32,8 @@ type TF interface {
 
 var Module = fx.Module("domain", fx.Provide(makeDomain), fx.Invoke(
 	func(d Domain) {
-		fmt.Println("domain created")
 		d.CreateCluster(SetupClusterAction{
-			ClusterID:    "sample-123",
-			Name:         "mine",
+			ClusterID:    "sample-121",
 			Region:       "blr1",
 			Provider:     "do",
 			MastersCount: 1,
