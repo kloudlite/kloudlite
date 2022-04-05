@@ -1,7 +1,4 @@
-__http__
 bin
 vendor
 .idea
-Makefile
-gqlenv.json
 *.log
