@@ -7,14 +7,13 @@ import (
 	"kloudlite.io/pkg/errors"
 )
 
-type consumer struct {
+type consumer[T any] struct {
 	kafkaConsumer *kafka.Consumer
+	topics        []string
 }
 
-func (c *consumer) OnMessage(topics []string, callback func(topic string, message Json) error) (e error) {
+func (c *consumer[T]) OnMessage(callback func(topic string, message T) error) (e error) {
 	defer errors.HandleErr(&e)
-	e = c.kafkaConsumer.SubscribeTopics(topics, nil)
-	errors.AssertNoError(e, fmt.Errorf("failed to subscribe to topics %v", topics))
 	go func() {
 		for {
 			msg, e := c.kafkaConsumer.ReadMessage(-1)
@@ -23,7 +22,7 @@ func (c *consumer) OnMessage(topics []string, callback func(topic string, messag
 				//continue
 			}
 
-			var message Json
+			var message T
 			e = json.Unmarshal(msg.Value, &message)
 			if e != nil {
 				fmt.Errorf("unable to typecast message into json")
@@ -44,16 +43,21 @@ func (c *consumer) OnMessage(topics []string, callback func(topic string, messag
 	return nil
 }
 
-func (c *consumer) Unsubscribe() error {
+func (c *consumer[T]) Unsubscribe() error {
 	return c.kafkaConsumer.Unsubscribe()
 }
 
-type Consumer interface {
-	OnMessage(topics []string, callback func(topic string, message Json) error) error
-	Unsubscribe() error
+func (c *consumer[T]) Connect() error {
+	return c.kafkaConsumer.SubscribeTopics(c.topics, nil)
 }
 
-func NewKafkaConsumer(kafkaBrokers string, consumerGroupId string) (messenger Consumer, e error) {
+type Consumer[T any] interface {
+	OnMessage(callback func(topic string, message T) error) error
+	Unsubscribe() error
+	Connect() error
+}
+
+func NewKafkaConsumer[T any](topics []string, kafkaBrokers string, consumerGroupId string) (messenger Consumer[T], e error) {
 	defer errors.HandleErr(&e)
 	c, e := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  kafkaBrokers,
@@ -62,7 +66,8 @@ func NewKafkaConsumer(kafkaBrokers string, consumerGroupId string) (messenger Co
 		"enable.auto.commit": "false",
 	})
 	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
-	return &consumer{
+	return &consumer[T]{
 		kafkaConsumer: c,
+		topics:        topics,
 	}, e
 }

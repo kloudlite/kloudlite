@@ -30,7 +30,7 @@ var Module = fx.Module("framework",
 		return logger.NewLogger(env.isProd)
 	}),
 	// Create Producer
-	fx.Provide(func(e *Env) (messaging.Producer, error) {
+	fx.Provide(func(e *Env) (messaging.Producer[messaging.Json], error) {
 		return messaging.NewKafkaProducer(e.KafkaBrokers)
 	}),
 	// Create Server
