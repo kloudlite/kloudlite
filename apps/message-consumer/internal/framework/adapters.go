@@ -12,12 +12,10 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
-	"kloudlite.io/apps/message-consumer/internal/domain"
-	"kloudlite.io/pkg/errors"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"kloudlite.io/apps/message-consumer/internal/domain"
 )
 
 func getKubeConfig(isDev bool) (cfg *rest.Config, e error) {

@@ -1,5 +1,6 @@
 #infra
 infra.run: export SSH_KEYS_PATH=/tmp/kloudlite/keys
+infra.run: export KAFKA_INFRA_ACTION_RESULT_TOPIC=kloudlite-infra-action-result
 infra.run: export DO_API_KEY=***REMOVED***
 infra.run: export DATA_PATH=/tmp/kloudlite/data
 infra.run:

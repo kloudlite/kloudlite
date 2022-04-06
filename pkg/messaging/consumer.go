@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"kloudlite.io/pkg/errors"
+	libErrors "kloudlite.io/pkg/lib-errors"
 )
 
 type consumer[T any] struct {
@@ -13,13 +13,6 @@ type consumer[T any] struct {
 	callback      func(topic string, message T) error
 	stopChan      chan bool
 }
-
-// func (c *consumer[T]) OnMessage(callback func(topic string, message T) error) (e error) {
-// 	defer errors.HandleErr(&e)
-// 	c.callback = callback
-// 	c.stopChan = make(chan int)
-// 	return nil
-// }
 
 func (c *consumer[T]) Unsubscribe() error {
 	c.stopChan <- true
@@ -62,25 +55,28 @@ func (c *consumer[T]) Subscribe() error {
 			c.kafkaConsumer.CommitMessage(msg)
 		}
 	}()
-
 	return c.kafkaConsumer.SubscribeTopics(c.topics, nil)
 }
 
 type Consumer[T any] interface {
-	// OnMessage(callback func(topic string, message T) error) error
 	Unsubscribe() error
 	Subscribe() error
 }
 
-func NewKafkaConsumer[T any](topics []string, kafkaBrokers string, consumerGroupId string, callback func(topic string, msg T) error) (messenger Consumer[T], e error) {
-	defer errors.HandleErr(&e)
+func NewKafkaConsumer[T any](
+	kafkaCli KafkaClient,
+	topics []string,
+	consumerGroupId string,
+	callback func(topic string, msg T) error,
+) (messenger Consumer[T], e error) {
+	defer libErrors.HandleErr(&e)
 	c, e := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  kafkaBrokers,
+		"bootstrap.servers":  kafkaCli.GetBrokers(),
 		"group.id":           consumerGroupId,
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": "false",
 	})
-	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
+	libErrors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
 	return &consumer[T]{
 		kafkaConsumer: c,
 		topics:        topics,

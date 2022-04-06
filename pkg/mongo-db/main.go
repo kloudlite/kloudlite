@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"kloudlite.io/pkg/errors"
 )
 
 func NewMongoDatabase(url string, dbName string) (db *mongo.Database, e error) {

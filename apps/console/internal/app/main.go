@@ -1,6 +1,7 @@
 package app
 
 import (
+	"kloudlite.io/pkg/messaging"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -25,6 +26,9 @@ var Module = fx.Module(
 		deviceRepo := repos.NewMongoRepoAdapter[*entities.Device](db, "devices", "dev")
 		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cluster")
 		return clusterRepo, deviceRepo
+	}),
+	fx.Provide(func(messagingCli *messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
+		return messaging.NewKafkaProducer[messaging.Json](messagingCli)
 	}),
 	// Load Domain
 	domain.Module,

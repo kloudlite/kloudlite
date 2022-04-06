@@ -6,7 +6,6 @@ import (
 	"kloudlite.io/pkg/messaging"
 
 	"github.com/gofiber/fiber/v2"
-	"kloudlite.io/pkg/errors"
 )
 
 var Module = fx.Module(

@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"kloudlite.io/apps/message-consumer/internal/domain"
-	"kloudlite.io/pkg/errors"
 )
 
 type appI struct {

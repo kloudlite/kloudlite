@@ -51,9 +51,10 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Provide(func(e *Env) (messaging.Producer[messaging.Json], error) {
-		return messaging.NewKafkaProducer[messaging.Json](e.KafkaBrokers)
+	fx.Provide(func(e *Env) *messaging.KafkaClient {
+		return messaging.NewKafkaClient(e.KafkaBrokers)
 	}),
+
 
 	// Load App Module
 	app.Module,
