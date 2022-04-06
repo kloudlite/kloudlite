@@ -49,4 +49,13 @@ type Env struct {
 
 var Module = fx.Module("domain",
 	fx.Provide(config.LoadEnv[Env]()),
-	fx.Provide(makeDomain))
+	fx.Provide(makeDomain),
+	fx.Invoke(func(d Domain) {
+		d.CreateCluster(SetupClusterAction{
+			ClusterID:    "cluster-ltujdwouztzgfeg",
+			Region:       "blr1",
+			Provider:     "do",
+			MastersCount: 1, NodesCount: 2,
+		})
+	}),
+)
