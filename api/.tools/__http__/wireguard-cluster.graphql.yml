@@ -11,14 +11,18 @@ query: |
 ---
 label: Create Cluster
 query: |
-  mutation CreateCluster($name: String!) {
-    createCluster(name: $name) {
+  mutation CreateCluster($name: String!, $provider: String!, $region: String!) {
+    createCluster(name: $name, provider: $provider, region: $region) {
       id
       name
+      provider
       endpoint
+      region
     }
   }
 
 variables:
   name: "sample cluster"
+  provider: do
+  region: blr1
 ---

@@ -13,18 +13,10 @@ type Env struct {
 }
 
 var Module = fx.Module("framework",
-	fx.Provide(makeEnv),
-	fx.Provide(func(env *Env) logger.Logger {
-		return logger.NewLogger(true)
-	}),
+	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(logger.NewLogger),
 	fx.Provide(func(env *Env) messaging.KafkaClient {
 		return messaging.NewKafkaClient(env.KafkaBrokers)
 	}),
 	application.Module,
 )
-
-func makeEnv() (*Env, error) {
-	var envC Env
-	err := config.LoadConfigFromEnv(&envC)
-	return &envC, err
-}

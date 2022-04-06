@@ -8,7 +8,6 @@ require (
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/gofiber/fiber/v2 v2.27.0
-	github.com/joho/godotenv v1.4.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/rs/cors v1.8.2
 	github.com/sirupsen/logrus v1.8.1

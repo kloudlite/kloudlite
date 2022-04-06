@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"kloudlite.io/apps/message-consumer/internal/app"
+	"kloudlite.io/pkg/errors"
 )
 
 func MakeFramework(cfg *Config) (fm Framework, e error) {
