@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 
+	"kloudlite.io/apps/infra/internal/frameworkd"
 	"kloudlite.io/pkg/errors"
 )
 

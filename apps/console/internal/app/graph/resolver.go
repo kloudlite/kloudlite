@@ -1,7 +1,7 @@
 package graph
 
 import (
-	"kloudlite.io/apps/wireguard/internal/domain"
+	"kloudlite.io/apps/console/internal/domain"
 )
 
 // This file will not be regenerated automatically.

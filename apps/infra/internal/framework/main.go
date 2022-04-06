@@ -1,6 +1,8 @@
 package framework
 
 import (
+	"context"
+
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/application"
 	"kloudlite.io/apps/infra/internal/domain"
@@ -17,23 +19,41 @@ type Env struct {
 }
 
 var Module = fx.Module("framework",
-	// Load Env
 	fx.Provide(func() (*Env, error) {
 		var envC Env
 		err := config.LoadConfigFromEnv(&envC)
 		return &envC, err
 	}),
-	// Setup Logger
 	fx.Provide(func(env *Env) logger.Logger {
 		return logger.NewLogger(env.isProd)
 	}),
-	// Create Producer
 	fx.Provide(func(e *Env) (messaging.Producer[messaging.Json], error) {
 		return messaging.NewKafkaProducer[messaging.Json](e.KafkaBrokers)
 	}),
-	// Setup Consumer
-	fx.Provide(func(env *Env) (messaging.Consumer[domain.SetupClusterAction], error) {
-		return messaging.NewKafkaConsumer[domain.SetupClusterAction]([]string{env.KafkaInfraActionTopic}, env.KafkaBrokers, env.KafkaGroupId)
+	fx.Provide(func(env *Env, d domain.Domain) (messaging.Consumer[domain.SetupClusterAction], error) {
+		return messaging.NewKafkaConsumer[domain.SetupClusterAction](
+			[]string{env.KafkaInfraActionTopic},
+			env.KafkaBrokers,
+			env.KafkaGroupId,
+			func(topic string, action domain.SetupClusterAction) error {
+				d.CreateCluster(action)
+				return nil
+			},
+		)
 	}),
 	application.Module,
+
+	fx.Invoke(
+		func(lf fx.Lifecycle, msgConsumer messaging.Consumer[domain.SetupClusterAction]) error {
+			lf.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return msgConsumer.Subscribe()
+				},
+				OnStop: func(ctx context.Context) error {
+					return msgConsumer.Unsubscribe()
+				},
+			})
+			return nil
+		},
+	),
 )

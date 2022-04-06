@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	"kloudlite.io/apps/wireguard/internal/app/graph/generated"
-	"kloudlite.io/apps/wireguard/internal/app/graph/model"
-	"kloudlite.io/apps/wireguard/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/app/graph/generated"
+	"kloudlite.io/apps/console/internal/app/graph/model"
+	"kloudlite.io/apps/console/internal/domain/entities"
 	err "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
@@ -55,17 +55,21 @@ func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreateCluster(ctx context.Context, name string) (*model.Cluster, error) {
+func (r *mutationResolver) CreateCluster(ctx context.Context, name string, provider string, region string) (*model.Cluster, error) {
 	var e error
 	defer err.HandleErr(&e)
 	cluster, e := r.Domain.CreateCluster(ctx, entities.Cluster{
-		Name: name,
+		Name:     name,
+		Provider: provider,
+		Region:   region,
 	})
 	err.AssertNoError(e, fmt.Errorf("not able to create cluster"))
 	return &model.Cluster{
 		ID:       cluster.Id,
 		Name:     cluster.Name,
 		Endpoint: cluster.Address,
+		Provider: cluster.Provider,
+		Region:   cluster.Region,
 	}, e
 }
 
