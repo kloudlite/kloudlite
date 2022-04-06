@@ -2,11 +2,10 @@ package domain
 
 import (
 	"fmt"
+	"kloudlite.io/pkg/errors"
 	"os"
 	"path"
 	"text/template"
-
-	"kloudlite.io/pkg/lib-errors"
 )
 
 func readJobTemplate() *template.Template {

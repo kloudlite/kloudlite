@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	errors "kloudlite.io/pkg/lib-errors"
+	"kloudlite.io/pkg/errors"
 )
 
 type Json map[string]any
