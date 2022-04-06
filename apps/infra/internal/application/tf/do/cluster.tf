@@ -40,10 +40,16 @@ resource "digitalocean_droplet" "workers" {
   })
 }
 
+output "cluster-ip" {
+  value = digitalocean_droplet.masters.0.ipv4_address
+}
+
 module "k3s" {
   depends_on = [digitalocean_droplet.masters, digitalocean_droplet.workers]
   source  = "xunleii/k3s/module"
+  cluster_domain = "kloudlite_k3s"
   version = "3.1.0"
+
   servers = {
   for instance in digitalocean_droplet.masters:
     instance.name => {
@@ -70,9 +76,8 @@ module "k3s" {
     }
 }
 
-output "kube_config" {
-  value     = module.k3s.kube_config
-  sensitive = true
-}
 
-
+#provisioner "local-exec" {
+#  depends_on = [k3s.module]
+#  command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.keys-path}/access root@${digitalocean_droplet.masters[0].ipv4_address}:/etc/rancher/k3s/k3s.yaml ."
+#}
