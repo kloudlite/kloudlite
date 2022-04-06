@@ -1,4 +1,4 @@
-package errors
+package lib_errors
 
 func HandleErr(e *error) {
 	if r := recover(); r != nil {

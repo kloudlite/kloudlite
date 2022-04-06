@@ -8,7 +8,6 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
 )

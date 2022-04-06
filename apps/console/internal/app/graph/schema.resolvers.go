@@ -10,7 +10,7 @@ import (
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	err "kloudlite.io/pkg/errors"
+	err "kloudlite.io/pkg/lib-errors"
 	"kloudlite.io/pkg/repos"
 )
 
