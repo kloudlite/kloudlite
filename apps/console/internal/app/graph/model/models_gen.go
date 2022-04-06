@@ -9,6 +9,8 @@ import (
 type Cluster struct {
 	ID            repos.ID  `json:"id"`
 	Name          string    `json:"name"`
+	Provider      string    `json:"provider"`
+	Region        string    `json:"region"`
 	Endpoint      *string   `json:"endpoint"`
 	Devices       []*Device `json:"devices"`
 	Configuration string    `json:"configuration"`

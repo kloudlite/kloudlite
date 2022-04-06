@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"strings"
+
 	"github.com/aymerick/raymond"
 	"go.uber.org/fx"
-	"io/ioutil"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/config"
 	klerrors "kloudlite.io/pkg/errors"
-	"strings"
+	"kloudlite.io/pkg/messaging"
 
 	"os"
 	"os/exec"
@@ -218,13 +220,40 @@ type InfraEnv struct {
 	SshKeysPath string `env:"SSH_KEYS_PATH", required:"true"`
 }
 
-var Module = fx.Module("applicaiton",
+var Module = fx.Module("application",
 	// Load Env
 	fx.Provide(func() (*InfraEnv, error) {
 		var envC InfraEnv
 		err := config.LoadConfigFromEnv(&envC)
 		return &envC, err
 	}),
+
 	fx.Provide(newInfraClient),
 	domain.Module,
+
+	fx.Provide(func(env *Env, d domain.Domain) (messaging.Consumer[domain.SetupClusterAction], error) {
+		return messaging.NewKafkaConsumer[domain.SetupClusterAction](
+			[]string{env.KafkaInfraActionTopic},
+			env.KafkaBrokers,
+			env.KafkaGroupId,
+			func(topic string, action domain.SetupClusterAction) error {
+				d.CreateCluster(action)
+				return nil
+			},
+		)
+	}),
+
+	fx.Invoke(
+		func(lf fx.Lifecycle, msgConsumer messaging.Consumer[domain.SetupClusterAction]) error {
+			lf.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return msgConsumer.Subscribe()
+				},
+				OnStop: func(ctx context.Context) error {
+					return msgConsumer.Unsubscribe()
+				},
+			})
+			return nil
+		},
+	)
 )

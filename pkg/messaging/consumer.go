@@ -10,12 +10,34 @@ import (
 type consumer[T any] struct {
 	kafkaConsumer *kafka.Consumer
 	topics        []string
+	callback      func(topic string, message T) error
+	stopChan      chan bool
 }
 
-func (c *consumer[T]) OnMessage(callback func(topic string, message T) error) (e error) {
-	defer errors.HandleErr(&e)
+// func (c *consumer[T]) OnMessage(callback func(topic string, message T) error) (e error) {
+// 	defer errors.HandleErr(&e)
+// 	c.callback = callback
+// 	c.stopChan = make(chan int)
+// 	return nil
+// }
+
+func (c *consumer[T]) Unsubscribe() error {
+	c.stopChan <- true
+	return c.kafkaConsumer.Unsubscribe()
+}
+
+func (c *consumer[T]) Subscribe() error {
+	c.stopChan = make(chan bool, 1)
 	go func() {
+		var stop = false
+		go func() {
+			<-c.stopChan
+			stop = true
+		}()
 		for {
+			if stop {
+				return
+			}
 			msg, e := c.kafkaConsumer.ReadMessage(-1)
 			if e != nil {
 				fmt.Errorf("failed to read message from kafka")
@@ -29,9 +51,9 @@ func (c *consumer[T]) OnMessage(callback func(topic string, message T) error) (e
 				//continue
 			}
 
-			e = callback(*msg.TopicPartition.Topic, message)
+			e = c.callback(*msg.TopicPartition.Topic, message)
 			if e != nil {
-				e = callback(*msg.TopicPartition.Topic, message)
+				e = c.callback(*msg.TopicPartition.Topic, message)
 				if e != nil {
 					fmt.Errorf("failed to process message after 2 retries")
 					//continue
@@ -40,24 +62,17 @@ func (c *consumer[T]) OnMessage(callback func(topic string, message T) error) (e
 			c.kafkaConsumer.CommitMessage(msg)
 		}
 	}()
-	return nil
-}
 
-func (c *consumer[T]) Unsubscribe() error {
-	return c.kafkaConsumer.Unsubscribe()
-}
-
-func (c *consumer[T]) Connect() error {
 	return c.kafkaConsumer.SubscribeTopics(c.topics, nil)
 }
 
 type Consumer[T any] interface {
-	OnMessage(callback func(topic string, message T) error) error
+	// OnMessage(callback func(topic string, message T) error) error
 	Unsubscribe() error
-	Connect() error
+	Subscribe() error
 }
 
-func NewKafkaConsumer[T any](topics []string, kafkaBrokers string, consumerGroupId string) (messenger Consumer[T], e error) {
+func NewKafkaConsumer[T any](topics []string, kafkaBrokers string, consumerGroupId string, callback func(topic string, msg T) error) (messenger Consumer[T], e error) {
 	defer errors.HandleErr(&e)
 	c, e := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  kafkaBrokers,
@@ -69,5 +84,6 @@ func NewKafkaConsumer[T any](topics []string, kafkaBrokers string, consumerGroup
 	return &consumer[T]{
 		kafkaConsumer: c,
 		topics:        topics,
+		callback:      callback,
 	}, e
 }

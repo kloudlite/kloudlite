@@ -5,6 +5,8 @@ import "kloudlite.io/pkg/repos"
 type Cluster struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string  `json:"name" bson:"name"`
+	Provider         string  `json:"provider" bson:"provider"`
+	Region           string  `json:"region" bson:"region"`
 	Address          *string `json:"address,omitempty" bson:"address,omitempty"`
 	ListenPort       *uint16 `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
 	PrivateKey       *string `json:"privateKey,omitempty" bson:"privateKey,omitempty"`

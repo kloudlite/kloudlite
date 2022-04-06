@@ -6,14 +6,18 @@ import (
 
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"kloudlite.io/apps/wireguard/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
 )
 
 type domain struct {
-	deviceRepo  repos.DbRepo[*entities.Device]
-	clusterRepo repos.DbRepo[*entities.Cluster]
+	deviceRepo      repos.DbRepo[*entities.Device]
+	clusterRepo     repos.DbRepo[*entities.Cluster]
+	messageProducer messaging.Producer[messaging.Json]
+	messageTopic    string
 }
 
 func (d *domain) SetupCluster(
@@ -42,12 +46,22 @@ func (d *domain) SetupCluster(
 func (d *domain) CreateCluster(ctx context.Context, data entities.Cluster) (cluster *entities.Cluster, e error) {
 	defer errors.HandleErr(&e)
 	pk, e := wgtypes.GeneratePrivateKey()
+
 	errors.AssertNoError(e, fmt.Errorf("could not generate wg privateKey"))
 	s := pk.String()
 	sPub := pk.PublicKey().String()
 	data.PrivateKey = &s
 	data.PublicKey = &sPub
 	c, err := d.clusterRepo.Create(ctx, &data)
+
+	d.messageProducer.SendMessage(d.messageTopic, string(c.Id), messaging.Json{
+		"cluster_id":    c.Id,
+		"region":        c.Region,
+		"provider":      c.Provider,
+		"masters_count": 1,
+		"nodes_count":   2,
+	})
+
 	return c, err
 }
 
@@ -66,10 +80,13 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 	cluster, e := d.clusterRepo.FindById(ctx, clusterId)
 	fmt.Println(cluster)
 	errors.AssertNoError(e, fmt.Errorf("cluster is not ready"))
+
 	pk, e := wgtypes.GeneratePrivateKey()
 	pkString := pk.String()
 	pbKeyString := pk.PublicKey().String()
+
 	errors.AssertNoError(e, fmt.Errorf("could not generate wg private key"))
+
 	newDevice, e := d.deviceRepo.Create(ctx, &entities.Device{
 		Name:       deviceName,
 		ClusterId:  clusterId,
@@ -78,6 +95,7 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 		PublicKey:  &pbKeyString,
 	})
 	errors.AssertNoError(e, fmt.Errorf("unable to create new device"))
+
 	return newDevice, e
 }
 
@@ -110,13 +128,28 @@ func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, 
 	return d.deviceRepo.FindById(ctx, id)
 }
 
+type Env struct {
+	KafkaInfraTopic string `env:KAFKA_INFRA_TOPIC required:"true"`
+}
+
 var Module = fx.Module(
 	"domain",
+	fx.Provide(func() (*Env, error) {
+		var envC Env
+		err := config.LoadConfigFromEnv(&envC)
+		if err != nil {
+			fmt.Println(err, "failed to load env")
+			return nil, fmt.Errorf("not able to load ENV: %v", err)
+		}
+		return &envC, err
+	}),
 	fx.Provide(
-		func(deviceRepo repos.DbRepo[*entities.Device], clusterRepo repos.DbRepo[*entities.Cluster]) Domain {
+		func(deviceRepo repos.DbRepo[*entities.Device], clusterRepo repos.DbRepo[*entities.Cluster], msgP messaging.Producer[messaging.Json], env *Env) Domain {
 			return &domain{
-				deviceRepo,
-				clusterRepo,
+				deviceRepo:      deviceRepo,
+				clusterRepo:     clusterRepo,
+				messageProducer: msgP,
+				messageTopic:    env.KafkaInfraTopic,
 			}
 		}),
 )

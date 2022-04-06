@@ -31,7 +31,7 @@ var Module = fx.Module("framework",
 	}),
 	// Create Producer
 	fx.Provide(func(e *Env) (messaging.Producer[messaging.Json], error) {
-		return messaging.NewKafkaProducer(e.KafkaBrokers)
+		return messaging.NewKafkaProducer[messaging.Json](e.KafkaBrokers)
 	}),
 	// Create Server
 	fx.Provide(fiber_app.NewFiberApp),

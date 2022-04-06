@@ -16,7 +16,6 @@ docker: IMAGE_REGISTRY = "harbor.dev.madhouselabs.io/kloudlite/hotspot/api"
 docker: TAG = "go"
 docker: IMAGE_NAME = $(APP)
 docker: _dkr.depends_on _dkr.build _dkr.push
-docker.build: _dkr.build
 
 _dkr.depends_on: PROJECT_ROOT := "../.."
 _dkr.depends_on:
