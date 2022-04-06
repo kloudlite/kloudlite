@@ -60,6 +60,7 @@ func (c *consumer[T]) Subscribe() error {
 					//continue
 				}
 			}
+			fmt.Println("committed msg...")
 			c.kafkaConsumer.CommitMessage(msg)
 		}
 	}()

@@ -23,7 +23,7 @@ var Module = fx.Module(
 		repos.DbRepo[*entities.Device],
 	) {
 		deviceRepo := repos.NewMongoRepoAdapter[*entities.Device](db, "devices", "dev")
-		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cluster")
+		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cls")
 		return clusterRepo, deviceRepo
 	}),
 
