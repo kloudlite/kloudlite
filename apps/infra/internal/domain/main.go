@@ -6,6 +6,7 @@ import (
 
 type Domain interface {
 	CreateCluster(action SetupClusterAction) error
+	UpdateCluster(action UpdateClusterAction) error
 }
 
 type domain struct {
@@ -14,6 +15,12 @@ type domain struct {
 
 func (d *domain) CreateCluster(action SetupClusterAction) error {
 	err := d.tf.CreateKubernetes(action)
+	err = d.tf.SetupCSI(action.ClusterID, action.Provider)
+	return err
+}
+
+func (d *domain) UpdateCluster(action UpdateClusterAction) error {
+	err := d.tf.UpdateKubernetes(action)
 	return err
 }
 
@@ -23,7 +30,8 @@ func makeDomain(tf TF) Domain {
 
 type TF interface {
 	CreateKubernetes(action SetupClusterAction) error
-	SetupCSI(clusterId string) error
+	UpdateKubernetes(action UpdateClusterAction) (e error)
+	SetupCSI(clusterId string, provider string) error
 	SetupOperator(clusterId string) error
 	SetupMonitoring(clusterId string) error
 	SetupIngress(clusterId string) error
