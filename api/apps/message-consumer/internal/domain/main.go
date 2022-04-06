@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	batchv1 "k8s.io/api/batch/v1"
-	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/functions"
 	"sigs.k8s.io/yaml"
 )
@@ -177,7 +176,6 @@ func (d *domain) ApplyJob(job *Job) (e error) {
 		if e != nil {
 			fmt.Printf("Job at index (%d) failed because %v\n", idx, e)
 		}
-		
 
 		isUndoable := func() bool {
 			canUndo := true

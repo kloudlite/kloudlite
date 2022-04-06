@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"kloudlite.io/pkg/errors"
+	errors "kloudlite.io/pkg/lib-errors"
 )
 
 type Json map[string]any
@@ -30,11 +30,11 @@ func (m producer[T]) SendMessage(topic string, key string, message T) error {
 	}, nil)
 }
 
-func NewKafkaProducer[T any](kafkaBorkers string) (messenger Producer[T], e error) {
+func NewKafkaProducer[T any](kafkaCli KafkaClient) (messenger Producer[T], e error) {
 	defer errors.HandleErr(&e)
 	p, e := kafka.NewProducer(
 		&kafka.ConfigMap{
-			"bootstrap.servers": kafkaBorkers,
+			"bootstrap.servers": kafkaCli.GetBrokers(),
 		},
 	)
 	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))

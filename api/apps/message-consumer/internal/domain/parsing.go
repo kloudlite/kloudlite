@@ -6,7 +6,7 @@ import (
 	"path"
 	"text/template"
 
-	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/lib-errors"
 )
 
 func readJobTemplate() *template.Template {
