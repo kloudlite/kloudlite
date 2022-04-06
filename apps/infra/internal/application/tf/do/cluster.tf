@@ -48,6 +48,7 @@ module "k3s" {
   depends_on = [digitalocean_droplet.masters, digitalocean_droplet.workers]
   source  = "xunleii/k3s/module"
   cluster_domain = "kloudlite_k3s"
+  k3s_version="v1.23.4+k3s1"
   version = "3.1.0"
 
   servers = {
