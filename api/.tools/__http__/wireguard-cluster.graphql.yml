@@ -22,7 +22,7 @@ query: |
   }
 
 variables:
-  name: "sample cluster"
+  name: "clusterfather"
   provider: do
   region: blr1
 ---
