@@ -16,7 +16,7 @@ type InfraEnv struct {
 	KafkaGroupId          string `env:"KAFKA_GROUP_ID", required:"true"`
 }
 
-func makeConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain) (messaging.Consumer[domain.SetupClusterAction], error) {
+func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain) (messaging.Consumer[domain.SetupClusterAction], error) {
 	consumer, err := messaging.NewKafkaConsumer[domain.SetupClusterAction](
 		mc,
 		[]string{env.KafkaInfraActionTopic},
@@ -27,25 +27,24 @@ func makeConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain) (mes
 		},
 	)
 	return consumer, err
-
 }
 
-func makeEnv() (*InfraEnv, error) {
+func fxEnv() (*InfraEnv, error) {
 	var envC InfraEnv
 	err := config.LoadConfigFromEnv(&envC)
 	return &envC, err
 }
 
-func makeProducer(mc messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
+func fxProducer(mc messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 	return messaging.NewKafkaProducer[messaging.Json](mc)
 }
 
 var Module = fx.Module("application",
-	fx.Provide(makeEnv),
-	fx.Provide(makeInfraClient),
-	fx.Provide(makeProducer),
+	fx.Provide(fxEnv),
+	fx.Provide(fxInfraClient),
+	fx.Provide(fxProducer),
 	domain.Module,
-	fx.Provide(makeConsumer),
+	fx.Provide(fxConsumer),
 	fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer[domain.SetupClusterAction]) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
