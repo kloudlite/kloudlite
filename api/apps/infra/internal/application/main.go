@@ -1,8 +1,6 @@
 package application
 
 import (
-	"context"
-
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/config"
@@ -45,14 +43,14 @@ var Module = fx.Module("application",
 	domain.Module,
 	fx.Provide(fxConsumer),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer[domain.SetupClusterAction]) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return consumer.Subscribe()
-			},
-			OnStop: func(ctx context.Context) error {
-				return consumer.Unsubscribe()
-			},
-		})
-	}),
+	//fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer[domain.SetupClusterAction]) {
+	//	lf.Append(fx.Hook{
+	//		OnStart: func(ctx context.Context) error {
+	//			return consumer.Subscribe()
+	//		},
+	//		OnStop: func(ctx context.Context) error {
+	//			return consumer.Unsubscribe()
+	//		},
+	//	})
+	//}),
 )

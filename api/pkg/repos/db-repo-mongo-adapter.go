@@ -21,7 +21,7 @@ type dbRepo[T Entity] struct {
 var re = regexp.MustCompile("(\\W|_)+/g")
 
 func (repo dbRepo[T]) NewId() ID {
-	id, e := functions.CleanerNanoid(48)
+	id, e := functions.CleanerNanoid(28)
 	if e != nil {
 		panic(fmt.Errorf("could not get cleanerNanoid()"))
 	}
