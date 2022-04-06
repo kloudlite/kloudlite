@@ -203,7 +203,7 @@ func (i *infraClient) SetupWireguard(clusterId string) error {
 	panic("implement me")
 }
 
-func makeInfraClient(env *InfraEnv) domain.InfraClient {
+func fxInfraClient(env *InfraEnv) domain.InfraClient {
 	return &infraClient{
 		env,
 	}
