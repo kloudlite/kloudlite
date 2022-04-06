@@ -7,17 +7,17 @@ import (
 	"kloudlite.io/pkg/errors"
 )
 
-type Json map[string]interface{}
+type Json map[string]any
 
-type Producer interface {
-	SendMessage(topic string, key string, message Json) error
+type Producer[T any] interface {
+	SendMessage(topic string, key string, message T) error
 }
 
-type producer struct {
+type producer[T any] struct {
 	kafkaProducer *kafka.Producer
 }
 
-func (m producer) SendMessage(topic string, key string, message Json) error {
+func (m producer[T]) SendMessage(topic string, key string, message T) error {
 	msgBody, e := json.Marshal(message)
 	errors.AssertNoError(e, fmt.Errorf("failed to marshal message"))
 	return m.kafkaProducer.Produce(&kafka.Message{
@@ -30,7 +30,7 @@ func (m producer) SendMessage(topic string, key string, message Json) error {
 	}, nil)
 }
 
-func NewKafkaProducer(kafkaBorkers string) (messenger Producer, e error) {
+func NewKafkaProducer[T any](kafkaBorkers string) (messenger Producer[T], e error) {
 	defer errors.HandleErr(&e)
 	p, e := kafka.NewProducer(
 		&kafka.ConfigMap{
@@ -38,7 +38,7 @@ func NewKafkaProducer(kafkaBorkers string) (messenger Producer, e error) {
 		},
 	)
 	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
-	return &producer{
+	return &producer[T]{
 		kafkaProducer: p,
 	}, e
 }
