@@ -1,7 +1,7 @@
 package framework
 
 import (
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -40,7 +40,6 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 	appSvc := app.MakeApp(kApplier, MakeGqlClient(httpClient), httpClient)
 
 	fm = func() {
-
 		for {
 			fmt.Println("awaiting for new message ...")
 			msg, err := consumer.ReadMessage(-1)
@@ -65,5 +64,5 @@ func MakeFramework(cfg *Config) (fm Framework, e error) {
 		}
 	}
 
-	return
+	return fm, nil
 }
