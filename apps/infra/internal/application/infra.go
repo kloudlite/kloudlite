@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/aymerick/raymond"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"kloudlite.io/apps/infra/internal/domain"
-	libErrors "kloudlite.io/pkg/lib-errors"
+	"kloudlite.io/pkg/errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -18,7 +17,7 @@ type infraClient struct {
 }
 
 func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e error) {
-	defer libErrors.HandleErr(&e)
+	defer errors.HandleErr(&e)
 	copyTemplateDirCommand := exec.Command(
 		"cp",
 		"-r",
@@ -28,7 +27,7 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	copyTemplateDirCommand.Stdout = os.Stdout
 	copyTemplateDirCommand.Stderr = os.Stderr
 	e = copyTemplateDirCommand.Run()
-	libErrors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
+	errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
 	initCommand := exec.Command(
 		"terraform",
 		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, action.ClusterID),
@@ -37,7 +36,7 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	initCommand.Stdout = os.Stdout
 	initCommand.Stderr = os.Stderr
 	e = initCommand.Run()
-	libErrors.AssertNoError(e, fmt.Errorf("failed to init terraform check"))
+	errors.AssertNoError(e, fmt.Errorf("failed to init terraform check"))
 	applyCommand := exec.Command(
 		"terraform",
 		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, action.ClusterID),
@@ -52,15 +51,15 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	applyCommand.Stdout = os.Stdout
 	applyCommand.Stderr = os.Stderr
 	e = applyCommand.Run()
-	libErrors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
+	errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
 	e = i.CreateKubeConfig(action.ClusterID)
-	libErrors.AssertNoError(e, fmt.Errorf("unable to create kubeconfig"))
+	errors.AssertNoError(e, fmt.Errorf("unable to create kubeconfig"))
 	return e
 }
 
 func (i *infraClient) CreateKubeConfig(clusterId string) (e error) {
 	fmt.Println("creating kube config")
-	defer libErrors.HandleErr(&e)
+	defer errors.HandleErr(&e)
 	fmt.Println("terraform",
 		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, clusterId),
 		"output",
@@ -71,10 +70,10 @@ func (i *infraClient) CreateKubeConfig(clusterId string) (e error) {
 		"output",
 		"-json",
 	).Output()
-	libErrors.AssertNoError(e, fmt.Errorf("should run"))
+	errors.AssertNoError(e, fmt.Errorf("should run"))
 	var outJson map[string]map[string]interface{}
 	e = json.Unmarshal(out, &outJson)
-	libErrors.AssertNoError(e, fmt.Errorf("should unmarshal output"))
+	errors.AssertNoError(e, fmt.Errorf("should unmarshal output"))
 	_, e = exec.Command(
 		"scp",
 		"-o",
@@ -86,17 +85,17 @@ func (i *infraClient) CreateKubeConfig(clusterId string) (e error) {
 		fmt.Sprintf("root@%v:/etc/rancher/k3s/k3s.yaml", outJson["cluster-ip"]["value"].(string)),
 		fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId),
 	).Output()
-	libErrors.AssertNoError(e, fmt.Errorf("unable to download file"))
+	errors.AssertNoError(e, fmt.Errorf("unable to download file"))
 	input, e := ioutil.ReadFile(fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-	libErrors.AssertNoError(e, fmt.Errorf("should read file"))
+	errors.AssertNoError(e, fmt.Errorf("should read file"))
 	newString := strings.ReplaceAll(string(input), "127.0.0.1", outJson["cluster-ip"]["value"].(string))
 	e = ioutil.WriteFile(fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId), []byte(newString), 0644)
-	libErrors.AssertNoError(e, fmt.Errorf("should be able to change file"))
+	errors.AssertNoError(e, fmt.Errorf("should be able to change file"))
 	return e
 }
 
 func (i *infraClient) UpdateKubernetes(action domain.UpdateClusterAction) (e error) {
-	defer libErrors.HandleErr(&e)
+	defer errors.HandleErr(&e)
 	applyCommand := exec.Command(
 		"terraform",
 		fmt.Sprintf("-chdir=%v", fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)),
@@ -111,17 +110,17 @@ func (i *infraClient) UpdateKubernetes(action domain.UpdateClusterAction) (e err
 	applyCommand.Stdout = os.Stdout
 	applyCommand.Stderr = os.Stderr
 	e = applyCommand.Run()
-	libErrors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
+	errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
 	return e
 }
 
 func (i *infraClient) SetupDOCSI(clusterId string) (e error) {
-	defer libErrors.HandleErr(&e)
+	defer errors.HandleErr(&e)
 	if _, err := os.Stat("/tmp/do-api.yaml"); err == nil {
 
 	} else if errors.Is(err, os.ErrNotExist) {
 		buffer, e := ioutil.ReadFile("./internal/application/csi/do-secret/template.yaml")
-		libErrors.AssertNoError(e, fmt.Errorf("template file should exist"))
+		errors.AssertNoError(e, fmt.Errorf("template file should exist"))
 		tpl := raymond.MustParse(string(buffer))
 		result := tpl.MustExec(map[string]interface{}{
 			"api_key": i.env.DoAPIKey,
@@ -144,7 +143,7 @@ func (i *infraClient) SetupDOCSI(clusterId string) (e error) {
 	applyDoKeySecretCommand.Stdout = os.Stdout
 	applyDoKeySecretCommand.Stderr = os.Stderr
 	e = applyDoKeySecretCommand.Run()
-	libErrors.AssertNoError(e, fmt.Errorf("unable to apply Digital Ocean Key"))
+	errors.AssertNoError(e, fmt.Errorf("unable to apply Digital Ocean Key"))
 
 	applyCSICommand1 := exec.Command(
 		"kubectl",
@@ -170,7 +169,7 @@ func (i *infraClient) SetupDOCSI(clusterId string) (e error) {
 	applyCSICommand2.Stderr = os.Stderr
 	e = applyCSICommand2.Run()
 
-	libErrors.AssertNoError(e, fmt.Errorf("unable to apply CSI"))
+	errors.AssertNoError(e, fmt.Errorf("unable to apply CSI"))
 	return e
 }
 

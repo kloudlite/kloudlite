@@ -8,6 +8,8 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
 )
@@ -17,6 +19,7 @@ type domain struct {
 	clusterRepo     repos.DbRepo[*entities.Cluster]
 	messageProducer messaging.Producer[messaging.Json]
 	messageTopic    string
+	logger          logger.Logger
 }
 
 func (d *domain) SetupCluster(
@@ -30,8 +33,11 @@ func (d *domain) SetupCluster(
 	c, err := d.clusterRepo.FindById(ctx, clusterId)
 
 	if err != nil {
-		errors.AssertNoError(e, fmt.Errorf("cluster not found"))
+		return nil, err
 	}
+
+	errors.AssertNoError(e, fmt.Errorf("cluster not found"))
+
 	c.ListenPort = &port
 	c.NetInterface = &netInterface
 	c.Address = &address
@@ -45,23 +51,26 @@ func (d *domain) SetupCluster(
 func (d *domain) CreateCluster(ctx context.Context, data entities.Cluster) (cluster *entities.Cluster, e error) {
 	defer errors.HandleErr(&e)
 	pk, e := wgtypes.GeneratePrivateKey()
-
 	errors.AssertNoError(e, fmt.Errorf("could not generate wg privateKey"))
+
 	s := pk.String()
 	sPub := pk.PublicKey().String()
 	data.PrivateKey = &s
 	data.PublicKey = &sPub
 	c, err := d.clusterRepo.Create(ctx, &data)
+	errors.AssertNoError(e, fmt.Errorf("could not create cluster as %v", err))
 
-	d.messageProducer.SendMessage(d.messageTopic, string(c.Id), messaging.Json{
+	kMsg := messaging.Json{
 		"cluster_id":    c.Id,
 		"region":        c.Region,
 		"provider":      c.Provider,
 		"masters_count": 1,
 		"nodes_count":   2,
-	})
+	}
 
-	return c, err
+	d.logger.Infof("Kafka Message: %+v, topic %v", kMsg, d.messageTopic)
+	e = d.messageProducer.SendMessage(d.messageTopic, string(c.Id), kMsg)
+	return c, e
 }
 
 func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
@@ -128,27 +137,27 @@ func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, 
 }
 
 type Env struct {
-	KafkaInfraTopic string `env:KAFKA_INFRA_TOPIC required:"true"`
+	KafkaInfraTopic string `env:"KAFKA_INFRA_TOPIC" required:"true"`
+}
+
+func fxDomain(
+	deviceRepo repos.DbRepo[*entities.Device],
+	clusterRepo repos.DbRepo[*entities.Cluster],
+	msgP messaging.Producer[messaging.Json],
+	env *Env,
+	logger logger.Logger,
+) Domain {
+	return &domain{
+		deviceRepo:      deviceRepo,
+		clusterRepo:     clusterRepo,
+		messageProducer: msgP,
+		messageTopic:    env.KafkaInfraTopic,
+		logger:          logger,
+	}
 }
 
 var Module = fx.Module(
 	"domain",
-	fx.Provide(func() (*Env, error) {
-		var envC Env
-		err := config.LoadConfigFromEnv(&envC)
-		if err != nil {
-			fmt.Println(err, "failed to load env")
-			return nil, fmt.Errorf("not able to load ENV: %v", err)
-		}
-		return &envC, err
-	}),
-	fx.Provide(
-		func(deviceRepo repos.DbRepo[*entities.Device], clusterRepo repos.DbRepo[*entities.Cluster], msgP messaging.Producer[messaging.Json], env *Env) Domain {
-			return &domain{
-				deviceRepo:      deviceRepo,
-				clusterRepo:     clusterRepo,
-				messageProducer: msgP,
-				messageTopic:    env.KafkaInfraTopic,
-			}
-		}),
+	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(fxDomain),
 )

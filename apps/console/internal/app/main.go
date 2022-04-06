@@ -6,7 +6,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/rs/cors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
@@ -27,15 +26,15 @@ var Module = fx.Module(
 		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cluster")
 		return clusterRepo, deviceRepo
 	}),
-	fx.Provide(func(messagingCli *messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
+
+	fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 		return messaging.NewKafkaProducer[messaging.Json](messagingCli)
 	}),
-	// Load Domain
+
 	domain.Module,
-	// Create GQL Handler from domain
-	fx.Provide(func(d domain.Domain) http.Handler {
-		server := http.NewServeMux()
-		server.HandleFunc("/", playground.Handler("Graphql playground", "/query"))
+
+	fx.Invoke(func(server *http.ServeMux, d domain.Domain) {
+		server.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
 
 		gqlServer := handler.NewDefaultServer(
 			generated.NewExecutableSchema(
@@ -43,13 +42,6 @@ var Module = fx.Module(
 			),
 		)
 
-		server.Handle("/query", gqlServer)
-		c := cors.New(cors.Options{
-			AllowedOrigins:   []string{"http://localhost:4001", "https://studio.apollographql.com"},
-			AllowCredentials: true,
-			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-		})
-
-		return c.Handler(server)
+		server.Handle("/", gqlServer)
 	}),
 )

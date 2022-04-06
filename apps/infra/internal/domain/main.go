@@ -48,9 +48,5 @@ type Env struct {
 }
 
 var Module = fx.Module("domain",
-	fx.Provide(func() (*Env, error) {
-		var envC Env
-		err := config.LoadConfigFromEnv(&envC)
-		return &envC, err
-	}),
+	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(makeDomain))

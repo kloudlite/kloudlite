@@ -11,7 +11,7 @@ type Cluster @key(fields: "id") {
   region: String!
   endpoint: String
   devices: [Device]
-  configuration: String!
+  configuration: String
 }
 
 type Device @key(fields: "id") {

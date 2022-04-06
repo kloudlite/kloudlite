@@ -3,8 +3,10 @@ package messaging
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	libErrors "kloudlite.io/pkg/lib-errors"
+	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/logger"
 )
 
 type consumer[T any] struct {
@@ -12,6 +14,7 @@ type consumer[T any] struct {
 	topics        []string
 	callback      func(topic string, message T) error
 	stopChan      chan bool
+	logger        logger.Logger
 }
 
 func (c *consumer[T]) Unsubscribe() error {
@@ -21,6 +24,11 @@ func (c *consumer[T]) Unsubscribe() error {
 
 func (c *consumer[T]) Subscribe() error {
 	c.stopChan = make(chan bool, 1)
+	e := c.kafkaConsumer.SubscribeTopics(c.topics, nil)
+	if e != nil {
+		return errors.New(fmt.Sprintf("could not subscribe to given topics %v", c.topics))
+	}
+
 	go func() {
 		var stop = false
 		go func() {
@@ -33,14 +41,14 @@ func (c *consumer[T]) Subscribe() error {
 			}
 			msg, e := c.kafkaConsumer.ReadMessage(-1)
 			if e != nil {
-				fmt.Errorf("failed to read message from kafka")
-				//continue
+				c.logger.Errorf("could not read kafka message because %v", e)
 			}
 
 			var message T
+			fmt.Printf("Msg: %v %T, msg.Value %v %T\n", message, message, msg, msg)
 			e = json.Unmarshal(msg.Value, &message)
 			if e != nil {
-				fmt.Errorf("unable to typecast message into json")
+				c.logger.Errorf("could not read kafka message because %v", e)
 				//continue
 			}
 
@@ -55,7 +63,7 @@ func (c *consumer[T]) Subscribe() error {
 			c.kafkaConsumer.CommitMessage(msg)
 		}
 	}()
-	return c.kafkaConsumer.SubscribeTopics(c.topics, nil)
+	return nil
 }
 
 type Consumer[T any] interface {
@@ -67,19 +75,21 @@ func NewKafkaConsumer[T any](
 	kafkaCli KafkaClient,
 	topics []string,
 	consumerGroupId string,
+	logger logger.Logger,
 	callback func(topic string, msg T) error,
 ) (messenger Consumer[T], e error) {
-	defer libErrors.HandleErr(&e)
+	defer errors.HandleErr(&e)
 	c, e := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  kafkaCli.GetBrokers(),
 		"group.id":           consumerGroupId,
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": "false",
 	})
-	libErrors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
+	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
 	return &consumer[T]{
 		kafkaConsumer: c,
 		topics:        topics,
 		callback:      callback,
+		logger:        logger,
 	}, e
 }
