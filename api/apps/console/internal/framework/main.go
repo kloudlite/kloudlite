@@ -3,21 +3,24 @@ package framework
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/wireguard/internal/app"
+	"kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/pkg/config"
 	gql_server "kloudlite.io/pkg/gql-server"
 	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/messaging"
 	mongo_db "kloudlite.io/pkg/mongo-db"
-	"net/http"
 )
 
 type Env struct {
-	MongoUri    string `env:"MONGO_URI", required:"true"`
-	MongoDbName string `env:"MONGO_DB_NAME", required:"true"`
-	Port        uint32 `env:"PORT", required:"true"`
-	IsDev       bool   `env:"DEV", default:"false"`
+	MongoUri     string `env:"MONGO_URI" required:"true"`
+	MongoDbName  string `env:"MONGO_DB_NAME" required:"true"`
+	KafkaBrokers string `env:KAFKA_BOOTSTRAP_SERVERS required:"true"`
+	Port         uint32 `env:"PORT" required:"true"`
+	IsDev        bool   `env:"DEV" default:"false"`
 }
 
 var Module = fx.Module("framework",
@@ -26,8 +29,8 @@ var Module = fx.Module("framework",
 		var envC Env
 		err := config.LoadConfigFromEnv(&envC)
 		if err != nil {
-			fmt.Println(err, "failed to load env asdkadhaskda dkjahd kashda kh")
-			return nil, fmt.Errorf("not able to load ENV: %w", err)
+			fmt.Println(err, "failed to load env")
+			return nil, fmt.Errorf("not able to load ENV: %v", err)
 		}
 		return &envC, err
 	}),
@@ -47,8 +50,14 @@ var Module = fx.Module("framework",
 			},
 		})
 	}),
+
+	fx.Provide(func(e *Env) (messaging.Producer[messaging.Json], error) {
+		return messaging.NewKafkaProducer[messaging.Json](e.KafkaBrokers)
+	}),
+
 	// Load App Module
 	app.Module,
+
 	// start http server
 	fx.Invoke(func(lf fx.Lifecycle, env *Env, logger logger.Logger, gqlHandler http.Handler) {
 		lf.Append(fx.Hook{

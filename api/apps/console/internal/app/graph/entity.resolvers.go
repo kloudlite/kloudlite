@@ -6,8 +6,8 @@ package graph
 import (
 	"context"
 
-	"kloudlite.io/apps/wireguard/internal/app/graph/generated"
-	"kloudlite.io/apps/wireguard/internal/app/graph/model"
+	"kloudlite.io/apps/console/internal/app/graph/generated"
+	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
 )
 

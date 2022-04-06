@@ -8,10 +8,10 @@ import (
 	"github.com/rs/cors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/wireguard/internal/app/graph"
-	"kloudlite.io/apps/wireguard/internal/app/graph/generated"
-	"kloudlite.io/apps/wireguard/internal/domain"
-	"kloudlite.io/apps/wireguard/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/app/graph"
+	"kloudlite.io/apps/console/internal/app/graph/generated"
+	"kloudlite.io/apps/console/internal/domain"
+	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
 
