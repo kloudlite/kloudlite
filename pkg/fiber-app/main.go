@@ -2,6 +2,7 @@ package fiber_app
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"kloudlite.io/pkg/errors"
 )
 
 func NewFiberApp() (server *fiber.App, e error) {
