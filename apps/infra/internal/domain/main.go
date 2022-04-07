@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
@@ -20,10 +21,8 @@ type domain struct {
 func (d *domain) CreateCluster(action SetupClusterAction) error {
 	err := d.infraCli.CreateKubernetes(action)
 	err = d.infraCli.SetupCSI(action.ClusterID, action.Provider)
-	d.messageProducer.SendMessage(d.messageTopic, action.ClusterID, messaging.Json{
-		"cluster_id": action.ClusterID,
-		"status":     "live",
-	})
+	err = d.infraCli.SetupIngress(action.ClusterID)
+	fmt.Println(err)
 	return err
 }
 
@@ -49,4 +48,13 @@ type Env struct {
 
 var Module = fx.Module("domain",
 	fx.Provide(config.LoadEnv[Env]()),
-	fx.Provide(makeDomain))
+	fx.Provide(makeDomain),
+	fx.Invoke(func(d Domain) {
+		d.CreateCluster(SetupClusterAction{
+			ClusterID:    "cluster-ltujdwouztzgfeg",
+			Region:       "blr1",
+			Provider:     "do",
+			MastersCount: 1, NodesCount: 2,
+		})
+	}),
+)
