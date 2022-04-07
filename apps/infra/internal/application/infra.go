@@ -193,8 +193,12 @@ func (i *infraClient) SetupMonitoring(clusterId string) error {
 }
 
 func (i *infraClient) SetupIngress(clusterId string) error {
-	//TODO implement me
-	panic("implement me")
+	applyHelm := exec.Command("bash", "./internal/application/ingress/init.sh", "install", "-f", "./internal/application/ingress/values.yaml")
+	applyHelm.Env = os.Environ()
+	applyHelm.Env = append(applyHelm.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
+	applyHelm.Stdout = os.Stdout
+	applyHelm.Stderr = os.Stderr
+	return applyHelm.Run()
 }
 
 func (i *infraClient) SetupWireguard(clusterId string) error {
