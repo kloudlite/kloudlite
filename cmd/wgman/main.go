@@ -38,10 +38,11 @@ func (c *Config) writeConfig() error {
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile("/etc/wireguard/wg0.conf", []byte(config), 0644)
-	exec.Command("wg-quick", "down", "wg0").Run()
-	exec.Command("wg-quick", "up", "wg0").Run()
-	return nil
+	err = exec.Command("wg-quick", "down", "wg0").Run()
+	exec.Command("rm", "/etc/wireguard/wg0.conf").Run()
+	err = ioutil.WriteFile("/etc/wireguard/wg0.conf", []byte(config), 0644)
+	err = exec.Command("wg-quick", "up", "wg0").Run()
+	return err
 }
 
 func (c *Config) getWgConfig() (string, error) {
@@ -69,7 +70,6 @@ Endpoint = {{ $value.Endpoint }}
 		return "", err
 	}
 	var buf bytes.Buffer
-	fmt.Println(c.Peers)
 	parse.Execute(&buf, c)
 	return buf.String(), err
 
@@ -87,16 +87,18 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("failed to generate public, private keys: %v", err))
 		}
-		marshal, err := json.Marshal(Config{
+		c := Config{
 			PublicKey:    key.PublicKey().String(),
 			PrivateKey:   key.String(),
 			PublicIp:     ip,
 			Peers:        map[string]Peer{},
 			NetInterface: "eth0",
-		})
+		}
+		marshal, err := json.Marshal(c)
 		if err != nil {
 			panic(fmt.Errorf("failed to marshal config: %v", err))
 		}
+		err = exec.Command("rm", "./wg0.conf").Run()
 		err = ioutil.WriteFile("config.json", marshal, 0644)
 		if err != nil {
 			panic(fmt.Errorf("unable to write config file: %v", err))
@@ -107,6 +109,7 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("unable to generate output: %v", err))
 		}
+		c.writeConfig()
 		fmt.Println(string(out))
 		break
 	case "peers":
@@ -123,11 +126,23 @@ func main() {
 		if err != nil {
 			fmt.Println(fmt.Errorf("unable to parse config error: %v", err))
 		}
-		c.Peers = map[string]Peer{}
-		for _, p := range peers {
-			c.Peers[p.PublicKey] = p
+		cp := &c
+		for k := range cp.Peers {
+			delete(cp.Peers, k)
 		}
-		c.writeConfig()
+		for _, p := range peers {
+			cp.Peers[p.PublicKey] = p
+		}
+		marshal, err := json.Marshal(c)
+		if err != nil {
+			panic(fmt.Errorf("failed to marshal config: %v", err))
+		}
+		err = exec.Command("rm", "./wg0.conf").Run()
+		err = ioutil.WriteFile("config.json", marshal, 0644)
+		err = cp.writeConfig()
+		if err != nil {
+			panic(fmt.Errorf("unable to update wireguard: %v", err))
+		}
 		break
 	}
 }
