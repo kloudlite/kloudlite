@@ -19,3 +19,9 @@ wireguard.gql:
 	cd apps/wireguard/internal/app && go run github.com/99designs/gqlgen generate
 wireguard.run:
 	cd apps/wireguard && go run main.go
+
+console:
+	make -C apps/console ${@:1}
+
+infra:
+	make -C apps/infra ${@:1}

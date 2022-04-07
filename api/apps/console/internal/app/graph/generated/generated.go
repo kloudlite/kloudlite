@@ -100,7 +100,7 @@ type ComplexityRoot struct {
 
 type ClusterResolver interface {
 	Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error)
-	Configuration(ctx context.Context, obj *model.Cluster) (string, error)
+	Configuration(ctx context.Context, obj *model.Cluster) (*string, error)
 }
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
@@ -446,7 +446,7 @@ type Cluster @key(fields: "id") {
   region: String!
   endpoint: String
   devices: [Device]
-  configuration: String!
+  configuration: String
 }
 
 type Device @key(fields: "id") {
@@ -1000,14 +1000,11 @@ func (ec *executionContext) _Cluster_configuration(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Device_id(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
@@ -3102,9 +3099,6 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Cluster_configuration(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			}
 

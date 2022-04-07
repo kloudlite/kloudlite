@@ -10,16 +10,16 @@ import (
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	"kloudlite.io/pkg/errors"
+	wErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
 
 func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	cluster := obj
 	deviceEntities, e := r.Domain.ListClusterDevices(ctx, cluster.ID)
-	errors.AssertNoError(e, fmt.Errorf("not able to list devices of cluster %s", cluster.ID))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of cluster %s", cluster.ID))
 	devices := make([]*model.Device, len(deviceEntities))
 	for i, d := range deviceEntities {
 		devices[i] = &model.Device{
@@ -32,16 +32,16 @@ func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*m
 	return devices, e
 }
 
-func (r *clusterResolver) Configuration(ctx context.Context, obj *model.Cluster) (string, error) {
+func (r *clusterResolver) Configuration(ctx context.Context, obj *model.Cluster) (*string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.User, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	device := obj
 	deviceEntity, e := r.Domain.GetDevice(ctx, device.ID)
-	errors.AssertNoError(e, fmt.Errorf("not able to get device"))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to get device"))
 	return &model.User{
 		ID: deviceEntity.UserId,
 	}, e
@@ -57,13 +57,13 @@ func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (
 
 func (r *mutationResolver) CreateCluster(ctx context.Context, name string, provider string, region string) (*model.Cluster, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	cluster, e := r.Domain.CreateCluster(ctx, entities.Cluster{
 		Name:     name,
 		Provider: provider,
 		Region:   region,
 	})
-	errors.AssertNoError(e, fmt.Errorf("not able to create cluster"))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to create cluster"))
 	return &model.Cluster{
 		ID:       cluster.Id,
 		Name:     cluster.Name,
@@ -75,9 +75,9 @@ func (r *mutationResolver) CreateCluster(ctx context.Context, name string, provi
 
 func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	device, e := r.Domain.AddDevice(ctx, name, clusterID, userID)
-	errors.AssertNoError(e, fmt.Errorf("not able to add device"))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to add device"))
 	return &model.Device{
 		ID:            device.Id,
 		Name:          device.Name,
@@ -87,9 +87,9 @@ func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, us
 
 func (r *mutationResolver) SetupCluster(ctx context.Context, clusterID repos.ID, address string, listenPort int, netInterface string) (*model.Cluster, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	clusterEntity, e := r.Domain.SetupCluster(ctx, clusterID, address, uint16(listenPort), netInterface)
-	errors.AssertNoError(e, fmt.Errorf("not able to setup cluster"))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to setup cluster"))
 	return &model.Cluster{
 		ID:       clusterEntity.Id,
 		Name:     clusterEntity.Name,
@@ -98,14 +98,15 @@ func (r *mutationResolver) SetupCluster(ctx context.Context, clusterID repos.ID,
 }
 
 func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, error) {
+	fmt.Printf("[context] %+v", ctx.Value("id"))
 	return make([]*model.Cluster, 0), nil
 }
 
 func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	clusterEntity, e := r.Domain.GetCluster(ctx, clusterID)
-	errors.AssertNoError(e, fmt.Errorf("not able to get cluster"))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to get cluster"))
 	return &model.Cluster{
 		ID:       clusterEntity.Id,
 		Name:     clusterEntity.Name,
@@ -115,9 +116,9 @@ func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*mo
 
 func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	device, e := r.Domain.GetDevice(ctx, deviceID)
-	errors.AssertNoError(e, fmt.Errorf("not able to get device"))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to get device"))
 	return &model.Device{
 		ID:            device.Id,
 		Name:          device.Name,
@@ -127,10 +128,10 @@ func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*mode
 
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
-	defer errors.HandleErr(&e)
+	defer wErrors.HandleErr(&e)
 	user := obj
 	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID))
-	errors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
+	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
 		devices = append(devices, &model.Device{
