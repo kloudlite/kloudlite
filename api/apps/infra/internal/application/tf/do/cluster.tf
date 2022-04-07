@@ -50,7 +50,6 @@ module "k3s" {
   cluster_domain = "kloudlite_k3s"
   k3s_version="v1.23.4+k3s1"
   version = "3.1.0"
-
   servers = {
   for instance in digitalocean_droplet.masters:
     instance.name => {
@@ -76,9 +75,3 @@ module "k3s" {
       }
     }
 }
-
-
-#provisioner "local-exec" {
-#  depends_on = [k3s.module]
-#  command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.keys-path}/access root@${digitalocean_droplet.masters[0].ipv4_address}:/etc/rancher/k3s/k3s.yaml ."
-#}

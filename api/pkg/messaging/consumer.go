@@ -67,7 +67,7 @@ func (c *consumer[T]) Subscribe() error {
 	return nil
 }
 
-type Consumer[T any] interface {
+type Consumer interface {
 	Unsubscribe() error
 	Subscribe() error
 }
@@ -78,7 +78,7 @@ func NewKafkaConsumer[T any](
 	consumerGroupId string,
 	logger logger.Logger,
 	callback func(topic string, msg T) error,
-) (messenger Consumer[T], e error) {
+) (messenger Consumer, e error) {
 	defer errors.HandleErr(&e)
 	c, e := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  kafkaCli.GetBrokers(),
