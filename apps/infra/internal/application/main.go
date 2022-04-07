@@ -16,7 +16,7 @@ type InfraEnv struct {
 	KafkaGroupId    string `env:"KAFKA_GROUP_ID", required:"true"`
 }
 
-func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger logger.Logger) (messaging.Consumer[domain.SetupClusterAction], error) {
+func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger logger.Logger) (messaging.Consumer, error) {
 	consumer, err := messaging.NewKafkaConsumer[domain.SetupClusterAction](
 		mc,
 		[]string{env.KafkaInfraTopic},
@@ -41,7 +41,7 @@ var Module = fx.Module("application",
 	fx.Provide(fxInfraClient),
 	fx.Provide(fxProducer),
 	domain.Module,
-	fx.Provide(fxConsumer),
+	//fx.Provide(fxConsumer),
 
 	//fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer[domain.SetupClusterAction]) {
 	//	lf.Append(fx.Hook{

@@ -1,10 +1,8 @@
 package domain
 
 import (
-	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/messaging"
 )
 
 type Domain interface {
@@ -13,16 +11,16 @@ type Domain interface {
 }
 
 type domain struct {
-	infraCli        InfraClient
-	messageProducer messaging.Producer[messaging.Json]
-	messageTopic    string
+	infraCli InfraClient
+	//messageProducer messaging.Producer[messaging.Json]
+	messageTopic string
 }
 
 func (d *domain) CreateCluster(action SetupClusterAction) error {
 	err := d.infraCli.CreateKubernetes(action)
-	err = d.infraCli.SetupCSI(action.ClusterID, action.Provider)
-	err = d.infraCli.SetupIngress(action.ClusterID)
-	fmt.Println(err)
+	//err = d.infraCli.SetupCSI(action.ClusterID, action.Provider)
+	//err = d.infraCli.SetupIngress(action.ClusterID)
+	//fmt.Println(err)
 	return err
 }
 
@@ -33,12 +31,12 @@ func (d *domain) UpdateCluster(action UpdateClusterAction) error {
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-	messageProducer messaging.Producer[messaging.Json],
+	//messageProducer messaging.Producer[messaging.Json],
 ) Domain {
 	return &domain{
-		infraCli:        infraCli,
-		messageProducer: messageProducer,
-		messageTopic:    env.KafkaInfraActionResulTopic,
+		infraCli: infraCli,
+		//messageProducer: messageProducer,
+		messageTopic: env.KafkaInfraActionResulTopic,
 	}
 }
 
