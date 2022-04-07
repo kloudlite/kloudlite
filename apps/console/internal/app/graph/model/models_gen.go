@@ -13,7 +13,7 @@ type Cluster struct {
 	Region        string    `json:"region"`
 	Endpoint      *string   `json:"endpoint"`
 	Devices       []*Device `json:"devices"`
-	Configuration string    `json:"configuration"`
+	Configuration *string   `json:"configuration"`
 }
 
 func (Cluster) IsEntity() {}

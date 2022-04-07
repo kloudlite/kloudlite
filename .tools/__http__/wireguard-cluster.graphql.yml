@@ -3,8 +3,8 @@ label: List Clusters
 query: |
   query ListClusters {
     listClusters {
-      Port
-      Id
+      id
+      name
     }
   }
 
