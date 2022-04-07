@@ -58,18 +58,15 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 }
 
 func (i *infraClient) CreateKubeConfig(clusterId string) (e error) {
-	fmt.Println("creating kube config")
+
 	defer errors.HandleErr(&e)
-	fmt.Println("terraform",
-		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, clusterId),
-		"output",
-		"-json")
 	out, e := exec.Command(
 		"terraform",
 		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, clusterId),
 		"output",
 		"-json",
 	).Output()
+
 	errors.AssertNoError(e, fmt.Errorf("should run"))
 	var outJson map[string]map[string]interface{}
 	e = json.Unmarshal(out, &outJson)
