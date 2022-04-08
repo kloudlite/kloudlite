@@ -150,16 +150,58 @@ var Module = fx.Module("app",
 				// 	},
 				// }
 
+				// msg := domain.Message{
+				// 	ResourceType: shared.RESOURCE_SECRET,
+				// 	Namespace:    "hotspot",
+				// 	Spec: domain.Secret{
+				// 		Name:      "hi-config",
+				// 		Namespace: "hotspot",
+				// 		Data: map[string]interface{}{
+				// 			"hi":  "hello there",
+				// 			"one": 2,
+				// 		},
+				// 	},
+				// }
+
+				// msg := domain.Message{
+				// 	ResourceType: shared.RESOURCE_ROUTER,
+				// 	Namespace:    "hotspot",
+				// 	Spec: domain.Router{
+				// 		Name:      "sample-router",
+				// 		Namespace: "hotspot",
+				// 		Domains:   []string{"x.kloudlite.io", "y.kloudlitle.io"},
+				// 		Routes: []domain.Routes{
+				// 			domain.Routes{
+				// 				Path: "/",
+				// 				App:  "sample",
+				// 				Port: 80,
+				// 			},
+				// 			domain.Routes{
+				// 				Path: "/api",
+				// 				App:  "sample-api",
+				// 				Port: 3000,
+				// 			},
+				// 		},
+				// 	},
+				// }
+
 				msg := domain.Message{
-					ResourceType: shared.RESOURCE_SECRET,
+					ResourceType: shared.RESOURCE_GIT_PIPELINE,
 					Namespace:    "hotspot",
-					Spec: domain.Secret{
-						Name:      "hi-config",
-						Namespace: "hotspot",
-						Data: map[string]interface{}{
-							"hi":  "hello there",
-							"one": 2,
+					Spec: domain.Pipeline{
+						Name:        "sample-p",
+						Namespace:   "hotspot",
+						GitProvider: "gitlab",
+						GitRepoUrl:  "https://gitlab.com/madhouselabs/kloudlite/api-go",
+						GitRef:      "heads/feature/ci",
+						BuildArgs: []domain.BuildArg{
+							domain.BuildArg{
+								Key:   "app",
+								Value: "message-consumer",
+							},
 						},
+						// Github:     domain.PipelineGithub{},
+						// Gitlab:     domain.PipelineGitlab{},
 					},
 				}
 

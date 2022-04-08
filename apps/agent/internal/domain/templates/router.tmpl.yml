@@ -16,7 +16,7 @@ spec:
   {{- range .Routes }}
     - path: {{.Path | squote}} 
       app: {{.App | squote}}
-      port: {{.Port | squote}}
+      port: {{.Port}}
   {{- end }}
 {{- end }}
 

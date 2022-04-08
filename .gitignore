@@ -4,9 +4,9 @@ vendor
 *.log
 .keys
 
-
 terraform.tfstate
 terraform.tfvars
 .terraform.lock.hcl
 .terraform
 .keys
+wgman

@@ -2,9 +2,36 @@ apiVersion: crds.kloudlite.io/v1
 kind: Pipeline
 metadata:
   name: {{.Name}}
-  namepsace: {{.Namespace}}
+  namespace: {{.Namespace}}
 spec:
   gitProvider: {{.GitProvider}}
   gitRepoUrl: {{.GitRepoUrl}}
   gitRef: {{.GitRef}}
+  dockerfile: {{.Dockerfile | default "./Dockefile"}}
+  contextDir: {{.ContextDir |  default "./"}}
+{{- if .BuildArgs }}
+  buildArgs:
+  {{- range .BuildArgs }}
+    - key: {{.Key | squote}}
+      value: {{.Value| squote}}
+  {{- end}}
+{{- end }}
 
+{{- if .Github.InstallationId }}
+{{- if .Github.TokenId }}
+  github:
+  {{- with .Github}}
+    installationId: {{.InstallationId}}
+    tokenId: {{.TokenId}}
+  {{- end}}
+{{- end}}
+{{- end}}
+
+{{- if .Gitlab }}
+{{- if .Gitlab.TokenId }}
+  gitlab:
+  {{- with .Gitlab}}
+    tokenId: {{.TokenId}}
+  {{- end}}
+{{- end}}
+{{- end}}
