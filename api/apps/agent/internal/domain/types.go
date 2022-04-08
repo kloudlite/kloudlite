@@ -50,7 +50,7 @@ type Router struct {
 	Routes    []Routes `json:"routes"`
 }
 
-type buildArg struct {
+type BuildArg struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
@@ -70,11 +70,11 @@ type Pipeline struct {
 	GitProvider string         `json:"gitProvider"`
 	GitRepoUrl  string         `json:"gitRepoUrl"`
 	GitRef      string         `json:"gitRef"`
-	BuildArgs   []buildArg     `json:"buildArgs"`
-	Dockerfile  string         `json:"dockerfile"`
-	ContextDir  string         `json:"contextDir"`
-	Github      PipelineGithub `json:"github"`
-	Gitlab      PipelineGitlab `json:"gitlab"`
+	BuildArgs   []BuildArg     `json:"buildArgs,omitempty"`
+	Dockerfile  string         `json:"dockerfile,omitempty"`
+	ContextDir  string         `json:"contextDir,omitempty"`
+	Github      PipelineGithub `json:"github,omitempty"`
+	Gitlab      PipelineGitlab `json:"gitlab,omitempty"`
 }
 
 type Message struct {

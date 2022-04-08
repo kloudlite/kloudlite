@@ -57,8 +57,25 @@ func (d *domain) ProcessMessage(msg *Message) error {
 			}
 			return errors.New("malformed spec not of type(Secret)")
 		}
+
+	case shared.RESOURCE_ROUTER:
+		{
+			if spec, ok := msg.Spec.(Router); ok {
+				bData, e := d.applyTemplate("router.tmpl.yml", spec)
+				fmt.Printf("error (%v) Data (%v)\n", e, string(bData))
+				return kubeApply(bData)
+			}
+			return errors.New("malformed spec not of type(Router)")
+		}
+
 	case shared.RESOURCE_GIT_PIPELINE:
 		{
+			if spec, ok := msg.Spec.(Pipeline); ok {
+				bData, e := d.applyTemplate("pipeline.tmpl.yml", spec)
+				fmt.Printf("error (%v) Data (%v)\n", e, string(bData))
+				return kubeApply(bData)
+			}
+			return errors.New("malformed spec not of type(Pipeline)")
 		}
 	case shared.RESOURCE_APP:
 		{
