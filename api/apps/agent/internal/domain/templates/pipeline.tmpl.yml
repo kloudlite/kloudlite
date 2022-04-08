@@ -1,0 +1,10 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Pipeline
+metadata:
+  name: {{.Name}}
+  namepsace: {{.Namespace}}
+spec:
+  gitProvider: {{.GitProvider}}
+  gitRepoUrl: {{.GitRepoUrl}}
+  gitRef: {{.GitRef}}
+

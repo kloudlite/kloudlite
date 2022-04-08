@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"kloudlite.io/apps/message-consumer/internal/domain"
+	"kloudlite.io/pkg/errors"
 )
 
 func getKubeConfig(isDev bool) (cfg *rest.Config, e error) {

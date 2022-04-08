@@ -1,6 +1,6 @@
 package errors
 
-import "errors"
+import "github.com/pkg/errors"
 
 func HandleErr(e *error) {
 	if r := recover(); r != nil {
@@ -29,4 +29,8 @@ func Is(err error, target error) bool {
 
 func New(text string) error {
 	return errors.New(text)
+}
+
+func Wrap(e error, msg string) error {
+	return errors.Wrap(e, msg)
 }
