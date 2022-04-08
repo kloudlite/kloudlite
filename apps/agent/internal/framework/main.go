@@ -19,5 +19,4 @@ var Module = fx.Module("framework",
 		return messaging.NewKafkaClient(e.KafkaBrokers)
 	}),
 	app.Module,
-	// fx.Provide(k8s.NewClient),
 )
