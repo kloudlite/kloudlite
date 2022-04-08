@@ -1,0 +1,10 @@
+version: '3'
+
+tasks:
+  gql:
+    sources:
+      - graph/schema.graphqls
+      - gqlgen.yml
+    dir: internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate

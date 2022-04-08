@@ -1,13 +1,5 @@
 package domain
 
-type userDomain struct {
-	userRepo UserRepository
-}
+import "go.uber.org/fx"
 
-func (u *userDomain) Create(user *User) error {
-	return u.userRepo.Create(user)
-}
-
-func MakeDomain(userRepo *UserRepository) *userDomain {
-	return &userDomain{}
-}
+var Module = fx.Module("domain")
