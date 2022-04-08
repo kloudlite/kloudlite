@@ -11,3 +11,7 @@ import (
 type Resolver struct {
 	Domain domain.Domain
 }
+
+func NewResolver(domain domain.Domain) *Resolver {
+	return &Resolver{Domain: domain}
+}

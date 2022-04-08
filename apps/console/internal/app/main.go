@@ -1,11 +1,9 @@
 package app
 
 import (
-	"fmt"
+	httpServer "kloudlite.io/pkg/http-server"
 	"net/http"
 
-	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
@@ -35,19 +33,9 @@ var Module = fx.Module(
 	domain.Module,
 
 	fx.Invoke(func(server *http.ServeMux, d domain.Domain) {
-		server.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
-
-		gqlServer := gqlHandler.NewDefaultServer(
-			generated.NewExecutableSchema(
-				generated.Config{Resolvers: &graph.Resolver{Domain: d}},
-			),
-		)
-
-		server.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-			fmt.Printf("Headers: %+v", req.Cookies())
-			gqlServer.ServeHTTP(w, req)
+		schema := generated.NewExecutableSchema(generated.Config{
+			Resolvers: graph.NewResolver(d),
 		})
-
-		// server.Handle("/", gqlServer)
+		httpServer.SetupGQLServer(server, schema)
 	}),
 )
