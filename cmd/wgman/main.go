@@ -2,15 +2,15 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"io"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"text/template"
+
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 type Peer struct {
@@ -76,11 +76,13 @@ Endpoint = {{ $value.Endpoint }}
 }
 
 func main() {
-	var ip string
-	var command string
+	var ip, peersBase64, command string
 	flag.StringVar(&ip, "ip", "", "public ip")
 	flag.StringVar(&command, "command", "", "command")
+	flag.StringVar(&peersBase64, "peers", "", "peers json in Base64")
+
 	flag.Parse()
+
 	switch command {
 	case "init":
 		key, err := wgtypes.GenerateKey()
@@ -113,8 +115,10 @@ func main() {
 		fmt.Println(string(out))
 		break
 	case "peers":
-		all, _ := io.ReadAll(os.Stdin)
-		os.Stdin.Close()
+
+		// all, _ := io.ReadAll(os.Stdin)
+		// os.Stdin.Close()
+		all, _ := base64.StdEncoding.DecodeString(peersBase64)
 		peers := make([]Peer, 0)
 		err := json.Unmarshal(all, &peers)
 		if err != nil {
