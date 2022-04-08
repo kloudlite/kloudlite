@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/99designs/gqlgen v0.17.2
+	github.com/Azure/go-autorest/autorest/date v0.3.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/aymerick/raymond v2.0.2+incompatible
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
@@ -11,6 +12,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/fiber/v2 v2.27.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
+	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.8.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/vektah/gqlparser/v2 v2.4.0
@@ -26,6 +28,7 @@ require (
 )
 
 require (
+	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/agnivade/levenshtein v1.1.0 // indirect
@@ -55,7 +58,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/urfave/cli/v2 v2.3.0 // indirect
