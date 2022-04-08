@@ -103,7 +103,7 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("unable to write config file: %v", err))
 		}
-		out, err := json.Marshal(map[string]any{
+		out, err := json.Marshal(map[string]string{
 			"public_key": key.PublicKey().String(),
 		})
 		if err != nil {
@@ -126,24 +126,32 @@ func main() {
 		if err != nil {
 			fmt.Println(fmt.Errorf("unable to parse config error: %v", err))
 		}
-		cp := &c
-		for k := range cp.Peers {
-			delete(cp.Peers, k)
+
+		for k := range c.Peers {
+			delete(c.Peers, k)
 		}
+
 		for _, p := range peers {
-			cp.Peers[p.PublicKey] = p
+			c.Peers[p.PublicKey] = p
 		}
+
 		marshal, err := json.Marshal(c)
 		if err != nil {
 			panic(fmt.Errorf("failed to marshal config: %v", err))
 		}
-		err = exec.Command("rm", "./wg0.conf").Run()
-		err = ioutil.WriteFile("config.json", marshal, 0644)
-		err = cp.writeConfig()
+
+		err = c.writeConfig()
+
 		if err != nil {
 			panic(fmt.Errorf("unable to update wireguard: %v", err))
 		}
+
+		err = ioutil.WriteFile("config.json", marshal, 0644)
+
+		if err != nil {
+			panic(fmt.Errorf("unable to write config file: %v", err))
+		}
+
 		break
 	}
 }
-
