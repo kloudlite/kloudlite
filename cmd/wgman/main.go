@@ -38,9 +38,9 @@ func (c *Config) writeConfig() error {
 	if err != nil {
 		return err
 	}
+	err = exec.Command("wg-quick", "down", "wg0").Run()
 	exec.Command("rm", "/etc/wireguard/wg0.conf").Run()
 	err = ioutil.WriteFile("/etc/wireguard/wg0.conf", []byte(config), 0644)
-	err = exec.Command("wg-quick", "down", "wg0").Run()
 	err = exec.Command("wg-quick", "up", "wg0").Run()
 	return err
 }
@@ -139,7 +139,10 @@ func main() {
 		}
 		err = exec.Command("rm", "./wg0.conf").Run()
 		err = ioutil.WriteFile("config.json", marshal, 0644)
-		cp.writeConfig()
+		err = cp.writeConfig()
+		if err != nil {
+			panic(fmt.Errorf("unable to update wireguard: %v", err))
+		}
 		break
 	}
 }
