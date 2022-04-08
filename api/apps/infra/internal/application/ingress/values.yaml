@@ -1,8 +1,0 @@
-controller:
-  replicaCount: 2
-
-service:
-  type: NodePort
-  nodePorts:
-    http: 32000
-    https: 32001
