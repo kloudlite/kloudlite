@@ -27,12 +27,6 @@ type Env struct {
 	CorsOrigins  string `env:"ORIGINS"`
 }
 
-// cors.Options{
-// 		AllowedOrigins:   []string{"http://localhost:4001", "https://studio.apollographql.com"},
-// 		AllowCredentials: true,
-// 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-// 	}
-
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(logger.NewLogger),

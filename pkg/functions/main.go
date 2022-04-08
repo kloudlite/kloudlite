@@ -47,3 +47,30 @@ func CleanerNanoid(n int) (string, error) {
 	}
 	return res, nil
 }
+
+type Json interface {
+	Must([]byte, error) []byte
+	From(v any) ([]byte, error)
+	String([]byte) string
+}
+
+type _json struct{}
+
+func (j *_json) From(v any) ([]byte, error) {
+	return json.Marshal(v)
+}
+
+func (j *_json) Must(b []byte, e error) []byte {
+	if e != nil {
+		panic(e)
+	}
+	return b
+}
+
+func (j *_json) String(b []byte) string {
+	return string(b)
+}
+
+func UseJson() Json {
+	return &_json{}
+}
