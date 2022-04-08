@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: digitalocean
-  namespace: kube-system
-stringData:
-  access-token: {{api_key}}

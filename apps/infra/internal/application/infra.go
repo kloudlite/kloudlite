@@ -3,17 +3,91 @@ package application
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aymerick/raymond"
 	"io/ioutil"
-	"kloudlite.io/apps/infra/internal/domain"
-	"kloudlite.io/pkg/errors"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/aymerick/raymond"
+	"kloudlite.io/apps/infra/internal/domain"
+	"kloudlite.io/pkg/errors"
 )
 
 type infraClient struct {
 	env *InfraEnv
+}
+
+func (i *infraClient) setupMaster(ip string) error {
+	fmt.Println("ssh",
+		"-o",
+		"StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-i",
+		fmt.Sprintf("%v/access", i.env.SshKeysPath),
+		"root@"+ip,
+		"/root/scripts/wait-for-on.sh")
+
+	e := exec.Command(
+		"ssh",
+		"-o",
+		"StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-i",
+		fmt.Sprintf("%v/access", i.env.SshKeysPath),
+		"root@"+ip,
+		"/root/scripts/wait-for-on.sh",
+	).Run()
+
+	return e
+
+}
+
+// func setupSecondaryMasters([]string ips) error{}
+// func setupAgents([]string ips) error{}
+
+func initTerraformInFolder(folder string) error {
+	cmd := exec.Command("terraform", "init")
+	cmd.Dir = folder
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+
+	// fmt.Println(err)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func applyTerraformInFolder(folder string, values map[string]any) error {
+	vars := []string{"apply", "-auto-approve"}
+
+	for k, v := range values {
+		vars = append(vars, fmt.Sprintf("-var=%v=%v", k, v))
+	}
+
+	cmd := exec.Command("terraform", vars...)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	cmd.Dir = folder
+	err := cmd.Run()
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getOutputTerraformInFolder(folder string, key string) (string, error) {
+	cmd := exec.Command("terraform", "output", key)
+	cmd.Dir = folder
+	out, err := cmd.Output()
+	return strings.ReplaceAll(strings.ReplaceAll(string(out), "\"", ""), "\n", ""), err
 }
 
 func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e error) {
@@ -28,32 +102,60 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	copyTemplateDirCommand.Stderr = os.Stderr
 	e = copyTemplateDirCommand.Run()
 	errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
-	initCommand := exec.Command(
-		"terraform",
-		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, action.ClusterID),
-		"init",
-	)
-	initCommand.Stdout = os.Stdout
-	initCommand.Stderr = os.Stderr
-	e = initCommand.Run()
-	errors.AssertNoError(e, fmt.Errorf("failed to init terraform check"))
-	applyCommand := exec.Command(
-		"terraform",
-		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, action.ClusterID),
-		"apply",
-		"-auto-approve",
-		fmt.Sprintf("-var=cluster-id=%v", action.ClusterID),
-		fmt.Sprintf("-var=master-nodes-count=%v", action.MastersCount),
-		fmt.Sprintf("-var=agent-nodes-count=%v", action.NodesCount-action.MastersCount),
-		fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath),
-		fmt.Sprintf("-var=do-token=%v", i.env.DoAPIKey),
-	)
-	applyCommand.Stdout = os.Stdout
-	applyCommand.Stderr = os.Stderr
-	e = applyCommand.Run()
-	errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
-	e = i.CreateKubeConfig(action.ClusterID)
-	errors.AssertNoError(e, fmt.Errorf("unable to create kubeconfig"))
+
+	// fmt.Println(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
+	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
+	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
+
+	// e = initTerraformInFolder(fmt.Sprintf("%v/%v/secondary-tf", i.env.DataPath, action.ClusterID))
+	// errors.AssertNoError(e, fmt.Errorf("unable to init terraform secondary"))
+
+	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), map[string]any{
+		"cluster-id":         action.ClusterID,
+		"do-token":           i.env.DoAPIKey,
+		"do-image-id":        i.env.DoImageId,
+		"keys-path":          i.env.SshKeysPath,
+		"master-nodes-count": action.MastersCount,
+		"agent-nodes-count":  action.NodesCount - action.MastersCount,
+	})
+
+	// fmt.Println(e.Error())
+	errors.AssertNoError(e, fmt.Errorf("unable to apply terraform primary"))
+
+	masterIp, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ip")
+	masterIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ips")
+	agentIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "agent-ips")
+
+	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ip"))
+
+	fmt.Println("master out", string(masterIp))
+	fmt.Println(masterIps)
+	fmt.Println(agentIps)
+
+	e = i.setupMaster(string(masterIp))
+
+	fmt.Println(e)
+	errors.AssertNoError(e, fmt.Errorf("unable to setup master"))
+
+	// applyCommand := exec.Command(
+	// 	"terraform",
+	// 	fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, action.ClusterID),
+	// 	"apply",
+	// 	"-auto-approve",
+	// 	fmt.Sprintf("-var=cluster-id=%v", action.ClusterID),
+	// 	fmt.Sprintf("-var=master-nodes-count=%v", action.MastersCount),
+	// 	fmt.Sprintf("-var=agent-nodes-count=%v", action.NodesCount-action.MastersCount),
+	// 	fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath),
+	// 	fmt.Sprintf("-var=do-token=%v", i.env.DoAPIKey),
+	// 	fmt.Sprintf("-var=do-image-id=%v", i.env.DoImageId),
+	// )
+
+	// applyCommand.Stdout = os.Stdout
+	// applyCommand.Stderr = os.Stderr
+	// e = applyCommand.Run()
+	// errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
+	// e = i.CreateKubeConfig(action.ClusterID)
+	// errors.AssertNoError(e, fmt.Errorf("unable to create kubeconfig"))
 	return e
 }
 

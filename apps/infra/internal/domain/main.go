@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
 )
@@ -20,7 +22,7 @@ func (d *domain) CreateCluster(action SetupClusterAction) error {
 	err := d.infraCli.CreateKubernetes(action)
 	//err = d.infraCli.SetupCSI(action.ClusterID, action.Provider)
 	//err = d.infraCli.SetupIngress(action.ClusterID)
-	//fmt.Println(err)
+	fmt.Println(err)
 	return err
 }
 
