@@ -1,0 +1,63 @@
+scalar Date
+scalar Json
+scalar ProviderDetail
+scalar URL
+
+type Query {
+  me: User
+#  oAuth2: OAuth2Query
+  findByEmail(email: String!): User
+  requestLogin(provider: String!, state: String): URL!
+}
+
+#type OAuth2Query {
+#
+#
+#  # WARN:only to be consumed by the console api (under the federation)
+#  gitlabAccessToken(tokenId: ID!): String
+#  githubAccessToken(tokenId: ID!): String
+#  githubAppToken: String
+#  githubRepoToken(repoUrl: String, installationId: ID): String
+#}
+
+type Mutation {
+  login(email: String!, password: String!): Session
+  inviteSignup(email: String!, name: String!): ID!
+  signup(name: String!, email: String!, password: String!): Session
+  logout: Boolean!
+  setMetadata(values: Json!): User!
+  clearMetadata: User!
+  verifyEmail(token: String!): Session!
+  resetPassword(token: String!, password: String!): Boolean!
+  requestResetPassword(email: String!): Boolean!
+  loginWithInviteToken(inviteToken: String!): Session
+  changeEmail(email: String!): Boolean!
+  resendVerificationEmail(email: String!): Boolean!
+  verifyChangeEmail(token: String!): Boolean!
+  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+
+  oauth_login(provider: String!, state: String!, code: String!): Session!
+  oauth_addLogin(provider: String!, state: String!, code: String!): Boolean!
+}
+
+type Session {
+  id: ID!
+  userId: ID!
+  userEmail: String!
+  loginMethod: String!
+  userVerified: Boolean!
+}
+
+type User @key(fields: "id") {
+  id: ID!
+  name: String!
+  email: String!
+  avatar: String
+  invite: String!
+  verified: Boolean!
+  metadata: Json!
+  joined: Date!
+  providerGitlab: ProviderDetail
+  providerGithub: ProviderDetail
+  providerGoogle: ProviderDetail
+}

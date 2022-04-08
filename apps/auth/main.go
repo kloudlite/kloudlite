@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"go.uber.org/fx"
+	"kloudlite.io/apps/auth/internal/framework"
 )
 
 func main() {
-	fmt.Println("hello world from auth")
+	fx.New(framework.Module).Run()
 }
