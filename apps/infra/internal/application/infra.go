@@ -1,14 +1,12 @@
 package application
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
-	"github.com/aymerick/raymond"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/errors"
 )
@@ -42,9 +40,6 @@ func (i *infraClient) setupMaster(ip string) error {
 
 }
 
-// func setupSecondaryMasters([]string ips) error{}
-// func setupAgents([]string ips) error{}
-
 func initTerraformInFolder(folder string) error {
 	cmd := exec.Command("terraform", "init")
 	cmd.Dir = folder
@@ -53,8 +48,6 @@ func initTerraformInFolder(folder string) error {
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
-
-	// fmt.Println(err)
 
 	if err != nil {
 		return err
@@ -90,106 +83,221 @@ func getOutputTerraformInFolder(folder string, key string) (string, error) {
 	return strings.ReplaceAll(strings.ReplaceAll(string(out), "\"", ""), "\n", ""), err
 }
 
+func (i *infraClient) waitForSshAvailability(ip string) error {
+
+	count := 0
+
+	for count < 20 {
+		e := exec.Command(
+			"ssh",
+			"-o",
+			"StrictHostKeyChecking=no",
+			"-o", "UserKnownHostsFile=/dev/null",
+			"-i",
+			fmt.Sprintf("%v/access", i.env.SshKeysPath),
+			"root@"+ip,
+			"echo", "hello",
+		).Run()
+
+		fmt.Println(e)
+		if e == nil {
+			return nil
+		}
+
+		fmt.Println("waiting for ssh availability")
+		time.Sleep(time.Second * 3)
+		count++
+	}
+
+	return errors.New("not able to access ssh after 10 attempts")
+}
+
+func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([]byte, error) {
+
+	i.waitForSshAvailability(masterIp)
+
+	fmt.Println("k3sup", "install", fmt.Sprintf("--ip=%v", masterIp), "--cluster", "--k3s-version=v1.19.1+k3s1", "--user=root")
+
+	cmd := exec.Command(
+		"k3sup",
+		"install",
+		fmt.Sprintf("--ip=%v", masterIp),
+		"--cluster",
+		"--k3s-version=v1.19.1+k3s1",
+		"--user=root",
+		"--k3s-extra-args='--disable=traefik'",
+	)
+
+	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)
+	return cmd.Output()
+}
+
+func (i *infraClient) setupAllKubernetes(clusterId string, provider string) ([]byte, error) {
+	cmd := exec.Command("bash", "init.sh")
+	cmd.Dir = fmt.Sprintf("./infra-scripts/%v/init-scripts", provider)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
+	return cmd.Output()
+}
+
+func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId string) error {
+
+	masterIp := masterIps[0]
+
+	if len(masterIps) < 2 {
+		return nil
+	}
+
+	c := make(chan error, len(masterIps)-1)
+
+	for index, ip := range masterIps {
+
+		if index == 0 {
+			continue
+		}
+
+		go func(ip string) error {
+
+			i.waitForSshAvailability(ip)
+
+			cmd := exec.Command(
+				"k3sup",
+				"join",
+				fmt.Sprintf("--ip=%v", ip),
+				fmt.Sprintf("--server-ip=%v", masterIp),
+				"--k3s-version=v1.19.1+k3s1",
+				"--user=root",
+				"--server-user=root",
+				"--server",
+				"--k3s-extra-args='--disable=traefik'",
+			)
+
+			_, err := cmd.Output()
+			c <- err
+
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}(ip)
+
+	}
+
+	err := <-c
+
+	return err
+
+}
+
+func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterId string) error {
+
+	// masterIp := masterIps[0]
+
+	if len(agentIps) < 1 {
+		return nil
+	}
+
+	c := make(chan error, len(agentIps))
+
+	for _, ip := range agentIps {
+
+		go func(ip string) error {
+			cmd := exec.Command(
+				"k3sup",
+				"join",
+				fmt.Sprintf("--ip=%v", ip),
+				fmt.Sprintf("--server-ip=%v", masterIp),
+				"--k3s-version=v1.19.1+k3s1",
+				"--user=root",
+				"--server-user=root",
+			)
+
+			_, err := cmd.Output()
+			c <- err
+
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}(ip)
+
+	}
+
+	err := <-c
+
+	return err
+
+}
+
 func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e error) {
+
 	defer errors.HandleErr(&e)
+
 	copyTemplateDirCommand := exec.Command(
 		"cp",
 		"-r",
-		fmt.Sprintf("./internal/application/tf/%v", action.Provider),
+		fmt.Sprintf("./infra-scripts/%v/tf", action.Provider),
 		fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID),
 	)
+
 	copyTemplateDirCommand.Stdout = os.Stdout
 	copyTemplateDirCommand.Stderr = os.Stderr
 	e = copyTemplateDirCommand.Run()
+
 	errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
 
-	// fmt.Println(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
-
-	// e = initTerraformInFolder(fmt.Sprintf("%v/%v/secondary-tf", i.env.DataPath, action.ClusterID))
-	// errors.AssertNoError(e, fmt.Errorf("unable to init terraform secondary"))
 
 	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), map[string]any{
 		"cluster-id":         action.ClusterID,
 		"do-token":           i.env.DoAPIKey,
-		"do-image-id":        i.env.DoImageId,
 		"keys-path":          i.env.SshKeysPath,
 		"master-nodes-count": action.MastersCount,
 		"agent-nodes-count":  action.NodesCount - action.MastersCount,
 	})
 
-	// fmt.Println(e.Error())
 	errors.AssertNoError(e, fmt.Errorf("unable to apply terraform primary"))
 
-	masterIp, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ip")
+	// masterFloatingIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-floating-ips")
 	masterIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ips")
 	agentIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "agent-ips")
 
 	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ip"))
 
-	fmt.Println("master out", string(masterIp))
-	fmt.Println(masterIps)
-	fmt.Println(agentIps)
+	fmt.Println("cluster setup finished")
 
-	e = i.setupMaster(string(masterIp))
+	masterIp := strings.Split(masterIps, ",")[0]
+
+	_, e = i.installPrimaryMaster(masterIp, action.ClusterID)
+
+	fmt.Println("setup finished", e)
+	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
+
+	c := make(chan bool, 4)
+
+	go func() {
+		i.setupAllKubernetes(action.ClusterID, action.Provider)
+		c <- true
+	}()
+
+	go func() {
+		i.installSecondaryMasters(strings.Split(masterIps, ","), action.ClusterID)
+		c <- true
+	}()
+
+	go func() {
+		i.installAgents(masterIp, strings.Split(agentIps, ","), action.ClusterID)
+		c <- true
+	}()
+
+	<-c
 
 	fmt.Println(e)
 	errors.AssertNoError(e, fmt.Errorf("unable to setup master"))
 
-	// applyCommand := exec.Command(
-	// 	"terraform",
-	// 	fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, action.ClusterID),
-	// 	"apply",
-	// 	"-auto-approve",
-	// 	fmt.Sprintf("-var=cluster-id=%v", action.ClusterID),
-	// 	fmt.Sprintf("-var=master-nodes-count=%v", action.MastersCount),
-	// 	fmt.Sprintf("-var=agent-nodes-count=%v", action.NodesCount-action.MastersCount),
-	// 	fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath),
-	// 	fmt.Sprintf("-var=do-token=%v", i.env.DoAPIKey),
-	// 	fmt.Sprintf("-var=do-image-id=%v", i.env.DoImageId),
-	// )
-
-	// applyCommand.Stdout = os.Stdout
-	// applyCommand.Stderr = os.Stderr
-	// e = applyCommand.Run()
-	// errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
-	// e = i.CreateKubeConfig(action.ClusterID)
-	// errors.AssertNoError(e, fmt.Errorf("unable to create kubeconfig"))
-	return e
-}
-
-func (i *infraClient) CreateKubeConfig(clusterId string) (e error) {
-
-	defer errors.HandleErr(&e)
-	out, e := exec.Command(
-		"terraform",
-		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, clusterId),
-		"output",
-		"-json",
-	).Output()
-
-	errors.AssertNoError(e, fmt.Errorf("should run"))
-	var outJson map[string]map[string]interface{}
-	e = json.Unmarshal(out, &outJson)
-	errors.AssertNoError(e, fmt.Errorf("should unmarshal output"))
-	_, e = exec.Command(
-		"scp",
-		"-o",
-		"StrictHostKeyChecking=no",
-		"-o",
-		"UserKnownHostsFile=/dev/null",
-		"-i",
-		fmt.Sprintf("%v/access", i.env.SshKeysPath),
-		fmt.Sprintf("root@%v:/etc/rancher/k3s/k3s.yaml", outJson["cluster-ip"]["value"].(string)),
-		fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId),
-	).Output()
-	errors.AssertNoError(e, fmt.Errorf("unable to download file"))
-	input, e := ioutil.ReadFile(fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-	errors.AssertNoError(e, fmt.Errorf("should read file"))
-	newString := strings.ReplaceAll(string(input), "127.0.0.1", outJson["cluster-ip"]["value"].(string))
-	e = ioutil.WriteFile(fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId), []byte(newString), 0644)
-	errors.AssertNoError(e, fmt.Errorf("should be able to change file"))
 	return e
 }
 
@@ -211,98 +319,6 @@ func (i *infraClient) UpdateKubernetes(action domain.UpdateClusterAction) (e err
 	e = applyCommand.Run()
 	errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
 	return e
-}
-
-func (i *infraClient) SetupDOCSI(clusterId string) (e error) {
-	defer errors.HandleErr(&e)
-	if _, err := os.Stat("/tmp/do-api.yaml"); err == nil {
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		buffer, e := ioutil.ReadFile("./internal/application/csi/do-secret/template.yaml")
-		errors.AssertNoError(e, fmt.Errorf("template file should exist"))
-		tpl := raymond.MustParse(string(buffer))
-		result := tpl.MustExec(map[string]interface{}{
-			"api_key": i.env.DoAPIKey,
-		})
-		fmt.Sprintf(result)
-		e = ioutil.WriteFile("/tmp/do-api.yaml", []byte(result), 0644)
-	} else {
-		// should not happen
-		return err
-	}
-	fmt.Println(fmt.Sprintf("%v/%v/kube.yaml", i.env.DataPath, clusterId))
-	applyDoKeySecretCommand := exec.Command(
-		"kubectl",
-		"apply",
-		"-f", "/tmp/do-api.yaml",
-	)
-	applyDoKeySecretCommand.Env = os.Environ()
-	applyDoKeySecretCommand.Env = append(applyDoKeySecretCommand.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-	fmt.Println(applyDoKeySecretCommand.Env)
-	applyDoKeySecretCommand.Stdout = os.Stdout
-	applyDoKeySecretCommand.Stderr = os.Stderr
-	e = applyDoKeySecretCommand.Run()
-	errors.AssertNoError(e, fmt.Errorf("unable to apply Digital Ocean Key"))
-
-	applyCSICommand1 := exec.Command(
-		"kubectl",
-		"apply",
-		"-f", "./internal/application/csi/crds.yaml",
-	)
-	applyCSICommand1.Env = os.Environ()
-	applyCSICommand1.Env = append(applyDoKeySecretCommand.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-
-	applyCSICommand1.Stdout = os.Stdout
-	applyCSICommand1.Stderr = os.Stderr
-	e = applyCSICommand1.Run()
-
-	applyCSICommand2 := exec.Command(
-		"kubectl",
-		"apply",
-		"-f", "./internal/application/csi",
-	)
-	applyCSICommand2.Env = os.Environ()
-	applyCSICommand2.Env = append(applyDoKeySecretCommand.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-
-	applyCSICommand2.Stdout = os.Stdout
-	applyCSICommand2.Stderr = os.Stderr
-	e = applyCSICommand2.Run()
-
-	errors.AssertNoError(e, fmt.Errorf("unable to apply CSI"))
-	return e
-}
-
-func (i *infraClient) SetupCSI(clusterId string, provider string) (e error) {
-	switch provider {
-	case "do":
-		return i.SetupDOCSI(clusterId)
-	default:
-		return fmt.Errorf("provider not supported")
-	}
-}
-
-func (i *infraClient) SetupOperator(clusterId string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *infraClient) SetupMonitoring(clusterId string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *infraClient) SetupIngress(clusterId string) error {
-	applyHelm := exec.Command("bash", "./internal/application/ingress/init.sh", "install", "-f", "./internal/application/ingress/values.yaml")
-	applyHelm.Env = os.Environ()
-	applyHelm.Env = append(applyHelm.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-	applyHelm.Stdout = os.Stdout
-	applyHelm.Stderr = os.Stderr
-	return applyHelm.Run()
-}
-
-func (i *infraClient) SetupWireguard(clusterId string) error {
-	//TODO implement me
-	panic("implement me")
 }
 
 func fxInfraClient(env *InfraEnv) domain.InfraClient {
