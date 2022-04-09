@@ -1,0 +1,64 @@
+domain: kloudlite.io
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: app
+repo: operators.kloudlite.io
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: Project
+  path: operators.kloudlite.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: Router
+  path: operators.kloudlite.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: App
+  path: operators.kloudlite.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: ManagedService
+  path: operators.kloudlite.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: ManagedResource
+  path: operators.kloudlite.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: Pipeline
+  path: operators.kloudlite.io/api/v1
+  version: v1
+version: "3"

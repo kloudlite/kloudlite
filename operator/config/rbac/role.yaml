@@ -1,0 +1,163 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - apps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - apps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - apps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedresources
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedresources/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedresources/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedservices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedservices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - pipelines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - pipelines/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - pipelines/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - projects
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - projects/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - projects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - routers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - routers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - routers/status
+  verbs:
+  - get
+  - patch
+  - update
