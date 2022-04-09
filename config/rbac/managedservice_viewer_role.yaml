@@ -1,0 +1,20 @@
+# permissions for end users to view managedservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: managedservice-viewer-role
+rules:
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - managedservices/status
+  verbs:
+  - get

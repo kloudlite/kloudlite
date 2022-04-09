@@ -1,0 +1,9 @@
+## Append samples you want in your CSV to this file as resources ##
+resources:
+- crds_v1_project.yaml
+- crds_v1_router.yaml
+- crds_v1_app.yaml
+- crds_v1_managedservice.yaml
+- crds_v1_managedresource.yaml
+- crds_v1_pipeline.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

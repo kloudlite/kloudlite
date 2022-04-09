@@ -1,0 +1,15 @@
+namespace: hotspot
+
+local:
+  services:
+    - name: app
+      image: operator:go1.17
+      working_dir: /tmp/app
+      environment:
+        GOPATH: "/tmp/go"
+        GOCACHE: /tmp/go-cache
+        KUBECONFIG: /tmp/kconfig
+      volumes:
+        - './:/tmp/app'
+        - '~/.kube/configs/dev-hotspot-01.yml:/tmp/kconfig'
+kubeConfig: ~/.kube/configs/dev-hotspot-01.yml

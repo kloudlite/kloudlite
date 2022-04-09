@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: {{ .Name }}-
+  namespace: {{ .Namespace }}
+spec:
+  template:
+    spec:
+      serviceAccount: {{.ServiceAccount}}
+      containers:
+        - name: {{.Name}}
+          image: {{.Image}}
+          imagePullPolicy: {{.ImagePullPolicy}}
+          args:
+            {{- range .Args}}
+            - {{.}}
+            {{- end}}
+          env:
+          {{- range $key, $value := .Env }}
+            - name: {{$key}}
+              value: {{$value}}
+          {{- end}}
+      restartPolicy: OnFailure
+  backoffLimit: 2

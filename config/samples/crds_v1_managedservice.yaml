@@ -1,0 +1,6 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: managedservice-sample
+spec:
+  # TODO(user): Add fields here

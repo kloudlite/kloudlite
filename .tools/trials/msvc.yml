@@ -1,0 +1,9 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: sample
+  namespace: hotspot
+spec:
+  version: 1
+  values: |
+    {"sample":"hello"}
