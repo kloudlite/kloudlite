@@ -38,7 +38,7 @@ type AppContainer struct {
 	Args            []string          `json:"args,omitempty"`
 	ResourceCpu     ContainerResource `json:"resourceCpu"`
 	ResourceMemory  ContainerResource `json:"resourceMemory"`
-	Env             []ContainerEnv    `json:"env,omitemtpy"`
+	Env             []ContainerEnv    `json:"env,omitempty"`
 	Volumes         []ContainerVolume `json:"volumes,omitempty"`
 }
 
@@ -56,8 +56,7 @@ type AppSpec struct {
 
 // AppStatus defines the observed state of App
 type AppStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
