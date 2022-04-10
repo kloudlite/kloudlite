@@ -18,6 +18,7 @@ import (
 
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/controllers"
+	"operators.kloudlite.io/lib"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -70,6 +71,7 @@ func main() {
 		Client:    mgr.GetClient(),
 		Scheme:    mgr.GetScheme(),
 		ClientSet: clientset,
+		JobMgr:    lib.NewJobber(clientset),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
@@ -82,13 +84,15 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	// if err = (&controllers.AppReconciler{
-	// 	Client: mgr.GetClient(),
-	// 	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "App")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.AppReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		ClientSet: clientset,
+		JobMgr:    lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "App")
+		os.Exit(1)
+	}
 	// if err = (&controllers.ManagedServiceReconciler{
 	// 	Client: mgr.GetClient(),
 	// 	Scheme: mgr.GetScheme(),

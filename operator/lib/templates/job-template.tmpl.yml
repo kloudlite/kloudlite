@@ -10,15 +10,19 @@ spec:
       containers:
         - name: {{.Name}}
           image: {{.Image}}
-          imagePullPolicy: {{.ImagePullPolicy}}
+          imagePullPolicy: {{.ImagePullPolicy | default "Always"}}
+        {{- if .Args }}
           args:
             {{- range .Args}}
             - {{.}}
             {{- end}}
+        {{- end }}
+        {{- if .Env }}
           env:
           {{- range $key, $value := .Env }}
             - name: {{$key}}
               value: {{$value}}
           {{- end}}
+        {{- end }}
       restartPolicy: OnFailure
   backoffLimit: 2
