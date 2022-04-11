@@ -192,8 +192,6 @@ func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([
 
 	i.waitForSshAvailability(masterIp)
 
-	fmt.Println("k3sup", "install", fmt.Sprintf("--ip=%v", masterIp), "--cluster", "--k3s-version=v1.19.1+k3s1", "--user=root")
-
 	cmd := exec.Command(
 		"k3sup",
 		"install",
@@ -202,6 +200,7 @@ func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([
 		"--k3s-version=v1.19.1+k3s1",
 		"--user=root",
 		"--k3s-extra-args='--disable=traefik'",
+		"--k3s-extra-args='--node-name=master'",
 	)
 
 	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)
@@ -344,7 +343,8 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	var clusterPublicKeyWaitGroup sync.WaitGroup
 	clusterPublicKeyWaitGroup.Add(1)
 
-	_, e = i.installPrimaryMaster(clusterIp, action.ClusterID)
+	out, e := i.installPrimaryMaster(clusterIp, action.ClusterID)
+	fmt.Println(string(out), e)
 
 	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
 
