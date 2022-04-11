@@ -9,4 +9,4 @@ terraform.tfvars
 .terraform.lock.hcl
 .terraform
 .keys
-wgman
+# wgman
