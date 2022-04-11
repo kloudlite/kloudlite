@@ -295,7 +295,7 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterI
 	return err
 }
 
-func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e error) {
+func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (e error) {
 
 	defer errors.HandleErr(&e)
 
@@ -397,7 +397,7 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	return e
 }
 
-func (i *infraClient) UpdateKubernetes(action domain.UpdateClusterAction) (e error) {
+func (i *infraClient) UpdateCluster(action domain.UpdateClusterAction) (e error) {
 
 	defer errors.HandleErr(&e)
 	applyCommand := exec.Command(

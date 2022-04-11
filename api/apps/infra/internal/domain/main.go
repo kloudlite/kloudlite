@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"fmt"
-
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
 )
@@ -16,28 +14,41 @@ type domain struct {
 	infraCli InfraClient
 	//messageProducer messaging.Producer[messaging.Json]
 	messageTopic string
+	jobResponder InfraJobResponder
 }
 
 func (d *domain) CreateCluster(action SetupClusterAction) error {
-	err := d.infraCli.CreateKubernetes(action)
-	//err = d.infraCli.SetupCSI(action.ClusterID, action.Provider)
-	//err = d.infraCli.SetupIngress(action.ClusterID)
-	fmt.Println(err)
+	publicIp, publicKey, err := d.infraCli.CreateCluster(action)
+	if err != nil {
+		d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
+			ClusterID: action.ClusterID,
+			PublicIp:  publicIp,
+			PublicKey: publicKey,
+			Done:      false,
+			Message:   err.Error(),
+		})
+	}
+	d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
+		ClusterID: action.ClusterID,
+		PublicIp:  publicIp,
+		PublicKey: publicKey,
+		Done:      true,
+	})
 	return err
 }
 
 func (d *domain) UpdateCluster(action UpdateClusterAction) error {
-	err := d.infraCli.UpdateKubernetes(action)
+	err := d.infraCli.UpdateCluster(action)
 	return err
 }
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-	//messageProducer messaging.Producer[messaging.Json],
+	infraJobResp InfraJobResponder,
 ) Domain {
 	return &domain{
-		infraCli: infraCli,
-		//messageProducer: messageProducer,
+		infraCli:     infraCli,
+		jobResponder: infraJobResp,
 		messageTopic: env.KafkaInfraActionResulTopic,
 	}
 }
