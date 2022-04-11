@@ -44,8 +44,8 @@ type AppContainer struct {
 
 type AppSvc struct {
 	Port       uint16 `json:"port"`
-	TargetPort uint16 `json:"targetPort"`
-	Type       string `json:"type"`
+	TargetPort uint16 `json:"targetPort,omitempty"`
+	Type       string `json:"type,omitempty"`
 }
 
 // AppSpec defines the desired state of App
@@ -54,9 +54,19 @@ type AppSpec struct {
 	Containers []AppContainer `json:"containers"`
 }
 
+type ReconJob struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
 // AppStatus defines the observed state of App
 type AppStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	Job                  *ReconJob          `json:"job,omitempty"`
+	JobCompleted         bool               `json:"jobCompleted"`
+	Generation           *int64             `json:"generation,omitempty"`
+	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
+	DeletionJobCompleted bool               `json:"deletionJobCompleted,omitempty"`
+	Conditions           []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -69,6 +79,33 @@ type App struct {
 
 	Spec   AppSpec   `json:"spec,omitempty"`
 	Status AppStatus `json:"status,omitempty"`
+}
+
+func (app *App) HasJob() bool {
+	return app.Status.Job != nil
+}
+
+func (app *App) IsNewGeneration() bool {
+	return app.Status.Generation == nil || app.Generation > *app.Status.Generation
+}
+
+func (app *App) ShouldCreateJob() bool {
+	if app.Status.JobCompleted && !app.IsNewGeneration() {
+		return false
+	}
+	return true
+}
+
+func (app *App) HasToBeDeleted() bool {
+	return app.GetDeletionTimestamp() != nil
+}
+
+func (app *App) HasRunningDeletionJob() bool {
+	return app.Status.DeletionJob != nil && !app.Status.DeletionJobCompleted
+}
+
+func (app *App) ShouldCreateDeletionJob() bool {
+	return app.Status.DeletionJob == nil && !app.Status.DeletionJobCompleted
 }
 
 //+kubebuilder:object:root=true

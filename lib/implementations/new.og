@@ -1,0 +1,206 @@
+	_ = log.FromContext(ctx).WithValues("resourceName:", req.Name, "namespace:", req.Namespace)
+	logger := GetLogger(req.NamespacedName)
+	r.logger = logger
+
+	app := &crdsv1.App{}
+	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
+		if apiErrors.IsNotFound(err) {
+			// INFO: might have been deleted
+			return reconcileResult.OK()
+		}
+		return reconcileResult.Failed()
+	}
+
+	if app.Status.Job != nil {
+		return reconcileResult.Retry(5)
+	}
+
+	if jobMeta := app.Status.Job; jobMeta != nil && jobMeta.IsRunning {
+		logger.Info("Job is RUNNING")
+		// ASSERT: job is running
+		hasFailed, err := r.JobMgr.HasFailed(ctx, jobMeta.Namespace, jobMeta.Name)
+		if err != nil {
+			app.Status.Job.IsRunning = false
+			logger.Debug("ERR GETTING JOB")
+			_, err = r.updateStatus(ctx, app)
+			if err != nil {
+				fmt.Println("Something happened: ", err)
+			}
+			return reconcileResult.Failed()
+		}
+
+		if hasFailed != nil {
+			logger.Debug("HAS FAILED")
+			app.Status.Job.IsRunning = false
+			app.Status.Job.Type = string(hasFailed.Type)
+			app.Status.Job.Status = string(hasFailed.Status)
+			app.Status.Job.Reason = strings.Join([]string{string(hasFailed.Reason), hasFailed.Message}, ",")
+			return r.updateStatus(ctx, app)
+		}
+
+		hasSucceeded, err := r.JobMgr.HasSucceeded(ctx, jobMeta.Namespace, jobMeta.Name)
+		if err != nil {
+			app.Status.Job.IsRunning = false
+			logger.Debug("ERR GETTING JOB")
+			_, err = r.updateStatus(ctx, app)
+			if err != nil {
+				fmt.Println("Something happened: ", err)
+			}
+			return reconcileResult.Failed()
+		}
+
+		if hasSucceeded != nil {
+			logger.Debug("HAS SUCCEEDED")
+			app.Status.Job.IsRunning = false
+			app.Status.Job.Type = string(hasSucceeded.Type)
+			app.Status.Job.Status = string(hasSucceeded.Status)
+			app.Status.Job.Reason = strings.Join([]string{string(hasSucceeded.Reason), hasSucceeded.Message}, ",")
+			return r.updateStatus(ctx, app)
+		}
+
+		return reconcileResult.Retry(2)
+	}
+
+		if app.IsNewVersion() || app.Status.Job == nil {
+			app.Status.Job = &crdsv1.ReconJob{}
+		}
+
+		// ASSERT: create/update result
+		_, err := json.Marshal(app.Spec)
+		if err != nil {
+			r.logger.Error(errors.New("could not unmarshal app spec into []byte"))
+			return reconcileResult.Failed()
+		}
+
+		logger.Debugf("something Status %v, Job %+v", app.Status, *app.Status.Job)
+
+		// action := "create"
+		// if app.IsNewVersion() {
+		// 	action = "update"
+		// }
+
+		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
+			Name:           "app-create",
+			Namespace:      "hotspot",
+			ServiceAccount: "hotspot-cluster-svc-account",
+			// Image:          "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
+			Image:   "nginx",
+			Command: []string{"bash"},
+			Args: []string{
+				"-c",
+				"sleep 2",
+			},
+			// Args: []string{
+			// 	action,
+			// 	"--name", app.Name,
+			// 	"--namespace", app.Namespace,
+			// 	"--spec", string(b),
+			// },
+		})
+
+		if err != nil {
+			return reconcileResult.RetryE(2, err)
+		}
+
+		app.Status.Job.Name = job.Name
+		app.Status.Job.IsRunning = true
+		app.Status.Job.Namespace = job.Namespace
+		return r.updateStatus(ctx, app)
+	}
+
+	if app.Status.Job != nil {
+		return reconcileResult.Retry(5)
+	}
+
+	if jobMeta := app.Status.Job; jobMeta != nil && jobMeta.IsRunning {
+		logger.Info("Job is RUNNING")
+		// ASSERT: job is running
+		hasFailed, err := r.JobMgr.HasFailed(ctx, jobMeta.Namespace, jobMeta.Name)
+		if err != nil {
+			app.Status.Job.IsRunning = false
+			logger.Debug("ERR GETTING JOB")
+			_, err = r.updateStatus(ctx, app)
+			if err != nil {
+				fmt.Println("Something happened: ", err)
+			}
+			return reconcileResult.Failed()
+		}
+
+		if hasFailed != nil {
+			logger.Debug("HAS FAILED")
+			app.Status.Job.IsRunning = false
+			app.Status.Job.Type = string(hasFailed.Type)
+			app.Status.Job.Status = string(hasFailed.Status)
+			app.Status.Job.Reason = strings.Join([]string{string(hasFailed.Reason), hasFailed.Message}, ",")
+			return r.updateStatus(ctx, app)
+		}
+
+		hasSucceeded, err := r.JobMgr.HasSucceeded(ctx, jobMeta.Namespace, jobMeta.Name)
+		if err != nil {
+			app.Status.Job.IsRunning = false
+			logger.Debug("ERR GETTING JOB")
+			_, err = r.updateStatus(ctx, app)
+			if err != nil {
+				fmt.Println("Something happened: ", err)
+			}
+			return reconcileResult.Failed()
+		}
+
+		if hasSucceeded != nil {
+			logger.Debug("HAS SUCCEEDED")
+			app.Status.Job.IsRunning = false
+			app.Status.Job.Type = string(hasSucceeded.Type)
+			app.Status.Job.Status = string(hasSucceeded.Status)
+			app.Status.Job.Reason = strings.Join([]string{string(hasSucceeded.Reason), hasSucceeded.Message}, ",")
+			return r.updateStatus(ctx, app)
+		}
+
+		return reconcileResult.Retry(2)
+	}
+
+		if app.IsNewVersion() || app.Status.Job == nil {
+			app.Status.Job = &crdsv1.ReconJob{}
+		}
+
+		// ASSERT: create/update result
+		_, err := json.Marshal(app.Spec)
+		if err != nil {
+			r.logger.Error(errors.New("could not unmarshal app spec into []byte"))
+			return reconcileResult.Failed()
+		}
+
+		logger.Debugf("something Status %v, Job %+v", app.Status, *app.Status.Job)
+
+		// action := "create"
+		// if app.IsNewVersion() {
+		// 	action = "update"
+		// }
+
+		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
+			Name:           "app-create",
+			Namespace:      "hotspot",
+			ServiceAccount: "hotspot-cluster-svc-account",
+			// Image:          "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
+			Image:   "nginx",
+			Command: []string{"bash"},
+			Args: []string{
+				"-c",
+				"sleep 2",
+			},
+			// Args: []string{
+			// 	action,
+			// 	"--name", app.Name,
+			// 	"--namespace", app.Namespace,
+			// 	"--spec", string(b),
+			// },
+		})
+
+		if err != nil {
+			return reconcileResult.RetryE(2, err)
+		}
+
+		app.Status.Job.Name = job.Name
+		app.Status.Job.IsRunning = true
+		app.Status.Job.Namespace = job.Namespace
+		return r.updateStatus(ctx, app)
+	}

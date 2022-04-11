@@ -5,18 +5,20 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	meta "k8s.io/apimachinery/pkg/api/meta"
+	_ "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	// applyCoreV1 "k8s.io/client-go/applyconfigurations/core/v1"
+	// applyMetaV1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
-	"operators.kloudlite.io/lib/reconcile-result"
+	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	_ "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -26,6 +28,7 @@ type ProjectReconciler struct {
 	Scheme    *runtime.Scheme
 	ClientSet *kubernetes.Clientset
 	JobMgr    lib.Job
+	logger    *zap.SugaredLogger
 }
 
 const (
@@ -43,13 +46,14 @@ func (b Bool) Condition() metav1.ConditionStatus {
 	return metav1.ConditionTrue
 }
 
-func GetLogger(args types.NamespacedName) *zap.SugaredLogger {
+func GetLogger(_ types.NamespacedName) *zap.SugaredLogger {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync() // flushes buffer, if any
 	sugar := logger.Sugar()
-	return sugar.With(
-		"NAME", args.String(),
-	)
+	return sugar
+	// return sugar.With(
+	// 	"NAME", args.String(),
+	// )
 }
 
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -62,6 +66,7 @@ const coolingTime = 5
 func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx).WithValues("resourceName:", req.Name, "namespace:", req.Namespace)
 	logger := GetLogger(req.NamespacedName)
+	r.logger = logger
 
 	project := &crdsv1.Project{}
 	if err := r.Get(ctx, req.NamespacedName, project); err != nil {
@@ -72,81 +77,83 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcileResult.Failed()
 	}
 
-	logger.Infof("received update conditions: %+v", project.Status.Conditions)
-	if project.IsNextGeneration() {
-		return reconcileResult.Retry(coolingTime)
+	if project.GetDeletionTimestamp() != nil {
+		logger.Debug("has deletiontimestamp")
+		return r.finalizeProject(ctx, project)
 	}
-	logger.Info("HERE")
 
-	if project.IsReady() {
-		logger.Info("HERE 2")
-		if project.HasConditionsMet() {
-			project.SetReady()
-			err := r.Status().Update(ctx, project)
+	if project.IsNewGeneration() || project.Status.Namespace != project.Name {
+		logger.Infof("Status.Namespace %v project.Name %v", project.Status.Namespace, project.Name)
+		logger.Debugf("project.Status.Namespace != project.Name")
+
+		// ASSERT: On Updating
+		if ns, ok := r.namespaceExists(ctx, project.Name); ok {
+			_, err := r.ClientSet.CoreV1().Namespaces().Update(ctx, ns, metav1.UpdateOptions{})
 			if err != nil {
-				return reconcileResult.RetryE(coolingTime, errors.ConditionUpdate(err))
+				return reconcileResult.RetryE(2, errors.NewEf(err, "could not update namspace %v", ns.Name))
 			}
+			logger.Debugf("namespace %v has been updated", ns.Name)
+			return r.updateStatus(ctx, project)
 		}
 
-		for _, condition := range project.ExpectedConditions() {
-			switch condition {
+		// ASSERT: New Creation
+		_, err := r.ClientSet.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: project.Name,
+			},
+		}, metav1.CreateOptions{})
 
-			case "namespace-exists":
-				{
-					var ns corev1.Namespace
-					if err := r.Get(ctx, types.NamespacedName{Name: project.Name}, &ns); err == nil {
-						meta.SetStatusCondition(&project.Status.Conditions, metav1.Condition{
-							Type:               "namespace-exists",
-							Status:             metav1.ConditionTrue,
-							ObservedGeneration: project.Generation,
-							Reason:             "already-exists",
-							Message:            "",
-						})
-
-						err = r.Status().Update(ctx, project)
-						if err != nil {
-							return reconcileResult.RetryE(10, errors.ConditionUpdate(err))
-						}
-						return reconcileResult.Retry(1)
-					}
-
-					_, err := r.ClientSet.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       project.Name,
-							Finalizers: []string{projectFinalizer},
-						},
-					}, metav1.CreateOptions{})
-					logger.Debugf("error %+w", err)
-
-					if err != nil {
-						return reconcileResult.RetryE(coolingTime, errors.NewEf(err, "could not create namespace"))
-					}
-
-					meta.SetStatusCondition(&project.Status.Conditions, metav1.Condition{
-						Type:               "namespace-exists",
-						Status:             metav1.ConditionTrue,
-						ObservedGeneration: project.Generation,
-						Reason:             "done",
-						Message:            "",
-					})
-
-					err = r.Status().Update(ctx, project)
-					if err != nil {
-						return reconcileResult.RetryE(10, errors.ConditionUpdate(err))
-					}
-
-					return reconcileResult.Retry(1)
-				}
-			}
+		if err != nil {
+			return reconcileResult.RetryE(maxCoolingTime, errors.NewEf(err, "could not create namespace"))
 		}
+		logger.Infof("created namespace (%s)\n", project.Name)
+		project.Status.Namespace = project.Name
+		return r.updateStatus(ctx, project)
 	}
 
-	return ctrl.Result{}, nil
+	return reconcileResult.OK()
+}
+
+func (r *ProjectReconciler) updateStatus(ctx context.Context, project *crdsv1.Project) (ctrl.Result, error) {
+	project.Status.Generation = project.Generation
+	err := r.Status().Update(ctx, project)
+	if err != nil {
+		return reconcileResult.RetryE(2, errors.StatusUpdate(err))
+	}
+	r.logger.Debugf("project (name=%s) has been updated", project.Name)
+	return reconcileResult.OK()
+}
+
+func (r *ProjectReconciler) finalizeProject(ctx context.Context, project *crdsv1.Project) (ctrl.Result, error) {
+	logger := GetLogger(types.NamespacedName{Name: project.Name})
+
+	if controllerutil.ContainsFinalizer(project, projectFinalizer) {
+		if err := r.ClientSet.CoreV1().Namespaces().Delete(ctx, project.Name, metav1.DeleteOptions{}); err != nil {
+			return reconcileResult.RetryE(2, errors.NewEf(err, "could not delete namespace"))
+		}
+
+		controllerutil.RemoveFinalizer(project, projectFinalizer)
+		logger.Infof("finalizers: %+v", project.GetFinalizers())
+		err := r.Update(ctx, project)
+		if err != nil {
+			return reconcileResult.RetryE(maxCoolingTime, errors.Newf("finalized project (name=%s)", project.Name))
+		}
+		return reconcileResult.OK()
+	}
+
+	return reconcileResult.OK()
+}
+
+func (r *ProjectReconciler) namespaceExists(ctx context.Context, namespace string) (*corev1.Namespace, bool) {
+	var ns corev1.Namespace
+	err := r.Get(ctx, types.NamespacedName{Name: namespace}, &ns)
+	return &ns, err == nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.Project{}).
+		Owns(&corev1.Namespace{}).
 		Complete(r)
 }

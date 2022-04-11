@@ -1,0 +1,30 @@
+apiVersion: "crds.kloudlite.io/v1"
+kind: App
+metadata:
+  name: sample-app
+  namespace: sample
+  finalizers:
+    - finalizers.kloudlite.io/app
+spec:
+  services:
+    - port: 80
+      targetPort: 80
+      type: tcp
+  containers:
+    - name: sampl
+      image: nginx
+      imagePullPolicy: Always
+      # command:
+      #   - "bash"
+      # args:
+      #   - "-c"
+      #   - "tail -f /dev/null"
+      resourceCpu:
+        min: "100"
+        max: "200"
+      resourceMemory:
+        min: "100"
+        max: "200"
+      env:
+        - key: hello
+          value: world
