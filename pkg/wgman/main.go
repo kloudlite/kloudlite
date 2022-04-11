@@ -109,8 +109,9 @@ Endpoint = {{ $value.Endpoint }}
 func (c *Config) getWgClientConfig() (string, error) {
 	f := `
 [Interface]
-Address ={{.PublicIp}}
 PrivateKey = {{.PrivateKey}}
+Address ={{.PublicIp}}
+DNS=10.43.0.10
 
 {{- range $key, $value := .Peers }}
 
@@ -252,89 +253,3 @@ func (wgc *wgManager) DeletePeer(publicKey string, configPath string) error {
 	delete(c.Peers, publicKey)
 	return c.writeConfig(*wgc)
 }
-
-// func main() {
-// 	var ip, peersBase64, command, wgConfigPath string
-// 	flag.StringVar(&ip, "ip", "", "public ip")
-// 	flag.StringVar(&command, "command", "", "command")
-// 	flag.StringVar(&peersBase64, "peers", "", "peers json in Base64")
-// 	flag.StringVar(&wgConfigPath, "configpath", "/etc/wireguard/wg0.conf", "wg config path")
-
-// 	flag.Parse()
-
-// 	switch command {
-// 	case "init":
-// 		key, err := wgtypes.GenerateKey()
-// 		if err != nil {
-// 			panic(fmt.Errorf("failed to generate public, private keys: %v", err))
-// 		}
-// 		c := Config{
-// 			PublicKey:    key.PublicKey().String(),
-// 			PrivateKey:   key.String(),
-// 			PublicIp:     ip,
-// 			Peers:        map[string]Peer{},
-// 			NetInterface: "eth0",
-// 		}
-// 		marshal, err := json.Marshal(c)
-// 		if err != nil {
-// 			panic(fmt.Errorf("failed to marshal config: %v", err))
-// 		}
-// 		err = exec.Command("rm", "./wg0.conf").Run()
-// 		err = ioutil.WriteFile("config.json", marshal, 0644)
-// 		if err != nil {
-// 			panic(fmt.Errorf("unable to write config file: %v", err))
-// 		}
-// 		out, err := json.Marshal(map[string]string{
-// 			"public_key": key.PublicKey().String(),
-// 		})
-// 		if err != nil {
-// 			panic(fmt.Errorf("unable to generate output: %v", err))
-// 		}
-// 		c.writeConfig(wgConfigPath)
-// 		fmt.Println(string(out))
-// 		break
-// 	case "peers":
-
-// 		// all, _ := io.ReadAll(os.Stdin)
-// 		// os.Stdin.Close()
-// 		all, _ := base64.StdEncoding.DecodeString(peersBase64)
-// 		peers := make([]Peer, 0)
-// 		err := json.Unmarshal(all, &peers)
-// 		if err != nil {
-// 			fmt.Println(fmt.Errorf("unable to parse peers error: %v", err))
-// 		}
-// 		var c Config
-// 		configsRaw, err := ioutil.ReadFile("config.json")
-// 		err = json.Unmarshal(configsRaw, &c)
-// 		if err != nil {
-// 			fmt.Println(fmt.Errorf("unable to parse config error: %v", err))
-// 		}
-
-// 		for k := range c.Peers {
-// 			delete(c.Peers, k)
-// 		}
-
-// 		for _, p := range peers {
-// 			c.Peers[p.PublicKey] = p
-// 		}
-
-// 		marshal, err := json.Marshal(c)
-// 		if err != nil {
-// 			panic(fmt.Errorf("failed to marshal config: %v", err))
-// 		}
-
-// 		err = c.writeConfig(wgConfigPath)
-
-// 		if err != nil {
-// 			panic(fmt.Errorf("unable to update wireguard: %v", err))
-// 		}
-
-// 		err = ioutil.WriteFile("config.json", marshal, 0644)
-
-// 		if err != nil {
-// 			panic(fmt.Errorf("unable to write config file: %v", err))
-// 		}
-
-// 		break
-// 	}
-// }
