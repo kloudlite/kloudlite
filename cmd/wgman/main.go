@@ -1,4 +1,4 @@
-package main
+package wgman
 
 import (
 	"bytes"
@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"text/template"
 
-	"golang.org/x/tools/go/analysis/passes/nilfunc"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -92,7 +91,6 @@ func InitWireguard(ip, configPath string) (*string, error) {
 	}
 
 	var marshal []byte
-
 	if marshal, err = json.Marshal(c); err != nil {
 		return nil, fmt.Errorf("failed to masrshal config: %v ", err)
 	}
@@ -108,6 +106,38 @@ func InitWireguard(ip, configPath string) (*string, error) {
 	publicKey := key.PublicKey().String()
 	return &publicKey, nil
 
+}
+
+func AddPeer(publicKey string, allowedIps string, endpoint *string, configPath string) error {
+	var c Config
+	var configsRaw []byte
+	var err error
+	if configsRaw, err = ioutil.ReadFile("config.json"); err != nil {
+		return fmt.Errorf("unable to parse config error: %v", err)
+	}
+	if err := json.Unmarshal(configsRaw, &c); err != nil {
+		return fmt.Errorf("unable to parse config error: %v", err)
+	}
+	c.Peers[publicKey] = Peer{
+		PublicKey:  publicKey,
+		Endpoint:   endpoint,
+		AllowedIps: allowedIps,
+	}
+	return c.writeConfig(configPath)
+}
+
+func DeletePeer(publicKey string, configPath string) error {
+	var c Config
+	var configsRaw []byte
+	var err error
+	if configsRaw, err = ioutil.ReadFile("config.json"); err != nil {
+		return fmt.Errorf("unable to parse config error: %v", err)
+	}
+	if err := json.Unmarshal(configsRaw, &c); err != nil {
+		return fmt.Errorf("unable to parse config error: %v", err)
+	}
+	delete(c.Peers, publicKey)
+	return c.writeConfig(configPath)
 }
 
 func main() {
@@ -147,7 +177,7 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("unable to generate output: %v", err))
 		}
-		c.writeConfig()
+		c.writeConfig(wgConfigPath)
 		fmt.Println(string(out))
 		break
 	case "peers":
@@ -180,7 +210,7 @@ func main() {
 			panic(fmt.Errorf("failed to marshal config: %v", err))
 		}
 
-		err = c.writeConfig()
+		err = c.writeConfig(wgConfigPath)
 
 		if err != nil {
 			panic(fmt.Errorf("unable to update wireguard: %v", err))
