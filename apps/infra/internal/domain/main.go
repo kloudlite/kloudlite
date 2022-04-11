@@ -54,7 +54,7 @@ var Module = fx.Module("domain",
 			ClusterID:    "cluster-test-new",
 			Region:       "blr1",
 			Provider:     "do",
-			MastersCount: 3, NodesCount: 4,
+			MastersCount: 1, NodesCount: 1,
 		})
 	}),
 )
