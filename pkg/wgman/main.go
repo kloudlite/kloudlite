@@ -80,11 +80,11 @@ func (c *Config) getWgConfig() (string, error) {
 	f := `
 [Interface]
 Address ={{.PublicIp}}
-SaveConfig = true
-ListenPort = 31820
+ListenPort = 51820
 PrivateKey = {{.PrivateKey}}
-PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ .NetInterface }} -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o {{ .NetInterface }} -j MASQUERADE
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ .NetInterface }} -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o {{ .NetInterface }} -j MASQUERADE
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
 
 {{- range $key, $value := .Peers }}
 
@@ -147,11 +147,11 @@ func (wgc *wgManager) Init(ip string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to generate public, private keys: %v", err)
 	}
-
+	nodeIp, err := wgc.GetNodeIp()
 	c := Config{
 		PublicKey:    key.PublicKey().String(),
 		PrivateKey:   key.String(),
-		PublicIp:     ip,
+		PublicIp:     nodeIp,
 		Peers:        map[string]Peer{},
 		NetInterface: "eth0",
 	}
@@ -180,7 +180,8 @@ func (wgc *wgManager) Init(ip string) (string, error) {
 func (wgc *wgManager) GetNodeIp() (string, error) {
 	out, err := wgc.remoteClient.Readfile("wg-ip")
 	if err != nil {
-		return "", fmt.Errorf("failed to get node ip: %v", err)
+		return "10.13.13.1", nil
+		//return "", fmt.Errorf("failed to get node ip: %v", err)
 	}
 	return string(out), nil
 }
