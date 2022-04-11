@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"kloudlite.io/apps/infra/internal/domain"
@@ -42,31 +43,29 @@ func (i *infraClient) setupMaster(ip string) error {
 
 func (i *infraClient) checkAndSetupNodeWireguards(ips []string) {
 
-	c := make(chan bool, len(ips))
-
-	fmt.Println(len(ips), "to setup wireguard")
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(len(ips))
 
 	for ind, ip := range ips {
 		go func(ip string) {
-
 			wg := wgman.NewSshWgManager("/etc/wireguard/wg0.conf", ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath), false)
 
 			if !wg.IsSetupDone() {
 				_ip, e := wg.GetNodeIp()
 				if e != nil {
 					fmt.Println(e)
-					c <- false
+					waitGroup.Done()
 					return
 				}
 				o, e := wg.Init(_ip)
 				fmt.Println(o, e)
 			}
 			fmt.Println(ind, "done")
-			c <- true
+			waitGroup.Done()
 		}(ip)
 	}
 
-	<-c
+	waitGroup.Wait()
 	fmt.Println("done", "checkAndSetupNodeWireguards")
 }
 
@@ -196,26 +195,19 @@ func (i *infraClient) setupAllKubernetes(clusterId string, provider string) ([]b
 	return cmd.Output()
 }
 
-func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId string) error {
-
+func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId string) (err error) {
 	masterIp := masterIps[0]
-
 	if len(masterIps) < 2 {
 		return nil
 	}
-
-	c := make(chan error, len(masterIps)-1)
-
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(len(masterIps) - 1)
 	for index, ip := range masterIps {
-
 		if index == 0 {
 			continue
 		}
-
 		go func(ip string) error {
-
 			i.waitForSshAvailability(ip)
-
 			cmd := exec.Command(
 				"k3sup",
 				"join",
@@ -227,22 +219,17 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId stri
 				"--server",
 				"--k3s-extra-args='--disable=traefik'",
 			)
-
+			cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
 			_, err := cmd.Output()
-			c <- err
-
+			waitGroup.Done()
 			if err != nil {
 				return err
 			}
-
 			return nil
 		}(ip)
-
 	}
-
-	err := <-c
+	waitGroup.Wait()
 	fmt.Println("done joining masters")
-
 	return err
 }
 
@@ -343,43 +330,38 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	fmt.Println("setup finished", e)
 	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
 
-	c := make(chan bool, 5)
-
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(5)
 	go func() {
 		i.checkAndSetupNodeWireguards(append(strings.Split(masterIps, ","), strings.Split(agentIps, ",")...))
-		fmt.Println("alex", 0)
-		c <- true
+		waitGroup.Done()
 	}()
 
 	go func() {
+
 		i.checkAndSetupKubeWireguard(masterIp, action.ClusterID)
-
-		fmt.Println("alex", 1)
-		c <- true
+		waitGroup.Done()
 	}()
 
 	go func() {
+
 		i.setupAllKubernetes(action.ClusterID, action.Provider)
-
-		fmt.Println("alex", 2)
-		c <- true
+		waitGroup.Done()
 	}()
 
 	go func() {
+
 		i.installSecondaryMasters(strings.Split(masterIps, ","), action.ClusterID)
-
-		fmt.Println("alex", 3)
-		c <- true
+		waitGroup.Done()
 	}()
 
 	go func() {
-		i.installAgents(masterIp, strings.Split(agentIps, ","), action.ClusterID)
 
-		fmt.Println("alex", 4)
-		c <- true
+		i.installAgents(masterIp, strings.Split(agentIps, ","), action.ClusterID)
+		waitGroup.Done()
 	}()
 
-	<-c
+	waitGroup.Wait()
 	fmt.Println("setup finished")
 
 	fmt.Println(e)
