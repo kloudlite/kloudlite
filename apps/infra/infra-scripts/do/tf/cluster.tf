@@ -22,8 +22,10 @@ resource "digitalocean_droplet" "master-nodes"  {
   region = var.region
   size     = var.size
   ssh_keys = var.ssh_keys
+
   user_data = templatefile("./init.sh", {
     pubkey = file("${var.keys-path}/access.pub")
+    wg_ip  = "10.13.13.${count.index + 2}"
   })
 }
 
@@ -36,6 +38,7 @@ resource "digitalocean_droplet" "agent-nodes"  {
   ssh_keys = var.ssh_keys
   user_data = templatefile("./init.sh", {
     pubkey = file("${var.keys-path}/access.pub")
+    wg_ip  = "10.13.13.${count.index + 5}"
   })
 }
 
@@ -57,6 +60,10 @@ resource "digitalocean_droplet" "agent-nodes"  {
 
 # output "master-floating-ips" {
 #   value = join(",", digitalocean_floating_ip.floating-ips.*.ip_address)
+# }
+# output master-wg-ips {
+#   count = var.master-nodes-count
+#   value = join(",", "10.13.13.${count.index + 2}")
 # }
 
 output "master-ips" {
