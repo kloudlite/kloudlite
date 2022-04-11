@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"text/template"
 
+	"golang.org/x/tools/go/analysis/passes/nilfunc"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -33,14 +34,14 @@ type Config struct {
 	NetInterface string          `json:"net_interface"`
 }
 
-func (c *Config) writeConfig() error {
+func (c *Config) writeConfig(configPath string) error {
 	config, err := c.getWgConfig()
 	if err != nil {
 		return err
 	}
 	err = exec.Command("wg-quick", "down", "wg0").Run()
-	exec.Command("rm", "/etc/wireguard/wg0.conf").Run()
-	err = ioutil.WriteFile("/etc/wireguard/wg0.conf", []byte(config), 0644)
+	exec.Command("rm", configPath).Run()
+	err = ioutil.WriteFile(configPath, []byte(config), 0644)
 	err = exec.Command("wg-quick", "up", "wg0").Run()
 	return err
 }
@@ -75,11 +76,46 @@ Endpoint = {{ $value.Endpoint }}
 
 }
 
+func InitWireguard(ip, configPath string) (*string, error) {
+
+	key, err := wgtypes.GenerateKey()
+	if err != nil {
+		panic(fmt.Errorf("failed to generate public, private keys: %v", err))
+	}
+
+	c := Config{
+		PublicKey:    key.PublicKey().String(),
+		PrivateKey:   key.String(),
+		PublicIp:     ip,
+		Peers:        map[string]Peer{},
+		NetInterface: "eth0",
+	}
+
+	var marshal []byte
+
+	if marshal, err = json.Marshal(c); err != nil {
+		return nil, fmt.Errorf("failed to masrshal config: %v ", err)
+	}
+
+	if err := ioutil.WriteFile("config.json", marshal, 0644); err != nil {
+		return nil, fmt.Errorf("failed to write config: %v ", err)
+	}
+
+	if err := c.writeConfig(configPath); err != nil {
+		return nil, fmt.Errorf("unable to write config file: %v", err)
+	}
+
+	publicKey := key.PublicKey().String()
+	return &publicKey, nil
+
+}
+
 func main() {
-	var ip, peersBase64, command string
+	var ip, peersBase64, command, wgConfigPath string
 	flag.StringVar(&ip, "ip", "", "public ip")
 	flag.StringVar(&command, "command", "", "command")
 	flag.StringVar(&peersBase64, "peers", "", "peers json in Base64")
+	flag.StringVar(&wgConfigPath, "configpath", "/etc/wireguard/wg0.conf", "wg config path")
 
 	flag.Parse()
 
