@@ -51,10 +51,10 @@ var Module = fx.Module("domain",
 	fx.Provide(makeDomain),
 	fx.Invoke(func(d Domain) {
 		d.CreateCluster(SetupClusterAction{
-			ClusterID:    "cluster-test-new",
-			Region:       "blr1",
-			Provider:     "do",
-			MastersCount: 1, NodesCount: 1,
+			ClusterID:  "cluster-test-new",
+			Region:     "blr1",
+			Provider:   "do",
+			NodesCount: 3,
 		})
 	}),
 )
