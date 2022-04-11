@@ -41,35 +41,61 @@ func (i *infraClient) setupMaster(ip string) error {
 	return e
 }
 
-func (i *infraClient) checkAndSetupNodeWireguards(ips []string) {
+func (i *infraClient) setupNodeWireguards(
+	nodeIps []string,
+	clusterId string,
+	clusterIp string,
+	clusterPublicKey string,
+) (err error) {
 
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(len(ips))
-
-	for ind, ip := range ips {
-		go func(ip string) {
+	serverWg := wgman.NewKubeWgManager(
+		"/config/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		true,
+	)
+	for _, ip := range nodeIps {
+		func(ip string) {
 			wg := wgman.NewSshWgManager("/etc/wireguard/wg0.conf", ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath), false)
-
-			if !wg.IsSetupDone() {
+			//!wg.IsSetupDone()
+			if true {
 				_ip, e := wg.GetNodeIp()
 				if e != nil {
-					fmt.Println(e)
-					waitGroup.Done()
+
+					fmt.Println(fmt.Errorf("unable to get nodeip %v", e))
 					return
 				}
-				o, e := wg.Init(_ip)
-				fmt.Println(o, e)
+				nodePublicKey, e := wg.Init(_ip)
+				if e != nil {
+
+					fmt.Println(fmt.Errorf("failed to setup wireguard for node %v", e))
+					return
+				}
+				endpoint := fmt.Sprintf("%v:31820", clusterIp)
+				e = wg.AddPeer(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", &endpoint)
+				if e != nil {
+					fmt.Println(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", endpoint)
+					panic(e)
+
+					fmt.Println(fmt.Errorf("failed to add peer to wireguard for node %v", e))
+					return
+				}
+				e = serverWg.AddPeer(nodePublicKey, fmt.Sprintf("%v/32", strings.TrimSpace(_ip)), nil)
+				if e != nil {
+
+					fmt.Println(fmt.Errorf("unable to add node as peer to wireguard server %v", e))
+					return
+				}
 			}
-			fmt.Println(ind, "done")
-			waitGroup.Done()
+
 		}(ip)
 	}
 
-	waitGroup.Wait()
-	fmt.Println("done", "checkAndSetupNodeWireguards")
+	return nil
 }
 
-func (i *infraClient) checkAndSetupKubeWireguard(ip, clusterId string) error {
+func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
 
 	cmd := exec.Command("kubectl", "wait", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
 	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
@@ -77,7 +103,7 @@ func (i *infraClient) checkAndSetupKubeWireguard(ip, clusterId string) error {
 
 	if err != nil {
 		fmt.Println("error on kube server start:", err)
-		return err
+		return "", err
 	}
 
 	wg := wgman.NewKubeWgManager("/config/wg0.conf", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId), "wireguard", "deploy/wireguard-deployment", true)
@@ -86,13 +112,9 @@ func (i *infraClient) checkAndSetupKubeWireguard(ip, clusterId string) error {
 
 	if err != nil {
 		fmt.Println("error on kube server start:", err)
-		return err
+		return o, err
 	}
-
-	fmt.Println("server publickey: ", o)
-
-	return err
-
+	return o, err
 }
 
 func initTerraformInFolder(folder string) error {
@@ -274,9 +296,6 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterI
 	return err
 }
 
-// TODO: Have to implement this
-func (i *infraClient) waitForKubernetesSetup() {}
-
 func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e error) {
 
 	defer errors.HandleErr(&e)
@@ -315,49 +334,58 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 
 	errors.AssertNoError(e, fmt.Errorf("unable to apply terraform primary"))
 
-	// masterFloatingIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-floating-ips")
 	masterIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ips")
 	agentIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "agent-ips")
 
 	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ip"))
 
-	fmt.Println("cluster setup finished")
+	clusterIp := strings.Split(masterIps, ",")[0]
+	var clusterPublicKey string
+	var clusterPublicKeyWaitGroup sync.WaitGroup
+	clusterPublicKeyWaitGroup.Add(1)
 
-	masterIp := strings.Split(masterIps, ",")[0]
+	_, e = i.installPrimaryMaster(clusterIp, action.ClusterID)
 
-	_, e = i.installPrimaryMaster(masterIp, action.ClusterID)
-
-	fmt.Println("setup finished", e)
 	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
 
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(5)
 	go func() {
-		i.checkAndSetupNodeWireguards(append(strings.Split(masterIps, ","), strings.Split(agentIps, ",")...))
+		clusterPublicKeyWaitGroup.Wait()
+		i.setupNodeWireguards(
+			append(strings.Split(masterIps, ","), strings.Split(agentIps, ",")...),
+			action.ClusterID,
+			clusterIp,
+			clusterPublicKey,
+		)
 		waitGroup.Done()
 	}()
 
 	go func() {
-
-		i.checkAndSetupKubeWireguard(masterIp, action.ClusterID)
+		wireguardPub, err := i.setupKubeWireguard(clusterIp, action.ClusterID)
+		if err != nil {
+			fmt.Println(fmt.Errorf("unable to setup wireguard %v", err))
+			waitGroup.Done()
+			return
+		}
+		clusterPublicKey = wireguardPub
+		clusterPublicKeyWaitGroup.Done()
 		waitGroup.Done()
 	}()
 
 	go func() {
-
-		i.setupAllKubernetes(action.ClusterID, action.Provider)
+		kubernetes, _ := i.setupAllKubernetes(action.ClusterID, action.Provider)
+		fmt.Println(string(kubernetes))
 		waitGroup.Done()
 	}()
 
 	go func() {
-
 		i.installSecondaryMasters(strings.Split(masterIps, ","), action.ClusterID)
 		waitGroup.Done()
 	}()
 
 	go func() {
-
-		i.installAgents(masterIp, strings.Split(agentIps, ","), action.ClusterID)
+		i.installAgents(clusterIp, strings.Split(agentIps, ","), action.ClusterID)
 		waitGroup.Done()
 	}()
 
@@ -365,11 +393,6 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	fmt.Println("setup finished")
 
 	fmt.Println(e)
-	errors.AssertNoError(e, fmt.Errorf("unable to setup master"))
-
-	// e = i.setupWireguard(masterIp)
-	// _, e = i.generateWireguardKey(masterIp)
-	errors.AssertNoError(e, fmt.Errorf("unable to setup wireguard"))
 
 	return e
 }
