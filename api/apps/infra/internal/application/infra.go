@@ -9,6 +9,7 @@ import (
 
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/wgman"
 )
 
 type infraClient struct {
@@ -37,6 +38,62 @@ func (i *infraClient) setupMaster(ip string) error {
 	).Run()
 
 	return e
+}
+
+func (i *infraClient) checkAndSetupNodeWireguards(ips []string) {
+
+	c := make(chan bool, len(ips))
+
+	fmt.Println(len(ips), "to setup wireguard")
+
+	for ind, ip := range ips {
+		go func(ip string) {
+
+			wg := wgman.NewSshWgManager("/etc/wireguard/wg0.conf", ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath), false)
+
+			if !wg.IsSetupDone() {
+				_ip, e := wg.GetNodeIp()
+				if e != nil {
+					fmt.Println(e)
+					c <- false
+					return
+				}
+				o, e := wg.Init(_ip)
+				fmt.Println(o, e)
+			}
+			fmt.Println(ind, "done")
+			c <- true
+		}(ip)
+	}
+
+	<-c
+	fmt.Println("done", "checkAndSetupNodeWireguards")
+}
+
+func (i *infraClient) checkAndSetupKubeWireguard(ip, clusterId string) error {
+
+	cmd := exec.Command("kubectl", "wait", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
+	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
+	err := cmd.Run()
+
+	if err != nil {
+		fmt.Println("error on kube server start:", err)
+		return err
+	}
+
+	wg := wgman.NewKubeWgManager("/config/wg0.conf", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId), "wireguard", "deploy/wireguard-deployment", true)
+
+	o, err := wg.Init(ip)
+
+	if err != nil {
+		fmt.Println("error on kube server start:", err)
+		return err
+	}
+
+	fmt.Println("server publickey: ", o)
+
+	return err
+
 }
 
 func initTerraformInFolder(folder string) error {
@@ -127,6 +184,7 @@ func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([
 	)
 
 	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)
+
 	return cmd.Output()
 }
 
@@ -183,6 +241,7 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId stri
 	}
 
 	err := <-c
+	fmt.Println("done joining masters")
 
 	return err
 }
@@ -223,106 +282,13 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterI
 	}
 
 	err := <-c
+	fmt.Println("done joining agents")
 
 	return err
 }
 
 // TODO: Have to implement this
 func (i *infraClient) waitForKubernetesSetup() {}
-
-func (i *infraClient) generateWireguardKey(ip string) ([]byte, error) {
-	cmd := exec.Command("ssh", "-o", "StrictHostKeyChecking=no", fmt.Sprintf("root@%v", ip), "~/host-scripts/wg/keygen.sh")
-	out, err := cmd.Output()
-	return out, err
-}
-
-func (i *infraClient) vmWgmanOutput(ip string) ([]byte, error) {
-	cmd := exec.Command("ssh", fmt.Sprintf("root@%v", ip), "wg")
-	out, err := cmd.Output()
-	return out, err
-
-}
-
-func (i *infraClient) podWgmanOutput(ip string) ([]byte, error) {
-	cmd := exec.Command("ssh", fmt.Sprintf("root@%v", ip), "k3s", "kubectl", "exec", "-n", "wireguard", "wireguard", "--", "wg")
-	out, err := cmd.Output()
-	return out, err
-
-}
-
-func (i *infraClient) vmInit(ip string) ([]byte, error) {
-	cmd := exec.Command("ssh", fmt.Sprintf("root@%v", ip), "wgman", "-command=init", fmt.Sprintf("-ip=%v", ip))
-	out, err := cmd.Output()
-
-	if err != nil {
-		return out, err
-	}
-
-	out, err = i.vmWgmanOutput(ip)
-	return out, err
-}
-
-func (i *infraClient) vmPeers(ip string, peersBase64 string) ([]byte, error) {
-	cmd := exec.Command("ssh", fmt.Sprintf("root@%v", ip), "wgman", "-command=peers", "-peers=%v", peersBase64)
-	out, err := cmd.Output()
-
-	if err != nil {
-		return out, err
-	}
-
-	out, err = i.vmWgmanOutput(ip)
-	return out, err
-}
-
-func (i *infraClient) podInit(ip string) ([]byte, error) {
-	cmd := exec.Command(
-		"ssh", fmt.Sprintf("root@%v", ip), "k3s", "kubectl", "exec", "-n", "wireguard", "wireguard", "--", "/host-scripts/wgman", "-command=init", fmt.Sprintf("-ip=%v", ip),
-	)
-
-	out, err := cmd.Output()
-
-	if err != nil {
-		return out, err
-	}
-
-	out, err = i.podWgmanOutput(ip)
-	return out, err
-}
-
-func (i *infraClient) podPeers(ip string, peersBase64 string) ([]byte, error) {
-	cmd := exec.Command("ssh", fmt.Sprintf("root@%v", ip), "k3s", "kubectl", "exec", "-n", "wireguard", "wireguard", "--", "/host-scripts/wgman", "-command=peers", fmt.Sprintf("-peers=%v", peersBase64))
-
-	out, err := cmd.Output()
-
-	if err != nil {
-		return out, err
-	}
-
-	out, err = i.podWgmanOutput(ip)
-	return out, err
-}
-
-func (i *infraClient) setupWireguard(ip string) error {
-	peers := ""
-	_, e := i.vmInit(ip)
-	errors.AssertNoError(e, fmt.Errorf("Error while initializing wireguard on vm %v", ip))
-
-	out, e := i.vmPeers(ip, peers)
-	errors.AssertNoError(e, fmt.Errorf("Error while initializing wireguard on vm %v", ip))
-	fmt.Println(string(out))
-
-	_, e = i.podInit(ip)
-	errors.AssertNoError(e, fmt.Errorf("Error while initializing wireguard on pod %v", ip))
-
-	_, e = i.podPeers(ip, peers)
-	errors.AssertNoError(e, fmt.Errorf("Error while initializing wireguard on pod %v", ip))
-	fmt.Println(string(out))
-
-	if e != nil {
-		return e
-	}
-	return nil
-}
 
 func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e error) {
 
@@ -344,12 +310,19 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
 
+	masterCount := func() int {
+		if action.NodesCount > 3 {
+			return 3
+		}
+		return 1
+	}()
+
 	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), map[string]any{
 		"cluster-id":         action.ClusterID,
 		"do-token":           i.env.DoAPIKey,
 		"keys-path":          i.env.SshKeysPath,
-		"master-nodes-count": action.MastersCount,
-		"agent-nodes-count":  action.NodesCount - action.MastersCount,
+		"master-nodes-count": masterCount,
+		"agent-nodes-count":  action.NodesCount - masterCount,
 		"do-image-id":        i.env.DoImageId,
 	})
 
@@ -370,36 +343,57 @@ func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e erro
 	fmt.Println("setup finished", e)
 	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
 
-	c := make(chan bool, 4)
+	c := make(chan bool, 5)
+
+	go func() {
+		i.checkAndSetupNodeWireguards(append(strings.Split(masterIps, ","), strings.Split(agentIps, ",")...))
+		fmt.Println("alex", 0)
+		c <- true
+	}()
+
+	go func() {
+		i.checkAndSetupKubeWireguard(masterIp, action.ClusterID)
+
+		fmt.Println("alex", 1)
+		c <- true
+	}()
 
 	go func() {
 		i.setupAllKubernetes(action.ClusterID, action.Provider)
+
+		fmt.Println("alex", 2)
 		c <- true
 	}()
 
 	go func() {
 		i.installSecondaryMasters(strings.Split(masterIps, ","), action.ClusterID)
+
+		fmt.Println("alex", 3)
 		c <- true
 	}()
 
 	go func() {
 		i.installAgents(masterIp, strings.Split(agentIps, ","), action.ClusterID)
+
+		fmt.Println("alex", 4)
 		c <- true
 	}()
 
 	<-c
+	fmt.Println("setup finished")
 
 	fmt.Println(e)
 	errors.AssertNoError(e, fmt.Errorf("unable to setup master"))
 
 	// e = i.setupWireguard(masterIp)
-	_, e = i.generateWireguardKey(masterIp)
+	// _, e = i.generateWireguardKey(masterIp)
 	errors.AssertNoError(e, fmt.Errorf("unable to setup wireguard"))
 
 	return e
 }
 
 func (i *infraClient) UpdateKubernetes(action domain.UpdateClusterAction) (e error) {
+
 	defer errors.HandleErr(&e)
 	applyCommand := exec.Command(
 		"terraform",
