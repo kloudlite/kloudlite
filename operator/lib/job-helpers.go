@@ -25,41 +25,42 @@ type JobVars struct {
 	ServiceAccount  string
 	Image           string
 	ImagePullPolicy string
+	Command         []string
 	Args            []string
 	Env             map[string]string
 }
 
 func useTemplate(filename string) (func(data interface{}) ([]byte, error), error) {
 	tPath := path.Join(os.Getenv("PWD"), fmt.Sprintf("lib/templates/%s", filename))
-	t, e := template.New(filename).Funcs(sprig.TxtFuncMap()).ParseFiles(tPath)
-	if e != nil {
-		return nil, errors.Newf("could not parse template %s: %w", filename, e)
+	t, err := template.New(filename).Funcs(sprig.TxtFuncMap()).ParseFiles(tPath)
+	if err != nil {
+		return nil, errors.NewEf(err, "could not parse template %s", filename)
 	}
 
 	return func(data interface{}) ([]byte, error) {
 		w := new(bytes.Buffer)
-		e = t.Execute(w, data)
-		if e != nil {
-			return nil, errors.Newf("could not execute template as %w", e)
+		err = t.Execute(w, data)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not execute template")
 		}
 		return w.Bytes(), nil
 	}, nil
 }
 
 func UseJobTemplate(data *JobVars) (*batchv1.Job, error) {
-	fn, e := useTemplate("job-template.tmpl.yml")
-	if e != nil {
-		return nil, errors.NewE(e)
+	fn, err := useTemplate("job-template.tmpl.yml")
+	if err != nil {
+		return nil, errors.NewE(err)
 	}
-	b, e := fn(data)
-	if e != nil {
-		return nil, errors.NewE(e)
+	b, err := fn(data)
+	if err != nil {
+		return nil, errors.NewE(err)
 	}
 
 	var job batchv1.Job
-	e = yaml.UnmarshalStrict(b, &job)
-	if e != nil {
-		return nil, errors.Newf("could not YAML unmarshal template jobVars because %w", e)
+	err = yaml.UnmarshalStrict(b, &job)
+	if err != nil {
+		return nil, errors.NewEf(err, "could not YAML unmarshal template jobVars")
 	}
 	return &job, nil
 }
@@ -81,8 +82,20 @@ func (j *job) Create(ctx context.Context, namespace string, jobVars *JobVars) (*
 	return kJob, nil
 }
 
+func (j *job) Delete(ctx context.Context, namespace string, name string) error {
+	err := j.mgr(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	if err != nil {
+		return errors.NewEf(err, "could not delete job")
+	}
+	return nil
+}
+
 func (j *job) Get(ctx context.Context, namespace string, name string) (*batchv1.Job, error) {
-	return j.mgr(namespace).Get(ctx, name, metav1.GetOptions{})
+	gJob, err := j.mgr(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not get job")
+	}
+	return gJob, nil
 }
 
 func (j *job) Watch(ctx context.Context, namespace string, listOptions metav1.ListOptions) (bool, error) {
@@ -122,10 +135,60 @@ func (j *job) Watch(ctx context.Context, namespace string, listOptions metav1.Li
 	}
 }
 
+func (j *job) HasFailed(ctx context.Context, namespace string, name string) (*batchv1.JobCondition, error) {
+	rJob, err := j.mgr(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not get job")
+	}
+	for _, condition := range rJob.Status.Conditions {
+		if condition.Type == batchv1.JobFailed {
+			return &condition, nil
+		}
+	}
+	return nil, nil
+}
+
+func newBool(b bool) *bool {
+	return &b
+}
+
+func (j *job) HasSucceeded(ctx context.Context, namespace string, name string) (*bool, error) {
+	rJob, err := j.mgr(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not get job")
+	}
+	for _, condition := range rJob.Status.Conditions {
+		if condition.Type == batchv1.JobComplete {
+			return newBool(condition.Status == "True"), nil
+		}
+	}
+	return nil, nil
+}
+
+func (j *job) HasCompleted(ctx context.Context, namespace string, name string) (*bool, error) {
+	rJob, err := j.mgr(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not get job")
+	}
+	for _, condition := range rJob.Status.Conditions {
+		if condition.Type == batchv1.JobComplete {
+			return newBool(condition.Status == "True"), nil
+		}
+		if condition.Type == batchv1.JobFailed {
+			return newBool(!(condition.Status == "True")), nil
+		}
+	}
+	return nil, nil
+}
+
 type Job interface {
 	Create(ctx context.Context, namespace string, jobVars *JobVars) (*batchv1.Job, error)
+	Delete(ctx context.Context, namespace string, name string) error
 	Watch(ctx context.Context, namespace string, listOptions metav1.ListOptions) (bool, error)
 	Get(ctx context.Context, namespace string, name string) (*batchv1.Job, error)
+	HasSucceeded(ctx context.Context, namespace string, name string) (*bool, error)
+	HasFailed(ctx context.Context, namespace string, name string) (*batchv1.JobCondition, error)
+	HasCompleted(ctx context.Context, namespace string, namee string) (*bool, error)
 }
 
 func NewJobber(clientset *kubernetes.Clientset) Job {

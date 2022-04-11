@@ -12,7 +12,9 @@ type ProjectSpec struct {
 
 // ProjectStatus defines the observed state of Project
 type ProjectStatus struct {
-	Conditions []metav1.Condition `json:"conditions"`
+	Namespace  string             `json:"namespace,omitempty"`
+	Generation int64              `json:"generation,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

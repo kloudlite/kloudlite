@@ -1,6 +1,7 @@
 package reconcileResult
 
 import (
+	"fmt"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -26,5 +27,6 @@ func Retry(after int) (reconcile.Result, error) {
 }
 
 func RetryE(after int, err error) (reconcile.Result, error) {
+	fmt.Printf("RetryE: %+v", err)
 	return retry(after, err)
 }

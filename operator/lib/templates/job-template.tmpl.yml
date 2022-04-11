@@ -11,10 +11,16 @@ spec:
         - name: {{.Name}}
           image: {{.Image}}
           imagePullPolicy: {{.ImagePullPolicy | default "Always"}}
+        {{- if .Command }}
+          command:
+          {{- range .Command}}
+          - {{. | squote}}
+          {{- end}}
+        {{- end }}
         {{- if .Args }}
           args:
             {{- range .Args}}
-            - {{.}}
+            - {{. | squote}}
             {{- end}}
         {{- end }}
         {{- if .Env }}
