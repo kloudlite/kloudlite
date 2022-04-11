@@ -53,6 +53,7 @@ spec:
       labels:
         app: wireguard
     spec:
+      nodeName: master
       containers:
       - name: wireguard
         image: ghcr.io/linuxserver/wireguard
@@ -98,4 +99,21 @@ spec:
             path: /lib/modules
             type: Directory
 
+---
 
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: wireguard
+  name: wireguard-service
+  namespace: wireguard
+spec:
+  type: NodePort
+  ports:
+    - port: 51820
+      nodePort: 31820
+      protocol: UDP
+      targetPort: 51820
+  selector:
+    app: wireguard
