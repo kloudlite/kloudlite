@@ -45,8 +45,8 @@ func (m producer[T]) SendMessage(topic string, key string, message T) error {
 	errors.AssertNoError(e, fmt.Errorf("failed to marshal message"))
 	return m.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
-			Topic: &topic,
-			// Partition: kafka.PartitionAny,
+			Topic:     &topic,
+			Partition: kafka.PartitionAny,
 		},
 		Key:   []byte(key),
 		Value: msgBody,

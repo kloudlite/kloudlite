@@ -38,8 +38,8 @@ func fxProducer(mc messaging.KafkaClient) (messaging.Producer[any], error) {
 	return messaging.NewKafkaProducer[any](mc)
 }
 
-func fxJobResponder(messaging.Producer[any]) domain.InfraJobResponder {
-	return NewInfraResponder(messaging.NewKafkaProducer[any])
+func fxJobResponder(p messaging.Producer[any]) domain.InfraJobResponder {
+	return NewInfraResponder(p)
 }
 
 var Module = fx.Module("application",
