@@ -33,7 +33,7 @@ func (r *rK8sClient) Readfile(file string) ([]byte, error) {
 
 func (r *rK8sClient) WriteFile(file string, content []byte) error {
 	_content := b64.StdEncoding.EncodeToString(content)
-	fmt.Println("kubectl", "exec", "-n", "wireguard", "deploy/wireguard-deployment", "--", "bash", "-c", fmt.Sprintf("echo %v | base64 -d > %v", _content, file))
+	// fmt.Println("kubectl", "exec", "-n", "wireguard", "deploy/wireguard-deployment", "--", "bash", "-c", fmt.Sprintf("echo %v | base64 -d > %v", _content, file))
 	_cmd := exec.Command("kubectl", "exec", "-n", "wireguard", "deploy/wireguard-deployment", "--", "bash", "-c", fmt.Sprintf("echo %v | base64 -d > %v", _content, file))
 	kubeEnv := fmt.Sprintf("KUBECONFIG=%v", r.kubeConfigPath)
 	_cmd.Env = append(_cmd.Env, kubeEnv)
