@@ -3,7 +3,7 @@ package messaging
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
