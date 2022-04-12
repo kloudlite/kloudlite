@@ -24,6 +24,7 @@ type AddPeerAction struct {
 type AddPeerResponse struct {
 	ClusterID string `json:"cluster_id"`
 	PublicKey string `json:"public_key"`
+	Message   string `json:"message"`
 	Done      bool   `json:"done"`
 }
 

@@ -6,3 +6,4 @@ infra.run: export DATA_PATH=${HOME}/tmp/kloudlite/data
 infra.run: export DO_IMAGE_ID=105984633
 infra.run:
 	go run main.go
+

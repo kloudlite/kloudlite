@@ -1,0 +1,26 @@
+version: '3'
+
+# dotenv:
+  # - .env
+
+tasks:
+  build:
+    cmds:
+      - go build -v -i main.go
+  run:
+    env:
+      SSH_KEYS_PATH: "{{.HOME}}/tmp/kloudlite/keys"
+      DATA_PATH: "{{.HOME}}/tmp/kloudlite/data"
+
+      KAFKA_BOOTSTRAP_SERVERS: |
+        kafka-kafka-0.kafka-kafka-brokers.hotspot:9092,kafka-kafka-1.kafka-kafka-brokers.hotspot:9092
+
+      KAFKA_INFRA_TOPIC: dev-hotspot-infra
+      KAFKA_INFRA_RESP_TOPIC: dev-hotspot-infra-resp
+      KAFKA_INFRA_ACTION_RESULT_TOPIC: kloudlite-infra-action-result
+      DO_API_KEY: ***REMOVED***
+      DO_IMAGE_ID: 105984633
+
+    cmds:
+      - GOOS=linux GOARCH=amd64 go run main.go
+

@@ -14,16 +14,30 @@ type Domain interface {
 }
 
 type domain struct {
-	infraCli InfraClient
-	//messageProducer messaging.Producer[messaging.Json]
+	infraCli     InfraClient
 	messageTopic string
 	jobResponder InfraJobResponder
 }
 
 // AddPeerToCluster implements Domain
 func (d *domain) AddPeerToCluster(action AddPeerAction) error {
-
-	return d.infraCli.AddPeer(action)
+	err := d.infraCli.AddPeer(action)
+	if err != nil {
+		d.jobResponder.SendAddPeerResponse(AddPeerResponse{
+			ClusterID: action.ClusterID,
+			PublicKey: action.PublicKey,
+			Message:   err.Error(),
+			Done:      false,
+		})
+		return err
+	}
+	d.jobResponder.SendAddPeerResponse(AddPeerResponse{
+		ClusterID: action.ClusterID,
+		PublicKey: action.PublicKey,
+		Message:   "Peer added",
+		Done:      true,
+	})
+	return err
 }
 
 // DeletePeerFromCluster implements Domain
@@ -69,11 +83,11 @@ func (d *domain) UpdateCluster(action UpdateClusterAction) error {
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-	// infraJobResp InfraJobResponder,
+	infraJobResp InfraJobResponder,
 ) Domain {
 	return &domain{
-		infraCli: infraCli,
-		// jobResponder: infraJobResp,
+		infraCli:     infraCli,
+		jobResponder: infraJobResp,
 		messageTopic: env.KafkaInfraActionResulTopic,
 	}
 }
@@ -86,14 +100,14 @@ var Module = fx.Module("domain",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(makeDomain),
 	fx.Invoke(func(d Domain) {
-		err := d.DeleteCluster(DeleteClusterAction{
-			ClusterID: "cluster-test-new",
-			Provider:  "do",
-		})
+		// err := d.DeleteCluster(DeleteClusterAction{
+		// 	ClusterID: "cluster-test-new",
+		// 	Provider:  "do",
+		// })
 
-		if err != nil {
-			panic(err)
-		}
+		// if err != nil {
+		// 	panic(err)
+		// }
 
 		// d.CreateCluster(SetupClusterAction{
 		// 	ClusterID:  "cluster-test-new",
