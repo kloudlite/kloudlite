@@ -54,11 +54,6 @@ type AppSpec struct {
 	Containers []AppContainer `json:"containers"`
 }
 
-type ReconJob struct {
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-}
-
 // AppStatus defines the observed state of App
 type AppStatus struct {
 	Job                  *ReconJob          `json:"job,omitempty"`
@@ -90,7 +85,7 @@ func (app *App) DefaultStatus() {
 }
 
 func (app *App) HasJob() bool {
-	return app.Status.Job != nil
+	return app.Status.Job != nil && app.Status.JobCompleted == nil
 }
 
 func (app *App) HasNotCheckedDependency() bool {
@@ -116,7 +111,7 @@ func (app *App) HasToBeDeleted() bool {
 	return app.GetDeletionTimestamp() != nil
 }
 
-func (app *App) HasRunningDeletionJob() bool {
+func (app *App) HasDeletionJob() bool {
 	return app.Status.DeletionJob != nil && app.Status.DeletionJobCompleted == nil
 }
 

@@ -14,7 +14,6 @@ type routes struct {
 type RouterSpec struct {
 	Domains     []string `json:"domains"`
 	Routes      []routes `json:"routes"`
-	LastApplied Json     `json:"lastApplied,omitempty"`
 }
 
 // RouterStatus defines the observed state of Router
