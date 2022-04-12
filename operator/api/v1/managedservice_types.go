@@ -4,18 +4,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Json string
-
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	// Contains LastApplied Value for update clauses
-	LastApplied Json `json:"lastApplied,omitempty"`
-
 	// Values define the managed services values that correspond to a particular templateId
-	Values Json `json:"values"`
-
-	// Version define the resource version currently in use
-	Version uint16 `json:"version"`
+	Values string `json:"values"`
 
 	// managed svc template Id
 	TemplateName string `json:"templateName"`
@@ -23,7 +15,13 @@ type ManagedServiceSpec struct {
 
 // ManagedServiceStatus defines the observed state of ManagedService
 type ManagedServiceStatus struct {
-	MarkedDeleted bool `json:"markedDeleted"`
+	Job                  *ReconJob          `json:"job,omitempty"`
+	JobCompleted         *bool              `json:"jobCompleted,omitempty"`
+	Generation           *int64             `json:"generation,omitempty"`
+	DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
+	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
+	DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
+	Conditions           []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -36,6 +34,53 @@ type ManagedService struct {
 
 	Spec   ManagedServiceSpec   `json:"spec,omitempty"`
 	Status ManagedServiceStatus `json:"status,omitempty"`
+}
+
+func (app *ManagedService) DefaultStatus() {
+	app.Status.DependencyChecked = nil
+	app.Status.Job = nil
+	app.Status.JobCompleted = nil
+	app.Status.Generation = &app.Generation
+}
+
+func (msvc *ManagedService) HasJob() bool {
+	return msvc.Status.Job != nil && msvc.Status.JobCompleted == nil
+}
+
+func (msvc *ManagedService) HasNotCheckedDependency() bool {
+	return false
+	// return msvc.Status.DependencyChecked == nil
+}
+
+func (msvc *ManagedService) HasPassedDependencyCheck() bool {
+	return true
+	// return msvc.Status.DependencyChecked != nil && len(*msvc.Status.DependencyChecked) == 0
+}
+
+func (msvc *ManagedService) IsNewGeneration() bool {
+	return msvc.Status.Generation == nil || msvc.Generation > *msvc.Status.Generation
+}
+
+func (msvc *ManagedService) ShouldCreateJob() bool {
+	if msvc.HasPassedDependencyCheck() && msvc.Status.JobCompleted == nil && msvc.Status.Job == nil {
+		return true
+	}
+	return false
+}
+
+func (msvc *ManagedService) HasToBeDeleted() bool {
+	return msvc.GetDeletionTimestamp() != nil
+}
+
+func (msvc *ManagedService) HasDeletionJob() bool {
+	return msvc.Status.DeletionJob != nil && msvc.Status.DeletionJobCompleted == nil
+}
+
+func (msvc *ManagedService) ShouldCreateDeletionJob() bool {
+	if msvc.Status.DeletionJob == nil && msvc.Status.DeletionJobCompleted == nil {
+		return true
+	}
+	return false
 }
 
 //+kubebuilder:object:root=true

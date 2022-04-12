@@ -202,7 +202,8 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 
 		if app.ShouldCreateDeletionJob() {
 			r.logger.Debug("app.ShouldCreateDeletionJob()")
-			specB, err := json.Marshal(app.Spec)
+			// specB, err := json.Marshal(app.Spec)
+			_, err := json.Marshal(app.Spec)
 			if err != nil {
 				r.logger.Error(errors.New("could not unmarshal app spec into []byte"))
 				return reconcileResult.Failed()
@@ -214,11 +215,18 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 				ServiceAccount:  "hotspot-cluster-svc-account",
 				Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
 				ImagePullPolicy: "Always",
+				// Args: []string{
+				// "delete",
+				// "--name", app.Name,
+				// "--namespace", app.Namespace,
+				// "--spec", string(specB),
+				// },
+				Command: []string{
+					"bash",
+				},
 				Args: []string{
-					"delete",
-					"--name", app.Name,
-					"--namespace", app.Namespace,
-					"--spec", string(specB),
+					"-c",
+					"sleep 5 && exit 1",
 				},
 			})
 
@@ -233,7 +241,7 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 			return r.updateStatus(ctx, app)
 		}
 
-		if app.HasRunningDeletionJob() {
+		if app.HasDeletionJob() {
 			r.logger.Debug("app.HasDeletionJob()")
 			//STEP:  WATCH for it
 			jobStatus, err := r.JobMgr.HasCompleted(ctx, app.Status.DeletionJob.Namespace, app.Status.DeletionJob.Name)
@@ -243,10 +251,10 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 			if jobStatus != nil {
 				app.Status.DeletionJobCompleted = newBool(true)
 				if !*jobStatus {
-					r.logger.Debugf("jobStatus, false: %v", *jobStatus)
+					r.logger.Debugf("DELETION jobStatus %v", *jobStatus)
 					return r.updateStatus(ctx, app)
 				}
-				r.logger.Debugf("jobStatus: %v", *jobStatus)
+				r.logger.Debugf("DELETION jobStatus: %v", *jobStatus)
 				app.Status.DeletionJob = nil
 				return r.updateStatus(ctx, app)
 			}
@@ -255,7 +263,7 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 		}
 
 		if app.Status.DeletionJobCompleted != nil {
-			r.logger.Debug("app.Status.JobCompleted")
+			r.logger.Debug("app.Status.DeletionJobCompleted")
 			controllerutil.RemoveFinalizer(app, appFinalizer)
 			err := r.Update(ctx, app)
 			if err != nil {

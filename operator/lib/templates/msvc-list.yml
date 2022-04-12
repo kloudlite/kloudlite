@@ -1,0 +1,93 @@
+msvc_mongo:
+  name: mongo
+  displayName: MongoDB
+  id: msvc_mongo
+  operations:
+    create: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:cluster
+    delete: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:cluster
+    update: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:cluster
+  fields:
+    - name: name
+      label: Installation Name
+      description: Installation's Unique Name
+      type: String
+      required: true
+
+    - name: capacity
+      label: Storage size
+      description: disk size of mongo installation
+      min: 1
+      default: 1
+      hidden: false
+      type: Number
+      unit: Gi
+
+    - name: replicaCount
+      label: Replica Count
+      description: number of mongodb replicas
+      min: 1
+      max: 3
+      default: 1
+      hidden: false
+      type: Number
+      unit: null
+
+  resources:
+    - name: db
+      label: Database
+      description: MongoDB database
+      type: String
+      operations:
+        create: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:resource
+        delete: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:resource
+      fields:
+        - name: name
+          label: Database Name
+          type: String
+          required: true
+          hidden: false
+      output:
+        type: secret
+        suffix: creds
+        keys:
+          - name: USERNAME
+            description: db username
+          - name: PASSWORD
+            description: db password
+          - name: HOSTS
+            description: JSON array of hosts
+          - name: DB_NAME
+            description: name of database
+          - name: URI
+            description: mongodb connection string
+          - name: JSON
+            description: all of the above values in a single JSON
+redis:
+  name: redis
+  display: Redis
+  id: msvc_mongo
+  fields:
+    - name: name
+      label: Installation Name
+      description: Installation's Unique Name
+      type: String
+      required: true
+
+    - name: capacity
+      label: Capacity
+      description: Disk size of Redis Installation
+      min: 1
+      unit: Gi
+
+  resources:
+    - name: prefix
+      label: key-prefix
+      fields:
+        - name: prefix
+          label: Prefix Key
+          type: String
+          required: true
+          hidden: false
+      output:
+        - name: creds
+          type: secret

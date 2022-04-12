@@ -39,8 +39,6 @@ spec:
                 items:
                   type: string
                 type: array
-              lastApplied:
-                type: string
               routes:
                 items:
                   properties:
