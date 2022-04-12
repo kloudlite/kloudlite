@@ -3,6 +3,7 @@ package rexec
 import (
 	b64 "encoding/base64"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -22,9 +23,6 @@ type rK8sClient struct {
 func (r *rK8sClient) Run(cmd string, args ...string) *exec.Cmd {
 	kubeEnv := fmt.Sprintf("KUBECONFIG=%v", r.kubeConfigPath)
 	_cmd := exec.Command("kubectl", append(append([]string{}, "exec", "-n", r.namespace, r.name, "--", cmd), args...)...)
-	// _cmd.Stdin = os.Stdin
-	// _cmd.Stdout = os.Stdout
-	// _cmd.Stderr = os.Stderr
 	_cmd.Env = append(_cmd.Env, kubeEnv)
 	return _cmd
 }
@@ -34,13 +32,14 @@ func (r *rK8sClient) Readfile(file string) ([]byte, error) {
 }
 
 func (r *rK8sClient) WriteFile(file string, content []byte) error {
-
-	_content := b64.StdEncoding.EncodeToString([]byte(content))
-
+	_content := b64.StdEncoding.EncodeToString(content)
 	// fmt.Println("kubectl", "exec", "-n", "wireguard", "deploy/wireguard-deployment", "--", "bash", "-c", fmt.Sprintf("echo %v | base64 -d > %v", _content, file))
-
-	_, err := r.Run("echo", fmt.Sprintf("\"%v | base64 -d > %v\"", _content, file)).Output()
-	return err
+	_cmd := exec.Command("kubectl", "exec", "-n", "wireguard", "deploy/wireguard-deployment", "--", "bash", "-c", fmt.Sprintf("echo %v | base64 -d > %v", _content, file))
+	kubeEnv := fmt.Sprintf("KUBECONFIG=%v", r.kubeConfigPath)
+	_cmd.Env = append(_cmd.Env, kubeEnv)
+	_cmd.Stderr = os.Stderr
+	_cmd.Stdout = os.Stdout
+	return _cmd.Run()
 }
 
 func NewK8sRclient(kubeConfigPath, namespace, name string) Rclient {
@@ -55,7 +54,6 @@ type rSshClient struct {
 
 func (r *rSshClient) Run(cmd string, args ...string) *exec.Cmd {
 	_args := strings.Split(fmt.Sprintf("%v@%v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=quiet -i %v %v", r.user, r.host, r.access_path, cmd), " ")
-
 	return exec.Command("ssh", append(_args, args...)...)
 }
 
@@ -64,10 +62,9 @@ func (r *rSshClient) Readfile(file string) ([]byte, error) {
 }
 
 func (r *rSshClient) WriteFile(file string, content []byte) error {
+	_content := b64.StdEncoding.EncodeToString(content)
 
-	_content := b64.StdEncoding.EncodeToString([]byte(content))
-
-	_, err := exec.Command("ssh", fmt.Sprintf("%v@%v", r.user, r.host), "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=quiet", "-i", r.access_path, "--", fmt.Sprintf("echo \"%v\" | base64 -d > %v", string(_content), file)).Output()
+	_, err := exec.Command("ssh", fmt.Sprintf("%v@%v", r.user, r.host), "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=quiet", "-i", r.access_path, "--", fmt.Sprintf("bash -c \"echo %v | base64 -d > %v\"", _content, file)).Output()
 	return err
 }
 
