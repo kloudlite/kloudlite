@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/config"
@@ -48,6 +49,14 @@ var Module = fx.Module("application",
 	fx.Provide(fxProducer),
 	fx.Provide(fxJobResponder),
 	domain.Module,
+	fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[any]) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(c context.Context) error {
+				return producer.Connect(c)
+			},
+		})
+	}),
+
 	// fx.Provide(fxConsumer),
 
 	//fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer[domain.SetupClusterAction]) {
