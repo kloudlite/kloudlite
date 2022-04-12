@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,17 +20,55 @@ type infraClient struct {
 
 func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error) {
 	//TODO implement me
-	panic("implement me")
+	var masterCount, agentCount int
+
+	if masterCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count"); err == nil {
+		masterCount, _ = strconv.Atoi(masterCountstr)
+	} else {
+		return err
+	}
+
+	if agentCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "agent-nodes-count"); err == nil {
+		agentCount, _ = strconv.Atoi(agentCountstr)
+	} else {
+		return err
+	}
+
+	cmd := exec.Command("terraform", "destroy", "-auto-approve", fmt.Sprintf("-var=master-nodes-count=%v", masterCount), fmt.Sprintf("-var=agent-nodes-count=%v", agentCount))
+	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)
+	// cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
 	//TODO implement me
-	panic("implement me")
+	// panic("implement me")
+	serverWg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		true,
+	)
+
+	return serverWg.AddRemotePeer(action.PublicKey, fmt.Sprintf("%v/32", action.PeerIp), nil)
+
 }
 
 func (i *infraClient) DeletePeer(action domain.DeletePeerAction) (e error) {
 	//TODO implement me
-	panic("implement me")
+	serverWg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		true,
+	)
+
+	return serverWg.DeleteRemotePeer(action.PublicKey)
+
 }
 
 func (i *infraClient) setupMaster(ip string) error {
@@ -64,7 +103,7 @@ func (i *infraClient) setupNodeWireguards(
 ) (err error) {
 
 	serverWg := wgman.NewKubeWgManager(
-		"/config/wg0.conf",
+		"/etc/wireguard/wg0.conf",
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId),
 		"wireguard",
 		"deploy/wireguard-deployment",
@@ -73,7 +112,8 @@ func (i *infraClient) setupNodeWireguards(
 	for _, ip := range nodeIps {
 		func(ip string) {
 			wg := wgman.NewSshWgManager("/etc/wireguard/wg0.conf", ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath), false)
-			//!wg.IsSetupDone()
+
+			// if !wg.IsSetupDone() {
 			if true {
 				_ip, e := wg.GetNodeIp()
 				if e != nil {
@@ -121,7 +161,7 @@ func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
 		return "", err
 	}
 
-	wg := wgman.NewKubeWgManager("/config/wg0.conf", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId), "wireguard", "deploy/wireguard-deployment", true)
+	wg := wgman.NewKubeWgManager("/etc/wireguard/wg0.conf", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId), "wireguard", "deploy/wireguard-deployment", true)
 
 	o, err := wg.Init(ip)
 
@@ -168,9 +208,9 @@ func applyTerraformInFolder(folder string, values map[string]any) error {
 	return nil
 }
 
-func getOutputTerraformInFolder(folder string, key string) (string, error) {
+func (i *infraClient) getOutputTerraformInFolder(clusterId string, key string) (string, error) {
 	cmd := exec.Command("terraform", "output", key)
-	cmd.Dir = folder
+	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)
 	out, err := cmd.Output()
 	return strings.ReplaceAll(strings.ReplaceAll(string(out), "\"", ""), "\n", ""), err
 }
@@ -348,8 +388,8 @@ func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp 
 
 	errors.AssertNoError(e, fmt.Errorf("unable to apply terraform primary"))
 
-	masterIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ips")
-	agentIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "agent-ips")
+	masterIps, e := i.getOutputTerraformInFolder(action.ClusterID, "master-ips")
+	agentIps, e := i.getOutputTerraformInFolder(action.ClusterID, "agent-ips")
 
 	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ip"))
 

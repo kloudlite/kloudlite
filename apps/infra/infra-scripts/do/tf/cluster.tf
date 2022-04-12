@@ -66,6 +66,14 @@ resource "digitalocean_droplet" "agent-nodes"  {
 #   value = join(",", "10.13.13.${count.index + 2}")
 # }
 
+output "master-nodes-count" {
+  value = var.master-nodes-count
+}
+
+output "agent-nodes-count" {
+  value = var.agent-nodes-count
+}
+
 output "master-ips" {
   value = join(",", digitalocean_droplet.master-nodes.*.ipv4_address)
 }
