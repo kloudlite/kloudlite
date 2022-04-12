@@ -17,6 +17,21 @@ type infraClient struct {
 	env *InfraEnv
 }
 
+func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i *infraClient) DeletePeer(action domain.DeletePeerAction) (e error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (i *infraClient) setupMaster(ip string) error {
 	fmt.Println("ssh",
 		"-o",
@@ -295,7 +310,7 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterI
 	return err
 }
 
-func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (e error) {
+func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
 
 	defer errors.HandleErr(&e)
 
@@ -394,28 +409,12 @@ func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (e error) 
 
 	fmt.Println(e)
 
-	return e
+	return clusterIp, clusterPublicKey, e
 }
 
 func (i *infraClient) UpdateCluster(action domain.UpdateClusterAction) (e error) {
-
-	defer errors.HandleErr(&e)
-	applyCommand := exec.Command(
-		"terraform",
-		fmt.Sprintf("-chdir=%v", fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)),
-		"apply",
-		"-auto-approve",
-		fmt.Sprintf("-var=cluster-id=%v", action.ClusterID),
-		fmt.Sprintf("-var=master-nodes-count=%v", action.MastersCount),
-		fmt.Sprintf("-var=agent-nodes-count=%v", action.NodesCount-action.MastersCount),
-		fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath),
-		fmt.Sprintf("-var=do-token=%v", i.env.DoAPIKey),
-	)
-	applyCommand.Stdout = os.Stdout
-	applyCommand.Stderr = os.Stderr
-	e = applyCommand.Run()
-	errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
-	return e
+	panic("implement me")
+	return nil
 }
 
 func fxInfraClient(env *InfraEnv) domain.InfraClient {
