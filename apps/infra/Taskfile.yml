@@ -22,5 +22,5 @@ tasks:
       DO_IMAGE_ID: 105984633
 
     cmds:
-      - GOOS=linux GOARCH=amd64 go run main.go
+      - go run main.go
 
