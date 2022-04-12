@@ -18,6 +18,7 @@ type SetupClusterResponse struct {
 type AddPeerAction struct {
 	ClusterID string `json:"cluster_id"`
 	PublicKey string `json:"public_key"`
+	PeerIp    string `json:"peer_ip"`
 }
 
 type AddPeerResponse struct {
