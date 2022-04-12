@@ -4,6 +4,7 @@ import (
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/messaging"
 	// "kloudlite.io/pkg/logger"
 	// "kloudlite.io/pkg/messaging"
 )
@@ -33,16 +34,21 @@ type InfraEnv struct {
 // 	return consumer, err
 // }
 
-// func fxProducer(mc messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
-// 	return messaging.NewKafkaProducer[messaging.Json](mc)
-// }
+func fxProducer(mc messaging.KafkaClient) (messaging.Producer[any], error) {
+	return messaging.NewKafkaProducer[any](mc)
+}
+
+func fxJobResponder(messaging.Producer[any]) domain.InfraJobResponder {
+	return NewInfraResponder(messaging.NewKafkaProducer[any])
+}
 
 var Module = fx.Module("application",
 	fx.Provide(config.LoadEnv[InfraEnv]()),
 	fx.Provide(fxInfraClient),
-	// fx.Provide(fxProducer),
+	fx.Provide(fxProducer),
+	fx.Provide(fxJobResponder),
 	domain.Module,
-	//fx.Provide(fxConsumer),
+	// fx.Provide(fxConsumer),
 
 	//fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer[domain.SetupClusterAction]) {
 	//	lf.Append(fx.Hook{
