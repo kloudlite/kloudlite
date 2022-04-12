@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/99designs/gqlgen v0.17.2
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/aymerick/raymond v2.0.2+incompatible
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/go-redis/redis/v8 v8.11.5
