@@ -227,6 +227,10 @@ spec:
                 type: object
               deletionJobCompleted:
                 type: boolean
+              dependencyChecked:
+                additionalProperties:
+                  type: string
+                type: object
               generation:
                 format: int64
                 type: integer
@@ -242,8 +246,6 @@ spec:
                 type: object
               jobCompleted:
                 type: boolean
-            required:
-            - jobCompleted
             type: object
         type: object
     served: true
