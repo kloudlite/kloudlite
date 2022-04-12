@@ -10,8 +10,8 @@ type InfraClient interface {
 
 type InfraJobResponder interface {
 	SendCreateClusterResponse(action SetupClusterResponse)
-	SendUpdateClusterResponse(action UpdateClusterAction)
-	SendDeleteClusterResponse(action DeleteClusterAction)
-	SendAddPeerResponse(action AddPeerAction)
-	SendDeletePeerResponse(action DeletePeerAction)
+	SendUpdateClusterResponse(action UpdateClusterResponse)
+	SendDeleteClusterResponse(action DeleteClusterResponse)
+	SendAddPeerResponse(action AddPeerResponse)
+	SendDeletePeerResponse(action DeletePeerResponse)
 }
