@@ -1,8 +1,10 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"kloudlite.io/pkg/errors"
 )
@@ -10,11 +12,32 @@ import (
 type Json map[string]any
 
 type Producer[T any] interface {
+	Connect(cxt context.Context) error
+	Close(ctx context.Context)
 	SendMessage(topic string, key string, message T) error
 }
 
 type producer[T any] struct {
+	kafkaBrokers  string
 	kafkaProducer *kafka.Producer
+}
+
+func (m producer[T]) Connect(cxt context.Context) error {
+	p, e := kafka.NewProducer(
+		&kafka.ConfigMap{
+			"bootstrap.servers": m.kafkaBrokers,
+		},
+	)
+	if e != nil {
+		return errors.Wrap(e, "failed to create kafka producer")
+	}
+	m.kafkaProducer = p
+
+	return nil
+}
+
+func (m producer[T]) Close(ctx context.Context) {
+	m.kafkaProducer.Close()
 }
 
 func (m producer[T]) SendMessage(topic string, key string, message T) error {
@@ -22,8 +45,8 @@ func (m producer[T]) SendMessage(topic string, key string, message T) error {
 	errors.AssertNoError(e, fmt.Errorf("failed to marshal message"))
 	return m.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
-			Topic:     &topic,
-			Partition: kafka.PartitionAny,
+			Topic: &topic,
+			// Partition: kafka.PartitionAny,
 		},
 		Key:   []byte(key),
 		Value: msgBody,
@@ -32,13 +55,8 @@ func (m producer[T]) SendMessage(topic string, key string, message T) error {
 
 func NewKafkaProducer[T any](kafkaCli KafkaClient) (messenger Producer[T], e error) {
 	defer errors.HandleErr(&e)
-	p, e := kafka.NewProducer(
-		&kafka.ConfigMap{
-			"bootstrap.servers": kafkaCli.GetBrokers(),
-		},
-	)
 	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
 	return &producer[T]{
-		kafkaProducer: p,
+		kafkaBrokers: kafkaCli.GetBrokers(),
 	}, e
 }
