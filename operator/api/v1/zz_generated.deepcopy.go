@@ -159,14 +159,35 @@ func (in *AppStatus) DeepCopyInto(out *AppStatus) {
 		*out = new(ReconJob)
 		**out = **in
 	}
+	if in.JobCompleted != nil {
+		in, out := &in.JobCompleted, &out.JobCompleted
+		*out = new(bool)
+		**out = **in
+	}
 	if in.Generation != nil {
 		in, out := &in.Generation, &out.Generation
 		*out = new(int64)
 		**out = **in
 	}
+	if in.DependencyChecked != nil {
+		in, out := &in.DependencyChecked, &out.DependencyChecked
+		*out = new(map[string]string)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make(map[string]string, len(*in))
+			for key, val := range *in {
+				(*out)[key] = val
+			}
+		}
+	}
 	if in.DeletionJob != nil {
 		in, out := &in.DeletionJob, &out.DeletionJob
 		*out = new(ReconJob)
+		**out = **in
+	}
+	if in.DeletionJobCompleted != nil {
+		in, out := &in.DeletionJobCompleted, &out.DeletionJobCompleted
+		*out = new(bool)
 		**out = **in
 	}
 	if in.Conditions != nil {

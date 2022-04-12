@@ -62,10 +62,11 @@ type ReconJob struct {
 // AppStatus defines the observed state of App
 type AppStatus struct {
 	Job                  *ReconJob          `json:"job,omitempty"`
-	JobCompleted         bool               `json:"jobCompleted"`
+	JobCompleted         *bool              `json:"jobCompleted,omitempty"`
 	Generation           *int64             `json:"generation,omitempty"`
+	DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
 	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
-	DeletionJobCompleted bool               `json:"deletionJobCompleted,omitempty"`
+	DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
 	Conditions           []metav1.Condition `json:"conditions,omitempty"`
 }
 
@@ -81,8 +82,23 @@ type App struct {
 	Status AppStatus `json:"status,omitempty"`
 }
 
+func (app *App) DefaultStatus() {
+	app.Status.DependencyChecked = nil
+	app.Status.Job = nil
+	app.Status.JobCompleted = nil
+	app.Status.Generation = &app.Generation
+}
+
 func (app *App) HasJob() bool {
 	return app.Status.Job != nil
+}
+
+func (app *App) HasNotCheckedDependency() bool {
+	return app.Status.DependencyChecked == nil
+}
+
+func (app *App) HasPassedDependencyCheck() bool {
+	return app.Status.DependencyChecked != nil && len(*app.Status.DependencyChecked) == 0
 }
 
 func (app *App) IsNewGeneration() bool {
@@ -90,10 +106,10 @@ func (app *App) IsNewGeneration() bool {
 }
 
 func (app *App) ShouldCreateJob() bool {
-	if app.Status.JobCompleted && !app.IsNewGeneration() {
-		return false
+	if app.HasPassedDependencyCheck() && app.Status.JobCompleted == nil && app.Status.Job == nil {
+		return true
 	}
-	return true
+	return false
 }
 
 func (app *App) HasToBeDeleted() bool {
@@ -101,11 +117,14 @@ func (app *App) HasToBeDeleted() bool {
 }
 
 func (app *App) HasRunningDeletionJob() bool {
-	return app.Status.DeletionJob != nil && !app.Status.DeletionJobCompleted
+	return app.Status.DeletionJob != nil && app.Status.DeletionJobCompleted == nil
 }
 
 func (app *App) ShouldCreateDeletionJob() bool {
-	return app.Status.DeletionJob == nil && !app.Status.DeletionJobCompleted
+	if app.Status.DeletionJob == nil && app.Status.DeletionJobCompleted == nil {
+		return true
+	}
+	return false
 }
 
 //+kubebuilder:object:root=true
