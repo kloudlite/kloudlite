@@ -2,4 +2,4 @@ dev: export KAFKA_BOOTSTRAP_SERVERS=kafka-kafka-0.kafka-kafka-brokers.hotspot:90
 dev: export KAFKA_TOPICS=dev-hotspot-infra
 dev: export KAFKA_GROUP_ID=dev-hotspot-infra
 dev:
-	go run ./main.go
+	watch -d 'ls -l internal/** main.go' & 
