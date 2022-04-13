@@ -16,27 +16,27 @@ type Domain interface {
 type domain struct {
 	infraCli     InfraClient
 	messageTopic string
-	jobResponder InfraJobResponder
+	//jobResponder InfraJobResponder
 }
 
 // AddPeerToCluster implements Domain
 func (d *domain) AddPeerToCluster(action AddPeerAction) error {
 	err := d.infraCli.AddPeer(action)
 	if err != nil {
-		d.jobResponder.SendAddPeerResponse(AddPeerResponse{
-			ClusterID: action.ClusterID,
-			PublicKey: action.PublicKey,
-			Message:   err.Error(),
-			Done:      false,
-		})
+		//d.jobResponder.SendAddPeerResponse(AddPeerResponse{
+		//	ClusterID: action.ClusterID,
+		//	PublicKey: action.PublicKey,
+		//	Message:   err.Error(),
+		//	Done:      false,
+		//})
 		return err
 	}
-	d.jobResponder.SendAddPeerResponse(AddPeerResponse{
-		ClusterID: action.ClusterID,
-		PublicKey: action.PublicKey,
-		Message:   "Peer added",
-		Done:      true,
-	})
+	//d.jobResponder.SendAddPeerResponse(AddPeerResponse{
+	//	ClusterID: action.ClusterID,
+	//	PublicKey: action.PublicKey,
+	//	Message:   "Peer added",
+	//	Done:      true,
+	//})
 	return err
 }
 
@@ -83,11 +83,11 @@ func (d *domain) UpdateCluster(action UpdateClusterAction) error {
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-	infraJobResp InfraJobResponder,
+//infraJobResp InfraJobResponder,
 ) Domain {
 	return &domain{
-		infraCli:     infraCli,
-		jobResponder: infraJobResp,
+		infraCli: infraCli,
+		//jobResponder: infraJobResp,
 		messageTopic: env.KafkaInfraActionResulTopic,
 	}
 }
@@ -100,35 +100,36 @@ var Module = fx.Module("domain",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(makeDomain),
 	fx.Invoke(func(d Domain) {
-		// err := d.DeleteCluster(DeleteClusterAction{
-		// 	ClusterID: "cluster-test-new",
-		// 	Provider:  "do",
-		// })
+		d.DeleteCluster(DeleteClusterAction{
+			ClusterID: "hotspot-dev",
+			Provider:  "do",
+		})
 
 		// if err != nil {
 		// 	panic(err)
 		// }
 
-		// d.CreateCluster(SetupClusterAction{
-		// 	ClusterID:  "cluster-test-new",
-		// 	Region:     "blr1",
-		// 	Provider:   "do",
-		// 	NodesCount: 5,
-		// })
+		//d.CreateCluster(SetupClusterAction{
+		//	ClusterID:  "hotspot-dev-2",
+		//	Region:     "blr1",
+		//	Provider:   "do",
+		//	NodesCount: 4,
+		//})
 
-		// d.UpdateCluster(UpdateClusterAction{
-		// 	ClusterID:  "cluster-test-new",
-		// 	Region:     "blr1",
-		// 	Provider:   "do",
-		// 	NodesCount: 2,
-		// })
+		//d.UpdateCluster(UpdateClusterAction{
+		//	ClusterID:  "hotspot-dev",
+		//	Region:     "blr1",
+		//	Provider:   "do",
+		//	NodesCount: 2,
+		//})
 
-		// key, _ := wgtypes.GenerateKey()
-		// d.AddPeerToCluster(AddPeerAction{
-		// 	ClusterID: "cluster-test-new",
-		// 	PublicKey: key.PublicKey().String(),
-		// 	PeerIp:    "10.13.13.101",
-		// })
+		//key, _ := wgtypes.GenerateKey()
+		//fmt.Println(key.String())
+		//d.AddPeerToCluster(AddPeerAction{
+		//	ClusterID: "hotspot-dev-2",
+		//	PublicKey: key.PublicKey().String(),
+		//	PeerIp:    "10.13.13.101",
+		//})
 
 		// d.DeletePeerFromCluster(DeletePeerAction{
 		// 	ClusterID: "cluster-test-new",

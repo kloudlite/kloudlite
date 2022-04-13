@@ -1,12 +1,9 @@
 version: '3'
 
-# dotenv:
-  # - .env
-
 tasks:
   build:
     cmds:
-      - go build -v -i main.go
+      - go build main.go
   run:
     env:
       SSH_KEYS_PATH: "{{.HOME}}/tmp/kloudlite/keys"

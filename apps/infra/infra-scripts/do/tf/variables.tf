@@ -16,7 +16,6 @@ variable "join-token" {
   default = "node_token_v1_sldkfjslkdjfskljioweuroiqlksdfjowersjdkjfnsdfkjoqwoeiruls"
 }
 variable "keys-path" {
-  default = "/Users/abdeshnayak/tmp/kloudlite/keys"
 }
 variable "do-image-id" {
   default = "ubuntu-20-04-x64"
