@@ -35,6 +35,7 @@ func (c *consumer) Subscribe() error {
 	c.stopChan = make(chan bool, 1)
 	e := c.kafkaConsumer.SubscribeTopics(c.topics, nil)
 	if e != nil {
+		fmt.Println("HELLO", e)
 		return errors.New(fmt.Sprintf("could not subscribe to given topics %v", c.topics))
 	}
 
