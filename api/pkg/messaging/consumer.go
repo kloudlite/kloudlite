@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -16,7 +17,7 @@ func (m Message) Unmarshal(x any) error {
 	return json.Unmarshal(m, &x)
 }
 
-type ConsumerCallback func(topic string, message Message) error
+type ConsumerCallback func(context context.Context, topic string, message Message) error
 
 type consumer struct {
 	kafkaConsumer *kafka.Consumer
@@ -26,12 +27,12 @@ type consumer struct {
 	logger        logger.Logger
 }
 
-func (c *consumer) Unsubscribe() error {
+func (c *consumer) Unsubscribe(context.Context) error {
 	c.stopChan <- true
 	return c.kafkaConsumer.Unsubscribe()
 }
 
-func (c *consumer) Subscribe() error {
+func (c *consumer) Subscribe(context context.Context) error {
 	c.stopChan = make(chan bool, 1)
 	e := c.kafkaConsumer.SubscribeTopics(c.topics, nil)
 	if e != nil {
@@ -58,10 +59,10 @@ func (c *consumer) Subscribe() error {
 				//continue
 			}
 
-			e = c.callback(*msg.TopicPartition.Topic, msg.Value)
+			e = c.callback(context, *msg.TopicPartition.Topic, msg.Value)
 
 			if e != nil {
-				e = c.callback(*msg.TopicPartition.Topic, msg.Value)
+				e = c.callback(context, *msg.TopicPartition.Topic, msg.Value)
 				if e != nil {
 					fmt.Errorf("failed to process message after 2 retries")
 				}
@@ -74,8 +75,8 @@ func (c *consumer) Subscribe() error {
 }
 
 type Consumer interface {
-	Unsubscribe() error
-	Subscribe() error
+	Unsubscribe(context context.Context) error
+	Subscribe(context context.Context) error
 }
 
 func NewKafkaConsumer(
