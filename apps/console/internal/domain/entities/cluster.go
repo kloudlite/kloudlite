@@ -7,6 +7,7 @@ type ClusterStatus string
 const (
 	ClusterStateSyncing = ClusterStatus("sync-in-progress")
 	ClusterStateLive    = ClusterStatus("live")
+	ClusterStateError   = ClusterStatus("error")
 	ClusterStateDown    = ClusterStatus("down")
 )
 
