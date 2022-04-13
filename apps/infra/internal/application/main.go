@@ -56,10 +56,10 @@ var Module = fx.Module("application",
 	fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				return consumer.Subscribe()
+				return consumer.Subscribe(ctx)
 			},
 			OnStop: func(ctx context.Context) error {
-				return consumer.Unsubscribe()
+				return consumer.Unsubscribe(ctx)
 			},
 		})
 	}),
@@ -68,15 +68,15 @@ var Module = fx.Module("application",
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				fmt.Println("SENT")
-				p.SendMessage("dev-hotspot-infra", "infra", messaging.Json{
-					"type": "setup-cluster",
-					"payload": messaging.Json{
-						"cluster_id":  "hotspot-dev",
-						"region":      "blr1",
-						"provider":    "do",
-						"nodes_count": 1,
-					},
-				})
+				//p.SendMessage("dev-hotspot-infra", "infra", messaging.Json{
+				//	"type": "setup-cluster",
+				//	"payload": messaging.Json{
+				//		"cluster_id":  "hotspot-dev",
+				//		"region":      "blr1",
+				//		"provider":    "do",
+				//		"nodes_count": 1,
+				//	},
+				//})
 				return nil
 			},
 			OnStop: nil,

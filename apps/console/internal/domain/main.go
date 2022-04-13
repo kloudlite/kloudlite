@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -20,6 +19,33 @@ type domain struct {
 	messageProducer messaging.Producer[messaging.Json]
 	messageTopic    string
 	logger          logger.Logger
+	messenger       InfraMessenger
+}
+
+func (d *domain) UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus) (bool, error) {
+	byId, err := d.clusterRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	byId.Status = status
+	updateById, err := d.clusterRepo.UpdateById(ctx, id, byId)
+	if err != nil {
+		return false, err
+	}
+	return updateById.Status == status, nil
+}
+
+func (d *domain) UpdateDeviceState(ctx context.Context, id repos.ID, status entities.DeviceStatus) (bool, error) {
+	byId, err := d.deviceRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	byId.Status = status
+	updateById, err := d.deviceRepo.UpdateById(ctx, id, byId)
+	if err != nil {
+		return false, err
+	}
+	return updateById.Status == status, nil
 }
 
 func (d *domain) ClusterDown(ctx context.Context, id repos.ID) (bool, error) {
@@ -153,8 +179,10 @@ func fxDomain(
 	msgP messaging.Producer[messaging.Json],
 	env *Env,
 	logger logger.Logger,
+	messenger InfraMessenger,
 ) Domain {
 	return &domain{
+		messenger:       messenger,
 		deviceRepo:      deviceRepo,
 		clusterRepo:     clusterRepo,
 		messageProducer: msgP,
