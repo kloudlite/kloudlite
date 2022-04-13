@@ -8,30 +8,7 @@ import (
 )
 
 type redisRepo[T any] struct {
-	opts struct {
-		Addr     string
-		Username string
-		Password string
-	}
-	client *redis.Client
-}
-
-func (r *redisRepo[T]) Connect(context.Context) error {
-	r.client = redis.NewClient(&redis.Options{
-		Addr:     r.opts.Addr,
-		Password: r.opts.Password,
-		Username: r.opts.Username,
-	})
-	return nil
-}
-
-func (r *redisRepo[T]) Close(context.Context) error {
-	err := r.client.Close()
-	if err != nil {
-		return err
-	}
-	r.client = nil
-	return nil
+	*RedisClient
 }
 
 func (r *redisRepo[T]) Set(c context.Context, key string, value T) error {
@@ -64,8 +41,41 @@ func (r *redisRepo[T]) Drop(c context.Context, key string) error {
 	return r.client.Del(c, key).Err()
 }
 
-func NewRedisRepo[T any](addr string, password string, userName string) Repo[T] {
+func NewRedisRepo[T any](redisCli *RedisClient) Repo[T] {
 	return &redisRepo[T]{
+		RedisClient: redisCli,
+	}
+}
+
+type RedisClient struct {
+	opts struct {
+		Addr     string
+		Username string
+		Password string
+	}
+	client *redis.Client
+}
+
+func (c *RedisClient) Connect(context.Context) error {
+	c.client = redis.NewClient(&redis.Options{
+		Addr:     c.opts.Addr,
+		Password: c.opts.Password,
+		Username: c.opts.Username,
+	})
+	return nil
+}
+
+func (c *RedisClient) Close(context.Context) error {
+	err := c.client.Close()
+	if err != nil {
+		return err
+	}
+	c.client = nil
+	return nil
+}
+
+func NewRedisClient(addr string, password string, userName string) *RedisClient {
+	return &RedisClient{
 		opts: struct {
 			Addr     string
 			Username string
