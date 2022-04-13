@@ -22,7 +22,7 @@ type producer[T any] struct {
 	kafkaProducer *kafka.Producer
 }
 
-func (m producer[T]) Connect(cxt context.Context) error {
+func (m *producer[T]) Connect(cxt context.Context) error {
 	p, e := kafka.NewProducer(
 		&kafka.ConfigMap{
 			"bootstrap.servers": m.kafkaBrokers,
@@ -32,17 +32,20 @@ func (m producer[T]) Connect(cxt context.Context) error {
 		return errors.Wrap(e, "failed to create kafka producer")
 	}
 	m.kafkaProducer = p
-
 	return nil
 }
 
-func (m producer[T]) Close(ctx context.Context) {
+func (m *producer[T]) Close(ctx context.Context) {
 	m.kafkaProducer.Close()
 }
 
-func (m producer[T]) SendMessage(topic string, key string, message T) error {
+func (m *producer[T]) SendMessage(topic string, key string, message T) error {
 	msgBody, e := json.Marshal(message)
-	errors.AssertNoError(e, fmt.Errorf("failed to marshal message"))
+	if e != nil {
+		fmt.Println(e)
+		return e
+	}
+	fmt.Println("running 2")
 	return m.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
 			Topic:     &topic,

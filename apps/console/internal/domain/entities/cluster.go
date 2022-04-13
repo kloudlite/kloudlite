@@ -2,28 +2,21 @@ package entities
 
 import "kloudlite.io/pkg/repos"
 
+type ClusterStatus string
+
+const (
+	ClusterStateSyncing = ClusterStatus("sync-in-progress")
+	ClusterStateLive    = ClusterStatus("live")
+	ClusterStateDown    = ClusterStatus("down")
+)
+
 type Cluster struct {
 	repos.BaseEntity `bson:",inline"`
-	Name             string  `json:"name" bson:"name"`
-	Provider         string  `json:"provider" bson:"provider"`
-	Region           string  `json:"region" bson:"region"`
-	Address          *string `json:"address,omitempty" bson:"address,omitempty"`
-	ListenPort       *uint16 `json:"listenPort,omitempty" bson:"listenPort,omitempty"`
-	PrivateKey       *string `json:"privateKey,omitempty" bson:"privateKey,omitempty"`
-	PublicKey        *string `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
-	NetInterface     *string `json:"netInterface" bson:"netInterface,omitempty"`
+	Name             string        `json:"name" bson:"name"`
+	Provider         string        `json:"provider" bson:"provider"`
+	Region           string        `json:"region" bson:"region"`
+	Ip               *string       `json:"ip,omitempty" bson:"ip,omitempty"`
+	PublicKey        *string       `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
+	NodesCount       int           `json:"nodes_count" bson:"nodes_count"`
+	Status           ClusterStatus `json:"status" bson:"status"`
 }
-
-/*
-	[Interface]
-	Address =
-	SaveConfig = true
-	ListenPort =
-	PrivateKey =
-	PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ .NetInterface }} -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o {{ .NetInterface }} -j MASQUERADE
-	PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ .NetInterface }} -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o {{ .NetInterface }} -j MASQUERADE
-
-	[Peer...]
-	PublicKey =
-	AllowedIPs =
-*/

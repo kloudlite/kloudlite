@@ -19,7 +19,6 @@ type infraClient struct {
 }
 
 func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error) {
-	//TODO implement me
 	var masterCount, agentCount int
 
 	if masterCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count"); err == nil {
@@ -119,7 +118,6 @@ func (i *infraClient) setupNodeWireguards(
 				}
 				nodePublicKey, e := wg.Init(_ip)
 				if e != nil {
-
 					fmt.Println(fmt.Errorf("failed to setup wireguard for node %v", e))
 					return
 				}

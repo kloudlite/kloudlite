@@ -3,6 +3,7 @@ package domain
 import (
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/messaging"
 )
 
 type Domain interface {
@@ -99,7 +100,13 @@ type Env struct {
 var Module = fx.Module("domain",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(makeDomain),
-	fx.Invoke(func(d Domain) {
+	fx.Invoke(func(d Domain, p messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
+
+		//ClusterID  string `json:"cluster_id"`
+		//Region     string `json:"region"`
+		//Provider   string `json:"provider"`
+		//NodesCount int    `json:"nodes_count"`
+
 		//d.DeleteCluster(DeleteClusterAction{
 		//	ClusterID: "hotspot-dev",
 		//	Provider:  "do",
