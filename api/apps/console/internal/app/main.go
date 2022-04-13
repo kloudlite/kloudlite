@@ -43,46 +43,58 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Provide(func(env *Env, p messaging.Producer[messaging.Json], d domain.Domain) domain.InfraMessenger {
+	fx.Provide(func(env *Env, p messaging.Producer[messaging.Json]) domain.InfraMessenger {
 		return &infraMessengerImpl{
 			env:      env,
 			producer: p,
-			onAddClusterResponse: func(ctx context.Context, m entities.SetupClusterResponse) {
-				if m.Done {
-					d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
-					return
-				}
-				d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
-			},
-
-			onDeleteClusterResponse: func(ctx context.Context, m entities.DeleteClusterResponse) {
-				if m.Done {
-					d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
-					return
-				}
-				d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
-
-			},
-
-			onUpdateClusterResponse: func(ctx context.Context, m entities.UpdateClusterResponse) {
-				if m.Done {
-					d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
-					return
-				}
-				d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
-
-			},
-
-			onAddDeviceResponse: func(ctx context.Context, m entities.AddPeerResponse) {
-
-				if m.Done {
-					d.UpdateDeviceState(ctx, repos.ID(m.DeviceID), entities.DeviceStateAttached)
-				}
-			},
-			onRemoveDeviceResponse: func(ctx context.Context, m entities.DeletePeerResponse) {
-
-			},
+			//onAddClusterResponse: func(ctx context.Context, m entities.SetupClusterResponse) {
+			//	if m.Done {
+			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+			//		return
+			//	}
+			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+			//},
+			//
+			//onDeleteClusterResponse: func(ctx context.Context, m entities.DeleteClusterResponse) {
+			//	if m.Done {
+			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+			//		return
+			//	}
+			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+			//
+			//},
+			//
+			//onUpdateClusterResponse: func(ctx context.Context, m entities.UpdateClusterResponse) {
+			//	if m.Done {
+			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+			//		return
+			//	}
+			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+			//
+			//},
+			//
+			//onAddDeviceResponse: func(ctx context.Context, m entities.AddPeerResponse) {
+			//
+			//	if m.Done {
+			//		d.UpdateDeviceState(ctx, repos.ID(m.DeviceID), entities.DeviceStateAttached)
+			//	}
+			//},
+			//onRemoveDeviceResponse: func(ctx context.Context, m entities.DeletePeerResponse) {
+			//
+			//},
 		}
+	}),
+
+	fx.Invoke(func(producer messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return producer.Connect(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				producer.Close(ctx)
+				return nil
+			},
+		})
 	}),
 
 	fx.Invoke(func(server *http.ServeMux, d domain.Domain) {
