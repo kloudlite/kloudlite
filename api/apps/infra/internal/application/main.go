@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/config"
@@ -28,8 +29,8 @@ type InfraEnv struct {
 	KafkaGroupId            string `env:"KAFKA_GROUP_ID", required:"true"`
 }
 
-func fxProducer(mc messaging.KafkaClient) (messaging.Producer[any], error) {
-	return messaging.NewKafkaProducer[any](mc)
+func fxProducer(mc messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
+	return messaging.NewKafkaProducer[messaging.Json](mc)
 }
 
 func fxJobResponder(p messaging.Producer[any], env InfraEnv) domain.InfraJobResponder {
@@ -40,17 +41,17 @@ var Module = fx.Module("application",
 	fx.Provide(config.LoadEnv[InfraEnv]()),
 	fx.Provide(fxInfraClient),
 	fx.Provide(fxProducer),
+	fx.Provide(fxConsumer),
 	fx.Provide(fxJobResponder),
 	domain.Module,
-	fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[any]) {
+	fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[messaging.Json]) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(c context.Context) error {
+				fmt.Println("CONNECTED")
 				return producer.Connect(c)
 			},
 		})
 	}),
-
-	fx.Provide(fxConsumer),
 
 	fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer) {
 		lf.Append(fx.Hook{
@@ -60,6 +61,25 @@ var Module = fx.Module("application",
 			OnStop: func(ctx context.Context) error {
 				return consumer.Unsubscribe()
 			},
+		})
+	}),
+
+	fx.Invoke(func(lifecycle fx.Lifecycle, p messaging.Producer[messaging.Json]) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				fmt.Println("SENT")
+				p.SendMessage("dev-hotspot-infra", "infra", messaging.Json{
+					"type": "setup-cluster",
+					"payload": messaging.Json{
+						"cluster_id":  "hotspot-dev",
+						"region":      "blr1",
+						"provider":    "do",
+						"nodes_count": 1,
+					},
+				})
+				return nil
+			},
+			OnStop: nil,
 		})
 	}),
 )
