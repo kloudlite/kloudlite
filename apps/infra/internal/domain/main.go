@@ -1,9 +1,7 @@
 package domain
 
 import (
-	"fmt"
 	"go.uber.org/fx"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
 )
@@ -86,7 +84,7 @@ func (d *domain) UpdateCluster(action UpdateClusterAction) error {
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-	//infraJobResp InfraJobResponder,
+//infraJobResp InfraJobResponder,
 ) Domain {
 	return &domain{
 		infraCli: infraCli,
@@ -132,13 +130,13 @@ var Module = fx.Module("domain",
 		//	NodesCount: 2,
 		//})
 
-		key, _ := wgtypes.GenerateKey()
-		fmt.Println(key.String())
-		d.AddPeerToCluster(AddPeerAction{
-			ClusterID: "hotspot-dev-2",
-			PublicKey: key.PublicKey().String(),
-			PeerIp:    "10.13.13.103",
-		})
+		//key, _ := wgtypes.GenerateKey()
+		//fmt.Println(key.String())
+		//d.AddPeerToCluster(AddPeerAction{
+		//	ClusterID: "hotspot-dev-2",
+		//	PublicKey: key.PublicKey().String(),
+		//	PeerIp:    "10.13.13.103",
+		//})
 
 		//d.DeletePeerFromCluster(DeletePeerAction{
 		//	ClusterID: "hotspot-dev-2",

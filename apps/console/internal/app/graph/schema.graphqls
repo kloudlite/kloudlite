@@ -34,8 +34,6 @@ extend type Mutation {
   createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
   updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
   deleteCluster(clusterId: ID!): Boolean!
-  downCluster(clusterId: ID!): Boolean!
-  upCluster(clusterId: ID!): Boolean!
   addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
   removeDevice(deviceId: ID!): Boolean!
 }

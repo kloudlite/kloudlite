@@ -25,8 +25,6 @@ type Device struct {
 	Name          string   `json:"name"`
 	Cluster       *Cluster `json:"cluster"`
 	Configuration string   `json:"configuration"`
-	DeviceIndex int `json:"device_index"`
-	Ip string `json:"ip"`
 }
 
 func (Device) IsEntity() {}
