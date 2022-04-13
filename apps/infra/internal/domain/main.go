@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"fmt"
 	"go.uber.org/fx"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/pkg/config"
 )
 
@@ -100,10 +102,10 @@ var Module = fx.Module("domain",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(makeDomain),
 	fx.Invoke(func(d Domain) {
-		d.DeleteCluster(DeleteClusterAction{
-			ClusterID: "hotspot-dev",
-			Provider:  "do",
-		})
+		//d.DeleteCluster(DeleteClusterAction{
+		//	ClusterID: "hotspot-dev",
+		//	Provider:  "do",
+		//})
 
 		// if err != nil {
 		// 	panic(err)
@@ -123,17 +125,17 @@ var Module = fx.Module("domain",
 		//	NodesCount: 2,
 		//})
 
-		//key, _ := wgtypes.GenerateKey()
-		//fmt.Println(key.String())
-		//d.AddPeerToCluster(AddPeerAction{
-		//	ClusterID: "hotspot-dev-2",
-		//	PublicKey: key.PublicKey().String(),
-		//	PeerIp:    "10.13.13.101",
-		//})
+		key, _ := wgtypes.GenerateKey()
+		fmt.Println(key.String())
+		d.AddPeerToCluster(AddPeerAction{
+			ClusterID: "hotspot-dev-2",
+			PublicKey: key.PublicKey().String(),
+			PeerIp:    "10.13.13.102",
+		})
 
-		// d.DeletePeerFromCluster(DeletePeerAction{
-		// 	ClusterID: "cluster-test-new",
-		// 	PublicKey: "BmQvaNhCzW5CC7DuU7StkI5Z7/Ko+DMb/EQF9E3/2SE=",
-		// })
+		//d.DeletePeerFromCluster(DeletePeerAction{
+		//	ClusterID: "hotspot-dev-2",
+		//	PublicKey: "1uBcGZvNsNh7wlNzawDXiAExIfbgyFgbJqTwGRTmdiY=",
+		//})
 	}),
 )
