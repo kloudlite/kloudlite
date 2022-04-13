@@ -19,7 +19,6 @@ type infraClient struct {
 }
 
 func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error) {
-	//TODO implement me
 	var masterCount, agentCount int
 
 	if masterCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count"); err == nil {
@@ -34,7 +33,7 @@ func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error)
 		return err
 	}
 
-	cmd := exec.Command("terraform", "destroy", "-auto-approve", fmt.Sprintf("-var=master-nodes-count=%v", masterCount), fmt.Sprintf("-var=agent-nodes-count=%v", agentCount))
+	cmd := exec.Command("terraform", "destroy", "-auto-approve", fmt.Sprintf("-var=master-nodes-count=%v", masterCount), fmt.Sprintf("-var=agent-nodes-count=%v", agentCount), fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath))
 	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)
 	// cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -43,8 +42,6 @@ func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error)
 }
 
 func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
-	//TODO implement me
-	// panic("implement me")
 	serverWg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
@@ -52,9 +49,7 @@ func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
 		"deploy/wireguard-deployment",
 		true,
 	)
-
 	return serverWg.AddRemotePeer(action.PublicKey, fmt.Sprintf("%v/32", action.PeerIp), nil)
-
 }
 
 func (i *infraClient) DeletePeer(action domain.DeletePeerAction) (e error) {
@@ -123,7 +118,6 @@ func (i *infraClient) setupNodeWireguards(
 				}
 				nodePublicKey, e := wg.Init(_ip)
 				if e != nil {
-
 					fmt.Println(fmt.Errorf("failed to setup wireguard for node %v", e))
 					return
 				}
@@ -252,7 +246,7 @@ func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([
 		"install",
 		fmt.Sprintf("--ip=%v", masterIp),
 		"--cluster",
-		"--k3s-version=v1.19.1+k3s1",
+		"--k3s-version=v1.23.5+k3s1",
 		"--user=root",
 		"--k3s-extra-args='--disable=traefik'",
 		"--k3s-extra-args='--node-name=master'",
@@ -276,6 +270,7 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId stri
 	if len(masterIps) < 2 {
 		return nil
 	}
+
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(len(masterIps) - 1)
 	for index, ip := range masterIps {
@@ -289,7 +284,7 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId stri
 				"join",
 				fmt.Sprintf("--ip=%v", ip),
 				fmt.Sprintf("--server-ip=%v", masterIp),
-				"--k3s-version=v1.19.1+k3s1",
+				"--k3s-version=v1.23.5+k3s1",
 				"--user=root",
 				"--server-user=root",
 				"--server",
@@ -317,17 +312,20 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterI
 		return nil
 	}
 
+	if agentIps[0] == "" {
+		return nil
+	}
+
 	c := make(chan error, len(agentIps))
 
 	for _, ip := range agentIps {
-
 		go func(ip string) error {
 			cmd := exec.Command(
 				"k3sup",
 				"join",
 				fmt.Sprintf("--ip=%v", ip),
 				fmt.Sprintf("--server-ip=%v", masterIp),
-				"--k3s-version=v1.19.1+k3s1",
+				"--k3s-version=v1.23.5+k3s1",
 				"--user=root",
 				"--server-user=root",
 			)
@@ -370,19 +368,19 @@ func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp 
 	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
 
-	masterCount := func() int {
-		if action.NodesCount > 3 {
-			return 3
-		}
-		return 1
-	}()
+	//masterCount := func() int {
+	//	if action.NodesCount > 3 {
+	//		return 3
+	//	}
+	//	return 1
+	//}()
 
 	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), map[string]any{
 		"cluster-id":         action.ClusterID,
 		"do-token":           i.env.DoAPIKey,
 		"keys-path":          i.env.SshKeysPath,
-		"master-nodes-count": masterCount,
-		"agent-nodes-count":  action.NodesCount - masterCount,
+		"master-nodes-count": 1,
+		"agent-nodes-count":  action.NodesCount - 1,
 		"do-image-id":        i.env.DoImageId,
 	})
 

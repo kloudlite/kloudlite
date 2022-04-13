@@ -2,20 +2,26 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
 
 type Domain interface {
+	UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus, PublicIp string, PublicKey string) (bool, error)
+	UpdateDeviceState(ctx context.Context, id repos.ID, status entities.DeviceStatus) (bool, error)
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
-
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
-
 	CreateCluster(
 		ctx context.Context,
 		data entities.Cluster,
 	) (*entities.Cluster, error)
-
+	UpdateCluster(
+		ctx context.Context,
+		id repos.ID,
+		name *string,
+		nodeCount *int,
+	) (*entities.Cluster, error)
 	DeleteCluster(
 		ctx context.Context,
 		clusterId repos.ID,
@@ -38,12 +44,14 @@ type Domain interface {
 	ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error)
 
 	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
+	ClusterDown(ctx context.Context, id repos.ID) (bool, error)
+	ClusterUp(ctx context.Context, id repos.ID) (bool, error)
+}
 
-	SetupCluster(
-		ctx context.Context,
-		clusterId repos.ID,
-		address string,
-		listenPort uint16,
-		netInterface string,
-	) (*entities.Cluster, error)
+type InfraMessenger interface {
+	SendAddClusterAction(action entities.SetupClusterAction) error
+	SendDeleteClusterAction(action entities.DeleteClusterAction) error
+	SendUpdateClusterAction(action entities.UpdateClusterAction) error
+	SendAddDeviceAction(action entities.AddPeerAction) error
+	SendRemoveDeviceAction(entities.DeletePeerAction) error
 }

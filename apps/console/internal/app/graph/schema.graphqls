@@ -9,9 +9,10 @@ type Cluster @key(fields: "id") {
   name: String!
   provider: String!
   region: String!
-  endpoint: String
+  ip: String
   devices: [Device]
-  configuration: String
+  nodesCount: Int!
+  status: String!
 }
 
 type Device @key(fields: "id") {
@@ -22,11 +23,6 @@ type Device @key(fields: "id") {
   configuration: String!
 }
 
-#extend type User @key(fields: "id"){
-#  id: String! @external
-#  devices: [Device]
-#}
-
 
 extend type Query {
   listClusters: [Cluster!]
@@ -35,14 +31,13 @@ extend type Query {
 }
 
 extend type Mutation {
-  createCluster(name: String!, provider: String!, region: String!): Cluster!
+  createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
+  updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
+  deleteCluster(clusterId: ID!): Boolean!
+  downCluster(clusterId: ID!): Boolean!
+  upCluster(clusterId: ID!): Boolean!
   addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
-  setupCluster(
-    clusterId: ID!,
-    address: String!,
-    listenPort: Int!,
-    netInterface:String!,
-  ): Cluster!
+  removeDevice(deviceId: ID!): Boolean!
 }
 
 

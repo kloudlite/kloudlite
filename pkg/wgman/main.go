@@ -224,9 +224,11 @@ func (wgc *wgManager) GetNodeIp() (string, error) {
 }
 
 func (wgc *wgManager) AddRemotePeer(publicKey string, allowedIps string, endpoint *string) error {
+
 	var c Config
 	var configsRaw []byte
 	var err error
+
 	if configsRaw, err = wgc.remoteClient.Readfile("config.json"); err != nil {
 		return fmt.Errorf("unable read config.json: %v", err)
 	}

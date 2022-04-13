@@ -1,4 +1,4 @@
-package domain
+package entities
 
 type SetupClusterAction struct {
 	ClusterID  string `json:"cluster_id"`
@@ -23,6 +23,7 @@ type AddPeerAction struct {
 
 type AddPeerResponse struct {
 	ClusterID string `json:"cluster_id"`
+	DeviceID  string `json:"device_id"`
 	PublicKey string `json:"public_key"`
 	Message   string `json:"message"`
 	Done      bool   `json:"done"`
@@ -30,11 +31,13 @@ type AddPeerResponse struct {
 
 type DeletePeerAction struct {
 	ClusterID string `json:"cluster_id"`
+	DeviceID  string `json:"device_id"`
 	PublicKey string `json:"public_key"`
 }
 
 type DeletePeerResponse struct {
 	ClusterID string `json:"cluster_id"`
+	DeviceID  string `json:"device_id"`
 	PublicKey string `json:"public_key"`
 	Done      bool   `json:"done"`
 }

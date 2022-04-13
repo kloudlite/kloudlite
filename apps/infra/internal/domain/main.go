@@ -1,8 +1,11 @@
 package domain
 
 import (
+	"fmt"
 	"go.uber.org/fx"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/messaging"
 )
 
 type Domain interface {
@@ -14,16 +17,30 @@ type Domain interface {
 }
 
 type domain struct {
-	infraCli InfraClient
-	//messageProducer messaging.Producer[messaging.Json]
+	infraCli     InfraClient
 	messageTopic string
-	jobResponder InfraJobResponder
+	//jobResponder InfraJobResponder
 }
 
 // AddPeerToCluster implements Domain
 func (d *domain) AddPeerToCluster(action AddPeerAction) error {
-
-	return d.infraCli.AddPeer(action)
+	err := d.infraCli.AddPeer(action)
+	if err != nil {
+		//d.jobResponder.SendAddPeerResponse(AddPeerResponse{
+		//	ClusterID: action.ClusterID,
+		//	PublicKey: action.PublicKey,
+		//	Message:   err.Error(),
+		//	Done:      false,
+		//})
+		return err
+	}
+	//d.jobResponder.SendAddPeerResponse(AddPeerResponse{
+	//	ClusterID: action.ClusterID,
+	//	PublicKey: action.PublicKey,
+	//	Message:   "Peer added",
+	//	Done:      true,
+	//})
+	return err
 }
 
 // DeletePeerFromCluster implements Domain
@@ -69,11 +86,11 @@ func (d *domain) UpdateCluster(action UpdateClusterAction) error {
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-	// infraJobResp InfraJobResponder,
+	//infraJobResp InfraJobResponder,
 ) Domain {
 	return &domain{
 		infraCli: infraCli,
-		// jobResponder: infraJobResp,
+		//jobResponder: infraJobResp,
 		messageTopic: env.KafkaInfraActionResulTopic,
 	}
 }
@@ -85,40 +102,47 @@ type Env struct {
 var Module = fx.Module("domain",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(makeDomain),
-	fx.Invoke(func(d Domain) {
-		err := d.DeleteCluster(DeleteClusterAction{
-			ClusterID: "cluster-test-new",
-			Provider:  "do",
+	fx.Invoke(func(d Domain, p messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
+
+		//ClusterID  string `json:"cluster_id"`
+		//Region     string `json:"region"`
+		//Provider   string `json:"provider"`
+		//NodesCount int    `json:"nodes_count"`
+
+		//d.DeleteCluster(DeleteClusterAction{
+		//	ClusterID: "hotspot-dev",
+		//	Provider:  "do",
+		//})
+
+		// if err != nil {
+		// 	panic(err)
+		// }
+
+		//d.CreateCluster(SetupClusterAction{
+		//	ClusterID:  "hotspot-dev-2",
+		//	Region:     "blr1",
+		//	Provider:   "do",
+		//	NodesCount: 4,
+		//})
+
+		//d.UpdateCluster(UpdateClusterAction{
+		//	ClusterID:  "hotspot-dev",
+		//	Region:     "blr1",
+		//	Provider:   "do",
+		//	NodesCount: 2,
+		//})
+
+		key, _ := wgtypes.GenerateKey()
+		fmt.Println(key.String())
+		d.AddPeerToCluster(AddPeerAction{
+			ClusterID: "hotspot-dev-2",
+			PublicKey: key.PublicKey().String(),
+			PeerIp:    "10.13.13.103",
 		})
 
-		if err != nil {
-			panic(err)
-		}
-
-		// d.CreateCluster(SetupClusterAction{
-		// 	ClusterID:  "cluster-test-new",
-		// 	Region:     "blr1",
-		// 	Provider:   "do",
-		// 	NodesCount: 5,
-		// })
-
-		// d.UpdateCluster(UpdateClusterAction{
-		// 	ClusterID:  "cluster-test-new",
-		// 	Region:     "blr1",
-		// 	Provider:   "do",
-		// 	NodesCount: 2,
-		// })
-
-		// key, _ := wgtypes.GenerateKey()
-		// d.AddPeerToCluster(AddPeerAction{
-		// 	ClusterID: "cluster-test-new",
-		// 	PublicKey: key.PublicKey().String(),
-		// 	PeerIp:    "10.13.13.101",
-		// })
-
-		// d.DeletePeerFromCluster(DeletePeerAction{
-		// 	ClusterID: "cluster-test-new",
-		// 	PublicKey: "BmQvaNhCzW5CC7DuU7StkI5Z7/Ko+DMb/EQF9E3/2SE=",
-		// })
+		//d.DeletePeerFromCluster(DeletePeerAction{
+		//	ClusterID: "hotspot-dev-2",
+		//	PublicKey: "1uBcGZvNsNh7wlNzawDXiAExIfbgyFgbJqTwGRTmdiY=",
+		//})
 	}),
 )
