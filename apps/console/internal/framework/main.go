@@ -63,7 +63,7 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	// // start http server
+	// start http server
 	fx.Invoke(func(lf fx.Lifecycle, env *Env, logger logger.Logger, server *http.ServeMux) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
