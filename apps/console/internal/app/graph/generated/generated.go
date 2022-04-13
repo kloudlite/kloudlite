@@ -51,13 +51,14 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Cluster struct {
-		Configuration func(childComplexity int) int
-		Devices       func(childComplexity int) int
-		Endpoint      func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Name          func(childComplexity int) int
-		Provider      func(childComplexity int) int
-		Region        func(childComplexity int) int
+		Devices    func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IP         func(childComplexity int) int
+		Name       func(childComplexity int) int
+		NodesCount func(childComplexity int) int
+		Provider   func(childComplexity int) int
+		Region     func(childComplexity int) int
+		Status     func(childComplexity int) int
 	}
 
 	Device struct {
@@ -76,8 +77,12 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AddDevice     func(childComplexity int, clusterID repos.ID, userID repos.ID, name string) int
-		CreateCluster func(childComplexity int, name string, provider string, region string) int
-		SetupCluster  func(childComplexity int, clusterID repos.ID, address string, listenPort int, netInterface string) int
+		CreateCluster func(childComplexity int, name string, provider string, region string, nodesCount int) int
+		DeleteCluster func(childComplexity int, clusterID repos.ID) int
+		DownCluster   func(childComplexity int, clusterID repos.ID) int
+		RemoveDevice  func(childComplexity int, deviceID repos.ID) int
+		UpCluster     func(childComplexity int, clusterID repos.ID) int
+		UpdateCluster func(childComplexity int, name *string, clusterID repos.ID, nodesCount *int) int
 	}
 
 	Query struct {
@@ -100,7 +105,6 @@ type ComplexityRoot struct {
 
 type ClusterResolver interface {
 	Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error)
-	Configuration(ctx context.Context, obj *model.Cluster) (*string, error)
 }
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
@@ -114,9 +118,13 @@ type EntityResolver interface {
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
 type MutationResolver interface {
-	CreateCluster(ctx context.Context, name string, provider string, region string) (*model.Cluster, error)
+	CreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error)
+	UpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (*model.Cluster, error)
+	DeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error)
+	DownCluster(ctx context.Context, clusterID repos.ID) (bool, error)
+	UpCluster(ctx context.Context, clusterID repos.ID) (bool, error)
 	AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error)
-	SetupCluster(ctx context.Context, clusterID repos.ID, address string, listenPort int, netInterface string) (*model.Cluster, error)
+	RemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
 }
 type QueryResolver interface {
 	ListClusters(ctx context.Context) ([]*model.Cluster, error)
@@ -142,26 +150,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Cluster.configuration":
-		if e.complexity.Cluster.Configuration == nil {
-			break
-		}
-
-		return e.complexity.Cluster.Configuration(childComplexity), true
-
 	case "Cluster.devices":
 		if e.complexity.Cluster.Devices == nil {
 			break
 		}
 
 		return e.complexity.Cluster.Devices(childComplexity), true
-
-	case "Cluster.endpoint":
-		if e.complexity.Cluster.Endpoint == nil {
-			break
-		}
-
-		return e.complexity.Cluster.Endpoint(childComplexity), true
 
 	case "Cluster.id":
 		if e.complexity.Cluster.ID == nil {
@@ -170,12 +164,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cluster.ID(childComplexity), true
 
+	case "Cluster.ip":
+		if e.complexity.Cluster.IP == nil {
+			break
+		}
+
+		return e.complexity.Cluster.IP(childComplexity), true
+
 	case "Cluster.name":
 		if e.complexity.Cluster.Name == nil {
 			break
 		}
 
 		return e.complexity.Cluster.Name(childComplexity), true
+
+	case "Cluster.nodesCount":
+		if e.complexity.Cluster.NodesCount == nil {
+			break
+		}
+
+		return e.complexity.Cluster.NodesCount(childComplexity), true
 
 	case "Cluster.provider":
 		if e.complexity.Cluster.Provider == nil {
@@ -190,6 +198,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Cluster.Region(childComplexity), true
+
+	case "Cluster.status":
+		if e.complexity.Cluster.Status == nil {
+			break
+		}
+
+		return e.complexity.Cluster.Status(childComplexity), true
 
 	case "Device.cluster":
 		if e.complexity.Device.Cluster == nil {
@@ -284,19 +299,67 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateCluster(childComplexity, args["name"].(string), args["provider"].(string), args["region"].(string)), true
+		return e.complexity.Mutation.CreateCluster(childComplexity, args["name"].(string), args["provider"].(string), args["region"].(string), args["nodesCount"].(int)), true
 
-	case "Mutation.setupCluster":
-		if e.complexity.Mutation.SetupCluster == nil {
+	case "Mutation.deleteCluster":
+		if e.complexity.Mutation.DeleteCluster == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_setupCluster_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteCluster_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetupCluster(childComplexity, args["clusterId"].(repos.ID), args["address"].(string), args["listenPort"].(int), args["netInterface"].(string)), true
+		return e.complexity.Mutation.DeleteCluster(childComplexity, args["clusterId"].(repos.ID)), true
+
+	case "Mutation.downCluster":
+		if e.complexity.Mutation.DownCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_downCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DownCluster(childComplexity, args["clusterId"].(repos.ID)), true
+
+	case "Mutation.removeDevice":
+		if e.complexity.Mutation.RemoveDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveDevice(childComplexity, args["deviceId"].(repos.ID)), true
+
+	case "Mutation.upCluster":
+		if e.complexity.Mutation.UpCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_upCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpCluster(childComplexity, args["clusterId"].(repos.ID)), true
+
+	case "Mutation.updateCluster":
+		if e.complexity.Mutation.UpdateCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateCluster(childComplexity, args["name"].(*string), args["clusterId"].(repos.ID), args["nodesCount"].(*int)), true
 
 	case "Query.getCluster":
 		if e.complexity.Query.GetCluster == nil {
@@ -444,9 +507,10 @@ type Cluster @key(fields: "id") {
   name: String!
   provider: String!
   region: String!
-  endpoint: String
+  ip: String
   devices: [Device]
-  configuration: String
+  nodesCount: Int!
+  status: String!
 }
 
 type Device @key(fields: "id") {
@@ -457,11 +521,6 @@ type Device @key(fields: "id") {
   configuration: String!
 }
 
-#extend type User @key(fields: "id"){
-#  id: String! @external
-#  devices: [Device]
-#}
-
 
 extend type Query {
   listClusters: [Cluster!]
@@ -470,14 +529,13 @@ extend type Query {
 }
 
 extend type Mutation {
-  createCluster(name: String!, provider: String!, region: String!): Cluster!
+  createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
+  updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
+  deleteCluster(clusterId: ID!): Boolean!
+  downCluster(clusterId: ID!): Boolean!
+  upCluster(clusterId: ID!): Boolean!
   addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
-  setupCluster(
-    clusterId: ID!,
-    address: String!,
-    listenPort: Int!,
-    netInterface:String!,
-  ): Cluster!
+  removeDevice(deviceId: ID!): Boolean!
 }
 
 
@@ -628,10 +686,19 @@ func (ec *executionContext) field_Mutation_createCluster_args(ctx context.Contex
 		}
 	}
 	args["region"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["nodesCount"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodesCount"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["nodesCount"] = arg3
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_setupCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deleteCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -643,33 +710,84 @@ func (ec *executionContext) field_Mutation_setupCluster_args(ctx context.Context
 		}
 	}
 	args["clusterId"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["address"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_downCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["clusterId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["address"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["listenPort"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("listenPort"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+	args["clusterId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["deviceId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["listenPort"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["netInterface"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("netInterface"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+	args["deviceId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_upCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["clusterId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["netInterface"] = arg3
+	args["clusterId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	var arg1 repos.ID
+	if tmp, ok := rawArgs["clusterId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
+		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterId"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["nodesCount"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodesCount"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["nodesCount"] = arg2
 	return args, nil
 }
 
@@ -911,7 +1029,7 @@ func (ec *executionContext) _Cluster_region(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Cluster_endpoint(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+func (ec *executionContext) _Cluster_ip(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -929,7 +1047,7 @@ func (ec *executionContext) _Cluster_endpoint(ctx context.Context, field graphql
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Endpoint, nil
+		return obj.IP, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -975,7 +1093,7 @@ func (ec *executionContext) _Cluster_devices(ctx context.Context, field graphql.
 	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Cluster_configuration(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+func (ec *executionContext) _Cluster_nodesCount(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -986,25 +1104,63 @@ func (ec *executionContext) _Cluster_configuration(ctx context.Context, field gr
 		Object:     "Cluster",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Cluster().Configuration(rctx, obj)
+		return obj.NodesCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Cluster_status(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Device_id(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
@@ -1333,7 +1489,7 @@ func (ec *executionContext) _Mutation_createCluster(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateCluster(rctx, args["name"].(string), args["provider"].(string), args["region"].(string))
+		return ec.resolvers.Mutation().CreateCluster(rctx, args["name"].(string), args["provider"].(string), args["region"].(string), args["nodesCount"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1348,6 +1504,174 @@ func (ec *executionContext) _Mutation_createCluster(ctx context.Context, field g
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateCluster(rctx, args["name"].(*string), args["clusterId"].(repos.ID), args["nodesCount"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Cluster)
+	fc.Result = res
+	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteCluster(rctx, args["clusterId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_downCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_downCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DownCluster(rctx, args["clusterId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_upCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_upCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpCluster(rctx, args["clusterId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_addDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1392,7 +1716,7 @@ func (ec *executionContext) _Mutation_addDevice(ctx context.Context, field graph
 	return ec.marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_setupCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_removeDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1409,7 +1733,7 @@ func (ec *executionContext) _Mutation_setupCluster(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_setupCluster_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_removeDevice_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1417,7 +1741,7 @@ func (ec *executionContext) _Mutation_setupCluster(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetupCluster(rctx, args["clusterId"].(repos.ID), args["address"].(string), args["listenPort"].(int), args["netInterface"].(string))
+		return ec.resolvers.Mutation().RemoveDevice(rctx, args["deviceId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1429,9 +1753,9 @@ func (ec *executionContext) _Mutation_setupCluster(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Cluster)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_listClusters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3065,9 +3389,9 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "endpoint":
+		case "ip":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_endpoint(ctx, field, obj)
+				return ec._Cluster_ip(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -3089,23 +3413,26 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
-		case "configuration":
-			field := field
-
+		case "nodesCount":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Cluster_configuration(ctx, field, obj)
-				return res
+				return ec._Cluster_nodesCount(ctx, field, obj)
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			out.Values[i] = innerFunc(ctx)
 
-			})
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Cluster_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3346,6 +3673,46 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "updateCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateCluster(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteCluster(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "downCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_downCluster(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "upCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_upCluster(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "addDevice":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addDevice(ctx, field)
@@ -3356,9 +3723,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "setupCluster":
+		case "removeDevice":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setupCluster(ctx, field)
+				return ec._Mutation_removeDevice(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -4618,6 +4985,22 @@ func (ec *executionContext) marshalODevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋ
 		return graphql.Null
 	}
 	return ec._Device(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

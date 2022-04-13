@@ -27,7 +27,7 @@ func (i *infraResponder) SendAddPeerResponse(action domain.AddPeerResponse) erro
 // SendCreateClusterResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendCreateClusterResponse(action domain.SetupClusterResponse) error {
 	marshal, err := json.Marshal(map[string]any{
-		"type":    "add-peer",
+		"type":    "create-cluster",
 		"payload": action,
 	})
 	if err != nil {
@@ -39,7 +39,7 @@ func (i *infraResponder) SendCreateClusterResponse(action domain.SetupClusterRes
 // SendDeleteClusterResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendDeleteClusterResponse(action domain.DeleteClusterResponse) error {
 	marshal, err := json.Marshal(map[string]any{
-		"type":    "add-peer",
+		"type":    "delete-cluster",
 		"payload": action,
 	})
 	if err != nil {
@@ -51,7 +51,7 @@ func (i *infraResponder) SendDeleteClusterResponse(action domain.DeleteClusterRe
 // SendDeletePeerResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendDeletePeerResponse(action domain.DeletePeerResponse) error {
 	marshal, err := json.Marshal(map[string]any{
-		"type":    "add-peer",
+		"type":    "delete-peer",
 		"payload": action,
 	})
 	if err != nil {
@@ -63,7 +63,7 @@ func (i *infraResponder) SendDeletePeerResponse(action domain.DeletePeerResponse
 // SendUpdateClusterResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendUpdateClusterResponse(action domain.UpdateClusterResponse) error {
 	marshal, err := json.Marshal(map[string]any{
-		"type":    "add-peer",
+		"type":    "update-cluster",
 		"payload": action,
 	})
 	if err != nil {
