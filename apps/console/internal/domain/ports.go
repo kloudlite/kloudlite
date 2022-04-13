@@ -2,12 +2,13 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
 
 type Domain interface {
-	UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus) (bool, error)
+	UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus, PublicIp string, PublicKey string) (bool, error)
 	UpdateDeviceState(ctx context.Context, id repos.ID, status entities.DeviceStatus) (bool, error)
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)

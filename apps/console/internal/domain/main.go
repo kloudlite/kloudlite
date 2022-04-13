@@ -22,7 +22,7 @@ type domain struct {
 	messenger       InfraMessenger
 }
 
-func (d *domain) UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus) (bool, error) {
+func (d *domain) UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus, PublicIp string, PublicKey string) (bool, error) {
 	byId, err := d.clusterRepo.FindById(ctx, id)
 	if err != nil {
 		return false, err

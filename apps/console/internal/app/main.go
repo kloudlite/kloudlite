@@ -48,16 +48,36 @@ var Module = fx.Module(
 			env:      env,
 			producer: p,
 			onAddClusterResponse: func(ctx context.Context, m entities.SetupClusterResponse) {
-
+				if m.Done {
+					d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+					return
+				}
+				d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
 			},
+
 			onDeleteClusterResponse: func(ctx context.Context, m entities.DeleteClusterResponse) {
+				if m.Done {
+					d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+					return
+				}
+				d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
 
 			},
+
 			onUpdateClusterResponse: func(ctx context.Context, m entities.UpdateClusterResponse) {
+				if m.Done {
+					d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+					return
+				}
+				d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
 
 			},
+
 			onAddDeviceResponse: func(ctx context.Context, m entities.AddPeerResponse) {
 
+				if m.Done {
+					d.UpdateDeviceState(ctx, repos.ID(m.DeviceID), entities.DeviceStateAttached)
+				}
 			},
 			onRemoveDeviceResponse: func(ctx context.Context, m entities.DeletePeerResponse) {
 
