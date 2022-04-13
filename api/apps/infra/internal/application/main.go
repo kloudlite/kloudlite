@@ -5,7 +5,6 @@ import (
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
-
 	//"kloudlite.io/pkg/messaging"
 	// "kloudlite.io/pkg/logger"
 	// "kloudlite.io/pkg/messaging"
@@ -40,15 +39,15 @@ func fxProducer(mc messaging.KafkaClient) (messaging.Producer[any], error) {
 	return messaging.NewKafkaProducer[any](mc)
 }
 
-func fxJobResponder(p messaging.Producer[any]) domain.InfraJobResponder {
-	return NewInfraResponder(p)
-}
+//func fxJobResponder(p messaging.Producer[any]) domain.InfraJobResponder {
+//	return NewInfraResponder(p)
+//}
 
 var Module = fx.Module("application",
 	fx.Provide(config.LoadEnv[InfraEnv]()),
 	fx.Provide(fxInfraClient),
-	fx.Provide(fxProducer),
-	fx.Provide(fxJobResponder),
+	//fx.Provide(fxProducer),
+	//fx.Provide(fxJobResponder),
 	domain.Module,
 	//fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[any]) {
 	//	lifecycle.Append(fx.Hook{
