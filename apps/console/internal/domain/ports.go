@@ -8,8 +8,16 @@ import (
 )
 
 type Domain interface {
-	UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus, PublicIp string, PublicKey string) (bool, error)
+	UpdateClusterState(
+		ctx context.Context,
+		id repos.ID,
+		status entities.ClusterStatus,
+		PublicIp *string,
+		PublicKey *string,
+	) (bool, error)
 	UpdateDeviceState(ctx context.Context, id repos.ID, status entities.DeviceStatus) (bool, error)
+	RemoveClusterDone(ctx context.Context, id repos.ID) error
+	RemoveDeviceDone(ctx context.Context, id repos.ID) error
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
 	CreateCluster(
@@ -44,8 +52,8 @@ type Domain interface {
 	ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error)
 
 	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
-	ClusterDown(ctx context.Context, id repos.ID) (bool, error)
-	ClusterUp(ctx context.Context, id repos.ID) (bool, error)
+	_ClusterDown(ctx context.Context, id repos.ID) (bool, error)
+	_ClusterUp(ctx context.Context, id repos.ID) (bool, error)
 }
 
 type InfraMessenger interface {
