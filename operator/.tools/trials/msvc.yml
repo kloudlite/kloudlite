@@ -1,13 +1,9 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: sampley
-  namespace: sample
+  name: mongo
+  namespace: hotspot
 spec:
   templateName: msvc_mongo
   values: |
-    {
-      "name": "sample",
-      "capacity": 1,
-      "replicaCount": 1
-    }
+    {"name":"mongo","capacity":1,"replicaCount":1}

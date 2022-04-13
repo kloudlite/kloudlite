@@ -67,15 +67,15 @@ func main() {
 
 	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
-	if err = (&controllers.ProjectReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: clientset,
-		JobMgr:    lib.NewJobber(clientset),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Project")
-		os.Exit(1)
-	}
+	// if err = (&controllers.ProjectReconciler{
+	// 	Client:    mgr.GetClient(),
+	// 	Scheme:    mgr.GetScheme(),
+	// 	ClientSet: clientset,
+	// 	JobMgr:    lib.NewJobber(clientset),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "Project")
+	// 	os.Exit(1)
+	// }
 	// if err = (&controllers.RouterReconciler{
 	// 	Client: mgr.GetClient(),
 	// 	Scheme: mgr.GetScheme(),

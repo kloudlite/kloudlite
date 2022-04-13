@@ -1,0 +1,3 @@
+package retry
+
+func Next() {}

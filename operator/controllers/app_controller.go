@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
+	// batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,6 +112,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 						if apiErrors.IsNotFound(err) {
 							checks[env.RefName] = "NotFound"
 						}
+						r.logger.Debug("failed as ", err)
 						return reconcileResult.Retry(minCoolingTime)
 					}
 					if _, ok := cfg.Data[env.RefKey]; !ok {
@@ -124,6 +127,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 						if apiErrors.IsNotFound(err) {
 							checks[env.RefName] = "NotFound"
 						}
+						r.logger.Debug("failed as", err)
 						return reconcileResult.Retry(minCoolingTime)
 					}
 					if _, ok := scrt.Data[env.RefKey]; !ok {
@@ -132,8 +136,88 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 				}
 			}
 		}
+
 		app.Status.DependencyChecked = &checks
 		return r.updateStatus(ctx, app)
+	}
+
+	if app.HasNotCheckedImages() {
+		logger.Debug("app.HasNotCheckedImages()")
+		pContainers := []corev1.Container{}
+		for _, container := range app.Spec.Containers {
+			pContainers = append(pContainers, corev1.Container{
+				Name:  container.Name,
+				Image: container.Image,
+			})
+		}
+
+		r.logger.Debugf("pContainers: %+v", pContainers)
+
+		pod, err := r.ClientSet.CoreV1().Pods(app.Namespace).Create(ctx, &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "app-sanity-check-",
+				Namespace:    app.Namespace,
+			},
+			Spec: corev1.PodSpec{
+				Containers: pContainers,
+			},
+		}, metav1.CreateOptions{})
+
+		if err != nil {
+			return reconcileResult.RetryE(maxCoolingTime, errors.NewEf(err, "could not create pod"))
+		}
+
+		app.Status.ImagesCheckJob = &crdsv1.ReconPod{
+			Namespace: pod.Namespace,
+			Name:      pod.Name,
+		}
+		return r.updateStatus(ctx, app)
+	}
+
+	if app.IsCheckingImages() {
+		logger.Debug("app.IsCheckingImages()")
+		// ASSERT: read status of pod to check for image pull error
+		var pod corev1.Pod
+		if err := r.Get(ctx, types.NamespacedName{
+			Namespace: app.Status.ImagesCheckJob.Namespace,
+			Name:      app.Status.ImagesCheckJob.Name,
+		}, &pod); err != nil {
+			return reconcileResult.Failed()
+		}
+
+		hasImageErrors := []bool{}
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.State.Running != nil {
+				hasImageErrors = append(hasImageErrors, false)
+			}
+			if cs.State.Waiting != nil {
+				if cs.State.Waiting.Reason == "ImagePullBackOff" {
+					app.Status.ImagesCheckJob.Failed = fmt.Sprintf("container (%s) can not pull image", cs.Name)
+					r.logger.Debug(app.Status.ImagesCheckJob.Failed)
+					app.Status.ImagesCheckCompleted = newBool(true)
+					if err := r.ClientSet.CoreV1().Pods(app.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
+						return reconcileResult.Retry(minCoolingTime)
+					}
+					return r.updateStatus(ctx, app)
+				}
+			}
+		}
+
+		if len(hasImageErrors) == len(pod.Spec.Containers) {
+			hasErr := false
+			for _, item := range hasImageErrors {
+				hasErr = hasErr || item
+			}
+			if !hasErr {
+				if err := r.ClientSet.CoreV1().Pods(app.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
+					return reconcileResult.Retry(minCoolingTime)
+				}
+				app.Status.ImagesCheckJob = nil
+				app.Status.ImagesCheckCompleted = newBool(true)
+				return r.updateStatus(ctx, app)
+			}
+		}
+		return reconcileResult.Retry(minCoolingTime)
 	}
 
 	// STEP: create new job

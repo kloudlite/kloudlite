@@ -234,6 +234,21 @@ spec:
               generation:
                 format: int64
                 type: integer
+              imagesCheckCompleted:
+                type: boolean
+              imagesCheckJob:
+                properties:
+                  failed:
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - failed
+                - name
+                - namespace
+                type: object
               job:
                 properties:
                   name:

@@ -31,4 +31,4 @@ spec:
           {{- end}}
         {{- end }}
       restartPolicy: OnFailure
-  backoffLimit: 2
+  backoffLimit: 2 
