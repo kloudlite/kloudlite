@@ -35,6 +35,6 @@ func (i *infraResponder) SendUpdateClusterResponse(action domain.UpdateClusterRe
 	panic("unimplemented")
 }
 
-//func NewInfraResponder(k messaging.Producer[any]) domain.InfraJobResponder {
-//	return &infraResponder{kProducer: k}
-//}
+func NewInfraResponder(k messaging.Producer[any]) domain.InfraJobResponder {
+	return &infraResponder{kProducer: k}
+}
