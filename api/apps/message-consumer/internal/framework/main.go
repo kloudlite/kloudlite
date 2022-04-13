@@ -3,11 +3,11 @@ package framework
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"kloudlite.io/apps/message-consumer/internal/app"
 	"kloudlite.io/pkg/errors"
 )

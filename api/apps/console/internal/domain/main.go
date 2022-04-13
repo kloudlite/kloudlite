@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -20,63 +19,97 @@ type domain struct {
 	messageProducer messaging.Producer[messaging.Json]
 	messageTopic    string
 	logger          logger.Logger
+	messenger       InfraMessenger
 }
 
-func (d *domain) SetupCluster(
-	ctx context.Context,
-	clusterId repos.ID,
-	address string,
-	port uint16,
-	netInterface string,
-) (cluster *entities.Cluster, e error) {
-	defer errors.HandleErr(&e)
-	c, err := d.clusterRepo.FindById(ctx, clusterId)
-
+func (d *domain) UpdateClusterState(ctx context.Context, id repos.ID, status entities.ClusterStatus, PublicIp string, PublicKey string) (bool, error) {
+	byId, err := d.clusterRepo.FindById(ctx, id)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-
-	errors.AssertNoError(e, fmt.Errorf("cluster not found"))
-
-	c.ListenPort = &port
-	c.NetInterface = &netInterface
-	c.Address = &address
-	updatedCluster, err := d.clusterRepo.UpdateById(ctx, clusterId, c)
+	byId.Status = status
+	updateById, err := d.clusterRepo.UpdateById(ctx, id, byId)
 	if err != nil {
-		errors.AssertNoError(e, fmt.Errorf("failed to update cluster"))
+		return false, err
 	}
-	return updatedCluster, err
+	return updateById.Status == status, nil
+}
+
+func (d *domain) UpdateDeviceState(ctx context.Context, id repos.ID, status entities.DeviceStatus) (bool, error) {
+	byId, err := d.deviceRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	byId.Status = status
+	updateById, err := d.deviceRepo.UpdateById(ctx, id, byId)
+	if err != nil {
+		return false, err
+	}
+	return updateById.Status == status, nil
+}
+
+func (d *domain) ClusterDown(ctx context.Context, id repos.ID) (bool, error) {
+	byId, err := d.clusterRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	byId.Status = entities.ClusterStateDown
+	updateById, err := d.clusterRepo.UpdateById(ctx, id, byId)
+	if err != nil {
+		return false, err
+	}
+	return updateById.Status == entities.ClusterStateDown, nil
+}
+
+func (d *domain) ClusterUp(ctx context.Context, id repos.ID) (bool, error) {
+	byId, err := d.clusterRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	byId.Status = entities.ClusterStateSyncing
+	updateById, err := d.clusterRepo.UpdateById(ctx, id, byId)
+	if err != nil {
+		return false, err
+	}
+	// TODO Send Message
+	return updateById.Status == entities.ClusterStateSyncing, nil
 }
 
 func (d *domain) CreateCluster(ctx context.Context, data entities.Cluster) (cluster *entities.Cluster, e error) {
-	defer errors.HandleErr(&e)
-	pk, e := wgtypes.GeneratePrivateKey()
-	errors.AssertNoError(e, fmt.Errorf("could not generate wg privateKey"))
-
-	s := pk.String()
-	sPub := pk.PublicKey().String()
-	data.PrivateKey = &s
-	data.PublicKey = &sPub
 	c, err := d.clusterRepo.Create(ctx, &data)
-	errors.AssertNoError(e, fmt.Errorf("could not create cluster as %v", err))
-
-	kMsg := messaging.Json{
-		"cluster_id":    c.Id,
-		"region":        c.Region,
-		"provider":      c.Provider,
-		"masters_count": 1,
-		"nodes_count":   2,
+	if err != nil {
+		return nil, err
 	}
-
-	d.logger.Infof("Kafka Message: %+v, topic %v", kMsg, d.messageTopic)
-	e = d.messageProducer.SendMessage(d.messageTopic, string(c.Id), kMsg)
 	return c, e
 }
 
+func (d *domain) UpdateCluster(
+	ctx context.Context,
+	id repos.ID,
+	name *string,
+	nodeCount *int,
+) (*entities.Cluster, error) {
+	c, err := d.clusterRepo.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if name != nil {
+		c.Name = *name
+	}
+	if nodeCount != nil {
+		c.NodesCount = *nodeCount
+	}
+	updated, err := d.clusterRepo.UpdateById(ctx, id, c)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
+}
+
 func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
-	//_, e := d.clusterRepo.DeleteById(ctx, clusterId)
-	//return e
-	return nil
+	// TODO
+	fmt.Println(clusterId)
+	return d.clusterRepo.DeleteById(ctx, clusterId)
 }
 
 func (d *domain) ListClusters(ctx context.Context) ([]*entities.Cluster, error) {
@@ -146,8 +179,10 @@ func fxDomain(
 	msgP messaging.Producer[messaging.Json],
 	env *Env,
 	logger logger.Logger,
+	messenger InfraMessenger,
 ) Domain {
 	return &domain{
+		messenger:       messenger,
 		deviceRepo:      deviceRepo,
 		clusterRepo:     clusterRepo,
 		messageProducer: msgP,
