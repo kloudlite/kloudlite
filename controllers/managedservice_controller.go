@@ -3,6 +3,8 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -90,6 +92,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return reconcileResult.Failed()
 		}
 
+		fmt.Println("HERE")
 		action := "create"
 		if msvc.Generation > 1 {
 			action = "update"
@@ -116,6 +119,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		})
 
 		if err != nil {
+			r.logger.Debug(err)
 			return reconcileResult.Failed()
 		}
 

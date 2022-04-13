@@ -30,6 +30,9 @@ type ContainerVolume struct {
 	Items     []ContainerVolumeItem `json:"items"`
 }
 
+type ImageFromGit struct {
+}
+
 type AppContainer struct {
 	Name            string            `json:"name"`
 	Image           string            `json:"image"`
@@ -54,12 +57,20 @@ type AppSpec struct {
 	Containers []AppContainer `json:"containers"`
 }
 
+type ReconPod struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	Failed    string `json:"failed"`
+}
+
 // AppStatus defines the observed state of App
 type AppStatus struct {
 	Job                  *ReconJob          `json:"job,omitempty"`
 	JobCompleted         *bool              `json:"jobCompleted,omitempty"`
 	Generation           *int64             `json:"generation,omitempty"`
 	DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
+	ImagesCheckJob       *ReconPod          `json:"imagesCheckJob,omitempty"`
+	ImagesCheckCompleted *bool              `json:"imagesCheckCompleted,omitempty"`
 	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
 	DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
 	Conditions           []metav1.Condition `json:"conditions,omitempty"`
@@ -81,6 +92,8 @@ func (app *App) DefaultStatus() {
 	app.Status.DependencyChecked = nil
 	app.Status.Job = nil
 	app.Status.JobCompleted = nil
+	app.Status.ImagesCheckJob = nil
+	app.Status.ImagesCheckCompleted = nil
 	app.Status.Generation = &app.Generation
 }
 
@@ -94,6 +107,15 @@ func (app *App) HasNotCheckedDependency() bool {
 
 func (app *App) HasPassedDependencyCheck() bool {
 	return app.Status.DependencyChecked != nil && len(*app.Status.DependencyChecked) == 0
+}
+
+func (app *App) HasNotCheckedImages() bool {
+	return app.Status.ImagesCheckCompleted == nil && app.Status.ImagesCheckJob == nil
+}
+
+func (app *App) IsCheckingImages() bool {
+	// return app.Status.ImagesCheckJob != nil && app.Status.ImagesCheckCompleted == nil
+	return app.Status.ImagesCheckJob != nil
 }
 
 func (app *App) IsNewGeneration() bool {

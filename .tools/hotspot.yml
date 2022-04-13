@@ -11,5 +11,5 @@ local:
         KUBECONFIG: /tmp/kconfig
       volumes:
         - './:/tmp/app'
-        - '~/.kube/configs/dev-hotspot-01.yml:/tmp/kconfig'
-kubeConfig: ~/.kube/configs/dev-hotspot-01.yml
+        - '~/.kube/configs/dev-kloudlite.yml:/tmp/kconfig'
+kubeConfig: ~/.kube/configs/dev-kloudlite.yml

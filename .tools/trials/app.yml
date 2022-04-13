@@ -2,7 +2,7 @@ apiVersion: "crds.kloudlite.io/v1"
 kind: App
 metadata:
   name: sample-app
-  namespace: sample
+  namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/app
 spec:
@@ -25,8 +25,8 @@ spec:
       resourceMemory:
         min: "100"
         max: "200"
-      env:
-        - key: MYHOME2
-          type: config
-          refName: config/sample-cfg
-          refKey: hello
+      # env:
+      #   - key: MYHOME2
+      #     type: config
+      #     refName: config/sample-cfg
+      #     refKey: hello

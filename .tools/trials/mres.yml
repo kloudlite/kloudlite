@@ -1,8 +1,8 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: sampley-db
-  namespace: sample
+  name: auth-db
+  namespace: hotspot
 spec:
   type: db
-  managedSvc: sampley
+  managedSvc: mongo
