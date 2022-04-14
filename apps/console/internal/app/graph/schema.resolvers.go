@@ -118,19 +118,11 @@ func (r *mutationResolver) DeleteCluster(ctx context.Context, clusterID repos.ID
 	return true, err
 }
 
-func (r *mutationResolver) DownCluster(ctx context.Context, clusterID repos.ID) (bool, error) {
-	return r.Domain.ClusterDown(ctx, clusterID)
-}
-
-func (r *mutationResolver) UpCluster(ctx context.Context, clusterID repos.ID) (bool, error) {
-	return r.Domain.ClusterUp(ctx, clusterID)
-}
-
 func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
-	var e error
-	defer wErrors.HandleErr(&e)
 	device, e := r.Domain.AddDevice(ctx, name, clusterID, userID)
-	wErrors.AssertNoError(e, fmt.Errorf("not able to add device"))
+	if e != nil {
+		return nil, e
+	}
 	return &model.Device{
 		ID:            device.Id,
 		Name:          device.Name,
@@ -147,8 +139,22 @@ func (r *mutationResolver) RemoveDevice(ctx context.Context, deviceID repos.ID) 
 }
 
 func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, error) {
-	fmt.Printf("[context] %+v", ctx.Value("id"))
-	return make([]*model.Cluster, 0), nil
+	clusterEntities, e := r.Domain.ListClusters(ctx)
+	clusters := make([]*model.Cluster, 0)
+
+	for _, cE := range clusterEntities {
+		clusters = append(clusters, &model.Cluster{
+			ID:         cE.Id,
+			Name:       cE.Name,
+			Provider:   cE.Provider,
+			Region:     cE.Region,
+			IP:         cE.Ip,
+			NodesCount: cE.NodesCount,
+			Status:     string(cE.Status),
+		})
+	}
+	fmt.Println(clusters)
+	return clusters, e
 }
 
 func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {

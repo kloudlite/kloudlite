@@ -144,11 +144,35 @@ func (i *infraClient) setupNodeWireguards(
 	return nil
 }
 
+func (i *infraClient) waitForWireguardAvailability(clusterId string) error {
+
+	count := 0
+	for count < 200 {
+
+		cmd := exec.Command("kubectl", "get", "pods", "-n", "wireguard", "|", "grep", "-i", "1/1")
+		cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
+
+		_, e := cmd.Output()
+
+		fmt.Println(e)
+		if e == nil {
+			return nil
+		}
+
+		fmt.Println("waiting for wireguard pods to be running")
+		time.Sleep(time.Second * 6)
+		count++
+	}
+
+	return errors.New("not able to access wireguard after 12 minute")
+}
+
 func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
 
-	cmd := exec.Command("kubectl", "wait", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
-	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
-	err := cmd.Run()
+	// cmd := exec.Command("kubectl", "wait", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
+	// cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
+	// err := cmd.Run()
+	err := i.waitForWireguardAvailability(clusterId)
 
 	if err != nil {
 		fmt.Println("error on kube server start:", err)
