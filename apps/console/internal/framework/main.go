@@ -20,13 +20,15 @@ import (
 )
 
 type Env struct {
-	MongoUri     string `env:"MONGO_URI" required:"true"`
-	RedisUri     string `env:"REDIS_URI" required:"true"`
-	MongoDbName  string `env:"MONGO_DB_NAME" required:"true"`
-	KafkaBrokers string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
-	Port         uint16 `env:"PORT" required:"true"`
-	IsDev        bool   `env:"DEV" default:"false"`
-	CorsOrigins  string `env:"ORIGINS"`
+	MongoUri      string `env:"MONGO_URI" required:"true"`
+	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
+	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
+	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
+	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
+	KafkaBrokers  string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
+	Port          uint16 `env:"PORT" required:"true"`
+	IsDev         bool   `env:"DEV" default:"false"`
+	CorsOrigins   string `env:"ORIGINS"`
 }
 
 var Module = fx.Module("framework",
@@ -44,9 +46,11 @@ var Module = fx.Module("framework",
 		return messaging.NewKafkaClient(e.KafkaBrokers)
 	}),
 
-	fx.Provide(func(e *Env) cache.Client {
+	fx.Provide(func(e *Env) *cache.RedisClient {
 		return cache.NewRedisClient(cache.RedisConnectOptions{
-			Addr: e.RedisUri,
+			Addr:     e.RedisHosts,
+			UserName: e.RedisUserName,
+			Password: e.RedisPassword,
 		})
 	}),
 
@@ -67,6 +71,18 @@ var Module = fx.Module("framework",
 			},
 			OnStop: func(ctx context.Context) error {
 				return db.Client().Disconnect(ctx)
+			},
+		})
+	}),
+
+	// start redis
+	fx.Invoke(func(lf fx.Lifecycle, r *cache.RedisClient) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return r.Connect(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return r.Close(ctx)
 			},
 		})
 	}),

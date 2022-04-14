@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -38,10 +39,12 @@ func (r *redisRepo[T]) SetWithExpiry(c context.Context, key string, value T, dur
 }
 
 func (r *redisRepo[T]) Get(c context.Context, key string) (*T, error) {
+	fmt.Println("r-movie:", r.client)
 	result, err := r.client.Get(c, key).Result()
 	if err != nil {
 		return nil, errors.NewEf(err, "could not get key (%s)", key)
 	}
+	fmt.Println("result:", result)
 	var value T
 	err = json.Unmarshal([]byte(result), &value)
 	if err != nil {
@@ -59,6 +62,7 @@ func (r *redisRepo[T]) Drop(c context.Context, key string) error {
 }
 
 func NewRedisRepo[T any](redisCli *RedisClient) Repo[T] {
+	fmt.Println("NRR: ", redisCli)
 	return &redisRepo[T]{
 		RedisClient: redisCli,
 	}
@@ -69,12 +73,16 @@ type RedisClient struct {
 	client *redis.Client
 }
 
-func (c *RedisClient) Connect(context.Context) error {
-	c.client = redis.NewClient(&redis.Options{
+func (c *RedisClient) Connect(ctx context.Context) error {
+	rCli := redis.NewClient(&redis.Options{
 		Addr:     c.opts.Addr,
 		Password: c.opts.Password,
 		Username: c.opts.UserName,
 	})
+	if err := rCli.Ping(ctx).Err(); err != nil {
+		return errors.NewEf(err, "could not connect to redis")
+	}
+	c.client = rCli
 	return nil
 }
 
