@@ -1,0 +1,6 @@
+version: '3'
+tasks:
+  agent:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
