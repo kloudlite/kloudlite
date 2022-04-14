@@ -69,6 +69,7 @@ type AppStatus struct {
 	JobCompleted         *bool              `json:"jobCompleted,omitempty"`
 	Generation           *int64             `json:"generation,omitempty"`
 	DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
+	HasAvailableImages   *bool              `json:"HasAvailableImages,omitempty"`
 	ImagesCheckJob       *ReconPod          `json:"imagesCheckJob,omitempty"`
 	ImagesCheckCompleted *bool              `json:"imagesCheckCompleted,omitempty"`
 	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
@@ -107,6 +108,13 @@ func (app *App) HasNotCheckedDependency() bool {
 
 func (app *App) HasPassedDependencyCheck() bool {
 	return app.Status.DependencyChecked != nil && len(*app.Status.DependencyChecked) == 0
+}
+
+func (app *App) CheckImagesAvailable() bool {
+	if app.Status.HasAvailableImages == nil {
+		return true
+	}
+	return !*app.Status.HasAvailableImages
 }
 
 func (app *App) HasNotCheckedImages() bool {
