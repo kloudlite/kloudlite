@@ -183,9 +183,11 @@ func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*mode
 }
 
 func (r *queryResolver) Sample(ctx context.Context) (*string, error) {
-	fmt.Println("HERE:", ctx.Value("session"))
-	s := ctx.Value("session").(string)
-	return &s, nil
+	s, ok := ctx.Value("session").(*entities.AuthSession)
+	if !ok {
+		return nil, wErrors.Newf("could not retrieve session from ctx")
+	}
+	return &s.UserEmail, nil
 }
 
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
