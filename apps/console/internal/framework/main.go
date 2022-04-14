@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
@@ -20,6 +21,7 @@ import (
 
 type Env struct {
 	MongoUri     string `env:"MONGO_URI" required:"true"`
+	RedisUri     string `env:"REDIS_URI" required:"true"`
 	MongoDbName  string `env:"MONGO_DB_NAME" required:"true"`
 	KafkaBrokers string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
 	Port         uint16 `env:"PORT" required:"true"`
@@ -40,6 +42,12 @@ var Module = fx.Module("framework",
 
 	fx.Provide(func(e *Env) messaging.KafkaClient {
 		return messaging.NewKafkaClient(e.KafkaBrokers)
+	}),
+
+	fx.Provide(func(e *Env) cache.Client {
+		return cache.NewRedisClient(cache.RedisConnectOptions{
+			Addr: e.RedisUri,
+		})
 	}),
 
 	// Load App Module

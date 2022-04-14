@@ -176,6 +176,12 @@ func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*mode
 	}, e
 }
 
+func (r *queryResolver) Sample(ctx context.Context) (*string, error) {
+	fmt.Println("HERE:", ctx.Value("session"))
+	s := ctx.Value("session").(string)
+	return &s, nil
+}
+
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)

@@ -95,8 +95,9 @@ var Module = fx.Module(
 		)
 
 		server.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-			fmt.Printf("Headers: %+v", req.Cookies())
-			gqlServer.ServeHTTP(w, req)
+			fmt.Printf("Headers: %+v\n", req.Cookies())
+			ctx := context.WithValue(req.Context(), "session", "hi")
+			gqlServer.ServeHTTP(w, req.WithContext(ctx))
 		})
 
 		// server.Handle("/", gqlServer)

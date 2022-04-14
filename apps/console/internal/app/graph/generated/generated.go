@@ -89,6 +89,7 @@ type ComplexityRoot struct {
 		GetCluster         func(childComplexity int, clusterID repos.ID) int
 		GetDevice          func(childComplexity int, deviceID repos.ID) int
 		ListClusters       func(childComplexity int) int
+		Sample             func(childComplexity int) int
 		__resolve__service func(childComplexity int) int
 		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
 	}
@@ -130,6 +131,7 @@ type QueryResolver interface {
 	ListClusters(ctx context.Context) ([]*model.Cluster, error)
 	GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error)
 	GetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error)
+	Sample(ctx context.Context) (*string, error)
 }
 type UserResolver interface {
 	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
@@ -392,6 +394,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ListClusters(childComplexity), true
 
+	case "Query.sample":
+		if e.complexity.Query.Sample == nil {
+			break
+		}
+
+		return e.complexity.Query.Sample(childComplexity), true
+
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
 			break
@@ -501,7 +510,6 @@ var sources = []*ast.Source{
   devices: [Device]
 }
 
-
 type Cluster @key(fields: "id") {
   id: ID!
   name: String!
@@ -526,6 +534,7 @@ extend type Query {
   listClusters: [Cluster!]
   getCluster(clusterId: ID!): Cluster
   getDevice(deviceId: ID!): Device
+  sample: String
 }
 
 extend type Mutation {
@@ -1866,6 +1875,38 @@ func (ec *executionContext) _Query_getDevice(ctx context.Context, field graphql.
 	res := resTmp.(*model.Device)
 	fc.Result = res
 	return ec.marshalODevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_sample(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Sample(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3813,6 +3854,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getDevice(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "sample":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_sample(ctx, field)
 				return res
 			}
 
