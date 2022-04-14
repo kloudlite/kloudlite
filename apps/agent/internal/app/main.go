@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"strings"
 
 	"go.uber.org/fx"
@@ -27,7 +26,7 @@ func fxMsgProducer(messenger messaging.KafkaClient) (messaging.Producer[domain.M
 }
 
 func fxMsgConsumer(messenger messaging.KafkaClient, env *Env, logger logger.Logger, d domain.Domain) (messaging.Consumer, error) {
-	consumer, e := messaging.NewKafkaConsumer[domain.Message](
+	consumer, e := messaging.NewKafkaConsumer(
 		messenger, strings.Split(env.Topics, ","), env.GroupId, logger,
 		func(topic string, msg domain.Message) error {
 			return d.ProcessMessage(&msg)
@@ -42,168 +41,19 @@ func fxMsgConsumer(messenger messaging.KafkaClient, env *Env, logger logger.Logg
 var Module = fx.Module("app",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(fxMsgProducer),
-	fx.Provide(fxMsgConsumer),
+	// fx.Provide(fxMsgConsumer),
 	domain.Module,
-	fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return consumer.Subscribe()
-			},
-			OnStop: func(ctx context.Context) error {
-				// return consumer.Unsubscribe()
-				return nil
-			},
-		})
-	}),
-
-	// fx.Invoke(func(lf fx.Lifecycle, d domain.Domain) {
+	// fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer) {
 	// 	lf.Append(fx.Hook{
 	// 		OnStart: func(ctx context.Context) error {
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_PROJECT,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.Project{
-	// 		Name:        "sample-xyz",
-	// 		DisplayName: "this is not just a project",
-	// 		Logo:        "i have no logo",
-	// 	},
-	// }
-
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_MANAGED_SERVICE,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.ManagedSvc{
-	// 		Name:         "sample-xyz",
-	// 		Namespace:    "hotspot",
-	// 		TemplateName: "msvc_mongo",
-	// 		Version:      1,
-	// 		Values: map[string]interface{}{
-	// 			"hi": "asdfa",
+	// 			return consumer.Subscribe()
+	// 			// return nil
 	// 		},
-	// 		LastApplied: M{"hello": "world", "something": map[string]interface{}{
-	// 			"one": 2,
-	// 			"two": 2,
-	// 		}},
-	// 	},
-	// }
-
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_APP,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.App{
-	// 		Name:      "sample",
-	// 		Namespace: "hotspot",
-	// 		Services: []domain.AppSvc{
-	// 			domain.AppSvc{
-	// 				Port:       21323,
-	// 				TargetPort: 21345,
-	// 				Type:       "tcp",
-	// 			},
+	// 		OnStop: func(ctx context.Context) error {
+	// 			// return consumer.Unsubscribe()
+	// 			return nil
 	// 		},
-	// 		Containers: []domain.AppContainer{
-	// 			domain.AppContainer{
-	// 				Name:            "sample",
-	// 				Image:           "nginx",
-	// 				ImagePullPolicy: "Always",
-	// 				Command:         []string{"hello", "world"},
-	// 				ResourceCpu:     domain.ContainerResource{Min: "100", Max: "200"},
-	// 				ResourceMemory:  domain.ContainerResource{Min: "200", Max: "300"},
-	// 				Env: []domain.ContainerEnv{
-	// 					domain.ContainerEnv{
-	// 						Key:   "hello",
-	// 						Value: "world",
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// }
-
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_MANAGED_RESOURCE,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.ManagedRes{
-	// 		Name:       "sample-mres",
-	// 		Type:       "db",
-	// 		Namespace:  "hotspot",
-	// 		ManagedSvc: "sample1234",
-	// 		Values: map[string]interface{}{
-	// 			"hello":  "world",
-	// 			"sample": "hello",
-	// 		},
-	// 	},
-	// }
-
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_CONFIG,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.Config{
-	// 		Name:      "hi-config",
-	// 		Namespace: "hotspot",
-	// 		Data: map[string]interface{}{
-	// 			"hi":  "hello there",
-	// 			"one": 2,
-	// 		},
-	// 	},
-	// }
-
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_SECRET,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.Secret{
-	// 		Name:      "hi-config",
-	// 		Namespace: "hotspot",
-	// 		Data: map[string]interface{}{
-	// 			"hi":  "hello there",
-	// 			"one": 2,
-	// 		},
-	// 	},
-	// }
-
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_ROUTER,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.Router{
-	// 		Name:      "sample-router",
-	// 		Namespace: "hotspot",
-	// 		Domains:   []string{"x.kloudlite.io", "y.kloudlitle.io"},
-	// 		Routes: []domain.Routes{
-	// 			domain.Routes{
-	// 				Path: "/",
-	// 				App:  "sample",
-	// 				Port: 80,
-	// 			},
-	// 			domain.Routes{
-	// 				Path: "/api",
-	// 				App:  "sample-api",
-	// 				Port: 3000,
-	// 			},
-	// 		},
-	// 	},
-	// }
-
-	// msg := domain.Message{
-	// 	ResourceType: shared.RESOURCE_GIT_PIPELINE,
-	// 	Namespace:    "hotspot",
-	// 	Spec: domain.Pipeline{
-	// 		Name:        "sample-p",
-	// 		Namespace:   "hotspot",
-	// 		GitProvider: "gitlab",
-	// 		GitRepoUrl:  "https://gitlab.com/madhouselabs/kloudlite/api-go",
-	// 		GitRef:      "heads/feature/ci",
-	// 		BuildArgs: []domain.BuildArg{
-	// 			domain.BuildArg{
-	// 				Key:   "app",
-	// 				Value: "message-consumer",
-	// 			},
-	// 		},
-	// 		// Github:     domain.PipelineGithub{},
-	// 		// Gitlab:     domain.PipelineGitlab{},
-	// 	},
-	// }
-
-	// return d.ProcessMessage(&msg)
-	// },
-	// })
+	// 	})
 	// }),
+	TModule,
 )
