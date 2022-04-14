@@ -3,8 +3,10 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-redis/redis/v8"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"kloudlite.io/pkg/errors"
 )
 
 type redisRepo[T any] struct {
@@ -14,9 +16,13 @@ type redisRepo[T any] struct {
 func (r *redisRepo[T]) Set(c context.Context, key string, value T) error {
 	marshal, err := json.Marshal(value)
 	if err != nil {
-		return err
+		return errors.NewEf(err, "could not unmarshal T into JSON string")
 	}
-	return r.client.Set(c, key, string(marshal), 0).Err()
+	err = r.client.Set(c, key, string(marshal), 0).Err()
+	if err != nil {
+		return errors.NewEf(err, "coult not set key (%s)", key)
+	}
+	return nil
 }
 
 func (r *redisRepo[T]) SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error {
@@ -24,21 +30,32 @@ func (r *redisRepo[T]) SetWithExpiry(c context.Context, key string, value T, dur
 	if err != nil {
 		return err
 	}
-	return r.client.Set(c, key, string(marshal), duration).Err()
+	err = r.client.Set(c, key, string(marshal), duration).Err()
+	if err != nil {
+		return errors.NewEf(err, "coult not set key (%s)", key)
+	}
+	return nil
 }
 
-func (r *redisRepo[T]) Get(c context.Context, key string) (T, error) {
+func (r *redisRepo[T]) Get(c context.Context, key string) (*T, error) {
 	result, err := r.client.Get(c, key).Result()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewEf(err, "could not get key (%s)", key)
 	}
 	var value T
 	err = json.Unmarshal([]byte(result), &value)
-	return value, err
+	if err != nil {
+		return nil, errors.NewEf(err, "could not unmarshal value into type (%T)", result)
+	}
+	return &value, nil
 }
 
 func (r *redisRepo[T]) Drop(c context.Context, key string) error {
-	return r.client.Del(c, key).Err()
+	err := r.client.Del(c, key).Err()
+	if err != nil {
+		return errors.NewEf(err, "could not drop key (%s)", key)
+	}
+	return nil
 }
 
 func NewRedisRepo[T any](redisCli *RedisClient) Repo[T] {
@@ -48,11 +65,7 @@ func NewRedisRepo[T any](redisCli *RedisClient) Repo[T] {
 }
 
 type RedisClient struct {
-	opts struct {
-		Addr     string
-		Username string
-		Password string
-	}
+	opts   *RedisConnectOptions
 	client *redis.Client
 }
 
@@ -60,7 +73,7 @@ func (c *RedisClient) Connect(context.Context) error {
 	c.client = redis.NewClient(&redis.Options{
 		Addr:     c.opts.Addr,
 		Password: c.opts.Password,
-		Username: c.opts.Username,
+		Username: c.opts.UserName,
 	})
 	return nil
 }
@@ -74,12 +87,14 @@ func (c *RedisClient) Close(context.Context) error {
 	return nil
 }
 
-func NewRedisClient(addr string, password string, userName string) *RedisClient {
+type RedisConnectOptions struct {
+	Addr     string
+	UserName string
+	Password string
+}
+
+func NewRedisClient(opts RedisConnectOptions) *RedisClient {
 	return &RedisClient{
-		opts: struct {
-			Addr     string
-			Username string
-			Password string
-		}{Addr: addr, Username: userName, Password: password},
+		opts: &opts,
 	}
 }
