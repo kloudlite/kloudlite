@@ -12,7 +12,7 @@ tasks:
       MONGO_DB_NAME: console-go
       PORT: 4001
       DEV: true
-      KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
     sources:
