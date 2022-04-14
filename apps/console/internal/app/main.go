@@ -3,8 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/pkg/config"
 	"net/http"
+
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/logger"
 
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -39,6 +42,10 @@ var Module = fx.Module(
 
 	fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 		return messaging.NewKafkaProducer[messaging.Json](messagingCli)
+	}),
+
+	fx.Provide(func(c *cache.RedisClient) cache.Repo[entities.AuthSession] {
+		return cache.NewRedisRepo[entities.AuthSession](c)
 	}),
 
 	domain.Module,
@@ -97,7 +104,7 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Invoke(func(server *http.ServeMux, d domain.Domain) {
+	fx.Invoke(func(server *http.ServeMux, d domain.Domain, c cache.Repo[entities.AuthSession], logger logger.Logger) {
 		server.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
 
 		gqlServer := gqlHandler.NewDefaultServer(
@@ -108,7 +115,18 @@ var Module = fx.Module(
 
 		server.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 			fmt.Printf("Headers: %+v\n", req.Cookies())
-			ctx := context.WithValue(req.Context(), "session", "hi")
+			sessCookie, err := req.Cookie("hotspot-session")
+			if err != nil {
+				fmt.Println("no hotspot-session cookie")
+			}
+			ctx := req.Context()
+			key := fmt.Sprintf("hotspot:auth:sessions:%s", sessCookie.Value)
+			r, err := c.Get(ctx, key)
+			if err != nil {
+				logger.Errorf("could not get session: %+v", err)
+			}
+			logger.Debugf("SESSION: %+v", r)
+			ctx = context.WithValue(ctx, "session", r)
 			gqlServer.ServeHTTP(w, req.WithContext(ctx))
 		})
 
