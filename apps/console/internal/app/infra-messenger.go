@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/messaging"
 )
@@ -31,6 +32,7 @@ func (i *infraMessengerImpl) SendDeleteClusterAction(action entities.DeleteClust
 }
 
 func (i *infraMessengerImpl) SendUpdateClusterAction(action entities.UpdateClusterAction) error {
+	fmt.Println(i.env, i.producer, action)
 	return i.producer.SendMessage(i.env.KafkaInfraTopic, action.ClusterID, messaging.Json{
 		"type":    "update-cluster",
 		"payload": action,

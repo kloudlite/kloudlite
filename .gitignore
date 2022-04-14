@@ -10,4 +10,5 @@ terraform.tfvars
 .terraform
 .keys
 .kube
+.task
 # wgman
