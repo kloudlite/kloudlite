@@ -14,6 +14,7 @@ require (
 	github.com/rs/cors v1.8.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/vektah/gqlparser/v2 v2.4.0
+	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54
 	go.mongodb.org/mongo-driver v1.8.2
 	go.uber.org/fx v1.17.1
 	go.uber.org/zap v1.21.0
