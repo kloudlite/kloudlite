@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
 
 	"go.uber.org/zap"
@@ -33,10 +35,12 @@ func newBool(b bool) *bool {
 // AppReconciler reconciles a App object
 type AppReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	ClientSet *kubernetes.Clientset
-	JobMgr    lib.Job
-	logger    *zap.SugaredLogger
+	Scheme         *runtime.Scheme
+	ClientSet      *kubernetes.Clientset
+	JobMgr         lib.Job
+	logger         *zap.SugaredLogger
+	HarborUserName string
+	HarborPassword string
 }
 
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -44,7 +48,8 @@ type AppReconciler struct {
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 const maxCoolingTime = 5
-const minCoolingTime = 2
+const semiCoolingTime = 2
+const minCoolingTime = 0
 
 const appFinalizer = "finalizers.kloudlite.io/app"
 
@@ -94,7 +99,6 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	// STEP: do assertions for dependents
-
 	// ASSERT: has configmaps/secrets
 	if app.HasNotCheckedDependency() {
 		logger.Debug("app.HasNotCheckedDependency()")
@@ -138,6 +142,46 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 
 		app.Status.DependencyChecked = &checks
+		return r.updateStatus(ctx, app)
+	}
+
+	//ASSERT: availability of images
+	if app.CheckImagesAvailable() {
+		checks := []bool{}
+		for _, c := range app.Spec.Containers {
+			if strings.HasPrefix(c.Image, "harbor.dev.madhouselabs.io") {
+				imageName := strings.Replace(c.Image, "harbor.dev.madhouselabs.io/ci/", "", 1)
+				artifact := strings.Split(imageName, ":")
+				artifactName := artifact[0]
+				tag := artifact[1]
+				req, err := http.NewRequest(
+					http.MethodGet,
+					fmt.Sprintf("https://harbor.dev.madhouselabs.io/api/v2.0/projects/ci/repositories/%s/artifacts/%s/tags", url.QueryEscape(artifactName), tag),
+					nil,
+				)
+				if err != nil {
+					return reconcileResult.RetryE(minCoolingTime, errors.NewEf(err, "could not create http.Request object"))
+				}
+				req.Header.Add("Content-Type", "application/vnd.oci.image.index.v1+json")
+				req.SetBasicAuth(r.HarborUserName, r.HarborPassword)
+
+				resp, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return reconcileResult.Retry(semiCoolingTime)
+				}
+				checks = append(checks, resp.StatusCode == 200)
+			}
+		}
+
+		b := true
+		for _, c := range checks {
+			b = b && c
+		}
+
+		if !b {
+			return reconcileResult.Retry(maxCoolingTime)
+		}
+		app.Status.ImagesCheckCompleted = newBool(true)
 		return r.updateStatus(ctx, app)
 	}
 
@@ -192,13 +236,16 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			}
 			if cs.State.Waiting != nil {
 				if cs.State.Waiting.Reason == "ImagePullBackOff" {
-					app.Status.ImagesCheckJob.Failed = fmt.Sprintf("container (%s) can not pull image", cs.Name)
-					r.logger.Debug(app.Status.ImagesCheckJob.Failed)
-					app.Status.ImagesCheckCompleted = newBool(true)
-					if err := r.ClientSet.CoreV1().Pods(app.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
-						return reconcileResult.Retry(minCoolingTime)
-					}
-					return r.updateStatus(ctx, app)
+					r.logger.Debug(cs.State.Waiting.Reason)
+					return reconcileResult.Retry(minCoolingTime)
+
+					// app.Status.ImagesCheckJob.Failed = fmt.Sprintf("container (%s) can not pull image", cs.Name)
+					// r.logger.Debug(app.Status.ImagesCheckJob.Failed)
+					// app.Status.ImagesCheckCompleted = newBool(true)
+					// if err := r.ClientSet.CoreV1().Pods(app.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
+					// 	return reconcileResult.Retry(minCoolingTime)
+					// }
+					// return r.updateStatus(ctx, app)
 				}
 			}
 		}
@@ -212,9 +259,10 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 				if err := r.ClientSet.CoreV1().Pods(app.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
 					return reconcileResult.Retry(minCoolingTime)
 				}
-				app.Status.ImagesCheckJob = nil
-				app.Status.ImagesCheckCompleted = newBool(true)
-				return r.updateStatus(ctx, app)
+				return reconcileResult.Retry(minCoolingTime)
+				// app.Status.ImagesCheckJob = nil
+				// app.Status.ImagesCheckCompleted = newBool(true)
+				// return r.updateStatus(ctx, app)
 			}
 		}
 		return reconcileResult.Retry(minCoolingTime)

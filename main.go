@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -84,11 +85,22 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
+	userName, ok := os.LookupEnv("HARBOR_USERNAME")
+	if !ok {
+		panic(fmt.Errorf("ENV 'HARBOR_USERNAME' is not provided"))
+	}
+	password, ok := os.LookupEnv("HARBOR_PASSWORD")
+	if !ok {
+		panic(fmt.Errorf("ENV 'HARBOR_PASSWORD' is not provided"))
+	}
+
 	if err = (&controllers.AppReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: clientset,
-		JobMgr:    lib.NewJobber(clientset),
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		ClientSet:      clientset,
+		JobMgr:         lib.NewJobber(clientset),
+		HarborUserName: userName,
+		HarborPassword: password,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "App")
 		os.Exit(1)
