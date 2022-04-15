@@ -1,20 +1,69 @@
 package application
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
 
-	"github.com/aymerick/raymond"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/wgman"
 )
 
 type infraClient struct {
 	env *InfraEnv
+}
+
+func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error) {
+	var masterCount, agentCount int
+
+	if masterCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count"); err == nil {
+		masterCount, _ = strconv.Atoi(masterCountstr)
+	} else {
+		return err
+	}
+
+	if agentCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "agent-nodes-count"); err == nil {
+		agentCount, _ = strconv.Atoi(agentCountstr)
+	} else {
+		return err
+	}
+
+	cmd := exec.Command("terraform", "destroy", "-auto-approve", fmt.Sprintf("-var=master-nodes-count=%v", masterCount), fmt.Sprintf("-var=agent-nodes-count=%v", agentCount), fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath))
+	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)
+	// cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
+	serverWg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		true,
+	)
+	return serverWg.AddRemotePeer(action.PublicKey, fmt.Sprintf("%v/32", action.PeerIp), nil)
+}
+
+func (i *infraClient) DeletePeer(action domain.DeletePeerAction) (e error) {
+	//TODO implement me
+	serverWg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		true,
+	)
+
+	return serverWg.DeleteRemotePeer(action.PublicKey)
+
 }
 
 func (i *infraClient) setupMaster(ip string) error {
@@ -39,11 +88,107 @@ func (i *infraClient) setupMaster(ip string) error {
 	).Run()
 
 	return e
-
 }
 
-// func setupSecondaryMasters([]string ips) error{}
-// func setupAgents([]string ips) error{}
+func (i *infraClient) setupNodeWireguards(
+	nodeIps []string,
+	clusterId string,
+	clusterIp string,
+	clusterPublicKey string,
+) (err error) {
+
+	serverWg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		true,
+	)
+	for _, ip := range nodeIps {
+		func(ip string) {
+			wg := wgman.NewSshWgManager("/etc/wireguard/wg0.conf", ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath), false)
+
+			// if !wg.IsSetupDone() {
+			if true {
+				_ip, e := wg.GetNodeIp()
+				if e != nil {
+
+					fmt.Println(fmt.Errorf("unable to get nodeip %v", e))
+					return
+				}
+				nodePublicKey, e := wg.Init(_ip)
+				if e != nil {
+					fmt.Println(fmt.Errorf("failed to setup wireguard for node %v", e))
+					return
+				}
+				endpoint := fmt.Sprintf("%v:31820", clusterIp)
+				e = wg.AddPeer(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", &endpoint)
+				if e != nil {
+					fmt.Println(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", endpoint)
+					panic(e)
+
+					fmt.Println(fmt.Errorf("failed to add peer to wireguard for node %v", e))
+					return
+				}
+				e = serverWg.AddPeer(nodePublicKey, fmt.Sprintf("%v/32", strings.TrimSpace(_ip)), nil)
+				if e != nil {
+
+					fmt.Println(fmt.Errorf("unable to add node as peer to wireguard server %v", e))
+					return
+				}
+			}
+
+		}(ip)
+	}
+
+	return nil
+}
+
+func (i *infraClient) waitForWireguardAvailability(clusterId string) error {
+
+	count := 0
+	for count < 200 {
+
+		cmd := exec.Command("kubectl", "get", "pods", "-n", "wireguard", "|", "grep", "-i", "1/1")
+		cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
+
+		_, e := cmd.Output()
+
+		fmt.Println(e)
+		if e == nil {
+			return nil
+		}
+
+		fmt.Println("waiting for wireguard pods to be running")
+		time.Sleep(time.Second * 6)
+		count++
+	}
+
+	return errors.New("not able to access wireguard after 12 minute")
+}
+
+func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
+
+	// cmd := exec.Command("kubectl", "wait", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
+	// cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
+	// err := cmd.Run()
+	err := i.waitForWireguardAvailability(clusterId)
+
+	if err != nil {
+		fmt.Println("error on kube server start:", err)
+		return "", err
+	}
+
+	wg := wgman.NewKubeWgManager("/etc/wireguard/wg0.conf", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId), "wireguard", "deploy/wireguard-deployment", true)
+
+	o, err := wg.Init(ip)
+
+	if err != nil {
+		fmt.Println("error on kube server start:", err)
+		return o, err
+	}
+	return o, err
+}
 
 func initTerraformInFolder(folder string) error {
 	cmd := exec.Command("terraform", "init")
@@ -53,8 +198,6 @@ func initTerraformInFolder(folder string) error {
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
-
-	// fmt.Println(err)
 
 	if err != nil {
 		return err
@@ -83,226 +226,257 @@ func applyTerraformInFolder(folder string, values map[string]any) error {
 	return nil
 }
 
-func getOutputTerraformInFolder(folder string, key string) (string, error) {
+func (i *infraClient) getOutputTerraformInFolder(clusterId string, key string) (string, error) {
 	cmd := exec.Command("terraform", "output", key)
-	cmd.Dir = folder
+	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)
 	out, err := cmd.Output()
 	return strings.ReplaceAll(strings.ReplaceAll(string(out), "\"", ""), "\n", ""), err
 }
 
-func (i *infraClient) CreateKubernetes(action domain.SetupClusterAction) (e error) {
+func (i *infraClient) waitForSshAvailability(ip string) error {
+
+	count := 0
+	for count < 20 {
+		e := exec.Command(
+			"ssh",
+			"-o",
+			"StrictHostKeyChecking=no",
+			"-o", "UserKnownHostsFile=/dev/null",
+			"-i",
+			fmt.Sprintf("%v/access", i.env.SshKeysPath),
+			"root@"+ip,
+			"echo", "hello",
+		).Run()
+
+		fmt.Println(e)
+		if e == nil {
+			return nil
+		}
+
+		fmt.Println("waiting for ssh availability")
+		time.Sleep(time.Second * 3)
+		count++
+	}
+
+	return errors.New("not able to access ssh after 10 attempts")
+}
+
+func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([]byte, error) {
+
+	i.waitForSshAvailability(masterIp)
+
+	cmd := exec.Command(
+		"k3sup",
+		"install",
+		fmt.Sprintf("--ip=%v", masterIp),
+		"--cluster",
+		"--k3s-version=v1.23.5+k3s1",
+		"--user=root",
+		"--k3s-extra-args='--disable=traefik'",
+		"--k3s-extra-args='--node-name=master'",
+	)
+
+	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)
+
+	return cmd.Output()
+}
+
+func (i *infraClient) setupAllKubernetes(clusterId string, provider string) ([]byte, error) {
+	cmd := exec.Command("bash", "init.sh")
+	cmd.Dir = fmt.Sprintf("./infra-scripts/%v/init-scripts", provider)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
+	return cmd.Output()
+}
+
+func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId string) (err error) {
+	masterIp := masterIps[0]
+	if len(masterIps) < 2 {
+		return nil
+	}
+
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(len(masterIps) - 1)
+	for index, ip := range masterIps {
+		if index == 0 {
+			continue
+		}
+		go func(ip string) error {
+			i.waitForSshAvailability(ip)
+			cmd := exec.Command(
+				"k3sup",
+				"join",
+				fmt.Sprintf("--ip=%v", ip),
+				fmt.Sprintf("--server-ip=%v", masterIp),
+				"--k3s-version=v1.23.5+k3s1",
+				"--user=root",
+				"--server-user=root",
+				"--server",
+				"--k3s-extra-args='--disable=traefik'",
+			)
+			cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
+			_, err := cmd.Output()
+			waitGroup.Done()
+			if err != nil {
+				return err
+			}
+			return nil
+		}(ip)
+	}
+	waitGroup.Wait()
+	fmt.Println("done joining masters")
+	return err
+}
+
+func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterId string) error {
+
+	// masterIp := masterIps[0]
+
+	if len(agentIps) < 1 {
+		return nil
+	}
+
+	if agentIps[0] == "" {
+		return nil
+	}
+
+	c := make(chan error, len(agentIps))
+
+	for _, ip := range agentIps {
+		go func(ip string) error {
+			cmd := exec.Command(
+				"k3sup",
+				"join",
+				fmt.Sprintf("--ip=%v", ip),
+				fmt.Sprintf("--server-ip=%v", masterIp),
+				"--k3s-version=v1.23.5+k3s1",
+				"--user=root",
+				"--server-user=root",
+			)
+
+			_, err := cmd.Output()
+			c <- err
+
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}(ip)
+
+	}
+
+	err := <-c
+	fmt.Println("done joining agents")
+
+	return err
+}
+
+func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
+
 	defer errors.HandleErr(&e)
+
 	copyTemplateDirCommand := exec.Command(
 		"cp",
 		"-r",
-		fmt.Sprintf("./internal/application/tf/%v", action.Provider),
+		fmt.Sprintf("./infra-scripts/%v/tf/", action.Provider),
 		fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID),
 	)
+
 	copyTemplateDirCommand.Stdout = os.Stdout
 	copyTemplateDirCommand.Stderr = os.Stderr
 	e = copyTemplateDirCommand.Run()
+
 	errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
 
-	// fmt.Println(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
 
-	// e = initTerraformInFolder(fmt.Sprintf("%v/%v/secondary-tf", i.env.DataPath, action.ClusterID))
-	// errors.AssertNoError(e, fmt.Errorf("unable to init terraform secondary"))
+	//masterCount := func() int {
+	//	if action.NodesCount > 3 {
+	//		return 3
+	//	}
+	//	return 1
+	//}()
 
 	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), map[string]any{
 		"cluster-id":         action.ClusterID,
 		"do-token":           i.env.DoAPIKey,
-		"do-image-id":        i.env.DoImageId,
 		"keys-path":          i.env.SshKeysPath,
-		"master-nodes-count": action.MastersCount,
-		"agent-nodes-count":  action.NodesCount - action.MastersCount,
+		"master-nodes-count": 1,
+		"agent-nodes-count":  action.NodesCount - 1,
+		"do-image-id":        i.env.DoImageId,
 	})
 
-	// fmt.Println(e.Error())
 	errors.AssertNoError(e, fmt.Errorf("unable to apply terraform primary"))
 
-	masterIp, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ip")
-	masterIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "master-ips")
-	agentIps, e := getOutputTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), "agent-ips")
+	masterIps, e := i.getOutputTerraformInFolder(action.ClusterID, "master-ips")
+	agentIps, e := i.getOutputTerraformInFolder(action.ClusterID, "agent-ips")
 
 	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ip"))
 
-	fmt.Println("master out", string(masterIp))
-	fmt.Println(masterIps)
-	fmt.Println(agentIps)
+	clusterIp := strings.Split(masterIps, ",")[0]
+	var clusterPublicKey string
+	var clusterPublicKeyWaitGroup sync.WaitGroup
+	clusterPublicKeyWaitGroup.Add(1)
 
-	e = i.setupMaster(string(masterIp))
+	out, e := i.installPrimaryMaster(clusterIp, action.ClusterID)
+	fmt.Println(string(out), e)
+
+	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
+
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(5)
+	go func() {
+		clusterPublicKeyWaitGroup.Wait()
+		i.setupNodeWireguards(
+			append(strings.Split(masterIps, ","), strings.Split(agentIps, ",")...),
+			action.ClusterID,
+			clusterIp,
+			clusterPublicKey,
+		)
+		waitGroup.Done()
+	}()
+
+	go func() {
+		wireguardPub, err := i.setupKubeWireguard(clusterIp, action.ClusterID)
+		if err != nil {
+			fmt.Println(fmt.Errorf("unable to setup wireguard %v", err))
+			waitGroup.Done()
+			return
+		}
+		clusterPublicKey = wireguardPub
+		clusterPublicKeyWaitGroup.Done()
+		waitGroup.Done()
+	}()
+
+	go func() {
+		kubernetes, _ := i.setupAllKubernetes(action.ClusterID, action.Provider)
+		fmt.Println(string(kubernetes))
+		waitGroup.Done()
+	}()
+
+	go func() {
+		i.installSecondaryMasters(strings.Split(masterIps, ","), action.ClusterID)
+		waitGroup.Done()
+	}()
+
+	go func() {
+		i.installAgents(clusterIp, strings.Split(agentIps, ","), action.ClusterID)
+		waitGroup.Done()
+	}()
+
+	waitGroup.Wait()
+	fmt.Println("setup finished")
 
 	fmt.Println(e)
-	errors.AssertNoError(e, fmt.Errorf("unable to setup master"))
 
-	// applyCommand := exec.Command(
-	// 	"terraform",
-	// 	fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, action.ClusterID),
-	// 	"apply",
-	// 	"-auto-approve",
-	// 	fmt.Sprintf("-var=cluster-id=%v", action.ClusterID),
-	// 	fmt.Sprintf("-var=master-nodes-count=%v", action.MastersCount),
-	// 	fmt.Sprintf("-var=agent-nodes-count=%v", action.NodesCount-action.MastersCount),
-	// 	fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath),
-	// 	fmt.Sprintf("-var=do-token=%v", i.env.DoAPIKey),
-	// 	fmt.Sprintf("-var=do-image-id=%v", i.env.DoImageId),
-	// )
-
-	// applyCommand.Stdout = os.Stdout
-	// applyCommand.Stderr = os.Stderr
-	// e = applyCommand.Run()
-	// errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
-	// e = i.CreateKubeConfig(action.ClusterID)
-	// errors.AssertNoError(e, fmt.Errorf("unable to create kubeconfig"))
-	return e
+	return clusterIp, clusterPublicKey, e
 }
 
-func (i *infraClient) CreateKubeConfig(clusterId string) (e error) {
-
-	defer errors.HandleErr(&e)
-	out, e := exec.Command(
-		"terraform",
-		fmt.Sprintf("-chdir=%v/%v", i.env.DataPath, clusterId),
-		"output",
-		"-json",
-	).Output()
-
-	errors.AssertNoError(e, fmt.Errorf("should run"))
-	var outJson map[string]map[string]interface{}
-	e = json.Unmarshal(out, &outJson)
-	errors.AssertNoError(e, fmt.Errorf("should unmarshal output"))
-	_, e = exec.Command(
-		"scp",
-		"-o",
-		"StrictHostKeyChecking=no",
-		"-o",
-		"UserKnownHostsFile=/dev/null",
-		"-i",
-		fmt.Sprintf("%v/access", i.env.SshKeysPath),
-		fmt.Sprintf("root@%v:/etc/rancher/k3s/k3s.yaml", outJson["cluster-ip"]["value"].(string)),
-		fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId),
-	).Output()
-	errors.AssertNoError(e, fmt.Errorf("unable to download file"))
-	input, e := ioutil.ReadFile(fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-	errors.AssertNoError(e, fmt.Errorf("should read file"))
-	newString := strings.ReplaceAll(string(input), "127.0.0.1", outJson["cluster-ip"]["value"].(string))
-	e = ioutil.WriteFile(fmt.Sprintf("%v/%v/k3s.yaml", i.env.DataPath, clusterId), []byte(newString), 0644)
-	errors.AssertNoError(e, fmt.Errorf("should be able to change file"))
-	return e
-}
-
-func (i *infraClient) UpdateKubernetes(action domain.UpdateClusterAction) (e error) {
-	defer errors.HandleErr(&e)
-	applyCommand := exec.Command(
-		"terraform",
-		fmt.Sprintf("-chdir=%v", fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)),
-		"apply",
-		"-auto-approve",
-		fmt.Sprintf("-var=cluster-id=%v", action.ClusterID),
-		fmt.Sprintf("-var=master-nodes-count=%v", action.MastersCount),
-		fmt.Sprintf("-var=agent-nodes-count=%v", action.NodesCount-action.MastersCount),
-		fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath),
-		fmt.Sprintf("-var=do-token=%v", i.env.DoAPIKey),
-	)
-	applyCommand.Stdout = os.Stdout
-	applyCommand.Stderr = os.Stderr
-	e = applyCommand.Run()
-	errors.AssertNoError(e, fmt.Errorf("failed to apply terraform"))
-	return e
-}
-
-func (i *infraClient) SetupDOCSI(clusterId string) (e error) {
-	defer errors.HandleErr(&e)
-	if _, err := os.Stat("/tmp/do-api.yaml"); err == nil {
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		buffer, e := ioutil.ReadFile("./internal/application/csi/do-secret/template.yaml")
-		errors.AssertNoError(e, fmt.Errorf("template file should exist"))
-		tpl := raymond.MustParse(string(buffer))
-		result := tpl.MustExec(map[string]interface{}{
-			"api_key": i.env.DoAPIKey,
-		})
-		fmt.Sprintf(result)
-		e = ioutil.WriteFile("/tmp/do-api.yaml", []byte(result), 0644)
-	} else {
-		// should not happen
-		return err
-	}
-	fmt.Println(fmt.Sprintf("%v/%v/kube.yaml", i.env.DataPath, clusterId))
-	applyDoKeySecretCommand := exec.Command(
-		"kubectl",
-		"apply",
-		"-f", "/tmp/do-api.yaml",
-	)
-	applyDoKeySecretCommand.Env = os.Environ()
-	applyDoKeySecretCommand.Env = append(applyDoKeySecretCommand.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-	fmt.Println(applyDoKeySecretCommand.Env)
-	applyDoKeySecretCommand.Stdout = os.Stdout
-	applyDoKeySecretCommand.Stderr = os.Stderr
-	e = applyDoKeySecretCommand.Run()
-	errors.AssertNoError(e, fmt.Errorf("unable to apply Digital Ocean Key"))
-
-	applyCSICommand1 := exec.Command(
-		"kubectl",
-		"apply",
-		"-f", "./internal/application/csi/crds.yaml",
-	)
-	applyCSICommand1.Env = os.Environ()
-	applyCSICommand1.Env = append(applyDoKeySecretCommand.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-
-	applyCSICommand1.Stdout = os.Stdout
-	applyCSICommand1.Stderr = os.Stderr
-	e = applyCSICommand1.Run()
-
-	applyCSICommand2 := exec.Command(
-		"kubectl",
-		"apply",
-		"-f", "./internal/application/csi",
-	)
-	applyCSICommand2.Env = os.Environ()
-	applyCSICommand2.Env = append(applyDoKeySecretCommand.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-
-	applyCSICommand2.Stdout = os.Stdout
-	applyCSICommand2.Stderr = os.Stderr
-	e = applyCSICommand2.Run()
-
-	errors.AssertNoError(e, fmt.Errorf("unable to apply CSI"))
-	return e
-}
-
-func (i *infraClient) SetupCSI(clusterId string, provider string) (e error) {
-	switch provider {
-	case "do":
-		return i.SetupDOCSI(clusterId)
-	default:
-		return fmt.Errorf("provider not supported")
-	}
-}
-
-func (i *infraClient) SetupOperator(clusterId string) error {
-	//TODO implement me
+func (i *infraClient) UpdateCluster(action domain.UpdateClusterAction) (e error) {
 	panic("implement me")
-}
-
-func (i *infraClient) SetupMonitoring(clusterId string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *infraClient) SetupIngress(clusterId string) error {
-	applyHelm := exec.Command("bash", "./internal/application/ingress/init.sh", "install", "-f", "./internal/application/ingress/values.yaml")
-	applyHelm.Env = os.Environ()
-	applyHelm.Env = append(applyHelm.Env, fmt.Sprintf("KUBECONFIG=%v/%v/k3s.yaml", i.env.DataPath, clusterId))
-	applyHelm.Stdout = os.Stdout
-	applyHelm.Stderr = os.Stderr
-	return applyHelm.Run()
-}
-
-func (i *infraClient) SetupWireguard(clusterId string) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func fxInfraClient(env *InfraEnv) domain.InfraClient {

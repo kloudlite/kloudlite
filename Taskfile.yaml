@@ -1,0 +1,6 @@
+version: '3'
+
+includes:
+  console: 
+    taskfile: ./apps/console/Taskfile.yml
+    dir: ./apps/console

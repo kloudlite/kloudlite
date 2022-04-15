@@ -7,13 +7,14 @@ import (
 )
 
 type Cluster struct {
-	ID            repos.ID  `json:"id"`
-	Name          string    `json:"name"`
-	Provider      string    `json:"provider"`
-	Region        string    `json:"region"`
-	Endpoint      *string   `json:"endpoint"`
-	Devices       []*Device `json:"devices"`
-	Configuration *string   `json:"configuration"`
+	ID         repos.ID  `json:"id"`
+	Name       string    `json:"name"`
+	Provider   string    `json:"provider"`
+	Region     string    `json:"region"`
+	IP         *string   `json:"ip"`
+	Devices    []*Device `json:"devices"`
+	NodesCount int       `json:"nodesCount"`
+	Status     string    `json:"status"`
 }
 
 func (Cluster) IsEntity() {}

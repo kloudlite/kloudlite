@@ -1,11 +1,17 @@
 package domain
 
 type InfraClient interface {
-	CreateKubernetes(action SetupClusterAction) error
-	UpdateKubernetes(action UpdateClusterAction) (e error)
-	SetupCSI(clusterId string, provider string) error
-	SetupOperator(clusterId string) error
-	SetupMonitoring(clusterId string) error
-	SetupIngress(clusterId string) error
-	SetupWireguard(clusterId string) error
+	CreateCluster(action SetupClusterAction) (publicIp string, publicKey string, err error)
+	UpdateCluster(action UpdateClusterAction) (e error)
+	DeleteCluster(action DeleteClusterAction) (e error)
+	AddPeer(action AddPeerAction) (e error)
+	DeletePeer(action DeletePeerAction) (e error)
+}
+
+type InfraJobResponder interface {
+	SendCreateClusterResponse(action SetupClusterResponse) error
+	SendUpdateClusterResponse(action UpdateClusterResponse) error
+	SendDeleteClusterResponse(action DeleteClusterResponse) error
+	SendAddPeerResponse(action AddPeerResponse) error
+	SendDeletePeerResponse(action DeletePeerResponse) error
 }
