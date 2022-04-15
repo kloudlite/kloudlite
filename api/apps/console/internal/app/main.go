@@ -44,12 +44,12 @@ var Module = fx.Module(
 			"devices",
 			"dev",
 			repos.MongoRepoOptions{
-				IndexFields: []string{"id", "name", "cluster_id", "user_id", "ip", "index"},
+				IndexFields: entities.DeviceIndexes,
 			},
 		)
 		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cls",
 			repos.MongoRepoOptions{
-				IndexFields: []string{"id", "name", "provider", "region", "ip", "index", "status"},
+				IndexFields: entities.ClusterIndexes,
 			})
 		return clusterRepo, deviceRepo
 	}),
