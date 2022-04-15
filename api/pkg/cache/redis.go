@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"fmt"
 	"go.uber.org/fx"
 	"time"
 
@@ -63,19 +62,12 @@ func (c *RedisClient) Set(ctx context.Context, key string, value []byte) error {
 }
 
 func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
-	fmt.Println(key, "HERE KEY")
 	status := c.client.Get(ctx, key)
 	err := status.Err()
 	if err != nil {
 		return nil, err
 	}
 	return []byte(status.Val()), nil
-	//fmt.Println("1wqsax", result, err, "redisget")
-	//if err != nil {
-	//	return nil, errors.NewEf(err, "could not get key (%s)", key)
-	//}
-	//
-	//return []byte(result), nil
 }
 
 func NewRedisClient(hosts, username, password string) Client {

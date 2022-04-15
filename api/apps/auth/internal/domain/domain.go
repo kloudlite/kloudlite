@@ -26,3 +26,9 @@ type Domain interface {
 	OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error)
 	OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error)
 }
+
+type Messenger interface {
+	SendVerificationEmail(ctx context.Context, verificationToken string, user *User) error
+	SendWelcomeEmail(ctx context.Context, invitationId string, user *User) error
+	SendResetPasswordEmail(ctx context.Context, invitationId string, user *User) error
+}
