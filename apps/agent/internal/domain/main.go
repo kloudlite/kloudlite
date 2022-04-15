@@ -2,6 +2,7 @@ package domain
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/shared"
 )
 
@@ -28,7 +30,7 @@ func kubeApply(b []byte) error {
 	return cmd.Run()
 }
 
-func (d *domain) ProcessMessage(msg *Message) error {
+func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 	switch msg.ResourceType {
 	case shared.RESOURCE_PROJECT:
 		{
@@ -109,7 +111,7 @@ func (d *domain) ProcessMessage(msg *Message) error {
 }
 
 type Domain interface {
-	ProcessMessage(msg *Message) error
+	ProcessMessage(ctx context.Context, msg *Message) error
 }
 
 var fxDomain = func(logger logger.Logger) Domain {
@@ -136,4 +138,15 @@ var fxDomain = func(logger logger.Logger) Domain {
 
 var Module = fx.Module("domain",
 	fx.Provide(fxDomain),
+	fx.Invoke(func(lf fx.Lifecycle, producer messaging.Producer[Message]) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return producer.Connect(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				producer.Close(ctx)
+				return nil
+			},
+		})
+	}),
 )
