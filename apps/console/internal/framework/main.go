@@ -8,7 +8,7 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
-	mongo_db "kloudlite.io/pkg/mongo-db"
+	mongo_db "kloudlite.io/pkg/repos"
 )
 
 type Env struct {
@@ -46,7 +46,7 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(logger.NewLogger),
-	mongo_db.NewFx[*Env](),
+	mongo_db.NewMongoClientFx[*Env](),
 	messaging.NewKafkaClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),

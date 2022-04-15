@@ -1,4 +1,4 @@
-package mongo_db
+package repos
 
 import (
 	"context"
@@ -20,7 +20,7 @@ type MongoConfig interface {
 	GetMongoConfig() (url string, dbName string)
 }
 
-func NewFx[T MongoConfig]() fx.Option {
+func NewMongoClientFx[T MongoConfig]() fx.Option {
 	return fx.Module("db",
 		fx.Provide(func(env T) (*mongo.Database, error) {
 			return NewMongoDatabase(env.GetMongoConfig())

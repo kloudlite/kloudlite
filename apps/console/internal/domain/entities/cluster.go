@@ -21,3 +21,13 @@ type Cluster struct {
 	NodesCount       int           `json:"nodes_count" bson:"nodes_count"`
 	Status           ClusterStatus `json:"status" bson:"status"`
 }
+
+var ClusterIndexes = []string{
+	"id",
+	"name",
+	"provider",
+	"region",
+	"ip",
+	"index",
+	"status",
+}

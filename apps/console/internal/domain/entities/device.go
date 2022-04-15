@@ -20,3 +20,5 @@ type Device struct {
 	Ip               string       `json:"ip" bson:"ip"`
 	Status           DeviceStatus `json:"status" bson:"status"`
 }
+
+var DeviceIndexes = []string{"id", "name", "cluster_id", "user_id", "ip", "index"}
