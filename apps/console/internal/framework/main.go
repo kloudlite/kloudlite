@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
@@ -19,12 +20,15 @@ import (
 )
 
 type Env struct {
-	MongoUri     string `env:"MONGO_URI" required:"true"`
-	MongoDbName  string `env:"MONGO_DB_NAME" required:"true"`
-	KafkaBrokers string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
-	Port         uint16 `env:"PORT" required:"true"`
-	IsDev        bool   `env:"DEV" default:"false"`
-	CorsOrigins  string `env:"ORIGINS"`
+	MongoUri      string `env:"MONGO_URI" required:"true"`
+	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
+	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
+	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
+	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
+	KafkaBrokers  string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
+	Port          uint16 `env:"PORT" required:"true"`
+	IsDev         bool   `env:"DEV" default:"false"`
+	CorsOrigins   string `env:"ORIGINS"`
 }
 
 var Module = fx.Module("framework",
@@ -40,6 +44,14 @@ var Module = fx.Module("framework",
 
 	fx.Provide(func(e *Env) messaging.KafkaClient {
 		return messaging.NewKafkaClient(e.KafkaBrokers)
+	}),
+
+	fx.Provide(func(e *Env) cache.Client {
+		return cache.NewRedisClient(cache.RedisConnectOptions{
+			Addr:     e.RedisHosts,
+			UserName: e.RedisUserName,
+			Password: e.RedisPassword,
+		})
 	}),
 
 	// Load App Module
@@ -63,7 +75,19 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	// // start http server
+	// start redis
+	fx.Invoke(func(lf fx.Lifecycle, r cache.Client) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return r.Connect(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return r.Close(ctx)
+			},
+		})
+	}),
+
+	// start http server
 	fx.Invoke(func(lf fx.Lifecycle, env *Env, logger logger.Logger, server *http.ServeMux) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {

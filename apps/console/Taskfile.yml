@@ -1,0 +1,28 @@
+version: "3"
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds: 
+      - go run github.com/99designs/gqlgen generate
+  run:
+    env:
+      MONGO_URI: mongodb://localhost:27017
+      # MONGO_URI: "***REMOVED***"
+      # REDIS_URI: redis://redis-headless:6379
+      # REDIS_URI: ***REMOVED***
+      REDIS_HOSTS: redis-db-master.hotspot:6379
+      REDIS_USERNAME: hotspot-user
+      REDIS_PASSWORD: ***REMOVED***
+      MONGO_DB_NAME: console
+      PORT: 4001
+      DEV: true
+      # KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka-kafka-0.kafka-kafka-brokers.hotspot:9092,kafka-kafka-1.kafka-kafka-brokers.hotspot:9092
+      KAFKA_INFRA_TOPIC: dev-hotspot-infra
+      ORIGINS: http://localhost:4001,https://studio.apollographql.com
+    sources:
+      - ./internal/**/*.go
+      - ./main.go
+    cmds:
+      - go run ./main.go --dev

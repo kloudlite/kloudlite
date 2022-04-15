@@ -32,10 +32,6 @@ func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*m
 	return devices, e
 }
 
-func (r *clusterResolver) Configuration(ctx context.Context, obj *model.Cluster) (*string, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.User, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
@@ -48,36 +44,85 @@ func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.Us
 }
 
 func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model.Cluster, error) {
-	return r.Query().GetCluster(ctx, obj.Cluster.ID)
+	deviceEntity, err := r.Domain.GetDevice(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	clusterEntity, err := r.Domain.GetCluster(ctx, deviceEntity.ClusterId)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Cluster{
+		ID:         clusterEntity.Id,
+		Name:       clusterEntity.Name,
+		Provider:   clusterEntity.Provider,
+		Region:     clusterEntity.Region,
+		IP:         clusterEntity.Ip,
+		NodesCount: clusterEntity.NodesCount,
+		Status:     string(clusterEntity.Status),
+	}, nil
 }
 
 func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	//deviceEntity, err := r.Domain.GetDevice(ctx, obj.ID)
+	//	return fmt.Sprintf(`
+	//[Interface]
+	//PrivateKey = %v
+	//Address = %v/32
+	//DNS = 10.43.0.10
+	//
+	//[Peer]
+	//PublicKey = %v
+	//AllowedIPs = 10.42.0.0/16, 10.43.0.0/16, 10.13.13.0/16
+	//Endpoint = %v:31820
+	//`, deviceEntity.PrivateKey, deviceEntity.), err
+	return "nil", nil
 }
 
-func (r *mutationResolver) CreateCluster(ctx context.Context, name string, provider string, region string) (*model.Cluster, error) {
-	var e error
-	defer wErrors.HandleErr(&e)
+func (r *mutationResolver) CreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error) {
 	cluster, e := r.Domain.CreateCluster(ctx, entities.Cluster{
-		Name:     name,
-		Provider: provider,
-		Region:   region,
+		Name:       name,
+		Provider:   provider,
+		Region:     region,
+		NodesCount: nodesCount,
 	})
-	wErrors.AssertNoError(e, fmt.Errorf("not able to create cluster"))
+	if e != nil {
+		return nil, e
+	}
 	return &model.Cluster{
-		ID:       cluster.Id,
-		Name:     cluster.Name,
-		Endpoint: cluster.Address,
-		Provider: cluster.Provider,
-		Region:   cluster.Region,
+		ID:         cluster.Id,
+		Name:       cluster.Name,
+		Provider:   cluster.Provider,
+		Region:     cluster.Region,
+		NodesCount: cluster.NodesCount,
 	}, e
 }
 
+func (r *mutationResolver) UpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (*model.Cluster, error) {
+	clusterEntity, err := r.Domain.UpdateCluster(ctx, clusterID, name, nodesCount)
+	return &model.Cluster{
+		ID:         clusterEntity.Id,
+		Name:       clusterEntity.Name,
+		Provider:   clusterEntity.Provider,
+		Region:     clusterEntity.Region,
+		IP:         clusterEntity.Ip,
+		NodesCount: clusterEntity.NodesCount,
+	}, err
+}
+
+func (r *mutationResolver) DeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error) {
+	err := r.Domain.DeleteCluster(ctx, clusterID)
+	if err != nil {
+		return false, err
+	}
+	return true, err
+}
+
 func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
-	var e error
-	defer wErrors.HandleErr(&e)
 	device, e := r.Domain.AddDevice(ctx, name, clusterID, userID)
-	wErrors.AssertNoError(e, fmt.Errorf("not able to add device"))
+	if e != nil {
+		return nil, e
+	}
 	return &model.Device{
 		ID:            device.Id,
 		Name:          device.Name,
@@ -85,21 +130,31 @@ func (r *mutationResolver) AddDevice(ctx context.Context, clusterID repos.ID, us
 	}, e
 }
 
-func (r *mutationResolver) SetupCluster(ctx context.Context, clusterID repos.ID, address string, listenPort int, netInterface string) (*model.Cluster, error) {
-	var e error
-	defer wErrors.HandleErr(&e)
-	clusterEntity, e := r.Domain.SetupCluster(ctx, clusterID, address, uint16(listenPort), netInterface)
-	wErrors.AssertNoError(e, fmt.Errorf("not able to setup cluster"))
-	return &model.Cluster{
-		ID:       clusterEntity.Id,
-		Name:     clusterEntity.Name,
-		Endpoint: clusterEntity.Address,
-	}, e
+func (r *mutationResolver) RemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error) {
+	err := r.Domain.RemoveDevice(ctx, deviceID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *queryResolver) ListClusters(ctx context.Context) ([]*model.Cluster, error) {
-	fmt.Printf("[context] %+v", ctx.Value("id"))
-	return make([]*model.Cluster, 0), nil
+	clusterEntities, e := r.Domain.ListClusters(ctx)
+	clusters := make([]*model.Cluster, 0)
+
+	for _, cE := range clusterEntities {
+		clusters = append(clusters, &model.Cluster{
+			ID:         cE.Id,
+			Name:       cE.Name,
+			Provider:   cE.Provider,
+			Region:     cE.Region,
+			IP:         cE.Ip,
+			NodesCount: cE.NodesCount,
+			Status:     string(cE.Status),
+		})
+	}
+	fmt.Println(clusters)
+	return clusters, e
 }
 
 func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
@@ -108,22 +163,31 @@ func (r *queryResolver) GetCluster(ctx context.Context, clusterID repos.ID) (*mo
 	clusterEntity, e := r.Domain.GetCluster(ctx, clusterID)
 	wErrors.AssertNoError(e, fmt.Errorf("not able to get cluster"))
 	return &model.Cluster{
-		ID:       clusterEntity.Id,
-		Name:     clusterEntity.Name,
-		Endpoint: clusterEntity.Address,
+		ID:         clusterEntity.Id,
+		Name:       clusterEntity.Name,
+		NodesCount: clusterEntity.NodesCount,
+		Status:     string(clusterEntity.Status),
 	}, e
 }
 
 func (r *queryResolver) GetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
-	device, e := r.Domain.GetDevice(ctx, deviceID)
+	deviceEntity, e := r.Domain.GetDevice(ctx, deviceID)
 	wErrors.AssertNoError(e, fmt.Errorf("not able to get device"))
 	return &model.Device{
-		ID:            device.Id,
-		Name:          device.Name,
-		Configuration: "",
+		ID:   deviceEntity.Id,
+		Name: deviceEntity.Name,
+		//Configuration: "",
 	}, e
+}
+
+func (r *queryResolver) Sample(ctx context.Context) (*string, error) {
+	s, ok := ctx.Value("session").(*entities.AuthSession)
+	if !ok {
+		return nil, wErrors.Newf("could not retrieve session from ctx")
+	}
+	return &s.UserEmail, nil
 }
 
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {

@@ -1,32 +1,42 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
 )
 
-type consumer[T any] struct {
+type Message []byte
+
+func (m Message) Unmarshal(x any) error {
+	return json.Unmarshal(m, &x)
+}
+
+type ConsumerCallback func(context context.Context, topic string, message Message) error
+
+type consumer struct {
 	kafkaConsumer *kafka.Consumer
 	topics        []string
-	callback      func(topic string, message T) error
+	callback      ConsumerCallback
 	stopChan      chan bool
 	logger        logger.Logger
 }
 
-func (c *consumer[T]) Unsubscribe() error {
+func (c *consumer) Unsubscribe(context.Context) error {
 	c.stopChan <- true
 	return c.kafkaConsumer.Unsubscribe()
 }
 
-func (c *consumer[T]) Subscribe() error {
+func (c *consumer) Subscribe(context context.Context) error {
 	c.stopChan = make(chan bool, 1)
 	e := c.kafkaConsumer.SubscribeTopics(c.topics, nil)
 	if e != nil {
-		return errors.New(fmt.Sprintf("could not subscribe to given topics %v", c.topics))
+		return fmt.Errorf("could not subscribe to given topics %v", e)
 	}
 
 	go func() {
@@ -44,20 +54,17 @@ func (c *consumer[T]) Subscribe() error {
 				c.logger.Errorf("could not read kafka message because %v", e)
 			}
 
-			var message T
-			fmt.Printf("Msg: %v %T, msg.Value %v %T\n", message, message, msg, msg)
-			e = json.Unmarshal(msg.Value, &message)
 			if e != nil {
 				c.logger.Errorf("could not read kafka message because %v", e)
 				//continue
 			}
 
-			e = c.callback(*msg.TopicPartition.Topic, message)
+			e = c.callback(context, *msg.TopicPartition.Topic, msg.Value)
+
 			if e != nil {
-				e = c.callback(*msg.TopicPartition.Topic, message)
+				e = c.callback(context, *msg.TopicPartition.Topic, msg.Value)
 				if e != nil {
 					fmt.Errorf("failed to process message after 2 retries")
-					//continue
 				}
 			}
 			fmt.Println("committed msg...")
@@ -68,16 +75,16 @@ func (c *consumer[T]) Subscribe() error {
 }
 
 type Consumer interface {
-	Unsubscribe() error
-	Subscribe() error
+	Unsubscribe(context context.Context) error
+	Subscribe(context context.Context) error
 }
 
-func NewKafkaConsumer[T any](
+func NewKafkaConsumer(
 	kafkaCli KafkaClient,
 	topics []string,
 	consumerGroupId string,
 	logger logger.Logger,
-	callback func(topic string, msg T) error,
+	callback ConsumerCallback,
 ) (messenger Consumer, e error) {
 	defer errors.HandleErr(&e)
 	c, e := kafka.NewConsumer(&kafka.ConfigMap{
@@ -87,7 +94,7 @@ func NewKafkaConsumer[T any](
 		"enable.auto.commit": "false",
 	})
 	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
-	return &consumer[T]{
+	return &consumer{
 		kafkaConsumer: c,
 		topics:        topics,
 		callback:      callback,

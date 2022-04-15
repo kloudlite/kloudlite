@@ -34,11 +34,19 @@ func Start(ctx context.Context, port uint16, mux http.Handler, corsOpt cors.Opti
 	return nil
 }
 
-func SetupGQLServer(mux *http.ServeMux, es graphql.ExecutableSchema) {
-	mux.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
+func SetupGQLServer(
+	mux *http.ServeMux,
+	es graphql.ExecutableSchema,
+	middlewares ...func(http.ResponseWriter, *http.Request) *http.Request,
+) {
+	mux.HandleFunc("/play", playground.Handler("Graphql playground", "/"))
 	gqlServer := gqlHandler.NewDefaultServer(es)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Printf("Headers: %+v", req.Cookies())
-		gqlServer.ServeHTTP(w, req)
+		_req := req
+		for _, middleware := range middlewares {
+			_req = middleware(w, req)
+		}
+		gqlServer.ServeHTTP(w, _req)
 	})
 }
