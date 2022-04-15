@@ -11,7 +11,7 @@ tasks:
       # MONGO_URI: "***REMOVED***"
       # REDIS_URI: redis://redis-headless:6379
       # REDIS_URI: ***REMOVED***
-      REDIS_HOSTS: redis-db-master.hotspot:6379
+      REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       REDIS_USERNAME: hotspot-user
       REDIS_PASSWORD: ***REMOVED***
       MONGO_DB_NAME: console

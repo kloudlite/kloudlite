@@ -118,7 +118,11 @@ func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 //	return e
 //}
 
-func NewMongoRepoAdapter[T Entity](db *mongo.Database, collectionName string, shortName string) DbRepo[T] {
+func NewMongoRepoAdapter[T Entity](
+	db *mongo.Database,
+	collectionName string,
+	shortName string,
+) DbRepo[T] {
 	return &dbRepo[T]{
 		db,
 		collectionName,

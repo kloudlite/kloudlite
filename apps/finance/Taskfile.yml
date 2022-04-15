@@ -1,21 +1,10 @@
-version: '3'
+version: 3
 
 tasks:
-  gen:
-    dir: ./internal/app
-    cmds:
-      - go run github.com/99designs/gqlgen generate
   run:
     env:
-      MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
-      MONGO_DB_NAME: finance-go
-      PORT: 4001
-      DEV: true
-      KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
-      KAFKA_INFRA_TOPIC: dev-hotspot-infra
-      ORIGINS: http://localhost:4001,https://studio.apollographql.com
-
-    sources:
-      - ./**/*.go
+      DB_NAME: hotspot-finance
+      DB_URL: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
     cmds:
       - go run main.go
+      

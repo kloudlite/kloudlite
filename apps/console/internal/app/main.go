@@ -35,7 +35,6 @@ type Env struct {
 var Module = fx.Module(
 	"app",
 	fx.Provide(config.LoadEnv[Env]()),
-	// Create Repos
 	fx.Provide(func(db *mongo.Database) (
 		repos.DbRepo[*entities.Cluster],
 		repos.DbRepo[*entities.Device],
@@ -45,65 +44,66 @@ var Module = fx.Module(
 		return clusterRepo, deviceRepo
 	}),
 
-	fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
-		return messaging.NewKafkaProducer[messaging.Json](messagingCli)
-	}),
+	fx.Module("producer",
+		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
+			return messaging.NewKafkaProducer[messaging.Json](messagingCli)
+		}),
+		fx.Provide(func(env *Env, p messaging.Producer[messaging.Json]) domain.InfraMessenger {
+			return &infraMessengerImpl{
+				env:      env,
+				producer: p,
+				//onAddClusterResponse: func(ctx context.Context, m entities.SetupClusterResponse) {
+				//	if m.Done {
+				//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+				//		return
+				//	}
+				//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+				//},
+				//
+				//onDeleteClusterResponse: func(ctx context.Context, m entities.DeleteClusterResponse) {
+				//	if m.Done {
+				//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+				//		return
+				//	}
+				//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+				//
+				//},
+				//
+				//onUpdateClusterResponse: func(ctx context.Context, m entities.UpdateClusterResponse) {
+				//	if m.Done {
+				//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+				//		return
+				//	}
+				//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+				//
+				//},
+				//
+				//onAddDeviceResponse: func(ctx context.Context, m entities.AddPeerResponse) {
+				//
+				//	if m.Done {
+				//		d.UpdateDeviceState(ctx, repos.ID(m.DeviceID), entities.DeviceStateAttached)
+				//	}
+				//},
+				//onRemoveDeviceResponse: func(ctx context.Context, m entities.DeletePeerResponse) {
+				//
+				//},
+			}
+		}),
+		fx.Invoke(func(producer messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
+			lifecycle.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return producer.Connect(ctx)
+				},
+				OnStop: func(ctx context.Context) error {
+					producer.Close(ctx)
+					return nil
+				},
+			})
+		}),
+	),
+
 
 	domain.Module,
-
-	fx.Provide(func(env *Env, p messaging.Producer[messaging.Json]) domain.InfraMessenger {
-		return &infraMessengerImpl{
-			env:      env,
-			producer: p,
-			//onAddClusterResponse: func(ctx context.Context, m entities.SetupClusterResponse) {
-			//	if m.Done {
-			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
-			//		return
-			//	}
-			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
-			//},
-			//
-			//onDeleteClusterResponse: func(ctx context.Context, m entities.DeleteClusterResponse) {
-			//	if m.Done {
-			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
-			//		return
-			//	}
-			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
-			//
-			//},
-			//
-			//onUpdateClusterResponse: func(ctx context.Context, m entities.UpdateClusterResponse) {
-			//	if m.Done {
-			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
-			//		return
-			//	}
-			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
-			//
-			//},
-			//
-			//onAddDeviceResponse: func(ctx context.Context, m entities.AddPeerResponse) {
-			//
-			//	if m.Done {
-			//		d.UpdateDeviceState(ctx, repos.ID(m.DeviceID), entities.DeviceStateAttached)
-			//	}
-			//},
-			//onRemoveDeviceResponse: func(ctx context.Context, m entities.DeletePeerResponse) {
-			//
-			//},
-		}
-	}),
-
-	fx.Invoke(func(producer messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
-		lifecycle.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return producer.Connect(ctx)
-			},
-			OnStop: func(ctx context.Context) error {
-				producer.Close(ctx)
-				return nil
-			},
-		})
-	}),
 
 	fx.Invoke(func(
 		server *http.ServeMux,
