@@ -9,6 +9,7 @@ terraform.tfvars
 .terraform.lock.hcl
 .terraform
 .keys
-.kube
+.kube/
 .task
+.settings
 # wgman
