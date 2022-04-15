@@ -2,8 +2,6 @@ package framework
 
 import (
 	"context"
-	"fmt"
-
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"kloudlite.io/apps/iam/internal/application"
@@ -17,28 +15,15 @@ type Env struct {
 	RedisHosts string `env:"REDIS_HOSTS" required:"true"`
 }
 
+func (env *Env) RedisOptions() (hosts string, username string, password string) {
+	return env.RedisHosts, "", ""
+}
+
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(grpc.NewServer),
 	application.Module,
-
-	fx.Provide(func(env *Env) cache.Client {
-		return cache.NewRedisClient(cache.RedisConnectOptions{
-			Addr: env.RedisHosts,
-		})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, cli cache.Client) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return cli.Connect(ctx)
-			},
-			OnStop: func(ctx context.Context) error {
-				return cli.Close(ctx)
-			},
-		})
-	}),
-
+	cache.NewRedisFx[*Env](),
 	fx.Invoke(func(lf fx.Lifecycle, env *Env, server *grpc.Server) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
