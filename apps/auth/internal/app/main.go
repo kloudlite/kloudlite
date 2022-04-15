@@ -19,8 +19,8 @@ type Env struct {
 
 var Module = fx.Module("app",
 	fx.Provide(config.LoadEnv[Env]()),
-	repos.NewFxMongoRepo[*domain.User](domain.UserIndexes),
-	repos.NewFxMongoRepo[*domain.AccessToken](domain.AccessTokenIndexes),
+	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
+	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
 	fx.Invoke(func(
 		server *http.ServeMux,
 		d domain.Domain,

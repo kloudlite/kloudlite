@@ -145,7 +145,7 @@ type MongoRepoOptions struct {
 	IndexFields []string
 }
 
-func NewMongoRepoAdapter[T Entity](
+func NewMongoRepo[T Entity](
 	db *mongo.Database,
 	collectionName string,
 	shortName string,
@@ -167,14 +167,14 @@ func NewMongoRepoAdapter[T Entity](
 	}
 }
 
-func NewFxMongoRepo[T Entity](indexFields []string) fx.Option {
+func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []string) fx.Option {
 	return fx.Module(
 		"repo",
 		fx.Provide(func(db *mongo.Database) DbRepo[T] {
-			return NewMongoRepoAdapter[T](
+			return NewMongoRepo[T](
 				db,
-				"devices",
-				"dev",
+				collectionName,
+				shortName,
 				MongoRepoOptions{
 					IndexFields: indexFields,
 				},
