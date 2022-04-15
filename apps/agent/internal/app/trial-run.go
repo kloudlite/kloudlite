@@ -155,7 +155,7 @@ var TModule = fx.Module("app.trial",
 	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				return d.ProcessMessage(&projectRes)
+				return d.ProcessMessage(ctx, &projectRes)
 			},
 		})
 	}),
