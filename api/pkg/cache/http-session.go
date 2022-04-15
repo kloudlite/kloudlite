@@ -17,12 +17,22 @@ func NewSessionRepo[T repos.Entity](
 	repo := NewRepo[T](cacheClient)
 	return func(w http.ResponseWriter, r *http.Request) *http.Request {
 		cookie, _ := r.Cookie(cookieName)
-		// TODO handle error
-		key := fmt.Sprintf("%v:%v", sessionKeyPrefix, cookie)
-		get, _ := repo.Get(r.Context(), key)
-		// TODO handle error
-		newContext := context.WithValue(r.Context(), "session", get)
+		newContext := r.Context()
+		if cookie != nil {
+			// TODO handle error
+			key := fmt.Sprintf("%v:%v", sessionKeyPrefix, cookie.Value)
+			get, _ := repo.Get(r.Context(), key)
+			// TODO handle error
+
+			if get != nil {
+				newContext = context.WithValue(r.Context(), "session", *get)
+			}
+		}
 		newContext = context.WithValue(newContext, "set-session", func(session T) {
+			err := repo.Set(r.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, session.GetId()), session)
+			if err != nil {
+				fmt.Println("[ERROR]", err)
+			}
 			http.SetCookie(w, &http.Cookie{
 				Name:     cookieName,
 				Value:    string(session.GetId()),
@@ -36,26 +46,32 @@ func NewSessionRepo[T repos.Entity](
 			})
 		})
 		newContext = context.WithValue(newContext, "delete-session", func() {
-			repo.Drop(newContext, key)
+			if cookie != nil {
+				repo.Drop(newContext, fmt.Sprintf("%v:%v", sessionKeyPrefix, cookie.Value))
+			}
 		})
 		return r.WithContext(newContext)
 	}
 }
 
 func GetSession[T repos.Entity](ctx context.Context) T {
-	return ctx.Value("session").(T)
+	value := ctx.Value("session")
+	if value != nil {
+		return value.(T)
+	}
+	var x T
+	return x
 }
 
 func SetSession[T repos.Entity](ctx context.Context, session T) {
 	setSession, ok := ctx.Value("set-session").(func(T))
-	fmt.Println("HERERERE", ok)
 	if !ok {
 		return
 	}
 	setSession(session)
 }
 
-func DeleteSession[T any](ctx context.Context) {
+func DeleteSession(ctx context.Context) {
 	deleteSession, ok := ctx.Value("delete-session").(func())
 	if !ok {
 		return

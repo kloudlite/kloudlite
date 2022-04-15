@@ -13,7 +13,6 @@ type Domain interface {
 	Login(ctx context.Context, email string, password string) (*common.AuthSession, error)
 	InviteUser(ctx context.Context, email string, name string) (repos.ID, error)
 	SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error)
-	Logout(ctx context.Context, userId repos.ID) (bool, error)
 	SetUserMetadata(ctx context.Context, userId repos.ID, metadata UserMetadata) (*User, error)
 	ClearUserMetadata(ctx context.Context, id repos.ID) (*User, error)
 	VerifyEmail(ctx context.Context, token string) (*common.AuthSession, error)

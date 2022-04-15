@@ -5,6 +5,8 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/cache"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
@@ -36,8 +38,12 @@ func (r *mutationResolver) Signup(ctx context.Context, name string, email string
 }
 
 func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	return r.d.Logout(ctx, userId)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return true, nil
+	}
+	cache.DeleteSession(ctx)
+	return true, nil
 }
 
 func (r *mutationResolver) SetMetadata(ctx context.Context, values map[string]interface{}) (*model.User, error) {
@@ -101,9 +107,13 @@ func (r *mutationResolver) OauthAddLogin(ctx context.Context, provider string, s
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	userEntity, err := r.d.GetUserById(ctx, userId)
-	return userModelFromEntity(userEntity), err
+	session := cache.GetSession[*common.AuthSession](ctx)
+	fmt.Println(session)
+	u, err := r.d.GetUserById(ctx, repos.ID(session.UserId))
+	if err != nil {
+		return nil, err
+	}
+	return userModelFromEntity(u), err
 }
 
 func (r *queryResolver) FindByEmail(ctx context.Context, email string) (*model.User, error) {
