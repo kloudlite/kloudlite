@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -26,6 +28,7 @@ type domainI struct {
 	accessTokenRepo repos.DbRepo[*AccessToken]
 	messenger       Messenger
 	verifyTokenRepo cache.Repo[*VerifyToken]
+	resetTokenRepo  cache.Repo[*ResetPasswordToken]
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
@@ -50,12 +53,15 @@ func (d *domainI) GetLoginDetails(ctx context.Context, provider string, state *s
 func (d *domainI) Login(ctx context.Context, email string, password string) (*common.AuthSession, error) {
 	matched, err := d.userRepo.FindOne(ctx, repos.Query{
 		Filter: repos.Filter{
-			"email":    email,
-			"password": password,
+			"email": email,
 		},
 	})
 	if err != nil {
 		return nil, err
+	}
+	bytes := md5.Sum([]byte(password + matched.PasswordSalt))
+	if matched.Password != hex.EncodeToString(bytes[:]) {
+		return nil, errors.New("not valid credentials")
 	}
 	session := common.NewSession(
 		string(matched.Id),
@@ -97,13 +103,16 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 	if matched != nil {
 		return nil, errors.New("User Already exist")
 	}
+	salt := generateId("salt")
+	sum := md5.Sum([]byte(password + salt))
 	create, err := d.userRepo.Create(ctx, &User{
-		Name:     name,
-		Email:    email,
-		Password: password,
-		Verified: false,
-		Metadata: nil,
-		Joined:   time.Now(),
+		Name:         name,
+		Email:        email,
+		Password:     hex.EncodeToString(sum[:]),
+		Verified:     false,
+		Metadata:     nil,
+		Joined:       time.Now(),
+		PasswordSalt: salt,
 	})
 	if err != nil {
 		return nil, err
@@ -160,17 +169,64 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 	if err != nil {
 		return nil, err
 	}
-	return common.NewSession(string(u.Id), u.Email, u.Verified, "email/verify"), nil
+	return common.NewSession(
+		string(u.Id),
+		u.Email,
+		u.Verified,
+		"email/verify",
+	), nil
 }
 
 func (d *domainI) ResetPassword(ctx context.Context, token string, password string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	get, err := d.resetTokenRepo.Get(ctx, token)
+	if err != nil {
+		return false, err
+	}
+	if get == nil {
+		return false, errors.New("unable to verify link")
+	}
+	user, err := d.userRepo.FindById(ctx, repos.ID(get.UserId))
+	if err != nil {
+		return false, errors.New("unable to find user")
+	}
+	salt := generateId("salt")
+	sum := md5.Sum([]byte(password + salt))
+	user.Password = hex.EncodeToString(sum[:])
+	user.PasswordSalt = salt
+	fmt.Println(user)
+	_, err = d.userRepo.UpdateById(ctx, repos.ID(get.UserId), user)
+	if err != nil {
+		return false, err
+	}
+	err = d.resetTokenRepo.Drop(ctx, token)
+	if err != nil {
+		// TODO silent fail
+		fmt.Println("[ERROR]", err)
+		return false, nil
+	}
+	return true, nil
 }
 
 func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	resetToken := generateId("reset")
+	one, err := d.userRepo.FindOne(ctx, repos.Query{Filter: repos.Filter{
+		"email": email,
+	}})
+	if err != nil {
+		return false, err
+	}
+	err = d.resetTokenRepo.Set(ctx, resetToken, &ResetPasswordToken{
+		Token:  resetToken,
+		UserId: string(one.Id),
+	})
+	if err != nil {
+		return false, err
+	}
+	err = d.messenger.SendResetPasswordEmail(ctx, resetToken, one)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (d *domainI) LoginWithInviteToken(ctx context.Context, token string) (*common.AuthSession, error) {
@@ -179,23 +235,53 @@ func (d *domainI) LoginWithInviteToken(ctx context.Context, token string) (*comm
 }
 
 func (d *domainI) ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	user, err := d.userRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	user.Email = email
+	updated, err := d.userRepo.UpdateById(ctx, id, user)
+	if err != nil {
+		return false, err
+	}
+	err = d.generateAndSendVerificationToken(ctx, updated)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (d *domainI) ResendVerificationEmail(ctx context.Context, email string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *domainI) VerifyChangeEmail(ctx context.Context, token string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+func (d *domainI) ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error) {
+	user, err := d.userRepo.FindById(ctx, userId)
+	if err != nil {
+		return false, err
+	}
+	err = d.generateAndSendVerificationToken(ctx, user)
+	if err != nil {
+		return false, err
+	}
+	return true, err
 }
 
 func (d *domainI) ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	user, err := d.userRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	sum := md5.Sum([]byte(currentPassword + user.PasswordSalt))
+	if user.Password == hex.EncodeToString(sum[:]) {
+		salt := generateId("salt")
+		user.PasswordSalt = salt
+		newSum := md5.Sum([]byte(newPassword + user.PasswordSalt))
+		user.Password = hex.EncodeToString(newSum[:])
+		_, err := d.userRepo.UpdateById(ctx, id, user)
+		if err != nil {
+			return false, err
+		}
+		// TODO send comm
+		return true, nil
+	}
+	return false, errors.New("invalid credentials")
 }
 
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
@@ -207,6 +293,7 @@ func fxDomain(
 	userRepo repos.DbRepo[*User],
 	accessTokenRepo repos.DbRepo[*AccessToken],
 	verifyTokenRepo cache.Repo[*VerifyToken],
+	resetTokenRepo cache.Repo[*ResetPasswordToken],
 	messenger Messenger,
 ) Domain {
 	return &domainI{
@@ -214,5 +301,6 @@ func fxDomain(
 		accessTokenRepo,
 		messenger,
 		verifyTokenRepo,
+		resetTokenRepo,
 	}
 }

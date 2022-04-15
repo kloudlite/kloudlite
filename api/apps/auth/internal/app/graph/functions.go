@@ -23,7 +23,7 @@ func sessionModelFromAuthSession(session *common.AuthSession) *model.Session {
 		UserID:       repos.ID(session.UserId),
 		UserEmail:    session.UserEmail,
 		LoginMethod:  session.LoginMethod,
-		UserVerified: false,
+		UserVerified: session.UserVerified,
 	}
 }
 
