@@ -39,9 +39,36 @@ var Module = fx.Module(
 		repos.DbRepo[*entities.Cluster],
 		repos.DbRepo[*entities.Device],
 	) {
-		deviceRepo := repos.NewMongoRepoAdapter[*entities.Device](db, "devices", "dev")
-		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cls")
+		deviceRepo := repos.NewMongoRepoAdapter[*entities.Device](
+			db,
+			"devices",
+			"dev",
+			repos.MongoRepoOptions{
+				IndexFields: []string{"id", "name", "cluster_id", "user_id", "ip", "index"},
+			},
+		)
+		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cls",
+			repos.MongoRepoOptions{
+				IndexFields: []string{"id", "name", "provider", "region", "ip", "index", "status"},
+			})
 		return clusterRepo, deviceRepo
+	}),
+
+	fx.Invoke(func(
+		lifecycle fx.Lifecycle,
+		dr repos.DbRepo[*entities.Cluster],
+		cr repos.DbRepo[*entities.Device],
+	) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				err := dr.IndexFields(ctx)
+				if err != nil {
+					return err
+				}
+				return cr.IndexFields(ctx)
+				return nil
+			},
+		})
 	}),
 
 	fx.Module("producer",
@@ -101,7 +128,6 @@ var Module = fx.Module(
 			})
 		}),
 	),
-
 
 	domain.Module,
 
