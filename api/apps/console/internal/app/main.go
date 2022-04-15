@@ -1,8 +1,20 @@
 package app
 
 import (
+	"context"
+	_ "fmt"
+	"kloudlite.io/common"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logger"
 	"net/http"
+	_ "net/http"
+
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/config"
+	_ "kloudlite.io/pkg/logger"
+
+	_ "github.com/99designs/gqlgen/graphql/handler"
+	_ "github.com/99designs/gqlgen/graphql/playground"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/fx"
@@ -14,8 +26,15 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type Env struct {
+	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC"`
+	KafkaInfraResponseTopic string `env:"KAFKA_INFRA_RESP_TOPIC"`
+	KafkaConsumerGroupId    string `env:"KAFKA_GROUP_ID"`
+}
+
 var Module = fx.Module(
 	"app",
+	fx.Provide(config.LoadEnv[Env]()),
 	// Create Repos
 	fx.Provide(func(db *mongo.Database) (
 		repos.DbRepo[*entities.Cluster],
@@ -32,10 +51,77 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Invoke(func(server *http.ServeMux, d domain.Domain) {
-		schema := generated.NewExecutableSchema(generated.Config{
-			Resolvers: graph.NewResolver(d),
+	fx.Provide(func(env *Env, p messaging.Producer[messaging.Json]) domain.InfraMessenger {
+		return &infraMessengerImpl{
+			env:      env,
+			producer: p,
+			//onAddClusterResponse: func(ctx context.Context, m entities.SetupClusterResponse) {
+			//	if m.Done {
+			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+			//		return
+			//	}
+			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+			//},
+			//
+			//onDeleteClusterResponse: func(ctx context.Context, m entities.DeleteClusterResponse) {
+			//	if m.Done {
+			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+			//		return
+			//	}
+			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+			//
+			//},
+			//
+			//onUpdateClusterResponse: func(ctx context.Context, m entities.UpdateClusterResponse) {
+			//	if m.Done {
+			//		d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateLive)
+			//		return
+			//	}
+			//	d.UpdateClusterState(ctx, repos.ID(m.ClusterID), entities.ClusterStateError)
+			//
+			//},
+			//
+			//onAddDeviceResponse: func(ctx context.Context, m entities.AddPeerResponse) {
+			//
+			//	if m.Done {
+			//		d.UpdateDeviceState(ctx, repos.ID(m.DeviceID), entities.DeviceStateAttached)
+			//	}
+			//},
+			//onRemoveDeviceResponse: func(ctx context.Context, m entities.DeletePeerResponse) {
+			//
+			//},
+		}
+	}),
+
+	fx.Invoke(func(producer messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return producer.Connect(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				producer.Close(ctx)
+				return nil
+			},
 		})
-		httpServer.SetupGQLServer(server, schema)
+	}),
+
+	fx.Invoke(func(
+		server *http.ServeMux,
+		d domain.Domain,
+		cacheClient cache.Client,
+		logger logger.Logger,
+	) {
+		schema := generated.NewExecutableSchema(
+			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
+		)
+		httpServer.SetupGQLServer(
+			server,
+			schema,
+			cache.NewSessionRepo[*common.AuthSession](
+				cacheClient,
+				"hotspot-session",
+				"hotspot:auth:sessions",
+			),
+		)
 	}),
 )

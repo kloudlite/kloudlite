@@ -4,7 +4,7 @@
     "url": "https://nxt.gateway.dev.madhouselabs.io",
     "cluster": "hotspot-01.dev",
     "headers": {
-      "cookie": "hotspot-session=sess-ie5Ed0Dew-H6wFtNjd3RNPXphJX9MHV9; Domain=.dev.madhouselabs.io; Path=/; HttpOnly; Secure; SameSite=None"
+      "cookie": "hotspot-session=sess-PKjLuiY4QZqlVoQrz_qsjjRNxGNyv8rx; Domain=.dev.madhouselabs.io; Path=/; HttpOnly; Secure; SameSite=None"
     }
   }
 }
