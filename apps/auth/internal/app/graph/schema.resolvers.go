@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"kloudlite.io/pkg/cache"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
@@ -13,13 +14,11 @@ import (
 
 func (r *mutationResolver) Login(ctx context.Context, email string, password string) (*model.Session, error) {
 	sessionEntity, err := r.d.Login(ctx, email, password)
-	return &model.Session{
-		ID:           sessionEntity.ID,
-		UserID:       sessionEntity.UserID,
-		UserEmail:    sessionEntity.UserEmail,
-		LoginMethod:  sessionEntity.LoginMethod,
-		UserVerified: sessionEntity.UserVerified,
-	}, err
+	if err != nil {
+		return nil, err
+	}
+	cache.SetSession(ctx, *sessionEntity)
+	return sessionModelFromAuthSession(sessionEntity), err
 }
 
 func (r *mutationResolver) InviteSignup(ctx context.Context, email string, name string) (repos.ID, error) {
@@ -28,13 +27,7 @@ func (r *mutationResolver) InviteSignup(ctx context.Context, email string, name 
 
 func (r *mutationResolver) Signup(ctx context.Context, name string, email string, password string) (*model.Session, error) {
 	sessionEntity, err := r.d.SignUp(ctx, name, email, password)
-	return &model.Session{
-		ID:           sessionEntity.ID,
-		UserID:       sessionEntity.UserID,
-		UserEmail:    sessionEntity.UserEmail,
-		LoginMethod:  sessionEntity.LoginMethod,
-		UserVerified: sessionEntity.UserVerified,
-	}, err
+	return sessionModelFromAuthSession(sessionEntity), err
 }
 
 func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
@@ -56,13 +49,8 @@ func (r *mutationResolver) ClearMetadata(ctx context.Context) (*model.User, erro
 
 func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (*model.Session, error) {
 	sessionEntity, err := r.d.VerifyEmail(ctx, token)
-	return &model.Session{
-		ID:           sessionEntity.ID,
-		UserID:       sessionEntity.UserID,
-		UserEmail:    sessionEntity.UserEmail,
-		LoginMethod:  sessionEntity.LoginMethod,
-		UserVerified: sessionEntity.UserVerified,
-	}, err
+	cache.SetSession(ctx, *sessionEntity)
+	return sessionModelFromAuthSession(sessionEntity), err
 }
 
 func (r *mutationResolver) ResetPassword(ctx context.Context, token string, password string) (bool, error) {
@@ -75,13 +63,7 @@ func (r *mutationResolver) RequestResetPassword(ctx context.Context, email strin
 
 func (r *mutationResolver) LoginWithInviteToken(ctx context.Context, inviteToken string) (*model.Session, error) {
 	sessionE, err := r.d.LoginWithInviteToken(ctx, inviteToken)
-	return &model.Session{
-		ID:           sessionE.ID,
-		UserID:       sessionE.UserID,
-		UserEmail:    sessionE.UserEmail,
-		LoginMethod:  sessionE.LoginMethod,
-		UserVerified: sessionE.UserVerified,
-	}, err
+	return sessionModelFromAuthSession(sessionE), err
 }
 
 func (r *mutationResolver) ChangeEmail(ctx context.Context, email string) (bool, error) {
@@ -104,13 +86,8 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword s
 
 func (r *mutationResolver) OauthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
 	sessionEntity, err := r.d.OauthLogin(ctx, provider, state, code)
-	return &model.Session{
-		ID:           sessionEntity.ID,
-		UserID:       sessionEntity.UserID,
-		UserEmail:    sessionEntity.UserEmail,
-		LoginMethod:  sessionEntity.LoginMethod,
-		UserVerified: sessionEntity.UserVerified,
-	}, err
+	cache.SetSession(ctx, *sessionEntity)
+	return sessionModelFromAuthSession(sessionEntity), err
 }
 
 func (r *mutationResolver) OauthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {

@@ -44,10 +44,15 @@ type User struct {
 	Joined           date.Date        `json:"joined"`
 }
 
-type Token struct {
+var UserIndexes = []string{"email", "id"}
+
+type AccessToken struct {
 	repos.BaseEntity `bson:",inline"`
-	UserId           *string `json:"user_id" bson:"user_id"`
-	Email            *string `json:"email" bson:"email"`
-	Provider         string  `json:"provider" bson:"provider"`
-	Token            string  `json:"token" bson:"token"`
+	UserId           *string        `json:"user_id" bson:"user_id"`
+	Email            *string        `json:"email" bson:"email"`
+	Provider         string         `json:"provider" bson:"provider"`
+	Token            string         `json:"token" bson:"token"`
+	Data             map[string]any `json:"data" bson:"data"`
 }
+
+var AccessTokenIndexes = []string{"user_id", "id"}
