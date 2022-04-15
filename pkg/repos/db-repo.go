@@ -4,7 +4,7 @@ import "context"
 
 type Entity interface {
 	GetId() ID
-	SetId(id ID) Entity
+	SetId(id ID)
 }
 
 type Opts map[string]interface{}
@@ -25,6 +25,7 @@ type PaginatedRecord[T Entity] struct {
 type DbRepo[T Entity] interface {
 	NewId() ID
 	Find(ctx context.Context, query Query) ([]T, error)
+	FindOne(ctx context.Context, query Query) (T, error)
 	FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error)
 	FindById(ctx context.Context, id ID) (T, error)
 	Create(ctx context.Context, data T) (T, error)

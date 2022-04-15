@@ -39,6 +39,13 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	return results, err
 }
 
+func (repo dbRepo[T]) FindOne(ctx context.Context, query Query) (T, error) {
+	one := repo.db.Collection(repo.collectionName).FindOne(ctx, query.Filter)
+	var res T
+	err := one.Decode(&res)
+	return res, err
+}
+
 func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
 	results := make([]T, 0)
 	var offset int64 = (page - 1) * size
@@ -164,7 +171,7 @@ func NewFxMongoRepo[T Entity](indexFields []string) fx.Option {
 	return fx.Module(
 		"repo",
 		fx.Provide(func(db *mongo.Database) DbRepo[T] {
-			return NewMongoRepoAdapter[*Entity](
+			return NewMongoRepoAdapter[T](
 				db,
 				"devices",
 				"dev",

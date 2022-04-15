@@ -17,7 +17,7 @@ func (r *mutationResolver) Login(ctx context.Context, email string, password str
 	if err != nil {
 		return nil, err
 	}
-	cache.SetSession(ctx, *sessionEntity)
+	cache.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
@@ -27,7 +27,12 @@ func (r *mutationResolver) InviteSignup(ctx context.Context, email string, name 
 
 func (r *mutationResolver) Signup(ctx context.Context, name string, email string, password string) (*model.Session, error) {
 	sessionEntity, err := r.d.SignUp(ctx, name, email, password)
-	return sessionModelFromAuthSession(sessionEntity), err
+	if err != nil {
+		return nil, err
+	}
+	cache.SetSession(ctx, sessionEntity)
+	session := sessionModelFromAuthSession(sessionEntity)
+	return session, err
 }
 
 func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
@@ -49,7 +54,7 @@ func (r *mutationResolver) ClearMetadata(ctx context.Context) (*model.User, erro
 
 func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (*model.Session, error) {
 	sessionEntity, err := r.d.VerifyEmail(ctx, token)
-	cache.SetSession(ctx, *sessionEntity)
+	cache.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
@@ -86,7 +91,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword s
 
 func (r *mutationResolver) OauthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
 	sessionEntity, err := r.d.OauthLogin(ctx, provider, state, code)
-	cache.SetSession(ctx, *sessionEntity)
+	cache.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
