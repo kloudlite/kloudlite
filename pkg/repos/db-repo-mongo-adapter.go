@@ -16,6 +16,7 @@ type dbRepo[T Entity] struct {
 	db             *mongo.Database
 	collectionName string
 	shortName      string
+	options        *MongoRepoOptions
 }
 
 var re = regexp.MustCompile("(\\W|_)+/g")
@@ -101,6 +102,20 @@ func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 	return e
 }
 
+func (repo dbRepo[T]) IndexFields(ctx context.Context) error {
+	if repo.options == nil {
+		return nil
+	}
+	models := make([]mongo.IndexModel, 0)
+	for _, f := range repo.options.IndexFields {
+		models = append(models, mongo.IndexModel{
+			Keys: bson.D{{f, 1}},
+		})
+	}
+	_, err := repo.db.Collection(repo.collectionName).Indexes().CreateMany(ctx, models)
+	return err
+}
+
 //func (repo dbRepo[T]) Delete(ctx context.Context, query Query) error {
 //	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.filter, &options.FindOptions{
 //		Sort: query.sort,
@@ -118,10 +133,28 @@ func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 //	return e
 //}
 
-func NewMongoRepoAdapter[T Entity](db *mongo.Database, collectionName string, shortName string) DbRepo[T] {
+type MongoRepoOptions struct {
+	IndexFields []string
+}
+
+func NewMongoRepoAdapter[T Entity](
+	db *mongo.Database,
+	collectionName string,
+	shortName string,
+	o ...MongoRepoOptions,
+) DbRepo[T] {
+	if len(o) > 0 {
+		return &dbRepo[T]{
+			db,
+			collectionName,
+			shortName,
+			&o[0],
+		}
+	}
 	return &dbRepo[T]{
 		db,
 		collectionName,
 		shortName,
+		nil,
 	}
 }
