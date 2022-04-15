@@ -46,7 +46,7 @@ var Module = fx.Module("framework",
 		return messaging.NewKafkaClient(e.KafkaBrokers)
 	}),
 
-	fx.Provide(func(e *Env) *cache.RedisClient {
+	fx.Provide(func(e *Env) cache.Client {
 		return cache.NewRedisClient(cache.RedisConnectOptions{
 			Addr:     e.RedisHosts,
 			UserName: e.RedisUserName,
@@ -76,7 +76,7 @@ var Module = fx.Module("framework",
 	}),
 
 	// start redis
-	fx.Invoke(func(lf fx.Lifecycle, r *cache.RedisClient) {
+	fx.Invoke(func(lf fx.Lifecycle, r cache.Client) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				return r.Connect(ctx)

@@ -2,75 +2,36 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"kloudlite.io/pkg/errors"
 )
 
-type redisRepo[T any] struct {
-	*RedisClient
+type RedisClient struct {
+	opts   *RedisConnectOptions
+	client *redis.Client
 }
 
-func (r *redisRepo[T]) Set(c context.Context, key string, value T) error {
-	marshal, err := json.Marshal(value)
-	if err != nil {
-		return errors.NewEf(err, "could not unmarshal T into JSON string")
-	}
-	err = r.client.Set(c, key, string(marshal), 0).Err()
-	if err != nil {
-		return errors.NewEf(err, "coult not set key (%s)", key)
-	}
-	return nil
-}
-
-func (r *redisRepo[T]) SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error {
-	marshal, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	err = r.client.Set(c, key, string(marshal), duration).Err()
-	if err != nil {
-		return errors.NewEf(err, "coult not set key (%s)", key)
-	}
-	return nil
-}
-
-func (r *redisRepo[T]) Get(c context.Context, key string) (*T, error) {
-	fmt.Println("r-movie:", r.client)
-	result, err := r.client.Get(c, key).Result()
-	if err != nil {
-		return nil, errors.NewEf(err, "could not get key (%s)", key)
-	}
-	fmt.Println("result:", result)
-	var value T
-	err = json.Unmarshal([]byte(result), &value)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not unmarshal value into type (%T)", result)
-	}
-	return &value, nil
-}
-
-func (r *redisRepo[T]) Drop(c context.Context, key string) error {
-	err := r.client.Del(c, key).Err()
+func (c *RedisClient) Drop(ctx context.Context, key string) error {
+	err := c.client.Del(ctx, key).Err()
 	if err != nil {
 		return errors.NewEf(err, "could not drop key (%s)", key)
 	}
 	return nil
 }
 
-func NewRedisRepo[T any](redisCli *RedisClient) Repo[T] {
-	fmt.Println("NRR: ", redisCli)
-	return &redisRepo[T]{
-		RedisClient: redisCli,
+func (c *RedisClient) SetWithExpiry(
+	ctx context.Context,
+	key string,
+	value []byte,
+	duration time.Duration,
+) error {
+	err := c.client.Set(ctx, key, value, duration).Err()
+	if err != nil {
+		return errors.NewEf(err, "coult not set key (%s)", key)
 	}
-}
-
-type RedisClient struct {
-	opts   *RedisConnectOptions
-	client *redis.Client
+	return nil
 }
 
 func (c *RedisClient) Connect(ctx context.Context) error {
@@ -95,13 +56,29 @@ func (c *RedisClient) Close(context.Context) error {
 	return nil
 }
 
+func (c *RedisClient) Set(ctx context.Context, key string, value []byte) error {
+	err := c.client.Set(ctx, key, value, 0).Err()
+	if err != nil {
+		return errors.NewEf(err, "coult not set key (%s)", key)
+	}
+	return nil
+}
+
+func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
+	result, err := c.client.Get(ctx, key).Result()
+	if err != nil {
+		return nil, errors.NewEf(err, "could not get key (%s)", key)
+	}
+	return []byte(result), nil
+}
+
 type RedisConnectOptions struct {
 	Addr     string
 	UserName string
 	Password string
 }
 
-func NewRedisClient(opts RedisConnectOptions) *RedisClient {
+func NewRedisClient(opts RedisConnectOptions) Client {
 	return &RedisClient{
 		opts: &opts,
 	}

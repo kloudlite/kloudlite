@@ -2,15 +2,20 @@ package app
 
 import (
 	"context"
-	"fmt"
+	_ "fmt"
+	"kloudlite.io/common"
+	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logger"
 	"net/http"
+	_ "net/http"
 
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/logger"
+	_ "kloudlite.io/pkg/logger"
 
-	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
+	_ "github.com/99designs/gqlgen/graphql/handler"
+	_ "github.com/99designs/gqlgen/graphql/playground"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
@@ -42,10 +47,6 @@ var Module = fx.Module(
 
 	fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 		return messaging.NewKafkaProducer[messaging.Json](messagingCli)
-	}),
-
-	fx.Provide(func(c *cache.RedisClient) cache.Repo[entities.AuthSession] {
-		return cache.NewRedisRepo[entities.AuthSession](c)
 	}),
 
 	domain.Module,
@@ -104,32 +105,23 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Invoke(func(server *http.ServeMux, d domain.Domain, c cache.Repo[entities.AuthSession], logger logger.Logger) {
-		server.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
-
-		gqlServer := gqlHandler.NewDefaultServer(
-			generated.NewExecutableSchema(
-				generated.Config{Resolvers: &graph.Resolver{Domain: d}},
+	fx.Invoke(func(
+		server *http.ServeMux,
+		d domain.Domain,
+		cacheClient cache.Client,
+		logger logger.Logger,
+	) {
+		schema := generated.NewExecutableSchema(
+			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
+		)
+		httpServer.SetupGQLServer(
+			server,
+			schema,
+			cache.NewSessionRepo[*common.AuthSession](
+				cacheClient,
+				"hotspot-session",
+				"hotspot:auth:sessions",
 			),
 		)
-
-		server.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-			fmt.Printf("Headers: %+v\n", req.Cookies())
-			sessCookie, err := req.Cookie("hotspot-session")
-			if err != nil {
-				fmt.Println("no hotspot-session cookie")
-			}
-			ctx := req.Context()
-			key := fmt.Sprintf("hotspot:auth:sessions:%s", sessCookie.Value)
-			r, err := c.Get(ctx, key)
-			if err != nil {
-				logger.Errorf("could not get session: %+v", err)
-			}
-			logger.Debugf("SESSION: %+v", r)
-			ctx = context.WithValue(ctx, "session", r)
-			gqlServer.ServeHTTP(w, req.WithContext(ctx))
-		})
-
-		// server.Handle("/", gqlServer)
 	}),
 )
