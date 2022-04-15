@@ -1,8 +1,9 @@
 version: 3
 
 tasks:
-    run:
-        env:
-            GRPC_PORT: 50051
-        cmds:
-            - go run main.go
+  run:
+    env:
+      GRPC_PORT: 3000
+      REDIS_HOSTS: redis-headless:6379
+    cmds:
+      - go run ./main.go

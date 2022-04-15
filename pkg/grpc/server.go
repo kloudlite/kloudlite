@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"kloudlite.io/pkg/errors"
 	"net"
 )
 
-func GRPCStartServer(ctx context.Context, server *grpc.Server, port int) error {
-	listen, portFormatError := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if portFormatError != nil {
-		return portFormatError
+func GRPCStartServer(_ context.Context, server *grpc.Server, port int) error {
+	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return errors.NewEf(err, "could not listen to net/tcp server")
 	}
 	go func() error {
-		serverStartError := server.Serve(listen)
-		if serverStartError != nil {
-			return serverStartError
+		err := server.Serve(listen)
+		if err != nil {
+			return errors.NewEf(err, "could not start grpc server ")
 		}
 		return nil
 	}()

@@ -1,12 +1,38 @@
-
 syntax = "proto3";
 
 option go_package = "kloudlite.io/rpc/iam";
 
-service IAMService {
+service IAM {
   rpc Ping(Message) returns (Message);
+  rpc Can(CanInput) returns (CanResult);
+  rpc ListMemberships(Membership) returns (RoleBindingResp);
 }
+
+message RoleBinding {
+  string userId = 1;
+  string resourceId = 2;
+  string role = 3;
+}
+
+message RoleBindingResp {
+  repeated RoleBinding roleBindings = 1;
+}
+
 
 message Message {
   string message = 1;
+}
+
+message CanInput {
+  string userId = 1;
+  repeated string resourceIds = 2;
+  string action = 3;
+}
+
+message CanResult {
+  bool status = 1;
+}
+
+message Membership {
+  string userId = 1;
 }
