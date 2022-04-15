@@ -1,0 +1,41 @@
+extend type User @key(fields: "id") {
+  id: ID! @external
+  devices: [Device]
+}
+
+
+type Cluster @key(fields: "id") {
+  id: ID!
+  name: String!
+  provider: String!
+  region: String!
+  ip: String
+  devices: [Device]
+  nodesCount: Int!
+  status: String!
+}
+
+type Device @key(fields: "id") {
+  id: ID!
+  user: User!
+  name: String!
+  cluster: Cluster!
+  configuration: String!
+}
+
+
+extend type Query {
+  listClusters: [Cluster!]
+  getCluster(clusterId: ID!): Cluster
+  getDevice(deviceId: ID!): Device
+}
+
+extend type Mutation {
+  createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
+  updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
+  deleteCluster(clusterId: ID!): Boolean!
+  addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
+  removeDevice(deviceId: ID!): Boolean!
+}
+
+
