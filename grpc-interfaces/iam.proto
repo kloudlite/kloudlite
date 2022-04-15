@@ -1,0 +1,12 @@
+
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/iam";
+
+service IAMService {
+  rpc Ping(Message) returns (Message);
+}
+
+message Message {
+  string message = 1;
+}
