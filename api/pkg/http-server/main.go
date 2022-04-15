@@ -6,7 +6,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"go.uber.org/fx"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/cors"
@@ -49,4 +51,27 @@ func SetupGQLServer(
 		}
 		gqlServer.ServeHTTP(w, _req)
 	})
+}
+
+type ServerOptions interface {
+	GetHttpPort() uint16
+	GetHttpCors() string
+}
+
+func NewHttpServerFx[T ServerOptions]() fx.Option {
+	return fx.Module("htt-server",
+		fx.Provide(http.NewServeMux),
+		fx.Invoke(func(lf fx.Lifecycle, env T, logger logger.Logger, server *http.ServeMux) {
+			lf.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					corsOpt := cors.Options{
+						AllowedOrigins:   strings.Split(env.GetHttpCors(), ","),
+						AllowCredentials: true,
+						AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+					}
+					return Start(ctx, env.GetHttpPort(), server, corsOpt, logger)
+				},
+			})
+		}),
+	)
 }

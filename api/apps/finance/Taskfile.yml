@@ -1,0 +1,10 @@
+version: 3
+
+tasks:
+  run:
+    env:
+      DB_NAME: hotspot-finance
+      DB_URL: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
+    cmds:
+      - go run main.go
+      
