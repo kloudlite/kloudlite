@@ -17,6 +17,6 @@ type Client interface {
 type Repo[T any] interface {
 	Set(c context.Context, key string, value T) error
 	SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error
-	Get(c context.Context, key string) (*T, error)
+	Get(c context.Context, key string) (T, error)
 	Drop(c context.Context, key string) error
 }

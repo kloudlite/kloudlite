@@ -580,27 +580,16 @@ scalar ProviderDetail
 scalar URL
 
 type Query {
-  me: User
-#  oAuth2: OAuth2Query
-  findByEmail(email: String!): User
+  me: User # Done
+  findByEmail(email: String!): User # Done
   requestLogin(provider: String!, state: String): URL!
 }
 
-#type OAuth2Query {
-#
-#
-#  # WARN:only to be consumed by the console api (under the federation)
-#  gitlabAccessToken(tokenId: ID!): String
-#  githubAccessToken(tokenId: ID!): String
-#  githubAppToken: String
-#  githubRepoToken(repoUrl: String, installationId: ID): String
-#}
-
 type Mutation {
-  login(email: String!, password: String!): Session
+  login(email: String!, password: String!): Session # Done
   inviteSignup(email: String!, name: String!): ID!
-  signup(name: String!, email: String!, password: String!): Session
-  logout: Boolean!
+  signup(name: String!, email: String!, password: String!): Session # Done
+  logout: Boolean! # Done
   setMetadata(values: Json!): User!
   clearMetadata: User!
   verifyEmail(token: String!): Session!
@@ -631,7 +620,7 @@ type User @key(fields: "id") {
   avatar: String
   invite: String!
   verified: Boolean!
-  metadata: Json!
+  metadata: Json
   joined: Date!
   providerGitlab: ProviderDetail
   providerGithub: ProviderDetail
@@ -2455,14 +2444,11 @@ func (ec *executionContext) _User_metadata(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(map[string]interface{})
 	fc.Result = res
-	return ec.marshalNJson2map(ctx, field.Selections, res)
+	return ec.marshalOJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_joined(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -4370,9 +4356,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "joined":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._User_joined(ctx, field, obj)
@@ -5377,6 +5360,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOJson2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOJson2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
 	return res
 }
 

@@ -56,3 +56,23 @@ type AccessToken struct {
 }
 
 var AccessTokenIndexes = []string{"user_id", "id"}
+
+type InviteToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}
+
+type VerifyToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}
+
+type ResetPasswordToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}
+
+type ChangeEmailToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}

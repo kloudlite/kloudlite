@@ -5,12 +5,11 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/cache"
-
+	"errors"
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -24,6 +23,7 @@ func (r *mutationResolver) Login(ctx context.Context, email string, password str
 }
 
 func (r *mutationResolver) InviteSignup(ctx context.Context, email string, name string) (repos.ID, error) {
+	// TODO
 	return r.d.InviteUser(ctx, email, name)
 }
 
@@ -47,14 +47,20 @@ func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
 }
 
 func (r *mutationResolver) SetMetadata(ctx context.Context, values map[string]interface{}) (*model.User, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	userEntity, err := r.d.SetUserMetadata(ctx, userId, values)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	userEntity, err := r.d.SetUserMetadata(ctx, repos.ID(session.UserId), values)
 	return userModelFromEntity(userEntity), err
 }
 
 func (r *mutationResolver) ClearMetadata(ctx context.Context) (*model.User, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	userEntity, err := r.d.ClearUserMetadata(ctx, userId)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	userEntity, err := r.d.ClearUserMetadata(ctx, repos.ID(session.UserId))
 	return userModelFromEntity(userEntity), err
 }
 
@@ -73,6 +79,7 @@ func (r *mutationResolver) RequestResetPassword(ctx context.Context, email strin
 }
 
 func (r *mutationResolver) LoginWithInviteToken(ctx context.Context, inviteToken string) (*model.Session, error) {
+	// TODO
 	sessionE, err := r.d.LoginWithInviteToken(ctx, inviteToken)
 	return sessionModelFromAuthSession(sessionE), err
 }
@@ -108,7 +115,9 @@ func (r *mutationResolver) OauthAddLogin(ctx context.Context, provider string, s
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
-	fmt.Println(session)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
 	u, err := r.d.GetUserById(ctx, repos.ID(session.UserId))
 	if err != nil {
 		return nil, err
