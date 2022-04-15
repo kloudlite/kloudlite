@@ -3,6 +3,9 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"github.com/99designs/gqlgen/graphql"
+	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"net/http"
 	"time"
 
@@ -29,4 +32,21 @@ func Start(ctx context.Context, port uint16, mux http.Handler, corsOpt cors.Opti
 		logger.Infof("Graphql Server started @ (port=%v)", port)
 	}
 	return nil
+}
+
+func SetupGQLServer(
+	mux *http.ServeMux,
+	es graphql.ExecutableSchema,
+	middlewares ...func(http.ResponseWriter, *http.Request) *http.Request,
+) {
+	mux.HandleFunc("/play", playground.Handler("Graphql playground", "/"))
+	gqlServer := gqlHandler.NewDefaultServer(es)
+	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Printf("Headers: %+v", req.Cookies())
+		_req := req
+		for _, middleware := range middlewares {
+			_req = middleware(w, req)
+		}
+		gqlServer.ServeHTTP(w, _req)
+	})
 }
