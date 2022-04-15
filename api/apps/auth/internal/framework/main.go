@@ -2,6 +2,7 @@ package framework
 
 import (
 	"go.uber.org/fx"
+	"kloudlite.io/apps/auth/internal/app"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -16,8 +17,23 @@ type Env struct {
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
 	Port          uint16 `env:"PORT" required:"true"`
-	IsDev         bool   `env:"DEV" default:"false"`
 	CorsOrigins   string `env:"ORIGINS"`
+}
+
+func (e *Env) GetHttpPort() uint16 {
+	return e.Port
+}
+
+func (e *Env) GetHttpCors() string {
+	return e.CorsOrigins
+}
+
+func (e *Env) RedisOptions() (hosts, username, password string) {
+	return e.RedisHosts, e.RedisUserName, e.RedisPassword
+}
+
+func (e *Env) GetMongoConfig() (url string, dbName string) {
+	return e.MongoUri, e.MongoDbName
 }
 
 var Module = fx.Module("framework",
@@ -26,4 +42,5 @@ var Module = fx.Module("framework",
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
+	app.Module,
 )
