@@ -30,5 +30,6 @@ type DbRepo[T Entity] interface {
 	Create(ctx context.Context, data T) (T, error)
 	UpdateById(ctx context.Context, id ID, updatedData T) (T, error)
 	DeleteById(ctx context.Context, id ID) error
+	IndexFields(ctx context.Context) error
 	//Delete(ctx context.Context, query Query) ([]ID, error)
 }
