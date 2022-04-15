@@ -14,8 +14,7 @@ type domainI struct {
 }
 
 func (d *domainI) GetUserById(ctx context.Context, id repos.ID) (*User, error) {
-	//TODO implement me
-	panic("implement me")
+	return d.userRepo.FindById(ctx, id)
 }
 
 func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*User, error) {
@@ -77,11 +76,6 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		create.Verified,
 		"email/password",
 	), nil
-}
-
-func (d *domainI) Logout(ctx context.Context, userId repos.ID) (bool, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (d *domainI) SetUserMetadata(ctx context.Context, userId repos.ID, metadata UserMetadata) (*User, error) {
