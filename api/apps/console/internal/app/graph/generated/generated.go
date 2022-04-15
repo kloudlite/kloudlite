@@ -533,7 +533,7 @@ directive @extends on OBJECT | INTERFACE
 # a union of all types that use the @key directive
 union _Entity = Cluster | Device | User
 
-# fake type to build resolver interfaces for users to implement
+# fake type to build resolver grpc-interfaces for users to implement
 type Entity {
 		findClusterByID(id: ID!,): Cluster!
 	findDeviceByID(id: ID!,): Device!
@@ -4233,7 +4233,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "interfaces":
+		case "grpc-interfaces":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec.___Type_interfaces(ctx, field, obj)
 			}
