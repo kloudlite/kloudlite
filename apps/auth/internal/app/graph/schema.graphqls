@@ -15,15 +15,14 @@ type Mutation {
   logout: Boolean! # Done
   setMetadata(values: Json!): User! # Done
   clearMetadata: User! #Done
-  verifyEmail(token: String!): Session!
-  resetPassword(token: String!, password: String!): Boolean!
-  requestResetPassword(email: String!): Boolean!
+  verifyEmail(token: String!): Session! #Done
+  resetPassword(token: String!, password: String!): Boolean! #Done
+  requestResetPassword(email: String!): Boolean! #Done
   loginWithInviteToken(inviteToken: String!): Session
   inviteSignup(email: String!, name: String!): ID!
-  changeEmail(email: String!): Boolean!
-  resendVerificationEmail(email: String!): Boolean!
-  verifyChangeEmail(token: String!): Boolean!
-  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+  changeEmail(email: String!): Boolean! #Done
+  resendVerificationEmail: Boolean! #Done
+  changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
 
   oauth_login(provider: String!, state: String!, code: String!): Session!
   oauth_addLogin(provider: String!, state: String!, code: String!): Boolean!
