@@ -5,7 +5,6 @@ import (
 	_ "fmt"
 	"kloudlite.io/common"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logger"
 	"net/http"
 	_ "net/http"
 
@@ -16,7 +15,6 @@ import (
 	_ "github.com/99designs/gqlgen/graphql/handler"
 	_ "github.com/99designs/gqlgen/graphql/playground"
 
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
@@ -35,42 +33,8 @@ type Env struct {
 var Module = fx.Module(
 	"app",
 	fx.Provide(config.LoadEnv[Env]()),
-	fx.Provide(func(db *mongo.Database) (
-		repos.DbRepo[*entities.Cluster],
-		repos.DbRepo[*entities.Device],
-	) {
-		deviceRepo := repos.NewMongoRepoAdapter[*entities.Device](
-			db,
-			"devices",
-			"dev",
-			repos.MongoRepoOptions{
-				IndexFields: entities.DeviceIndexes,
-			},
-		)
-		clusterRepo := repos.NewMongoRepoAdapter[*entities.Cluster](db, "clusters", "cls",
-			repos.MongoRepoOptions{
-				IndexFields: entities.ClusterIndexes,
-			})
-		return clusterRepo, deviceRepo
-	}),
-
-	fx.Invoke(func(
-		lifecycle fx.Lifecycle,
-		dr repos.DbRepo[*entities.Cluster],
-		cr repos.DbRepo[*entities.Device],
-	) {
-		lifecycle.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				err := dr.IndexFields(ctx)
-				if err != nil {
-					return err
-				}
-				return cr.IndexFields(ctx)
-				return nil
-			},
-		})
-	}),
-
+	repos.NewFxMongoRepo[entities.Cluster](entities.ClusterIndexes),
+	repos.NewFxMongoRepo[entities.Device](entities.DeviceIndexes),
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 			return messaging.NewKafkaProducer[messaging.Json](messagingCli)
@@ -135,7 +99,6 @@ var Module = fx.Module(
 		server *http.ServeMux,
 		d domain.Domain,
 		cacheClient cache.Client,
-		logger logger.Logger,
 	) {
 		schema := generated.NewExecutableSchema(
 			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
