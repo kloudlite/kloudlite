@@ -20,8 +20,7 @@ type Domain interface {
 	RequestResetPassword(ctx context.Context, email string) (bool, error)
 	LoginWithInviteToken(ctx context.Context, token string) (*common.AuthSession, error)
 	ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error)
-	ResendVerificationEmail(ctx context.Context, email string) (bool, error)
-	VerifyChangeEmail(ctx context.Context, token string) (bool, error)
+	ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error)
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)
 	OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error)
 	OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error)
@@ -30,5 +29,5 @@ type Domain interface {
 type Messenger interface {
 	SendVerificationEmail(ctx context.Context, verificationToken string, user *User) error
 	SendWelcomeEmail(ctx context.Context, invitationId string, user *User) error
-	SendResetPasswordEmail(ctx context.Context, invitationId string, user *User) error
+	SendResetPasswordEmail(ctx context.Context, resetToken string, user *User) error
 }

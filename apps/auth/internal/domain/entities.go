@@ -42,6 +42,7 @@ type User struct {
 	Verified         bool             `json:"verified"`
 	Metadata         UserMetadata     `json:"metadata"`
 	Joined           time.Time        `json:"joined"`
+	PasswordSalt     string           `json:"password_salt"`
 }
 
 var UserIndexes = []string{"email", "id"}
