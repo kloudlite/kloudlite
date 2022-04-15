@@ -5,20 +5,9 @@ scalar URL
 
 type Query {
   me: User
-#  oAuth2: OAuth2Query
   findByEmail(email: String!): User
   requestLogin(provider: String!, state: String): URL!
 }
-
-#type OAuth2Query {
-#
-#
-#  # WARN:only to be consumed by the console api (under the federation)
-#  gitlabAccessToken(tokenId: ID!): String
-#  githubAccessToken(tokenId: ID!): String
-#  githubAppToken: String
-#  githubRepoToken(repoUrl: String, installationId: ID): String
-#}
 
 type Mutation {
   login(email: String!, password: String!): Session

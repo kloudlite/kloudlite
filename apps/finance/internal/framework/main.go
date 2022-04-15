@@ -3,7 +3,7 @@ package framework
 import (
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/mongo-db"
+	"kloudlite.io/pkg/repos"
 )
 
 type Env struct {
@@ -17,5 +17,5 @@ func (e Env) GetMongoConfig() (url string, dbName string) {
 
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
-	fx.Provide(mongo_db.NewFx[Env]()),
+	fx.Provide(repos.NewMongoClientFx[Env]()),
 )

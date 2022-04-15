@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/fx"
 	"regexp"
 	"strings"
 
@@ -157,4 +158,27 @@ func NewMongoRepoAdapter[T Entity](
 		shortName,
 		nil,
 	}
+}
+
+func NewFxMongoRepo[T Entity](indexFields []string) fx.Option {
+	return fx.Module(
+		"repo",
+		fx.Provide(func(db *mongo.Database) DbRepo[T] {
+			return NewMongoRepoAdapter[*Entity](
+				db,
+				"devices",
+				"dev",
+				MongoRepoOptions{
+					IndexFields: indexFields,
+				},
+			)
+		}),
+		fx.Invoke(func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
+			lifecycle.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return repo.IndexFields(ctx)
+				},
+			})
+		}),
+	)
 }
