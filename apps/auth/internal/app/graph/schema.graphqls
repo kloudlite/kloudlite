@@ -4,22 +4,22 @@ scalar ProviderDetail
 scalar URL
 
 type Query {
-  me: User
-  findByEmail(email: String!): User
+  me: User # Done
+  findByEmail(email: String!): User # Done
   requestLogin(provider: String!, state: String): URL!
 }
 
 type Mutation {
-  login(email: String!, password: String!): Session
-  inviteSignup(email: String!, name: String!): ID!
-  signup(name: String!, email: String!, password: String!): Session
-  logout: Boolean!
-  setMetadata(values: Json!): User!
-  clearMetadata: User!
+  login(email: String!, password: String!): Session # Done
+  signup(name: String!, email: String!, password: String!): Session # Done
+  logout: Boolean! # Done
+  setMetadata(values: Json!): User! # Done
+  clearMetadata: User! #Done
   verifyEmail(token: String!): Session!
   resetPassword(token: String!, password: String!): Boolean!
   requestResetPassword(email: String!): Boolean!
   loginWithInviteToken(inviteToken: String!): Session
+  inviteSignup(email: String!, name: String!): ID!
   changeEmail(email: String!): Boolean!
   resendVerificationEmail(email: String!): Boolean!
   verifyChangeEmail(token: String!): Boolean!
@@ -44,7 +44,7 @@ type User @key(fields: "id") {
   avatar: String
   invite: String!
   verified: Boolean!
-  metadata: Json!
+  metadata: Json
   joined: Date!
   providerGitlab: ProviderDetail
   providerGithub: ProviderDetail

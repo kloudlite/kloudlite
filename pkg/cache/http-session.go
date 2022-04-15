@@ -21,11 +21,12 @@ func NewSessionRepo[T repos.Entity](
 		if cookie != nil {
 			// TODO handle error
 			key := fmt.Sprintf("%v:%v", sessionKeyPrefix, cookie.Value)
-			get, _ := repo.Get(r.Context(), key)
+			var get any
+			get, _ = repo.Get(r.Context(), key)
 			// TODO handle error
 
 			if get != nil {
-				newContext = context.WithValue(r.Context(), "session", *get)
+				newContext = context.WithValue(r.Context(), "session", get)
 			}
 		}
 		newContext = context.WithValue(newContext, "set-session", func(session T) {

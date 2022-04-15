@@ -21,6 +21,8 @@ var Module = fx.Module("app",
 	fx.Provide(config.LoadEnv[Env]()),
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
+	cache.NewFxRepo[*domain.VerifyToken](),
+	fx.Provide(fxMessenger),
 	fx.Invoke(func(
 		server *http.ServeMux,
 		d domain.Domain,
