@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"go.uber.org/fx"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -9,7 +10,7 @@ import (
 )
 
 type RedisClient struct {
-	opts   *RedisConnectOptions
+	opts   *redis.Options
 	client *redis.Client
 }
 
@@ -35,11 +36,7 @@ func (c *RedisClient) SetWithExpiry(
 }
 
 func (c *RedisClient) Connect(ctx context.Context) error {
-	rCli := redis.NewClient(&redis.Options{
-		Addr:     c.opts.Addr,
-		Password: c.opts.Password,
-		Username: c.opts.UserName,
-	})
+	rCli := redis.NewClient(c.opts)
 	if err := rCli.Ping(ctx).Err(); err != nil {
 		return errors.NewEf(err, "could not connect to redis")
 	}
@@ -72,14 +69,34 @@ func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
 	return []byte(result), nil
 }
 
-type RedisConnectOptions struct {
-	Addr     string
-	UserName string
-	Password string
+func NewRedisClient(hosts, username, password string) Client {
+	return &RedisClient{
+		opts: &redis.Options{
+			Addr:     hosts,
+			Username: username,
+			Password: password,
+		},
+	}
 }
 
-func NewRedisClient(opts RedisConnectOptions) Client {
-	return &RedisClient{
-		opts: &opts,
-	}
+type RedisConfig interface {
+	RedisOptions() (hosts, username, password string)
+}
+
+func NewRedisFx[T RedisConfig]() fx.Option {
+	return fx.Module("redis",
+		fx.Provide(func(env T) Client {
+			return NewRedisClient(env.RedisOptions())
+		}),
+		fx.Invoke(func(lf fx.Lifecycle, r Client) {
+			lf.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return r.Connect(ctx)
+				},
+				OnStop: func(ctx context.Context) error {
+					return r.Close(ctx)
+				},
+			})
+		}),
+	)
 }

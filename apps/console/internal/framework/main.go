@@ -1,14 +1,6 @@
 package framework
 
 import (
-	"context"
-	"net/http"
-	"strings"
-	"time"
-
-	"github.com/rs/cors"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/pkg/cache"
@@ -22,8 +14,8 @@ import (
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
-	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
-	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
+	RedisUserName string `env:"REDIS_USERNAME"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
 	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
 	KafkaBrokers  string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
 	Port          uint16 `env:"PORT" required:"true"`
@@ -31,73 +23,32 @@ type Env struct {
 	CorsOrigins   string `env:"ORIGINS"`
 }
 
+func (e *Env) GetBrokers() string {
+	return e.KafkaBrokers
+}
+
+func (e *Env) GetHttpPort() uint16 {
+	return e.Port
+}
+
+func (e *Env) GetHttpCors() string {
+	return e.CorsOrigins
+}
+
+func (e *Env) RedisOptions() (hosts, username, password string) {
+	return e.RedisHosts, e.RedisUserName, e.RedisPassword
+}
+
+func (e *Env) GetMongoConfig() (url string, dbName string) {
+	return e.MongoUri, e.MongoDbName
+}
+
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(logger.NewLogger),
-
-	// Create DB Client
-	fx.Provide(func(env *Env) (*mongo.Database, error) {
-		return mongo_db.NewMongoDatabase(env.MongoUri, env.MongoDbName)
-	}),
-
-	fx.Provide(http.NewServeMux),
-
-	fx.Provide(func(e *Env) messaging.KafkaClient {
-		return messaging.NewKafkaClient(e.KafkaBrokers)
-	}),
-
-	fx.Provide(func(e *Env) cache.Client {
-		return cache.NewRedisClient(cache.RedisConnectOptions{
-			Addr:     e.RedisHosts,
-			UserName: e.RedisUserName,
-			Password: e.RedisPassword,
-		})
-	}),
-
-	// Load App Module
+	mongo_db.NewFx[*Env](),
+	messaging.NewKafkaClientFx[*Env](),
+	cache.NewRedisFx[*Env](),
+	httpServer.NewHttpServerFx[*Env](),
 	app.Module,
-
-	// Connect DB Client
-	fx.Invoke(func(lf fx.Lifecycle, db *mongo.Database) {
-		lf.Append(fx.Hook{
-			OnStart: func(pCtx context.Context) error {
-				ctx, cancelFn := context.WithTimeout(pCtx, time.Second*2)
-				defer cancelFn()
-				e := db.Client().Connect(ctx)
-				if e != nil {
-					return e
-				}
-				return db.Client().Ping(ctx, &readpref.ReadPref{})
-			},
-			OnStop: func(ctx context.Context) error {
-				return db.Client().Disconnect(ctx)
-			},
-		})
-	}),
-
-	// start redis
-	fx.Invoke(func(lf fx.Lifecycle, r cache.Client) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return r.Connect(ctx)
-			},
-			OnStop: func(ctx context.Context) error {
-				return r.Close(ctx)
-			},
-		})
-	}),
-
-	// start http server
-	fx.Invoke(func(lf fx.Lifecycle, env *Env, logger logger.Logger, server *http.ServeMux) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				corsOpt := cors.Options{
-					AllowedOrigins:   strings.Split(env.CorsOrigins, ","),
-					AllowCredentials: true,
-					AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-				}
-				return httpServer.Start(ctx, env.Port, server, corsOpt, logger)
-			},
-		})
-	}),
 )
