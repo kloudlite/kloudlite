@@ -118,7 +118,7 @@ func fxServer(rbRepo repos.DbRepo[*entities.RoleBinding]) iam.IAMServer {
 
 var Module = fx.Module("application",
 	fx.Provide(fxServer),
-	repos.NewFxMongoRepo[*entities.RoleBinding]("role_bindings", "rb", entities.RoleBindingIndexes),
+	repos.NewFxMongoRepo[*entities.RoleBinding]("role_bindings", "rb", entities.RoleBindingIndices),
 	fx.Invoke(func(server *grpc.Server, iamService iam.IAMServer) {
 		iam.RegisterIAMServer(server, iamService)
 	}),
