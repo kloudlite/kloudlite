@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"go.uber.org/fx"
 
 	"github.com/codingconcepts/env"
 )
@@ -18,4 +19,11 @@ func LoadEnv[T any]() func() (*T, error) {
 		}
 		return &x, err
 	}
+}
+
+func EnvFx[T any]() fx.Option {
+	return fx.Module(
+		"env",
+		fx.Provide(LoadEnv[T]()),
+	)
 }

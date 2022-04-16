@@ -8,7 +8,7 @@ service IAM {
   rpc Can(InCan) returns (OutCan);
   rpc ListMemberships(InListMemberships) returns (OutListMemberships);
 
-  // Mutation 
+  // Mutation
   rpc AddMembership(InAddMembership) returns (OutAddMembership);
   rpc RemoveMembership(InRemoveMembership) returns (OutRemoveMembership);
   rpc RemoveResource(InRemoveResource) returns (OutRemoveResource);

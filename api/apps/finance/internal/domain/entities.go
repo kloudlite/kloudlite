@@ -22,3 +22,12 @@ type Account struct {
 	CreatedAt        time.Time `json:"created_at" bson:"created_at"`
 	ReadableId       repos.ID  `json:"readable_id" bson:"readable_id"`
 }
+
+var AccountIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}

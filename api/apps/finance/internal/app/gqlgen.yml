@@ -48,9 +48,20 @@ models:
   Json:
     model:
       - github.com/99designs/gqlgen/graphql.Map
-  ProviderDetail:
-    model:
-      - github.com/99designs/gqlgen/graphql.Map
+  User:
+    fields:
+      memberships:
+        resolver: true
+  Account:
+    fields:
+      memberships:
+        resolver: true
+  Membership:
+    fields:
+      user:
+        resolver: true
+      account:
+        resolver: true
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
