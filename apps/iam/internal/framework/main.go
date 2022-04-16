@@ -14,7 +14,7 @@ type Env struct {
 }
 
 var Module = fx.Module("framework",
-	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[*Env]()),
 	fx.Provide(grpc.NewServer),
 	application.Module,
 	fx.Invoke(func(lifecycle fx.Lifecycle, env *Env, server *grpc.Server) {

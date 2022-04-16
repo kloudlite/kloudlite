@@ -18,7 +18,7 @@ type Env struct {
 
 var Module = fx.Module(
 	"application",
-	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[*Env]()),
 	fx.Invoke(func(
 		server *http.ServeMux,
 		d domain.Domain,

@@ -44,7 +44,7 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 }
 
 var Module = fx.Module("framework",
-	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[*Env]()),
 	fx.Provide(logger.NewLogger),
 	mongo_db.NewMongoClientFx[*Env](),
 	messaging.NewKafkaClientFx[*Env](),
