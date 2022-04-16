@@ -7,7 +7,12 @@ import (
 )
 
 type Domain interface {
-	CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*Account, error)
+	CreateAccount(
+		ctx context.Context,
+		userId repos.ID,
+		name string,
+		billing *model.BillingInput,
+	) (*Account, error)
 	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
 	UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error)
 	InviteAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error)

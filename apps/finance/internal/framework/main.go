@@ -5,6 +5,7 @@ import (
 	"kloudlite.io/apps/finance/internal/app"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
+	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
@@ -37,8 +38,9 @@ func (e *Env) GetHttpCors() string {
 }
 
 var Module = fx.Module("framework",
-	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(logger.NewLogger),
+	config.EnvFx[Env](),
+	rpc.NewGrpcClientFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),

@@ -34,8 +34,8 @@ func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 		return &iam.OutCan{Status: true}, nil
 	}
 
-	for _, role := range ActionMap[Action(in.Action)] {
-		if role == Role(rb.Role) {
+	for _, role := range iam.ActionMap[iam.Action(in.Action)] {
+		if role == iam.Role(rb.Role) {
 			return &iam.OutCan{Status: true}, nil
 		}
 	}

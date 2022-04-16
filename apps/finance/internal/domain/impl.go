@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
+	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/repos"
 	"math"
 	"math/rand"
@@ -13,6 +15,7 @@ import (
 )
 
 type domainI struct {
+	iamCli      iam.IAMClient
 	accountRepo repos.DbRepo[*Account]
 }
 
@@ -23,7 +26,12 @@ func generateReadable(name string) string {
 	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
 }
 
-func (domain *domainI) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*Account, error) {
+func (domain *domainI) CreateAccount(
+	ctx context.Context,
+	userId repos.ID,
+	name string,
+	billing *model.BillingInput,
+) (*Account, error) {
 	create, err := domain.accountRepo.Create(ctx, &Account{
 		Name: name,
 		Billing: Billing{
@@ -34,6 +42,12 @@ func (domain *domainI) CreateAccount(ctx context.Context, name string, billing *
 		IsActive:   true,
 		CreatedAt:  time.Time{},
 		ReadableId: repos.ID(generateReadable(name)),
+	})
+	domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
+		UserId:       string(userId),
+		ResourceType: common.ResourceAccount,
+		ResourceId:   string(create.Id),
+		Role:         string(iam.AccountOwner),
 	})
 	if err != nil {
 		return nil, err
@@ -117,8 +131,10 @@ func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, e
 
 func fxDomain(
 	accountRepo repos.DbRepo[*Account],
+	iamCli iam.IAMClient,
 ) Domain {
 	return &domainI{
-		accountRepo: accountRepo,
+		iamCli,
+		accountRepo,
 	}
 }
