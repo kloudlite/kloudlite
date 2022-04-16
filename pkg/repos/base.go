@@ -11,3 +11,7 @@ func (c *BaseEntity) GetId() ID {
 func (c *BaseEntity) SetId(id ID) {
 	c.Id = id
 }
+
+func (c *BaseEntity) IsZero() bool {
+	return c.Id == ""
+}

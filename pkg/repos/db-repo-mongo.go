@@ -32,7 +32,7 @@ func (repo dbRepo[T]) NewId() ID {
 }
 
 func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
-	results := make([]T, 0)
+	results := []T{}
 	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.Filter, &options.FindOptions{
 		Sort: query.Sort,
 	})
