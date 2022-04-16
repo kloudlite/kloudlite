@@ -3,10 +3,11 @@ package app
 import (
 	"context"
 	_ "fmt"
-	"kloudlite.io/common"
-	httpServer "kloudlite.io/pkg/http-server"
 	"net/http"
 	_ "net/http"
+
+	"kloudlite.io/common"
+	httpServer "kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
@@ -34,8 +35,8 @@ type Env struct {
 var Module = fx.Module(
 	"app",
 	fx.Provide(config.LoadEnv[*Env]()),
-	repos.NewFxMongoRepo[entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
-	repos.NewFxMongoRepo[entities.Device]("devices", "dev", entities.DeviceIndexes),
+	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
+	repos.NewFxMongoRepo[*entities.Device]("devices", "dev", entities.DeviceIndexes),
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 			return messaging.NewKafkaProducer[messaging.Json](messagingCli)
