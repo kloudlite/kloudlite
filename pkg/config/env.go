@@ -11,8 +11,8 @@ func LoadEnv[T any]() func() (T, error) {
 		var envC T
 		err := env.Set(&envC)
 		if err != nil {
-			var envC T
-			return envC, fmt.Errorf("not able to load ENV: %v", err)
+			var e T
+			return e, fmt.Errorf("not able to load ENV: %v", err)
 		}
 		return envC, err
 	}
