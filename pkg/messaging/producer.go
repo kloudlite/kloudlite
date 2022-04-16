@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"kloudlite.io/pkg/errors"
@@ -45,11 +46,10 @@ func (m *producer[T]) SendMessage(topic string, key string, message T) error {
 		fmt.Println(e)
 		return e
 	}
-	fmt.Println("running 2")
 	return m.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
 			Topic:     &topic,
-			Partition: kafka.PartitionAny,
+			Partition: int32(kafka.PartitionAny),
 		},
 		Key:   []byte(key),
 		Value: msgBody,
