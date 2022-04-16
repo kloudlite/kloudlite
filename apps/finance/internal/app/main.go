@@ -1,6 +1,8 @@
 package app
 
 import (
+	"google.golang.org/grpc"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/repos"
 	"net/http"
 
@@ -22,6 +24,9 @@ var Module = fx.Module(
 	"application",
 	fx.Provide(config.LoadEnv[Env]()),
 	repos.NewFxMongoRepo[*domain.Account]("accounts", "acc", domain.AccountIndexes),
+	fx.Provide(func(conn *grpc.ClientConn) iam.IAMClient {
+		return iam.NewIAMClient(conn)
+	}),
 	fx.Invoke(func(
 		server *http.ServeMux,
 		d domain.Domain,
