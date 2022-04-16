@@ -11,7 +11,7 @@ tasks:
       COOKIE_DOMAIN: localhost
 #      COOKIE_DOMAIN: .dev.madhouselabs.io
     cmds:
-      - go run main.go
+      - go run -tags dynamic main.go
   gql:
     sources:
       - graph/schema.graphqls

@@ -84,7 +84,7 @@ func (d *domain) UpdateCluster(action UpdateClusterAction) error {
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-//infraJobResp InfraJobResponder,
+	//infraJobResp InfraJobResponder,
 ) Domain {
 	return &domain{
 		infraCli: infraCli,
@@ -98,7 +98,7 @@ type Env struct {
 }
 
 var Module = fx.Module("domain",
-	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[*Env]()),
 	fx.Provide(makeDomain),
 	fx.Invoke(func(d Domain, p messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
 

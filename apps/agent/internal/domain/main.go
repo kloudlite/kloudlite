@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"kloudlite.io/common"
 	"os"
 	"os/exec"
 	"path"
@@ -14,7 +15,6 @@ import (
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
-	"kloudlite.io/pkg/shared"
 )
 
 type domain struct {
@@ -32,7 +32,7 @@ func kubeApply(b []byte) error {
 
 func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 	switch msg.ResourceType {
-	case shared.RESOURCE_PROJECT:
+	case common.ResourceProject:
 		{
 			if spec, ok := msg.Spec.(Project); ok {
 				bData, e := d.applyTemplate("project.tmpl.yml", spec)
@@ -41,7 +41,7 @@ func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 			}
 			return errors.New("malformed spec not of type(Project)")
 		}
-	case shared.RESOURCE_CONFIG:
+	case common.ResourceConfig:
 		{
 			if spec, ok := msg.Spec.(Config); ok {
 				bData, e := d.applyTemplate("configs.tmpl.yml", spec)
@@ -50,7 +50,7 @@ func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 			}
 			return errors.New("malformed spec not of type(Config)")
 		}
-	case shared.RESOURCE_SECRET:
+	case common.ResourceSecret:
 		{
 			if spec, ok := msg.Spec.(Secret); ok {
 				bData, e := d.applyTemplate("secrets.tmpl.yml", spec)
@@ -60,7 +60,7 @@ func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 			return errors.New("malformed spec not of type(Secret)")
 		}
 
-	case shared.RESOURCE_ROUTER:
+	case common.ResourceRouter:
 		{
 			if spec, ok := msg.Spec.(Router); ok {
 				bData, e := d.applyTemplate("router.tmpl.yml", spec)
@@ -70,7 +70,7 @@ func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 			return errors.New("malformed spec not of type(Router)")
 		}
 
-	case shared.RESOURCE_GIT_PIPELINE:
+	case common.ResourceGitPipeline:
 		{
 			if spec, ok := msg.Spec.(Pipeline); ok {
 				bData, e := d.applyTemplate("pipeline.tmpl.yml", spec)
@@ -79,7 +79,7 @@ func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 			}
 			return errors.New("malformed spec not of type(Pipeline)")
 		}
-	case shared.RESOURCE_APP:
+	case common.ResourceApp:
 		{
 			if spec, ok := msg.Spec.(App); ok {
 				bData, e := d.applyTemplate("app.tmpl.yml", spec)
@@ -88,7 +88,7 @@ func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 			}
 			return errors.New("malformed spec not of type(App)")
 		}
-	case shared.RESOURCE_MANAGED_SERVICE:
+	case common.ResourceManagedService:
 		{
 			if spec, ok := msg.Spec.(ManagedSvc); ok {
 				bData, e := d.applyTemplate("msvc.tmpl.yml", spec)
@@ -97,7 +97,7 @@ func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
 			}
 			return errors.New("malformed spec not of type(ManagedSvc)")
 		}
-	case shared.RESOURCE_MANAGED_RESOURCE:
+	case common.ResourceManagedResource:
 		{
 			if spec, ok := msg.Spec.(ManagedRes); ok {
 				bData, e := d.applyTemplate("mres.tmpl.yml", spec)
