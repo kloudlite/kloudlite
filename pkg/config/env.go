@@ -6,13 +6,13 @@ import (
 	"github.com/codingconcepts/env"
 )
 
-func LoadEnv[T any]() func() (*T, error) {
-	return func() (*T, error) {
+func LoadEnv[T any]() func() (T, error) {
+	return func() (T, error) {
 		var envC T
 		err := env.Set(&envC)
 		if err != nil {
 			return nil, fmt.Errorf("not able to load ENV: %v", err)
 		}
-		return &envC, err
+		return envC, err
 	}
 }
