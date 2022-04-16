@@ -11,6 +11,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/functions"
 )
 
@@ -18,7 +19,6 @@ type dbRepo[T Entity] struct {
 	db             *mongo.Database
 	collectionName string
 	shortName      string
-	options        *MongoRepoOptions
 }
 
 var re = regexp.MustCompile(`(\W|_)+/g`)
@@ -123,16 +123,22 @@ func (repo dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 	return nil
 }
 
-func (repo dbRepo[T]) IndexFields(ctx context.Context) error {
-	if repo.options == nil {
-		return nil
-	}
-	models := make([]mongo.IndexModel, 0)
-	for _, f := range repo.options.IndexFields {
+func (repo dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) error {
+	models := []mongo.IndexModel{}
+	for _, f := range indices {
+		b := bson.D{}
+		for _, field := range f.Field {
+			switch field.Value {
+			case IndexAsc:
+				b = append(b, bson.E{Key: field.Key, Value: 1})
+			case IndexDesc:
+				b = append(b, bson.E{Key: field.Key, Value: -1})
+			}
+		}
 		models = append(models, mongo.IndexModel{
-			Keys: bson.D{{f, 1}},
+			Keys: b,
 			Options: &options.IndexOptions{
-				Unique: new(bool),
+				Unique: &f.Unique,
 			},
 		})
 	}
@@ -165,25 +171,15 @@ func NewMongoRepo[T Entity](
 	db *mongo.Database,
 	collectionName string,
 	shortName string,
-	o ...MongoRepoOptions,
 ) DbRepo[T] {
-	if len(o) > 0 {
-		return &dbRepo[T]{
-			db,
-			collectionName,
-			shortName,
-			&o[0],
-		}
-	}
 	return &dbRepo[T]{
 		db,
 		collectionName,
 		shortName,
-		nil,
 	}
 }
 
-func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []string) fx.Option {
+func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []IndexField) fx.Option {
 	return fx.Module(
 		"repo",
 		fx.Provide(func(db *mongo.Database) DbRepo[T] {
@@ -191,15 +187,16 @@ func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []st
 				db,
 				collectionName,
 				shortName,
-				MongoRepoOptions{
-					IndexFields: indexFields,
-				},
 			)
 		}),
 		fx.Invoke(func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
 			lifecycle.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
-					return repo.IndexFields(ctx)
+					err := repo.IndexFields(ctx, indexFields)
+					if err != nil {
+						return errors.NewEf(err, "could not create indexes on DB")
+					}
+					return nil
 				},
 			})
 		}),
