@@ -17,7 +17,8 @@ service IAM {
 message RoleBinding {
   string userId = 1;
   string resourceId = 2;
-  string role = 3;
+  string resourceType = 3;
+  string role = 4;
 }
 
 message InAddMembership {

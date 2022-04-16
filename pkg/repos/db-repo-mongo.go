@@ -3,10 +3,11 @@ package repos
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.uber.org/fx"
 	"regexp"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/fx"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -110,6 +111,14 @@ func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 	return e
 }
 
+func (repo dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
+	_, err := repo.db.Collection(repo.collectionName).DeleteMany(ctx, filter)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (repo dbRepo[T]) IndexFields(ctx context.Context) error {
 	if repo.options == nil {
 		return nil
@@ -118,6 +127,9 @@ func (repo dbRepo[T]) IndexFields(ctx context.Context) error {
 	for _, f := range repo.options.IndexFields {
 		models = append(models, mongo.IndexModel{
 			Keys: bson.D{{f, 1}},
+			Options: &options.IndexOptions{
+				Unique: new(bool),
+			},
 		})
 	}
 	_, err := repo.db.Collection(repo.collectionName).Indexes().CreateMany(ctx, models)

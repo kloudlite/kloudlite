@@ -31,6 +31,25 @@ type DbRepo[T Entity] interface {
 	Create(ctx context.Context, data T) (T, error)
 	UpdateById(ctx context.Context, id ID, updatedData T) (T, error)
 	DeleteById(ctx context.Context, id ID) error
+	DeleteMany(ctx context.Context, filter Filter) error
 	IndexFields(ctx context.Context) error
 	//Delete(ctx context.Context, query Query) ([]ID, error)
+}
+
+type indexOrder int
+
+const (
+	Undefined indexOrder = 1
+	IndexAsc  indexOrder = 1
+	IndexDesc indexOrder = -1
+)
+
+type IndexKey struct {
+	Key   string
+	Value indexOrder
+}
+
+type IndexField struct {
+	Field  []IndexKey
+	Unique bool
 }

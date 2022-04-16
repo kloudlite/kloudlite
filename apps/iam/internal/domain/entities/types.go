@@ -11,3 +11,8 @@ type RoleBinding struct {
 }
 
 var RoleBindingIndexes = []string{"id", "user_id", "resource_id", "role"}
+
+var RoleBindingIndices = []repos.IndexField{
+	Field:  []repos.IndexKey{{"id", repos.IndexAsc}},
+	Unique: true,
+}
