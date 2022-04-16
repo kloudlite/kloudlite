@@ -5,6 +5,13 @@ tasks:
     env:
       DB_NAME: hotspot-finance
       DB_URL: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
+      COOKIE_DOMAIN: localhost
     cmds:
-      - go run main.go
-      
+      - nodemon -w **/* -e "go" --signal SIGKILL -q --exec 'echo && go run main.go || echo'
+  gql:
+    sources:
+      - graph/schema.graphqls
+      - gqlgen.yml
+    dir: internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
