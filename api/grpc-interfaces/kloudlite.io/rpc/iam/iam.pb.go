@@ -83,16 +83,20 @@ func (x *RoleBinding) GetRole() string {
 	return ""
 }
 
-type RoleBindingResp struct {
+type InAddMembership struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RoleBindings []*RoleBinding `protobuf:"bytes,1,rep,name=roleBindings,proto3" json:"roleBindings,omitempty"`
+	UserId       string `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	ResourceType string `protobuf:"bytes,2,opt,name=resourceType,proto3" json:"resourceType,omitempty"`
+	ResourceId   string `protobuf:"bytes,3,opt,name=resourceId,proto3" json:"resourceId,omitempty"`
+	Role         string `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	Filter       string `protobuf:"bytes,5,opt,name=filter,proto3" json:"filter,omitempty"`
 }
 
-func (x *RoleBindingResp) Reset() {
-	*x = RoleBindingResp{}
+func (x *InAddMembership) Reset() {
+	*x = InAddMembership{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_iam_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -100,13 +104,13 @@ func (x *RoleBindingResp) Reset() {
 	}
 }
 
-func (x *RoleBindingResp) String() string {
+func (x *InAddMembership) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RoleBindingResp) ProtoMessage() {}
+func (*InAddMembership) ProtoMessage() {}
 
-func (x *RoleBindingResp) ProtoReflect() protoreflect.Message {
+func (x *InAddMembership) ProtoReflect() protoreflect.Message {
 	mi := &file_iam_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -118,12 +122,330 @@ func (x *RoleBindingResp) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RoleBindingResp.ProtoReflect.Descriptor instead.
-func (*RoleBindingResp) Descriptor() ([]byte, []int) {
+// Deprecated: Use InAddMembership.ProtoReflect.Descriptor instead.
+func (*InAddMembership) Descriptor() ([]byte, []int) {
 	return file_iam_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *RoleBindingResp) GetRoleBindings() []*RoleBinding {
+func (x *InAddMembership) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *InAddMembership) GetResourceType() string {
+	if x != nil {
+		return x.ResourceType
+	}
+	return ""
+}
+
+func (x *InAddMembership) GetResourceId() string {
+	if x != nil {
+		return x.ResourceId
+	}
+	return ""
+}
+
+func (x *InAddMembership) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *InAddMembership) GetFilter() string {
+	if x != nil {
+		return x.Filter
+	}
+	return ""
+}
+
+type OutAddMembership struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Result bool `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
+}
+
+func (x *OutAddMembership) Reset() {
+	*x = OutAddMembership{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_iam_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OutAddMembership) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OutAddMembership) ProtoMessage() {}
+
+func (x *OutAddMembership) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OutAddMembership.ProtoReflect.Descriptor instead.
+func (*OutAddMembership) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *OutAddMembership) GetResult() bool {
+	if x != nil {
+		return x.Result
+	}
+	return false
+}
+
+type InRemoveMembership struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	UserId     string `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	ResourceId string `protobuf:"bytes,2,opt,name=resourceId,proto3" json:"resourceId,omitempty"`
+}
+
+func (x *InRemoveMembership) Reset() {
+	*x = InRemoveMembership{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_iam_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *InRemoveMembership) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InRemoveMembership) ProtoMessage() {}
+
+func (x *InRemoveMembership) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InRemoveMembership.ProtoReflect.Descriptor instead.
+func (*InRemoveMembership) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *InRemoveMembership) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *InRemoveMembership) GetResourceId() string {
+	if x != nil {
+		return x.ResourceId
+	}
+	return ""
+}
+
+type OutRemoveMembership struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Result bool `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
+}
+
+func (x *OutRemoveMembership) Reset() {
+	*x = OutRemoveMembership{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_iam_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OutRemoveMembership) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OutRemoveMembership) ProtoMessage() {}
+
+func (x *OutRemoveMembership) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OutRemoveMembership.ProtoReflect.Descriptor instead.
+func (*OutRemoveMembership) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *OutRemoveMembership) GetResult() bool {
+	if x != nil {
+		return x.Result
+	}
+	return false
+}
+
+type InRemoveResource struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ResourceId string `protobuf:"bytes,1,opt,name=resourceId,proto3" json:"resourceId,omitempty"`
+}
+
+func (x *InRemoveResource) Reset() {
+	*x = InRemoveResource{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_iam_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *InRemoveResource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InRemoveResource) ProtoMessage() {}
+
+func (x *InRemoveResource) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InRemoveResource.ProtoReflect.Descriptor instead.
+func (*InRemoveResource) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *InRemoveResource) GetResourceId() string {
+	if x != nil {
+		return x.ResourceId
+	}
+	return ""
+}
+
+type OutRemoveResource struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Result bool `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
+}
+
+func (x *OutRemoveResource) Reset() {
+	*x = OutRemoveResource{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_iam_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OutRemoveResource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OutRemoveResource) ProtoMessage() {}
+
+func (x *OutRemoveResource) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OutRemoveResource.ProtoReflect.Descriptor instead.
+func (*OutRemoveResource) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *OutRemoveResource) GetResult() bool {
+	if x != nil {
+		return x.Result
+	}
+	return false
+}
+
+type OutListMemberships struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RoleBindings []*RoleBinding `protobuf:"bytes,1,rep,name=roleBindings,proto3" json:"roleBindings,omitempty"`
+}
+
+func (x *OutListMemberships) Reset() {
+	*x = OutListMemberships{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_iam_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OutListMemberships) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OutListMemberships) ProtoMessage() {}
+
+func (x *OutListMemberships) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OutListMemberships.ProtoReflect.Descriptor instead.
+func (*OutListMemberships) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *OutListMemberships) GetRoleBindings() []*RoleBinding {
 	if x != nil {
 		return x.RoleBindings
 	}
@@ -141,7 +463,7 @@ type Message struct {
 func (x *Message) Reset() {
 	*x = Message{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_iam_proto_msgTypes[2]
+		mi := &file_iam_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -154,7 +476,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_iam_proto_msgTypes[2]
+	mi := &file_iam_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -167,7 +489,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_iam_proto_rawDescGZIP(), []int{2}
+	return file_iam_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Message) GetMessage() string {
@@ -177,7 +499,7 @@ func (x *Message) GetMessage() string {
 	return ""
 }
 
-type CanInput struct {
+type InCan struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -187,23 +509,23 @@ type CanInput struct {
 	Action      string   `protobuf:"bytes,3,opt,name=action,proto3" json:"action,omitempty"`
 }
 
-func (x *CanInput) Reset() {
-	*x = CanInput{}
+func (x *InCan) Reset() {
+	*x = InCan{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_iam_proto_msgTypes[3]
+		mi := &file_iam_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *CanInput) String() string {
+func (x *InCan) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CanInput) ProtoMessage() {}
+func (*InCan) ProtoMessage() {}
 
-func (x *CanInput) ProtoReflect() protoreflect.Message {
-	mi := &file_iam_proto_msgTypes[3]
+func (x *InCan) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -214,33 +536,33 @@ func (x *CanInput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CanInput.ProtoReflect.Descriptor instead.
-func (*CanInput) Descriptor() ([]byte, []int) {
-	return file_iam_proto_rawDescGZIP(), []int{3}
+// Deprecated: Use InCan.ProtoReflect.Descriptor instead.
+func (*InCan) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *CanInput) GetUserId() string {
+func (x *InCan) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *CanInput) GetResourceIds() []string {
+func (x *InCan) GetResourceIds() []string {
 	if x != nil {
 		return x.ResourceIds
 	}
 	return nil
 }
 
-func (x *CanInput) GetAction() string {
+func (x *InCan) GetAction() string {
 	if x != nil {
 		return x.Action
 	}
 	return ""
 }
 
-type CanResult struct {
+type OutCan struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -248,23 +570,23 @@ type CanResult struct {
 	Status bool `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 }
 
-func (x *CanResult) Reset() {
-	*x = CanResult{}
+func (x *OutCan) Reset() {
+	*x = OutCan{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_iam_proto_msgTypes[4]
+		mi := &file_iam_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *CanResult) String() string {
+func (x *OutCan) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CanResult) ProtoMessage() {}
+func (*OutCan) ProtoMessage() {}
 
-func (x *CanResult) ProtoReflect() protoreflect.Message {
-	mi := &file_iam_proto_msgTypes[4]
+func (x *OutCan) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -275,19 +597,19 @@ func (x *CanResult) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CanResult.ProtoReflect.Descriptor instead.
-func (*CanResult) Descriptor() ([]byte, []int) {
-	return file_iam_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use OutCan.ProtoReflect.Descriptor instead.
+func (*OutCan) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *CanResult) GetStatus() bool {
+func (x *OutCan) GetStatus() bool {
 	if x != nil {
 		return x.Status
 	}
 	return false
 }
 
-type Membership struct {
+type InListMemberships struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -295,23 +617,23 @@ type Membership struct {
 	UserId string `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 }
 
-func (x *Membership) Reset() {
-	*x = Membership{}
+func (x *InListMemberships) Reset() {
+	*x = InListMemberships{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_iam_proto_msgTypes[5]
+		mi := &file_iam_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *Membership) String() string {
+func (x *InListMemberships) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Membership) ProtoMessage() {}
+func (*InListMemberships) ProtoMessage() {}
 
-func (x *Membership) ProtoReflect() protoreflect.Message {
-	mi := &file_iam_proto_msgTypes[5]
+func (x *InListMemberships) ProtoReflect() protoreflect.Message {
+	mi := &file_iam_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -322,12 +644,12 @@ func (x *Membership) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Membership.ProtoReflect.Descriptor instead.
-func (*Membership) Descriptor() ([]byte, []int) {
-	return file_iam_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use InListMemberships.ProtoReflect.Descriptor instead.
+func (*InListMemberships) Descriptor() ([]byte, []int) {
+	return file_iam_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *Membership) GetUserId() string {
+func (x *InListMemberships) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
@@ -343,33 +665,71 @@ var file_iam_proto_rawDesc = []byte{
 	0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64,
 	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
 	0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x43, 0x0a, 0x0f, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x69,
-	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x12, 0x30, 0x0a, 0x0c, 0x72, 0x6f, 0x6c,
-	0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x0c, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x0c, 0x72,
-	0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x22, 0x23, 0x0a, 0x07, 0x4d,
-	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
-	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
-	0x22, 0x5c, 0x0a, 0x08, 0x43, 0x61, 0x6e, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x16, 0x0a, 0x06,
-	0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73,
-	0x65, 0x72, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x49, 0x64, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x49, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x23,
-	0x0a, 0x09, 0x43, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x73, 0x74, 0x61,
-	0x74, 0x75, 0x73, 0x22, 0x24, 0x0a, 0x0a, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69,
-	0x70, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x32, 0x71, 0x0a, 0x03, 0x49, 0x41, 0x4d,
-	0x12, 0x1a, 0x0a, 0x04, 0x50, 0x69, 0x6e, 0x67, 0x12, 0x08, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61,
-	0x67, 0x65, 0x1a, 0x08, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x1c, 0x0a, 0x03,
-	0x43, 0x61, 0x6e, 0x12, 0x09, 0x2e, 0x43, 0x61, 0x6e, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x1a, 0x0a,
-	0x2e, 0x43, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x30, 0x0a, 0x0f, 0x4c, 0x69,
-	0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x73, 0x12, 0x0b, 0x2e,
-	0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x1a, 0x10, 0x2e, 0x52, 0x6f, 0x6c,
-	0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x42, 0x16, 0x5a, 0x14,
-	0x6b, 0x6c, 0x6f, 0x75, 0x64, 0x6c, 0x69, 0x74, 0x65, 0x2e, 0x69, 0x6f, 0x2f, 0x72, 0x70, 0x63,
-	0x2f, 0x69, 0x61, 0x6d, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x99, 0x01, 0x0a, 0x0f, 0x49, 0x6e, 0x41, 0x64, 0x64,
+	0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73,
+	0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72,
+	0x49, 0x64, 0x12, 0x22, 0x0a, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x54, 0x79,
+	0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x72, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x66, 0x69,
+	0x6c, 0x74, 0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x69, 0x6c, 0x74,
+	0x65, 0x72, 0x22, 0x2a, 0x0a, 0x10, 0x4f, 0x75, 0x74, 0x41, 0x64, 0x64, 0x4d, 0x65, 0x6d, 0x62,
+	0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x22, 0x4c,
+	0x0a, 0x12, 0x49, 0x6e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72,
+	0x73, 0x68, 0x69, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x22, 0x2d, 0x0a, 0x13,
+	0x4f, 0x75, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73,
+	0x68, 0x69, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x08, 0x52, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x22, 0x32, 0x0a, 0x10, 0x49,
+	0x6e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12,
+	0x1e, 0x0a, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x22,
+	0x2b, 0x0a, 0x11, 0x4f, 0x75, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x22, 0x46, 0x0a, 0x12,
+	0x4f, 0x75, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69,
+	0x70, 0x73, 0x12, 0x30, 0x0a, 0x0c, 0x72, 0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e,
+	0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x42,
+	0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x0c, 0x72, 0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64,
+	0x69, 0x6e, 0x67, 0x73, 0x22, 0x23, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12,
+	0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x59, 0x0a, 0x05, 0x49, 0x6e, 0x43,
+	0x61, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x72, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52,
+	0x0b, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06,
+	0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x22, 0x20, 0x0a, 0x06, 0x4f, 0x75, 0x74, 0x43, 0x61, 0x6e, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06,
+	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x2b, 0x0a, 0x11, 0x49, 0x6e, 0x4c, 0x69, 0x73, 0x74,
+	0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x75,
+	0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65,
+	0x72, 0x49, 0x64, 0x32, 0xa3, 0x02, 0x0a, 0x03, 0x49, 0x41, 0x4d, 0x12, 0x1a, 0x0a, 0x04, 0x50,
+	0x69, 0x6e, 0x67, 0x12, 0x08, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x1a, 0x08, 0x2e,
+	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x16, 0x0a, 0x03, 0x43, 0x61, 0x6e, 0x12, 0x06,
+	0x2e, 0x49, 0x6e, 0x43, 0x61, 0x6e, 0x1a, 0x07, 0x2e, 0x4f, 0x75, 0x74, 0x43, 0x61, 0x6e, 0x12,
+	0x3a, 0x0a, 0x0f, 0x4c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69,
+	0x70, 0x73, 0x12, 0x12, 0x2e, 0x49, 0x6e, 0x4c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65,
+	0x72, 0x73, 0x68, 0x69, 0x70, 0x73, 0x1a, 0x13, 0x2e, 0x4f, 0x75, 0x74, 0x4c, 0x69, 0x73, 0x74,
+	0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x73, 0x12, 0x34, 0x0a, 0x0d, 0x41,
+	0x64, 0x64, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x12, 0x10, 0x2e, 0x49,
+	0x6e, 0x41, 0x64, 0x64, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x1a, 0x11,
+	0x2e, 0x4f, 0x75, 0x74, 0x41, 0x64, 0x64, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69,
+	0x70, 0x12, 0x3d, 0x0a, 0x10, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x4d, 0x65, 0x6d, 0x62, 0x65,
+	0x72, 0x73, 0x68, 0x69, 0x70, 0x12, 0x13, 0x2e, 0x49, 0x6e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65,
+	0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70, 0x1a, 0x14, 0x2e, 0x4f, 0x75, 0x74,
+	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x68, 0x69, 0x70,
+	0x12, 0x37, 0x0a, 0x0e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x12, 0x11, 0x2e, 0x49, 0x6e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x1a, 0x12, 0x2e, 0x4f, 0x75, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76,
+	0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x42, 0x16, 0x5a, 0x14, 0x6b, 0x6c, 0x6f,
+	0x75, 0x64, 0x6c, 0x69, 0x74, 0x65, 0x2e, 0x69, 0x6f, 0x2f, 0x72, 0x70, 0x63, 0x2f, 0x69, 0x61,
+	0x6d, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -384,28 +744,40 @@ func file_iam_proto_rawDescGZIP() []byte {
 	return file_iam_proto_rawDescData
 }
 
-var file_iam_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_iam_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_iam_proto_goTypes = []interface{}{
-	(*RoleBinding)(nil),     // 0: RoleBinding
-	(*RoleBindingResp)(nil), // 1: RoleBindingResp
-	(*Message)(nil),         // 2: Message
-	(*CanInput)(nil),        // 3: CanInput
-	(*CanResult)(nil),       // 4: CanResult
-	(*Membership)(nil),      // 5: Membership
+	(*RoleBinding)(nil),         // 0: RoleBinding
+	(*InAddMembership)(nil),     // 1: InAddMembership
+	(*OutAddMembership)(nil),    // 2: OutAddMembership
+	(*InRemoveMembership)(nil),  // 3: InRemoveMembership
+	(*OutRemoveMembership)(nil), // 4: OutRemoveMembership
+	(*InRemoveResource)(nil),    // 5: InRemoveResource
+	(*OutRemoveResource)(nil),   // 6: OutRemoveResource
+	(*OutListMemberships)(nil),  // 7: OutListMemberships
+	(*Message)(nil),             // 8: Message
+	(*InCan)(nil),               // 9: InCan
+	(*OutCan)(nil),              // 10: OutCan
+	(*InListMemberships)(nil),   // 11: InListMemberships
 }
 var file_iam_proto_depIdxs = []int32{
-	0, // 0: RoleBindingResp.roleBindings:type_name -> RoleBinding
-	2, // 1: IAM.Ping:input_type -> Message
-	3, // 2: IAM.Can:input_type -> CanInput
-	5, // 3: IAM.ListMemberships:input_type -> Membership
-	2, // 4: IAM.Ping:output_type -> Message
-	4, // 5: IAM.Can:output_type -> CanResult
-	1, // 6: IAM.ListMemberships:output_type -> RoleBindingResp
-	4, // [4:7] is the sub-list for method output_type
-	1, // [1:4] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0,  // 0: OutListMemberships.roleBindings:type_name -> RoleBinding
+	8,  // 1: IAM.Ping:input_type -> Message
+	9,  // 2: IAM.Can:input_type -> InCan
+	11, // 3: IAM.ListMemberships:input_type -> InListMemberships
+	1,  // 4: IAM.AddMembership:input_type -> InAddMembership
+	3,  // 5: IAM.RemoveMembership:input_type -> InRemoveMembership
+	5,  // 6: IAM.RemoveResource:input_type -> InRemoveResource
+	8,  // 7: IAM.Ping:output_type -> Message
+	10, // 8: IAM.Can:output_type -> OutCan
+	7,  // 9: IAM.ListMemberships:output_type -> OutListMemberships
+	2,  // 10: IAM.AddMembership:output_type -> OutAddMembership
+	4,  // 11: IAM.RemoveMembership:output_type -> OutRemoveMembership
+	6,  // 12: IAM.RemoveResource:output_type -> OutRemoveResource
+	7,  // [7:13] is the sub-list for method output_type
+	1,  // [1:7] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_iam_proto_init() }
@@ -427,7 +799,7 @@ func file_iam_proto_init() {
 			}
 		}
 		file_iam_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RoleBindingResp); i {
+			switch v := v.(*InAddMembership); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -439,7 +811,7 @@ func file_iam_proto_init() {
 			}
 		}
 		file_iam_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Message); i {
+			switch v := v.(*OutAddMembership); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -451,7 +823,7 @@ func file_iam_proto_init() {
 			}
 		}
 		file_iam_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CanInput); i {
+			switch v := v.(*InRemoveMembership); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -463,7 +835,7 @@ func file_iam_proto_init() {
 			}
 		}
 		file_iam_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CanResult); i {
+			switch v := v.(*OutRemoveMembership); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -475,7 +847,79 @@ func file_iam_proto_init() {
 			}
 		}
 		file_iam_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Membership); i {
+			switch v := v.(*InRemoveResource); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_iam_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OutRemoveResource); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_iam_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OutListMemberships); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_iam_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Message); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_iam_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*InCan); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_iam_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OutCan); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_iam_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*InListMemberships); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -493,7 +937,7 @@ func file_iam_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_iam_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -18,9 +18,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IAMClient interface {
+	// Query
 	Ping(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
-	Can(ctx context.Context, in *CanInput, opts ...grpc.CallOption) (*CanResult, error)
-	ListMemberships(ctx context.Context, in *Membership, opts ...grpc.CallOption) (*RoleBindingResp, error)
+	Can(ctx context.Context, in *InCan, opts ...grpc.CallOption) (*OutCan, error)
+	ListMemberships(ctx context.Context, in *InListMemberships, opts ...grpc.CallOption) (*OutListMemberships, error)
+	// Mutation
+	AddMembership(ctx context.Context, in *InAddMembership, opts ...grpc.CallOption) (*OutAddMembership, error)
+	RemoveMembership(ctx context.Context, in *InRemoveMembership, opts ...grpc.CallOption) (*OutRemoveMembership, error)
+	RemoveResource(ctx context.Context, in *InRemoveResource, opts ...grpc.CallOption) (*OutRemoveResource, error)
 }
 
 type iAMClient struct {
@@ -40,8 +45,8 @@ func (c *iAMClient) Ping(ctx context.Context, in *Message, opts ...grpc.CallOpti
 	return out, nil
 }
 
-func (c *iAMClient) Can(ctx context.Context, in *CanInput, opts ...grpc.CallOption) (*CanResult, error) {
-	out := new(CanResult)
+func (c *iAMClient) Can(ctx context.Context, in *InCan, opts ...grpc.CallOption) (*OutCan, error) {
+	out := new(OutCan)
 	err := c.cc.Invoke(ctx, "/IAM/Can", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -49,9 +54,36 @@ func (c *iAMClient) Can(ctx context.Context, in *CanInput, opts ...grpc.CallOpti
 	return out, nil
 }
 
-func (c *iAMClient) ListMemberships(ctx context.Context, in *Membership, opts ...grpc.CallOption) (*RoleBindingResp, error) {
-	out := new(RoleBindingResp)
+func (c *iAMClient) ListMemberships(ctx context.Context, in *InListMemberships, opts ...grpc.CallOption) (*OutListMemberships, error) {
+	out := new(OutListMemberships)
 	err := c.cc.Invoke(ctx, "/IAM/ListMemberships", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMClient) AddMembership(ctx context.Context, in *InAddMembership, opts ...grpc.CallOption) (*OutAddMembership, error) {
+	out := new(OutAddMembership)
+	err := c.cc.Invoke(ctx, "/IAM/AddMembership", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMClient) RemoveMembership(ctx context.Context, in *InRemoveMembership, opts ...grpc.CallOption) (*OutRemoveMembership, error) {
+	out := new(OutRemoveMembership)
+	err := c.cc.Invoke(ctx, "/IAM/RemoveMembership", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMClient) RemoveResource(ctx context.Context, in *InRemoveResource, opts ...grpc.CallOption) (*OutRemoveResource, error) {
+	out := new(OutRemoveResource)
+	err := c.cc.Invoke(ctx, "/IAM/RemoveResource", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +94,14 @@ func (c *iAMClient) ListMemberships(ctx context.Context, in *Membership, opts ..
 // All implementations must embed UnimplementedIAMServer
 // for forward compatibility
 type IAMServer interface {
+	// Query
 	Ping(context.Context, *Message) (*Message, error)
-	Can(context.Context, *CanInput) (*CanResult, error)
-	ListMemberships(context.Context, *Membership) (*RoleBindingResp, error)
+	Can(context.Context, *InCan) (*OutCan, error)
+	ListMemberships(context.Context, *InListMemberships) (*OutListMemberships, error)
+	// Mutation
+	AddMembership(context.Context, *InAddMembership) (*OutAddMembership, error)
+	RemoveMembership(context.Context, *InRemoveMembership) (*OutRemoveMembership, error)
+	RemoveResource(context.Context, *InRemoveResource) (*OutRemoveResource, error)
 	mustEmbedUnimplementedIAMServer()
 }
 
@@ -75,11 +112,20 @@ type UnimplementedIAMServer struct {
 func (UnimplementedIAMServer) Ping(context.Context, *Message) (*Message, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedIAMServer) Can(context.Context, *CanInput) (*CanResult, error) {
+func (UnimplementedIAMServer) Can(context.Context, *InCan) (*OutCan, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Can not implemented")
 }
-func (UnimplementedIAMServer) ListMemberships(context.Context, *Membership) (*RoleBindingResp, error) {
+func (UnimplementedIAMServer) ListMemberships(context.Context, *InListMemberships) (*OutListMemberships, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMemberships not implemented")
+}
+func (UnimplementedIAMServer) AddMembership(context.Context, *InAddMembership) (*OutAddMembership, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMembership not implemented")
+}
+func (UnimplementedIAMServer) RemoveMembership(context.Context, *InRemoveMembership) (*OutRemoveMembership, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMembership not implemented")
+}
+func (UnimplementedIAMServer) RemoveResource(context.Context, *InRemoveResource) (*OutRemoveResource, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveResource not implemented")
 }
 func (UnimplementedIAMServer) mustEmbedUnimplementedIAMServer() {}
 
@@ -113,7 +159,7 @@ func _IAM_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{
 }
 
 func _IAM_Can_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CanInput)
+	in := new(InCan)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -125,13 +171,13 @@ func _IAM_Can_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 		FullMethod: "/IAM/Can",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IAMServer).Can(ctx, req.(*CanInput))
+		return srv.(IAMServer).Can(ctx, req.(*InCan))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _IAM_ListMemberships_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Membership)
+	in := new(InListMemberships)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -143,7 +189,61 @@ func _IAM_ListMemberships_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/IAM/ListMemberships",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IAMServer).ListMemberships(ctx, req.(*Membership))
+		return srv.(IAMServer).ListMemberships(ctx, req.(*InListMemberships))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAM_AddMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InAddMembership)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMServer).AddMembership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/IAM/AddMembership",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMServer).AddMembership(ctx, req.(*InAddMembership))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAM_RemoveMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InRemoveMembership)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMServer).RemoveMembership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/IAM/RemoveMembership",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMServer).RemoveMembership(ctx, req.(*InRemoveMembership))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAM_RemoveResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InRemoveResource)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMServer).RemoveResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/IAM/RemoveResource",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMServer).RemoveResource(ctx, req.(*InRemoveResource))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -166,6 +266,18 @@ var IAM_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMemberships",
 			Handler:    _IAM_ListMemberships_Handler,
+		},
+		{
+			MethodName: "AddMembership",
+			Handler:    _IAM_AddMembership_Handler,
+		},
+		{
+			MethodName: "RemoveMembership",
+			Handler:    _IAM_RemoveMembership_Handler,
+		},
+		{
+			MethodName: "RemoveResource",
+			Handler:    _IAM_RemoveResource_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
