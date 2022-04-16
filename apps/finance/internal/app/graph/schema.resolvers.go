@@ -16,6 +16,18 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.Membership, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *membershipResolver) User(ctx context.Context, obj *model.Membership) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *membershipResolver) Account(ctx context.Context, obj *model.Membership) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
@@ -125,7 +137,7 @@ func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model
 	if session == nil {
 		return nil, errors.New("not logged in")
 	}
-	accountEntity, err := r.domain.GetAccount(accountID)
+	accountEntity, err := r.domain.GetAccount(ctx, accountID)
 	return AccountModelFromEntity(accountEntity), err
 }
 
@@ -141,33 +153,27 @@ func (r *queryResolver) StripeSetupIntent(ctx context.Context) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *userResolver) Memberships(ctx context.Context, obj *model.User) ([]*model.Membership, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Account returns generated.AccountResolver implementation.
+func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
+
+// Membership returns generated.MembershipResolver implementation.
+func (r *Resolver) Membership() generated.MembershipResolver { return &membershipResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
+type accountResolver struct{ *Resolver }
+type membershipResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func AccountModelFromEntity(account *domain.Account) *model.Account {
-	return &model.Account{
-		ID:   account.Id,
-		Name: account.Name,
-		Billing: &model.Billing{
-			StripeCustomerID: account.Billing.StripeCustomerId,
-			CardholderName:   account.Billing.CardholderName,
-			Address:          account.Billing.Address,
-		},
-		IsActive:     account.IsActive,
-		ContactEmail: account.ContactEmail,
-		ReadableID:   account.ReadableId,
-		Created:      account.CreatedAt.String(),
-	}
-}
+type userResolver struct{ *Resolver }

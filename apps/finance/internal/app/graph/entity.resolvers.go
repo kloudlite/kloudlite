@@ -13,6 +13,14 @@ import (
 )
 
 func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error) {
+	accountEntity, err := r.domain.GetAccount(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return AccountModelFromEntity(accountEntity), nil
+}
+
+func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

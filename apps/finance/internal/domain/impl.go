@@ -42,13 +42,38 @@ func (domain *domainI) CreateAccount(ctx context.Context, name string, billing *
 }
 
 func (domain *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error) {
-	//TODO implement me
-	panic("implement me")
+	acc, err := domain.accountRepo.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if name != nil {
+		acc.Name = *name
+	}
+	if email != nil {
+		acc.ContactEmail = *email
+	}
+	updated, err := domain.accountRepo.UpdateById(ctx, id, acc)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (domain *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error) {
-	//TODO implement me
-	panic("implement me")
+	acc, err := domain.accountRepo.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	acc.Billing = Billing{
+		StripeSetupIntentId: d.StripeSetupIntentId,
+		CardholderName:      d.CardholderName,
+		Address:             d.Address,
+	}
+	updated, err := domain.accountRepo.UpdateById(ctx, id, acc)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (domain *domainI) InviteAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error) {
@@ -86,9 +111,8 @@ func (domain *domainI) ListAccounts(ctx context.Context, id repos.ID) ([]*Accoun
 	panic("implement me")
 }
 
-func (domain *domainI) GetAccount(id repos.ID) (*Account, error) {
-	//TODO implement me
-	panic("implement me")
+func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {
+	return domain.accountRepo.FindById(ctx, id)
 }
 
 func fxDomain(

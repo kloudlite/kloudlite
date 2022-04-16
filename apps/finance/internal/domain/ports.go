@@ -17,5 +17,5 @@ type Domain interface {
 	ActivateAccount(ctx context.Context, id repos.ID) (bool, error)
 	DeleteAccount(ctx context.Context, id repos.ID) (bool, error)
 	ListAccounts(ctx context.Context, id repos.ID) ([]*Account, error)
-	GetAccount(id repos.ID) (*Account, error)
+	GetAccount(ctx context.Context, id repos.ID) (*Account, error)
 }
