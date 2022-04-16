@@ -11,6 +11,10 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
+func NewBool(b bool) *bool {
+	return &b
+}
+
 func ToBytes(v interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
