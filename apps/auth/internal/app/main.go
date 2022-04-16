@@ -1,6 +1,8 @@
 package app
 
 import (
+	"net/http"
+
 	"go.uber.org/fx"
 	"kloudlite.io/apps/auth/internal/app/graph"
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
@@ -10,7 +12,6 @@ import (
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
-	"net/http"
 )
 
 type Env struct {
@@ -18,7 +19,7 @@ type Env struct {
 }
 
 var Module = fx.Module("app",
-	fx.Provide(config.LoadEnv[*Env]()),
+	fx.Provide(config.LoadEnv[Env]()),
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
 	cache.NewFxRepo[*domain.VerifyToken](),

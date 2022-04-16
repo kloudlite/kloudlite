@@ -3,10 +3,11 @@ package repos
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.uber.org/fx"
 	"regexp"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/fx"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -43,7 +44,11 @@ func (repo dbRepo[T]) FindOne(ctx context.Context, query Query) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, query.Filter)
 	var res T
 	err := one.Decode(&res)
-	return res, err
+	if err != nil {
+		var x T
+		return x, err
+	}
+	return res, nil
 }
 
 func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
@@ -71,20 +76,20 @@ func (repo dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
 	return result, err
 }
 
-func (repo dbRepo[T]) withId(data T) T {
+func (repo dbRepo[T]) withId(data T) {
 	if data.GetId() != "" {
-		return data
+		return
 	}
 	data.SetId(repo.NewId())
-	return data
 }
 
 func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	var result T
-	recordWithId := repo.withId(data)
-	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, recordWithId)
+	repo.withId(data)
+	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, data)
 	if e != nil {
-		return result, e
+		var x T
+		return x, e
 	}
 	r2 := repo.db.Collection(repo.collectionName).FindOne(ctx, Filter{"_id": r.InsertedID})
 	e = r2.Decode(&result)

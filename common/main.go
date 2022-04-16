@@ -2,9 +2,10 @@ package common
 
 import (
 	"fmt"
+	"strings"
+
 	"kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
-	"strings"
 )
 
 type AuthSession struct {

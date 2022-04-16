@@ -2,14 +2,14 @@ package app
 
 import (
 	"context"
+	"kloudlite.io/common"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/agent/internal/domain"
-	"kloudlite.io/pkg/shared"
 )
 
 var projectRes = domain.Message{
-	ResourceType: shared.RESOURCE_PROJECT,
+	ResourceType: common.ResourceProject,
 	Namespace:    "hotspot",
 	Spec: domain.Project{
 		Name:        "sample-xyz",
@@ -19,7 +19,7 @@ var projectRes = domain.Message{
 }
 
 var managedSvcMsg = domain.Message{
-	ResourceType: shared.RESOURCE_MANAGED_SERVICE,
+	ResourceType: common.ResourceManagedService,
 	Namespace:    "hotspot",
 	Spec: domain.ManagedSvc{
 		Name:         "sample-xyz",
@@ -37,7 +37,7 @@ var managedSvcMsg = domain.Message{
 }
 
 var managedApp = domain.Message{
-	ResourceType: shared.RESOURCE_APP,
+	ResourceType: common.ResourceApp,
 	Namespace:    "hotspot",
 	Spec: domain.App{
 		Name:      "sample",
@@ -69,7 +69,7 @@ var managedApp = domain.Message{
 }
 
 var managedRes = domain.Message{
-	ResourceType: shared.RESOURCE_MANAGED_RESOURCE,
+	ResourceType: common.ResourceManagedService,
 	Namespace:    "hotspot",
 	Spec: domain.ManagedRes{
 		Name:       "sample-mres",
@@ -84,7 +84,7 @@ var managedRes = domain.Message{
 }
 
 var configRes = domain.Message{
-	ResourceType: shared.RESOURCE_CONFIG,
+	ResourceType: common.ResourceConfig,
 	Namespace:    "hotspot",
 	Spec: domain.Config{
 		Name:      "hi-config",
@@ -97,7 +97,7 @@ var configRes = domain.Message{
 }
 
 var secretRes = domain.Message{
-	ResourceType: shared.RESOURCE_SECRET,
+	ResourceType: common.ResourceSecret,
 	Namespace:    "hotspot",
 	Spec: domain.Secret{
 		Name:      "hi-config",
@@ -110,7 +110,7 @@ var secretRes = domain.Message{
 }
 
 var routerRes = domain.Message{
-	ResourceType: shared.RESOURCE_ROUTER,
+	ResourceType: common.ResourceRouter,
 	Namespace:    "hotspot",
 	Spec: domain.Router{
 		Name:      "sample-router",
@@ -132,7 +132,7 @@ var routerRes = domain.Message{
 }
 
 var pipelineRes = domain.Message{
-	ResourceType: shared.RESOURCE_GIT_PIPELINE,
+	ResourceType: common.ResourceGitPipeline,
 	Namespace:    "hotspot",
 	Spec: domain.Pipeline{
 		Name:        "sample-p",
