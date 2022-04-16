@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"kloudlite.io/pkg/repos"
 	"time"
+
+	"kloudlite.io/pkg/repos"
 )
 
 type InvitationStatus string
@@ -33,9 +34,9 @@ type User struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string           `json:"name"`
 	Avatar           *string          `json:"avatar"`
-	ProviderGithub   *ProviderDetail  `json:"provider_github",bson:"provider_github"`
+	ProviderGithub   *ProviderDetail  `json:"provider_github" bson:"provider_github"`
 	ProviderGitlab   *ProviderDetail  `json:"provider_gitlab" bson:"provider_gitlab"`
-	ProviderGoogle   *ProviderDetail  `json:"provider_github",bson:"provider_github"`
+	ProviderGoogle   *ProviderDetail  `json:"provider_google" bson:"provider_google"`
 	Email            string           `json:"email"`
 	Password         string           `json:"password"`
 	InvitationStatus InvitationStatus `json:"invite"`

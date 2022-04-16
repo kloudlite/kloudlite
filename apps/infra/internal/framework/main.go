@@ -13,7 +13,7 @@ type Env struct {
 }
 
 var Module = fx.Module("framework",
-	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[*Env]()),
 	fx.Provide(logger.NewLogger),
 	fx.Provide(func(env *Env) messaging.KafkaClient {
 		return messaging.NewKafkaClient(env.KafkaBrokers)
