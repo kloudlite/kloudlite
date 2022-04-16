@@ -29,7 +29,9 @@ func NewMongoClientFx[T MongoConfig]() fx.Option {
 			lifecycle.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
 					err := db.Client().Connect(ctx)
-					fmt.Println("hello connected", err)
+					if err != nil {
+						return errors.NewEf(err, "coult not connect to Mongo")
+					}
 					return db.Client().Ping(ctx, nil)
 				},
 				OnStop: func(ctx context.Context) error {

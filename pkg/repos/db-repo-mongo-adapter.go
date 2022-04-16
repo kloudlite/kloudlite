@@ -20,7 +20,7 @@ type dbRepo[T Entity] struct {
 	options        *MongoRepoOptions
 }
 
-var re = regexp.MustCompile("(\\W|_)+/g")
+var re = regexp.MustCompile(`(\W|_)+/g`)
 
 func (repo dbRepo[T]) NewId() ID {
 	id, e := functions.CleanerNanoid(28)
@@ -160,11 +160,11 @@ func NewMongoRepoAdapter[T Entity](
 	}
 }
 
-func NewFxMongoRepo[T Entity](indexFields []string) fx.Option {
+func NewFxMongoRepo[T Entity](collectionName string, shortName string, indexFields []string) fx.Option {
 	return fx.Module(
 		"repo",
 		fx.Provide(func(db *mongo.Database) DbRepo[T] {
-			return NewMongoRepoAdapter[*Entity](
+			return NewMongoRepoAdapter[T](
 				db,
 				"devices",
 				"dev",

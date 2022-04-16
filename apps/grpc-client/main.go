@@ -9,12 +9,21 @@ import (
 )
 
 func main() {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("localhost:3000", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(err)
 	}
 	defer conn.Close()
-	client := iam.NewIAMServiceClient(conn)
+	client := iam.NewIAMClient(conn)
+
+	client.AddMembership(context.TODO(), &iam.InAddMembership{
+		UserId:       "sample kumar",
+		ResourceType: "",
+		ResourceId:   "",
+		Role:         "",
+		Filter:       "",
+	})
+
 	ping, err := client.Ping(context.Background(), &iam.Message{
 		Message: "Hello",
 	})

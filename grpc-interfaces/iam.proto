@@ -3,9 +3,15 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/iam";
 
 service IAM {
+  // Query
   rpc Ping(Message) returns (Message);
-  rpc Can(CanInput) returns (CanResult);
-  rpc ListMemberships(Membership) returns (RoleBindingResp);
+  rpc Can(InCan) returns (OutCan);
+  rpc ListMemberships(InListMemberships) returns (OutListMemberships);
+
+  // Mutation 
+  rpc AddMembership(InAddMembership) returns (OutAddMembership);
+  rpc RemoveMembership(InRemoveMembership) returns (OutRemoveMembership);
+  rpc RemoveResource(InRemoveResource) returns (OutRemoveResource);
 }
 
 message RoleBinding {
@@ -14,25 +20,53 @@ message RoleBinding {
   string role = 3;
 }
 
-message RoleBindingResp {
-  repeated RoleBinding roleBindings = 1;
+message InAddMembership {
+  string userId = 1;
+  string resourceType = 2;
+  string resourceId = 3;
+  string role = 4;
+  string filter = 5;
 }
 
+message OutAddMembership {
+  bool result = 1;
+}
+
+message InRemoveMembership {
+  string userId = 1;
+  string resourceId = 2;
+}
+
+message OutRemoveMembership {
+  bool result = 1;
+}
+
+message InRemoveResource {
+  string resourceId = 1;
+}
+
+message OutRemoveResource {
+  bool result = 1;
+}
+
+message OutListMemberships {
+  repeated RoleBinding roleBindings = 1;
+}
 
 message Message {
   string message = 1;
 }
 
-message CanInput {
+message InCan {
   string userId = 1;
   repeated string resourceIds = 2;
   string action = 3;
 }
 
-message CanResult {
+message OutCan {
   bool status = 1;
 }
 
-message Membership {
+message InListMemberships {
   string userId = 1;
 }
