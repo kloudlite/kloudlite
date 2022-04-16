@@ -7,6 +7,7 @@ import (
 type Entity interface {
 	GetId() ID
 	SetId(id ID)
+	IsZero() bool
 }
 
 type Opts map[string]interface{}

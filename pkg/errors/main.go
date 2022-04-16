@@ -1,6 +1,8 @@
 package errors
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/yext/yerrors"
 )
@@ -35,7 +37,7 @@ func Wrap(e error, msg string) error {
 }
 
 func NewEf(err error, msg string, a ...interface{}) error {
-	return yerrors.Errorf("%s as %+v", msg, err)
+	return yerrors.Errorf("%s as %+v", fmt.Sprintf(msg, a...), err)
 }
 
 func Newf(msg string, a ...interface{}) error {
