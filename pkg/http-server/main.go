@@ -41,10 +41,9 @@ func SetupGQLServer(
 	es graphql.ExecutableSchema,
 	middlewares ...func(http.ResponseWriter, *http.Request) *http.Request,
 ) {
-	mux.HandleFunc("/play", playground.Handler("Graphql playground", "/"))
+	mux.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
 	gqlServer := gqlHandler.NewDefaultServer(es)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Printf("Headers: %+v", req.Cookies())
 		_req := req
 		for _, middleware := range middlewares {
 			_req = middleware(w, req)

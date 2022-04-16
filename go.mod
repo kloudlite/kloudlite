@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/99designs/gqlgen v0.17.2
-	github.com/Azure/go-autorest/autorest/date v0.3.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/confluentinc/confluent-kafka-go v1.8.2
@@ -29,7 +28,6 @@ require (
 )
 
 require (
-	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/agnivade/levenshtein v1.1.0 // indirect

@@ -8,7 +8,6 @@ func (c *BaseEntity) GetId() ID {
 	return c.Id
 }
 
-func (c *BaseEntity) SetId(id ID) Entity {
+func (c *BaseEntity) SetId(id ID) {
 	c.Id = id
-	return c
 }

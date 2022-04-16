@@ -3,8 +3,10 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"kloudlite.io/pkg/errors"
 	"time"
+
+	"go.uber.org/fx"
+	"kloudlite.io/pkg/errors"
 )
 
 type redisRepo[T any] struct {
@@ -19,14 +21,15 @@ func (r *redisRepo[T]) Set(c context.Context, key string, value T) error {
 	return r.cli.Set(c, key, b)
 }
 
-func (r *redisRepo[T]) Get(c context.Context, key string) (*T, error) {
+func (r *redisRepo[T]) Get(c context.Context, key string) (T, error) {
 	get, err := r.cli.Get(c, key)
 	if err != nil {
-		return nil, err
+		var x T
+		return x, err
 	}
 	var value T
 	err = json.Unmarshal(get, &value)
-	return &value, err
+	return value, err
 }
 
 func (r *redisRepo[T]) SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error {
@@ -49,4 +52,13 @@ func NewRepo[T any](cli Client) Repo[T] {
 	return &redisRepo[T]{
 		cli,
 	}
+}
+
+func NewFxRepo[T any]() fx.Option {
+	return fx.Module(
+		"cache",
+		fx.Provide(func(cli Client) Repo[T] {
+			return NewRepo[T](cli)
+		}),
+	)
 }
