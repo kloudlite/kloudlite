@@ -11,11 +11,11 @@ type Env struct {
 	DBUrl  string `env:"DB_URL"`
 }
 
-func (e Env) GetMongoConfig() (url string, dbName string) {
+func (e *Env) GetMongoConfig() (url string, dbName string) {
 	return e.DBUrl, e.DBName
 }
 
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
-	fx.Provide(repos.NewMongoClientFx[Env]()),
+	repos.NewMongoClientFx[*Env](),
 )
