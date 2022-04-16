@@ -6,13 +6,16 @@ import (
 	"github.com/codingconcepts/env"
 )
 
+type Samole struct {
+}
+
 func LoadEnv[T any]() func() (*T, error) {
 	return func() (*T, error) {
-		var envC T
-		err := env.Set(&envC)
+		var x T
+		err := env.Set(&x)
 		if err != nil {
 			return nil, fmt.Errorf("not able to load ENV: %v", err)
 		}
-		return &envC, err
+		return &x, err
 	}
 }

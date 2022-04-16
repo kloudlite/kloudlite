@@ -28,7 +28,7 @@ func (env *Env) GetMongoConfig() (url, dbName string) {
 }
 
 var Module = fx.Module("framework",
-	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[*Env]()),
 	fx.Provide(grpc.NewServer),
 
 	repos.NewMongoClientFx[*Env](),
