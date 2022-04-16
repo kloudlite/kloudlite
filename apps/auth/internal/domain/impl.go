@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"kloudlite.io/pkg/messaging"
 	"strings"
 	"time"
 
@@ -76,22 +77,6 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 func (d *domainI) InviteUser(ctx context.Context, email string, name string) (repos.ID, error) {
 	//TODO implement me
 	panic("implement me")
-}
-
-func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *User) error {
-	verificationToken := generateId("invite")
-	err := d.verifyTokenRepo.Set(ctx, verificationToken, &VerifyToken{
-		Token:  verificationToken,
-		UserId: string(user.Id),
-	})
-	if err != nil {
-		return err
-	}
-	err = d.messenger.SendVerificationEmail(ctx, verificationToken, user)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (d *domainI) SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error) {
@@ -222,7 +207,7 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 	if err != nil {
 		return false, err
 	}
-	err = d.messenger.SendResetPasswordEmail(ctx, resetToken, one)
+	err = d.sendResetPasswordEmail(ctx, resetToken, one)
 	if err != nil {
 		return false, err
 	}
@@ -287,6 +272,38 @@ func (d *domainI) ChangePassword(ctx context.Context, id repos.ID, currentPasswo
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user *User) error {
+	return d.messenger.SendEmail(ctx, "reset-password", messaging.Json{
+		"token":    token,
+		"userName": user.Name,
+		"userId":   user.Id,
+	})
+}
+
+func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user *User) error {
+	return d.messenger.SendEmail(ctx, "verify-email", messaging.Json{
+		"token":    token,
+		"userName": user.Name,
+		"userId":   user.Id,
+	})
+}
+
+func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *User) error {
+	verificationToken := generateId("invite")
+	err := d.verifyTokenRepo.Set(ctx, verificationToken, &VerifyToken{
+		Token:  verificationToken,
+		UserId: string(user.Id),
+	})
+	if err != nil {
+		return err
+	}
+	err = d.sendVerificationEmail(ctx, verificationToken, user)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func fxDomain(

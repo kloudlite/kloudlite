@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"kloudlite.io/common"
+	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -27,7 +28,5 @@ type Domain interface {
 }
 
 type Messenger interface {
-	SendVerificationEmail(ctx context.Context, verificationToken string, user *User) error
-	SendWelcomeEmail(ctx context.Context, invitationId string, user *User) error
-	SendResetPasswordEmail(ctx context.Context, resetToken string, user *User) error
+	SendEmail(ctx context.Context, template string, payload messaging.Json) error
 }
