@@ -39,6 +39,13 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	return results, err
 }
 
+func (repo dbRepo[T]) FindOne(ctx context.Context, query Query) (T, error) {
+	one := repo.db.Collection(repo.collectionName).FindOne(ctx, query.Filter)
+	var res T
+	err := one.Decode(&res)
+	return res, err
+}
+
 func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
 	results := make([]T, 0)
 	var offset int64 = (page - 1) * size
@@ -138,7 +145,7 @@ type MongoRepoOptions struct {
 	IndexFields []string
 }
 
-func NewMongoRepoAdapter[T Entity](
+func NewMongoRepo[T Entity](
 	db *mongo.Database,
 	collectionName string,
 	shortName string,
@@ -160,14 +167,14 @@ func NewMongoRepoAdapter[T Entity](
 	}
 }
 
-func NewFxMongoRepo[T Entity](collectionName string, shortName string, indexFields []string) fx.Option {
+func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []string) fx.Option {
 	return fx.Module(
 		"repo",
 		fx.Provide(func(db *mongo.Database) DbRepo[T] {
-			return NewMongoRepoAdapter[T](
+			return NewMongoRepo[T](
 				db,
-				"devices",
-				"dev",
+				collectionName,
+				shortName,
 				MongoRepoOptions{
 					IndexFields: indexFields,
 				},
