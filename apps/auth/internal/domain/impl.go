@@ -200,10 +200,10 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 	if err != nil {
 		return false, err
 	}
-	err = d.resetTokenRepo.Set(ctx, resetToken, &ResetPasswordToken{
+	err = d.resetTokenRepo.SetWithExpiry(ctx, resetToken, &ResetPasswordToken{
 		Token:  resetToken,
 		UserId: string(one.Id),
-	})
+	}, time.Second*24*60*60)
 	if err != nil {
 		return false, err
 	}
@@ -292,10 +292,10 @@ func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user 
 
 func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *User) error {
 	verificationToken := generateId("invite")
-	err := d.verifyTokenRepo.Set(ctx, verificationToken, &VerifyToken{
+	err := d.verifyTokenRepo.SetWithExpiry(ctx, verificationToken, &VerifyToken{
 		Token:  verificationToken,
 		UserId: string(user.Id),
-	})
+	}, time.Second*24*60*60)
 	if err != nil {
 		return err
 	}
