@@ -14,7 +14,16 @@ var RoleBindingIndexes = []string{"id", "user_id", "resource_id", "role"}
 
 var RoleBindingIndices = []repos.IndexField{
 	{
-		Field: []repos.IndexKey{},
-		Unique: false,
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "user_id", Value: repos.IndexDesc},
+			{Key: "resource_id", Value: repos.IndexDesc},
+		},
+		Unique: true,
 	},
 }

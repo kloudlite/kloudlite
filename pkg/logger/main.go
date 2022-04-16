@@ -18,6 +18,7 @@ func NewLogger() Logger {
 		if err != nil {
 			panic(err)
 		}
+		logger.Sugar().With()
 		return Logger{SugaredLogger: logger.Sugar()}
 	}
 	logger, err := zap.NewProduction()
