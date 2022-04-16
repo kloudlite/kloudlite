@@ -28,13 +28,14 @@ type Env struct {
 	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC"`
 	KafkaInfraResponseTopic string `env:"KAFKA_INFRA_RESP_TOPIC"`
 	KafkaConsumerGroupId    string `env:"KAFKA_GROUP_ID"`
+	CookieDomain            string `env:"COOKIE_DOMAIN"`
 }
 
 var Module = fx.Module(
 	"app",
-	fx.Provide(config.LoadEnv[Env]()),
-	repos.NewFxMongoRepo[entities.Cluster](entities.ClusterIndexes),
-	repos.NewFxMongoRepo[entities.Device](entities.DeviceIndexes),
+	fx.Provide(config.LoadEnv[*Env]()),
+	repos.NewFxMongoRepo[entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
+	repos.NewFxMongoRepo[entities.Device]("devices", "dev", entities.DeviceIndexes),
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 			return messaging.NewKafkaProducer[messaging.Json](messagingCli)
@@ -99,6 +100,7 @@ var Module = fx.Module(
 		server *http.ServeMux,
 		d domain.Domain,
 		cacheClient cache.Client,
+		env *Env,
 	) {
 		schema := generated.NewExecutableSchema(
 			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
@@ -109,6 +111,7 @@ var Module = fx.Module(
 			cache.NewSessionRepo[*common.AuthSession](
 				cacheClient,
 				"hotspot-session",
+				env.CookieDomain,
 				"hotspot:auth:sessions",
 			),
 		)

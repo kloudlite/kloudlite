@@ -321,6 +321,6 @@ func fxDomain(
 
 var Module = fx.Module(
 	"domain",
-	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[*Env]()),
 	fx.Provide(fxDomain),
 )
