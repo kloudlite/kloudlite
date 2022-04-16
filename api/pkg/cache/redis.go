@@ -62,11 +62,12 @@ func (c *RedisClient) Set(ctx context.Context, key string, value []byte) error {
 }
 
 func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
-	result, err := c.client.Get(ctx, key).Result()
+	status := c.client.Get(ctx, key)
+	err := status.Err()
 	if err != nil {
-		return nil, errors.NewEf(err, "could not get key (%s)", key)
+		return nil, err
 	}
-	return []byte(result), nil
+	return []byte(status.Val()), nil
 }
 
 func NewRedisClient(hosts, username, password string) Client {

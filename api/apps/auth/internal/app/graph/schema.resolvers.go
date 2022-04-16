@@ -5,10 +5,12 @@ package graph
 
 import (
 	"context"
-	"kloudlite.io/pkg/cache"
+	"errors"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -17,39 +19,50 @@ func (r *mutationResolver) Login(ctx context.Context, email string, password str
 	if err != nil {
 		return nil, err
 	}
-	cache.SetSession(ctx, *sessionEntity)
+	cache.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
-}
-
-func (r *mutationResolver) InviteSignup(ctx context.Context, email string, name string) (repos.ID, error) {
-	return r.d.InviteUser(ctx, email, name)
 }
 
 func (r *mutationResolver) Signup(ctx context.Context, name string, email string, password string) (*model.Session, error) {
 	sessionEntity, err := r.d.SignUp(ctx, name, email, password)
-	return sessionModelFromAuthSession(sessionEntity), err
+	if err != nil {
+		return nil, err
+	}
+	cache.SetSession(ctx, sessionEntity)
+	session := sessionModelFromAuthSession(sessionEntity)
+	return session, err
 }
 
 func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	return r.d.Logout(ctx, userId)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return true, nil
+	}
+	cache.DeleteSession(ctx)
+	return true, nil
 }
 
 func (r *mutationResolver) SetMetadata(ctx context.Context, values map[string]interface{}) (*model.User, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	userEntity, err := r.d.SetUserMetadata(ctx, userId, values)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	userEntity, err := r.d.SetUserMetadata(ctx, repos.ID(session.UserId), values)
 	return userModelFromEntity(userEntity), err
 }
 
 func (r *mutationResolver) ClearMetadata(ctx context.Context) (*model.User, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	userEntity, err := r.d.ClearUserMetadata(ctx, userId)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	userEntity, err := r.d.ClearUserMetadata(ctx, repos.ID(session.UserId))
 	return userModelFromEntity(userEntity), err
 }
 
 func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (*model.Session, error) {
 	sessionEntity, err := r.d.VerifyEmail(ctx, token)
-	cache.SetSession(ctx, *sessionEntity)
+	cache.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
@@ -62,43 +75,64 @@ func (r *mutationResolver) RequestResetPassword(ctx context.Context, email strin
 }
 
 func (r *mutationResolver) LoginWithInviteToken(ctx context.Context, inviteToken string) (*model.Session, error) {
+	// TODO
 	sessionE, err := r.d.LoginWithInviteToken(ctx, inviteToken)
 	return sessionModelFromAuthSession(sessionE), err
 }
 
+func (r *mutationResolver) InviteSignup(ctx context.Context, email string, name string) (repos.ID, error) {
+	// TODO
+	return r.d.InviteUser(ctx, email, name)
+}
+
 func (r *mutationResolver) ChangeEmail(ctx context.Context, email string) (bool, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	return r.d.ChangeEmail(ctx, userId, email)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user is not logged in")
+	}
+	return r.d.ChangeEmail(ctx, repos.ID(session.UserId), email)
 }
 
-func (r *mutationResolver) ResendVerificationEmail(ctx context.Context, email string) (bool, error) {
-	return r.d.ResendVerificationEmail(ctx, email)
-}
-
-func (r *mutationResolver) VerifyChangeEmail(ctx context.Context, token string) (bool, error) {
-	return r.d.VerifyChangeEmail(ctx, token)
+func (r *mutationResolver) ResendVerificationEmail(ctx context.Context) (bool, error) {
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user is not logged in")
+	}
+	return r.d.ResendVerificationEmail(ctx, repos.ID(session.UserId))
 }
 
 func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	return r.d.ChangePassword(ctx, userId, currentPassword, newPassword)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user is not logged in")
+	}
+	return r.d.ChangePassword(ctx, repos.ID(session.UserId), currentPassword, newPassword)
 }
 
 func (r *mutationResolver) OauthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
 	sessionEntity, err := r.d.OauthLogin(ctx, provider, state, code)
-	cache.SetSession(ctx, *sessionEntity)
+	cache.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
 func (r *mutationResolver) OauthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	return r.d.OauthAddLogin(ctx, userId, provider, state, code)
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user is not logged in")
+	}
+	return r.d.OauthAddLogin(ctx, repos.ID(session.UserId), provider, state, code)
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	userId := ctx.Value("user_id").(repos.ID)
-	userEntity, err := r.d.GetUserById(ctx, userId)
-	return userModelFromEntity(userEntity), err
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	u, err := r.d.GetUserById(ctx, repos.ID(session.UserId))
+	if err != nil {
+		return nil, err
+	}
+	return userModelFromEntity(u), err
 }
 
 func (r *queryResolver) FindByEmail(ctx context.Context, email string) (*model.User, error) {

@@ -4,26 +4,25 @@ scalar ProviderDetail
 scalar URL
 
 type Query {
-  me: User
-  findByEmail(email: String!): User
+  me: User # Done
+  findByEmail(email: String!): User # Done
   requestLogin(provider: String!, state: String): URL!
 }
 
 type Mutation {
-  login(email: String!, password: String!): Session
-  inviteSignup(email: String!, name: String!): ID!
-  signup(name: String!, email: String!, password: String!): Session
-  logout: Boolean!
-  setMetadata(values: Json!): User!
-  clearMetadata: User!
-  verifyEmail(token: String!): Session!
-  resetPassword(token: String!, password: String!): Boolean!
-  requestResetPassword(email: String!): Boolean!
+  login(email: String!, password: String!): Session # Done
+  signup(name: String!, email: String!, password: String!): Session # Done
+  logout: Boolean! # Done
+  setMetadata(values: Json!): User! # Done
+  clearMetadata: User! #Done
+  verifyEmail(token: String!): Session! #Done
+  resetPassword(token: String!, password: String!): Boolean! #Done
+  requestResetPassword(email: String!): Boolean! #Done
   loginWithInviteToken(inviteToken: String!): Session
-  changeEmail(email: String!): Boolean!
-  resendVerificationEmail(email: String!): Boolean!
-  verifyChangeEmail(token: String!): Boolean!
-  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+  inviteSignup(email: String!, name: String!): ID!
+  changeEmail(email: String!): Boolean! #Done
+  resendVerificationEmail: Boolean! #Done
+  changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
 
   oauth_login(provider: String!, state: String!, code: String!): Session!
   oauth_addLogin(provider: String!, state: String!, code: String!): Boolean!
@@ -44,7 +43,7 @@ type User @key(fields: "id") {
   avatar: String
   invite: String!
   verified: Boolean!
-  metadata: Json!
+  metadata: Json
   joined: Date!
   providerGitlab: ProviderDetail
   providerGithub: ProviderDetail

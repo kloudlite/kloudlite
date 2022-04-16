@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"github.com/Azure/go-autorest/autorest/date"
 	"kloudlite.io/pkg/repos"
+	"time"
 )
 
 type InvitationStatus string
@@ -41,7 +41,8 @@ type User struct {
 	InvitationStatus InvitationStatus `json:"invite"`
 	Verified         bool             `json:"verified"`
 	Metadata         UserMetadata     `json:"metadata"`
-	Joined           date.Date        `json:"joined"`
+	Joined           time.Time        `json:"joined"`
+	PasswordSalt     string           `json:"password_salt"`
 }
 
 var UserIndexes = []string{"email", "id"}
@@ -56,3 +57,23 @@ type AccessToken struct {
 }
 
 var AccessTokenIndexes = []string{"user_id", "id"}
+
+type InviteToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}
+
+type VerifyToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}
+
+type ResetPasswordToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}
+
+type ChangeEmailToken struct {
+	Token  string `json:"token"`
+	UserId string `json:"user_id"`
+}
