@@ -15,7 +15,7 @@ type Domain interface {
 	) (*Account, error)
 	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
 	UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error)
-	InviteAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error)
+	AddAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error)
 	RemoveAccountMember(ctx context.Context, id repos.ID, id2 repos.ID) (bool, error)
 	UpdateAccountMember(ctx context.Context, id repos.ID, id2 repos.ID, role string) (bool, error)
 	DeactivateAccount(ctx context.Context, id repos.ID) (bool, error)
@@ -23,4 +23,5 @@ type Domain interface {
 	DeleteAccount(ctx context.Context, id repos.ID) (bool, error)
 	ListAccounts(ctx context.Context, id repos.ID) ([]*Account, error)
 	GetAccount(ctx context.Context, id repos.ID) (*Account, error)
+	GetAccountMemberShips(ctx context.Context, id repos.ID) ([]*Account, error)
 }
