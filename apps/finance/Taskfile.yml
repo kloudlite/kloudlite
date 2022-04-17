@@ -6,8 +6,13 @@ tasks:
       DB_NAME: hotspot-finance
       DB_URL: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
       COOKIE_DOMAIN: localhost
+      REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
+      HTTP_PORT: 4002
+      ORIGINS: http://localhost:4001,https://studio.apollographql.com
+      # REDIS_USERNAME: 
+      # REDIS_PASSWORD: 
     cmds:
-      - nodemon -w **/* -e "go" --signal SIGKILL -q --exec 'echo && go run main.go || echo'
+      - nodemon -w "**/*" -e "go" --signal SIGKILL -q --exec 'echo && go run main.go || echo'
   gql:
     sources:
       - graph/schema.graphqls

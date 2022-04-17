@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"kloudlite.io/pkg/repos"
 	"time"
+
+	"kloudlite.io/pkg/repos"
 )
 
 type Billing struct {
@@ -18,6 +19,15 @@ type Account struct {
 	ContactEmail     string    `bson:"contact_email" json:"contact_email,omitempty"`
 	Billing          Billing   `json:"billing" bson:"billing"`
 	IsActive         bool      `json:"is_active,omitempty" bson:"is_active"`
-	CreatedAt        time.Time `json:"created_at", bson:"created_at"`
+	CreatedAt        time.Time `json:"created_at" bson:"created_at"`
 	ReadableId       repos.ID  `json:"readable_id" bson:"readable_id"`
+}
+
+var AccountIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }
