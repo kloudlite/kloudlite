@@ -18,7 +18,7 @@ type Mutation {
         accountId: ID!
         billing: BillingInput!
     ): Account!
-    inviteAccountMember(
+    addAccountMember(
         accountId: String!
         email: String!
         name: String!

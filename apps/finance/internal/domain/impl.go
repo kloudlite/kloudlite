@@ -90,7 +90,7 @@ func (domain *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, d 
 	return updated, nil
 }
 
-func (domain *domainI) InviteAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error) {
+func (domain *domainI) AddAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }
