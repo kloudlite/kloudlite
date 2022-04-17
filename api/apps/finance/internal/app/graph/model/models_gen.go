@@ -38,12 +38,14 @@ type BillingInput struct {
 }
 
 type Membership struct {
-	User *User  `json:"user"`
-	Role string `json:"role"`
+	User    *User    `json:"user"`
+	Role    string   `json:"role"`
+	Account *Account `json:"account"`
 }
 
 type User struct {
-	ID repos.ID `json:"id"`
+	ID          repos.ID      `json:"id"`
+	Memberships []*Membership `json:"memberships"`
 }
 
 func (User) IsEntity() {}

@@ -1,4 +1,4 @@
-package application
+package iam
 
 type AccountAction struct {
 }
