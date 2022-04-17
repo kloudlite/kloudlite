@@ -17,15 +17,27 @@ import (
 )
 
 func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.Membership, error) {
-	panic(fmt.Errorf("not implemented"))
+	memberShipEntities, err := r.domain.GetAccountMemberShips(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	memberships := make([]*model.Membership, 0)
+	for _, mse := range memberShipEntities {
+		memberships = append(memberships, AccountModelFromEntity(mse))
+	}
+	return err, nil
 }
 
 func (r *membershipResolver) User(ctx context.Context, obj *model.Membership) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return obj.User, nil
 }
 
 func (r *membershipResolver) Account(ctx context.Context, obj *model.Membership) (*model.Account, error) {
-	panic(fmt.Errorf("not implemented"))
+	accountEntity, err := r.domain.GetAccount(ctx, obj.Account.ID)
+	if err != nil {
+		return nil, err
+	}
+	return AccountModelFromEntity(accountEntity), nil
 }
 
 func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
@@ -33,7 +45,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billi
 	if session == nil {
 		return nil, errors.New("not logged in")
 	}
-	account, err := r.domain.CreateAccount(ctx, name, billing)
+	account, err := r.domain.CreateAccount(ctx, repos.ID(session.UserId), name, billing)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +80,12 @@ func (r *mutationResolver) UpdateAccountBilling(ctx context.Context, accountID r
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) InviteAccountMember(ctx context.Context, accountID string, email string, name string, role string) (bool, error) {
+func (r *mutationResolver) AddAccountMember(ctx context.Context, accountID string, email string, name string, role string) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
 	}
-	return r.domain.InviteAccountMember(ctx, accountID, email, name, role)
+	return r.domain.AddAccountMember(ctx, accountID, email, name, role)
 }
 
 func (r *mutationResolver) RemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
@@ -177,3 +189,10 @@ type membershipResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
