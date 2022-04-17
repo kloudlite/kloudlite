@@ -1,6 +1,11 @@
 package app
 
 import (
+	"google.golang.org/grpc"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/pkg/repos"
+	"net/http"
+
 	"go.uber.org/fx"
 	"kloudlite.io/apps/finance/internal/app/graph"
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
@@ -9,7 +14,6 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
-	"net/http"
 )
 
 type Env struct {
@@ -18,7 +22,11 @@ type Env struct {
 
 var Module = fx.Module(
 	"application",
-	fx.Provide(config.LoadEnv[*Env]()),
+	fx.Provide(config.LoadEnv[Env]()),
+	repos.NewFxMongoRepo[*domain.Account]("accounts", "acc", domain.AccountIndexes),
+	fx.Provide(func(conn *grpc.ClientConn) iam.IAMClient {
+		return iam.NewIAMClient(conn)
+	}),
 	fx.Invoke(func(
 		server *http.ServeMux,
 		d domain.Domain,
@@ -39,4 +47,5 @@ var Module = fx.Module(
 			),
 		)
 	}),
+	domain.Module,
 )

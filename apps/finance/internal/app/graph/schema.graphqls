@@ -13,21 +13,17 @@ type Mutation {
         name: String!
         billing: BillingInput
     ): Account!
-
     updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
-
     updateAccountBilling(
         accountId: ID!
         billing: BillingInput!
     ): Account!
-
     inviteAccountMember(
         accountId: String!
         email: String!
         name: String!
         role: String!
     ): Boolean!
-
     removeAccountMember(accountId: ID!, userId: ID!): Boolean!
     updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
     deactivateAccount(accountId: ID!): Boolean!
@@ -56,11 +52,13 @@ type Account @key(fields: "id") {
 
 extend type User @key(fields: "id") {
     id: ID! @external
+    memberships:[Membership!]!
 }
 
 type Membership {
     user: User!
     role: String!
+    account: Account!
 }
 
 type Billing {
