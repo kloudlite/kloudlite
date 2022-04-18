@@ -17,7 +17,13 @@ import (
 )
 
 func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented"))
+	me,err:=r.domain.GetAccountMemberShips(ctx, obj.ID)
+
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(me)
+	return , nil
 }
 
 func (r *accountMembershipResolver) User(ctx context.Context, obj *model.AccountMembership) (*model.User, error) {
@@ -25,7 +31,13 @@ func (r *accountMembershipResolver) User(ctx context.Context, obj *model.Account
 }
 
 func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error) {
-	panic(fmt.Errorf("not implemented"))
+	ae, err := r.domain.GetAccount(ctx, obj.Account.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return AccountModelFromEntity(ae), nil
 }
 
 func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
@@ -74,6 +86,7 @@ func (r *mutationResolver) AddAccountMember(ctx context.Context, accountID strin
 	if session == nil {
 		return false, errors.New("not logged in")
 	}
+
 	return r.domain.AddAccountMember(ctx, accountID, email, name, role)
 }
 
@@ -129,8 +142,22 @@ func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
 	entities, err := r.domain.GetAccountMemberShips(ctx, obj.ID)
 	fmt.Println(entities, err, "entities")
+	accountMemeberships := make([]*model.AccountMembership, len(entities))
 
-	panic(fmt.Errorf("not implemented"))
+	for i, entity := range entities {
+		accountMemeberships[i] = &model.AccountMembership{
+			Account: &model.Account{
+				ID: entity.AccountId,
+			},
+			User: &model.User{
+				ID: entity.UserId,
+			},
+			Role: string(entity.Role),
+		}
+	}
+
+	return accountMemeberships, err
+	// panic(fmt.Errorf("not implemented 1"))
 }
 
 // Account returns generated.AccountResolver implementation.
