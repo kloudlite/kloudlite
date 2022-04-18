@@ -147,19 +147,22 @@ func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model
 }
 
 func (r *queryResolver) AccountsMembership(ctx context.Context) ([]*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented"))
+	panic(fmt.Errorf("not implemented1"))
 }
 
 func (r *queryResolver) AccountMembership(ctx context.Context, accountID repos.ID) (*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented"))
+	panic(fmt.Errorf("not implemented2"))
 }
 
 func (r *queryResolver) StripeSetupIntent(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	panic(fmt.Errorf("not implemented3"))
 }
 
 func (r *userResolver) Memberships(ctx context.Context, obj *model.User) ([]*model.Membership, error) {
-	panic(fmt.Errorf("not implemented"))
+	fmt.Println("memberships running")
+	r.domain.ListAccounts(ctx, repos.ID(obj.ID))
+
+	panic(fmt.Errorf("not implemented4"))
 }
 
 // Account returns generated.AccountResolver implementation.

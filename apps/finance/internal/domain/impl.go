@@ -49,6 +49,11 @@ func (domain *domainI) CreateAccount(
 		CreatedAt:  time.Time{},
 		ReadableId: repos.ID(generateReadable(name)),
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
 		ResourceType: common.ResourceAccount,
@@ -127,8 +132,24 @@ func (domain *domainI) DeleteAccount(ctx context.Context, id repos.ID) (bool, er
 }
 
 func (domain *domainI) ListAccounts(ctx context.Context, id repos.ID) ([]*Account, error) {
+	fmt.Println("listing accounts", id)
+
+	outListMemberships, err := domain.iamCli.ListMemberships(ctx, &iam.InListMemberships{
+		UserId: string(id),
+	})
+
+	fmt.Println("listing accounts", id, outListMemberships, err)
+
+
+	fmt.Println(outListMemberships.RoleBindings, err)
+	if err != nil {
+		return nil, err
+	}
+
+	// fmt.Println(outListMemberships.RoleBindings)
+
 	//TODO implement me
-	panic("implement me")
+	panic("implement me 1")
 }
 
 func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {

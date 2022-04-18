@@ -3,11 +3,11 @@ version: 3
 tasks:
   run:
     env:
-      DB_NAME: hotspot-finance
-      DB_URL: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
+      MONGO_DB_NAME: finance
+      MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
       COOKIE_DOMAIN: localhost
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
-      HTTP_PORT: 4002
+      PORT: 4002
       # ORIGINS: http://localhost:4002,https://studio.apollographql.com
       # ORIGINS: http://localhost:4002,https://studio.apollographql.com
       IAM_SERVER_HOST: iam.hotspot.svc.cluster.local
@@ -23,3 +23,13 @@ tasks:
     dir: internal/app
     cmds:
       - go run github.com/99designs/gqlgen generate
+
+  docker-build:
+    dir: ../..
+    vars:
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/finance:v2
+      APP_DIR: ./apps/finance
+    cmds:
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker push {{.IMAGE}}
+

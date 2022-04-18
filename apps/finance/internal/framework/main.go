@@ -13,12 +13,12 @@ import (
 )
 
 type Env struct {
-	DBName        string `env:"DB_NAME"`
-	DBUrl         string `env:"DB_URL"`
+	DBName        string `env:"MONGO_DB_NAME"`
+	DBUrl         string `env:"MONGO_URI"`
 	RedisHosts    string `env:"REDIS_HOSTS"`
 	RedisUsername string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
-	HttpPort      uint16 `env:"HTTP_PORT"`
+	HttpPort      uint16 `env:"PORT"`
 	HttpCors      string `env:"ORIGINS"`
 	IAMServerHost string `env:"IAM_SERVER_HOST"`
 	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
@@ -41,7 +41,7 @@ func (e *Env) GetHttpCors() string {
 }
 
 func (e *Env) GetGCPServerURL() string {
-	return fmt.Sprintf("tcp://%v:%v", e.IAMServerHost, e.IAMServerPort)
+	return fmt.Sprintf("%v:%v", e.IAMServerHost, e.IAMServerPort)
 }
 
 var Module = fx.Module("framework",
