@@ -20,6 +20,7 @@ type Account struct {
 	ContactEmail     string    `bson:"contact_email" json:"contact_email,omitempty"`
 	Billing          Billing   `json:"billing" bson:"billing"`
 	IsActive         bool      `json:"is_active,omitempty" bson:"is_active"`
+	IsDeleted        bool      `json:"is_deleted,omitempty" bson:"is_deleted"`
 	CreatedAt        time.Time `json:"created_at" bson:"created_at"`
 	ReadableId       repos.ID  `json:"readable_id" bson:"readable_id"`
 }
@@ -27,7 +28,7 @@ type Account struct {
 type Membership struct {
 	AccountId repos.ID
 	UserId    repos.ID
-	Role			common.Role
+	Role      common.Role
 }
 
 var AccountIndexes = []repos.IndexField{
