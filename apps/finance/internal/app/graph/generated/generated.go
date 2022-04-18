@@ -39,9 +39,11 @@ type Config struct {
 
 type ResolverRoot interface {
 	Account() AccountResolver
+	AccountMembership() AccountMembershipResolver
 	Entity() EntityResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -107,6 +109,11 @@ type ComplexityRoot struct {
 type AccountResolver interface {
 	Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error)
 }
+type AccountMembershipResolver interface {
+	User(ctx context.Context, obj *model.AccountMembership) (*model.User, error)
+
+	Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error)
+}
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
@@ -124,6 +131,9 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Account(ctx context.Context, accountID repos.ID) (*model.Account, error)
+}
+type UserResolver interface {
+	AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error)
 }
 
 type executableSchema struct {
@@ -1228,14 +1238,14 @@ func (ec *executionContext) _AccountMembership_user(ctx context.Context, field g
 		Object:     "AccountMembership",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
+		return ec.resolvers.AccountMembership().User(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1298,14 +1308,14 @@ func (ec *executionContext) _AccountMembership_account(ctx context.Context, fiel
 		Object:     "AccountMembership",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Account, nil
+		return ec.resolvers.AccountMembership().Account(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2122,14 +2132,14 @@ func (ec *executionContext) _User_accountMemberships(ctx context.Context, field 
 		Object:     "User",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountMemberships, nil
+		return ec.resolvers.User().AccountMemberships(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3564,15 +3574,25 @@ func (ec *executionContext) _AccountMembership(ctx context.Context, sel ast.Sele
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AccountMembership")
 		case "user":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AccountMembership_user(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountMembership_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			})
 		case "role":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._AccountMembership_role(ctx, field, obj)
@@ -3581,18 +3601,28 @@ func (ec *executionContext) _AccountMembership(ctx context.Context, sel ast.Sele
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "account":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AccountMembership_account(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountMembership_account(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3979,18 +4009,28 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "accountMemberships":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_accountMemberships(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_accountMemberships(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
