@@ -288,9 +288,6 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
 }
 
-func (d *domainI) createUser(ctx context.Context, user *User) (*User, error) {
-}
-
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
 	switch provider {
 	case common.ProviderGithub:
@@ -306,45 +303,43 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				return nil, errors.NewEf(err, "could not find user")
 			}
 
-			if user != nil {
-				token, err := d.accessTokenRepo.Create(ctx, &AccessToken{
-					UserId:   user.Id,
-					Email:    user.Email,
-					Provider: provider,
-					Token:    t,
+			if user == nil {
+				user, err = d.userRepo.Create(ctx, &User{
+					Name:     *u.Name,
+					Avatar:   u.AvatarURL,
+					Email:    *u.Email,
+					Verified: true,
+					Joined:   time.Now(),
 				})
-
 				if err != nil {
-					return nil, errors.NewEf(err, "could not store access token in repo")
+					return nil, errors.NewEf(err, "could not create user (email=%s)", *u.Email)
 				}
-
-				d.logger.Infof("TOKEN: %+v\n", token)
-
-				providerGithub := &ProviderDetail{
-					TokenId: token.Id,
-					Avatar:  u.AvatarURL,
-				}
-				user.ProviderGithub = providerGithub
-				_, err = d.userRepo.UpdateById(ctx, user.Id, user)
-				if err != nil {
-					return nil, errors.NewEf(err, "could not update user")
-				}
-
-				return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/github"), nil
 			}
 
-			// STEP: if has then, update his token, otherwise create new token
-			user, err = d.userRepo.Create(ctx, &User{
-				Name:           *u.Name,
-				Avatar:         u.AvatarURL,
-				ProviderGithub: providerGithub,
-				Email:          *u.Email,
-				Verified:       true,
-				Joined:         time.Now(),
+			token, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
+				UserId:   user.Id,
+				Email:    user.Email,
+				Provider: provider,
+				Token:    t,
 			})
+
 			if err != nil {
-				return nil, errors.NewEf(err, "could not create user")
+				return nil, errors.NewEf(err, "could not store access token in repo")
 			}
+
+			d.logger.Infof("TOKEN: %+v\n", token)
+
+			providerGithub := &ProviderDetail{
+				TokenId: token.Id,
+				Avatar:  u.AvatarURL,
+			}
+			user.ProviderGithub = providerGithub
+			user, err = d.userRepo.UpdateById(ctx, user.Id, user)
+			if err != nil {
+				return nil, errors.NewEf(err, "could not update user")
+			}
+
+			d.logger.Infof("USER %+v\n", user)
 
 			return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/github"), nil
 		}
