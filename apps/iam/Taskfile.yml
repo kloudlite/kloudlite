@@ -14,15 +14,15 @@ tasks:
     deps: [killPort]
     env:
       GRPC_PORT: 3000
-      REDIS_HOSTS: redis-headless:6379
-      MONGO_DB_URI: mongodb://mongodb-dev:27017
+      REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
+      MONGO_DB_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
       MONGO_DB_NAME: iam-go
     sources:
       - ./**/*.go
       - main.go
     cmds:
       # - go run ./main.go
-      - nodemon -q -w '**/*' -e go --signal SIGKILL --exec 'go run ./main.go || exit 1' 
+      - nodemon -q -w '**/*' -e go --signal SIGKILL --exec 'go run ./main.go || exit 1'
     nethod: timestamp
 
   killPort:

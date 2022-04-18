@@ -8,9 +8,11 @@ tasks:
       COOKIE_DOMAIN: localhost
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       HTTP_PORT: 4002
-      ORIGINS: http://localhost:4001,https://studio.apollographql.com
-      # REDIS_USERNAME: 
-      # REDIS_PASSWORD: 
+      ORIGINS: http://localhost:4002,https://studio.apollographql.com
+      IAM_SERVER_HOST: localhost
+      IAM_SERVER_PORT: 3000
+      # REDIS_USERNAME:
+      # REDIS_PASSWORD:
     cmds:
       - nodemon -w "**/*" -e "go" --signal SIGKILL -q --exec 'echo && go run main.go || echo'
   gql:

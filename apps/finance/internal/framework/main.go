@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/finance/internal/app"
 	"kloudlite.io/pkg/cache"
@@ -19,6 +20,8 @@ type Env struct {
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	HttpPort      uint16 `env:"HTTP_PORT"`
 	HttpCors      string `env:"ORIGINS"`
+	IAMServerHost string `env:"IAM_SERVER_HOST"`
+	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -35,6 +38,10 @@ func (e *Env) GetHttpPort() uint16 {
 
 func (e *Env) GetHttpCors() string {
 	return e.HttpCors
+}
+
+func (e *Env) GetGCPServerURL() string {
+	return fmt.Sprintf("tcp://%v:%v", e.IAMServerHost, e.IAMServerPort)
 }
 
 var Module = fx.Module("framework",

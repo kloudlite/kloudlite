@@ -19,6 +19,12 @@ type domainI struct {
 	accountRepo repos.DbRepo[*Account]
 }
 
+func (domain *domainI) GetAccountMemberShips(ctx context.Context, id repos.ID) ([]*Account, error) {
+
+	//TODO implement me
+	panic("implement me")
+}
+
 func generateReadable(name string) string {
 	compile := regexp.MustCompile(`[^0-9a-zA-Z:,/s]+`)
 	allString := compile.ReplaceAllString(strings.ToLower(name), "")
