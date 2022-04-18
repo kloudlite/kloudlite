@@ -10,14 +10,14 @@ import (
 
 type AuthSession struct {
 	repos.BaseEntity `json:",inline"`
-	UserId           string `json:"user_id"`
-	UserEmail        string `json:"user_email"`
-	UserVerified     bool   `json:"user_verified"`
-	LoginMethod      string `json:"login_method"`
+	UserId           repos.ID `json:"user_id"`
+	UserEmail        string   `json:"user_email"`
+	UserVerified     bool     `json:"user_verified"`
+	LoginMethod      string   `json:"login_method"`
 }
 
 func NewSession(
-	UserId string,
+	UserId repos.ID,
 	UserEmail string,
 	UserVerified bool,
 	LoginMethod string,
