@@ -17,17 +17,26 @@ import (
 )
 
 func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error) {
-	me,err:=r.domain.GetAccountMemberShips(ctx, obj.ID)
-
-	if err != nil {
-		return nil, err
+	entities, err := r.domain.GetUserMemberships(ctx, obj.ID)
+	accountMemberships := make([]*model.AccountMembership, len(entities))
+	for i, entity := range entities {
+		accountMemberships[i] = &model.AccountMembership{
+			Account: &model.Account{
+				ID: entity.AccountId,
+			},
+			User: &model.User{
+				ID: entity.UserId,
+			},
+			Role: string(entity.Role),
+		}
 	}
-	fmt.Println(me)
-	return , nil
+	return accountMemberships, err
 }
 
 func (r *accountMembershipResolver) User(ctx context.Context, obj *model.AccountMembership) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return &model.User{
+		ID: obj.User.ID,
+	}, nil
 }
 
 func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error) {
@@ -140,12 +149,11 @@ func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model
 }
 
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
-	entities, err := r.domain.GetAccountMemberShips(ctx, obj.ID)
+	entities, err := r.domain.GetAccountMemberships(ctx, obj.ID)
 	fmt.Println(entities, err, "entities")
-	accountMemeberships := make([]*model.AccountMembership, len(entities))
-
+	accountMemberships := make([]*model.AccountMembership, len(entities))
 	for i, entity := range entities {
-		accountMemeberships[i] = &model.AccountMembership{
+		accountMemberships[i] = &model.AccountMembership{
 			Account: &model.Account{
 				ID: entity.AccountId,
 			},
@@ -155,9 +163,7 @@ func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) 
 			Role: string(entity.Role),
 		}
 	}
-
-	return accountMemeberships, err
-	// panic(fmt.Errorf("not implemented 1"))
+	return accountMemberships, err
 }
 
 // Account returns generated.AccountResolver implementation.
