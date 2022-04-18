@@ -75,7 +75,12 @@ func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 }
 
 func (s *server) ListUserMemberships(ctx context.Context, in *iam.InUserMemberships) (*iam.OutListMemberships, error) {
-	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: repos.Filter{"user_id": in.UserId}})
+	filter := repos.Filter{"user_id": in.UserId}
+	if in.ResourceType != "" {
+		filter["resource_type"] = in.ResourceType
+	}
+
+	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: filter})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find memberships by (userId=%q)", in.UserId)
 	}

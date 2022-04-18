@@ -288,6 +288,9 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
 }
 
+func (d *domainI) createUser(ctx context.Context, user *User) (*User, error) {
+}
+
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
 	switch provider {
 	case common.ProviderGithub:
