@@ -90,13 +90,13 @@ func (r *mutationResolver) UpdateAccountBilling(ctx context.Context, accountID r
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) AddAccountMember(ctx context.Context, accountID string, email string, name string, role string) (bool, error) {
+func (r *mutationResolver) AddAccountMember(ctx context.Context, accountID string, userID repos.ID, role string) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
 	}
 
-	return r.domain.AddAccountMember(ctx, accountID, email, name, role)
+	return r.domain.AddAccountMember(ctx, repos.ID(accountID), userID, common.Role(role))
 }
 
 func (r *mutationResolver) RemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
