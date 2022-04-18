@@ -13,7 +13,7 @@ tasks:
       # COOKIE_DOMAIN: localhost
       COOKIE_DOMAIN: kl.madhouselabs.io
     cmds:
-      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go || exit 1'
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   gql:
     sources:
       - graph/schema.graphqls

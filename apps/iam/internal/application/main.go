@@ -18,6 +18,35 @@ type server struct {
 	rbRepo repos.DbRepo[*entities.RoleBinding]
 }
 
+func (s *server) ListResourceMemberships(ctx context.Context, in *iam.InResourceMemberships) (*iam.OutListMemberships, error) {
+	filter := repos.Filter{}
+	if in.ResourceId != "" {
+		filter["resource_id"] = in.ResourceId
+	}
+	if in.ResourceType != "" {
+		filter["resource_type"] = in.ResourceType
+	}
+
+	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: filter})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not find memberships by (resourceId=%q, resourceType=%q)", in.ResourceId, in.ResourceType)
+	}
+
+	result := []*iam.RoleBinding{}
+	for _, rb := range rbs {
+		result = append(result, &iam.RoleBinding{
+			UserId:       rb.UserId,
+			ResourceType: rb.ResourceType,
+			ResourceId:   rb.ResourceId,
+			Role:         rb.Role,
+		})
+	}
+
+	return &iam.OutListMemberships{
+		RoleBindings: result,
+	}, nil
+}
+
 func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{
 		"resource_id": map[string]interface{}{"$in": in.ResourceIds},
@@ -45,7 +74,7 @@ func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 	return &iam.OutCan{Status: false}, nil
 }
 
-func (s *server) ListMemberships(ctx context.Context, in *iam.InListMemberships) (*iam.OutListMemberships, error) {
+func (s *server) ListUserMemberships(ctx context.Context, in *iam.InUserMemberships) (*iam.OutListMemberships, error) {
 	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: repos.Filter{"user_id": in.UserId}})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find memberships by (userId=%q)", in.UserId)
