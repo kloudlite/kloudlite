@@ -19,19 +19,38 @@ type domainI struct {
 	accountRepo repos.DbRepo[*Account]
 }
 
-func (domain *domainI) GetAccountMemberShips(ctx context.Context, id repos.ID) ([]*Membership, error) {
-
-	rbs, err := domain.iamCli.ListUserMemberships(ctx, &iam.InUserMemberships{
-		UserId:       string(id),
+func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
+	rbs, err := domain.iamCli.ListResourceMemberships(ctx, &iam.InResourceMemberships{
+		ResourceId:   string(id),
 		ResourceType: common.ResourceAccount,
 	})
+	if err != nil {
+		return nil, err
+	}
+	var memberships []*Membership
+	for _, rb := range rbs.RoleBindings {
+		memberships = append(memberships, &Membership{
+			AccountId: repos.ID(rb.ResourceId),
+			UserId:    repos.ID(rb.UserId),
+			Role:      common.Role(rb.Role),
+		})
+	}
 
 	if err != nil {
 		return nil, err
 	}
+	return memberships, nil
+}
 
-	memberships := []*Membership{}
-	fmt.Println(rbs)
+func (domain *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
+	rbs, err := domain.iamCli.ListUserMemberships(ctx, &iam.InUserMemberships{
+		UserId:       string(id),
+		ResourceType: common.ResourceAccount,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var memberships []*Membership
 
 	for _, rb := range rbs.RoleBindings {
 		memberships = append(memberships, &Membership{
@@ -41,24 +60,10 @@ func (domain *domainI) GetAccountMemberShips(ctx context.Context, id repos.ID) (
 		})
 	}
 
-	// accounts, err := domain.accountRepo.Find(ctx, repos.Query{
-	// 	Filter: repos.Filter{
-	// 		"id": map[string]any{
-	// 			"$in": accountIds,
-	// 		},
-	// 	},
-	// })
-
 	if err != nil {
 		return nil, err
 	}
-
 	return memberships, nil
-
-	// fmt.Println("listing accounts", memberships, err)
-
-	//TODO implement me
-	// panic("implement me")
 }
 
 func generateReadable(name string) string {

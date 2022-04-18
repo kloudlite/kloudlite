@@ -16,7 +16,7 @@ tasks:
       # REDIS_USERNAME:
       # REDIS_PASSWORD:
     cmds:
-      - nodemon -w "**/*" -e "go" --signal SIGKILL -q --exec 'echo && go run main.go || echo'
+      - nodemon -w "**/*" -e "go" --signal SIGKILL -q --exec 'go run main.go | pp -rel-path'
   gql:
     sources:
       - graph/schema.graphqls
