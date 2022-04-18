@@ -20,7 +20,6 @@ func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*mod
 }
 
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
-	// panic(fmt.Errorf("not implemented user"))
 	return &model.User{
 		ID: id,
 	}, nil

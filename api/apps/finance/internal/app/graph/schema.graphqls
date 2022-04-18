@@ -31,10 +31,6 @@ type Mutation {
     deleteAccount(accountId: ID!): Boolean!
 }
 
-# type AccountMembership {
-#     account: Account!
-#     role: String!
-# }
 
 scalar Json
 scalar Date
