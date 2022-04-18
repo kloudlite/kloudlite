@@ -45,4 +45,7 @@ var Module = fx.Module("framework",
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
 	app.Module,
+	fx.Invoke(func() {
+		panic("NOT IMPLEMENTED")
+	}),
 )
