@@ -60,7 +60,7 @@ type ComplexityRoot struct {
 		LoginWithInviteToken    func(childComplexity int, inviteToken string) int
 		Logout                  func(childComplexity int) int
 		OAuthAddLogin           func(childComplexity int, provider string, state string, code string) int
-		OAuthLogin              func(childComplexity int, provider string, state string, code string) int
+		OAuthLogin              func(childComplexity int, provider string, code string, state *string) int
 		RequestResetPassword    func(childComplexity int, email string) int
 		ResendVerificationEmail func(childComplexity int) int
 		ResetPassword           func(childComplexity int, token string, password string) int
@@ -121,7 +121,7 @@ type MutationResolver interface {
 	ChangeEmail(ctx context.Context, email string) (bool, error)
 	ResendVerificationEmail(ctx context.Context) (bool, error)
 	ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
-	OAuthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error)
+	OAuthLogin(ctx context.Context, provider string, code string, state *string) (*model.Session, error)
 	OAuthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error)
 }
 type QueryResolver interface {
@@ -253,7 +253,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.OAuthLogin(childComplexity, args["provider"].(string), args["state"].(string), args["code"].(string)), true
+		return e.complexity.Mutation.OAuthLogin(childComplexity, args["provider"].(string), args["code"].(string), args["state"].(*string)), true
 
 	case "Mutation.requestResetPassword":
 		if e.complexity.Mutation.RequestResetPassword == nil {
@@ -581,7 +581,7 @@ type Mutation {
   resendVerificationEmail: Boolean! #Done
   changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
 
-  oAuthLogin(provider: String!, state: String!, code: String!): Session!
+  oAuthLogin(provider: String!, code: String!, state: String): Session!
   oAuthAddLogin(provider: String!, state: String!, code: String!): Boolean!
 }
 
@@ -806,23 +806,23 @@ func (ec *executionContext) field_Mutation_oAuthLogin_args(ctx context.Context, 
 	}
 	args["provider"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["state"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+	if tmp, ok := rawArgs["code"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["state"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["code"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+	args["code"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["state"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["code"] = arg2
+	args["state"] = arg2
 	return args, nil
 }
 
@@ -1618,7 +1618,7 @@ func (ec *executionContext) _Mutation_oAuthLogin(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().OAuthLogin(rctx, args["provider"].(string), args["state"].(string), args["code"].(string))
+		return ec.resolvers.Mutation().OAuthLogin(rctx, args["provider"].(string), args["code"].(string), args["state"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
