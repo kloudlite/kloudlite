@@ -25,6 +25,10 @@ type PaginatedRecord[T Entity] struct {
 	totalCount int64
 }
 
+type UpdateOpts struct {
+	Upsert bool
+}
+
 type DbRepo[T Entity] interface {
 	NewId() ID
 	Find(ctx context.Context, query Query) ([]T, error)
@@ -32,7 +36,7 @@ type DbRepo[T Entity] interface {
 	FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error)
 	FindById(ctx context.Context, id ID) (T, error)
 	Create(ctx context.Context, data T) (T, error)
-	UpdateById(ctx context.Context, id ID, updatedData T) (T, error)
+	UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
 	DeleteById(ctx context.Context, id ID) error
 	DeleteMany(ctx context.Context, filter Filter) error
 	IndexFields(ctx context.Context, indices []IndexField) error
