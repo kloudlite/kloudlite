@@ -21,4 +21,37 @@ type Device struct {
 	Status           DeviceStatus `json:"status" bson:"status"`
 }
 
-var DeviceIndexes = []string{"id", "name", "cluster_id", "user_id", "ip", "index"}
+var DeviceIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "cluster_id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "user_id", Value: repos.IndexAsc},
+		},
+		Unique: false,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "ip", Value: repos.IndexAsc},
+			{Key: "cluster_id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "index", Value: repos.IndexAsc},
+			{Key: "cluster_id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
