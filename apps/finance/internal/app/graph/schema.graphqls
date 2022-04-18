@@ -1,11 +1,11 @@
 type Query {
-    accounts: [Account!]!
+    # accounts: [Account!]!
     account(accountId: ID!): Account
 
-    accountsMembership: [AccountMembership!]!
-    accountMembership(accountId: ID!): AccountMembership!
+    # accountsMemberships: [AccountMembership!]!
+    # accountMembership(accountId: ID!): AccountMembership!
 
-    stripeSetupIntent: String!
+    # stripeSetupIntent: String!
 }
 
 type Mutation {
@@ -31,10 +31,10 @@ type Mutation {
     deleteAccount(accountId: ID!): Boolean!
 }
 
-type AccountMembership {
-    account: Account!
-    role: String!
-}
+# type AccountMembership {
+#     account: Account!
+#     role: String!
+# }
 
 scalar Json
 scalar Date
@@ -46,16 +46,15 @@ type Account @key(fields: "id") {
     isActive: Boolean!
     contactEmail: String!
     readableId: ID!
-    memberships: [Membership!]!
+    memberships: [AccountMembership!]!
     created: Date!
 }
 
 extend type User @key(fields: "id") {
     id: ID! @external
-    memberships:[Membership!]!
+    accountMemberships:[AccountMembership!]!
 }
-
-type Membership {
+type AccountMembership {
     user: User!
     role: String!
     account: Account!
