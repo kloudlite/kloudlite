@@ -19,17 +19,19 @@ type server struct {
 }
 
 func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
-	rb, err := s.rbRepo.FindOne(ctx, repos.Query{
-		Filter: repos.Filter{
-			"resource_id": map[string]interface{}{"$in": in.ResourceIds},
-			"user_id":     in.UserId,
-		},
+	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{
+		"resource_id": map[string]interface{}{"$in": in.ResourceIds},
+		"user_id":     in.UserId,
 	})
 
 	if err != nil {
-		return nil, errors.NewEf(err, "could not find resource(ids=%+v)", in.ResourceIds)
+		if rb == nil {
+			return &iam.OutCan{Status: false}, nil
+		}
+		return nil, errors.NewEf(err, "could not find resource(ids=%v)", in.ResourceIds)
 	}
 
+	fmt.Println("HERE2")
 	if strings.HasPrefix(in.UserId, "sys-user") {
 		return &iam.OutCan{Status: true}, nil
 	}
@@ -79,10 +81,7 @@ func (s *server) AddMembership(ctx context.Context, in *iam.InAddMembership) (*i
 }
 
 func (s *server) RemoveMembership(ctx context.Context, in *iam.InRemoveMembership) (*iam.OutRemoveMembership, error) {
-	rb, err := s.rbRepo.FindOne(ctx, repos.Query{
-		Filter: map[string]interface{}{},
-		Sort:   map[string]interface{}{},
-	})
+	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not findone")
 	}

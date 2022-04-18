@@ -32,7 +32,7 @@ func (repo dbRepo[T]) NewId() ID {
 }
 
 func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
-	results := make([]T, 0)
+	results := []T{}
 	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.Filter, &options.FindOptions{
 		Sort: query.Sort,
 	})
@@ -40,8 +40,8 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	return results, err
 }
 
-func (repo dbRepo[T]) FindOne(ctx context.Context, query Query) (T, error) {
-	one := repo.db.Collection(repo.collectionName).FindOne(ctx, query.Filter)
+func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
+	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	var res T
 	err := one.Decode(&res)
 	if err != nil {

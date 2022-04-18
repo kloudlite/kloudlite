@@ -16,3 +16,9 @@ const (
 	CacheSessionPrefix = "hotspot:auth:sessions"
 	CookieName         = "hotspot-session"
 )
+
+const (
+	ProviderGithub = "github"
+	ProviderGitlab = "gitlab"
+	ProviderGoogle = "google"
+)

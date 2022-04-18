@@ -35,17 +35,21 @@ func NewSessionRepo[T repos.Entity](
 			if err != nil {
 				fmt.Println("[ERROR]", err)
 			}
-			http.SetCookie(w, &http.Cookie{
+			ck := &http.Cookie{
 				Name:     cookieName,
 				Value:    string(session.GetId()),
 				Path:     "/",
-				Domain:   fmt.Sprintf(".%v", cookieDomain),
+				Domain:   "." + fmt.Sprintf("%v", cookieDomain),
 				Expires:  time.Time{},
 				MaxAge:   0,
-				Secure:   false,
+				Secure:   true,
 				HttpOnly: true,
-				SameSite: http.SameSiteStrictMode,
-			})
+				// SameSite: http.SameSiteStrictMode,
+				SameSite: http.SameSiteNoneMode,
+			}
+
+			http.SetCookie(w, ck)
+			fmt.Printf("I am HERE  %+v\n", ck)
 		})
 		newContext = context.WithValue(newContext, "delete-session", func() {
 			if cookie != nil {
