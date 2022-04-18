@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/messaging"
 
 	"kloudlite.io/common"
@@ -296,7 +295,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				return nil, errors.NewEf(err, "could not login to github")
 			}
 			//STEP: find if this user has account with this email
-			user, err := d.userRepo.FindOne(ctx, repos.Filter{})
+			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
 			if err != nil {
 				return nil, errors.NewEf(err, "could not find user")
 			}
@@ -308,16 +307,34 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				Token:    t,
 			})
 
+			if err != nil {
+				return nil, errors.NewEf(err, "could not store access token in repo")
+			}
+
+			providerGithub := &ProviderDetail{
+				TokenId: token.Id,
+				Avatar:  u.AvatarURL,
+			}
 			if user != nil {
 				// ASSERT: user exists
-				user.ProviderGithub = &ProviderDetail{
-					TokenId: token.Id,
-					Avatar: "",
+				user.ProviderGithub = providerGithub
+				_, err := d.userRepo.UpdateById(ctx, user.Id, user)
+				if err != nil {
+					return nil, errors.NewEf(err, "could not update user")
 				}
-				d.userRepo.UpdateById(ctx, user.Id)
 			}
 
 			// STEP: if has then, update his token, otherwise create new token
+			d.userRepo.Create(ctx, &User{
+				Name:           *u.Name,
+				Avatar:         u.AvatarURL,
+				ProviderGithub: providerGithub,
+				Email:          *u.Email,
+				Verified:       true,
+				Joined:         time.Now(),
+				PasswordSalt:   "",
+			})
+
 		}
 
 	case common.ProviderGitlab:

@@ -1,0 +1,10 @@
+**
+!go.*
+!apps
+!pkg
+!common
+!*.go
+!grpc-interfaces
+apps/**/.task
+apps/**/node_modules
+apps/**/.pnpm
