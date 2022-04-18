@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/functions"
+	fn "kloudlite.io/pkg/functions"
 )
 
 type dbRepo[T Entity] struct {
@@ -43,10 +43,12 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	var res T
-	err := one.Decode(&res)
+	err := one.Decode(res)
 	if err != nil {
-		var x T
-		return x, err
+		if err == mongo.ErrNoDocuments {
+			return res, nil
+		}
+		return res, err
 	}
 	return res, nil
 }
@@ -96,14 +98,24 @@ func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	return result, e
 }
 
-func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T) (T, error) {
+type UpdateOpts struct {
+	Upsert bool
+}
+
+func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
 	var result T
 	after := options.After
+	updateOpts := &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+
+	if opt := fn.ParseOnlyOption(&opts); opt != nil {
+		
+	}
+
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(ctx, &Filter{"id": id}, bson.M{
 		"$set": updatedData,
-	}, &options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
-	})
+	}, updateOpts)
 	e := r.Decode(&result)
 	return result, e
 }
