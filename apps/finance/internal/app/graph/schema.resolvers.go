@@ -17,7 +17,15 @@ import (
 )
 
 func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error) {
-	panic("implement me")
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *accountMembershipResolver) User(ctx context.Context, obj *model.AccountMembership) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
@@ -118,8 +126,20 @@ func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model
 	return AccountModelFromEntity(accountEntity), err
 }
 
+func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
+	entities, err := r.domain.GetAccountMemberShips(ctx, obj.ID)
+	fmt.Println(entities, err, "entities")
+
+	panic(fmt.Errorf("not implemented"))
+}
+
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
+
+// AccountMembership returns generated.AccountMembershipResolver implementation.
+func (r *Resolver) AccountMembership() generated.AccountMembershipResolver {
+	return &accountMembershipResolver{r}
+}
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
@@ -127,58 +147,11 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
 type accountResolver struct{ *Resolver }
+type accountMembershipResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *membershipResolver) User(ctx context.Context, obj *model.Membership) (*model.User, error) {
-	return obj.User, nil
-}
-func (r *membershipResolver) Account(ctx context.Context, obj *model.Membership) (*model.Account, error) {
-	accountEntity, err := r.domain.GetAccount(ctx, obj.Account.ID)
-	if err != nil {
-		return nil, err
-	}
-	return AccountModelFromEntity(accountEntity), nil
-}
-func (r *queryResolver) Accounts(ctx context.Context) ([]*model.Account, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("not logged in")
-	}
-	accountEntities, err := r.domain.ListAccounts(ctx, repos.ID(session.UserId))
-	if err != nil {
-		return nil, err
-	}
-	accountModels := make([]*model.Account, 0)
-	for _, ae := range accountEntities {
-		accountModels = append(accountModels, AccountModelFromEntity(ae))
-	}
-	return accountModels, nil
-}
-func (r *queryResolver) AccountsMembership(ctx context.Context) ([]*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented1"))
-}
-func (r *queryResolver) AccountMembership(ctx context.Context, accountID repos.ID) (*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented2"))
-}
-func (r *queryResolver) StripeSetupIntent(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented3"))
-}
-func (r *userResolver) Memberships(ctx context.Context, obj *model.User) ([]*model.Membership, error) {
-	fmt.Println("memberships running")
-	r.domain.ListAccounts(ctx, repos.ID(obj.ID))
-
-	panic(fmt.Errorf("not implemented4"))
-}
-func (r *Resolver) Membership() generated.MembershipResolver { return &membershipResolver{r} }
-func (r *Resolver) User() generated.UserResolver             { return &userResolver{r} }
-
-type membershipResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
