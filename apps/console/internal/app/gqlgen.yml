@@ -43,6 +43,7 @@ autobind:
 # The first line in each type will be used as defaults for resolver arguments and
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
+skip_validation: true
 models:
   User:
     fields:

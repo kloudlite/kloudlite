@@ -38,7 +38,6 @@ type AppContainer struct {
 }
 
 type AppContainerIn struct {
-	FromGit          *GitPipelineIn     `json:"fromGit"`
 	Name             string             `json:"name"`
 	Image            *string            `json:"image"`
 	ImagePullPolicy  *string            `json:"imagePullPolicy"`
@@ -178,9 +177,7 @@ type GitPipeline struct {
 	Project     *Project `json:"project"`
 }
 
-type GitPipelineIn struct {
-	ProjectID   repos.ID   `json:"projectId"`
-	Name        string     `json:"name"`
+type GitPipelineInput struct {
 	GitRepoURL  string     `json:"gitRepoUrl"`
 	GitProvider string     `json:"gitProvider"`
 	DockerFile  *string    `json:"dockerFile"`
@@ -210,42 +207,6 @@ type IAppVolumeUpdate struct {
 	Items     []*IAppVolumeItem `json:"items"`
 }
 
-type IManagedResArtifact struct {
-	Type    string `json:"type"`
-	RefName string `json:"refName"`
-	RefKey  string `json:"refKey"`
-}
-
-type JAction struct {
-	ID           repos.ID `json:"id"`
-	ResourceType string   `json:"resourceType"`
-	ResourceID   string   `json:"resourceId"`
-	Action       string   `json:"action"`
-	Data         *string  `json:"data"`
-	KubeData     *string  `json:"kubeData"`
-}
-
-type Job struct {
-	ID        repos.ID   `json:"id"`
-	Project   *Project   `json:"project"`
-	Actions   []*JAction `json:"actions"`
-	Flows     []repos.ID `json:"flows"`
-	KlStatus  *KlStatus2 `json:"klStatus"`
-	CreatedAt *string    `json:"createdAt"`
-}
-
-type JSONPatch struct {
-	Op    string  `json:"op"`
-	Path  string  `json:"path"`
-	Value *string `json:"value"`
-}
-
-type JSONPatchInput struct {
-	Op    string  `json:"op"`
-	Path  string  `json:"path"`
-	Value *string `json:"value"`
-}
-
 type Kv struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -256,38 +217,18 @@ type KVInput struct {
 	Value string `json:"value"`
 }
 
-type KlStatus struct {
-	State string  `json:"state"`
-	Msg   string  `json:"msg"`
-	Error *string `json:"error"`
-}
-
-type KlStatus2 struct {
-	State string          `json:"state"`
-	Feed  []*KlStatusFeed `json:"feed"`
-}
-
-type KlStatusFeed struct {
-	Timestamp string `json:"timestamp"`
-	Type      string `json:"type"`
-	Message   string `json:"message"`
-}
-
 type ManagedRes struct {
-	ID           repos.ID              `json:"id"`
-	Name         string                `json:"name"`
-	ResourceName string                `json:"resourceName"`
-	Version      int                   `json:"version"`
-	Installation *ManagedSvc           `json:"installation"`
-	Values       string                `json:"values"`
-	Artifacts    []*ManagedResArtifact `json:"artifacts"`
-	JobID        *repos.ID             `json:"jobId"`
+	ID           repos.ID    `json:"id"`
+	Name         string      `json:"name"`
+	ResourceName string      `json:"resourceName"`
+	Version      int         `json:"version"`
+	Installation *ManagedSvc `json:"installation"`
+	Values       string      `json:"values"`
 }
 
-type ManagedResArtifact struct {
-	Type    string `json:"type"`
-	RefName string `json:"refName"`
-	RefKey  string `json:"refKey"`
+type ManagedResourceSource struct {
+	Name   string  `json:"name"`
+	Fields *string `json:"fields"`
 }
 
 type ManagedSvc struct {
@@ -300,31 +241,12 @@ type ManagedSvc struct {
 	JobID   *repos.ID         `json:"jobId"`
 }
 
-type ManagedSvcResource struct {
-	Name       string            `json:"name"`
-	Fields     *string           `json:"fields"`
-	Operations *MsvcSourceResOps `json:"operations"`
-}
-
 type ManagedSvcSource struct {
-	ID          repos.ID              `json:"id"`
-	Name        string                `json:"name"`
-	DisplayName *string               `json:"displayName"`
-	Operations  *MsvcSourceOps        `json:"operations"`
-	Fields      *string               `json:"fields"`
-	Resources   []*ManagedSvcResource `json:"resources"`
-}
-
-type MsvcSourceOps struct {
-	Install   string  `json:"install"`
-	Uninstall string  `json:"uninstall"`
-	Update    *string `json:"update"`
-}
-
-type MsvcSourceResOps struct {
-	Create string  `json:"create"`
-	Update *string `json:"update"`
-	Delete string  `json:"delete"`
+	ID          repos.ID                 `json:"id"`
+	Name        string                   `json:"name"`
+	DisplayName *string                  `json:"displayName"`
+	Fields      *string                  `json:"fields"`
+	Resources   []*ManagedResourceSource `json:"resources"`
 }
 
 type NewResourcesIn struct {
@@ -332,17 +254,6 @@ type NewResourcesIn struct {
 	Secrets    []string `json:"secrets"`
 	MServices  []string `json:"mServices"`
 	MResources []string `json:"mResources"`
-}
-
-type Patch struct {
-	Status bool   `json:"status"`
-	Errors string `json:"errors"`
-}
-
-type PatchApp struct {
-	Status bool    `json:"status"`
-	Errors *string `json:"errors"`
-	App    *App    `json:"app"`
 }
 
 type Project struct {
@@ -355,17 +266,6 @@ type Project struct {
 	Description *string           `json:"description"`
 	Account     *Account          `json:"account"`
 	Memberships []*UserMembership `json:"memberships"`
-}
-
-type ProjectMembership struct {
-	Project *Project `json:"project"`
-	Role    *string  `json:"role"`
-}
-
-type QueryInput struct {
-	Namespace *string   `json:"namespace"`
-	AccountID *repos.ID `json:"accountId"`
-	Cluster   *string   `json:"cluster"`
 }
 
 type Route struct {

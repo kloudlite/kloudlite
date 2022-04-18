@@ -1,118 +1,48 @@
+scalar Json
+
 type Query {
-  projects(accountId: ID): [Project!]!
-  project(projectId: ID!): Project
-  projectsMemberships(accountId: ID): [ProjectMembership!]!
-  projectMemberships(projectId: ID!): ProjectMembership!
+  core_projects(accountId: ID): [Project!]!
+  core_project(accountId:ID, projectId: ID!): Project
 
-  apps(projectId: ID!, search: String): [App!]!
-  app(appId: ID!, version: String): App
+  core_apps(projectId: ID!, search: String): [App!]!
+  core_app(appId: ID!, version: String): App
 
-  routers(projectId: ID!, search: String): [Router!]!
-  router(routerId: ID, projectId: ID, routerName: String): Router
+  core_routers(projectId: ID!, search: String): [Router!]!
+  core_router(routerId: ID, projectId: ID): Router
 
-  configs(projectId: ID!): [Config!]!
-  searchConfigs(projectId: ID!, search: String): [CSEntry!]!
-  config(configId: ID, projectId: ID, configName: String): Config!
+  core_configs(projectId: ID!, search: String): [Config!]!
+  core_config(configId: ID, projectId: ID): Config!
 
-  secrets(projectId: ID!, search: String): [Secret!]!
-  searchSecrets(projectId: ID!, search: String): [CSEntry!]!
-  secret(secretId: ID, projectId: ID, secretName: String): Secret!
+  core_secrets(projectId: ID!, search: String): [Secret!]!
+  core_secret(secretId: ID, projectId: ID, secretName: String): Secret!
 
-  gitPullRepoToken(imageId: ID!): String
+  ci_gitPullRepoToken(imageId: ID!): String # TBD
 
-  gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
-  gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
-  gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
-  githubInstallations: [Json!]!
-  githubRepos(installationId: String!, limit: Int, page: Int): [Json!]!
-  githubRepoBranches(repoUrl: String!, limit: Int, page: Int): [Json!]!
-  searchGithubRepos(
-    search: String
-    org: String!
-    limit: Int
-    page: Int
-  ): [Json!]!
+  ci_gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
+  ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
+  ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
 
-  gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
-  gitPipeline(pipelineId: ID!): GitPipeline
+  ci_githubInstallations: [Json!]!
+  ci_githubRepos(installationId: String!, limit: Int, page: Int): [Json!]!
+  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): [Json!]!
+  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): [Json!]!
+
+  ci_gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
+  ci_gitPipeline(pipelineId: ID!): GitPipeline
 
   managedSvc_listAvailable: Json!
   managedSvc_getInstallation(installationId: ID!, nextVersion: Boolean): ManagedSvc
   managedSvc_listInstallations(projectId: ID!): [ManagedSvc!]
 
-
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
-  jobs(projectId: ID!, search: String): [Job!]
-  job(jobId: ID!): Job
-
-
-  listClusters: [Cluster!]
-  getCluster(clusterId: ID!): Cluster
-  getDevice(deviceId: ID!): Device
-}
-
-type Job {
-  id: ID!
-  project: Project
-  actions: [JAction!]
-  flows: [ID!]
-  klStatus: KlStatus2
-  createdAt: Date
-}
-
-type JAction {
-  id: ID!
-  resourceType: String!
-  resourceId: String!
-  action: String!
-  data: Json
-  kubeData: Json
-}
-
-type KlStatus2 {
-  state: String!
-  feed: [KlStatusFeed!]
-}
-
-type KlStatusFeed {
-  timestamp: Date!
-  type: String!
-  message: String!
+  infra_listClusters: [Cluster!]
+  infra_getCluster(clusterId: ID!): Cluster
+  infra_getDevices(deviceId: ID!): Device
 }
 
 
-type KlStatus {
-  state: String!
-  msg: String!
-  error: String
-}
-
-scalar Json
-
-type JsonPatch {
-  op: String!
-  path: String!
-  value: Json
-}
-
-input JsonPatchInput {
-  op: String!
-  path: String!
-  value: Json
-}
-
-type Patch {
-  status: Boolean!
-  errors: Json!
-}
-
-type PatchApp {
-  status: Boolean!
-  errors: Json
-  app: App
-}
 
 type ManagedRes {
   id: ID!
@@ -121,8 +51,6 @@ type ManagedRes {
   version: Int!
   installation: ManagedSvc!
   values: Json!
-  artifacts: [ManagedResArtifact!]
-  jobId: ID
 }
 
 type ManagedSvc {
@@ -139,200 +67,80 @@ type ManagedSvcSource {
   id: ID!
   name: String!
   displayName: String
-  operations: MsvcSourceOps!
   fields: Json
-  resources: [ManagedSvcResource!]
+  resources: [ManagedResourceSource!]
 }
 
-type MsvcSourceOps {
-  install: String!
-  uninstall: String!
-  update: String
-}
-
-type ManagedSvcResource {
+type ManagedResourceSource {
   name: String!
   fields: Json
-  operations: MsvcSourceResOps
 }
 
-type MsvcSourceResOps {
-  create: String!
-  update: String
-  delete: String!
+input GitPipelineInput{
+  gitRepoUrl: String!
+  gitProvider: String!
+  dockerFile: String
+  contextDir: String
+  buildArgs: [KVInput]
+  pipelineEnv: String!
+  pullSecret: String
 }
-
-input IManagedResArtifact {
-  type: String!
-  refName: String!
-  refKey: String!
-}
-
-type ManagedResArtifact {
-  type: String!
-  refName: String!
-  refKey: String!
-}
-
 
 type Mutation {
-  mangedSvc_install(
-    projectId: ID!
-    templateId: ID!
-    name: String!
-    values: Json!
-  ): ManagedSvc
-  mangedSvc_uninstall(installationId: ID!): ManagedSvc
-  mangedSvc_update(installationId: ID!, values: Json!): ManagedSvc
+  mangedSvc_install(projectId: ID!, templateId: ID!, name: String!, values: Json!): ManagedSvc
+  mangedSvc_uninstall(installationId: ID!): Boolean!
+  mangedSvc_update(installationId: ID!, values: Json!): Boolean!
 
-  managedRes_create(
-    installationId: ID!
-    name: String!
-    resourceName: String!
-    values: Json!
-  ): ManagedRes!
-  managedRes_update(resId: ID!, values: Json): ManagedRes!
-  managedRes_delete(resId: ID!): ManagedRes!
+  managedRes_create(installationId: ID!, name: String!, resourceName: String!, values: Json!): ManagedRes!
+  managedRes_update(resId: ID!, values: Json): Boolean!
+  managedRes_delete(resId: ID!): Boolean
 
-  job_commit(jobId: ID!): Boolean
-  job_undo(jobId: ID!): Boolean
+  infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
+  infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
+  infra_deleteCluster(clusterId: ID!): Boolean!
+  infra_addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
+  infra_removeDevice(deviceId: ID!): Boolean!
 
-  createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
-  updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
-  deleteCluster(clusterId: ID!): Boolean!
-  addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
-  removeDevice(deviceId: ID!): Boolean!
+  core_createProject(accountId: ID!, name: String!, displayName: String!, cluster: String!, logo: String, description: String): Project!
+  core_updateProject(projectId: ID!, displayName: String, cluster: String, logo: String, description: String): Boolean!
+  core_deleteProject(projectId: ID!): Boolean!
 
-  # addManagedRes(installationId: Id, name: String!, values: Json!): ManagedRes
+  iam_inviteProjectMember(projectId: ID!, email: String!, name: String!, role: String!): Boolean!
+  iam_removeProjectMember(projectId: ID!, userId: ID!): Boolean!
+  iam_updateProjectMember(projectId: ID!, userId: ID!, role: String!): Boolean!
 
-  # removeManagedRes(resId: ID!): Boolean!
-  # updateManagedRes(resId: ID!, values: Json!): ManagedRes
-
-  # installManagedSvc(svcId: ID!, name: String!, values: Json!): ManagedSvc
-  # updateManagedSvc(installationId: ID!, values: Json!): ManagedSvc
-  # uninstallManagedSvc(installationId: ID!): Boolean!
-
-  createProject(
-    accountId: ID!
-    name: String!
-    displayName: String!
-    cluster: String!
-    logo: String
-    description: String
-  ): Project!
-
-  ci_appJobHook(
-    appId: ID!
-    hasStarted: Boolean
-    hasCompleted: Boolean
-    error: String
-  ): Boolean!
-
-  updateProject(
-    projectId: ID!
-    displayName: String
-    cluster: String
-    logo: String
-    description: String
-  ): Project!
-
-  deleteProject(projectId: ID!): Boolean!
-
-  inviteProjectMember(
-    projectId: ID!
-    email: String!
-    name: String!
-    role: String!
-  ): Boolean!
-
-  removeProjectMember(projectId: ID!, userId: ID!): Boolean!
-  updateProjectMember(projectId: ID!, userId: ID!, role: String!): Boolean!
-
-  githubEvent(installationId: ID!, sourceRepo: String!): Boolean
-  gitlabEvent(email: ID!, sourceRepo: String!): Boolean
+  githubEvent(installationId: ID!, sourceRepo: String!): Boolean #TBD
+  gitlabEvent(email: ID!, sourceRepo: String!): Boolean #TBD
 
   # App
-  createAppFlow(
-    projectId: ID!
-    app: Json
-    configs: Json
-    secrets: Json
-    mServices: Json
+  core_createAppFlow(
+    projectId: ID!,
+    app: Json!,
+    pipelines: GitPipelineInput,
+    configs: Json,
+    secrets: Json,
+    mServices: Json,
     mResources: Json
-  ): Job!
-
-  createApp(
-    projectId: ID!
-    name: String!
-    description: String
-    services: [AppServiceInput]
-    replicas: Int
-    containers: [AppContainerIN]!
-  ): App!
-
-  patchApp(appId: ID!, patch: [JsonPatchInput]): PatchApp
-
-  updateApp(
-    appId: ID!
-    name: String
-    description: String
-    service: AppServiceInput
-    replicas: Int
-    containers: AppContainerIN
-  ): App!
-
-  rollbackApp(appId: ID!, version: Int!): App!
-  deleteApp(appId: ID!): Boolean!
-
-  addAppContainer(appId: ID!, container: AppContainerIN!): App!
-  updateAppContainer(
-    appId: ID!
-    containerName: String!
-    container: AppContainerUpdateInput!
-  ): App!
-  removeAppContainer(appId: ID!, containerName: String!): App!
-
-  addVolume(appId: ID!, containerName: String!, volume: IAppVolume!): App!
-  updateVolume(
-    appId: ID!
-    containerName: String!
-    volumeName: String!
-    volume: IAppVolumeUpdate!
-  ): App!
-  deleteVolume(appId: ID!, containerName: String!, volumeName: String!): App!
+  ): Boolean
+  core_updateApp(appId: ID!, name: String, description: String, service: AppServiceInput, replicas: Int, containers: AppContainerIN): App!
+  core_deleteApp(appId: ID!): Boolean!
+  core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
   # Secret n Config
-  createSecret(projectId: ID!, name: String!, data: Json): Secret!
-  upsertSecretEntry(secretId: ID!, key: String!, value: String!): Secret!
-  removeSecretEntry(secretId: ID!, key: String!): Secret!
-  deleteSecret(secretId: ID!): Secret!
+  core_createSecret(projectId: ID!, name: String!, data: Json): Secret!
+  core_updateSecret(projectId: ID!, name: String!, data: Json): Secret!
+  core_deleteSecret(projectId: ID!, name: String!): Secret!
 
-  createConfig(projectId: ID!, name: String!, data: Json): Config!
-  upsertConfigEntry(configId: ID!, key: String!, value: String!): Config!
-  removeConfigEntry(configId: ID!, key: String!): Config!
-  deleteConfig(configId: ID!): Config!
+  core_createConfig(projectId: ID!, name: String!, data: Json): Config!
+  core_updateConfig(projectId: ID!, name: String!, data: Json): Config!
+  core_deleteConfig(configId: ID!): Config!
 
-  #  TODO: have to check once
-  createGitPipeline(
-    projectId: ID!
-    name: String!
-    gitRepoUrl: String!
-    gitProvider: String!
-    dockerFile: String
-    contextDir: String
-    buildArgs: [KVInput]
-    pipelineEnv: String!
-    pullSecret: String
-  ): GitPipeline!
-
-  deleteGitPipeline(pipelineId: ID!): Boolean!
+  ci_deleteGitPipeline(pipelineId: ID!): Boolean!
 
 
-  createRouter(projectId: ID!, name: String!, routes: [RouteInput!]!): Router!
-  addRoute(routerId: ID!, route: RouteInput!): Router!
-  updateRoute(routerId: ID!, routeId: ID!, route: RouteInput!): Router!
-  removeRoute(routerId: ID!, routeId: ID!): Router!
-  deleteRouter(routerId: ID!): Boolean!
+  core_createRouter(projectId: ID!, name: String!, domains: [String], routes: [RouteInput!]!): Router!
+  core_updateRouter(routerId: ID!, name: String!, domains: [String], routes: [RouteInput!]!): Boolean
+  core_deleteRouter(routerId: ID!): Boolean!
 
 }
 
@@ -348,17 +156,6 @@ type Route {
   path: String!
   app: App!
   port: Int!
-}
-
-type ProjectMembership {
-  project: Project
-  role: String
-}
-
-input QueryInput {
-  namespace: String
-  accountId: ID
-  cluster: String
 }
 
 extend type Account @key(fields: "id") {
@@ -387,7 +184,6 @@ type Project {
   cluster: String!
   logo: String
   description: String
-
   account: Account!
   memberships: [UserMembership!]!
 }
@@ -439,7 +235,6 @@ type AppContainer {
 }
 
 input AppContainerIN {
-  fromGit: GitPipelineIN
   name: String!
   image: String
   imagePullPolicy: String
@@ -567,18 +362,6 @@ input NewResourcesIN {
   mResources: [Json!]
 }
 
-input GitPipelineIN {
-  projectId: ID!
-  name: String!
-  gitRepoUrl: String!
-  gitProvider: String!
-  dockerFile: String
-  contextDir: String
-  buildArgs: [KVInput]
-  pipelineEnv: String!
-  pullSecret: String
-}
-
 type GitPipeline {
   id: ID!
   pipelineEnv: String!
@@ -594,7 +377,6 @@ type GitPipeline {
   gitlab: Json
   project: Project!
 }
-
 
 
 extend type User @key(fields: "id") {
@@ -620,4 +402,3 @@ type Device @key(fields: "id") {
   cluster: Cluster!
   configuration: String!
 }
-
