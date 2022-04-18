@@ -38,3 +38,17 @@ query: |
 variables:
   provider: github
 
+---
+label: OAuth Login
+query: |
+  mutation Login($code: String!, $provider: String!, $state: String!) {
+    oAuthLogin(code: $code, provider: $provider, state: $state) {
+      id
+      loginMethod
+      userEmail
+    }
+  }
+variables:
+  code: 19558fbbb49a4f5eb4ad
+  provider: github
+  state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9

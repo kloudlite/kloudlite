@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 
 	"kloudlite.io/common"
@@ -31,6 +32,7 @@ type domainI struct {
 	messenger       Messenger
 	verifyTokenRepo cache.Repo[*VerifyToken]
 	resetTokenRepo  cache.Repo[*ResetPasswordToken]
+	logger          logger.Logger
 	github          Github
 	// gitlab          Gitlab
 	// google          Google
@@ -59,7 +61,7 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 		return nil, errors.New("not valid credentials")
 	}
 	session := common.NewSession(
-		string(matched.Id),
+		matched.Id,
 		matched.Email,
 		matched.Verified,
 		"email/password",
@@ -104,7 +106,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 	}
 
 	return common.NewSession(
-		string(create.Id),
+		create.Id,
 		create.Email,
 		create.Verified,
 		"email/password",
@@ -162,7 +164,7 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 		return nil, err
 	}
 	return common.NewSession(
-		string(u.Id),
+		u.Id,
 		u.Email,
 		u.Verified,
 		"email/verify",
@@ -291,6 +293,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 	case common.ProviderGithub:
 		{
 			u, t, err := d.github.Callback(ctx, code, state)
+			d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
 				return nil, errors.NewEf(err, "could not login to github")
 			}
@@ -300,41 +303,47 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				return nil, errors.NewEf(err, "could not find user")
 			}
 
-			token, err := d.accessTokenRepo.Create(ctx, &AccessToken{
-				UserId:   user.Id,
-				Email:    user.Email,
-				Provider: provider,
-				Token:    t,
-			})
-
-			if err != nil {
-				return nil, errors.NewEf(err, "could not store access token in repo")
-			}
-
-			providerGithub := &ProviderDetail{
-				TokenId: token.Id,
-				Avatar:  u.AvatarURL,
-			}
 			if user != nil {
-				// ASSERT: user exists
+				token, err := d.accessTokenRepo.Create(ctx, &AccessToken{
+					UserId:   user.Id,
+					Email:    user.Email,
+					Provider: provider,
+					Token:    t,
+				})
+
+				if err != nil {
+					return nil, errors.NewEf(err, "could not store access token in repo")
+				}
+
+				d.logger.Infof("TOKEN: %+v\n", token)
+
+				providerGithub := &ProviderDetail{
+					TokenId: token.Id,
+					Avatar:  u.AvatarURL,
+				}
 				user.ProviderGithub = providerGithub
-				_, err := d.userRepo.UpdateById(ctx, user.Id, user)
+				_, err = d.userRepo.UpdateById(ctx, user.Id, user)
 				if err != nil {
 					return nil, errors.NewEf(err, "could not update user")
 				}
+
+				return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/github"), nil
 			}
 
 			// STEP: if has then, update his token, otherwise create new token
-			d.userRepo.Create(ctx, &User{
+			user, err = d.userRepo.Create(ctx, &User{
 				Name:           *u.Name,
 				Avatar:         u.AvatarURL,
 				ProviderGithub: providerGithub,
 				Email:          *u.Email,
 				Verified:       true,
 				Joined:         time.Now(),
-				PasswordSalt:   "",
 			})
+			if err != nil {
+				return nil, errors.NewEf(err, "could not create user")
+			}
 
+			return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/github"), nil
 		}
 
 	case common.ProviderGitlab:
@@ -387,6 +396,7 @@ func fxDomain(
 	resetTokenRepo cache.Repo[*ResetPasswordToken],
 	messenger Messenger,
 	github Github,
+	logger logger.Logger,
 ) Domain {
 	return &domainI{
 		userRepo:        userRepo,
@@ -395,5 +405,6 @@ func fxDomain(
 		verifyTokenRepo: verifyTokenRepo,
 		resetTokenRepo:  resetTokenRepo,
 		github:          github,
+		logger:          logger,
 	}
 }

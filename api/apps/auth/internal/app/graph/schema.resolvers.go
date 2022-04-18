@@ -111,8 +111,17 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword s
 	return r.d.ChangePassword(ctx, repos.ID(session.UserId), currentPassword, newPassword)
 }
 
-func (r *mutationResolver) OAuthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) OAuthLogin(ctx context.Context, provider string, code string, state *string) (*model.Session, error) {
+	st := ""
+	if state != nil {
+		st = *state
+	}
+	sessionEntity, err := r.d.OauthLogin(ctx, provider, st, code)
+	if err != nil {
+		return nil, klErrors.NewEf(err, "could not create session")
+	}
+	cache.SetSession(ctx, sessionEntity)
+	return sessionModelFromAuthSession(sessionEntity), err
 }
 
 func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {
@@ -163,12 +172,6 @@ type queryResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
-
-func (r *mutationResolver) OauthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
-	sessionEntity, err := r.d.OauthLogin(ctx, provider, state, code)
-	cache.SetSession(ctx, sessionEntity)
-	return sessionModelFromAuthSession(sessionEntity), err
-}
 func (r *mutationResolver) OauthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
