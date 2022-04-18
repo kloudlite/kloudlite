@@ -19,10 +19,46 @@ type domainI struct {
 	accountRepo repos.DbRepo[*Account]
 }
 
-func (domain *domainI) GetAccountMemberShips(ctx context.Context, id repos.ID) ([]*Account, error) {
+func (domain *domainI) GetAccountMemberShips(ctx context.Context, id repos.ID) ([]*Membership, error) {
+
+	rbs, err := domain.iamCli.ListUserMemberships(ctx, &iam.InUserMemberships{
+		UserId:       string(id),
+		ResourceType: common.ResourceAccount,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	memberships := []*Membership{}
+	fmt.Println(rbs)
+
+	for _, rb := range rbs.RoleBindings {
+		memberships = append(memberships, &Membership{
+			AccountId: repos.ID(rb.ResourceId),
+			UserId:    repos.ID(rb.UserId),
+			Role:      common.Role(rb.Role),
+		})
+	}
+
+	// accounts, err := domain.accountRepo.Find(ctx, repos.Query{
+	// 	Filter: repos.Filter{
+	// 		"id": map[string]any{
+	// 			"$in": accountIds,
+	// 		},
+	// 	},
+	// })
+
+	if err != nil {
+		return nil, err
+	}
+
+	return memberships, nil
+
+	// fmt.Println("listing accounts", memberships, err)
 
 	//TODO implement me
-	panic("implement me")
+	// panic("implement me")
 }
 
 func generateReadable(name string) string {
@@ -58,7 +94,7 @@ func (domain *domainI) CreateAccount(
 		UserId:       string(userId),
 		ResourceType: common.ResourceAccount,
 		ResourceId:   string(create.Id),
-		Role:         string(iam.AccountOwner),
+		Role:         string(common.AccountOwner),
 	})
 	if err != nil {
 		return nil, err
@@ -103,32 +139,32 @@ func (domain *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, d 
 
 func (domain *domainI) AddAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error) {
 	//TODO implement me
-	panic("implement me")
+	panic("implement me1")
 }
 
 func (domain *domainI) RemoveAccountMember(ctx context.Context, id repos.ID, id2 repos.ID) (bool, error) {
 	//TODO implement me
-	panic("implement me")
+	panic("implement me2")
 }
 
 func (domain *domainI) UpdateAccountMember(ctx context.Context, id repos.ID, id2 repos.ID, role string) (bool, error) {
 	//TODO implement me
-	panic("implement me")
+	panic("implement me3")
 }
 
 func (domain *domainI) DeactivateAccount(ctx context.Context, id repos.ID) (bool, error) {
 	//TODO implement me
-	panic("implement me")
+	panic("implement me4")
 }
 
 func (domain *domainI) ActivateAccount(ctx context.Context, id repos.ID) (bool, error) {
 	//TODO implement me
-	panic("implement me")
+	panic("implement me5")
 }
 
 func (domain *domainI) DeleteAccount(ctx context.Context, id repos.ID) (bool, error) {
 	//TODO implement me
-	panic("implement me")
+	panic("implement me6")
 }
 
 func (domain *domainI) ListAccounts(ctx context.Context, id repos.ID) ([]*Account, error) {

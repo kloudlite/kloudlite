@@ -3,6 +3,7 @@ package domain
 import (
 	"time"
 
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -21,6 +22,12 @@ type Account struct {
 	IsActive         bool      `json:"is_active,omitempty" bson:"is_active"`
 	CreatedAt        time.Time `json:"created_at" bson:"created_at"`
 	ReadableId       repos.ID  `json:"readable_id" bson:"readable_id"`
+}
+
+type Membership struct {
+	AccountId repos.ID
+	UserId    repos.ID
+	Role			common.Role
 }
 
 var AccountIndexes = []repos.IndexField{
