@@ -57,6 +57,7 @@ message OutListMemberships {
 
 message InUserMemberships {
   string userId = 1;
+  string resourceType = 2;
 }
 
 message InResourceMemberships {
