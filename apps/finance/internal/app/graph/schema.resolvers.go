@@ -16,20 +16,8 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.Membership, error) {
+func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error) {
 	panic("implement me")
-}
-
-func (r *membershipResolver) User(ctx context.Context, obj *model.Membership) (*model.User, error) {
-	return obj.User, nil
-}
-
-func (r *membershipResolver) Account(ctx context.Context, obj *model.Membership) (*model.Account, error) {
-	accountEntity, err := r.domain.GetAccount(ctx, obj.Account.ID)
-	if err != nil {
-		return nil, err
-	}
-	return AccountModelFromEntity(accountEntity), nil
 }
 
 func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
@@ -121,6 +109,44 @@ func (r *mutationResolver) DeleteAccount(ctx context.Context, accountID repos.ID
 	return r.domain.DeleteAccount(ctx, accountID)
 }
 
+func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model.Account, error) {
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("not logged in")
+	}
+	accountEntity, err := r.domain.GetAccount(ctx, accountID)
+	return AccountModelFromEntity(accountEntity), err
+}
+
+// Account returns generated.AccountResolver implementation.
+func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
+// Query returns generated.QueryResolver implementation.
+func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+
+type accountResolver struct{ *Resolver }
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *membershipResolver) User(ctx context.Context, obj *model.Membership) (*model.User, error) {
+	return obj.User, nil
+}
+func (r *membershipResolver) Account(ctx context.Context, obj *model.Membership) (*model.Account, error) {
+	accountEntity, err := r.domain.GetAccount(ctx, obj.Account.ID)
+	if err != nil {
+		return nil, err
+	}
+	return AccountModelFromEntity(accountEntity), nil
+}
 func (r *queryResolver) Accounts(ctx context.Context) ([]*model.Account, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
@@ -136,59 +162,23 @@ func (r *queryResolver) Accounts(ctx context.Context) ([]*model.Account, error) 
 	}
 	return accountModels, nil
 }
-
-func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model.Account, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("not logged in")
-	}
-	accountEntity, err := r.domain.GetAccount(ctx, accountID)
-	return AccountModelFromEntity(accountEntity), err
-}
-
 func (r *queryResolver) AccountsMembership(ctx context.Context) ([]*model.AccountMembership, error) {
 	panic(fmt.Errorf("not implemented1"))
 }
-
 func (r *queryResolver) AccountMembership(ctx context.Context, accountID repos.ID) (*model.AccountMembership, error) {
 	panic(fmt.Errorf("not implemented2"))
 }
-
 func (r *queryResolver) StripeSetupIntent(ctx context.Context) (string, error) {
 	panic(fmt.Errorf("not implemented3"))
 }
-
 func (r *userResolver) Memberships(ctx context.Context, obj *model.User) ([]*model.Membership, error) {
 	fmt.Println("memberships running")
 	r.domain.ListAccounts(ctx, repos.ID(obj.ID))
 
 	panic(fmt.Errorf("not implemented4"))
 }
-
-// Account returns generated.AccountResolver implementation.
-func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
-
-// Membership returns generated.MembershipResolver implementation.
 func (r *Resolver) Membership() generated.MembershipResolver { return &membershipResolver{r} }
+func (r *Resolver) User() generated.UserResolver             { return &userResolver{r} }
 
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
-// User returns generated.UserResolver implementation.
-func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
-
-type accountResolver struct{ *Resolver }
 type membershipResolver struct{ *Resolver }
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.

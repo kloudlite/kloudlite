@@ -134,17 +134,19 @@ func (domain *domainI) DeleteAccount(ctx context.Context, id repos.ID) (bool, er
 func (domain *domainI) ListAccounts(ctx context.Context, id repos.ID) ([]*Account, error) {
 	fmt.Println("listing accounts", id)
 
-	outListMemberships, err := domain.iamCli.ListMemberships(ctx, &iam.InListMemberships{
-		UserId: string(id),
-	})
+	// accountMemberships, err := domain.iamCli.ListUserMemberships(ctx, &iam.InUserMemberships{
+	// 	UserId: string(id),
+	// })
 
-	fmt.Println("listing accounts", id, outListMemberships, err)
+	// for _, rb := range accountMemberships.RoleBindings {
+	// }
 
+	// fmt.Println("listing accounts", id, outListMemberships, err)
 
-	fmt.Println(outListMemberships.RoleBindings, err)
-	if err != nil {
-		return nil, err
-	}
+	// fmt.Println(outListMemberships.RoleBindings, err)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// fmt.Println(outListMemberships.RoleBindings)
 
