@@ -22,12 +22,29 @@ type Cluster struct {
 	Status           ClusterStatus `json:"status" bson:"status"`
 }
 
-var ClusterIndexes = []string{
-	"id",
-	"name",
-	"provider",
-	"region",
-	"ip",
-	"index",
-	"status",
+var ClusterIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "provider", Value: repos.IndexAsc},
+		},
+		Unique: false,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "region", Value: repos.IndexAsc},
+		},
+		Unique: false,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "ip", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }
