@@ -24,7 +24,7 @@ type dbRepo[T Entity] struct {
 var re = regexp.MustCompile(`(\W|_)+/g`)
 
 func (repo dbRepo[T]) NewId() ID {
-	id, e := functions.CleanerNanoid(28)
+	id, e := fn.CleanerNanoid(28)
 	if e != nil {
 		panic(fmt.Errorf("could not get cleanerNanoid()"))
 	}
@@ -98,10 +98,6 @@ func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	return result, e
 }
 
-type UpdateOpts struct {
-	Upsert bool
-}
-
 func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
 	var result T
 	after := options.After
@@ -109,13 +105,15 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 		ReturnDocument: &after,
 	}
 
-	if opt := fn.ParseOnlyOption(&opts); opt != nil {
-		
+	if opt := fn.ParseOnlyOption(opts); opt != nil {
+		updateOpts.Upsert = &opt.Upsert
 	}
 
-	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(ctx, &Filter{"id": id}, bson.M{
-		"$set": updatedData,
-	}, updateOpts)
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(ctx,
+		&Filter{"id": id},
+		bson.M{"$set": updatedData},
+		updateOpts,
+	)
 	e := r.Decode(&result)
 	return result, e
 }
