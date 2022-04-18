@@ -33,6 +33,7 @@ func (r *membershipResolver) Account(ctx context.Context, obj *model.Membership)
 }
 
 func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
+	fmt.Println("create account")
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")

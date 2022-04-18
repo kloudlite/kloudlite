@@ -122,13 +122,13 @@ func (i *infraClient) setupNodeWireguards(
 					return
 				}
 				endpoint := fmt.Sprintf("%v:31820", clusterIp)
-				e = wg.AddPeer(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", &endpoint)
+				e = wg.AddPeer(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16,10.13.13.0/24", &endpoint)
 				if e != nil {
 					fmt.Println(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", endpoint)
 					panic(e)
 
-					fmt.Println(fmt.Errorf("failed to add peer to wireguard for node %v", e))
-					return
+					// fmt.Println(fmt.Errorf("failed to add peer to wireguard for node %v", e))
+					// return
 				}
 				e = serverWg.AddPeer(nodePublicKey, fmt.Sprintf("%v/32", strings.TrimSpace(_ip)), nil)
 				if e != nil {
