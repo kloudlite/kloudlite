@@ -1,41 +1,50 @@
 package functions
 
 import (
-	"bytes"
 	"encoding/base64"
-	"encoding/gob"
-	"encoding/json"
+	libJson "encoding/json"
+	nanoid "github.com/matoous/go-nanoid/v2"
+	"kloudlite.io/pkg/errors"
 	"regexp"
 	"strings"
-
-	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
 func NewBool(b bool) *bool {
 	return &b
 }
 
-func ToBytes(v interface{}) ([]byte, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(v)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+type JsonFeatures interface {
+	ToB64Url(v interface{}) (string, error)
+	ToB64String(v interface{}) (string, error)
 }
 
-func ToBase64String(v interface{}) (string, error) {
-	b, e := ToBytes(v)
+type jsonFeatures struct{}
+
+func (j *jsonFeatures) ToB64Url(v interface{}) (string, error) {
+	b, e := libJson.Marshal(v)
+	return base64.URLEncoding.EncodeToString(b), e
+}
+
+func (j *jsonFeatures) ToB64String(v interface{}) (string, error) {
+	b, e := libJson.Marshal(v)
 	return base64.StdEncoding.EncodeToString(b), e
 }
+
+var Json = &jsonFeatures{}
 
 func ToBase64StringFromJson(v interface{}) (string, error) {
-	b, e := json.Marshal(v)
+	b, e := libJson.Marshal(v)
 	return base64.StdEncoding.EncodeToString(b), e
 }
 
-var re = regexp.MustCompile("(\\W|_)+")
+var re = regexp.MustCompile(`(\W|_)+`)
+
+func Must[T any](value T, err error) T {
+	if err != nil {
+		panic(errors.NewEf(err, "panicking as Must() check failed"))
+	}
+	return value
+}
 
 func CleanerNanoid(n int) (string, error) {
 	id, e := nanoid.New(n)
@@ -50,31 +59,4 @@ func CleanerNanoid(n int) (string, error) {
 		res = res + "k"
 	}
 	return res, nil
-}
-
-type Json interface {
-	Must([]byte, error) []byte
-	From(v any) ([]byte, error)
-	String([]byte) string
-}
-
-type _json struct{}
-
-func (j *_json) From(v any) ([]byte, error) {
-	return json.Marshal(v)
-}
-
-func (j *_json) Must(b []byte, e error) []byte {
-	if e != nil {
-		panic(e)
-	}
-	return b
-}
-
-func (j *_json) String(b []byte) string {
-	return string(b)
-}
-
-func UseJson() Json {
-	return &_json{}
 }
