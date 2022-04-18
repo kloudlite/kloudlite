@@ -11,10 +11,10 @@ import (
 
 func addMembership(client iam.IAMClient) {
 	res, err := client.AddMembership(context.TODO(), &iam.InAddMembership{
-		UserId:       "sample kumar",
+		UserId:       "sample kumar1",
 		ResourceType: "account",
 		ResourceId:   "res_sample",
-		Role:         "account-member",
+		Role:         "account-admin",
 	})
 
 	if err != nil {
@@ -38,7 +38,7 @@ func listMembership(client iam.IAMClient) {
 
 func can(client iam.IAMClient) {
 	res, err := client.Can(context.TODO(), &iam.InCan{
-		UserId:      "sample kumar",
+		UserId:      "sample kumar1",
 		ResourceIds: []string{"res_sample"},
 		Action:      "delete-account",
 	})

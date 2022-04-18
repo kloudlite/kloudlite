@@ -14,3 +14,6 @@ terraform.tfvars
 .task
 .settings
 # wgman
+.secrets
+node_modules
+.pnpm

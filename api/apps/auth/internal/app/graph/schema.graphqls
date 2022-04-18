@@ -24,8 +24,8 @@ type Mutation {
   resendVerificationEmail: Boolean! #Done
   changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
 
-  oauth_login(provider: String!, state: String!, code: String!): Session!
-  oauth_addLogin(provider: String!, state: String!, code: String!): Boolean!
+  oAuthLogin(provider: String!, state: String!, code: String!): Session!
+  oAuthAddLogin(provider: String!, state: String!, code: String!): Boolean!
 }
 
 type Session {
