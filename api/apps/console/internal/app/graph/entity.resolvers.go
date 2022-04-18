@@ -5,11 +5,16 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
 )
+
+func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *entityResolver) FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error) {
 	return r.Query().GetCluster(ctx, id)
