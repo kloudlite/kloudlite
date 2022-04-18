@@ -1,0 +1,17 @@
+subgraphs:
+  auth:
+    routing_url: http://localhost:3001
+    schema:
+      subgraph_url: http://localhost:3001
+  finance:
+    routing_url: http://localhost:3003
+    schema:
+      subgraph_url: http://localhost:3003
+  console:
+    routing_url: http://localhost:3002
+    schema:
+      subgraph_url: http://localhost:3002
+  console-2.0:
+    routing_url: http://localhost:4001
+    schema:
+      subgraph_url: http://localhost:4001

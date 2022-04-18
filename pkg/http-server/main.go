@@ -44,10 +44,12 @@ func SetupGQLServer(
 	mux.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
 	gqlServer := gqlHandler.NewDefaultServer(es)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Printf("HERE.......%+v\n", req.Header)
 		_req := req
 		for _, middleware := range middlewares {
 			_req = middleware(w, req)
 		}
+		w.Header().Add("EXAMPLE", "sample")
 		gqlServer.ServeHTTP(w, _req)
 	})
 }
@@ -58,7 +60,7 @@ type ServerOptions interface {
 }
 
 func NewHttpServerFx[T ServerOptions]() fx.Option {
-	return fx.Module("htt-server",
+	return fx.Module("http-server",
 		fx.Provide(http.NewServeMux),
 		fx.Invoke(func(lf fx.Lifecycle, env T, logger logger.Logger, server *http.ServeMux) {
 			lf.Append(fx.Hook{
