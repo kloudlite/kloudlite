@@ -40,10 +40,8 @@ type Config struct {
 type ResolverRoot interface {
 	Account() AccountResolver
 	Entity() EntityResolver
-	Membership() MembershipResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
-	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -64,6 +62,7 @@ type ComplexityRoot struct {
 	AccountMembership struct {
 		Account func(childComplexity int) int
 		Role    func(childComplexity int) int
+		User    func(childComplexity int) int
 	}
 
 	Billing struct {
@@ -75,12 +74,6 @@ type ComplexityRoot struct {
 	Entity struct {
 		FindAccountByID func(childComplexity int, id repos.ID) int
 		FindUserByID    func(childComplexity int, id repos.ID) int
-	}
-
-	Membership struct {
-		Account func(childComplexity int) int
-		Role    func(childComplexity int) int
-		User    func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -97,17 +90,13 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Account            func(childComplexity int, accountID repos.ID) int
-		AccountMembership  func(childComplexity int, accountID repos.ID) int
-		Accounts           func(childComplexity int) int
-		AccountsMembership func(childComplexity int) int
-		StripeSetupIntent  func(childComplexity int) int
 		__resolve__service func(childComplexity int) int
 		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
 	}
 
 	User struct {
-		ID          func(childComplexity int) int
-		Memberships func(childComplexity int) int
+		AccountMemberships func(childComplexity int) int
+		ID                 func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -116,16 +105,11 @@ type ComplexityRoot struct {
 }
 
 type AccountResolver interface {
-	Memberships(ctx context.Context, obj *model.Account) ([]*model.Membership, error)
+	Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error)
 }
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
-}
-type MembershipResolver interface {
-	User(ctx context.Context, obj *model.Membership) (*model.User, error)
-
-	Account(ctx context.Context, obj *model.Membership) (*model.Account, error)
 }
 type MutationResolver interface {
 	CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error)
@@ -139,14 +123,7 @@ type MutationResolver interface {
 	DeleteAccount(ctx context.Context, accountID repos.ID) (bool, error)
 }
 type QueryResolver interface {
-	Accounts(ctx context.Context) ([]*model.Account, error)
 	Account(ctx context.Context, accountID repos.ID) (*model.Account, error)
-	AccountsMembership(ctx context.Context) ([]*model.AccountMembership, error)
-	AccountMembership(ctx context.Context, accountID repos.ID) (*model.AccountMembership, error)
-	StripeSetupIntent(ctx context.Context) (string, error)
-}
-type UserResolver interface {
-	Memberships(ctx context.Context, obj *model.User) ([]*model.Membership, error)
 }
 
 type executableSchema struct {
@@ -234,6 +211,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AccountMembership.Role(childComplexity), true
 
+	case "AccountMembership.user":
+		if e.complexity.AccountMembership.User == nil {
+			break
+		}
+
+		return e.complexity.AccountMembership.User(childComplexity), true
+
 	case "Billing.address":
 		if e.complexity.Billing.Address == nil {
 			break
@@ -278,27 +262,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindUserByID(childComplexity, args["id"].(repos.ID)), true
-
-	case "Membership.account":
-		if e.complexity.Membership.Account == nil {
-			break
-		}
-
-		return e.complexity.Membership.Account(childComplexity), true
-
-	case "Membership.role":
-		if e.complexity.Membership.Role == nil {
-			break
-		}
-
-		return e.complexity.Membership.Role(childComplexity), true
-
-	case "Membership.user":
-		if e.complexity.Membership.User == nil {
-			break
-		}
-
-		return e.complexity.Membership.User(childComplexity), true
 
 	case "Mutation.activateAccount":
 		if e.complexity.Mutation.ActivateAccount == nil {
@@ -420,39 +383,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Account(childComplexity, args["accountId"].(repos.ID)), true
 
-	case "Query.accountMembership":
-		if e.complexity.Query.AccountMembership == nil {
-			break
-		}
-
-		args, err := ec.field_Query_accountMembership_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.AccountMembership(childComplexity, args["accountId"].(repos.ID)), true
-
-	case "Query.accounts":
-		if e.complexity.Query.Accounts == nil {
-			break
-		}
-
-		return e.complexity.Query.Accounts(childComplexity), true
-
-	case "Query.accountsMembership":
-		if e.complexity.Query.AccountsMembership == nil {
-			break
-		}
-
-		return e.complexity.Query.AccountsMembership(childComplexity), true
-
-	case "Query.stripeSetupIntent":
-		if e.complexity.Query.StripeSetupIntent == nil {
-			break
-		}
-
-		return e.complexity.Query.StripeSetupIntent(childComplexity), true
-
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
 			break
@@ -472,19 +402,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.__resolve_entities(childComplexity, args["representations"].([]map[string]interface{})), true
 
+	case "User.accountMemberships":
+		if e.complexity.User.AccountMemberships == nil {
+			break
+		}
+
+		return e.complexity.User.AccountMemberships(childComplexity), true
+
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
 		}
 
 		return e.complexity.User.ID(childComplexity), true
-
-	case "User.memberships":
-		if e.complexity.User.Memberships == nil {
-			break
-		}
-
-		return e.complexity.User.Memberships(childComplexity), true
 
 	case "_Service.sdl":
 		if e.complexity._Service.SDL == nil {
@@ -558,13 +488,13 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type Query {
-    accounts: [Account!]!
+    # accounts: [Account!]!
     account(accountId: ID!): Account
 
-    accountsMembership: [AccountMembership!]!
-    accountMembership(accountId: ID!): AccountMembership!
+    # accountsMemberships: [AccountMembership!]!
+    # accountMembership(accountId: ID!): AccountMembership!
 
-    stripeSetupIntent: String!
+    # stripeSetupIntent: String!
 }
 
 type Mutation {
@@ -590,10 +520,10 @@ type Mutation {
     deleteAccount(accountId: ID!): Boolean!
 }
 
-type AccountMembership {
-    account: Account!
-    role: String!
-}
+# type AccountMembership {
+#     account: Account!
+#     role: String!
+# }
 
 scalar Json
 scalar Date
@@ -605,16 +535,15 @@ type Account @key(fields: "id") {
     isActive: Boolean!
     contactEmail: String!
     readableId: ID!
-    memberships: [Membership!]!
+    memberships: [AccountMembership!]!
     created: Date!
 }
 
 extend type User @key(fields: "id") {
     id: ID! @external
-    memberships:[Membership!]!
+    accountMemberships:[AccountMembership!]!
 }
-
-type Membership {
+type AccountMembership {
     user: User!
     role: String!
     account: Account!
@@ -955,21 +884,6 @@ func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_accountMembership_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_account_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1263,9 +1177,9 @@ func (ec *executionContext) _Account_memberships(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Membership)
+	res := resTmp.([]*model.AccountMembership)
 	fc.Result = res
-	return ec.marshalNMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐMembershipᚄ(ctx, field.Selections, res)
+	return ec.marshalNAccountMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembershipᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Account_created(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
@@ -1303,7 +1217,7 @@ func (ec *executionContext) _Account_created(ctx context.Context, field graphql.
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AccountMembership_account(ctx context.Context, field graphql.CollectedField, obj *model.AccountMembership) (ret graphql.Marshaler) {
+func (ec *executionContext) _AccountMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.AccountMembership) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1321,7 +1235,7 @@ func (ec *executionContext) _AccountMembership_account(ctx context.Context, fiel
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Account, nil
+		return obj.User, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1333,9 +1247,9 @@ func (ec *executionContext) _AccountMembership_account(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Account)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AccountMembership_role(ctx context.Context, field graphql.CollectedField, obj *model.AccountMembership) (ret graphql.Marshaler) {
@@ -1371,6 +1285,41 @@ func (ec *executionContext) _AccountMembership_role(ctx context.Context, field g
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AccountMembership_account(ctx context.Context, field graphql.CollectedField, obj *model.AccountMembership) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AccountMembership",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Account, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Account)
+	fc.Result = res
+	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Billing_stripeCustomerId(ctx context.Context, field graphql.CollectedField, obj *model.Billing) (ret graphql.Marshaler) {
@@ -1560,111 +1509,6 @@ func (ec *executionContext) _Entity_findUserByID(ctx context.Context, field grap
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Membership_user(ctx context.Context, field graphql.CollectedField, obj *model.Membership) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Membership().User(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Membership_role(ctx context.Context, field graphql.CollectedField, obj *model.Membership) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Role, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Membership_account(ctx context.Context, field graphql.CollectedField, obj *model.Membership) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Membership().Account(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Account)
-	fc.Result = res
-	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2045,41 +1889,6 @@ func (ec *executionContext) _Mutation_deleteAccount(ctx context.Context, field g
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_accounts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Accounts(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Account)
-	fc.Result = res
-	return ec.marshalNAccount2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountᚄ(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_account(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2117,118 +1926,6 @@ func (ec *executionContext) _Query_account(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.Account)
 	fc.Result = res
 	return ec.marshalOAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_accountsMembership(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AccountsMembership(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.AccountMembership)
-	fc.Result = res
-	return ec.marshalNAccountMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembershipᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_accountMembership(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_accountMembership_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AccountMembership(rctx, args["accountId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.AccountMembership)
-	fc.Result = res
-	return ec.marshalNAccountMembership2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembership(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_stripeSetupIntent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().StripeSetupIntent(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2414,7 +2111,7 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_memberships(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_accountMemberships(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2425,14 +2122,14 @@ func (ec *executionContext) _User_memberships(ctx context.Context, field graphql
 		Object:     "User",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Memberships(rctx, obj)
+		return obj.AccountMemberships, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2444,9 +2141,9 @@ func (ec *executionContext) _User_memberships(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Membership)
+	res := resTmp.([]*model.AccountMembership)
 	fc.Result = res
-	return ec.marshalNMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐMembershipᚄ(ctx, field.Selections, res)
+	return ec.marshalNAccountMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembershipᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) __Service_sdl(ctx context.Context, field graphql.CollectedField, obj *fedruntime.Service) (ret graphql.Marshaler) {
@@ -3866,9 +3563,9 @@ func (ec *executionContext) _AccountMembership(ctx context.Context, sel ast.Sele
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AccountMembership")
-		case "account":
+		case "user":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AccountMembership_account(ctx, field, obj)
+				return ec._AccountMembership_user(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -3879,6 +3576,16 @@ func (ec *executionContext) _AccountMembership(ctx context.Context, sel ast.Sele
 		case "role":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._AccountMembership_role(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "account":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._AccountMembership_account(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -4012,77 +3719,6 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
-			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var membershipImplementors = []string{"Membership"}
-
-func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSet, obj *model.Membership) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, membershipImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Membership")
-		case "user":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Membership_user(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "role":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Membership_role(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "account":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Membership_account(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
 			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -4234,29 +3870,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "accounts":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_accounts(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
 		case "account":
 			field := field
 
@@ -4267,75 +3880,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_account(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "accountsMembership":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_accountsMembership(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "accountMembership":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_accountMembership(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "stripeSetupIntent":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_stripeSetupIntent(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			}
 
@@ -4435,28 +3979,18 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
-		case "memberships":
-			field := field
-
+		case "accountMemberships":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_memberships(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+				return ec._User_accountMemberships(ctx, field, obj)
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			out.Values[i] = innerFunc(ctx)
 
-			})
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4923,50 +4457,6 @@ func (ec *executionContext) marshalNAccount2kloudliteᚗioᚋappsᚋfinanceᚋin
 	return ec._Account(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAccount2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Account) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -4975,10 +4465,6 @@ func (ec *executionContext) marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinance�
 		return graphql.Null
 	}
 	return ec._Account(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNAccountMembership2kloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembership(ctx context.Context, sel ast.SelectionSet, v model.AccountMembership) graphql.Marshaler {
-	return ec._AccountMembership(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNAccountMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembershipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AccountMembership) graphql.Marshaler {
@@ -5115,60 +4601,6 @@ func (ec *executionContext) marshalNJson2map(ctx context.Context, sel ast.Select
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐMembershipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Membership) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNMembership2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐMembership(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNMembership2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐMembership(ctx context.Context, sel ast.SelectionSet, v *model.Membership) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Membership(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
