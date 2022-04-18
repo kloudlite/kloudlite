@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/messaging"
 
 	"kloudlite.io/common"
@@ -31,6 +32,9 @@ type domainI struct {
 	messenger       Messenger
 	verifyTokenRepo cache.Repo[*VerifyToken]
 	resetTokenRepo  cache.Repo[*ResetPasswordToken]
+	github          Github
+	// gitlab          Gitlab
+	// google          Google
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
@@ -43,21 +47,11 @@ func (d *domainI) GetUserById(ctx context.Context, id repos.ID) (*User, error) {
 }
 
 func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *domainI) GetLoginDetails(ctx context.Context, provider string, state *string) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	return d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 }
 
 func (d *domainI) Login(ctx context.Context, email string, password string) (*common.AuthSession, error) {
-	matched, err := d.userRepo.FindOne(ctx, repos.Query{
-		Filter: repos.Filter{
-			"email": email,
-		},
-	})
+	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		return nil, err
 	}
@@ -71,24 +65,24 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 		matched.Verified,
 		"email/password",
 	)
-	cache.SetSession(ctx, session)
 	return session, nil
 }
 
-func (d *domainI) InviteUser(ctx context.Context, email string, name string) (repos.ID, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (d *domainI) SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error) {
-	matched, err := d.userRepo.FindOne(ctx, repos.Query{
-		Filter: repos.Filter{
-			"email": email,
-		},
-	})
-	if matched != nil {
-		return nil, errors.New("User Already exist")
+	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
+
+	if err != nil {
+		if matched != nil {
+			return nil, err
+		}
 	}
+
+	if matched != nil {
+		if matched.Email == email {
+			return nil, errors.Newf("user(email=%s) already exists", email)
+		}
+	}
+
 	salt := generateId("salt")
 	sum := md5.Sum([]byte(password + salt))
 	create, err := d.userRepo.Create(ctx, &User{
@@ -100,19 +94,32 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		Joined:       time.Now(),
 		PasswordSalt: salt,
 	})
+
 	if err != nil {
 		return nil, err
 	}
+
 	err = d.generateAndSendVerificationToken(ctx, create)
 	if err != nil {
 		return nil, err
 	}
+
 	return common.NewSession(
 		string(create.Id),
 		create.Email,
 		create.Verified,
 		"email/password",
 	), nil
+}
+
+func (d *domainI) GetLoginDetails(ctx context.Context, provider string, state *string) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *domainI) InviteUser(ctx context.Context, email string, name string) (repos.ID, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (d *domainI) SetUserMetadata(ctx context.Context, userId repos.ID, metadata UserMetadata) (*User, error) {
@@ -165,15 +172,13 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 
 func (d *domainI) ResetPassword(ctx context.Context, token string, password string) (bool, error) {
 	get, err := d.resetTokenRepo.Get(ctx, token)
-	if err != nil {
-		return false, err
+	if err != nil || get == nil {
+		return false, errors.NewEf(err, "failed to verify reset password token")
 	}
-	if get == nil {
-		return false, errors.New("unable to verify link")
-	}
-	user, err := d.userRepo.FindById(ctx, repos.ID(get.UserId))
+
+	user, err := d.userRepo.FindById(ctx, get.UserId)
 	if err != nil {
-		return false, errors.New("unable to find user")
+		return false, errors.NewEf(err, "unable to find user")
 	}
 	salt := generateId("salt")
 	sum := md5.Sum([]byte(password + salt))
@@ -184,10 +189,11 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	if err != nil {
 		return false, err
 	}
+
 	err = d.resetTokenRepo.Drop(ctx, token)
 	if err != nil {
 		// TODO silent fail
-		fmt.Println("[ERROR]", err)
+		fmt.Printf("[ERROR] could not delete resetpassword roken as %+v", err)
 		return false, nil
 	}
 	return true, nil
@@ -195,16 +201,11 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 
 func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool, error) {
 	resetToken := generateId("reset")
-	one, err := d.userRepo.FindOne(ctx, repos.Query{Filter: repos.Filter{
-		"email": email,
-	}})
+	one, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		return false, err
 	}
-	err = d.resetTokenRepo.SetWithExpiry(ctx, resetToken, &ResetPasswordToken{
-		Token:  resetToken,
-		UserId: string(one.Id),
-	}, time.Second*24*60*60)
+	err = d.resetTokenRepo.SetWithExpiry(ctx, resetToken, &ResetPasswordToken{Token: resetToken, UserId: one.Id}, time.Second*24*60*60)
 	if err != nil {
 		return false, err
 	}
@@ -270,8 +271,63 @@ func (d *domainI) ChangePassword(ctx context.Context, id repos.ID, currentPasswo
 	return false, errors.New("invalid credentials")
 }
 
+func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state string) (string, error) {
+	if provider == common.ProviderGithub {
+		return d.github.Authorize(ctx, state)
+	}
+
+	if provider == common.ProviderGitlab {
+		return d.github.Authorize(ctx, state)
+	}
+
+	if provider == common.ProviderGoogle {
+		return d.github.Authorize(ctx, state)
+	}
+
+	return "", errors.Newf("Unsupported provider (%v)", provider)
+}
+
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
-	//TODO implement me
+	switch provider {
+	case common.ProviderGithub:
+		{
+			u, t, err := d.github.Callback(ctx, code, state)
+			if err != nil {
+				return nil, errors.NewEf(err, "could not login to github")
+			}
+			//STEP: find if this user has account with this email
+			user, err := d.userRepo.FindOne(ctx, repos.Filter{})
+			if err != nil {
+				return nil, errors.NewEf(err, "could not find user")
+			}
+
+			token, err := d.accessTokenRepo.Create(ctx, &AccessToken{
+				UserId:   user.Id,
+				Email:    user.Email,
+				Provider: provider,
+				Token:    t,
+			})
+
+			if user != nil {
+				// ASSERT: user exists
+				user.ProviderGithub = &ProviderDetail{
+					TokenId: token.Id,
+					Avatar: "",
+				}
+				d.userRepo.UpdateById(ctx, user.Id)
+			}
+
+			// STEP: if has then, update his token, otherwise create new token
+		}
+
+	case common.ProviderGitlab:
+		{
+		}
+
+	case common.ProviderGoogle:
+		{
+		}
+	}
 	panic("implement me")
 }
 
@@ -295,7 +351,7 @@ func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *Us
 	verificationToken := generateId("invite")
 	err := d.verifyTokenRepo.SetWithExpiry(ctx, verificationToken, &VerifyToken{
 		Token:  verificationToken,
-		UserId: string(user.Id),
+		UserId: user.Id,
 	}, time.Second*24*60*60)
 	if err != nil {
 		return err
@@ -313,12 +369,14 @@ func fxDomain(
 	verifyTokenRepo cache.Repo[*VerifyToken],
 	resetTokenRepo cache.Repo[*ResetPasswordToken],
 	messenger Messenger,
+	github Github,
 ) Domain {
 	return &domainI{
-		userRepo,
-		accessTokenRepo,
-		messenger,
-		verifyTokenRepo,
-		resetTokenRepo,
+		userRepo:        userRepo,
+		accessTokenRepo: accessTokenRepo,
+		messenger:       messenger,
+		verifyTokenRepo: verifyTokenRepo,
+		resetTokenRepo:  resetTokenRepo,
+		github:          github,
 	}
 }

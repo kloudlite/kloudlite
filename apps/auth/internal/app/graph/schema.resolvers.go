@@ -6,11 +6,13 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/cache"
+	klErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -109,18 +111,12 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword s
 	return r.d.ChangePassword(ctx, repos.ID(session.UserId), currentPassword, newPassword)
 }
 
-func (r *mutationResolver) OauthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
-	sessionEntity, err := r.d.OauthLogin(ctx, provider, state, code)
-	cache.SetSession(ctx, sessionEntity)
-	return sessionModelFromAuthSession(sessionEntity), err
+func (r *mutationResolver) OAuthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) OauthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("user is not logged in")
-	}
-	return r.d.OauthAddLogin(ctx, repos.ID(session.UserId), provider, state, code)
+func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
@@ -141,7 +137,15 @@ func (r *queryResolver) FindByEmail(ctx context.Context, email string) (*model.U
 }
 
 func (r *queryResolver) RequestLogin(ctx context.Context, provider string, state *string) (string, error) {
-	return r.d.GetLoginDetails(ctx, provider, state)
+	_state := ""
+	if state != nil {
+		_state = *state
+	}
+	url, err := r.d.OauthRequestLogin(ctx, provider, _state)
+	if err != nil {
+		return "", klErrors.NewE(err)
+	}
+	return url, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -152,3 +156,23 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+
+func (r *mutationResolver) OauthLogin(ctx context.Context, provider string, state string, code string) (*model.Session, error) {
+	sessionEntity, err := r.d.OauthLogin(ctx, provider, state, code)
+	cache.SetSession(ctx, sessionEntity)
+	return sessionModelFromAuthSession(sessionEntity), err
+}
+func (r *mutationResolver) OauthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user is not logged in")
+	}
+	return r.d.OauthAddLogin(ctx, repos.ID(session.UserId), provider, state, code)
+}

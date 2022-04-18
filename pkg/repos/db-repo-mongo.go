@@ -40,8 +40,8 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	return results, err
 }
 
-func (repo dbRepo[T]) FindOne(ctx context.Context, query Query) (T, error) {
-	one := repo.db.Collection(repo.collectionName).FindOne(ctx, query.Filter)
+func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
+	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	var res T
 	err := one.Decode(&res)
 	if err != nil {

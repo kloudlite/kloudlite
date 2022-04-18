@@ -29,7 +29,7 @@ func (env *Env) GetGRPCPort() uint16 {
 }
 
 var Module = fx.Module("framework",
-	config.EnvFx[*Env](),
+	config.EnvFx[Env](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	rpc.NewGrpcServerFx[*Env](),

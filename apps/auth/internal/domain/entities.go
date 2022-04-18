@@ -3,6 +3,7 @@ package domain
 import (
 	"time"
 
+	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -18,16 +19,16 @@ const (
 type UserMetadata map[string]any
 
 type ProviderDetail struct {
-	TokenId string `json:"token_id" bson:"token_id"`
+	TokenId repos.ID `json:"token_id" bson:"token_id"`
 	Avatar  string `json:"avatar" bson:"avatar"`
 }
 
 type Session struct {
 	ID           repos.ID `json:"id"`
-	UserID       repos.ID `json:"userId"`
-	UserEmail    string   `json:"userEmail"`
-	LoginMethod  string   `json:"loginMethod"`
-	UserVerified bool     `json:"userVerified"`
+	UserID       repos.ID `json:"user_id"`
+	UserEmail    string   `json:"user_email"`
+	LoginMethod  string   `json:"login_method"`
+	UserVerified bool     `json:"user_verified"`
 }
 
 type User struct {
@@ -46,35 +47,61 @@ type User struct {
 	PasswordSalt     string           `json:"password_salt"`
 }
 
-var UserIndexes = []string{"email", "id"}
+var UserIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "email", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
 
 type AccessToken struct {
 	repos.BaseEntity `bson:",inline"`
-	UserId           *string        `json:"user_id" bson:"user_id"`
-	Email            *string        `json:"email" bson:"email"`
+	UserId           repos.ID       `json:"user_id" bson:"user_id"`
+	Email            string         `json:"email" bson:"email"`
 	Provider         string         `json:"provider" bson:"provider"`
-	Token            string         `json:"token" bson:"token"`
+	Token            *oauth2.Token  `json:"token" bson:"token"`
 	Data             map[string]any `json:"data" bson:"data"`
 }
 
-var AccessTokenIndexes = []string{"user_id", "id"}
+var AccessTokenIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "user_id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
 
 type InviteToken struct {
-	Token  string `json:"token"`
-	UserId string `json:"user_id"`
+	Token  string   `json:"token"`
+	UserId repos.ID `json:"user_id"`
 }
 
 type VerifyToken struct {
-	Token  string `json:"token"`
-	UserId string `json:"user_id"`
+	Token  string   `json:"token"`
+	UserId repos.ID `json:"user_id"`
 }
 
 type ResetPasswordToken struct {
-	Token  string `json:"token"`
-	UserId string `json:"user_id"`
+	Token  string   `json:"token"`
+	UserId repos.ID `json:"user_id"`
 }
 
 type ChangeEmailToken struct {
-	Token  string `json:"token"`
-	UserId string `json:"user_id"`
+	Token  string   `json:"token"`
+	UserId repos.ID `json:"user_id"`
 }

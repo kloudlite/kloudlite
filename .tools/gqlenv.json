@@ -1,10 +1,11 @@
 {
   "mode": "dev",
   "dev": {
-    "url": "https://nxt.gateway.dev.madhouselabs.io",
+    "url2": "https://gateway.kl.madhouselabs.io",
+    "url": "http://localhost:4001",
     "cluster": "hotspot-01.dev",
     "headers": {
-      "cookie": "hotspot-session=sess-PKjLuiY4QZqlVoQrz_qsjjRNxGNyv8rx; Domain=.dev.madhouselabs.io; Path=/; HttpOnly; Secure; SameSite=None"
+      "cookie": "my-cookie=value"
     }
   }
 }

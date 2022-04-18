@@ -1,0 +1,40 @@
+---
+query: |
+  mutation Signup($email: String!, $name: String!, $password: String!) {
+    signup(email: $email, name: $name, password: $password) {
+      id
+      userId
+      userEmail
+      userVerified
+      loginMethod
+    }
+  }
+variables:
+  email: sample@gmail.com
+  password: sample
+  name: Sample Kumar
+
+---
+label: Login
+query: |
+  mutation Login($email: String!, $password: String!) {
+    login(email: $email, password: $password) {
+      userId
+      userEmail
+    }
+  }
+variables:
+  email: sample@gmail.com
+  password: sample
+
+---
+
+label: "OAuth Login Request"
+query: |
+  query RequestLogin($provider: String!) {
+    requestLogin(provider: $provider)
+  }
+
+variables:
+  provider: github
+
