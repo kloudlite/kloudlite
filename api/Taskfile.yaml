@@ -4,3 +4,11 @@ includes:
   console: 
     taskfile: ./apps/console/Taskfile.yml
     dir: ./apps/console
+
+  grpc:
+    taskfile: ./apps/grpc-interfaces/Taskfile.yml
+    dir: ./apps/grpc-interfaces
+
+  iam:
+    taskfile: ./apps/iam/Taskfile.yml
+    dir: ./apps/console

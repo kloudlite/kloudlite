@@ -20,7 +20,7 @@ type UserMetadata map[string]any
 
 type ProviderDetail struct {
 	TokenId repos.ID `json:"token_id" bson:"token_id"`
-	Avatar  string `json:"avatar" bson:"avatar"`
+	Avatar  *string  `json:"avatar" bson:"avatar"`
 }
 
 type Session struct {
