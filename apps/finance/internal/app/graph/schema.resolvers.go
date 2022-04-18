@@ -17,15 +17,7 @@ import (
 )
 
 func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.Membership, error) {
-	memberShipEntities, err := r.domain.GetAccountMemberShips(ctx, obj.ID)
-	if err != nil {
-		return nil, err
-	}
-	memberships := make([]*model.Membership, 0)
-	for _, mse := range memberShipEntities {
-		memberships = append(memberships, AccountModelFromEntity(mse))
-	}
-	return err, nil
+	panic("implement me")
 }
 
 func (r *membershipResolver) User(ctx context.Context, obj *model.Membership) (*model.User, error) {
