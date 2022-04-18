@@ -4,7 +4,7 @@ tasks:
   gql:
     dir: ./internal/app
     cmds:
-      - go run github.com/99designs/gqlgen generate
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
     env:
       MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
