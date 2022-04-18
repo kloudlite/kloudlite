@@ -80,7 +80,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		ActivateAccount      func(childComplexity int, accountID repos.ID) int
-		AddAccountMember     func(childComplexity int, accountID string, email string, name string, role string) int
+		AddAccountMember     func(childComplexity int, accountID string, userID repos.ID, role string) int
 		CreateAccount        func(childComplexity int, name string, billing *model.BillingInput) int
 		DeactivateAccount    func(childComplexity int, accountID repos.ID) int
 		DeleteAccount        func(childComplexity int, accountID repos.ID) int
@@ -122,7 +122,7 @@ type MutationResolver interface {
 	CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error)
 	UpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error)
 	UpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error)
-	AddAccountMember(ctx context.Context, accountID string, email string, name string, role string) (bool, error)
+	AddAccountMember(ctx context.Context, accountID string, userID repos.ID, role string) (bool, error)
 	RemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error)
 	UpdateAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID, role string) (bool, error)
 	DeactivateAccount(ctx context.Context, accountID repos.ID) (bool, error)
@@ -295,7 +295,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddAccountMember(childComplexity, args["accountId"].(string), args["email"].(string), args["name"].(string), args["role"].(string)), true
+		return e.complexity.Mutation.AddAccountMember(childComplexity, args["accountId"].(string), args["userId"].(repos.ID), args["role"].(string)), true
 
 	case "Mutation.createAccount":
 		if e.complexity.Mutation.CreateAccount == nil {
@@ -519,8 +519,7 @@ type Mutation {
     ): Account!
     addAccountMember(
         accountId: String!
-        email: String!
-        name: String!
+        userId: ID!
         role: String!
     ): Boolean!
     removeAccountMember(accountId: ID!, userId: ID!): Boolean!
@@ -530,10 +529,6 @@ type Mutation {
     deleteAccount(accountId: ID!): Boolean!
 }
 
-# type AccountMembership {
-#     account: Account!
-#     role: String!
-# }
 
 scalar Json
 scalar Date
@@ -666,33 +661,24 @@ func (ec *executionContext) field_Mutation_addAccountMember_args(ctx context.Con
 		}
 	}
 	args["accountId"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["email"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg1 repos.ID
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["email"] = arg1
+	args["userId"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["role"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["role"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["role"] = arg3
+	args["role"] = arg2
 	return args, nil
 }
 
@@ -1672,7 +1658,7 @@ func (ec *executionContext) _Mutation_addAccountMember(ctx context.Context, fiel
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddAccountMember(rctx, args["accountId"].(string), args["email"].(string), args["name"].(string), args["role"].(string))
+		return ec.resolvers.Mutation().AddAccountMember(rctx, args["accountId"].(string), args["userId"].(repos.ID), args["role"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

@@ -20,8 +20,7 @@ type Mutation {
     ): Account!
     addAccountMember(
         accountId: String!
-        email: String!
-        name: String!
+        userId: ID!
         role: String!
     ): Boolean!
     removeAccountMember(accountId: ID!, userId: ID!): Boolean!
