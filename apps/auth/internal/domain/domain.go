@@ -23,7 +23,7 @@ type Domain interface {
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)
 
 	//
-	GithubInstallationToken(ctx context.Context) (string, error)
+	GithubInstallationToken(ctx context.Context, installationId int64) (string, error)
 
 	//TODO
 	GetLoginDetails(ctx context.Context, provider string, state *string) (string, error)
