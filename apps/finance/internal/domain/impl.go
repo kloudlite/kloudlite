@@ -19,6 +19,53 @@ type domainI struct {
 	accountRepo repos.DbRepo[*Account]
 }
 
+func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
+	rbs, err := domain.iamCli.ListResourceMemberships(ctx, &iam.InResourceMemberships{
+		ResourceId:   string(id),
+		ResourceType: common.ResourceAccount,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var memberships []*Membership
+	for _, rb := range rbs.RoleBindings {
+		memberships = append(memberships, &Membership{
+			AccountId: repos.ID(rb.ResourceId),
+			UserId:    repos.ID(rb.UserId),
+			Role:      common.Role(rb.Role),
+		})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return memberships, nil
+}
+
+func (domain *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
+	rbs, err := domain.iamCli.ListUserMemberships(ctx, &iam.InUserMemberships{
+		UserId:       string(id),
+		ResourceType: common.ResourceAccount,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var memberships []*Membership
+
+	for _, rb := range rbs.RoleBindings {
+		memberships = append(memberships, &Membership{
+			AccountId: repos.ID(rb.ResourceId),
+			UserId:    repos.ID(rb.UserId),
+			Role:      common.Role(rb.Role),
+		})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return memberships, nil
+}
+
 func generateReadable(name string) string {
 	compile := regexp.MustCompile(`[^0-9a-zA-Z:,/s]+`)
 	allString := compile.ReplaceAllString(strings.ToLower(name), "")
@@ -43,11 +90,16 @@ func (domain *domainI) CreateAccount(
 		CreatedAt:  time.Time{},
 		ReadableId: repos.ID(generateReadable(name)),
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
 		ResourceType: common.ResourceAccount,
 		ResourceId:   string(create.Id),
-		Role:         string(iam.AccountOwner),
+		Role:         string(common.AccountOwner),
 	})
 	if err != nil {
 		return nil, err
@@ -90,39 +142,94 @@ func (domain *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, d 
 	return updated, nil
 }
 
-func (domain *domainI) InviteAccountMember(ctx context.Context, id string, email string, name string, role string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+func (domain *domainI) AddAccountMember(
+	ctx context.Context,
+	accountId repos.ID,
+	userId repos.ID,
+	role common.Role,
+) (bool, error) {
+	_, err := domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
+		UserId:       string(userId),
+		ResourceType: common.ResourceAccount,
+		ResourceId:   string(accountId),
+		Role:         string(role),
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (domain *domainI) RemoveAccountMember(ctx context.Context, id repos.ID, id2 repos.ID) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+func (domain *domainI) RemoveAccountMember(
+	ctx context.Context,
+	accountId repos.ID,
+	userId repos.ID,
+) (bool, error) {
+	_, err := domain.iamCli.RemoveMembership(ctx, &iam.InRemoveMembership{
+		UserId:     string(userId),
+		ResourceId: string(accountId),
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (domain *domainI) UpdateAccountMember(ctx context.Context, id repos.ID, id2 repos.ID, role string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+func (domain *domainI) UpdateAccountMember(
+	ctx context.Context,
+	accountId repos.ID,
+	userId repos.ID,
+	role string,
+) (bool, error) {
+	_, err := domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
+		UserId:       string(userId),
+		ResourceType: common.ResourceAccount,
+		ResourceId:   string(accountId),
+		Role:         string(role),
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (domain *domainI) DeactivateAccount(ctx context.Context, id repos.ID) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+func (domain *domainI) DeactivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+	matched, err := domain.accountRepo.FindById(ctx, accountId)
+	if err != nil {
+		return false, err
+	}
+	matched.IsActive = false
+	_, err = domain.accountRepo.UpdateById(ctx, accountId, matched)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (domain *domainI) ActivateAccount(ctx context.Context, id repos.ID) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+func (domain *domainI) ActivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+	matched, err := domain.accountRepo.FindById(ctx, accountId)
+	if err != nil {
+		return false, err
+	}
+	matched.IsActive = true
+	_, err = domain.accountRepo.UpdateById(ctx, accountId, matched)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (domain *domainI) DeleteAccount(ctx context.Context, id repos.ID) (bool, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (domain *domainI) ListAccounts(ctx context.Context, id repos.ID) ([]*Account, error) {
-	//TODO implement me
-	panic("implement me")
+func (domain *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+	matched, err := domain.accountRepo.FindById(ctx, accountId)
+	if err != nil {
+		return false, err
+	}
+	matched.IsDeleted = true
+	_, err = domain.accountRepo.UpdateById(ctx, accountId, matched)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {

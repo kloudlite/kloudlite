@@ -3,27 +3,30 @@ version: "3"
 tasks:
   gql:
     dir: ./internal/app
-    cmds: 
-      - go run github.com/99designs/gqlgen generate
+    cmds:
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
     env:
       MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
-#      MONGO_URI: mongodb://localhost:27017
-      # MONGO_URI: "***REMOVED***"
-      # REDIS_URI: redis://redis-headless:6379
-      # REDIS_URI: ***REMOVED***
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
 #      REDIS_USERNAME: hotspot-user
 #      REDIS_PASSWORD: ***REMOVED***
       MONGO_DB_NAME: console-go
-      PORT: 4001
+      PORT: 4002
       DEV: true
       KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
-#      KAFKA_BOOTSTRAP_SERVERS: kafka-kafka-0.kafka-kafka-brokers.hotspot:9092,kafka-kafka-1.kafka-kafka-brokers.hotspot:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
     sources:
       - ./internal/**/*.go
       - ./main.go
     cmds:
-      - go run ./main.go --dev
+      - go run -tags dynamic ./main.go --dev
+  docker-build:
+    dir: ../..
+    vars:
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/finance:v2
+      APP_DIR: ./apps/finance
+    cmds:
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker push {{.IMAGE}}

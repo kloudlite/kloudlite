@@ -34,7 +34,7 @@ type Env struct {
 
 var Module = fx.Module(
 	"app",
-	fx.Provide(config.LoadEnv[*Env]()),
+	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
 	repos.NewFxMongoRepo[*entities.Device]("devices", "dev", entities.DeviceIndexes),
 	fx.Module("producer",

@@ -50,13 +50,15 @@ models:
       - github.com/99designs/gqlgen/graphql.Map
   User:
     fields:
-      memberships:
+      accountMemberships:
+      # memberships:
         resolver: true
   Account:
     fields:
+      # accountMemberships:
       memberships:
         resolver: true
-  Membership:
+  AccountMembership:
     fields:
       user:
         resolver: true
