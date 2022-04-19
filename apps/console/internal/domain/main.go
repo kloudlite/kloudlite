@@ -21,88 +21,96 @@ type domain struct {
 	infraMessenger  InfraMessenger
 }
 
-func (d *domain) UpdateClusterState(
-	ctx context.Context,
-	id repos.ID,
-	status entities.ClusterStatus,
-	PublicIp *string,
-	PublicKey *string,
-) (bool, error) {
-	byId, err := d.clusterRepo.FindById(ctx, id)
+func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClusterResponse) error {
+	byId, err := d.clusterRepo.FindById(ctx, response.ClusterID)
 	if err != nil {
-		return false, err
+		return err
 	}
-	byId.Status = status
-	if PublicIp != nil {
-		byId.Ip = PublicIp
+	if response.Done {
+		byId.Status = entities.ClusterStateLive
+	} else {
+		byId.Status = entities.ClusterStateError
 	}
-	if PublicKey != nil {
-		byId.PublicKey = PublicKey
+
+	if response.PublicIp != "" {
+		byId.Ip = &response.PublicIp
 	}
-	updateById, err := d.clusterRepo.UpdateById(ctx, id, byId)
+	if response.PublicKey != "" {
+		byId.PublicKey = &response.PublicKey
+	}
+	_, err = d.clusterRepo.UpdateById(ctx, response.ClusterID, byId)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return updateById.Status == status, nil
+	return nil
 }
 
-func (d *domain) UpdateDeviceState(ctx context.Context, id repos.ID, status entities.DeviceStatus) (bool, error) {
-	byId, err := d.deviceRepo.FindById(ctx, id)
+func (d *domain) OnDeleteCluster(cxt context.Context, response entities.DeleteClusterResponse) error {
+	byId, err := d.clusterRepo.FindById(cxt, response.ClusterID)
 	if err != nil {
-		return false, err
+		return err
 	}
-	byId.Status = status
-	updateById, err := d.deviceRepo.UpdateById(ctx, id, byId)
+	if response.Done {
+		byId.Status = entities.ClusterStateDown
+	} else {
+		byId.Status = entities.ClusterStateError
+	}
+	_, err = d.clusterRepo.UpdateById(cxt, response.ClusterID, byId)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return updateById.Status == status, nil
+	return nil
 }
 
-func (d *domain) RemoveDeviceDone(ctx context.Context, id repos.ID) error {
-	return d.deviceRepo.DeleteById(ctx, id)
+func (d *domain) OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error {
+	byId, err := d.clusterRepo.FindById(cxt, response.ClusterID)
+	if err != nil {
+		return err
+	}
+	if response.Done {
+		byId.Status = entities.ClusterStateLive
+	} else {
+		byId.Status = entities.ClusterStateError
+	}
+	_, err = d.clusterRepo.UpdateById(cxt, response.ClusterID, byId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (d *domain) _ClusterDown(ctx context.Context, id repos.ID) (bool, error) {
-	byId, err := d.clusterRepo.FindById(ctx, id)
+func (d *domain) OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error {
+	byId, err := d.deviceRepo.FindById(cxt, response.DeviceID)
 	if err != nil {
-		return false, err
+		return err
 	}
-	byId.Status = entities.ClusterStateDown
-	updateById, err := d.clusterRepo.UpdateById(ctx, id, byId)
+	if response.Done {
+		byId.Status = entities.DeviceStateAttached
+	} else {
+		byId.Status = entities.DeviceStateError
+	}
+	_, err = d.deviceRepo.UpdateById(cxt, response.ClusterID, byId)
 	if err != nil {
-		return false, err
+		return err
 	}
-	err = d.infraMessenger.SendDeleteClusterAction(entities.DeleteClusterAction{
-		ClusterID: string(updateById.Id),
-		Provider:  updateById.Provider,
-	})
-	if err != nil {
-		return false, err
-	}
-	return updateById.Status == entities.ClusterStateDown, nil
+	return nil
 }
 
-func (d *domain) _ClusterUp(ctx context.Context, id repos.ID) (bool, error) {
-	byId, err := d.clusterRepo.FindById(ctx, id)
+func (d *domain) OnDeletePeer(cxt context.Context, response entities.DeletePeerResponse) error {
+	byId, err := d.deviceRepo.FindById(cxt, response.DeviceID)
 	if err != nil {
-		return false, err
+		return err
 	}
-	byId.Status = entities.ClusterStateSyncing
-	updateById, err := d.clusterRepo.UpdateById(ctx, id, byId)
+	if response.Done {
+		byId.Status = entities.DeviceStateDeleted
+	} else {
+		byId.Status = entities.DeviceStateError
+	}
+	_, err = d.deviceRepo.UpdateById(cxt, response.ClusterID, byId)
 	if err != nil {
-		return false, err
+		return err
 	}
-	err = d.infraMessenger.SendUpdateClusterAction(entities.UpdateClusterAction{
-		ClusterID:  string(updateById.Id),
-		Region:     updateById.Region,
-		Provider:   updateById.Provider,
-		NodesCount: updateById.NodesCount,
-	})
-	if err != nil {
-		return false, err
-	}
-	return updateById.Status == entities.ClusterStateSyncing, nil
+	return nil
 }
 
 func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (cluster *entities.Cluster, e error) {
@@ -111,12 +119,15 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 	if err != nil {
 		return nil, err
 	}
-	err = d.infraMessenger.SendAddClusterAction(entities.SetupClusterAction{
-		ClusterID:  string(c.Id),
-		Region:     c.Region,
-		Provider:   c.Provider,
-		NodesCount: c.NodesCount,
-	})
+	err = SendAction(
+		d.infraMessenger,
+		entities.SetupClusterAction{
+			ClusterID:  c.Id,
+			Region:     c.Region,
+			Provider:   c.Provider,
+			NodesCount: c.NodesCount,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +156,8 @@ func (d *domain) UpdateCluster(
 		return nil, err
 	}
 	if c.Status == entities.ClusterStateSyncing {
-		err = d.infraMessenger.SendUpdateClusterAction(entities.UpdateClusterAction{
-			ClusterID:  string(id),
+		err = SendAction(d.infraMessenger, entities.UpdateClusterAction{
+			ClusterID:  id,
 			Region:     updated.Region,
 			Provider:   updated.Provider,
 			NodesCount: updated.NodesCount,
@@ -156,10 +167,6 @@ func (d *domain) UpdateCluster(
 		}
 	}
 	return updated, nil
-}
-
-func (d *domain) RemoveClusterDone(ctx context.Context, id repos.ID) error {
-	return d.clusterRepo.DeleteById(ctx, id)
 }
 
 func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
@@ -172,8 +179,8 @@ func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	err = d.infraMessenger.SendDeleteClusterAction(entities.DeleteClusterAction{
-		ClusterID: string(clusterId),
+	err = SendAction(d.infraMessenger, entities.DeleteClusterAction{
+		ClusterID: clusterId,
 		Provider:  cluster.Provider,
 	})
 	if err != nil {
@@ -191,16 +198,13 @@ func (d *domain) ListClusters(ctx context.Context, accountId repos.ID) ([]*entit
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (*entities.Device, error) {
-
 	cluster, e := d.clusterRepo.FindById(ctx, clusterId)
 	if e != nil {
 		return nil, fmt.Errorf("unable to fetch cluster %v", e)
 	}
-
 	if cluster.PublicKey == nil {
 		return nil, fmt.Errorf("cluster is not ready")
 	}
-
 	pk, e := wgtypes.GeneratePrivateKey()
 	if e != nil {
 		return nil, fmt.Errorf("unable to generate private key because %v", e)
@@ -250,11 +254,14 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 		return nil, fmt.Errorf("unable to persist in db %v", e)
 	}
 
-	d.infraMessenger.SendAddDeviceAction(entities.AddPeerAction{
-		ClusterID: string(clusterId),
+	e = SendAction(d.infraMessenger, entities.AddPeerAction{
+		ClusterID: clusterId,
 		PublicKey: pbKeyString,
 		PeerIp:    ip,
 	})
+	if e != nil {
+		return nil, e
+	}
 
 	return newDevice, e
 }
@@ -264,15 +271,19 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	_, err = d.UpdateDeviceState(ctx, deviceId, entities.DeviceStateSyncing)
+	device.Status = entities.DeviceStateSyncing
+	_, err = d.deviceRepo.UpdateById(ctx, deviceId, device)
 	if err != nil {
 		return err
 	}
-	d.infraMessenger.SendRemoveDeviceAction(entities.DeletePeerAction{
-		ClusterID: string(device.ClusterId),
-		DeviceID:  string(device.Id),
+	err = SendAction(d.infraMessenger, entities.DeletePeerAction{
+		ClusterID: device.ClusterId,
+		DeviceID:  device.Id,
 		PublicKey: *device.PublicKey,
 	})
+	if err != nil {
+		return err
+	}
 	return err
 }
 

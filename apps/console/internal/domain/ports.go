@@ -8,16 +8,6 @@ import (
 )
 
 type Domain interface {
-	UpdateClusterState(
-		ctx context.Context,
-		id repos.ID,
-		status entities.ClusterStatus,
-		PublicIp *string,
-		PublicKey *string,
-	) (bool, error)
-	UpdateDeviceState(ctx context.Context, id repos.ID, status entities.DeviceStatus) (bool, error)
-	RemoveClusterDone(ctx context.Context, id repos.ID) error
-	RemoveDeviceDone(ctx context.Context, id repos.ID) error
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
 	CreateCluster(
@@ -52,14 +42,22 @@ type Domain interface {
 	ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error)
 
 	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
-	_ClusterDown(ctx context.Context, id repos.ID) (bool, error)
-	_ClusterUp(ctx context.Context, id repos.ID) (bool, error)
+
+	OnSetupCluster(cxt context.Context, response entities.SetupClusterResponse) error
+	OnDeleteCluster(cxt context.Context, response entities.DeleteClusterResponse) error
+	OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
+	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
+	OnDeletePeer(cxt context.Context, response entities.DeletePeerResponse) error
+}
+
+type InfraActionMessage interface {
+	~entities.SetupClusterAction | ~entities.DeleteClusterAction | ~entities.UpdateClusterAction | ~entities.AddPeerAction | entities.DeletePeerAction
 }
 
 type InfraMessenger interface {
-	SendAddClusterAction(action entities.SetupClusterAction) error
-	SendDeleteClusterAction(action entities.DeleteClusterAction) error
-	SendUpdateClusterAction(action entities.UpdateClusterAction) error
-	SendAddDeviceAction(action entities.AddPeerAction) error
-	SendRemoveDeviceAction(entities.DeletePeerAction) error
+	SendAction(action any) error
+}
+
+func SendAction[T InfraActionMessage](i InfraMessenger, action T) error {
+	return i.SendAction(action)
 }
