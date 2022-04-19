@@ -2,10 +2,10 @@
   "mode": "dev",
   "dev": {
     "url2": "https://gateway.kl.madhouselabs.io",
-    "url": "http://localhost:4001",
+    "url": "http://localhost:3000",
     "cluster": "hotspot-01.dev",
     "headers": {
-      "cookie": "hotspot-session=ses-np9bijch4vqruq1n3bi6m18azmkw; Path=/; Domain=kl.madhouselabs.io; HttpOnly; Secure; SameSite=None"
+      "cookie": "hotspot-session=ses-7i3thxkfzgd3-72djdzamglqojqd; Path=/; Domain=kl.madhouselabs.io; HttpOnly; Secure; SameSite=None"
     }
   }
 }
