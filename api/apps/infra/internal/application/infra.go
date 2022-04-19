@@ -148,17 +148,13 @@ func (i *infraClient) waitForWireguardAvailability(clusterId string) error {
 
 	count := 0
 	for count < 200 {
-
-		cmd := exec.Command("kubectl", "get", "pods", "-n", "wireguard", "|", "grep", "-i", "1/1")
-		cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
-
-		_, e := cmd.Output()
-
-		fmt.Println(e)
+		cmd := exec.Command("kubectl", "wait", "--timeout=3s", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
+		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
+		o, e := cmd.Output()
+		fmt.Println(e, string(o))
 		if e == nil {
 			return nil
 		}
-
 		fmt.Println("waiting for wireguard pods to be running")
 		time.Sleep(time.Second * 6)
 		count++
