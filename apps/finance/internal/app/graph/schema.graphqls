@@ -1,6 +1,6 @@
 type Query {
     # accounts: [Account!]!
-    account(accountId: ID!): Account
+    finance_account(accountId: ID!): Account
 
     # accountsMemberships: [AccountMembership!]!
     # accountMembership(accountId: ID!): AccountMembership!
@@ -9,25 +9,15 @@ type Query {
 }
 
 type Mutation {
-    createAccount(
-        name: String!
-        billing: BillingInput
-    ): Account!
-    updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
-    updateAccountBilling(
-        accountId: ID!
-        billing: BillingInput!
-    ): Account!
-    addAccountMember(
-        accountId: String!
-        userId: ID!
-        role: String!
-    ): Boolean!
-    removeAccountMember(accountId: ID!, userId: ID!): Boolean!
-    updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
-    deactivateAccount(accountId: ID!): Boolean!
-    activateAccount(accountId: ID!): Boolean!
-    deleteAccount(accountId: ID!): Boolean!
+    finance_createAccount(name: String!, billing: BillingInput): Account!
+    finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
+    finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
+    finance_addAccountMember(accountId: String!, userId: ID!, role: String!): Boolean!
+    finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean!
+    finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
+    finance_deactivateAccount(accountId: ID!): Boolean!
+    finance_activateAccount(accountId: ID!): Boolean!
+    finance_deleteAccount(accountId: ID!): Boolean!
 }
 
 
