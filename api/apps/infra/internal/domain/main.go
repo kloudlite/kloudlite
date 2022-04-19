@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"fmt"
 	"go.uber.org/fx"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
 )
@@ -98,7 +100,7 @@ type Env struct {
 }
 
 var Module = fx.Module("domain",
-	fx.Provide(config.LoadEnv[*Env]()),
+	config.EnvFx[Env](),
 	fx.Provide(makeDomain),
 	fx.Invoke(func(d Domain, p messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
 
@@ -130,12 +132,12 @@ var Module = fx.Module("domain",
 		//	NodesCount: 2,
 		//})
 
-		//key, _ := wgtypes.GenerateKey()
-		//fmt.Println(key.String())
+		key, _ := wgtypes.GenerateKey()
+		fmt.Println(key.String())
 		//d.AddPeerToCluster(AddPeerAction{
 		//	ClusterID: "hotspot-dev-2",
 		//	PublicKey: key.PublicKey().String(),
-		//	PeerIp:    "10.13.13.103",
+		//	PeerIp:    "10.13.13.104",
 		//})
 
 		//d.DeletePeerFromCluster(DeletePeerAction{

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/console";
+
+service Console {
+  rpc CreateDefaultCluster(CreateClusterIn) returns (CreateClusterOut);
+}
+
+message CreateClusterIn {
+  string accountId = 1;
+  string accountName = 2;
+}
+
+message CreateClusterOut {
+ string clusterId = 1;
+}
+

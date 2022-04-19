@@ -37,7 +37,6 @@ type Query {
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
-  infra_listClusters: [Cluster!]
   infra_getCluster(clusterId: ID!): Cluster
   infra_getDevices(deviceId: ID!): Device
 }
@@ -161,6 +160,7 @@ type Route {
 extend type Account @key(fields: "id") {
   id: ID! @external
   projects: [Project!]!
+  clusters:[Cluster!]!
 }
 
 
@@ -393,6 +393,7 @@ type Cluster @key(fields: "id") {
   devices: [Device]
   nodesCount: Int!
   status: String!
+  account: Account!
 }
 
 type Device @key(fields: "id") {
