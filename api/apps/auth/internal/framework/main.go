@@ -36,8 +36,6 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 	return e.MongoUri, e.MongoDbName
 }
 
-// GithubConfig implements domain.OAuthProvider
-
 var Module = fx.Module("framework",
 	config.EnvFx[Env](),
 	fx.Provide(logger.NewLogger),
@@ -45,7 +43,4 @@ var Module = fx.Module("framework",
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
 	app.Module,
-	fx.Invoke(func() {
-		panic("NOT IMPLEMENTED")
-	}),
 )
