@@ -64,11 +64,21 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 		fx.Invoke(func(lf fx.Lifecycle, env T, logger logger.Logger, server *http.ServeMux) {
 			lf.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
-					corsOpt := cors.Options{
-						AllowedOrigins:   strings.Split(env.GetHttpCors(), ","),
-						AllowCredentials: true,
-						AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+					var corsOpt cors.Options
+					if env.GetHttpCors() != "" {
+						corsOpt = cors.Options{
+							AllowedOrigins:   strings.Split(env.GetHttpCors(), ","),
+							AllowCredentials: true,
+							AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+						}
 					}
+
+					// corsOpt = cors.Options{
+					// 	AllowedOrigins:   strings.Split(env.GetHttpCors(), ","),
+					// 	AllowCredentials: true,
+					// 	AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+					// }
+
 					return Start(ctx, env.GetHttpPort(), server, corsOpt, logger)
 				},
 			})
