@@ -16,5 +16,5 @@ tasks:
       DO_IMAGE_ID: 105984633
 
     cmds:
-      - go run main.go
+      - go run -tags dynamic main.go
 

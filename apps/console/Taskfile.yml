@@ -12,7 +12,8 @@ tasks:
 #      REDIS_USERNAME: hotspot-user
 #      REDIS_PASSWORD: ***REMOVED***
       MONGO_DB_NAME: console-go
-      PORT: 4002
+      PORT: 4001
+      GRPC_PORT: 8080
       DEV: true
       KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra

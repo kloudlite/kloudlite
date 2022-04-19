@@ -9,6 +9,7 @@ import (
 type Account struct {
 	ID       repos.ID   `json:"id"`
 	Projects []*Project `json:"projects"`
+	Clusters []*Cluster `json:"clusters"`
 }
 
 func (Account) IsEntity() {}
@@ -126,6 +127,7 @@ type Cluster struct {
 	Devices    []*Device `json:"devices"`
 	NodesCount int       `json:"nodesCount"`
 	Status     string    `json:"status"`
+	Account    *Account  `json:"account"`
 }
 
 func (Cluster) IsEntity() {}

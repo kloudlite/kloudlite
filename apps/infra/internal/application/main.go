@@ -38,7 +38,7 @@ func fxJobResponder(p messaging.Producer[any], env InfraEnv) domain.InfraJobResp
 }
 
 var Module = fx.Module("application",
-	fx.Provide(config.LoadEnv[*InfraEnv]()),
+	config.EnvFx[InfraEnv](),
 	fx.Provide(fxInfraClient),
 	fx.Provide(fxProducer),
 	fx.Provide(fxConsumer),
