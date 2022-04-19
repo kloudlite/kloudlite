@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/repos"
 	"math"
@@ -16,6 +17,7 @@ import (
 
 type domainI struct {
 	iamCli      iam.IAMClient
+	consoleCli  console.ConsoleClient
 	accountRepo repos.DbRepo[*Account]
 }
 
@@ -95,12 +97,22 @@ func (domain *domainI) CreateAccount(
 		return nil, err
 	}
 
-	domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
+	_, err = domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
 		ResourceType: common.ResourceAccount,
 		ResourceId:   string(create.Id),
 		Role:         string(common.AccountOwner),
 	})
+	if err != nil {
+		return nil, err
+	}
+	_, err = domain.consoleCli.CreateDefaultCluster(ctx, &console.CreateClusterIn{
+		AccountId:   string(create.Id),
+		AccountName: create.Name,
+	})
+	if err != nil {
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -239,9 +251,11 @@ func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, e
 func fxDomain(
 	accountRepo repos.DbRepo[*Account],
 	iamCli iam.IAMClient,
+	consoleClient console.ConsoleClient,
 ) Domain {
 	return &domainI{
 		iamCli,
+		consoleClient,
 		accountRepo,
 	}
 }

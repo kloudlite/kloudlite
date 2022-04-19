@@ -105,9 +105,9 @@ func (d *domain) _ClusterUp(ctx context.Context, id repos.ID) (bool, error) {
 	return updateById.Status == entities.ClusterStateSyncing, nil
 }
 
-func (d *domain) CreateCluster(ctx context.Context, data entities.Cluster) (cluster *entities.Cluster, e error) {
+func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (cluster *entities.Cluster, e error) {
 	data.Status = entities.ClusterStateSyncing
-	c, err := d.clusterRepo.Create(ctx, &data)
+	c, err := d.clusterRepo.Create(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -182,8 +182,12 @@ func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
 	return nil
 }
 
-func (d *domain) ListClusters(ctx context.Context) ([]*entities.Cluster, error) {
-	return d.clusterRepo.Find(ctx, repos.Query{})
+func (d *domain) ListClusters(ctx context.Context, accountId repos.ID) ([]*entities.Cluster, error) {
+	return d.clusterRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"account_id": accountId,
+		},
+	})
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (*entities.Device, error) {

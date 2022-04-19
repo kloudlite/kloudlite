@@ -49,6 +49,10 @@ models:
     fields:
       devices:
         resolver: true
+  Account:
+    fields:
+      clusters:
+        resolver: true
   Cluster:
     fields:
       devices:

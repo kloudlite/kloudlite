@@ -22,7 +22,7 @@ type Domain interface {
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
 	CreateCluster(
 		ctx context.Context,
-		data entities.Cluster,
+		data *entities.Cluster,
 	) (*entities.Cluster, error)
 	UpdateCluster(
 		ctx context.Context,
@@ -35,7 +35,7 @@ type Domain interface {
 		clusterId repos.ID,
 	) error
 
-	ListClusters(ctx context.Context) ([]*entities.Cluster, error)
+	ListClusters(ctx context.Context, accountId repos.ID) ([]*entities.Cluster, error)
 
 	AddDevice(
 		ctx context.Context,

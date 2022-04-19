@@ -41,11 +41,9 @@ func (r *accountMembershipResolver) User(ctx context.Context, obj *model.Account
 
 func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error) {
 	ae, err := r.domain.GetAccount(ctx, obj.Account.ID)
-
 	if err != nil {
 		return nil, err
 	}
-
 	return AccountModelFromEntity(ae), nil
 }
 
