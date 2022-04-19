@@ -16,24 +16,46 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.Membership, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error) {
+	entities, err := r.domain.GetUserMemberships(ctx, obj.ID)
+	accountMemberships := make([]*model.AccountMembership, len(entities))
+	for i, entity := range entities {
+		accountMemberships[i] = &model.AccountMembership{
+			Account: &model.Account{
+				ID: entity.AccountId,
+			},
+			User: &model.User{
+				ID: entity.UserId,
+			},
+			Role: string(entity.Role),
+		}
+	}
+	return accountMemberships, err
 }
 
-func (r *membershipResolver) User(ctx context.Context, obj *model.Membership) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *accountMembershipResolver) User(ctx context.Context, obj *model.AccountMembership) (*model.User, error) {
+	return &model.User{
+		ID: obj.User.ID,
+	}, nil
 }
 
-func (r *membershipResolver) Account(ctx context.Context, obj *model.Membership) (*model.Account, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error) {
+	ae, err := r.domain.GetAccount(ctx, obj.Account.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return AccountModelFromEntity(ae), nil
 }
 
 func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
+	fmt.Println("create account")
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")
 	}
-	account, err := r.domain.CreateAccount(ctx, name, billing)
+	account, err := r.domain.CreateAccount(ctx, repos.ID(session.UserId), name, billing)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +90,13 @@ func (r *mutationResolver) UpdateAccountBilling(ctx context.Context, accountID r
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) InviteAccountMember(ctx context.Context, accountID string, email string, name string, role string) (bool, error) {
+func (r *mutationResolver) AddAccountMember(ctx context.Context, accountID string, userID repos.ID, role string) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
 	}
-	return r.domain.InviteAccountMember(ctx, accountID, email, name, role)
+
+	return r.domain.AddAccountMember(ctx, repos.ID(accountID), userID, common.Role(role))
 }
 
 func (r *mutationResolver) RemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
@@ -116,22 +139,6 @@ func (r *mutationResolver) DeleteAccount(ctx context.Context, accountID repos.ID
 	return r.domain.DeleteAccount(ctx, accountID)
 }
 
-func (r *queryResolver) Accounts(ctx context.Context) ([]*model.Account, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("not logged in")
-	}
-	accountEntities, err := r.domain.ListAccounts(ctx, repos.ID(session.UserId))
-	if err != nil {
-		return nil, err
-	}
-	accountModels := make([]*model.Account, 0)
-	for _, ae := range accountEntities {
-		accountModels = append(accountModels, AccountModelFromEntity(ae))
-	}
-	return accountModels, nil
-}
-
 func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model.Account, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
@@ -141,27 +148,31 @@ func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model
 	return AccountModelFromEntity(accountEntity), err
 }
 
-func (r *queryResolver) AccountsMembership(ctx context.Context) ([]*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) AccountMembership(ctx context.Context, accountID repos.ID) (*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) StripeSetupIntent(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *userResolver) Memberships(ctx context.Context, obj *model.User) ([]*model.Membership, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
+	entities, err := r.domain.GetAccountMemberships(ctx, obj.ID)
+	fmt.Println(entities, err, "entities")
+	accountMemberships := make([]*model.AccountMembership, len(entities))
+	for i, entity := range entities {
+		accountMemberships[i] = &model.AccountMembership{
+			Account: &model.Account{
+				ID: entity.AccountId,
+			},
+			User: &model.User{
+				ID: entity.UserId,
+			},
+			Role: string(entity.Role),
+		}
+	}
+	return accountMemberships, err
 }
 
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
-// Membership returns generated.MembershipResolver implementation.
-func (r *Resolver) Membership() generated.MembershipResolver { return &membershipResolver{r} }
+// AccountMembership returns generated.AccountMembershipResolver implementation.
+func (r *Resolver) AccountMembership() generated.AccountMembershipResolver {
+	return &accountMembershipResolver{r}
+}
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
@@ -173,7 +184,7 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
 type accountResolver struct{ *Resolver }
-type membershipResolver struct{ *Resolver }
+type accountMembershipResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
