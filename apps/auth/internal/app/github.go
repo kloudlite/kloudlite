@@ -8,12 +8,17 @@ import (
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
 	"kloudlite.io/apps/auth/internal/domain"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/repos"
 )
 
 type githubI struct {
-	cfg *oauth2.Config
+	cfg             *oauth2.Config
+	githubAppId     string
+	githubAppPKFile string
+	accTokenRepo    repos.DbRepo[*domain.AccessToken]
 }
 
 func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
@@ -46,12 +51,30 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
-func (gh *githubI) GetAppToken() {
-	panic("Not Implemented")
+func (gh *githubI) getAccessToken(ctx context.Context, provider string) (*domain.AccessToken, error) {
+	session := cache.GetSession[*domain.AccessToken](ctx)
+	if session == nil {
+		return nil, errors.UnAuthorized()
+	}
+	accToken, err := gh.accTokenRepo.FindOne(ctx, repos.Filter{"user_id": session.UserId, "provider": provider})
+	if err != nil {
+		return nil, errors.NewEf(err, "finding access token")
+	}
+	return accToken, nil
 }
 
-func (*githubI) RefreshToken() {
-	panic("unimplemented")
+func (gh *githubI) InstallationToken(ctx context.Context, accToken *domain.AccessToken, installationId int64) (string, error) {
+	// accToken, err := gh.getAccessToken(ctx, common.ProviderGithub)
+	c := gh.cfg.Client(ctx, accToken.Token)
+	c2 := github.NewClient(c)
+	it, _, err := c2.Apps.CreateInstallationToken(ctx, installationId, &github.InstallationTokenOptions{})
+	if err != nil {
+		return "", errors.NewEf(err, "failed to get installation token")
+	}
+	return it.GetToken(), err
+}
+
+func (gh *githubI) GetAppToken() {
 }
 
 func (gh *githubI) GetRepoToken() {
@@ -59,11 +82,11 @@ func (gh *githubI) GetRepoToken() {
 }
 
 type GithubOAuth interface {
-	GithubConfig() (clientId, clientSecret, callbackUrl string)
+	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
 }
 
-func fxGithub(env *Env) domain.Github {
-	clientId, clientSecret, callbackUrl := env.GithubConfig()
+func fxGithub(env *Env, accTokenRepo repos.DbRepo[*domain.AccessToken]) domain.Github {
+	clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile := env.GithubConfig()
 	cfg := oauth2.Config{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
@@ -71,5 +94,10 @@ func fxGithub(env *Env) domain.Github {
 		RedirectURL:  callbackUrl,
 		Scopes:       []string{"user:email", "admin:org"},
 	}
-	return &githubI{cfg: &cfg}
+	return &githubI{
+		cfg:             &cfg,
+		githubAppId:     ghAppId,
+		githubAppPKFile: ghAppPKFile,
+		accTokenRepo:    accTokenRepo,
+	}
 }

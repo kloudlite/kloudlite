@@ -128,6 +128,10 @@ func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, s
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *mutationResolver) GithubInstallationToken(ctx context.Context, provider string) (*string, error) {
+	return nil, nil
+}
+
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {

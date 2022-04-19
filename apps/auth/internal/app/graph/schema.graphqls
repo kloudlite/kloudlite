@@ -26,6 +26,8 @@ type Mutation {
 
   oAuthLogin(provider: String!, code: String!, state: String): Session!
   oAuthAddLogin(provider: String!, state: String!, code: String!): Boolean!
+
+  githubInstallationToken(provider: String!): String
 }
 
 type Session {

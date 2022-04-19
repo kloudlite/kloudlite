@@ -40,8 +40,8 @@ func (env *Env) GitlabConfig() (clientId string, clientSecret string, callbackUr
 	return env.GitlabClientId, env.GitlabClientSecret, env.GitlabCallbackUrl
 }
 
-func (env *Env) GithubConfig() (clientId string, clientSecret string, callbackUrl string) {
-	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl
+func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string) {
+	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
 var Module = fx.Module("app",
