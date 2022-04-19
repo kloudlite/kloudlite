@@ -22,6 +22,9 @@ type Domain interface {
 	ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error)
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)
 
+	//
+	GithubInstallationToken(ctx context.Context) (string, error)
+
 	//TODO
 	GetLoginDetails(ctx context.Context, provider string, state *string) (string, error)
 	InviteUser(ctx context.Context, email string, name string) (repos.ID, error)
