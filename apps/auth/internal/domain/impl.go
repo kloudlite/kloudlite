@@ -35,7 +35,7 @@ type domainI struct {
 	logger          logger.Logger
 	github          Github
 	gitlab          Gitlab
-	// google          Google
+	google          Google
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
@@ -282,7 +282,7 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	}
 
 	if provider == common.ProviderGoogle {
-		return d.github.Authorize(ctx, state)
+		return d.google.Authorize(ctx, state)
 	}
 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
@@ -403,6 +403,59 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 
 	case common.ProviderGoogle:
 		{
+			u, t, err := d.google.Callback(ctx, code, state)
+			d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			if err != nil {
+				return nil, errors.NewEf(err, "could not login to github")
+			}
+
+			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
+			d.logger.Infof("user %+v, err %+v\n", user, err)
+			if err != nil {
+				d.logger.Infof("user: %+v (err %+v)", user, err)
+				return nil, errors.NewEf(err, "could not find user")
+			}
+
+			if user == nil {
+				user, err = d.userRepo.Create(ctx, &User{
+					Name:     u.Name,
+					Avatar:   u.AvatarURL,
+					Email:    u.Email,
+					Verified: true,
+					Joined:   time.Now(),
+				})
+
+				if err != nil {
+					return nil, errors.NewEf(err, "could not create user (email=%s)", u.Email)
+				}
+			}
+
+			token, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
+				UserId:   user.Id,
+				Email:    user.Email,
+				Provider: provider,
+				Token:    t,
+			})
+
+			if err != nil {
+				return nil, errors.NewEf(err, "could not store access token in repo")
+			}
+
+			d.logger.Infof("TOKEN: %+v\n", token)
+
+			user.ProviderGitlab = &ProviderDetail{
+				TokenId: token.Id,
+				Avatar:  u.AvatarURL,
+			}
+
+			user, err = d.userRepo.UpdateById(ctx, user.Id, user)
+			if err != nil {
+				return nil, errors.NewEf(err, "could not update user")
+			}
+
+			d.logger.Infof("USER %+v\n", user)
+
+			return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/google"), nil
 		}
 	}
 	panic("implement me")
@@ -448,6 +501,7 @@ func fxDomain(
 	messenger Messenger,
 	github Github,
 	gitlab Gitlab,
+	google Google,
 	logger logger.Logger,
 ) Domain {
 	return &domainI{
@@ -458,6 +512,7 @@ func fxDomain(
 		resetTokenRepo:  resetTokenRepo,
 		github:          github,
 		gitlab:          gitlab,
+		google:          google,
 		logger:          logger,
 	}
 }

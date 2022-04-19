@@ -32,6 +32,10 @@ type Env struct {
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
 }
 
+func (env *Env) GoogleConfig() (clientId string, clientSecret string, callbackUrl string) {
+	return env.GoogleClientId, env.GoogleClientSecret, env.GoogleCallbackUrl
+}
+
 func (env *Env) GitlabConfig() (clientId string, clientSecret string, callbackUrl string) {
 	return env.GitlabClientId, env.GitlabClientSecret, env.GitlabCallbackUrl
 }
@@ -49,6 +53,7 @@ var Module = fx.Module("app",
 
 	fx.Provide(fxGithub),
 	fx.Provide(fxGitlab),
+	fx.Provide(fxGoogle),
 
 	fx.Provide(fxMessenger),
 	fx.Invoke(func(

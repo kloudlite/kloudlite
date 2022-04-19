@@ -20,4 +20,17 @@ type Github interface {
 type Gitlab interface {
 	Authorize(ctx context.Context, state string) (string, error)
 	Callback(ctx context.Context, code, state string) (*gitlab.User, *oauth2.Token, error)
+	GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error)
+}
+
+// google oauth user struct
+type GoogleUser struct {
+	Email     string  `json:"email"`
+	AvatarURL *string `json:"picture"`
+	Name      string  `json:"name"`
+}
+
+type Google interface {
+	Authorize(ctx context.Context, state string) (string, error)
+	Callback(ctx context.Context, code, state string) (*GoogleUser, *oauth2.Token, error)
 }
