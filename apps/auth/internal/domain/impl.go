@@ -34,7 +34,7 @@ type domainI struct {
 	resetTokenRepo  cache.Repo[*ResetPasswordToken]
 	logger          logger.Logger
 	github          Github
-	// gitlab          Gitlab
+	gitlab          Gitlab
 	// google          Google
 }
 
@@ -278,7 +278,7 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	}
 
 	if provider == common.ProviderGitlab {
-		return d.github.Authorize(ctx, state)
+		return d.gitlab.Authorize(ctx, state)
 	}
 
 	if provider == common.ProviderGoogle {
@@ -298,8 +298,9 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				return nil, errors.NewEf(err, "could not login to github")
 			}
 			//STEP: find if this user has account with this email
-			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
+			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": *u.Email})
 			if err != nil {
+				d.logger.Infof("user: %+v (err %+v)", user, err)
 				return nil, errors.NewEf(err, "could not find user")
 			}
 
@@ -329,11 +330,10 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 
 			d.logger.Infof("TOKEN: %+v\n", token)
 
-			providerGithub := &ProviderDetail{
+			user.ProviderGithub = &ProviderDetail{
 				TokenId: token.Id,
 				Avatar:  u.AvatarURL,
 			}
-			user.ProviderGithub = providerGithub
 			user, err = d.userRepo.UpdateById(ctx, user.Id, user)
 			if err != nil {
 				return nil, errors.NewEf(err, "could not update user")
@@ -346,6 +346,59 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 
 	case common.ProviderGitlab:
 		{
+			u, t, err := d.gitlab.Callback(ctx, code, state)
+			d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			if err != nil {
+				return nil, errors.NewEf(err, "could not login to github")
+			}
+
+			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
+			d.logger.Infof("user %+v, err %+v\n", user, err)
+			if err != nil {
+				d.logger.Infof("user: %+v (err %+v)", user, err)
+				return nil, errors.NewEf(err, "could not find user")
+			}
+
+			if user == nil {
+				user, err = d.userRepo.Create(ctx, &User{
+					Name:     u.Name,
+					Avatar:   &u.AvatarURL,
+					Email:    u.Email,
+					Verified: true,
+					Joined:   time.Now(),
+				})
+
+				if err != nil {
+					return nil, errors.NewEf(err, "could not create user (email=%s)", u.Email)
+				}
+			}
+
+			token, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
+				UserId:   user.Id,
+				Email:    user.Email,
+				Provider: provider,
+				Token:    t,
+			})
+
+			if err != nil {
+				return nil, errors.NewEf(err, "could not store access token in repo")
+			}
+
+			d.logger.Infof("TOKEN: %+v\n", token)
+
+			user.ProviderGitlab = &ProviderDetail{
+				TokenId: token.Id,
+				Avatar:  &u.AvatarURL,
+			}
+
+			user, err = d.userRepo.UpdateById(ctx, user.Id, user)
+			if err != nil {
+				return nil, errors.NewEf(err, "could not update user")
+			}
+
+			d.logger.Infof("USER %+v\n", user)
+
+			return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/gitlab"), nil
 		}
 
 	case common.ProviderGoogle:
@@ -394,6 +447,7 @@ func fxDomain(
 	resetTokenRepo cache.Repo[*ResetPasswordToken],
 	messenger Messenger,
 	github Github,
+	gitlab Gitlab,
 	logger logger.Logger,
 ) Domain {
 	return &domainI{
@@ -403,6 +457,7 @@ func fxDomain(
 		verifyTokenRepo: verifyTokenRepo,
 		resetTokenRepo:  resetTokenRepo,
 		github:          github,
+		gitlab:          gitlab,
 		logger:          logger,
 	}
 }

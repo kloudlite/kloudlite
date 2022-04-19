@@ -6,3 +6,8 @@ func ParseOnlyOption[T any](item []T) *T {
 	}
 	return nil
 }
+
+func New[T any]() T {
+	t := make([]T, 1)
+	return t[0]
+}

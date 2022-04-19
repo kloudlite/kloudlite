@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/go-github/v43/github"
+	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 )
 
@@ -14,4 +15,9 @@ type Github interface {
 	RefreshToken()
 	GetAppToken()
 	GetRepoToken()
+}
+
+type Gitlab interface {
+	Authorize(ctx context.Context, state string) (string, error)
+	Callback(ctx context.Context, code, state string) (*gitlab.User, *oauth2.Token, error)
 }

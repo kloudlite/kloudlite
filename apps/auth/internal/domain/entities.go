@@ -81,6 +81,8 @@ var AccessTokenIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "user_id", Value: repos.IndexAsc},
+			{Key: "email", Value: repos.IndexAsc},
+			{Key: "provider", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

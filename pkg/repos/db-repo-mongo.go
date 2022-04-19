@@ -42,9 +42,10 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 
 func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	var res T
-	err := one.Decode(res)
+	res := fn.New[T]()
+	err := one.Decode(&res)
 	if err != nil {
+		fmt.Println("ERR: ", err)
 		return res, err
 	}
 	return res, nil
@@ -52,8 +53,8 @@ func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 
 func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	var res T
-	err := one.Decode(res)
+	res := fn.New[T]()
+	err := one.Decode(&res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return res, nil
