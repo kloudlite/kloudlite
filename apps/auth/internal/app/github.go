@@ -2,8 +2,12 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v43/github"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
@@ -13,7 +17,9 @@ import (
 )
 
 type githubI struct {
-	cfg *oauth2.Config
+	cfg         *oauth2.Config
+	githubAppId string
+	githubAppPK []byte
 }
 
 func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
@@ -46,12 +52,24 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
-func (gh *githubI) GetAppToken() {
-	panic("Not Implemented")
+func (gh *githubI) InstallationToken(ctx context.Context, accToken *domain.AccessToken, repoUrl string) (string, error) {
+	fmt.Println(accToken)
+	c := gh.cfg.Client(ctx, accToken.Token)
+	c2 := github.NewClient(c)
+
+	inst, _, err := c2.Apps.FindRepositoryInstallation(ctx, "nxtcoder17", "sample")
+	if err != nil {
+		return "", errors.NewEf(err, "could not fetch repository installation")
+	}
+	it, _, err := c2.Apps.CreateInstallationToken(ctx, *inst.ID, &github.InstallationTokenOptions{})
+	fmt.Println(it)
+	if err != nil {
+		return "", errors.NewEf(err, "failed to get installation token")
+	}
+	return it.GetToken(), err
 }
 
-func (*githubI) RefreshToken() {
-	panic("unimplemented")
+func (gh *githubI) GetAppToken() {
 }
 
 func (gh *githubI) GetRepoToken() {
@@ -59,11 +77,11 @@ func (gh *githubI) GetRepoToken() {
 }
 
 type GithubOAuth interface {
-	GithubConfig() (clientId, clientSecret, callbackUrl string)
+	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
 }
 
 func fxGithub(env *Env) domain.Github {
-	clientId, clientSecret, callbackUrl := env.GithubConfig()
+	clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile := env.GithubConfig()
 	cfg := oauth2.Config{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
@@ -71,5 +89,15 @@ func fxGithub(env *Env) domain.Github {
 		RedirectURL:  callbackUrl,
 		Scopes:       []string{"user:email", "admin:org"},
 	}
-	return &githubI{cfg: &cfg}
+	privatePem, err := ioutil.ReadFile(ghAppPKFile)
+	ghinstallation.NewAppsTransport(http.DefaultTransport, 10, privatePem)
+
+	if err != nil {
+		panic(errors.NewEf(err, "could not read github app PK file"))
+	}
+	return &githubI{
+		cfg:         &cfg,
+		githubAppId: ghAppId,
+		githubAppPK: privatePem,
+	}
 }

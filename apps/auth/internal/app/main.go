@@ -32,8 +32,16 @@ type Env struct {
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
 }
 
-func (cfg *Env) GithubConfig() (clientId string, clientSecret string, callbackUrl string) {
-	return cfg.GithubClientId, cfg.GithubClientSecret, cfg.GithubCallbackUrl
+func (env *Env) GoogleConfig() (clientId string, clientSecret string, callbackUrl string) {
+	return env.GoogleClientId, env.GoogleClientSecret, env.GoogleCallbackUrl
+}
+
+func (env *Env) GitlabConfig() (clientId string, clientSecret string, callbackUrl string) {
+	return env.GitlabClientId, env.GitlabClientSecret, env.GitlabCallbackUrl
+}
+
+func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string) {
+	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
 var Module = fx.Module("app",
@@ -44,6 +52,8 @@ var Module = fx.Module("app",
 	cache.NewFxRepo[*domain.ResetPasswordToken](),
 
 	fx.Provide(fxGithub),
+	fx.Provide(fxGitlab),
+	fx.Provide(fxGoogle),
 
 	fx.Provide(fxMessenger),
 	fx.Invoke(func(

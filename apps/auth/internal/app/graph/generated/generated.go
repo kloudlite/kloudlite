@@ -52,29 +52,30 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ChangeEmail             func(childComplexity int, email string) int
-		ChangePassword          func(childComplexity int, currentPassword string, newPassword string) int
-		ClearMetadata           func(childComplexity int) int
-		InviteSignup            func(childComplexity int, email string, name string) int
-		Login                   func(childComplexity int, email string, password string) int
-		LoginWithInviteToken    func(childComplexity int, inviteToken string) int
-		Logout                  func(childComplexity int) int
-		OAuthAddLogin           func(childComplexity int, provider string, state string, code string) int
-		OAuthLogin              func(childComplexity int, provider string, code string, state *string) int
-		RequestResetPassword    func(childComplexity int, email string) int
-		ResendVerificationEmail func(childComplexity int) int
-		ResetPassword           func(childComplexity int, token string, password string) int
-		SetMetadata             func(childComplexity int, values map[string]interface{}) int
-		Signup                  func(childComplexity int, name string, email string, password string) int
-		VerifyEmail             func(childComplexity int, token string) int
+		AuthChangeEmail             func(childComplexity int, email string) int
+		AuthChangePassword          func(childComplexity int, currentPassword string, newPassword string) int
+		AuthClearMetadata           func(childComplexity int) int
+		AuthInviteSignup            func(childComplexity int, email string, name string) int
+		AuthLogin                   func(childComplexity int, email string, password string) int
+		AuthLoginWithInviteToken    func(childComplexity int, inviteToken string) int
+		AuthLogout                  func(childComplexity int) int
+		AuthRequestResetPassword    func(childComplexity int, email string) int
+		AuthResendVerificationEmail func(childComplexity int) int
+		AuthResetPassword           func(childComplexity int, token string, password string) int
+		AuthSetMetadata             func(childComplexity int, values map[string]interface{}) int
+		AuthSignup                  func(childComplexity int, name string, email string, password string) int
+		AuthVerifyEmail             func(childComplexity int, token string) int
+		OAuthAddLogin               func(childComplexity int, provider string, state string, code string) int
+		OAuthLogin                  func(childComplexity int, provider string, code string, state *string) int
 	}
 
 	Query struct {
-		FindByEmail        func(childComplexity int, email string) int
-		Me                 func(childComplexity int) int
-		RequestLogin       func(childComplexity int, provider string, state *string) int
-		__resolve__service func(childComplexity int) int
-		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
+		AuthFindByEmail              func(childComplexity int, email string) int
+		AuthMe                       func(childComplexity int) int
+		OAuthGithubInstallationToken func(childComplexity int, installationID int) int
+		OAuthRequestLogin            func(childComplexity int, provider string, state *string) int
+		__resolve__service           func(childComplexity int) int
+		__resolve_entities           func(childComplexity int, representations []map[string]interface{}) int
 	}
 
 	Session struct {
@@ -108,26 +109,27 @@ type EntityResolver interface {
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
 type MutationResolver interface {
-	Login(ctx context.Context, email string, password string) (*model.Session, error)
-	Signup(ctx context.Context, name string, email string, password string) (*model.Session, error)
-	Logout(ctx context.Context) (bool, error)
-	SetMetadata(ctx context.Context, values map[string]interface{}) (*model.User, error)
-	ClearMetadata(ctx context.Context) (*model.User, error)
-	VerifyEmail(ctx context.Context, token string) (*model.Session, error)
-	ResetPassword(ctx context.Context, token string, password string) (bool, error)
-	RequestResetPassword(ctx context.Context, email string) (bool, error)
-	LoginWithInviteToken(ctx context.Context, inviteToken string) (*model.Session, error)
-	InviteSignup(ctx context.Context, email string, name string) (repos.ID, error)
-	ChangeEmail(ctx context.Context, email string) (bool, error)
-	ResendVerificationEmail(ctx context.Context) (bool, error)
-	ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
+	AuthLogin(ctx context.Context, email string, password string) (*model.Session, error)
+	AuthSignup(ctx context.Context, name string, email string, password string) (*model.Session, error)
+	AuthLogout(ctx context.Context) (bool, error)
+	AuthSetMetadata(ctx context.Context, values map[string]interface{}) (*model.User, error)
+	AuthClearMetadata(ctx context.Context) (*model.User, error)
+	AuthVerifyEmail(ctx context.Context, token string) (*model.Session, error)
+	AuthResetPassword(ctx context.Context, token string, password string) (bool, error)
+	AuthRequestResetPassword(ctx context.Context, email string) (bool, error)
+	AuthLoginWithInviteToken(ctx context.Context, inviteToken string) (*model.Session, error)
+	AuthInviteSignup(ctx context.Context, email string, name string) (repos.ID, error)
+	AuthChangeEmail(ctx context.Context, email string) (bool, error)
+	AuthResendVerificationEmail(ctx context.Context) (bool, error)
+	AuthChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
 	OAuthLogin(ctx context.Context, provider string, code string, state *string) (*model.Session, error)
 	OAuthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error)
 }
 type QueryResolver interface {
-	Me(ctx context.Context) (*model.User, error)
-	FindByEmail(ctx context.Context, email string) (*model.User, error)
-	RequestLogin(ctx context.Context, provider string, state *string) (string, error)
+	AuthMe(ctx context.Context) (*model.User, error)
+	AuthFindByEmail(ctx context.Context, email string) (*model.User, error)
+	OAuthRequestLogin(ctx context.Context, provider string, state *string) (string, error)
+	OAuthGithubInstallationToken(ctx context.Context, installationID int) (string, error)
 }
 
 type executableSchema struct {
@@ -157,201 +159,213 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Entity.FindUserByID(childComplexity, args["id"].(repos.ID)), true
 
-	case "Mutation.changeEmail":
-		if e.complexity.Mutation.ChangeEmail == nil {
+	case "Mutation.auth_changeEmail":
+		if e.complexity.Mutation.AuthChangeEmail == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_changeEmail_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_auth_changeEmail_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ChangeEmail(childComplexity, args["email"].(string)), true
+		return e.complexity.Mutation.AuthChangeEmail(childComplexity, args["email"].(string)), true
 
-	case "Mutation.changePassword":
-		if e.complexity.Mutation.ChangePassword == nil {
+	case "Mutation.auth_changePassword":
+		if e.complexity.Mutation.AuthChangePassword == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_changePassword_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_auth_changePassword_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ChangePassword(childComplexity, args["currentPassword"].(string), args["newPassword"].(string)), true
+		return e.complexity.Mutation.AuthChangePassword(childComplexity, args["currentPassword"].(string), args["newPassword"].(string)), true
 
-	case "Mutation.clearMetadata":
-		if e.complexity.Mutation.ClearMetadata == nil {
+	case "Mutation.auth_clearMetadata":
+		if e.complexity.Mutation.AuthClearMetadata == nil {
 			break
 		}
 
-		return e.complexity.Mutation.ClearMetadata(childComplexity), true
+		return e.complexity.Mutation.AuthClearMetadata(childComplexity), true
 
-	case "Mutation.inviteSignup":
-		if e.complexity.Mutation.InviteSignup == nil {
+	case "Mutation.auth_inviteSignup":
+		if e.complexity.Mutation.AuthInviteSignup == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_inviteSignup_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_auth_inviteSignup_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InviteSignup(childComplexity, args["email"].(string), args["name"].(string)), true
+		return e.complexity.Mutation.AuthInviteSignup(childComplexity, args["email"].(string), args["name"].(string)), true
 
-	case "Mutation.login":
-		if e.complexity.Mutation.Login == nil {
+	case "Mutation.auth_login":
+		if e.complexity.Mutation.AuthLogin == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_login_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_auth_login_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Login(childComplexity, args["email"].(string), args["password"].(string)), true
+		return e.complexity.Mutation.AuthLogin(childComplexity, args["email"].(string), args["password"].(string)), true
 
-	case "Mutation.loginWithInviteToken":
-		if e.complexity.Mutation.LoginWithInviteToken == nil {
+	case "Mutation.auth_loginWithInviteToken":
+		if e.complexity.Mutation.AuthLoginWithInviteToken == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_loginWithInviteToken_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_auth_loginWithInviteToken_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.LoginWithInviteToken(childComplexity, args["inviteToken"].(string)), true
+		return e.complexity.Mutation.AuthLoginWithInviteToken(childComplexity, args["inviteToken"].(string)), true
 
-	case "Mutation.logout":
-		if e.complexity.Mutation.Logout == nil {
+	case "Mutation.auth_logout":
+		if e.complexity.Mutation.AuthLogout == nil {
 			break
 		}
 
-		return e.complexity.Mutation.Logout(childComplexity), true
+		return e.complexity.Mutation.AuthLogout(childComplexity), true
 
-	case "Mutation.oAuthAddLogin":
+	case "Mutation.auth_requestResetPassword":
+		if e.complexity.Mutation.AuthRequestResetPassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_requestResetPassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthRequestResetPassword(childComplexity, args["email"].(string)), true
+
+	case "Mutation.auth_resendVerificationEmail":
+		if e.complexity.Mutation.AuthResendVerificationEmail == nil {
+			break
+		}
+
+		return e.complexity.Mutation.AuthResendVerificationEmail(childComplexity), true
+
+	case "Mutation.auth_resetPassword":
+		if e.complexity.Mutation.AuthResetPassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_resetPassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthResetPassword(childComplexity, args["token"].(string), args["password"].(string)), true
+
+	case "Mutation.auth_setMetadata":
+		if e.complexity.Mutation.AuthSetMetadata == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_setMetadata_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthSetMetadata(childComplexity, args["values"].(map[string]interface{})), true
+
+	case "Mutation.auth_signup":
+		if e.complexity.Mutation.AuthSignup == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_signup_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthSignup(childComplexity, args["name"].(string), args["email"].(string), args["password"].(string)), true
+
+	case "Mutation.auth_verifyEmail":
+		if e.complexity.Mutation.AuthVerifyEmail == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_verifyEmail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthVerifyEmail(childComplexity, args["token"].(string)), true
+
+	case "Mutation.oAuth_addLogin":
 		if e.complexity.Mutation.OAuthAddLogin == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_oAuthAddLogin_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_oAuth_addLogin_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.complexity.Mutation.OAuthAddLogin(childComplexity, args["provider"].(string), args["state"].(string), args["code"].(string)), true
 
-	case "Mutation.oAuthLogin":
+	case "Mutation.oAuth_login":
 		if e.complexity.Mutation.OAuthLogin == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_oAuthLogin_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_oAuth_login_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.complexity.Mutation.OAuthLogin(childComplexity, args["provider"].(string), args["code"].(string), args["state"].(*string)), true
 
-	case "Mutation.requestResetPassword":
-		if e.complexity.Mutation.RequestResetPassword == nil {
+	case "Query.auth_findByEmail":
+		if e.complexity.Query.AuthFindByEmail == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_requestResetPassword_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_auth_findByEmail_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RequestResetPassword(childComplexity, args["email"].(string)), true
+		return e.complexity.Query.AuthFindByEmail(childComplexity, args["email"].(string)), true
 
-	case "Mutation.resendVerificationEmail":
-		if e.complexity.Mutation.ResendVerificationEmail == nil {
+	case "Query.auth_me":
+		if e.complexity.Query.AuthMe == nil {
 			break
 		}
 
-		return e.complexity.Mutation.ResendVerificationEmail(childComplexity), true
+		return e.complexity.Query.AuthMe(childComplexity), true
 
-	case "Mutation.resetPassword":
-		if e.complexity.Mutation.ResetPassword == nil {
+	case "Query.oAuth_githubInstallationToken":
+		if e.complexity.Query.OAuthGithubInstallationToken == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_resetPassword_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_oAuth_githubInstallationToken_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ResetPassword(childComplexity, args["token"].(string), args["password"].(string)), true
+		return e.complexity.Query.OAuthGithubInstallationToken(childComplexity, args["installationId"].(int)), true
 
-	case "Mutation.setMetadata":
-		if e.complexity.Mutation.SetMetadata == nil {
+	case "Query.oAuth_requestLogin":
+		if e.complexity.Query.OAuthRequestLogin == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_setMetadata_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_oAuth_requestLogin_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetMetadata(childComplexity, args["values"].(map[string]interface{})), true
-
-	case "Mutation.signup":
-		if e.complexity.Mutation.Signup == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_signup_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.Signup(childComplexity, args["name"].(string), args["email"].(string), args["password"].(string)), true
-
-	case "Mutation.verifyEmail":
-		if e.complexity.Mutation.VerifyEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_verifyEmail_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.VerifyEmail(childComplexity, args["token"].(string)), true
-
-	case "Query.findByEmail":
-		if e.complexity.Query.FindByEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Query_findByEmail_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.FindByEmail(childComplexity, args["email"].(string)), true
-
-	case "Query.me":
-		if e.complexity.Query.Me == nil {
-			break
-		}
-
-		return e.complexity.Query.Me(childComplexity), true
-
-	case "Query.requestLogin":
-		if e.complexity.Query.RequestLogin == nil {
-			break
-		}
-
-		args, err := ec.field_Query_requestLogin_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.RequestLogin(childComplexity, args["provider"].(string), args["state"].(*string)), true
+		return e.complexity.Query.OAuthRequestLogin(childComplexity, args["provider"].(string), args["state"].(*string)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -561,28 +575,28 @@ scalar ProviderDetail
 scalar URL
 
 type Query {
-  me: User # Done
-  findByEmail(email: String!): User # Done
-  requestLogin(provider: String!, state: String): URL!
+  auth_me: User # Done
+  auth_findByEmail(email: String!): User # Done
+  oAuth_requestLogin(provider: String!, state: String): URL!
+  oAuth_githubInstallationToken(installationId: Int!): String!
 }
 
 type Mutation {
-  login(email: String!, password: String!): Session # Done
-  signup(name: String!, email: String!, password: String!): Session # Done
-  logout: Boolean! # Done
-  setMetadata(values: Json!): User! # Done
-  clearMetadata: User! #Done
-  verifyEmail(token: String!): Session! #Done
-  resetPassword(token: String!, password: String!): Boolean! #Done
-  requestResetPassword(email: String!): Boolean! #Done
-  loginWithInviteToken(inviteToken: String!): Session
-  inviteSignup(email: String!, name: String!): ID!
-  changeEmail(email: String!): Boolean! #Done
-  resendVerificationEmail: Boolean! #Done
-  changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
-
-  oAuthLogin(provider: String!, code: String!, state: String): Session!
-  oAuthAddLogin(provider: String!, state: String!, code: String!): Boolean!
+  auth_login(email: String!, password: String!): Session # Done
+  auth_signup(name: String!, email: String!, password: String!): Session # Done
+  auth_logout: Boolean! # Done
+  auth_setMetadata(values: Json!): User! # Done
+  auth_clearMetadata: User! #Done
+  auth_verifyEmail(token: String!): Session! #Done
+  auth_resetPassword(token: String!, password: String!): Boolean! #Done
+  auth_requestResetPassword(email: String!): Boolean! #Done
+  auth_loginWithInviteToken(inviteToken: String!): Session
+  auth_inviteSignup(email: String!, name: String!): ID!
+  auth_changeEmail(email: String!): Boolean! #Done
+  auth_resendVerificationEmail: Boolean! #Done
+  auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
+  oAuth_login(provider: String!, code: String!, state: String): Session!
+  oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean!
 }
 
 type Session {
@@ -658,7 +672,7 @@ func (ec *executionContext) field_Entity_findUserByID_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_changeEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_changeEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -673,7 +687,7 @@ func (ec *executionContext) field_Mutation_changeEmail_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_changePassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -697,7 +711,7 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_inviteSignup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_inviteSignup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -721,7 +735,7 @@ func (ec *executionContext) field_Mutation_inviteSignup_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_loginWithInviteToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_loginWithInviteToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -736,7 +750,7 @@ func (ec *executionContext) field_Mutation_loginWithInviteToken_args(ctx context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -760,73 +774,7 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_oAuthAddLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["provider"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["provider"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["state"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["state"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["code"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["code"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_oAuthLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["provider"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["provider"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["code"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["code"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["state"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["state"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_requestResetPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_requestResetPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -841,7 +789,7 @@ func (ec *executionContext) field_Mutation_requestResetPassword_args(ctx context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_resetPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_resetPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -865,7 +813,7 @@ func (ec *executionContext) field_Mutation_resetPassword_args(ctx context.Contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_setMetadata_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_setMetadata_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 map[string]interface{}
@@ -880,7 +828,7 @@ func (ec *executionContext) field_Mutation_setMetadata_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_signup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_signup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -913,7 +861,7 @@ func (ec *executionContext) field_Mutation_signup_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_auth_verifyEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -925,6 +873,72 @@ func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context,
 		}
 	}
 	args["token"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_oAuth_addLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["provider"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["provider"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["state"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["state"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["code"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["code"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_oAuth_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["provider"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["provider"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["code"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["code"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["state"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["state"] = arg2
 	return args, nil
 }
 
@@ -958,7 +972,7 @@ func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_findByEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_auth_findByEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -973,7 +987,22 @@ func (ec *executionContext) field_Query_findByEmail_args(ctx context.Context, ra
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_requestLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_oAuth_githubInstallationToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["installationId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("installationId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["installationId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_oAuth_requestLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1077,7 +1106,7 @@ func (ec *executionContext) _Entity_findUserByID(ctx context.Context, field grap
 	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1094,7 +1123,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_login_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_login_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1102,7 +1131,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Login(rctx, args["email"].(string), args["password"].(string))
+		return ec.resolvers.Mutation().AuthLogin(rctx, args["email"].(string), args["password"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1116,7 +1145,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	return ec.marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_signup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_signup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1133,7 +1162,7 @@ func (ec *executionContext) _Mutation_signup(ctx context.Context, field graphql.
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_signup_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_signup_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1141,7 +1170,7 @@ func (ec *executionContext) _Mutation_signup(ctx context.Context, field graphql.
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Signup(rctx, args["name"].(string), args["email"].(string), args["password"].(string))
+		return ec.resolvers.Mutation().AuthSignup(rctx, args["name"].(string), args["email"].(string), args["password"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1155,7 +1184,7 @@ func (ec *executionContext) _Mutation_signup(ctx context.Context, field graphql.
 	return ec.marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_logout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1173,7 +1202,7 @@ func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Logout(rctx)
+		return ec.resolvers.Mutation().AuthLogout(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1190,7 +1219,7 @@ func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_setMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_setMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1207,7 +1236,7 @@ func (ec *executionContext) _Mutation_setMetadata(ctx context.Context, field gra
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_setMetadata_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_setMetadata_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1215,7 +1244,7 @@ func (ec *executionContext) _Mutation_setMetadata(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetMetadata(rctx, args["values"].(map[string]interface{}))
+		return ec.resolvers.Mutation().AuthSetMetadata(rctx, args["values"].(map[string]interface{}))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1232,7 +1261,7 @@ func (ec *executionContext) _Mutation_setMetadata(ctx context.Context, field gra
 	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_clearMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_clearMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1250,7 +1279,7 @@ func (ec *executionContext) _Mutation_clearMetadata(ctx context.Context, field g
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ClearMetadata(rctx)
+		return ec.resolvers.Mutation().AuthClearMetadata(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1267,7 +1296,7 @@ func (ec *executionContext) _Mutation_clearMetadata(ctx context.Context, field g
 	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_verifyEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1284,7 +1313,7 @@ func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field gra
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_verifyEmail_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_verifyEmail_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1292,7 +1321,7 @@ func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().VerifyEmail(rctx, args["token"].(string))
+		return ec.resolvers.Mutation().AuthVerifyEmail(rctx, args["token"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1309,7 +1338,7 @@ func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field gra
 	return ec.marshalNSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_resetPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_resetPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1326,7 +1355,7 @@ func (ec *executionContext) _Mutation_resetPassword(ctx context.Context, field g
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_resetPassword_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_resetPassword_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1334,7 +1363,7 @@ func (ec *executionContext) _Mutation_resetPassword(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ResetPassword(rctx, args["token"].(string), args["password"].(string))
+		return ec.resolvers.Mutation().AuthResetPassword(rctx, args["token"].(string), args["password"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1351,7 +1380,7 @@ func (ec *executionContext) _Mutation_resetPassword(ctx context.Context, field g
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_requestResetPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_requestResetPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1368,7 +1397,7 @@ func (ec *executionContext) _Mutation_requestResetPassword(ctx context.Context, 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_requestResetPassword_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_requestResetPassword_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1376,7 +1405,7 @@ func (ec *executionContext) _Mutation_requestResetPassword(ctx context.Context, 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RequestResetPassword(rctx, args["email"].(string))
+		return ec.resolvers.Mutation().AuthRequestResetPassword(rctx, args["email"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1393,7 +1422,7 @@ func (ec *executionContext) _Mutation_requestResetPassword(ctx context.Context, 
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_loginWithInviteToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_loginWithInviteToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1410,7 +1439,7 @@ func (ec *executionContext) _Mutation_loginWithInviteToken(ctx context.Context, 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_loginWithInviteToken_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_loginWithInviteToken_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1418,7 +1447,7 @@ func (ec *executionContext) _Mutation_loginWithInviteToken(ctx context.Context, 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().LoginWithInviteToken(rctx, args["inviteToken"].(string))
+		return ec.resolvers.Mutation().AuthLoginWithInviteToken(rctx, args["inviteToken"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1432,7 +1461,7 @@ func (ec *executionContext) _Mutation_loginWithInviteToken(ctx context.Context, 
 	return ec.marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_inviteSignup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_inviteSignup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1449,7 +1478,7 @@ func (ec *executionContext) _Mutation_inviteSignup(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_inviteSignup_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_inviteSignup_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1457,7 +1486,7 @@ func (ec *executionContext) _Mutation_inviteSignup(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InviteSignup(rctx, args["email"].(string), args["name"].(string))
+		return ec.resolvers.Mutation().AuthInviteSignup(rctx, args["email"].(string), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1474,7 +1503,7 @@ func (ec *executionContext) _Mutation_inviteSignup(ctx context.Context, field gr
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_changeEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_changeEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1491,7 +1520,7 @@ func (ec *executionContext) _Mutation_changeEmail(ctx context.Context, field gra
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_changeEmail_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_changeEmail_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1499,7 +1528,7 @@ func (ec *executionContext) _Mutation_changeEmail(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ChangeEmail(rctx, args["email"].(string))
+		return ec.resolvers.Mutation().AuthChangeEmail(rctx, args["email"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1516,7 +1545,7 @@ func (ec *executionContext) _Mutation_changeEmail(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_resendVerificationEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1534,7 +1563,7 @@ func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ResendVerificationEmail(rctx)
+		return ec.resolvers.Mutation().AuthResendVerificationEmail(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1551,7 +1580,7 @@ func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Contex
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_auth_changePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1568,7 +1597,7 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_changePassword_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_auth_changePassword_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1576,7 +1605,7 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ChangePassword(rctx, args["currentPassword"].(string), args["newPassword"].(string))
+		return ec.resolvers.Mutation().AuthChangePassword(rctx, args["currentPassword"].(string), args["newPassword"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1593,7 +1622,7 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_oAuthLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_oAuth_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1610,7 +1639,7 @@ func (ec *executionContext) _Mutation_oAuthLogin(ctx context.Context, field grap
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_oAuthLogin_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_oAuth_login_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1635,7 +1664,7 @@ func (ec *executionContext) _Mutation_oAuthLogin(ctx context.Context, field grap
 	return ec.marshalNSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_oAuthAddLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_oAuth_addLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1652,7 +1681,7 @@ func (ec *executionContext) _Mutation_oAuthAddLogin(ctx context.Context, field g
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_oAuthAddLogin_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_oAuth_addLogin_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1677,7 +1706,7 @@ func (ec *executionContext) _Mutation_oAuthAddLogin(ctx context.Context, field g
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_auth_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1695,7 +1724,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Me(rctx)
+		return ec.resolvers.Query().AuthMe(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1709,7 +1738,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	return ec.marshalOUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_findByEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_auth_findByEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1726,7 +1755,7 @@ func (ec *executionContext) _Query_findByEmail(ctx context.Context, field graphq
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_findByEmail_args(ctx, rawArgs)
+	args, err := ec.field_Query_auth_findByEmail_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1734,7 +1763,7 @@ func (ec *executionContext) _Query_findByEmail(ctx context.Context, field graphq
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FindByEmail(rctx, args["email"].(string))
+		return ec.resolvers.Query().AuthFindByEmail(rctx, args["email"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1748,7 +1777,7 @@ func (ec *executionContext) _Query_findByEmail(ctx context.Context, field graphq
 	return ec.marshalOUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_requestLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_oAuth_requestLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1765,7 +1794,7 @@ func (ec *executionContext) _Query_requestLogin(ctx context.Context, field graph
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_requestLogin_args(ctx, rawArgs)
+	args, err := ec.field_Query_oAuth_requestLogin_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1773,7 +1802,7 @@ func (ec *executionContext) _Query_requestLogin(ctx context.Context, field graph
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().RequestLogin(rctx, args["provider"].(string), args["state"].(*string))
+		return ec.resolvers.Query().OAuthRequestLogin(rctx, args["provider"].(string), args["state"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1788,6 +1817,48 @@ func (ec *executionContext) _Query_requestLogin(ctx context.Context, field graph
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNURL2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_oAuth_githubInstallationToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_oAuth_githubInstallationToken_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().OAuthGithubInstallationToken(rctx, args["installationId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3797,33 +3868,23 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "login":
+		case "auth_login":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_login(ctx, field)
+				return ec._Mutation_auth_login(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
-		case "signup":
+		case "auth_signup":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_signup(ctx, field)
+				return ec._Mutation_auth_signup(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
-		case "logout":
+		case "auth_logout":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_logout(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "setMetadata":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setMetadata(ctx, field)
+				return ec._Mutation_auth_logout(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3831,9 +3892,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "clearMetadata":
+		case "auth_setMetadata":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_clearMetadata(ctx, field)
+				return ec._Mutation_auth_setMetadata(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3841,9 +3902,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "verifyEmail":
+		case "auth_clearMetadata":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_verifyEmail(ctx, field)
+				return ec._Mutation_auth_clearMetadata(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3851,9 +3912,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "resetPassword":
+		case "auth_verifyEmail":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_resetPassword(ctx, field)
+				return ec._Mutation_auth_verifyEmail(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3861,9 +3922,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "requestResetPassword":
+		case "auth_resetPassword":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_requestResetPassword(ctx, field)
+				return ec._Mutation_auth_resetPassword(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3871,16 +3932,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "loginWithInviteToken":
+		case "auth_requestResetPassword":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_loginWithInviteToken(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-		case "inviteSignup":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_inviteSignup(ctx, field)
+				return ec._Mutation_auth_requestResetPassword(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3888,9 +3942,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "changeEmail":
+		case "auth_loginWithInviteToken":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_changeEmail(ctx, field)
+				return ec._Mutation_auth_loginWithInviteToken(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+		case "auth_inviteSignup":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_auth_inviteSignup(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3898,9 +3959,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "resendVerificationEmail":
+		case "auth_changeEmail":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_resendVerificationEmail(ctx, field)
+				return ec._Mutation_auth_changeEmail(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3908,9 +3969,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "changePassword":
+		case "auth_resendVerificationEmail":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_changePassword(ctx, field)
+				return ec._Mutation_auth_resendVerificationEmail(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3918,9 +3979,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "oAuthLogin":
+		case "auth_changePassword":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_oAuthLogin(ctx, field)
+				return ec._Mutation_auth_changePassword(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3928,9 +3989,19 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "oAuthAddLogin":
+		case "oAuth_login":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_oAuthAddLogin(ctx, field)
+				return ec._Mutation_oAuth_login(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "oAuth_addLogin":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_oAuth_addLogin(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3968,7 +4039,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "me":
+		case "auth_me":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3977,7 +4048,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_me(ctx, field)
+				res = ec._Query_auth_me(ctx, field)
 				return res
 			}
 
@@ -3988,7 +4059,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "findByEmail":
+		case "auth_findByEmail":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3997,7 +4068,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_findByEmail(ctx, field)
+				res = ec._Query_auth_findByEmail(ctx, field)
 				return res
 			}
 
@@ -4008,7 +4079,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "requestLogin":
+		case "oAuth_requestLogin":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4017,7 +4088,30 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_requestLogin(ctx, field)
+				res = ec._Query_oAuth_requestLogin(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "oAuth_githubInstallationToken":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_oAuth_githubInstallationToken(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4778,6 +4872,21 @@ func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx c
 
 func (ec *executionContext) marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v repos.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")

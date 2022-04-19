@@ -40,10 +40,21 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	return results, err
 }
 
+func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
+	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
+	res := fn.New[T]()
+	err := one.Decode(&res)
+	if err != nil {
+		fmt.Println("ERR: ", err)
+		return res, err
+	}
+	return res, nil
+}
+
 func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	var res T
-	err := one.Decode(res)
+	res := fn.New[T]()
+	err := one.Decode(&res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return res, nil
@@ -116,6 +127,20 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 	)
 	e := r.Decode(&result)
 	return result, e
+}
+
+// upsert
+func (repo dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, error) {
+
+	id := repo.NewId()
+	if t, err := repo.findOne(ctx, filter); err == nil {
+		id = t.GetId()
+	}
+
+	data.SetId(id)
+	return repo.UpdateById(ctx, id, data, UpdateOpts{
+		Upsert: true,
+	})
 }
 
 func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
