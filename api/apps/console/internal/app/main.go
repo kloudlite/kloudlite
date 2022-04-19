@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	_ "fmt"
+	"google.golang.org/grpc"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"net/http"
 	_ "net/http"
 
@@ -96,6 +98,11 @@ var Module = fx.Module(
 	),
 
 	domain.Module,
+
+	fx.Provide(fxConsoleGrpcServer),
+	fx.Invoke(func(server *grpc.Server, consoleServer console.ConsoleServer) {
+		console.RegisterConsoleServer(server, consoleServer)
+	}),
 
 	fx.Invoke(func(
 		server *http.ServeMux,

@@ -13,6 +13,29 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+func (r *accountResolver) Clusters(ctx context.Context, obj *model.Account) ([]*model.Cluster, error) {
+	clusterEntities, err := r.Domain.ListClusters(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	clusters := make([]*model.Cluster, 0)
+	for _, cle := range clusterEntities {
+		clusters = append(clusters, &model.Cluster{
+			ID:         cle.Id,
+			Name:       cle.Name,
+			Provider:   cle.Provider,
+			Region:     cle.Region,
+			IP:         cle.Ip,
+			NodesCount: cle.NodesCount,
+			Status:     string(cle.Status),
+			Account: &model.Account{
+				ID: repos.ID(cle.AccountId),
+			},
+		})
+	}
+	return clusters, err
+}
+
 func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
@@ -310,10 +333,6 @@ func (r *queryResolver) ManagedResListResources(ctx context.Context, installatio
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) InfraListClusters(ctx context.Context) ([]*model.Cluster, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *queryResolver) InfraGetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -339,6 +358,9 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 	return devices, e
 }
 
+// Account returns generated.AccountResolver implementation.
+func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
+
 // Cluster returns generated.ClusterResolver implementation.
 func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver{r} }
 
@@ -354,8 +376,19 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
+type accountResolver struct{ *Resolver }
 type clusterResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) InfraListClusters(ctx context.Context) ([]*model.Cluster, error) {
+	panic(fmt.Errorf("not implemented"))
+}

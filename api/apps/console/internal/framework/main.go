@@ -5,6 +5,7 @@ import (
 	"kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
+	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
@@ -21,6 +22,7 @@ type Env struct {
 	Port          uint16 `env:"PORT" required:"true"`
 	IsDev         bool   `env:"DEV" default:"false"`
 	CorsOrigins   string `env:"ORIGINS"`
+	GrpcPort      uint16 `env:"GRPC_PORT"`
 }
 
 func (e *Env) GetBrokers() string {
@@ -43,9 +45,14 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 	return e.MongoUri, e.MongoDbName
 }
 
+func (e *Env) GetGRPCPort() uint16 {
+	return e.GrpcPort
+}
+
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(logger.NewLogger),
+	rpc.NewGrpcServerFx[*Env](),
 	mongo_db.NewMongoClientFx[*Env](),
 	messaging.NewKafkaClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
