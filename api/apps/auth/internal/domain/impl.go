@@ -38,9 +38,13 @@ type domainI struct {
 	gitlab          Gitlab
 	google          Google
 }
-//
-func (domaini *domainI) GithubInstallationToken(ctx context.Context) (string, error) {
-	panic("not implemented") // TODO: Implement
+
+func (d *domainI) GithubInstallationToken(ctx context.Context, _ int64) (string, error) {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return "", errors.NewEf(err, "finding accessToken")
+	}
+	return d.github.InstallationToken(ctx, accToken, "asdfsdaf")
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
@@ -405,11 +409,13 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 }
 
 func (d *domainI) GetAccessToken(ctx context.Context, provider string) (*AccessToken, error) {
-	session := cache.GetSession[*AccessToken](ctx)
+	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.UnAuthorized()
 	}
-	accToken, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{"user_id": session.UserId, "provider": provider})
+	q := repos.Filter{"user_id": session.UserId, "provider": provider}
+	d.logger.Debugf("q: %+v\n", q)
+	accToken, err := d.accessTokenRepo.FindOne(ctx, q)
 	if err != nil {
 		return nil, errors.NewEf(err, "finding access token")
 	}

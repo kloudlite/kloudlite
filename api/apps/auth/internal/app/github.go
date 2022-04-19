@@ -2,23 +2,24 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v43/github"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
 	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
 )
 
 type githubI struct {
-	cfg             *oauth2.Config
-	githubAppId     string
-	githubAppPKFile string
-	accTokenRepo    repos.DbRepo[*domain.AccessToken]
+	cfg         *oauth2.Config
+	githubAppId string
+	githubAppPK []byte
 }
 
 func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
@@ -51,23 +52,17 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
-func (gh *githubI) getAccessToken(ctx context.Context, provider string) (*domain.AccessToken, error) {
-	session := cache.GetSession[*domain.AccessToken](ctx)
-	if session == nil {
-		return nil, errors.UnAuthorized()
-	}
-	accToken, err := gh.accTokenRepo.FindOne(ctx, repos.Filter{"user_id": session.UserId, "provider": provider})
-	if err != nil {
-		return nil, errors.NewEf(err, "finding access token")
-	}
-	return accToken, nil
-}
-
-func (gh *githubI) InstallationToken(ctx context.Context, accToken *domain.AccessToken, installationId int64) (string, error) {
-	// accToken, err := gh.getAccessToken(ctx, common.ProviderGithub)
+func (gh *githubI) InstallationToken(ctx context.Context, accToken *domain.AccessToken, repoUrl string) (string, error) {
+	fmt.Println(accToken)
 	c := gh.cfg.Client(ctx, accToken.Token)
 	c2 := github.NewClient(c)
-	it, _, err := c2.Apps.CreateInstallationToken(ctx, installationId, &github.InstallationTokenOptions{})
+
+	inst, _, err := c2.Apps.FindRepositoryInstallation(ctx, "nxtcoder17", "sample")
+	if err != nil {
+		return "", errors.NewEf(err, "could not fetch repository installation")
+	}
+	it, _, err := c2.Apps.CreateInstallationToken(ctx, *inst.ID, &github.InstallationTokenOptions{})
+	fmt.Println(it)
 	if err != nil {
 		return "", errors.NewEf(err, "failed to get installation token")
 	}
@@ -85,7 +80,7 @@ type GithubOAuth interface {
 	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
 }
 
-func fxGithub(env *Env, accTokenRepo repos.DbRepo[*domain.AccessToken]) domain.Github {
+func fxGithub(env *Env) domain.Github {
 	clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile := env.GithubConfig()
 	cfg := oauth2.Config{
 		ClientID:     clientId,
@@ -94,10 +89,15 @@ func fxGithub(env *Env, accTokenRepo repos.DbRepo[*domain.AccessToken]) domain.G
 		RedirectURL:  callbackUrl,
 		Scopes:       []string{"user:email", "admin:org"},
 	}
+	privatePem, err := ioutil.ReadFile(ghAppPKFile)
+	ghinstallation.NewAppsTransport(http.DefaultTransport, 10, privatePem)
+
+	if err != nil {
+		panic(errors.NewEf(err, "could not read github app PK file"))
+	}
 	return &githubI{
-		cfg:             &cfg,
-		githubAppId:     ghAppId,
-		githubAppPKFile: ghAppPKFile,
-		accTokenRepo:    accTokenRepo,
+		cfg:         &cfg,
+		githubAppId: ghAppId,
+		githubAppPK: privatePem,
 	}
 }
