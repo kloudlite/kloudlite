@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 
@@ -36,6 +37,10 @@ type domainI struct {
 	github          Github
 	gitlab          Gitlab
 	google          Google
+}
+//
+func (domaini *domainI) GithubInstallationToken(ctx context.Context) (string, error) {
+	panic("not implemented") // TODO: Implement
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
@@ -288,177 +293,127 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
 }
 
+func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User) (*common.AuthSession, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": newUser.Email})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not find user")
+	}
+
+	if user == nil {
+		newUser.Joined = time.Now()
+		user, err = d.userRepo.Create(ctx, newUser)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not create user (email=%s)", user.Email)
+		}
+	}
+
+	t, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
+		UserId:   user.Id,
+		Email:    user.Email,
+		Provider: provider,
+		Token:    token,
+	})
+
+	if err != nil {
+		return nil, errors.NewEf(err, "could not store access token in repo")
+	}
+
+	p := &ProviderDetail{TokenId: t.Id, Avatar: newUser.Avatar}
+
+	if provider == common.ProviderGithub {
+		user.ProviderGithub = p
+	}
+
+	if provider == common.ProviderGitlab {
+		user.ProviderGitlab = p
+	}
+
+	if provider == common.ProviderGoogle {
+		user.ProviderGoogle = p
+	}
+
+	user.Verified = true
+	user, err = d.userRepo.UpdateById(ctx, user.Id, user)
+	if err != nil {
+		return nil, errors.NewEf(err, "could not update user")
+	}
+
+	return common.NewSession(user.Id, user.Email, user.Verified, fmt.Sprintf("oauth2/%s", provider)), nil
+}
+
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
 	switch provider {
 	case common.ProviderGithub:
 		{
 			u, t, err := d.github.Callback(ctx, code, state)
-			d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
 				return nil, errors.NewEf(err, "could not login to github")
 			}
-			//STEP: find if this user has account with this email
-			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": *u.Email})
-			if err != nil {
-				d.logger.Infof("user: %+v (err %+v)", user, err)
-				return nil, errors.NewEf(err, "could not find user")
+			d.logger.Infof("PRE AVATAR: %V\n", *u.AvatarURL)
+			user := &User{
+				Name:   *u.Name,
+				Avatar: u.AvatarURL,
+				Email:  *u.Email,
 			}
 
-			if user == nil {
-				user, err = d.userRepo.Create(ctx, &User{
-					Name:     *u.Name,
-					Avatar:   u.AvatarURL,
-					Email:    *u.Email,
-					Verified: true,
-					Joined:   time.Now(),
-				})
-				if err != nil {
-					return nil, errors.NewEf(err, "could not create user (email=%s)", *u.Email)
-				}
-			}
-
-			token, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
-				UserId:   user.Id,
-				Email:    user.Email,
-				Provider: provider,
-				Token:    t,
-			})
-
-			if err != nil {
-				return nil, errors.NewEf(err, "could not store access token in repo")
-			}
-
-			d.logger.Infof("TOKEN: %+v\n", token)
-
-			user.ProviderGithub = &ProviderDetail{
-				TokenId: token.Id,
-				Avatar:  u.AvatarURL,
-			}
-			user, err = d.userRepo.UpdateById(ctx, user.Id, user)
-			if err != nil {
-				return nil, errors.NewEf(err, "could not update user")
-			}
-
-			d.logger.Infof("USER %+v\n", user)
-
-			return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/github"), nil
+			d.logger.Infof("AVATAR: %v\n", *user.Avatar)
+			return d.afterOAuthLogin(ctx, provider, t, user)
 		}
 
 	case common.ProviderGitlab:
 		{
 			u, t, err := d.gitlab.Callback(ctx, code, state)
-			d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
-				return nil, errors.NewEf(err, "could not login to github")
+				return nil, errors.NewEf(err, "could not login to gitlab")
 			}
 
-			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
-			d.logger.Infof("user %+v, err %+v\n", user, err)
-			if err != nil {
-				d.logger.Infof("user: %+v (err %+v)", user, err)
-				return nil, errors.NewEf(err, "could not find user")
+			user := &User{
+				Name:   u.Name,
+				Avatar: &u.AvatarURL,
+				Email:  u.Email,
 			}
+			d.logger.Infof("AVATAR: %v\n", *user.Avatar)
 
-			if user == nil {
-				user, err = d.userRepo.Create(ctx, &User{
-					Name:     u.Name,
-					Avatar:   &u.AvatarURL,
-					Email:    u.Email,
-					Verified: true,
-					Joined:   time.Now(),
-				})
-
-				if err != nil {
-					return nil, errors.NewEf(err, "could not create user (email=%s)", u.Email)
-				}
-			}
-
-			token, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
-				UserId:   user.Id,
-				Email:    user.Email,
-				Provider: provider,
-				Token:    t,
-			})
-
-			if err != nil {
-				return nil, errors.NewEf(err, "could not store access token in repo")
-			}
-
-			d.logger.Infof("TOKEN: %+v\n", token)
-
-			user.ProviderGitlab = &ProviderDetail{
-				TokenId: token.Id,
-				Avatar:  &u.AvatarURL,
-			}
-
-			user, err = d.userRepo.UpdateById(ctx, user.Id, user)
-			if err != nil {
-				return nil, errors.NewEf(err, "could not update user")
-			}
-
-			d.logger.Infof("USER %+v\n", user)
-
-			return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/gitlab"), nil
+			return d.afterOAuthLogin(ctx, provider, t, user)
 		}
 
 	case common.ProviderGoogle:
 		{
 			u, t, err := d.google.Callback(ctx, code, state)
-			d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
-				return nil, errors.NewEf(err, "could not login to github")
+				return nil, errors.NewEf(err, "could not login to google")
 			}
 
-			user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
-			d.logger.Infof("user %+v, err %+v\n", user, err)
-			if err != nil {
-				d.logger.Infof("user: %+v (err %+v)", user, err)
-				return nil, errors.NewEf(err, "could not find user")
+			user := &User{
+				Name:   u.Name,
+				Avatar: u.AvatarURL,
+				Email:  u.Email,
 			}
 
-			if user == nil {
-				user, err = d.userRepo.Create(ctx, &User{
-					Name:     u.Name,
-					Avatar:   u.AvatarURL,
-					Email:    u.Email,
-					Verified: true,
-					Joined:   time.Now(),
-				})
+			d.logger.Infof("AVATAR: %v\n", user.Avatar)
 
-				if err != nil {
-					return nil, errors.NewEf(err, "could not create user (email=%s)", u.Email)
-				}
-			}
-
-			token, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
-				UserId:   user.Id,
-				Email:    user.Email,
-				Provider: provider,
-				Token:    t,
-			})
-
-			if err != nil {
-				return nil, errors.NewEf(err, "could not store access token in repo")
-			}
-
-			d.logger.Infof("TOKEN: %+v\n", token)
-
-			user.ProviderGitlab = &ProviderDetail{
-				TokenId: token.Id,
-				Avatar:  u.AvatarURL,
-			}
-
-			user, err = d.userRepo.UpdateById(ctx, user.Id, user)
-			if err != nil {
-				return nil, errors.NewEf(err, "could not update user")
-			}
-
-			d.logger.Infof("USER %+v\n", user)
-
-			return common.NewSession(user.Id, user.Email, user.Verified, "oauth2/google"), nil
+			return d.afterOAuthLogin(ctx, provider, t, user)
+		}
+	default:
+		{
+			return nil, errors.Newf("unknown provider=%s, aborting request", provider)
 		}
 	}
-	panic("implement me")
+}
+
+func (d *domainI) GetAccessToken(ctx context.Context, provider string) (*AccessToken, error) {
+	session := cache.GetSession[*AccessToken](ctx)
+	if session == nil {
+		return nil, errors.UnAuthorized()
+	}
+	accToken, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{"user_id": session.UserId, "provider": provider})
+	if err != nil {
+		return nil, errors.NewEf(err, "finding access token")
+	}
+	return accToken, nil
 }
 
 func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user *User) error {

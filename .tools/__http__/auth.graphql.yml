@@ -36,7 +36,7 @@ query: |
   }
 
 variables:
-  provider: google
+  provider: github
 
 ---
 label: OAuth Login
@@ -49,8 +49,8 @@ query: |
     }
   }
 variables:
-  code: 4%2F0AX4XfWjOQpnPjEGloHJp1hahw362V6ArODatScJi-yVWAbGoF3qAmA-Ph24kIK8-oDSMFw
-  provider: google
+  code: 829560d905e553a95f2a
+  provider: github
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
 
 ---

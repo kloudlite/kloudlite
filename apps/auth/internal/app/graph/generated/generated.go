@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 		ChangeEmail             func(childComplexity int, email string) int
 		ChangePassword          func(childComplexity int, currentPassword string, newPassword string) int
 		ClearMetadata           func(childComplexity int) int
+		GithubInstallationToken func(childComplexity int, provider string) int
 		InviteSignup            func(childComplexity int, email string, name string) int
 		Login                   func(childComplexity int, email string, password string) int
 		LoginWithInviteToken    func(childComplexity int, inviteToken string) int
@@ -123,6 +124,7 @@ type MutationResolver interface {
 	ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
 	OAuthLogin(ctx context.Context, provider string, code string, state *string) (*model.Session, error)
 	OAuthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error)
+	GithubInstallationToken(ctx context.Context, provider string) (*string, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -187,6 +189,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ClearMetadata(childComplexity), true
+
+	case "Mutation.githubInstallationToken":
+		if e.complexity.Mutation.GithubInstallationToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_githubInstallationToken_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.GithubInstallationToken(childComplexity, args["provider"].(string)), true
 
 	case "Mutation.inviteSignup":
 		if e.complexity.Mutation.InviteSignup == nil {
@@ -583,6 +597,8 @@ type Mutation {
 
   oAuthLogin(provider: String!, code: String!, state: String): Session!
   oAuthAddLogin(provider: String!, state: String!, code: String!): Boolean!
+
+  githubInstallationToken(provider: String!): String
 }
 
 type Session {
@@ -694,6 +710,21 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		}
 	}
 	args["newPassword"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_githubInstallationToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["provider"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["provider"] = arg0
 	return args, nil
 }
 
@@ -1675,6 +1706,45 @@ func (ec *executionContext) _Mutation_oAuthAddLogin(ctx context.Context, field g
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_githubInstallationToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_githubInstallationToken_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().GithubInstallationToken(rctx, args["provider"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3938,6 +4008,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "githubInstallationToken":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_githubInstallationToken(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
