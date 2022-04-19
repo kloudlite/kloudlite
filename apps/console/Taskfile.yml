@@ -26,8 +26,8 @@ tasks:
   docker-build:
     dir: ../..
     vars:
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/finance:v2
-      APP_DIR: ./apps/finance
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/console:v2
+      APP_DIR: ./apps/console
     cmds:
       - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
       - docker push {{.IMAGE}}
