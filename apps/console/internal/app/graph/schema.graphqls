@@ -41,8 +41,6 @@ type Query {
   infra_getDevices(deviceId: ID!): Device
 }
 
-
-
 type ManagedRes {
   id: ID!
   name: String!
