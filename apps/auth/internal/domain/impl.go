@@ -44,7 +44,7 @@ func (d *domainI) GithubInstallationToken(ctx context.Context, _ int64) (string,
 	if err != nil {
 		return "", errors.NewEf(err, "finding accessToken")
 	}
-	return d.github.InstallationToken(ctx, accToken, "asdfsdaf")
+	return d.github.GetInstallationToken(ctx, accToken, "asdfsdaf")
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
