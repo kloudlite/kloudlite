@@ -21,7 +21,7 @@ func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger
 			action.Unmarshal(&_d)
 			//if true {
 			//	logger.Info("message", "type", _d)
-			//	//return nil
+			//	return nil
 			//}
 			switch _d.Type {
 			case "setup-cluster":
