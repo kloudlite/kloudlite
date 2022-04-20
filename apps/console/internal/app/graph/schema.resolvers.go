@@ -9,9 +9,22 @@ import (
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
+	"kloudlite.io/apps/console/internal/domain/entities"
 	wErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
+
+func (r *accountResolver) Projects(ctx context.Context, obj *model.Account) ([]*model.Project, error) {
+	projectEntities, err := r.Domain.GetAccountProjects(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	projectModels := make([]*model.Project, 0)
+	for _, pe := range projectEntities {
+		projectModels = append(projectModels, projectModelFromEntity(pe))
+	}
+	return projectModels, err
+}
 
 func (r *accountResolver) Clusters(ctx context.Context, obj *model.Account) ([]*model.Cluster, error) {
 	clusterEntities, err := r.Domain.ListClusters(ctx, obj.ID)
@@ -101,7 +114,7 @@ func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (
 	return "nil", nil
 }
 
-func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values string) (*model.ManagedSvc, error) {
+func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -109,15 +122,15 @@ func (r *mutationResolver) MangedSvcUninstall(ctx context.Context, installationI
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) MangedSvcUpdate(ctx context.Context, installationID repos.ID, values string) (bool, error) {
+func (r *mutationResolver) MangedSvcUpdate(ctx context.Context, installationID repos.ID, values map[string]interface{}) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceName string, values string) (*model.ManagedRes, error) {
+func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceName string, values map[string]interface{}) (*model.ManagedRes, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) ManagedResUpdate(ctx context.Context, resID repos.ID, values *string) (bool, error) {
+func (r *mutationResolver) ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -145,8 +158,12 @@ func (r *mutationResolver) InfraRemoveDevice(ctx context.Context, deviceID repos
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, cluster string, logo *string, description *string) (*model.Project, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string) (*model.Project, error) {
+	projectEntity, err := r.Domain.CreateProject(ctx, accountID, name, displayName, logo, description)
+	if err != nil {
+		return nil, err
+	}
+	return projectModelFromEntity(projectEntity), nil
 }
 
 func (r *mutationResolver) CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error) {
@@ -177,7 +194,7 @@ func (r *mutationResolver) GitlabEvent(ctx context.Context, email repos.ID, sour
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app string, pipelines *model.GitPipelineInput, configs *string, secrets *string, mServices *string, mResources *string) (*bool, error) {
+func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app map[string]interface{}, pipelines *model.GitPipelineInput, configs map[string]interface{}, secrets map[string]interface{}, mServices map[string]interface{}, mResources map[string]interface{}) (*bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -193,27 +210,63 @@ func (r *mutationResolver) CoreRollbackApp(ctx context.Context, appID repos.ID, 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateSecret(ctx context.Context, projectID repos.ID, name string, data *string) (*model.Secret, error) {
+func (r *mutationResolver) CoreCreateSecret(ctx context.Context, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) (*model.Secret, error) {
+	entries := make([]*entities.Entry, 0)
+	for _, i := range data {
+		entries = append(entries, &entities.Entry{
+			Key:   i.Key,
+			Value: i.Value,
+		})
+	}
+	configEntity, err := r.Domain.CreateSecret(ctx, projectID, name, description, entries)
+	if err != nil {
+		return nil, err
+	}
+	return secretModelFromEntity(configEntity), nil
+}
+
+func (r *mutationResolver) CoreUpdateSecret(ctx context.Context, secretID repos.ID, description *string, data []*model.CSEntryIn) (bool, error) {
+	entries := make([]*entities.Entry, 0)
+	for _, i := range data {
+		entries = append(entries, &entities.Entry{
+			Key:   i.Key,
+			Value: i.Value,
+		})
+	}
+	return r.Domain.UpdateSecret(ctx, secretID, description, entries)
+}
+
+func (r *mutationResolver) CoreDeleteSecret(ctx context.Context, secretID repos.ID) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreUpdateSecret(ctx context.Context, projectID repos.ID, name string, data *string) (*model.Secret, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreCreateConfig(ctx context.Context, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) (*model.Config, error) {
+	entries := make([]*entities.Entry, 0)
+	for _, i := range data {
+		entries = append(entries, &entities.Entry{
+			Key:   i.Key,
+			Value: i.Value,
+		})
+	}
+	configEntity, err := r.Domain.CreateConfig(ctx, projectID, name, description, entries)
+	if err != nil {
+		return nil, err
+	}
+	return configModelFromEntity(configEntity), nil
 }
 
-func (r *mutationResolver) CoreDeleteSecret(ctx context.Context, projectID repos.ID, name string) (*model.Secret, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreUpdateConfig(ctx context.Context, configID repos.ID, description *string, data []*model.CSEntryIn) (bool, error) {
+	entries := make([]*entities.Entry, 0)
+	for _, i := range data {
+		entries = append(entries, &entities.Entry{
+			Key:   i.Key,
+			Value: i.Value,
+		})
+	}
+	return r.Domain.UpdateConfig(ctx, configID, description, entries)
 }
 
-func (r *mutationResolver) CoreCreateConfig(ctx context.Context, projectID repos.ID, name string, data *string) (*model.Config, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) CoreUpdateConfig(ctx context.Context, projectID repos.ID, name string, data *string) (*model.Config, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) CoreDeleteConfig(ctx context.Context, configID repos.ID) (*model.Config, error) {
+func (r *mutationResolver) CoreDeleteConfig(ctx context.Context, configID repos.ID) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -221,12 +274,32 @@ func (r *mutationResolver) CiDeleteGitPipeline(ctx context.Context, pipelineID r
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateRouter(ctx context.Context, projectID repos.ID, name string, domains []*string, routes []*model.RouteInput) (*model.Router, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreCreateRouter(ctx context.Context, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) (*model.Router, error) {
+	routeEnt := make([]*entities.Route, 0)
+	for _, r := range routes {
+		routeEnt = append(routeEnt, &entities.Route{
+			Path:    r.Path,
+			AppName: r.AppName,
+			Port:    fmt.Sprintf("%v", r.Port),
+		})
+	}
+	router, err := r.Domain.CreateRouter(ctx, projectID, name, domains, routeEnt)
+	if err != nil {
+		return nil, err
+	}
+	return routerModelFromEntity(router), err
 }
 
-func (r *mutationResolver) CoreUpdateRouter(ctx context.Context, routerID repos.ID, name string, domains []*string, routes []*model.RouteInput) (*bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreUpdateRouter(ctx context.Context, routerID repos.ID, domains []string, routes []*model.RouteInput) (bool, error) {
+	entries := make([]*entities.Route, 0)
+	for _, i := range routes {
+		entries = append(entries, &entities.Route{
+			Path:    i.Path,
+			AppName: i.AppName,
+			Port:    fmt.Sprintf("%v", i.Port),
+		})
+	}
+	return r.Domain.UpdateRouter(ctx, routerID, domains, entries)
 }
 
 func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, routerID repos.ID) (bool, error) {
@@ -238,7 +311,11 @@ func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) (
 }
 
 func (r *queryResolver) CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error) {
-	panic(fmt.Errorf("not implemented"))
+	p, err := r.Domain.GetProjectWithID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	return projectModelFromEntity(p), nil
 }
 
 func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error) {
@@ -250,62 +327,98 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID, version *st
 }
 
 func (r *queryResolver) CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error) {
-	panic(fmt.Errorf("not implemented"))
+	routerEntities, err := r.Domain.GetRouters(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	routers := make([]*model.Router, 0)
+	for _, i := range routerEntities {
+		routers = append(routers, routerModelFromEntity(i))
+	}
+	return routers, nil
 }
 
-func (r *queryResolver) CoreRouter(ctx context.Context, routerID *repos.ID, projectID *repos.ID) (*model.Router, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) CoreRouter(ctx context.Context, routerID repos.ID) (*model.Router, error) {
+	routerEntity, err := r.Domain.GetRouter(ctx, routerID)
+	if err != nil {
+		return nil, err
+	}
+	return routerModelFromEntity(routerEntity), nil
 }
 
 func (r *queryResolver) CoreConfigs(ctx context.Context, projectID repos.ID, search *string) ([]*model.Config, error) {
-	panic(fmt.Errorf("not implemented"))
+	configEntities, err := r.Domain.GetConfigs(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	configs := make([]*model.Config, 0)
+	for _, i := range configEntities {
+		configs = append(configs, configModelFromEntity(i))
+	}
+	return configs, nil
 }
 
-func (r *queryResolver) CoreConfig(ctx context.Context, configID *repos.ID, projectID *repos.ID) (*model.Config, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) CoreConfig(ctx context.Context, configID repos.ID) (*model.Config, error) {
+	configEntity, err := r.Domain.GetConfig(ctx, configID)
+	if err != nil {
+		return nil, err
+	}
+	return configModelFromEntity(configEntity), nil
 }
 
 func (r *queryResolver) CoreSecrets(ctx context.Context, projectID repos.ID, search *string) ([]*model.Secret, error) {
-	panic(fmt.Errorf("not implemented"))
+	configEntities, err := r.Domain.GetSecrets(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	secrets := make([]*model.Secret, 0)
+	for _, i := range configEntities {
+		secrets = append(secrets, secretModelFromEntity(i))
+	}
+	return secrets, nil
 }
 
-func (r *queryResolver) CoreSecret(ctx context.Context, secretID *repos.ID, projectID *repos.ID, secretName *string) (*model.Secret, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) CoreSecret(ctx context.Context, secretID repos.ID) (*model.Secret, error) {
+	secretEntity, err := r.Domain.GetSecret(ctx, secretID)
+	if err != nil {
+		return nil, err
+	}
+	return secretModelFromEntity(secretEntity), nil
 }
 
 func (r *queryResolver) CiGitPullRepoToken(ctx context.Context, imageID repos.ID) (*string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiGitlabRepos(ctx context.Context, groupID repos.ID, search *string, limit *int, page *int) ([]string, error) {
+func (r *queryResolver) CiGitlabRepos(ctx context.Context, groupID repos.ID, search *string, limit *int, page *int) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiGitlabGroups(ctx context.Context, search *string, limit *int, page *int) ([]string, error) {
+func (r *queryResolver) CiGitlabGroups(ctx context.Context, search *string, limit *int, page *int) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoURL string, search *string) ([]string, error) {
+func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoURL string, search *string) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiGithubInstallations(ctx context.Context) ([]string, error) {
+func (r *queryResolver) CiGithubInstallations(ctx context.Context) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID string, limit *int, page *int) ([]string, error) {
+func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID string, limit *int, page *int) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) ([]string, error) {
+func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) ([]string, error) {
+func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CiGitPipelines(ctx context.Context, projectID repos.ID, query *string) ([]*model.GitPipeline, error) {
+func (r *queryResolver) CiGitPipelines(ctx context.Context, projectID repos.ID, query map[string]interface{}) ([]*model.GitPipeline, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -313,7 +426,7 @@ func (r *queryResolver) CiGitPipeline(ctx context.Context, pipelineID repos.ID) 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) ManagedSvcListAvailable(ctx context.Context) (string, error) {
+func (r *queryResolver) ManagedSvcListAvailable(ctx context.Context) (map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -382,13 +495,3 @@ type deviceResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) InfraListClusters(ctx context.Context) ([]*model.Cluster, error) {
-	panic(fmt.Errorf("not implemented"))
-}

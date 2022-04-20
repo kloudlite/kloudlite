@@ -39,6 +39,10 @@ var Module = fx.Module(
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
 	repos.NewFxMongoRepo[*entities.Device]("devices", "dev", entities.DeviceIndexes),
+	repos.NewFxMongoRepo[*entities.Project]("project", "proj", entities.ProjectIndexes),
+	repos.NewFxMongoRepo[*entities.Config]("config", "cfg", entities.ConfigIndexes),
+	repos.NewFxMongoRepo[*entities.Secret]("secret", "sec", entities.SecretIndexes),
+	repos.NewFxMongoRepo[*entities.Router]("router", "route", entities.RouterIndexes),
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 			return messaging.NewKafkaProducer[messaging.Json](messagingCli)
