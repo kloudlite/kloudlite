@@ -6,9 +6,7 @@ tasks:
     run: always
     deps:
       - pre
-      - apply
     cmds:
-      # - go run ./main.go
       - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go |& pp -rel-path || exit 1'
     sources:
       - ./**/*.go
@@ -18,6 +16,7 @@ tasks:
     cmds:
       - make manifests
       - make generate
+      - task: apply
 
   apply:
     run: once
