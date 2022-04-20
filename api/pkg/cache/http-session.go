@@ -49,7 +49,6 @@ func NewSessionRepo[T repos.Entity](
 			}
 
 			http.SetCookie(w, ck)
-			fmt.Printf("I am HERE  %+v\n", ck)
 		})
 		newContext = context.WithValue(newContext, "delete-session", func() {
 			if cookie != nil {
