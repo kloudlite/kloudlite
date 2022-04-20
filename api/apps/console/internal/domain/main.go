@@ -10,15 +10,245 @@ import (
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
+	"math"
+	"math/rand"
+	"regexp"
+	"strings"
 )
 
 type domain struct {
 	deviceRepo      repos.DbRepo[*entities.Device]
 	clusterRepo     repos.DbRepo[*entities.Cluster]
+	projectRepo     repos.DbRepo[*entities.Project]
+	configRepo      repos.DbRepo[*entities.Config]
+	routerRepo      repos.DbRepo[*entities.Router]
+	secretRepo      repos.DbRepo[*entities.Secret]
 	messageProducer messaging.Producer[messaging.Json]
 	messageTopic    string
 	logger          logger.Logger
 	infraMessenger  InfraMessenger
+}
+
+func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string, entries []*entities.Route) (bool, error) {
+	router, err := d.routerRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	if domains != nil {
+		router.Domains = domains
+	}
+	if entries != nil {
+		router.Routes = entries
+	}
+	_, err = d.routerRepo.UpdateById(ctx, id, router)
+	if err != nil {
+		return false, err
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) GetRouter(ctx context.Context, routerID repos.ID) (*entities.Router, error) {
+	router, err := d.routerRepo.FindById(ctx, routerID)
+	if err != nil {
+		return nil, err
+	}
+	return router, nil
+}
+
+func (d *domain) GetRouters(ctx context.Context, projectID repos.ID) ([]*entities.Router, error) {
+	routers, err := d.routerRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"project_id": projectID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return routers, nil
+}
+
+func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerName string, domains []string, routes []*entities.Route) (*entities.Router, error) {
+	prj, err := d.projectRepo.FindById(ctx, projectId)
+	if err != nil {
+		return nil, err
+	}
+	if prj == nil {
+		return nil, fmt.Errorf("project not found")
+	}
+	create, err := d.routerRepo.Create(ctx, &entities.Router{
+		ProjectId: projectId,
+		Name:      routerName,
+		Namespace: prj.Name,
+		Domains:   domains,
+		Routes:    routes,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error) {
+	prj, err := d.projectRepo.FindById(ctx, projectId)
+	if err != nil {
+		return nil, err
+	}
+	if prj == nil {
+		return nil, fmt.Errorf("project not found")
+	}
+	create, err := d.secretRepo.Create(ctx, &entities.Secret{
+		Name:        secretName,
+		ProjectId:   projectId,
+		Namespace:   prj.Name,
+		Data:        secretData,
+		Description: desc,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error) {
+	cfg, err := d.secretRepo.FindById(ctx, secretId)
+	if err != nil {
+		return false, err
+	}
+	if cfg == nil {
+		return false, fmt.Errorf("config not found")
+	}
+	if desc != nil {
+		cfg.Description = desc
+	}
+	cfg.Data = secretData
+	_, err = d.secretRepo.UpdateById(ctx, secretId, cfg)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error) {
+	secrets, err := d.secretRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"project_id": projectId,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return secrets, nil
+}
+
+func (d *domain) GetSecret(ctx context.Context, secretId repos.ID) (*entities.Secret, error) {
+	sec, err := d.secretRepo.FindById(ctx, secretId)
+	if err != nil {
+		return nil, err
+	}
+	return sec, nil
+}
+
+func (d *domain) GetConfig(ctx context.Context, configId repos.ID) (*entities.Config, error) {
+	cfg, err := d.configRepo.FindById(ctx, configId)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error) {
+	configs, err := d.configRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"project_id": projectId,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return configs, nil
+}
+
+func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error) {
+	cfg, err := d.configRepo.FindById(ctx, configId)
+	if err != nil {
+		return false, err
+	}
+	if cfg == nil {
+		return false, fmt.Errorf("config not found")
+	}
+	if desc != nil {
+		cfg.Description = desc
+	}
+	cfg.Data = configData
+	_, err = d.configRepo.UpdateById(ctx, configId, cfg)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error) {
+	prj, err := d.projectRepo.FindById(ctx, projectId)
+	if err != nil {
+		return nil, err
+	}
+	if prj == nil {
+		return nil, fmt.Errorf("project not found")
+	}
+	create, err := d.configRepo.Create(ctx, &entities.Config{
+		Name:        configName,
+		ProjectId:   projectId,
+		Namespace:   prj.Name,
+		Data:        configData,
+		Description: desc,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error) {
+	return d.projectRepo.FindById(ctx, projectId)
+}
+
+func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
+	res, err := d.projectRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"account_id": acountId,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func generateReadable(name string) string {
+	compile := regexp.MustCompile(`[^0-9a-zA-Z:,/s]+`)
+	allString := compile.ReplaceAllString(strings.ToLower(name), "")
+	m := math.Min(10, float64(len(allString)))
+	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
+}
+
+func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectName string, displayName string, logo *string, description *string) (*entities.Project, error) {
+	create, err := d.projectRepo.Create(ctx, &entities.Project{
+		Name:        projectName,
+		AccountId:   accountId,
+		ReadableId:  repos.ID(generateReadable(projectName)),
+		DisplayName: displayName,
+		Logo:        logo,
+		Description: description,
+		Status:      entities.ProjectStateSyncing,
+	})
+	//TODO send message
+	if err != nil {
+		return nil, err
+	}
+	return create, err
 }
 
 func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClusterResponse) error {
@@ -319,6 +549,10 @@ type Env struct {
 func fxDomain(
 	deviceRepo repos.DbRepo[*entities.Device],
 	clusterRepo repos.DbRepo[*entities.Cluster],
+	projectRepo repos.DbRepo[*entities.Project],
+	configRepo repos.DbRepo[*entities.Config],
+	secretRepo repos.DbRepo[*entities.Secret],
+	routerRepo repos.DbRepo[*entities.Router],
 	msgP messaging.Producer[messaging.Json],
 	env *Env,
 	logger logger.Logger,
@@ -328,6 +562,10 @@ func fxDomain(
 		infraMessenger:  messenger,
 		deviceRepo:      deviceRepo,
 		clusterRepo:     clusterRepo,
+		projectRepo:     projectRepo,
+		routerRepo:      routerRepo,
+		secretRepo:      secretRepo,
+		configRepo:      configRepo,
 		messageProducer: msgP,
 		messageTopic:    env.KafkaInfraTopic,
 		logger:          logger,

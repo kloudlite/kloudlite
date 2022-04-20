@@ -47,6 +47,7 @@ const (
 
 type App struct {
 	repos.BaseEntity  `bson:",inline"`
+	ProjectId         repos.ID           `json:"project_id" bson:"project_id"`
 	Name              string             `json:"name" bson:"name"`
 	Namespace         string             `json:"namespace" bson:"namespace"`
 	Description       string             `json:"description" bson:"description"`
