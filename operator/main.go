@@ -125,6 +125,8 @@ func main() {
 		ClientSet:   clientset,
 		SendMessage: sendMessage,
 		JobMgr:      lib.NewJobber(clientset),
+		HarborUserName: harborUserName,
+		HarborPassword: harborPassword,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)

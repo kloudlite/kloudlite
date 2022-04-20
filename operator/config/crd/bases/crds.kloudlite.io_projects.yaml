@@ -155,6 +155,48 @@ spec:
                   status:
                     type: boolean
                 type: object
+              pull_secret_check:
+                properties:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
+                    type: string
+                  status:
+                    type: boolean
+                type: object
+              svc_account_check:
+                properties:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
+                    type: string
+                  status:
+                    type: boolean
+                type: object
             type: object
         type: object
     served: true

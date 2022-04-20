@@ -7,7 +7,7 @@ import (
 )
 
 func NewEf(err error, msg string, a ...interface{}) error {
-	return yerrors.Errorf("%s as %+v", fmt.Sprintf(msg, a...), err)
+	return yerrors.Errorf("%s as %v", fmt.Sprintf(msg, a...), err)
 }
 
 func Newf(msg string, a ...interface{}) error {
@@ -30,5 +30,5 @@ func StatusUpdate(err error) error {
 }
 
 func ConditionUpdate(err error) error {
-	return Newf("job condition update failed as %+v", err)
+	return Newf("job condition update failed as %v", err)
 }
