@@ -31,8 +31,8 @@ variables:
 
 label: "OAuth Login Request"
 query: |
-  query RequestLogin($provider: String!) {
-    requestLogin(provider: $provider)
+  query Query($provider: String!) {
+    oAuth_requestLogin(provider: $provider)
   }
 
 variables:
@@ -41,14 +41,34 @@ variables:
 ---
 label: OAuth Login
 query: |
-  mutation Login($code: String!, $provider: String!, $state: String!) {
-    oAuthLogin(code: $code, provider: $provider, state: $state) {
+  mutation OAuth_addLogin($code: String!, $provider: String!) {
+    oAuth_login(code: $code, provider: $provider) {
       id
       loginMethod
       userEmail
     }
   }
 variables:
-  code: 19558fbbb49a4f5eb4ad
+  code: 8bc82f40de80105ab35d
   provider: github
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
+
+---
+label: Me
+query: |
+  query Me {
+    auth_me {
+      avatar
+      id
+      email
+    }
+  }
+
+---
+label: asdf
+query: |
+  query Query($installationId: Int!) {
+    oAuth_githubInstallationToken(installationId: $installationId)
+  }
+variables:
+  installationId: 123432

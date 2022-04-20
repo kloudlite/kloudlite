@@ -54,3 +54,7 @@ func NewE(err error) error {
 func New(msg string) error {
 	return yerrors.Wrap(yerrors.New(msg))
 }
+
+func UnAuthorized() error {
+	return yerrors.Wrap(fmt.Errorf("not logged in into system"))
+}

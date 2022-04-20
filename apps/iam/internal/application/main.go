@@ -61,7 +61,6 @@ func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 		return nil, errors.NewEf(err, "could not find resource(ids=%v)", in.ResourceIds)
 	}
 
-	fmt.Println("HERE2")
 	if strings.HasPrefix(in.UserId, "sys-user") {
 		return &iam.OutCan{Status: true}, nil
 	}
