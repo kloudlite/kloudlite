@@ -51,7 +51,7 @@ type Domain interface {
 }
 
 type InfraActionMessage interface {
-	~entities.SetupClusterAction | ~entities.DeleteClusterAction | ~entities.UpdateClusterAction | ~entities.AddPeerAction | entities.DeletePeerAction
+	entities.SetupClusterAction | entities.DeleteClusterAction | entities.UpdateClusterAction | entities.AddPeerAction | entities.DeletePeerAction
 }
 
 type InfraMessenger interface {

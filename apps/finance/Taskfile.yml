@@ -8,14 +8,14 @@ tasks:
       COOKIE_DOMAIN: localhost
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       PORT: 4002
-      IAM_SERVER_HOST: iam.hotspot.svc.cluster.local
-      IAM_SERVER_PORT: 80
+      IAM_SERVER_HOST: localhost
+      IAM_SERVER_PORT: 3000
       CONSOLE_SERVER_HOST: 10.13.13.104
       CONSOLE_SERVER_PORT: 8080
       # REDIS_USERNAME:
       # REDIS_PASSWORD:
     cmds:
-      - nodemon -w "**/*" -e "go" --signal SIGKILL -q --exec 'go run main.go | pp -rel-path'
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   gql:
     sources:
       - graph/schema.graphqls

@@ -2,7 +2,7 @@ scalar Json
 
 type Query {
   core_projects(accountId: ID): [Project!]!
-  core_project(accountId:ID, projectId: ID!): Project
+  core_project(projectId: ID!): Project
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!, version: String): App
@@ -183,7 +183,7 @@ type Project {
   logo: String
   description: String
   account: Account!
-  memberships: [UserMembership!]!
+  memberships: [ProjectMembership!]!
 }
 
 type AppMemebership {
@@ -191,9 +191,10 @@ type AppMemebership {
   role: String!
 }
 
-type UserMembership {
+type ProjectMembership {
   user: User!
   role: String!
+  project: Project!
 }
 
 type App {
