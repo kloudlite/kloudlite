@@ -62,3 +62,20 @@ func (re *Recon) Reason() string {
 	}
 	return "Unknown"
 }
+
+type Bool bool
+
+func (b Bool) Status() metav1.ConditionStatus {
+	if b {
+		return metav1.ConditionTrue
+	}
+	return metav1.ConditionFalse
+}
+
+type Condition struct {
+	Type               string
+	Status             string // "True", "False", "Unknown"
+	ObservedGeneration int64
+	Reason             string
+	Message            string
+}
