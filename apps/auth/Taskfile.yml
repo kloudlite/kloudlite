@@ -8,12 +8,14 @@ tasks:
       MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
       MONGO_DB_NAME: auth
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
-      PORT: 4001
+      PORT: 3000
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
       # COOKIE_DOMAIN: localhost
       COOKIE_DOMAIN: kl.madhouselabs.io
+      GOTRACEBACK: all
     cmds:
-      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+      # - go run -tags dynamic main.go --dev 2>&1 | pp
+      - nodemon -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev |& pp -rel-path || exit 1'
   gql:
     sources:
       - graph/schema.graphqls

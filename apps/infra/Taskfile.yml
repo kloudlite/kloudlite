@@ -18,3 +18,11 @@ tasks:
     cmds:
       - go run -tags dynamic main.go
 
+  docker-build:
+    dir: ../..
+    vars:
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/infra:v2
+      APP_DIR: ./apps/infra
+    cmds:
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker push {{.IMAGE}}
