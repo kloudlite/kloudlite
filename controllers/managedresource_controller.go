@@ -3,13 +3,12 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
@@ -18,7 +17,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 
 	crdsv1 "operators.kloudlite.io/api/v1"
@@ -75,7 +73,12 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 
 		c := meta.FindStatusCondition(msvc.Status.Conditions, "Ready")
-		if c == nil || c.Status != metav1
+		if c == nil || c.Status != metav1.ConditionTrue {
+			mres.Status.ManagedSvcDepCheck.SetFinishedWith(false, errors.Newf("managed svc (%s/%s) is not ready, yet", msvc.Namespace, msvc.Name).Error())
+			return r.updateStatus(ctx, mres)
+		}
+		mres.Status.ManagedSvcDepCheck.SetFinishedWith(false, errors.Newf("managed svc (%s/%s) is not ready, yet", msvc.Namespace, msvc.Name).Error())
+		return r.updateStatus(ctx, mres)
 	}
 
 	if !mres.Status.ManagedSvcDepCheck.Status {
@@ -88,88 +91,13 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if mres.Status.ApplyJobCheck.ShouldCheck() {
-	}
-
-	if mres.Status.ApplyJobCheck.IsRunning() {
-	}
-
-	if !mres.Status.ApplyJobCheck.Status {
-		return reconcileResult.Failed()
-	}
-
-	return reconcileResult.OK()
-}
-
-func (r *ManagedResourceReconciler) Reconcile2(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
-	r.logger = GetLogger(req.NamespacedName)
-
-	mres := &crdsv1.ManagedResource{}
-	if err := r.Get(ctx, req.NamespacedName, mres); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return reconcileResult.OK()
-		}
-		return reconcileResult.Failed()
-	}
-
-	if mres.HasToBeDeleted() {
-		r.logger.Debugf("mres.HasToBeDeleted()")
-		return r.finalizeMres(ctx, mres)
-	}
-
-	if mres.IsNewGeneration() {
-		r.logger.Debug("mres.IsNewGeneration()")
-		if mres.HasJob() {
-			fmt.Printf("HERE %+v\n", mres.HasJob())
-			return reconcileResult.Retry(minCoolingTime)
-		}
-		mres.DefaultStatus()
-		return r.updateStatus(ctx, mres)
-	}
-
-	if mres.HasJob() {
-		r.logger.Debug("mres.HasJob()")
-		b, err := r.JobMgr.HasCompleted(ctx, mres.Status.Job.Namespace, mres.Status.Job.Name)
-		if err != nil {
-			return reconcileResult.Retry(minCoolingTime)
-		}
-		if b != nil {
-			mres.Status.JobCompleted = newBool(true)
-			if !*b {
-				return r.updateStatus(ctx, mres)
-			}
-			mres.Status.Job = nil
-			return r.updateStatus(ctx, mres)
-		}
-		return reconcileResult.Retry(minCoolingTime)
-	}
-
-	if mres.HasNotCheckedDependency() {
-		r.logger.Debug("mres.HasNotCheckedDependency()")
-		checks := make(map[string]string)
-		msvc := &crdsv1.ManagedService{}
-		if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: mres.Spec.ManagedSvc}, msvc); err != nil {
-			r.logger.Debug(types.NamespacedName{Namespace: mres.Namespace, Name: mres.Spec.ManagedSvc})
-			r.logger.Debug(mres.Spec.ManagedSvc)
-			r.logger.Error(err)
-			return reconcileResult.Failed()
-		}
-		// ASSERT: no job running on msvc
-		r.logger.Debugf("msvc.Status: %+v\n", msvc.Status)
-		if msvc.Status.Job != nil {
-			checks[fmt.Sprintf("msvc/%s", msvc.Name)] = "Not Ready"
-		}
-		mres.Status.DependencyChecked = &checks
-		return r.updateStatus(ctx, mres)
-	}
-
-	if mres.ShouldCreateJob() {
-		r.logger.Debug("mres.ShouldCreateJob()")
-
+		mres.Status.ApplyJobCheck.SetStarted()
 		specB, err := json.Marshal(mres.Spec)
 		if err != nil {
-			r.logger.Error(errors.New("could not unmarshal mres spec into []byte"))
-			return reconcileResult.Failed()
+			e := errors.New("could not unmarshal mres Spec into []byte")
+			r.logger.Error(e)
+			mres.Status.ApplyJobCheck.SetFinishedWith(false, e.Error())
+			return r.updateStatus(ctx, mres)
 		}
 
 		action := "create"
@@ -179,8 +107,10 @@ func (r *ManagedResourceReconciler) Reconcile2(ctx context.Context, req ctrl.Req
 
 		dockerI, err := r.getDockerImage(ctx, mres, action)
 		if err != nil {
-			r.logger.Debug(err)
-			return reconcileResult.Failed()
+			e := errors.NewEf(err, "could not find docker image for maagedSvc=%s action=%s", mres.Spec.ManagedSvc, action)
+			r.logger.Error(e)
+			mres.Status.ApplyJobCheck.SetFinishedWith(false, e.Error())
+			return r.updateStatus(ctx, mres)
 		}
 
 		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
@@ -198,107 +128,226 @@ func (r *ManagedResourceReconciler) Reconcile2(ctx context.Context, req ctrl.Req
 		})
 
 		if err != nil {
-			return reconcileResult.Failed()
+			e := errors.NewEf(err, "could not create job")
+			r.logger.Error(e)
+			mres.Status.ApplyJobCheck.SetFinishedWith(false, e.Error())
+			return r.updateStatus(ctx, mres)
 		}
 
-		mres.Status.Job = &crdsv1.ReconJob{
+		mres.Status.ApplyJobCheck.Job = &crdsv1.ReconJob{
 			Namespace: job.Namespace,
 			Name:      job.Name,
 		}
+
 		return r.updateStatus(ctx, mres)
 	}
 
+	if mres.Status.ApplyJobCheck.IsRunning() {
+		j := mres.Status.ApplyJobCheck.Job
+		b, err := r.JobMgr.HasCompleted(ctx, j.Namespace, j.Name)
+		if err != nil {
+			return reconcileResult.Retry(minCoolingTime)
+		}
+
+		if b != nil {
+			if !*b {
+				mres.Status.ApplyJobCheck.SetFinishedWith(false, "job failed")
+				return r.updateStatus(ctx, mres)
+			}
+			mres.Status.ApplyJobCheck.SetFinishedWith(true, "job failed")
+			return r.updateStatus(ctx, mres)
+		}
+
+		return reconcileResult.Retry(minCoolingTime)
+	}
+
+	if !mres.Status.ApplyJobCheck.Status {
+		r.logger.Debugf("ApplyJobCheck status has failed")
+		return reconcileResult.Failed()
+	}
+
+	r.logger.Infof("Managed Resource reconcile complete ...")
 	return reconcileResult.OK()
 }
 
 func (r *ManagedResourceReconciler) finalizeMres(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {
-	if controllerutil.ContainsFinalizer(mres, mresFinalizer) {
-		if mres.HasJob() {
-			r.logger.Debug("mres.HasJob() (deletion)")
-			// STEP: cleaning currently executing jobs
-			err := r.JobMgr.Delete(ctx, mres.Status.Job.Namespace, mres.Status.Job.Name)
-			if err != nil {
-				return reconcileResult.RetryE(minCoolingTime, err)
-			}
-			mres.Status.Job = nil
-			mres.Status.JobCompleted = nil
-			return r.updateStatus(ctx, mres)
-		}
+	logger := r.logger.With("FINALIZER", "true")
 
-		if mres.ShouldCreateDeletionJob() {
-			r.logger.Debug("mres.ShouldCreateDeletionJob()")
-			specB, err := json.Marshal(mres.Spec)
-			if err != nil {
-				r.logger.Error(errors.New("could not unmarshal mres spec into []byte"))
-				return reconcileResult.Failed()
-			}
-
-			dockerI, err := r.getDockerImage(ctx, mres, "delete")
-			if err != nil {
-				r.logger.Debug(err)
-				return reconcileResult.Failed()
-			}
-
-			job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
-				Name:            "delete-job",
-				Namespace:       "hotspot",
-				ServiceAccount:  "hotspot-cluster-svc-account",
-				Image:           dockerI,
-				ImagePullPolicy: "Always",
-				Args: []string{
-					"delete",
-					"--name", mres.Name,
-					"--namespace", mres.Namespace,
-					"--spec", string(specB),
-				},
-			})
-
-			if err != nil {
-				return reconcileResult.Failed()
-			}
-
-			mres.Status.DeletionJob = &crdsv1.ReconJob{
-				Name:      job.Name,
-				Namespace: job.Namespace,
-			}
-			return r.updateStatus(ctx, mres)
-		}
-
-		if mres.HasDeletionJob() {
-			r.logger.Debug("mres.HasDeletionJob()")
-			//STEP:  WATCH for it
-			jobStatus, err := r.JobMgr.HasCompleted(ctx, mres.Status.DeletionJob.Namespace, mres.Status.DeletionJob.Name)
-			if err != nil {
-				return reconcileResult.Retry(minCoolingTime)
-			}
-			if jobStatus != nil {
-				mres.Status.DeletionJobCompleted = newBool(true)
-				if !*jobStatus {
-					r.logger.Debugf("DELETION jobStatus %v", *jobStatus)
-					return r.updateStatus(ctx, mres)
-				}
-				r.logger.Debugf("DELETION jobStatus: %v", *jobStatus)
-				mres.Status.DeletionJob = nil
-				return r.updateStatus(ctx, mres)
-			}
-			return reconcileResult.Retry(minCoolingTime)
-			// STEP: remove finalizer once done
-		}
-
-		if mres.Status.DeletionJobCompleted != nil {
-			r.logger.Debug("mres.Status.DeletionJobCompleted")
-			controllerutil.RemoveFinalizer(mres, appFinalizer)
-			err := r.Update(ctx, mres)
-			if err != nil {
-				r.logger.Error(errors.NewEf(err, "could not remove finalizers from mres"))
-			}
-			return reconcileResult.OK()
-		}
+	if !controllerutil.ContainsFinalizer(mres, mresFinalizer) {
+		return reconcileResult.OK()
 	}
 
-	r.logger.Debug("contains no finalizers")
+	if mres.Status.ApplyJobCheck.IsRunning() {
+		j := mres.Status.ApplyJobCheck.Job
+		err := r.JobMgr.Delete(ctx, j.Namespace, j.Name)
+		if err != nil {
+			mres.Status.ApplyJobCheck.SetFinishedWith(false, err.Error())
+			return r.updateStatus(ctx, mres)
+		}
+		mres.Status.ApplyJobCheck.SetFinishedWith(true, "job deleted")
+		return r.updateStatus(ctx, mres)
+	}
+
+	if mres.Status.DeleteJobCheck.ShouldCheck() {
+		logger.Debug("mres.ShouldCreateDeletionJob()")
+		specB, err := json.Marshal(mres.Spec)
+		if err != nil {
+			r.logger.Error(errors.New("could not unmarshal mres spec into []byte"))
+			return reconcileResult.Failed()
+		}
+
+		dockerI, err := r.getDockerImage(ctx, mres, "delete")
+		if err != nil {
+			r.logger.Debug(err)
+			return reconcileResult.Failed()
+		}
+
+		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
+			Name:            "delete-job",
+			Namespace:       "hotspot",
+			ServiceAccount:  "hotspot-cluster-svc-account",
+			Image:           dockerI,
+			ImagePullPolicy: "Always",
+			Args: []string{
+				"delete",
+				"--name", mres.Name,
+				"--namespace", mres.Namespace,
+				"--spec", string(specB),
+			},
+		})
+
+		if err != nil {
+			return reconcileResult.Failed()
+		}
+
+		mres.Status.DeleteJobCheck.Job = &crdsv1.ReconJob{
+			Name:      job.Name,
+			Namespace: job.Namespace,
+		}
+		return r.updateStatus(ctx, mres)
+	}
+
+	if mres.Status.DeleteJobCheck.IsRunning() {
+		j := mres.Status.DeleteJobCheck.Job
+		jst, err := r.JobMgr.HasCompleted(ctx, j.Namespace, j.Name)
+
+		if err != nil {
+			return reconcileResult.Retry(minCoolingTime)
+		}
+
+		if jst != nil {
+			if !*jst {
+				mres.Status.DeleteJobCheck.SetFinishedWith(false, "job failed")
+				return r.updateStatus(ctx, mres)
+			}
+			mres.Status.DeleteJobCheck.SetFinishedWith(true, "job succeeded")
+			return r.updateStatus(ctx, mres)
+		}
+		return reconcileResult.Retry(minCoolingTime)
+	}
+
+	if !mres.Status.DeleteJobCheck.Status {
+		logger.Infof("mres.Status.DeleteJobCheck.Status has failed, still letting pass through though ...")
+	}
+
+	logger.Debug("[Finalizer]: all deletion checks completed ...")
+	controllerutil.RemoveFinalizer(mres, msvcFinalizer)
+	err := r.Update(ctx, mres)
+	if err != nil {
+		logger.Error(errors.NewEf(err, "could not remove finalizers from app"))
+		return reconcileResult.Retry(minCoolingTime)
+	}
 	return reconcileResult.OK()
 }
+
+//func (r *ManagedResourceReconciler) finalizeMres2(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {
+//	if controllerutil.ContainsFinalizer(mres, mresFinalizer) {
+//		if mres.HasJob() {
+//			r.logger.Debug("mres.HasJob() (deletion)")
+//			// STEP: cleaning currently executing jobs
+//			err := r.JobMgr.Delete(ctx, mres.Status.Job.Namespace, mres.Status.Job.Name)
+//			if err != nil {
+//				return reconcileResult.RetryE(minCoolingTime, err)
+//			}
+//			mres.Status.Job = nil
+//			mres.Status.JobCompleted = nil
+//			return r.updateStatus(ctx, mres)
+//		}
+
+//		if mres.ShouldCreateDeletionJob() {
+//			r.logger.Debug("mres.ShouldCreateDeletionJob()")
+//			specB, err := json.Marshal(mres.Spec)
+//			if err != nil {
+//				r.logger.Error(errors.New("could not unmarshal mres spec into []byte"))
+//				return reconcileResult.Failed()
+//			}
+
+//			dockerI, err := r.getDockerImage(ctx, mres, "delete")
+//			if err != nil {
+//				r.logger.Debug(err)
+//				return reconcileResult.Failed()
+//			}
+
+//			job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
+//				Name:            "delete-job",
+//				Namespace:       "hotspot",
+//				ServiceAccount:  "hotspot-cluster-svc-account",
+//				Image:           dockerI,
+//				ImagePullPolicy: "Always",
+//				Args: []string{
+//					"delete",
+//					"--name", mres.Name,
+//					"--namespace", mres.Namespace,
+//					"--spec", string(specB),
+//				},
+//			})
+
+//			if err != nil {
+//				return reconcileResult.Failed()
+//			}
+
+//			mres.Status.DeletionJob = &crdsv1.ReconJob{
+//				Name:      job.Name,
+//				Namespace: job.Namespace,
+//			}
+//			return r.updateStatus(ctx, mres)
+//		}
+
+//		if mres.HasDeletionJob() {
+//			r.logger.Debug("mres.HasDeletionJob()")
+//			//STEP:  WATCH for it
+//			jobStatus, err := r.JobMgr.HasCompleted(ctx, mres.Status.DeletionJob.Namespace, mres.Status.DeletionJob.Name)
+//			if err != nil {
+//				return reconcileResult.Retry(minCoolingTime)
+//			}
+//			if jobStatus != nil {
+//				mres.Status.DeletionJobCompleted = newBool(true)
+//				if !*jobStatus {
+//					r.logger.Debugf("DELETION jobStatus %v", *jobStatus)
+//					return r.updateStatus(ctx, mres)
+//				}
+//				r.logger.Debugf("DELETION jobStatus: %v", *jobStatus)
+//				mres.Status.DeletionJob = nil
+//				return r.updateStatus(ctx, mres)
+//			}
+//			return reconcileResult.Retry(minCoolingTime)
+//			// STEP: remove finalizer once done
+//		}
+
+//		if mres.Status.DeletionJobCompleted != nil {
+//			r.logger.Debug("mres.Status.DeletionJobCompleted")
+//			controllerutil.RemoveFinalizer(mres, appFinalizer)
+//			err := r.Update(ctx, mres)
+//			if err != nil {
+//				r.logger.Error(errors.NewEf(err, "could not remove finalizers from mres"))
+//			}
+//			return reconcileResult.OK()
+//		}
+//	}
+
+//	r.logger.Debug("contains no finalizers")
+//	return reconcileResult.OK()
+//}
 
 func (r *ManagedResourceReconciler) getDockerImage(ctx context.Context, mres *crdsv1.ManagedResource, action string) (string, error) {
 	var m crdsv1.ManagedService
