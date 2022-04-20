@@ -147,8 +147,27 @@ spec:
           status:
             description: AppStatus defines the observed state of App
             properties:
-              HasAvailableImages:
-                type: boolean
+              apply_job:
+                properties:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
+                    type: string
+                  status:
+                    type: boolean
+                type: object
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -217,39 +236,74 @@ spec:
                   - type
                   type: object
                 type: array
-              deletionJob:
-                description: ImagesCheckJob       *ReconPod          `json:"imagesCheckJob,omitempty"`
-                  ImagesCheckCompleted *bool              `json:"imagesCheckCompleted,omitempty"`
+              delete_job:
                 properties:
-                  name:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
                     type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
+                  status:
+                    type: boolean
                 type: object
-              deletionJobCompleted:
-                type: boolean
-              dependencyChecked:
-                additionalProperties:
-                  type: string
+              dependency_check:
+                properties:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
+                    type: string
+                  status:
+                    type: boolean
                 type: object
               generation:
                 format: int64
                 type: integer
-              job:
+              images_availability:
                 properties:
-                  name:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
                     type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
+                  status:
+                    type: boolean
                 type: object
-              jobCompleted:
-                type: boolean
+            required:
+            - generation
             type: object
         type: object
     served: true

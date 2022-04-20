@@ -232,5 +232,5 @@ catalog-build: opm ## Build a catalog image.
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
 
-dev: manifests generate
+dev: manifests generate deploy
 	go run ./main.go
