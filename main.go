@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -19,10 +20,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"operators.kloudlite.io/agent"
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
+
+	"go.uber.org/fx"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -36,6 +40,13 @@ func init() {
 
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+}
+func fromEnv(key string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		panic(fmt.Errorf("ENV '%v' is not provided", key))
+	}
+	return value
 }
 
 func main() {
@@ -71,25 +82,14 @@ func main() {
 
 	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
-	userName, ok := os.LookupEnv("HARBOR_USERNAME")
-	if !ok {
-		panic(fmt.Errorf("ENV 'HARBOR_USERNAME' is not provided"))
-	}
+	harborUserName := fromEnv("HARBOR_USERNAME")
+	harborPassword := fromEnv("HARBOR_PASSWORD")
 
-	password, ok := os.LookupEnv("HARBOR_PASSWORD")
-	if !ok {
-		panic(fmt.Errorf("ENV 'HARBOR_PASSWORD' is not provided"))
-	}
+	kafkaBrokers := fromEnv("KAFKA_BROKERS")
+	kafkaReplyTopic := fromEnv("KAFKA_REPLY_TOPIC")
 
-	kafkaReplyTopic, ok := os.LookupEnv("KAFKA_REPLY_TOPIC")
-	if !ok {
-		panic(fmt.Errorf("ENV 'KAFKA_REPLY_TOPIC' is not provided"))
-	}
-
-	kafkaBrokers, ok := os.LookupEnv("KAFKA_BROKERS")
-	if !ok {
-		panic(fmt.Errorf("ENV 'KAFKA_BROKERS' is not provided"))
-	}
+	agentKafkaGroupId := fromEnv("AGENT_KAFKA_GROUP_ID")
+	agentKafkaTopic := fromEnv("AGENT_KAFKA_TOPIC")
 
 	kafkaProducer, err := kafka.NewProducer(
 		&kafka.ConfigMap{
@@ -136,8 +136,8 @@ func main() {
 		ClientSet:      clientset,
 		JobMgr:         lib.NewJobber(clientset),
 		SendMessage:    sendMessage,
-		HarborUserName: userName,
-		HarborPassword: password,
+		HarborUserName: harborUserName,
+		HarborPassword: harborPassword,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "App")
 		os.Exit(1)
@@ -190,8 +190,47 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
-	}
+
+	app := fx.New(
+		agent.App(),
+
+		fx.Provide(func() *kafka.Producer {
+			return kafkaProducer
+		}),
+
+		fx.Provide(func() *kafka.Consumer {
+			c, e := kafka.NewConsumer(&kafka.ConfigMap{
+				"bootstrap.servers":  kafkaBrokers,
+				"group.id":           agentKafkaGroupId,
+				"auto.offset.reset":  "earliest",
+				"enable.auto.commit": "false",
+			})
+			if e != nil {
+				panic(errors.NewEf(err, "could not create kafka consumer"))
+			}
+			return c
+		}),
+		fx.Invoke(func(lf fx.Lifecycle, k *kafka.Consumer) {
+			lf.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return k.Subscribe(agentKafkaTopic, nil)
+				},
+			})
+		}),
+		fx.Invoke(func(lf fx.Lifecycle) {
+			lf.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					go func() {
+						if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+							setupLog.Error(err, "problem running manager")
+							panic(err)
+						}
+					}()
+					return nil
+				},
+			})
+		}),
+	)
+
+	app.Run()
 }
