@@ -50,7 +50,7 @@ func (b Bool) Condition() metav1.ConditionStatus {
 
 func GetLogger(_ types.NamespacedName) *zap.SugaredLogger {
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync() // flushes buffer, if any
+	defer logger.Sync()
 	sugar := logger.Sugar()
 	return sugar
 	// return sugar.With(
@@ -123,6 +123,7 @@ func (r *ProjectReconciler) updateStatus(ctx context.Context, project *crdsv1.Pr
 		return reconcileResult.RetryE(2, errors.StatusUpdate(err))
 	}
 	r.logger.Debugf("project (name=%s) has been updated", project.Name)
+
 	r.SendMessage("KEY", lib.MessageReply{
 		Message: "HHII",
 		Status:  true,

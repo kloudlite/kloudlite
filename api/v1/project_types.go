@@ -30,6 +30,10 @@ type Project struct {
 	Status ProjectStatus `json:"status,omitempty"`
 }
 
+func (p *Project) IsNewGeneration() bool {
+	return p.Generation > p.Status.Generation
+}
+
 //+kubebuilder:object:root=true
 
 // ProjectList contains a list of Project
