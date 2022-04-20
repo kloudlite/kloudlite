@@ -8,7 +8,8 @@ tasks:
       - pre
       - killPort
     cmds:
-      - go run ./main.go
+      # - go run ./main.go
+      - nodemon -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go |& pp -rel-path || exit 1'
     sources:
       - ./**/*.go
 
@@ -17,7 +18,7 @@ tasks:
     cmds:
       - make manifests
       - make generate
-      - sleep 0.5
+      # - sleep 0.5
 
   killPort:
     run: always

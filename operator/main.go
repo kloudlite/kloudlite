@@ -71,15 +71,15 @@ func main() {
 
 	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
-	// userName, ok := os.LookupEnv("HARBOR_USERNAME")
-	// if !ok {
-	// 	panic(fmt.Errorf("ENV 'HARBOR_USERNAME' is not provided"))
-	// }
+	userName, ok := os.LookupEnv("HARBOR_USERNAME")
+	if !ok {
+		panic(fmt.Errorf("ENV 'HARBOR_USERNAME' is not provided"))
+	}
 
-	// password, ok := os.LookupEnv("HARBOR_PASSWORD")
-	// if !ok {
-	// 	panic(fmt.Errorf("ENV 'HARBOR_PASSWORD' is not provided"))
-	// }
+	password, ok := os.LookupEnv("HARBOR_PASSWORD")
+	if !ok {
+		panic(fmt.Errorf("ENV 'HARBOR_PASSWORD' is not provided"))
+	}
 
 	kafkaReplyTopic, ok := os.LookupEnv("KAFKA_REPLY_TOPIC")
 	if !ok {
@@ -130,6 +130,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controllers.AppReconciler{
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		ClientSet:      clientset,
+		JobMgr:         lib.NewJobber(clientset),
+		HarborUserName: userName,
+		HarborPassword: password,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "App")
+		os.Exit(1)
+	}
+
 	// if err = (&controllers.RouterReconciler{
 	// 	Client: mgr.GetClient(),
 	// 	Scheme: mgr.GetScheme(),
@@ -138,37 +150,25 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	// if err = (&controllers.AppReconciler{
-	// 	Client:         mgr.GetClient(),
-	// 	Scheme:         mgr.GetScheme(),
-	// 	ClientSet:      clientset,
-	// 	JobMgr:         lib.NewJobber(clientset),
-	// 	HarborUserName: userName,
-	// 	HarborPassword: password,
+	// if err = (&controllers.ManagedServiceReconciler{
+	// 	Client:    mgr.GetClient(),
+	// 	Scheme:    mgr.GetScheme(),
+	// 	ClientSet: clientset,
+	// 	JobMgr:    lib.NewJobber(clientset),
 	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "App")
+	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
 	// 	os.Exit(1)
 	// }
 
-	if err = (&controllers.ManagedServiceReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: clientset,
-		JobMgr:    lib.NewJobber(clientset),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
-		os.Exit(1)
-	}
-
-	if err = (&controllers.ManagedResourceReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: clientset,
-		JobMgr:    lib.NewJobber(clientset),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-		os.Exit(1)
-	}
+	// if err = (&controllers.ManagedResourceReconciler{
+	// 	Client:    mgr.GetClient(),
+	// 	Scheme:    mgr.GetScheme(),
+	// 	ClientSet: clientset,
+	// 	JobMgr:    lib.NewJobber(clientset),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
+	// 	os.Exit(1)
+	// }
 
 	// if err = (&controllers.PipelineReconciler{
 	// 	Client: mgr.GetClient(),

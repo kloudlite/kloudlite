@@ -63,6 +63,13 @@ type ReconPod struct {
 	Failed    string `json:"failed"`
 }
 
+type Recon struct {
+	HasStarted  bool `json:"has_started"`
+	IsRunning   bool `json:"is_running"`
+	HasFinished bool `json:"has_finished"`
+	Status      bool `json:"status"`
+}
+
 // AppStatus defines the observed state of App
 type AppStatus struct {
 	Job                *ReconJob          `json:"job,omitempty"`

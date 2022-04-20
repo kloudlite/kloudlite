@@ -34,10 +34,12 @@ func newBool(b bool) *bool {
 // AppReconciler reconciles a App object
 type AppReconciler struct {
 	client.Client
-	Scheme         *runtime.Scheme
-	ClientSet      *kubernetes.Clientset
-	JobMgr         lib.Job
-	logger         *zap.SugaredLogger
+	Scheme      *runtime.Scheme
+	ClientSet   *kubernetes.Clientset
+	JobMgr      lib.Job
+	logger      *zap.SugaredLogger
+	SendMessage func(key string, msg lib.MessageReply) error
+
 	HarborUserName string
 	HarborPassword string
 }
