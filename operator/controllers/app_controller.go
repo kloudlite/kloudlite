@@ -192,8 +192,8 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 func (r *AppReconciler) updateStatus(ctx context.Context, app *crdsv1.App) (ctrl.Result, error) {
 	app.BuildConditions()
-	fmt.Printf("####################\nAPP.Conditions: %+v\n", app.Status.Conditions)
-	fmt.Printf("#############\nAPP.Status: %+v\n", app.Status)
+	// fmt.Printf("####################\nAPP.Conditions: %+v\n", app.Status.Conditions)
+	// fmt.Printf("#############\nAPP.Status: %+v\n", app.Status)
 
 	b, err := json.Marshal(app.Status.Conditions)
 	if err != nil {
