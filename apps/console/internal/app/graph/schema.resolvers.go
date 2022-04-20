@@ -237,7 +237,7 @@ func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) (
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CoreProject(ctx context.Context, accountID *repos.ID, projectID repos.ID) (*model.Project, error) {
+func (r *queryResolver) CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

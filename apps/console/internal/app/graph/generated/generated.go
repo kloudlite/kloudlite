@@ -268,6 +268,12 @@ type ComplexityRoot struct {
 		ReadableID  func(childComplexity int) int
 	}
 
+	ProjectMembership struct {
+		Project func(childComplexity int) int
+		Role    func(childComplexity int) int
+		User    func(childComplexity int) int
+	}
+
 	Query struct {
 		CiGitPipeline               func(childComplexity int, pipelineID repos.ID) int
 		CiGitPipelines              func(childComplexity int, projectID repos.ID, query *string) int
@@ -283,7 +289,7 @@ type ComplexityRoot struct {
 		CoreApps                    func(childComplexity int, projectID repos.ID, search *string) int
 		CoreConfig                  func(childComplexity int, configID *repos.ID, projectID *repos.ID) int
 		CoreConfigs                 func(childComplexity int, projectID repos.ID, search *string) int
-		CoreProject                 func(childComplexity int, accountID *repos.ID, projectID repos.ID) int
+		CoreProject                 func(childComplexity int, projectID repos.ID) int
 		CoreProjects                func(childComplexity int, accountID *repos.ID) int
 		CoreRouter                  func(childComplexity int, routerID *repos.ID, projectID *repos.ID) int
 		CoreRouters                 func(childComplexity int, projectID repos.ID, search *string) int
@@ -328,11 +334,6 @@ type ComplexityRoot struct {
 	User struct {
 		Devices func(childComplexity int) int
 		ID      func(childComplexity int) int
-	}
-
-	UserMembership struct {
-		Role func(childComplexity int) int
-		User func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -395,7 +396,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	CoreProjects(ctx context.Context, accountID *repos.ID) ([]*model.Project, error)
-	CoreProject(ctx context.Context, accountID *repos.ID, projectID repos.ID) (*model.Project, error)
+	CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error)
 	CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error)
 	CoreApp(ctx context.Context, appID repos.ID, version *string) (*model.App, error)
 	CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error)
@@ -1667,6 +1668,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.ReadableID(childComplexity), true
 
+	case "ProjectMembership.project":
+		if e.complexity.ProjectMembership.Project == nil {
+			break
+		}
+
+		return e.complexity.ProjectMembership.Project(childComplexity), true
+
+	case "ProjectMembership.role":
+		if e.complexity.ProjectMembership.Role == nil {
+			break
+		}
+
+		return e.complexity.ProjectMembership.Role(childComplexity), true
+
+	case "ProjectMembership.user":
+		if e.complexity.ProjectMembership.User == nil {
+			break
+		}
+
+		return e.complexity.ProjectMembership.User(childComplexity), true
+
 	case "Query.ci_gitPipeline":
 		if e.complexity.Query.CiGitPipeline == nil {
 			break
@@ -1840,7 +1862,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreProject(childComplexity, args["accountId"].(*repos.ID), args["projectId"].(repos.ID)), true
+		return e.complexity.Query.CoreProject(childComplexity, args["projectId"].(repos.ID)), true
 
 	case "Query.core_projects":
 		if e.complexity.Query.CoreProjects == nil {
@@ -2131,20 +2153,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.ID(childComplexity), true
 
-	case "UserMembership.role":
-		if e.complexity.UserMembership.Role == nil {
-			break
-		}
-
-		return e.complexity.UserMembership.Role(childComplexity), true
-
-	case "UserMembership.user":
-		if e.complexity.UserMembership.User == nil {
-			break
-		}
-
-		return e.complexity.UserMembership.User(childComplexity), true
-
 	case "_Service.sdl":
 		if e.complexity._Service.SDL == nil {
 			break
@@ -2220,7 +2228,7 @@ var sources = []*ast.Source{
 
 type Query {
   core_projects(accountId: ID): [Project!]!
-  core_project(accountId:ID, projectId: ID!): Project
+  core_project(projectId: ID!): Project
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!, version: String): App
@@ -2254,12 +2262,10 @@ type Query {
 
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
-  
+
   infra_getCluster(clusterId: ID!): Cluster
   infra_getDevices(deviceId: ID!): Device
 }
-
-
 
 type ManagedRes {
   id: ID!
@@ -2403,7 +2409,7 @@ type Project {
   logo: String
   description: String
   account: Account!
-  memberships: [UserMembership!]!
+  memberships: [ProjectMembership!]!
 }
 
 type AppMemebership {
@@ -2411,9 +2417,10 @@ type AppMemebership {
   role: String!
 }
 
-type UserMembership {
+type ProjectMembership {
   user: User!
   role: String!
+  project: Project!
 }
 
 type App {
@@ -4152,24 +4159,15 @@ func (ec *executionContext) field_Query_core_configs_args(ctx context.Context, r
 func (ec *executionContext) field_Query_core_project_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg0
-	var arg1 repos.ID
+	var arg0 repos.ID
 	if tmp, ok := rawArgs["projectId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
-		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectId"] = arg1
+	args["projectId"] = arg0
 	return args, nil
 }
 
@@ -9781,9 +9779,114 @@ func (ec *executionContext) _Project_memberships(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserMembership)
+	res := resTmp.([]*model.ProjectMembership)
 	fc.Result = res
-	return ec.marshalNUserMembership2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐUserMembershipᚄ(ctx, field.Selections, res)
+	return ec.marshalNProjectMembership2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProjectMembershipᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectMembership",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectMembership_role(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectMembership",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Role, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectMembership_project(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectMembership",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Project, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Project)
+	fc.Result = res
+	return ec.marshalNProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_core_projects(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9853,7 +9956,7 @@ func (ec *executionContext) _Query_core_project(ctx context.Context, field graph
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CoreProject(rctx, args["accountId"].(*repos.ID), args["projectId"].(repos.ID))
+		return ec.resolvers.Query().CoreProject(rctx, args["projectId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11638,76 +11741,6 @@ func (ec *executionContext) _User_devices(ctx context.Context, field graphql.Col
 	res := resTmp.([]*model.Device)
 	fc.Result = res
 	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _UserMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.UserMembership) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "UserMembership",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _UserMembership_role(ctx context.Context, field graphql.CollectedField, obj *model.UserMembership) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "UserMembership",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Role, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) __Service_sdl(ctx context.Context, field graphql.CollectedField, obj *fedruntime.Service) (ret graphql.Marshaler) {
@@ -15554,6 +15587,57 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var projectMembershipImplementors = []string{"ProjectMembership"}
+
+func (ec *executionContext) _ProjectMembership(ctx context.Context, sel ast.SelectionSet, obj *model.ProjectMembership) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, projectMembershipImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProjectMembership")
+		case "user":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ProjectMembership_user(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "role":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ProjectMembership_role(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "project":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ProjectMembership_project(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -16477,47 +16561,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				return innerFunc(ctx)
 
 			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var userMembershipImplementors = []string{"UserMembership"}
-
-func (ec *executionContext) _UserMembership(ctx context.Context, sel ast.SelectionSet, obj *model.UserMembership) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userMembershipImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UserMembership")
-		case "user":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._UserMembership_user(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "role":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._UserMembership_role(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17588,6 +17631,60 @@ func (ec *executionContext) marshalNProject2ᚖkloudliteᚗioᚋappsᚋconsole�
 	return ec._Project(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNProjectMembership2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProjectMembershipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProjectMembership) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProjectMembership2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProjectMembership(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProjectMembership2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProjectMembership(ctx context.Context, sel ast.SelectionSet, v *model.ProjectMembership) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ProjectMembership(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNRoute2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17763,60 +17860,6 @@ func (ec *executionContext) marshalNUser2ᚖkloudliteᚗioᚋappsᚋconsoleᚋin
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNUserMembership2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐUserMembershipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserMembership) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUserMembership2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐUserMembership(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNUserMembership2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐUserMembership(ctx context.Context, sel ast.SelectionSet, v *model.UserMembership) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._UserMembership(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalN_Any2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {

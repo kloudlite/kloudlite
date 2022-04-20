@@ -1,11 +1,5 @@
 type Query {
-    # accounts: [Account!]!
     finance_account(accountId: ID!): Account
-
-    # accountsMemberships: [AccountMembership!]!
-    # accountMembership(accountId: ID!): AccountMembership!
-
-    # stripeSetupIntent: String!
 }
 
 type Mutation {

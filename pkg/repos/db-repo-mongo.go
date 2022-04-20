@@ -32,11 +32,20 @@ func (repo dbRepo[T]) NewId() ID {
 }
 
 func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
-	results := []T{}
+	var results []T
 	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.Filter, &options.FindOptions{
 		Sort: query.Sort,
 	})
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return results, nil
+		}
+		return nil, err
+	}
 	err = curr.All(ctx, &results)
+	if err != nil {
+		return nil, err
+	}
 	return results, err
 }
 
@@ -74,7 +83,14 @@ func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64
 func (repo dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOne(ctx, &Filter{"id": id})
+
 	err := r.Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return result, nil
+		}
+		return result, err
+	}
 	return result, err
 }
 
@@ -105,7 +121,7 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 		ReturnDocument: &after,
 	}
 
-	if opt := fn.ParseOnlyOption(opts); opt != nil {
+	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
 		updateOpts.Upsert = &opt.Upsert
 	}
 
@@ -134,7 +150,7 @@ func (repo dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 }
 
 func (repo dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) error {
-	models := []mongo.IndexModel{}
+	var models []mongo.IndexModel
 	for _, f := range indices {
 		b := bson.D{}
 		for _, field := range f.Field {

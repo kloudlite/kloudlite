@@ -259,15 +259,21 @@ type NewResourcesIn struct {
 }
 
 type Project struct {
-	ID          repos.ID          `json:"id"`
-	Name        string            `json:"name"`
-	DisplayName string            `json:"displayName"`
-	ReadableID  repos.ID          `json:"readableId"`
-	Cluster     string            `json:"cluster"`
-	Logo        *string           `json:"logo"`
-	Description *string           `json:"description"`
-	Account     *Account          `json:"account"`
-	Memberships []*UserMembership `json:"memberships"`
+	ID          repos.ID             `json:"id"`
+	Name        string               `json:"name"`
+	DisplayName string               `json:"displayName"`
+	ReadableID  repos.ID             `json:"readableId"`
+	Cluster     string               `json:"cluster"`
+	Logo        *string              `json:"logo"`
+	Description *string              `json:"description"`
+	Account     *Account             `json:"account"`
+	Memberships []*ProjectMembership `json:"memberships"`
+}
+
+type ProjectMembership struct {
+	User    *User    `json:"user"`
+	Role    string   `json:"role"`
+	Project *Project `json:"project"`
 }
 
 type Route struct {
@@ -307,8 +313,3 @@ type User struct {
 }
 
 func (User) IsEntity() {}
-
-type UserMembership struct {
-	User *User  `json:"user"`
-	Role string `json:"role"`
-}
