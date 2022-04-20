@@ -13,13 +13,11 @@ type ManagedResourceSpec struct {
 
 // ManagedResourceStatus defines the observed state of ManagedResource
 type ManagedResourceStatus struct {
-	Job                  *ReconJob          `json:"job,omitempty"`
-	JobCompleted         *bool              `json:"jobCompleted,omitempty"`
-	Generation           *int64             `json:"generation,omitempty"`
-	DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
-	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
-	DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
-	Conditions           []metav1.Condition `json:"conditions,omitempty"`
+	ApplyJobCheck      Recon              `json:"apply_job_check,omitempty"`
+	DeleteJobCheck     Recon              `json:"delete_job_check,omitempty"`
+	ManagedSvcDepCheck Recon              `json:"managed_svc_dep_check,omitempty"`
+	Generation         int64              `json:"generation,omitempty"`
+	Conditions         []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -35,48 +33,19 @@ type ManagedResource struct {
 }
 
 func (mres *ManagedResource) DefaultStatus() {
-	mres.Status.DependencyChecked = nil
-	mres.Status.Job = nil
-	mres.Status.JobCompleted = nil
-	mres.Status.Generation = &mres.Generation
-}
-
-func (mres *ManagedResource) HasJob() bool {
-	return mres.Status.Job != nil && mres.Status.JobCompleted == nil
-}
-
-func (mres *ManagedResource) HasNotCheckedDependency() bool {
-	return mres.Status.DependencyChecked == nil
-}
-
-func (mres *ManagedResource) HasPassedDependencyCheck() bool {
-	return mres.Status.DependencyChecked != nil && len(*mres.Status.DependencyChecked) == 0
+	mres.Status.Generation = mres.Generation
+	mres.Status.ApplyJobCheck = Recon{}
 }
 
 func (mres *ManagedResource) IsNewGeneration() bool {
-	return mres.Status.Generation == nil || mres.Generation > *mres.Status.Generation
-}
-
-func (mres *ManagedResource) ShouldCreateJob() bool {
-	if mres.HasPassedDependencyCheck() && mres.Status.JobCompleted == nil && mres.Status.Job == nil {
-		return true
-	}
-	return false
+	return mres.Generation > mres.Status.Generation
 }
 
 func (mres *ManagedResource) HasToBeDeleted() bool {
 	return mres.GetDeletionTimestamp() != nil
 }
 
-func (mres *ManagedResource) HasDeletionJob() bool {
-	return mres.Status.DeletionJob != nil && mres.Status.DeletionJobCompleted == nil
-}
-
-func (mres *ManagedResource) ShouldCreateDeletionJob() bool {
-	if mres.Status.DeletionJob == nil && mres.Status.DeletionJobCompleted == nil {
-		return true
-	}
-	return false
+func (mres *ManagedResource) BuildConditions() {
 }
 
 //+kubebuilder:object:root=true

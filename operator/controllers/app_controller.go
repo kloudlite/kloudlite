@@ -59,7 +59,7 @@ const appFinalizer = "finalizers.kloudlite.io/app"
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx).WithValues("resourceName:", req.Name, "namespace:", req.Namespace)
 	logger := GetLogger(req.NamespacedName)
-	r.logger = logger
+	r.logger = logger.With("Name", req.NamespacedName)
 
 	app := &crdsv1.App{}
 
