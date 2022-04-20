@@ -180,13 +180,8 @@ func (in *AppStatus) DeepCopyInto(out *AppStatus) {
 			}
 		}
 	}
-	if in.ImagesCheckJob != nil {
-		in, out := &in.ImagesCheckJob, &out.ImagesCheckJob
-		*out = new(ReconPod)
-		**out = **in
-	}
-	if in.ImagesCheckCompleted != nil {
-		in, out := &in.ImagesCheckCompleted, &out.ImagesCheckCompleted
+	if in.HasAvailableImages != nil {
+		in, out := &in.HasAvailableImages, &out.HasAvailableImages
 		*out = new(bool)
 		**out = **in
 	}

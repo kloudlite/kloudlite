@@ -65,13 +65,13 @@ type ReconPod struct {
 
 // AppStatus defines the observed state of App
 type AppStatus struct {
-	Job                  *ReconJob          `json:"job,omitempty"`
-	JobCompleted         *bool              `json:"jobCompleted,omitempty"`
-	Generation           *int64             `json:"generation,omitempty"`
-	DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
-	HasAvailableImages   *bool              `json:"HasAvailableImages,omitempty"`
-	ImagesCheckJob       *ReconPod          `json:"imagesCheckJob,omitempty"`
-	ImagesCheckCompleted *bool              `json:"imagesCheckCompleted,omitempty"`
+	Job                *ReconJob          `json:"job,omitempty"`
+	JobCompleted       *bool              `json:"jobCompleted,omitempty"`
+	Generation         *int64             `json:"generation,omitempty"`
+	DependencyChecked  *map[string]string `json:"dependencyChecked,omitempty"`
+	HasAvailableImages *bool              `json:"HasAvailableImages,omitempty"`
+	// ImagesCheckJob       *ReconPod          `json:"imagesCheckJob,omitempty"`
+	// ImagesCheckCompleted *bool              `json:"imagesCheckCompleted,omitempty"`
 	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
 	DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
 	Conditions           []metav1.Condition `json:"conditions,omitempty"`
@@ -93,8 +93,9 @@ func (app *App) DefaultStatus() {
 	app.Status.DependencyChecked = nil
 	app.Status.Job = nil
 	app.Status.JobCompleted = nil
-	app.Status.ImagesCheckJob = nil
-	app.Status.ImagesCheckCompleted = nil
+	app.Status.HasAvailableImages = nil
+	// app.Status.ImagesCheckJob = nil
+	// app.Status.ImagesCheckCompleted = nil
 	app.Status.Generation = &app.Generation
 }
 
@@ -117,14 +118,14 @@ func (app *App) CheckImagesAvailable() bool {
 	return !*app.Status.HasAvailableImages
 }
 
-func (app *App) HasNotCheckedImages() bool {
-	return app.Status.ImagesCheckCompleted == nil && app.Status.ImagesCheckJob == nil
-}
+// func (app *App) HasNotCheckedImages() bool {
+// 	return app.Status.ImagesCheckCompleted == nil && app.Status.ImagesCheckJob == nil
+// }
 
-func (app *App) IsCheckingImages() bool {
-	// return app.Status.ImagesCheckJob != nil && app.Status.ImagesCheckCompleted == nil
-	return app.Status.ImagesCheckJob != nil
-}
+// func (app *App) IsCheckingImages() bool {
+// 	// return app.Status.ImagesCheckJob != nil && app.Status.ImagesCheckCompleted == nil
+// 	return app.Status.ImagesCheckJob != nil
+// }
 
 func (app *App) IsNewGeneration() bool {
 	return app.Status.Generation == nil || app.Generation > *app.Status.Generation
