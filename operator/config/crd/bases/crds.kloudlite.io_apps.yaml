@@ -147,6 +147,8 @@ spec:
           status:
             description: AppStatus defines the observed state of App
             properties:
+              HasAvailableImages:
+                type: boolean
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -216,6 +218,8 @@ spec:
                   type: object
                 type: array
               deletionJob:
+                description: ImagesCheckJob       *ReconPod          `json:"imagesCheckJob,omitempty"`
+                  ImagesCheckCompleted *bool              `json:"imagesCheckCompleted,omitempty"`
                 properties:
                   name:
                     type: string
@@ -234,21 +238,6 @@ spec:
               generation:
                 format: int64
                 type: integer
-              imagesCheckCompleted:
-                type: boolean
-              imagesCheckJob:
-                properties:
-                  failed:
-                    type: string
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - failed
-                - name
-                - namespace
-                type: object
               job:
                 properties:
                   name:

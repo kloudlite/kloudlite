@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
 	// applyCoreV1 "k8s.io/client-go/applyconfigurations/core/v1"
 	// applyMetaV1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -25,10 +26,11 @@ import (
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	ClientSet *kubernetes.Clientset
-	JobMgr    lib.Job
-	logger    *zap.SugaredLogger
+	Scheme      *runtime.Scheme
+	ClientSet   *kubernetes.Clientset
+	SendMessage func(key string, msg lib.MessageReply) error
+	JobMgr      lib.Job
+	logger      *zap.SugaredLogger
 }
 
 const (
@@ -121,6 +123,10 @@ func (r *ProjectReconciler) updateStatus(ctx context.Context, project *crdsv1.Pr
 		return reconcileResult.RetryE(2, errors.StatusUpdate(err))
 	}
 	r.logger.Debugf("project (name=%s) has been updated", project.Name)
+	r.SendMessage("KEY", lib.MessageReply{
+		Message: "HHII",
+		Status:  true,
+	})
 	return reconcileResult.OK()
 }
 

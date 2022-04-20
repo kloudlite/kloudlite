@@ -1,11 +1,13 @@
 package errors
 
 import (
+	"fmt"
+
 	"github.com/yext/yerrors"
 )
 
 func NewEf(err error, msg string, a ...interface{}) error {
-	return yerrors.Errorf("%s as %+v", msg, err)
+	return yerrors.Errorf("%s as %+v", fmt.Sprintf(msg, a...), err)
 }
 
 func Newf(msg string, a ...interface{}) error {

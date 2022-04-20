@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -20,6 +22,7 @@ import (
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib"
+	"operators.kloudlite.io/lib/errors"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -68,15 +71,65 @@ func main() {
 
 	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
-	// if err = (&controllers.ProjectReconciler{
-	// 	Client:    mgr.GetClient(),
-	// 	Scheme:    mgr.GetScheme(),
-	// 	ClientSet: clientset,
-	// 	JobMgr:    lib.NewJobber(clientset),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "Project")
-	// 	os.Exit(1)
+	// userName, ok := os.LookupEnv("HARBOR_USERNAME")
+	// if !ok {
+	// 	panic(fmt.Errorf("ENV 'HARBOR_USERNAME' is not provided"))
 	// }
+
+	// password, ok := os.LookupEnv("HARBOR_PASSWORD")
+	// if !ok {
+	// 	panic(fmt.Errorf("ENV 'HARBOR_PASSWORD' is not provided"))
+	// }
+
+	kafkaReplyTopic, ok := os.LookupEnv("KAFKA_REPLY_TOPIC")
+	if !ok {
+		panic(fmt.Errorf("ENV 'KAFKA_REPLY_TOPIC' is not provided"))
+	}
+
+	kafkaBrokers, ok := os.LookupEnv("KAFKA_BROKERS")
+	if !ok {
+		panic(fmt.Errorf("ENV 'KAFKA_BROKERS' is not provided"))
+	}
+
+	kafkaProducer, err := kafka.NewProducer(
+		&kafka.ConfigMap{
+			"bootstrap.servers": kafkaBrokers,
+		},
+	)
+
+	if err != nil {
+		panic(errors.NewEf(err, "could not create kafka producer"))
+	}
+
+	fmt.Println("kafka producer connected")
+
+	sendMessage := func(key string, message lib.MessageReply) error {
+		msgBody, e := json.Marshal(message)
+		if e != nil {
+			fmt.Println(e)
+			return e
+		}
+		return kafkaProducer.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{
+				Topic:     &kafkaReplyTopic,
+				Partition: int32(kafka.PartitionAny),
+			},
+			Key:   []byte(key),
+			Value: msgBody,
+		}, nil)
+	}
+
+	if err = (&controllers.ProjectReconciler{
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		ClientSet:   clientset,
+		SendMessage: sendMessage,
+		JobMgr:      lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Project")
+		os.Exit(1)
+	}
+
 	// if err = (&controllers.RouterReconciler{
 	// 	Client: mgr.GetClient(),
 	// 	Scheme: mgr.GetScheme(),
@@ -85,26 +138,17 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	userName, ok := os.LookupEnv("HARBOR_USERNAME")
-	if !ok {
-		panic(fmt.Errorf("ENV 'HARBOR_USERNAME' is not provided"))
-	}
-	password, ok := os.LookupEnv("HARBOR_PASSWORD")
-	if !ok {
-		panic(fmt.Errorf("ENV 'HARBOR_PASSWORD' is not provided"))
-	}
-
-	if err = (&controllers.AppReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		ClientSet:      clientset,
-		JobMgr:         lib.NewJobber(clientset),
-		HarborUserName: userName,
-		HarborPassword: password,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "App")
-		os.Exit(1)
-	}
+	// if err = (&controllers.AppReconciler{
+	// 	Client:         mgr.GetClient(),
+	// 	Scheme:         mgr.GetScheme(),
+	// 	ClientSet:      clientset,
+	// 	JobMgr:         lib.NewJobber(clientset),
+	// 	HarborUserName: userName,
+	// 	HarborPassword: password,
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "App")
+	// 	os.Exit(1)
+	// }
 
 	if err = (&controllers.ManagedServiceReconciler{
 		Client:    mgr.GetClient(),
