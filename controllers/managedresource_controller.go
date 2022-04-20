@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
@@ -40,6 +43,64 @@ const mresFinalizer = "finalizers.kloudlite.io/mres"
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
 
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	r.logger = GetLogger(req.NamespacedName)
+
+	mres := &crdsv1.ManagedResource{}
+	if err := r.Get(ctx, req.NamespacedName, mres); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return reconcileResult.OK()
+		}
+		return reconcileResult.Failed()
+	}
+
+	if mres.HasToBeDeleted() {
+		return r.finalizeMres(ctx, mres)
+	}
+
+	if mres.IsNewGeneration() {
+		r.logger.Debug("mres.IsNewGeneration()")
+		if mres.Status.ApplyJobCheck.IsRunning() {
+			return reconcileResult.Retry(minCoolingTime)
+		}
+		mres.DefaultStatus()
+		return r.updateStatus(ctx, mres)
+	}
+
+	if mres.Status.ManagedSvcDepCheck.ShouldCheck() {
+		mres.Status.ManagedSvcDepCheck.SetStarted()
+		msvc := &crdsv1.ManagedService{}
+		if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: mres.Spec.ManagedSvc}, msvc); err != nil {
+			mres.Status.ManagedSvcDepCheck.SetFinishedWith(false, errors.NewEf(err, "could not get managed svc").Error())
+			return r.updateStatus(ctx, mres)
+		}
+
+		c := meta.FindStatusCondition(msvc.Status.Conditions, "Ready")
+		if c == nil || c.Status != metav1
+	}
+
+	if !mres.Status.ManagedSvcDepCheck.Status {
+		r.logger.Debugf("ManagedSvc Dependency Check failed ...")
+		time.AfterFunc(time.Second*maxCoolingTime, func() {
+			mres.Status.ManagedSvcDepCheck = crdsv1.Recon{}
+			r.updateStatus(ctx, mres)
+		})
+		return reconcileResult.Retry(minCoolingTime)
+	}
+
+	if mres.Status.ApplyJobCheck.ShouldCheck() {
+	}
+
+	if mres.Status.ApplyJobCheck.IsRunning() {
+	}
+
+	if !mres.Status.ApplyJobCheck.Status {
+		return reconcileResult.Failed()
+	}
+
+	return reconcileResult.OK()
+}
+
+func (r *ManagedResourceReconciler) Reconcile2(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 	r.logger = GetLogger(req.NamespacedName)
 

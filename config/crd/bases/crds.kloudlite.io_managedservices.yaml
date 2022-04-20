@@ -49,6 +49,27 @@ spec:
           status:
             description: ManagedServiceStatus defines the observed state of ManagedService
             properties:
+              apply_job_check:
+                properties:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
+                    type: string
+                  status:
+                    type: boolean
+                type: object
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -117,37 +138,36 @@ spec:
                   - type
                   type: object
                 type: array
-              deletionJob:
+              delete_job_check:
                 properties:
-                  name:
+                  has_finished:
+                    type: boolean
+                  has_started:
+                    type: boolean
+                  job:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  message:
                     type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              deletionJobCompleted:
-                type: boolean
-              dependencyChecked:
-                additionalProperties:
-                  type: string
+                  status:
+                    type: boolean
                 type: object
               generation:
+                description: Job                  *ReconJob          `json:"job,omitempty"`
+                  JobCompleted         *bool              `json:"jobCompleted,omitempty"`
+                  DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
+                  DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
+                  DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
+                  NEW
                 format: int64
                 type: integer
-              job:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              jobCompleted:
-                type: boolean
             type: object
         type: object
     served: true
