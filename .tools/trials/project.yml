@@ -1,7 +1,7 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Project
 metadata:
-  name: sample
+  name: sample-example
   finalizers:
     - finalizers.kloudlite.io/project
 spec:

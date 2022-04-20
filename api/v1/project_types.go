@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -12,9 +13,10 @@ type ProjectSpec struct {
 
 // ProjectStatus defines the observed state of Project
 type ProjectStatus struct {
-	Namespace  string             `json:"namespace,omitempty"`
-	Generation int64              `json:"generation,omitempty"`
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	NamespaceCheck    Recon              `json:"namespace,omitempty"`
+	DelNamespaceCheck Recon              `json:"del_namespace_check,omitempty"`
+	Generation        int64              `json:"generation,omitempty"`
+	Conditions        []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -30,8 +32,27 @@ type Project struct {
 	Status ProjectStatus `json:"status,omitempty"`
 }
 
+func (p *Project) DefaultStatus() {
+	p.Status.Generation = p.Generation
+	p.Status.NamespaceCheck = Recon{}
+}
+
 func (p *Project) IsNewGeneration() bool {
 	return p.Generation > p.Status.Generation
+}
+
+func (p *Project) HasToBeDeleted() bool {
+	return p.GetDeletionTimestamp() != nil
+}
+
+func (p *Project) BuildConditions() {
+	meta.SetStatusCondition(&p.Status.Conditions, metav1.Condition{
+		Type:               "Ready",
+		Status:             p.Status.NamespaceCheck.ConditionStatus(),
+		ObservedGeneration: p.Generation,
+		Reason:             p.Status.NamespaceCheck.Reason(),
+		Message:            p.Status.NamespaceCheck.Message,
+	})
 }
 
 //+kubebuilder:object:root=true
