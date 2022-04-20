@@ -120,11 +120,11 @@ func main() {
 	}
 
 	if err = (&controllers.ProjectReconciler{
-		Client:      mgr.GetClient(),
-		Scheme:      mgr.GetScheme(),
-		ClientSet:   clientset,
-		SendMessage: sendMessage,
-		JobMgr:      lib.NewJobber(clientset),
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		ClientSet:      clientset,
+		SendMessage:    sendMessage,
+		JobMgr:         lib.NewJobber(clientset),
 		HarborUserName: harborUserName,
 		HarborPassword: harborPassword,
 	}).SetupWithManager(mgr); err != nil {
@@ -153,25 +153,25 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	// if err = (&controllers.ManagedServiceReconciler{
-	// 	Client:    mgr.GetClient(),
-	// 	Scheme:    mgr.GetScheme(),
-	// 	ClientSet: clientset,
-	// 	JobMgr:    lib.NewJobber(clientset),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.ManagedServiceReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		ClientSet: clientset,
+		JobMgr:    lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
+		os.Exit(1)
+	}
 
-	// if err = (&controllers.ManagedResourceReconciler{
-	// 	Client:    mgr.GetClient(),
-	// 	Scheme:    mgr.GetScheme(),
-	// 	ClientSet: clientset,
-	// 	JobMgr:    lib.NewJobber(clientset),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.ManagedResourceReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		ClientSet: clientset,
+		JobMgr:    lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
+		os.Exit(1)
+	}
 
 	// if err = (&controllers.PipelineReconciler{
 	// 	Client: mgr.GetClient(),
