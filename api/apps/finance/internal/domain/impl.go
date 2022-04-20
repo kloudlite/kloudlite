@@ -245,6 +245,7 @@ func (domain *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (b
 }
 
 func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {
+	fmt.Println("GetAccount", id)
 	return domain.accountRepo.FindById(ctx, id)
 }
 

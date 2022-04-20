@@ -498,13 +498,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type Query {
-    # accounts: [Account!]!
     finance_account(accountId: ID!): Account
-
-    # accountsMemberships: [AccountMembership!]!
-    # accountMembership(accountId: ID!): AccountMembership!
-
-    # stripeSetupIntent: String!
 }
 
 type Mutation {
