@@ -372,6 +372,7 @@ func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp 
 
 	defer errors.HandleErr(&e)
 
+	// TODO: check if cluster already exists
 	copyTemplateDirCommand := exec.Command(
 		"cp",
 		"-r",
