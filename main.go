@@ -135,6 +135,7 @@ func main() {
 		Scheme:         mgr.GetScheme(),
 		ClientSet:      clientset,
 		JobMgr:         lib.NewJobber(clientset),
+		SendMessage:    sendMessage,
 		HarborUserName: userName,
 		HarborPassword: password,
 	}).SetupWithManager(mgr); err != nil {

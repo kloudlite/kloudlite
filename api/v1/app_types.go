@@ -1,6 +1,7 @@
 package v1
 
 import (
+	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -64,24 +65,72 @@ type ReconPod struct {
 }
 
 type Recon struct {
-	HasStarted  bool `json:"has_started"`
-	IsRunning   bool `json:"is_running"`
-	HasFinished bool `json:"has_finished"`
-	Status      bool `json:"status"`
+	HasStarted  bool      `json:"has_started,omitempty"`
+	HasFinished bool      `json:"has_finished,omitempty"`
+	Job         *ReconJob `json:"job,omitempty"`
+	Message     string    `json:"message,omitempty"`
+	Status      bool      `json:"status,omitempty"`
+}
+
+func (re *Recon) ShouldCheck() bool {
+	if re.HasFinished == false && re.HasStarted == false {
+		return true
+	}
+	return false
+}
+
+func (re *Recon) SetStarted() {
+	re.HasFinished = false
+	re.HasStarted = true
+}
+
+func (re *Recon) SetFinishedWith(status bool, msg string) {
+	re.HasStarted = false
+	re.HasFinished = true
+
+	re.Status = status
+	re.Message = msg
+}
+
+// makes sense only for reconcile requests where a period check of any other resource is required
+func (re *Recon) IsRunning() bool {
+	if re.HasFinished == false && re.HasStarted == true {
+		return true
+	}
+	return false
+}
+
+func (re *Recon) ConditionStatus() metav1.ConditionStatus {
+	if re.HasFinished && re.Status {
+		return metav1.ConditionTrue
+	}
+	if re.HasFinished && !re.Status {
+		return metav1.ConditionFalse
+	}
+	return metav1.ConditionUnknown
+}
+
+func (re *Recon) Reason() string {
+	if re.HasFinished && re.Status {
+		return "Success"
+	}
+	if re.HasFinished && !re.Status {
+		return "Failed"
+	}
+	if !re.HasFinished && re.HasStarted {
+		return "Running"
+	}
+	return "Unknown"
 }
 
 // AppStatus defines the observed state of App
 type AppStatus struct {
-	Job                *ReconJob          `json:"job,omitempty"`
-	JobCompleted       *bool              `json:"jobCompleted,omitempty"`
-	Generation         *int64             `json:"generation,omitempty"`
-	DependencyChecked  *map[string]string `json:"dependencyChecked,omitempty"`
-	HasAvailableImages *bool              `json:"HasAvailableImages,omitempty"`
-	// ImagesCheckJob       *ReconPod          `json:"imagesCheckJob,omitempty"`
-	// ImagesCheckCompleted *bool              `json:"imagesCheckCompleted,omitempty"`
-	DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
-	DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
-	Conditions           []metav1.Condition `json:"conditions,omitempty"`
+	Generation         int64              `json:"generation"`
+	DependencyCheck    Recon              `json:"dependency_check,omitempty"`
+	ApplyJob           Recon              `json:"apply_job,omitempty"`
+	DeleteJob          Recon              `json:"delete_job,omitempty"`
+	ImagesAvailability Recon              `json:"images_availability,omitempty"`
+	Conditions         []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -97,67 +146,47 @@ type App struct {
 }
 
 func (app *App) DefaultStatus() {
-	app.Status.DependencyChecked = nil
-	app.Status.Job = nil
-	app.Status.JobCompleted = nil
-	app.Status.HasAvailableImages = nil
-	// app.Status.ImagesCheckJob = nil
-	// app.Status.ImagesCheckCompleted = nil
-	app.Status.Generation = &app.Generation
+	app.Status.Generation = app.Generation
+	app.Status.DependencyCheck = Recon{}
+	app.Status.ImagesAvailability = Recon{}
+	app.Status.ApplyJob = Recon{}
 }
-
-func (app *App) HasJob() bool {
-	return app.Status.Job != nil && app.Status.JobCompleted == nil
-}
-
-func (app *App) HasNotCheckedDependency() bool {
-	return app.Status.DependencyChecked == nil
-}
-
-func (app *App) HasPassedDependencyCheck() bool {
-	return app.Status.DependencyChecked != nil && len(*app.Status.DependencyChecked) == 0
-}
-
-func (app *App) CheckImagesAvailable() bool {
-	if app.Status.HasAvailableImages == nil {
-		return true
-	}
-	return !*app.Status.HasAvailableImages
-}
-
-// func (app *App) HasNotCheckedImages() bool {
-// 	return app.Status.ImagesCheckCompleted == nil && app.Status.ImagesCheckJob == nil
-// }
-
-// func (app *App) IsCheckingImages() bool {
-// 	// return app.Status.ImagesCheckJob != nil && app.Status.ImagesCheckCompleted == nil
-// 	return app.Status.ImagesCheckJob != nil
-// }
 
 func (app *App) IsNewGeneration() bool {
-	return app.Status.Generation == nil || app.Generation > *app.Status.Generation
-}
-
-func (app *App) ShouldCreateJob() bool {
-	if app.HasPassedDependencyCheck() && app.Status.JobCompleted == nil && app.Status.Job == nil {
-		return true
-	}
-	return false
+	return app.Generation > app.Status.Generation
 }
 
 func (app *App) HasToBeDeleted() bool {
 	return app.GetDeletionTimestamp() != nil
 }
 
-func (app *App) HasDeletionJob() bool {
-	return app.Status.DeletionJob != nil && app.Status.DeletionJobCompleted == nil
-}
+func (app *App) BuildConditions() {
+	// DependencyCheck
+	meta.SetStatusCondition(&app.Status.Conditions, metav1.Condition{
+		Type:               "DependencyCheck",
+		Status:             app.Status.DependencyCheck.ConditionStatus(),
+		ObservedGeneration: app.Generation,
+		Reason:             app.Status.DependencyCheck.Reason(),
+		Message:            app.Status.DependencyCheck.Message,
+	})
 
-func (app *App) ShouldCreateDeletionJob() bool {
-	if app.Status.DeletionJob == nil && app.Status.DeletionJobCompleted == nil {
-		return true
-	}
-	return false
+	// Images Available
+	meta.SetStatusCondition(&app.Status.Conditions, metav1.Condition{
+		Type:               "ImagesAvailable",
+		Status:             app.Status.ImagesAvailability.ConditionStatus(),
+		ObservedGeneration: app.Generation,
+		Reason:             app.Status.ImagesAvailability.Reason(),
+		Message:            app.Status.ImagesAvailability.Message,
+	})
+
+	// Ready
+	meta.SetStatusCondition(&app.Status.Conditions, metav1.Condition{
+		Type:               "Ready",
+		Status:             app.Status.ApplyJob.ConditionStatus(),
+		ObservedGeneration: app.Generation,
+		Reason:             app.Status.ApplyJob.Reason(),
+		Message:            app.Status.ApplyJob.Message,
+	})
 }
 
 //+kubebuilder:object:root=true

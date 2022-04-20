@@ -3,10 +3,12 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"fmt"
 
 	"go.uber.org/zap"
 	// batchv1 "k8s.io/api/batch/v1"
@@ -57,9 +59,10 @@ const appFinalizer = "finalizers.kloudlite.io/app"
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx).WithValues("resourceName:", req.Name, "namespace:", req.Namespace)
 	logger := GetLogger(req.NamespacedName)
-	r.logger = logger
+	r.logger = logger.With("Name", req.NamespacedName)
 
 	app := &crdsv1.App{}
+
 	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
@@ -68,347 +71,353 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	if app.HasToBeDeleted() {
-		logger.Debugf("app.HasToBeDeleted()")
 		return r.finalizeApp(ctx, app)
 	}
 
 	if app.IsNewGeneration() {
 		logger.Debugf("app.IsNewGeneration() %+v\n", app.Status)
-		if app.HasJob() {
-			logger.Debugf("app.HasJob() %+v\n", app.Status.Job)
-			return reconcileResult.Retry(maxCoolingTime)
+		if app.Status.ApplyJob.IsRunning() {
+			return reconcileResult.Retry(semiCoolingTime)
 		}
+
 		app.DefaultStatus()
 		return r.updateStatus(ctx, app)
 	}
 
-	if app.HasJob() {
-		logger.Debug("app.HasJob()")
-		b, err := r.JobMgr.HasCompleted(ctx, app.Status.Job.Namespace, app.Status.Job.Name)
+	if app.Status.DependencyCheck.ShouldCheck() {
+		r.logger.Debugf("app.Status.DependencyCheck.ShouldCheck()")
+		checks := r.checkDependency(ctx, app)
+		app.Status.DependencyCheck.HasFinished = true
+		app.Status.DependencyCheck.HasStarted = false
+
+		if checks != nil {
+			// ASSERT: DependencyCheck  failed
+			r.logger.Infof("Dependenct check failed ...")
+			b, err := json.Marshal(*checks)
+			if err != nil {
+				r.logger.Infof("faied to marshal map[string]string into JSON []byte")
+			}
+			app.Status.DependencyCheck.SetFinishedWith(false, string(b))
+			return r.updateStatus(ctx, app)
+		}
+
+		// ASSERT: DependencyCheck  passed
+		app.Status.DependencyCheck.SetFinishedWith(true, "Dependency check passed")
+		r.logger.Infof("Dependency check passed ...")
+		return r.updateStatus(ctx, app)
+	}
+
+	if app.Status.DependencyCheck.IsRunning() {
+		r.logger.Debugf("app.Status.DependencyCheck.IsRunning()")
+		return r.updateStatus(ctx, app)
+	}
+
+	if !app.Status.DependencyCheck.Status {
+		r.logger.Infof("Dependency Check failed")
+		return reconcileResult.Failed()
+	}
+
+	if app.Status.ImagesAvailability.ShouldCheck() {
+		r.logger.Debugf("app.Status.ImagesAvailability.ShouldCheck()")
+		app.Status.ImagesAvailability.SetStarted()
+
+		checks, err := r.checkImagesAvailable(ctx, app)
+		if err != nil {
+			app.Status.ImagesAvailability.SetFinishedWith(false, err.Error())
+			return r.updateStatus(ctx, app)
+		}
+
+		r.logger.Infof("CHECKS: %+v", checks)
+
+		if checks == nil {
+			return reconcileResult.Failed()
+		}
+
+		for k, c := range checks {
+			if !c {
+				r.logger.Infof("CHECKS c: %v\n", c)
+				app.Status.ImagesAvailability.SetFinishedWith(false, fmt.Sprintf("image %s not available to cluster", k))
+				return r.updateStatus(ctx, app)
+			}
+		}
+
+		app.Status.ImagesAvailability.SetFinishedWith(true, "all images available to the cluster")
+		return r.updateStatus(ctx, app)
+	}
+
+	// ASSERT: keep retying until you find the image
+	if !app.Status.ImagesAvailability.Status {
+		r.logger.Infof("ImagesAvailability check failed")
+		time.AfterFunc(time.Second*maxCoolingTime, func() {
+			app.Status.ImagesAvailability = crdsv1.Recon{}
+			r.Status().Update(ctx, app)
+		})
+		return reconcileResult.OK()
+	}
+
+	if app.Status.ApplyJob.ShouldCheck() {
+		r.logger.Debugf("app.Status.ApplyJob.ShouldCheck()")
+		app.Status.ApplyJob.SetStarted()
+		err := r.createAppJob(ctx, app)
+		if err != nil {
+			app.Status.ApplyJob.SetFinishedWith(false, "")
+			return r.updateStatus(ctx, app)
+		}
+		return r.updateStatus(ctx, app)
+	}
+
+	if app.Status.ApplyJob.IsRunning() {
+		r.logger.Debugf("app.Status.ApplyJob.IsRunning()")
+		j := app.Status.ApplyJob.Job
+
+		b, err := r.JobMgr.HasCompleted(ctx, j.Namespace, j.Name)
 		if err != nil {
 			return reconcileResult.Retry(minCoolingTime)
 		}
+
 		if b != nil {
-			app.Status.JobCompleted = newBool(true)
 			if !*b {
+				app.Status.ApplyJob.SetFinishedWith(false, "")
 				return r.updateStatus(ctx, app)
 			}
-			app.Status.Job = nil
+			app.Status.ApplyJob.SetFinishedWith(true, "Ready")
 			return r.updateStatus(ctx, app)
 		}
+
 		return reconcileResult.Retry(minCoolingTime)
-	}
-
-	// STEP: do assertions for dependents
-	// ASSERT: has configmaps/secrets
-	if app.HasNotCheckedDependency() {
-		logger.Debug("app.HasNotCheckedDependency()")
-		checks := make(map[string]string)
-		for _, container := range app.Spec.Containers {
-			for _, env := range container.Env {
-				if env.Value != "" {
-					continue
-				}
-				sp := strings.Split(env.RefName, "/")
-				if sp[0] == "config" {
-					var cfg corev1.ConfigMap
-					err := r.Get(ctx, types.NamespacedName{Namespace: app.Namespace, Name: sp[1]}, &cfg)
-					if err != nil {
-						if apiErrors.IsNotFound(err) {
-							checks[env.RefName] = "NotFound"
-						}
-						r.logger.Debug("failed as ", err)
-						return reconcileResult.Retry(minCoolingTime)
-					}
-					if _, ok := cfg.Data[env.RefKey]; !ok {
-						checks[fmt.Sprintf("%s/%s", env.RefName, env.RefKey)] = "NotFound"
-					}
-				}
-
-				if sp[0] == "secret" {
-					var scrt corev1.Secret
-					err := r.Get(ctx, types.NamespacedName{Namespace: app.Namespace, Name: sp[1]}, &scrt)
-					if err != nil {
-						if apiErrors.IsNotFound(err) {
-							checks[env.RefName] = "NotFound"
-						}
-						r.logger.Debug("failed as", err)
-						return reconcileResult.Retry(minCoolingTime)
-					}
-					if _, ok := scrt.Data[env.RefKey]; !ok {
-						checks[fmt.Sprintf("%s/%s", env.RefName, env.RefKey)] = "NotFound"
-					}
-				}
-			}
-		}
-
-		app.Status.DependencyChecked = &checks
-		return r.updateStatus(ctx, app)
-	}
-
-	//ASSERT: availability of images
-	if app.CheckImagesAvailable() {
-		checks := []bool{}
-		for _, c := range app.Spec.Containers {
-			if strings.HasPrefix(c.Image, "harbor.dev.madhouselabs.io") {
-				imageName := strings.Replace(c.Image, "harbor.dev.madhouselabs.io/ci/", "", 1)
-				artifact := strings.Split(imageName, ":")
-				artifactName := artifact[0]
-				tag := artifact[1]
-				req, err := http.NewRequest(
-					http.MethodGet,
-					fmt.Sprintf("https://harbor.dev.madhouselabs.io/api/v2.0/projects/ci/repositories/%s/artifacts/%s/tags", url.QueryEscape(artifactName), tag),
-					nil,
-				)
-				if err != nil {
-					return reconcileResult.RetryE(minCoolingTime, errors.NewEf(err, "could not create http.Request object"))
-				}
-				req.Header.Add("Content-Type", "application/vnd.oci.image.index.v1+json")
-				req.SetBasicAuth(r.HarborUserName, r.HarborPassword)
-
-				resp, err := http.DefaultClient.Do(req)
-				if err != nil {
-					return reconcileResult.Retry(semiCoolingTime)
-				}
-				checks = append(checks, resp.StatusCode == 200)
-			}
-		}
-
-		b := true
-		for _, c := range checks {
-			b = b && c
-		}
-
-		if !b {
-			return reconcileResult.Retry(maxCoolingTime)
-		}
-		app.Status.HasAvailableImages = newBool(true)
-		// app.Status.ImagesCheckCompleted = newBool(true)
-		return r.updateStatus(ctx, app)
-	}
-
-	// if app.HasNotCheckedImages() {
-	// 	logger.Debug("app.HasNotCheckedImages()")
-	// 	pContainers := []corev1.Container{}
-	// 	for _, container := range app.Spec.Containers {
-	// 		pContainers = append(pContainers, corev1.Container{
-	// 			Name:  container.Name,
-	// 			Image: container.Image,
-	// 		})
-	// 	}
-
-	// 	r.logger.Debugf("pContainers: %+v", pContainers)
-
-	// 	pod, err := r.ClientSet.CoreV1().Pods(app.Namespace).Create(ctx, &corev1.Pod{
-	// 		ObjectMeta: metav1.ObjectMeta{
-	// 			GenerateName: "app-sanity-check-",
-	// 			Namespace:    app.Namespace,
-	// 		},
-	// 		Spec: corev1.PodSpec{
-	// 			Containers: pContainers,
-	// 		},
-	// 	}, metav1.CreateOptions{})
-
-	// 	if err != nil {
-	// 		return reconcileResult.RetryE(maxCoolingTime, errors.NewEf(err, "could not create pod"))
-	// 	}
-
-	// 	app.Status.ImagesCheckJob = &crdsv1.ReconPod{
-	// 		Namespace: pod.Namespace,
-	// 		Name:      pod.Name,
-	// 	}
-	// 	return r.updateStatus(ctx, app)
-	// }
-
-	// if app.IsCheckingImages() {
-	// 	logger.Debug("app.IsCheckingImages()")
-	// 	// ASSERT: read status of pod to check for image pull error
-	// 	var pod corev1.Pod
-	// 	if err := r.Get(ctx, types.NamespacedName{
-	// 		Namespace: app.Status.ImagesCheckJob.Namespace,
-	// 		Name:      app.Status.ImagesCheckJob.Name,
-	// 	}, &pod); err != nil {
-	// 		return reconcileResult.Failed()
-	// 	}
-
-	// 	hasImageErrors := []bool{}
-	// 	for _, cs := range pod.Status.ContainerStatuses {
-	// 		if cs.State.Running != nil {
-	// 			hasImageErrors = append(hasImageErrors, false)
-	// 		}
-	// 		if cs.State.Waiting != nil {
-	// 			if cs.State.Waiting.Reason == "ImagePullBackOff" {
-	// 				r.logger.Debug(cs.State.Waiting.Reason)
-	// 				return reconcileResult.Retry(minCoolingTime)
-
-	// 				// app.Status.ImagesCheckJob.Failed = fmt.Sprintf("container (%s) can not pull image", cs.Name)
-	// 				// r.logger.Debug(app.Status.ImagesCheckJob.Failed)
-	// 				// app.Status.ImagesCheckCompleted = newBool(true)
-	// 				// if err := r.ClientSet.CoreV1().Pods(app.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
-	// 				// 	return reconcileResult.Retry(minCoolingTime)
-	// 				// }
-	// 				// return r.updateStatus(ctx, app)
-	// 			}
-	// 		}
-	// 	}
-
-	// 	if len(hasImageErrors) == len(pod.Spec.Containers) {
-	// 		hasErr := false
-	// 		for _, item := range hasImageErrors {
-	// 			hasErr = hasErr || item
-	// 		}
-	// 		if !hasErr {
-	// 			if err := r.ClientSet.CoreV1().Pods(app.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
-	// 				return reconcileResult.Retry(minCoolingTime)
-	// 			}
-	// 			return reconcileResult.Retry(minCoolingTime)
-	// 			// app.Status.ImagesCheckJob = nil
-	// 			// app.Status.ImagesCheckCompleted = newBool(true)
-	// 			// return r.updateStatus(ctx, app)
-	// 		}
-	// 	}
-	// 	return reconcileResult.Retry(minCoolingTime)
-	// }
-
-	// STEP: create new job
-	if app.ShouldCreateJob() {
-		logger.Debug("app.ShouldCreateJob()")
-		specB, err := json.Marshal(app.Spec)
-		if err != nil {
-			r.logger.Error(errors.New("could not unmarshal app spec into []byte"))
-			return reconcileResult.Failed()
-		}
-		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
-			Name:            "create-job",
-			Namespace:       "hotspot",
-			ServiceAccount:  "hotspot-cluster-svc-account",
-			Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
-			ImagePullPolicy: "Always",
-			Args: []string{
-				"create",
-				"--name", app.Name,
-				"--namespace", app.Namespace,
-				"--spec", string(specB),
-			},
-		})
-
-		if err != nil {
-			return reconcileResult.Failed()
-		}
-
-		app.Status.Job = &crdsv1.ReconJob{
-			Namespace: job.Namespace,
-			Name:      job.Name,
-		}
-		return r.updateStatus(ctx, app)
 	}
 
 	return reconcileResult.OK()
 }
 
 func (r *AppReconciler) updateStatus(ctx context.Context, app *crdsv1.App) (ctrl.Result, error) {
-	err := r.Status().Update(ctx, app)
+	app.BuildConditions()
+	fmt.Printf("####################\nAPP.Conditions: %+v\n", app.Status.Conditions)
+	fmt.Printf("#############\nAPP.Status: %+v\n", app.Status)
+
+	b, err := json.Marshal(app.Status.Conditions)
 	if err != nil {
+		r.logger.Debug(err)
+		b = []byte("")
+	}
+
+	err = r.SendMessage(fmt.Sprintf("%s/%s/%s", app.Namespace, "app", app.Name), lib.MessageReply{
+		Message: string(b),
+		Status:  false,
+	})
+
+	if err != nil {
+		r.logger.Infof("unable to send kafka reply message")
+	}
+
+	if err := r.Status().Update(ctx, app); err != nil {
 		return reconcileResult.RetryE(maxCoolingTime, errors.StatusUpdate(err))
 	}
 
-	if app.Status.Job == nil {
-		r.logger.Debug("app has been updated nil")
-	} else {
-		r.logger.Debugf("app has been updated %+v", *app.Status.Job)
-	}
-	return reconcileResult.Retry(minCoolingTime)
+	r.logger.Debug("App has been updated")
+	return ctrl.Result{}, nil
 }
 
 func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.Result, error) {
 	if controllerutil.ContainsFinalizer(app, appFinalizer) {
-		if app.HasJob() {
-			r.logger.Debug("app.HasJob() (deletion)")
-			// STEP: cleaning currently executing jobs
-			err := r.JobMgr.Delete(ctx, app.Status.Job.Namespace, app.Status.Job.Name)
+
+		// STEP: cleaning currently executing jobs
+		if app.Status.ApplyJob.IsRunning() {
+			r.logger.Debugf("[Finalizer]: killing app.Status.ApplyJob.IsRunning()")
+			j := app.Status.ApplyJob.Job
+			err := r.JobMgr.Delete(ctx, j.Namespace, j.Name)
 			if err != nil {
 				return reconcileResult.RetryE(minCoolingTime, err)
 			}
-			app.Status.Job = nil
-			app.Status.JobCompleted = nil
+			app.Status.ApplyJob.SetFinishedWith(false, "killed by APP finalizer")
 			return r.updateStatus(ctx, app)
 		}
 
-		if app.ShouldCreateDeletionJob() {
-			r.logger.Debug("app.ShouldCreateDeletionJob()")
-			// specB, err := json.Marshal(app.Spec)
-			_, err := json.Marshal(app.Spec)
+		if app.Status.DeleteJob.ShouldCheck() {
+			r.logger.Debugf("[Finalizer]: app.Status.DeleteJob.ShouldCheck()")
+			app.Status.DeleteJob.SetStarted()
+			specB, err := json.Marshal(app.Spec)
 			if err != nil {
-				r.logger.Error(errors.New("could not unmarshal app spec into []byte"))
-				return reconcileResult.Failed()
+				app.Status.DeleteJob.SetFinishedWith(false, "could not unmarshal app spec into []byte")
+				return r.updateStatus(ctx, app)
 			}
 
-			job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
+			job, err := r.JobMgr.Create(ctx, app.Namespace, &lib.JobVars{
 				Name:            "delete-job",
-				Namespace:       "hotspot",
+				Namespace:       app.Namespace,
 				ServiceAccount:  "hotspot-cluster-svc-account",
 				Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
 				ImagePullPolicy: "Always",
-				// Args: []string{
-				// "delete",
-				// "--name", app.Name,
-				// "--namespace", app.Namespace,
-				// "--spec", string(specB),
-				// },
-				Command: []string{
-					"bash",
-				},
 				Args: []string{
-					"-c",
-					"sleep 5 && exit 1",
+					"delete",
+					"--name", app.Name,
+					"--namespace", app.Namespace,
+					"--spec", string(specB),
 				},
 			})
 
 			if err != nil {
-				return reconcileResult.Failed()
+				app.Status.DeleteJob.SetFinishedWith(false, fmt.Sprintf("could not create deletion job as %s", err.Error()))
+				return r.updateStatus(ctx, app)
 			}
 
-			app.Status.DeletionJob = &crdsv1.ReconJob{
+			app.Status.DeleteJob.Job = &crdsv1.ReconJob{
 				Name:      job.Name,
 				Namespace: job.Namespace,
 			}
 			return r.updateStatus(ctx, app)
 		}
 
-		if app.HasDeletionJob() {
-			r.logger.Debug("app.HasDeletionJob()")
-			//STEP:  WATCH for it
-			jobStatus, err := r.JobMgr.HasCompleted(ctx, app.Status.DeletionJob.Namespace, app.Status.DeletionJob.Name)
+		if app.Status.DeleteJob.IsRunning() {
+			r.logger.Debugf("[Finalizer]: app.Status.DeleteJob.IsRunning()")
+
+			j := app.Status.DeleteJob.Job
+			jobStatus, err := r.JobMgr.HasCompleted(ctx, j.Namespace, j.Name)
 			if err != nil {
+				// means child job is running
 				return reconcileResult.Retry(minCoolingTime)
 			}
+
 			if jobStatus != nil {
-				app.Status.DeletionJobCompleted = newBool(true)
 				if !*jobStatus {
 					r.logger.Debugf("DELETION jobStatus %v", *jobStatus)
+					app.Status.DeleteJob.SetFinishedWith(false, "finalzing deletion job failed")
 					return r.updateStatus(ctx, app)
 				}
 				r.logger.Debugf("DELETION jobStatus: %v", *jobStatus)
-				app.Status.DeletionJob = nil
+				app.Status.DeleteJob.SetFinishedWith(true, "finalzing deletion job succeeded")
 				return r.updateStatus(ctx, app)
 			}
+
 			return reconcileResult.Retry(minCoolingTime)
-			// STEP: remove finalizer once done
 		}
 
-		if app.Status.DeletionJobCompleted != nil {
-			r.logger.Debug("app.Status.DeletionJobCompleted")
-			controllerutil.RemoveFinalizer(app, appFinalizer)
-			err := r.Update(ctx, app)
-			if err != nil {
-				r.logger.Error(errors.NewEf(err, "could not remove finalizers from app"))
-			}
-			return reconcileResult.OK()
+		r.logger.Debug("[Finalizer]: all deletion checks completed ...")
+		controllerutil.RemoveFinalizer(app, appFinalizer)
+		err := r.Update(ctx, app)
+		if err != nil {
+			eMsg := errors.NewEf(err, "could not remove finalizers from app")
+			r.logger.Error(eMsg)
+			return reconcileResult.RetryE(minCoolingTime, eMsg)
 		}
+
+		return reconcileResult.OK()
 	}
 
 	r.logger.Debug("contains no finalizers")
 	return reconcileResult.OK()
+}
+
+func (r *AppReconciler) createAppJob(ctx context.Context, app *crdsv1.App) error {
+	specB, err := json.Marshal(app.Spec)
+	if err != nil {
+		return errors.New("could not unmarshal app spec into []byte")
+	}
+
+	job, err := r.JobMgr.Create(ctx, app.Namespace, &lib.JobVars{
+		Name:            "create-job",
+		Namespace:       app.Namespace,
+		ServiceAccount:  "hotspot-cluster-svc-account",
+		Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
+		ImagePullPolicy: "Always",
+		Args: []string{
+			"create",
+			"--name", app.Name,
+			"--namespace", app.Namespace,
+			"--spec", string(specB),
+		},
+	})
+
+	if err != nil {
+		return errors.NewEf(err, "could not create job")
+	}
+
+	app.Status.ApplyJob.Job = &crdsv1.ReconJob{Namespace: job.Namespace, Name: job.Name}
+	return nil
+}
+
+const ImageRegistry = "harbor.dev.madhouselabs.io"
+
+func (r *AppReconciler) checkImagesAvailable(ctx context.Context, app *crdsv1.App) (map[string]bool, error) {
+	checks := map[string]bool{}
+	for _, c := range app.Spec.Containers {
+		if !strings.HasPrefix(c.Image, ImageRegistry) {
+			checks[c.Image] = true
+			continue
+		}
+
+		imageName := strings.Replace(c.Image, fmt.Sprintf("%s/ci/", ImageRegistry), "", 1)
+		artifact := strings.Split(imageName, ":")
+		artifactName := artifact[0]
+		tag := artifact[1]
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("https://harbor.dev.madhouselabs.io/api/v2.0/projects/ci/repositories/%s/artifacts/%s/tags", url.QueryEscape(artifactName), tag),
+			nil,
+		)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not create http object")
+		}
+		req.Header.Add("Content-Type", "application/vnd.oci.image.index.v1+json")
+		req.SetBasicAuth(r.HarborUserName, r.HarborPassword)
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not make http request")
+		}
+		r.logger.Infof("resp.StatusCode=%v", resp.StatusCode)
+		checks[c.Image] = resp.StatusCode == 200
+	}
+
+	return checks, nil
+}
+
+func (r *AppReconciler) checkDependency(ctx context.Context, app *crdsv1.App) *map[string]string {
+	checks := map[string]string{}
+	for _, container := range app.Spec.Containers {
+		for _, env := range container.Env {
+			if env.Value != "" {
+				continue
+			}
+
+			sp := strings.Split(env.RefName, "/")
+			if sp[0] == "config" {
+				var cfg corev1.ConfigMap
+				err := r.Get(ctx, types.NamespacedName{Namespace: app.Namespace, Name: sp[1]}, &cfg)
+				if err != nil {
+					if apiErrors.IsNotFound(err) {
+						checks[env.RefName] = "NotFound"
+						return &checks
+					}
+					checks[env.RefName] = err.Error()
+					return &checks
+				}
+				if _, ok := cfg.Data[env.RefKey]; !ok {
+					checks[fmt.Sprintf("%s/%s", env.RefName, env.RefKey)] = "NotFound"
+					return &checks
+				}
+			}
+
+			if sp[0] == "secret" {
+				var scrt corev1.Secret
+				err := r.Get(ctx, types.NamespacedName{Namespace: app.Namespace, Name: sp[1]}, &scrt)
+				if err != nil {
+					if apiErrors.IsNotFound(err) {
+						checks[env.RefName] = "NotFound"
+						return &checks
+					}
+					checks[env.RefName] = err.Error()
+					return &checks
+				}
+				if _, ok := scrt.Data[env.RefKey]; !ok {
+					checks[fmt.Sprintf("%s/%s", env.RefName, env.RefKey)] = "NotFound"
+					return &checks
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

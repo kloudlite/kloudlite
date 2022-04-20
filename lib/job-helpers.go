@@ -188,7 +188,7 @@ type Job interface {
 	Get(ctx context.Context, namespace string, name string) (*batchv1.Job, error)
 	HasSucceeded(ctx context.Context, namespace string, name string) (*bool, error)
 	HasFailed(ctx context.Context, namespace string, name string) (*batchv1.JobCondition, error)
-	HasCompleted(ctx context.Context, namespace string, namee string) (*bool, error)
+	HasCompleted(ctx context.Context, namespace string, name string) (*bool, error)
 }
 
 func NewJobber(clientset *kubernetes.Clientset) Job {
