@@ -11,24 +11,27 @@ import (
 )
 
 type wgManager struct {
-	isServer     bool
-	configPath   string
-	remoteClient rexec.Rclient
+	isServer       bool
+	configPath     string
+	remoteClient   rexec.Rclient
+	configDataPath string
 }
 
-func NewSshWgManager(configPath, hostIp, user, access_path string, isServer bool) *wgManager {
+func NewSshWgManager(configPath, hostIp, user, accessPath, configDataPath string, isServer bool) *wgManager {
 	return &wgManager{
-		configPath:   configPath,
-		remoteClient: rexec.NewSshRclient(hostIp, user, access_path),
-		isServer:     isServer,
+		configPath:     configPath,
+		configDataPath: configDataPath,
+		remoteClient:   rexec.NewSshRclient(hostIp, user, accessPath),
+		isServer:       isServer,
 	}
 }
 
-func NewKubeWgManager(configPath, kubeconfigPath, namespace, name string, isServer bool) *wgManager {
+func NewKubeWgManager(configPath, kubeConfigPath, namespace, name, configDataPath string, isServer bool) *wgManager {
 	return &wgManager{
-		configPath:   configPath,
-		remoteClient: rexec.NewK8sRclient(kubeconfigPath, namespace, name),
-		isServer:     isServer,
+		configPath:     configPath,
+		configDataPath: configDataPath,
+		remoteClient:   rexec.NewK8sRclient(kubeConfigPath, namespace, name),
+		isServer:       isServer,
 	}
 }
 
@@ -152,7 +155,7 @@ Endpoint = {{ $value.Endpoint }}
 }
 
 func (wgc *wgManager) IsSetupDone() bool {
-	_, err := wgc.remoteClient.Readfile("/root/config.json")
+	_, err := wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath))
 	if err != nil {
 		return false
 	}
@@ -162,7 +165,7 @@ func (wgc *wgManager) IsSetupDone() bool {
 func (wgc *wgManager) Init(ip string) (string, error) {
 	fmt.Println("Initializing wireguard")
 
-	out, err := wgc.remoteClient.Readfile("config.json")
+	out, err := wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath))
 
 	var c Config
 
@@ -201,7 +204,7 @@ func (wgc *wgManager) Init(ip string) (string, error) {
 		return "", fmt.Errorf("failed to masrshal config: %v ", err)
 	}
 
-	if err := wgc.remoteClient.WriteFile("config.json", marshal); err != nil {
+	if err := wgc.remoteClient.WriteFile(fmt.Sprintf("%v/config.json", wgc.configDataPath), marshal); err != nil {
 		return "", fmt.Errorf("failed to write config: %v ", err)
 	}
 
@@ -229,7 +232,7 @@ func (wgc *wgManager) AddRemotePeer(publicKey string, allowedIps string, endpoin
 	var configsRaw []byte
 	var err error
 
-	if configsRaw, err = wgc.remoteClient.Readfile("config.json"); err != nil {
+	if configsRaw, err = wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath)); err != nil {
 		return fmt.Errorf("unable read config.json: %v", err)
 	}
 
@@ -254,7 +257,7 @@ func (wgc *wgManager) AddRemotePeer(publicKey string, allowedIps string, endpoin
 		return fmt.Errorf("unable to write config file: %v", err)
 	}
 	marshal, err := json.Marshal(c)
-	err = wgc.remoteClient.WriteFile("config.json", marshal)
+	err = wgc.remoteClient.WriteFile(fmt.Sprintf("%v/config.json", wgc.configDataPath), marshal)
 	return err
 }
 
@@ -262,7 +265,7 @@ func (wgc *wgManager) AddPeer(publicKey string, allowedIps string, endpoint *str
 	var c Config
 	var configsRaw []byte
 	var err error
-	if configsRaw, err = wgc.remoteClient.Readfile("config.json"); err != nil {
+	if configsRaw, err = wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath)); err != nil {
 		return fmt.Errorf("unable read config.json: %v", err)
 	}
 
@@ -280,7 +283,7 @@ func (wgc *wgManager) AddPeer(publicKey string, allowedIps string, endpoint *str
 		return fmt.Errorf("unable to write config file: %v", err)
 	}
 	marshal, err := json.Marshal(c)
-	err = wgc.remoteClient.WriteFile("config.json", marshal)
+	err = wgc.remoteClient.WriteFile(fmt.Sprintf("%v/config.json", wgc.configDataPath), marshal)
 	return err
 }
 
@@ -301,7 +304,7 @@ func (wgc *wgManager) DeleteRemotePeer(publicKey string) error {
 	var c Config
 	var configsRaw []byte
 	var err error
-	if configsRaw, err = wgc.remoteClient.Readfile("config.json"); err != nil {
+	if configsRaw, err = wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath)); err != nil {
 		return fmt.Errorf("unable to parse config error: %v", err)
 	}
 	if err := json.Unmarshal(configsRaw, &c); err != nil {
@@ -315,7 +318,7 @@ func (wgc *wgManager) DeletePeer(publicKey string) error {
 	var c Config
 	var configsRaw []byte
 	var err error
-	if configsRaw, err = wgc.remoteClient.Readfile("config.json"); err != nil {
+	if configsRaw, err = wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath)); err != nil {
 		return fmt.Errorf("unable to parse config error: %v", err)
 	}
 	if err := json.Unmarshal(configsRaw, &c); err != nil {

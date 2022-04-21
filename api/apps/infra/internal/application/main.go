@@ -29,11 +29,12 @@ type InfraEnv struct {
 	KafkaGroupId            string `env:"KAFKA_GROUP_ID", required:"true"`
 }
 
-func fxProducer(mc messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
-	return messaging.NewKafkaProducer[messaging.Json](mc)
+func fxProducer(mc messaging.KafkaClient) (messaging.Producer[any], error) {
+	return messaging.NewKafkaProducer[any](mc)
 }
 
-func fxJobResponder(p messaging.Producer[any], env InfraEnv) domain.InfraJobResponder {
+func fxJobResponder(p messaging.Producer[any], env *InfraEnv) domain.InfraJobResponder {
+	fmt.Println("sending msg to ", env.KafkaInfraResponseTopic)
 	return NewInfraResponder(p, env.KafkaInfraResponseTopic)
 }
 
@@ -44,7 +45,7 @@ var Module = fx.Module("application",
 	fx.Provide(fxConsumer),
 	fx.Provide(fxJobResponder),
 	domain.Module,
-	fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[messaging.Json]) {
+	fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[any]) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(c context.Context) error {
 				fmt.Println("CONNECTED")
@@ -64,10 +65,9 @@ var Module = fx.Module("application",
 		})
 	}),
 
-	fx.Invoke(func(lifecycle fx.Lifecycle, p messaging.Producer[messaging.Json]) {
+	fx.Invoke(func(lifecycle fx.Lifecycle, p messaging.Producer[any]) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				fmt.Println("SENT")
 				//p.SendMessage("dev-hotspot-infra", "infra", messaging.Json{
 				//	"type": "setup-cluster",
 				//	"payload": messaging.Json{

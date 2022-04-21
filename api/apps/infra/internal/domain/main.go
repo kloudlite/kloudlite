@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
@@ -52,7 +53,6 @@ func (d *domain) DeleteCluster(action DeleteClusterAction) error {
 }
 
 func (d *domain) CreateCluster(action SetupClusterAction) error {
-	_, _, err := d.infraCli.CreateCluster(action)
 	publicIp, publicKey, err := d.infraCli.CreateCluster(action)
 	if err != nil {
 		d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
@@ -100,8 +100,21 @@ type Env struct {
 var Module = fx.Module("domain",
 	config.EnvFx[Env](),
 	fx.Provide(makeDomain),
-	fx.Invoke(func(d Domain, p messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
-
+	fx.Invoke(func(ij InfraJobResponder, d Domain, p messaging.Producer[any], lifecycle fx.Lifecycle) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				ij.SendCreateClusterResponse(SetupClusterResponse{
+					ClusterID: "clus-le8xeokcvycsn8uwutsmuzimk5up",
+					PublicIp:  "1234",
+					PublicKey: "12345",
+					Done:      true,
+				})
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return nil
+			},
+		})
 		//ClusterID  string `json:"cluster_id"`
 		//Region     string `json:"region"`
 		//Provider   string `json:"provider"`
