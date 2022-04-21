@@ -1,5 +1,7 @@
 package domain
 
+import "kloudlite.io/common"
+
 type Project struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
@@ -78,7 +80,12 @@ type Pipeline struct {
 }
 
 type Message struct {
-	ResourceType string      `json:"resourceType"`
-	Namespace    string      `json:"namespace"`
-	Spec         interface{} `json:"spec"`
+	ResourceType common.ResourceType `json:"resourceType"`
+	Namespace    string              `json:"namespace"`
+	Spec         interface{}         `json:"spec"`
+}
+
+type MessageReply struct {
+	Message string `json:"message,omitempty"`
+	Status  bool   `json:"status,omitempty"`
 }

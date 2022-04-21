@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"go.uber.org/fx"
@@ -14,14 +15,14 @@ import (
 )
 
 type Env struct {
-	GroupId string `env:"KAFKA_GROUP_ID" required:"true"`
-	Topics  string `env:"KAFKA_TOPICS" required:"true"`
+	KafkaGroupId string `env:"KAFKA_GROUP_ID" required:"true"`
+	KafkaTopic   string `env:"KAFKA_TOPIC" required:"true"`
 }
 
 type M map[string]interface{}
 
-func fxMsgProducer(messenger messaging.KafkaClient) (messaging.Producer[domain.Message], error) {
-	producer, e := messaging.NewKafkaProducer[domain.Message](messenger)
+func fxMsgProducer(messenger messaging.KafkaClient) (messaging.Producer[domain.MessageReply], error) {
+	producer, e := messaging.NewKafkaProducer[domain.MessageReply](messenger)
 	if e != nil {
 		return nil, e
 	}
@@ -30,6 +31,7 @@ func fxMsgProducer(messenger messaging.KafkaClient) (messaging.Producer[domain.M
 
 func fxMsgConsumer(messenger messaging.KafkaClient, env *Env, logger logger.Logger, d domain.Domain) (messaging.Consumer, error) {
 	callback := func(ctx context.Context, topic string, message messaging.Message) error {
+		fmt.Println("#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
 		var msg domain.Message
 		err := json.Unmarshal(message, &msg)
 		if err != nil {
@@ -39,7 +41,10 @@ func fxMsgConsumer(messenger messaging.KafkaClient, env *Env, logger logger.Logg
 	}
 
 	consumer, e := messaging.NewKafkaConsumer(
-		messenger, strings.Split(env.Topics, ","), env.GroupId, logger,
+		messenger,
+		strings.Split(env.KafkaTopic, ","),
+		env.KafkaGroupId,
+		logger,
 		callback,
 	)
 	if e != nil {
@@ -49,7 +54,7 @@ func fxMsgConsumer(messenger messaging.KafkaClient, env *Env, logger logger.Logg
 }
 
 var Module = fx.Module("app",
-	fx.Provide(config.LoadEnv[Env]()),
+	config.EnvFx[Env](),
 	fx.Provide(fxMsgProducer),
 	fx.Provide(fxMsgConsumer),
 	domain.Module,
@@ -63,5 +68,27 @@ var Module = fx.Module("app",
 			},
 		})
 	}),
-	// TModule,
+	TModule,
+
+	// DEV module
+	// fx.Invoke(func(lf fx.Lifecycle, env *Env, producer messaging.Producer[domain.Message]) {
+	// 	lf.Append(fx.Hook{
+	// 		OnStart: func(ctx context.Context) error {
+	// 			err := producer.Connect(ctx)
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 			err = producer.SendMessage(env.KafkaTopic, "hello-world", domain.Message{
+	// 				ResourceType: common.ResourceProject,
+	// 				Namespace:    "sample",
+	// 				Spec: domain.Project{
+	// 					Name:        "sample",
+	// 					DisplayName: "this is just a sample project",
+	// 				},
+	// 			})
+	// 			fmt.Println("MESSAGE dumped into kafka")
+	// 			return err
+	// 		},
+	// 	})
+	// }),
 )

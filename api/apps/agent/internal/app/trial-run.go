@@ -36,7 +36,7 @@ var managedSvcMsg = domain.Message{
 	},
 }
 
-var managedApp = domain.Message{
+var appRes = domain.Message{
 	ResourceType: common.ResourceApp,
 	Namespace:    "hotspot",
 	Spec: domain.App{
@@ -117,12 +117,12 @@ var routerRes = domain.Message{
 		Namespace: "hotspot",
 		Domains:   []string{"x.kloudlite.io", "y.kloudlitle.io"},
 		Routes: []domain.Routes{
-			domain.Routes{
+			{
 				Path: "/",
 				App:  "sample",
 				Port: 80,
 			},
-			domain.Routes{
+			{
 				Path: "/api",
 				App:  "sample-api",
 				Port: 3000,
@@ -141,7 +141,7 @@ var pipelineRes = domain.Message{
 		GitRepoUrl:  "https://gitlab.com/madhouselabs/kloudlite/api-go",
 		GitRef:      "heads/feature/ci",
 		BuildArgs: []domain.BuildArg{
-			domain.BuildArg{
+			{
 				Key:   "app",
 				Value: "message-consumer",
 			},
@@ -155,7 +155,7 @@ var TModule = fx.Module("app.trial",
 	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				return d.ProcessMessage(ctx, &projectRes)
+				return d.ProcessMessage(ctx, &appRes)
 			},
 		})
 	}),

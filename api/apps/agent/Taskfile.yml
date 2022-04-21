@@ -1,8 +1,13 @@
 version: '3'
 tasks:
-  dev:
+  run:
     sources:
       - ./main.go
-      - ./internal/*
+      - ./internal/**
+    env:
+      KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
+      KAFKA_TOPIC: dev-hotspot-agent
+      KAFKA_REPLY_TOPIC: dev-hotspot-agent-reply
+      KAFKA_GROUP_ID: kl-agent
     cmds:
-      - go run ./main.go
+      - nodemon -q -e go --signal SIGKILL --exec 'go run -tags dynamic ./main.go --dev |& pp -rel-path || exit 1'
