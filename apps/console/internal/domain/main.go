@@ -648,7 +648,6 @@ func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectN
 }
 
 func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClusterResponse) error {
-	fmt.Println(response, "response")
 	byId, err := d.clusterRepo.FindById(ctx, response.ClusterID)
 	if err != nil {
 		return err
@@ -667,6 +666,7 @@ func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClus
 	}
 	_, err = d.clusterRepo.UpdateById(ctx, response.ClusterID, byId)
 	if err != nil {
+		panic(err)
 		return err
 	}
 	return nil
@@ -981,4 +981,34 @@ var Module = fx.Module(
 	"domain",
 	config.EnvFx[Env](),
 	fx.Provide(fxDomain),
+	fx.Invoke(func(domain Domain, lifecycle fx.Lifecycle) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				//var m struct {
+				//	Type    string
+				//	Payload entities.SetupClusterResponse
+				//}
+				//err := json.Unmarshal([]byte(`
+				//{"payload":{"cluster_id":"clus-nkqjpafm09b-plpxhtw4w2gjilm8","public_ip":"64.227.176.94","public_key":"EOnx1zHYXmZgsBhYYzZrW5MUDN0D67iS3qq1H26U+10=","done":true,"message":""},"type":"create-cluster"}
+				//`), &m)
+				//err = domain.OnSetupCluster(ctx, m.Payload)
+				//fmt.Println(err)
+				return nil
+
+				//return domain.OnSetupCluster(ctx, entities.SetupClusterResponse{
+				//	ClusterID: "clus-le8xeokcvycsn8uwutsmuzimk5up",
+				//	PublicIp:  "159.65.159.8",
+				//	PublicKey: "vetk9LZsy+YuUVhu4lHnfj/vwAwIXRVEFX5f8abl+h4=",
+				//	Done:      true,
+				//	Message:   "",
+				//})
+			},
+		})
+	}),
 )
+
+/*
+map[payload:map[cluster_id:clus-nkqjpafm09b-plpxhtw4w2gjilm8 done:true message: public_ip:64.227.176.94 public_key:EOnx1zHYXmZgsBhYYzZrW5MUDN0D67iS3qq1H26U+10=] type:create-cluster]
+{clus-nkqjpafm09b-plpxhtw4w2gjilm8 64.227.176.94 EOnx1zHYXmZgsBhYYzZrW5MUDN0D67iS3qq1H26U+10= true } response
+{clus-nkqjpafm09b-plpxhtw4w2gjilm8 64.227.176.94 EOnx1zHYXmZgsBhYYzZrW5MUDN0D67iS3qq1H26U+10= true }
+*/
