@@ -1,6 +1,9 @@
 package entities
 
-import "kloudlite.io/pkg/repos"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kloudlite.io/pkg/repos"
+)
 
 type PortType string
 
@@ -55,5 +58,23 @@ type App struct {
 	ExposedPorts      []ExposedPort      `json:"exposed_ports" bson:"exposed_ports"`
 	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
 	Containers        []Container        `json:"containers" bson:"containers"`
-	Status            ClusterStatus      `json:"status" bson:"status"`
+	Status            AppStatus          `json:"status" bson:"status"`
+	Conditions        []metav1.Condition `json:"conditions" bson:"conditions"`
+}
+
+var AppIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "name", Value: repos.IndexAsc},
+			{Key: "namespace", Value: repos.IndexAsc},
+			{Key: "cluster_id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }

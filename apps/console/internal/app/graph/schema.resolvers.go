@@ -58,10 +58,9 @@ func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*m
 	devices := make([]*model.Device, len(deviceEntities))
 	for i, d := range deviceEntities {
 		devices[i] = &model.Device{
-			ID:            d.Id,
-			Name:          d.Name,
-			Cluster:       cluster,
-			Configuration: "",
+			ID:      d.Id,
+			Name:    d.Name,
+			Cluster: cluster,
 		}
 	}
 	return devices, e
@@ -98,23 +97,22 @@ func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model
 	}, nil
 }
 
-func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
-	//deviceEntity, err := r.Domain.GetDevice(ctx, obj.ID)
-	//	return fmt.Sprintf(`
-	//[Interface]
-	//PrivateKey = %v
-	//Address = %v/32
-	//DNS = 10.43.0.10
-	//
-	//[Peer]
-	//PublicKey = %v
-	//AllowedIPs = 10.42.0.0/16, 10.43.0.0/16, 10.13.13.0/16
-	//Endpoint = %v:31820
-	//`, deviceEntity.PrivateKey, deviceEntity.), err
-	return "nil", nil
-}
-
 func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
+	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, templateID, name, values)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ManagedSvc{
+		ID:      svcEntity.Id,
+		Name:    svcEntity.Name,
+		Version: 0,
+		Project: &model.Project{ID: projectID},
+		Source: &model.ManagedSvcSource{
+			Name: string(svcEntity.ServiceType),
+		},
+		Values: values,
+		JobID:  nil,
+	}, nil
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -386,10 +384,6 @@ func (r *queryResolver) CoreSecret(ctx context.Context, secretID repos.ID) (*mod
 	return secretModelFromEntity(secretEntity), nil
 }
 
-func (r *queryResolver) CiGitPullRepoToken(ctx context.Context, imageID repos.ID) (*string, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *queryResolver) CiGitlabRepos(ctx context.Context, groupID repos.ID, search *string, limit *int, page *int) ([]map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -463,9 +457,8 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
 		devices = append(devices, &model.Device{
-			ID:            device.Id,
-			Name:          device.Name,
-			Configuration: "",
+			ID:   device.Id,
+			Name: device.Name,
 		})
 	}
 	return devices, e

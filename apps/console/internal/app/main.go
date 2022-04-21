@@ -4,7 +4,9 @@ import (
 	"context"
 	_ "fmt"
 	"google.golang.org/grpc"
+	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/pkg/logger"
 	"net/http"
 	_ "net/http"
 
@@ -34,6 +36,9 @@ type Env struct {
 	CookieDomain            string `env:"COOKIE_DOMAIN"`
 }
 
+type InfraEventConsumer messaging.Consumer[messaging.Json]
+type ClusterEventConsumer messaging.Consumer[messaging.Json]
+
 var Module = fx.Module(
 	"app",
 	config.EnvFx[Env](),
@@ -43,6 +48,8 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.Config]("config", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secret", "sec", entities.SecretIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("router", "route", entities.RouterIndexes),
+	repos.NewFxMongoRepo[*entities.ManagedService]("managedservice", "mgsvc", entities.ManagedServiceIndexes),
+	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 			return messaging.NewKafkaProducer[messaging.Json](messagingCli)
@@ -63,6 +70,166 @@ var Module = fx.Module(
 					return nil
 				},
 			})
+		}),
+	),
+
+	fx.Module("infra-event-consumer",
+		fx.Provide(func(domain domain.Domain, env *Env, kafkaCli messaging.KafkaClient, logger logger.Logger) (ClusterEventConsumer, error) {
+			return messaging.NewKafkaConsumer[messaging.Json](
+				kafkaCli,
+				[]string{env.KafkaInfraTopic},
+				env.KafkaConsumerGroupId,
+				logger, func(context context.Context, topic string, message messaging.Message) error {
+					var d map[string]any
+					err := message.Unmarshal(&d)
+					if err != nil {
+						return err
+					}
+					switch d["type"].(string) {
+					case "create-cluster":
+						var m struct {
+							Type    string
+							Payload entities.SetupClusterResponse
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnSetupCluster(context, m.Payload)
+					case "delete-cluster":
+						var m struct {
+							Type    string
+							Payload entities.DeleteClusterResponse
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return nil
+					case "update-cluster":
+						var m struct {
+							Type    string
+							Payload entities.UpdateClusterResponse
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateCluster(context, m.Payload)
+					case "add-peer":
+						var m struct {
+							Type    string
+							Payload entities.AddPeerResponse
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnAddPeer(context, m.Payload)
+					case "delete-peer":
+						var m struct {
+							Type    string
+							Payload entities.DeletePeerResponse
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return nil
+					}
+					return nil
+				},
+			)
+		}),
+	),
+
+	fx.Module("cluster-event-consumer",
+		fx.Provide(func(domain domain.Domain, env *Env, kafkaCli messaging.KafkaClient, logger logger.Logger) (InfraEventConsumer, error) {
+			return messaging.NewKafkaConsumer[messaging.Json](
+				kafkaCli,
+				[]string{env.KafkaInfraTopic},
+				env.KafkaConsumerGroupId,
+				logger, func(context context.Context, topic string, message messaging.Message) error {
+					var d map[string]any
+					err := message.Unmarshal(&d)
+					if err != nil {
+						return err
+					}
+					switch d["type"].(string) {
+					case "project-update":
+						var m struct {
+							Type    string
+							Payload *op_crds.Project
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateProject(context, m.Payload)
+					case "app-update":
+						var m struct {
+							Type    string
+							Payload *op_crds.App
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateApp(context, m.Payload)
+					case "config-update":
+						var m struct {
+							Type    string
+							Payload repos.ID
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateConfig(context, m.Payload)
+					case "secret-update":
+						var m struct {
+							Type    string
+							Payload repos.ID
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateSecret(context, m.Payload)
+					case "router-update":
+						var m struct {
+							Type    string
+							Payload *op_crds.Router
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateRouter(context, m.Payload)
+					case "managed-svc-update":
+						var m struct {
+							Type    string
+							Payload *op_crds.ManagedService
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateManagedSvc(context, m.Payload)
+					case "managed-res-update":
+						var m struct {
+							Type    string
+							Payload *op_crds.ManagedResource
+						}
+						err := message.Unmarshal(&m)
+						if err != nil {
+							return err
+						}
+						return domain.OnUpdateManagedRes(context, m.Payload)
+					}
+					return nil
+				},
+			)
 		}),
 	),
 
