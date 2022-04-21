@@ -28,6 +28,7 @@ type Query {
   ci_gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
   ci_gitPipeline(pipelineId: ID!): GitPipeline
 
+  managedSvc_marketList: Json!
   managedSvc_listAvailable: Json!
   managedSvc_getInstallation(installationId: ID!, nextVersion: Boolean): ManagedSvc
   managedSvc_listInstallations(projectId: ID!): [ManagedSvc!]
@@ -42,8 +43,7 @@ type Query {
 type ManagedRes {
   id: ID!
   name: String!
-  resourceName: String!
-  version: Int!
+  resourceType: String!
   installation: ManagedSvc!
   values: Json!
 }
@@ -51,25 +51,13 @@ type ManagedRes {
 type ManagedSvc {
   id: ID!
   name: String!
-  version: Int!
   project: Project!
-  source: ManagedSvcSource!
+  source: String!
   values: Json!
-  jobId: ID
+  resources: [ManagedRes!]!
 }
 
-type ManagedSvcSource {
-  id: ID!
-  name: String!
-  displayName: String
-  fields: Json
-  resources: [ManagedResourceSource!]
-}
 
-type ManagedResourceSource {
-  name: String!
-  fields: Json
-}
 
 input GitPipelineInput{
   gitRepoUrl: String!
@@ -82,11 +70,11 @@ input GitPipelineInput{
 }
 
 type Mutation {
-  mangedSvc_install(projectId: ID!, templateId: ID!, name: String!, values: Json!): ManagedSvc
+  mangedSvc_install(projectId: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
   mangedSvc_uninstall(installationId: ID!): Boolean!
   mangedSvc_update(installationId: ID!, values: Json!): Boolean!
 
-  managedRes_create(installationId: ID!, name: String!, resourceName: String!, values: Json!): ManagedRes!
+  managedRes_create(installationId: ID!, name: String!, resourceType: String!, values: Json!): ManagedRes!
   managedRes_update(resId: ID!, values: Json): Boolean!
   managedRes_delete(resId: ID!): Boolean
 

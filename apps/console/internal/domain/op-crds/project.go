@@ -11,7 +11,9 @@ type Status struct {
 }
 
 type Project struct {
-	Name   string      `json:"name,omitempty"`
-	Spec   ProjectSpec `json:"spec,omitempty"`
-	Status Status      `json:"status,omitempty"`
+	Name      string      `json:"name,omitempty"`
+	NameSpace string      `json:"name,omitempty"`
+	ClusterId string      `json:"cluster_id"`
+	Spec      ProjectSpec `json:"spec,omitempty"`
+	Status    Status      `json:"status,omitempty"`
 }

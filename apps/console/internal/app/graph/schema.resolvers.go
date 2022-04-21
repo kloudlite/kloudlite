@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
@@ -97,23 +98,30 @@ func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model
 	}, nil
 }
 
-func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
-	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, templateID, name, values)
+func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error) {
+	resources, err := r.Domain.GetManagedResourcesOfService(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*model.ManagedRes, 0)
+	for _, r := range resources {
+		res = append(res, managedResourceModelFromEntity(r))
+	}
+	return res, nil
+}
+
+func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
+	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, serviceType, name, values)
 	if err != nil {
 		return nil, err
 	}
 	return &model.ManagedSvc{
 		ID:      svcEntity.Id,
 		Name:    svcEntity.Name,
-		Version: 0,
 		Project: &model.Project{ID: projectID},
-		Source: &model.ManagedSvcSource{
-			Name: string(svcEntity.ServiceType),
-		},
-		Values: values,
-		JobID:  nil,
+		Source:  string(svcEntity.ServiceType),
+		Values:  values,
 	}, nil
-	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) MangedSvcUninstall(ctx context.Context, installationID repos.ID) (bool, error) {
@@ -124,8 +132,20 @@ func (r *mutationResolver) MangedSvcUpdate(ctx context.Context, installationID r
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceName string, values map[string]interface{}) (*model.ManagedRes, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error) {
+	res, err := r.Domain.InstallManagedRes(ctx, installationID, name, resourceType, values)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ManagedRes{
+		ID:           res.Id,
+		Name:         res.Name,
+		ResourceType: string(res.ResourceType),
+		Installation: &model.ManagedSvc{
+			ID: installationID,
+		},
+		Values: values,
+	}, nil
 }
 
 func (r *mutationResolver) ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error) {
@@ -420,6 +440,23 @@ func (r *queryResolver) CiGitPipeline(ctx context.Context, pipelineID repos.ID) 
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *queryResolver) ManagedSvcMarketList(ctx context.Context) (map[string]interface{}, error) {
+	templates, err := r.Domain.GetManagedServiceTemplates(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var res []any
+	marshal, err := json.Marshal(templates)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(marshal, &res)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{"categories": res}, nil
+}
+
 func (r *queryResolver) ManagedSvcListAvailable(ctx context.Context) (map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -429,7 +466,12 @@ func (r *queryResolver) ManagedSvcGetInstallation(ctx context.Context, installat
 }
 
 func (r *queryResolver) ManagedSvcListInstallations(ctx context.Context, projectID repos.ID) ([]*model.ManagedSvc, error) {
-	panic(fmt.Errorf("not implemented"))
+	svcs, err := r.Domain.GetManagedSvcs(ctx, projectID)
+	managedSvcs := make([]*model.ManagedSvc, 0)
+	for _, svc := range svcs {
+		managedSvcs = append(managedSvcs, managedSvcModelFromEntity(svc))
+	}
+	return managedSvcs, err
 }
 
 func (r *queryResolver) ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error) {
@@ -473,6 +515,9 @@ func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
 
+// ManagedSvc returns generated.ManagedSvcResolver implementation.
+func (r *Resolver) ManagedSvc() generated.ManagedSvcResolver { return &managedSvcResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -485,6 +530,7 @@ func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 type accountResolver struct{ *Resolver }
 type clusterResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
+type managedSvcResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

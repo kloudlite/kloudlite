@@ -20,8 +20,8 @@ type ManagedResource struct {
 	ProjectId        repos.ID              `json:"project_id" bson:"project_id"`
 	Name             string                `json:"name" bson:"name"`
 	Namespace        string                `json:"namespace" bson:"namespace"`
-	ServiceType      ManagedResourceType   `json:"resource_type" bson:"resource_type"`
-	Service          string                `bson:"service_name" json:"service_name"`
+	ResourceType     ManagedResourceType   `json:"resource_type" bson:"resource_type"`
+	ServiceId        repos.ID              `bson:"service_id" json:"service_id"`
 	Values           map[string]any        `json:"values" bson:"values"`
 	Status           ManagedResourceStatus `json:"status" bson:"status"`
 	Conditions       []metav1.Condition    `json:"conditions" bson:"conditions"`
@@ -37,6 +37,7 @@ var ManagedResourceIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "name", Value: repos.IndexAsc},
+			{Key: "service_id", Value: repos.IndexAsc},
 			{Key: "namespace", Value: repos.IndexAsc},
 			{Key: "cluster_id", Value: repos.IndexAsc},
 		},
