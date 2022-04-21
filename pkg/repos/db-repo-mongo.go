@@ -145,9 +145,8 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 	return result, e
 }
 
-// upsert
+// Upsert upsert
 func (repo dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, error) {
-
 	id := repo.NewId()
 	if t, err := repo.findOne(ctx, filter); err == nil {
 		id = t.GetId()

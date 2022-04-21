@@ -16,8 +16,6 @@ type Query {
   core_secrets(projectId: ID!, search: String): [Secret!]!
   core_secret(secretId: ID!): Secret!
 
-  ci_gitPullRepoToken(imageId: ID!): String # TBD
-
   ci_gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
   ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
   ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
@@ -185,11 +183,6 @@ type Project {
   memberships: [ProjectMembership!]!
 }
 
-type AppMemebership {
-  app: App!
-  role: String!
-}
-
 type ProjectMembership {
   user: User!
   role: String!
@@ -202,8 +195,9 @@ type App {
   namespace: String!
   description: String
   readableId: ID!
-  services: [AppService]!
   replicas: Int
+  services: [AppService]!
+  attachedResources:[ManagedRes]!
   containers: [AppContainer!]!
   project: Project!
   version: Int
@@ -399,5 +393,4 @@ type Device @key(fields: "id") {
   user: User!
   name: String!
   cluster: Cluster!
-  configuration: String!
 }

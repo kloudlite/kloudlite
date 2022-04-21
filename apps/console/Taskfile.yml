@@ -9,6 +9,7 @@ tasks:
     env:
       MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
+      MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
 #      REDIS_USERNAME: hotspot-user
 #      REDIS_PASSWORD: ***REMOVED***
       MONGO_DB_NAME: console-go

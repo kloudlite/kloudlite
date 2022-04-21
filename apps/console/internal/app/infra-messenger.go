@@ -16,7 +16,7 @@ func (i *infraMessengerImpl) SendAction(action any) error {
 	case entities.SetupClusterAction:
 		{
 			return i.producer.SendMessage(i.env.KafkaInfraTopic, string(a.ClusterID), messaging.Json{
-				"type":    "setup-cluster",
+				"type":    "create-cluster",
 				"payload": action,
 			})
 		}

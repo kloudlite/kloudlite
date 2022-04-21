@@ -5,28 +5,395 @@ import (
 	"fmt"
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"gopkg.in/yaml.v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
 	"math"
 	"math/rand"
+	"os"
 	"regexp"
 	"strings"
 )
 
 type domain struct {
-	deviceRepo      repos.DbRepo[*entities.Device]
-	clusterRepo     repos.DbRepo[*entities.Cluster]
-	projectRepo     repos.DbRepo[*entities.Project]
-	configRepo      repos.DbRepo[*entities.Config]
-	routerRepo      repos.DbRepo[*entities.Router]
-	secretRepo      repos.DbRepo[*entities.Secret]
-	messageProducer messaging.Producer[messaging.Json]
-	messageTopic    string
-	logger          logger.Logger
-	infraMessenger  InfraMessenger
+	deviceRepo           repos.DbRepo[*entities.Device]
+	clusterRepo          repos.DbRepo[*entities.Cluster]
+	projectRepo          repos.DbRepo[*entities.Project]
+	configRepo           repos.DbRepo[*entities.Config]
+	routerRepo           repos.DbRepo[*entities.Router]
+	secretRepo           repos.DbRepo[*entities.Secret]
+	messageProducer      messaging.Producer[messaging.Json]
+	messageTopic         string
+	logger               logger.Logger
+	infraMessenger       InfraMessenger
+	managedSvcRepo       repos.DbRepo[*entities.ManagedService]
+	managedResRepo       repos.DbRepo[*entities.ManagedResource]
+	appRepo              repos.DbRepo[*entities.App]
+	managedTemplatesPath string
+}
+
+func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceTemplate, error) {
+	templates := make([]*entities.ManagedServiceTemplate, 0)
+	data, err := os.ReadFile(d.managedTemplatesPath)
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal(data, &templates)
+	if err != nil {
+		return nil, err
+	}
+	return templates, nil
+}
+
+func isReady(c []metav1.Condition) bool {
+	for _, _c := range c {
+		if _c.Type == "Ready" && _c.Status == "True" {
+			return true
+		}
+	}
+	return false
+}
+
+func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.Project) error {
+	one, err := d.projectRepo.FindOne(ctx, repos.Filter{
+		"name": response.Name,
+	})
+	if err != nil {
+		return err
+	}
+	if isReady(response.Status.Conditions) {
+		one.Status = entities.ProjectStateLive
+	} else {
+		one.Status = entities.ProjectStateSyncing
+	}
+	one.Conditions = response.Status.Conditions
+	_, err = d.projectRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnUpdateConfig(ctx context.Context, configId repos.ID) error {
+	one, err := d.configRepo.FindById(ctx, configId)
+	if err != nil {
+		return err
+	}
+	one.Status = entities.ConfigStateLive
+	_, err = d.configRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnUpdateSecret(ctx context.Context, secretId repos.ID) error {
+	one, err := d.secretRepo.FindById(ctx, secretId)
+	if err != nil {
+		return err
+	}
+	one.Status = entities.SecretStateLive
+	_, err = d.secretRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.Router) error {
+	one, err := d.routerRepo.FindOne(ctx, repos.Filter{
+		"name": response.Name,
+	})
+	if err != nil {
+		return err
+	}
+	if isReady(response.Status.Conditions) {
+		one.Status = entities.RouteStateLive
+	} else {
+		one.Status = entities.RouteStateSyncing
+	}
+	one.Conditions = response.Status.Conditions
+	_, err = d.routerRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.ManagedService) error {
+	one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
+		"name": response.Name,
+	})
+	if err != nil {
+		return err
+	}
+	if isReady(response.Status.Conditions) {
+		one.Status = entities.ManagedServiceStateLive
+	} else {
+		one.Status = entities.ManagedServiceStateSyncing
+	}
+	one.Conditions = response.Status.Conditions
+	_, err = d.managedSvcRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.ManagedResource) error {
+	one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
+		"name": response.Name,
+	})
+	if err != nil {
+		return err
+	}
+	if isReady(response.Status.Conditions) {
+		one.Status = entities.ManagedResourceStateLive
+	} else {
+		one.Status = entities.ManagedResourceStateSyncing
+	}
+	one.Conditions = response.Status.Conditions
+	_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.App) error {
+	one, err := d.appRepo.FindOne(ctx, repos.Filter{
+		"name": response.Name,
+	})
+	if err != nil {
+		return err
+	}
+	if isReady(response.Status.Conditions) {
+		one.Status = entities.AppStateLive
+	} else {
+		one.Status = entities.AppStateSyncing
+	}
+	one.Conditions = response.Status.Conditions
+	_, err = d.appRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) PatchConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error) {
+	one, err := d.configRepo.FindById(ctx, configId)
+	if err != nil {
+		return false, err
+	}
+	if desc != nil {
+		one.Description = desc
+	}
+	if configData != nil {
+		if one.Data == nil {
+			one.Data = make([]*entities.Entry, 0)
+		}
+		for _, v := range configData {
+			inserted := false
+			for _, v2 := range make([]*entities.Entry, 0) {
+				if v.Key == v2.Key {
+					v2.Value = v.Value
+					inserted = true
+					break
+				}
+			}
+			if !inserted {
+				one.Data = append(one.Data, v)
+			}
+		}
+	}
+	_, err = d.configRepo.UpdateById(ctx, one.Id, one)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, error) {
+	err := d.configRepo.DeleteById(ctx, configId)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) PatchSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error) {
+	one, err := d.secretRepo.FindById(ctx, secretId)
+	if err != nil {
+		return false, err
+	}
+	if desc != nil {
+		one.Description = desc
+	}
+	if secretData != nil {
+		if one.Data == nil {
+			one.Data = make([]*entities.Entry, 0)
+		}
+		for _, v := range secretData {
+			inserted := false
+			for _, v2 := range make([]*entities.Entry, 0) {
+				if v.Key == v2.Key {
+					v2.Value = v.Value
+					inserted = true
+					break
+				}
+			}
+			if !inserted {
+				one.Data = append(one.Data, v)
+			}
+		}
+	}
+	_, err = d.secretRepo.UpdateById(ctx, one.Id, one)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error) {
+	err := d.secretRepo.DeleteById(ctx, secretId)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, error) {
+	err := d.secretRepo.DeleteById(ctx, routerID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error) {
+	return d.managedSvcRepo.FindById(ctx, managedSvcID)
+}
+
+func (d *domain) GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error) {
+	return d.managedSvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"project_id": projectID,
+	}})
+}
+
+func (d *domain) GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error) {
+	return d.managedResRepo.FindById(ctx, managedResID)
+}
+
+func (d *domain) GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error) {
+	return d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"project_id": projectID,
+	}})
+}
+
+func (d *domain) InstallManagedRes(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedResource, error) {
+	prj, err := d.projectRepo.FindById(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	if prj == nil {
+		return nil, fmt.Errorf("project not found")
+	}
+	create, err := d.managedResRepo.Create(ctx, &entities.ManagedResource{
+		ProjectId:   projectID,
+		Namespace:   prj.Name,
+		ServiceType: entities.ManagedResourceType(templateID),
+		Name:        name,
+		Values:      values,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error) {
+	id, err := d.managedResRepo.FindById(ctx, managedResID)
+	if err != nil {
+		return false, err
+	}
+	id.Values = values
+	_, err = d.managedResRepo.UpdateById(ctx, managedResID, id)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool, error) {
+	err := d.managedResRepo.DeleteById(ctx, appID)
+	if err != nil {
+		return false, err
+	}
+	return true, err
+}
+
+func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, error) {
+	return d.appRepo.FindById(ctx, appId)
+}
+
+func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.App, error) {
+	apps, err := d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"project_id": projectID,
+	}})
+	if err != nil {
+		return nil, err
+	}
+	return apps, nil
+}
+
+func (d *domain) InstallApp(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedResource, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *domain) UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
+	err := d.appRepo.DeleteById(ctx, appID)
+	if err != nil {
+		return false, err
+	}
+	return true, err
+}
+
+func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error) {
+	prj, err := d.projectRepo.FindById(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	if prj == nil {
+		return nil, fmt.Errorf("project not found")
+	}
+
+	create, err := d.managedSvcRepo.Create(ctx, &entities.ManagedService{
+		Name:        name,
+		Namespace:   prj.Name,
+		ServiceType: entities.ManagedServiceType(templateID),
+		Values:      values,
+		Status:      entities.ManagedServiceStateSyncing,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return create, err
+}
+
+func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error) {
+	managedSvc, err := d.managedSvcRepo.FindById(ctx, managedServiceId)
+	if err != nil {
+		return false, err
+	}
+	if managedSvc == nil {
+		return false, fmt.Errorf("project not found")
+	}
+	managedSvc.Values = values
+	managedSvc.Status = entities.ManagedServiceStateSyncing
+	_, err = d.managedSvcRepo.UpdateById(ctx, managedServiceId, managedSvc)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error) {
+	err := d.managedSvcRepo.DeleteById(ctx, managedServiceId)
+	// TODO send message
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string, entries []*entities.Route) (bool, error) {
@@ -543,7 +910,8 @@ func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, 
 }
 
 type Env struct {
-	KafkaInfraTopic string `env:"KAFKA_INFRA_TOPIC" required:"true"`
+	KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
+	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
 }
 
 func fxDomain(
@@ -553,22 +921,29 @@ func fxDomain(
 	configRepo repos.DbRepo[*entities.Config],
 	secretRepo repos.DbRepo[*entities.Secret],
 	routerRepo repos.DbRepo[*entities.Router],
+	appRepo repos.DbRepo[*entities.App],
+	managedSvcRepo repos.DbRepo[*entities.ManagedService],
+	managedResRepo repos.DbRepo[*entities.ManagedResource],
 	msgP messaging.Producer[messaging.Json],
 	env *Env,
 	logger logger.Logger,
 	messenger InfraMessenger,
 ) Domain {
 	return &domain{
-		infraMessenger:  messenger,
-		deviceRepo:      deviceRepo,
-		clusterRepo:     clusterRepo,
-		projectRepo:     projectRepo,
-		routerRepo:      routerRepo,
-		secretRepo:      secretRepo,
-		configRepo:      configRepo,
-		messageProducer: msgP,
-		messageTopic:    env.KafkaInfraTopic,
-		logger:          logger,
+		infraMessenger:       messenger,
+		deviceRepo:           deviceRepo,
+		clusterRepo:          clusterRepo,
+		projectRepo:          projectRepo,
+		routerRepo:           routerRepo,
+		secretRepo:           secretRepo,
+		configRepo:           configRepo,
+		appRepo:              appRepo,
+		managedSvcRepo:       managedSvcRepo,
+		managedResRepo:       managedResRepo,
+		messageProducer:      msgP,
+		messageTopic:         env.KafkaInfraTopic,
+		managedTemplatesPath: env.ManagedTemplatesPath,
+		logger:               logger,
 	}
 }
 

@@ -1,0 +1,37 @@
+- name: mongo_cluster
+  label: MongoDB cluster
+  description: MongoDB cluster
+  fields:
+    - name: capacity
+      label: Capacity in GB
+      fieldType: Number
+      defaultValue: 10
+      min: 1
+      required: true
+    - name: primary_count
+      label: Mongo Primary Count
+      fieldType: Number
+      defaultValue: 1
+      min: 1
+    - name: secondary_count
+      label: Mongo Secondary Count
+      fieldType: Number
+      defaultValue: 1
+      min: 1
+  outputs:
+    - name: ROOT_PASSWORD
+      label: MongoRoot Password
+    - name: HOSTS
+      description: DB Hosts
+    - name: DB_URL
+      description: DB URL
+    - name: JSON
+      description: Configuration JSON
+  resources:
+    - name: mongo_db
+      description: MongoDB
+      fields:
+        - name: name
+          label: Database Name
+          fieldType: String
+          required: true
