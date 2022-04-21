@@ -3,12 +3,13 @@ package app
 import (
 	"context"
 	_ "fmt"
+	"net/http"
+	_ "net/http"
+
 	"google.golang.org/grpc"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/pkg/logger"
-	"net/http"
-	_ "net/http"
 
 	"kloudlite.io/common"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -36,8 +37,8 @@ type Env struct {
 	CookieDomain            string `env:"COOKIE_DOMAIN"`
 }
 
-type InfraEventConsumer messaging.Consumer[messaging.Json]
-type ClusterEventConsumer messaging.Consumer[messaging.Json]
+type InfraEventConsumer messaging.Consumer
+type ClusterEventConsumer messaging.Consumer
 
 var Module = fx.Module(
 	"app",
@@ -49,6 +50,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.Secret]("secret", "sec", entities.SecretIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("router", "route", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedService]("managedservice", "mgsvc", entities.ManagedServiceIndexes),
+	repos.NewFxMongoRepo[*entities.App]("app", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
@@ -75,7 +77,7 @@ var Module = fx.Module(
 
 	fx.Module("infra-event-consumer",
 		fx.Provide(func(domain domain.Domain, env *Env, kafkaCli messaging.KafkaClient, logger logger.Logger) (ClusterEventConsumer, error) {
-			return messaging.NewKafkaConsumer[messaging.Json](
+			return messaging.NewKafkaConsumer(
 				kafkaCli,
 				[]string{env.KafkaInfraTopic},
 				env.KafkaConsumerGroupId,
@@ -145,7 +147,7 @@ var Module = fx.Module(
 
 	fx.Module("cluster-event-consumer",
 		fx.Provide(func(domain domain.Domain, env *Env, kafkaCli messaging.KafkaClient, logger logger.Logger) (InfraEventConsumer, error) {
-			return messaging.NewKafkaConsumer[messaging.Json](
+			return messaging.NewKafkaConsumer(
 				kafkaCli,
 				[]string{env.KafkaInfraTopic},
 				env.KafkaConsumerGroupId,
