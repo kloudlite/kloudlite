@@ -37,8 +37,8 @@ type domain struct {
 	managedTemplatesPath string
 }
 
-func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceTemplate, error) {
-	templates := make([]*entities.ManagedServiceTemplate, 0)
+func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error) {
+	templates := make([]*entities.ManagedServiceCategory, 0)
 	data, err := os.ReadFile(d.managedTemplatesPath)
 	if err != nil {
 		return nil, err
@@ -47,6 +47,7 @@ func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.Ma
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(templates)
 	return templates, nil
 }
 
@@ -61,7 +62,8 @@ func isReady(c []metav1.Condition) bool {
 
 func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.Project) error {
 	one, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"name": response.Name,
+		"name":       response.Name,
+		"cluster_id": response.ClusterId,
 	})
 	if err != nil {
 		return err
@@ -274,20 +276,46 @@ func (d *domain) GetManagedResources(ctx context.Context, projectID repos.ID) ([
 	}})
 }
 
-func (d *domain) InstallManagedRes(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedResource, error) {
-	prj, err := d.projectRepo.FindById(ctx, projectID)
+func (d *domain) GetManagedResourcesOfService(
+	ctx context.Context,
+	installationId repos.ID,
+) ([]*entities.ManagedResource, error) {
+	fmt.Println("GetManagedResourcesOfService", installationId)
+	return d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"service_id": installationId,
+	}})
+}
+
+func (d *domain) InstallManagedRes(
+	ctx context.Context,
+	installationId repos.ID,
+	name string,
+	resourceType string,
+	values map[string]interface{},
+) (*entities.ManagedResource, error) {
+	svc, err := d.managedSvcRepo.FindById(ctx, installationId)
+	if err != nil {
+		return nil, err
+	}
+	if svc == nil {
+		return nil, fmt.Errorf("managed service not found")
+	}
+
+	prj, err := d.projectRepo.FindById(ctx, svc.ProjectId)
 	if err != nil {
 		return nil, err
 	}
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
+
 	create, err := d.managedResRepo.Create(ctx, &entities.ManagedResource{
-		ProjectId:   projectID,
-		Namespace:   prj.Name,
-		ServiceType: entities.ManagedResourceType(templateID),
-		Name:        name,
-		Values:      values,
+		ProjectId:    prj.Id,
+		Namespace:    prj.Name,
+		ServiceId:    svc.Id,
+		ResourceType: entities.ManagedResourceType(resourceType),
+		Name:         name,
+		Values:       values,
 	})
 	if err != nil {
 		return nil, err
@@ -360,6 +388,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	create, err := d.managedSvcRepo.Create(ctx, &entities.ManagedService{
 		Name:        name,
 		Namespace:   prj.Name,
+		ProjectId:   prj.Id,
 		ServiceType: entities.ManagedServiceType(templateID),
 		Values:      values,
 		Status:      entities.ManagedServiceStateSyncing,
