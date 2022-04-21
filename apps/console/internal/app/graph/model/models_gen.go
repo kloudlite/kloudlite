@@ -219,33 +219,18 @@ type KVInput struct {
 type ManagedRes struct {
 	ID           repos.ID               `json:"id"`
 	Name         string                 `json:"name"`
-	ResourceName string                 `json:"resourceName"`
-	Version      int                    `json:"version"`
+	ResourceType string                 `json:"resourceType"`
 	Installation *ManagedSvc            `json:"installation"`
 	Values       map[string]interface{} `json:"values"`
 }
 
-type ManagedResourceSource struct {
-	Name   string                 `json:"name"`
-	Fields map[string]interface{} `json:"fields"`
-}
-
 type ManagedSvc struct {
-	ID      repos.ID               `json:"id"`
-	Name    string                 `json:"name"`
-	Version int                    `json:"version"`
-	Project *Project               `json:"project"`
-	Source  *ManagedSvcSource      `json:"source"`
-	Values  map[string]interface{} `json:"values"`
-	JobID   *repos.ID              `json:"jobId"`
-}
-
-type ManagedSvcSource struct {
-	ID          repos.ID                 `json:"id"`
-	Name        string                   `json:"name"`
-	DisplayName *string                  `json:"displayName"`
-	Fields      map[string]interface{}   `json:"fields"`
-	Resources   []*ManagedResourceSource `json:"resources"`
+	ID        repos.ID               `json:"id"`
+	Name      string                 `json:"name"`
+	Project   *Project               `json:"project"`
+	Source    string                 `json:"source"`
+	Values    map[string]interface{} `json:"values"`
+	Resources []*ManagedRes          `json:"resources"`
 }
 
 type NewResourcesIn struct {

@@ -75,3 +75,25 @@ func secretModelFromEntity(secretEntity *entities.Secret) *model.Secret {
 		Entries: entries,
 	}
 }
+
+func managedSvcModelFromEntity(svcEntity *entities.ManagedService) *model.ManagedSvc {
+	return &model.ManagedSvc{
+		ID:      svcEntity.Id,
+		Name:    svcEntity.Name,
+		Project: &model.Project{ID: svcEntity.ProjectId},
+		Source:  string(svcEntity.ServiceType),
+		Values:  svcEntity.Values,
+	}
+}
+
+func managedResourceModelFromEntity(resEntity *entities.ManagedResource) *model.ManagedRes {
+	return &model.ManagedRes{
+		ID:           resEntity.Id,
+		Name:         resEntity.Name,
+		ResourceType: string(resEntity.ResourceType),
+		Installation: &model.ManagedSvc{
+			ID: resEntity.ServiceId,
+		},
+		Values: resEntity.Values,
+	}
+}

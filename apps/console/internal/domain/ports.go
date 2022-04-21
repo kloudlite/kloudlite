@@ -60,7 +60,15 @@ type Domain interface {
 
 	GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error)
 	GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error)
-	InstallManagedRes(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedResource, error)
+	GetManagedResourcesOfService(ctx context.Context, installationId repos.ID) ([]*entities.ManagedResource, error)
+
+	InstallManagedRes(
+		ctx context.Context,
+		installationId repos.ID,
+		name string,
+		resourceType string,
+		values map[string]interface{},
+	) (*entities.ManagedResource, error)
 	UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
 	UnInstallManagedRes(ctx context.Context, managedResID repos.ID) (bool, error)
 	OnUpdateManagedRes(ctx context.Context, r *op_crds.ManagedResource) error
@@ -71,7 +79,7 @@ type Domain interface {
 	UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.App) error
-	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceTemplate, error)
+	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
 }
 
 type InfraActionMessage interface {
