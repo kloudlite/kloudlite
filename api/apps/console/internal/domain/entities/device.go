@@ -6,7 +6,9 @@ type DeviceStatus string
 
 const (
 	DeviceStateSyncing  = DeviceStatus("sync-in-progress")
+	DeviceStateError    = DeviceStatus("error")
 	DeviceStateAttached = DeviceStatus("attached")
+	DeviceStateDeleted  = DeviceStatus("deleted")
 )
 
 type Device struct {

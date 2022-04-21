@@ -12,6 +12,24 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type ConsoleGRPCEnv struct {
+	ConsoleServerHost string `env:"CONSOLE_SERVER_HOST"`
+	ConsoleServerPort uint16 `env:"CONSOLE_SERVER_PORT"`
+}
+
+func (e *ConsoleGRPCEnv) GetGCPServerURL() string {
+	return fmt.Sprintf("%v:%v", e.ConsoleServerHost, e.ConsoleServerPort)
+}
+
+type IAMGRPCEnv struct {
+	IAMServerHost string `env:"IAM_SERVER_HOST"`
+	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
+}
+
+func (e *IAMGRPCEnv) GetGCPServerURL() string {
+	return fmt.Sprintf("%v:%v", e.IAMServerHost, e.IAMServerPort)
+}
+
 type Env struct {
 	DBName        string `env:"MONGO_DB_NAME"`
 	DBUrl         string `env:"MONGO_URI"`
@@ -20,8 +38,6 @@ type Env struct {
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	HttpPort      uint16 `env:"PORT"`
 	HttpCors      string `env:"ORIGINS"`
-	IAMServerHost string `env:"IAM_SERVER_HOST"`
-	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -40,14 +56,13 @@ func (e *Env) GetHttpCors() string {
 	return e.HttpCors
 }
 
-func (e *Env) GetGCPServerURL() string {
-	return fmt.Sprintf("%v:%v", e.IAMServerHost, e.IAMServerPort)
-}
-
 var Module = fx.Module("framework",
 	fx.Provide(logger.NewLogger),
 	config.EnvFx[Env](),
-	rpc.NewGrpcClientFx[*Env](),
+	config.EnvFx[ConsoleGRPCEnv](),
+	config.EnvFx[IAMGRPCEnv](),
+	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
+	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
