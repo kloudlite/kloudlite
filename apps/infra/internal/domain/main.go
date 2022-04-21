@@ -17,7 +17,7 @@ type Domain interface {
 type domain struct {
 	infraCli     InfraClient
 	messageTopic string
-	//jobResponder InfraJobResponder
+	jobResponder InfraJobResponder
 }
 
 // AddPeerToCluster implements Domain
@@ -53,22 +53,22 @@ func (d *domain) DeleteCluster(action DeleteClusterAction) error {
 
 func (d *domain) CreateCluster(action SetupClusterAction) error {
 	_, _, err := d.infraCli.CreateCluster(action)
-	// publicIp, publicKey, err := d.infraCli.CreateCluster(action)
-	// if err != nil {
-	// 	d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
-	// 		ClusterID: action.ClusterID,
-	// 		PublicIp:  publicIp,
-	// 		PublicKey: publicKey,
-	// 		Done:      false,
-	// 		Message:   err.Error(),
-	// 	})
-	// }
-	// d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
-	// 	ClusterID: action.ClusterID,
-	// 	PublicIp:  publicIp,
-	// 	PublicKey: publicKey,
-	// 	Done:      true,
-	// })
+	publicIp, publicKey, err := d.infraCli.CreateCluster(action)
+	if err != nil {
+		d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
+			ClusterID: action.ClusterID,
+			PublicIp:  publicIp,
+			PublicKey: publicKey,
+			Done:      false,
+			Message:   err.Error(),
+		})
+	}
+	d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
+		ClusterID: action.ClusterID,
+		PublicIp:  publicIp,
+		PublicKey: publicKey,
+		Done:      true,
+	})
 	return err
 }
 
@@ -84,11 +84,11 @@ func (d *domain) UpdateCluster(action UpdateClusterAction) error {
 func makeDomain(
 	env *Env,
 	infraCli InfraClient,
-	//infraJobResp InfraJobResponder,
+	infraJobResp InfraJobResponder,
 ) Domain {
 	return &domain{
-		infraCli: infraCli,
-		//jobResponder: infraJobResp,
+		infraCli:     infraCli,
+		jobResponder: infraJobResp,
 		messageTopic: env.KafkaInfraActionResulTopic,
 	}
 }
