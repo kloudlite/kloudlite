@@ -1,54 +1,54 @@
 package app
 
 import (
-	"context"
-	"fmt"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/messaging"
 )
 
 type infraMessengerImpl struct {
-	env                     *Env
-	producer                messaging.Producer[messaging.Json]
-	onAddClusterResponse    func(ctx context.Context, m entities.SetupClusterResponse)
-	onDeleteClusterResponse func(ctx context.Context, m entities.DeleteClusterResponse)
-	onUpdateClusterResponse func(ctx context.Context, m entities.UpdateClusterResponse)
-	onAddDeviceResponse     func(ctx context.Context, m entities.AddPeerResponse)
-	onRemoveDeviceResponse  func(ctx context.Context, m entities.DeletePeerResponse)
+	env      *Env
+	producer messaging.Producer[messaging.Json]
 }
 
-func (i *infraMessengerImpl) SendAddClusterAction(action entities.SetupClusterAction) error {
-	return i.producer.SendMessage(i.env.KafkaInfraTopic, action.ClusterID, messaging.Json{
-		"type":    "setup-cluster",
-		"payload": action,
-	})
-}
+func (i *infraMessengerImpl) SendAction(action any) error {
+	switch a := action.(type) {
+	case entities.SetupClusterAction:
+		{
+			return i.producer.SendMessage(i.env.KafkaInfraTopic, string(a.ClusterID), messaging.Json{
+				"type":    "create-cluster",
+				"payload": action,
+			})
+		}
+	case entities.DeleteClusterAction:
+		{
+			return i.producer.SendMessage(i.env.KafkaInfraTopic, string(a.ClusterID), messaging.Json{
+				"type":    "delete-cluster",
+				"payload": action,
+			})
+		}
+	case entities.UpdateClusterAction:
+		{
+			return i.producer.SendMessage(i.env.KafkaInfraTopic, string(a.ClusterID), messaging.Json{
+				"type":    "update-cluster",
+				"payload": action,
+			})
+		}
+	case entities.AddPeerAction:
+		{
+			return i.producer.SendMessage(i.env.KafkaInfraTopic, a.PublicKey, messaging.Json{
+				"type":    "add-peer",
+				"payload": action,
+			})
+		}
+	case entities.DeletePeerAction:
+		{
+			return i.producer.SendMessage(i.env.KafkaInfraTopic, a.PublicKey, messaging.Json{
+				"type":    "delete-peer",
+				"payload": action,
+			})
+		}
 
-func (i *infraMessengerImpl) SendDeleteClusterAction(action entities.DeleteClusterAction) error {
-	return i.producer.SendMessage(i.env.KafkaInfraTopic, action.ClusterID, messaging.Json{
-		"type":    "delete-cluster",
-		"payload": action,
-	})
-}
-
-func (i *infraMessengerImpl) SendUpdateClusterAction(action entities.UpdateClusterAction) error {
-	fmt.Println(i.env, i.producer, action)
-	return i.producer.SendMessage(i.env.KafkaInfraTopic, action.ClusterID, messaging.Json{
-		"type":    "update-cluster",
-		"payload": action,
-	})
-}
-
-func (i *infraMessengerImpl) SendAddDeviceAction(action entities.AddPeerAction) error {
-	return i.producer.SendMessage(i.env.KafkaInfraTopic, action.PublicKey, messaging.Json{
-		"type":    "add-peer",
-		"payload": action,
-	})
-}
-
-func (i *infraMessengerImpl) SendRemoveDeviceAction(action entities.DeletePeerAction) error {
-	return i.producer.SendMessage(i.env.KafkaInfraTopic, action.PublicKey, messaging.Json{
-		"type":    "delete-peer",
-		"payload": action,
-	})
+	}
+	return errors.New("no matching message type")
 }

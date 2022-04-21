@@ -2,21 +2,19 @@ scalar Json
 
 type Query {
   core_projects(accountId: ID): [Project!]!
-  core_project(accountId:ID, projectId: ID!): Project
+  core_project(projectId: ID!): Project
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!, version: String): App
 
   core_routers(projectId: ID!, search: String): [Router!]!
-  core_router(routerId: ID, projectId: ID): Router
+  core_router(routerId: ID!): Router
 
   core_configs(projectId: ID!, search: String): [Config!]!
-  core_config(configId: ID, projectId: ID): Config!
+  core_config(configId: ID!): Config!
 
   core_secrets(projectId: ID!, search: String): [Secret!]!
-  core_secret(secretId: ID, projectId: ID, secretName: String): Secret!
-
-  ci_gitPullRepoToken(imageId: ID!): String # TBD
+  core_secret(secretId: ID!): Secret!
 
   ci_gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
   ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
@@ -37,12 +35,9 @@ type Query {
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
-  infra_listClusters: [Cluster!]
   infra_getCluster(clusterId: ID!): Cluster
   infra_getDevices(deviceId: ID!): Device
 }
-
-
 
 type ManagedRes {
   id: ID!
@@ -101,7 +96,7 @@ type Mutation {
   infra_addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
 
-  core_createProject(accountId: ID!, name: String!, displayName: String!, cluster: String!, logo: String, description: String): Project!
+  core_createProject(accountId: ID!, name: String!, displayName: String!, logo: String, description: String): Project!
   core_updateProject(projectId: ID!, displayName: String, cluster: String, logo: String, description: String): Boolean!
   core_deleteProject(projectId: ID!): Boolean!
 
@@ -127,19 +122,19 @@ type Mutation {
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
   # Secret n Config
-  core_createSecret(projectId: ID!, name: String!, data: Json): Secret!
-  core_updateSecret(projectId: ID!, name: String!, data: Json): Secret!
-  core_deleteSecret(projectId: ID!, name: String!): Secret!
+  core_createSecret(projectId: ID!, name: String!, description:String, data: [CSEntryIn!]): Secret!
+  core_updateSecret(secretId: ID!, description:String, data: [CSEntryIn!]): Boolean!
+  core_deleteSecret(secretId: ID!): Boolean!
 
-  core_createConfig(projectId: ID!, name: String!, data: Json): Config!
-  core_updateConfig(projectId: ID!, name: String!, data: Json): Config!
-  core_deleteConfig(configId: ID!): Config!
+  core_createConfig(projectId: ID!, name: String!, description:String, data: [CSEntryIn!]): Config!
+  core_updateConfig(configId: ID!, description:String, data: [CSEntryIn!]): Boolean!
+  core_deleteConfig(configId: ID!): Boolean!
 
   ci_deleteGitPipeline(pipelineId: ID!): Boolean!
 
 
-  core_createRouter(projectId: ID!, name: String!, domains: [String], routes: [RouteInput!]!): Router!
-  core_updateRouter(routerId: ID!, name: String!, domains: [String], routes: [RouteInput!]!): Boolean
+  core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
+  core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
 
 }
@@ -154,13 +149,14 @@ type Router {
 
 type Route {
   path: String!
-  app: App!
+  appName: String!
   port: Int!
 }
 
 extend type Account @key(fields: "id") {
   id: ID! @external
   projects: [Project!]!
+  clusters:[Cluster!]!
 }
 
 
@@ -181,21 +177,16 @@ type Project {
   name: String!
   displayName: String!
   readableId: ID!
-  cluster: String!
   logo: String
   description: String
   account: Account!
-  memberships: [UserMembership!]!
+  memberships: [ProjectMembership!]!
 }
 
-type AppMemebership {
-  app: App!
-  role: String!
-}
-
-type UserMembership {
+type ProjectMembership {
   user: User!
   role: String!
+  project: Project!
 }
 
 type App {
@@ -204,8 +195,9 @@ type App {
   namespace: String!
   description: String
   readableId: ID!
-  services: [AppService]!
   replicas: Int
+  services: [AppService]!
+  attachedResources:[ManagedRes]!
   containers: [AppContainer!]!
   project: Project!
   version: Int
@@ -320,26 +312,26 @@ type Secret {
   id: ID!
   name: String!
   project: Project!
+  description: String
+  namespace: String!
   entries: [CSEntry]!
-  readableId: ID!
-  version: Int!
-  apps(secretKey: String): [App!]
-  jobId: ID
 }
 
 type Config {
   id: ID!
   name: String!
   project: Project!
+  description: String
+  namespace: String!
   entries: [CSEntry]!
-  readableId: ID!
-  version: Int!
-  apps(configKey: String): [App!]
-  jobId: ID
 }
 
 type CSEntry {
-  apps: [App!]
+  key: String!
+  value: String!
+}
+
+input CSEntryIn {
   key: String!
   value: String!
 }
@@ -351,7 +343,7 @@ type CCMData {
 
 input RouteInput {
   path: String!
-  appId: String!
+  appName: String!
   port: Int!
 }
 
@@ -393,6 +385,7 @@ type Cluster @key(fields: "id") {
   devices: [Device]
   nodesCount: Int!
   status: String!
+  account: Account!
 }
 
 type Device @key(fields: "id") {
@@ -400,5 +393,4 @@ type Device @key(fields: "id") {
   user: User!
   name: String!
   cluster: Cluster!
-  configuration: String!
 }
