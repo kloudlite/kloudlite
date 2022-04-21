@@ -4,5 +4,6 @@ metadata:
   name: sample-example
   finalizers:
     - finalizers.kloudlite.io/project
+    - foreground
 spec:
   displayName: how are you guys ?

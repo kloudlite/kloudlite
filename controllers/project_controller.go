@@ -9,6 +9,8 @@ import (
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	_ "k8s.io/apimachinery/pkg/api/meta"
@@ -54,8 +56,6 @@ const FieldManager = "kl-operator"
 
 const ImagePullSecretName = "kloudlite-docker-registry"
 
-var svcAccountName string = "hotspot-svc-account"
-
 func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
 
@@ -87,11 +87,23 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		r.logger.Debugf("project.Status.NamespaceCheck.ShouldCheck()")
 		project.Status.NamespaceCheck.SetStarted()
 
-		tRef := &corev1.Namespace{}
-		err := r.apply(ctx, tRef, &corev1.Namespace{
-			TypeMeta:   tRef.TypeMeta,
-			ObjectMeta: metav1.ObjectMeta{Name: project.Name},
+		err := r.apply(ctx, &corev1.Namespace{}, &corev1.Namespace{
+			TypeMeta: TypeNamespace,
+			ObjectMeta: metav1.ObjectMeta{
+				Name: project.Name,
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         project.APIVersion,
+						Kind:               project.Kind,
+						Name:               project.Name,
+						UID:                project.UID,
+						Controller:         newBool(true),
+						BlockOwnerDeletion: newBool(true),
+					},
+				},
+			},
 		})
+
 		if err != nil {
 			project.Status.NamespaceCheck.SetFinishedWith(false, errors.NewEf(err, "while creating namespace").Error())
 			return r.updateStatus(ctx, project)
@@ -101,7 +113,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if !project.Status.NamespaceCheck.Status {
-		r.logger.Infof("Namespace %s does not exist", project.Name)
+		r.logger.Infof("Namespace %s does not exist, aborting reconcilation ...", project.Name)
 		return reconcileResult.Failed()
 	}
 
@@ -124,9 +136,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return r.updateStatus(ctx, project)
 		}
 
-		tRef := &corev1.Secret{}
-		err = r.apply(ctx, tRef, &corev1.Secret{
-			TypeMeta:   tRef.TypeMeta,
+		err = r.apply(ctx, &corev1.Secret{}, &corev1.Secret{
+			TypeMeta:   TypeSecret,
 			ObjectMeta: metav1.ObjectMeta{Name: ImagePullSecretName, Namespace: project.Name},
 			Data:       map[string][]byte{".dockerconfigjson": dockerConfigJson},
 			Type:       corev1.SecretTypeDockerConfigJson,
@@ -150,20 +161,67 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if project.Status.SvcAccountCheck.ShouldCheck() {
 		project.Status.SvcAccountCheck.SetStarted()
 
-		// r.ClientSet.CoreV1().ServiceAccounts(project.Name).Create(ctx, &corev1.ServiceAccount{}, metav1.CreateOptions{})
-		tRef := &corev1.ServiceAccount{}
-		err := r.apply(ctx, tRef, &corev1.ServiceAccount{
-			TypeMeta:         tRef.TypeMeta,
-			ObjectMeta:       metav1.ObjectMeta{Name: svcAccountName, Namespace: project.Name},
+		err := r.apply(ctx, &rbacv1.Role{}, &rbacv1.Role{
+			TypeMeta: TypeRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: project.Name,
+				Name:      NamespaceAdminRole,
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{"", "extensions", "apps"},
+					Resources: []string{"*"},
+					Verbs:     []string{"*"},
+				},
+				{
+					APIGroups: []string{"batch"},
+					Resources: []string{"jobs", "cronjobs"},
+					Verbs:     []string{"*"},
+				},
+			},
+		})
+		if err != nil {
+			project.Status.SvcAccountCheck.SetFinishedWith(false, errors.NewEf(err, "while creating admin role").Error())
+			return r.updateStatus(ctx, project)
+		}
+
+		err = r.apply(ctx, &rbacv1.RoleBinding{}, &rbacv1.RoleBinding{
+			TypeMeta: TypeRoleBinding,
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: project.Name,
+				Name:      NamespaceAdminRoleBinding,
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      TypeSvcAccount.Kind,
+					APIGroup:  "",
+					Name:      SvcAccountName,
+					Namespace: project.Name,
+				},
+			},
+			RoleRef: rbacv1.RoleRef{
+				APIGroup: "",
+				Kind:     TypeRole.Kind,
+				Name:     NamespaceAdminRole,
+			},
+		})
+
+		if err != nil {
+			project.Status.SvcAccountCheck.SetFinishedWith(false, errors.NewEf(err, "while creating admin role binding").Error())
+			return r.updateStatus(ctx, project)
+		}
+
+		err = r.apply(ctx, &corev1.ServiceAccount{}, &corev1.ServiceAccount{
+			TypeMeta:         TypeSvcAccount,
+			ObjectMeta:       metav1.ObjectMeta{Name: SvcAccountName, Namespace: project.Name},
 			ImagePullSecrets: []corev1.LocalObjectReference{{Name: ImagePullSecretName}},
 		})
 
 		if err != nil {
-			e := errors.NewEf(err, "could not apply service account")
-			r.logger.Error(e)
-			project.Status.SvcAccountCheck.SetFinishedWith(false, e.Error())
+			project.Status.SvcAccountCheck.SetFinishedWith(false, errors.NewEf(err, "while creating service account").Error())
 			return r.updateStatus(ctx, project)
 		}
+
 		project.Status.SvcAccountCheck.SetFinishedWith(true, "svc account created")
 		return r.updateStatus(ctx, project)
 	}
@@ -202,6 +260,18 @@ func (r *ProjectReconciler) finalizeProject(ctx context.Context, project *crdsv1
 	logger := r.logger.With("FINALIZER", "true")
 	logger.Debug("finalizing ...")
 	if !controllerutil.ContainsFinalizer(project, projectFinalizer) {
+		if controllerutil.ContainsFinalizer(project, foregroundFinalizer) {
+
+			//TODO: check if namespace has been deleted
+			controllerutil.RemoveFinalizer(project, foregroundFinalizer)
+			err := r.Update(ctx, project)
+			if err != nil {
+				r.logger.Debugf("could not update to remove foreground finalizer from resource")
+				return reconcileResult.Retry()
+			}
+			r.logger.Infof("Removing foreground finalizer , Deletion successfull...")
+			return reconcileResult.OK()
+		}
 		return reconcileResult.OK()
 	}
 
@@ -243,24 +313,27 @@ func (r *ProjectReconciler) finalizeProject(ctx context.Context, project *crdsv1
 	return reconcileResult.OK()
 }
 
-func (r *ProjectReconciler) apply(ctx context.Context, typeRef client.Object, value client.Object) error {
+func (r *ProjectReconciler) apply(ctx context.Context, resourceRef client.Object, value client.Object) error {
 	nameRef := types.NamespacedName{Namespace: value.GetNamespace(), Name: value.GetName()}
-	err := r.Get(ctx, nameRef, typeRef)
+	err := r.Get(ctx, nameRef, resourceRef)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			// STEP: create
 			err = r.Client.Create(ctx, value, &client.CreateOptions{})
 			if err != nil {
-				return errors.NewEf(err, "could not update resource %s (kind=%s)", nameRef.String(), value.GetObjectKind())
+				return errors.NewEf(err, "could not update resource %s", toRefString(value))
 			}
 			return nil
 		}
-		return errors.NewEf(err, "could not get resource %s (kind=%s)", nameRef.String(), value.GetObjectKind())
+		return errors.NewEf(err, "could not get resource %s", toRefString(value))
 	}
-	// STEP: Update
+	// STEP: Update , but first check if it is in deletion phase then pause,
+	if resourceRef.GetDeletionTimestamp() != nil {
+		return errors.Newf("could not update resource(%s) as it has deletion timestamp on it, wait for it to be deleted first...", toRefString(resourceRef))
+	}
 	err = r.Client.Update(ctx, value, &client.UpdateOptions{})
 	if err != nil {
-		return errors.NewEf(err, "could not update resource %s (kind=%s)", nameRef.String(), value.GetObjectKind())
+		return errors.NewEf(err, "could not update resource %s", toRefString(value))
 	}
 	return nil
 }

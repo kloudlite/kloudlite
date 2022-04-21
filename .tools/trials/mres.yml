@@ -6,17 +6,24 @@ metadata:
   finalizers:
     - finalizers.kloudlite.io/managed-resource
 spec:
-  type: db
   managedSvc: mongo
-
----
-apiVersion: crds.kloudlite.io/v1
-kind: ManagedResource
-metadata:
-  name: console-db
-  namespace: hotspot
-  finalizers:
-    - finalizers.kloudlite.io/managed-resource
-spec:
   type: db
-  managedSvc: mongo
+  operations:
+    create: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:resource
+    delete: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:resource
+  fields:
+    - name: name
+      label: Database Name
+      inputType: String
+      required: true
+  outputs:
+    - name: DB_USER
+      label: MongoRoot User
+    - name: DB_PASSWORD
+      label: MongoRoot Password
+    - name: HOSTS
+      description: DB Hosts
+    - name: DB_URL
+      description: DB URL
+    - name: JSON
+      description: Configuration JSON
