@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
@@ -13,15 +12,15 @@ import (
 )
 
 func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error) {
-	panic(fmt.Errorf("not implemented"))
+	return &model.Account{ID: id}, nil
 }
 
 func (r *entityResolver) FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error) {
-	return r.Query().GetCluster(ctx, id)
+	return r.Query().InfraGetCluster(ctx, id)
 }
 
 func (r *entityResolver) FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error) {
-	return r.Query().GetDevice(ctx, id)
+	return r.Query().InfraGetDevices(ctx, id)
 }
 
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {

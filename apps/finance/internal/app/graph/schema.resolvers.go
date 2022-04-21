@@ -41,15 +41,16 @@ func (r *accountMembershipResolver) User(ctx context.Context, obj *model.Account
 
 func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error) {
 	ae, err := r.domain.GetAccount(ctx, obj.Account.ID)
-
 	if err != nil {
 		return nil, err
 	}
-
+	if ae == nil {
+		return nil, errors.New("account not found")
+	}
 	return AccountModelFromEntity(ae), nil
 }
 
-func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
+func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
 	fmt.Println("create account")
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
@@ -62,7 +63,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, name string, billi
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) UpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error) {
+func (r *mutationResolver) FinanceUpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")
@@ -74,7 +75,7 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, accountID repos.ID
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) UpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error) {
+func (r *mutationResolver) FinanceUpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")
@@ -90,7 +91,7 @@ func (r *mutationResolver) UpdateAccountBilling(ctx context.Context, accountID r
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) AddAccountMember(ctx context.Context, accountID string, userID repos.ID, role string) (bool, error) {
+func (r *mutationResolver) FinanceAddAccountMember(ctx context.Context, accountID string, userID repos.ID, role string) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
@@ -99,7 +100,7 @@ func (r *mutationResolver) AddAccountMember(ctx context.Context, accountID strin
 	return r.domain.AddAccountMember(ctx, repos.ID(accountID), userID, common.Role(role))
 }
 
-func (r *mutationResolver) RemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
+func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
@@ -107,7 +108,7 @@ func (r *mutationResolver) RemoveAccountMember(ctx context.Context, accountID re
 	return r.domain.RemoveAccountMember(ctx, accountID, userID)
 }
 
-func (r *mutationResolver) UpdateAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID, role string) (bool, error) {
+func (r *mutationResolver) FinanceUpdateAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID, role string) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
@@ -115,7 +116,7 @@ func (r *mutationResolver) UpdateAccountMember(ctx context.Context, accountID re
 	return r.domain.UpdateAccountMember(ctx, accountID, userID, role)
 }
 
-func (r *mutationResolver) DeactivateAccount(ctx context.Context, accountID repos.ID) (bool, error) {
+func (r *mutationResolver) FinanceDeactivateAccount(ctx context.Context, accountID repos.ID) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
@@ -123,7 +124,7 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, accountID repo
 	return r.domain.DeactivateAccount(ctx, accountID)
 }
 
-func (r *mutationResolver) ActivateAccount(ctx context.Context, accountID repos.ID) (bool, error) {
+func (r *mutationResolver) FinanceActivateAccount(ctx context.Context, accountID repos.ID) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
@@ -131,7 +132,7 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, accountID repos.
 	return r.domain.ActivateAccount(ctx, accountID)
 }
 
-func (r *mutationResolver) DeleteAccount(ctx context.Context, accountID repos.ID) (bool, error) {
+func (r *mutationResolver) FinanceDeleteAccount(ctx context.Context, accountID repos.ID) (bool, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("not logged in")
@@ -139,7 +140,7 @@ func (r *mutationResolver) DeleteAccount(ctx context.Context, accountID repos.ID
 	return r.domain.DeleteAccount(ctx, accountID)
 }
 
-func (r *queryResolver) Account(ctx context.Context, accountID repos.ID) (*model.Account, error) {
+func (r *queryResolver) FinanceAccount(ctx context.Context, accountID repos.ID) (*model.Account, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")

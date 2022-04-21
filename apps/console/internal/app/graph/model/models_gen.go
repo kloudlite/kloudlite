@@ -9,21 +9,23 @@ import (
 type Account struct {
 	ID       repos.ID   `json:"id"`
 	Projects []*Project `json:"projects"`
+	Clusters []*Cluster `json:"clusters"`
 }
 
 func (Account) IsEntity() {}
 
 type App struct {
-	ID          repos.ID        `json:"id"`
-	Name        string          `json:"name"`
-	Namespace   string          `json:"namespace"`
-	Description *string         `json:"description"`
-	ReadableID  repos.ID        `json:"readableId"`
-	Services    []*AppService   `json:"services"`
-	Replicas    *int            `json:"replicas"`
-	Containers  []*AppContainer `json:"containers"`
-	Project     *Project        `json:"project"`
-	Version     *int            `json:"version"`
+	ID                repos.ID        `json:"id"`
+	Name              string          `json:"name"`
+	Namespace         string          `json:"namespace"`
+	Description       *string         `json:"description"`
+	ReadableID        repos.ID        `json:"readableId"`
+	Replicas          *int            `json:"replicas"`
+	Services          []*AppService   `json:"services"`
+	AttachedResources []*ManagedRes   `json:"attachedResources"`
+	Containers        []*AppContainer `json:"containers"`
+	Project           *Project        `json:"project"`
+	Version           *int            `json:"version"`
 }
 
 type AppContainer struct {
@@ -76,11 +78,6 @@ type AppEnvInput struct {
 	RefID  *string `json:"refId"`
 }
 
-type AppMemebership struct {
-	App  *App   `json:"app"`
-	Role string `json:"role"`
-}
-
 type AppService struct {
 	Type       string `json:"type"`
 	Port       int    `json:"port"`
@@ -112,7 +109,11 @@ type CCMData struct {
 }
 
 type CSEntry struct {
-	Apps  []*App `json:"apps"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type CSEntryIn struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
@@ -126,19 +127,18 @@ type Cluster struct {
 	Devices    []*Device `json:"devices"`
 	NodesCount int       `json:"nodesCount"`
 	Status     string    `json:"status"`
+	Account    *Account  `json:"account"`
 }
 
 func (Cluster) IsEntity() {}
 
 type Config struct {
-	ID         repos.ID   `json:"id"`
-	Name       string     `json:"name"`
-	Project    *Project   `json:"project"`
-	Entries    []*CSEntry `json:"entries"`
-	ReadableID repos.ID   `json:"readableId"`
-	Version    int        `json:"version"`
-	Apps       []*App     `json:"apps"`
-	JobID      *repos.ID  `json:"jobId"`
+	ID          repos.ID   `json:"id"`
+	Name        string     `json:"name"`
+	Project     *Project   `json:"project"`
+	Description *string    `json:"description"`
+	Namespace   string     `json:"namespace"`
+	Entries     []*CSEntry `json:"entries"`
 }
 
 type ContainerRes struct {
@@ -152,29 +152,28 @@ type ContainerResInput struct {
 }
 
 type Device struct {
-	ID            repos.ID `json:"id"`
-	User          *User    `json:"user"`
-	Name          string   `json:"name"`
-	Cluster       *Cluster `json:"cluster"`
-	Configuration string   `json:"configuration"`
+	ID      repos.ID `json:"id"`
+	User    *User    `json:"user"`
+	Name    string   `json:"name"`
+	Cluster *Cluster `json:"cluster"`
 }
 
 func (Device) IsEntity() {}
 
 type GitPipeline struct {
-	ID          repos.ID `json:"id"`
-	PipelineEnv string   `json:"pipelineEnv"`
-	GitProvider *string  `json:"gitProvider"`
-	GitRepoURL  *string  `json:"gitRepoUrl"`
-	BuildArgs   []*Kv    `json:"buildArgs"`
-	PullSecret  *string  `json:"pullSecret"`
-	Name        string   `json:"name"`
-	ImageName   string   `json:"imageName"`
-	DockerFile  *string  `json:"dockerFile"`
-	ContextDir  *string  `json:"contextDir"`
-	Github      *string  `json:"github"`
-	Gitlab      *string  `json:"gitlab"`
-	Project     *Project `json:"project"`
+	ID          repos.ID               `json:"id"`
+	PipelineEnv string                 `json:"pipelineEnv"`
+	GitProvider *string                `json:"gitProvider"`
+	GitRepoURL  *string                `json:"gitRepoUrl"`
+	BuildArgs   []*Kv                  `json:"buildArgs"`
+	PullSecret  *string                `json:"pullSecret"`
+	Name        string                 `json:"name"`
+	ImageName   string                 `json:"imageName"`
+	DockerFile  *string                `json:"dockerFile"`
+	ContextDir  *string                `json:"contextDir"`
+	Github      map[string]interface{} `json:"github"`
+	Gitlab      map[string]interface{} `json:"gitlab"`
+	Project     *Project               `json:"project"`
 }
 
 type GitPipelineInput struct {
@@ -218,66 +217,71 @@ type KVInput struct {
 }
 
 type ManagedRes struct {
-	ID           repos.ID    `json:"id"`
-	Name         string      `json:"name"`
-	ResourceName string      `json:"resourceName"`
-	Version      int         `json:"version"`
-	Installation *ManagedSvc `json:"installation"`
-	Values       string      `json:"values"`
+	ID           repos.ID               `json:"id"`
+	Name         string                 `json:"name"`
+	ResourceName string                 `json:"resourceName"`
+	Version      int                    `json:"version"`
+	Installation *ManagedSvc            `json:"installation"`
+	Values       map[string]interface{} `json:"values"`
 }
 
 type ManagedResourceSource struct {
-	Name   string  `json:"name"`
-	Fields *string `json:"fields"`
+	Name   string                 `json:"name"`
+	Fields map[string]interface{} `json:"fields"`
 }
 
 type ManagedSvc struct {
-	ID      repos.ID          `json:"id"`
-	Name    string            `json:"name"`
-	Version int               `json:"version"`
-	Project *Project          `json:"project"`
-	Source  *ManagedSvcSource `json:"source"`
-	Values  string            `json:"values"`
-	JobID   *repos.ID         `json:"jobId"`
+	ID      repos.ID               `json:"id"`
+	Name    string                 `json:"name"`
+	Version int                    `json:"version"`
+	Project *Project               `json:"project"`
+	Source  *ManagedSvcSource      `json:"source"`
+	Values  map[string]interface{} `json:"values"`
+	JobID   *repos.ID              `json:"jobId"`
 }
 
 type ManagedSvcSource struct {
 	ID          repos.ID                 `json:"id"`
 	Name        string                   `json:"name"`
 	DisplayName *string                  `json:"displayName"`
-	Fields      *string                  `json:"fields"`
+	Fields      map[string]interface{}   `json:"fields"`
 	Resources   []*ManagedResourceSource `json:"resources"`
 }
 
 type NewResourcesIn struct {
-	Configs    []string `json:"configs"`
-	Secrets    []string `json:"secrets"`
-	MServices  []string `json:"mServices"`
-	MResources []string `json:"mResources"`
+	Configs    []map[string]interface{} `json:"configs"`
+	Secrets    []map[string]interface{} `json:"secrets"`
+	MServices  []map[string]interface{} `json:"mServices"`
+	MResources []map[string]interface{} `json:"mResources"`
 }
 
 type Project struct {
-	ID          repos.ID          `json:"id"`
-	Name        string            `json:"name"`
-	DisplayName string            `json:"displayName"`
-	ReadableID  repos.ID          `json:"readableId"`
-	Cluster     string            `json:"cluster"`
-	Logo        *string           `json:"logo"`
-	Description *string           `json:"description"`
-	Account     *Account          `json:"account"`
-	Memberships []*UserMembership `json:"memberships"`
+	ID          repos.ID             `json:"id"`
+	Name        string               `json:"name"`
+	DisplayName string               `json:"displayName"`
+	ReadableID  repos.ID             `json:"readableId"`
+	Logo        *string              `json:"logo"`
+	Description *string              `json:"description"`
+	Account     *Account             `json:"account"`
+	Memberships []*ProjectMembership `json:"memberships"`
+}
+
+type ProjectMembership struct {
+	User    *User    `json:"user"`
+	Role    string   `json:"role"`
+	Project *Project `json:"project"`
 }
 
 type Route struct {
-	Path string `json:"path"`
-	App  *App   `json:"app"`
-	Port int    `json:"port"`
+	Path    string `json:"path"`
+	AppName string `json:"appName"`
+	Port    int    `json:"port"`
 }
 
 type RouteInput struct {
-	Path  string `json:"path"`
-	AppID string `json:"appId"`
-	Port  int    `json:"port"`
+	Path    string `json:"path"`
+	AppName string `json:"appName"`
+	Port    int    `json:"port"`
 }
 
 type Router struct {
@@ -289,14 +293,12 @@ type Router struct {
 }
 
 type Secret struct {
-	ID         repos.ID   `json:"id"`
-	Name       string     `json:"name"`
-	Project    *Project   `json:"project"`
-	Entries    []*CSEntry `json:"entries"`
-	ReadableID repos.ID   `json:"readableId"`
-	Version    int        `json:"version"`
-	Apps       []*App     `json:"apps"`
-	JobID      *repos.ID  `json:"jobId"`
+	ID          repos.ID   `json:"id"`
+	Name        string     `json:"name"`
+	Project     *Project   `json:"project"`
+	Description *string    `json:"description"`
+	Namespace   string     `json:"namespace"`
+	Entries     []*CSEntry `json:"entries"`
 }
 
 type User struct {
@@ -305,8 +307,3 @@ type User struct {
 }
 
 func (User) IsEntity() {}
-
-type UserMembership struct {
-	User *User  `json:"user"`
-	Role string `json:"role"`
-}

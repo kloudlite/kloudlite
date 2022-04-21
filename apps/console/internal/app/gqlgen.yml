@@ -49,6 +49,12 @@ models:
     fields:
       devices:
         resolver: true
+  Account:
+    fields:
+      projects:
+        resolver: true
+      clusters:
+        resolver: true
   Cluster:
     fields:
       devices:
@@ -71,3 +77,6 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Json:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map

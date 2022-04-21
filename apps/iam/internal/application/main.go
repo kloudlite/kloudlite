@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"kloudlite.io/common"
 	"strings"
 
 	"go.uber.org/fx"
@@ -32,7 +33,7 @@ func (s *server) ListResourceMemberships(ctx context.Context, in *iam.InResource
 		return nil, errors.NewEf(err, "could not find memberships by (resourceId=%q, resourceType=%q)", in.ResourceId, in.ResourceType)
 	}
 
-	result := []*iam.RoleBinding{}
+	var result []*iam.RoleBinding
 	for _, rb := range rbs {
 		result = append(result, &iam.RoleBinding{
 			UserId:       rb.UserId,
@@ -64,8 +65,8 @@ func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 		return &iam.OutCan{Status: true}, nil
 	}
 
-	for _, role := range iam.ActionMap[iam.Action(in.Action)] {
-		if role == iam.Role(rb.Role) {
+	for _, role := range common.ActionMap[common.Action(in.Action)] {
+		if role == common.Role(rb.Role) {
 			return &iam.OutCan{Status: true}, nil
 		}
 	}

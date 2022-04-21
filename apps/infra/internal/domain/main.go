@@ -98,7 +98,7 @@ type Env struct {
 }
 
 var Module = fx.Module("domain",
-	fx.Provide(config.LoadEnv[*Env]()),
+	config.EnvFx[Env](),
 	fx.Provide(makeDomain),
 	fx.Invoke(func(d Domain, p messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
 
@@ -135,7 +135,7 @@ var Module = fx.Module("domain",
 		//d.AddPeerToCluster(AddPeerAction{
 		//	ClusterID: "hotspot-dev-2",
 		//	PublicKey: key.PublicKey().String(),
-		//	PeerIp:    "10.13.13.103",
+		//	PeerIp:    "10.13.13.104",
 		//})
 
 		//d.DeletePeerFromCluster(DeletePeerAction{

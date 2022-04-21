@@ -9,10 +9,12 @@ tasks:
     env:
       MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
+      MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
 #      REDIS_USERNAME: hotspot-user
 #      REDIS_PASSWORD: ***REMOVED***
       MONGO_DB_NAME: console-go
-      PORT: 4002
+      PORT: 4001
+      GRPC_PORT: 8080
       DEV: true
       KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
@@ -21,12 +23,12 @@ tasks:
       - ./internal/**/*.go
       - ./main.go
     cmds:
-      - go run -tags dynamic ./main.go --dev
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   docker-build:
     dir: ../..
     vars:
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/finance:v2
-      APP_DIR: ./apps/finance
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/console:v2
+      APP_DIR: ./apps/console
     cmds:
       - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
       - docker push {{.IMAGE}}
