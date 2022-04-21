@@ -79,7 +79,7 @@ var Module = fx.Module(
 		fx.Provide(func(domain domain.Domain, env *Env, kafkaCli messaging.KafkaClient, logger logger.Logger) (ClusterEventConsumer, error) {
 			return messaging.NewKafkaConsumer(
 				kafkaCli,
-				[]string{env.KafkaInfraTopic},
+				[]string{env.KafkaInfraResponseTopic},
 				env.KafkaConsumerGroupId,
 				logger, func(context context.Context, topic string, message messaging.Message) error {
 					var d map[string]any
@@ -142,6 +142,17 @@ var Module = fx.Module(
 					return nil
 				},
 			)
+		}),
+		fx.Invoke(func(consumer ClusterEventConsumer, lifecycle fx.Lifecycle) {
+			lifecycle.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return consumer.Subscribe(ctx)
+				},
+				OnStop: func(ctx context.Context) error {
+					consumer.Unsubscribe(ctx)
+					return nil
+				},
+			})
 		}),
 	),
 

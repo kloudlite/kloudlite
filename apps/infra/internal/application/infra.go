@@ -47,18 +47,19 @@ func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
 		"wireguard",
 		"deploy/wireguard-deployment",
+		"/config",
 		true,
 	)
 	return serverWg.AddRemotePeer(action.PublicKey, fmt.Sprintf("%v/32", action.PeerIp), nil)
 }
 
 func (i *infraClient) DeletePeer(action domain.DeletePeerAction) (e error) {
-	//TODO implement me
 	serverWg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
 		"wireguard",
 		"deploy/wireguard-deployment",
+		"/config",
 		true,
 	)
 
@@ -66,29 +67,29 @@ func (i *infraClient) DeletePeer(action domain.DeletePeerAction) (e error) {
 
 }
 
-func (i *infraClient) setupMaster(ip string) error {
-	fmt.Println("ssh",
-		"-o",
-		"StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
-		"-i",
-		fmt.Sprintf("%v/access", i.env.SshKeysPath),
-		"root@"+ip,
-		"/root/scripts/wait-for-on.sh")
-
-	e := exec.Command(
-		"ssh",
-		"-o",
-		"StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
-		"-i",
-		fmt.Sprintf("%v/access", i.env.SshKeysPath),
-		"root@"+ip,
-		"/root/scripts/wait-for-on.sh",
-	).Run()
-
-	return e
-}
+//func (i *infraClient) setupMaster(ip string) error {
+//	fmt.Println("ssh",
+//		"-o",
+//		"StrictHostKeyChecking=no",
+//		"-o", "UserKnownHostsFile=/dev/null",
+//		"-i",
+//		fmt.Sprintf("%v/access", i.env.SshKeysPath),
+//		"root@"+ip,
+//		"/root/scripts/wait-for-on.sh")
+//
+//	e := exec.Command(
+//		"ssh",
+//		"-o",
+//		"StrictHostKeyChecking=no",
+//		"-o", "UserKnownHostsFile=/dev/null",
+//		"-i",
+//		fmt.Sprintf("%v/access", i.env.SshKeysPath),
+//		"root@"+ip,
+//		"/root/scripts/wait-for-on.sh",
+//	).Run()
+//
+//	return e
+//}
 
 func (i *infraClient) setupNodeWireguards(
 	nodeIps []string,
@@ -102,11 +103,19 @@ func (i *infraClient) setupNodeWireguards(
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId),
 		"wireguard",
 		"deploy/wireguard-deployment",
+		"/config",
 		true,
 	)
 	for _, ip := range nodeIps {
 		func(ip string) {
-			wg := wgman.NewSshWgManager("/etc/wireguard/wg0.conf", ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath), false)
+			wg := wgman.NewSshWgManager(
+				"/etc/wireguard/wg0.conf",
+				ip,
+				"root",
+				fmt.Sprintf("%v/access", i.env.SshKeysPath),
+				"./",
+				false,
+			)
 
 			// if !wg.IsSetupDone() {
 			if true {
@@ -175,7 +184,14 @@ func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
 		return "", err
 	}
 
-	wg := wgman.NewKubeWgManager("/etc/wireguard/wg0.conf", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId), "wireguard", "deploy/wireguard-deployment", true)
+	wg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		"/config",
+		true,
+	)
 
 	o, err := wg.Init(ip)
 
@@ -241,10 +257,9 @@ func (i *infraClient) waitForSshAvailability(ip string) error {
 			"-i",
 			fmt.Sprintf("%v/access", i.env.SshKeysPath),
 			"root@"+ip,
-			"echo", "hello",
+			"mkdir", "-p", "/wg-config",
 		).Run()
 
-		fmt.Println(e)
 		if e == nil {
 			return nil
 		}
