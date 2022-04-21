@@ -2,6 +2,7 @@ package reconcileResult
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -15,18 +16,18 @@ func Failed() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-func retry(after int, err error) (reconcile.Result, error) {
+func Retry(after ...int) (reconcile.Result, error) {
+	a := 0
+	if len(after) > 0 {
+		a = after[0]
+	}
 	return reconcile.Result{
 		Requeue:      true,
-		RequeueAfter: time.Second * time.Duration(after),
+		RequeueAfter: time.Second * time.Duration(math.Max(float64(a), 1)),
 	}, nil
-}
-
-func Retry(after int) (reconcile.Result, error) {
-	return retry(after, nil)
 }
 
 func RetryE(after int, err error) (reconcile.Result, error) {
 	fmt.Printf("RetryE: %+v", err)
-	return retry(after, err)
+	return Retry(after)
 }

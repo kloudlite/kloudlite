@@ -1,6 +1,9 @@
 package v1
 
 import (
+	// "fmt"
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -8,6 +11,7 @@ type Recon struct {
 	HasStarted  bool      `json:"has_started,omitempty"`
 	HasFinished bool      `json:"has_finished,omitempty"`
 	Job         *ReconJob `json:"job,omitempty"`
+	LastChecked int64     `json:"last_checked"`
 	Message     string    `json:"message,omitempty"`
 	Status      bool      `json:"status,omitempty"`
 }
@@ -19,22 +23,41 @@ func (re *Recon) ShouldCheck() bool {
 	return false
 }
 
+func (re *Recon) reset() {
+	re.HasStarted = false
+	re.HasFinished = false
+	re.Job = nil
+	re.Status = false
+	re.Message = ""
+}
+
 func (re *Recon) SetStarted() {
 	re.HasFinished = false
 	re.HasStarted = true
+	re.LastChecked = time.Now().Unix()
 }
 
 func (re *Recon) SetFinishedWith(status bool, msg string) {
 	re.HasStarted = false
 	re.HasFinished = true
-
 	re.Status = status
 	re.Message = msg
+	re.LastChecked = time.Now().Unix()
 }
 
 // makes sense only for reconcile requests where a period check of any other resource is required
 func (re *Recon) IsRunning() bool {
 	if re.HasFinished == false && re.HasStarted == true {
+		return true
+	}
+	return false
+}
+
+func (re *Recon) ShouldRetry(coolingTime int) bool {
+	t1 := time.Now().Unix()
+	t2 := re.LastChecked
+	if t1-t2 >= int64(coolingTime) {
+		re.reset()
 		return true
 	}
 	return false

@@ -3,7 +3,9 @@ kind: ManagedService
 metadata:
   name: mongo
   namespace: hotspot
+  finalizers:
+    - finalizers.kloudlite.io/managed-service
 spec:
   templateName: msvc_mongo
   values: |
-    {"name":"mongo","capacity":1,"replicaCount":1}
+    {"name":"my-mongo","capacity":1,"replicaCount":1}

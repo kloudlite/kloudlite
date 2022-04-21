@@ -3,6 +3,20 @@ kind: ManagedResource
 metadata:
   name: auth-db
   namespace: hotspot
+  finalizers:
+    - finalizers.kloudlite.io/managed-resource
+spec:
+  type: db
+  managedSvc: mongo
+
+---
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedResource
+metadata:
+  name: console-db
+  namespace: hotspot
+  finalizers:
+    - finalizers.kloudlite.io/managed-resource
 spec:
   type: db
   managedSvc: mongo
