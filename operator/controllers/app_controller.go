@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"fmt"
 
@@ -76,7 +75,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if app.IsNewGeneration() {
 		if app.Status.ApplyJob.IsRunning() {
-			return reconcileResult.Retry(semiCoolingTime)
+			return reconcileResult.Retry()
 		}
 
 		app.DefaultStatus()
@@ -144,11 +143,10 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	// ASSERT: keep retying until you find the image
 	if !app.Status.ImagesAvailability.Status {
 		r.logger.Infof("ImagesAvailability check failed")
-		time.AfterFunc(time.Second*maxCoolingTime, func() {
-			app.Status.ImagesAvailability = crdsv1.Recon{}
-			r.Status().Update(ctx, app)
-		})
-		return reconcileResult.OK()
+		if app.Status.ImagesAvailability.ShouldRetry(maxCoolingTime) {
+			return r.updateStatus(ctx, app)
+		}
+		return reconcileResult.Retry()
 	}
 
 	if app.Status.ApplyJob.ShouldCheck() {
@@ -168,7 +166,8 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 		b, err := r.JobMgr.HasCompleted(ctx, j.Namespace, j.Name)
 		if err != nil {
-			return reconcileResult.Retry(minCoolingTime)
+			app.Status.ApplyJob.SetFinishedWith(false, errors.NewEf(err, "job failed").Error())
+			return r.updateStatus(ctx, app)
 		}
 
 		if b != nil {
@@ -180,7 +179,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			return r.updateStatus(ctx, app)
 		}
 
-		return reconcileResult.Retry(minCoolingTime)
+		return reconcileResult.Retry()
 	}
 
 	return reconcileResult.OK()
@@ -215,22 +214,22 @@ func (r *AppReconciler) updateStatus(ctx context.Context, app *crdsv1.App) (ctrl
 }
 
 func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.Result, error) {
+	logger := r.logger.With("FINALIZER", "true")
 	if controllerutil.ContainsFinalizer(app, appFinalizer) {
-
 		// STEP: cleaning currently executing jobs
 		if app.Status.ApplyJob.IsRunning() {
 			r.logger.Debugf("[Finalizer]: killing app.Status.ApplyJob.IsRunning()")
 			j := app.Status.ApplyJob.Job
 			err := r.JobMgr.Delete(ctx, j.Namespace, j.Name)
 			if err != nil {
-				return reconcileResult.RetryE(minCoolingTime, err)
+				logger.Error(errors.NewEf(err, "error deleting job %s/%s, silently exiting ", j.Namespace, j.Name))
 			}
 			app.Status.ApplyJob.SetFinishedWith(false, "killed by APP finalizer")
 			return r.updateStatus(ctx, app)
 		}
 
 		if app.Status.DeleteJob.ShouldCheck() {
-			r.logger.Debugf("[Finalizer]: app.Status.DeleteJob.ShouldCheck()")
+			logger.Debugf("[Finalizer]: app.Status.DeleteJob.ShouldCheck()")
 			app.Status.DeleteJob.SetStarted()
 			specB, err := json.Marshal(app.Spec)
 			if err != nil {
@@ -239,10 +238,11 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 			}
 
 			job, err := r.JobMgr.Create(ctx, app.Namespace, &lib.JobVars{
-				Name:            "delete-job",
-				Namespace:       app.Namespace,
-				ServiceAccount:  "hotspot-cluster-svc-account",
-				Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
+				Name:           "delete-job",
+				Namespace:      app.Namespace,
+				ServiceAccount: SvcAccountName,
+				// Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
+				Image:           "harbor.dev.madhouselabs.io/ci/jobs/app:latest",
 				ImagePullPolicy: "Always",
 				Args: []string{
 					"delete",
@@ -271,7 +271,8 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 			jobStatus, err := r.JobMgr.HasCompleted(ctx, j.Namespace, j.Name)
 			if err != nil {
 				// means child job is running
-				return reconcileResult.Retry(minCoolingTime)
+				app.Status.DeleteJob.SetFinishedWith(false, errors.NewEf(err, "job failed").Error())
+				return r.updateStatus(ctx, app)
 			}
 
 			if jobStatus != nil {
@@ -311,10 +312,11 @@ func (r *AppReconciler) createAppJob(ctx context.Context, app *crdsv1.App) error
 	}
 
 	job, err := r.JobMgr.Create(ctx, app.Namespace, &lib.JobVars{
-		Name:            "create-job",
-		Namespace:       app.Namespace,
-		ServiceAccount:  "hotspot-cluster-svc-account",
-		Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
+		Name:           "create-job",
+		Namespace:      app.Namespace,
+		ServiceAccount: SvcAccountName,
+		// Image:           "harbor.dev.madhouselabs.io/kloudlite/jobs/app:latest",
+		Image:           "harbor.dev.madhouselabs.io/ci/jobs/app:latest",
 		ImagePullPolicy: "Always",
 		Args: []string{
 			"create",

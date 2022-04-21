@@ -54,7 +54,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	if msvc.IsNewGeneration() {
 		if msvc.Status.ApplyJobCheck.IsRunning() {
-			return reconcileResult.Retry(minCoolingTime)
+			return reconcileResult.Retry()
 		}
 		msvc.DefaultStatus()
 		return r.updateStatus(ctx, msvc)

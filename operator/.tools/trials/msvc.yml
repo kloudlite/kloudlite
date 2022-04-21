@@ -6,6 +6,19 @@ metadata:
   finalizers:
     - finalizers.kloudlite.io/managed-service
 spec:
-  templateName: msvc_mongo
-  values: |
-    {"name":"my-mongo","capacity":1,"replicaCount":1}
+  operations:
+    create: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:cluster
+    delete: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:cluster
+  inputs:
+    capacity: 1
+    primary_count: 1
+    secondary_count: 1
+  outputs:
+    - name: ROOT_PASSWORD
+      label: MongoRoot Password
+    - name: HOSTS
+      description: DB Hosts
+    - name: DB_URL
+      description: DB URL
+    - name: JSON
+      description: Configuration JSON

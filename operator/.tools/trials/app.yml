@@ -2,7 +2,7 @@ apiVersion: "crds.kloudlite.io/v1"
 kind: App
 metadata:
   name: sample-app3
-  namespace: hotspot
+  namespace: sample-example
   finalizers:
     - finalizers.kloudlite.io/app
 spec:
@@ -12,7 +12,7 @@ spec:
       type: tcp
   containers:
     - name: samplen
-      image: nginxxx
+      image: nginx
       imagePullPolicy: Always
       # command:
       #   - "bash"
@@ -25,8 +25,12 @@ spec:
       resourceMemory:
         min: "100"
         max: "200"
-      # env:
-      #   - key: MYHOME2
-      #     type: config
-      #     refName: config/sample-cfg
-      #     refKey: hello
+      env:
+        - key: MYHOME2
+          type: config
+          refName: config/sample-cfg
+          refKey: hello
+        - key: auth-db
+          type: mResource
+          refName: secret/
+          refKey: hello
