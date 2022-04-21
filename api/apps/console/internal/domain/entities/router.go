@@ -1,6 +1,9 @@
 package entities
 
-import "kloudlite.io/pkg/repos"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kloudlite.io/pkg/repos"
+)
 
 type RouterStatus string
 
@@ -13,11 +16,14 @@ const (
 
 type Router struct {
 	repos.BaseEntity `bson:",inline"`
-	ProjectId        repos.ID `json:"project_id" bson:"project_id"`
-	Name             string   `bson:"name" json:"name"`
-	Namespace        string   `bson:"namespace" json:"namespace"`
-	Domains          []string `bson:"domains" json:"domains"`
-	Routes           []*Route `bson:"routes" json:"routes"`
+	ClusterId        repos.ID           `json:"cluster_id" bson:"cluster_id"`
+	ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
+	Name             string             `json:"name" bson:"name"`
+	Namespace        string             `json:"namespace" bson:"namespace"`
+	Domains          []string           `bson:"domains" json:"domains"`
+	Routes           []*Route           `bson:"routes" json:"routes"`
+	Status           RouterStatus       `json:"status" bson:"status"`
+	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
 }
 
 type Route struct {
@@ -36,6 +42,8 @@ var RouterIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "name", Value: repos.IndexAsc},
+			{Key: "namespace", Value: repos.IndexAsc},
+			{Key: "cluster_id", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

@@ -15,16 +15,17 @@ type Account struct {
 func (Account) IsEntity() {}
 
 type App struct {
-	ID          repos.ID        `json:"id"`
-	Name        string          `json:"name"`
-	Namespace   string          `json:"namespace"`
-	Description *string         `json:"description"`
-	ReadableID  repos.ID        `json:"readableId"`
-	Services    []*AppService   `json:"services"`
-	Replicas    *int            `json:"replicas"`
-	Containers  []*AppContainer `json:"containers"`
-	Project     *Project        `json:"project"`
-	Version     *int            `json:"version"`
+	ID                repos.ID        `json:"id"`
+	Name              string          `json:"name"`
+	Namespace         string          `json:"namespace"`
+	Description       *string         `json:"description"`
+	ReadableID        repos.ID        `json:"readableId"`
+	Replicas          *int            `json:"replicas"`
+	Services          []*AppService   `json:"services"`
+	AttachedResources []*ManagedRes   `json:"attachedResources"`
+	Containers        []*AppContainer `json:"containers"`
+	Project           *Project        `json:"project"`
+	Version           *int            `json:"version"`
 }
 
 type AppContainer struct {
@@ -75,11 +76,6 @@ type AppEnvInput struct {
 	Value  *string `json:"value"`
 	RefKey *string `json:"refKey"`
 	RefID  *string `json:"refId"`
-}
-
-type AppMemebership struct {
-	App  *App   `json:"app"`
-	Role string `json:"role"`
 }
 
 type AppService struct {
@@ -156,11 +152,10 @@ type ContainerResInput struct {
 }
 
 type Device struct {
-	ID            repos.ID `json:"id"`
-	User          *User    `json:"user"`
-	Name          string   `json:"name"`
-	Cluster       *Cluster `json:"cluster"`
-	Configuration string   `json:"configuration"`
+	ID      repos.ID `json:"id"`
+	User    *User    `json:"user"`
+	Name    string   `json:"name"`
+	Cluster *Cluster `json:"cluster"`
 }
 
 func (Device) IsEntity() {}
