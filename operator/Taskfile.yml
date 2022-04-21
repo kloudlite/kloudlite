@@ -5,11 +5,14 @@ tasks:
   run:
     run: always
     deps:
-      - pre
+      # - pre
+      - task: kill-port
     cmds:
       - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go |& pp -rel-path || exit 1'
+      # - go run -tags musl main.go
     sources:
       - ./**/*.go
+    method: timestamp
 
   pre:
     run: once
@@ -23,3 +26,16 @@ tasks:
     dir: config/crd/bases
     cmds:
       - kubectl apply -f .
+  
+  kill-port:
+    run: always
+    cmds:
+      - |
+        PID=$(lsof -t -i:8089)
+        echo "$PID"
+        if [ "$PID" != "" ]; then
+          kill -9 $PID
+        fi
+    silent: true
+
+

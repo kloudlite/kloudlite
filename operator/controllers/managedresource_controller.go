@@ -3,7 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"time"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,7 +34,7 @@ type ManagedResourceReconciler struct {
 	logger    *zap.SugaredLogger
 }
 
-const mresFinalizer = "finalizers.kloudlite.io/mres"
+const mresFinalizer = "finalizers.kloudlite.io/managed-resource"
 
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
@@ -65,6 +65,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if mres.Status.ManagedSvcDepCheck.ShouldCheck() {
+		r.logger.Debugf("mres.Status.ManagedSvcDepCheck.ShouldCheck()")
 		mres.Status.ManagedSvcDepCheck.SetStarted()
 		msvc := &crdsv1.ManagedService{}
 		if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: mres.Spec.ManagedSvc}, msvc); err != nil {
@@ -77,17 +78,19 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			mres.Status.ManagedSvcDepCheck.SetFinishedWith(false, errors.Newf("managed svc (%s/%s) is not ready, yet", msvc.Namespace, msvc.Name).Error())
 			return r.updateStatus(ctx, mres)
 		}
-		mres.Status.ManagedSvcDepCheck.SetFinishedWith(false, errors.Newf("managed svc (%s/%s) is not ready, yet", msvc.Namespace, msvc.Name).Error())
+		mres.Status.ManagedSvcDepCheck.SetFinishedWith(true, fmt.Sprintf("managed svc (%s/%s) is ready", msvc.Namespace, msvc.Name))
 		return r.updateStatus(ctx, mres)
 	}
 
 	if !mres.Status.ManagedSvcDepCheck.Status {
-		r.logger.Debugf("ManagedSvc Dependency Check failed ...")
-		time.AfterFunc(time.Second*maxCoolingTime, func() {
-			mres.Status.ManagedSvcDepCheck = crdsv1.Recon{}
-			r.updateStatus(ctx, mres)
-		})
-		return reconcileResult.Retry(minCoolingTime)
+		r.logger.Debugf("ManagedSvc Dependency Check failed ..., would retry soon")
+		if mres.Status.ManagedSvcDepCheck.ShouldRetry(maxCoolingTime) {
+			mres.Status.ManagedSvcDepCheck = crdsv1.Recon{
+				// LastChecked: time.Now().Unix(),
+			}
+			return r.updateStatus(ctx, mres)
+		}
+		return reconcileResult.Retry(1)
 	}
 
 	if mres.Status.ApplyJobCheck.ShouldCheck() {
@@ -146,7 +149,8 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		j := mres.Status.ApplyJobCheck.Job
 		b, err := r.JobMgr.HasCompleted(ctx, j.Namespace, j.Name)
 		if err != nil {
-			return reconcileResult.Retry(minCoolingTime)
+			mres.Status.ApplyJobCheck.SetFinishedWith(false, errors.NewEf(err, "job failed").Error())
+			return r.updateStatus(ctx, mres)
 		}
 
 		if b != nil {
@@ -189,17 +193,18 @@ func (r *ManagedResourceReconciler) finalizeMres(ctx context.Context, mres *crds
 	}
 
 	if mres.Status.DeleteJobCheck.ShouldCheck() {
+		mres.Status.DeleteJobCheck.SetStarted()
 		logger.Debug("mres.ShouldCreateDeletionJob()")
 		specB, err := json.Marshal(mres.Spec)
 		if err != nil {
-			r.logger.Error(errors.New("could not unmarshal mres spec into []byte"))
-			return reconcileResult.Failed()
+			mres.Status.DeleteJobCheck.SetFinishedWith(false, errors.New("could not unmarshal mres spec into []byte").Error())
+			return r.updateStatus(ctx, mres)
 		}
 
 		dockerI, err := r.getDockerImage(ctx, mres, "delete")
 		if err != nil {
-			r.logger.Debug(err)
-			return reconcileResult.Failed()
+			mres.Status.DeleteJobCheck.SetFinishedWith(false, errors.NewEf(err, "could not find docker image form(msvc=%s) for action=delete", mres.Spec.ManagedSvc).Error())
+			return r.updateStatus(ctx, mres)
 		}
 
 		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
@@ -217,6 +222,7 @@ func (r *ManagedResourceReconciler) finalizeMres(ctx context.Context, mres *crds
 		})
 
 		if err != nil {
+			mres.Status.DeleteJobCheck.SetFinishedWith(false, errors.NewEf(err, "could not create deletion job").Error())
 			return reconcileResult.Failed()
 		}
 
@@ -250,8 +256,8 @@ func (r *ManagedResourceReconciler) finalizeMres(ctx context.Context, mres *crds
 		logger.Infof("mres.Status.DeleteJobCheck.Status has failed, still letting pass through though ...")
 	}
 
-	logger.Debug("[Finalizer]: all deletion checks completed ...")
-	controllerutil.RemoveFinalizer(mres, msvcFinalizer)
+	logger.Debug("[Finalizer]: all deletion checks completed, removing finalizer ...")
+	controllerutil.RemoveFinalizer(mres, mresFinalizer)
 	err := r.Update(ctx, mres)
 	if err != nil {
 		logger.Error(errors.NewEf(err, "could not remove finalizers from app"))
@@ -259,95 +265,6 @@ func (r *ManagedResourceReconciler) finalizeMres(ctx context.Context, mres *crds
 	}
 	return reconcileResult.OK()
 }
-
-//func (r *ManagedResourceReconciler) finalizeMres2(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {
-//	if controllerutil.ContainsFinalizer(mres, mresFinalizer) {
-//		if mres.HasJob() {
-//			r.logger.Debug("mres.HasJob() (deletion)")
-//			// STEP: cleaning currently executing jobs
-//			err := r.JobMgr.Delete(ctx, mres.Status.Job.Namespace, mres.Status.Job.Name)
-//			if err != nil {
-//				return reconcileResult.RetryE(minCoolingTime, err)
-//			}
-//			mres.Status.Job = nil
-//			mres.Status.JobCompleted = nil
-//			return r.updateStatus(ctx, mres)
-//		}
-
-//		if mres.ShouldCreateDeletionJob() {
-//			r.logger.Debug("mres.ShouldCreateDeletionJob()")
-//			specB, err := json.Marshal(mres.Spec)
-//			if err != nil {
-//				r.logger.Error(errors.New("could not unmarshal mres spec into []byte"))
-//				return reconcileResult.Failed()
-//			}
-
-//			dockerI, err := r.getDockerImage(ctx, mres, "delete")
-//			if err != nil {
-//				r.logger.Debug(err)
-//				return reconcileResult.Failed()
-//			}
-
-//			job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
-//				Name:            "delete-job",
-//				Namespace:       "hotspot",
-//				ServiceAccount:  "hotspot-cluster-svc-account",
-//				Image:           dockerI,
-//				ImagePullPolicy: "Always",
-//				Args: []string{
-//					"delete",
-//					"--name", mres.Name,
-//					"--namespace", mres.Namespace,
-//					"--spec", string(specB),
-//				},
-//			})
-
-//			if err != nil {
-//				return reconcileResult.Failed()
-//			}
-
-//			mres.Status.DeletionJob = &crdsv1.ReconJob{
-//				Name:      job.Name,
-//				Namespace: job.Namespace,
-//			}
-//			return r.updateStatus(ctx, mres)
-//		}
-
-//		if mres.HasDeletionJob() {
-//			r.logger.Debug("mres.HasDeletionJob()")
-//			//STEP:  WATCH for it
-//			jobStatus, err := r.JobMgr.HasCompleted(ctx, mres.Status.DeletionJob.Namespace, mres.Status.DeletionJob.Name)
-//			if err != nil {
-//				return reconcileResult.Retry(minCoolingTime)
-//			}
-//			if jobStatus != nil {
-//				mres.Status.DeletionJobCompleted = newBool(true)
-//				if !*jobStatus {
-//					r.logger.Debugf("DELETION jobStatus %v", *jobStatus)
-//					return r.updateStatus(ctx, mres)
-//				}
-//				r.logger.Debugf("DELETION jobStatus: %v", *jobStatus)
-//				mres.Status.DeletionJob = nil
-//				return r.updateStatus(ctx, mres)
-//			}
-//			return reconcileResult.Retry(minCoolingTime)
-//			// STEP: remove finalizer once done
-//		}
-
-//		if mres.Status.DeletionJobCompleted != nil {
-//			r.logger.Debug("mres.Status.DeletionJobCompleted")
-//			controllerutil.RemoveFinalizer(mres, appFinalizer)
-//			err := r.Update(ctx, mres)
-//			if err != nil {
-//				r.logger.Error(errors.NewEf(err, "could not remove finalizers from mres"))
-//			}
-//			return reconcileResult.OK()
-//		}
-//	}
-
-//	r.logger.Debug("contains no finalizers")
-//	return reconcileResult.OK()
-//}
 
 func (r *ManagedResourceReconciler) getDockerImage(ctx context.Context, mres *crdsv1.ManagedResource, action string) (string, error) {
 	var m crdsv1.ManagedService
@@ -398,11 +315,14 @@ func (r *ManagedResourceReconciler) getDockerImage(ctx context.Context, mres *cr
 }
 
 func (r *ManagedResourceReconciler) updateStatus(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {
+	mres.BuildConditions()
 	if err := r.Status().Update(ctx, mres); err != nil {
-		return reconcileResult.RetryE(maxCoolingTime, errors.StatusUpdate(err))
+		return reconcileResult.OK()
+		// r.logger.Infof("Status Update Failed ... as %w", err)
+		// return reconcileResult.RetryE(0, errors.StatusUpdate(err))
 	}
 	r.logger.Debug("ManagedResource has been updated")
-	return reconcileResult.Retry(minCoolingTime)
+	return reconcileResult.Retry(0)
 }
 
 // SetupWithManager sets up the controller with the Manager.

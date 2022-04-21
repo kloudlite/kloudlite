@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,6 +49,46 @@ func (mres *ManagedResource) HasToBeDeleted() bool {
 }
 
 func (mres *ManagedResource) BuildConditions() {
+	meta.SetStatusCondition(&mres.Status.Conditions, metav1.Condition{
+		Type:               "ApplyJobCheck",
+		Status:             mres.Status.ApplyJobCheck.ConditionStatus(),
+		ObservedGeneration: mres.Generation,
+		Reason:             mres.Status.ApplyJobCheck.Reason(),
+		Message:            mres.Status.ApplyJobCheck.Message,
+	})
+
+	meta.SetStatusCondition(&mres.Status.Conditions, metav1.Condition{
+		Type:               "ManagedSvcDepCheck",
+		Status:             mres.Status.ManagedSvcDepCheck.ConditionStatus(),
+		ObservedGeneration: mres.Generation,
+		Reason:             mres.Status.ManagedSvcDepCheck.Reason(),
+		Message:            mres.Status.ManagedSvcDepCheck.Message,
+	})
+
+	c := Condition{
+		Type:               "Ready",
+		Status:             string(metav1.ConditionTrue),
+		ObservedGeneration: mres.Generation,
+		Reason:             "Success",
+		Message:            "all conditions passed",
+	}
+
+	for _, cond := range mres.Status.Conditions {
+		if cond.Status != metav1.ConditionTrue {
+			c.Status = string(cond.Status)
+			c.Reason = "ConditionFailed"
+			c.Message = fmt.Sprintf("Condition Type=%s Status=%s Message=%s", cond.Type, cond.Status, cond.Message)
+			break
+		}
+	}
+
+	meta.SetStatusCondition(&mres.Status.Conditions, metav1.Condition{
+		Type:               c.Type,
+		Status:             metav1.ConditionStatus(c.Status),
+		ObservedGeneration: mres.Generation,
+		Reason:             c.Reason,
+		Message:            c.Message,
+	})
 }
 
 //+kubebuilder:object:root=true

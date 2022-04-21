@@ -126,10 +126,15 @@ spec:
                     - name
                     - namespace
                     type: object
+                  last_checked:
+                    format: int64
+                    type: integer
                   message:
                     type: string
                   status:
                     type: boolean
+                required:
+                - last_checked
                 type: object
               generation:
                 format: int64
@@ -150,10 +155,15 @@ spec:
                     - name
                     - namespace
                     type: object
+                  last_checked:
+                    format: int64
+                    type: integer
                   message:
                     type: string
                   status:
                     type: boolean
+                required:
+                - last_checked
                 type: object
               pull_secret_check:
                 properties:
@@ -171,10 +181,15 @@ spec:
                     - name
                     - namespace
                     type: object
+                  last_checked:
+                    format: int64
+                    type: integer
                   message:
                     type: string
                   status:
                     type: boolean
+                required:
+                - last_checked
                 type: object
               svc_account_check:
                 properties:
@@ -192,10 +207,15 @@ spec:
                     - name
                     - namespace
                     type: object
+                  last_checked:
+                    format: int64
+                    type: integer
                   message:
                     type: string
                   status:
                     type: boolean
+                required:
+                - last_checked
                 type: object
             type: object
         type: object

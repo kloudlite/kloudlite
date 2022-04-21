@@ -75,7 +75,6 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	if app.IsNewGeneration() {
-		logger.Debugf("app.IsNewGeneration() %+v\n", app.Status)
 		if app.Status.ApplyJob.IsRunning() {
 			return reconcileResult.Retry(semiCoolingTime)
 		}
@@ -86,12 +85,11 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if app.Status.DependencyCheck.ShouldCheck() {
 		r.logger.Debugf("app.Status.DependencyCheck.ShouldCheck()")
+		app.Status.DependencyCheck.SetStarted()
+
 		checks := r.checkDependency(ctx, app)
-		app.Status.DependencyCheck.HasFinished = true
-		app.Status.DependencyCheck.HasStarted = false
 
 		if checks != nil {
-			// ASSERT: DependencyCheck  failed
 			r.logger.Infof("Dependenct check failed ...")
 			b, err := json.Marshal(*checks)
 			if err != nil {
@@ -107,14 +105,12 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return r.updateStatus(ctx, app)
 	}
 
-	if app.Status.DependencyCheck.IsRunning() {
-		r.logger.Debugf("app.Status.DependencyCheck.IsRunning()")
-		return r.updateStatus(ctx, app)
-	}
-
 	if !app.Status.DependencyCheck.Status {
 		r.logger.Infof("Dependency Check failed")
-		return reconcileResult.Failed()
+		if app.Status.DependencyCheck.ShouldRetry(maxCoolingTime) {
+			return r.updateStatus(ctx, app)
+		}
+		return reconcileResult.Retry()
 	}
 
 	if app.Status.ImagesAvailability.ShouldCheck() {
