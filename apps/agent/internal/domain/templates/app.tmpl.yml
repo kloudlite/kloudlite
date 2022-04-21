@@ -3,6 +3,8 @@ kind: App
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
+  finalizers:
+    - finalizers.kloudlite.io/app
 spec:
   services:
 {{- range .Services }}

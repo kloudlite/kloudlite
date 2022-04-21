@@ -1,15 +1,17 @@
 package common
 
+type ResourceType string
+
 const (
-	ResourceConfig          = "config"
-	ResourceSecret          = "secret"
-	ResourceApp             = "app"
-	ResourceProject         = "project"
-	ResourceAccount         = "account"
-	ResourceRouter          = "router"
-	ResourceManagedService  = "mService"
-	ResourceManagedResource = "mResource"
-	ResourceGitPipeline     = "gitPipeline"
+	ResourceConfig          ResourceType = "config"
+	ResourceSecret          ResourceType = "secret"
+	ResourceApp             ResourceType = "app"
+	ResourceProject         ResourceType = "project"
+	ResourceAccount         ResourceType = "account"
+	ResourceRouter          ResourceType = "router"
+	ResourceManagedService  ResourceType = "mService"
+	ResourceManagedResource ResourceType = "mResource"
+	ResourceGitPipeline     ResourceType = "gitPipeline"
 )
 
 const (

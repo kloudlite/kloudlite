@@ -4,21 +4,30 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"kloudlite.io/common"
 	"os"
 	"os/exec"
 	"path"
 	"text/template"
 
+	"kloudlite.io/common"
+
 	"github.com/Masterminds/sprig"
 	"go.uber.org/fx"
+	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 )
 
+type Env struct {
+	KafkaReplyTopic string `env:"KAFKA_REPLY_TOPIC" required:"true"`
+}
+
 type domain struct {
 	applyTemplate func(filename string, data any) ([]byte, error)
+	logger        logger.Logger
+	producer      messaging.Producer[MessageReply]
+	msgTopic      string
 }
 
 func kubeApply(b []byte) error {
@@ -26,19 +35,42 @@ func kubeApply(b []byte) error {
 	cmd.Stdin = bytes.NewBuffer(b)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
+func (m *Message) bucket() string {
+	return fmt.Sprintf("%s/%s", m.Namespace, m.ResourceType)
+}
+
+func (d *domain) reply(msg *Message, status bool, description string) error {
+	return d.producer.SendMessage(
+		d.msgTopic,
+		msg.bucket(),
+		MessageReply{
+			Message: description,
+			Status:  status,
+		},
+	)
+}
+
 func (d *domain) ProcessMessage(ctx context.Context, msg *Message) error {
+	if msg == nil {
+		return errors.New("empty message received")
+	}
+	d.logger.Debugf("MSG: %+v\n", *msg)
 	switch msg.ResourceType {
 	case common.ResourceProject:
 		{
 			if spec, ok := msg.Spec.(Project); ok {
-				bData, e := d.applyTemplate("project.tmpl.yml", spec)
-				fmt.Printf("error (%v) Data (%v)\n", e, string(bData))
-				return kubeApply(bData)
+				bData, err := d.applyTemplate("project.tmpl.yml", spec)
+				fmt.Printf("error (%v) Data (%v)\n", err, string(bData))
+				err = kubeApply(bData)
+				if err != nil {
+					return d.reply(msg, false, "failed to apply resource")
+				}
+				return d.reply(msg, true, "applied resource, keep listening for resource updates ...")
 			}
+
 			return errors.New("malformed spec not of type(Project)")
 		}
 	case common.ResourceConfig:
@@ -114,7 +146,7 @@ type Domain interface {
 	ProcessMessage(ctx context.Context, msg *Message) error
 }
 
-var fxDomain = func(logger logger.Logger) Domain {
+var fxDomain = func(logger logger.Logger, env *Env, producer messaging.Producer[MessageReply]) Domain {
 	applyTemplate := func(filename string, data any) ([]byte, error) {
 		tPath := path.Join(os.Getenv("PWD"), fmt.Sprintf("internal/domain/templates/%s", filename))
 		w := new(bytes.Buffer)
@@ -133,12 +165,16 @@ var fxDomain = func(logger logger.Logger) Domain {
 
 	return &domain{
 		applyTemplate,
+		logger,
+		producer,
+		env.KafkaReplyTopic,
 	}
 }
 
 var Module = fx.Module("domain",
+	config.EnvFx[Env](),
 	fx.Provide(fxDomain),
-	fx.Invoke(func(lf fx.Lifecycle, producer messaging.Producer[Message]) {
+	fx.Invoke(func(lf fx.Lifecycle, producer messaging.Producer[MessageReply]) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				return producer.Connect(ctx)
