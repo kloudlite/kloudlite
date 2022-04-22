@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	"go.uber.org/zap"
@@ -14,7 +12,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/yaml"
 
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
@@ -71,26 +68,14 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return r.updateStatus(ctx, msvc)
 		}
 
-		action := "create"
-		if msvc.Generation > 1 {
-			action = "update"
-		}
-
-		dockerI, err := r.getDockerImage(ctx, msvc.Spec.TemplateName, action)
-		if err != nil {
-			e := errors.NewEf(err, "could not find docker image for (template=%s)", msvc.Spec.TemplateName)
-			msvc.Status.ApplyJobCheck.SetFinishedWith(false, e.Error())
-			return r.updateStatus(ctx, msvc)
-		}
-
 		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
 			Name:            "create-job",
 			Namespace:       "hotspot",
 			ServiceAccount:  "hotspot-cluster-svc-account",
-			Image:           dockerI,
+			Image:           msvc.Spec.Operations.Apply,
 			ImagePullPolicy: "Always",
 			Args: []string{
-				action,
+				"apply",
 				"--name", msvc.Name,
 				"--namespace", msvc.Namespace,
 				"--spec", string(specB),
@@ -167,17 +152,11 @@ func (r *ManagedServiceReconciler) finalizeMsvc(ctx context.Context, msvc *crdsv
 			return r.updateStatus(ctx, msvc)
 		}
 
-		dockerI, err := r.getDockerImage(ctx, msvc.Spec.TemplateName, "delete")
-		if err != nil {
-			msvc.Status.DeleteJobCheck.SetFinishedWith(false, errors.NewEf(err, "could not find docker image (template=%s) for action=delete", msvc.Spec.TemplateName).Error())
-			return r.updateStatus(ctx, msvc)
-		}
-
 		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
 			Name:            "delete-job",
 			Namespace:       "hotspot",
 			ServiceAccount:  "hotspot-cluster-svc-account",
-			Image:           dockerI,
+			Image:           msvc.Spec.Operations.Delete,
 			ImagePullPolicy: "Always",
 			Args: []string{
 				"delete",
@@ -232,36 +211,6 @@ func (r *ManagedServiceReconciler) finalizeMsvc(ctx context.Context, msvc *crdsv
 		return reconcileResult.Retry(minCoolingTime)
 	}
 	return reconcileResult.OK()
-}
-
-func (r *ManagedServiceReconciler) getDockerImage(ctx context.Context, templateName, action string) (string, error) {
-	var cfg corev1.ConfigMap
-	if err := r.Get(ctx, types.NamespacedName{Namespace: "hotspot", Name: "available-msvc"}, &cfg); err != nil {
-		return "", errors.NewEf(err, "Could not get available managed svc list")
-	}
-
-	var msvcT MSvcTemplate
-	err := yaml.Unmarshal([]byte(cfg.Data[templateName]), &msvcT)
-	if err != nil {
-		return "", errors.NewEf(err, "could not YAML unmarshal services into MsvcTemplate")
-	}
-
-	switch action {
-	case "create":
-		{
-			return msvcT.Operations.Create, nil
-		}
-	case "update":
-		{
-			return msvcT.Operations.Update, nil
-		}
-	case "delete":
-		{
-			return msvcT.Operations.Update, nil
-		}
-	default:
-		return "", errors.Newf("unknown action should be one of create|update|delete")
-	}
 }
 
 func (r *ManagedServiceReconciler) updateStatus(ctx context.Context, msvc *crdsv1.ManagedService) (ctrl.Result, error) {

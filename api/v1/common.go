@@ -102,3 +102,13 @@ type Condition struct {
 	Reason             string
 	Message            string
 }
+
+type Operations struct {
+	Apply  string `json:"create"`
+	Delete string `json:"delete"`
+}
+
+type Output struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}

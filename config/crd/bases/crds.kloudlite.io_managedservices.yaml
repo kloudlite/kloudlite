@@ -35,16 +35,38 @@ spec:
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
-              templateName:
-                description: managed svc template Id
-                type: string
-              values:
-                description: Values define the managed services values that correspond
-                  to a particular templateId
-                type: string
+              inputs:
+                additionalProperties:
+                  type: string
+                description: Input fields
+                type: object
+              operations:
+                description: Operations
+                properties:
+                  create:
+                    type: string
+                  delete:
+                    type: string
+                required:
+                - create
+                - delete
+                type: object
+              outputs:
+                description: Output Fields
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
             required:
-            - templateName
-            - values
+            - inputs
+            - operations
+            - outputs
             type: object
           status:
             description: ManagedServiceStatus defines the observed state of ManagedService
@@ -170,12 +192,6 @@ spec:
                 - last_checked
                 type: object
               generation:
-                description: Job                  *ReconJob          `json:"job,omitempty"`
-                  JobCompleted         *bool              `json:"jobCompleted,omitempty"`
-                  DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
-                  DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
-                  DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
-                  NEW
                 format: int64
                 type: integer
             type: object

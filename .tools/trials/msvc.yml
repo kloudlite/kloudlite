@@ -2,7 +2,7 @@ apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
   name: mongo
-  namespace: hotspot
+  namespace: sample-example
   finalizers:
     - finalizers.kloudlite.io/managed-service
 spec:
@@ -11,11 +11,10 @@ spec:
     delete: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:cluster
   inputs:
     capacity: 1
-    primary_count: 1
-    secondary_count: 1
+    replica_count: 1
   outputs:
     - name: ROOT_PASSWORD
-      label: MongoRoot Password
+      description: MongoRoot Password
     - name: HOSTS
       description: DB Hosts
     - name: DB_URL

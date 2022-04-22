@@ -35,14 +35,42 @@ spec:
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
+              inputs:
+                additionalProperties:
+                  type: string
+                type: object
               managedSvc:
                 type: string
+              operations:
+                properties:
+                  create:
+                    type: string
+                  delete:
+                    type: string
+                required:
+                - create
+                - delete
+                type: object
+              outputs:
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               type:
                 type: string
               values:
                 type: string
             required:
+            - inputs
             - managedSvc
+            - operations
+            - outputs
             - type
             type: object
           status:

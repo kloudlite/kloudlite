@@ -2,7 +2,7 @@ apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
   name: auth-db
-  namespace: hotspot
+  namespace: sample-example
   finalizers:
     - finalizers.kloudlite.io/managed-resource
 spec:
@@ -11,19 +11,10 @@ spec:
   operations:
     create: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:resource
     delete: harbor.dev.madhouselabs.io/kloudlite/jobs/msvc-mongo:resource
-  fields:
-    - name: name
-      label: Database Name
-      inputType: String
-      required: true
+  inputs:
+    name: auth-db
   outputs:
     - name: DB_USER
-      label: MongoRoot User
+      description: MongoRoot User
     - name: DB_PASSWORD
-      label: MongoRoot Password
-    - name: HOSTS
-      description: DB Hosts
-    - name: DB_URL
-      description: DB URL
-    - name: JSON
-      description: Configuration JSON
+      description: MongoRoot Password
