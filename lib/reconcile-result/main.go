@@ -16,6 +16,10 @@ func Failed() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
+func FailedE(err error) (reconcile.Result, error) {
+	return reconcile.Result{}, err
+}
+
 func Retry(after ...int) (reconcile.Result, error) {
 	a := 0
 	if len(after) > 0 {

@@ -132,18 +132,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.AppReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		ClientSet:      clientset,
-		JobMgr:         lib.NewJobber(clientset),
-		SendMessage:    sendMessage,
-		HarborUserName: harborUserName,
-		HarborPassword: harborPassword,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "App")
-		os.Exit(1)
-	}
+	// if err = (&controllers.AppReconciler{
+	// 	Client:         mgr.GetClient(),
+	// 	Scheme:         mgr.GetScheme(),
+	// 	ClientSet:      clientset,
+	// 	JobMgr:         lib.NewJobber(clientset),
+	// 	SendMessage:    sendMessage,
+	// 	HarborUserName: harborUserName,
+	// 	HarborPassword: harborPassword,
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "App")
+	// 	os.Exit(1)
+	// }
 
 	// if err = (&controllers.RouterReconciler{
 	// 	Client: mgr.GetClient(),
@@ -153,25 +153,25 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	if err = (&controllers.ManagedServiceReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: clientset,
-		JobMgr:    lib.NewJobber(clientset),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
-		os.Exit(1)
-	}
+	// if err = (&controllers.ManagedServiceReconciler{
+	// 	Client:    mgr.GetClient(),
+	// 	Scheme:    mgr.GetScheme(),
+	// 	ClientSet: clientset,
+	// 	JobMgr:    lib.NewJobber(clientset),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
+	// 	os.Exit(1)
+	// }
 
-	if err = (&controllers.ManagedResourceReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: clientset,
-		JobMgr:    lib.NewJobber(clientset),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-		os.Exit(1)
-	}
+	// if err = (&controllers.ManagedResourceReconciler{
+	// 	Client:    mgr.GetClient(),
+	// 	Scheme:    mgr.GetScheme(),
+	// 	ClientSet: clientset,
+	// 	JobMgr:    lib.NewJobber(clientset),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
+	// 	os.Exit(1)
+	// }
 
 	// if err = (&controllers.PipelineReconciler{
 	// 	Client: mgr.GetClient(),
@@ -182,11 +182,12 @@ func main() {
 	// }
 	//+kubebuilder:scaffold:builder
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
