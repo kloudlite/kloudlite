@@ -387,20 +387,23 @@ func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp 
 
 	defer errors.HandleErr(&e)
 
-	// TODO: check if cluster already exists
-	copyTemplateDirCommand := exec.Command(
-		"cp",
-		"-r",
-		fmt.Sprintf("./infra-scripts/%v/tf/", action.Provider),
-		fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID),
-	)
+	if _, err := os.Stat(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)); os.IsNotExist(err) {
 
-	copyTemplateDirCommand.Stdout = os.Stdout
-	copyTemplateDirCommand.Stderr = os.Stderr
-	e = copyTemplateDirCommand.Run()
+		// TODO: check if cluster already exists
+		copyTemplateDirCommand := exec.Command(
+			"cp",
+			"-r",
+			fmt.Sprintf("./infra-scripts/%v/tf/", action.Provider),
+			fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID),
+		)
 
-	errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
+		copyTemplateDirCommand.Stdout = os.Stdout
+		copyTemplateDirCommand.Stderr = os.Stderr
+		e = copyTemplateDirCommand.Run()
 
+		errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
+
+	}
 	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
 
