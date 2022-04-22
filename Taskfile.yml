@@ -16,14 +16,18 @@ tasks:
 
   mongo-operator:
     cmds:
-      - operator-sdk create api —-group crds --version v1 —-type helm —-helm-chart bitnami/mongodb —-kind MongoDB 
-
+      # - operator-sdk create api —-group crds --version v1 —-type helm —-helm-chart bitnami/mongodb —-kind MongoDB 
+        # operator-sdk init --plugins helm --domain example.com --group demo --version v1alpha1 --kind Nginx
+      # - operator-sdk create api --plugins=helm --group crds --version v1 --kind MongoDB --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
+      # - operator-sdk create api --plugins=helm --group crds --version v1 --kind MongoDB --helm-chart https://charts.bitnami.com/bitnami
+      # - operator-sdk create api --plugins=helm --group crds --version v1 --kind MongoDB --helm-chart bitnami/mongodb
+      - operator-sdk create api --plugins=helm --group crds --version v1 --kind MongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
   pre:
     run: once
     cmds:
       - make manifests
       - make generate
-      - task: applyss
+      - task: apply
 
   apply:
     run: once

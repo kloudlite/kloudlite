@@ -1,6 +1,7 @@
 domain: kloudlite.io
 layout:
 - go.kubebuilder.io/v3
+multigroup: true
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
@@ -60,5 +61,12 @@ resources:
   group: crds
   kind: Pipeline
   path: operators.kloudlite.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: MongoDB
   version: v1
 version: "3"
