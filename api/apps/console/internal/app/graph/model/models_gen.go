@@ -119,15 +119,16 @@ type CSEntryIn struct {
 }
 
 type Cluster struct {
-	ID         repos.ID  `json:"id"`
-	Name       string    `json:"name"`
-	Provider   string    `json:"provider"`
-	Region     string    `json:"region"`
-	IP         *string   `json:"ip"`
-	Devices    []*Device `json:"devices"`
-	NodesCount int       `json:"nodesCount"`
-	Status     string    `json:"status"`
-	Account    *Account  `json:"account"`
+	ID          repos.ID  `json:"id"`
+	Name        string    `json:"name"`
+	Provider    string    `json:"provider"`
+	Region      string    `json:"region"`
+	IP          *string   `json:"ip"`
+	Devices     []*Device `json:"devices"`
+	UserDevices []*Device `json:"userDevices"`
+	NodesCount  int       `json:"nodesCount"`
+	Status      string    `json:"status"`
+	Account     *Account  `json:"account"`
 }
 
 func (Cluster) IsEntity() {}
@@ -152,10 +153,12 @@ type ContainerResInput struct {
 }
 
 type Device struct {
-	ID      repos.ID `json:"id"`
-	User    *User    `json:"user"`
-	Name    string   `json:"name"`
-	Cluster *Cluster `json:"cluster"`
+	ID            repos.ID `json:"id"`
+	User          *User    `json:"user"`
+	Name          string   `json:"name"`
+	Cluster       *Cluster `json:"cluster"`
+	Configuration string   `json:"configuration"`
+	IP            string   `json:"ip"`
 }
 
 func (Device) IsEntity() {}
