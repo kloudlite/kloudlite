@@ -1,0 +1,11 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Router
+metadata:
+  name: sample-router
+  namespace: hotspot
+spec:
+  domains: ['abcd.kl.madhouselabs.io']
+  routes:
+    - app: auth-web-sdaf
+      path: /
+      port: 3000

@@ -6,4 +6,5 @@ resources:
 - crds_v1_managedservice.yaml
 - crds_v1_managedresource.yaml
 - crds_v1_pipeline.yaml
+- crds_v1_mongodb.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

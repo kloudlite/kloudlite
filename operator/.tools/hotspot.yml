@@ -4,12 +4,13 @@ local:
   services:
     - name: app
       image: operator:go1.17
-      working_dir: /tmp/app
+      working_dir: /home/nxtcoder17
       environment:
         GOPATH: "/tmp/go"
         GOCACHE: /tmp/go-cache
         KUBECONFIG: /tmp/kconfig
       volumes:
-        - './:/tmp/app'
+        - './:/home/nxtcoder17/operator'
         - '~/.kube/configs/dev-kloudlite.yml:/tmp/kconfig'
+        - '/tmp/hotspot-cache:/.config'
 kubeConfig: ~/.kube/configs/dev-kloudlite.yml
