@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
@@ -17,10 +18,11 @@ type Domain interface {
 	OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
 
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
+	GetDeviceConfig(ctx context.Context, id repos.ID) (string, error)
 	AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (dev *entities.Device, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
 	ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error)
-	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
+	ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID) ([]*entities.Device, error)
 	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
 
 	CreateProject(ctx context.Context, id repos.ID, projectName string, displayName string, logo *string, description *string) (*entities.Project, error)
@@ -80,6 +82,14 @@ type Domain interface {
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.App) error
 	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
+	InstallAppFlow(
+		ctx context.Context,
+		id repos.ID,
+		pipeline *model.GitPipelineInput,
+		app map[string]interface{},
+		configPatches map[string]interface{},
+		secretPatches map[string]interface{},
+	) (bool, error)
 }
 
 type InfraActionMessage interface {

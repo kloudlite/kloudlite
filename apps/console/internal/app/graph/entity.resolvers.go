@@ -20,7 +20,14 @@ func (r *entityResolver) FindClusterByID(ctx context.Context, id repos.ID) (*mod
 }
 
 func (r *entityResolver) FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error) {
-	return r.Query().InfraGetDevices(ctx, id)
+	device, err := r.Domain.GetDevice(ctx, id)
+	return &model.Device{
+		ID:      device.Id,
+		User:    &model.User{ID: device.UserId},
+		Name:    device.Name,
+		Cluster: &model.Cluster{ID: device.ClusterId},
+		IP:      device.Ip,
+	}, err
 }
 
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {

@@ -14,8 +14,8 @@ const (
 )
 
 type ExposedPort struct {
-	Port       int      `json:"port" bson:"port"`
-	TargetPort int      `json:"target_port" bson:"target_port"`
+	Port       int64    `json:"port" bson:"port"`
+	TargetPort int64    `json:"target_port" bson:"target_port"`
 	Type       PortType `json:"type" bson:"type"`
 }
 
@@ -30,13 +30,15 @@ type Limit struct {
 }
 
 type Container struct {
-	Name         string            `json:"name" bson:"name"`
-	Image        string            `json:"image" bson:"image"`
-	Command      []string          `json:"command" bson:"command"`
-	Args         []string          `json:"args" bson:"args"`
-	EnvVars      map[string]string `json:"env_vars" bson:"env_cars"`
-	CPULimits    Limit             `json:"cpu_limits" bson:"cpu_limits"`
-	MemoryLimits Limit             `json:"memory_limits" bson:"memory_limits"`
+	Name              string             `json:"name" bson:"name"`
+	Image             string             `json:"image" bson:"image"`
+	ImagePullSecret   string             `json:"pull_secret" bson:"pull_secret"`
+	Command           []string           `json:"command" bson:"command"`
+	Args              []string           `json:"args" bson:"args"`
+	EnvVars           map[string]string  `json:"env_vars" bson:"env_cars"`
+	CPULimits         Limit              `json:"cpu_limits" bson:"cpu_limits"`
+	MemoryLimits      Limit              `json:"memory_limits" bson:"memory_limits"`
+	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
 }
 
 type AppStatus string
@@ -49,17 +51,16 @@ const (
 )
 
 type App struct {
-	repos.BaseEntity  `bson:",inline"`
-	ProjectId         repos.ID           `json:"project_id" bson:"project_id"`
-	Name              string             `json:"name" bson:"name"`
-	Namespace         string             `json:"namespace" bson:"namespace"`
-	Description       string             `json:"description" bson:"description"`
-	Replicas          int                `json:"replicas" bson:"replicas"`
-	ExposedPorts      []ExposedPort      `json:"exposed_ports" bson:"exposed_ports"`
-	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
-	Containers        []Container        `json:"containers" bson:"containers"`
-	Status            AppStatus          `json:"status" bson:"status"`
-	Conditions        []metav1.Condition `json:"conditions" bson:"conditions"`
+	repos.BaseEntity `bson:",inline"`
+	ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
+	Name             string             `json:"name" bson:"name"`
+	Namespace        string             `json:"namespace" bson:"namespace"`
+	Description      string             `json:"description" bson:"description"`
+	Replicas         int                `json:"replicas" bson:"replicas"`
+	ExposedPorts     []ExposedPort      `json:"exposed_ports" bson:"exposed_ports"`
+	Containers       []Container        `json:"containers" bson:"containers"`
+	Status           AppStatus          `json:"status" bson:"status"`
+	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
 }
 
 var AppIndexes = []repos.IndexField{

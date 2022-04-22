@@ -52,13 +52,8 @@ func (c *consumer) Subscribe(cc context.Context) error {
 			msg, e := c.kafkaConsumer.ReadMessage(-1)
 			if e != nil {
 				c.logger.Errorf("could not read kafka message because %v", e)
+				continue
 			}
-
-			if e != nil {
-				c.logger.Errorf("could not read kafka message because %v", e)
-				//continue
-			}
-
 			e = c.callback(context.TODO(), *msg.TopicPartition.Topic, msg.Value)
 
 			if e != nil {
@@ -67,7 +62,6 @@ func (c *consumer) Subscribe(cc context.Context) error {
 					fmt.Errorf("failed to process message after 2 retries")
 				}
 			}
-			fmt.Println("committed msg...")
 			c.kafkaConsumer.CommitMessage(msg)
 		}
 	}()
