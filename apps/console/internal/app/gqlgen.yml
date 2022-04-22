@@ -59,7 +59,7 @@ models:
     fields:
       devices:
         resolver: true
-      configuration:
+      userDevices:
         resolver: true
   ManagedSvc:
     fields:

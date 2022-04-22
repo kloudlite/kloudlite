@@ -121,15 +121,16 @@ type ComplexityRoot struct {
 	}
 
 	Cluster struct {
-		Account    func(childComplexity int) int
-		Devices    func(childComplexity int) int
-		ID         func(childComplexity int) int
-		IP         func(childComplexity int) int
-		Name       func(childComplexity int) int
-		NodesCount func(childComplexity int) int
-		Provider   func(childComplexity int) int
-		Region     func(childComplexity int) int
-		Status     func(childComplexity int) int
+		Account     func(childComplexity int) int
+		Devices     func(childComplexity int) int
+		ID          func(childComplexity int) int
+		IP          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		NodesCount  func(childComplexity int) int
+		Provider    func(childComplexity int) int
+		Region      func(childComplexity int) int
+		Status      func(childComplexity int) int
+		UserDevices func(childComplexity int) int
 	}
 
 	Config struct {
@@ -147,10 +148,12 @@ type ComplexityRoot struct {
 	}
 
 	Device struct {
-		Cluster func(childComplexity int) int
-		ID      func(childComplexity int) int
-		Name    func(childComplexity int) int
-		User    func(childComplexity int) int
+		Cluster       func(childComplexity int) int
+		Configuration func(childComplexity int) int
+		ID            func(childComplexity int) int
+		IP            func(childComplexity int) int
+		Name          func(childComplexity int) int
+		User          func(childComplexity int) int
 	}
 
 	Entity struct {
@@ -200,7 +203,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CiDeleteGitPipeline    func(childComplexity int, pipelineID repos.ID) int
-		CoreCreateAppFlow      func(childComplexity int, projectID repos.ID, app map[string]interface{}, pipelines *model.GitPipelineInput, configs map[string]interface{}, secrets map[string]interface{}, mServices map[string]interface{}, mResources map[string]interface{}) int
+		CoreCreateAppFlow      func(childComplexity int, projectID repos.ID, pipeline *model.GitPipelineInput, app map[string]interface{}, configsPatches map[string]interface{}, secretPatches map[string]interface{}) int
 		CoreCreateConfig       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string) int
 		CoreCreateRouter       func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
@@ -221,7 +224,7 @@ type ComplexityRoot struct {
 		IamInviteProjectMember func(childComplexity int, projectID repos.ID, email string, name string, role string) int
 		IamRemoveProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID) int
 		IamUpdateProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
-		InfraAddDevice         func(childComplexity int, clusterID repos.ID, userID repos.ID, name string) int
+		InfraAddDevice         func(childComplexity int, clusterID repos.ID, name string) int
 		InfraCreateCluster     func(childComplexity int, name string, provider string, region string, nodesCount int) int
 		InfraDeleteCluster     func(childComplexity int, clusterID repos.ID) int
 		InfraRemoveDevice      func(childComplexity int, deviceID repos.ID) int
@@ -272,7 +275,6 @@ type ComplexityRoot struct {
 		CoreSecret                  func(childComplexity int, secretID repos.ID) int
 		CoreSecrets                 func(childComplexity int, projectID repos.ID, search *string) int
 		InfraGetCluster             func(childComplexity int, clusterID repos.ID) int
-		InfraGetDevices             func(childComplexity int, deviceID repos.ID) int
 		ManagedResGetResource       func(childComplexity int, resID repos.ID, nextVersion *bool) int
 		ManagedResListResources     func(childComplexity int, installationID repos.ID) int
 		ManagedSvcGetInstallation   func(childComplexity int, installationID repos.ID, nextVersion *bool) int
@@ -322,11 +324,13 @@ type AccountResolver interface {
 }
 type ClusterResolver interface {
 	Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error)
+	UserDevices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error)
 }
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
 
 	Cluster(ctx context.Context, obj *model.Device) (*model.Cluster, error)
+	Configuration(ctx context.Context, obj *model.Device) (string, error)
 }
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
@@ -347,7 +351,7 @@ type MutationResolver interface {
 	InfraCreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error)
 	InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (*model.Cluster, error)
 	InfraDeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error)
-	InfraAddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error)
+	InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error)
 	InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
 	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string) (*model.Project, error)
 	CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
@@ -357,7 +361,7 @@ type MutationResolver interface {
 	IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error)
 	GithubEvent(ctx context.Context, installationID repos.ID, sourceRepo string) (*bool, error)
 	GitlabEvent(ctx context.Context, email repos.ID, sourceRepo string) (*bool, error)
-	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app map[string]interface{}, pipelines *model.GitPipelineInput, configs map[string]interface{}, secrets map[string]interface{}, mServices map[string]interface{}, mResources map[string]interface{}) (*bool, error)
+	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, pipeline *model.GitPipelineInput, app map[string]interface{}, configsPatches map[string]interface{}, secretPatches map[string]interface{}) (bool, error)
 	CoreUpdateApp(ctx context.Context, appID repos.ID, name *string, description *string, service *model.AppServiceInput, replicas *int, containers *model.AppContainerIn) (*model.App, error)
 	CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error)
@@ -399,7 +403,6 @@ type QueryResolver interface {
 	ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error)
 	ManagedResListResources(ctx context.Context, installationID repos.ID) ([]*model.ManagedRes, error)
 	InfraGetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error)
-	InfraGetDevices(ctx context.Context, deviceID repos.ID) (*model.Device, error)
 }
 type UserResolver interface {
 	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
@@ -770,6 +773,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cluster.Status(childComplexity), true
 
+	case "Cluster.userDevices":
+		if e.complexity.Cluster.UserDevices == nil {
+			break
+		}
+
+		return e.complexity.Cluster.UserDevices(childComplexity), true
+
 	case "Config.description":
 		if e.complexity.Config.Description == nil {
 			break
@@ -833,12 +843,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Device.Cluster(childComplexity), true
 
+	case "Device.configuration":
+		if e.complexity.Device.Configuration == nil {
+			break
+		}
+
+		return e.complexity.Device.Configuration(childComplexity), true
+
 	case "Device.id":
 		if e.complexity.Device.ID == nil {
 			break
 		}
 
 		return e.complexity.Device.ID(childComplexity), true
+
+	case "Device.ip":
+		if e.complexity.Device.IP == nil {
+			break
+		}
+
+		return e.complexity.Device.IP(childComplexity), true
 
 	case "Device.name":
 		if e.complexity.Device.Name == nil {
@@ -1106,7 +1130,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateAppFlow(childComplexity, args["projectId"].(repos.ID), args["app"].(map[string]interface{}), args["pipelines"].(*model.GitPipelineInput), args["configs"].(map[string]interface{}), args["secrets"].(map[string]interface{}), args["mServices"].(map[string]interface{}), args["mResources"].(map[string]interface{})), true
+		return e.complexity.Mutation.CoreCreateAppFlow(childComplexity, args["projectId"].(repos.ID), args["pipeline"].(*model.GitPipelineInput), args["app"].(map[string]interface{}), args["configsPatches"].(map[string]interface{}), args["secretPatches"].(map[string]interface{})), true
 
 	case "Mutation.core_createConfig":
 		if e.complexity.Mutation.CoreCreateConfig == nil {
@@ -1358,7 +1382,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraAddDevice(childComplexity, args["clusterId"].(repos.ID), args["userId"].(repos.ID), args["name"].(string)), true
+		return e.complexity.Mutation.InfraAddDevice(childComplexity, args["clusterId"].(repos.ID), args["name"].(string)), true
 
 	case "Mutation.infra_createCluster":
 		if e.complexity.Mutation.InfraCreateCluster == nil {
@@ -1792,18 +1816,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetCluster(childComplexity, args["clusterId"].(repos.ID)), true
 
-	case "Query.infra_getDevices":
-		if e.complexity.Query.InfraGetDevices == nil {
-			break
-		}
-
-		args, err := ec.field_Query_infra_getDevices_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.InfraGetDevices(childComplexity, args["deviceId"].(repos.ID)), true
-
 	case "Query.managedRes_getResource":
 		if e.complexity.Query.ManagedResGetResource == nil {
 			break
@@ -2107,7 +2119,6 @@ type Query {
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
   infra_getCluster(clusterId: ID!): Cluster
-  infra_getDevices(deviceId: ID!): Device
 }
 
 type ManagedRes {
@@ -2151,7 +2162,7 @@ type Mutation {
   infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
   infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
   infra_deleteCluster(clusterId: ID!): Boolean!
-  infra_addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
+  infra_addDevice(clusterId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
 
   core_createProject(accountId: ID!, name: String!, displayName: String!, logo: String, description: String): Project!
@@ -2168,13 +2179,11 @@ type Mutation {
   # App
   core_createAppFlow(
     projectId: ID!,
+    pipeline: GitPipelineInput,
     app: Json!,
-    pipelines: GitPipelineInput,
-    configs: Json,
-    secrets: Json,
-    mServices: Json,
-    mResources: Json
-  ): Boolean
+    configsPatches: Json,
+    secretPatches: Json,
+  ): Boolean!
   core_updateApp(appId: ID!, name: String, description: String, service: AppServiceInput, replicas: Int, containers: AppContainerIN): App!
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
@@ -2441,6 +2450,7 @@ type Cluster @key(fields: "id") {
   region: String!
   ip: String
   devices: [Device]
+  userDevices: [Device]
   nodesCount: Int!
   status: String!
   account: Account!
@@ -2451,6 +2461,8 @@ type Device @key(fields: "id") {
   user: User!
   name: String!
   cluster: Cluster!
+  configuration: String!
+  ip: String!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -2579,60 +2591,42 @@ func (ec *executionContext) field_Mutation_core_createAppFlow_args(ctx context.C
 		}
 	}
 	args["projectId"] = arg0
-	var arg1 map[string]interface{}
+	var arg1 *model.GitPipelineInput
+	if tmp, ok := rawArgs["pipeline"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pipeline"))
+		arg1, err = ec.unmarshalOGitPipelineInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pipeline"] = arg1
+	var arg2 map[string]interface{}
 	if tmp, ok := rawArgs["app"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg1, err = ec.unmarshalNJson2map(ctx, tmp)
+		arg2, err = ec.unmarshalNJson2map(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["app"] = arg1
-	var arg2 *model.GitPipelineInput
-	if tmp, ok := rawArgs["pipelines"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pipelines"))
-		arg2, err = ec.unmarshalOGitPipelineInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pipelines"] = arg2
+	args["app"] = arg2
 	var arg3 map[string]interface{}
-	if tmp, ok := rawArgs["configs"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configs"))
+	if tmp, ok := rawArgs["configsPatches"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configsPatches"))
 		arg3, err = ec.unmarshalOJson2map(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["configs"] = arg3
+	args["configsPatches"] = arg3
 	var arg4 map[string]interface{}
-	if tmp, ok := rawArgs["secrets"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secrets"))
+	if tmp, ok := rawArgs["secretPatches"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretPatches"))
 		arg4, err = ec.unmarshalOJson2map(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["secrets"] = arg4
-	var arg5 map[string]interface{}
-	if tmp, ok := rawArgs["mServices"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mServices"))
-		arg5, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["mServices"] = arg5
-	var arg6 map[string]interface{}
-	if tmp, ok := rawArgs["mResources"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mResources"))
-		arg6, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["mResources"] = arg6
+	args["secretPatches"] = arg4
 	return args, nil
 }
 
@@ -3281,24 +3275,15 @@ func (ec *executionContext) field_Mutation_infra_addDevice_args(ctx context.Cont
 		}
 	}
 	args["clusterId"] = arg0
-	var arg1 repos.ID
-	if tmp, ok := rawArgs["userId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userId"] = arg1
-	var arg2 string
+	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -4052,21 +4037,6 @@ func (ec *executionContext) field_Query_infra_getCluster_args(ctx context.Contex
 		}
 	}
 	args["clusterId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_infra_getDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["deviceId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceId"] = arg0
 	return args, nil
 }
 
@@ -5789,6 +5759,38 @@ func (ec *executionContext) _Cluster_devices(ctx context.Context, field graphql.
 	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Cluster_userDevices(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Cluster().UserDevices(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Device)
+	fc.Result = res
+	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Cluster_nodesCount(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6309,6 +6311,76 @@ func (ec *executionContext) _Device_cluster(ctx context.Context, field graphql.C
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_configuration(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Device().Configuration(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_ip(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IP, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7762,7 +7834,7 @@ func (ec *executionContext) _Mutation_infra_addDevice(ctx context.Context, field
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraAddDevice(rctx, args["clusterId"].(repos.ID), args["userId"].(repos.ID), args["name"].(string))
+		return ec.resolvers.Mutation().InfraAddDevice(rctx, args["clusterId"].(repos.ID), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8176,18 +8248,21 @@ func (ec *executionContext) _Mutation_core_createAppFlow(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreCreateAppFlow(rctx, args["projectId"].(repos.ID), args["app"].(map[string]interface{}), args["pipelines"].(*model.GitPipelineInput), args["configs"].(map[string]interface{}), args["secrets"].(map[string]interface{}), args["mServices"].(map[string]interface{}), args["mResources"].(map[string]interface{}))
+		return ec.resolvers.Mutation().CoreCreateAppFlow(rctx, args["projectId"].(repos.ID), args["pipeline"].(*model.GitPipelineInput), args["app"].(map[string]interface{}), args["configsPatches"].(map[string]interface{}), args["secretPatches"].(map[string]interface{}))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10154,45 +10229,6 @@ func (ec *executionContext) _Query_infra_getCluster(ctx context.Context, field g
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_infra_getDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_infra_getDevices_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetDevices(rctx, args["deviceId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Device)
-	fc.Result = res
-	return ec.marshalODevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -13454,6 +13490,23 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
+		case "userDevices":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Cluster_userDevices(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "nodesCount":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Cluster_nodesCount(ctx, field, obj)
@@ -13684,6 +13737,36 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 				return innerFunc(ctx)
 
 			})
+		case "configuration":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Device_configuration(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "ip":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Device_ip(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14351,6 +14434,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "core_updateApp":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_updateApp(ctx, field)
@@ -15215,26 +15301,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_infra_getCluster(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "infra_getDevices":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_infra_getDevices(ctx, field)
 				return res
 			}
 

@@ -6,11 +6,14 @@ package graph
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/cache"
 	wErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
@@ -60,9 +63,30 @@ func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*m
 	for i, d := range deviceEntities {
 		devices[i] = &model.Device{
 			ID:      d.Id,
+			User:    &model.User{ID: d.UserId},
 			Name:    d.Name,
 			Cluster: cluster,
+			IP:      d.Ip,
 		}
+	}
+	return devices, e
+}
+
+func (r *clusterResolver) UserDevices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error) {
+	var e error
+	defer wErrors.HandleErr(&e)
+	user := obj
+	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID), &obj.ID)
+	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
+	devices := make([]*model.Device, 0)
+	for _, device := range deviceEntities {
+		devices = append(devices, &model.Device{
+			ID:      device.Id,
+			User:    &model.User{ID: user.ID},
+			Name:    device.Name,
+			Cluster: &model.Cluster{ID: device.ClusterId},
+			IP:      device.Ip,
+		})
 	}
 	return devices, e
 }
@@ -96,6 +120,10 @@ func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model
 		NodesCount: clusterEntity.NodesCount,
 		Status:     string(clusterEntity.Status),
 	}, nil
+}
+
+func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
+	return r.Domain.GetDeviceConfig(ctx, obj.ID)
 }
 
 func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error) {
@@ -168,8 +196,24 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, clusterID rep
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error) {
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	device, err := r.Domain.AddDevice(ctx, name, clusterID, session.UserId)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Device{
+		ID:   device.Id,
+		User: &model.User{ID: session.UserId},
+		Name: device.Name,
+		Cluster: &model.Cluster{
+			ID: clusterID,
+		},
+		IP: device.Ip,
+	}, nil
 }
 
 func (r *mutationResolver) InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error) {
@@ -212,8 +256,8 @@ func (r *mutationResolver) GitlabEvent(ctx context.Context, email repos.ID, sour
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app map[string]interface{}, pipelines *model.GitPipelineInput, configs map[string]interface{}, secrets map[string]interface{}, mServices map[string]interface{}, mResources map[string]interface{}) (*bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, pipeline *model.GitPipelineInput, app map[string]interface{}, configsPatches map[string]interface{}, secretPatches map[string]interface{}) (bool, error) {
+	return r.Domain.InstallAppFlow(ctx, projectID, pipeline, app, configsPatches, secretPatches)
 }
 
 func (r *mutationResolver) CoreUpdateApp(ctx context.Context, appID repos.ID, name *string, description *string, service *model.AppServiceInput, replicas *int, containers *model.AppContainerIn) (*model.App, error) {
@@ -486,21 +530,20 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, clusterID repos.ID)
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) InfraGetDevices(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
 	user := obj
-	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID))
+	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID), nil)
 	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
 		devices = append(devices, &model.Device{
-			ID:   device.Id,
-			Name: device.Name,
+			ID:      device.Id,
+			User:    &model.User{ID: user.ID},
+			Name:    device.Name,
+			Cluster: &model.Cluster{ID: device.ClusterId},
+			IP:      device.Ip,
 		})
 	}
 	return devices, e

@@ -30,30 +30,4 @@ var DeviceIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "cluster_id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "user_id", Value: repos.IndexAsc},
-		},
-		Unique: false,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "ip", Value: repos.IndexAsc},
-			{Key: "cluster_id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "index", Value: repos.IndexAsc},
-			{Key: "cluster_id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
 }

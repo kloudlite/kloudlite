@@ -37,7 +37,6 @@ type Query {
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
   infra_getCluster(clusterId: ID!): Cluster
-  infra_getDevices(deviceId: ID!): Device
 }
 
 type ManagedRes {
@@ -81,7 +80,7 @@ type Mutation {
   infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
   infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
   infra_deleteCluster(clusterId: ID!): Boolean!
-  infra_addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
+  infra_addDevice(clusterId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
 
   core_createProject(accountId: ID!, name: String!, displayName: String!, logo: String, description: String): Project!
@@ -98,13 +97,11 @@ type Mutation {
   # App
   core_createAppFlow(
     projectId: ID!,
+    pipeline: GitPipelineInput,
     app: Json!,
-    pipelines: GitPipelineInput,
-    configs: Json,
-    secrets: Json,
-    mServices: Json,
-    mResources: Json
-  ): Boolean
+    configsPatches: Json,
+    secretPatches: Json,
+  ): Boolean!
   core_updateApp(appId: ID!, name: String, description: String, service: AppServiceInput, replicas: Int, containers: AppContainerIN): App!
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
@@ -371,6 +368,7 @@ type Cluster @key(fields: "id") {
   region: String!
   ip: String
   devices: [Device]
+  userDevices: [Device]
   nodesCount: Int!
   status: String!
   account: Account!
@@ -381,4 +379,6 @@ type Device @key(fields: "id") {
   user: User!
   name: String!
   cluster: Cluster!
+  configuration: String!
+  ip: String!
 }
