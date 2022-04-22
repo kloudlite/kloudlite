@@ -14,7 +14,7 @@ RUN chmod +x /tmp/bin/infra
 
 FROM alpine
 
-RUN apk update && apk add curl openssh terraform
+RUN apk update && apk add curl openssh terraform bash
 RUN curl -sLS https://get.k3sup.dev | sh
 
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
