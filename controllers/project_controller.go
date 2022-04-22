@@ -13,7 +13,6 @@ import (
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	_ "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,6 +21,7 @@ import (
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
+	"operators.kloudlite.io/lib/finalizers"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,10 +50,6 @@ const (
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
-const projectFinalizer = "finalizers.kloudlite.io/project"
-const coolingTime = 5
-const FieldManager = "kl-operator"
-
 const ImagePullSecretName = "kloudlite-docker-registry"
 
 func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -76,7 +72,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if project.IsNewGeneration() {
 		r.logger.Debugf("project.IsNewGeneration()")
 		if project.Status.NamespaceCheck.IsRunning() {
-			return reconcileResult.Retry(minCoolingTime)
+			return reconcileResult.Retry()
 		}
 
 		project.DefaultStatus()
@@ -87,6 +83,16 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		r.logger.Debugf("project.Status.NamespaceCheck.ShouldCheck()")
 		project.Status.NamespaceCheck.SetStarted()
 
+		ns := corev1.Namespace{
+			TypeMeta: TypeNamespace,
+			ObjectMeta: metav1.ObjectMeta{
+				Name: project.Name,
+			},
+		}
+
+		controllerutil.CreateOrUpdate(ctx, r.Client, &ns, func() error {
+			return nil
+		})
 		err := r.apply(ctx, &corev1.Namespace{}, &corev1.Namespace{
 			TypeMeta: TypeNamespace,
 			ObjectMeta: metav1.ObjectMeta{
@@ -259,7 +265,7 @@ func (r *ProjectReconciler) updateStatus(ctx context.Context, project *crdsv1.Pr
 func (r *ProjectReconciler) finalizeProject(ctx context.Context, project *crdsv1.Project) (ctrl.Result, error) {
 	logger := r.logger.With("FINALIZER", "true")
 	logger.Debug("finalizing ...")
-	if !controllerutil.ContainsFinalizer(project, projectFinalizer) {
+	if !controllerutil.ContainsFinalizer(project, finalizers.Project.String()) {
 		if controllerutil.ContainsFinalizer(project, foregroundFinalizer) {
 
 			//TODO: check if namespace has been deleted
@@ -303,8 +309,8 @@ func (r *ProjectReconciler) finalizeProject(ctx context.Context, project *crdsv1
 		return reconcileResult.OK()
 	}
 
-	logger.Infof("Removing projectfinalizer (%s) ...", projectFinalizer)
-	controllerutil.RemoveFinalizer(project, projectFinalizer)
+	logger.Infof("Removing projectfinalizer (%s) ...", finalizers.Project.String())
+	controllerutil.RemoveFinalizer(project, finalizers.Project.String())
 	logger.Infof("finalizers: %+v", project.GetFinalizers())
 	err := r.Update(ctx, project)
 	if err != nil {
