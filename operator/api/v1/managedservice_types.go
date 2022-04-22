@@ -7,21 +7,16 @@ import (
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	// Values define the managed services values that correspond to a particular templateId
-	Values string `json:"values"`
-
-	// managed svc template Id
-	TemplateName string `json:"templateName"`
+	// Operations
+	Operations Operations `json:"operations"`
+	// Input fields
+	Inputs map[string]string `json:"inputs"`
+	// Output Fields
+	Outputs []Output `json:"outputs"`
 }
 
 // ManagedServiceStatus defines the observed state of ManagedService
 type ManagedServiceStatus struct {
-	// Job                  *ReconJob          `json:"job,omitempty"`
-	// JobCompleted         *bool              `json:"jobCompleted,omitempty"`
-	// DependencyChecked    *map[string]string `json:"dependencyChecked,omitempty"`
-	// DeletionJob          *ReconJob          `json:"deletionJob,omitempty"`
-	// DeletionJobCompleted *bool              `json:"deletionJobCompleted,omitempty"`
-	// NEW
 	Generation     int64              `json:"generation,omitempty"`
 	ApplyJobCheck  Recon              `json:"apply_job_check,omitempty"`
 	DeleteJobCheck Recon              `json:"delete_job_check,omitempty"`

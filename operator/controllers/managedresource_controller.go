@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +16,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/yaml"
 
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
@@ -85,9 +83,6 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	if !mres.Status.ManagedSvcDepCheck.Status {
 		r.logger.Debugf("ManagedSvc Dependency Check failed ..., would retry soon")
 		if mres.Status.ManagedSvcDepCheck.ShouldRetry(maxCoolingTime) {
-			mres.Status.ManagedSvcDepCheck = crdsv1.Recon{
-				// LastChecked: time.Now().Unix(),
-			}
 			return r.updateStatus(ctx, mres)
 		}
 		return reconcileResult.Retry(1)
@@ -103,27 +98,14 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			return r.updateStatus(ctx, mres)
 		}
 
-		action := "create"
-		if mres.Generation > 1 {
-			action = "update"
-		}
-
-		dockerI, err := r.getDockerImage(ctx, mres, action)
-		if err != nil {
-			e := errors.NewEf(err, "could not find docker image for maagedSvc=%s action=%s", mres.Spec.ManagedSvc, action)
-			r.logger.Error(e)
-			mres.Status.ApplyJobCheck.SetFinishedWith(false, e.Error())
-			return r.updateStatus(ctx, mres)
-		}
-
 		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
-			Name:            "create-job",
-			Namespace:       "hotspot",
-			ServiceAccount:  "hotspot-cluster-svc-account",
-			Image:           dockerI,
+			Name:            fmt.Sprintf("create-job-%s", mres.Name),
+			Namespace:       mres.Namespace,
+			ServiceAccount:  SvcAccountName,
+			Image:           mres.Spec.Operations.Apply,
 			ImagePullPolicy: "Always",
 			Args: []string{
-				action,
+				"apply",
 				"--name", mres.Name,
 				"--namespace", mres.Namespace,
 				"--spec", string(specB),
@@ -201,17 +183,11 @@ func (r *ManagedResourceReconciler) finalizeMres(ctx context.Context, mres *crds
 			return r.updateStatus(ctx, mres)
 		}
 
-		dockerI, err := r.getDockerImage(ctx, mres, "delete")
-		if err != nil {
-			mres.Status.DeleteJobCheck.SetFinishedWith(false, errors.NewEf(err, "could not find docker image form(msvc=%s) for action=delete", mres.Spec.ManagedSvc).Error())
-			return r.updateStatus(ctx, mres)
-		}
-
 		job, err := r.JobMgr.Create(ctx, "hotspot", &lib.JobVars{
-			Name:            "delete-job",
-			Namespace:       "hotspot",
-			ServiceAccount:  "hotspot-cluster-svc-account",
-			Image:           dockerI,
+			Name:            fmt.Sprintf("delete-job-%s", mres.Name),
+			Namespace:       mres.Namespace,
+			ServiceAccount:  SvcAccountName,
+			Image:           mres.Spec.Operations.Delete,
 			ImagePullPolicy: "Always",
 			Args: []string{
 				"delete",
@@ -266,54 +242,6 @@ func (r *ManagedResourceReconciler) finalizeMres(ctx context.Context, mres *crds
 	return reconcileResult.OK()
 }
 
-func (r *ManagedResourceReconciler) getDockerImage(ctx context.Context, mres *crdsv1.ManagedResource, action string) (string, error) {
-	var m crdsv1.ManagedService
-	if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: mres.Spec.ManagedSvc}, &m); err != nil {
-		return "", errors.NewEf(err, "could not get managedsvc(%s) for this resource", mres.Spec.ManagedSvc)
-	}
-
-	// READ configMap
-	var cfg corev1.ConfigMap
-	if err := r.Get(ctx, types.NamespacedName{Namespace: "hotspot", Name: "available-msvc"}, &cfg); err != nil {
-		return "", errors.NewEf(err, "Could not get available managed svc list")
-	}
-
-	var msvcT MSvcTemplate
-	err := yaml.Unmarshal([]byte(cfg.Data[m.Spec.TemplateName]), &msvcT)
-
-	if err != nil {
-		return "", errors.NewEf(err, "could not YAML unmarshal services into MsvcTemplate")
-	}
-
-	var res *MresTemplate
-	for _, item := range msvcT.Resources {
-		if item.Type == mres.Spec.Type {
-			res = &item
-			break
-		}
-	}
-	if res == nil {
-		return "", errors.Newf("could not find resource(%s) in svc(%s) definition", mres.Name, m.Spec.TemplateName)
-	}
-
-	switch action {
-	case "create":
-		{
-			return res.Operations.Create, nil
-		}
-	case "update":
-		{
-			return res.Operations.Update, nil
-		}
-	case "delete":
-		{
-			return res.Operations.Update, nil
-		}
-	default:
-		return "", errors.Newf("unknown action should be one of create|update|delete")
-	}
-}
-
 func (r *ManagedResourceReconciler) updateStatus(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {
 	mres.BuildConditions()
 	if err := r.Status().Update(ctx, mres); err != nil {
@@ -322,7 +250,7 @@ func (r *ManagedResourceReconciler) updateStatus(ctx context.Context, mres *crds
 		// return reconcileResult.RetryE(0, errors.StatusUpdate(err))
 	}
 	r.logger.Debug("ManagedResource has been updated")
-	return reconcileResult.Retry(0)
+	return reconcileResult.Retry()
 }
 
 // SetupWithManager sets up the controller with the Manager.

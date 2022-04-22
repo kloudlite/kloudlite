@@ -9,9 +9,12 @@ import (
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	Type       string `json:"type"`
-	ManagedSvc string `json:"managedSvc"`
-	Values     string `json:"values,omitempty"`
+	Type       string            `json:"type"`
+	ManagedSvc string            `json:"managedSvc"`
+	Values     string            `json:"values,omitempty"`
+	Operations Operations        `json:"operations"`
+	Inputs     map[string]string `json:"inputs"`
+	Outputs    []Output          `json:"outputs"`
 }
 
 // ManagedResourceStatus defines the observed state of ManagedResource
