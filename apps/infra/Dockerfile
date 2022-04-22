@@ -17,6 +17,11 @@ FROM alpine
 RUN apk update && apk add curl openssh terraform
 RUN curl -sLS https://get.k3sup.dev | sh
 
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
+RUN chmod +x ./kubectl
+RUN mv ./kubectl /usr/local/bin/kubectl
+# kubectl version --client
+
 RUN mkdir -p /home/hotspot
 
 RUN adduser \
