@@ -14,12 +14,16 @@ tasks:
       - ./**/*.go
     method: timestamp
 
+  mongo-operator:
+    cmds:
+      - operator-sdk create api —-group crds --version v1 —-type helm —-helm-chart bitnami/mongodb —-kind MongoDB 
+
   pre:
     run: once
     cmds:
       - make manifests
       - make generate
-      - task: apply
+      - task: applyss
 
   apply:
     run: once

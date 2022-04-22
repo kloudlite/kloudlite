@@ -18,6 +18,8 @@ func GetLogger(name types.NamespacedName) *zap.SugaredLogger {
 	)
 }
 
+const ImagePullSecretName = "kloudlite-docker-registry"
+
 const maxCoolingTime = 5
 const minCoolingTime = 2
 const semiCoolingTime = 2
