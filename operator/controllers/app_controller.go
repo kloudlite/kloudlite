@@ -21,6 +21,7 @@ import (
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
+	"operators.kloudlite.io/lib/finalizers"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,12 +49,6 @@ type AppReconciler struct {
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
-
-const maxCoolingTime = 5
-const semiCoolingTime = 2
-const minCoolingTime = 0
-
-const appFinalizer = "finalizers.kloudlite.io/app"
 
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx).WithValues("resourceName:", req.Name, "namespace:", req.Namespace)
@@ -215,7 +210,7 @@ func (r *AppReconciler) updateStatus(ctx context.Context, app *crdsv1.App) (ctrl
 
 func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.Result, error) {
 	logger := r.logger.With("FINALIZER", "true")
-	if controllerutil.ContainsFinalizer(app, appFinalizer) {
+	if controllerutil.ContainsFinalizer(app, finalizers.App.String()) {
 		// STEP: cleaning currently executing jobs
 		if app.Status.ApplyJob.IsRunning() {
 			r.logger.Debugf("[Finalizer]: killing app.Status.ApplyJob.IsRunning()")
@@ -286,16 +281,16 @@ func (r *AppReconciler) finalizeApp(ctx context.Context, app *crdsv1.App) (ctrl.
 				return r.updateStatus(ctx, app)
 			}
 
-			return reconcileResult.Retry(minCoolingTime)
+			return reconcileResult.Retry()
 		}
 
 		r.logger.Debug("[Finalizer]: all deletion checks completed ...")
-		controllerutil.RemoveFinalizer(app, appFinalizer)
+		controllerutil.RemoveFinalizer(app, finalizers.App.String())
 		err := r.Update(ctx, app)
 		if err != nil {
 			eMsg := errors.NewEf(err, "could not remove finalizers from app")
 			r.logger.Error(eMsg)
-			return reconcileResult.RetryE(minCoolingTime, eMsg)
+			return reconcileResult.Retry()
 		}
 
 		return reconcileResult.OK()

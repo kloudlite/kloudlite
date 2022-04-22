@@ -18,6 +18,10 @@ func GetLogger(name types.NamespacedName) *zap.SugaredLogger {
 	)
 }
 
+const maxCoolingTime = 5
+const minCoolingTime = 2
+const semiCoolingTime = 2
+
 const NamespaceAdminRole = "kloudlite-ns-admin"
 const NamespaceAdminRoleBinding = "kloudlite-ns-admin"
 const SvcAccountName = "kloudlite-svc-account"

@@ -12,12 +12,14 @@ type routes struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Domains     []string `json:"domains"`
-	Routes      []routes `json:"routes"`
+	Domains []string `json:"domains"`
+	Routes  []routes `json:"routes"`
 }
 
 // RouterStatus defines the observed state of Router
 type RouterStatus struct {
+	IngressCheck Recon              `json:"ingress_check"`
+	Conditions   []metav1.Condition `json:"conditions"`
 }
 
 //+kubebuilder:object:root=true
