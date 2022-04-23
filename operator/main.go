@@ -27,6 +27,9 @@ import (
 	"operators.kloudlite.io/lib/errors"
 
 	"go.uber.org/fx"
+
+	mresv1 "operators.kloudlite.io/apis/mres/v1"
+	mrescontrollers "operators.kloudlite.io/controllers/mres"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -39,6 +42,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
+	utilruntime.Must(mresv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 func fromEnv(key string) string {
@@ -54,7 +58,7 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8089", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":9081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -163,15 +167,15 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	// if err = (&controllers.ManagedResourceReconciler{
-	// 	Client:    mgr.GetClient(),
-	// 	Scheme:    mgr.GetScheme(),
-	// 	ClientSet: clientset,
-	// 	JobMgr:    lib.NewJobber(clientset),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.ManagedResourceReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		ClientSet: clientset,
+		JobMgr:    lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
+		os.Exit(1)
+	}
 
 	// if err = (&controllers.PipelineReconciler{
 	// 	Client: mgr.GetClient(),
@@ -180,6 +184,13 @@ func main() {
 	// 	setupLog.Error(err, "unable to create controller", "controller", "Pipeline")
 	// 	os.Exit(1)
 	// }
+	if err = (&mrescontrollers.MongoDatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MongoDatabase")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

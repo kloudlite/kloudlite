@@ -1,0 +1,6 @@
+# Use the 'create api' subcommand to add watches to this file.
+- group: crds.kloudlite.io
+  version: v1
+  kind: MongoDB
+  chart: helm-charts/mongodb
+#+kubebuilder:scaffold:watch

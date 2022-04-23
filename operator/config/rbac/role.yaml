@@ -161,3 +161,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - mres.kloudlite.io
+  resources:
+  - mongodatabases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mres.kloudlite.io
+  resources:
+  - mongodatabases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mres.kloudlite.io
+  resources:
+  - mongodatabases/status
+  verbs:
+  - get
+  - patch
+  - update

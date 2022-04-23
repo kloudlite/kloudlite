@@ -3,4 +3,6 @@
 # It should be run by config/default
 resources:
 - bases/crds.kloudlite.io_mongodbs.yaml
+- bases/mres.kloudlite.io_mongodb-databases.yaml
+- bases/mres.kloudlite.io_mongodatabases.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

@@ -1,0 +1,13 @@
+apiVersion: crds.kloudlite.io/v1
+kind: MongoDB
+metadata:
+  name: sample-mongo
+  namespace: hotspot
+spec:
+  auth:
+    enabled: true
+    rootPassword: sample
+  # nameOverride: db
+  fullnameOverride: sample-mongo
+  service:
+    nameOverride: svc
