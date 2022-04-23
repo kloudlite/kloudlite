@@ -29,7 +29,7 @@ type Router struct {
 type Route struct {
 	Path    string `bson:"path" json:"path"`
 	AppName string `bson:"app" json:"app"`
-	Port    string `bson:"port" json:"port"`
+	Port    uint16 `bson:"port" json:"port"`
 }
 
 var RouterIndexes = []repos.IndexField{

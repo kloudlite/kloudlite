@@ -3,7 +3,6 @@ package graph
 import (
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	"strconv"
 )
 
 func projectModelFromEntity(projectEntity *entities.Project) *model.Project {
@@ -39,12 +38,10 @@ func configModelFromEntity(configEntity *entities.Config) *model.Config {
 func routerModelFromEntity(routerEntity *entities.Router) *model.Router {
 	entries := make([]*model.Route, 0)
 	for _, e := range routerEntity.Routes {
-		atoi, _ := strconv.Atoi(e.Port)
-		// TODO: handle error
 		entries = append(entries, &model.Route{
 			Path:    e.Path,
 			AppName: e.AppName,
-			Port:    atoi,
+			Port:    int(e.Port),
 		})
 	}
 	d := routerEntity.Domains

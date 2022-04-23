@@ -31,10 +31,12 @@ import (
 )
 
 type Env struct {
-	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC"`
-	KafkaInfraResponseTopic string `env:"KAFKA_INFRA_RESP_TOPIC"`
-	KafkaConsumerGroupId    string `env:"KAFKA_GROUP_ID"`
-	CookieDomain            string `env:"COOKIE_DOMAIN"`
+	KafkaInfraTopic            string `env:"KAFKA_INFRA_TOPIC"`
+	KafkaInfraResponseTopic    string `env:"KAFKA_INFRA_RESP_TOPIC"`
+	KafkaWorkloadTopic         string `env:"KAFKA_WORKLOAD_TOPIC"`
+	KafkaWorkloadResponseTopic string `env:"KAFKA_WORKLOAD_RESP_TOPIC"`
+	KafkaConsumerGroupId       string `env:"KAFKA_GROUP_ID"`
+	CookieDomain               string `env:"COOKIE_DOMAIN"`
 }
 
 type InfraEventConsumer messaging.Consumer
@@ -58,6 +60,12 @@ var Module = fx.Module(
 		}),
 		fx.Provide(func(env *Env, p messaging.Producer[messaging.Json]) domain.InfraMessenger {
 			return &infraMessengerImpl{
+				env:      env,
+				producer: p,
+			}
+		}),
+		fx.Provide(func(env *Env, p messaging.Producer[messaging.Json]) domain.WorkloadMessenger {
+			return &workloadMessengerImpl{
 				env:      env,
 				producer: p,
 			}

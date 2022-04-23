@@ -20,8 +20,8 @@ type ExposedPort struct {
 }
 
 type AttachedResource struct {
-	ResourceId repos.ID          `json:"resource_id" bson:"resource_id"`
-	EnvVars    map[string]string `json:"env_vars" bson:"env_vars"`
+	ResourceId repos.ID                 `json:"resource_id" bson:"resource_id"`
+	EnvVars    []map[string]interface{} `json:"env_vars" bson:"env_vars"`
 }
 
 type Limit struct {

@@ -18,7 +18,7 @@ type ManagedServiceTemplate struct {
 	LogoUrl     string                    `yaml:"logoUrl" json:"logo_url"`
 	DisplayName string                    `yaml:"displayName" json:"display_name"`
 	Fields      []TemplateField           `yaml:"fields" json:"fields"`
-	Output      []TemplateOutput          `yaml:"output" json:"output"`
+	Outputs     []TemplateOutput          `yaml:"outputs" json:"outputs"`
 	Resources   []ManagedResourceTemplate `yaml:"resources" json:"resources"`
 	Active      bool                      `yaml:"active" json:"active"`
 	Description string                    `yaml:"description" json:"description"`
@@ -47,4 +47,5 @@ type ManagedResourceTemplate struct {
 	Name        string           `yaml:"name" json:"name"`
 	DisplayName string           `yaml:"displayName" json:"display_name"`
 	Fields      []*TemplateField `yaml:"fields" json:"fields"`
+	Outputs     []TemplateOutput `yaml:"outputs" json:"outputs"`
 }

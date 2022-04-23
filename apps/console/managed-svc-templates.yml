@@ -52,15 +52,11 @@
               required: true
           outputs:
             - name: DB_USER
-              label: MongoRoot User
+              label: Username
             - name: DB_PASSWORD
-              label: MongoRoot Password
-            - name: HOSTS
-              description: DB Hosts
+              label: Password
             - name: DB_URL
-              description: DB URL
-            - name: JSON
-              description: Configuration JSON
+              label: Connection String
     - name: mongo_standalone
       logoUrl: https://img.icons8.com/color/344/mongodb.png
       displayName: MongoDB Standalone
