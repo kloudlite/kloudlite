@@ -100,6 +100,10 @@ type InfraMessenger interface {
 	SendAction(action any) error
 }
 
+type WorkloadMessenger interface {
+	SendAction(action string, resId string, res any) error
+}
+
 func SendAction[T InfraActionMessage](i InfraMessenger, action T) error {
 	return i.SendAction(action)
 }
