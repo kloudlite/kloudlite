@@ -95,24 +95,6 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			},
 		}
 		ing.Spec.Rules = ingRules
-		// ingress := networkingv1.Ingress{
-		// 	TypeMeta: TypeIngress,
-		// 	ObjectMeta: metav1.ObjectMeta{
-		// 		Namespace:   router.Namespace,
-		// 		Name:        router.Name,
-		// 		Annotations: IngressAnnotations,
-		// 	},
-		// 	Spec: networkingv1.IngressSpec{
-		// 		TLS: []networkingv1.IngressTLS{
-		// 			{
-		// 				Hosts:      router.Spec.Domains,
-		// 				SecretName: fmt.Sprintf("%s-router-tls", router.Name),
-		// 			},
-		// 		},
-		// 		Rules: ingRules,
-		// 	},
-		// 	Status: networkingv1.IngressStatus{},
-		// }
 		if err := controllerutil.SetControllerReference(router, ing, r.Scheme); err != nil {
 			logger.Info("could not set controller references")
 			return err

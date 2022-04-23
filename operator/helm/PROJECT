@@ -11,6 +11,6 @@ resources:
     namespaced: true
   domain: kloudlite.io
   group: crds
-  kind: MongoDB
+  kind: MongoDBHelm
   version: v1
 version: "3"

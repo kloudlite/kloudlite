@@ -1,13 +1,13 @@
-# permissions for end users to view mongodbs.
+# permissions for end users to view mongodbhelms.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mongodb-viewer-role
+  name: mongodbhelm-viewer-role
 rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - mongodbs
+  - mongodbhelms
   verbs:
   - get
   - list
@@ -15,6 +15,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - mongodbs/status
+  - mongodbhelms/status
   verbs:
   - get

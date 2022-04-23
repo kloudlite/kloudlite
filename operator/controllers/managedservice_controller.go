@@ -36,6 +36,27 @@ const msvcFinalizer = "finalizers.kloudlite.io/managed-service"
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
+	msvc := &crdsv1.ManagedService{}
+	if err := r.Get(ctx, req.NamespacedName, msvc); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return reconcileResult.OK()
+		}
+		return reconcileResult.Failed()
+	}
+
+	if msvc.HasToBeDeleted() {
+		return r.finalizeMsvc(ctx, msvc)
+	}
+
+	return reconcileResult.OK()
+}
+
+func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.ManagedService) (ctrl.Result, error) {
+	return reconcileResult.OK()
+}
+
+func (r *ManagedServiceReconciler) Reconcile2(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	r.logger = GetLogger(req.NamespacedName)
 
 	msvc := &crdsv1.ManagedService{}
 	if err := r.Get(ctx, req.NamespacedName, msvc); err != nil {

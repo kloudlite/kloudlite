@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 	// batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	// appsv1 "k8s.io/api/apps/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -51,6 +52,33 @@ type AppReconciler struct {
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := GetLogger(req.NamespacedName)
+	r.logger = logger.With("Name", req.NamespacedName)
+
+	app := &crdsv1.App{}
+	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return reconcileResult.OK()
+		}
+		return reconcileResult.FailedE(err)
+	}
+
+	if app.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, app)
+	}
+
+	// d = appsv1.Deployment{
+	// 	ObjectMeta: metav1.ObjectMea,
+	// }
+
+	return reconcileResult.OK()
+}
+
+func (r *AppReconciler) finalize(ctx context.Context, app *crdsv1.App) (ctrl.Result, error) {
+	return reconcileResult.OK()
+}
+
+func (r *AppReconciler) Reconcile2(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx).WithValues("resourceName:", req.Name, "namespace:", req.Namespace)
 	logger := GetLogger(req.NamespacedName)
 	r.logger = logger.With("Name", req.NamespacedName)
