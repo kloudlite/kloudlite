@@ -10,10 +10,17 @@ type Status struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
+type ProjectMetadata struct {
+	Name string `json:"name,omitempty"`
+}
+
+const APIVersion = "crds.kloudlite.io/v1"
+const ProjectKind = "Project"
+
 type Project struct {
-	Name      string      `json:"name,omitempty"`
-	NameSpace string      `json:"name,omitempty"`
-	ClusterId string      `json:"cluster_id"`
-	Spec      ProjectSpec `json:"spec,omitempty"`
-	Status    Status      `json:"status,omitempty"`
+	APIVersion string          `json:"apiVersion,omitempty"`
+	Kind       string          `json:"kind,omitempty"`
+	Metadata   ProjectMetadata `json:"metadata,omitempty"`
+	Spec       ProjectSpec     `json:"spec,omitempty"`
+	Status     Status          `json:"status,omitempty"`
 }

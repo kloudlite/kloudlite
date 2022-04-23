@@ -342,10 +342,14 @@ func (r *mutationResolver) CoreCreateRouter(ctx context.Context, projectID repos
 		routeEnt = append(routeEnt, &entities.Route{
 			Path:    r.Path,
 			AppName: r.AppName,
-			Port:    fmt.Sprintf("%v", r.Port),
+			Port:    uint16(r.Port),
 		})
 	}
-	router, err := r.Domain.CreateRouter(ctx, projectID, name, domains, routeEnt)
+	d := domains
+	if domains == nil {
+		d = []string{}
+	}
+	router, err := r.Domain.CreateRouter(ctx, projectID, name, d, routeEnt)
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +362,7 @@ func (r *mutationResolver) CoreUpdateRouter(ctx context.Context, routerID repos.
 		entries = append(entries, &entities.Route{
 			Path:    i.Path,
 			AppName: i.AppName,
-			Port:    fmt.Sprintf("%v", i.Port),
+			Port:    uint16(i.Port),
 		})
 	}
 	return r.Domain.UpdateRouter(ctx, routerID, domains, entries)
