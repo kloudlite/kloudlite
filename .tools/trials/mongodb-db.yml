@@ -1,0 +1,23 @@
+apiVersion: mres.kloudlite.io/v1
+kind: MongoDatabase
+metadata:
+  name: sample-auth-db
+  namespace: hotspot
+  finalizers:
+    - finalizers.kloudlite.io/managed-resource
+    - foreground
+spec:
+  managed_svc: 
+    name: MongoDB 
+    service: sample-mongo
+    secret_ref:
+      name: sample-mongo
+  outputs:
+    - name: USERNAME
+      description: DB username
+    - name: PASSWORD
+      description: DB username
+    - name: URI
+      description: Mongo Connection URI
+    - name: JSON
+      description: Mongo Connection URI

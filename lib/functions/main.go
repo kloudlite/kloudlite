@@ -4,6 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	libJson "encoding/json"
+	"regexp"
+	"strings"
+
+	nanoid "github.com/matoous/go-nanoid/v2"
 	"operators.kloudlite.io/lib/errors"
 )
 
@@ -49,8 +53,19 @@ func ToBase64StringFromJson(v interface{}) (string, error) {
 	return base64.StdEncoding.EncodeToString(b), e
 }
 
-// func Must(v interface{}, err error) interface {
-// 	if err != nil {
-// 		panic()
-// 	}
-// }
+var re = regexp.MustCompile(`(\W|_)+`)
+
+func CleanerNanoid(n int) (string, error) {
+	id, e := nanoid.New(n)
+	if e != nil {
+		return "", e
+	}
+	res := re.ReplaceAllString(id, "-")
+	if strings.HasPrefix(res, "-") {
+		res = "k" + res
+	}
+	if strings.HasSuffix(res, "-") {
+		res = res + "k"
+	}
+	return res, nil
+}

@@ -69,4 +69,13 @@ resources:
   group: crds
   kind: MongoDB
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: mres
+  kind: MongoDatabase
+  path: operators.kloudlite.io/apis/mres/v1
+  version: v1
 version: "3"

@@ -35,74 +35,22 @@ spec:
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
-              inputs:
-                additionalProperties:
-                  type: string
-                type: object
               managedSvc:
                 type: string
-              operations:
-                properties:
-                  create:
-                    type: string
-                  delete:
-                    type: string
-                required:
-                - create
-                - delete
-                type: object
-              outputs:
-                items:
-                  properties:
-                    description:
-                      type: string
-                    name:
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
               type:
                 type: string
-              values:
-                type: string
             required:
-            - inputs
             - managedSvc
-            - operations
-            - outputs
             - type
             type: object
           status:
             description: ManagedResourceStatus defines the observed state of ManagedResource
             properties:
-              apply_job_check:
-                properties:
-                  has_finished:
-                    type: boolean
-                  has_started:
-                    type: boolean
-                  job:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    - namespace
-                    type: object
-                  last_checked:
-                    format: int64
-                    type: integer
-                  message:
-                    type: string
-                  status:
-                    type: boolean
-                required:
-                - last_checked
-                type: object
               conditions:
+                description: ApplyJobCheck      Recon              `json:"apply_job_check,omitempty"`
+                  DeleteJobCheck     Recon              `json:"delete_job_check,omitempty"`
+                  ManagedSvcDepCheck Recon              `json:"managed_svc_dep_check,omitempty"`
+                  Generation         int64              `json:"generation,omitempty"`
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct
@@ -170,61 +118,6 @@ spec:
                   - type
                   type: object
                 type: array
-              delete_job_check:
-                properties:
-                  has_finished:
-                    type: boolean
-                  has_started:
-                    type: boolean
-                  job:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    - namespace
-                    type: object
-                  last_checked:
-                    format: int64
-                    type: integer
-                  message:
-                    type: string
-                  status:
-                    type: boolean
-                required:
-                - last_checked
-                type: object
-              generation:
-                format: int64
-                type: integer
-              managed_svc_dep_check:
-                properties:
-                  has_finished:
-                    type: boolean
-                  has_started:
-                    type: boolean
-                  job:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    - namespace
-                    type: object
-                  last_checked:
-                    format: int64
-                    type: integer
-                  message:
-                    type: string
-                  status:
-                    type: boolean
-                required:
-                - last_checked
-                type: object
             type: object
         type: object
     served: true
