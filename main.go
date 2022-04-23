@@ -57,8 +57,8 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8089", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":9081", "The address the probe endpoint binds to.")
+	flag.StringVar(&metricsAddr, "metrics-bind-address", ":9091", "The address the metric endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":9092", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -233,7 +233,7 @@ func main() {
 		}),
 		fx.Invoke(func(lf fx.Lifecycle) {
 			lf.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
+				OnStart: func(context.Context) error {
 					go func() {
 						if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 							setupLog.Error(err, "problem running manager")

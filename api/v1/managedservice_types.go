@@ -7,8 +7,6 @@ import (
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	// Operations
-	Operations Operations `json:"operations"`
 	// Input fields
 	Inputs map[string]string `json:"inputs"`
 	// Output Fields
@@ -17,10 +15,8 @@ type ManagedServiceSpec struct {
 
 // ManagedServiceStatus defines the observed state of ManagedService
 type ManagedServiceStatus struct {
-	Generation     int64              `json:"generation,omitempty"`
-	ApplyJobCheck  Recon              `json:"apply_job_check,omitempty"`
-	DeleteJobCheck Recon              `json:"delete_job_check,omitempty"`
-	Conditions     []metav1.Condition `json:"conditions,omitempty"`
+	Generation int64              `json:"generation,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -37,7 +33,6 @@ type ManagedService struct {
 
 func (msvc *ManagedService) DefaultStatus() {
 	msvc.Status.Generation = msvc.Generation
-	msvc.Status.ApplyJobCheck = Recon{}
 }
 
 func (msvc *ManagedService) IsNewGeneration() bool {
@@ -65,46 +60,6 @@ func (msvc *ManagedService) BuildConditions() {
 		Message:            msvc.Status.ApplyJobCheck.Message,
 	})
 }
-
-// func (msvc *ManagedService) HasJob() bool {
-// 	return msvc.Status.Job != nil && msvc.Status.JobCompleted == nil
-// }
-
-// func (msvc *ManagedService) HasNotCheckedDependency() bool {
-// 	return false
-// 	// return msvc.Status.DependencyChecked == nil
-// }
-
-// func (msvc *ManagedService) HasPassedDependencyCheck() bool {
-// 	return true
-// 	// return msvc.Status.DependencyChecked != nil && len(*msvc.Status.DependencyChecked) == 0
-// }
-
-// func (msvc *ManagedService) IsNewGeneration() bool {
-// 	return msvc.Status.Generation == nil || msvc.Generation > *msvc.Status.Generation
-// }
-
-// func (msvc *ManagedService) ShouldCreateJob() bool {
-// 	if msvc.HasPassedDependencyCheck() && msvc.Status.JobCompleted == nil && msvc.Status.Job == nil {
-// 		return true
-// 	}
-// 	return false
-// }
-
-// func (msvc *ManagedService) HasToBeDeleted() bool {
-// 	return msvc.GetDeletionTimestamp() != nil
-// }
-
-// func (msvc *ManagedService) HasDeletionJob() bool {
-// 	return msvc.Status.DeletionJob != nil && msvc.Status.DeletionJobCompleted == nil
-// }
-
-// func (msvc *ManagedService) ShouldCreateDeletionJob() bool {
-// 	if msvc.Status.DeletionJob == nil && msvc.Status.DeletionJobCompleted == nil {
-// 		return true
-// 	}
-// 	return false
-// }
 
 //+kubebuilder:object:root=true
 

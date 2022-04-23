@@ -1,4 +1,4 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
-- crds_v1_mongodb.yaml
+- crds_v1_mongodbhelm.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
