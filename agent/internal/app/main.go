@@ -70,7 +70,7 @@ func readMessages(kConsumer *kafka.Consumer) {
 		if !hasProcessed {
 			fmt.Printf("could not process message even after %d retries\n", MaxRetries)
 		}
-		// kConsumer.CommitMessage(msg)
+		kConsumer.CommitMessage(msg)
 		fmt.Println("committed msg...")
 	}
 }

@@ -8,4 +8,6 @@ resources:
 - crds_v1_pipeline.yaml
 - crds_v1_mongodb.yaml
 - mres_v1_mongodatabase.yaml
+- msvc_v1_mongodb.yaml
+- crds_v1_mongodbhelm.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

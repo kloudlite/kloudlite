@@ -5,4 +5,6 @@ resources:
 - bases/crds.kloudlite.io_mongodbs.yaml
 - bases/mres.kloudlite.io_mongodb-databases.yaml
 - bases/mres.kloudlite.io_mongodatabases.yaml
+- bases/msvc.kloudlite.io_mongodbs.yaml
+- bases/crds.kloudlite.io_mongodbhelms.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

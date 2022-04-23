@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,21 +43,6 @@ func (msvc *ManagedService) HasToBeDeleted() bool {
 }
 
 func (msvc *ManagedService) BuildConditions() {
-	meta.SetStatusCondition(&msvc.Status.Conditions, metav1.Condition{
-		Type:               "ApplyJobCheck",
-		Status:             msvc.Status.ApplyJobCheck.ConditionStatus(),
-		ObservedGeneration: msvc.Generation,
-		Reason:             msvc.Status.ApplyJobCheck.Reason(),
-		Message:            msvc.Status.ApplyJobCheck.Message,
-	})
-
-	meta.SetStatusCondition(&msvc.Status.Conditions, metav1.Condition{
-		Type:               "Ready",
-		Status:             msvc.Status.ApplyJobCheck.ConditionStatus(),
-		ObservedGeneration: msvc.Generation,
-		Reason:             msvc.Status.ApplyJobCheck.Reason(),
-		Message:            msvc.Status.ApplyJobCheck.Message,
-	})
 }
 
 //+kubebuilder:object:root=true

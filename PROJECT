@@ -78,4 +78,22 @@ resources:
   kind: MongoDatabase
   path: operators.kloudlite.io/apis/mres/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: msvc
+  kind: MongoDB
+  path: operators.kloudlite.io/apis/msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: MongoDBHelm
+  path: operators.kloudlite.io/apis/crds/v1
+  version: v1
 version: "3"

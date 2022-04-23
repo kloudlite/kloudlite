@@ -29,7 +29,7 @@ import (
 	"go.uber.org/fx"
 
 	mresv1 "operators.kloudlite.io/apis/mres/v1"
-	mrescontrollers "operators.kloudlite.io/controllers/mres"
+	// mrescontrollers "operators.kloudlite.io/controllers/mres"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -86,8 +86,8 @@ func main() {
 
 	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
-	harborUserName := fromEnv("HARBOR_USERNAME")
-	harborPassword := fromEnv("HARBOR_PASSWORD")
+	// harborUserName := fromEnv("HARBOR_USERNAME")
+	// harborPassword := fromEnv("HARBOR_PASSWORD")
 
 	kafkaBrokers := fromEnv("KAFKA_BROKERS")
 	kafkaReplyTopic := fromEnv("KAFKA_REPLY_TOPIC")
@@ -123,18 +123,18 @@ func main() {
 		}, nil)
 	}
 
-	if err = (&controllers.ProjectReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		ClientSet:      clientset,
-		SendMessage:    sendMessage,
-		JobMgr:         lib.NewJobber(clientset),
-		HarborUserName: harborUserName,
-		HarborPassword: harborPassword,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Project")
-		os.Exit(1)
-	}
+	// if err = (&controllers.ProjectReconciler{
+	// 	Client:         mgr.GetClient(),
+	// 	Scheme:         mgr.GetScheme(),
+	// 	ClientSet:      clientset,
+	// 	SendMessage:    sendMessage,
+	// 	JobMgr:         lib.NewJobber(clientset),
+	// 	HarborUserName: harborUserName,
+	// 	HarborPassword: harborPassword,
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "Project")
+	// 	os.Exit(1)
+	// }
 
 	// if err = (&controllers.AppReconciler{
 	// 	Client:         mgr.GetClient(),
@@ -149,33 +149,34 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	if err = (&controllers.RouterReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+	// if err = (&controllers.RouterReconciler{
+	// 	Client: mgr.GetClient(),
+	// 	Scheme: mgr.GetScheme(),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "Router")
+	// 	os.Exit(1)
+	// }
+
+	if err = (&controllers.ManagedServiceReconciler{
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		ClientSet:   clientset,
+		SendMessage: sendMessage,
+		JobMgr:      lib.NewJobber(clientset),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Router")
+		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
 		os.Exit(1)
 	}
 
-	// if err = (&controllers.ManagedServiceReconciler{
+	// if err = (&controllers.ManagedResourceReconciler{
 	// 	Client:    mgr.GetClient(),
 	// 	Scheme:    mgr.GetScheme(),
 	// 	ClientSet: clientset,
 	// 	JobMgr:    lib.NewJobber(clientset),
 	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
+	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
 	// 	os.Exit(1)
 	// }
-
-	if err = (&controllers.ManagedResourceReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		ClientSet: clientset,
-		JobMgr:    lib.NewJobber(clientset),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-		os.Exit(1)
-	}
 
 	// if err = (&controllers.PipelineReconciler{
 	// 	Client: mgr.GetClient(),
@@ -184,13 +185,13 @@ func main() {
 	// 	setupLog.Error(err, "unable to create controller", "controller", "Pipeline")
 	// 	os.Exit(1)
 	// }
-	if err = (&mrescontrollers.MongoDatabaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MongoDatabase")
-		os.Exit(1)
-	}
+	// if err = (&mrescontrollers.MongoDatabaseReconciler{
+	// 	Client: mgr.GetClient(),
+	// 	Scheme: mgr.GetScheme(),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "MongoDatabase")
+	// 	os.Exit(1)
+	// }
 	//+kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

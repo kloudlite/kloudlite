@@ -40,17 +40,6 @@ spec:
                   type: string
                 description: Input fields
                 type: object
-              operations:
-                description: Operations
-                properties:
-                  create:
-                    type: string
-                  delete:
-                    type: string
-                required:
-                - create
-                - delete
-                type: object
               outputs:
                 description: Output Fields
                 items:
@@ -65,38 +54,11 @@ spec:
                 type: array
             required:
             - inputs
-            - operations
             - outputs
             type: object
           status:
             description: ManagedServiceStatus defines the observed state of ManagedService
             properties:
-              apply_job_check:
-                properties:
-                  has_finished:
-                    type: boolean
-                  has_started:
-                    type: boolean
-                  job:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    - namespace
-                    type: object
-                  last_checked:
-                    format: int64
-                    type: integer
-                  message:
-                    type: string
-                  status:
-                    type: boolean
-                required:
-                - last_checked
-                type: object
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -165,32 +127,6 @@ spec:
                   - type
                   type: object
                 type: array
-              delete_job_check:
-                properties:
-                  has_finished:
-                    type: boolean
-                  has_started:
-                    type: boolean
-                  job:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    - namespace
-                    type: object
-                  last_checked:
-                    format: int64
-                    type: integer
-                  message:
-                    type: string
-                  status:
-                    type: boolean
-                required:
-                - last_checked
-                type: object
               generation:
                 format: int64
                 type: integer

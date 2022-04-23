@@ -1,6 +1,0 @@
-apiVersion: mres.kloudlite.io/v1
-kind: MongoDatabase
-metadata:
-  name: mongodatabase-sample
-spec:
-  # TODO(user): Add fields here

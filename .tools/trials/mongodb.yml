@@ -1,13 +1,16 @@
 apiVersion: crds.kloudlite.io/v1
-kind: MongoDB
+kind: MongoDBHelm
 metadata:
   name: sample-mongo
   namespace: hotspot
 spec:
-  auth:
-    enabled: true
-    rootPassword: sample
-  # nameOverride: db
-  fullnameOverride: sample-mongo
-  service:
-    nameOverride: svc
+  type: Standalone
+  # capacity: 1Gi
+  # rootPassword: 
+  # auth:
+  #   enabled: true
+  #   rootPassword: sample
+  # # nameOverride: db
+  # fullnameOverride: sample-mongo
+  # service:
+  #   nameOverride: svc
