@@ -1,0 +1,24 @@
+apiVersion: crds.kloudlite.io/v1
+kind: MongoDBHelm
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+spec:
+  auth:
+    enabled: true
+    rootPassword: {{.RootPassword}}
+  fullNameOverride: {{.Name}}
+  persistence:
+    enabled: true
+    size: {{.Size}}
+  volumePermissions:
+    enabled: true
+  metrics:
+    enabled: true
+  resources:
+    requests:
+      cpu: 200m
+      memory: 200Mi
+    limits:
+      cpu: 300m
+      memory: 300Mi

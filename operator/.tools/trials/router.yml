@@ -8,4 +8,3 @@ spec:
   routes:
     - app: auth-web-sdaf
       path: /
-      port: 3000
