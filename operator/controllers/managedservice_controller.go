@@ -4,11 +4,11 @@ import (
 	"context"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	"go.uber.org/zap"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	crdsv1 "operators.kloudlite.io/api/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
@@ -20,6 +20,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 )
 
 // ManagedServiceReconciler reconciles a ManagedService object
@@ -38,6 +39,14 @@ type ManagedServiceReconciler struct {
 
 const msvcFinalizer = "finalizers.kloudlite.io/managed-service"
 
+type Sample struct {
+	Metadata struct {
+		Namespace string `json:"namespace"`
+		Name      string `json:"name"`
+	} `json:"metadata"`
+	Spec interface{} `json:"spec"`
+}
+
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
@@ -50,13 +59,9 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcileResult.Failed()
 	}
 
-	if msvc.HasToBeDeleted() {
+	if msvc.GetDeletionTimestamp() != nil {
 		return r.finalize(ctx, msvc)
 	}
-
-	logger.Info("************************************************************")
-	logger.Infof("MSVC conditions UPDATE: %+v", msvc.Status.Conditions)
-	logger.Info("************************************************************")
 
 	if msvc.Spec.Type != "MongoDBStandalone" {
 		reconcileResult.Failed()
@@ -64,30 +69,37 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	kt, err := templates.UseTemplate(templates.MongoDBStandalone)
 	if err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not useTemplate"))
+		logger.Info("could not useTemplate, aborting...")
+		return reconcileResult.Failed()
 	}
 	b, err := kt.WithValues(msvc)
 	if err != nil {
 		logger.Info(b, err)
 	}
 
-	res := msvcv1.MongoDB{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: req.Namespace,
-			Name:      req.Name,
-		},
+	var ry unstructured.Unstructured
+	if err = yaml.Unmarshal(b, &ry.Object); err != nil {
+		logger.Error(err)
+		logger.Info("could not convert template %s []byte into mongodb", templates.MongoDBStandalone)
+		return reconcileResult.Failed()
 	}
-	// if err = yaml.Unmarshal(b, &res); err != nil {
-	// 	fmt.Println("------------------------------------------------------")
-	// 	fmt.Println(err)
-	// 	fmt.Println("------------------------------------------------------")
-	// 	return reconcileResult.FailedE(errors.NewEf(err, "could not unmarshal template into K8sStruct"))
-	// }
 
-	// logger.Infof("struct: %+v", res)
+	logger.Info("ry.Spec:", ry.Object["spec"])
 
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &res, func() error {
-		if err = controllerutil.SetControllerReference(msvc, &res, r.Scheme); err != nil {
+	m := new(unstructured.Unstructured)
+
+	m.Object = map[string]interface{}{
+		"apiVersion": ry.Object["apiVersion"],
+		"kind":       ry.Object["kind"],
+		"metadata":   ry.Object["metadata"],
+		"spec":       ry.Object["spec"],
+	}
+
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, m, func() error {
+		m = m.DeepCopy()
+		m.Object["spec"] = ry.Object["spec"]
+
+		if err = controllerutil.SetControllerReference(msvc, m, r.Scheme); err != nil {
 			return err
 		}
 		return nil
@@ -96,10 +108,12 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcileResult.FailedE(errors.NewEf(err, "could not create/update resource"))
 	}
 
-	r.SendMessage(toRefString(msvc), lib.MessageReply{
+	if err := r.SendMessage(toRefString(msvc), lib.MessageReply{
 		Conditions: msvc.Status.Conditions,
 		Status:     false,
-	})
+	}); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not send message to kafka"))
+	}
 
 	return reconcileResult.OK()
 }
@@ -126,16 +140,6 @@ func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.Ma
 		}
 	}
 
-	return reconcileResult.OK()
-}
-
-func (r *ManagedServiceReconciler) updateStatus(ctx context.Context, msvc *crdsv1.ManagedService) (ctrl.Result, error) {
-	msvc.BuildConditions()
-
-	if err := r.Status().Update(ctx, msvc); err != nil {
-		return reconcileResult.RetryE(maxCoolingTime, errors.StatusUpdate(err))
-	}
-	r.logger.Debug("ManagedService has been updated")
 	return reconcileResult.OK()
 }
 

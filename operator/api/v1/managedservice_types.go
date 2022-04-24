@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -29,19 +31,8 @@ type ManagedService struct {
 	Status ManagedServiceStatus `json:"status,omitempty"`
 }
 
-func (msvc *ManagedService) DefaultStatus() {
-	msvc.Status.Generation = msvc.Generation
-}
-
-func (msvc *ManagedService) IsNewGeneration() bool {
-	return msvc.Generation > msvc.Status.Generation
-}
-
-func (msvc *ManagedService) HasToBeDeleted() bool {
-	return msvc.GetDeletionTimestamp() != nil
-}
-
-func (msvc *ManagedService) BuildConditions() {
+func (m *ManagedService) String() string {
+	return fmt.Sprintf("(APIVersion=%s, kind=%s) %s/%s", m.TypeMeta.APIVersion, m.TypeMeta.Kind, m.Namespace, m.Name)
 }
 
 //+kubebuilder:object:root=true

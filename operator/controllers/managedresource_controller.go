@@ -2,20 +2,21 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 
+	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	crdsv1 "operators.kloudlite.io/api/v1"
+	// mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
@@ -58,7 +59,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r.finalize(ctx, mres)
 	}
 
-	kt, err := templates.UseTemplate(templates.MongoDBStandalone)
+	kt, err := templates.UseTemplate(templates.MongoDBResourceDatabase)
 	if err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not useTemplate"))
 	}
@@ -67,25 +68,48 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		logger.Info(b, err)
 	}
 
-	managedSvc := &crdsv1.ManagedService{}
-	if err := r.Get(ctx, types.NamespacedName{Name: mres.Spec.ManagedSvc, Namespace: mres.Namespace}, managedSvc); err != nil {
-		logger.Infof("failing to get managed service (%s), queing for later", toRefString(mres))
-		return reconcileResult.FailedE(err)
-	}
-
-	//STEP: check if managedsvc is ready
-	if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
-		return reconcileResult.FailedE(errors.Newf("managedSvc %s is not ready", toRefString(managedSvc)))
-	}
-
-	msvcSecretName := fmt.Sprintf("msvc-%s", mres.Spec.ManagedSvc)
-	var msvcSecret corev1.Secret
-	if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: msvcSecretName}, &msvcSecret); err != nil {
-		logger.Errorf("ManagedSvc secret %s/%s not found, aborting reconcilation", mres.Namespace, msvcSecretName)
+	var ry unstructured.Unstructured
+	if err = yaml.Unmarshal(b, &ry.Object); err != nil {
+		logger.Error(err)
+		logger.Info("could not convert template %s []byte into mongodb", templates.MongoDBResourceDatabase)
 		return reconcileResult.Failed()
 	}
 
-	logger.Infof("Secret: %+v\n", string(msvcSecret.Data["mongodb-root-password"]))
+	logger.Info("ry.Spec:", ry.Object["spec"])
+
+	m := new(unstructured.Unstructured)
+	m.Object = map[string]interface{}{
+		"apiVersion": ry.Object["apiVersion"],
+		"kind":       ry.Object["kind"],
+		"metadata":   ry.Object["metadata"],
+		"spec":       ry.Object["spec"],
+	}
+
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, m, func() error {
+		m = m.DeepCopy()
+		m.Object["spec"] = ry.Object["spec"]
+		if err = controllerutil.SetControllerReference(mres, m, r.Scheme); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not create/update resource"))
+	}
+
+	////STEP: check if managedsvc is ready
+	//if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
+	//	return reconcileResult.FailedE(errors.Newf("managedSvc %s is not ready", toRefString(managedSvc)))
+	//}
+
+	//msvcSecretName := fmt.Sprintf("msvc-%s", mres.Spec.ManagedSvc)
+	//var msvcSecret corev1.Secret
+	//if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: msvcSecretName}, &msvcSecret); err != nil {
+	//	logger.Errorf("ManagedSvc secret %s/%s not found, aborting reconcilation", mres.Namespace, msvcSecretName)
+	//	return reconcileResult.Failed()
+	//}
+
+	//logger.Infof("Secret: %+v\n", string(msvcSecret.Data["mongodb-root-password"]))
 
 	return reconcileResult.OK()
 }

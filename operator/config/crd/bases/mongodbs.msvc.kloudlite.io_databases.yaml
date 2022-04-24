@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: mongodbs.msvc.kloudlite.io
+  name: databases.mongodbs.msvc.kloudlite.io
 spec:
-  group: msvc.kloudlite.io
+  group: mongodbs.msvc.kloudlite.io
   names:
-    kind: MongoDB
-    listKind: MongoDBList
-    plural: mongodbs
-    singular: mongodb
+    kind: Database
+    listKind: DatabaseList
+    plural: databases
+    singular: database
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: MongoDB is the Schema for the mongodbs API
+        description: Database is the Schema for the databases API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,12 +33,17 @@ spec:
           metadata:
             type: object
           spec:
-            description: MongoDBSpec defines the desired state of Project
+            description: DatabaseSpec defines the desired state of Database
+            properties:
+              managed_svc:
+                description: name of managed svc
+                type: string
+            required:
+            - managed_svc
             type: object
-            x-kubernetes-preserve-unknown-fields: true
           status:
+            description: DatabaseStatus defines the observed state of Database
             type: object
-            x-kubernetes-preserve-unknown-fields: true
         type: object
     served: true
     storage: true

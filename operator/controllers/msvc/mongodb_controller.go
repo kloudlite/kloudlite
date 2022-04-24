@@ -35,10 +35,6 @@ type MongoDBReconciler struct {
 //+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/finalizers,verbs=update
 
-func getName(mdb *msvcv1.MongoDB) string {
-	return mdb.Name + "-mongodb"
-}
-
 func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = controllers.GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
@@ -59,8 +55,8 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	logger.Debugf("Reconilation started ...")
 
 	depl := appsv1.Deployment{}
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: mdb.Name + "-mongodb"}, &depl); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not list deployments for helm resource"))
+	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: mdb.DeploymentName()}, &depl); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not get deployment for helm resource"))
 	}
 
 	x := metav1.Condition{
@@ -73,6 +69,7 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	for _, cond := range depl.Status.Conditions {
 		if cond.Type == appsv1.DeploymentAvailable {
 			x.Status = metav1.ConditionStatus(cond.Status)
+			x.Reason = cond.Reason
 			x.Message = cond.Message
 		}
 	}
@@ -95,14 +92,14 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	var mongoCfg corev1.Secret
 
-	if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: getName(mdb)}, &mongoCfg); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: mdb.DeploymentName()}, &mongoCfg); err != nil {
 		return reconcileResult.FailedE(err)
 	}
 
 	body := map[string]string{
 		"ROOT_PASSWORD": string(mongoCfg.Data["mongodb-root-password"]),
-		"HOST":          fmt.Sprintf("%s.%s.svc.cluster.local", getName(mdb), mdb.Namespace),
-		"URI":           fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local", "root", string(mongoCfg.Data["mongodb-root-password"]), getName(mdb), mdb.Namespace),
+		"HOST":          fmt.Sprintf("%s.%s.svc.cluster.local", mdb.DeploymentName(), mdb.Namespace),
+		"URI":           fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local", "root", string(mongoCfg.Data["mongodb-root-password"]), mdb.DeploymentName(), mdb.Namespace),
 	}
 
 	b, err := json.Marshal(body)
@@ -114,7 +111,7 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	ts := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: mdb.Namespace,
-			Name:      fmt.Sprintf("msvc-%s", getName(mdb)),
+			Name:      fmt.Sprintf("msvc-%s", mdb.Name),
 		},
 	}
 

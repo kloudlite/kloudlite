@@ -10,4 +10,6 @@ resources:
 - mres_v1_mongodatabase.yaml
 - msvc_v1_mongodb.yaml
 - crds_v1_mongodbhelm.yaml
+- mres.mongodbs.msvc_v1_database.yaml
+- mongodbs.msvc_v1_database.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

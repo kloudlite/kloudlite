@@ -30,7 +30,9 @@ import (
 
 	mresv1 "operators.kloudlite.io/apis/mres/v1"
 	// mrescontrollers "operators.kloudlite.io/controllers/mres"
+	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
+	mongodbsmsvccontrollers "operators.kloudlite.io/controllers/mongodbs.msvc"
 	msvccontrollers "operators.kloudlite.io/controllers/msvc"
 	//+kubebuilder:scaffold:imports
 )
@@ -46,8 +48,10 @@ func init() {
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
 	utilruntime.Must(mresv1.AddToScheme(scheme))
 	utilruntime.Must(msvcv1.AddToScheme(scheme))
+	utilruntime.Must(mongodbsmsvcv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
+
 func fromEnv(key string) string {
 	value, ok := os.LookupEnv(key)
 	if !ok {
@@ -171,15 +175,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	// if err = (&controllers.ManagedResourceReconciler{
-	// 	Client:    mgr.GetClient(),
-	// 	Scheme:    mgr.GetScheme(),
-	// 	ClientSet: clientset,
-	// 	JobMgr:    lib.NewJobber(clientset),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.ManagedResourceReconciler{
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		ClientSet:   clientset,
+		SendMessage: sendMessage,
+		JobMgr:      lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
+		os.Exit(1)
+	}
 
 	// if err = (&controllers.PipelineReconciler{
 	// 	Client: mgr.GetClient(),
@@ -200,6 +205,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MongoDB")
+		os.Exit(1)
+	}
+	if err = (&mongodbsmsvccontrollers.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

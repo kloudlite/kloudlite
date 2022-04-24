@@ -1,14 +1,21 @@
 package v1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type MongoDBSpec struct{}
+// MongoDBSpec defines the desired state of Project
+// +kubebuilder:pruning:PreserveUnknownFields
+type MongoDBSpec struct {
+	// unstructured.Unstructured `json:",inline"`
+}
 
-// MongoDBStatus defines the observed state of MongoDB
-type MongoDBStatus struct{}
+// +kubebuilder:pruning:PreserveUnknownFields
+type MongoDBStatus struct {
+	// unstructured.Unstructured `json:",inline"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -22,11 +29,8 @@ type MongoDB struct {
 	Status MongoDBStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-type K8sYaml struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              unstructured.Unstructured `json:"spec"`
+func (m *MongoDB) DeploymentName() string {
+	return fmt.Sprintf("%s-mongodb", m.Name)
 }
 
 //+kubebuilder:object:root=true
@@ -39,5 +43,5 @@ type MongoDBList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&MongoDB{}, &MongoDBList{}, &K8sYaml{})
+	SchemeBuilder.Register(&MongoDB{}, &MongoDBList{})
 }
