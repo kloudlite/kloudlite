@@ -32,7 +32,7 @@ func (c *consumer) Unsubscribe(context.Context) error {
 	return c.kafkaConsumer.Unsubscribe()
 }
 
-func (c *consumer) Subscribe(context context.Context) error {
+func (c *consumer) Subscribe(cc context.Context) error {
 	c.stopChan = make(chan bool, 1)
 	e := c.kafkaConsumer.SubscribeTopics(c.topics, nil)
 	if e != nil {
@@ -52,17 +52,12 @@ func (c *consumer) Subscribe(context context.Context) error {
 			msg, e := c.kafkaConsumer.ReadMessage(-1)
 			if e != nil {
 				c.logger.Errorf("could not read kafka message because %v", e)
+				continue
 			}
+			e = c.callback(context.TODO(), *msg.TopicPartition.Topic, msg.Value)
 
 			if e != nil {
-				c.logger.Errorf("could not read kafka message because %v", e)
-				//continue
-			}
-
-			e = c.callback(context, *msg.TopicPartition.Topic, msg.Value)
-
-			if e != nil {
-				e = c.callback(context, *msg.TopicPartition.Topic, msg.Value)
+				e = c.callback(context.TODO(), *msg.TopicPartition.Topic, msg.Value)
 				if e != nil {
 					c.logger.Debug("failed to process message after 2 retries")
 				}

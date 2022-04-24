@@ -10,7 +10,7 @@ metadata:
 # apiVersion: v1
 # kind: PersistentVolumeClaim
 # metadata:
-#   name: pv-claim-wireguard 
+#   name: pv-claim-wireguard
 #   namespace: wireguard
 # spec:
 #   storageClassName: do-block-storage
@@ -71,12 +71,10 @@ spec:
               - SYS_MODULE
           privileged: true
         volumeMounts:
-          # - name: wg-config
-          #   mountPath: /config
+          - name: wg-config
+            mountPath: /config
           - name: host-volumes
             mountPath: /lib/modules
-          # - name: host-scripts
-          #   mountPath: /host-scripts
         ports:
         - containerPort: 51820
           protocol: UDP
@@ -88,16 +86,10 @@ spec:
             memory: "128Mi"
             cpu: "200m"
       volumes:
-        # - name: wg-config
-        #   persistentVolumeClaim:
-        #     claimName: pv-claim-wireguard
-          # hostPath:
-          #   path: /wg-mount
-          #   type: Directory
-        # - name: host-scripts
-        #   hostPath:
-        #     path: /root/bin
-        #     type: Directory
+        - name: wg-config
+          hostPath:
+            path: /wg-config
+            type: Directory
         - name: host-volumes
           hostPath:
             path: /lib/modules

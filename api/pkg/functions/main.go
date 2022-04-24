@@ -53,14 +53,14 @@ func ToBase64StringFromJson(v interface{}) (string, error) {
 	return base64.StdEncoding.EncodeToString(b), e
 }
 
-var re = regexp.MustCompile(`(\W|_)+`)
-
 func Must[T any](value T, err error) T {
 	if err != nil {
 		panic(errors.NewEf(err, "panicking as Must() check failed"))
 	}
 	return value
 }
+
+var re = regexp.MustCompile(`(\W|_)+`)
 
 func CleanerNanoid(n int) (string, error) {
 	id, e := nanoid.New(n)
