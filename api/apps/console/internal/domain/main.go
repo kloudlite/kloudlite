@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -9,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
@@ -36,6 +38,35 @@ type domain struct {
 	appRepo              repos.DbRepo[*entities.App]
 	managedTemplatesPath string
 	workloadMessenger    WorkloadMessenger
+	infraClient          infra.InfraClient
+}
+
+func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error) {
+	mres, err := d.managedResRepo.FindById(ctx, managedResID)
+	if err != nil {
+		return nil, err
+	}
+	project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+		"account_id": project.AccountId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
+		ManagedResName: mres.Name,
+		ClusterId:      string(cluster.Id),
+		Namespace:      mres.Namespace,
+	})
+	m := make(map[string]interface{}, 0)
+	err = json.Unmarshal([]byte(output.Output), &m)
+	if err != nil {
+		return nil, err
+	}
+	return m, err
 }
 
 func (d *domain) InstallAppFlow(
@@ -1138,8 +1169,10 @@ func fxDomain(
 	logger logger.Logger,
 	infraMessenger InfraMessenger,
 	workloadMessenger WorkloadMessenger,
+	infraClient infra.InfraClient,
 ) Domain {
 	return &domain{
+		infraClient:          infraClient,
 		infraMessenger:       infraMessenger,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,

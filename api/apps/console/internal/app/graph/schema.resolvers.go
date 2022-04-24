@@ -126,6 +126,10 @@ func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (
 	return r.Domain.GetDeviceConfig(ctx, obj.ID)
 }
 
+func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
+	return r.Domain.GetResourceOutputs(ctx, obj.ID)
+}
+
 func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error) {
 	resources, err := r.Domain.GetManagedResourcesOfService(ctx, obj.ID)
 	if err != nil {
@@ -316,10 +320,6 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 	})
 }
 
-func (r *mutationResolver) CoreUpdateApp(ctx context.Context, appID repos.ID, name *string, description *string, service *model.AppServiceInput, replicas *int, containers *model.AppContainerIn) (*model.App, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *mutationResolver) CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -441,7 +441,68 @@ func (r *queryResolver) CoreProject(ctx context.Context, projectID repos.ID) (*m
 }
 
 func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error) {
-	panic(fmt.Errorf("not implemented"))
+	appEntities, err := r.Domain.GetApps(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	apps := make([]*model.App, 0)
+
+	for _, a := range appEntities {
+		services := make([]*model.ExposedService, 0)
+		for _, s := range a.ExposedPorts {
+			services = append(services, &model.ExposedService{
+				Type:    string(s.Type),
+				Target:  int(s.TargetPort),
+				Exposed: int(s.Port),
+			})
+		}
+
+		containers := make([]*model.AppContainer, 0)
+		for _, c := range a.Containers {
+			envVars := make([]*model.EnvVar, 0)
+			for _, e := range c.EnvVars {
+				envVars = append(envVars, &model.EnvVar{
+					Key: e.Key,
+					Value: &model.EnvVal{
+						Type:  e.Value.Type,
+						Value: e.Value.Value,
+						Ref:   e.Value.Ref,
+						Key:   e.Value.Key,
+					},
+				})
+			}
+			res := make([]*model.AttachedRes, 0)
+			for _, r := range c.AttachedResources {
+				res = append(res, &model.AttachedRes{
+					ResID: r.ResourceId,
+				})
+			}
+			containers = append(containers, &model.AppContainer{
+				Name:              c.Name,
+				Image:             c.Image,
+				PullSecret:        c.ImagePullSecret,
+				EnvVars:           envVars,
+				CPUMin:            c.CPULimits.Min,
+				CPUMax:            c.CPULimits.Max,
+				MemMin:            c.MemoryLimits.Min,
+				MemMax:            c.MemoryLimits.Max,
+				AttachedResources: res,
+			})
+		}
+
+		apps = append(apps, &model.App{
+			ID:          a.Id,
+			Name:        a.Name,
+			Namespace:   a.Namespace,
+			Description: a.Description,
+			ReadableID:  repos.ID(a.Name),
+			Replicas:    &a.Replicas,
+			Services:    services,
+			Containers:  containers,
+			Project:     &model.Project{ID: projectID},
+		})
+	}
+	return apps, nil
 }
 
 func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID, version *string) (*model.App, error) {
@@ -618,6 +679,9 @@ func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
 
+// ManagedRes returns generated.ManagedResResolver implementation.
+func (r *Resolver) ManagedRes() generated.ManagedResResolver { return &managedResResolver{r} }
+
 // ManagedSvc returns generated.ManagedSvcResolver implementation.
 func (r *Resolver) ManagedSvc() generated.ManagedSvcResolver { return &managedSvcResolver{r} }
 
@@ -633,6 +697,7 @@ func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 type accountResolver struct{ *Resolver }
 type clusterResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
+type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
