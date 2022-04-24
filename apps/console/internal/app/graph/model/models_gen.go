@@ -15,43 +15,19 @@ type Account struct {
 func (Account) IsEntity() {}
 
 type App struct {
-	ID                repos.ID        `json:"id"`
-	Name              string          `json:"name"`
-	Namespace         string          `json:"namespace"`
-	Description       *string         `json:"description"`
-	ReadableID        repos.ID        `json:"readableId"`
-	Replicas          *int            `json:"replicas"`
-	Services          []*AppService   `json:"services"`
-	AttachedResources []*ManagedRes   `json:"attachedResources"`
-	Containers        []*AppContainer `json:"containers"`
-	Project           *Project        `json:"project"`
-	Version           *int            `json:"version"`
+	ID          repos.ID          `json:"id"`
+	Name        string            `json:"name"`
+	Namespace   string            `json:"namespace"`
+	Description *string           `json:"description"`
+	ReadableID  repos.ID          `json:"readableId"`
+	Replicas    *int              `json:"replicas"`
+	Services    []*ExposedService `json:"services"`
+	Containers  []*AppContainer   `json:"containers"`
+	Project     *Project          `json:"project"`
+	Version     *int              `json:"version"`
 }
 
 type AppContainer struct {
-	Name             string        `json:"name"`
-	Image            string        `json:"image"`
-	ImagePullPolicy  string        `json:"imagePullPolicy"`
-	Env              []*AppEnv     `json:"env"`
-	ResourceCPU      *ContainerRes `json:"resourceCpu"`
-	ResourceMemory   *ContainerRes `json:"resourceMemory"`
-	Volumes          []*AppVolume  `json:"volumes"`
-	ManagedResources []*ManagedRes `json:"managedResources"`
-}
-
-type AppContainerIn struct {
-	Name             string             `json:"name"`
-	Image            *string            `json:"image"`
-	ImagePullPolicy  *string            `json:"imagePullPolicy"`
-	Env              []*AppEnvInput     `json:"env"`
-	ResourceCPU      *ContainerResInput `json:"resourceCpu"`
-	ResourceMemory   *ContainerResInput `json:"resourceMemory"`
-	Volumes          []*IAppVolume      `json:"volumes"`
-	ManagedResources []string           `json:"managedResources"`
-	PullSecret       *string            `json:"pullSecret"`
-}
-
-type AppContainerInput struct {
 	Name              string         `json:"name"`
 	Image             string         `json:"image"`
 	PullSecret        *string        `json:"pull_secret"`
@@ -63,31 +39,16 @@ type AppContainerInput struct {
 	AttachedResources []*AttachedRes `json:"attached_resources"`
 }
 
-type AppContainerUpdateInput struct {
-	Name             *string            `json:"name"`
-	Image            *string            `json:"image"`
-	ImagePullPolicy  *string            `json:"imagePullPolicy"`
-	Env              []*AppEnvInput     `json:"env"`
-	ResourceCPU      *ContainerResInput `json:"resourceCpu"`
-	ResourceMemory   *ContainerResInput `json:"resourceMemory"`
-	Volumes          []*IAppVolume      `json:"volumes"`
-	ManagedResources []string           `json:"managedResources"`
-}
-
-type AppEnv struct {
-	Key    string  `json:"key"`
-	Type   string  `json:"type"`
-	Value  *string `json:"value"`
-	RefKey *string `json:"refKey"`
-	RefID  *string `json:"refId"`
-}
-
-type AppEnvInput struct {
-	Key    string  `json:"key"`
-	Type   string  `json:"type"`
-	Value  *string `json:"value"`
-	RefKey *string `json:"refKey"`
-	RefID  *string `json:"refId"`
+type AppContainerInput struct {
+	Name              string              `json:"name"`
+	Image             string              `json:"image"`
+	PullSecret        *string             `json:"pull_secret"`
+	EnvVars           []*EnvVarInput      `json:"env_vars"`
+	CPUMin            string              `json:"cpu_min"`
+	CPUMax            string              `json:"cpu_max"`
+	MemMin            string              `json:"mem_min"`
+	MemMax            string              `json:"mem_max"`
+	AttachedResources []*AttachedResInput `json:"attached_resources"`
 }
 
 type AppFlowInput struct {
@@ -109,20 +70,11 @@ type AppServiceInput struct {
 	TargetPort *int   `json:"targetPort"`
 }
 
-type AppVolume struct {
-	Name      string           `json:"name"`
-	MountPath string           `json:"mountPath"`
-	Type      string           `json:"type"`
-	RefID     repos.ID         `json:"refId"`
-	Items     []*AppVolumeItem `json:"items"`
-}
-
-type AppVolumeItem struct {
-	Key      string `json:"key"`
-	FileName string `json:"fileName"`
-}
-
 type AttachedRes struct {
+	ResID repos.ID `json:"res_id"`
+}
+
+type AttachedResInput struct {
 	ResID repos.ID `json:"res_id"`
 }
 
@@ -165,16 +117,6 @@ type Config struct {
 	Entries     []*CSEntry `json:"entries"`
 }
 
-type ContainerRes struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
-}
-
-type ContainerResInput struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
-}
-
 type Device struct {
 	ID            repos.ID `json:"id"`
 	User          *User    `json:"user"`
@@ -193,9 +135,27 @@ type EnvVal struct {
 	Key   *string `json:"key"`
 }
 
+type EnvValInput struct {
+	Type  string  `json:"type"`
+	Value *string `json:"value"`
+	Ref   *string `json:"ref"`
+	Key   *string `json:"key"`
+}
+
 type EnvVar struct {
 	Key   string  `json:"key"`
 	Value *EnvVal `json:"value"`
+}
+
+type EnvVarInput struct {
+	Key   string       `json:"key"`
+	Value *EnvValInput `json:"value"`
+}
+
+type ExposedService struct {
+	Type    string `json:"type"`
+	Target  int    `json:"target"`
+	Exposed int    `json:"exposed"`
 }
 
 type ExposedServiceInput struct {
@@ -230,26 +190,6 @@ type GitPipelineInput struct {
 	PullSecret  *string    `json:"pullSecret"`
 }
 
-type IAppVolume struct {
-	Name      string            `json:"name"`
-	MountPath string            `json:"mountPath"`
-	Type      string            `json:"type"`
-	RefID     repos.ID          `json:"refId"`
-	Items     []*IAppVolumeItem `json:"items"`
-}
-
-type IAppVolumeItem struct {
-	Key      string `json:"key"`
-	FileName string `json:"fileName"`
-}
-
-type IAppVolumeUpdate struct {
-	MountPath *string           `json:"mountPath"`
-	Type      *string           `json:"type"`
-	RefID     *repos.ID         `json:"refId"`
-	Items     []*IAppVolumeItem `json:"items"`
-}
-
 type Kv struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -266,6 +206,7 @@ type ManagedRes struct {
 	ResourceType string                 `json:"resourceType"`
 	Installation *ManagedSvc            `json:"installation"`
 	Values       map[string]interface{} `json:"values"`
+	Outputs      map[string]interface{} `json:"outputs"`
 }
 
 type ManagedSvc struct {

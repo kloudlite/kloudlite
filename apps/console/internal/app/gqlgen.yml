@@ -65,7 +65,10 @@ models:
     fields:
       resources:
         resolver: true
-
+  ManagedRes:
+    fields:
+      outputs:
+        resolver: true
   Device:
     fields:
       user:

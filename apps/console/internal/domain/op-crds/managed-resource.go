@@ -2,7 +2,7 @@ package op_crds
 
 type ManagedResourceSpec struct {
 	Type           string            `json:"type"`
-	ManagedService string            `json:"managed_service"`
+	ManagedService string            `json:"managedSvc"`
 	Inputs         map[string]string `json:"inputs,omitempty"`
 }
 
