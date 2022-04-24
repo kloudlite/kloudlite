@@ -123,6 +123,7 @@ type Mutation {
 
 input AppFlowInput{
   name: String!
+  readable: String!
   description: String
   exposed_services: [ExposedServiceInput!]!
   containers:[AppContainerInput!]!

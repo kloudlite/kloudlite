@@ -53,6 +53,7 @@ type AppContainerInput struct {
 
 type AppFlowInput struct {
 	Name            string                 `json:"name"`
+	Readable        string                 `json:"readable"`
 	Description     *string                `json:"description"`
 	ExposedServices []*ExposedServiceInput `json:"exposed_services"`
 	Containers      []*AppContainerInput   `json:"containers"`

@@ -311,6 +311,7 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 	}
 	return r.Domain.InstallAppFlow(ctx, projectID, entities.App{
 		Name:         app.Name,
+		ReadableId:   app.Readable,
 		Description:  app.Description,
 		Replicas:     1,
 		ExposedPorts: ports,
@@ -495,7 +496,7 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 			Name:        a.Name,
 			Namespace:   a.Namespace,
 			Description: a.Description,
-			ReadableID:  repos.ID(a.Name),
+			ReadableID:  repos.ID(a.ReadableId),
 			Replicas:    &a.Replicas,
 			Services:    services,
 			Containers:  containers,
