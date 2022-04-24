@@ -2,13 +2,11 @@ package domain
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/config"
@@ -43,105 +41,15 @@ type domain struct {
 func (d *domain) InstallAppFlow(
 	ctx context.Context,
 	projectId repos.ID,
-	pipeline *model.GitPipelineInput,
-	app map[string]interface{},
-	configPatches map[string]interface{},
-	secretPatches map[string]interface{},
+	app entities.App,
 ) (bool, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return false, err
 	}
-
-	ports := make([]entities.ExposedPort, 0)
-	for _, exposedServices := range app["exposed_services"].([]interface{}) {
-		exposedService := exposedServices.(map[string]interface{})
-		p, err := (exposedService["port"].(json.Number)).Int64()
-		if err != nil {
-			return false, err
-		}
-		port := entities.ExposedPort{
-			Port:       p,
-			TargetPort: p,
-			Type:       entities.PortType(exposedService["type"].(string)),
-		}
-		ports = append(ports, port)
-	}
-
-	cs := make([]entities.Container, 0)
-	for _, containers := range app["containers"].([]interface{}) {
-		container := containers.(map[string]interface{})
-
-		resources := make([]entities.AttachedResource, 0)
-		for _, attachedResources := range container["attached_resources"].([]interface{}) {
-			attachedResource := attachedResources.(map[string]interface{})
-			e := make([]map[string]interface{}, 0)
-			for _, v := range attachedResource["output_mounts"].([]map[string]interface{}) {
-				e = append(e, map[string]any{
-					"output_key": v["output_key"].(string),
-					"env_key":    v["env_key"].(string),
-				})
-			}
-			resources = append(resources, entities.AttachedResource{
-				ResourceId: repos.ID(attachedResource["resource_id"].(string)),
-				EnvVars:    e,
-			})
-		}
-
-		cmd := make([]string, 0)
-		for _, cmds := range container["command"].([]interface{}) {
-			cmd = append(cmd, cmds.(string))
-		}
-
-		arg := make([]string, 0)
-		for _, args := range container["args"].([]interface{}) {
-			arg = append(arg, args.(string))
-		}
-
-		e := make(map[string]string, 0)
-		for k, v := range container["env_vars"].(map[string]interface{}) {
-			e[k] = v.(string)
-		}
-
-		cs = append(cs, entities.Container{
-			Name:            container["name"].(string),
-			Image:           container["image"].(string),
-			ImagePullSecret: container["pull_secret"].(string),
-			Command:         cmd,
-			Args:            arg,
-			EnvVars:         e,
-			CPULimits: entities.Limit{
-				Min: container["cpu_min"].(string),
-				Max: container["cpu_max"].(string),
-			},
-			MemoryLimits: entities.Limit{
-				Min: container["mem_min"].(string),
-				Max: container["mem_max"].(string),
-			},
-			AttachedResources: resources,
-		})
-	}
-
-	/*_, err = d.appRepo.Create(ctx, &entities.App{
-		BaseEntity:   repos.BaseEntity{},
-		ProjectId:    projectId,
-		Name:         app["name"].(string),
-		Namespace:    prj.Name,
-		Description:  app["description"].(string),
-		Replicas:     1,
-		ExposedPorts: ports,
-		Containers:   cs,
-	})*/
-	fmt.Println(entities.App{
-		BaseEntity:   repos.BaseEntity{},
-		ProjectId:    projectId,
-		Name:         app["name"].(string),
-		Namespace:    prj.Name,
-		Description:  app["description"].(string),
-		Replicas:     1,
-		ExposedPorts: ports,
-		Containers:   cs,
-	})
+	app.Namespace = prj.Name
+	app.ProjectId = prj.Id
+	_, err = d.appRepo.Create(ctx, &app)
 	if err != nil {
 		return false, err
 	}
@@ -270,7 +178,8 @@ func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.Manag
 
 func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.ManagedResource) error {
 	one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
-		"name": response.Name,
+		"name":      response.Metadata.Name,
+		"namespace": response.Metadata.Namespace,
 	})
 	if err != nil {
 		return err
@@ -427,7 +336,7 @@ func (d *domain) InstallManagedRes(
 	installationId repos.ID,
 	name string,
 	resourceType string,
-	values map[string]interface{},
+	values map[string]string,
 ) (*entities.ManagedResource, error) {
 	svc, err := d.managedSvcRepo.FindById(ctx, installationId)
 	if err != nil {
@@ -456,10 +365,26 @@ func (d *domain) InstallManagedRes(
 	if err != nil {
 		return nil, err
 	}
+
+	d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedResource{
+		APIVersion: op_crds.ManagedResourceAPIVersion,
+		Kind:       op_crds.ManagedResourceKind,
+		Metadata: op_crds.ManagedResourceMetadata{
+			Name:      create.Name,
+			Namespace: create.Namespace,
+		},
+		Spec: op_crds.ManagedResourceSpec{
+			ManagedService: svc.Name,
+			Type:           resourceType,
+			Inputs:         create.Values,
+		},
+		Status: op_crds.Status{},
+	})
+
 	return create, nil
 }
 
-func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error) {
+func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error) {
 	id, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err != nil {
 		return false, err
@@ -701,7 +626,7 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 		return nil, fmt.Errorf("project not found")
 	}
 	create, err := d.secretRepo.Create(ctx, &entities.Secret{
-		Name:        secretName,
+		Name:        strings.ToLower(secretName),
 		ProjectId:   projectId,
 		Namespace:   prj.Name,
 		Data:        secretData,
@@ -817,7 +742,7 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 		return nil, fmt.Errorf("project not found")
 	}
 	create, err := d.configRepo.Create(ctx, &entities.Config{
-		Name:        configName,
+		Name:        strings.ToLower(configName),
 		ProjectId:   projectId,
 		Namespace:   prj.Name,
 		Data:        configData,

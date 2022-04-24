@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
@@ -69,9 +68,9 @@ type Domain interface {
 		installationId repos.ID,
 		name string,
 		resourceType string,
-		values map[string]interface{},
+		values map[string]string,
 	) (*entities.ManagedResource, error)
-	UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
+	UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error)
 	UnInstallManagedRes(ctx context.Context, managedResID repos.ID) (bool, error)
 	OnUpdateManagedRes(ctx context.Context, r *op_crds.ManagedResource) error
 
@@ -85,10 +84,7 @@ type Domain interface {
 	InstallAppFlow(
 		ctx context.Context,
 		id repos.ID,
-		pipeline *model.GitPipelineInput,
-		app map[string]interface{},
-		configPatches map[string]interface{},
-		secretPatches map[string]interface{},
+		app entities.App,
 	) (bool, error)
 }
 

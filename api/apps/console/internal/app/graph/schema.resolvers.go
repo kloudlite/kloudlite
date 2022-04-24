@@ -161,7 +161,11 @@ func (r *mutationResolver) MangedSvcUpdate(ctx context.Context, installationID r
 }
 
 func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error) {
-	res, err := r.Domain.InstallManagedRes(ctx, installationID, name, resourceType, values)
+	kvs := make(map[string]string, 0)
+	for k, v := range values {
+		kvs[k] = v.(string)
+	}
+	res, err := r.Domain.InstallManagedRes(ctx, installationID, name, resourceType, kvs)
 	if err != nil {
 		return nil, err
 	}
@@ -256,8 +260,60 @@ func (r *mutationResolver) GitlabEvent(ctx context.Context, email repos.ID, sour
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, pipeline *model.GitPipelineInput, app map[string]interface{}, configsPatches map[string]interface{}, secretPatches map[string]interface{}) (bool, error) {
-	return r.Domain.InstallAppFlow(ctx, projectID, pipeline, app, configsPatches, secretPatches)
+func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error) {
+	ports := make([]entities.ExposedPort, 0)
+	for _, port := range app.ExposedServices {
+		ports = append(ports, entities.ExposedPort{
+			Port:       int64(port.Exposed),
+			TargetPort: int64(port.Target),
+			Type:       entities.PortType(port.Type),
+		})
+	}
+	containers := make([]entities.Container, 0)
+	for _, container := range app.Containers {
+		e := make([]entities.EnvVar, 0)
+		for _, env := range container.EnvVars {
+			e = append(e, entities.EnvVar{
+				Key: env.Key,
+				Value: entities.EnvValue{
+					Type:  env.Value.Type,
+					Value: env.Value.Value,
+					Ref:   env.Value.Ref,
+					Key:   env.Value.Key,
+				},
+			})
+		}
+		a := make([]entities.AttachedResource, 0)
+		for _, attached := range container.AttachedResources {
+			a = append(a, entities.AttachedResource{
+				ResourceId: attached.ResID,
+			})
+		}
+		containers = append(containers, entities.Container{
+			Name:            container.Name,
+			Image:           container.Image,
+			ImagePullSecret: container.PullSecret,
+			EnvVars:         e,
+			CPULimits: entities.Limit{
+				Min: container.CPUMin,
+				Max: container.CPUMax,
+			},
+			MemoryLimits: entities.Limit{
+				Min: container.MemMin,
+				Max: container.MemMax,
+			},
+			AttachedResources: a,
+		})
+	}
+	return r.Domain.InstallAppFlow(ctx, projectID, entities.App{
+		Name:         app.Name,
+		Description:  app.Description,
+		Replicas:     1,
+		ExposedPorts: ports,
+		Containers:   containers,
+		Status:       "",
+		Conditions:   nil,
+	})
 }
 
 func (r *mutationResolver) CoreUpdateApp(ctx context.Context, appID repos.ID, name *string, description *string, service *model.AppServiceInput, replicas *int, containers *model.AppContainerIn) (*model.App, error) {

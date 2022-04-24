@@ -20,8 +20,7 @@ type ExposedPort struct {
 }
 
 type AttachedResource struct {
-	ResourceId repos.ID                 `json:"resource_id" bson:"resource_id"`
-	EnvVars    []map[string]interface{} `json:"env_vars" bson:"env_vars"`
+	ResourceId repos.ID `json:"resource_id" bson:"resource_id"`
 }
 
 type Limit struct {
@@ -29,13 +28,23 @@ type Limit struct {
 	Max string `json:"max" bson:"max"`
 }
 
+type EnvValue struct {
+	Type  string  `json:"type,omitempty"`
+	Value *string `json:"value,omitempty"`
+	Ref   *string `json:"ref,omitempty"`
+	Key   *string `json:"key,omitempty"`
+}
+
+type EnvVar struct {
+	Key   string   `json:"name" bson:"name"`
+	Value EnvValue `json:"value" bson:"value"`
+}
+
 type Container struct {
 	Name              string             `json:"name" bson:"name"`
 	Image             string             `json:"image" bson:"image"`
-	ImagePullSecret   string             `json:"pull_secret" bson:"pull_secret"`
-	Command           []string           `json:"command" bson:"command"`
-	Args              []string           `json:"args" bson:"args"`
-	EnvVars           map[string]string  `json:"env_vars" bson:"env_cars"`
+	ImagePullSecret   *string            `json:"pull_secret" bson:"pull_secret"`
+	EnvVars           []EnvVar           `json:"env_vars" bson:"env_cars"`
 	CPULimits         Limit              `json:"cpu_limits" bson:"cpu_limits"`
 	MemoryLimits      Limit              `json:"memory_limits" bson:"memory_limits"`
 	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
@@ -55,7 +64,7 @@ type App struct {
 	ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
 	Name             string             `json:"name" bson:"name"`
 	Namespace        string             `json:"namespace" bson:"namespace"`
-	Description      string             `json:"description" bson:"description"`
+	Description      *string            `json:"description" bson:"description"`
 	Replicas         int                `json:"replicas" bson:"replicas"`
 	ExposedPorts     []ExposedPort      `json:"exposed_ports" bson:"exposed_ports"`
 	Containers       []Container        `json:"containers" bson:"containers"`
