@@ -39,21 +39,6 @@ tasks:
   mongo-operator:
     cmds:
       - operator-sdk create api --plugins=helm --group crds --version v1 --kind MongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
-  helm-ops:
-    dir: ./helm/
-    cmds:
-      - operator-sdk init --plugins helm --domain kloudlite.io --group crds --version v1 --kind MongoDBHelm --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
-  helm-ops-mongo:
-    dir: ./helm/
-    cmds:
-      - operator-sdk create api --plugins helm --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
-  helm-ops-run:
-    dir: ./helm
-    cmds:
-      - make install run
-  helm-ops-clean:
-    cmds:
-      - rm -rf ./helm
   pre:
     run: once
     cmds:

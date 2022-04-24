@@ -29,14 +29,14 @@ rules:
   - create
 
 ##
-## Rules for crds.kloudlite.io/v1, Kind: MongoDBHelm
+## Rules for msvc.kloudlite.io/v1, Kind: MongoDB
 ##
 - apiGroups:
-  - crds.kloudlite.io
+  - msvc.kloudlite.io
   resources:
-  - mongodbhelms
-  - mongodbhelms/status
-  - mongodbhelms/finalizers
+  - mongodbs
+  - mongodbs/status
+  - mongodbs/finalizers
   verbs:
   - create
   - delete
@@ -45,39 +45,20 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
+- verbs:
+  - "*"
+  apiGroups:
   - ""
   resources:
-  - pods
-  - services
-  - services/finalizers
-  - endpoints
-  - persistentvolumeclaims
-  - events
-  - configmaps
-  - secrets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - apps
+  - "persistentvolumeclaims"
+  - "secrets"
+  - "serviceaccounts"
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
   resources:
-  - deployments
-  - daemonsets
-  - replicasets
-  - statefulsets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - "deployments"
 
 #+kubebuilder:scaffold:rules

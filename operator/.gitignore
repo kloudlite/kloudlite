@@ -26,3 +26,4 @@ testbin/*
 .task
 .secrets
 .kube
+helm-charts

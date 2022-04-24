@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: managedservices.crds.kloudlite.io
+  name: mongodatabases.mres.kloudlite.io
 spec:
-  group: crds.kloudlite.io
+  group: mres.kloudlite.io
   names:
-    kind: ManagedService
-    listKind: ManagedServiceList
-    plural: managedservices
-    singular: managedservice
+    kind: MongoDatabase
+    listKind: MongoDatabaseList
+    plural: mongodatabases
+    singular: mongodatabase
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: ManagedService is the Schema for the managedservices API
+        description: MongoDatabase is the Schema for the mongodatabases API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,20 +33,49 @@ spec:
           metadata:
             type: object
           spec:
-            description: ManagedServiceSpec defines the desired state of ManagedService
+            description: MongoDatabaseSpec defines the desired state of MongoDatabase
             properties:
-              inputs:
-                additionalProperties:
-                  type: string
+              managed_svc:
+                properties:
+                  config_ref:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  name:
+                    type: string
+                  secret_ref:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  service:
+                    type: string
+                required:
+                - name
+                - service
                 type: object
-              type:
-                type: string
+              outputs:
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
             required:
-            - inputs
-            - type
+            - managed_svc
+            - outputs
             type: object
           status:
-            description: ManagedServiceStatus defines the observed state of ManagedService
+            description: MongoDatabaseStatus defines the observed state of MongoDatabase
             properties:
               conditions:
                 items:
@@ -116,9 +145,15 @@ spec:
                   - type
                   type: object
                 type: array
-              generation:
-                format: int64
-                type: integer
+              secret_ref:
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - secret_ref
             type: object
         type: object
     served: true

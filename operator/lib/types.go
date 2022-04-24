@@ -1,6 +1,11 @@
 package lib
 
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 type MessageReply struct {
-	Message string `json:"message"`
-	Status  bool   `json:"status"`
+	Message    string             `json:"message"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	Status     bool               `json:"status"`
 }

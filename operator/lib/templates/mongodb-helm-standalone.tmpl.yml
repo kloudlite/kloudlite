@@ -1,16 +1,15 @@
-apiVersion: crds.kloudlite.io/v1
-kind: MongoDBHelm
+apiVersion: msvc.kloudlite.io/v1
+kind: MongoDB
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
 spec:
   auth:
     enabled: true
-    rootPassword: {{.RootPassword}}
-  fullNameOverride: {{.Name}}
+    rootPassword: {{.Spec.Inputs.RootPassword | default uuidv4 }}
   persistence:
-    enabled: true
-    size: {{.Size}}
+    enabled: false
+    size: {{index .Spec.Inputs "size" | default "1Gi" }}
   volumePermissions:
     enabled: true
   metrics:

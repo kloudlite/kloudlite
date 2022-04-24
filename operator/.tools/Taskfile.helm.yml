@@ -4,7 +4,7 @@ tasks:
   init:
     dir: ../helm
     cmds:
-      - operator-sdk init --plugins helm --domain kloudlite.io --group crds --version v1 --kind MongoDBHelm --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
+      - operator-sdk init --plugins helm --domain kloudlite.io --group msvc --version v1 --kind MongoDB --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
 
   run:
     dir: ../helm
