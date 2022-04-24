@@ -200,7 +200,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	body := map[string]string{
 		"USERNAME": mdb.Name,
 		"PASSWORD": password,
-		"URI":      fmt.Sprintf("mongodb://%s:%s@%s/%s", mdb.Name, password, mSecret.Data["HOST"], mdb.Name),
+		"URI":      fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=admin", mdb.Name, password, mSecret.Data["HOST"], mdb.Name),
 	}
 
 	jsonB, err := json.Marshal(body)

@@ -99,7 +99,7 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	body := map[string]string{
 		"ROOT_PASSWORD": string(mongoCfg.Data["mongodb-root-password"]),
 		"HOST":          fmt.Sprintf("%s.%s.svc.cluster.local", mdb.DeploymentName(), mdb.Namespace),
-		"URI":           fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local", "root", string(mongoCfg.Data["mongodb-root-password"]), mdb.DeploymentName(), mdb.Namespace),
+		"URI":           fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local/admin?authSource=admin", "root", string(mongoCfg.Data["mongodb-root-password"]), mdb.DeploymentName(), mdb.Namespace),
 	}
 
 	b, err := json.Marshal(body)
