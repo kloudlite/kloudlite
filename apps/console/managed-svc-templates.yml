@@ -61,7 +61,44 @@
       logoUrl: https://img.icons8.com/color/344/mongodb.png
       displayName: MongoDB Standalone
       description: MongoDB Standalone
-      active: false
+      active: true
+      fields:
+        - name: size
+          label: Capacity in GB
+          inputType: Number
+          defaultValue: 10
+          min: 1
+          required: true
+          unit: GB
+      outputs:
+        - name: ROOT_PASSWORD
+          label: MongoRoot Password
+        - name: HOSTS
+          description: DB Hosts
+        - name: DB_URL
+          description: DB URL
+        - name: JSON
+          description: Configuration JSON
+      resources:
+        - name: db
+          displayName: Database
+          description: MongoDB
+          operations:
+            apply: mongo-apply-image:tag
+            delete: mongo-delete-image:tag
+          fields:
+            - name: name
+              label: Database Name
+              inputType: String
+              required: true
+          outputs:
+            - name: DB_USER
+              label: Username
+            - name: DB_PASSWORD
+              label: Password
+            - name: DB_URL
+              label: Connection String
+
     - name: mysql_standalone
       logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
       displayName: MySQL Standalone

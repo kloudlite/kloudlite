@@ -5,14 +5,16 @@ import (
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
+	"kloudlite.io/pkg/repos"
 )
 
 type Domain interface {
-	CreateCluster(action SetupClusterAction) error
-	UpdateCluster(action UpdateClusterAction) error
-	DeleteCluster(action DeleteClusterAction) error
-	AddPeerToCluster(action AddPeerAction) error
-	DeletePeerFromCluster(action DeletePeerAction) error
+	CreateCluster(cxt context.Context, action SetupClusterAction) error
+	UpdateCluster(cxt context.Context, action UpdateClusterAction) error
+	DeleteCluster(cxt context.Context, action DeleteClusterAction) error
+	AddPeerToCluster(cxt context.Context, action AddPeerAction) error
+	DeletePeerFromCluster(cxt context.Context, action DeletePeerAction) error
+	GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error)
 }
 
 type domain struct {
@@ -21,9 +23,13 @@ type domain struct {
 	jobResponder InfraJobResponder
 }
 
+func (d *domain) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error) {
+	return d.infraCli.GetResourceOutput(ctx, clusterId, resName, namespace)
+}
+
 // AddPeerToCluster implements Domain
-func (d *domain) AddPeerToCluster(action AddPeerAction) error {
-	err := d.infraCli.AddPeer(action)
+func (d *domain) AddPeerToCluster(cxt context.Context, action AddPeerAction) error {
+	err := d.infraCli.AddPeer(cxt, action)
 	if err != nil {
 		//d.jobResponder.SendAddPeerResponse(AddPeerResponse{
 		//	ClusterID: action.ClusterID,
@@ -43,19 +49,19 @@ func (d *domain) AddPeerToCluster(action AddPeerAction) error {
 }
 
 // DeletePeerFromCluster implements Domain
-func (d *domain) DeletePeerFromCluster(action DeletePeerAction) error {
-	return d.infraCli.DeletePeer(action)
+func (d *domain) DeletePeerFromCluster(cxt context.Context, action DeletePeerAction) error {
+	return d.infraCli.DeletePeer(cxt, action)
 }
 
 // DeleteCluster implements Domain
-func (d *domain) DeleteCluster(action DeleteClusterAction) error {
-	return d.infraCli.DeleteCluster(action)
+func (d *domain) DeleteCluster(cxt context.Context, action DeleteClusterAction) error {
+	return d.infraCli.DeleteCluster(cxt, action)
 }
 
-func (d *domain) CreateCluster(action SetupClusterAction) error {
-	publicIp, publicKey, err := d.infraCli.CreateCluster(action)
+func (d *domain) CreateCluster(cxt context.Context, action SetupClusterAction) error {
+	publicIp, publicKey, err := d.infraCli.CreateCluster(cxt, action)
 	if err != nil {
-		d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
+		d.jobResponder.SendCreateClusterResponse(cxt, SetupClusterResponse{
 			ClusterID: action.ClusterID,
 			PublicIp:  publicIp,
 			PublicKey: publicKey,
@@ -63,7 +69,7 @@ func (d *domain) CreateCluster(action SetupClusterAction) error {
 			Message:   err.Error(),
 		})
 	}
-	d.jobResponder.SendCreateClusterResponse(SetupClusterResponse{
+	d.jobResponder.SendCreateClusterResponse(cxt, SetupClusterResponse{
 		ClusterID: action.ClusterID,
 		PublicIp:  publicIp,
 		PublicKey: publicKey,
@@ -72,8 +78,8 @@ func (d *domain) CreateCluster(action SetupClusterAction) error {
 	return err
 }
 
-func (d *domain) UpdateCluster(action UpdateClusterAction) error {
-	_, _, err := d.infraCli.CreateCluster(SetupClusterAction{
+func (d *domain) UpdateCluster(cxt context.Context, action UpdateClusterAction) error {
+	_, _, err := d.infraCli.CreateCluster(cxt, SetupClusterAction{
 		ClusterID:  action.ClusterID,
 		Region:     action.Region,
 		Provider:   action.Provider,
@@ -103,7 +109,7 @@ var Module = fx.Module("domain",
 	fx.Invoke(func(ij InfraJobResponder, d Domain, p messaging.Producer[any], lifecycle fx.Lifecycle) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				ij.SendCreateClusterResponse(SetupClusterResponse{
+				ij.SendCreateClusterResponse(ctx, SetupClusterResponse{
 					ClusterID: "clus-le8xeokcvycsn8uwutsmuzimk5up",
 					PublicIp:  "1234",
 					PublicKey: "12345",

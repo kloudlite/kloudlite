@@ -25,7 +25,7 @@ func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger
 					Payload domain.SetupClusterAction
 				}
 				action.Unmarshal(&m)
-				return d.CreateCluster(m.Payload)
+				return d.CreateCluster(context, m.Payload)
 				break
 			case "update-cluster":
 				var m struct {
@@ -34,7 +34,7 @@ func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger
 				}
 				action.Unmarshal(&m)
 				logger.Info("message", "type", m)
-				return d.UpdateCluster(m.Payload)
+				return d.UpdateCluster(context, m.Payload)
 				break
 			case "delete-cluster":
 				var m struct {
@@ -43,7 +43,7 @@ func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger
 				}
 				action.Unmarshal(&m)
 				logger.Info("message", "type", m)
-				return d.DeleteCluster(m.Payload)
+				return d.DeleteCluster(context, m.Payload)
 				break
 			case "add-peer":
 				var m struct {
@@ -52,7 +52,7 @@ func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger
 				}
 				action.Unmarshal(&m)
 				logger.Info("message", "type", m)
-				return d.AddPeerToCluster(m.Payload)
+				return d.AddPeerToCluster(context, m.Payload)
 				break
 			case "delete-peer":
 				var m struct {
@@ -61,7 +61,7 @@ func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger
 				}
 				action.Unmarshal(&m)
 				logger.Info("message", "type", m)
-				return d.DeletePeerFromCluster(m.Payload)
+				return d.DeletePeerFromCluster(context, m.Payload)
 				break
 			}
 			return nil

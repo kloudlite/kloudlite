@@ -1,7 +1,9 @@
 package application
 
 import (
+	"context"
 	"fmt"
+	"kloudlite.io/pkg/repos"
 	"os"
 	"os/exec"
 	"strconv"
@@ -18,7 +20,13 @@ type infraClient struct {
 	env *InfraEnv
 }
 
-func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error) {
+func (i *infraClient) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error) {
+	cmd := exec.Command("kubectl", "get", fmt.Sprintf("configmap/%v", resName), "-n", namespace, "-o", "jsonpath='{.data}'")
+	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
+	return cmd.Output()
+}
+
+func (i *infraClient) DeleteCluster(cxt context.Context, action domain.DeleteClusterAction) (e error) {
 	var masterCount, agentCount int
 
 	if masterCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count"); err == nil {
@@ -41,7 +49,7 @@ func (i *infraClient) DeleteCluster(action domain.DeleteClusterAction) (e error)
 	return cmd.Run()
 }
 
-func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
+func (i *infraClient) AddPeer(cxt context.Context, action domain.AddPeerAction) (e error) {
 	serverWg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
@@ -53,7 +61,7 @@ func (i *infraClient) AddPeer(action domain.AddPeerAction) (e error) {
 	return serverWg.AddRemotePeer(action.PublicKey, fmt.Sprintf("%v/32", action.PeerIp), nil)
 }
 
-func (i *infraClient) DeletePeer(action domain.DeletePeerAction) (e error) {
+func (i *infraClient) DeletePeer(cxt context.Context, action domain.DeletePeerAction) (e error) {
 	serverWg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
@@ -383,7 +391,7 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterI
 	return err
 }
 
-func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
+func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
 
 	defer errors.HandleErr(&e)
 
@@ -489,7 +497,7 @@ func (i *infraClient) CreateCluster(action domain.SetupClusterAction) (publicIp 
 	return clusterIp, clusterPublicKey, e
 }
 
-func (i *infraClient) UpdateCluster(action domain.UpdateClusterAction) (e error) {
+func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClusterAction) (e error) {
 	panic("implement me")
 	return nil
 }
