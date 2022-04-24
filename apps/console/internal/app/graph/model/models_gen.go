@@ -51,6 +51,18 @@ type AppContainerIn struct {
 	PullSecret       *string            `json:"pullSecret"`
 }
 
+type AppContainerInput struct {
+	Name              string         `json:"name"`
+	Image             string         `json:"image"`
+	PullSecret        *string        `json:"pull_secret"`
+	EnvVars           []*EnvVar      `json:"env_vars"`
+	CPUMin            string         `json:"cpu_min"`
+	CPUMax            string         `json:"cpu_max"`
+	MemMin            string         `json:"mem_min"`
+	MemMax            string         `json:"mem_max"`
+	AttachedResources []*AttachedRes `json:"attached_resources"`
+}
+
 type AppContainerUpdateInput struct {
 	Name             *string            `json:"name"`
 	Image            *string            `json:"image"`
@@ -78,6 +90,13 @@ type AppEnvInput struct {
 	RefID  *string `json:"refId"`
 }
 
+type AppFlowInput struct {
+	Name            string                 `json:"name"`
+	Description     *string                `json:"description"`
+	ExposedServices []*ExposedServiceInput `json:"exposed_services"`
+	Containers      []*AppContainerInput   `json:"containers"`
+}
+
 type AppService struct {
 	Type       string `json:"type"`
 	Port       int    `json:"port"`
@@ -101,6 +120,10 @@ type AppVolume struct {
 type AppVolumeItem struct {
 	Key      string `json:"key"`
 	FileName string `json:"fileName"`
+}
+
+type AttachedRes struct {
+	ResID repos.ID `json:"res_id"`
 }
 
 type CCMData struct {
@@ -162,6 +185,24 @@ type Device struct {
 }
 
 func (Device) IsEntity() {}
+
+type EnvVal struct {
+	Type  string  `json:"type"`
+	Value *string `json:"value"`
+	Ref   *string `json:"ref"`
+	Key   *string `json:"key"`
+}
+
+type EnvVar struct {
+	Key   string  `json:"key"`
+	Value *EnvVal `json:"value"`
+}
+
+type ExposedServiceInput struct {
+	Type    string `json:"type"`
+	Target  int    `json:"target"`
+	Exposed int    `json:"exposed"`
+}
 
 type GitPipeline struct {
 	ID          repos.ID               `json:"id"`

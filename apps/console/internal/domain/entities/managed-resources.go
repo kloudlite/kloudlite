@@ -22,7 +22,7 @@ type ManagedResource struct {
 	Namespace        string                `json:"namespace" bson:"namespace"`
 	ResourceType     ManagedResourceType   `json:"resource_type" bson:"resource_type"`
 	ServiceId        repos.ID              `bson:"service_id" json:"service_id"`
-	Values           map[string]any        `json:"values" bson:"values"`
+	Values           map[string]string     `json:"values" bson:"values"`
 	Status           ManagedResourceStatus `json:"status" bson:"status"`
 	Conditions       []metav1.Condition    `json:"conditions" bson:"conditions"`
 }

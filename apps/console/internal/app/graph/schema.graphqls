@@ -97,10 +97,7 @@ type Mutation {
   # App
   core_createAppFlow(
     projectId: ID!,
-    pipeline: GitPipelineInput,
-    app: Json!,
-    configsPatches: Json,
-    secretPatches: Json,
+    app: AppFlowInput!,
   ): Boolean!
   core_updateApp(appId: ID!, name: String, description: String, service: AppServiceInput, replicas: Int, containers: AppContainerIN): App!
   core_deleteApp(appId: ID!): Boolean!
@@ -122,6 +119,46 @@ type Mutation {
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
 
+}
+
+input AppFlowInput{
+  name: String!
+  description: String
+  exposed_services: [ExposedServiceInput!]!
+  containers:[AppContainerInput!]!
+}
+
+input EnvVal {
+  type: String!
+  value: String
+  ref: String
+  key: String
+}
+
+input EnvVar {
+  key: String!
+  value: EnvVal!
+}
+input AttachedRes{
+  res_id: ID!
+}
+
+input AppContainerInput{
+  name: String!
+  image: String!
+  pull_secret: String
+  env_vars:[EnvVar!]!
+  cpu_min:String!
+  cpu_max:String!
+  mem_min:String!
+  mem_max:String!
+  attached_resources:[AttachedRes!]!
+}
+
+input ExposedServiceInput{
+  type :String!
+  target: Int!
+  exposed: Int!
 }
 
 type Router {
@@ -174,12 +211,6 @@ type ProjectMembership {
   project: Project!
 }
 
-type AppInput {
-  name: String!
-  description: String
-  exposedServices:[ExposedServiceInput!]!
-  containers:[AppContainerInput!]!
-}
 
 
 

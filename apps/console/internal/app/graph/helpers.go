@@ -84,6 +84,10 @@ func managedSvcModelFromEntity(svcEntity *entities.ManagedService) *model.Manage
 }
 
 func managedResourceModelFromEntity(resEntity *entities.ManagedResource) *model.ManagedRes {
+	kvs := make(map[string]any, 0)
+	for k, v := range resEntity.Values {
+		kvs[k] = v
+	}
 	return &model.ManagedRes{
 		ID:           resEntity.Id,
 		Name:         resEntity.Name,
@@ -91,6 +95,6 @@ func managedResourceModelFromEntity(resEntity *entities.ManagedResource) *model.
 		Installation: &model.ManagedSvc{
 			ID: resEntity.ServiceId,
 		},
-		Values: resEntity.Values,
+		Values: kvs,
 	}
 }
