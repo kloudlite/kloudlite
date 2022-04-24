@@ -2171,6 +2171,7 @@ type Mutation {
 
 input AppFlowInput{
   name: String!
+  readable: String!
   description: String
   exposed_services: [ExposedServiceInput!]!
   containers:[AppContainerInput!]!
@@ -11977,6 +11978,14 @@ func (ec *executionContext) unmarshalInputAppFlowInput(ctx context.Context, obj 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readable":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readable"))
+			it.Readable, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
