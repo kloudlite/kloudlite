@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"go.uber.org/fx"
+	"google.golang.org/grpc"
 	"kloudlite.io/apps/infra/internal/domain"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
 	// "kloudlite.io/pkg/messaging"
@@ -45,6 +47,7 @@ var Module = fx.Module("application",
 	fx.Provide(fxConsumer),
 	fx.Provide(fxJobResponder),
 	domain.Module,
+	fx.Provide(fxInfraGrpcServer),
 	fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[any]) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(c context.Context) error {
@@ -63,6 +66,10 @@ var Module = fx.Module("application",
 				return consumer.Unsubscribe(ctx)
 			},
 		})
+	}),
+
+	fx.Invoke(func(server *grpc.Server, infraServer infra.InfraServer) {
+		infra.RegisterInfraServer(server, infraServer)
 	}),
 
 	fx.Invoke(func(lifecycle fx.Lifecycle, p messaging.Producer[any]) {

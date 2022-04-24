@@ -252,7 +252,8 @@ func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.Router) e
 
 func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.ManagedService) error {
 	one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
-		"name": response.Name,
+		"name":      response.Metadata.Name,
+		"namespace": response.Metadata.Namespace,
 	})
 	if err != nil {
 		return err
@@ -531,6 +532,29 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	if err != nil {
 		return nil, err
 	}
+
+	vs := make(map[string]string, 0)
+
+	for k, v := range create.Values {
+		vs[k] = v.(string)
+	}
+
+	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
+		APIVersion: op_crds.ManagedServiceAPIVersion,
+		Kind:       op_crds.ManagedServiceKind,
+		Metadata: op_crds.ManagedServiceMetadata{
+			Name:      create.Name,
+			Namespace: create.Namespace,
+		},
+		Spec: op_crds.ManagedServiceSpec{
+			Type:   "MongoDBStandalone",
+			Inputs: vs,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return create, err
 }
 

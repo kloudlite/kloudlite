@@ -6,6 +6,7 @@ tasks:
       - go build main.go
   run:
     env:
+      GRPC_PORT: 8081
       SSH_KEYS_PATH: "{{.HOME}}/tmp/kloudlite/keys"
       DATA_PATH: "{{.HOME}}/tmp/kloudlite/data"
       CONFIG_DATA_PATH: "{{.HOME}}/tmp/kloudlite/config"
