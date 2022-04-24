@@ -1,37 +1,151 @@
-- name: mongo_cluster
-  label: MongoDB cluster
-  description: MongoDB cluster
-  fields:
-    - name: capacity
-      label: Capacity in GB
-      fieldType: Number
-      defaultValue: 10
-      min: 1
-      required: true
-    - name: primary_count
-      label: Mongo Primary Count
-      fieldType: Number
-      defaultValue: 1
-      min: 1
-    - name: secondary_count
-      label: Mongo Secondary Count
-      fieldType: Number
-      defaultValue: 1
-      min: 1
-  outputs:
-    - name: ROOT_PASSWORD
-      label: MongoRoot Password
-    - name: HOSTS
-      description: DB Hosts
-    - name: DB_URL
-      description: DB URL
-    - name: JSON
-      description: Configuration JSON
-  resources:
-    - name: mongo_db
-      description: MongoDB
+- category: db
+  displayName: Databases
+  list:
+    - name: mongo_cluster
+      logoUrl: https://img.icons8.com/color/344/mongodb.png
+      displayName: MongoDB cluster
+      description: MongoDB cluster
+      active: true
+      operations:
+        apply: mongo-apply-image:tag
+        delete: mongo-delete-image:tag
       fields:
-        - name: name
-          label: Database Name
-          fieldType: String
+        - name: capacity
+          label: Capacity in GB
+          inputType: Number
+          defaultValue: 10
+          min: 1
           required: true
+          unit: Gi
+        - name: primary_count
+          label: Mongo Primary Count
+          inputType: Number
+          defaultValue: 1
+          min: 1
+          unit: Node
+        - name: secondary_count
+          label: Mongo Secondary Count
+          inputType: Number
+          defaultValue: 1
+          min: 1
+          unit: Node
+      outputs:
+        - name: ROOT_PASSWORD
+          label: MongoRoot Password
+        - name: HOSTS
+          description: DB Hosts
+        - name: DB_URL
+          description: DB URL
+        - name: JSON
+          description: Configuration JSON
+      resources:
+        - name: db
+          displayName: Database
+          description: MongoDB
+          operations:
+            apply: mongo-apply-image:tag
+            delete: mongo-delete-image:tag
+          fields:
+            - name: name
+              label: Database Name
+              inputType: String
+              required: true
+          outputs:
+            - name: DB_USER
+              label: Username
+            - name: DB_PASSWORD
+              label: Password
+            - name: DB_URL
+              label: Connection String
+    - name: mongo_standalone
+      logoUrl: https://img.icons8.com/color/344/mongodb.png
+      displayName: MongoDB Standalone
+      description: MongoDB Standalone
+      active: true
+      fields:
+        - name: size
+          label: Capacity in GB
+          inputType: Number
+          defaultValue: 10
+          min: 1
+          required: true
+          unit: Gi
+      outputs:
+        - name: ROOT_PASSWORD
+          label: MongoRoot Password
+        - name: HOSTS
+          description: DB Hosts
+        - name: DB_URL
+          description: DB URL
+        - name: JSON
+          description: Configuration JSON
+      resources:
+        - name: db
+          displayName: Database
+          description: MongoDB
+          operations:
+            apply: mongo-apply-image:tag
+            delete: mongo-delete-image:tag
+          fields:
+            - name: name
+              label: Database Name
+              inputType: String
+              required: true
+          outputs:
+            - name: DB_USER
+              label: Username
+            - name: DB_PASSWORD
+              label: Password
+            - name: DB_URL
+              label: Connection String
+
+    - name: mysql_standalone
+      logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
+      displayName: MySQL Standalone
+      description: MySQL Standalone
+      active: false
+    - name: mysql_cluster
+      logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
+      displayName: MySQL Cluster
+      description: MySQL Cluster
+      active: false
+
+- category: cache
+  displayName: Caches
+  logoUrl: https://img.icons8.com/external-others-pike-picture/344/external-cache-data-scientist-worker-others-pike-picture-2.png
+  list:
+    - name: redis_cluster
+      logoUrl: https://img.icons8.com/color/344/redis.png
+      displayName: Redis Cluster
+      description: Redis Cluster
+      active: false
+    - name: redis_standalone
+      logoUrl: https://img.icons8.com/color/344/redis.png
+      displayName: Redis Standalone
+      description: Redis Standalone
+      active: false
+    - name: memcached_cluster
+      logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
+      displayName: Memcached Cluster
+      description: Memcached Cluster
+      active: false
+    - name: memcached_standalone
+      logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
+      displayName: Memcached Standalone
+      description: Memcached Standalone
+      active: false
+
+- category: messaging
+  displayName: Messaging
+  list:
+    - name: kafka_cluster
+      logoUrl: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Apache_kafka-icon.svg/1200px-Apache_kafka-icon.svg.png
+      displayName: Kafka Cluster
+      description: Kafka Cluster
+      active: false
+    - name: rabbitmq_cluster
+      logoUrl: https://pbs.twimg.com/profile_images/1223261138059780097/eH73w5lN_400x400.jpg
+      displayName: RabbitMQ Cluster
+      description: RabbitMQ Cluster
+      active: false
+

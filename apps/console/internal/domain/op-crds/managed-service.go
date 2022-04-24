@@ -1,13 +1,22 @@
 package op_crds
 
 type ManagedServiceSpec struct {
-	Values       string `json:"values"`
-	TemplateName string `json:"templateName"`
+	Type   string            `json:"type"`
+	Inputs map[string]string `json:"inputs,omitempty"`
 }
 
+type ManagedServiceMetadata struct {
+	Name      string `json:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+}
+
+const ManagedServiceAPIVersion = "crds.kloudlite.io/v1"
+const ManagedServiceKind = "ManagedService"
+
 type ManagedService struct {
-	Name      string             `json:"name"`
-	NameSpace string             `json:"nameSpace"`
-	Spec      ManagedServiceSpec `json:"spec,omitempty"`
-	Status    Status             `json:"status,omitempty"`
+	APIVersion string                 `json:"apiVersion,omitempty"`
+	Kind       string                 `json:"kind,omitempty"`
+	Metadata   ManagedServiceMetadata `json:"metadata"`
+	Spec       ManagedServiceSpec     `json:"spec,omitempty"`
+	Status     Status                 `json:"status,omitempty"`
 }

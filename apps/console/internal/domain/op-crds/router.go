@@ -1,6 +1,6 @@
 package op_crds
 
-type routes struct {
+type Route struct {
 	Path string `json:"path"`
 	App  string `json:"app"`
 	Port uint16 `json:"port"`
@@ -8,12 +8,21 @@ type routes struct {
 
 type RouterSpec struct {
 	Domains []string `json:"domains"`
-	Routes  []routes `json:"routes"`
+	Routes  []Route  `json:"routes"`
 }
 
+type RouterMetadata struct {
+	Name      string `json:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+}
+
+const RouterAPIVersion = "crds.kloudlite.io/v1"
+const RouterKind = "Router"
+
 type Router struct {
-	Name      string     `json:"name"`
-	NameSpace string     `json:"nameSpace"`
-	Spec      RouterSpec `json:"spec,omitempty"`
-	Status    Status     `json:"status,omitempty"`
+	APIVersion string         `json:"apiVersion,omitempty"`
+	Kind       string         `json:"kind,omitempty"`
+	Metadata   RouterMetadata `json:"metadata"`
+	Spec       RouterSpec     `json:"spec,omitempty"`
+	Status     Status         `json:"status,omitempty"`
 }

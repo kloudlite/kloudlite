@@ -17,10 +17,11 @@ type Domain interface {
 	OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
 
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
+	GetDeviceConfig(ctx context.Context, id repos.ID) (string, error)
 	AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (dev *entities.Device, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
 	ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error)
-	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
+	ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID) ([]*entities.Device, error)
 	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
 
 	CreateProject(ctx context.Context, id repos.ID, projectName string, displayName string, logo *string, description *string) (*entities.Project, error)
@@ -60,8 +61,16 @@ type Domain interface {
 
 	GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error)
 	GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error)
-	InstallManagedRes(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedResource, error)
-	UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
+	GetManagedResourcesOfService(ctx context.Context, installationId repos.ID) ([]*entities.ManagedResource, error)
+
+	InstallManagedRes(
+		ctx context.Context,
+		installationId repos.ID,
+		name string,
+		resourceType string,
+		values map[string]string,
+	) (*entities.ManagedResource, error)
+	UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error)
 	UnInstallManagedRes(ctx context.Context, managedResID repos.ID) (bool, error)
 	OnUpdateManagedRes(ctx context.Context, r *op_crds.ManagedResource) error
 
@@ -71,7 +80,12 @@ type Domain interface {
 	UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.App) error
-	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceTemplate, error)
+	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
+	InstallAppFlow(
+		ctx context.Context,
+		id repos.ID,
+		app entities.App,
+	) (bool, error)
 }
 
 type InfraActionMessage interface {
@@ -80,6 +94,10 @@ type InfraActionMessage interface {
 
 type InfraMessenger interface {
 	SendAction(action any) error
+}
+
+type WorkloadMessenger interface {
+	SendAction(action string, resId string, res any) error
 }
 
 func SendAction[T InfraActionMessage](i InfraMessenger, action T) error {

@@ -3,7 +3,6 @@ package graph
 import (
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	"strconv"
 )
 
 func projectModelFromEntity(projectEntity *entities.Project) *model.Project {
@@ -39,12 +38,10 @@ func configModelFromEntity(configEntity *entities.Config) *model.Config {
 func routerModelFromEntity(routerEntity *entities.Router) *model.Router {
 	entries := make([]*model.Route, 0)
 	for _, e := range routerEntity.Routes {
-		atoi, _ := strconv.Atoi(e.Port)
-		// TODO: handle error
 		entries = append(entries, &model.Route{
 			Path:    e.Path,
 			AppName: e.AppName,
-			Port:    atoi,
+			Port:    int(e.Port),
 		})
 	}
 	d := routerEntity.Domains
@@ -73,5 +70,31 @@ func secretModelFromEntity(secretEntity *entities.Secret) *model.Secret {
 		Name:    secretEntity.Name,
 		Project: &model.Project{ID: secretEntity.ProjectId},
 		Entries: entries,
+	}
+}
+
+func managedSvcModelFromEntity(svcEntity *entities.ManagedService) *model.ManagedSvc {
+	return &model.ManagedSvc{
+		ID:      svcEntity.Id,
+		Name:    svcEntity.Name,
+		Project: &model.Project{ID: svcEntity.ProjectId},
+		Source:  string(svcEntity.ServiceType),
+		Values:  svcEntity.Values,
+	}
+}
+
+func managedResourceModelFromEntity(resEntity *entities.ManagedResource) *model.ManagedRes {
+	kvs := make(map[string]any, 0)
+	for k, v := range resEntity.Values {
+		kvs[k] = v
+	}
+	return &model.ManagedRes{
+		ID:           resEntity.Id,
+		Name:         resEntity.Name,
+		ResourceType: string(resEntity.ResourceType),
+		Installation: &model.ManagedSvc{
+			ID: resEntity.ServiceId,
+		},
+		Values: kvs,
 	}
 }

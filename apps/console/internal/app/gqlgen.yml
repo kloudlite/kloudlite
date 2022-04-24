@@ -59,8 +59,13 @@ models:
     fields:
       devices:
         resolver: true
-      configuration:
+      userDevices:
         resolver: true
+  ManagedSvc:
+    fields:
+      resources:
+        resolver: true
+
   Device:
     fields:
       user:
@@ -69,6 +74,10 @@ models:
         resolver: true
       configuration:
         resolver: true
+  MSCategoryResult:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.ManagedServiceCategory
+
   ID:
     model:
       - kloudlite.io/pkg/repos.ID

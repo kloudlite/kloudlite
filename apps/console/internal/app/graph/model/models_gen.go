@@ -51,6 +51,18 @@ type AppContainerIn struct {
 	PullSecret       *string            `json:"pullSecret"`
 }
 
+type AppContainerInput struct {
+	Name              string         `json:"name"`
+	Image             string         `json:"image"`
+	PullSecret        *string        `json:"pull_secret"`
+	EnvVars           []*EnvVar      `json:"env_vars"`
+	CPUMin            string         `json:"cpu_min"`
+	CPUMax            string         `json:"cpu_max"`
+	MemMin            string         `json:"mem_min"`
+	MemMax            string         `json:"mem_max"`
+	AttachedResources []*AttachedRes `json:"attached_resources"`
+}
+
 type AppContainerUpdateInput struct {
 	Name             *string            `json:"name"`
 	Image            *string            `json:"image"`
@@ -78,6 +90,13 @@ type AppEnvInput struct {
 	RefID  *string `json:"refId"`
 }
 
+type AppFlowInput struct {
+	Name            string                 `json:"name"`
+	Description     *string                `json:"description"`
+	ExposedServices []*ExposedServiceInput `json:"exposed_services"`
+	Containers      []*AppContainerInput   `json:"containers"`
+}
+
 type AppService struct {
 	Type       string `json:"type"`
 	Port       int    `json:"port"`
@@ -103,6 +122,10 @@ type AppVolumeItem struct {
 	FileName string `json:"fileName"`
 }
 
+type AttachedRes struct {
+	ResID repos.ID `json:"res_id"`
+}
+
 type CCMData struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -119,15 +142,16 @@ type CSEntryIn struct {
 }
 
 type Cluster struct {
-	ID         repos.ID  `json:"id"`
-	Name       string    `json:"name"`
-	Provider   string    `json:"provider"`
-	Region     string    `json:"region"`
-	IP         *string   `json:"ip"`
-	Devices    []*Device `json:"devices"`
-	NodesCount int       `json:"nodesCount"`
-	Status     string    `json:"status"`
-	Account    *Account  `json:"account"`
+	ID          repos.ID  `json:"id"`
+	Name        string    `json:"name"`
+	Provider    string    `json:"provider"`
+	Region      string    `json:"region"`
+	IP          *string   `json:"ip"`
+	Devices     []*Device `json:"devices"`
+	UserDevices []*Device `json:"userDevices"`
+	NodesCount  int       `json:"nodesCount"`
+	Status      string    `json:"status"`
+	Account     *Account  `json:"account"`
 }
 
 func (Cluster) IsEntity() {}
@@ -152,13 +176,33 @@ type ContainerResInput struct {
 }
 
 type Device struct {
-	ID      repos.ID `json:"id"`
-	User    *User    `json:"user"`
-	Name    string   `json:"name"`
-	Cluster *Cluster `json:"cluster"`
+	ID            repos.ID `json:"id"`
+	User          *User    `json:"user"`
+	Name          string   `json:"name"`
+	Cluster       *Cluster `json:"cluster"`
+	Configuration string   `json:"configuration"`
+	IP            string   `json:"ip"`
 }
 
 func (Device) IsEntity() {}
+
+type EnvVal struct {
+	Type  string  `json:"type"`
+	Value *string `json:"value"`
+	Ref   *string `json:"ref"`
+	Key   *string `json:"key"`
+}
+
+type EnvVar struct {
+	Key   string  `json:"key"`
+	Value *EnvVal `json:"value"`
+}
+
+type ExposedServiceInput struct {
+	Type    string `json:"type"`
+	Target  int    `json:"target"`
+	Exposed int    `json:"exposed"`
+}
 
 type GitPipeline struct {
 	ID          repos.ID               `json:"id"`
@@ -219,33 +263,18 @@ type KVInput struct {
 type ManagedRes struct {
 	ID           repos.ID               `json:"id"`
 	Name         string                 `json:"name"`
-	ResourceName string                 `json:"resourceName"`
-	Version      int                    `json:"version"`
+	ResourceType string                 `json:"resourceType"`
 	Installation *ManagedSvc            `json:"installation"`
 	Values       map[string]interface{} `json:"values"`
 }
 
-type ManagedResourceSource struct {
-	Name   string                 `json:"name"`
-	Fields map[string]interface{} `json:"fields"`
-}
-
 type ManagedSvc struct {
-	ID      repos.ID               `json:"id"`
-	Name    string                 `json:"name"`
-	Version int                    `json:"version"`
-	Project *Project               `json:"project"`
-	Source  *ManagedSvcSource      `json:"source"`
-	Values  map[string]interface{} `json:"values"`
-	JobID   *repos.ID              `json:"jobId"`
-}
-
-type ManagedSvcSource struct {
-	ID          repos.ID                 `json:"id"`
-	Name        string                   `json:"name"`
-	DisplayName *string                  `json:"displayName"`
-	Fields      map[string]interface{}   `json:"fields"`
-	Resources   []*ManagedResourceSource `json:"resources"`
+	ID        repos.ID               `json:"id"`
+	Name      string                 `json:"name"`
+	Project   *Project               `json:"project"`
+	Source    string                 `json:"source"`
+	Values    map[string]interface{} `json:"values"`
+	Resources []*ManagedRes          `json:"resources"`
 }
 
 type NewResourcesIn struct {
