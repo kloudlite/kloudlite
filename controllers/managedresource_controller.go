@@ -2,30 +2,34 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	"go.uber.org/zap"
-	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
+	"operators.kloudlite.io/lib/errors"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
+	"operators.kloudlite.io/lib/templates"
 )
 
 // ManagedResourceReconciler reconciles a ManagedResource object
 type ManagedResourceReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	ClientSet *kubernetes.Clientset
-	JobMgr    lib.Job
-	logger    *zap.SugaredLogger
+	Scheme      *runtime.Scheme
+	ClientSet   *kubernetes.Clientset
+	SendMessage func(key string, msg lib.MessageReply) error
+	JobMgr      lib.Job
+	logger      *zap.SugaredLogger
 }
 
 const mresFinalizer = "finalizers.kloudlite.io/managed-resource"
@@ -54,24 +58,31 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r.finalize(ctx, mres)
 	}
 
-	managedSvc := &appsv1.Deployment{}
+	kt, err := templates.UseTemplate(templates.MongoDBStandalone)
+	if err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not useTemplate"))
+	}
+	b, err := kt.WithValues(mres)
+	if err != nil {
+		logger.Info(b, err)
+	}
+
+	managedSvc := &crdsv1.ManagedService{}
 	if err := r.Get(ctx, types.NamespacedName{Name: mres.Spec.ManagedSvc, Namespace: mres.Namespace}, managedSvc); err != nil {
 		logger.Infof("failing to get managed service (%s), queing for later", toRefString(mres))
 		return reconcileResult.FailedE(err)
 	}
-	// logger.Info("ManagedResource has been found: %+v", managedSvc)
 
-	// check if managedSvc is ready to use
-	// if !meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Available") {
-	// 	r.logger.Info("Found managed svc but still not available, so requeing ...")
-	// 	return reconcileResult.Retry()
-	// }
+	//STEP: check if managedsvc is ready
+	if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
+		return reconcileResult.FailedE(errors.Newf("managedSvc %s is not ready", toRefString(managedSvc)))
+	}
 
-	// look for secret
-	msvcSecret := &corev1.Secret{}
-	if err := r.Get(ctx, types.NamespacedName{Name: mres.Spec.ManagedSvc, Namespace: mres.Namespace}, msvcSecret); err != nil {
-		logger.Infof("failing to get managed service secret (%s), queing for later", toRefString(mres))
-		return reconcileResult.FailedE(err)
+	msvcSecretName := fmt.Sprintf("msvc-%s", mres.Spec.ManagedSvc)
+	var msvcSecret corev1.Secret
+	if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: msvcSecretName}, &msvcSecret); err != nil {
+		logger.Errorf("ManagedSvc secret %s/%s not found, aborting reconcilation", mres.Namespace, msvcSecretName)
+		return reconcileResult.Failed()
 	}
 
 	logger.Infof("Secret: %+v\n", string(msvcSecret.Data["mongodb-root-password"]))

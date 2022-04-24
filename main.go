@@ -89,8 +89,8 @@ func main() {
 
 	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
-	// harborUserName := fromEnv("HARBOR_USERNAME")
-	// harborPassword := fromEnv("HARBOR_PASSWORD")
+	harborUserName := fromEnv("HARBOR_USERNAME")
+	harborPassword := fromEnv("HARBOR_PASSWORD")
 
 	kafkaBrokers := fromEnv("KAFKA_BROKERS")
 	kafkaReplyTopic := fromEnv("KAFKA_REPLY_TOPIC")
@@ -126,39 +126,39 @@ func main() {
 		}, nil)
 	}
 
-	// if err = (&controllers.ProjectReconciler{
-	// 	Client:         mgr.GetClient(),
-	// 	Scheme:         mgr.GetScheme(),
-	// 	ClientSet:      clientset,
-	// 	SendMessage:    sendMessage,
-	// 	JobMgr:         lib.NewJobber(clientset),
-	// 	HarborUserName: harborUserName,
-	// 	HarborPassword: harborPassword,
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "Project")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.ProjectReconciler{
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		ClientSet:      clientset,
+		SendMessage:    sendMessage,
+		JobMgr:         lib.NewJobber(clientset),
+		HarborUserName: harborUserName,
+		HarborPassword: harborPassword,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Project")
+		os.Exit(1)
+	}
 
-	// if err = (&controllers.AppReconciler{
-	// 	Client:         mgr.GetClient(),
-	// 	Scheme:         mgr.GetScheme(),
-	// 	ClientSet:      clientset,
-	// 	JobMgr:         lib.NewJobber(clientset),
-	// 	SendMessage:    sendMessage,
-	// 	HarborUserName: harborUserName,
-	// 	HarborPassword: harborPassword,
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "App")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.AppReconciler{
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		ClientSet:      clientset,
+		JobMgr:         lib.NewJobber(clientset),
+		SendMessage:    sendMessage,
+		HarborUserName: harborUserName,
+		HarborPassword: harborPassword,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "App")
+		os.Exit(1)
+	}
 
-	// if err = (&controllers.RouterReconciler{
-	// 	Client: mgr.GetClient(),
-	// 	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "Router")
-	// 	os.Exit(1)
-	// }
+	if err = (&controllers.RouterReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Router")
+		os.Exit(1)
+	}
 
 	if err = (&controllers.ManagedServiceReconciler{
 		Client:      mgr.GetClient(),
