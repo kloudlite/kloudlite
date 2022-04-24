@@ -16,7 +16,7 @@
           defaultValue: 10
           min: 1
           required: true
-          unit: GB
+          unit: Gi
         - name: primary_count
           label: Mongo Primary Count
           inputType: Number
@@ -69,7 +69,7 @@
           defaultValue: 10
           min: 1
           required: true
-          unit: GB
+          unit: Gi
       outputs:
         - name: ROOT_PASSWORD
           label: MongoRoot Password

@@ -203,7 +203,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CiDeleteGitPipeline    func(childComplexity int, pipelineID repos.ID) int
-		CoreCreateAppFlow      func(childComplexity int, projectID repos.ID, pipeline *model.GitPipelineInput, app map[string]interface{}, configsPatches map[string]interface{}, secretPatches map[string]interface{}) int
+		CoreCreateAppFlow      func(childComplexity int, projectID repos.ID, app model.AppFlowInput) int
 		CoreCreateConfig       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string) int
 		CoreCreateRouter       func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
@@ -361,7 +361,7 @@ type MutationResolver interface {
 	IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error)
 	GithubEvent(ctx context.Context, installationID repos.ID, sourceRepo string) (*bool, error)
 	GitlabEvent(ctx context.Context, email repos.ID, sourceRepo string) (*bool, error)
-	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, pipeline *model.GitPipelineInput, app map[string]interface{}, configsPatches map[string]interface{}, secretPatches map[string]interface{}) (bool, error)
+	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error)
 	CoreUpdateApp(ctx context.Context, appID repos.ID, name *string, description *string, service *model.AppServiceInput, replicas *int, containers *model.AppContainerIn) (*model.App, error)
 	CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error)
@@ -1130,7 +1130,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateAppFlow(childComplexity, args["projectId"].(repos.ID), args["pipeline"].(*model.GitPipelineInput), args["app"].(map[string]interface{}), args["configsPatches"].(map[string]interface{}), args["secretPatches"].(map[string]interface{})), true
+		return e.complexity.Mutation.CoreCreateAppFlow(childComplexity, args["projectId"].(repos.ID), args["app"].(model.AppFlowInput)), true
 
 	case "Mutation.core_createConfig":
 		if e.complexity.Mutation.CoreCreateConfig == nil {
@@ -2179,10 +2179,7 @@ type Mutation {
   # App
   core_createAppFlow(
     projectId: ID!,
-    pipeline: GitPipelineInput,
-    app: Json!,
-    configsPatches: Json,
-    secretPatches: Json,
+    app: AppFlowInput!,
   ): Boolean!
   core_updateApp(appId: ID!, name: String, description: String, service: AppServiceInput, replicas: Int, containers: AppContainerIN): App!
   core_deleteApp(appId: ID!): Boolean!
@@ -2204,6 +2201,46 @@ type Mutation {
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
 
+}
+
+input AppFlowInput{
+  name: String!
+  description: String
+  exposed_services: [ExposedServiceInput!]!
+  containers:[AppContainerInput!]!
+}
+
+input EnvVal {
+  type: String!
+  value: String
+  ref: String
+  key: String
+}
+
+input EnvVar {
+  key: String!
+  value: EnvVal!
+}
+input AttachedRes{
+  res_id: ID!
+}
+
+input AppContainerInput{
+  name: String!
+  image: String!
+  pull_secret: String
+  env_vars:[EnvVar!]!
+  cpu_min:String!
+  cpu_max:String!
+  mem_min:String!
+  mem_max:String!
+  attached_resources:[AttachedRes!]!
+}
+
+input ExposedServiceInput{
+  type :String!
+  target: Int!
+  exposed: Int!
 }
 
 type Router {
@@ -2255,6 +2292,9 @@ type ProjectMembership {
   role: String!
   project: Project!
 }
+
+
+
 
 type App {
   id: ID!
@@ -2591,42 +2631,15 @@ func (ec *executionContext) field_Mutation_core_createAppFlow_args(ctx context.C
 		}
 	}
 	args["projectId"] = arg0
-	var arg1 *model.GitPipelineInput
-	if tmp, ok := rawArgs["pipeline"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pipeline"))
-		arg1, err = ec.unmarshalOGitPipelineInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pipeline"] = arg1
-	var arg2 map[string]interface{}
+	var arg1 model.AppFlowInput
 	if tmp, ok := rawArgs["app"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg2, err = ec.unmarshalNJson2map(ctx, tmp)
+		arg1, err = ec.unmarshalNAppFlowInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppFlowInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["app"] = arg2
-	var arg3 map[string]interface{}
-	if tmp, ok := rawArgs["configsPatches"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configsPatches"))
-		arg3, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["configsPatches"] = arg3
-	var arg4 map[string]interface{}
-	if tmp, ok := rawArgs["secretPatches"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretPatches"))
-		arg4, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["secretPatches"] = arg4
+	args["app"] = arg1
 	return args, nil
 }
 
@@ -8248,7 +8261,7 @@ func (ec *executionContext) _Mutation_core_createAppFlow(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreCreateAppFlow(rctx, args["projectId"].(repos.ID), args["pipeline"].(*model.GitPipelineInput), args["app"].(map[string]interface{}), args["configsPatches"].(map[string]interface{}), args["secretPatches"].(map[string]interface{}))
+		return ec.resolvers.Mutation().CoreCreateAppFlow(rctx, args["projectId"].(repos.ID), args["app"].(model.AppFlowInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12232,6 +12245,93 @@ func (ec *executionContext) unmarshalInputAppContainerIN(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context, obj interface{}) (model.AppContainerInput, error) {
+	var it model.AppContainerInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "image":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+			it.Image, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pull_secret":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pull_secret"))
+			it.PullSecret, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "env_vars":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env_vars"))
+			it.EnvVars, err = ec.unmarshalNEnvVar2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVarᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cpu_min":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu_min"))
+			it.CPUMin, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cpu_max":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu_max"))
+			it.CPUMax, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "mem_min":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mem_min"))
+			it.MemMin, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "mem_max":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mem_max"))
+			it.MemMax, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "attached_resources":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attached_resources"))
+			it.AttachedResources, err = ec.unmarshalNAttachedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedResᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAppContainerUpdateInput(ctx context.Context, obj interface{}) (model.AppContainerUpdateInput, error) {
 	var it model.AppContainerUpdateInput
 	asMap := map[string]interface{}{}
@@ -12366,6 +12466,53 @@ func (ec *executionContext) unmarshalInputAppEnvInput(ctx context.Context, obj i
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAppFlowInput(ctx context.Context, obj interface{}) (model.AppFlowInput, error) {
+	var it model.AppFlowInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "exposed_services":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exposed_services"))
+			it.ExposedServices, err = ec.unmarshalNExposedServiceInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "containers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containers"))
+			it.Containers, err = ec.unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAppServiceInput(ctx context.Context, obj interface{}) (model.AppServiceInput, error) {
 	var it model.AppServiceInput
 	asMap := map[string]interface{}{}
@@ -12396,6 +12543,29 @@ func (ec *executionContext) unmarshalInputAppServiceInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
 			it.TargetPort, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAttachedRes(ctx context.Context, obj interface{}) (model.AttachedRes, error) {
+	var it model.AttachedRes
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "res_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("res_id"))
+			it.ResID, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12458,6 +12628,123 @@ func (ec *executionContext) unmarshalInputContainerResInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
 			it.Max, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEnvVal(ctx context.Context, obj interface{}) (model.EnvVal, error) {
+	var it model.EnvVal
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "value":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			it.Value, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ref":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ref"))
+			it.Ref, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "key":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			it.Key, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEnvVar(ctx context.Context, obj interface{}) (model.EnvVar, error) {
+	var it model.EnvVar
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "key":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			it.Key, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "value":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			it.Value, err = ec.unmarshalNEnvVal2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVal(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputExposedServiceInput(ctx context.Context, obj interface{}) (model.ExposedServiceInput, error) {
+	var it model.ExposedServiceInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "target":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("target"))
+			it.Target, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "exposed":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exposed"))
+			it.Exposed, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16201,6 +16488,28 @@ func (ec *executionContext) marshalNAppContainer2ᚖkloudliteᚗioᚋappsᚋcons
 	return ec._AppContainer(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInputᚄ(ctx context.Context, v interface{}) ([]*model.AppContainerInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.AppContainerInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAppContainerInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNAppContainerInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInput(ctx context.Context, v interface{}) (*model.AppContainerInput, error) {
+	res, err := ec.unmarshalInputAppContainerInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNAppEnv2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppEnvᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AppEnv) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -16272,6 +16581,11 @@ func (ec *executionContext) unmarshalNAppEnvInput2ᚕᚖkloudliteᚗioᚋappsᚋ
 	return res, nil
 }
 
+func (ec *executionContext) unmarshalNAppFlowInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppFlowInput(ctx context.Context, v interface{}) (model.AppFlowInput, error) {
+	res, err := ec.unmarshalInputAppFlowInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNAppService2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppService(ctx context.Context, sel ast.SelectionSet, v []*model.AppService) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -16308,6 +16622,28 @@ func (ec *executionContext) marshalNAppService2ᚕᚖkloudliteᚗioᚋappsᚋcon
 	wg.Wait()
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNAttachedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedResᚄ(ctx context.Context, v interface{}) ([]*model.AttachedRes, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.AttachedRes, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAttachedRes2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedRes(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNAttachedRes2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedRes(ctx context.Context, v interface{}) (*model.AttachedRes, error) {
+	res, err := ec.unmarshalInputAttachedRes(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
@@ -16496,6 +16832,55 @@ func (ec *executionContext) marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋ
 		return graphql.Null
 	}
 	return ec._Device(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEnvVal2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVal(ctx context.Context, v interface{}) (*model.EnvVal, error) {
+	res, err := ec.unmarshalInputEnvVal(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNEnvVar2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVarᚄ(ctx context.Context, v interface{}) ([]*model.EnvVar, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.EnvVar, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNEnvVar2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVar(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNEnvVar2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVar(ctx context.Context, v interface{}) (*model.EnvVar, error) {
+	res, err := ec.unmarshalInputEnvVar(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNExposedServiceInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInputᚄ(ctx context.Context, v interface{}) ([]*model.ExposedServiceInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.ExposedServiceInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNExposedServiceInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNExposedServiceInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInput(ctx context.Context, v interface{}) (*model.ExposedServiceInput, error) {
+	res, err := ec.unmarshalInputExposedServiceInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNGitPipeline2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipeline(ctx context.Context, sel ast.SelectionSet, v *model.GitPipeline) graphql.Marshaler {
@@ -17662,14 +18047,6 @@ func (ec *executionContext) marshalOGitPipeline2ᚖkloudliteᚗioᚋappsᚋconso
 		return graphql.Null
 	}
 	return ec._GitPipeline(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOGitPipelineInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineInput(ctx context.Context, v interface{}) (*model.GitPipelineInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGitPipelineInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOIAppVolume2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐIAppVolume(ctx context.Context, v interface{}) ([]*model.IAppVolume, error) {

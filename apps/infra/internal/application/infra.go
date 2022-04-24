@@ -21,7 +21,7 @@ type infraClient struct {
 }
 
 func (i *infraClient) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error) {
-	cmd := exec.Command("kubectl", "get", fmt.Sprintf("configmap/%v", resName), "-n", namespace, "-o", "jsonpath='{.data}'")
+	cmd := exec.Command("kubectl", "get", fmt.Sprintf("configmap/%v", fmt.Sprintf("mres-%v", resName)), "-n", namespace, "-o", "jsonpath='{.data}'")
 	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
 	return cmd.Output()
 }
