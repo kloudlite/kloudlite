@@ -30,6 +30,8 @@ import (
 
 	mresv1 "operators.kloudlite.io/apis/mres/v1"
 	// mrescontrollers "operators.kloudlite.io/controllers/mres"
+	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
+	msvccontrollers "operators.kloudlite.io/controllers/msvc"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -43,6 +45,7 @@ func init() {
 
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
 	utilruntime.Must(mresv1.AddToScheme(scheme))
+	utilruntime.Must(msvcv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 func fromEnv(key string) string {
@@ -192,6 +195,13 @@ func main() {
 	// 	setupLog.Error(err, "unable to create controller", "controller", "MongoDatabase")
 	// 	os.Exit(1)
 	// }
+	if err = (&msvccontrollers.MongoDBReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MongoDB")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

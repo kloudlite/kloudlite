@@ -1,13 +1,13 @@
-# permissions for end users to edit mongodb-databases.
+# permissions for end users to edit mongodbs.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mongodb-database-editor-role
+  name: mongodb-editor-role
 rules:
 - apiGroups:
-  - mres.kloudlite.io
+  - msvc.kloudlite.io
   resources:
-  - mongodb-databases
+  - mongodbs
   verbs:
   - create
   - delete
@@ -17,8 +17,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - mres.kloudlite.io
+  - msvc.kloudlite.io
   resources:
-  - mongodb-databases/status
+  - mongodbs/status
   verbs:
   - get

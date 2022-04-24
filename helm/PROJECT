@@ -10,7 +10,7 @@ resources:
     crdVersion: v1
     namespaced: true
   domain: kloudlite.io
-  group: crds
-  kind: MongoDBHelm
+  group: msvc
+  kind: MongoDB
   version: v1
 version: "3"

@@ -1,0 +1,146 @@
+package msvc
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	crdsv1 "operators.kloudlite.io/api/v1"
+	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
+	"operators.kloudlite.io/controllers"
+	"operators.kloudlite.io/lib/errors"
+	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
+)
+
+// MongoDBReconciler reconciles a MongoDB object
+type MongoDBReconciler struct {
+	client.Client
+	Scheme *runtime.Scheme
+	logger *zap.SugaredLogger
+}
+
+//+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/finalizers,verbs=update
+
+func getName(mdb *msvcv1.MongoDB) string {
+	return mdb.Name + "-mongodb"
+}
+
+func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	r.logger = controllers.GetLogger(req.NamespacedName)
+	logger := r.logger.With("RECONCILE", true)
+
+	mdb := &msvcv1.MongoDB{}
+	if err := r.Get(ctx, req.NamespacedName, mdb); err != nil {
+		if apiErrors.IsNotFound(err) {
+			// INFO: might have been deleted
+			return reconcileResult.OK()
+		}
+		return reconcileResult.Failed()
+	}
+
+	if mdb.GetDeletionTimestamp() != nil {
+		return reconcileResult.OK()
+	}
+
+	logger.Debugf("Reconilation started ...")
+
+	depl := appsv1.Deployment{}
+	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: mdb.Name + "-mongodb"}, &depl); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not list deployments for helm resource"))
+	}
+
+	x := metav1.Condition{
+		Type:    "Ready",
+		Status:  "False",
+		Reason:  "Initialized",
+		Message: "deployment has not been created yet",
+	}
+
+	for _, cond := range depl.Status.Conditions {
+		if cond.Type == appsv1.DeploymentAvailable {
+			x.Status = metav1.ConditionStatus(cond.Status)
+			x.Message = cond.Message
+		}
+	}
+
+	var msvc crdsv1.ManagedService
+	if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: mdb.Name}, &msvc); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	meta.SetStatusCondition(&msvc.Status.Conditions, x)
+
+	if err := r.Status().Update(ctx, &msvc); err != nil {
+		logger.Infof("could not update msvc status")
+		return reconcileResult.FailedE(err)
+	}
+
+	if x.Status != "True" {
+		return reconcileResult.Retry()
+	}
+
+	var mongoCfg corev1.Secret
+
+	if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: getName(mdb)}, &mongoCfg); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	body := map[string]string{
+		"ROOT_PASSWORD": string(mongoCfg.Data["mongodb-root-password"]),
+		"HOST":          fmt.Sprintf("%s.%s.svc.cluster.local", getName(mdb), mdb.Namespace),
+		"URI":           fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local", "root", string(mongoCfg.Data["mongodb-root-password"]), getName(mdb), mdb.Namespace),
+	}
+
+	b, err := json.Marshal(body)
+	if err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not marshal secret body into JSON"))
+	}
+	body["JSON"] = string(b)
+
+	ts := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: mdb.Namespace,
+			Name:      fmt.Sprintf("msvc-%s", getName(mdb)),
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &ts, func() error {
+		ts.StringData = body
+
+		if err := controllerutil.SetControllerReference(mdb, &ts, r.Scheme); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	logger.Infof("Reconcile Completed ...", x)
+	return reconcileResult.OK()
+}
+
+func (r *MongoDBReconciler) retry() (ctrl.Result, error) {
+	return reconcileResult.Retry()
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *MongoDBReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&msvcv1.MongoDB{}).
+		Complete(r)
+}

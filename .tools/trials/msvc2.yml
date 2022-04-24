@@ -1,0 +1,12 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: sample-example
+  namespace: hotspot
+  finalizers:
+    - finalizers.kloudlite.io/managed-service
+    - foreground
+spec:
+  type: MongoDBStandalone
+  inputs:
+    size: 1Gi

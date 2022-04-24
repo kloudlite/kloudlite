@@ -1,7 +1,7 @@
-apiVersion: crds.kloudlite.io/v1
-kind: MongoDBHelm
+apiVersion: msvc.kloudlite.io/v1
+kind: MongoDB
 metadata:
-  name: mongodbhelm-sample
+  name: mongodb-sample
 spec:
   # Default values copied from <project_dir>/helm-charts/mongodb/values.yaml
   affinity: {}
@@ -84,6 +84,13 @@ spec:
     usernames: []
   clusterDomain: cluster.local
   command: []
+  common:
+    exampleValue: common-chart
+    global:
+      imagePullSecrets: []
+      imageRegistry: ""
+      namespaceOverride: ""
+      storageClass: ""
   commonAnnotations: {}
   commonLabels: {}
   configuration: ""
