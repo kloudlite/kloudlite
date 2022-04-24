@@ -35,6 +35,10 @@ spec:
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
+              inputs:
+                additionalProperties:
+                  type: string
+                type: object
               managedSvc:
                 type: string
               type:
@@ -47,10 +51,6 @@ spec:
             description: ManagedResourceStatus defines the observed state of ManagedResource
             properties:
               conditions:
-                description: ApplyJobCheck      Recon              `json:"apply_job_check,omitempty"`
-                  DeleteJobCheck     Recon              `json:"delete_job_check,omitempty"`
-                  ManagedSvcDepCheck Recon              `json:"managed_svc_dep_check,omitempty"`
-                  Generation         int64              `json:"generation,omitempty"`
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct

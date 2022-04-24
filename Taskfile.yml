@@ -17,6 +17,9 @@ tasks:
     cmds:
       - operator-sdk create api --group crds --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
 
+  new-mongo-res:
+      - operator-sdk create api --group mongodbs.msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
+
   new-msvc-kind:
     cmds:
       - operator-sdk create api --group msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"

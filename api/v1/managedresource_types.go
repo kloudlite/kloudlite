@@ -8,7 +8,7 @@ import (
 type ManagedResourceSpec struct {
 	Type       string            `json:"type"`
 	ManagedSvc string            `json:"managedSvc"`
-	Inputs     map[string]string `json:"inputs"`
+	Inputs     map[string]string `json:"inputs,omitempty"`
 }
 
 // ManagedResourceStatus defines the observed state of ManagedResource

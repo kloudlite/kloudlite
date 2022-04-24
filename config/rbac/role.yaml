@@ -162,6 +162,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - mongodbs.msvc.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodbs.msvc.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodbs.msvc.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - mres.kloudlite.io
   resources:
   - mongodatabases

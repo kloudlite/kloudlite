@@ -8,7 +8,7 @@ spec:
     enabled: true
     rootPassword: {{.Spec.Inputs.RootPassword | default uuidv4 }}
   persistence:
-    enabled: false
+    enabled: true
     size: {{index .Spec.Inputs "size" | default "1Gi" }}
   volumePermissions:
     enabled: true

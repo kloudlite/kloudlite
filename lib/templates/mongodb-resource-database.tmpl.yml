@@ -1,7 +1,7 @@
-apiVersion: mres.mongodbs.msvc.kloudlite.io
+apiVersion: mongodbs.msvc.kloudlite.io/v1
 kind: Database
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
 spec:
-  managedSvc: {{.Spec.ManagedSvc}}
+  managed_svc: {{.Spec.ManagedSvc }}
