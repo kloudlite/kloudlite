@@ -1,7 +1,7 @@
 package application
 
 import (
-	"encoding/json"
+	"context"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/messaging"
 	//"kloudlite.io/pkg/messaging"
@@ -13,65 +13,49 @@ type infraResponder struct {
 }
 
 // SendAddPeerResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendAddPeerResponse(action domain.AddPeerResponse) error {
-	marshal, err := json.Marshal(map[string]any{
+func (i *infraResponder) SendAddPeerResponse(cxt context.Context, action domain.AddPeerResponse) error {
+	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "add-peer",
 		"payload": action,
 	})
-	if err != nil {
-		return err
-	}
-	return i.kProducer.SendMessage(i.responseTopic, "resp", marshal)
 }
 
 // SendCreateClusterResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendCreateClusterResponse(action domain.SetupClusterResponse) error {
-	marshal, err := json.Marshal(map[string]any{
+func (i *infraResponder) SendCreateClusterResponse(cxt context.Context, action domain.SetupClusterResponse) error {
+	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "create-cluster",
 		"payload": action,
 	})
-	if err != nil {
-		return err
-	}
-	return i.kProducer.SendMessage(i.responseTopic, "resp", marshal)
 }
 
 // SendDeleteClusterResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendDeleteClusterResponse(action domain.DeleteClusterResponse) error {
-	marshal, err := json.Marshal(map[string]any{
+func (i *infraResponder) SendDeleteClusterResponse(cxt context.Context, action domain.DeleteClusterResponse) error {
+	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "delete-cluster",
 		"payload": action,
 	})
-	if err != nil {
-		return err
-	}
-	return i.kProducer.SendMessage(i.responseTopic, "resp", marshal)
 }
 
 // SendDeletePeerResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendDeletePeerResponse(action domain.DeletePeerResponse) error {
-	marshal, err := json.Marshal(map[string]any{
+func (i *infraResponder) SendDeletePeerResponse(cxt context.Context, action domain.DeletePeerResponse) error {
+
+	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "delete-peer",
 		"payload": action,
 	})
-	if err != nil {
-		return err
-	}
-	return i.kProducer.SendMessage(i.responseTopic, "resp", marshal)
 }
 
 // SendUpdateClusterResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendUpdateClusterResponse(action domain.UpdateClusterResponse) error {
-	marshal, err := json.Marshal(map[string]any{
+func (i *infraResponder) SendUpdateClusterResponse(cxt context.Context, action domain.UpdateClusterResponse) error {
+	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "update-cluster",
 		"payload": action,
 	})
-	if err != nil {
-		return err
-	}
-	return i.kProducer.SendMessage(i.responseTopic, "resp", marshal)
 }
 
 func NewInfraResponder(k messaging.Producer[any], responseTopic string) domain.InfraJobResponder {
-	return &infraResponder{kProducer: k, responseTopic: responseTopic}
+	return &infraResponder{
+		kProducer:     k,
+		responseTopic: responseTopic,
+	}
 }

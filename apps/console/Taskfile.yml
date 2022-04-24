@@ -18,6 +18,10 @@ tasks:
       DEV: true
       KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
+      KAFKA_WORKLOAD_TOPIC: dev-hotspot-agent
+      KAFKA_WORKLOAD_RESP_TOPIC: dev-hotspot-agent-reply
+      KAFKA_INFRA_RESP_TOPIC: dev-hotspot-infra-resp
+      KAFKA_GROUP_ID: console-infra-cli
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
     sources:
       - ./internal/**/*.go

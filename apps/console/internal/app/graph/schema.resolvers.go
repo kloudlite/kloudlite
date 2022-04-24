@@ -5,11 +5,15 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/cache"
 	wErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
@@ -59,9 +63,30 @@ func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*m
 	for i, d := range deviceEntities {
 		devices[i] = &model.Device{
 			ID:      d.Id,
+			User:    &model.User{ID: d.UserId},
 			Name:    d.Name,
 			Cluster: cluster,
+			IP:      d.Ip,
 		}
+	}
+	return devices, e
+}
+
+func (r *clusterResolver) UserDevices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error) {
+	var e error
+	defer wErrors.HandleErr(&e)
+	user := obj
+	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID), &obj.ID)
+	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
+	devices := make([]*model.Device, 0)
+	for _, device := range deviceEntities {
+		devices = append(devices, &model.Device{
+			ID:      device.Id,
+			User:    &model.User{ID: user.ID},
+			Name:    device.Name,
+			Cluster: &model.Cluster{ID: device.ClusterId},
+			IP:      device.Ip,
+		})
 	}
 	return devices, e
 }
@@ -97,23 +122,34 @@ func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model
 	}, nil
 }
 
-func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
-	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, templateID, name, values)
+func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
+	return r.Domain.GetDeviceConfig(ctx, obj.ID)
+}
+
+func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error) {
+	resources, err := r.Domain.GetManagedResourcesOfService(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*model.ManagedRes, 0)
+	for _, r := range resources {
+		res = append(res, managedResourceModelFromEntity(r))
+	}
+	return res, nil
+}
+
+func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
+	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, serviceType, name, values)
 	if err != nil {
 		return nil, err
 	}
 	return &model.ManagedSvc{
 		ID:      svcEntity.Id,
 		Name:    svcEntity.Name,
-		Version: 0,
 		Project: &model.Project{ID: projectID},
-		Source: &model.ManagedSvcSource{
-			Name: string(svcEntity.ServiceType),
-		},
-		Values: values,
-		JobID:  nil,
+		Source:  string(svcEntity.ServiceType),
+		Values:  values,
 	}, nil
-	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) MangedSvcUninstall(ctx context.Context, installationID repos.ID) (bool, error) {
@@ -124,8 +160,24 @@ func (r *mutationResolver) MangedSvcUpdate(ctx context.Context, installationID r
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceName string, values map[string]interface{}) (*model.ManagedRes, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error) {
+	kvs := make(map[string]string, 0)
+	for k, v := range values {
+		kvs[k] = v.(string)
+	}
+	res, err := r.Domain.InstallManagedRes(ctx, installationID, name, resourceType, kvs)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ManagedRes{
+		ID:           res.Id,
+		Name:         res.Name,
+		ResourceType: string(res.ResourceType),
+		Installation: &model.ManagedSvc{
+			ID: installationID,
+		},
+		Values: values,
+	}, nil
 }
 
 func (r *mutationResolver) ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error) {
@@ -148,8 +200,24 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, clusterID rep
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error) {
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	device, err := r.Domain.AddDevice(ctx, name, clusterID, session.UserId)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Device{
+		ID:   device.Id,
+		User: &model.User{ID: session.UserId},
+		Name: device.Name,
+		Cluster: &model.Cluster{
+			ID: clusterID,
+		},
+		IP: device.Ip,
+	}, nil
 }
 
 func (r *mutationResolver) InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error) {
@@ -192,8 +260,60 @@ func (r *mutationResolver) GitlabEvent(ctx context.Context, email repos.ID, sour
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app map[string]interface{}, pipelines *model.GitPipelineInput, configs map[string]interface{}, secrets map[string]interface{}, mServices map[string]interface{}, mResources map[string]interface{}) (*bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error) {
+	ports := make([]entities.ExposedPort, 0)
+	for _, port := range app.ExposedServices {
+		ports = append(ports, entities.ExposedPort{
+			Port:       int64(port.Exposed),
+			TargetPort: int64(port.Target),
+			Type:       entities.PortType(port.Type),
+		})
+	}
+	containers := make([]entities.Container, 0)
+	for _, container := range app.Containers {
+		e := make([]entities.EnvVar, 0)
+		for _, env := range container.EnvVars {
+			e = append(e, entities.EnvVar{
+				Key: env.Key,
+				Value: entities.EnvValue{
+					Type:  env.Value.Type,
+					Value: env.Value.Value,
+					Ref:   env.Value.Ref,
+					Key:   env.Value.Key,
+				},
+			})
+		}
+		a := make([]entities.AttachedResource, 0)
+		for _, attached := range container.AttachedResources {
+			a = append(a, entities.AttachedResource{
+				ResourceId: attached.ResID,
+			})
+		}
+		containers = append(containers, entities.Container{
+			Name:            container.Name,
+			Image:           container.Image,
+			ImagePullSecret: container.PullSecret,
+			EnvVars:         e,
+			CPULimits: entities.Limit{
+				Min: container.CPUMin,
+				Max: container.CPUMax,
+			},
+			MemoryLimits: entities.Limit{
+				Min: container.MemMin,
+				Max: container.MemMax,
+			},
+			AttachedResources: a,
+		})
+	}
+	return r.Domain.InstallAppFlow(ctx, projectID, entities.App{
+		Name:         app.Name,
+		Description:  app.Description,
+		Replicas:     1,
+		ExposedPorts: ports,
+		Containers:   containers,
+		Status:       "",
+		Conditions:   nil,
+	})
 }
 
 func (r *mutationResolver) CoreUpdateApp(ctx context.Context, appID repos.ID, name *string, description *string, service *model.AppServiceInput, replicas *int, containers *model.AppContainerIn) (*model.App, error) {
@@ -278,10 +398,14 @@ func (r *mutationResolver) CoreCreateRouter(ctx context.Context, projectID repos
 		routeEnt = append(routeEnt, &entities.Route{
 			Path:    r.Path,
 			AppName: r.AppName,
-			Port:    fmt.Sprintf("%v", r.Port),
+			Port:    uint16(r.Port),
 		})
 	}
-	router, err := r.Domain.CreateRouter(ctx, projectID, name, domains, routeEnt)
+	d := domains
+	if domains == nil {
+		d = []string{}
+	}
+	router, err := r.Domain.CreateRouter(ctx, projectID, name, d, routeEnt)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +418,7 @@ func (r *mutationResolver) CoreUpdateRouter(ctx context.Context, routerID repos.
 		entries = append(entries, &entities.Route{
 			Path:    i.Path,
 			AppName: i.AppName,
-			Port:    fmt.Sprintf("%v", i.Port),
+			Port:    uint16(i.Port),
 		})
 	}
 	return r.Domain.UpdateRouter(ctx, routerID, domains, entries)
@@ -420,6 +544,23 @@ func (r *queryResolver) CiGitPipeline(ctx context.Context, pipelineID repos.ID) 
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *queryResolver) ManagedSvcMarketList(ctx context.Context) (map[string]interface{}, error) {
+	templates, err := r.Domain.GetManagedServiceTemplates(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var res []any
+	marshal, err := json.Marshal(templates)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(marshal, &res)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{"categories": res}, nil
+}
+
 func (r *queryResolver) ManagedSvcListAvailable(ctx context.Context) (map[string]interface{}, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -429,7 +570,12 @@ func (r *queryResolver) ManagedSvcGetInstallation(ctx context.Context, installat
 }
 
 func (r *queryResolver) ManagedSvcListInstallations(ctx context.Context, projectID repos.ID) ([]*model.ManagedSvc, error) {
-	panic(fmt.Errorf("not implemented"))
+	svcs, err := r.Domain.GetManagedSvcs(ctx, projectID)
+	managedSvcs := make([]*model.ManagedSvc, 0)
+	for _, svc := range svcs {
+		managedSvcs = append(managedSvcs, managedSvcModelFromEntity(svc))
+	}
+	return managedSvcs, err
 }
 
 func (r *queryResolver) ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error) {
@@ -444,21 +590,20 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, clusterID repos.ID)
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) InfraGetDevices(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
 	user := obj
-	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID))
+	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID), nil)
 	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
 		devices = append(devices, &model.Device{
-			ID:   device.Id,
-			Name: device.Name,
+			ID:      device.Id,
+			User:    &model.User{ID: user.ID},
+			Name:    device.Name,
+			Cluster: &model.Cluster{ID: device.ClusterId},
+			IP:      device.Ip,
 		})
 	}
 	return devices, e
@@ -473,6 +618,9 @@ func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
 
+// ManagedSvc returns generated.ManagedSvcResolver implementation.
+func (r *Resolver) ManagedSvc() generated.ManagedSvcResolver { return &managedSvcResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -485,6 +633,7 @@ func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 type accountResolver struct{ *Resolver }
 type clusterResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
+type managedSvcResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

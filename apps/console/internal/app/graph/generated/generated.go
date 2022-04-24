@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	Cluster() ClusterResolver
 	Device() DeviceResolver
 	Entity() EntityResolver
+	ManagedSvc() ManagedSvcResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	User() UserResolver
@@ -120,15 +121,16 @@ type ComplexityRoot struct {
 	}
 
 	Cluster struct {
-		Account    func(childComplexity int) int
-		Devices    func(childComplexity int) int
-		ID         func(childComplexity int) int
-		IP         func(childComplexity int) int
-		Name       func(childComplexity int) int
-		NodesCount func(childComplexity int) int
-		Provider   func(childComplexity int) int
-		Region     func(childComplexity int) int
-		Status     func(childComplexity int) int
+		Account     func(childComplexity int) int
+		Devices     func(childComplexity int) int
+		ID          func(childComplexity int) int
+		IP          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		NodesCount  func(childComplexity int) int
+		Provider    func(childComplexity int) int
+		Region      func(childComplexity int) int
+		Status      func(childComplexity int) int
+		UserDevices func(childComplexity int) int
 	}
 
 	Config struct {
@@ -146,10 +148,12 @@ type ComplexityRoot struct {
 	}
 
 	Device struct {
-		Cluster func(childComplexity int) int
-		ID      func(childComplexity int) int
-		Name    func(childComplexity int) int
-		User    func(childComplexity int) int
+		Cluster       func(childComplexity int) int
+		Configuration func(childComplexity int) int
+		ID            func(childComplexity int) int
+		IP            func(childComplexity int) int
+		Name          func(childComplexity int) int
+		User          func(childComplexity int) int
 	}
 
 	Entity struct {
@@ -184,37 +188,22 @@ type ComplexityRoot struct {
 		ID           func(childComplexity int) int
 		Installation func(childComplexity int) int
 		Name         func(childComplexity int) int
-		ResourceName func(childComplexity int) int
+		ResourceType func(childComplexity int) int
 		Values       func(childComplexity int) int
-		Version      func(childComplexity int) int
-	}
-
-	ManagedResourceSource struct {
-		Fields func(childComplexity int) int
-		Name   func(childComplexity int) int
 	}
 
 	ManagedSvc struct {
-		ID      func(childComplexity int) int
-		JobID   func(childComplexity int) int
-		Name    func(childComplexity int) int
-		Project func(childComplexity int) int
-		Source  func(childComplexity int) int
-		Values  func(childComplexity int) int
-		Version func(childComplexity int) int
-	}
-
-	ManagedSvcSource struct {
-		DisplayName func(childComplexity int) int
-		Fields      func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Resources   func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Project   func(childComplexity int) int
+		Resources func(childComplexity int) int
+		Source    func(childComplexity int) int
+		Values    func(childComplexity int) int
 	}
 
 	Mutation struct {
 		CiDeleteGitPipeline    func(childComplexity int, pipelineID repos.ID) int
-		CoreCreateAppFlow      func(childComplexity int, projectID repos.ID, app map[string]interface{}, pipelines *model.GitPipelineInput, configs map[string]interface{}, secrets map[string]interface{}, mServices map[string]interface{}, mResources map[string]interface{}) int
+		CoreCreateAppFlow      func(childComplexity int, projectID repos.ID, app model.AppFlowInput) int
 		CoreCreateConfig       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string) int
 		CoreCreateRouter       func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
@@ -235,15 +224,15 @@ type ComplexityRoot struct {
 		IamInviteProjectMember func(childComplexity int, projectID repos.ID, email string, name string, role string) int
 		IamRemoveProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID) int
 		IamUpdateProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
-		InfraAddDevice         func(childComplexity int, clusterID repos.ID, userID repos.ID, name string) int
+		InfraAddDevice         func(childComplexity int, clusterID repos.ID, name string) int
 		InfraCreateCluster     func(childComplexity int, name string, provider string, region string, nodesCount int) int
 		InfraDeleteCluster     func(childComplexity int, clusterID repos.ID) int
 		InfraRemoveDevice      func(childComplexity int, deviceID repos.ID) int
 		InfraUpdateCluster     func(childComplexity int, name *string, clusterID repos.ID, nodesCount *int) int
-		ManagedResCreate       func(childComplexity int, installationID repos.ID, name string, resourceName string, values map[string]interface{}) int
+		ManagedResCreate       func(childComplexity int, installationID repos.ID, name string, resourceType string, values map[string]interface{}) int
 		ManagedResDelete       func(childComplexity int, resID repos.ID) int
 		ManagedResUpdate       func(childComplexity int, resID repos.ID, values map[string]interface{}) int
-		MangedSvcInstall       func(childComplexity int, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) int
+		MangedSvcInstall       func(childComplexity int, projectID repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
 		MangedSvcUninstall     func(childComplexity int, installationID repos.ID) int
 		MangedSvcUpdate        func(childComplexity int, installationID repos.ID, values map[string]interface{}) int
 	}
@@ -286,12 +275,12 @@ type ComplexityRoot struct {
 		CoreSecret                  func(childComplexity int, secretID repos.ID) int
 		CoreSecrets                 func(childComplexity int, projectID repos.ID, search *string) int
 		InfraGetCluster             func(childComplexity int, clusterID repos.ID) int
-		InfraGetDevices             func(childComplexity int, deviceID repos.ID) int
 		ManagedResGetResource       func(childComplexity int, resID repos.ID, nextVersion *bool) int
 		ManagedResListResources     func(childComplexity int, installationID repos.ID) int
 		ManagedSvcGetInstallation   func(childComplexity int, installationID repos.ID, nextVersion *bool) int
 		ManagedSvcListAvailable     func(childComplexity int) int
 		ManagedSvcListInstallations func(childComplexity int, projectID repos.ID) int
+		ManagedSvcMarketList        func(childComplexity int) int
 		__resolve__service          func(childComplexity int) int
 		__resolve_entities          func(childComplexity int, representations []map[string]interface{}) int
 	}
@@ -335,11 +324,13 @@ type AccountResolver interface {
 }
 type ClusterResolver interface {
 	Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error)
+	UserDevices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error)
 }
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
 
 	Cluster(ctx context.Context, obj *model.Device) (*model.Cluster, error)
+	Configuration(ctx context.Context, obj *model.Device) (string, error)
 }
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
@@ -347,17 +338,20 @@ type EntityResolver interface {
 	FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error)
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
+type ManagedSvcResolver interface {
+	Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error)
+}
 type MutationResolver interface {
-	MangedSvcInstall(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error)
+	MangedSvcInstall(ctx context.Context, projectID repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error)
 	MangedSvcUninstall(ctx context.Context, installationID repos.ID) (bool, error)
 	MangedSvcUpdate(ctx context.Context, installationID repos.ID, values map[string]interface{}) (bool, error)
-	ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceName string, values map[string]interface{}) (*model.ManagedRes, error)
+	ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error)
 	ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error)
 	ManagedResDelete(ctx context.Context, resID repos.ID) (*bool, error)
 	InfraCreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error)
 	InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (*model.Cluster, error)
 	InfraDeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error)
-	InfraAddDevice(ctx context.Context, clusterID repos.ID, userID repos.ID, name string) (*model.Device, error)
+	InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error)
 	InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
 	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string) (*model.Project, error)
 	CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
@@ -367,7 +361,7 @@ type MutationResolver interface {
 	IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error)
 	GithubEvent(ctx context.Context, installationID repos.ID, sourceRepo string) (*bool, error)
 	GitlabEvent(ctx context.Context, email repos.ID, sourceRepo string) (*bool, error)
-	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app map[string]interface{}, pipelines *model.GitPipelineInput, configs map[string]interface{}, secrets map[string]interface{}, mServices map[string]interface{}, mResources map[string]interface{}) (*bool, error)
+	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error)
 	CoreUpdateApp(ctx context.Context, appID repos.ID, name *string, description *string, service *model.AppServiceInput, replicas *int, containers *model.AppContainerIn) (*model.App, error)
 	CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error)
@@ -402,13 +396,13 @@ type QueryResolver interface {
 	CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) ([]map[string]interface{}, error)
 	CiGitPipelines(ctx context.Context, projectID repos.ID, query map[string]interface{}) ([]*model.GitPipeline, error)
 	CiGitPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error)
+	ManagedSvcMarketList(ctx context.Context) (map[string]interface{}, error)
 	ManagedSvcListAvailable(ctx context.Context) (map[string]interface{}, error)
 	ManagedSvcGetInstallation(ctx context.Context, installationID repos.ID, nextVersion *bool) (*model.ManagedSvc, error)
 	ManagedSvcListInstallations(ctx context.Context, projectID repos.ID) ([]*model.ManagedSvc, error)
 	ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error)
 	ManagedResListResources(ctx context.Context, installationID repos.ID) ([]*model.ManagedRes, error)
 	InfraGetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error)
-	InfraGetDevices(ctx context.Context, deviceID repos.ID) (*model.Device, error)
 }
 type UserResolver interface {
 	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
@@ -779,6 +773,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cluster.Status(childComplexity), true
 
+	case "Cluster.userDevices":
+		if e.complexity.Cluster.UserDevices == nil {
+			break
+		}
+
+		return e.complexity.Cluster.UserDevices(childComplexity), true
+
 	case "Config.description":
 		if e.complexity.Config.Description == nil {
 			break
@@ -842,12 +843,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Device.Cluster(childComplexity), true
 
+	case "Device.configuration":
+		if e.complexity.Device.Configuration == nil {
+			break
+		}
+
+		return e.complexity.Device.Configuration(childComplexity), true
+
 	case "Device.id":
 		if e.complexity.Device.ID == nil {
 			break
 		}
 
 		return e.complexity.Device.ID(childComplexity), true
+
+	case "Device.ip":
+		if e.complexity.Device.IP == nil {
+			break
+		}
+
+		return e.complexity.Device.IP(childComplexity), true
 
 	case "Device.name":
 		if e.complexity.Device.Name == nil {
@@ -1037,12 +1052,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedRes.Name(childComplexity), true
 
-	case "ManagedRes.resourceName":
-		if e.complexity.ManagedRes.ResourceName == nil {
+	case "ManagedRes.resourceType":
+		if e.complexity.ManagedRes.ResourceType == nil {
 			break
 		}
 
-		return e.complexity.ManagedRes.ResourceName(childComplexity), true
+		return e.complexity.ManagedRes.ResourceType(childComplexity), true
 
 	case "ManagedRes.values":
 		if e.complexity.ManagedRes.Values == nil {
@@ -1051,40 +1066,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedRes.Values(childComplexity), true
 
-	case "ManagedRes.version":
-		if e.complexity.ManagedRes.Version == nil {
-			break
-		}
-
-		return e.complexity.ManagedRes.Version(childComplexity), true
-
-	case "ManagedResourceSource.fields":
-		if e.complexity.ManagedResourceSource.Fields == nil {
-			break
-		}
-
-		return e.complexity.ManagedResourceSource.Fields(childComplexity), true
-
-	case "ManagedResourceSource.name":
-		if e.complexity.ManagedResourceSource.Name == nil {
-			break
-		}
-
-		return e.complexity.ManagedResourceSource.Name(childComplexity), true
-
 	case "ManagedSvc.id":
 		if e.complexity.ManagedSvc.ID == nil {
 			break
 		}
 
 		return e.complexity.ManagedSvc.ID(childComplexity), true
-
-	case "ManagedSvc.jobId":
-		if e.complexity.ManagedSvc.JobID == nil {
-			break
-		}
-
-		return e.complexity.ManagedSvc.JobID(childComplexity), true
 
 	case "ManagedSvc.name":
 		if e.complexity.ManagedSvc.Name == nil {
@@ -1100,6 +1087,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedSvc.Project(childComplexity), true
 
+	case "ManagedSvc.resources":
+		if e.complexity.ManagedSvc.Resources == nil {
+			break
+		}
+
+		return e.complexity.ManagedSvc.Resources(childComplexity), true
+
 	case "ManagedSvc.source":
 		if e.complexity.ManagedSvc.Source == nil {
 			break
@@ -1113,48 +1107,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ManagedSvc.Values(childComplexity), true
-
-	case "ManagedSvc.version":
-		if e.complexity.ManagedSvc.Version == nil {
-			break
-		}
-
-		return e.complexity.ManagedSvc.Version(childComplexity), true
-
-	case "ManagedSvcSource.displayName":
-		if e.complexity.ManagedSvcSource.DisplayName == nil {
-			break
-		}
-
-		return e.complexity.ManagedSvcSource.DisplayName(childComplexity), true
-
-	case "ManagedSvcSource.fields":
-		if e.complexity.ManagedSvcSource.Fields == nil {
-			break
-		}
-
-		return e.complexity.ManagedSvcSource.Fields(childComplexity), true
-
-	case "ManagedSvcSource.id":
-		if e.complexity.ManagedSvcSource.ID == nil {
-			break
-		}
-
-		return e.complexity.ManagedSvcSource.ID(childComplexity), true
-
-	case "ManagedSvcSource.name":
-		if e.complexity.ManagedSvcSource.Name == nil {
-			break
-		}
-
-		return e.complexity.ManagedSvcSource.Name(childComplexity), true
-
-	case "ManagedSvcSource.resources":
-		if e.complexity.ManagedSvcSource.Resources == nil {
-			break
-		}
-
-		return e.complexity.ManagedSvcSource.Resources(childComplexity), true
 
 	case "Mutation.ci_deleteGitPipeline":
 		if e.complexity.Mutation.CiDeleteGitPipeline == nil {
@@ -1178,7 +1130,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateAppFlow(childComplexity, args["projectId"].(repos.ID), args["app"].(map[string]interface{}), args["pipelines"].(*model.GitPipelineInput), args["configs"].(map[string]interface{}), args["secrets"].(map[string]interface{}), args["mServices"].(map[string]interface{}), args["mResources"].(map[string]interface{})), true
+		return e.complexity.Mutation.CoreCreateAppFlow(childComplexity, args["projectId"].(repos.ID), args["app"].(model.AppFlowInput)), true
 
 	case "Mutation.core_createConfig":
 		if e.complexity.Mutation.CoreCreateConfig == nil {
@@ -1430,7 +1382,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraAddDevice(childComplexity, args["clusterId"].(repos.ID), args["userId"].(repos.ID), args["name"].(string)), true
+		return e.complexity.Mutation.InfraAddDevice(childComplexity, args["clusterId"].(repos.ID), args["name"].(string)), true
 
 	case "Mutation.infra_createCluster":
 		if e.complexity.Mutation.InfraCreateCluster == nil {
@@ -1490,7 +1442,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ManagedResCreate(childComplexity, args["installationId"].(repos.ID), args["name"].(string), args["resourceName"].(string), args["values"].(map[string]interface{})), true
+		return e.complexity.Mutation.ManagedResCreate(childComplexity, args["installationId"].(repos.ID), args["name"].(string), args["resourceType"].(string), args["values"].(map[string]interface{})), true
 
 	case "Mutation.managedRes_delete":
 		if e.complexity.Mutation.ManagedResDelete == nil {
@@ -1526,7 +1478,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.MangedSvcInstall(childComplexity, args["projectId"].(repos.ID), args["templateId"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{})), true
+		return e.complexity.Mutation.MangedSvcInstall(childComplexity, args["projectId"].(repos.ID), args["serviceType"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{})), true
 
 	case "Mutation.mangedSvc_uninstall":
 		if e.complexity.Mutation.MangedSvcUninstall == nil {
@@ -1864,18 +1816,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetCluster(childComplexity, args["clusterId"].(repos.ID)), true
 
-	case "Query.infra_getDevices":
-		if e.complexity.Query.InfraGetDevices == nil {
-			break
-		}
-
-		args, err := ec.field_Query_infra_getDevices_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.InfraGetDevices(childComplexity, args["deviceId"].(repos.ID)), true
-
 	case "Query.managedRes_getResource":
 		if e.complexity.Query.ManagedResGetResource == nil {
 			break
@@ -1930,6 +1870,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.ManagedSvcListInstallations(childComplexity, args["projectId"].(repos.ID)), true
+
+	case "Query.managedSvc_marketList":
+		if e.complexity.Query.ManagedSvcMarketList == nil {
+			break
+		}
+
+		return e.complexity.Query.ManagedSvcMarketList(childComplexity), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -2163,6 +2110,7 @@ type Query {
   ci_gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
   ci_gitPipeline(pipelineId: ID!): GitPipeline
 
+  managedSvc_marketList: Json!
   managedSvc_listAvailable: Json!
   managedSvc_getInstallation(installationId: ID!, nextVersion: Boolean): ManagedSvc
   managedSvc_listInstallations(projectId: ID!): [ManagedSvc!]
@@ -2171,14 +2119,12 @@ type Query {
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
   infra_getCluster(clusterId: ID!): Cluster
-  infra_getDevices(deviceId: ID!): Device
 }
 
 type ManagedRes {
   id: ID!
   name: String!
-  resourceName: String!
-  version: Int!
+  resourceType: String!
   installation: ManagedSvc!
   values: Json!
 }
@@ -2186,25 +2132,13 @@ type ManagedRes {
 type ManagedSvc {
   id: ID!
   name: String!
-  version: Int!
   project: Project!
-  source: ManagedSvcSource!
+  source: String!
   values: Json!
-  jobId: ID
+  resources: [ManagedRes!]!
 }
 
-type ManagedSvcSource {
-  id: ID!
-  name: String!
-  displayName: String
-  fields: Json
-  resources: [ManagedResourceSource!]
-}
 
-type ManagedResourceSource {
-  name: String!
-  fields: Json
-}
 
 input GitPipelineInput{
   gitRepoUrl: String!
@@ -2217,18 +2151,18 @@ input GitPipelineInput{
 }
 
 type Mutation {
-  mangedSvc_install(projectId: ID!, templateId: ID!, name: String!, values: Json!): ManagedSvc
+  mangedSvc_install(projectId: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
   mangedSvc_uninstall(installationId: ID!): Boolean!
   mangedSvc_update(installationId: ID!, values: Json!): Boolean!
 
-  managedRes_create(installationId: ID!, name: String!, resourceName: String!, values: Json!): ManagedRes!
+  managedRes_create(installationId: ID!, name: String!, resourceType: String!, values: Json!): ManagedRes!
   managedRes_update(resId: ID!, values: Json): Boolean!
   managedRes_delete(resId: ID!): Boolean
 
   infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
   infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
   infra_deleteCluster(clusterId: ID!): Boolean!
-  infra_addDevice(clusterId: ID!, userId: ID!, name: String!): Device!
+  infra_addDevice(clusterId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
 
   core_createProject(accountId: ID!, name: String!, displayName: String!, logo: String, description: String): Project!
@@ -2245,13 +2179,8 @@ type Mutation {
   # App
   core_createAppFlow(
     projectId: ID!,
-    app: Json!,
-    pipelines: GitPipelineInput,
-    configs: Json,
-    secrets: Json,
-    mServices: Json,
-    mResources: Json
-  ): Boolean
+    app: AppFlowInput!,
+  ): Boolean!
   core_updateApp(appId: ID!, name: String, description: String, service: AppServiceInput, replicas: Int, containers: AppContainerIN): App!
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
@@ -2272,6 +2201,46 @@ type Mutation {
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
 
+}
+
+input AppFlowInput{
+  name: String!
+  description: String
+  exposed_services: [ExposedServiceInput!]!
+  containers:[AppContainerInput!]!
+}
+
+input EnvVal {
+  type: String!
+  value: String
+  ref: String
+  key: String
+}
+
+input EnvVar {
+  key: String!
+  value: EnvVal!
+}
+input AttachedRes{
+  res_id: ID!
+}
+
+input AppContainerInput{
+  name: String!
+  image: String!
+  pull_secret: String
+  env_vars:[EnvVar!]!
+  cpu_min:String!
+  cpu_max:String!
+  mem_min:String!
+  mem_max:String!
+  attached_resources:[AttachedRes!]!
+}
+
+input ExposedServiceInput{
+  type :String!
+  target: Int!
+  exposed: Int!
 }
 
 type Router {
@@ -2323,6 +2292,9 @@ type ProjectMembership {
   role: String!
   project: Project!
 }
+
+
+
 
 type App {
   id: ID!
@@ -2518,6 +2490,7 @@ type Cluster @key(fields: "id") {
   region: String!
   ip: String
   devices: [Device]
+  userDevices: [Device]
   nodesCount: Int!
   status: String!
   account: Account!
@@ -2528,6 +2501,8 @@ type Device @key(fields: "id") {
   user: User!
   name: String!
   cluster: Cluster!
+  configuration: String!
+  ip: String!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -2656,60 +2631,15 @@ func (ec *executionContext) field_Mutation_core_createAppFlow_args(ctx context.C
 		}
 	}
 	args["projectId"] = arg0
-	var arg1 map[string]interface{}
+	var arg1 model.AppFlowInput
 	if tmp, ok := rawArgs["app"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg1, err = ec.unmarshalNJson2map(ctx, tmp)
+		arg1, err = ec.unmarshalNAppFlowInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppFlowInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["app"] = arg1
-	var arg2 *model.GitPipelineInput
-	if tmp, ok := rawArgs["pipelines"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pipelines"))
-		arg2, err = ec.unmarshalOGitPipelineInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pipelines"] = arg2
-	var arg3 map[string]interface{}
-	if tmp, ok := rawArgs["configs"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configs"))
-		arg3, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["configs"] = arg3
-	var arg4 map[string]interface{}
-	if tmp, ok := rawArgs["secrets"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secrets"))
-		arg4, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["secrets"] = arg4
-	var arg5 map[string]interface{}
-	if tmp, ok := rawArgs["mServices"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mServices"))
-		arg5, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["mServices"] = arg5
-	var arg6 map[string]interface{}
-	if tmp, ok := rawArgs["mResources"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mResources"))
-		arg6, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["mResources"] = arg6
 	return args, nil
 }
 
@@ -3358,24 +3288,15 @@ func (ec *executionContext) field_Mutation_infra_addDevice_args(ctx context.Cont
 		}
 	}
 	args["clusterId"] = arg0
-	var arg1 repos.ID
-	if tmp, ok := rawArgs["userId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userId"] = arg1
-	var arg2 string
+	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -3506,14 +3427,14 @@ func (ec *executionContext) field_Mutation_managedRes_create_args(ctx context.Co
 	}
 	args["name"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["resourceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceName"))
+	if tmp, ok := rawArgs["resourceType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceType"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["resourceName"] = arg2
+	args["resourceType"] = arg2
 	var arg3 map[string]interface{}
 	if tmp, ok := rawArgs["values"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
@@ -3578,14 +3499,14 @@ func (ec *executionContext) field_Mutation_mangedSvc_install_args(ctx context.Co
 	}
 	args["projectId"] = arg0
 	var arg1 repos.ID
-	if tmp, ok := rawArgs["templateId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templateId"))
+	if tmp, ok := rawArgs["serviceType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceType"))
 		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["templateId"] = arg1
+	args["serviceType"] = arg1
 	var arg2 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -4129,21 +4050,6 @@ func (ec *executionContext) field_Query_infra_getCluster_args(ctx context.Contex
 		}
 	}
 	args["clusterId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_infra_getDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["deviceId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceId"] = arg0
 	return args, nil
 }
 
@@ -5866,6 +5772,38 @@ func (ec *executionContext) _Cluster_devices(ctx context.Context, field graphql.
 	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Cluster_userDevices(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Cluster().UserDevices(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Device)
+	fc.Result = res
+	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Cluster_nodesCount(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6386,6 +6324,76 @@ func (ec *executionContext) _Device_cluster(ctx context.Context, field graphql.C
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_configuration(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Device().Configuration(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_ip(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IP, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7127,7 +7135,7 @@ func (ec *executionContext) _ManagedRes_name(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _ManagedRes_resourceName(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
+func (ec *executionContext) _ManagedRes_resourceType(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -7145,7 +7153,7 @@ func (ec *executionContext) _ManagedRes_resourceName(ctx context.Context, field 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ResourceName, nil
+		return obj.ResourceType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7160,41 +7168,6 @@ func (ec *executionContext) _ManagedRes_resourceName(ctx context.Context, field 
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ManagedRes_version(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedRes",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Version, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ManagedRes_installation(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
@@ -7267,73 +7240,6 @@ func (ec *executionContext) _ManagedRes_values(ctx context.Context, field graphq
 	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _ManagedResourceSource_name(ctx context.Context, field graphql.CollectedField, obj *model.ManagedResourceSource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedResourceSource",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ManagedResourceSource_fields(ctx context.Context, field graphql.CollectedField, obj *model.ManagedResourceSource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedResourceSource",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Fields, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOJson2map(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _ManagedSvc_id(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7404,41 +7310,6 @@ func (ec *executionContext) _ManagedSvc_name(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _ManagedSvc_version(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedSvc",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Version, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _ManagedSvc_project(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7504,9 +7375,9 @@ func (ec *executionContext) _ManagedSvc_source(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.ManagedSvcSource)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNManagedSvcSource2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedSvcSource(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ManagedSvc_values(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
@@ -7544,7 +7415,7 @@ func (ec *executionContext) _ManagedSvc_values(ctx context.Context, field graphq
 	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _ManagedSvc_jobId(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
+func (ec *executionContext) _ManagedSvc_resources(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -7555,46 +7426,14 @@ func (ec *executionContext) _ManagedSvc_jobId(ctx context.Context, field graphql
 		Object:     "ManagedSvc",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.JobID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*repos.ID)
-	fc.Result = res
-	return ec.marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ManagedSvcSource_id(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvcSource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedSvcSource",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return ec.resolvers.ManagedSvc().Resources(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7606,140 +7445,9 @@ func (ec *executionContext) _ManagedSvcSource_id(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(repos.ID)
+	res := resTmp.([]*model.ManagedRes)
 	fc.Result = res
-	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ManagedSvcSource_name(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvcSource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedSvcSource",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ManagedSvcSource_displayName(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvcSource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedSvcSource",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DisplayName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ManagedSvcSource_fields(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvcSource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedSvcSource",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Fields, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOJson2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ManagedSvcSource_resources(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvcSource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ManagedSvcSource",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Resources, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.ManagedResourceSource)
-	fc.Result = res
-	return ec.marshalOManagedResourceSource2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResourceSourceᚄ(ctx, field.Selections, res)
+	return ec.marshalNManagedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_mangedSvc_install(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7767,7 +7475,7 @@ func (ec *executionContext) _Mutation_mangedSvc_install(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().MangedSvcInstall(rctx, args["projectId"].(repos.ID), args["templateId"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{}))
+		return ec.resolvers.Mutation().MangedSvcInstall(rctx, args["projectId"].(repos.ID), args["serviceType"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{}))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7890,7 +7598,7 @@ func (ec *executionContext) _Mutation_managedRes_create(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ManagedResCreate(rctx, args["installationId"].(repos.ID), args["name"].(string), args["resourceName"].(string), args["values"].(map[string]interface{}))
+		return ec.resolvers.Mutation().ManagedResCreate(rctx, args["installationId"].(repos.ID), args["name"].(string), args["resourceType"].(string), args["values"].(map[string]interface{}))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8139,7 +7847,7 @@ func (ec *executionContext) _Mutation_infra_addDevice(ctx context.Context, field
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraAddDevice(rctx, args["clusterId"].(repos.ID), args["userId"].(repos.ID), args["name"].(string))
+		return ec.resolvers.Mutation().InfraAddDevice(rctx, args["clusterId"].(repos.ID), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8553,18 +8261,21 @@ func (ec *executionContext) _Mutation_core_createAppFlow(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreCreateAppFlow(rctx, args["projectId"].(repos.ID), args["app"].(map[string]interface{}), args["pipelines"].(*model.GitPipelineInput), args["configs"].(map[string]interface{}), args["secrets"].(map[string]interface{}), args["mServices"].(map[string]interface{}), args["mResources"].(map[string]interface{}))
+		return ec.resolvers.Mutation().CoreCreateAppFlow(rctx, args["projectId"].(repos.ID), args["app"].(model.AppFlowInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10268,6 +9979,41 @@ func (ec *executionContext) _Query_ci_gitPipeline(ctx context.Context, field gra
 	return ec.marshalOGitPipeline2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipeline(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_managedSvc_marketList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ManagedSvcMarketList(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNJson2map(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_managedSvc_listAvailable(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -10496,45 +10242,6 @@ func (ec *executionContext) _Query_infra_getCluster(ctx context.Context, field g
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_infra_getDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_infra_getDevices_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetDevices(rctx, args["deviceId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Device)
-	fc.Result = res
-	return ec.marshalODevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12538,6 +12245,93 @@ func (ec *executionContext) unmarshalInputAppContainerIN(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context, obj interface{}) (model.AppContainerInput, error) {
+	var it model.AppContainerInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "image":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+			it.Image, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pull_secret":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pull_secret"))
+			it.PullSecret, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "env_vars":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env_vars"))
+			it.EnvVars, err = ec.unmarshalNEnvVar2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVarᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cpu_min":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu_min"))
+			it.CPUMin, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cpu_max":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu_max"))
+			it.CPUMax, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "mem_min":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mem_min"))
+			it.MemMin, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "mem_max":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mem_max"))
+			it.MemMax, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "attached_resources":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attached_resources"))
+			it.AttachedResources, err = ec.unmarshalNAttachedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedResᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAppContainerUpdateInput(ctx context.Context, obj interface{}) (model.AppContainerUpdateInput, error) {
 	var it model.AppContainerUpdateInput
 	asMap := map[string]interface{}{}
@@ -12672,6 +12466,53 @@ func (ec *executionContext) unmarshalInputAppEnvInput(ctx context.Context, obj i
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAppFlowInput(ctx context.Context, obj interface{}) (model.AppFlowInput, error) {
+	var it model.AppFlowInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "exposed_services":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exposed_services"))
+			it.ExposedServices, err = ec.unmarshalNExposedServiceInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "containers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containers"))
+			it.Containers, err = ec.unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAppServiceInput(ctx context.Context, obj interface{}) (model.AppServiceInput, error) {
 	var it model.AppServiceInput
 	asMap := map[string]interface{}{}
@@ -12702,6 +12543,29 @@ func (ec *executionContext) unmarshalInputAppServiceInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
 			it.TargetPort, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAttachedRes(ctx context.Context, obj interface{}) (model.AttachedRes, error) {
+	var it model.AttachedRes
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "res_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("res_id"))
+			it.ResID, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12764,6 +12628,123 @@ func (ec *executionContext) unmarshalInputContainerResInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
 			it.Max, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEnvVal(ctx context.Context, obj interface{}) (model.EnvVal, error) {
+	var it model.EnvVal
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "value":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			it.Value, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ref":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ref"))
+			it.Ref, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "key":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			it.Key, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEnvVar(ctx context.Context, obj interface{}) (model.EnvVar, error) {
+	var it model.EnvVar
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "key":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			it.Key, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "value":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			it.Value, err = ec.unmarshalNEnvVal2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVal(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputExposedServiceInput(ctx context.Context, obj interface{}) (model.ExposedServiceInput, error) {
+	var it model.ExposedServiceInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "target":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("target"))
+			it.Target, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "exposed":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exposed"))
+			it.Exposed, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13796,6 +13777,23 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
+		case "userDevices":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Cluster_userDevices(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "nodesCount":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Cluster_nodesCount(ctx, field, obj)
@@ -14026,6 +14024,36 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 				return innerFunc(ctx)
 
 			})
+		case "configuration":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Device_configuration(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "ip":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Device_ip(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14357,19 +14385,9 @@ func (ec *executionContext) _ManagedRes(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "resourceName":
+		case "resourceType":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedRes_resourceName(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "version":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedRes_version(ctx, field, obj)
+				return ec._ManagedRes_resourceType(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -14408,44 +14426,6 @@ func (ec *executionContext) _ManagedRes(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var managedResourceSourceImplementors = []string{"ManagedResourceSource"}
-
-func (ec *executionContext) _ManagedResourceSource(ctx context.Context, sel ast.SelectionSet, obj *model.ManagedResourceSource) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, managedResourceSourceImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ManagedResourceSource")
-		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedResourceSource_name(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "fields":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedResourceSource_fields(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var managedSvcImplementors = []string{"ManagedSvc"}
 
 func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSet, obj *model.ManagedSvc) graphql.Marshaler {
@@ -14464,7 +14444,7 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -14474,17 +14454,7 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "version":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedSvc_version(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "project":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -14494,7 +14464,7 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "source":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -14504,7 +14474,7 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "values":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -14514,77 +14484,28 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
-		case "jobId":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedSvc_jobId(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var managedSvcSourceImplementors = []string{"ManagedSvcSource"}
-
-func (ec *executionContext) _ManagedSvcSource(ctx context.Context, sel ast.SelectionSet, obj *model.ManagedSvcSource) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, managedSvcSourceImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ManagedSvcSource")
-		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedSvcSource_id(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedSvcSource_name(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "displayName":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedSvcSource_displayName(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		case "fields":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedSvcSource_fields(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
 		case "resources":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ManagedSvcSource_resources(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ManagedSvc_resources(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14800,6 +14721,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "core_updateApp":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_updateApp(ctx, field)
@@ -15528,6 +15452,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "managedSvc_marketList":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_managedSvc_marketList(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "managedSvc_listAvailable":
 			field := field
 
@@ -15641,26 +15588,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_infra_getCluster(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "infra_getDevices":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_infra_getDevices(ctx, field)
 				return res
 			}
 
@@ -16561,6 +16488,28 @@ func (ec *executionContext) marshalNAppContainer2ᚖkloudliteᚗioᚋappsᚋcons
 	return ec._AppContainer(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInputᚄ(ctx context.Context, v interface{}) ([]*model.AppContainerInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.AppContainerInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAppContainerInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNAppContainerInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInput(ctx context.Context, v interface{}) (*model.AppContainerInput, error) {
+	res, err := ec.unmarshalInputAppContainerInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNAppEnv2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppEnvᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AppEnv) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -16632,6 +16581,11 @@ func (ec *executionContext) unmarshalNAppEnvInput2ᚕᚖkloudliteᚗioᚋappsᚋ
 	return res, nil
 }
 
+func (ec *executionContext) unmarshalNAppFlowInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppFlowInput(ctx context.Context, v interface{}) (model.AppFlowInput, error) {
+	res, err := ec.unmarshalInputAppFlowInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNAppService2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppService(ctx context.Context, sel ast.SelectionSet, v []*model.AppService) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -16668,6 +16622,28 @@ func (ec *executionContext) marshalNAppService2ᚕᚖkloudliteᚗioᚋappsᚋcon
 	wg.Wait()
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNAttachedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedResᚄ(ctx context.Context, v interface{}) ([]*model.AttachedRes, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.AttachedRes, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAttachedRes2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedRes(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNAttachedRes2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedRes(ctx context.Context, v interface{}) (*model.AttachedRes, error) {
+	res, err := ec.unmarshalInputAttachedRes(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
@@ -16858,6 +16834,55 @@ func (ec *executionContext) marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋ
 	return ec._Device(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNEnvVal2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVal(ctx context.Context, v interface{}) (*model.EnvVal, error) {
+	res, err := ec.unmarshalInputEnvVal(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNEnvVar2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVarᚄ(ctx context.Context, v interface{}) ([]*model.EnvVar, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.EnvVar, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNEnvVar2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVar(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNEnvVar2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVar(ctx context.Context, v interface{}) (*model.EnvVar, error) {
+	res, err := ec.unmarshalInputEnvVar(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNExposedServiceInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInputᚄ(ctx context.Context, v interface{}) ([]*model.ExposedServiceInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.ExposedServiceInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNExposedServiceInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNExposedServiceInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInput(ctx context.Context, v interface{}) (*model.ExposedServiceInput, error) {
+	res, err := ec.unmarshalInputExposedServiceInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNGitPipeline2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipeline(ctx context.Context, sel ast.SelectionSet, v *model.GitPipeline) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -16994,6 +17019,50 @@ func (ec *executionContext) marshalNManagedRes2ᚕᚖkloudliteᚗioᚋappsᚋcon
 	return ret
 }
 
+func (ec *executionContext) marshalNManagedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ManagedRes) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNManagedRes2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedRes(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNManagedRes2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedRes(ctx context.Context, sel ast.SelectionSet, v *model.ManagedRes) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17004,16 +17073,6 @@ func (ec *executionContext) marshalNManagedRes2ᚖkloudliteᚗioᚋappsᚋconsol
 	return ec._ManagedRes(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNManagedResourceSource2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResourceSource(ctx context.Context, sel ast.SelectionSet, v *model.ManagedResourceSource) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ManagedResourceSource(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNManagedSvc2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedSvc(ctx context.Context, sel ast.SelectionSet, v *model.ManagedSvc) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17022,16 +17081,6 @@ func (ec *executionContext) marshalNManagedSvc2ᚖkloudliteᚗioᚋappsᚋconsol
 		return graphql.Null
 	}
 	return ec._ManagedSvc(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNManagedSvcSource2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedSvcSource(ctx context.Context, sel ast.SelectionSet, v *model.ManagedSvcSource) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ManagedSvcSource(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProject2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {
@@ -18000,14 +18049,6 @@ func (ec *executionContext) marshalOGitPipeline2ᚖkloudliteᚗioᚋappsᚋconso
 	return ec._GitPipeline(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGitPipelineInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineInput(ctx context.Context, v interface{}) (*model.GitPipelineInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGitPipelineInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalOIAppVolume2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐIAppVolume(ctx context.Context, v interface{}) ([]*model.IAppVolume, error) {
 	if v == nil {
 		return nil, nil
@@ -18320,53 +18361,6 @@ func (ec *executionContext) marshalOManagedRes2ᚖkloudliteᚗioᚋappsᚋconsol
 		return graphql.Null
 	}
 	return ec._ManagedRes(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOManagedResourceSource2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResourceSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ManagedResourceSource) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNManagedResourceSource2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResourceSource(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalOManagedSvc2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedSvcᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ManagedSvc) graphql.Marshaler {

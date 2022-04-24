@@ -31,10 +31,12 @@ import (
 )
 
 type Env struct {
-	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC"`
-	KafkaInfraResponseTopic string `env:"KAFKA_INFRA_RESP_TOPIC"`
-	KafkaConsumerGroupId    string `env:"KAFKA_GROUP_ID"`
-	CookieDomain            string `env:"COOKIE_DOMAIN"`
+	KafkaInfraTopic            string `env:"KAFKA_INFRA_TOPIC"`
+	KafkaInfraResponseTopic    string `env:"KAFKA_INFRA_RESP_TOPIC"`
+	KafkaWorkloadTopic         string `env:"KAFKA_WORKLOAD_TOPIC"`
+	KafkaWorkloadResponseTopic string `env:"KAFKA_WORKLOAD_RESP_TOPIC"`
+	KafkaConsumerGroupId       string `env:"KAFKA_GROUP_ID"`
+	CookieDomain               string `env:"COOKIE_DOMAIN"`
 }
 
 type InfraEventConsumer messaging.Consumer
@@ -62,6 +64,12 @@ var Module = fx.Module(
 				producer: p,
 			}
 		}),
+		fx.Provide(func(env *Env, p messaging.Producer[messaging.Json]) domain.WorkloadMessenger {
+			return &workloadMessengerImpl{
+				env:      env,
+				producer: p,
+			}
+		}),
 		fx.Invoke(func(producer messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
 			lifecycle.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
@@ -79,7 +87,7 @@ var Module = fx.Module(
 		fx.Provide(func(domain domain.Domain, env *Env, kafkaCli messaging.KafkaClient, logger logger.Logger) (ClusterEventConsumer, error) {
 			return messaging.NewKafkaConsumer(
 				kafkaCli,
-				[]string{env.KafkaInfraTopic},
+				[]string{env.KafkaInfraResponseTopic},
 				env.KafkaConsumerGroupId,
 				logger, func(context context.Context, topic string, message messaging.Message) error {
 					var d map[string]any
@@ -142,6 +150,17 @@ var Module = fx.Module(
 					return nil
 				},
 			)
+		}),
+		fx.Invoke(func(consumer ClusterEventConsumer, lifecycle fx.Lifecycle) {
+			lifecycle.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					return consumer.Subscribe(ctx)
+				},
+				OnStop: func(ctx context.Context) error {
+					consumer.Unsubscribe(ctx)
+					return nil
+				},
+			})
 		}),
 	),
 
