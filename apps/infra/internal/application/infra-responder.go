@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/messaging"
 	//"kloudlite.io/pkg/messaging"
@@ -12,7 +13,7 @@ type infraResponder struct {
 }
 
 // SendAddPeerResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendAddPeerResponse(action domain.AddPeerResponse) error {
+func (i *infraResponder) SendAddPeerResponse(cxt context.Context, action domain.AddPeerResponse) error {
 	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "add-peer",
 		"payload": action,
@@ -20,7 +21,7 @@ func (i *infraResponder) SendAddPeerResponse(action domain.AddPeerResponse) erro
 }
 
 // SendCreateClusterResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendCreateClusterResponse(action domain.SetupClusterResponse) error {
+func (i *infraResponder) SendCreateClusterResponse(cxt context.Context, action domain.SetupClusterResponse) error {
 	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "create-cluster",
 		"payload": action,
@@ -28,7 +29,7 @@ func (i *infraResponder) SendCreateClusterResponse(action domain.SetupClusterRes
 }
 
 // SendDeleteClusterResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendDeleteClusterResponse(action domain.DeleteClusterResponse) error {
+func (i *infraResponder) SendDeleteClusterResponse(cxt context.Context, action domain.DeleteClusterResponse) error {
 	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "delete-cluster",
 		"payload": action,
@@ -36,7 +37,7 @@ func (i *infraResponder) SendDeleteClusterResponse(action domain.DeleteClusterRe
 }
 
 // SendDeletePeerResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendDeletePeerResponse(action domain.DeletePeerResponse) error {
+func (i *infraResponder) SendDeletePeerResponse(cxt context.Context, action domain.DeletePeerResponse) error {
 
 	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "delete-peer",
@@ -45,7 +46,7 @@ func (i *infraResponder) SendDeletePeerResponse(action domain.DeletePeerResponse
 }
 
 // SendUpdateClusterResponse implements domain.InfraJobResponder
-func (i *infraResponder) SendUpdateClusterResponse(action domain.UpdateClusterResponse) error {
+func (i *infraResponder) SendUpdateClusterResponse(cxt context.Context, action domain.UpdateClusterResponse) error {
 	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
 		"type":    "update-cluster",
 		"payload": action,
