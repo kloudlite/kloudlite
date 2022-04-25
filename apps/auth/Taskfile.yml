@@ -43,6 +43,6 @@ tasks:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/auth:v2
       APP_DIR: ./apps/auth
     cmds:
-      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}} --platform linux/arm64
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
       - docker push {{.IMAGE}}
 
