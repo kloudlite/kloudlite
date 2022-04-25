@@ -2,7 +2,7 @@ apiVersion: "crds.kloudlite.io/v1"
 kind: App
 metadata:
   name: sample-app3
-  namespace: sample-example
+  namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/app
 spec:
@@ -14,11 +14,6 @@ spec:
     - name: samplen
       image: nginx
       imagePullPolicy: Always
-      # command:
-      #   - "bash"
-      # args:
-      #   - "-c"
-      #   - "tail -f /dev/null"
       resourceCpu:
         min: "100"
         max: "200"
@@ -28,9 +23,9 @@ spec:
       env:
         - key: MYHOME2
           type: config
-          refName: config/sample-cfg
+          refName: myhome
           refKey: hello
         - key: auth-db
-          type: mResource
-          refName: secret/
+          type: secret
+          refName: auth-db-secret
           refKey: hello
