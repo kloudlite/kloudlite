@@ -7,7 +7,7 @@ tasks:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
     env:
-      MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
+      MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
       INFRA_GRPC_URL: localhost
@@ -18,7 +18,7 @@ tasks:
       PORT: 4001
       GRPC_PORT: 8080
       DEV: true
-      KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
+      KAFKA_BOOTSTRAP_SERVERS: dev-kafka-headless.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
       KAFKA_WORKLOAD_TOPIC: dev-hotspot-agent
       KAFKA_WORKLOAD_RESP_TOPIC: dev-hotspot-agent-reply

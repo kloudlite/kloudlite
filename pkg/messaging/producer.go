@@ -46,6 +46,7 @@ func (m *producer[T]) SendMessage(topic string, key string, message T) error {
 		fmt.Println(e)
 		return e
 	}
+	return nil
 	return m.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
 			Topic:     &topic,
