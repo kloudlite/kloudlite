@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
@@ -133,12 +134,16 @@ func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, s
 
 func (r *queryResolver) AuthMe(ctx context.Context) (*model.User, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
+	fmt.Println("SESSION: ", session)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
 	u, err := r.d.GetUserById(ctx, repos.ID(session.UserId))
 	if err != nil {
 		return nil, err
+	}
+	if u == nil {
+		return nil, klErrors.Newf("user(email=%s) does not exist in system", session.UserEmail)
 	}
 	return userModelFromEntity(u), err
 }
@@ -162,6 +167,23 @@ func (r *queryResolver) OAuthRequestLogin(ctx context.Context, provider string, 
 
 func (r *queryResolver) OAuthGithubInstallationToken(ctx context.Context, installationID int) (string, error) {
 	return r.d.GithubInstallationToken(ctx, int64(installationID))
+}
+
+func (r *queryResolver) OAuthListInstallations(ctx context.Context) (map[string]interface{}, error) {
+	a, err := r.d.GithubListInstallations(ctx)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("type is: %T", a)
+	m, ok := a.(map[string]interface{})
+	if !ok {
+		return nil, klErrors.Newf("could not typecast into map[string]interface{}")
+	}
+	return m, nil
+}
+
+func (r *queryResolver) OAuthListRepos(ctx context.Context, installationID int) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.
