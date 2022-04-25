@@ -900,8 +900,9 @@ func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectN
 }
 
 func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClusterResponse) error {
+	fmt.Println("OnSetupClusterDone")
 	byId, err := d.clusterRepo.FindById(ctx, response.ClusterID)
-	if err != nil || byId == nil {
+	if err != nil {
 		return err
 	}
 	if response.Done {

@@ -1,8 +1,0 @@
-version: '3'
-tasks:
-  dev:
-    sources:
-      - ./main.go
-      - ./internal/*
-    cmds:
-      - go run ./main.go
