@@ -102,7 +102,6 @@ var Module = fx.Module(
 					if err != nil {
 						return err
 					}
-					return nil
 					switch d["type"].(string) {
 					case "create-cluster":
 						var m struct {
