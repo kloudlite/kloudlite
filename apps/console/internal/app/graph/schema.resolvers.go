@@ -278,13 +278,11 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 		e := make([]entities.EnvVar, 0)
 		for _, env := range container.EnvVars {
 			e = append(e, entities.EnvVar{
-				Key: env.Key,
-				Value: entities.EnvValue{
-					Type:  env.Value.Type,
-					Value: env.Value.Value,
-					Ref:   env.Value.Ref,
-					Key:   env.Value.Key,
-				},
+				Key:    env.Key,
+				Type:   env.Value.Type,
+				Value:  env.Value.Value,
+				Ref:    env.Value.Ref,
+				RefKey: env.Value.Key,
 			})
 		}
 		a := make([]entities.AttachedResource, 0)
@@ -465,10 +463,10 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 				envVars = append(envVars, &model.EnvVar{
 					Key: e.Key,
 					Value: &model.EnvVal{
-						Type:  e.Value.Type,
-						Value: e.Value.Value,
-						Ref:   e.Value.Ref,
-						Key:   e.Value.Key,
+						Type:  e.Type,
+						Value: e.Value,
+						Ref:   e.Ref,
+						Key:   e.RefKey,
 					},
 				})
 			}
@@ -506,8 +504,64 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 	return apps, nil
 }
 
-func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID, version *string) (*model.App, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App, error) {
+	a, err := r.Domain.GetApp(ctx, appID)
+	if err != nil {
+		return nil, err
+	}
+	services := make([]*model.ExposedService, 0)
+	for _, s := range a.ExposedPorts {
+		services = append(services, &model.ExposedService{
+			Type:    string(s.Type),
+			Target:  int(s.TargetPort),
+			Exposed: int(s.Port),
+		})
+	}
+
+	containers := make([]*model.AppContainer, 0)
+	for _, c := range a.Containers {
+		envVars := make([]*model.EnvVar, 0)
+		for _, e := range c.EnvVars {
+			envVars = append(envVars, &model.EnvVar{
+				Key: e.Key,
+				Value: &model.EnvVal{
+					Type:  e.Type,
+					Value: e.Value,
+					Ref:   e.Ref,
+					Key:   e.RefKey,
+				},
+			})
+		}
+		res := make([]*model.AttachedRes, 0)
+		for _, r := range c.AttachedResources {
+			res = append(res, &model.AttachedRes{
+				ResID: r.ResourceId,
+			})
+		}
+		containers = append(containers, &model.AppContainer{
+			Name:              c.Name,
+			Image:             c.Image,
+			PullSecret:        c.ImagePullSecret,
+			EnvVars:           envVars,
+			CPUMin:            c.CPULimits.Min,
+			CPUMax:            c.CPULimits.Max,
+			MemMin:            c.MemoryLimits.Min,
+			MemMax:            c.MemoryLimits.Max,
+			AttachedResources: res,
+		})
+	}
+
+	return &model.App{
+		ID:          a.Id,
+		Name:        a.Name,
+		Namespace:   a.Namespace,
+		Description: a.Description,
+		ReadableID:  repos.ID(a.ReadableId),
+		Replicas:    &a.Replicas,
+		Services:    services,
+		Containers:  containers,
+		Project:     &model.Project{ID: a.ProjectId},
+	}, nil
 }
 
 func (r *queryResolver) CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error) {

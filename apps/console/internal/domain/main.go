@@ -84,6 +84,54 @@ func (d *domain) InstallAppFlow(
 	if err != nil {
 		return false, err
 	}
+	svcs := make([]op_crds.Service, 0)
+	for _, ep := range app.ExposedPorts {
+		svcs = append(svcs, op_crds.Service{
+			Port:       int(ep.Port),
+			TargetPort: int(ep.TargetPort),
+			Type:       string(ep.Type),
+		})
+	}
+	containers := make([]op_crds.Container, 0)
+	for _, c := range app.Containers {
+		env := make([]op_crds.EnvEntry, 0)
+		for _, e := range c.EnvVars {
+			env = append(env, op_crds.EnvEntry{
+				Value:   e.Value,
+				Key:     e.Key,
+				Type:    e.Type,
+				RefName: e.Ref,
+				RefKey:  e.RefKey,
+			})
+		}
+		containers = append(containers, op_crds.Container{
+			Name:  c.Name,
+			Image: c.Image,
+			ResourceCpu: op_crds.Limit{
+				Min: c.CPULimits.Min,
+				Max: c.CPULimits.Max,
+			},
+			ResourceMemory: op_crds.Limit{
+				Min: c.MemoryLimits.Min,
+				Max: c.MemoryLimits.Max,
+			},
+			Env: env,
+		})
+	}
+
+	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+		APIVersion: op_crds.AppAPIVersion,
+		Kind:       op_crds.AppKind,
+		Metadata: op_crds.AppMetadata{
+			Name:      app.Name,
+			Namespace: app.Namespace,
+		},
+		Spec: op_crds.AppSpec{
+			Services:   svcs,
+			Containers: containers,
+			Replicas:   1,
+		},
+	})
 	return true, nil
 }
 
@@ -227,7 +275,8 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Manag
 
 func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.App) error {
 	one, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"name": response.Name,
+		"name":      response.Metadata.Name,
+		"namespace": response.Metadata.Namespace,
 	})
 	if err != nil {
 		return err

@@ -5,7 +5,7 @@ type Query {
   core_project(projectId: ID!): Project
 
   core_apps(projectId: ID!, search: String): [App!]!
-  core_app(appId: ID!, version: String): App
+  core_app(appId: ID!): App
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
