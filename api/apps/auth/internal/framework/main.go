@@ -36,11 +36,16 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 	return e.MongoUri, e.MongoDbName
 }
 
+// func (env *Env) GetGRPCPort() uint16 {
+// 	return env.Port
+// }
+
 var Module = fx.Module("framework",
 	config.EnvFx[Env](),
 	fx.Provide(logger.NewLogger),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
+	// rpc.NewGrpcServerFx[*Env](),
 	app.Module,
 )
