@@ -5,7 +5,7 @@ dotenv: [".secrets/oauth.env"]
 tasks:
   run:
     env:
-      MONGO_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
+      MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       MONGO_DB_NAME: auth
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       PORT: 3000

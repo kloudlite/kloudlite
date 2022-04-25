@@ -847,7 +847,8 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 }
 
 func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error) {
-	return d.projectRepo.FindById(ctx, projectId)
+	id, err := d.projectRepo.FindById(ctx, projectId)
+	return id, err
 }
 
 func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
@@ -900,7 +901,7 @@ func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectN
 
 func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClusterResponse) error {
 	byId, err := d.clusterRepo.FindById(ctx, response.ClusterID)
-	if err != nil {
+	if err != nil || byId == nil {
 		return err
 	}
 	if response.Done {
@@ -997,6 +998,12 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(entities.SetupClusterAction{
+		ClusterID:  c.Id,
+		Region:     c.Region,
+		Provider:   c.Provider,
+		NodesCount: c.NodesCount,
+	})
 	err = SendAction(
 		d.infraMessenger,
 		entities.SetupClusterAction{
@@ -1007,6 +1014,7 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 		},
 	)
 	if err != nil {
+		panic(err)
 		return nil, err
 	}
 	return c, e

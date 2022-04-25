@@ -10,7 +10,7 @@ tasks:
       SSH_KEYS_PATH: "{{.HOME}}/tmp/kloudlite/keys"
       DATA_PATH: "{{.HOME}}/tmp/kloudlite/data"
       CONFIG_DATA_PATH: "{{.HOME}}/tmp/kloudlite/config"
-      KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
+      KAFKA_BOOTSTRAP_SERVERS: dev-kafka-headless.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
       KAFKA_INFRA_RESP_TOPIC: dev-hotspot-infra-resp
       KAFKA_GROUP_ID: infra-cli
