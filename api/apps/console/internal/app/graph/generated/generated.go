@@ -261,7 +261,7 @@ type ComplexityRoot struct {
 		CiGitlabRepoBranches        func(childComplexity int, repoURL string, search *string) int
 		CiGitlabRepos               func(childComplexity int, groupID repos.ID, search *string, limit *int, page *int) int
 		CiSearchGithubRepos         func(childComplexity int, search *string, org string, limit *int, page *int) int
-		CoreApp                     func(childComplexity int, appID repos.ID, version *string) int
+		CoreApp                     func(childComplexity int, appID repos.ID) int
 		CoreApps                    func(childComplexity int, projectID repos.ID, search *string) int
 		CoreConfig                  func(childComplexity int, configID repos.ID) int
 		CoreConfigs                 func(childComplexity int, projectID repos.ID, search *string) int
@@ -379,7 +379,7 @@ type QueryResolver interface {
 	CoreProjects(ctx context.Context, accountID *repos.ID) ([]*model.Project, error)
 	CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error)
 	CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error)
-	CoreApp(ctx context.Context, appID repos.ID, version *string) (*model.App, error)
+	CoreApp(ctx context.Context, appID repos.ID) (*model.App, error)
 	CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error)
 	CoreRouter(ctx context.Context, routerID repos.ID) (*model.Router, error)
 	CoreConfigs(ctx context.Context, projectID repos.ID, search *string) ([]*model.Config, error)
@@ -1660,7 +1660,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreApp(childComplexity, args["appId"].(repos.ID), args["version"].(*string)), true
+		return e.complexity.Query.CoreApp(childComplexity, args["appId"].(repos.ID)), true
 
 	case "Query.core_apps":
 		if e.complexity.Query.CoreApps == nil {
@@ -2053,7 +2053,7 @@ type Query {
   core_project(projectId: ID!): Project
 
   core_apps(projectId: ID!, search: String): [App!]!
-  core_app(appId: ID!, version: String): App
+  core_app(appId: ID!): App
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
@@ -3709,15 +3709,6 @@ func (ec *executionContext) field_Query_core_app_args(ctx context.Context, rawAr
 		}
 	}
 	args["appId"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["version"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["version"] = arg1
 	return args, nil
 }
 
@@ -9070,7 +9061,7 @@ func (ec *executionContext) _Query_core_app(ctx context.Context, field graphql.C
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CoreApp(rctx, args["appId"].(repos.ID), args["version"].(*string))
+		return ec.resolvers.Query().CoreApp(rctx, args["appId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

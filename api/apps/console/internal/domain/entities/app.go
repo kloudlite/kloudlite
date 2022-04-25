@@ -28,16 +28,12 @@ type Limit struct {
 	Max string `json:"max" bson:"max"`
 }
 
-type EnvValue struct {
-	Type  string  `json:"type,omitempty"`
-	Value *string `json:"value,omitempty"`
-	Ref   *string `json:"ref,omitempty"`
-	Key   *string `json:"key,omitempty"`
-}
-
 type EnvVar struct {
-	Key   string   `json:"name" bson:"name"`
-	Value EnvValue `json:"value" bson:"value"`
+	Key    string  `json:"name" bson:"name"`
+	Type   string  `json:"type,omitempty"`
+	Value  *string `json:"value,omitempty"`
+	Ref    *string `json:"ref,omitempty"`
+	RefKey *string `json:"key,omitempty"`
 }
 
 type Container struct {
