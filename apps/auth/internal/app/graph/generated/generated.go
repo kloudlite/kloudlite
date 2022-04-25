@@ -73,6 +73,8 @@ type ComplexityRoot struct {
 		AuthFindByEmail              func(childComplexity int, email string) int
 		AuthMe                       func(childComplexity int) int
 		OAuthGithubInstallationToken func(childComplexity int, installationID int) int
+		OAuthListInstallations       func(childComplexity int) int
+		OAuthListRepos               func(childComplexity int, installationID int) int
 		OAuthRequestLogin            func(childComplexity int, provider string, state *string) int
 		__resolve__service           func(childComplexity int) int
 		__resolve_entities           func(childComplexity int, representations []map[string]interface{}) int
@@ -130,6 +132,8 @@ type QueryResolver interface {
 	AuthFindByEmail(ctx context.Context, email string) (*model.User, error)
 	OAuthRequestLogin(ctx context.Context, provider string, state *string) (string, error)
 	OAuthGithubInstallationToken(ctx context.Context, installationID int) (string, error)
+	OAuthListInstallations(ctx context.Context) (map[string]interface{}, error)
+	OAuthListRepos(ctx context.Context, installationID int) (map[string]interface{}, error)
 }
 
 type executableSchema struct {
@@ -355,6 +359,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.OAuthGithubInstallationToken(childComplexity, args["installationId"].(int)), true
 
+	case "Query.oAuth_listInstallations":
+		if e.complexity.Query.OAuthListInstallations == nil {
+			break
+		}
+
+		return e.complexity.Query.OAuthListInstallations(childComplexity), true
+
+	case "Query.oAuth_listRepos":
+		if e.complexity.Query.OAuthListRepos == nil {
+			break
+		}
+
+		args, err := ec.field_Query_oAuth_listRepos_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.OAuthListRepos(childComplexity, args["installationId"].(int)), true
+
 	case "Query.oAuth_requestLogin":
 		if e.complexity.Query.OAuthRequestLogin == nil {
 			break
@@ -579,6 +602,8 @@ type Query {
   auth_findByEmail(email: String!): User # Done
   oAuth_requestLogin(provider: String!, state: String): URL!
   oAuth_githubInstallationToken(installationId: Int!): String!
+  oAuth_listInstallations: Json
+  oAuth_listRepos(installationId: Int!): Json
 }
 
 type Mutation {
@@ -988,6 +1013,21 @@ func (ec *executionContext) field_Query_auth_findByEmail_args(ctx context.Contex
 }
 
 func (ec *executionContext) field_Query_oAuth_githubInstallationToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["installationId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("installationId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["installationId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_oAuth_listRepos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int
@@ -1859,6 +1899,77 @@ func (ec *executionContext) _Query_oAuth_githubInstallationToken(ctx context.Con
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_oAuth_listInstallations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().OAuthListInstallations(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOJson2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_oAuth_listRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_oAuth_listRepos_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().OAuthListRepos(rctx, args["installationId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4115,6 +4226,46 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "oAuth_listInstallations":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_oAuth_listInstallations(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "oAuth_listRepos":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_oAuth_listRepos(ctx, field)
 				return res
 			}
 

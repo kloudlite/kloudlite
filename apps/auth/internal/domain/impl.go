@@ -39,6 +39,20 @@ type domainI struct {
 	google          Google
 }
 
+func (d *domainI) GithubListInstallations(ctx context.Context) (any, error) {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return "", errors.NewEf(err, "while finding accessToken")
+	}
+	i, err := d.github.ListInstallations(ctx, accToken)
+	fmt.Println(i, err)
+	return i, err
+}
+
+func (d *domainI) GithubListRepos(ctx context.Context) (any, error) {
+	panic("not implemented") // TODO: Implement
+}
+
 func (d *domainI) GithubInstallationToken(ctx context.Context, _ int64) (string, error) {
 	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
 	if err != nil {

@@ -8,6 +8,8 @@ type Query {
   auth_findByEmail(email: String!): User # Done
   oAuth_requestLogin(provider: String!, state: String): URL!
   oAuth_githubInstallationToken(installationId: Int!): String!
+  oAuth_listInstallations: Json
+  oAuth_listRepos(installationId: Int!): Json
 }
 
 type Mutation {
