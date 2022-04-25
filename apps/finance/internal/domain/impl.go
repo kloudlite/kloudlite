@@ -96,7 +96,7 @@ func (domain *domainI) CreateAccount(
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("sending message to console1")
 	_, err = domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
 		ResourceType: common.ResourceAccount,
@@ -106,13 +106,12 @@ func (domain *domainI) CreateAccount(
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("sending message to console")
 	_, err = domain.consoleCli.CreateDefaultCluster(ctx, &console.CreateClusterIn{
 		AccountId:   string(create.Id),
 		AccountName: create.Name,
 	})
-	if err != nil {
-		return nil, err
-	}
+	fmt.Println("sent message", err)
 	if err != nil {
 		return nil, err
 	}

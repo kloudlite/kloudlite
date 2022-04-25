@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	_ "fmt"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"net/http"
@@ -95,11 +96,13 @@ var Module = fx.Module(
 				[]string{env.KafkaInfraResponseTopic},
 				env.KafkaConsumerGroupId,
 				logger, func(context context.Context, topic string, message messaging.Message) error {
+					fmt.Println(string(message))
 					var d map[string]any
 					err := message.Unmarshal(&d)
 					if err != nil {
 						return err
 					}
+					return nil
 					switch d["type"].(string) {
 					case "create-cluster":
 						var m struct {
