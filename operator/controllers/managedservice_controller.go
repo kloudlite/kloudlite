@@ -87,7 +87,6 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	logger.Info("ry.Spec:", ry.Object["spec"])
 
 	m := new(unstructured.Unstructured)
-
 	m.Object = map[string]interface{}{
 		"apiVersion": ry.Object["apiVersion"],
 		"kind":       ry.Object["kind"],

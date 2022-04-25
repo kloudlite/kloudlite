@@ -5,7 +5,7 @@ tasks:
       - ./main.go
       - ./internal/**
     env:
-      KAFKA_BOOTSTRAP_SERVERS: dev-release-kafka-headless.hotspot.svc.cluster.local:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka-kafka-brokers.hotspot.svc.cluster.local:9092
       KAFKA_TOPIC: dev-hotspot-agent
       KAFKA_REPLY_TOPIC: dev-hotspot-agent-reply
       KAFKA_GROUP_ID: kl-agent
