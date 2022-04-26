@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -9,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
@@ -36,6 +38,35 @@ type domain struct {
 	appRepo              repos.DbRepo[*entities.App]
 	managedTemplatesPath string
 	workloadMessenger    WorkloadMessenger
+	infraClient          infra.InfraClient
+}
+
+func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error) {
+	mres, err := d.managedResRepo.FindById(ctx, managedResID)
+	if err != nil {
+		return nil, err
+	}
+	project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+		"account_id": project.AccountId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
+		ManagedResName: mres.Name,
+		ClusterId:      string(cluster.Id),
+		Namespace:      mres.Namespace,
+	})
+	m := make(map[string]interface{}, 0)
+	err = json.Unmarshal([]byte(output.Output), &m)
+	if err != nil {
+		return nil, err
+	}
+	return m, err
 }
 
 func (d *domain) InstallAppFlow(
@@ -53,6 +84,54 @@ func (d *domain) InstallAppFlow(
 	if err != nil {
 		return false, err
 	}
+	svcs := make([]op_crds.Service, 0)
+	for _, ep := range app.ExposedPorts {
+		svcs = append(svcs, op_crds.Service{
+			Port:       int(ep.Port),
+			TargetPort: int(ep.TargetPort),
+			Type:       string(ep.Type),
+		})
+	}
+	containers := make([]op_crds.Container, 0)
+	for _, c := range app.Containers {
+		env := make([]op_crds.EnvEntry, 0)
+		for _, e := range c.EnvVars {
+			env = append(env, op_crds.EnvEntry{
+				Value:   e.Value,
+				Key:     e.Key,
+				Type:    e.Type,
+				RefName: e.Ref,
+				RefKey:  e.RefKey,
+			})
+		}
+		containers = append(containers, op_crds.Container{
+			Name:  c.Name,
+			Image: c.Image,
+			ResourceCpu: op_crds.Limit{
+				Min: c.CPULimits.Min,
+				Max: c.CPULimits.Max,
+			},
+			ResourceMemory: op_crds.Limit{
+				Min: c.MemoryLimits.Min,
+				Max: c.MemoryLimits.Max,
+			},
+			Env: env,
+		})
+	}
+
+	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+		APIVersion: op_crds.AppAPIVersion,
+		Kind:       op_crds.AppKind,
+		Metadata: op_crds.AppMetadata{
+			Name:      app.Name,
+			Namespace: app.Namespace,
+		},
+		Spec: op_crds.AppSpec{
+			Services:   svcs,
+			Containers: containers,
+			Replicas:   1,
+		},
+	})
 	return true, nil
 }
 
@@ -196,7 +275,8 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Manag
 
 func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.App) error {
 	one, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"name": response.Name,
+		"name":      response.Metadata.Name,
+		"namespace": response.Metadata.Namespace,
 	})
 	if err != nil {
 		return err
@@ -767,7 +847,8 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 }
 
 func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error) {
-	return d.projectRepo.FindById(ctx, projectId)
+	id, err := d.projectRepo.FindById(ctx, projectId)
+	return id, err
 }
 
 func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
@@ -820,7 +901,7 @@ func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectN
 
 func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClusterResponse) error {
 	byId, err := d.clusterRepo.FindById(ctx, response.ClusterID)
-	if err != nil {
+	if err != nil || byId == nil {
 		return err
 	}
 	if response.Done {
@@ -917,6 +998,12 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(entities.SetupClusterAction{
+		ClusterID:  c.Id,
+		Region:     c.Region,
+		Provider:   c.Provider,
+		NodesCount: c.NodesCount,
+	})
 	err = SendAction(
 		d.infraMessenger,
 		entities.SetupClusterAction{
@@ -927,6 +1014,7 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 		},
 	)
 	if err != nil {
+		panic(err)
 		return nil, err
 	}
 	return c, e
@@ -1138,8 +1226,10 @@ func fxDomain(
 	logger logger.Logger,
 	infraMessenger InfraMessenger,
 	workloadMessenger WorkloadMessenger,
+	infraClient infra.InfraClient,
 ) Domain {
 	return &domain{
+		infraClient:          infraClient,
 		infraMessenger:       infraMessenger,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,

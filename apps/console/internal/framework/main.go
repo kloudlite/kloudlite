@@ -12,6 +12,15 @@ import (
 	mongo_db "kloudlite.io/pkg/repos"
 )
 
+type GrpcInfraConfig struct {
+	InfraGrpcHost string `env:"INFRA_GRPC_URL" required:"true"`
+	InfraGrpcPort string `env:"INFRA_GRPC_PORT" required:"true"`
+}
+
+func (e *GrpcInfraConfig) GetGCPServerURL() string {
+	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
+}
+
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
@@ -51,8 +60,10 @@ func (e *Env) GetGRPCPort() uint16 {
 
 var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[Env]()),
+	fx.Provide(config.LoadEnv[GrpcInfraConfig]()),
 	fx.Provide(logger.NewLogger),
 	rpc.NewGrpcServerFx[*Env](),
+	rpc.NewGrpcClientFx[*GrpcInfraConfig, app.InfraClientConnection](),
 	mongo_db.NewMongoClientFx[*Env](),
 	messaging.NewKafkaClientFx[*Env](),
 	cache.NewRedisFx[*Env](),

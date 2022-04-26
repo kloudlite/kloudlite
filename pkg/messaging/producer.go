@@ -48,8 +48,7 @@ func (m *producer[T]) SendMessage(topic string, key string, message T) error {
 	}
 	return m.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{
-			Topic:     &topic,
-			Partition: int32(kafka.PartitionAny),
+			Topic: &topic,
 		},
 		Key:   []byte(key),
 		Value: msgBody,

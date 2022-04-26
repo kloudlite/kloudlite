@@ -2,12 +2,14 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 )
 
 func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger logger.Logger) (messaging.Consumer, error) {
+	fmt.Println("fxConsumer", env.KafkaInfraTopic, env.KafkaGroupId)
 	consumer, err := messaging.NewKafkaConsumer(
 		mc,
 		[]string{env.KafkaInfraTopic},
@@ -18,6 +20,7 @@ func fxConsumer(env *InfraEnv, mc messaging.KafkaClient, d domain.Domain, logger
 				Type string
 			}
 			action.Unmarshal(&_d)
+			fmt.Println(_d.Type)
 			switch _d.Type {
 			case "create-cluster":
 				var m struct {

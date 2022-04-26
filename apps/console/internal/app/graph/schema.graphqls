@@ -5,7 +5,7 @@ type Query {
   core_project(projectId: ID!): Project
 
   core_apps(projectId: ID!, search: String): [App!]!
-  core_app(appId: ID!, version: String): App
+  core_app(appId: ID!): App
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
@@ -45,6 +45,7 @@ type ManagedRes {
   resourceType: String!
   installation: ManagedSvc!
   values: Json!
+  outputs: Json!
 }
 
 type ManagedSvc {
@@ -99,7 +100,6 @@ type Mutation {
     projectId: ID!,
     app: AppFlowInput!,
   ): Boolean!
-  core_updateApp(appId: ID!, name: String, description: String, service: AppServiceInput, replicas: Int, containers: AppContainerIN): App!
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
@@ -123,27 +123,59 @@ type Mutation {
 
 input AppFlowInput{
   name: String!
+  readable: String!
   description: String
   exposed_services: [ExposedServiceInput!]!
   containers:[AppContainerInput!]!
 }
 
-input EnvVal {
+type App {
+  id: ID!
+  name: String!
+  namespace: String!
+  description: String
+  readableId: ID!
+  replicas: Int
+  services: [ExposedService]!
+  containers: [AppContainer!]!
+  project: Project!
+  version: Int
+}
+
+
+type EnvVal {
   type: String!
   value: String
   ref: String
   key: String
 }
 
-input EnvVar {
+input EnvValInput {
+  type: String!
+  value: String
+  ref: String
+  key: String
+}
+
+type EnvVar {
   key: String!
   value: EnvVal!
 }
-input AttachedRes{
+
+input EnvVarInput {
+  key: String!
+  value: EnvValInput!
+}
+
+type AttachedRes{
   res_id: ID!
 }
 
-input AppContainerInput{
+input AttachedResInput{
+  res_id: ID!
+}
+
+type AppContainer{
   name: String!
   image: String!
   pull_secret: String
@@ -153,6 +185,25 @@ input AppContainerInput{
   mem_min:String!
   mem_max:String!
   attached_resources:[AttachedRes!]!
+}
+
+
+input AppContainerInput{
+  name: String!
+  image: String!
+  pull_secret: String
+  env_vars:[EnvVarInput!]!
+  cpu_min:String!
+  cpu_max:String!
+  mem_min:String!
+  mem_max:String!
+  attached_resources:[AttachedResInput!]!
+}
+
+type ExposedService{
+  type :String!
+  target: Int!
+  exposed: Int!
 }
 
 input ExposedServiceInput{
@@ -211,23 +262,6 @@ type ProjectMembership {
   project: Project!
 }
 
-
-
-
-type App {
-  id: ID!
-  name: String!
-  namespace: String!
-  description: String
-  readableId: ID!
-  replicas: Int
-  services: [AppService]!
-  attachedResources:[ManagedRes]!
-  containers: [AppContainer!]!
-  project: Project!
-  version: Int
-}
-
 type AppService {
   type: String!
   port: Int!
@@ -240,98 +274,12 @@ input AppServiceInput {
   targetPort: Int
 }
 
-type AppContainer {
-  name: String!
-  image: String!
-  imagePullPolicy: String!
-  env: [AppEnv!]!
-  resourceCpu: ContainerRes
-  resourceMemory: ContainerRes
-  volumes: [AppVolume]
-  managedResources: [ManagedRes]
-}
 
-input AppContainerIN {
-  name: String!
-  image: String
-  imagePullPolicy: String
-  env: [AppEnvInput]!
-  resourceCpu: ContainerResInput
-  resourceMemory: ContainerResInput
-  volumes: [IAppVolume]
-  managedResources: [String!]
-  pullSecret: String
-}
 
-input AppContainerUpdateInput {
-  name: String
-  image: String
-  imagePullPolicy: String
-  env: [AppEnvInput]
-  resourceCpu: ContainerResInput
-  resourceMemory: ContainerResInput
-  volumes: [IAppVolume]
-  managedResources: [String!]
-}
 
-input ContainerResInput {
-  min: String!
-  max: String!
-}
 
-type ContainerRes {
-  min: String!
-  max: String!
-}
 
-type AppVolume {
-  name: String!
-  mountPath: String!
-  type: String!
-  refId: ID!
-  items: [AppVolumeItem]
-}
 
-input IAppVolume {
-  name: String!
-  mountPath: String!
-  type: String!
-  refId: ID!
-  items: [IAppVolumeItem]
-}
-
-input IAppVolumeUpdate {
-  mountPath: String
-  type: String
-  refId: ID
-  items: [IAppVolumeItem]
-}
-
-type AppVolumeItem {
-  key: String!
-  fileName: String!
-}
-
-input IAppVolumeItem {
-  key: String!
-  fileName: String!
-}
-
-type AppEnv {
-  key: String!
-  type: String!
-  value: String
-  refKey: String
-  refId: String
-}
-
-input AppEnvInput {
-  key: String!
-  type: String!
-  value: String
-  refKey: String
-  refId: String
-}
 
 type Secret {
   id: ID!

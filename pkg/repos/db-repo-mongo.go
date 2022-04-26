@@ -97,9 +97,6 @@ func (repo dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
 
 	err := r.Decode(&result)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return result, nil
-		}
 		return result, err
 	}
 	return result, err
