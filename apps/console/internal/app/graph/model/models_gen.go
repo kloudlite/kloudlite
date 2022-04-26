@@ -29,7 +29,7 @@ type App struct {
 
 type AppContainer struct {
 	Name              string         `json:"name"`
-	Image             string         `json:"image"`
+	Image             *string        `json:"image"`
 	PullSecret        *string        `json:"pull_secret"`
 	EnvVars           []*EnvVar      `json:"env_vars"`
 	CPUMin            string         `json:"cpu_min"`
@@ -41,7 +41,8 @@ type AppContainer struct {
 
 type AppContainerInput struct {
 	Name              string              `json:"name"`
-	Image             string              `json:"image"`
+	Image             *string             `json:"image"`
+	PipelineData      *PipelineDataInput  `json:"pipelineData"`
 	PullSecret        *string             `json:"pull_secret"`
 	EnvVars           []*EnvVarInput      `json:"env_vars"`
 	CPUMin            string              `json:"cpu_min"`
@@ -198,6 +199,17 @@ type NewResourcesIn struct {
 	Secrets    []map[string]interface{} `json:"secrets"`
 	MServices  []map[string]interface{} `json:"mServices"`
 	MResources []map[string]interface{} `json:"mResources"`
+}
+
+type PipelineDataInput struct {
+	Name                 string                 `json:"name"`
+	ImageName            string                 `json:"imageName"`
+	GitProvider          string                 `json:"gitProvider"`
+	GitRepoURL           string                 `json:"gitRepoUrl"`
+	DockerFile           string                 `json:"dockerFile"`
+	ContextDir           string                 `json:"contextDir"`
+	GithubInstallationID *int                   `json:"githubInstallationId"`
+	BuildArgs            map[string]interface{} `json:"buildArgs"`
 }
 
 type Project struct {

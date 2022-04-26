@@ -62,7 +62,7 @@ func (c *ciServerImpl) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*
 			ba[k] = v
 		}
 	}
-	pipeline, err := c.d.CretePipeline(ctx, domain.Pipeline{
+	pipeline, err := c.d.CretePipeline(ctx, repos.ID(in.UserId), domain.Pipeline{
 		Name:                 in.Name,
 		ImageName:            in.ImageName,
 		PipelineEnv:          in.PipelineEnv,

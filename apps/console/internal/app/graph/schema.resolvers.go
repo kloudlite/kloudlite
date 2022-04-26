@@ -257,6 +257,10 @@ func (r *mutationResolver) IamUpdateProjectMember(ctx context.Context, projectID
 }
 
 func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error) {
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user not logged in")
+	}
 	ports := make([]entities.ExposedPort, 0)
 	for _, port := range app.ExposedServices {
 		ports = append(ports, entities.ExposedPort{
@@ -265,7 +269,7 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 			Type:       entities.PortType(port.Type),
 		})
 	}
-	containers := make([]entities.Container, 0)
+	containers := make([]entities.ContainerIn, 0)
 	for _, container := range app.Containers {
 		e := make([]entities.EnvVar, 0)
 		for _, env := range container.EnvVars {
@@ -283,7 +287,18 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				ResourceId: attached.ResID,
 			})
 		}
-		containers = append(containers, entities.Container{
+		i := *container.PipelineData.GithubInstallationID
+		containers = append(containers, entities.ContainerIn{
+			Pipeline: &entities.PipelineIn{
+				Name:                 container.PipelineData.Name,
+				ImageName:            container.PipelineData.ImageName,
+				GitProvider:          container.PipelineData.GitProvider,
+				GitRepoUrl:           container.PipelineData.GitRepoURL,
+				DockerFile:           container.PipelineData.DockerFile,
+				ContextDir:           container.PipelineData.ContextDir,
+				GithubInstallationId: int64(i),
+				BuildArgs:            container.PipelineData.BuildArgs,
+			},
 			Name:            container.Name,
 			Image:           container.Image,
 			ImagePullSecret: container.PullSecret,
@@ -299,15 +314,13 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 			AttachedResources: a,
 		})
 	}
-	return r.Domain.InstallAppFlow(ctx, projectID, entities.App{
+	return r.Domain.InstallAppFlow(ctx, session.UserId, projectID, entities.AppIn{
 		Name:         app.Name,
 		ReadableId:   app.Readable,
 		Description:  app.Description,
 		Replicas:     1,
 		ExposedPorts: ports,
 		Containers:   containers,
-		Status:       "",
-		Conditions:   nil,
 	})
 }
 

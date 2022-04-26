@@ -22,7 +22,11 @@ func (r *mutationResolver) CiDeleteGitPipeline(ctx context.Context, pipelineID r
 }
 
 func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPipelineIn) (map[string]interface{}, error) {
-	pipeline, err := r.Domain.CretePipeline(ctx, domain.Pipeline{
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("not authorized")
+	}
+	pipeline, err := r.Domain.CretePipeline(ctx, session.UserId, domain.Pipeline{
 		Name:                 in.Name,
 		ImageName:            in.ImageName,
 		GitProvider:          in.GitProvider,
@@ -77,7 +81,14 @@ func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, l
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
-	return r.Domain.GithubListRepos(ctx, session.UserId, int64(installationID), *limit, *page)
+	p, l := 1, 20
+	if page != nil {
+		p = *page
+	}
+	if limit != nil {
+		p = *limit
+	}
+	return r.Domain.GithubListRepos(ctx, session.UserId, int64(installationID), p, l)
 }
 
 func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) (interface{}, error) {
@@ -85,7 +96,14 @@ func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
-	branches, err := r.Domain.GithubListBranches(ctx, session.UserId, repoURL, *page, *limit)
+	p, l := 1, 20
+	if page != nil {
+		p = *page
+	}
+	if limit != nil {
+		p = *limit
+	}
+	branches, err := r.Domain.GithubListBranches(ctx, session.UserId, repoURL, p, l)
 	return branches, err
 }
 
@@ -94,7 +112,14 @@ func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string,
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
-	return r.Domain.GithubSearchRepos(ctx, session.UserId, *search, org, *page, *limit)
+	p, l := 1, 20
+	if page != nil {
+		p = *page
+	}
+	if limit != nil {
+		p = *limit
+	}
+	return r.Domain.GithubSearchRepos(ctx, session.UserId, *search, org, p, l)
 }
 
 func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) ([]*model.GitPipeline, error) {
