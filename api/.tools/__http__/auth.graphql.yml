@@ -49,7 +49,7 @@ query: |
     }
   }
 variables:
-  code: 807df2441129a743fb6b
+  code: d11ad27343fa71d60468
   provider: github
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
 
@@ -74,8 +74,29 @@ variables:
   installationId: 123432
 
 ---
-label: List Installations
+label: List Github Installations
 query: |
   query Query {
-    oAuth_listInstallations
+    oAuth_githubListInstallations
   }
+
+---
+label: List Github Repos
+query: |
+  query ListRepos($installationId: Int!, $page: Int!, $size: Int!) {
+    oAuth_githubListRepos(installationId: $installationId, page: $page, size: $size)
+  }
+variables:
+  installationId: 22487879 
+  page: 1
+  size: 20
+---
+
+label: Github Add Webhook
+query: |
+  mutation OAuth_githubAddWebhook($repoUrl: String!) {
+    oAuth_githubAddWebhook(repoUrl: $repoUrl)
+  }
+variables:
+  repoUrl: nxtcoder17/sample
+
