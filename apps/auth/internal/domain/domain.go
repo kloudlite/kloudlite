@@ -25,7 +25,8 @@ type Domain interface {
 	//
 	GithubInstallationToken(ctx context.Context, installationId int64) (string, error)
 	GithubListInstallations(ctx context.Context) (any, error)
-	GithubListRepos(ctx context.Context) (any, error)
+	GithubListRepos(ctx context.Context, installationId int64, page, size int) (any, error)
+	GithubAddWebhook(ctx context.Context, repoUrl string) error
 
 	//TODO
 	GetLoginDetails(ctx context.Context, provider string, state *string) (string, error)

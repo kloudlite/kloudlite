@@ -39,18 +39,33 @@ type domainI struct {
 	google          Google
 }
 
+func (d *domainI) GithubAddWebhook(ctx context.Context, repoUrl string) error {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return errors.NewEf(err, "while finding accessToken")
+	}
+	return d.github.AddWebhook(ctx, accToken, repoUrl)
+}
+
+func (d *domainI) GithubListRepos(ctx context.Context, installationId int64, page int, size int) (any, error) {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return "", errors.NewEf(err, "while finding accessToken")
+	}
+	return d.github.ListRepos(ctx, accToken, installationId, page, size)
+}
+
 func (d *domainI) GithubListInstallations(ctx context.Context) (any, error) {
 	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
 	if err != nil {
 		return "", errors.NewEf(err, "while finding accessToken")
 	}
 	i, err := d.github.ListInstallations(ctx, accToken)
-	fmt.Println(i, err)
-	return i, err
-}
-
-func (d *domainI) GithubListRepos(ctx context.Context) (any, error) {
-	panic("not implemented") // TODO: Implement
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("item: %+v\n", i[0])
+	return i, nil
 }
 
 func (d *domainI) GithubInstallationToken(ctx context.Context, _ int64) (string, error) {
