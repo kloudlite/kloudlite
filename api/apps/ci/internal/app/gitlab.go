@@ -2,20 +2,16 @@ package app
 
 import (
 	"context"
+	"kloudlite.io/apps/ci/internal/domain"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 	oauthGitlab "golang.org/x/oauth2/gitlab"
-	"kloudlite.io/apps/auth/internal/domain"
 	"kloudlite.io/pkg/errors"
 )
 
 type gitlabI struct {
 	cfg *oauth2.Config
-}
-
-func (gl *gitlabI) Authorize(_ context.Context, state string) (string, error) {
-	return gl.cfg.AuthCodeURL(state), nil
 }
 
 func (gl *gitlabI) Callback(ctx context.Context, code string, state string) (*gitlab.User, *oauth2.Token, error) {
@@ -33,6 +29,10 @@ func (gl *gitlabI) Callback(ctx context.Context, code string, state string) (*gi
 		return nil, nil, errors.NewEf(err, "could not get gitlab user")
 	}
 	return u, token, nil
+}
+
+func (gl *gitlabI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
+	return gl.cfg.TokenSource(ctx, token).Token()
 }
 
 type GitlabOAuth interface {

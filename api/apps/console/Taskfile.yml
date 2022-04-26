@@ -12,6 +12,8 @@ tasks:
       MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
       INFRA_HOST: localhost
       INFRA_PORT: 50051
+      AUTH_HOST: localhost
+      AUTH_PORT: 50051
 #      REDIS_USERNAME: hotspot-user
 #      REDIS_PASSWORD: ***REMOVED***
       MONGO_DB_NAME: console-go

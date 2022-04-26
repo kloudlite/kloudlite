@@ -11,7 +11,22 @@ tasks:
       MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       MONGO_DB_NAME: ci
+      AUTH_HOST: localhost
+      AUTH_PORT: 8081
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
+      GITHUB_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/github
+      GITHUB_CLIENT_ID: ***REMOVED***
+      GITHUB_CLIENT_SECRET: ***REMOVED***
+      GITHUB_APP_ID: ***REMOVED***
+      GITHUB_APP_PK_FILE: ./.secrets/github-app-pk.pem
+
+      GITLAB_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/gitlab
+      GITLAB_CLIENT_ID: ***REMOVED***
+      GITLAB_CLIENT_SECRET: ***REMOVED***
+
+      GOOGLE_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/google
+      GOOGLE_CLIENT_ID: ***REMOVED***
+      GOOGLE_CLIENT_SECRET: ***REMOVED***
     sources:
       - ./internal/**/*.go
       - ./main.go

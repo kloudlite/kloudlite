@@ -21,6 +21,15 @@ func (e *GrpcInfraConfig) GetGCPServerURL() string {
 	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
 }
 
+type GrpcAuthConfig struct {
+	InfraGrpcHost string `env:"AUTH_HOST" required:"true"`
+	InfraGrpcPort string `env:"AUTH_PORT" required:"true"`
+}
+
+func (e *GrpcAuthConfig) GetGCPServerURL() string {
+	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
+}
+
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
@@ -64,6 +73,7 @@ var Module = fx.Module("framework",
 	fx.Provide(logger.NewLogger),
 	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*GrpcInfraConfig, app.InfraClientConnection](),
+	rpc.NewGrpcClientFx[*GrpcInfraConfig, app.AuthClientConnection](),
 	mongo_db.NewMongoClientFx[*Env](),
 	messaging.NewKafkaClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
