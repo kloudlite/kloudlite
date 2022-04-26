@@ -1,0 +1,27 @@
+---
+label: Get Pipeline
+query: |
+  query GetPipeline($pipelineId: ID!) {
+    ci_getPipeline(pipelineId: $pipelineId) {
+      id
+      githubInstallationId
+      imageName
+      gitRepoUrl
+      dockerFile
+      contextDir
+      buildArgs
+    }
+  }
+variables:
+  pipelineId: "pip-vyztsks0wncupyna-4kdc7qd-w2w"
+
+---
+
+label: Create Pipeline
+query: |
+  mutation {
+    ci_createPipeline(
+      in: {name: "asd", imageName: "asd", gitProvider: "github", gitRepoUrl: "nxtcoder17/sample", dockerFile: "./Dockerfile", contextDir: "./"}
+    )
+  }
+
