@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
@@ -131,14 +132,26 @@ func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, s
 	return r.d.OauthAddLogin(ctx, repos.ID(session.UserId), provider, state, code)
 }
 
+func (r *mutationResolver) OAuthGithubAddWebhook(ctx context.Context, repoURL string) (bool, error) {
+	err := r.d.GithubAddWebhook(ctx, repoURL)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *queryResolver) AuthMe(ctx context.Context) (*model.User, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
+	fmt.Println("SESSION: ", session)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
 	u, err := r.d.GetUserById(ctx, repos.ID(session.UserId))
 	if err != nil {
 		return nil, err
+	}
+	if u == nil {
+		return nil, klErrors.Newf("user(email=%s) does not exist in system", session.UserEmail)
 	}
 	return userModelFromEntity(u), err
 }
@@ -162,6 +175,14 @@ func (r *queryResolver) OAuthRequestLogin(ctx context.Context, provider string, 
 
 func (r *queryResolver) OAuthGithubInstallationToken(ctx context.Context, installationID int) (string, error) {
 	return r.d.GithubInstallationToken(ctx, int64(installationID))
+}
+
+func (r *queryResolver) OAuthGithubListInstallations(ctx context.Context) (interface{}, error) {
+	return r.d.GithubListInstallations(ctx)
+}
+
+func (r *queryResolver) OAuthGithubListRepos(ctx context.Context, installationID int, page int, size int) (interface{}, error) {
+	return r.d.GithubListRepos(ctx, int64(installationID), page, size)
 }
 
 // Mutation returns generated.MutationResolver implementation.

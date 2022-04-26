@@ -57,10 +57,11 @@ func (c *consumer) Subscribe(cc context.Context) error {
 			if e != nil {
 				e = c.callback(context.TODO(), *msg.TopicPartition.Topic, msg.Value)
 				if e != nil {
-					fmt.Errorf("failed to process message after 2 retries")
+					c.logger.Debug("failed to process message after 2 retries")
 				}
 			}
 			c.kafkaConsumer.CommitMessage(msg)
+			fmt.Println("committed msg...")
 		}
 	}()
 	return nil

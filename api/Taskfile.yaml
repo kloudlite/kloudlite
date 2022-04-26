@@ -6,8 +6,8 @@ includes:
     dir: ./apps/console
 
   grpc:
-    taskfile: ./apps/grpc-interfaces/Taskfile.yml
-    dir: ./apps/grpc-interfaces
+    taskfile: ./grpc-interfaces/Taskfile.yml
+    dir: ./grpc-interfaces
 
   iam:
     taskfile: ./apps/iam/Taskfile.yml
