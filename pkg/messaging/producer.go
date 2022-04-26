@@ -56,8 +56,6 @@ func (m *producer[T]) SendMessage(topic string, key string, message T) error {
 }
 
 func NewKafkaProducer[T any](kafkaCli KafkaClient) (messenger Producer[T], e error) {
-	defer errors.HandleErr(&e)
-	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
 	return &producer[T]{
 		kafkaBrokers: kafkaCli.GetBrokers(),
 	}, e
