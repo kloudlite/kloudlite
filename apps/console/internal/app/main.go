@@ -3,12 +3,10 @@ package app
 import (
 	"context"
 	"fmt"
-	_ "fmt"
+	"google.golang.org/grpc"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"net/http"
-	_ "net/http"
 
-	"google.golang.org/grpc"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/pkg/logger"
@@ -18,10 +16,6 @@ import (
 
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
-	_ "kloudlite.io/pkg/logger"
-
-	_ "github.com/99designs/gqlgen/graphql/handler"
-	_ "github.com/99designs/gqlgen/graphql/playground"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"

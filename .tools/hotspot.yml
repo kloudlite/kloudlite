@@ -1,0 +1,47 @@
+namespace: hotspot
+
+tunnels:
+  - nxt-gateway:80 -> app:4000
+  - tekton-interceptor:80 -> app:5001
+  - message-consumer:80 -> app:5001
+
+local:
+  services:
+    - name: app
+      image: nxtcoder17/home
+      environment:
+        ABC: 'hello'
+      # command:
+        # - pnpm all
+      working_dir: /home/node/app
+      volumes:
+        - .:/home/node/app
+
+    - name: mongo
+      image: mongo:latest
+      command: mongod --port 27018
+
+    - name: messenger
+      image: nxtcoder17/home
+      working_dir: /home/node/app
+      volumes:
+        - ../api-go:/home/node/app
+        - ~/.kube/configs/dev-hotspot-01.yml:/tmp/kconfig
+      environment:
+        KUBECONFIG: /tmp/kconfig
+      # command:
+      #   - pnpm all
+
+  mounts:
+    dir: /var/mounts
+    configs:
+      - gateway-supergraph
+    secrets:
+      - auth-api-secret
+      - auth-api-github-app-pk
+      - mongo-creds-mongodb
+      - redis-creds-redis-db
+      - comms-sendgrid-api
+      - finance-api-secret
+
+kubeConfig: ~/.kube/configs/dev-hotspot-01.yml

@@ -3,6 +3,7 @@ package logger
 import (
 	"flag"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Logger struct {
@@ -14,11 +15,9 @@ func NewLogger() Logger {
 	flag.Parse()
 
 	if isDev != nil && *isDev {
-		logger, err := zap.NewDevelopment()
-		if err != nil {
-			panic(err)
-		}
-		logger.Sugar().With()
+		config := zap.NewDevelopmentConfig()
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		logger, _ := config.Build()
 		return Logger{SugaredLogger: logger.Sugar()}
 	}
 	logger, err := zap.NewProduction()

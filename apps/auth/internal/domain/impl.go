@@ -39,12 +39,41 @@ type domainI struct {
 	google          Google
 }
 
+func (d *domainI) GithubAddWebhook(ctx context.Context, repoUrl string) error {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return errors.NewEf(err, "while finding accessToken")
+	}
+	return d.github.AddWebhook(ctx, accToken, repoUrl)
+}
+
+func (d *domainI) GithubListRepos(ctx context.Context, installationId int64, page int, size int) (any, error) {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return "", errors.NewEf(err, "while finding accessToken")
+	}
+	return d.github.ListRepos(ctx, accToken, installationId, page, size)
+}
+
+func (d *domainI) GithubListInstallations(ctx context.Context) (any, error) {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return "", errors.NewEf(err, "while finding accessToken")
+	}
+	i, err := d.github.ListInstallations(ctx, accToken)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("item: %+v\n", i[0])
+	return i, nil
+}
+
 func (d *domainI) GithubInstallationToken(ctx context.Context, _ int64) (string, error) {
 	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
 	if err != nil {
 		return "", errors.NewEf(err, "finding accessToken")
 	}
-	return d.github.InstallationToken(ctx, accToken, "asdfsdaf")
+	return d.github.GetInstallationToken(ctx, accToken, "asdfsdaf")
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
