@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
@@ -14,7 +13,6 @@ type consoleServerI struct {
 }
 
 func (c consoleServerI) CreateDefaultCluster(ctx context.Context, in *console.CreateClusterIn) (*console.CreateClusterOut, error) {
-	fmt.Println("HERE")
 	cluster, err := c.d.CreateCluster(ctx, &entities.Cluster{
 		AccountId:  in.AccountId,
 		Name:       in.AccountName,

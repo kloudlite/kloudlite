@@ -18,7 +18,7 @@ type Cluster struct {
 	Provider         string        `json:"provider" bson:"provider"`
 	Region           string        `json:"region" bson:"region"`
 	Ip               *string       `json:"ip,omitempty" bson:"ip,omitempty"`
-	PublicKey        *string       `json:"publicKey,omitempty" bson:"publicKey,omitempty"`
+	PublicKey        *string       `json:"public_key,omitempty" bson:"public_key,omitempty"`
 	NodesCount       int           `json:"nodes_count" bson:"nodes_count"`
 	Status           ClusterStatus `json:"status" bson:"status"`
 }

@@ -31,20 +31,20 @@ func (d *domain) GetResourceOutput(ctx context.Context, clusterId repos.ID, resN
 func (d *domain) AddPeerToCluster(cxt context.Context, action AddPeerAction) error {
 	err := d.infraCli.AddPeer(cxt, action)
 	if err != nil {
-		//d.jobResponder.SendAddPeerResponse(AddPeerResponse{
-		//	ClusterID: action.ClusterID,
-		//	PublicKey: action.PublicKey,
-		//	Message:   err.Error(),
-		//	Done:      false,
-		//})
+		d.jobResponder.SendAddPeerResponse(cxt, AddPeerResponse{
+			ClusterID: action.ClusterID,
+			PublicKey: action.PublicKey,
+			Message:   err.Error(),
+			Done:      false,
+		})
 		return err
 	}
-	//d.jobResponder.SendAddPeerResponse(AddPeerResponse{
-	//	ClusterID: action.ClusterID,
-	//	PublicKey: action.PublicKey,
-	//	Message:   "Peer added",
-	//	Done:      true,
-	//})
+	d.jobResponder.SendAddPeerResponse(cxt, AddPeerResponse{
+		ClusterID: action.ClusterID,
+		PublicKey: action.PublicKey,
+		Message:   "Peer added",
+		Done:      true,
+	})
 	return err
 }
 

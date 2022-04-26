@@ -1,0 +1,42 @@
+scalar Json
+
+type Query {
+
+  ci_gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
+  ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
+  ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
+
+  ci_githubInstallations: [Json!]!
+  ci_githubRepos(installationId: String!, limit: Int, page: Int): [Json!]!
+  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): [Json!]!
+  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): [Json!]!
+
+  ci_gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
+  ci_gitPipeline(pipelineId: ID!): GitPipeline
+
+}
+
+type KV {
+  key: String!
+  value: String!
+}
+
+
+type GitPipeline {
+  id: ID!
+  pipelineEnv: String!
+  gitProvider: String
+  gitRepoUrl: String
+  buildArgs: [KV]
+  pullSecret: String
+  name: String!
+  imageName: String!
+  dockerFile: String
+  contextDir: String
+  github: Json
+  gitlab: Json
+}
+
+type Mutation {
+  ci_deleteGitPipeline(pipelineId: ID!): Boolean!
+}

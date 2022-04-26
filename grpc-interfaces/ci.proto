@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/ci";
+
+service CI {
+  rpc CreatePipeline(PipelineIn) returns (PipelineOutput);
+}
+
+message PipelineIn {
+  string name = 1;
+  string imageName = 2;
+  string pipelineEnv = 3;
+  string GitProvider = 4;
+  string GitRepoUrl = 5;
+  string DockerFile = 6;
+  string ContextDir = 7;
+  string GithubInstallationId = 8;
+  string GitlabTokenId  = 9;
+  map<string, string>  BuildArgs = 10;
+}
+
+message PipelineOutput {
+ string pipelineId = 1;
+}
+
