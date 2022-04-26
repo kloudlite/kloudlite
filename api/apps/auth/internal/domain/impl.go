@@ -39,7 +39,45 @@ type domainI struct {
 	google          Google
 }
 
-func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
+func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider string, state string, code string) (bool, error) {
+	user, err := d.userRepo.FindById(ctx, userId)
+	if err != nil {
+		return false, errors.NewEf(err, "could not find user")
+	}
+	switch provider {
+	case common.ProviderGithub:
+		{
+			_, t, err := d.github.Callback(ctx, code, state)
+			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			if err != nil {
+				return false, errors.NewEf(err, "could not login to github")
+			}
+			_, err = d.addOAuthLogin(ctx, provider, t, user)
+			if err != nil {
+				return false, err
+			}
+			return true, err
+		}
+
+	case common.ProviderGitlab:
+		{
+			_, t, err := d.gitlab.Callback(ctx, code, state)
+			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			if err != nil {
+				return false, errors.NewEf(err, "could not login to gitlab")
+			}
+			_, err = d.afterOAuthLogin(ctx, provider, t, user)
+			if err != nil {
+				return false, err
+			}
+			return true, err
+		}
+
+	default:
+		{
+			return false, errors.Newf("unknown provider=%s, aborting request", provider)
+		}
+	}
 
 }
 
@@ -288,15 +326,15 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
 }
 
-func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User) (*common.AuthSession, error) {
-	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": newUser.Email})
-	if err != nil {
+func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, user *User) (*User, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": user.Email})
+	if err != nil || user == nil {
 		return nil, errors.NewEf(err, "could not find user")
 	}
 
 	if user == nil {
-		newUser.Joined = time.Now()
-		user, err = d.userRepo.Create(ctx, newUser)
+		user.Joined = time.Now()
+		user, err = d.userRepo.Create(ctx, user)
 		if err != nil {
 			return nil, errors.NewEf(err, "could not create user (email=%s)", user.Email)
 		}
@@ -313,7 +351,7 @@ func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *o
 		return nil, errors.NewEf(err, "could not store access token in repo")
 	}
 
-	p := &ProviderDetail{TokenId: t.Id, Avatar: newUser.Avatar}
+	p := &ProviderDetail{TokenId: t.Id, Avatar: user.Avatar}
 
 	if provider == common.ProviderGithub {
 		user.ProviderGithub = p
@@ -332,7 +370,14 @@ func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *o
 	if err != nil {
 		return nil, errors.NewEf(err, "could not update user")
 	}
+	return nil, err
+}
 
+func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User) (*common.AuthSession, error) {
+	user, err := d.addOAuthLogin(ctx, provider, token, newUser)
+	if err != nil {
+		return nil, err
+	}
 	return common.NewSession(user.Id, user.Email, user.Verified, fmt.Sprintf("oauth2/%s", provider)), nil
 }
 
