@@ -97,7 +97,8 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	var ry unstructured.Unstructured
 	if err = yaml.Unmarshal(b, &ry.Object); err != nil {
-		logger.Infof(errors.NewEf(err, "could not convert template %s []byte into mongodb", templates.App).Error())
+		logger.Error(err)
+		logger.Infof(errors.NewEf(err, "could not convert template %s []byte into appspec", templates.App).Error())
 		return reconcileResult.Failed()
 	}
 	m := new(unstructured.Unstructured)

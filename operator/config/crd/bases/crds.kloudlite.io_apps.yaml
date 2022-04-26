@@ -51,9 +51,9 @@ spec:
                         properties:
                           key:
                             type: string
-                          refKey:
+                          ref_key:
                             type: string
-                          refName:
+                          ref_name:
                             type: string
                           type:
                             type: string
@@ -65,29 +65,23 @@ spec:
                       type: array
                     image:
                       type: string
-                    imagePullPolicy:
+                    image_pull_policy:
                       type: string
                     name:
                       type: string
-                    resourceCpu:
+                    resource_cpu:
                       properties:
                         max:
                           type: string
                         min:
                           type: string
-                      required:
-                      - max
-                      - min
                       type: object
-                    resourceMemory:
+                    resource_memory:
                       properties:
                         max:
                           type: string
                         min:
                           type: string
-                      required:
-                      - max
-                      - min
                       type: object
                     volumes:
                       items:
@@ -122,18 +116,17 @@ spec:
                       type: array
                   required:
                   - image
-                  - imagePullPolicy
                   - name
-                  - resourceCpu
-                  - resourceMemory
                   type: object
                 type: array
+              replicas:
+                type: integer
               services:
                 items:
                   properties:
                     port:
                       type: integer
-                    targetPort:
+                    target_port:
                       type: integer
                     type:
                       type: string
@@ -322,8 +315,6 @@ spec:
                 required:
                 - last_checked
                 type: object
-            required:
-            - generation
             type: object
         type: object
     served: true
