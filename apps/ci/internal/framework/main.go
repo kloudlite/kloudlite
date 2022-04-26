@@ -30,6 +30,7 @@ func (e *Env) GetGRPCPort() uint16 {
 	return e.GrpcPort
 }
 
+
 var Module = fx.Module("framework",
 	fx.Provide(logger.NewLogger),
 	config.EnvFx[Env](),
