@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/messaging"
@@ -12,9 +13,12 @@ type infraMessengerImpl struct {
 }
 
 func (i *infraMessengerImpl) SendAction(action any) error {
+
 	switch a := action.(type) {
+
 	case entities.SetupClusterAction:
 		{
+			fmt.Println(action, "ACTION", i.env.KafkaInfraTopic)
 			return i.producer.SendMessage(i.env.KafkaInfraTopic, string(a.ClusterID), messaging.Json{
 				"type":    "create-cluster",
 				"payload": action,

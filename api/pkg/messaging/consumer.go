@@ -46,6 +46,7 @@ func (c *consumer) Subscribe(cc context.Context) error {
 			stop = true
 		}()
 		for {
+			fmt.Println("here")
 			if stop {
 				return
 			}
@@ -54,6 +55,7 @@ func (c *consumer) Subscribe(cc context.Context) error {
 				c.logger.Errorf("could not read kafka message because %v", e)
 				continue
 			}
+			fmt.Println("Received message: ", string(msg.Value))
 			e = c.callback(context.TODO(), *msg.TopicPartition.Topic, msg.Value)
 
 			if e != nil {

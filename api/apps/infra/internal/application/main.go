@@ -36,7 +36,6 @@ func fxProducer(mc messaging.KafkaClient) (messaging.Producer[any], error) {
 }
 
 func fxJobResponder(p messaging.Producer[any], env *InfraEnv) domain.InfraJobResponder {
-	fmt.Println("sending msg to ", env.KafkaInfraResponseTopic)
 	return NewInfraResponder(p, env.KafkaInfraResponseTopic)
 }
 
@@ -70,23 +69,5 @@ var Module = fx.Module("application",
 
 	fx.Invoke(func(server *grpc.Server, infraServer infra.InfraServer) {
 		infra.RegisterInfraServer(server, infraServer)
-	}),
-
-	fx.Invoke(func(lifecycle fx.Lifecycle, p messaging.Producer[any]) {
-		lifecycle.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				//p.SendMessage("dev-hotspot-infra", "infra", messaging.Json{
-				//	"type": "setup-cluster",
-				//	"payload": messaging.Json{
-				//		"cluster_id":  "hotspot-dev",
-				//		"region":      "blr1",
-				//		"provider":    "do",
-				//		"nodes_count": 1,
-				//	},
-				//})
-				return nil
-			},
-			OnStop: nil,
-		})
 	}),
 )

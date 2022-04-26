@@ -291,7 +291,7 @@ func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([
 		"--cluster",
 		"--k3s-version=v1.23.5+k3s1",
 		"--user=root",
-		"--k3s-extra-args='--disable=traefik'",
+		"--k3s-extra-args='--disable traefik'",
 		"--k3s-extra-args='--node-name=master'",
 	)
 
@@ -331,7 +331,7 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId stri
 				"--user=root",
 				"--server-user=root",
 				"--server",
-				"--k3s-extra-args='--disable=traefik'",
+				"--k3s-extra-args='--disable traefik'",
 			)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
 			_, err := cmd.Output()
