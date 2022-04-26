@@ -1,0 +1,46 @@
+package framework
+
+import (
+	"context"
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go.uber.org/fx"
+	"kloudlite.io/apps/ci/internal/app"
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/config"
+	fiberapp "kloudlite.io/pkg/fiber-app"
+	rpc "kloudlite.io/pkg/grpc"
+	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/repos"
+)
+
+type Env struct {
+	DBName        string `env:"MONGO_DB_NAME"`
+	DBUrl         string `env:"MONGO_URI"`
+	RedisHosts    string `env:"REDIS_HOSTS"`
+	RedisUsername string `env:"REDIS_USERNAME"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
+	HttpPort      uint16 `env:"PORT"`
+	HttpCors      string `env:"ORIGINS"`
+}
+
+var Module = fx.Module("framework",
+	fx.Provide(logger.NewLogger),
+	config.EnvFx[Env](),
+	repos.NewMongoClientFx[*Env](),
+	cache.NewRedisFx[*Env](),
+	fx.Provide(fiberapp.NewFiberApp),
+	rpc.NewGrpcServerFx[*Env](),
+	fx.Invoke(func(app *fiber.App, env *Env, lifecycle fx.Lifecycle) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				go app.Listen(fmt.Sprintf(":%v", env.HttpPort))
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return nil
+			},
+		})
+	}),
+	app.Module,
+)

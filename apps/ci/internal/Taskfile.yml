@@ -9,21 +9,7 @@ tasks:
     env:
       MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
-      MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
-      INFRA_HOST: localhost
-      INFRA_PORT: 50051
-#      REDIS_USERNAME: hotspot-user
-#      REDIS_PASSWORD: ***REMOVED***
-      MONGO_DB_NAME: console-go
-      PORT: 4001
-      GRPC_PORT: 8080
-      DEV: true
-      KAFKA_BOOTSTRAP_SERVERS: dev-kafka-headless.hotspot.svc.cluster.local:9092
-      KAFKA_INFRA_TOPIC: dev-hotspot-infra
-      KAFKA_WORKLOAD_TOPIC: dev-hotspot-agent
-      KAFKA_WORKLOAD_RESP_TOPIC: dev-hotspot-agent-reply
-      KAFKA_INFRA_RESP_TOPIC: dev-hotspot-infra-resp
-      KAFKA_GROUP_ID: console-infra-cli
+      MONGO_DB_NAME: ci
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
     sources:
       - ./internal/**/*.go
