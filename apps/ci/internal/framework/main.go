@@ -20,7 +20,7 @@ type Env struct {
 	RedisHost     string `env:"REDIS_HOST"`
 	RedisUsername string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
-	HttpPort      uint16 `env:"PORT"`
+	HttpPort      uint16 `env:"PORT" required:"true"`
 	HttpCors      string `env:"ORIGINS"`
 	GrpcPort      uint16 `env:"GRPC_PORT"`
 }
