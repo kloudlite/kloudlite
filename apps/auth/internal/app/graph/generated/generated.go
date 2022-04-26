@@ -66,6 +66,7 @@ type ComplexityRoot struct {
 		AuthSignup                  func(childComplexity int, name string, email string, password string) int
 		AuthVerifyEmail             func(childComplexity int, token string) int
 		OAuthAddLogin               func(childComplexity int, provider string, state string, code string) int
+		OAuthGithubAddWebhook       func(childComplexity int, repoURL string) int
 		OAuthLogin                  func(childComplexity int, provider string, code string, state *string) int
 	}
 
@@ -73,8 +74,8 @@ type ComplexityRoot struct {
 		AuthFindByEmail              func(childComplexity int, email string) int
 		AuthMe                       func(childComplexity int) int
 		OAuthGithubInstallationToken func(childComplexity int, installationID int) int
-		OAuthListInstallations       func(childComplexity int) int
-		OAuthListRepos               func(childComplexity int, installationID int) int
+		OAuthGithubListInstallations func(childComplexity int) int
+		OAuthGithubListRepos         func(childComplexity int, installationID int, page int, size int) int
 		OAuthRequestLogin            func(childComplexity int, provider string, state *string) int
 		__resolve__service           func(childComplexity int) int
 		__resolve_entities           func(childComplexity int, representations []map[string]interface{}) int
@@ -126,14 +127,15 @@ type MutationResolver interface {
 	AuthChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
 	OAuthLogin(ctx context.Context, provider string, code string, state *string) (*model.Session, error)
 	OAuthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error)
+	OAuthGithubAddWebhook(ctx context.Context, repoURL string) (bool, error)
 }
 type QueryResolver interface {
 	AuthMe(ctx context.Context) (*model.User, error)
 	AuthFindByEmail(ctx context.Context, email string) (*model.User, error)
 	OAuthRequestLogin(ctx context.Context, provider string, state *string) (string, error)
 	OAuthGithubInstallationToken(ctx context.Context, installationID int) (string, error)
-	OAuthListInstallations(ctx context.Context) (map[string]interface{}, error)
-	OAuthListRepos(ctx context.Context, installationID int) (map[string]interface{}, error)
+	OAuthGithubListInstallations(ctx context.Context) (interface{}, error)
+	OAuthGithubListRepos(ctx context.Context, installationID int, page int, size int) (interface{}, error)
 }
 
 type executableSchema struct {
@@ -316,6 +318,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.OAuthAddLogin(childComplexity, args["provider"].(string), args["state"].(string), args["code"].(string)), true
 
+	case "Mutation.oAuth_githubAddWebhook":
+		if e.complexity.Mutation.OAuthGithubAddWebhook == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_oAuth_githubAddWebhook_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.OAuthGithubAddWebhook(childComplexity, args["repoUrl"].(string)), true
+
 	case "Mutation.oAuth_login":
 		if e.complexity.Mutation.OAuthLogin == nil {
 			break
@@ -359,24 +373,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.OAuthGithubInstallationToken(childComplexity, args["installationId"].(int)), true
 
-	case "Query.oAuth_listInstallations":
-		if e.complexity.Query.OAuthListInstallations == nil {
+	case "Query.oAuth_githubListInstallations":
+		if e.complexity.Query.OAuthGithubListInstallations == nil {
 			break
 		}
 
-		return e.complexity.Query.OAuthListInstallations(childComplexity), true
+		return e.complexity.Query.OAuthGithubListInstallations(childComplexity), true
 
-	case "Query.oAuth_listRepos":
-		if e.complexity.Query.OAuthListRepos == nil {
+	case "Query.oAuth_githubListRepos":
+		if e.complexity.Query.OAuthGithubListRepos == nil {
 			break
 		}
 
-		args, err := ec.field_Query_oAuth_listRepos_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_oAuth_githubListRepos_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.OAuthListRepos(childComplexity, args["installationId"].(int)), true
+		return e.complexity.Query.OAuthGithubListRepos(childComplexity, args["installationId"].(int), args["page"].(int), args["size"].(int)), true
 
 	case "Query.oAuth_requestLogin":
 		if e.complexity.Query.OAuthRequestLogin == nil {
@@ -596,14 +610,15 @@ var sources = []*ast.Source{
 scalar Json
 scalar ProviderDetail
 scalar URL
+scalar Any
 
 type Query {
   auth_me: User # Done
   auth_findByEmail(email: String!): User # Done
   oAuth_requestLogin(provider: String!, state: String): URL!
   oAuth_githubInstallationToken(installationId: Int!): String!
-  oAuth_listInstallations: Json
-  oAuth_listRepos(installationId: Int!): Json
+  oAuth_githubListInstallations: Any
+  oAuth_githubListRepos(installationId: Int!, page: Int!, size: Int!): Any
 }
 
 type Mutation {
@@ -622,6 +637,8 @@ type Mutation {
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
   oAuth_login(provider: String!, code: String!, state: String): Session!
   oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean!
+
+  oAuth_githubAddWebhook(repoUrl: String!): Boolean!
 }
 
 type Session {
@@ -934,6 +951,21 @@ func (ec *executionContext) field_Mutation_oAuth_addLogin_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_oAuth_githubAddWebhook_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["repoUrl"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoUrl"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["repoUrl"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_oAuth_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1027,7 +1059,7 @@ func (ec *executionContext) field_Query_oAuth_githubInstallationToken_args(ctx c
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_oAuth_listRepos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_oAuth_githubListRepos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int
@@ -1039,6 +1071,24 @@ func (ec *executionContext) field_Query_oAuth_listRepos_args(ctx context.Context
 		}
 	}
 	args["installationId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg2
 	return args, nil
 }
 
@@ -1746,6 +1796,48 @@ func (ec *executionContext) _Mutation_oAuth_addLogin(ctx context.Context, field 
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_oAuth_githubAddWebhook(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_oAuth_githubAddWebhook_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().OAuthGithubAddWebhook(rctx, args["repoUrl"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_auth_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1901,7 +1993,7 @@ func (ec *executionContext) _Query_oAuth_githubInstallationToken(ctx context.Con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_oAuth_listInstallations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_oAuth_githubListInstallations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1919,7 +2011,7 @@ func (ec *executionContext) _Query_oAuth_listInstallations(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().OAuthListInstallations(rctx)
+		return ec.resolvers.Query().OAuthGithubListInstallations(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1928,12 +2020,12 @@ func (ec *executionContext) _Query_oAuth_listInstallations(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.(interface{})
 	fc.Result = res
-	return ec.marshalOJson2map(ctx, field.Selections, res)
+	return ec.marshalOAny2interface(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_oAuth_listRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_oAuth_githubListRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1950,7 +2042,7 @@ func (ec *executionContext) _Query_oAuth_listRepos(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_oAuth_listRepos_args(ctx, rawArgs)
+	args, err := ec.field_Query_oAuth_githubListRepos_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1958,7 +2050,7 @@ func (ec *executionContext) _Query_oAuth_listRepos(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().OAuthListRepos(rctx, args["installationId"].(int))
+		return ec.resolvers.Query().OAuthGithubListRepos(rctx, args["installationId"].(int), args["page"].(int), args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1967,9 +2059,9 @@ func (ec *executionContext) _Query_oAuth_listRepos(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.(interface{})
 	fc.Result = res
-	return ec.marshalOJson2map(ctx, field.Selections, res)
+	return ec.marshalOAny2interface(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4120,6 +4212,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "oAuth_githubAddWebhook":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_oAuth_githubAddWebhook(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4236,7 +4338,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "oAuth_listInstallations":
+		case "oAuth_githubListInstallations":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4245,7 +4347,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_oAuth_listInstallations(ctx, field)
+				res = ec._Query_oAuth_githubListInstallations(ctx, field)
 				return res
 			}
 
@@ -4256,7 +4358,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "oAuth_listRepos":
+		case "oAuth_githubListRepos":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4265,7 +4367,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_oAuth_listRepos(ctx, field)
+				res = ec._Query_oAuth_githubListRepos(ctx, field)
 				return res
 			}
 
@@ -5485,6 +5587,22 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 			ec.Errorf(ctx, "must not be null")
 		}
 	}
+	return res
+}
+
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalAny(v)
 	return res
 }
 

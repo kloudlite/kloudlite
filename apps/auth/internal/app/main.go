@@ -15,7 +15,9 @@ import (
 )
 
 type Env struct {
-	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
+	CookieDomain     string `env:"COOKIE_DOMAIN" required:"true"`
+	GithubWebhookUrl string `env:"GITHUB_WEBHOOK_URL" required:"true"`
+	GitlabWebhookUrl string `env:"GITLAB_WEBHOOK_URL" required:"true"`
 
 	GithubClientId     string `env:"GITHUB_CLIENT_ID" required:"true"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET" required:"true"`
