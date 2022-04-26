@@ -1,13 +1,10 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
 	"strings"
 
 	"fmt"
@@ -17,6 +14,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	fn "operators.kloudlite.io/lib/functions"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,15 +49,6 @@ type AppReconciler struct {
 	HarborPassword string
 }
 
-func kubectlApply(stdin []byte) error {
-	c := exec.Command("kubectl", "apply", "-f", "-")
-	c.Stdin = bytes.NewBuffer(stdin)
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
-
-	return c.Run()
-}
-
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := GetLogger(req.NamespacedName)
 	r.logger = logger.With("Name", req.NamespacedName)
@@ -85,7 +74,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		logger.Info(b, err)
 	}
 
-	if err2 := kubectlApply(b); err2 != nil {
+	if err2 := fn.KubectlApply(b); err2 != nil {
 		return reconcileResult.FailedE(errors.NewEf(err2, "could not apply deployment"))
 	}
 	logger.Info("App has been applied")
@@ -99,7 +88,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if err != nil {
 		logger.Info(b2, err)
 	}
-	if err2 := kubectlApply(b2); err2 != nil {
+	if err2 := fn.KubectlApply(b2); err2 != nil {
 		return reconcileResult.FailedE(errors.NewEf(err2, "could not apply service"))
 	}
 	logger.Info("Service has been applied")
