@@ -81,15 +81,17 @@ query: |
   }
 
 ---
+
 label: List Github Repos
 query: |
-  query ListRepos($installationId: Int!, $page: Int!, $size: Int!) {
+  query Query($installationId: Int!, $page: Int!, $size: Int!) {
     oAuth_githubListRepos(installationId: $installationId, page: $page, size: $size)
   }
 variables:
-  installationId: 22487879 
+  installationId: 22487879
   page: 1
   size: 20
+
 ---
 
 label: Github Add Webhook
@@ -100,3 +102,14 @@ query: |
 variables:
   repoUrl: nxtcoder17/sample
 
+---
+
+label: Github List Branches
+query: |
+  query Query($page: Int!, $repoUrl: String!, $size: Int!) {
+    oAuth_githubListBranches(page: $page, repoUrl: $repoUrl, size: $size)
+  }
+variables:
+  repoUrl: nxtcoder17/sample
+  page: 1
+  size: 20

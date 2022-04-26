@@ -74,8 +74,10 @@ type ComplexityRoot struct {
 		AuthFindByEmail              func(childComplexity int, email string) int
 		AuthMe                       func(childComplexity int) int
 		OAuthGithubInstallationToken func(childComplexity int, installationID int) int
+		OAuthGithubListBranches      func(childComplexity int, repoURL string, page int, size int) int
 		OAuthGithubListInstallations func(childComplexity int) int
 		OAuthGithubListRepos         func(childComplexity int, installationID int, page int, size int) int
+		OAuthGithubSearchRepos       func(childComplexity int, query string, org string, page int, size int) int
 		OAuthRequestLogin            func(childComplexity int, provider string, state *string) int
 		__resolve__service           func(childComplexity int) int
 		__resolve_entities           func(childComplexity int, representations []map[string]interface{}) int
@@ -136,6 +138,8 @@ type QueryResolver interface {
 	OAuthGithubInstallationToken(ctx context.Context, installationID int) (string, error)
 	OAuthGithubListInstallations(ctx context.Context) (interface{}, error)
 	OAuthGithubListRepos(ctx context.Context, installationID int, page int, size int) (interface{}, error)
+	OAuthGithubSearchRepos(ctx context.Context, query string, org string, page int, size int) (interface{}, error)
+	OAuthGithubListBranches(ctx context.Context, repoURL string, page int, size int) (interface{}, error)
 }
 
 type executableSchema struct {
@@ -373,6 +377,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.OAuthGithubInstallationToken(childComplexity, args["installationId"].(int)), true
 
+	case "Query.oAuth_githubListBranches":
+		if e.complexity.Query.OAuthGithubListBranches == nil {
+			break
+		}
+
+		args, err := ec.field_Query_oAuth_githubListBranches_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.OAuthGithubListBranches(childComplexity, args["repoUrl"].(string), args["page"].(int), args["size"].(int)), true
+
 	case "Query.oAuth_githubListInstallations":
 		if e.complexity.Query.OAuthGithubListInstallations == nil {
 			break
@@ -391,6 +407,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.OAuthGithubListRepos(childComplexity, args["installationId"].(int), args["page"].(int), args["size"].(int)), true
+
+	case "Query.oAuth_githubSearchRepos":
+		if e.complexity.Query.OAuthGithubSearchRepos == nil {
+			break
+		}
+
+		args, err := ec.field_Query_oAuth_githubSearchRepos_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.OAuthGithubSearchRepos(childComplexity, args["query"].(string), args["org"].(string), args["page"].(int), args["size"].(int)), true
 
 	case "Query.oAuth_requestLogin":
 		if e.complexity.Query.OAuthRequestLogin == nil {
@@ -619,6 +647,8 @@ type Query {
   oAuth_githubInstallationToken(installationId: Int!): String!
   oAuth_githubListInstallations: Any
   oAuth_githubListRepos(installationId: Int!, page: Int!, size: Int!): Any
+  oAuth_githubSearchRepos(query: String!, org: String!, page: Int!, size: Int!): Any
+  oAuth_githubListBranches(repoUrl: String!, page: Int!, size: Int!): Any
 }
 
 type Mutation {
@@ -1059,6 +1089,39 @@ func (ec *executionContext) field_Query_oAuth_githubInstallationToken_args(ctx c
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_oAuth_githubListBranches_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["repoUrl"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoUrl"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["repoUrl"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_oAuth_githubListRepos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1089,6 +1152,48 @@ func (ec *executionContext) field_Query_oAuth_githubListRepos_args(ctx context.C
 		}
 	}
 	args["size"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_oAuth_githubSearchRepos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["query"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["query"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["org"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("org"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["org"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg3
 	return args, nil
 }
 
@@ -2051,6 +2156,84 @@ func (ec *executionContext) _Query_oAuth_githubListRepos(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().OAuthGithubListRepos(rctx, args["installationId"].(int), args["page"].(int), args["size"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalOAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_oAuth_githubSearchRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_oAuth_githubSearchRepos_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().OAuthGithubSearchRepos(rctx, args["query"].(string), args["org"].(string), args["page"].(int), args["size"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalOAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_oAuth_githubListBranches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_oAuth_githubListBranches_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().OAuthGithubListBranches(rctx, args["repoUrl"].(string), args["page"].(int), args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4368,6 +4551,46 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_oAuth_githubListRepos(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "oAuth_githubSearchRepos":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_oAuth_githubSearchRepos(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "oAuth_githubListBranches":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_oAuth_githubListBranches(ctx, field)
 				return res
 			}
 

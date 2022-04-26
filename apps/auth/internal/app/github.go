@@ -25,6 +25,22 @@ type githubI struct {
 	webhookUrl   string
 }
 
+func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, page int, size int) ([]*github.Branch, error) {
+	sp := strings.Split(repoUrl, "/")
+	owner := sp[0]
+	repo := sp[1]
+	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(ctx, owner, repo, &github.BranchListOptions{
+		ListOptions: github.ListOptions{
+			Page:    page,
+			PerPage: size,
+		},
+	})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not list branches")
+	}
+	return branches, nil
+}
+
 func (gh *githubI) SearchRepos(ctx context.Context, accToken *domain.AccessToken, q string, org string, page int, size int) (*github.RepositoriesSearchResult, error) {
 	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{})
 	if err != nil {
@@ -53,27 +69,16 @@ func (gh *githubI) ListInstallations(ctx context.Context, accToken *domain.Acces
 	return i, nil
 }
 
-func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, org string, page int, size int) ([]*github.Repository, error) {
-	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListByOrg(ctx, org, &github.RepositoryListByOrgOptions{
-		Sort: "updated",
-		ListOptions: github.ListOptions{
-			Page:    page,
-			PerPage: page,
-		},
+func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, instId int64, page int, size int) (*github.ListRepositories, error) {
+	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, instId, &github.ListOptions{
+		Page:    page,
+		PerPage: size,
 	})
 	if err != nil {
-		return nil, errors.NewEf(err, "could not list repos by organisations")
+		return nil, errors.NewEf(err, "could not list user repositories")
 	}
-	return repos, nil
 
-	// repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, installationId, &github.ListOptions{
-	// 	Page:    page,
-	// 	PerPage: size,
-	// })
-	// if err != nil {
-	// 	return nil, errors.NewEf(err, "could not list user repositories")
-	// }
-	// return repos, nil
+	return repos, nil
 }
 
 func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string) error {

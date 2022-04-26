@@ -185,6 +185,14 @@ func (r *queryResolver) OAuthGithubListRepos(ctx context.Context, installationID
 	return r.d.GithubListRepos(ctx, int64(installationID), page, size)
 }
 
+func (r *queryResolver) OAuthGithubSearchRepos(ctx context.Context, query string, org string, page int, size int) (interface{}, error) {
+	return r.d.GithubSearchRepos(ctx, query, org, page, size)
+}
+
+func (r *queryResolver) OAuthGithubListBranches(ctx context.Context, repoURL string, page int, size int) (interface{}, error) {
+	return r.d.GithubListBranches(ctx, repoURL, page, size)
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
