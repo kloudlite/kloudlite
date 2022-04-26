@@ -2,9 +2,13 @@ package app
 
 import (
 	"context"
+	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
+	"kloudlite.io/apps/ci/internal/app/graph"
+	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/pkg/config"
@@ -57,8 +61,13 @@ var Module = fx.Module("app",
 			}
 			return ctx.JSON(pipeline)
 		})
-	}),
 
+		schema := generated.NewExecutableSchema(
+			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
+		)
+		gqlServer := gqlHandler.NewDefaultServer(schema)
+		server.Get("/", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
+	}),
 	fx.Invoke(func(server *grpc.Server, ciServer ci.CIServer) {
 		ci.RegisterCIServer(server, ciServer)
 	}),
