@@ -53,19 +53,27 @@ func (gh *githubI) ListInstallations(ctx context.Context, accToken *domain.Acces
 	return i, nil
 }
 
-func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, org string, page int, size int) (*github.ListRepositories, error) {
-	gh.ghCliForUser(ctx, accToken.Token).Repositories.ListByOrg(ctx, org, &github.RepositoryListByOrgOptions{
+func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, org string, page int, size int) ([]*github.Repository, error) {
+	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListByOrg(ctx, org, &github.RepositoryListByOrgOptions{
 		Sort: "updated",
-	})
-
-	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, installationId, &github.ListOptions{
-		Page:    page,
-		PerPage: size,
+		ListOptions: github.ListOptions{
+			Page:    page,
+			PerPage: page,
+		},
 	})
 	if err != nil {
-		return nil, errors.NewEf(err, "could not list user repositories")
+		return nil, errors.NewEf(err, "could not list repos by organisations")
 	}
 	return repos, nil
+
+	// repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, installationId, &github.ListOptions{
+	// 	Page:    page,
+	// 	PerPage: size,
+	// })
+	// if err != nil {
+	// 	return nil, errors.NewEf(err, "could not list user repositories")
+	// }
+	// return repos, nil
 }
 
 func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string) error {

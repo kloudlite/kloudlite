@@ -5,7 +5,7 @@
     "url": "http://localhost:3000",
     "cluster": "hotspot-01.dev",
     "headers": {
-      "cookie": "hotspot-session=ses-uuwbgbtycbvjbpfewi8unckrra3y; Path=/; Domain=kl.madhouselabs.io; HttpOnly; Secure; SameSite=None"
+      "cookie": "hotspot-session=ses-fhve2v1mi0byzua3rrvruhqyzltt; Path=/; Domain=kl.madhouselabs.io; HttpOnly; Secure; SameSite=None"
     }
   }
 }
