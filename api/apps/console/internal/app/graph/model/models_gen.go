@@ -165,32 +165,6 @@ type ExposedServiceInput struct {
 	Exposed int    `json:"exposed"`
 }
 
-type GitPipeline struct {
-	ID          repos.ID               `json:"id"`
-	PipelineEnv string                 `json:"pipelineEnv"`
-	GitProvider *string                `json:"gitProvider"`
-	GitRepoURL  *string                `json:"gitRepoUrl"`
-	BuildArgs   []*Kv                  `json:"buildArgs"`
-	PullSecret  *string                `json:"pullSecret"`
-	Name        string                 `json:"name"`
-	ImageName   string                 `json:"imageName"`
-	DockerFile  *string                `json:"dockerFile"`
-	ContextDir  *string                `json:"contextDir"`
-	Github      map[string]interface{} `json:"github"`
-	Gitlab      map[string]interface{} `json:"gitlab"`
-	Project     *Project               `json:"project"`
-}
-
-type GitPipelineInput struct {
-	GitRepoURL  string     `json:"gitRepoUrl"`
-	GitProvider string     `json:"gitProvider"`
-	DockerFile  *string    `json:"dockerFile"`
-	ContextDir  *string    `json:"contextDir"`
-	BuildArgs   []*KVInput `json:"buildArgs"`
-	PipelineEnv string     `json:"pipelineEnv"`
-	PullSecret  *string    `json:"pullSecret"`
-}
-
 type Kv struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`

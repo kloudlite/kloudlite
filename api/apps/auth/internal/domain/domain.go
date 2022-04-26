@@ -8,7 +8,6 @@ import (
 )
 
 type Domain interface {
-	//DONE: asdfas
 	Login(ctx context.Context, email string, password string) (*common.AuthSession, error)
 	SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error)
 	GetUserById(ctx context.Context, id repos.ID) (*User, error)
@@ -21,16 +20,7 @@ type Domain interface {
 	ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error)
 	ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error)
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)
-
-	//
-	GithubInstallationToken(ctx context.Context, repoUrl string) (string, error)
-	GithubListInstallations(ctx context.Context) (any, error)
-	GithubListRepos(ctx context.Context, installationId int64, page, size int) (any, error)
-	GithubSearchRepos(ctx context.Context, q string, org string, page, size int) (any, error)
-	GithubListBranches(ctx context.Context, repoUrl string, page, size int) (any, error)
-	GithubAddWebhook(ctx context.Context, repoUrl string) error
-
-	//TODO
+	GetAccessToken(ctx context.Context, provider string, userId string) (*AccessToken, error)
 	GetLoginDetails(ctx context.Context, provider string, state *string) (string, error)
 	InviteUser(ctx context.Context, email string, name string) (repos.ID, error)
 	LoginWithInviteToken(ctx context.Context, token string) (*common.AuthSession, error)
