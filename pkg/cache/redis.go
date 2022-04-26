@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"go.uber.org/fx"
 	"time"
 
@@ -67,6 +68,7 @@ func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(status.Val())
 	return []byte(status.Val()), nil
 }
 
@@ -87,7 +89,9 @@ type RedisConfig interface {
 func NewRedisFx[T RedisConfig]() fx.Option {
 	return fx.Module("redis",
 		fx.Provide(func(env T) Client {
-			return NewRedisClient(env.RedisOptions())
+			options, username, password := env.RedisOptions()
+			fmt.Println(env, "redisenv")
+			return NewRedisClient(options, username, password)
 		}),
 		fx.Invoke(func(lf fx.Lifecycle, r Client) {
 			lf.Append(fx.Hook{
