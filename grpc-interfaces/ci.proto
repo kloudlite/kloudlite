@@ -14,7 +14,7 @@ message PipelineIn {
   string GitRepoUrl = 5;
   string DockerFile = 6;
   string ContextDir = 7;
-  string GithubInstallationId = 8;
+  int32 GithubInstallationId = 8;
   string GitlabTokenId  = 9;
   map<string, string>  BuildArgs = 10;
 }

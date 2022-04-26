@@ -1,6 +1,9 @@
 package app
 
 import (
+	"context"
+	"google.golang.org/grpc"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"net/http"
 
 	"go.uber.org/fx"
@@ -46,6 +49,34 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
+type authGrpcServerImpl struct {
+	auth.UnimplementedAuthServer
+	d domain.Domain
+}
+
+func (a *authGrpcServerImpl) GetAccessToken(ctx context.Context, request *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
+	token, err := a.d.GetAccessToken(ctx, request.Provider, request.UserId)
+	if err != nil {
+		return nil, err
+	}
+	return &auth.AccessTokenOut{
+		UserId:   string(token.UserId),
+		Email:    token.Email,
+		Provider: token.Provider,
+		OauthToken: &auth.OauthToken{
+			AccessToken:  token.Token.AccessToken,
+			RefreshToken: token.Token.RefreshToken,
+			Expiry:       token.Token.Expiry.UnixMilli(),
+		},
+	}, err
+}
+
+func fxRPCServer(d domain.Domain) auth.AuthServer {
+	return &authGrpcServerImpl{
+		d: d,
+	}
+}
+
 var Module = fx.Module("app",
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
@@ -56,6 +87,11 @@ var Module = fx.Module("app",
 	fx.Provide(fxGithub),
 	fx.Provide(fxGitlab),
 	fx.Provide(fxGoogle),
+
+	fx.Provide(fxRPCServer),
+	fx.Invoke(func(server *grpc.Server, authServer auth.AuthServer) {
+		auth.RegisterAuthServer(server, authServer)
+	}),
 
 	fx.Provide(fxMessenger),
 	fx.Invoke(func(

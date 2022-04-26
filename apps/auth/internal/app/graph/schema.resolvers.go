@@ -132,14 +132,6 @@ func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, s
 	return r.d.OauthAddLogin(ctx, repos.ID(session.UserId), provider, state, code)
 }
 
-func (r *mutationResolver) OAuthGithubAddWebhook(ctx context.Context, repoURL string) (bool, error) {
-	err := r.d.GithubAddWebhook(ctx, repoURL)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 func (r *queryResolver) AuthMe(ctx context.Context) (*model.User, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	fmt.Println("SESSION: ", session)
@@ -171,26 +163,6 @@ func (r *queryResolver) OAuthRequestLogin(ctx context.Context, provider string, 
 		return "", klErrors.NewE(err)
 	}
 	return url, nil
-}
-
-func (r *queryResolver) OAuthGithubInstallationToken(ctx context.Context, installationID int) (string, error) {
-	return r.d.GithubInstallationToken(ctx, int64(installationID))
-}
-
-func (r *queryResolver) OAuthGithubListInstallations(ctx context.Context) (interface{}, error) {
-	return r.d.GithubListInstallations(ctx)
-}
-
-func (r *queryResolver) OAuthGithubListRepos(ctx context.Context, installationID int, page int, size int) (interface{}, error) {
-	return r.d.GithubListRepos(ctx, int64(installationID), page, size)
-}
-
-func (r *queryResolver) OAuthGithubSearchRepos(ctx context.Context, query string, org string, page int, size int) (interface{}, error) {
-	return r.d.GithubSearchRepos(ctx, query, org, page, size)
-}
-
-func (r *queryResolver) OAuthGithubListBranches(ctx context.Context, repoURL string, page int, size int) (interface{}, error) {
-	return r.d.GithubListBranches(ctx, repoURL, page, size)
 }
 
 // Mutation returns generated.MutationResolver implementation.

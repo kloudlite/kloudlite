@@ -1,4 +1,5 @@
 scalar Json
+scalar Any
 
 type Query {
 
@@ -6,13 +7,14 @@ type Query {
   ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
   ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
 
-  ci_githubInstallations: [Json!]!
-  ci_githubRepos(installationId: String!, limit: Int, page: Int): [Json!]!
-  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): [Json!]!
-  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): [Json!]!
+  ci_githubInstallations: Any!
+  ci_githubInstallationToken(repoUrl: String!): Any!
+  ci_githubRepos(installationId: Int!, limit: Int, page: Int): Any!
+  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): Any!
+  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): Any!
 
-  ci_gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
-  ci_gitPipeline(pipelineId: ID!): GitPipeline
+  ci_getPipelines(projectId: ID!): [GitPipeline!]
+  ci_getPipeline(pipelineId: ID!): GitPipeline
 
 }
 
@@ -21,22 +23,32 @@ type KV {
   value: String!
 }
 
+input GitPipelineIn {
+  name: String!
+  imageName: String!
+  gitProvider: String!
+  gitRepoUrl: String!
+  dockerFile: String
+  contextDir: String
+  githubInstallationId: Int
+  buildArgs: Json
+}
+
+
 
 type GitPipeline {
   id: ID!
-  pipelineEnv: String!
-  gitProvider: String
-  gitRepoUrl: String
-  buildArgs: [KV]
-  pullSecret: String
   name: String!
   imageName: String!
+  gitProvider: String!
+  gitRepoUrl: String!
   dockerFile: String
   contextDir: String
-  github: Json
-  gitlab: Json
+  githubInstallationId: Int
+  buildArgs: Json
 }
 
 type Mutation {
   ci_deleteGitPipeline(pipelineId: ID!): Boolean!
+  ci_createPipeline(in: GitPipelineIn!): Json!
 }

@@ -256,14 +256,6 @@ func (r *mutationResolver) IamUpdateProjectMember(ctx context.Context, projectID
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) GithubEvent(ctx context.Context, installationID repos.ID, sourceRepo string) (*bool, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) GitlabEvent(ctx context.Context, email repos.ID, sourceRepo string) (*bool, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error) {
 	ports := make([]entities.ExposedPort, 0)
 	for _, port := range app.ExposedServices {
@@ -384,10 +376,6 @@ func (r *mutationResolver) CoreUpdateConfig(ctx context.Context, configID repos.
 }
 
 func (r *mutationResolver) CoreDeleteConfig(ctx context.Context, configID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) CiDeleteGitPipeline(ctx context.Context, pipelineID repos.ID) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -622,42 +610,6 @@ func (r *queryResolver) CoreSecret(ctx context.Context, secretID repos.ID) (*mod
 		return nil, err
 	}
 	return secretModelFromEntity(secretEntity), nil
-}
-
-func (r *queryResolver) CiGitlabRepos(ctx context.Context, groupID repos.ID, search *string, limit *int, page *int) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGitlabGroups(ctx context.Context, search *string, limit *int, page *int) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoURL string, search *string) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGithubInstallations(ctx context.Context) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID string, limit *int, page *int) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGitPipelines(ctx context.Context, projectID repos.ID, query map[string]interface{}) ([]*model.GitPipeline, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGitPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error) {
-	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) ManagedSvcMarketList(ctx context.Context) (map[string]interface{}, error) {

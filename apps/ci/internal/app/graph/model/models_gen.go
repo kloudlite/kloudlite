@@ -7,18 +7,26 @@ import (
 )
 
 type GitPipeline struct {
-	ID          repos.ID               `json:"id"`
-	PipelineEnv string                 `json:"pipelineEnv"`
-	GitProvider *string                `json:"gitProvider"`
-	GitRepoURL  *string                `json:"gitRepoUrl"`
-	BuildArgs   []*Kv                  `json:"buildArgs"`
-	PullSecret  *string                `json:"pullSecret"`
-	Name        string                 `json:"name"`
-	ImageName   string                 `json:"imageName"`
-	DockerFile  *string                `json:"dockerFile"`
-	ContextDir  *string                `json:"contextDir"`
-	Github      map[string]interface{} `json:"github"`
-	Gitlab      map[string]interface{} `json:"gitlab"`
+	ID                   repos.ID               `json:"id"`
+	Name                 string                 `json:"name"`
+	ImageName            string                 `json:"imageName"`
+	GitProvider          string                 `json:"gitProvider"`
+	GitRepoURL           string                 `json:"gitRepoUrl"`
+	DockerFile           *string                `json:"dockerFile"`
+	ContextDir           *string                `json:"contextDir"`
+	GithubInstallationID *int                   `json:"githubInstallationId"`
+	BuildArgs            map[string]interface{} `json:"buildArgs"`
+}
+
+type GitPipelineIn struct {
+	Name                 string                 `json:"name"`
+	ImageName            string                 `json:"imageName"`
+	GitProvider          string                 `json:"gitProvider"`
+	GitRepoURL           string                 `json:"gitRepoUrl"`
+	DockerFile           *string                `json:"dockerFile"`
+	ContextDir           *string                `json:"contextDir"`
+	GithubInstallationID *int                   `json:"githubInstallationId"`
+	BuildArgs            map[string]interface{} `json:"buildArgs"`
 }
 
 type Kv struct {
