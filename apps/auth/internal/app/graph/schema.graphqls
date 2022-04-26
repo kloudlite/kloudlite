@@ -11,6 +11,8 @@ type Query {
   oAuth_githubInstallationToken(installationId: Int!): String!
   oAuth_githubListInstallations: Any
   oAuth_githubListRepos(installationId: Int!, page: Int!, size: Int!): Any
+  oAuth_githubSearchRepos(query: String!, org: String!, page: Int!, size: Int!): Any
+  oAuth_githubListBranches(repoUrl: String!, page: Int!, size: Int!): Any
 }
 
 type Mutation {

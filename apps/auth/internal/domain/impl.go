@@ -39,6 +39,22 @@ type domainI struct {
 	google          Google
 }
 
+func (d *domainI) GithubSearchRepos(ctx context.Context, q string, org string, page int, size int) (any, error) {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return nil, errors.NewEf(err, "while finding accessToken")
+	}
+	return d.github.SearchRepos(ctx, accToken, q, org, page, size)
+}
+
+func (d *domainI) GithubListBranches(ctx context.Context, repoUrl string, page int, size int) (any, error) {
+	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
+	if err != nil {
+		return nil, errors.NewEf(err, "while finding accessToken")
+	}
+	return d.github.ListBranches(ctx, accToken, repoUrl, page, size)
+}
+
 func (d *domainI) GithubAddWebhook(ctx context.Context, repoUrl string) error {
 	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
 	if err != nil {
@@ -47,12 +63,12 @@ func (d *domainI) GithubAddWebhook(ctx context.Context, repoUrl string) error {
 	return d.github.AddWebhook(ctx, accToken, repoUrl)
 }
 
-func (d *domainI) GithubListRepos(ctx context.Context, installationId int64, page int, size int) (any, error) {
+func (d *domainI) GithubListRepos(ctx context.Context, instId int64, page int, size int) (any, error) {
 	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
 	if err != nil {
 		return "", errors.NewEf(err, "while finding accessToken")
 	}
-	return d.github.ListRepos(ctx, accToken, installationId, page, size)
+	return d.github.ListRepos(ctx, accToken, instId, page, size)
 }
 
 func (d *domainI) GithubListInstallations(ctx context.Context) (any, error) {
