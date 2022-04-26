@@ -15,7 +15,7 @@ type Github interface {
 	ListRepos(ctx context.Context, accToken *AccessToken, instId int64, page, size int) (*github.ListRepositories, error)
 	SearchRepos(ctx context.Context, accToken *AccessToken, q string, org string, page, size int) (*github.RepositoriesSearchResult, error)
 	ListBranches(ctx context.Context, accToken *AccessToken, repoUrl string, page, size int) ([]*github.Branch, error)
-	AddWebhook(ctx context.Context, accToken *AccessToken, repoUrl string) error
+	AddWebhook(ctx context.Context, accToken *AccessToken, refId string, repoUrl string) error
 	GetAppToken()
 	GetRepoToken()
 }

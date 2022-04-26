@@ -13,9 +13,7 @@ type infraMessengerImpl struct {
 }
 
 func (i *infraMessengerImpl) SendAction(action any) error {
-
 	switch a := action.(type) {
-
 	case entities.SetupClusterAction:
 		{
 			fmt.Println(action, "ACTION", i.env.KafkaInfraTopic)
