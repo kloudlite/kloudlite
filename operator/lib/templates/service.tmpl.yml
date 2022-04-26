@@ -3,6 +3,13 @@ kind: Service
 metadata:
   namespace: {{.Namespace}}
   name: {{.Name}}
+  ownerReferences:
+    - apiVersion: {{.APIVersion}}
+      kind: {{.Kind}}
+      name: {{.Name}}
+      uid: {{.UID}}
+      controller: true
+      blockOwnerDeletion: true
 spec:
   selector:
     app: {{.Name}}

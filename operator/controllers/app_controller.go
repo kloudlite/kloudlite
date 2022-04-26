@@ -1,23 +1,24 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
 	"strings"
 
 	"fmt"
 
 	"go.uber.org/zap"
-	// batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	// appsv1 "k8s.io/api/apps/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	crdsv1 "operators.kloudlite.io/api/v1"
@@ -50,13 +51,75 @@ type AppReconciler struct {
 	HarborPassword string
 }
 
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
+func kubectlApply(stdin []byte) error {
+	c := exec.Command("kubectl", "apply", "-f", "-")
+	c.Stdin = bytes.NewBuffer(stdin)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+
+	return c.Run()
+}
 
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := GetLogger(req.NamespacedName)
 	r.logger = logger.With("Name", req.NamespacedName)
+	app := &crdsv1.App{}
+	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return reconcileResult.OK()
+		}
+		return reconcileResult.FailedE(err)
+	}
+
+	if app.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, app)
+	}
+
+	kt, err := templates.UseTemplate(templates.App)
+	if err != nil {
+		logger.Error(err, "could not useTemplate, aborting...")
+		return reconcileResult.Failed()
+	}
+	b, err := kt.WithValues(app)
+	if err != nil {
+		logger.Info(b, err)
+	}
+
+	if err2 := kubectlApply(b); err2 != nil {
+		return reconcileResult.FailedE(errors.NewEf(err2, "could not apply deployment"))
+	}
+	logger.Info("App has been applied")
+
+	kt2, err := templates.UseTemplate(templates.Service)
+	if err != nil {
+		logger.Error(err, "could not useTemplate, aborting...")
+		return reconcileResult.Failed()
+	}
+	b2, err := kt2.WithValues(app)
+	if err != nil {
+		logger.Info(b2, err)
+	}
+	if err2 := kubectlApply(b2); err2 != nil {
+		return reconcileResult.FailedE(errors.NewEf(err2, "could not apply service"))
+	}
+	logger.Info("Service has been applied")
+	return reconcileResult.OK()
+}
+
+//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
+
+func (r *AppReconciler) Reconcile3(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := GetLogger(req.NamespacedName)
+	r.logger = logger.With("Name", req.NamespacedName)
+
+	// pod := &corev1.Pod{}
+	// if err := r.Get(ctx, req.NamespacedName, pod); err != nil {
+	// 	logger.Infof("not a pod")
+	// 	// return reconcileResult.FailedE(err)
+	// }
+	// logger.Infof("POd: %+v", pod)
 
 	app := &crdsv1.App{}
 	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
@@ -109,13 +172,21 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		"spec":       ry.Object["spec"],
 	}
 
+	// if err := controllerutil.SetOwnerReference(app, m, r.Scheme); err != nil {
+	// 	logger.Debugf("Err: %v", err)
+	// 	return reconcileResult.FailedE(err)
+	// }
+
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, m, func() error {
 		m = m.DeepCopy()
 		m.Object["spec"] = ry.Object["spec"]
 
 		if err = controllerutil.SetControllerReference(app, m, r.Scheme); err != nil {
+			logger.Debugf("Err: %v", err)
 			return err
 		}
+		x := m.Object["metadata"].(map[string]interface{})
+		logger.Infof("M: %+v", x["ownerReferences"])
 		return nil
 	})
 	if err != nil {
@@ -123,7 +194,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	var ry2 unstructured.Unstructured
-	if err = yaml.Unmarshal(b, &ry2.Object); err != nil {
+	if err = yaml.Unmarshal(b2, &ry2.Object); err != nil {
 		logger.Infof(errors.NewEf(err, "could not convert template %s []byte into mongodb", templates.App).Error())
 		return reconcileResult.Failed()
 	}
@@ -140,10 +211,12 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		m2.Object["spec"] = ry2.Object["spec"]
 
 		if err = controllerutil.SetControllerReference(app, m2, r.Scheme); err != nil {
+			logger.Debugf("Err: %v", err)
 			return err
 		}
 		return nil
 	})
+
 	if err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not create/update resource"))
 	}
@@ -156,6 +229,13 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 }
 
 func (r *AppReconciler) finalize(ctx context.Context, app *crdsv1.App) (ctrl.Result, error) {
+	if controllerutil.ContainsFinalizer(app, finalizers.App.String()) {
+		controllerutil.RemoveFinalizer(app, finalizers.App.String())
+		if err := r.Update(ctx, app); err != nil {
+			return reconcileResult.FailedE(errors.NewEf(err, "could not update app to remove finalizer"))
+		}
+		return reconcileResult.OK()
+	}
 	return reconcileResult.OK()
 }
 
@@ -526,5 +606,7 @@ func (r *AppReconciler) checkDependency(ctx context.Context, app *crdsv1.App) *m
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.App{}).
+		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }
