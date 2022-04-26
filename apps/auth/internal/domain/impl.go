@@ -40,8 +40,7 @@ type domainI struct {
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+
 }
 
 func (d *domainI) GetUserById(ctx context.Context, id repos.ID) (*User, error) {
