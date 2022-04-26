@@ -115,13 +115,17 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
-func (gh *githubI) GetInstallationToken(ctx context.Context, accToken *domain.AccessToken, repoUrl string) (string, error) {
-	gitRepo := strings.Split(repoUrl, "/")
-	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, gitRepo[0], gitRepo[1])
-	if err != nil {
-		return "", errors.NewEf(err, "could not fetch repository installation")
+func (gh *githubI) GetInstallationToken(ctx context.Context, accToken *domain.AccessToken, repoUrl string, instId int64) (string, error) {
+	installationId := instId
+	if installationId != 0 {
+		gitRepo := strings.Split(repoUrl, "/")
+		inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, gitRepo[0], gitRepo[1])
+		if err != nil {
+			return "", errors.NewEf(err, "could not fetch repository installation")
+		}
+		installationId = *inst.ID
 	}
-	it, _, err := gh.ghCli.Apps.CreateInstallationToken(ctx, *inst.ID, &github.InstallationTokenOptions{})
+	it, _, err := gh.ghCli.Apps.CreateInstallationToken(ctx, installationId, &github.InstallationTokenOptions{})
 	fmt.Println(it)
 	if err != nil {
 		return "", errors.NewEf(err, "failed to get installation token")
