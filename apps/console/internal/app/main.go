@@ -38,6 +38,7 @@ type Env struct {
 type InfraEventConsumer messaging.Consumer
 type ClusterEventConsumer messaging.Consumer
 type InfraClientConnection *grpc.ClientConn
+type AuthClientConnection *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",

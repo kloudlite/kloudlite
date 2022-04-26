@@ -39,59 +39,6 @@ type domainI struct {
 	google          Google
 }
 
-func (d *domainI) GithubSearchRepos(ctx context.Context, q string, org string, page int, size int) (any, error) {
-	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
-	if err != nil {
-		return nil, errors.NewEf(err, "while finding accessToken")
-	}
-	return d.github.SearchRepos(ctx, accToken, q, org, page, size)
-}
-
-func (d *domainI) GithubListBranches(ctx context.Context, repoUrl string, page int, size int) (any, error) {
-	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
-	if err != nil {
-		return nil, errors.NewEf(err, "while finding accessToken")
-	}
-	return d.github.ListBranches(ctx, accToken, repoUrl, page, size)
-}
-
-func (d *domainI) GithubAddWebhook(ctx context.Context, repoUrl string) error {
-	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
-	if err != nil {
-		return errors.NewEf(err, "while finding accessToken")
-	}
-	return d.github.AddWebhook(ctx, accToken, repoUrl)
-}
-
-func (d *domainI) GithubListRepos(ctx context.Context, instId int64, page int, size int) (any, error) {
-	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
-	if err != nil {
-		return "", errors.NewEf(err, "while finding accessToken")
-	}
-	return d.github.ListRepos(ctx, accToken, instId, page, size)
-}
-
-func (d *domainI) GithubListInstallations(ctx context.Context) (any, error) {
-	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
-	if err != nil {
-		return "", errors.NewEf(err, "while finding accessToken")
-	}
-	i, err := d.github.ListInstallations(ctx, accToken)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("item: %+v\n", i[0])
-	return i, nil
-}
-
-func (d *domainI) GithubInstallationToken(ctx context.Context, _ int64) (string, error) {
-	accToken, err := d.GetAccessToken(ctx, common.ProviderGithub)
-	if err != nil {
-		return "", errors.NewEf(err, "finding accessToken")
-	}
-	return d.github.GetInstallationToken(ctx, accToken, "asdfsdaf")
-}
-
 func (d *domainI) OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error) {
 	//TODO implement me
 	panic("implement me")
@@ -453,12 +400,8 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 	}
 }
 
-func (d *domainI) GetAccessToken(ctx context.Context, provider string) (*AccessToken, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.UnAuthorized()
-	}
-	q := repos.Filter{"user_id": session.UserId, "provider": provider}
+func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string) (*AccessToken, error) {
+	q := repos.Filter{"user_id": userId, "provider": provider}
 	d.logger.Debugf("q: %+v\n", q)
 	accToken, err := d.accessTokenRepo.FindOne(ctx, q)
 	if err != nil {
