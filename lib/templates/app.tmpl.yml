@@ -42,6 +42,13 @@ spec:
           {{- end }}
           {{- end }}
         {{- end }}
+          resources:
+            requests:
+              cpu: {{ .ResourceCpu.Min  | default "200"}}m
+              memory: {{ .ResourceMemory.Min  | default "200"}}Mi
+            limits:
+              cpu: {{ .ResourceCpu.Max  | default "300"}}m
+              memory: {{ .ResourceMemory.Max  | default "300"}}Mi
       {{- end }}
       {{- end }}
     {{- end }}

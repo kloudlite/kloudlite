@@ -6,16 +6,16 @@ import (
 )
 
 type ContainerResource struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
+	Min string `json:"min,omitempty"`
+	Max string `json:"max,omitempty"`
 }
 
 type ContainerEnv struct {
 	Key     string `json:"key"`
 	Value   string `json:"value,omitempty"`
 	Type    string `json:"type,omitempty"`
-	RefName string `json:"refName,omitempty"`
-	RefKey  string `json:"refKey,omitempty"`
+	RefName string `json:"ref_name,omitempty"`
+	RefKey  string `json:"ref_key,omitempty"`
 }
 
 type ContainerVolumeItem struct {
@@ -37,23 +37,24 @@ type ImageFromGit struct {
 type AppContainer struct {
 	Name            string            `json:"name"`
 	Image           string            `json:"image"`
-	ImagePullPolicy string            `json:"imagePullPolicy"`
+	ImagePullPolicy string            `json:"image_pull_policy,omitempty"`
 	Command         []string          `json:"command,omitempty"`
 	Args            []string          `json:"args,omitempty"`
-	ResourceCpu     ContainerResource `json:"resourceCpu"`
-	ResourceMemory  ContainerResource `json:"resourceMemory"`
+	ResourceCpu     ContainerResource `json:"resource_cpu,omitempty"`
+	ResourceMemory  ContainerResource `json:"resource_memory,omitempty"`
 	Env             []ContainerEnv    `json:"env,omitempty"`
 	Volumes         []ContainerVolume `json:"volumes,omitempty"`
 }
 
 type AppSvc struct {
 	Port       uint16 `json:"port"`
-	TargetPort uint16 `json:"targetPort,omitempty"`
+	TargetPort uint16 `json:"target_port,omitempty"`
 	Type       string `json:"type,omitempty"`
 }
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
+	Replicas   int            `json:"replicas,omitempty"`
 	Services   []AppSvc       `json:"services,omitempty"`
 	Containers []AppContainer `json:"containers"`
 }
@@ -66,7 +67,7 @@ type ReconPod struct {
 
 // AppStatus defines the observed state of App
 type AppStatus struct {
-	Generation         int64              `json:"generation"`
+	Generation         int64              `json:"generation,omitempty"`
 	DependencyCheck    Recon              `json:"dependency_check,omitempty"`
 	ApplyJob           Recon              `json:"apply_job,omitempty"`
 	DeleteJob          Recon              `json:"delete_job,omitempty"`
