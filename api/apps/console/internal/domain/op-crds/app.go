@@ -21,7 +21,7 @@ type EnvEntry struct {
 
 type Container struct {
 	Name           string     `json:"name,omitempty"`
-	Image          string     `json:"image,omitempty"`
+	Image          *string    `json:"image,omitempty"`
 	ResourceCpu    Limit      `json:"resource_cpu,omitempty"`
 	ResourceMemory Limit      `json:"resource_memory,omitempty"`
 	Env            []EnvEntry `json:"env,omitempty"`

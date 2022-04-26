@@ -76,15 +76,15 @@ type Domain interface {
 
 	GetApps(ctx context.Context, projectId repos.ID) ([]*entities.App, error)
 	GetApp(ctx context.Context, projectID repos.ID) (*entities.App, error)
-	InstallApp(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedResource, error)
 	UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.App) error
 	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
 	InstallAppFlow(
 		ctx context.Context,
+		userId repos.ID,
 		id repos.ID,
-		app entities.App,
+		app entities.AppIn,
 	) (bool, error)
 
 	GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error)

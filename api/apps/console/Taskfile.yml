@@ -14,6 +14,8 @@ tasks:
       INFRA_PORT: 50051
       AUTH_HOST: localhost
       AUTH_PORT: 50051
+      CI_HOST: localhost
+      CI_PORT: 6748
 #      REDIS_USERNAME: hotspot-user
 #      REDIS_PASSWORD: ***REMOVED***
       MONGO_DB_NAME: console-go
