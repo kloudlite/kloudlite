@@ -68,16 +68,17 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CiGetPipeline         func(childComplexity int, pipelineID repos.ID) int
-		CiGetPipelines        func(childComplexity int, projectID repos.ID) int
-		CiGithubInstallations func(childComplexity int) int
-		CiGithubRepoBranches  func(childComplexity int, repoURL string, limit *int, page *int) int
-		CiGithubRepos         func(childComplexity int, installationID int, limit *int, page *int) int
-		CiGitlabGroups        func(childComplexity int, search *string, limit *int, page *int) int
-		CiGitlabRepoBranches  func(childComplexity int, repoURL string, search *string) int
-		CiGitlabRepos         func(childComplexity int, groupID repos.ID, search *string, limit *int, page *int) int
-		CiSearchGithubRepos   func(childComplexity int, search *string, org string, limit *int, page *int) int
-		__resolve__service    func(childComplexity int) int
+		CiGetPipeline             func(childComplexity int, pipelineID repos.ID) int
+		CiGetPipelines            func(childComplexity int, projectID repos.ID) int
+		CiGithubInstallationToken func(childComplexity int, repoURL *string, instID *int) int
+		CiGithubInstallations     func(childComplexity int) int
+		CiGithubRepoBranches      func(childComplexity int, repoURL string, limit *int, page *int) int
+		CiGithubRepos             func(childComplexity int, installationID int, limit *int, page *int) int
+		CiGitlabGroups            func(childComplexity int, search *string, limit *int, page *int) int
+		CiGitlabRepoBranches      func(childComplexity int, repoURL string, search *string) int
+		CiGitlabRepos             func(childComplexity int, groupID repos.ID, search *string, limit *int, page *int) int
+		CiSearchGithubRepos       func(childComplexity int, search *string, org string, limit *int, page *int) int
+		__resolve__service        func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -94,6 +95,7 @@ type QueryResolver interface {
 	CiGitlabGroups(ctx context.Context, search *string, limit *int, page *int) ([]map[string]interface{}, error)
 	CiGitlabRepoBranches(ctx context.Context, repoURL string, search *string) ([]map[string]interface{}, error)
 	CiGithubInstallations(ctx context.Context) (interface{}, error)
+	CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error)
 	CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error)
 	CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) (interface{}, error)
 	CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) (interface{}, error)
@@ -240,6 +242,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CiGetPipelines(childComplexity, args["projectId"].(repos.ID)), true
+
+	case "Query.ci_githubInstallationToken":
+		if e.complexity.Query.CiGithubInstallationToken == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ci_githubInstallationToken_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CiGithubInstallationToken(childComplexity, args["repoUrl"].(*string), args["instId"].(*int)), true
 
 	case "Query.ci_githubInstallations":
 		if e.complexity.Query.CiGithubInstallations == nil {
@@ -408,6 +422,7 @@ type Query {
   ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
 
   ci_githubInstallations: Any!
+  ci_githubInstallationToken(repoUrl: String, instId: Int): Any!
   ci_githubRepos(installationId: Int!, limit: Int, page: Int): Any!
   ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): Any!
   ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): Any!
@@ -550,6 +565,30 @@ func (ec *executionContext) field_Query_ci_getPipelines_args(ctx context.Context
 		}
 	}
 	args["projectId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ci_githubInstallationToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["repoUrl"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoUrl"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["repoUrl"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["instId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instId"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["instId"] = arg1
 	return args, nil
 }
 
@@ -1400,6 +1439,48 @@ func (ec *executionContext) _Query_ci_githubInstallations(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().CiGithubInstallations(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_ci_githubInstallationToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_ci_githubInstallationToken_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CiGithubInstallationToken(rctx, args["repoUrl"].(*string), args["instId"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3319,6 +3400,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_ci_githubInstallations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "ci_githubInstallationToken":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ci_githubInstallationToken(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

@@ -64,6 +64,14 @@ func (r *queryResolver) CiGithubInstallations(ctx context.Context) (interface{},
 	return r.Domain.GithubListInstallations(ctx, session.UserId)
 }
 
+func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error) {
+	session := cache.GetSession[*common.AuthSession](ctx)
+	if instID == nil {
+		return r.Domain.GithubInstallationToken(ctx, session.UserId, *repoURL, 0)
+	}
+	return r.Domain.GithubInstallationToken(ctx, session.UserId, "", int64(*instID))
+}
+
 func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	if session == nil {

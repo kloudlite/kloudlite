@@ -8,7 +8,7 @@ type Query {
   ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
 
   ci_githubInstallations: Any!
-  ci_githubInstallationToken(repoUrl: String!): Any!
+  ci_githubInstallationToken(repoUrl: String, instId: Int): Any!
   ci_githubRepos(installationId: Int!, limit: Int, page: Int): Any!
   ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): Any!
   ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): Any!
