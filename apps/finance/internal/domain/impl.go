@@ -24,7 +24,7 @@ type domainI struct {
 func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
 	rbs, err := domain.iamCli.ListResourceMemberships(ctx, &iam.InResourceMemberships{
 		ResourceId:   string(id),
-		ResourceType: common.ResourceAccount,
+		ResourceType: string(common.ResourceAccount),
 	})
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*
 func (domain *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
 	rbs, err := domain.iamCli.ListUserMemberships(ctx, &iam.InUserMemberships{
 		UserId:       string(id),
-		ResourceType: common.ResourceAccount,
+		ResourceType: string(common.ResourceAccount),
 	})
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (domain *domainI) CreateAccount(
 	fmt.Println("sending message to console1")
 	_, err = domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
-		ResourceType: common.ResourceAccount,
+		ResourceType: string(common.ResourceAccount),
 		ResourceId:   string(create.Id),
 		Role:         string(common.AccountOwner),
 	})
@@ -161,7 +161,7 @@ func (domain *domainI) AddAccountMember(
 ) (bool, error) {
 	_, err := domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
-		ResourceType: common.ResourceAccount,
+		ResourceType: string(common.ResourceAccount),
 		ResourceId:   string(accountId),
 		Role:         string(role),
 	})
@@ -194,7 +194,7 @@ func (domain *domainI) UpdateAccountMember(
 ) (bool, error) {
 	_, err := domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
-		ResourceType: common.ResourceAccount,
+		ResourceType: string(common.ResourceAccount),
 		ResourceId:   string(accountId),
 		Role:         string(role),
 	})

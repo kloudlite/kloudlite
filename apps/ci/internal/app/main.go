@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -88,7 +89,7 @@ var Module = fx.Module("app",
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
 	fx.Invoke(func(server *fiber.App, d domain.Domain) {
-		server.Get("/pipeline/:id", func(ctx *fiber.Ctx) error {
+		server.Get("/api/pipeline/:id", func(ctx *fiber.Ctx) error {
 			pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(ctx.Params("id")))
 			if err != nil {
 				return err
@@ -100,7 +101,8 @@ var Module = fx.Module("app",
 			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
 		)
 		gqlServer := gqlHandler.NewDefaultServer(schema)
-		server.Get("/", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
+		server.All("/", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
+		server.All("/play", adaptor.HTTPHandler(playground.Handler("Graphql playground", "/")))
 	}),
 	fx.Invoke(func(server *grpc.Server, ciServer ci.CIServer) {
 		ci.RegisterCIServer(server, ciServer)
