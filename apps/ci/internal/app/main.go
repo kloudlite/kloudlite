@@ -2,19 +2,19 @@ package app
 
 import (
 	"context"
-	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/gofiber/adaptor/v2"
-	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"kloudlite.io/apps/ci/internal/app/graph"
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/domain"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
+	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
+	"net/http"
 )
 
 type Env struct {
@@ -55,17 +55,24 @@ type ciServerImpl struct {
 }
 
 func (c *ciServerImpl) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.PipelineOutput, error) {
+	i := int(in.GithubInstallationId)
+	ba := make(map[string]interface{}, 0)
+	if in.BuildArgs != nil {
+		for k, v := range in.BuildArgs {
+			ba[k] = v
+		}
+	}
 	pipeline, err := c.d.CretePipeline(ctx, domain.Pipeline{
 		Name:                 in.Name,
 		ImageName:            in.ImageName,
 		PipelineEnv:          in.PipelineEnv,
 		GitProvider:          in.GitProvider,
 		GitRepoUrl:           in.GitRepoUrl,
-		DockerFile:           in.DockerFile,
-		ContextDir:           in.ContextDir,
-		GithubInstallationId: in.GithubInstallationId,
+		DockerFile:           &in.DockerFile,
+		ContextDir:           &in.ContextDir,
+		GithubInstallationId: &i,
 		GitlabTokenId:        in.GitlabTokenId,
-		BuildArgs:            in.BuildArgs,
+		BuildArgs:            ba,
 	})
 	if err != nil {
 		return nil, err
@@ -83,29 +90,35 @@ type AuthClientConnection *grpc.ClientConn
 
 var Module = fx.Module("app",
 	fx.Provide(config.LoadEnv[Env]()),
-	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "acc", domain.PipelineIndexes),
+	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
 	fx.Provide(fxCiServer),
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
-	fx.Invoke(func(server *fiber.App, d domain.Domain) {
-		server.Get("/api/pipeline/:id", func(ctx *fiber.Ctx) error {
-			pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(ctx.Params("id")))
-			if err != nil {
-				return err
-			}
-			return ctx.JSON(pipeline)
-		})
-
+	fx.Invoke(func(
+		server *http.ServeMux,
+		d domain.Domain,
+		env *Env,
+		cacheClient cache.Client,
+	) {
 		schema := generated.NewExecutableSchema(
 			generated.Config{Resolvers: &graph.Resolver{Domain: d}},
 		)
-		gqlServer := gqlHandler.NewDefaultServer(schema)
-		server.All("/", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
-		server.All("/play", adaptor.HTTPHandler(playground.Handler("Graphql playground", "/")))
+		httpServer.SetupGQLServer(
+			server,
+			schema,
+			cache.NewSessionRepo[*common.AuthSession](
+				cacheClient,
+				common.CookieName,
+				env.CookieDomain,
+				common.CacheSessionPrefix,
+			),
+		)
 	}),
 	fx.Invoke(func(server *grpc.Server, ciServer ci.CIServer) {
 		ci.RegisterCIServer(server, ciServer)
 	}),
+	fx.Provide(fxGitlab),
+	fx.Provide(fxGithub),
 	domain.Module,
 )

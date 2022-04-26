@@ -18,6 +18,7 @@ func NewSessionRepo[T repos.Entity](
 	repo := NewRepo[T](cacheClient)
 	return func(w http.ResponseWriter, r *http.Request) *http.Request {
 		cookie, _ := r.Cookie(cookieName)
+
 		newContext := r.Context()
 		if cookie != nil {
 			// TODO handle error
@@ -25,11 +26,12 @@ func NewSessionRepo[T repos.Entity](
 			var get any
 			get, _ = repo.Get(r.Context(), key)
 			// TODO handle error
-
 			if get != nil {
 				newContext = context.WithValue(r.Context(), "session", get)
 			}
+			fmt.Println(cookie, "HERERERE", key)
 		}
+
 		newContext = context.WithValue(newContext, "set-session", func(session T) {
 			err := repo.Set(r.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, session.GetId()), session)
 			if err != nil {
