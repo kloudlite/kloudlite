@@ -12,6 +12,7 @@ import (
 	rpc "kloudlite.io/pkg/grpc"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
+	"net/http"
 )
 
 type Env struct {
@@ -36,7 +37,7 @@ var Module = fx.Module("framework",
 	cache.NewRedisFx[*Env](),
 	fx.Provide(fiberapp.NewFiberApp),
 	rpc.NewGrpcServerFx[*Env](),
-	fx.Invoke(func(app *fiber.App, env *Env, lifecycle fx.Lifecycle) {
+	fx.Invoke(func(server *http.ServeMux, app *fiber.App, env *Env, lifecycle fx.Lifecycle) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				go app.Listen(fmt.Sprintf(":%v", env.HttpPort))
