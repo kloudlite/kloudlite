@@ -46,18 +46,15 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	GitPipeline struct {
-		BuildArgs   func(childComplexity int) int
-		ContextDir  func(childComplexity int) int
-		DockerFile  func(childComplexity int) int
-		GitProvider func(childComplexity int) int
-		GitRepoURL  func(childComplexity int) int
-		Github      func(childComplexity int) int
-		Gitlab      func(childComplexity int) int
-		ID          func(childComplexity int) int
-		ImageName   func(childComplexity int) int
-		Name        func(childComplexity int) int
-		PipelineEnv func(childComplexity int) int
-		PullSecret  func(childComplexity int) int
+		BuildArgs            func(childComplexity int) int
+		ContextDir           func(childComplexity int) int
+		DockerFile           func(childComplexity int) int
+		GitProvider          func(childComplexity int) int
+		GitRepoURL           func(childComplexity int) int
+		GithubInstallationID func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		ImageName            func(childComplexity int) int
+		Name                 func(childComplexity int) int
 	}
 
 	KV struct {
@@ -66,15 +63,16 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		CiCreatePipeline    func(childComplexity int, in model.GitPipelineIn) int
 		CiDeleteGitPipeline func(childComplexity int, pipelineID repos.ID) int
 	}
 
 	Query struct {
-		CiGitPipeline         func(childComplexity int, pipelineID repos.ID) int
-		CiGitPipelines        func(childComplexity int, projectID repos.ID, query map[string]interface{}) int
+		CiGetPipeline         func(childComplexity int, pipelineID repos.ID) int
+		CiGetPipelines        func(childComplexity int, projectID repos.ID) int
 		CiGithubInstallations func(childComplexity int) int
 		CiGithubRepoBranches  func(childComplexity int, repoURL string, limit *int, page *int) int
-		CiGithubRepos         func(childComplexity int, installationID string, limit *int, page *int) int
+		CiGithubRepos         func(childComplexity int, installationID int, limit *int, page *int) int
 		CiGitlabGroups        func(childComplexity int, search *string, limit *int, page *int) int
 		CiGitlabRepoBranches  func(childComplexity int, repoURL string, search *string) int
 		CiGitlabRepos         func(childComplexity int, groupID repos.ID, search *string, limit *int, page *int) int
@@ -89,17 +87,18 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CiDeleteGitPipeline(ctx context.Context, pipelineID repos.ID) (bool, error)
+	CiCreatePipeline(ctx context.Context, in model.GitPipelineIn) (map[string]interface{}, error)
 }
 type QueryResolver interface {
 	CiGitlabRepos(ctx context.Context, groupID repos.ID, search *string, limit *int, page *int) ([]map[string]interface{}, error)
 	CiGitlabGroups(ctx context.Context, search *string, limit *int, page *int) ([]map[string]interface{}, error)
 	CiGitlabRepoBranches(ctx context.Context, repoURL string, search *string) ([]map[string]interface{}, error)
-	CiGithubInstallations(ctx context.Context) ([]map[string]interface{}, error)
-	CiGithubRepos(ctx context.Context, installationID string, limit *int, page *int) ([]map[string]interface{}, error)
-	CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) ([]map[string]interface{}, error)
-	CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) ([]map[string]interface{}, error)
-	CiGitPipelines(ctx context.Context, projectID repos.ID, query map[string]interface{}) ([]*model.GitPipeline, error)
-	CiGitPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error)
+	CiGithubInstallations(ctx context.Context) (interface{}, error)
+	CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error)
+	CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) (interface{}, error)
+	CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) (interface{}, error)
+	CiGetPipelines(ctx context.Context, projectID repos.ID) ([]*model.GitPipeline, error)
+	CiGetPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error)
 }
 
 type executableSchema struct {
@@ -152,19 +151,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GitPipeline.GitRepoURL(childComplexity), true
 
-	case "GitPipeline.github":
-		if e.complexity.GitPipeline.Github == nil {
+	case "GitPipeline.githubInstallationId":
+		if e.complexity.GitPipeline.GithubInstallationID == nil {
 			break
 		}
 
-		return e.complexity.GitPipeline.Github(childComplexity), true
-
-	case "GitPipeline.gitlab":
-		if e.complexity.GitPipeline.Gitlab == nil {
-			break
-		}
-
-		return e.complexity.GitPipeline.Gitlab(childComplexity), true
+		return e.complexity.GitPipeline.GithubInstallationID(childComplexity), true
 
 	case "GitPipeline.id":
 		if e.complexity.GitPipeline.ID == nil {
@@ -187,20 +179,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GitPipeline.Name(childComplexity), true
 
-	case "GitPipeline.pipelineEnv":
-		if e.complexity.GitPipeline.PipelineEnv == nil {
-			break
-		}
-
-		return e.complexity.GitPipeline.PipelineEnv(childComplexity), true
-
-	case "GitPipeline.pullSecret":
-		if e.complexity.GitPipeline.PullSecret == nil {
-			break
-		}
-
-		return e.complexity.GitPipeline.PullSecret(childComplexity), true
-
 	case "KV.key":
 		if e.complexity.KV.Key == nil {
 			break
@@ -215,6 +193,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.KV.Value(childComplexity), true
 
+	case "Mutation.ci_createPipeline":
+		if e.complexity.Mutation.CiCreatePipeline == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_ci_createPipeline_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CiCreatePipeline(childComplexity, args["in"].(model.GitPipelineIn)), true
+
 	case "Mutation.ci_deleteGitPipeline":
 		if e.complexity.Mutation.CiDeleteGitPipeline == nil {
 			break
@@ -227,29 +217,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CiDeleteGitPipeline(childComplexity, args["pipelineId"].(repos.ID)), true
 
-	case "Query.ci_gitPipeline":
-		if e.complexity.Query.CiGitPipeline == nil {
+	case "Query.ci_getPipeline":
+		if e.complexity.Query.CiGetPipeline == nil {
 			break
 		}
 
-		args, err := ec.field_Query_ci_gitPipeline_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_ci_getPipeline_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGitPipeline(childComplexity, args["pipelineId"].(repos.ID)), true
+		return e.complexity.Query.CiGetPipeline(childComplexity, args["pipelineId"].(repos.ID)), true
 
-	case "Query.ci_gitPipelines":
-		if e.complexity.Query.CiGitPipelines == nil {
+	case "Query.ci_getPipelines":
+		if e.complexity.Query.CiGetPipelines == nil {
 			break
 		}
 
-		args, err := ec.field_Query_ci_gitPipelines_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_ci_getPipelines_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGitPipelines(childComplexity, args["projectId"].(repos.ID), args["query"].(map[string]interface{})), true
+		return e.complexity.Query.CiGetPipelines(childComplexity, args["projectId"].(repos.ID)), true
 
 	case "Query.ci_githubInstallations":
 		if e.complexity.Query.CiGithubInstallations == nil {
@@ -280,7 +270,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGithubRepos(childComplexity, args["installationId"].(string), args["limit"].(*int), args["page"].(*int)), true
+		return e.complexity.Query.CiGithubRepos(childComplexity, args["installationId"].(int), args["limit"].(*int), args["page"].(*int)), true
 
 	case "Query.ci_gitlabGroups":
 		if e.complexity.Query.CiGitlabGroups == nil {
@@ -409,6 +399,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
+scalar Any
 
 type Query {
 
@@ -416,13 +407,13 @@ type Query {
   ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
   ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
 
-  ci_githubInstallations: [Json!]!
-  ci_githubRepos(installationId: String!, limit: Int, page: Int): [Json!]!
-  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): [Json!]!
-  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): [Json!]!
+  ci_githubInstallations: Any!
+  ci_githubRepos(installationId: Int!, limit: Int, page: Int): Any!
+  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): Any!
+  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): Any!
 
-  ci_gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
-  ci_gitPipeline(pipelineId: ID!): GitPipeline
+  ci_getPipelines(projectId: ID!): [GitPipeline!]
+  ci_getPipeline(pipelineId: ID!): GitPipeline
 
 }
 
@@ -431,24 +422,34 @@ type KV {
   value: String!
 }
 
+input GitPipelineIn {
+  name: String!
+  imageName: String!
+  gitProvider: String!
+  gitRepoUrl: String!
+  dockerFile: String
+  contextDir: String
+  githubInstallationId: Int
+  buildArgs: Json
+}
+
+
 
 type GitPipeline {
   id: ID!
-  pipelineEnv: String!
-  gitProvider: String
-  gitRepoUrl: String
-  buildArgs: [KV]
-  pullSecret: String
   name: String!
   imageName: String!
+  gitProvider: String!
+  gitRepoUrl: String!
   dockerFile: String
   contextDir: String
-  github: Json
-  gitlab: Json
+  githubInstallationId: Int
+  buildArgs: Json
 }
 
 type Mutation {
   ci_deleteGitPipeline(pipelineId: ID!): Boolean!
+  ci_createPipeline(in: GitPipelineIn!): Json!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -476,6 +477,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_ci_createPipeline_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.GitPipelineIn
+	if tmp, ok := rawArgs["in"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("in"))
+		arg0, err = ec.unmarshalNGitPipelineIn2kloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["in"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_ci_deleteGitPipeline_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -507,7 +523,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_ci_gitPipeline_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_ci_getPipeline_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -522,7 +538,7 @@ func (ec *executionContext) field_Query_ci_gitPipeline_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_ci_gitPipelines_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_ci_getPipelines_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -534,15 +550,6 @@ func (ec *executionContext) field_Query_ci_gitPipelines_args(ctx context.Context
 		}
 	}
 	args["projectId"] = arg0
-	var arg1 map[string]interface{}
-	if tmp, ok := rawArgs["query"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
-		arg1, err = ec.unmarshalOJson2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["query"] = arg1
 	return args, nil
 }
 
@@ -582,10 +589,10 @@ func (ec *executionContext) field_Query_ci_githubRepoBranches_args(ctx context.C
 func (ec *executionContext) field_Query_ci_githubRepos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int
 	if tmp, ok := rawArgs["installationId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("installationId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -826,169 +833,6 @@ func (ec *executionContext) _GitPipeline_id(ctx context.Context, field graphql.C
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _GitPipeline_pipelineEnv(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "GitPipeline",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PipelineEnv, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _GitPipeline_gitProvider(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "GitPipeline",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.GitProvider, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _GitPipeline_gitRepoUrl(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "GitPipeline",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.GitRepoURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _GitPipeline_buildArgs(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "GitPipeline",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BuildArgs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Kv)
-	fc.Result = res
-	return ec.marshalOKV2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐKv(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _GitPipeline_pullSecret(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "GitPipeline",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PullSecret, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _GitPipeline_name(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1043,6 +887,76 @@ func (ec *executionContext) _GitPipeline_imageName(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ImageName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipeline_gitProvider(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipeline",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GitProvider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipeline_gitRepoUrl(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipeline",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GitRepoURL, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1123,7 +1037,7 @@ func (ec *executionContext) _GitPipeline_contextDir(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _GitPipeline_github(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+func (ec *executionContext) _GitPipeline_githubInstallationId(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1141,7 +1055,7 @@ func (ec *executionContext) _GitPipeline_github(ctx context.Context, field graph
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Github, nil
+		return obj.GithubInstallationID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1150,12 +1064,12 @@ func (ec *executionContext) _GitPipeline_github(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalOJson2map(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _GitPipeline_gitlab(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+func (ec *executionContext) _GitPipeline_buildArgs(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1173,7 +1087,7 @@ func (ec *executionContext) _GitPipeline_gitlab(ctx context.Context, field graph
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gitlab, nil
+		return obj.BuildArgs, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1297,6 +1211,48 @@ func (ec *executionContext) _Mutation_ci_deleteGitPipeline(ctx context.Context, 
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_ci_createPipeline(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_ci_createPipeline_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CiCreatePipeline(rctx, args["in"].(model.GitPipelineIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_ci_gitlabRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1455,9 +1411,9 @@ func (ec *executionContext) _Query_ci_githubInstallations(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]map[string]interface{})
+	res := resTmp.(interface{})
 	fc.Result = res
-	return ec.marshalNJson2ᚕmapᚄ(ctx, field.Selections, res)
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_ci_githubRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1485,7 +1441,7 @@ func (ec *executionContext) _Query_ci_githubRepos(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGithubRepos(rctx, args["installationId"].(string), args["limit"].(*int), args["page"].(*int))
+		return ec.resolvers.Query().CiGithubRepos(rctx, args["installationId"].(int), args["limit"].(*int), args["page"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1497,9 +1453,9 @@ func (ec *executionContext) _Query_ci_githubRepos(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]map[string]interface{})
+	res := resTmp.(interface{})
 	fc.Result = res
-	return ec.marshalNJson2ᚕmapᚄ(ctx, field.Selections, res)
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_ci_githubRepoBranches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1539,9 +1495,9 @@ func (ec *executionContext) _Query_ci_githubRepoBranches(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]map[string]interface{})
+	res := resTmp.(interface{})
 	fc.Result = res
-	return ec.marshalNJson2ᚕmapᚄ(ctx, field.Selections, res)
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_ci_searchGithubRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1581,12 +1537,12 @@ func (ec *executionContext) _Query_ci_searchGithubRepos(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]map[string]interface{})
+	res := resTmp.(interface{})
 	fc.Result = res
-	return ec.marshalNJson2ᚕmapᚄ(ctx, field.Selections, res)
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_ci_gitPipelines(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_ci_getPipelines(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1603,7 +1559,7 @@ func (ec *executionContext) _Query_ci_gitPipelines(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_ci_gitPipelines_args(ctx, rawArgs)
+	args, err := ec.field_Query_ci_getPipelines_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1611,7 +1567,7 @@ func (ec *executionContext) _Query_ci_gitPipelines(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGitPipelines(rctx, args["projectId"].(repos.ID), args["query"].(map[string]interface{}))
+		return ec.resolvers.Query().CiGetPipelines(rctx, args["projectId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1625,7 +1581,7 @@ func (ec *executionContext) _Query_ci_gitPipelines(ctx context.Context, field gr
 	return ec.marshalOGitPipeline2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_ci_gitPipeline(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_ci_getPipeline(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1642,7 +1598,7 @@ func (ec *executionContext) _Query_ci_gitPipeline(ctx context.Context, field gra
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_ci_gitPipeline_args(ctx, rawArgs)
+	args, err := ec.field_Query_ci_getPipeline_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1650,7 +1606,7 @@ func (ec *executionContext) _Query_ci_gitPipeline(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGitPipeline(rctx, args["pipelineId"].(repos.ID))
+		return ec.resolvers.Query().CiGetPipeline(rctx, args["pipelineId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2988,6 +2944,85 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputGitPipelineIn(ctx context.Context, obj interface{}) (model.GitPipelineIn, error) {
+	var it model.GitPipelineIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "imageName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageName"))
+			it.ImageName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitProvider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitProvider"))
+			it.GitProvider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitRepoUrl":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitRepoUrl"))
+			it.GitRepoURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dockerFile":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerFile"))
+			it.DockerFile, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "contextDir":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contextDir"))
+			it.ContextDir, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "githubInstallationId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("githubInstallationId"))
+			it.GithubInstallationID, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "buildArgs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildArgs"))
+			it.BuildArgs, err = ec.unmarshalOJson2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3016,9 +3051,19 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "pipelineEnv":
+		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_pipelineEnv(ctx, field, obj)
+				return ec._GitPipeline_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "imageName":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._GitPipeline_imageName(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -3033,40 +3078,12 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "gitRepoUrl":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_gitRepoUrl(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		case "buildArgs":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_buildArgs(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		case "pullSecret":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_pullSecret(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_name(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "imageName":
+		case "gitRepoUrl":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_imageName(ctx, field, obj)
+				return ec._GitPipeline_gitRepoUrl(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -3088,16 +3105,16 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "github":
+		case "githubInstallationId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_github(ctx, field, obj)
+				return ec._GitPipeline_githubInstallationId(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "gitlab":
+		case "buildArgs":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_gitlab(ctx, field, obj)
+				return ec._GitPipeline_buildArgs(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -3176,6 +3193,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "ci_deleteGitPipeline":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_ci_deleteGitPipeline(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "ci_createPipeline":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_ci_createPipeline(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3374,7 +3401,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "ci_gitPipelines":
+		case "ci_getPipelines":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3383,7 +3410,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_ci_gitPipelines(ctx, field)
+				res = ec._Query_ci_getPipelines(ctx, field)
 				return res
 			}
 
@@ -3394,7 +3421,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "ci_gitPipeline":
+		case "ci_getPipeline":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3403,7 +3430,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_ci_gitPipeline(ctx, field)
+				res = ec._Query_ci_getPipeline(ctx, field)
 				return res
 			}
 
@@ -3913,6 +3940,27 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalAny(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3938,6 +3986,11 @@ func (ec *executionContext) marshalNGitPipeline2ᚖkloudliteᚗioᚋappsᚋciᚋ
 	return ec._GitPipeline(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNGitPipelineIn2kloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineIn(ctx context.Context, v interface{}) (model.GitPipelineIn, error) {
+	res, err := ec.unmarshalInputGitPipelineIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := repos.ID(tmp)
@@ -3946,6 +3999,21 @@ func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx c
 
 func (ec *executionContext) marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v repos.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -4404,54 +4472,6 @@ func (ec *executionContext) marshalOJson2map(ctx context.Context, sel ast.Select
 	}
 	res := graphql.MarshalMap(v)
 	return res
-}
-
-func (ec *executionContext) marshalOKV2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐKv(ctx context.Context, sel ast.SelectionSet, v []*model.Kv) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOKV2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐKv(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOKV2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐKv(ctx context.Context, sel ast.SelectionSet, v *model.Kv) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._KV(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
