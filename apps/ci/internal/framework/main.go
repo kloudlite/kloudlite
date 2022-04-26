@@ -18,7 +18,7 @@ import (
 type Env struct {
 	DBName        string `env:"MONGO_DB_NAME"`
 	DBUrl         string `env:"MONGO_URI"`
-	RedisHosts    string `env:"REDIS_HOSTS"`
+	RedisHost     string `env:"REDIS_HOST"`
 	RedisUsername string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	HttpPort      uint16 `env:"PORT"`
@@ -28,6 +28,10 @@ type Env struct {
 
 func (e *Env) GetGRPCPort() uint16 {
 	return e.GrpcPort
+}
+
+func (e *Env) RedisOptions() (hosts, username, password string) {
+	return e.RedisUsername, e.RedisPassword, e.RedisHost
 }
 
 var Module = fx.Module("framework",
