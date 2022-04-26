@@ -22,6 +22,11 @@ type Env struct {
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	HttpPort      uint16 `env:"PORT"`
 	HttpCors      string `env:"ORIGINS"`
+	GrpcPort      uint16 `env:"GRPC_PORT"`
+}
+
+func (e *Env) GetGRPCPort() uint16 {
+	return e.GrpcPort
 }
 
 var Module = fx.Module("framework",
