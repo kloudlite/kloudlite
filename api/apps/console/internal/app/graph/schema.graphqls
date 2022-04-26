@@ -16,18 +16,6 @@ type Query {
   core_secrets(projectId: ID!, search: String): [Secret!]!
   core_secret(secretId: ID!): Secret!
 
-  ci_gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
-  ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
-  ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
-
-  ci_githubInstallations: [Json!]!
-  ci_githubRepos(installationId: String!, limit: Int, page: Int): [Json!]!
-  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): [Json!]!
-  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): [Json!]!
-
-  ci_gitPipelines(projectId: ID!, query: Json): [GitPipeline!]
-  ci_gitPipeline(pipelineId: ID!): GitPipeline
-
   managedSvc_marketList: Json!
   managedSvc_listAvailable: Json!
   managedSvc_getInstallation(installationId: ID!, nextVersion: Boolean): ManagedSvc
@@ -59,15 +47,6 @@ type ManagedSvc {
 
 
 
-input GitPipelineInput{
-  gitRepoUrl: String!
-  gitProvider: String!
-  dockerFile: String
-  contextDir: String
-  buildArgs: [KVInput]
-  pipelineEnv: String!
-  pullSecret: String
-}
 
 type Mutation {
   mangedSvc_install(projectId: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
@@ -92,8 +71,6 @@ type Mutation {
   iam_removeProjectMember(projectId: ID!, userId: ID!): Boolean!
   iam_updateProjectMember(projectId: ID!, userId: ID!, role: String!): Boolean!
 
-  githubEvent(installationId: ID!, sourceRepo: String!): Boolean #TBD
-  gitlabEvent(email: ID!, sourceRepo: String!): Boolean #TBD
 
   # App
   core_createAppFlow(
@@ -112,7 +89,6 @@ type Mutation {
   core_updateConfig(configId: ID!, description:String, data: [CSEntryIn!]): Boolean!
   core_deleteConfig(configId: ID!): Boolean!
 
-  ci_deleteGitPipeline(pipelineId: ID!): Boolean!
 
 
   core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
@@ -327,21 +303,6 @@ input NewResourcesIN {
   mResources: [Json!]
 }
 
-type GitPipeline {
-  id: ID!
-  pipelineEnv: String!
-  gitProvider: String
-  gitRepoUrl: String
-  buildArgs: [KV]
-  pullSecret: String
-  name: String!
-  imageName: String!
-  dockerFile: String
-  contextDir: String
-  github: Json
-  gitlab: Json
-  project: Project!
-}
 
 
 extend type User @key(fields: "id") {

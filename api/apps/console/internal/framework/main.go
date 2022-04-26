@@ -13,8 +13,8 @@ import (
 )
 
 type GrpcInfraConfig struct {
-	InfraGrpcHost string `env:"INFRA_GRPC_URL" required:"true"`
-	InfraGrpcPort string `env:"INFRA_GRPC_PORT" required:"true"`
+	InfraGrpcHost string `env:"INFRA_HOST" required:"true"`
+	InfraGrpcPort string `env:"INFRA_PORT" required:"true"`
 }
 
 func (e *GrpcInfraConfig) GetGCPServerURL() string {

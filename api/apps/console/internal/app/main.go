@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"net/http"
 
-	"google.golang.org/grpc"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/pkg/logger"
@@ -96,7 +96,6 @@ var Module = fx.Module(
 					if err != nil {
 						return err
 					}
-					// return nil
 					switch d["type"].(string) {
 					case "create-cluster":
 						var m struct {
