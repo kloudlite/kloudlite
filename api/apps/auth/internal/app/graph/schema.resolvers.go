@@ -132,6 +132,14 @@ func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, s
 	return r.d.OauthAddLogin(ctx, repos.ID(session.UserId), provider, state, code)
 }
 
+func (r *mutationResolver) OAuthGithubAddWebhook(ctx context.Context, repoURL string) (bool, error) {
+	err := r.d.GithubAddWebhook(ctx, repoURL)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *queryResolver) AuthMe(ctx context.Context) (*model.User, error) {
 	session := cache.GetSession[*common.AuthSession](ctx)
 	fmt.Println("SESSION: ", session)
@@ -169,21 +177,12 @@ func (r *queryResolver) OAuthGithubInstallationToken(ctx context.Context, instal
 	return r.d.GithubInstallationToken(ctx, int64(installationID))
 }
 
-func (r *queryResolver) OAuthListInstallations(ctx context.Context) (map[string]interface{}, error) {
-	a, err := r.d.GithubListInstallations(ctx)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("type is: %T", a)
-	m, ok := a.(map[string]interface{})
-	if !ok {
-		return nil, klErrors.Newf("could not typecast into map[string]interface{}")
-	}
-	return m, nil
+func (r *queryResolver) OAuthGithubListInstallations(ctx context.Context) (interface{}, error) {
+	return r.d.GithubListInstallations(ctx)
 }
 
-func (r *queryResolver) OAuthListRepos(ctx context.Context, installationID int) (map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) OAuthGithubListRepos(ctx context.Context, installationID int, page int, size int) (interface{}, error) {
+	return r.d.GithubListRepos(ctx, int64(installationID), page, size)
 }
 
 // Mutation returns generated.MutationResolver implementation.
