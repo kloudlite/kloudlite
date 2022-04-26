@@ -109,12 +109,50 @@ var Module = fx.Module("domain",
 	fx.Invoke(func(ij InfraJobResponder, d Domain, p messaging.Producer[any], lifecycle fx.Lifecycle) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				ij.SendCreateClusterResponse(ctx, SetupClusterResponse{
-					ClusterID: "clus-le8xeokcvycsn8uwutsmuzimk5up",
-					PublicIp:  "1234",
-					PublicKey: "12345",
-					Done:      true,
-				})
+				//ij.SendCreateClusterResponse(ctx, SetupClusterResponse{
+				//	ClusterID: "clus-le8xeokcvycsn8uwutsmuzimk5up",
+				//	PublicIp:  "1234",
+				//	PublicKey: "12345",
+				//	Done:      true,
+				//})
+				go func() {
+					//d.CreateCluster(ctx, SetupClusterAction{
+					//	ClusterID:  "hotspot-dev",
+					//	Region:     "blr1",
+					//	Provider:   "do",
+					//	NodesCount: 3,
+					//})
+					//d.UpdateCluster(ctx, UpdateClusterAction{
+					//	ClusterID:  "hotspot-dev",
+					//	Region:     "blr1",
+					//	Provider:   "do",
+					//	NodesCount: 3,
+					//})
+					//key1, _ := wgtypes.GenerateKey()
+					//fmt.Println(key1.String())
+					//d.AddPeerToCluster(ctx, AddPeerAction{
+					//	ClusterID: "hotspot-dev",
+					//	PublicKey: key1.PublicKey().String(),
+					//	PeerIp:    "10.13.13.101",
+					//})
+
+					//key2, _ := wgtypes.GenerateKey()
+					//fmt.Println(key2.String())
+					//d.AddPeerToCluster(ctx, AddPeerAction{
+					//	ClusterID: "hotspot-dev",
+					//	PublicKey: key2.PublicKey().String(),
+					//	PeerIp:    "10.13.13.102",
+					//})
+
+					//key3, _ := wgtypes.GenerateKey()
+					//fmt.Println(key3.String())
+					//d.AddPeerToCluster(ctx, AddPeerAction{
+					//	ClusterID: "hotspot-dev",
+					//	PublicKey: key3.PublicKey().String(),
+					//	PeerIp:    "10.13.13.103",
+					//})
+
+				}()
 				return nil
 			},
 			OnStop: func(ctx context.Context) error {

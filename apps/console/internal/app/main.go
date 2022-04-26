@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"net/http"
 
 	"google.golang.org/grpc"
@@ -35,6 +37,7 @@ type Env struct {
 
 type InfraEventConsumer messaging.Consumer
 type ClusterEventConsumer messaging.Consumer
+type InfraClientConnection *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
@@ -48,6 +51,9 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.ManagedService]("managedservice", "mgsvc", entities.ManagedServiceIndexes),
 	repos.NewFxMongoRepo[*entities.App]("app", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
+	fx.Provide(func(conn InfraClientConnection) infra.InfraClient {
+		return infra.NewInfraClient((*grpc.ClientConn)(conn))
+	}),
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 			return messaging.NewKafkaProducer[messaging.Json](messagingCli)
@@ -84,11 +90,13 @@ var Module = fx.Module(
 				[]string{env.KafkaInfraResponseTopic},
 				env.KafkaConsumerGroupId,
 				logger, func(context context.Context, topic string, message messaging.Message) error {
+					fmt.Println(string(message))
 					var d map[string]any
 					err := message.Unmarshal(&d)
 					if err != nil {
 						return err
 					}
+					// return nil
 					switch d["type"].(string) {
 					case "create-cluster":
 						var m struct {
