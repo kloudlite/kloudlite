@@ -2,9 +2,9 @@ apiVersion: "crds.kloudlite.io/v1"
 kind: App
 metadata:
   name: sample-app3
-  namespace: default
-  # finalizers:
-  #   - finalizers.kloudlite.io/app
+  namespace: hotspot
+  finalizers:
+    - finalizers.kloudlite.io/app
 spec:
   services:
     - port: 80
@@ -20,12 +20,12 @@ spec:
       resource_memory:
         min: "100"
         max: "200"
-      # env:
-      #   - key: MYHOME2
-      #     type: config
-      #     ref_name: myhome
-      #     ref_key: hello
-      #   - key: auth-db
-      #     type: secret
-      #     ref_name: auth-db-secret
-      #     ref_key: hello
+      env:
+        - key: MYHOME2
+          type: config
+          ref_name: myhome
+          ref_key: hello
+        - key: auth-db
+          type: secret
+          ref_name: auth-db-secret
+          ref_key: hello

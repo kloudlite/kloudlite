@@ -11,7 +11,8 @@ local:
         KUBECONFIG: /tmp/kconfig
       volumes:
         - './:/home/nxtcoder17/operator'
-        # - '~/.kube/configs/dev-kloudlite.yml:/tmp/kconfig'
-        - '~/.kube/configs/dev-test-01.yml:/tmp/kconfig'
+        - '~/.kube/configs/dev-kloudlite.yml:/tmp/kconfig'
+        # - '~/.kube/configs/dev-test-01.yml:/tmp/kconfig'
         - '/tmp/hotspot-cache:/.config'
-kubeConfig: ~/.kube/configs/dev-test-01.yml
+# kubeConfig: ~/.kube/configs/dev-test-01.yml
+kubeConfig: ~/.kube/configs/dev-hotspot-01.yml

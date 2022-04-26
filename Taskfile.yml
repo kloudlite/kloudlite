@@ -45,6 +45,7 @@ tasks:
   pre:
     run: once
     cmds:
+      - go mod tidy
       - make manifests
       - make generate
       - task: apply
