@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
@@ -83,7 +82,7 @@ func (domain *domainI) CreateAccount(
 	ctx context.Context,
 	userId repos.ID,
 	name string,
-	billing *model.BillingInput,
+	billing Billing,
 ) (*Account, error) {
 
 	id := domain.accountRepo.NewId()
@@ -98,7 +97,7 @@ func (domain *domainI) CreateAccount(
 		},
 		Name:         name,
 		ContactEmail: "",
-		Billing:      Billing{StripeSetupIntentId: billing.StripeSetupIntentID, CardholderName: billing.CardholderName, Address: billing.Address},
+		Billing:      Billing{StripeSetupIntentId: billing.StripeSetupIntentId, CardholderName: billing.CardholderName, Address: billing.Address},
 		IsActive:     true,
 		IsDeleted:    false,
 		CreatedAt:    time.Time{},
