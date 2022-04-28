@@ -15,17 +15,17 @@ tasks:
       COOKIE_DOMAIN: kl.madhouselabs.io
       GOTRACEBACK: all
 
-      GITHUB_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/github
+      GITHUB_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/github
       GITHUB_CLIENT_ID: ***REMOVED***
       GITHUB_CLIENT_SECRET: ***REMOVED***
       GITHUB_APP_ID: ***REMOVED***
       GITHUB_APP_PK_FILE: ./.secrets/github-app-pk.pem
 
-      GITLAB_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/gitlab
+      GITLAB_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/gitlab
       GITLAB_CLIENT_ID: ***REMOVED***
       GITLAB_CLIENT_SECRET: ***REMOVED***
 
-      GOOGLE_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/google
+      GOOGLE_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/google
       GOOGLE_CLIENT_ID: ***REMOVED***
       GOOGLE_CLIENT_SECRET: ***REMOVED***
 
