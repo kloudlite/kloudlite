@@ -6,23 +6,21 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gofiber/adaptor/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go.uber.org/fx"
+	"kloudlite.io/pkg/logger"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/rs/cors"
-	"kloudlite.io/pkg/logger"
 )
 
-func Start(ctx context.Context, port uint16, mux http.Handler, corsOpt cors.Options, logger logger.Logger) error {
+func Start(ctx context.Context, port uint16, app *fiber.App, corsOpt cors.Config, logger logger.Logger) error {
 	errChannel := make(chan error, 1)
-
-	c := cors.New(corsOpt)
-
 	go func() {
-		// TODO: find a way for graceful shutdown of server
-		errChannel <- http.ListenAndServe(fmt.Sprintf(":%v", port), c.Handler(mux))
+		app.Use(cors.New(corsOpt))
+		errChannel <- app.Listen(fmt.Sprintf(":%d", port))
 	}()
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
@@ -34,23 +32,21 @@ func Start(ctx context.Context, port uint16, mux http.Handler, corsOpt cors.Opti
 		logger.Infof("Graphql Server started @ (port=%v)", port)
 	}
 	return nil
+
 }
 
 func SetupGQLServer(
-	mux *http.ServeMux,
+	app *fiber.App,
 	es graphql.ExecutableSchema,
-	middlewares ...func(http.ResponseWriter, *http.Request) *http.Request,
+	middlewares ...fiber.Handler,
 ) {
-	mux.HandleFunc("/play", playground.Handler("Graphql playground", "/query"))
+	app.All("/play", adaptor.HTTPHandler(playground.Handler("GraphQL playground", "/query")))
 	gqlServer := gqlHandler.NewDefaultServer(es)
-	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		_req := req
-		for _, middleware := range middlewares {
-			_req = middleware(w, req)
-		}
-		w.Header().Add("EXAMPLE", "sample")
-		gqlServer.ServeHTTP(w, _req)
-	})
+	for _, v := range middlewares {
+		app.Use(v)
+	}
+	app.All("/query", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
+
 }
 
 type ServerOptions interface {
@@ -60,26 +56,19 @@ type ServerOptions interface {
 
 func NewHttpServerFx[T ServerOptions]() fx.Option {
 	return fx.Module("http-server",
-		fx.Provide(http.NewServeMux),
-		fx.Invoke(func(lf fx.Lifecycle, env T, logger logger.Logger, server *http.ServeMux) {
+		fx.Provide(fiber.New),
+		fx.Invoke(func(lf fx.Lifecycle, env T, logger logger.Logger, app *fiber.App) {
 			lf.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
-					var corsOpt cors.Options
+					var corsOpt cors.Config
 					if env.GetHttpCors() != "" {
-						corsOpt = cors.Options{
-							AllowedOrigins:   strings.Split(env.GetHttpCors(), ","),
+						corsOpt = cors.Config{
+							AllowOrigins:     env.GetHttpCors(),
 							AllowCredentials: true,
-							AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+							AllowMethods:     strings.Join([]string{http.MethodGet, http.MethodPost, http.MethodOptions}, ","),
 						}
 					}
-
-					// corsOpt = cors.Options{
-					// 	AllowedOrigins:   strings.Split(env.GetHttpCors(), ","),
-					// 	AllowCredentials: true,
-					// 	AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-					// }
-
-					return Start(ctx, env.GetHttpPort(), server, corsOpt, logger)
+					return Start(ctx, env.GetHttpPort(), app, corsOpt, logger)
 				},
 			})
 		}),

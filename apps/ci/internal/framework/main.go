@@ -5,7 +5,6 @@ import (
 	"kloudlite.io/apps/ci/internal/app"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
-	fiberapp "kloudlite.io/pkg/fiber-app"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
@@ -56,11 +55,10 @@ var Module = fx.Module("framework",
 	fx.Provide(logger.NewLogger),
 	config.EnvFx[Env](),
 	config.EnvFx[GrpcAuthConfig](),
-	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
-	fx.Provide(fiberapp.NewFiberApp),
-	rpc.NewGrpcServerFx[*Env](),
-	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	httpServer.NewHttpServerFx[*Env](),
+	rpc.NewGrpcServerFx[*Env](),
+	repos.NewMongoClientFx[*Env](),
+	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	app.Module,
 )

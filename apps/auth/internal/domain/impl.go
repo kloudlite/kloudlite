@@ -326,13 +326,14 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
 }
 
-func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, user *User) (*User, error) {
-	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": user.Email})
-	if err != nil || user == nil {
+func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, u *User) (*User, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
+	if err != nil {
 		return nil, errors.NewEf(err, "could not find user")
 	}
 
 	if user == nil {
+		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
 		if err != nil {
@@ -370,7 +371,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 	if err != nil {
 		return nil, errors.NewEf(err, "could not update user")
 	}
-	return nil, err
+	return user, nil
 }
 
 func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User) (*common.AuthSession, error) {

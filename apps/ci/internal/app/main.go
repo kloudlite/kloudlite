@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"kloudlite.io/apps/ci/internal/app/graph"
@@ -13,7 +14,6 @@ import (
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
-	"net/http"
 )
 
 type Env struct {
@@ -56,13 +56,37 @@ type AuthClientConnection *grpc.ClientConn
 
 var Module = fx.Module("app",
 	fx.Provide(config.LoadEnv[Env]()),
+	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
-	GrpcServer,
+
+	fx.Provide(fxCiServer),
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
+
+	// FiberApp
+	fx.Invoke(func(app *fiber.App, d domain.Domain, github domain.Github) {
+		app.Get("/pipelines/:pipeline", func(ctx *fiber.Ctx) error {
+			pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(ctx.Params("pipeline")))
+			if err != nil {
+				return err
+			}
+			return ctx.JSON(pipeline)
+		})
+
+		app.Get("/access-repo-token/:installation_id", func(ctx *fiber.Ctx) error {
+			paramsInt, err := ctx.ParamsInt("installation_id")
+			if err != nil {
+				return err
+			}
+			token, err := github.GetInstallationToken(ctx.Context(), "", int64(paramsInt))
+			return ctx.JSON(token)
+		})
+	}),
+
+	// GraphQL App
 	fx.Invoke(func(
-		server *http.ServeMux,
+		server *fiber.App,
 		d domain.Domain,
 		env *Env,
 		cacheClient cache.Client,
@@ -73,7 +97,7 @@ var Module = fx.Module("app",
 		httpServer.SetupGQLServer(
 			server,
 			schema,
-			cache.NewSessionRepo[*common.AuthSession](
+			httpServer.NewSessionMiddleware[*common.AuthSession](
 				cacheClient,
 				common.CookieName,
 				env.CookieDomain,

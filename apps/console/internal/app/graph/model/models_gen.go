@@ -210,6 +210,7 @@ type PipelineDataInput struct {
 	ContextDir           string                 `json:"contextDir"`
 	GithubInstallationID *int                   `json:"githubInstallationId"`
 	BuildArgs            map[string]interface{} `json:"buildArgs"`
+	Branch               string                 `json:"branch"`
 }
 
 type Project struct {

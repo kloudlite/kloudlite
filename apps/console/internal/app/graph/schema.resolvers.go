@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/common"
-	"kloudlite.io/pkg/cache"
 	wErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
@@ -205,7 +205,7 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, clusterID rep
 }
 
 func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
@@ -257,7 +257,7 @@ func (r *mutationResolver) IamUpdateProjectMember(ctx context.Context, projectID
 }
 
 func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("user not logged in")
 	}
@@ -287,18 +287,9 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				ResourceId: attached.ResID,
 			})
 		}
-		i := *container.PipelineData.GithubInstallationID
-		containers = append(containers, entities.ContainerIn{
-			Pipeline: &entities.PipelineIn{
-				Name:                 container.PipelineData.Name,
-				ImageName:            container.PipelineData.ImageName,
-				GitProvider:          container.PipelineData.GitProvider,
-				GitRepoUrl:           container.PipelineData.GitRepoURL,
-				DockerFile:           container.PipelineData.DockerFile,
-				ContextDir:           container.PipelineData.ContextDir,
-				GithubInstallationId: int64(i),
-				BuildArgs:            container.PipelineData.BuildArgs,
-			},
+
+		in := entities.ContainerIn{
+
 			Name:            container.Name,
 			Image:           container.Image,
 			ImagePullSecret: container.PullSecret,
@@ -312,7 +303,22 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				Max: container.MemMax,
 			},
 			AttachedResources: a,
-		})
+		}
+		if container.PipelineData != nil {
+			i := *container.PipelineData.GithubInstallationID
+			in.Pipeline = &entities.PipelineIn{
+				Name:                 container.PipelineData.Name,
+				ImageName:            container.PipelineData.ImageName,
+				GitProvider:          container.PipelineData.GitProvider,
+				GitRepoUrl:           container.PipelineData.GitRepoURL,
+				DockerFile:           container.PipelineData.DockerFile,
+				ContextDir:           container.PipelineData.ContextDir,
+				GithubInstallationId: int64(i),
+				BuildArgs:            container.PipelineData.BuildArgs,
+			}
+		}
+		containers = append(containers, in)
+
 	}
 	return r.Domain.InstallAppFlow(ctx, session.UserId, projectID, entities.AppIn{
 		Name:         app.Name,
