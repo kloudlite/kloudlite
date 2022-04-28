@@ -287,18 +287,9 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				ResourceId: attached.ResID,
 			})
 		}
-		i := *container.PipelineData.GithubInstallationID
-		containers = append(containers, entities.ContainerIn{
-			Pipeline: &entities.PipelineIn{
-				Name:                 container.PipelineData.Name,
-				ImageName:            container.PipelineData.ImageName,
-				GitProvider:          container.PipelineData.GitProvider,
-				GitRepoUrl:           container.PipelineData.GitRepoURL,
-				DockerFile:           container.PipelineData.DockerFile,
-				ContextDir:           container.PipelineData.ContextDir,
-				GithubInstallationId: int64(i),
-				BuildArgs:            container.PipelineData.BuildArgs,
-			},
+
+		in := entities.ContainerIn{
+
 			Name:            container.Name,
 			Image:           container.Image,
 			ImagePullSecret: container.PullSecret,
@@ -312,7 +303,22 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				Max: container.MemMax,
 			},
 			AttachedResources: a,
-		})
+		}
+		if container.PipelineData != nil {
+			i := *container.PipelineData.GithubInstallationID
+			in.Pipeline = &entities.PipelineIn{
+				Name:                 container.PipelineData.Name,
+				ImageName:            container.PipelineData.ImageName,
+				GitProvider:          container.PipelineData.GitProvider,
+				GitRepoUrl:           container.PipelineData.GitRepoURL,
+				DockerFile:           container.PipelineData.DockerFile,
+				ContextDir:           container.PipelineData.ContextDir,
+				GithubInstallationId: int64(i),
+				BuildArgs:            container.PipelineData.BuildArgs,
+			}
+		}
+		containers = append(containers, in)
+
 	}
 	return r.Domain.InstallAppFlow(ctx, session.UserId, projectID, entities.AppIn{
 		Name:         app.Name,
