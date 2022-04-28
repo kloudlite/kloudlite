@@ -2,12 +2,12 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 	// "kloudlite.io/pkg/messaging"
 )
@@ -31,8 +31,11 @@ type InfraEnv struct {
 	KafkaGroupId            string `env:"KAFKA_GROUP_ID", required:"true"`
 }
 
-func fxProducer(mc messaging.KafkaClient) (messaging.Producer[any], error) {
-	return messaging.NewKafkaProducer[any](mc)
+func (i *InfraEnv) GetSubscriptionTopics() []string {
+	return []string{i.KafkaInfraTopic}
+}
+func (i *InfraEnv) GetConsumerGroupId() string {
+	return i.KafkaGroupId
 }
 
 func fxJobResponder(p messaging.Producer[any], env *InfraEnv) domain.InfraJobResponder {
@@ -42,32 +45,72 @@ func fxJobResponder(p messaging.Producer[any], env *InfraEnv) domain.InfraJobRes
 var Module = fx.Module("application",
 	config.EnvFx[InfraEnv](),
 	fx.Provide(fxInfraClient),
-	fx.Provide(fxProducer),
-	fx.Provide(fxConsumer),
+
+	// Common Producer
+	messaging.NewFxKafkaProducer[messaging.Message](),
+
 	fx.Provide(fxJobResponder),
-	domain.Module,
+
+	messaging.NewFxKafkaConsumer[*InfraEnv](),
+	fx.Invoke(func(env *InfraEnv, logger logger.Logger, d domain.Domain, consumer messaging.Consumer[*InfraEnv]) {
+		consumer.On(env.KafkaInfraTopic, func(context context.Context, action messaging.Message) error {
+			var _d struct {
+				Type string
+			}
+			action.Unmarshal(&_d)
+			switch _d.Type {
+			case "create-cluster":
+				var m struct {
+					Type    string
+					Payload domain.SetupClusterAction
+				}
+				action.Unmarshal(&m)
+				return d.CreateCluster(context, m.Payload)
+				break
+			case "update-cluster":
+				var m struct {
+					Type    string
+					Payload domain.UpdateClusterAction
+				}
+				action.Unmarshal(&m)
+				return d.UpdateCluster(context, m.Payload)
+				break
+			case "delete-cluster":
+				var m struct {
+					Type    string
+					Payload domain.DeleteClusterAction
+				}
+				action.Unmarshal(&m)
+				return d.DeleteCluster(context, m.Payload)
+				break
+			case "add-peer":
+				var m struct {
+					Type    string
+					Payload domain.AddPeerAction
+				}
+				action.Unmarshal(&m)
+				return d.AddPeerToCluster(context, m.Payload)
+				break
+			case "delete-peer":
+				var m struct {
+					Type    string
+					Payload domain.DeletePeerAction
+				}
+				action.Unmarshal(&m)
+				return d.DeletePeerFromCluster(context, m.Payload)
+				break
+			}
+			return nil
+		})
+	}),
+
+	// Grpc Server
 	fx.Provide(fxInfraGrpcServer),
-	fx.Invoke(func(lifecycle fx.Lifecycle, producer messaging.Producer[any]) {
-		lifecycle.Append(fx.Hook{
-			OnStart: func(c context.Context) error {
-				fmt.Println("CONNECTED")
-				return producer.Connect(c)
-			},
-		})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, consumer messaging.Consumer) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return consumer.Subscribe(ctx)
-			},
-			OnStop: func(ctx context.Context) error {
-				return consumer.Unsubscribe(ctx)
-			},
-		})
-	}),
-
 	fx.Invoke(func(server *grpc.Server, infraServer infra.InfraServer) {
 		infra.RegisterInfraServer(server, infraServer)
 	}),
+
+	domain.Module,
+
+
 )
