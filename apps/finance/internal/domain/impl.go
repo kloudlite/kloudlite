@@ -3,22 +3,26 @@ package domain
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/apps/finance/internal/app/graph/model"
-	"kloudlite.io/common"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/repos"
 	"math"
 	"math/rand"
 	"regexp"
 	"strings"
 	"time"
+
+	"kloudlite.io/apps/finance/internal/app/graph/model"
+	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/repos"
 )
 
 type domainI struct {
 	iamCli      iam.IAMClient
 	consoleCli  console.ConsoleClient
 	accountRepo repos.DbRepo[*Account]
+	ciClient    ci.CIClient
 }
 
 func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
@@ -81,16 +85,24 @@ func (domain *domainI) CreateAccount(
 	name string,
 	billing *model.BillingInput,
 ) (*Account, error) {
-	create, err := domain.accountRepo.Create(ctx, &Account{
-		Name: name,
-		Billing: Billing{
-			StripeSetupIntentId: billing.StripeSetupIntentID,
-			CardholderName:      billing.CardholderName,
-			Address:             billing.Address,
+
+	id := domain.accountRepo.NewId()
+	_, err := domain.ciClient.CreateHarborProject(ctx, &ci.HarborProjectIn{Name: string(id)})
+	if err != nil {
+		return nil, errors.NewEf(err, "harbor account could not be created")
+	}
+
+	acc, err := domain.accountRepo.Create(ctx, &Account{
+		BaseEntity: repos.BaseEntity{
+			Id: id,
 		},
-		IsActive:   true,
-		CreatedAt:  time.Time{},
-		ReadableId: repos.ID(generateReadable(name)),
+		Name:         name,
+		ContactEmail: "",
+		Billing:      Billing{StripeSetupIntentId: billing.StripeSetupIntentID, CardholderName: billing.CardholderName, Address: billing.Address},
+		IsActive:     true,
+		IsDeleted:    false,
+		CreatedAt:    time.Time{},
+		ReadableId:   repos.ID(generateReadable(name)),
 	})
 
 	if err != nil {
@@ -100,7 +112,7 @@ func (domain *domainI) CreateAccount(
 	_, err = domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(userId),
 		ResourceType: string(common.ResourceAccount),
-		ResourceId:   string(create.Id),
+		ResourceId:   string(acc.Id),
 		Role:         string(common.AccountOwner),
 	})
 	if err != nil {
@@ -108,14 +120,15 @@ func (domain *domainI) CreateAccount(
 	}
 	fmt.Println("sending message to console")
 	_, err = domain.consoleCli.CreateDefaultCluster(ctx, &console.CreateClusterIn{
-		AccountId:   string(create.Id),
-		AccountName: create.Name,
+		AccountId:   string(acc.Id),
+		AccountName: acc.Name,
 	})
 	fmt.Println("sent message", err)
 	if err != nil {
 		return nil, err
 	}
-	return create, err
+
+	return acc, err
 }
 
 func (domain *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error) {
@@ -231,6 +244,7 @@ func (domain *domainI) ActivateAccount(ctx context.Context, accountId repos.ID) 
 }
 
 func (domain *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+	// TODO: delete harbor project
 	matched, err := domain.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
@@ -252,10 +266,12 @@ func fxDomain(
 	accountRepo repos.DbRepo[*Account],
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
+	ciClient ci.CIClient,
 ) Domain {
 	return &domainI{
 		iamCli,
 		consoleClient,
 		accountRepo,
+		ciClient,
 	}
 }
