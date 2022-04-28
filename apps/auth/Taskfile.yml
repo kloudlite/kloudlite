@@ -11,8 +11,8 @@ tasks:
       PORT: 3000
       GRPC_PORT: 8081
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
-      # COOKIE_DOMAIN: localhost
-      COOKIE_DOMAIN: kl.madhouselabs.io
+      COOKIE_DOMAIN: localhost
+      # COOKIE_DOMAIN: kl.madhouselabs.io
       GOTRACEBACK: all
 
       GITHUB_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/github
@@ -25,7 +25,7 @@ tasks:
       GITLAB_CLIENT_ID: ***REMOVED***
       GITLAB_CLIENT_SECRET: ***REMOVED***
 
-      GOOGLE_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/google
+      GOOGLE_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/google
       GOOGLE_CLIENT_ID: ***REMOVED***
       GOOGLE_CLIENT_SECRET: ***REMOVED***
 

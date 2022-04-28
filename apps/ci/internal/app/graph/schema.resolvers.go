@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
-	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -22,7 +22,7 @@ func (r *mutationResolver) CiDeleteGitPipeline(ctx context.Context, pipelineID r
 }
 
 func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPipelineIn) (map[string]interface{}, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authorized")
 	}
@@ -61,7 +61,7 @@ func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoURL string
 }
 
 func (r *queryResolver) CiGithubInstallations(ctx context.Context) (interface{}, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
@@ -69,15 +69,14 @@ func (r *queryResolver) CiGithubInstallations(ctx context.Context) (interface{},
 }
 
 func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
 	if instID == nil {
-		return r.Domain.GithubInstallationToken(ctx, session.UserId, *repoURL, 0)
+		return r.Domain.GithubInstallationToken(ctx, *repoURL, 0)
 	}
-	return r.Domain.GithubInstallationToken(ctx, session.UserId, "", int64(*instID))
+	return r.Domain.GithubInstallationToken(ctx, "", int64(*instID))
 }
 
 func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
@@ -92,7 +91,7 @@ func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, l
 }
 
 func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) (interface{}, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
@@ -108,7 +107,7 @@ func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string
 }
 
 func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) (interface{}, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
