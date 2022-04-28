@@ -172,6 +172,7 @@ input PipelineDataInput{
   contextDir: String!
   githubInstallationId: Int
   buildArgs: Json
+  branch: String!
 }
 
 input AppContainerInput{

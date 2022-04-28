@@ -69,11 +69,10 @@ func (r *queryResolver) CiGithubInstallations(ctx context.Context) (interface{},
 }
 
 func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
 	if instID == nil {
-		return r.Domain.GithubInstallationToken(ctx, session.UserId, *repoURL, 0)
+		return r.Domain.GithubInstallationToken(ctx, *repoURL, 0)
 	}
-	return r.Domain.GithubInstallationToken(ctx, session.UserId, "", int64(*instID))
+	return r.Domain.GithubInstallationToken(ctx, "", int64(*instID))
 }
 
 func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error) {

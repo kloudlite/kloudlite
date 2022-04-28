@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"kloudlite.io/apps/ci/internal/app/graph"
@@ -95,6 +96,25 @@ var Module = fx.Module("app",
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
+	fx.Invoke(func(app *fiber.App, d domain.Domain, github domain.Github) {
+		app.Get("/pipelines/:pipeline", func(ctx *fiber.Ctx) error {
+			pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(ctx.Params("pipeline")))
+			if err != nil {
+				return err
+			}
+			return ctx.JSON(pipeline)
+		})
+
+		app.Get("/access-repo-token/:installation_id", func(ctx *fiber.Ctx) error {
+			paramsInt, err := ctx.ParamsInt("installation_id")
+			if err != nil {
+				return err
+			}
+			token, err := github.GetInstallationToken(ctx.Context(), "", int64(paramsInt))
+			return ctx.JSON(token)
+		})
+	}),
+
 	fx.Invoke(func(
 		server *http.ServeMux,
 		d domain.Domain,
