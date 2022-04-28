@@ -1,0 +1,6 @@
+mode: dev
+dev:
+  url: http://localhost:3000
+  headers:
+    cookie: hotspot-session=ses-mo6h17rrwea3tugeptonu48s3prf; Path=/; Domain=kl.madhouselabs.io; HttpOnly; Secure; SameSite=None
+

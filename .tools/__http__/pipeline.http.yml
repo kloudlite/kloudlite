@@ -13,7 +13,7 @@ query: |
     }
   }
 variables:
-  pipelineId: "pip-vyztsks0wncupyna-4kdc7qd-w2w"
+  pipelineId: "pip-gpwbd2ax8opdhmqfkjq1dforcfzv"
 
 ---
 
@@ -21,7 +21,7 @@ label: Create Pipeline
 query: |
   mutation {
     ci_createPipeline(
-      in: {name: "asd", imageName: "asd", gitProvider: "github", gitRepoUrl: "nxtcoder17/sample", dockerFile: "./Dockerfile", contextDir: "./"}
+in: {name: "sample", imageName: "sample.io", gitProvider: "github", gitRepoUrl: "https://github.com/nxtcoder17/sample", dockerFile: "./Dockerfile", contextDir: "./"}
     )
   }
 
