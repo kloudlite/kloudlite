@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/logger"
@@ -39,6 +40,7 @@ type domain struct {
 	managedTemplatesPath string
 	workloadMessenger    WorkloadMessenger
 	infraClient          infra.InfraClient
+	ciClient             ci.CIClient
 }
 
 func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error) {
@@ -69,18 +71,72 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	return m, err
 }
 
+func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn) (*entities.App, error) {
+	a := entities.App{
+		ReadableId:   app.ReadableId,
+		ProjectId:    app.ProjectId,
+		Name:         app.Name,
+		Namespace:    app.Namespace,
+		Description:  app.Description,
+		Replicas:     app.Replicas,
+		ExposedPorts: app.ExposedPorts,
+	}
+	for _, c := range app.Containers {
+		m := make(map[string]string, 0)
+		for k, v := range c.Pipeline.BuildArgs {
+			m[k] = v.(string)
+		}
+		var pipelineId string
+		if c.Pipeline != nil {
+			fmt.Println("hello", c.Pipeline)
+			pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
+				UserId:               string(userId),
+				Name:                 c.Pipeline.Name,
+				ImageName:            c.Pipeline.ImageName,
+				GitProvider:          c.Pipeline.GitProvider,
+				GitRepoUrl:           c.Pipeline.GitRepoUrl,
+				DockerFile:           c.Pipeline.DockerFile,
+				ContextDir:           c.Pipeline.ContextDir,
+				GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
+				// TODO Gitlab
+				BuildArgs: m,
+			})
+			if err != nil {
+				return nil, err
+			}
+			pipelineId = pipeline.PipelineId
+		}
+		a.Containers = append(a.Containers, entities.Container{
+			PipelineId:        repos.ID(pipelineId),
+			Name:              c.Name,
+			Image:             c.Image,
+			ImagePullSecret:   c.ImagePullSecret,
+			EnvVars:           c.EnvVars,
+			CPULimits:         c.CPULimits,
+			MemoryLimits:      c.MemoryLimits,
+			AttachedResources: c.AttachedResources,
+		})
+	}
+	return &a, nil
+}
+
 func (d *domain) InstallAppFlow(
 	ctx context.Context,
+	userId repos.ID,
 	projectId repos.ID,
-	app entities.App,
+	appIn entities.AppIn,
 ) (bool, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return false, err
 	}
+	app, err := d.createPipelinesOfApp(ctx, userId, appIn)
+	if err != nil {
+		return false, err
+	}
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
-	_, err = d.appRepo.Create(ctx, &app)
+	_, err = d.appRepo.Create(ctx, app)
 	if err != nil {
 		return false, err
 	}
@@ -497,11 +553,6 @@ func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.A
 		return nil, err
 	}
 	return apps, nil
-}
-
-func (d *domain) InstallApp(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedResource, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (d *domain) UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error) {
@@ -1228,8 +1279,10 @@ func fxDomain(
 	infraMessenger InfraMessenger,
 	workloadMessenger WorkloadMessenger,
 	infraClient infra.InfraClient,
+	ciClient ci.CIClient,
 ) Domain {
 	return &domain{
+		ciClient:             ciClient,
 		infraClient:          infraClient,
 		infraMessenger:       infraMessenger,
 		workloadMessenger:    workloadMessenger,

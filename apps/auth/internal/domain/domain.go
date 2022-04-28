@@ -26,7 +26,7 @@ type Domain interface {
 	LoginWithInviteToken(ctx context.Context, token string) (*common.AuthSession, error)
 	OauthRequestLogin(ctx context.Context, provider string, state string) (string, error)
 	OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error)
-	OauthAddLogin(ctx context.Context, id repos.ID, provider string, state string, code string) (bool, error)
+	OauthAddLogin(ctx context.Context, userId repos.ID, provider string, state string, code string) (bool, error)
 }
 
 type Messenger interface {

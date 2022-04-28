@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"net/http"
 
@@ -39,6 +40,7 @@ type InfraEventConsumer messaging.Consumer
 type ClusterEventConsumer messaging.Consumer
 type InfraClientConnection *grpc.ClientConn
 type AuthClientConnection *grpc.ClientConn
+type CIClientConnection *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
@@ -55,6 +57,11 @@ var Module = fx.Module(
 	fx.Provide(func(conn InfraClientConnection) infra.InfraClient {
 		return infra.NewInfraClient((*grpc.ClientConn)(conn))
 	}),
+
+	fx.Provide(func(conn CIClientConnection) ci.CIClient {
+		return ci.NewCIClient((*grpc.ClientConn)(conn))
+	}),
+
 	fx.Module("producer",
 		fx.Provide(func(messagingCli messaging.KafkaClient) (messaging.Producer[messaging.Json], error) {
 			return messaging.NewKafkaProducer[messaging.Json](messagingCli)

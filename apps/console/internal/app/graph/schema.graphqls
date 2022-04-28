@@ -153,7 +153,7 @@ input AttachedResInput{
 
 type AppContainer{
   name: String!
-  image: String!
+  image: String
   pull_secret: String
   env_vars:[EnvVar!]!
   cpu_min:String!
@@ -163,10 +163,21 @@ type AppContainer{
   attached_resources:[AttachedRes!]!
 }
 
+input PipelineDataInput{
+  name: String!
+  imageName: String!
+  gitProvider: String!
+  gitRepoUrl: String!
+  dockerFile: String!
+  contextDir: String!
+  githubInstallationId: Int
+  buildArgs: Json
+}
 
 input AppContainerInput{
   name: String!
-  image: String!
+  image: String
+  pipelineData: PipelineDataInput,
   pull_secret: String
   env_vars:[EnvVarInput!]!
   cpu_min:String!
