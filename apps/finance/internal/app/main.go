@@ -19,7 +19,7 @@ type Env struct {
 
 var Module = fx.Module(
 	"application",
-	config.EnvFx[*Env](),
+	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.Account]("accounts", "acc", domain.AccountIndexes),
 	CiClientFx,
 	IAMClientFx,

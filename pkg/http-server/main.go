@@ -16,10 +16,9 @@ import (
 	"time"
 )
 
-func Start(ctx context.Context, port uint16, app *fiber.App, corsOpt cors.Config, logger logger.Logger) error {
+func Start(ctx context.Context, port uint16, app *fiber.App, logger logger.Logger) error {
 	errChannel := make(chan error, 1)
 	go func() {
-		app.Use(cors.New(corsOpt))
 		errChannel <- app.Listen(fmt.Sprintf(":%d", port))
 	}()
 
@@ -56,19 +55,21 @@ type ServerOptions interface {
 
 func NewHttpServerFx[T ServerOptions]() fx.Option {
 	return fx.Module("http-server",
-		fx.Provide(fiber.New),
+		fx.Provide(func() *fiber.App {
+			return fiber.New()
+		}),
 		fx.Invoke(func(lf fx.Lifecycle, env T, logger logger.Logger, app *fiber.App) {
+			if env.GetHttpCors() != "" {
+				app.Use(cors.New(cors.Config{
+					AllowOrigins:     env.GetHttpCors(),
+					AllowCredentials: true,
+					AllowMethods:     strings.Join([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions}, ","),
+				}))
+			}
+
 			lf.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
-					var corsOpt cors.Config
-					if env.GetHttpCors() != "" {
-						corsOpt = cors.Config{
-							AllowOrigins:     env.GetHttpCors(),
-							AllowCredentials: true,
-							AllowMethods:     strings.Join([]string{http.MethodGet, http.MethodPost, http.MethodOptions}, ","),
-						}
-					}
-					return Start(ctx, env.GetHttpPort(), app, corsOpt, logger)
+					return Start(ctx, env.GetHttpPort(), app, logger)
 				},
 			})
 		}),

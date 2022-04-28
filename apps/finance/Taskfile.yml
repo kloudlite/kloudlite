@@ -6,6 +6,7 @@ tasks:
       MONGO_DB_NAME: finance
       MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       COOKIE_DOMAIN: localhost
+      ORIGINS: localhost,https://studio.apollographql.com
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       PORT: 4002
       IAM_SERVER_HOST: iam.hotspot.svc.cluster.local
