@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/common"
-	"kloudlite.io/pkg/cache"
 	wErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
@@ -205,7 +205,7 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, clusterID rep
 }
 
 func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
@@ -257,7 +257,7 @@ func (r *mutationResolver) IamUpdateProjectMember(ctx context.Context, projectID
 }
 
 func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("user not logged in")
 	}

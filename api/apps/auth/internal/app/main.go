@@ -2,15 +2,14 @@ package app
 
 import (
 	"context"
-	"google.golang.org/grpc"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"net/http"
-
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
+	"google.golang.org/grpc"
 	"kloudlite.io/apps/auth/internal/app/graph"
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/domain"
 	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -95,7 +94,7 @@ var Module = fx.Module("app",
 
 	fx.Provide(fxMessenger),
 	fx.Invoke(func(
-		server *http.ServeMux,
+		server *fiber.App,
 		d domain.Domain,
 		env *Env,
 		cacheClient cache.Client,
@@ -106,7 +105,7 @@ var Module = fx.Module("app",
 		httpServer.SetupGQLServer(
 			server,
 			schema,
-			cache.NewSessionRepo[*common.AuthSession](
+			httpServer.NewSessionMiddleware[*common.AuthSession](
 				cacheClient,
 				common.CookieName,
 				env.CookieDomain,
