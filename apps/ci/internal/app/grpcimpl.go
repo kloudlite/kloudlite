@@ -37,9 +37,3 @@ func (c *ciServerImpl) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*
 	}
 	return &ci.PipelineOutput{PipelineId: string(pipeline.Id)}, err
 }
-
-func fxCiServer(d domain.Domain) ci.CIServer {
-	return &ciServerImpl{
-		d: d,
-	}
-}

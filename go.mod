@@ -13,7 +13,6 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
-	github.com/rs/cors v1.8.2
 	github.com/vektah/gqlparser/v2 v2.4.0
 	github.com/xanzy/go-gitlab v0.63.0
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54

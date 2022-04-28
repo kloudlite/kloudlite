@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
@@ -12,7 +11,7 @@ type Domain interface {
 		ctx context.Context,
 		userId repos.ID,
 		name string,
-		billing *model.BillingInput,
+		billing Billing,
 	) (*Account, error)
 	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
 	UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error)
