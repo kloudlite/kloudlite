@@ -21,6 +21,15 @@ func (e *ConsoleGRPCEnv) GetGCPServerURL() string {
 	return fmt.Sprintf("%v:%v", e.ConsoleServerHost, e.ConsoleServerPort)
 }
 
+type CiGrpcEnv struct {
+	CiServerHost string `env:"CI_SERVER_HOST" required:"true"`
+	CiServerPort uint16 `env:"CI_SERVER_PORT" required:"true"`
+}
+
+func (e *CiGrpcEnv) GetGCPServerURL() string {
+	return fmt.Sprintf("%v:%v", e.CiServerHost, e.CiServerPort)
+}
+
 type IAMGRPCEnv struct {
 	IAMServerHost string `env:"IAM_SERVER_HOST"`
 	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
@@ -61,8 +70,10 @@ var Module = fx.Module("framework",
 	config.EnvFx[Env](),
 	config.EnvFx[ConsoleGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),
+	config.EnvFx[CiGrpcEnv](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
+	rpc.NewGrpcClientFx[*CiGrpcEnv, app.CIGrpcClientConn](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),

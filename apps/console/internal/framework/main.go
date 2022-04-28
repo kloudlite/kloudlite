@@ -77,6 +77,7 @@ func (e *Env) GetGRPCPort() uint16 {
 }
 
 var Module = fx.Module("framework",
+	config.EnvFx[*Env](),
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(config.LoadEnv[GrpcInfraConfig]()),
 	fx.Provide(config.LoadEnv[GrpcAuthConfig]()),
@@ -90,6 +91,5 @@ var Module = fx.Module("framework",
 	messaging.NewKafkaClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
-
 	app.Module,
 )

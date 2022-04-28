@@ -54,6 +54,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.ManagedService]("managedservice", "mgsvc", entities.ManagedServiceIndexes),
 	repos.NewFxMongoRepo[*entities.App]("app", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
+
 	fx.Provide(func(conn InfraClientConnection) infra.InfraClient {
 		return infra.NewInfraClient((*grpc.ClientConn)(conn))
 	}),
