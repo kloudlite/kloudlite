@@ -36,7 +36,7 @@ query: |
   }
 
 variables:
-  provider: github
+  provider: gitlab
 
 ---
 label: OAuth Login
@@ -49,8 +49,8 @@ query: |
     }
   }
 variables:
-  code: 7e245766cba1ed221349
-  provider: github
+  code: 2805cd374aefb7df637a9adb2f75544bc60a3c3e0e4e769ae16d2d65616a4ded
+  provider: gitlab
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
 
 ---
@@ -113,3 +113,22 @@ variables:
   repoUrl: nxtcoder17/sample
   page: 1
   limit: 20
+
+---
+label: create acc
+query: |
+  mutation Finance_createAccount($name: String!, $billing: BillingInput!) {
+    finance_createAccount(name: $name, billing: $billing) {
+      id
+      name
+    }
+  }
+variables:
+  name: sample-acc3
+  billing:
+    stripePaymentMethod: "sample"
+    stripeSetupIntentId: "sadfasf"
+    cardholderName: "sdfass"
+    address: 
+      line1: sadfasdf
+---

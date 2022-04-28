@@ -5,16 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
-
-	"go.uber.org/fx"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
+	"net/http"
+	"net/url"
 )
 
 type server struct {
@@ -85,12 +83,16 @@ func (s *server) CreateHarborProject(ctx context.Context, in *ci.HarborProjectIn
 	if err != nil {
 		return nil, errors.NewEf(err, "could not unmarshal req body")
 	}
-	req, err := http.NewRequest(http.MethodPost, s.harborUrl.String(), bytes.NewBuffer(bbody))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", s.harborUrl.String(), "projects"), bytes.NewBuffer(bbody))
 	if err != nil {
 		return nil, errors.NewEf(err, "could not build request")
 	}
+	req.Header.Add("Content-Type", "application/json")
+	req.SetBasicAuth(s.harborUsername, s.harborPassword)
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		fmt.Println(err)
 		return nil, errors.NewEf(err, "while making request")
 	}
 	if resp.StatusCode == http.StatusCreated {
@@ -130,17 +132,15 @@ func (s *server) DeleteHarborProject(ctx context.Context, in *ci.HarborProjectIn
 	return nil, errors.Newf("could not delete harbor project as received (statuscode=%d)", resp.StatusCode)
 }
 
-var GrpcServer = fx.Module("grpc-server",
-	fx.Provide(func(env *Env, d domain.Domain) ci.CIServer {
-		hUrl, err := url.Parse(env.HarborUrl)
-		if err != nil || hUrl == nil {
-			panic(fmt.Errorf("harbor url (%s) is not a valid url", env.HarborUrl))
-		}
-		return &server{
-			harborUsername: env.HarborUsername,
-			harborPassword: env.HarborPassword,
-			harborUrl:      *hUrl,
-			d:              d,
-		}
-	}),
-)
+func fxCiServer(env *Env, d domain.Domain) ci.CIServer {
+	hUrl, err := url.Parse(env.HarborUrl)
+	if err != nil || hUrl == nil {
+		panic(fmt.Errorf("harbor url (%s) is not a valid url", env.HarborUrl))
+	}
+	return &server{
+		harborUsername: env.HarborUsername,
+		harborPassword: env.HarborPassword,
+		harborUrl:      *hUrl,
+		d:              d,
+	}
+}

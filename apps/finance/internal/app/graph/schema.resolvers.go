@@ -7,12 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/apps/finance/internal/domain"
 	"kloudlite.io/common"
+	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -50,13 +50,18 @@ func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.Acco
 	return AccountModelFromEntity(ae), nil
 }
 
-func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error) {
+func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error) {
 	fmt.Println("create account")
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")
 	}
-	account, err := r.domain.CreateAccount(ctx, repos.ID(session.UserId), name, billing)
+
+	account, err := r.domain.CreateAccount(ctx, repos.ID(session.UserId), name, domain.Billing{
+		StripeSetupIntentId: billing.StripeSetupIntentID,
+		CardholderName:      billing.CardholderName,
+		Address:             billing.Address,
+	})
 	if err != nil {
 		return nil, err
 	}
