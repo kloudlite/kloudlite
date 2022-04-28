@@ -1,9 +1,7 @@
 package app
 
 import (
-	"kloudlite.io/pkg/repos"
-	"net/http"
-
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/finance/internal/app/graph"
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
@@ -12,6 +10,7 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/repos"
 )
 
 type Env struct {
@@ -26,7 +25,7 @@ var Module = fx.Module(
 	IAMClientFx,
 	ConsoleClientFx,
 	fx.Invoke(func(
-		server *http.ServeMux,
+		server *fiber.App,
 		d domain.Domain,
 		env *Env,
 		cacheClient cache.Client,
