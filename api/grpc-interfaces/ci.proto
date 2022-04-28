@@ -4,6 +4,8 @@ option go_package = "kloudlite.io/rpc/ci";
 
 service CI {
   rpc CreatePipeline(PipelineIn) returns (PipelineOutput);
+  rpc CreateHarborProject(HarborProjectIn) returns (HarborProjectOut);
+  rpc DeleteHarborProject(HarborProjectIn) returns (HarborProjectOut);
 }
 
 message PipelineIn {
@@ -21,6 +23,14 @@ message PipelineIn {
 }
 
 message PipelineOutput {
- string pipelineId = 1;
+  string pipelineId = 1;
+}
+
+message HarborProjectIn {
+  string name = 1;
+}
+
+message HarborProjectOut {
+  bool status = 1;
 }
 
