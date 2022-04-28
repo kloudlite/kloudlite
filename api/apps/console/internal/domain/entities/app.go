@@ -37,13 +37,36 @@ type EnvVar struct {
 }
 
 type Container struct {
+	PipelineId        repos.ID           `json:"pipeline_id" bson:"pipeline_id"`
 	Name              string             `json:"name" bson:"name"`
-	Image             string             `json:"image" bson:"image"`
+	Image             *string            `json:"image" bson:"image"`
 	ImagePullSecret   *string            `json:"pull_secret" bson:"pull_secret"`
 	EnvVars           []EnvVar           `json:"env_vars" bson:"env_cars"`
 	CPULimits         Limit              `json:"cpu_limits" bson:"cpu_limits"`
 	MemoryLimits      Limit              `json:"memory_limits" bson:"memory_limits"`
 	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
+}
+
+type PipelineIn struct {
+	Name                 string
+	ImageName            string
+	GitProvider          string
+	GitRepoUrl           string
+	DockerFile           string
+	ContextDir           string
+	GithubInstallationId int64
+	BuildArgs            map[string]interface{}
+}
+
+type ContainerIn struct {
+	Name              string
+	Image             *string
+	ImagePullSecret   *string
+	Pipeline          *PipelineIn
+	EnvVars           []EnvVar
+	CPULimits         Limit
+	MemoryLimits      Limit
+	AttachedResources []AttachedResource
 }
 
 type AppStatus string
@@ -54,6 +77,19 @@ const (
 	AppStateError   = AppStatus("error")
 	AppStateDown    = AppStatus("down")
 )
+
+type AppIn struct {
+	ReadableId   string
+	ProjectId    repos.ID
+	Name         string
+	Namespace    string
+	Description  *string
+	Replicas     int
+	ExposedPorts []ExposedPort
+	Containers   []ContainerIn
+	Status       AppStatus
+	Conditions   []metav1.Condition
+}
 
 type App struct {
 	repos.BaseEntity `bson:",inline"`

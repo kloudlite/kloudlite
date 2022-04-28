@@ -1931,7 +1931,7 @@ input AttachedResInput{
 
 type AppContainer{
   name: String!
-  image: String!
+  image: String
   pull_secret: String
   env_vars:[EnvVar!]!
   cpu_min:String!
@@ -1941,10 +1941,21 @@ type AppContainer{
   attached_resources:[AttachedRes!]!
 }
 
+input PipelineDataInput{
+  name: String!
+  imageName: String!
+  gitProvider: String!
+  gitRepoUrl: String!
+  dockerFile: String!
+  contextDir: String!
+  githubInstallationId: Int
+  buildArgs: Json
+}
 
 input AppContainerInput{
   name: String!
-  image: String!
+  image: String
+  pipelineData: PipelineDataInput,
   pull_secret: String
   env_vars:[EnvVarInput!]!
   cpu_min:String!
@@ -3902,14 +3913,11 @@ func (ec *executionContext) _AppContainer_image(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppContainer_pull_secret(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
@@ -10355,7 +10363,15 @@ func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
-			it.Image, err = ec.unmarshalNString2string(ctx, v)
+			it.Image, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pipelineData":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pipelineData"))
+			it.PipelineData, err = ec.unmarshalOPipelineDataInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPipelineDataInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10764,6 +10780,85 @@ func (ec *executionContext) unmarshalInputNewResourcesIN(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPipelineDataInput(ctx context.Context, obj interface{}) (model.PipelineDataInput, error) {
+	var it model.PipelineDataInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "imageName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageName"))
+			it.ImageName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitProvider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitProvider"))
+			it.GitProvider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitRepoUrl":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitRepoUrl"))
+			it.GitRepoURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dockerFile":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerFile"))
+			it.DockerFile, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "contextDir":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contextDir"))
+			it.ContextDir, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "githubInstallationId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("githubInstallationId"))
+			it.GithubInstallationID, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "buildArgs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildArgs"))
+			it.BuildArgs, err = ec.unmarshalOJson2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRouteInput(ctx context.Context, obj interface{}) (model.RouteInput, error) {
 	var it model.RouteInput
 	asMap := map[string]interface{}{}
@@ -11058,9 +11153,6 @@ func (ec *executionContext) _AppContainer(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "pull_secret":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._AppContainer_pull_secret(ctx, field, obj)
@@ -15358,6 +15450,14 @@ func (ec *executionContext) marshalOManagedSvc2ᚖkloudliteᚗioᚋappsᚋconsol
 		return graphql.Null
 	}
 	return ec._ManagedSvc(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPipelineDataInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPipelineDataInput(ctx context.Context, v interface{}) (*model.PipelineDataInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPipelineDataInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {

@@ -25,10 +25,17 @@ type githubI struct {
 	webhookUrl   string
 }
 
-func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, page int, size int) ([]*github.Branch, error) {
-	sp := strings.Split(repoUrl, "/")
+func getOwnerAndRepo(repoUrl string) (string, string) {
+	sp := strings.Split(repoUrl, "https://github.com/")
+	sp = strings.Split(sp[1], ".git")
+	sp = strings.Split(sp[0], "/")
 	owner := sp[0]
 	repo := sp[1]
+	return owner, repo
+}
+
+func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, page int, size int) ([]*github.Branch, error) {
+	owner, repo := getOwnerAndRepo(repoUrl)
 	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(ctx, owner, repo, &github.BranchListOptions{
 		ListOptions: github.ListOptions{
 			Page:    page,
@@ -69,12 +76,12 @@ func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, 
 	return repos, nil
 }
 
-func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string) error {
-	sp := strings.Split(repoUrl, "/")
-	hookUrl := fmt.Sprintf("%s?tokenId=%s", gh.webhookUrl, accToken.Id)
+func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, refId string, repoUrl string) error {
+	owner, repo := getOwnerAndRepo(repoUrl)
+	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, refId)
 	hookName := "kloudlite-pipeline"
 
-	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(ctx, sp[0], sp[1], &github.Hook{
+	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(ctx, owner, repo, &github.Hook{
 		Config: map[string]interface{}{
 			"url":          hookUrl,
 			"content_type": "json",
