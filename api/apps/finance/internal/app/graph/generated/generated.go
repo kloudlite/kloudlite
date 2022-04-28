@@ -81,7 +81,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		FinanceActivateAccount      func(childComplexity int, accountID repos.ID) int
 		FinanceAddAccountMember     func(childComplexity int, accountID string, userID repos.ID, role string) int
-		FinanceCreateAccount        func(childComplexity int, name string, billing *model.BillingInput) int
+		FinanceCreateAccount        func(childComplexity int, name string, billing model.BillingInput) int
 		FinanceDeactivateAccount    func(childComplexity int, accountID repos.ID) int
 		FinanceDeleteAccount        func(childComplexity int, accountID repos.ID) int
 		FinanceRemoveAccountMember  func(childComplexity int, accountID repos.ID, userID repos.ID) int
@@ -119,7 +119,7 @@ type EntityResolver interface {
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
 type MutationResolver interface {
-	FinanceCreateAccount(ctx context.Context, name string, billing *model.BillingInput) (*model.Account, error)
+	FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error)
 	FinanceUpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error)
 	FinanceUpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error)
 	FinanceAddAccountMember(ctx context.Context, accountID string, userID repos.ID, role string) (bool, error)
@@ -307,7 +307,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceCreateAccount(childComplexity, args["name"].(string), args["billing"].(*model.BillingInput)), true
+		return e.complexity.Mutation.FinanceCreateAccount(childComplexity, args["name"].(string), args["billing"].(model.BillingInput)), true
 
 	case "Mutation.finance_deactivateAccount":
 		if e.complexity.Mutation.FinanceDeactivateAccount == nil {
@@ -502,7 +502,7 @@ var sources = []*ast.Source{
 }
 
 type Mutation {
-    finance_createAccount(name: String!, billing: BillingInput): Account!
+    finance_createAccount(name: String!, billing: BillingInput!): Account!
     finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
     finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
     finance_addAccountMember(accountId: String!, userId: ID!, role: String!): Boolean!
@@ -678,10 +678,10 @@ func (ec *executionContext) field_Mutation_finance_createAccount_args(ctx contex
 		}
 	}
 	args["name"] = arg0
-	var arg1 *model.BillingInput
+	var arg1 model.BillingInput
 	if tmp, ok := rawArgs["billing"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billing"))
-		arg1, err = ec.unmarshalOBillingInput2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐBillingInput(ctx, tmp)
+		arg1, err = ec.unmarshalNBillingInput2kloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐBillingInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1516,7 +1516,7 @@ func (ec *executionContext) _Mutation_finance_createAccount(ctx context.Context,
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceCreateAccount(rctx, args["name"].(string), args["billing"].(*model.BillingInput))
+		return ec.resolvers.Mutation().FinanceCreateAccount(rctx, args["name"].(string), args["billing"].(model.BillingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5010,14 +5010,6 @@ func (ec *executionContext) marshalOAccount2ᚖkloudliteᚗioᚋappsᚋfinance�
 		return graphql.Null
 	}
 	return ec._Account(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOBillingInput2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐBillingInput(ctx context.Context, v interface{}) (*model.BillingInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputBillingInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

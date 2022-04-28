@@ -3,7 +3,7 @@ type Query {
 }
 
 type Mutation {
-    finance_createAccount(name: String!, billing: BillingInput): Account!
+    finance_createAccount(name: String!, billing: BillingInput!): Account!
     finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
     finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
     finance_addAccountMember(accountId: String!, userId: ID!, role: String!): Boolean!
