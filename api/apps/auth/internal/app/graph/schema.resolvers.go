@@ -7,11 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
 	"kloudlite.io/common"
-	"kloudlite.io/pkg/cache"
 	klErrors "kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
@@ -21,7 +21,7 @@ func (r *mutationResolver) AuthLogin(ctx context.Context, email string, password
 	if err != nil {
 		return nil, err
 	}
-	cache.SetSession(ctx, sessionEntity)
+	httpServer.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
@@ -30,22 +30,22 @@ func (r *mutationResolver) AuthSignup(ctx context.Context, name string, email st
 	if err != nil {
 		return nil, err
 	}
-	cache.SetSession(ctx, sessionEntity)
+	httpServer.SetSession(ctx, sessionEntity)
 	session := sessionModelFromAuthSession(sessionEntity)
 	return session, err
 }
 
 func (r *mutationResolver) AuthLogout(ctx context.Context) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return true, nil
 	}
-	cache.DeleteSession(ctx)
+	httpServer.DeleteSession(ctx)
 	return true, nil
 }
 
 func (r *mutationResolver) AuthSetMetadata(ctx context.Context, values map[string]interface{}) (*model.User, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
@@ -54,7 +54,7 @@ func (r *mutationResolver) AuthSetMetadata(ctx context.Context, values map[strin
 }
 
 func (r *mutationResolver) AuthClearMetadata(ctx context.Context) (*model.User, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
@@ -64,7 +64,7 @@ func (r *mutationResolver) AuthClearMetadata(ctx context.Context) (*model.User, 
 
 func (r *mutationResolver) AuthVerifyEmail(ctx context.Context, token string) (*model.Session, error) {
 	sessionEntity, err := r.d.VerifyEmail(ctx, token)
-	cache.SetSession(ctx, sessionEntity)
+	httpServer.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
@@ -88,7 +88,7 @@ func (r *mutationResolver) AuthInviteSignup(ctx context.Context, email string, n
 }
 
 func (r *mutationResolver) AuthChangeEmail(ctx context.Context, email string) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("user is not logged in")
 	}
@@ -96,7 +96,7 @@ func (r *mutationResolver) AuthChangeEmail(ctx context.Context, email string) (b
 }
 
 func (r *mutationResolver) AuthResendVerificationEmail(ctx context.Context) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("user is not logged in")
 	}
@@ -104,7 +104,7 @@ func (r *mutationResolver) AuthResendVerificationEmail(ctx context.Context) (boo
 }
 
 func (r *mutationResolver) AuthChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("user is not logged in")
 	}
@@ -120,12 +120,12 @@ func (r *mutationResolver) OAuthLogin(ctx context.Context, provider string, code
 	if err != nil {
 		return nil, klErrors.NewEf(err, "could not create session")
 	}
-	cache.SetSession(ctx, sessionEntity)
+	httpServer.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }
 
 func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, state string, code string) (bool, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("user is not logged in")
 	}
@@ -133,7 +133,7 @@ func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, s
 }
 
 func (r *queryResolver) AuthMe(ctx context.Context) (*model.User, error) {
-	session := cache.GetSession[*common.AuthSession](ctx)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 	fmt.Println("SESSION: ", session)
 	if session == nil {
 		return nil, errors.New("user not logged in")

@@ -43,12 +43,8 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 	}, err
 }
 
-func (d *domainI) GithubInstallationToken(ctx context.Context, userId repos.ID, repoUrl string, instId int64) (string, error) {
-	token, err := d.getAccessToken(ctx, "github", userId)
-	if err != nil {
-		return "", err
-	}
-	return d.github.GetInstallationToken(ctx, token, repoUrl, instId)
+func (d *domainI) GithubInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error) {
+	return d.github.GetInstallationToken(ctx, repoUrl, instId)
 }
 
 func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, page int, size int) (any, error) {
