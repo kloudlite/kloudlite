@@ -8,6 +8,7 @@ require (
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/gofiber/adaptor/v2 v2.1.23
 	github.com/gofiber/fiber/v2 v2.32.0
 	github.com/google/go-github/v43 v43.0.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
@@ -39,6 +40,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/gofiber/utils v0.1.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

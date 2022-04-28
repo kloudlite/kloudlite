@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -15,7 +14,6 @@ import (
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
-	"net/http"
 )
 
 type Env struct {
@@ -50,52 +48,20 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
-type ciServerImpl struct {
-	ci.UnimplementedCIServer
-	d domain.Domain
-}
-
-func (c *ciServerImpl) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.PipelineOutput, error) {
-	i := int(in.GithubInstallationId)
-	ba := make(map[string]interface{}, 0)
-	if in.BuildArgs != nil {
-		for k, v := range in.BuildArgs {
-			ba[k] = v
-		}
-	}
-	pipeline, err := c.d.CretePipeline(ctx, repos.ID(in.UserId), domain.Pipeline{
-		Name:                 in.Name,
-		ImageName:            in.ImageName,
-		PipelineEnv:          in.PipelineEnv,
-		GitProvider:          in.GitProvider,
-		GitRepoUrl:           in.GitRepoUrl,
-		DockerFile:           &in.DockerFile,
-		ContextDir:           &in.ContextDir,
-		GithubInstallationId: &i,
-		GitlabTokenId:        in.GitlabTokenId,
-		BuildArgs:            ba,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &ci.PipelineOutput{PipelineId: string(pipeline.Id)}, err
-}
-
-func fxCiServer(d domain.Domain) ci.CIServer {
-	return &ciServerImpl{
-		d: d,
-	}
-}
-
 type AuthClientConnection *grpc.ClientConn
 
 var Module = fx.Module("app",
 	fx.Provide(config.LoadEnv[Env]()),
+	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
+
+	// GRPC Implementations
 	fx.Provide(fxCiServer),
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
+
+	// FiberApp
 	fx.Invoke(func(app *fiber.App, d domain.Domain, github domain.Github) {
 		app.Get("/pipelines/:pipeline", func(ctx *fiber.Ctx) error {
 			pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(ctx.Params("pipeline")))
@@ -115,8 +81,9 @@ var Module = fx.Module("app",
 		})
 	}),
 
+	// GraphQL App
 	fx.Invoke(func(
-		server *http.ServeMux,
+		server *fiber.App,
 		d domain.Domain,
 		env *Env,
 		cacheClient cache.Client,
@@ -127,7 +94,7 @@ var Module = fx.Module("app",
 		httpServer.SetupGQLServer(
 			server,
 			schema,
-			cache.NewSessionRepo[*common.AuthSession](
+			httpServer.NewSessionMiddleware[*common.AuthSession](
 				cacheClient,
 				common.CookieName,
 				env.CookieDomain,

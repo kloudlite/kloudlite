@@ -46,7 +46,7 @@ var Module = fx.Module(
 		httpServer.SetupGQLServer(
 			server,
 			schema,
-			cache.NewSessionRepo[*common.AuthSession](
+			httpServer.NewSessionMiddleware[*common.AuthSession](
 				cacheClient,
 				common.CookieName,
 				env.CookieDomain,
