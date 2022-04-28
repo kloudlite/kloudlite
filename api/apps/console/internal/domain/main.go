@@ -41,6 +41,7 @@ type domain struct {
 	workloadMessenger    WorkloadMessenger
 	infraClient          infra.InfraClient
 	ciClient             ci.CIClient
+	imageRepoUrlPrefix   string
 }
 
 func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error) {
@@ -82,29 +83,30 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 		ExposedPorts: app.ExposedPorts,
 	}
 	for _, c := range app.Containers {
-		m := make(map[string]string, 0)
-		for k, v := range c.Pipeline.BuildArgs {
-			m[k] = v.(string)
-		}
 		var pipelineId string
 		if c.Pipeline != nil {
-			fmt.Println("hello", c.Pipeline)
-			pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
-				UserId:               string(userId),
-				Name:                 c.Pipeline.Name,
-				ImageName:            c.Pipeline.ImageName,
-				GitProvider:          c.Pipeline.GitProvider,
-				GitRepoUrl:           c.Pipeline.GitRepoUrl,
-				DockerFile:           c.Pipeline.DockerFile,
-				ContextDir:           c.Pipeline.ContextDir,
-				GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
-				// TODO Gitlab
-				BuildArgs: m,
-			})
-			if err != nil {
-				return nil, err
+			m := make(map[string]string, 0)
+			for k, v := range c.Pipeline.BuildArgs {
+				m[k] = v.(string)
 			}
-			pipelineId = pipeline.PipelineId
+			if c.Pipeline != nil {
+				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
+					UserId:               string(userId),
+					Name:                 c.Pipeline.Name,
+					ImageName:            fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName),
+					GitProvider:          c.Pipeline.GitProvider,
+					GitRepoUrl:           c.Pipeline.GitRepoUrl,
+					DockerFile:           c.Pipeline.DockerFile,
+					ContextDir:           c.Pipeline.ContextDir,
+					GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
+					// TODO Gitlab
+					BuildArgs: m,
+				})
+				if err != nil {
+					return nil, err
+				}
+				pipelineId = pipeline.PipelineId
+			}
 		}
 		a.Containers = append(a.Containers, entities.Container{
 			PipelineId:        repos.ID(pipelineId),
@@ -1259,8 +1261,9 @@ func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, 
 }
 
 type Env struct {
-	KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
-	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
+	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC" required:"true"`
+	ManagedTemplatesPath    string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
+	ArtifactImageRepoPrefix string `env:"IMAGE_REGISTRY_PREFIX" required:"true"`
 }
 
 func fxDomain(
@@ -1282,6 +1285,7 @@ func fxDomain(
 	ciClient ci.CIClient,
 ) Domain {
 	return &domain{
+		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
 		ciClient:             ciClient,
 		infraClient:          infraClient,
 		infraMessenger:       infraMessenger,

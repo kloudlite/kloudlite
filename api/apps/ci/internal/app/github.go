@@ -122,9 +122,9 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
-func (gh *githubI) GetInstallationToken(ctx context.Context, accToken *domain.AccessToken, repoUrl string, instId int64) (string, error) {
+func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error) {
 	installationId := instId
-	if installationId != 0 {
+	if installationId == 0 {
 		gitRepo := strings.Split(repoUrl, "/")
 		inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, gitRepo[0], gitRepo[1])
 		if err != nil {

@@ -25,7 +25,7 @@ tasks:
       GITLAB_CLIENT_ID: ***REMOVED***
       GITLAB_CLIENT_SECRET: ***REMOVED***
 
-      GOOGLE_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/google
+      GOOGLE_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/google
       GOOGLE_CLIENT_ID: ***REMOVED***
       GOOGLE_CLIENT_SECRET: ***REMOVED***
 

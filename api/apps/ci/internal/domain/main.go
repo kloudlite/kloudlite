@@ -14,8 +14,7 @@ import (
 type Domain interface {
 	GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error)
 	CretePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error)
-
-	GithubInstallationToken(ctx context.Context, userId repos.ID, repoUrl string, instId int64) (string, error)
+	GithubInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error)
 	GithubListInstallations(ctx context.Context, userId repos.ID) (any, error)
 	GithubListRepos(ctx context.Context, userId repos.ID, installationId int64, page, size int) (any, error)
 	GithubSearchRepos(ctx context.Context, userId repos.ID, q string, org string, page, size int) (any, error)
@@ -55,12 +54,8 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 	}, err
 }
 
-func (d *domainI) GithubInstallationToken(ctx context.Context, userId repos.ID, repoUrl string, instId int64) (string, error) {
-	token, err := d.getAccessToken(ctx, "github", userId)
-	if err != nil {
-		return "", err
-	}
-	return d.github.GetInstallationToken(ctx, token, repoUrl, instId)
+func (d *domainI) GithubInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error) {
+	return d.github.GetInstallationToken(ctx, repoUrl, instId)
 }
 
 func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, page int, size int) (any, error) {

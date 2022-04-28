@@ -10,7 +10,7 @@ import (
 type Github interface {
 	Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error)
 	GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error)
-	GetInstallationToken(ctx context.Context, accToken *AccessToken, repoUrl string, instId int64) (string, error)
+	GetInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error)
 	ListInstallations(ctx context.Context, accToken *AccessToken) ([]*github.Installation, error)
 	ListRepos(ctx context.Context, accToken *AccessToken, instId int64, page, size int) (*github.ListRepositories, error)
 	SearchRepos(ctx context.Context, accToken *AccessToken, q string, org string, page, size int) (*github.RepositoriesSearchResult, error)
