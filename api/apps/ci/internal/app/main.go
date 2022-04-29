@@ -12,6 +12,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/harbor"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 )
@@ -52,6 +53,10 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
+func (env *Env) GetHarborConfig() (username, password, registryUrl string) {
+	return env.HarborUsername, env.HarborPassword, env.HarborUrl
+}
+
 type AuthClientConnection *grpc.ClientConn
 
 var Module = fx.Module("app",
@@ -62,6 +67,10 @@ var Module = fx.Module("app",
 	fx.Provide(fxCiServer),
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(env *Env) (harbor.Harbor, error) {
+		return harbor.NewClient(env)
 	}),
 
 	// FiberApp
