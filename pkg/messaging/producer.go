@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/fx"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
@@ -59,4 +60,23 @@ func NewKafkaProducer[T any](kafkaCli KafkaClient) (messenger Producer[T], e err
 	return &producer[T]{
 		kafkaBrokers: kafkaCli.GetBrokers(),
 	}, e
+}
+
+func NewFxKafkaProducer[T any]() fx.Option {
+	return fx.Module("producer",
+		fx.Provide(func(c KafkaClient) (Producer[T], error) {
+			return NewKafkaProducer[T](c)
+		}),
+		fx.Invoke(func(p Producer[T], lifecycle fx.Lifecycle) {
+			lifecycle.Append(fx.Hook{
+				OnStart: func(context context.Context) error {
+					return p.Connect(context)
+				},
+				OnStop: func(context context.Context) error {
+					p.Close(context)
+					return nil
+				},
+			})
+		}),
+	)
 }
