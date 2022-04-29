@@ -8,13 +8,13 @@ import (
 )
 
 type infraResponder struct {
-	kProducer     messaging.Producer[any]
+	kProducer     messaging.Producer[messaging.Json]
 	responseTopic string
 }
 
 // SendAddPeerResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendAddPeerResponse(cxt context.Context, action domain.AddPeerResponse) error {
-	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
+	return i.kProducer.SendMessage(i.responseTopic, "resp", messaging.Json{
 		"type":    "add-peer",
 		"payload": action,
 	})
@@ -22,7 +22,7 @@ func (i *infraResponder) SendAddPeerResponse(cxt context.Context, action domain.
 
 // SendCreateClusterResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendCreateClusterResponse(cxt context.Context, action domain.SetupClusterResponse) error {
-	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
+	return i.kProducer.SendMessage(i.responseTopic, "resp", messaging.Json{
 		"type":    "create-cluster",
 		"payload": action,
 	})
@@ -30,7 +30,7 @@ func (i *infraResponder) SendCreateClusterResponse(cxt context.Context, action d
 
 // SendDeleteClusterResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendDeleteClusterResponse(cxt context.Context, action domain.DeleteClusterResponse) error {
-	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
+	return i.kProducer.SendMessage(i.responseTopic, "resp", messaging.Json{
 		"type":    "delete-cluster",
 		"payload": action,
 	})
@@ -39,7 +39,7 @@ func (i *infraResponder) SendDeleteClusterResponse(cxt context.Context, action d
 // SendDeletePeerResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendDeletePeerResponse(cxt context.Context, action domain.DeletePeerResponse) error {
 
-	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
+	return i.kProducer.SendMessage(i.responseTopic, "resp", messaging.Json{
 		"type":    "delete-peer",
 		"payload": action,
 	})
@@ -47,15 +47,19 @@ func (i *infraResponder) SendDeletePeerResponse(cxt context.Context, action doma
 
 // SendUpdateClusterResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendUpdateClusterResponse(cxt context.Context, action domain.UpdateClusterResponse) error {
-	return i.kProducer.SendMessage(i.responseTopic, "resp", map[string]any{
+	return i.kProducer.SendMessage(i.responseTopic, "resp", messaging.Json{
 		"type":    "update-cluster",
 		"payload": action,
 	})
 }
 
-func NewInfraResponder(k messaging.Producer[any], responseTopic string) domain.InfraJobResponder {
+func NewInfraResponder(k messaging.Producer[messaging.Json], responseTopic string) domain.InfraJobResponder {
 	return &infraResponder{
 		kProducer:     k,
 		responseTopic: responseTopic,
 	}
+}
+
+func fxJobResponder(p messaging.Producer[messaging.Json], env *InfraEnv) domain.InfraJobResponder {
+	return NewInfraResponder(p, env.KafkaInfraResponseTopic)
 }

@@ -38,16 +38,12 @@ func (i *InfraEnv) GetConsumerGroupId() string {
 	return i.KafkaGroupId
 }
 
-func fxJobResponder(p messaging.Producer[any], env *InfraEnv) domain.InfraJobResponder {
-	return NewInfraResponder(p, env.KafkaInfraResponseTopic)
-}
-
 var Module = fx.Module("application",
 	config.EnvFx[InfraEnv](),
 	fx.Provide(fxInfraClient),
 
 	// Common Producer
-	messaging.NewFxKafkaProducer[messaging.Message](),
+	messaging.NewFxKafkaProducer[messaging.Json](),
 
 	fx.Provide(fxJobResponder),
 
@@ -111,6 +107,4 @@ var Module = fx.Module("application",
 	}),
 
 	domain.Module,
-
-
 )
