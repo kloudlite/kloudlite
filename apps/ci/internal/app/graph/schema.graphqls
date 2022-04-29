@@ -2,20 +2,24 @@ scalar Json
 scalar Any
 
 type Query {
-
-  ci_gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
-  ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
-  ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
-
   ci_githubInstallations: Any!
   ci_githubInstallationToken(repoUrl: String, instId: Int): Any!
   ci_githubRepos(installationId: Int!, limit: Int, page: Int): Any!
   ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): Any!
   ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): Any!
 
+  ci_gitlabGroups(query: String, pagination: PaginationIn): Any!
+  ci_gitlabRepos(groupId: String!, search: String, pagination: PaginationIn): Any!
+  ci_gitlabRepoBranches(repoId: String!, search: String, pagination: PaginationIn): Any!
+
   ci_getPipelines(projectId: ID!): [GitPipeline!]
   ci_getPipeline(pipelineId: ID!): GitPipeline
 
+}
+
+input PaginationIn {
+  page: Int!
+  PerPage: Int!
 }
 
 type KV {
@@ -33,8 +37,6 @@ input GitPipelineIn {
   githubInstallationId: Int
   buildArgs: Json
 }
-
-
 
 type GitPipeline {
   id: ID!

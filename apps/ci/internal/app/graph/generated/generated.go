@@ -17,6 +17,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/types"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -74,9 +75,9 @@ type ComplexityRoot struct {
 		CiGithubInstallations     func(childComplexity int) int
 		CiGithubRepoBranches      func(childComplexity int, repoURL string, limit *int, page *int) int
 		CiGithubRepos             func(childComplexity int, installationID int, limit *int, page *int) int
-		CiGitlabGroups            func(childComplexity int, search *string, limit *int, page *int) int
-		CiGitlabRepoBranches      func(childComplexity int, repoURL string, search *string) int
-		CiGitlabRepos             func(childComplexity int, groupID repos.ID, search *string, limit *int, page *int) int
+		CiGitlabGroups            func(childComplexity int, query *string, pagination *types.Pagination) int
+		CiGitlabRepoBranches      func(childComplexity int, repoID string, search *string, pagination *types.Pagination) int
+		CiGitlabRepos             func(childComplexity int, groupID string, search *string, pagination *types.Pagination) int
 		CiSearchGithubRepos       func(childComplexity int, search *string, org string, limit *int, page *int) int
 		__resolve__service        func(childComplexity int) int
 	}
@@ -91,14 +92,14 @@ type MutationResolver interface {
 	CiCreatePipeline(ctx context.Context, in model.GitPipelineIn) (map[string]interface{}, error)
 }
 type QueryResolver interface {
-	CiGitlabRepos(ctx context.Context, groupID repos.ID, search *string, limit *int, page *int) ([]map[string]interface{}, error)
-	CiGitlabGroups(ctx context.Context, search *string, limit *int, page *int) ([]map[string]interface{}, error)
-	CiGitlabRepoBranches(ctx context.Context, repoURL string, search *string) ([]map[string]interface{}, error)
 	CiGithubInstallations(ctx context.Context) (interface{}, error)
 	CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error)
 	CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error)
 	CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) (interface{}, error)
 	CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) (interface{}, error)
+	CiGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) (interface{}, error)
+	CiGitlabRepos(ctx context.Context, groupID string, search *string, pagination *types.Pagination) (interface{}, error)
+	CiGitlabRepoBranches(ctx context.Context, repoID string, search *string, pagination *types.Pagination) (interface{}, error)
 	CiGetPipelines(ctx context.Context, projectID repos.ID) ([]*model.GitPipeline, error)
 	CiGetPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error)
 }
@@ -296,7 +297,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGitlabGroups(childComplexity, args["search"].(*string), args["limit"].(*int), args["page"].(*int)), true
+		return e.complexity.Query.CiGitlabGroups(childComplexity, args["query"].(*string), args["pagination"].(*types.Pagination)), true
 
 	case "Query.ci_gitlabRepoBranches":
 		if e.complexity.Query.CiGitlabRepoBranches == nil {
@@ -308,7 +309,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGitlabRepoBranches(childComplexity, args["repoUrl"].(string), args["search"].(*string)), true
+		return e.complexity.Query.CiGitlabRepoBranches(childComplexity, args["repoId"].(string), args["search"].(*string), args["pagination"].(*types.Pagination)), true
 
 	case "Query.ci_gitlabRepos":
 		if e.complexity.Query.CiGitlabRepos == nil {
@@ -320,7 +321,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGitlabRepos(childComplexity, args["groupId"].(repos.ID), args["search"].(*string), args["limit"].(*int), args["page"].(*int)), true
+		return e.complexity.Query.CiGitlabRepos(childComplexity, args["groupId"].(string), args["search"].(*string), args["pagination"].(*types.Pagination)), true
 
 	case "Query.ci_searchGithubRepos":
 		if e.complexity.Query.CiSearchGithubRepos == nil {
@@ -416,20 +417,24 @@ var sources = []*ast.Source{
 scalar Any
 
 type Query {
-
-  ci_gitlabRepos(groupId: ID!, search: String, limit: Int, page: Int): [Json!]!
-  ci_gitlabGroups(search: String, limit: Int, page: Int): [Json!]!
-  ci_gitlabRepoBranches(repoUrl: String!, search: String): [Json!]!
-
   ci_githubInstallations: Any!
   ci_githubInstallationToken(repoUrl: String, instId: Int): Any!
   ci_githubRepos(installationId: Int!, limit: Int, page: Int): Any!
   ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): Any!
   ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): Any!
 
+  ci_gitlabGroups(query: String, pagination: PaginationIn): Any!
+  ci_gitlabRepos(groupId: String!, search: String, pagination: PaginationIn): Any!
+  ci_gitlabRepoBranches(repoId: String!, search: String, pagination: PaginationIn): Any!
+
   ci_getPipelines(projectId: ID!): [GitPipeline!]
   ci_getPipeline(pipelineId: ID!): GitPipeline
 
+}
+
+input PaginationIn {
+  page: Int!
+  PerPage: Int!
 }
 
 type KV {
@@ -447,8 +452,6 @@ input GitPipelineIn {
   githubInstallationId: Int
   buildArgs: Json
 }
-
-
 
 type GitPipeline {
   id: ID!
@@ -662,32 +665,23 @@ func (ec *executionContext) field_Query_ci_gitlabGroups_args(ctx context.Context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["query"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
 		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg0
-	var arg1 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	args["query"] = arg0
+	var arg1 *types.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg1, err = ec.unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["limit"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg2
+	args["pagination"] = arg1
 	return args, nil
 }
 
@@ -695,14 +689,14 @@ func (ec *executionContext) field_Query_ci_gitlabRepoBranches_args(ctx context.C
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["repoUrl"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoUrl"))
+	if tmp, ok := rawArgs["repoId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoId"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["repoUrl"] = arg0
+	args["repoId"] = arg0
 	var arg1 *string
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
@@ -712,16 +706,25 @@ func (ec *executionContext) field_Query_ci_gitlabRepoBranches_args(ctx context.C
 		}
 	}
 	args["search"] = arg1
+	var arg2 *types.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg2, err = ec.unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg2
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_ci_gitlabRepos_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
+	var arg0 string
 	if tmp, ok := rawArgs["groupId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("groupId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -736,24 +739,15 @@ func (ec *executionContext) field_Query_ci_gitlabRepos_args(ctx context.Context,
 		}
 	}
 	args["search"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg2 *types.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg2, err = ec.unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["limit"] = arg2
-	var arg3 *int
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg3
+	args["pagination"] = arg2
 	return args, nil
 }
 
@@ -1294,132 +1288,6 @@ func (ec *executionContext) _Mutation_ci_createPipeline(ctx context.Context, fie
 	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_ci_gitlabRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_ci_gitlabRepos_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGitlabRepos(rctx, args["groupId"].(repos.ID), args["search"].(*string), args["limit"].(*int), args["page"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]map[string]interface{})
-	fc.Result = res
-	return ec.marshalNJson2ᚕmapᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_ci_gitlabGroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_ci_gitlabGroups_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGitlabGroups(rctx, args["search"].(*string), args["limit"].(*int), args["page"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]map[string]interface{})
-	fc.Result = res
-	return ec.marshalNJson2ᚕmapᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_ci_gitlabRepoBranches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_ci_gitlabRepoBranches_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGitlabRepoBranches(rctx, args["repoUrl"].(string), args["search"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]map[string]interface{})
-	fc.Result = res
-	return ec.marshalNJson2ᚕmapᚄ(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_ci_githubInstallations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1607,6 +1475,132 @@ func (ec *executionContext) _Query_ci_searchGithubRepos(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().CiSearchGithubRepos(rctx, args["search"].(*string), args["org"].(string), args["limit"].(*int), args["page"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_ci_gitlabGroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_ci_gitlabGroups_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CiGitlabGroups(rctx, args["query"].(*string), args["pagination"].(*types.Pagination))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_ci_gitlabRepos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_ci_gitlabRepos_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CiGitlabRepos(rctx, args["groupId"].(string), args["search"].(*string), args["pagination"].(*types.Pagination))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_ci_gitlabRepoBranches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_ci_gitlabRepoBranches_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CiGitlabRepoBranches(rctx, args["repoId"].(string), args["search"].(*string), args["pagination"].(*types.Pagination))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3104,6 +3098,37 @@ func (ec *executionContext) unmarshalInputGitPipelineIn(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPaginationIn(ctx context.Context, obj interface{}) (types.Pagination, error) {
+	var it types.Pagination
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "page":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+			it.Page, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "PerPage":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("PerPage"))
+			it.PerPage, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3321,75 +3346,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "ci_gitlabRepos":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_ci_gitlabRepos(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "ci_gitlabGroups":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_ci_gitlabGroups(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "ci_gitlabRepoBranches":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_ci_gitlabRepoBranches(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
 		case "ci_githubInstallations":
 			field := field
 
@@ -3492,6 +3448,75 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_ci_searchGithubRepos(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "ci_gitlabGroups":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ci_gitlabGroups(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "ci_gitlabRepos":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ci_gitlabRepos(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "ci_gitlabRepoBranches":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ci_gitlabRepoBranches(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4147,38 +4172,6 @@ func (ec *executionContext) marshalNJson2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) unmarshalNJson2ᚕmapᚄ(ctx context.Context, v interface{}) ([]map[string]interface{}, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]map[string]interface{}, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNJson2map(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNJson2ᚕmapᚄ(ctx context.Context, sel ast.SelectionSet, v []map[string]interface{}) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNJson2map(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4576,6 +4569,14 @@ func (ec *executionContext) marshalOJson2map(ctx context.Context, sel ast.Select
 	}
 	res := graphql.MarshalMap(v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx context.Context, v interface{}) (*types.Pagination, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPaginationIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
