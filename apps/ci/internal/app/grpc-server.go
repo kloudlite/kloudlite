@@ -1,26 +1,17 @@
 package app
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/harbor"
 	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
-	"net/http"
-	"net/url"
 )
 
 type server struct {
 	ci.UnimplementedCIServer
-	harborUsername string
-	harborPassword string
-	harborUrl      url.URL
-	d              domain.Domain
+	harborCli harbor.Harbor
+	d         domain.Domain
 }
 
 func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.PipelineOutput, error) {
@@ -49,98 +40,23 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 	return &ci.PipelineOutput{PipelineId: string(pipeline.Id)}, err
 }
 
-func (s *server) checkIfProjectExists(ctx context.Context, name string) (*bool, error) {
-	s.harborUrl.Query().Add("project_name", name)
-	r, err := http.NewRequest(http.MethodHead, s.harborUrl.String(), nil)
-	if err != nil {
-		return nil, errors.NewEf(err, "while building http request")
-	}
-	r2, err := http.DefaultClient.Do(r)
-	if err != nil {
-		return nil, errors.NewEf(err, "while making request to check if project name already exists")
-	}
-
-	if r2.StatusCode == http.StatusOK {
-		return fn.NewBool(true), nil
-	}
-	return fn.NewBool(false), nil
-}
-
 func (s *server) CreateHarborProject(ctx context.Context, in *ci.HarborProjectIn) (*ci.HarborProjectOut, error) {
-	b, err := s.checkIfProjectExists(ctx, in.Name)
-	if err != nil {
+	if err := s.harborCli.CreateProject(ctx, in.Name); err != nil {
 		return nil, err
 	}
-	if b != nil && *b {
-		return &ci.HarborProjectOut{Status: true}, nil
-	}
-
-	body := t.M{
-		"project_name": in.Name,
-		"public":       false,
-	}
-	bbody, err := json.Marshal(body)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not unmarshal req body")
-	}
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", s.harborUrl.String(), "projects"), bytes.NewBuffer(bbody))
-	if err != nil {
-		return nil, errors.NewEf(err, "could not build request")
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.SetBasicAuth(s.harborUsername, s.harborPassword)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil, errors.NewEf(err, "while making request")
-	}
-	if resp.StatusCode == http.StatusCreated {
-		return &ci.HarborProjectOut{Status: true}, nil
-	}
-	return nil, errors.Newf("could not create harbor project as received (statuscode=%d)", resp.StatusCode)
+	return &ci.HarborProjectOut{Status: true}, nil
 }
 
 func (s *server) DeleteHarborProject(ctx context.Context, in *ci.HarborProjectIn) (*ci.HarborProjectOut, error) {
-	b, err := s.checkIfProjectExists(ctx, in.Name)
-	if err != nil {
+	if err := s.harborCli.DeleteProject(ctx, in.Name); err != nil {
 		return nil, err
 	}
-	if b != nil && *b {
-		return &ci.HarborProjectOut{Status: true}, nil
-	}
-	if b != nil && !*b {
-		return nil, errors.Newf("harbor project(name=%s) does not exist", in.Name)
-	}
-
-	u, err := s.harborUrl.Parse(in.Name)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not join url path param")
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), nil)
-	if err != nil {
-		return nil, errors.NewEf(err, "while building http request")
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, errors.NewEf(err, "while making request")
-	}
-	if resp.StatusCode == http.StatusOK {
-		return &ci.HarborProjectOut{Status: true}, nil
-	}
-	return nil, errors.Newf("could not delete harbor project as received (statuscode=%d)", resp.StatusCode)
+	return &ci.HarborProjectOut{Status: true}, nil
 }
 
-func fxCiServer(env *Env, d domain.Domain) ci.CIServer {
-	hUrl, err := url.Parse(env.HarborUrl)
-	if err != nil || hUrl == nil {
-		panic(fmt.Errorf("harbor url (%s) is not a valid url", env.HarborUrl))
-	}
+func fxCiServer(env *Env, harborCli harbor.Harbor, d domain.Domain) ci.CIServer {
 	return &server{
-		harborUsername: env.HarborUsername,
-		harborPassword: env.HarborPassword,
-		harborUrl:      *hUrl,
-		d:              d,
+		harborCli: harborCli,
+		d:         d,
 	}
 }
