@@ -8,15 +8,16 @@ import (
 )
 
 type ResourceChangeNotifier interface {
-	Notify(resourceId repos.ID, changeType string) error
+	Notify(resourceId repos.ID) error
 }
 
 type rcn struct {
 	serviceUrl string
 }
 
-func (r *rcn) Notify(resourceId repos.ID, changeType string) error {
-	_, err := http.Get(fmt.Sprintf("%s/publish/resource-update/%s", r.serviceUrl, resourceId))
+func (r *rcn) Notify(resourceId repos.ID) error {
+	_, err := http.Post(fmt.Sprintf("%s/publish/resource-update/%s", r.serviceUrl, resourceId), "text/plain", nil)
+	fmt.Println(err)
 	return err
 }
 

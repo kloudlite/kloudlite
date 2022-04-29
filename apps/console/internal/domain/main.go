@@ -16,11 +16,13 @@ import (
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
+	rcn "kloudlite.io/pkg/res-change-notifier"
 	"math"
 	"math/rand"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type domain struct {
@@ -42,6 +44,7 @@ type domain struct {
 	infraClient          infra.InfraClient
 	ciClient             ci.CIClient
 	imageRepoUrlPrefix   string
+	notifier             rcn.ResourceChangeNotifier
 }
 
 func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error) {
@@ -893,6 +896,11 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 		},
 		Data: nil,
 	})
+	fmt.Println("scheduled")
+	time.AfterFunc(3*time.Second, func() {
+		fmt.Println("send apply config")
+		d.notifier.Notify(create.Id)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -1267,6 +1275,7 @@ type Env struct {
 }
 
 func fxDomain(
+	notifier rcn.ResourceChangeNotifier,
 	deviceRepo repos.DbRepo[*entities.Device],
 	clusterRepo repos.DbRepo[*entities.Cluster],
 	projectRepo repos.DbRepo[*entities.Project],
@@ -1285,6 +1294,7 @@ func fxDomain(
 	ciClient ci.CIClient,
 ) Domain {
 	return &domain{
+		notifier:             notifier,
 		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
 		ciClient:             ciClient,
 		infraClient:          infraClient,
