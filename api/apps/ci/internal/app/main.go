@@ -63,6 +63,7 @@ var Module = fx.Module("app",
 	fx.Provide(config.LoadEnv[Env]()),
 	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
+	repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
 
 	fx.Provide(fxCiServer),
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
@@ -91,6 +92,7 @@ var Module = fx.Module("app",
 			token, err := github.GetInstallationToken(ctx.Context(), "", int64(paramsInt))
 			return ctx.JSON(token)
 		})
+
 	}),
 
 	// GraphQL App

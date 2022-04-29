@@ -28,6 +28,14 @@ var PipelineIndexes = []repos.IndexField{
 	},
 }
 
+type HarborAccount struct {
+	repos.BaseEntity `bson:",inline"`
+	HarborId         int    `json:"harbor_id"`
+	ProjectName      string `json:"project_name"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+}
+
 type AccessToken struct {
 	Id       repos.ID       `json:"_id"`
 	UserId   repos.ID       `json:"user_id" bson:"user_id"`
