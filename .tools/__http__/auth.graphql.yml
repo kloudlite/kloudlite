@@ -124,7 +124,7 @@ query: |
     }
   }
 variables:
-  name: sample-acc3
+  name: sample-accn
   billing:
     stripePaymentMethod: "sample"
     stripeSetupIntentId: "sadfasf"

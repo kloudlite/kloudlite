@@ -16,3 +16,7 @@ type Domain interface {
 	GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, page, size int) (any, error)
 	GithubAddWebhook(ctx context.Context, userId repos.ID, refId string, repoUrl string) error
 }
+
+type Harbor interface {
+	SaveUserAcc(ctx context.Context, acc *HarborAccount) error
+}

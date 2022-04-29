@@ -171,6 +171,9 @@ func (repo dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 }
 
 func (repo dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) error {
+	if len(indices) == 0 {
+		return nil
+	}
 	var models []mongo.IndexModel
 	for _, f := range indices {
 		b := bson.D{}

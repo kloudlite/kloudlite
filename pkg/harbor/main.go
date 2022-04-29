@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"kloudlite.io/pkg/errors"
 	"net/http"
 	"net/url"
 
-	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
 	t "kloudlite.io/pkg/types"
 )
@@ -20,7 +21,7 @@ type Config interface {
 type harbor struct {
 	username    string
 	password    string
-	registryUrl *url.URL
+	registryUrl url.URL
 }
 
 func (h *harbor) withAuth(req *http.Request) {
@@ -28,23 +29,31 @@ func (h *harbor) withAuth(req *http.Request) {
 	req.SetBasicAuth(h.username, h.password)
 }
 
-func (h *harbor) CreateUserAccount(ctx context.Context, projectName string, name string) error {
-	b, err := h.checkIfProjectExists(ctx, name)
+type User struct {
+	Id     int
+	Name   string
+	Secret string
+}
+
+func (h *harbor) CreateUserAccount(ctx context.Context, projectName string) (*User, error) {
+	b, err := h.checkIfProjectExists(ctx, projectName)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if b != nil && !*b {
-		return errors.Newf("project(name=%s) not found", name)
+	if !b { //i.e. project does not exist
+		return nil, errors.Newf("project %s does not exist", projectName)
 	}
 
 	// create account
 	s, err := fn.CleanerNanoid(32)
 	if err != nil {
-		return errors.NewEf(err, "could not create nanoid")
+		return nil, err
 	}
 	body := t.M{
 		"secret":      s,
-		"name":        name,
+		"name":        projectName,
+		"level":       "system",
+		"duration":    0,
 		"description": "created by kloudlite/ci",
 		"permissions": []t.M{
 			{
@@ -98,7 +107,7 @@ func (h *harbor) CreateUserAccount(ctx context.Context, projectName string, name
 
 	b2, err := json.Marshal(body)
 	if err != nil {
-		return errors.NewEf(err, "could not unmarshal request body")
+		return nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", h.registryUrl.String(), "robots"), bytes.NewBuffer(b2))
@@ -106,14 +115,23 @@ func (h *harbor) CreateUserAccount(ctx context.Context, projectName string, name
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return errors.NewEf(err, "while making request")
+		return nil, err
 	}
-
-	if resp.StatusCode == http.StatusOK {
-		return nil
+	rbody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
+	fmt.Println("Response: ", string(rbody))
+	var user User
+	if err := json.Unmarshal(rbody, &user); err != nil {
+		return nil, errors.NewEf(err, "could not unmarshal into harborUser")
+	}
+	fmt.Printf("User: %+v\n", user)
 
-	return errors.Newf("could not create harbor account as received (statuscode=%d)", resp.StatusCode)
+	if resp.StatusCode == http.StatusCreated {
+		return &user, nil
+	}
+	return nil, errors.Newf("could not create user account as received statuscode=%d", resp.StatusCode)
 }
 
 func (h *harbor) DeleteUserAccount(ctx context.Context, robotAccId int) error {
@@ -123,23 +141,27 @@ func (h *harbor) DeleteUserAccount(ctx context.Context, robotAccId int) error {
 	return nil
 }
 
-func (h *harbor) checkIfProjectExists(ctx context.Context, name string) (*bool, error) {
-	q := h.registryUrl.Query()
-	q.Add("project_name", name)
-	h.registryUrl.RawQuery = q.Encode()
-	r, err := http.NewRequest(http.MethodHead, h.registryUrl.String(), nil)
+func (h *harbor) checkIfProjectExists(ctx context.Context, name string) (bool, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, fmt.Sprintf("%s/projects", h.registryUrl.String()), nil)
 	if err != nil {
-		return nil, errors.NewEf(err, "while building http request")
+		return false, errors.NewEf(err, "while building http request")
 	}
-	r2, err := http.DefaultClient.Do(r)
+	q := req.URL.Query()
+	q.Add("project_name", name)
+	req.URL.RawQuery = q.Encode()
+	h.withAuth(req)
+	fmt.Println("checkprojects: url=>", req.URL.String())
+	r2, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, errors.NewEf(err, "while making request to check if project name already exists")
+		return false, errors.NewEf(err, "while making request to check if project name already exists")
 	}
 
 	if r2.StatusCode == http.StatusOK {
-		return fn.NewBool(true), nil
+		return true, nil
 	}
-	return fn.NewBool(false), nil
+	all, err := io.ReadAll(r2.Body)
+	fmt.Println("all:", string(all), "err:", err, "statuscode:", r2.StatusCode)
+	return false, nil
 }
 
 func (h *harbor) CreateProject(ctx context.Context, name string) error {
@@ -147,7 +169,7 @@ func (h *harbor) CreateProject(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
-	if b != nil && *b {
+	if b { //ie. project exists
 		return nil
 	}
 
@@ -163,8 +185,8 @@ func (h *harbor) CreateProject(ctx context.Context, name string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not build request")
 	}
-	req.Header.Add("Content-Type", "application/json")
-	req.SetBasicAuth(h.username, h.password)
+	fmt.Println("url:", req.URL)
+	h.withAuth(req)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -182,10 +204,7 @@ func (h *harbor) DeleteProject(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
-	if b != nil && *b {
-		return nil
-	}
-	if b != nil && !*b {
+	if !b {
 		return errors.Newf("harbor project(name=%s) does not exist", name)
 	}
 
@@ -217,6 +236,6 @@ func NewClient(cfg Config) (Harbor, error) {
 	return &harbor{
 		username:    username,
 		password:    password,
-		registryUrl: u,
+		registryUrl: *u,
 	}, nil
 }
