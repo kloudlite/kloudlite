@@ -119,7 +119,7 @@ func (domain *domainI) CreateAccount(
 	}
 	fmt.Println("sending message to console")
 	// _, err = domain.consoleCli.CreateDefaultCluster(ctx, &console.CreateClusterIn{
-	// 	AccountId:   string(acc.Id),
+	// 	AccountId:   string(acc.HarborId),
 	// 	AccountName: acc.Name,
 	// })
 	// fmt.Println("sent message", err)

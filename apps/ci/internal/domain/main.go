@@ -12,10 +12,19 @@ import (
 )
 
 type domainI struct {
-	pipelineRepo repos.DbRepo[*Pipeline]
-	authClient   auth.AuthClient
-	github       Github
-	gitlab       Gitlab
+	pipelineRepo  repos.DbRepo[*Pipeline]
+	authClient    auth.AuthClient
+	github        Github
+	gitlab        Gitlab
+	harborAccRepo repos.DbRepo[*HarborAccount]
+}
+
+func (d *domainI) SaveUserAcc(ctx context.Context, acc *HarborAccount) error {
+	acc, err := d.harborAccRepo.Create(ctx, acc)
+	if err != nil {
+		return errors.NewEf(err, "[dbRepo] failed to create harbor account")
+	}
+	return nil
 }
 
 func (d *domainI) getAccessToken(ctx context.Context, provider string, userId repos.ID) (*AccessToken, error) {
@@ -112,13 +121,15 @@ func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeli
 	return id, nil
 }
 
-func fxDomain(pipelineRepo repos.DbRepo[*Pipeline], authClient auth.AuthClient, gitlab Gitlab, github Github) Domain {
-	return &domainI{
-		authClient:   authClient,
-		pipelineRepo: pipelineRepo,
-		gitlab:       gitlab,
-		github:       github,
+func fxDomain(pipelineRepo repos.DbRepo[*Pipeline], harborAccRepo repos.DbRepo[*HarborAccount], authClient auth.AuthClient, gitlab Gitlab, github Github) (Domain, Harbor) {
+	d := domainI{
+		authClient:    authClient,
+		pipelineRepo:  pipelineRepo,
+		gitlab:        gitlab,
+		github:        github,
+		harborAccRepo: harborAccRepo,
 	}
+	return &d, &d
 }
 
 var Module = fx.Module("domain",
