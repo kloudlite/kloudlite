@@ -106,7 +106,7 @@ type Env struct {
 var Module = fx.Module("domain",
 	config.EnvFx[Env](),
 	fx.Provide(fxDomain),
-	fx.Invoke(func(ij InfraJobResponder, d Domain, p messaging.Producer[any], lifecycle fx.Lifecycle) {
+	fx.Invoke(func(ij InfraJobResponder, d Domain, p messaging.Producer[messaging.Json], lifecycle fx.Lifecycle) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				//ij.SendCreateClusterResponse(ctx, SetupClusterResponse{
