@@ -49,7 +49,7 @@ query: |
     }
   }
 variables:
-  code: 2805cd374aefb7df637a9adb2f75544bc60a3c3e0e4e769ae16d2d65616a4ded
+  code: 7f749df57239c9b05d6a7860420233bdea797b9ad3234ef19b65b7ff1f75e182
   provider: gitlab
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
 
@@ -61,6 +61,7 @@ query: |
       avatar
       id
       email
+      providerGitlab
     }
   }
 
@@ -131,4 +132,62 @@ variables:
     cardholderName: "sdfass"
     address: 
       line1: sadfasdf
+---
+
+### gitlab testing
+---
+label: Gitlab Groups
+query: |
+  query Query {
+    ci_gitlabGroups
+  }
+---
+
+---
+label: Gitlab Groups
+query: |
+  query Query($query: String) {
+    ci_gitlabGroups(query: $query)
+  }
+variables:
+  query: madh
+---
+
+label: Gitlab Repos
+query: |
+  query Query($groupId: String!) {
+    ci_gitlabRepos(groupId: $groupId)
+  }
+variables:
+  groupId: "8508925"
+---
+
+label: Gitlab Repos with Search
+query: |
+  query Query($groupId: String!, $search: String) {
+    ci_gitlabRepos(groupId: $groupId, search: $search)
+  }
+
+variables:
+  groupId: "8508925"
+  search: "oper"
+
+---
+
+label: Gitlab Repo Branches
+query: |
+  query Query($repoId: String!) {
+    ci_gitlabRepoBranches(repoId: $repoId)
+  }
+variables:
+  repoId: "26232015"
+---
+
+label: Gitlab Add Webhook
+query: |
+  query Query($repoId: String!) {
+    ci_addWebhook(repoId: $repoId)
+  }
+variables:
+  repoId: "26232015"
 ---
