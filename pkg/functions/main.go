@@ -65,7 +65,7 @@ var re = regexp.MustCompile(`(\W|_)+`)
 func CleanerNanoid(n int) (string, error) {
 	id, e := nanoid.New(n)
 	if e != nil {
-		return "", e
+		return "", errors.NewEf(e, "could not get nanoid()")
 	}
 	res := re.ReplaceAllString(id, "-")
 	if strings.HasPrefix(res, "-") {
