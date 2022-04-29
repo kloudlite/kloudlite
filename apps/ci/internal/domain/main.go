@@ -3,11 +3,13 @@ package domain
 import (
 	"context"
 	"fmt"
+	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"golang.org/x/oauth2"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/types"
 	"time"
 )
 
@@ -17,6 +19,38 @@ type domainI struct {
 	github        Github
 	gitlab        Gitlab
 	harborAccRepo repos.DbRepo[*HarborAccount]
+}
+
+func (d *domainI) GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error) {
+	token, err := d.getAccessToken(ctx, "gitlab", userId)
+	if err != nil {
+		return nil, err
+	}
+	return d.gitlab.ListGroups(ctx, token, query, pagination)
+}
+
+func (d *domainI) GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) (any, error) {
+	token, err := d.getAccessToken(ctx, "gitlab", userId)
+	if err != nil {
+		return nil, err
+	}
+	return d.gitlab.ListRepos(ctx, token, gid, query, pagination)
+}
+
+func (d *domainI) GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) (any, error) {
+	token, err := d.getAccessToken(ctx, "gitlab", userId)
+	if err != nil {
+		return nil, err
+	}
+	return d.gitlab.ListBranches(ctx, token, repoId, query, pagination)
+}
+
+func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId string) (*gitlab.ProjectHook, error) {
+	token, err := d.getAccessToken(ctx, "gitlab", userId)
+	if err != nil {
+		return nil, err
+	}
+	return d.gitlab.AddWebhook(ctx, token, repoId, pipelineId)
 }
 
 func (d *domainI) SaveUserAcc(ctx context.Context, acc *HarborAccount) error {

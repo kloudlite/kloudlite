@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
+	hello := "sdfasdf"
 	readable := generateReadable("Kar")
 	fmt.Println(readable)
 }

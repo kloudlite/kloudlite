@@ -8,13 +8,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
+	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/types"
 )
 
 func (r *mutationResolver) CiDeleteGitPipeline(ctx context.Context, pipelineID repos.ID) (bool, error) {
@@ -46,18 +47,6 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 		return nil, err
 	}
 	return x, err
-}
-
-func (r *queryResolver) CiGitlabRepos(ctx context.Context, groupID repos.ID, search *string, limit *int, page *int) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGitlabGroups(ctx context.Context, search *string, limit *int, page *int) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoURL string, search *string) ([]map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) CiGithubInstallations(ctx context.Context) (interface{}, error) {
@@ -119,6 +108,21 @@ func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string,
 		p = *limit
 	}
 	return r.Domain.GithubSearchRepos(ctx, session.UserId, *search, org, p, l)
+}
+
+func (r *queryResolver) CiGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) (interface{}, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	return r.Domain.GitlabListGroups(ctx, session.UserId, query, pagination)
+}
+
+func (r *queryResolver) CiGitlabRepos(ctx context.Context, groupID string, search *string, pagination *types.Pagination) (interface{}, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	return r.Domain.GitlabListRepos(ctx, session.UserId, groupID, search, pagination)
+}
+
+func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoID string, search *string, pagination *types.Pagination) (interface{}, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	return r.Domain.GitlabListBranches(ctx, session.UserId, repoID, search, pagination)
 }
 
 func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) ([]*model.GitPipeline, error) {
