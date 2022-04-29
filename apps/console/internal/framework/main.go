@@ -10,6 +10,7 @@ import (
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 	mongo_db "kloudlite.io/pkg/repos"
+	rcn "kloudlite.io/pkg/res-change-notifier"
 )
 
 type GrpcInfraConfig struct {
@@ -47,9 +48,10 @@ type Env struct {
 	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
 	KafkaBrokers  string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
 	Port          uint16 `env:"PORT" required:"true"`
-	IsDev         bool   `env:"DEV" default:"false"`
-	CorsOrigins   string `env:"ORIGINS"`
-	GrpcPort      uint16 `env:"GRPC_PORT"`
+	IsDev         bool   `env:"DEV" default:"false" required:"true"`
+	CorsOrigins   string `env:"ORIGINS" required:"true"`
+	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
+	NotifierUrl   string `env:"NOTIFIER_URL" required:"true"`
 }
 
 func (e *Env) GetBrokers() string {
@@ -76,6 +78,10 @@ func (e *Env) GetGRPCPort() uint16 {
 	return e.GrpcPort
 }
 
+func (e *Env) GetNotifierUrl() string {
+	return e.NotifierUrl
+}
+
 var Module = fx.Module("framework",
 	config.EnvFx[*Env](),
 	fx.Provide(config.LoadEnv[Env]()),
@@ -83,6 +89,7 @@ var Module = fx.Module("framework",
 	fx.Provide(config.LoadEnv[GrpcAuthConfig]()),
 	fx.Provide(config.LoadEnv[GrpcCIConfig]()),
 	fx.Provide(logger.NewLogger),
+	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*GrpcInfraConfig, app.InfraClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
