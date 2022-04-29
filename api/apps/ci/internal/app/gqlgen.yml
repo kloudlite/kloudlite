@@ -45,7 +45,6 @@ autobind:
 # your liking
 skip_validation: true
 models:
-
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
@@ -54,6 +53,9 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  PaginationIn:
+    model:
+      - kloudlite.io/pkg/types.Pagination
   Json:
     model:
       - github.com/99designs/gqlgen/graphql.Map

@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"kloudlite.io/apps/ci/internal/domain"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/types"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
@@ -17,6 +19,9 @@ type gitlabI struct {
 }
 
 func (gl *gitlabI) getToken(ctx context.Context, token *domain.AccessToken) (*oauth2.Token, error) {
+	if token == nil {
+		return nil, errors.New("token is nil")
+	}
 	t, err := gl.cfg.TokenSource(ctx, token.Token).Token()
 	if err != nil {
 		return nil, errors.NewEf(err, "could not get token from token source")
@@ -36,14 +41,14 @@ func (gl *gitlabI) getClient(ctx context.Context, token *domain.AccessToken) (*g
 	return client, nil
 }
 
-func (gl *gitlabI) ListGroups(ctx context.Context, token *domain.AccessToken, query string, page int, size int) ([]*gitlab.Group, error) {
+func (gl *gitlabI) ListGroups(ctx context.Context, token *domain.AccessToken, query *string, pagination *types.Pagination) ([]*gitlab.Group, error) {
 	client, err := gl.getClient(ctx, token)
+	if err != nil {
+		return nil, err
+	}
 	groups, _, err := client.Groups.ListGroups(&gitlab.ListGroupsOptions{
-		Search: &query,
-		ListOptions: gitlab.ListOptions{
-			Page:    page,
-			PerPage: size,
-		},
+		Search:       query,
+		ListOptions:  buildListOptions(pagination),
 		TopLevelOnly: fn.NewBool(true),
 	})
 	if err != nil {
@@ -52,15 +57,25 @@ func (gl *gitlabI) ListGroups(ctx context.Context, token *domain.AccessToken, qu
 	return groups, nil
 }
 
-func (gl *gitlabI) ListRepos(ctx context.Context, token *domain.AccessToken, gid string, query string) ([]*gitlab.Project, error) {
+func buildListOptions(p *types.Pagination) gitlab.ListOptions {
+	if p == nil {
+		return gitlab.ListOptions{}
+	}
+	return gitlab.ListOptions{
+		Page:    p.Page,
+		PerPage: p.PerPage,
+	}
+}
+
+func (gl *gitlabI) ListRepos(ctx context.Context, token *domain.AccessToken, gid string, query *string, pagination *types.Pagination) ([]*gitlab.Project, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 	projects, _, err := client.Groups.ListGroupProjects(gid, &gitlab.ListGroupProjectsOptions{
-		ListOptions:      gitlab.ListOptions{},
 		IncludeSubGroups: fn.NewBool(true),
-		Search:           &query,
+		ListOptions:      buildListOptions(pagination),
+		Search:           query,
 		Simple:           fn.NewBool(true),
 	})
 	if err != nil {
@@ -69,17 +84,14 @@ func (gl *gitlabI) ListRepos(ctx context.Context, token *domain.AccessToken, gid
 	return projects, nil
 }
 
-func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, projectId string, page int, size int) ([]*gitlab.Branch, error) {
+func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, repoId string, query *string, pagination *types.Pagination) ([]*gitlab.Branch, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, err
 	}
-	branches, _, err := client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{
-		ListOptions: gitlab.ListOptions{
-			Page:    page,
-			PerPage: size,
-		},
-		Search: nil,
+	branches, _, err := client.Branches.ListBranches(repoId, &gitlab.ListBranchesOptions{
+		ListOptions: buildListOptions(pagination),
+		Search:      query,
 	})
 
 	if err != nil {
@@ -89,7 +101,7 @@ func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, 
 	return branches, nil
 }
 
-func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken) (*gitlab.ProjectHook, error) {
+func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId string, pipelineId string) (*gitlab.ProjectHook, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, err
@@ -98,12 +110,16 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken) (*
 	if err != nil {
 		return nil, err
 	}
-	hook, _, err := client.Projects.AddProjectHook(ctx, &gitlab.AddProjectHookOptions{
+	webhookUrl := fmt.Sprintf("%s?pipelineId=%s", gl.webhookUrl, pipelineId)
+	hook, _, err := client.Projects.AddProjectHook(repoId, &gitlab.AddProjectHookOptions{
 		PushEvents:    fn.NewBool(true),
 		TagPushEvents: fn.NewBool(true),
 		Token:         &id,
-		URL:           &gl.webhookUrl,
+		URL:           &webhookUrl,
 	})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not add gitlab webhook")
+	}
 	return hook, nil
 }
 
