@@ -87,7 +87,7 @@ func (d *domain) UpdateCluster(cxt context.Context, action UpdateClusterAction) 
 	})
 	return err
 }
-func makeDomain(
+func fxDomain(
 	env *Env,
 	infraCli InfraClient,
 	infraJobResp InfraJobResponder,
@@ -105,7 +105,7 @@ type Env struct {
 
 var Module = fx.Module("domain",
 	config.EnvFx[Env](),
-	fx.Provide(makeDomain),
+	fx.Provide(fxDomain),
 	fx.Invoke(func(ij InfraJobResponder, d Domain, p messaging.Producer[any], lifecycle fx.Lifecycle) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
