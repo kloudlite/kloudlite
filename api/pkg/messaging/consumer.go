@@ -115,6 +115,7 @@ type KafkaConsumerConfig interface {
 func NewFxKafkaConsumer[T KafkaConsumerConfig]() fx.Option {
 	return fx.Module("consumer",
 		fx.Provide(func(c T, kafkaCli KafkaClient, logger logger.Logger) (Consumer[T], error) {
+			fmt.Println("subscription", c.GetSubscriptionTopics())
 			return NewKafkaConsumer[T](
 				kafkaCli,
 				c.GetSubscriptionTopics(),
