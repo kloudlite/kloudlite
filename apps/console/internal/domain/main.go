@@ -95,6 +95,7 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
 					UserId:               string(userId),
 					Name:                 c.Pipeline.Name,
+					ProjectId:            string(app.ProjectId),
 					ImageName:            fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName),
 					GitProvider:          c.Pipeline.GitProvider,
 					GitRepoUrl:           c.Pipeline.GitRepoUrl,
