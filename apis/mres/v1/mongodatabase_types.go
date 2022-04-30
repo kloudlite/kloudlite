@@ -20,7 +20,6 @@ type ConfigRef struct {
 
 type ManagedSvcRef struct {
 	Name      string     `json:"name"`
-	Service   string     `json:"service"`
 	ConfigRef *ConfigRef `json:"config_ref,omitempty"`
 	SecretRef *SecretRef `json:"secret_ref,omitempty"`
 }
@@ -49,8 +48,8 @@ type MongoDatabase struct {
 	Status MongoDatabaseStatus `json:"status,omitempty"`
 }
 
-func (m *MongoDatabase) ConnectToDB(ctx context.Context, username, password, dbName string) (*mongo.Database, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s.%s", username, password, m.Spec.ManagedSvc.Service, m.Namespace)))
+func (m *MongoDatabase) ConnectToDB(ctx context.Context, username, password, host, dbName string) (*mongo.Database, error) {
+	client, err := mongo.NewClient(options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s", username, password, host)))
 	if err != nil {
 		return nil, errors.NewEf(err, "could not create mongodb client")
 	}

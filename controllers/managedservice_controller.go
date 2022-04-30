@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"context"
+	fn "operators.kloudlite.io/lib/functions"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
@@ -20,7 +20,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/yaml"
 )
 
 // ManagedServiceReconciler reconciles a ManagedService object
@@ -39,14 +38,6 @@ type ManagedServiceReconciler struct {
 
 const msvcFinalizer = "finalizers.kloudlite.io/managed-service"
 
-type Sample struct {
-	Metadata struct {
-		Namespace string `json:"namespace"`
-		Name      string `json:"name"`
-	} `json:"metadata"`
-	Spec interface{} `json:"spec"`
-}
-
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
@@ -64,7 +55,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	if msvc.Spec.Type != "MongoDBStandalone" {
-		reconcileResult.Failed()
+		return reconcileResult.Failed()
 	}
 
 	kt, err := templates.UseTemplate(templates.MongoDBStandalone)
@@ -77,37 +68,12 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		logger.Info(b, err)
 	}
 
-	var ry unstructured.Unstructured
-	if err = yaml.Unmarshal(b, &ry.Object); err != nil {
-		logger.Error(err)
-		logger.Info("could not convert template %s []byte into mongodb", templates.MongoDBStandalone)
-		return reconcileResult.Failed()
+	if err := fn.KubectlApply(b); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not apply managed service"))
 	}
+	logger.Infof("applied managed service")
 
-	logger.Info("ry.Spec:", ry.Object["spec"])
-
-	m := new(unstructured.Unstructured)
-	m.Object = map[string]interface{}{
-		"apiVersion": ry.Object["apiVersion"],
-		"kind":       ry.Object["kind"],
-		"metadata":   ry.Object["metadata"],
-		"spec":       ry.Object["spec"],
-	}
-
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, m, func() error {
-		m = m.DeepCopy()
-		m.Object["spec"] = ry.Object["spec"]
-
-		if err = controllerutil.SetControllerReference(msvc, m, r.Scheme); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not create/update resource"))
-	}
-
-	if err := r.SendMessage(toRefString(msvc), lib.MessageReply{
+	if err := r.SendMessage(msvc.String(), lib.MessageReply{
 		Conditions: msvc.Status.Conditions,
 		Status:     false,
 	}); err != nil {

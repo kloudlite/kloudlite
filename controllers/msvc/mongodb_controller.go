@@ -35,6 +35,12 @@ type MongoDBReconciler struct {
 //+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/finalizers,verbs=update
 
+const (
+	RootPassword string = "ROOT_PASSWORD"
+	DbHosts      string = "HOSTS"
+	DbUrl        string = "DB_URL"
+)
+
 func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = controllers.GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
@@ -97,9 +103,9 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	body := map[string]string{
-		"ROOT_PASSWORD": string(mongoCfg.Data["mongodb-root-password"]),
-		"HOST":          fmt.Sprintf("%s.%s.svc.cluster.local", mdb.DeploymentName(), mdb.Namespace),
-		"URI":           fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local/admin?authSource=admin", "root", string(mongoCfg.Data["mongodb-root-password"]), mdb.DeploymentName(), mdb.Namespace),
+		RootPassword: string(mongoCfg.Data["mongodb-root-password"]),
+		DbHosts:      fmt.Sprintf("%s.%s.svc.cluster.local", mdb.DeploymentName(), mdb.Namespace),
+		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local/admin?authSource=admin", "root", string(mongoCfg.Data["mongodb-root-password"]), mdb.DeploymentName(), mdb.Namespace),
 	}
 
 	b, err := json.Marshal(body)
@@ -117,11 +123,9 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &ts, func() error {
 		ts.StringData = body
-
 		if err := controllerutil.SetControllerReference(mdb, &ts, r.Scheme); err != nil {
 			return err
 		}
-
 		return nil
 	}); err != nil {
 		return reconcileResult.FailedE(err)

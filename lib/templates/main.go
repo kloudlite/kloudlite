@@ -11,25 +11,40 @@ import (
 	"operators.kloudlite.io/lib/errors"
 )
 
-func UseTemplate(filename templateFile) (KlTemplate, error) {
-	tPath := path.Join(os.Getenv("PWD"), fmt.Sprintf("lib/templates/%s", filename))
-	t, err := template.New(filename.String()).Funcs(sprig.TxtFuncMap()).ParseFiles(tPath)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not parse template %s", filename)
+func UseTemplate(tfile templateFile, tList ...templateFile) (KlTemplate, error) {
+	t := template.New(tfile.String())
+	tList = append(tList, tfile)
+	for _, f := range tList {
+		tPath := path.Join(os.Getenv("PWD"), fmt.Sprintf("lib/templates/%s", f.String()))
+		_, err := t.New(f.String()).Funcs(sprig.TxtFuncMap()).ParseFiles(tPath)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not parse template %s", f.String())
+		}
 	}
-	return &kt{t}, nil
+	return &kt{list: tList, Template: t}, nil
 }
 
 type kt struct {
+	list []templateFile
 	*template.Template
 }
 
 func (kt *kt) WithValues(v interface{}) ([]byte, error) {
 	w := new(bytes.Buffer)
-	if err := kt.Execute(w, v); err != nil {
-		return nil, errors.NewEf(err, "could not execute template")
+	for _, t := range kt.list {
+		if err := kt.ExecuteTemplate(w, t.String(), v); err != nil {
+			return nil, errors.NewEf(err, "could not execute template")
+		}
 	}
 	return w.Bytes(), nil
+}
+
+func Parse(f templateFile, values interface{}) ([]byte, error) {
+	t, err := UseTemplate(f)
+	if err != nil {
+		return nil, err
+	}
+	return t.WithValues(values)
 }
 
 type KlTemplate interface {
@@ -44,7 +59,7 @@ func (tf templateFile) String() string {
 
 const (
 	MongoDBStandalone       templateFile = "mongodb-helm-standalone.tmpl.yml"
-	App                     templateFile = "app.tmpl.yml"
+	Deployment              templateFile = "deployment.tmpl.yml"
 	Service                 templateFile = "service.tmpl.yml"
 	MongoDBResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
 )
