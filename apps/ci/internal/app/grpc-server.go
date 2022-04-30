@@ -33,6 +33,7 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 		PipelineEnv:          in.PipelineEnv,
 		GitProvider:          in.GitProvider,
 		GitRepoUrl:           in.GitRepoUrl,
+		RepoName:             in.RepoName,
 		DockerFile:           &in.DockerFile,
 		ContextDir:           &in.ContextDir,
 		GithubInstallationId: &i,

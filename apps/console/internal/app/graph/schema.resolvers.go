@@ -8,13 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/common"
 	wErrors "kloudlite.io/pkg/errors"
+	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -297,7 +297,6 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 		}
 
 		in := entities.ContainerIn{
-
 			Name:            container.Name,
 			Image:           container.Image,
 			ImagePullSecret: container.PullSecret,
@@ -318,6 +317,7 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				Name:                 container.PipelineData.Name,
 				ImageName:            container.PipelineData.ImageName,
 				GitProvider:          container.PipelineData.GitProvider,
+				RepoName:             container.PipelineData.RepoName,
 				GitRepoUrl:           container.PipelineData.GitRepoURL,
 				DockerFile:           container.PipelineData.DockerFile,
 				ContextDir:           container.PipelineData.ContextDir,
