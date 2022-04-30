@@ -5,7 +5,6 @@ import (
 )
 
 type MessageReply struct {
-	Message    string             `json:"message"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	Status     bool               `json:"status"`
 }

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -100,6 +101,10 @@ func (app *App) IsNewGeneration() bool {
 
 func (app *App) HasToBeDeleted() bool {
 	return app.GetDeletionTimestamp() != nil
+}
+
+func (app *App) LogRef() string {
+	return fmt.Sprintf("%s/%s/%s", app.Namespace, "App", app.Name)
 }
 
 func (app *App) BuildConditions() {

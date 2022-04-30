@@ -1,4 +1,4 @@
-apiVersion: batch/v1
+piVersion: batch/v1
 kind: Job
 metadata:
   generateName: {{ .Name }}-

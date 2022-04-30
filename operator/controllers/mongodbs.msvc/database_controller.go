@@ -36,6 +36,15 @@ type DatabaseReconciler struct {
 	mres   *crdsv1.ManagedResource
 }
 
+const (
+	DbUser     string = "DB_USER"
+	DbPassword string = "DB_PASSWORD"
+	DbHosts    string = "DB_HOSTS"
+	DbUrl      string = "DB_URL"
+)
+
+// Ref: mongo commands referenced from [https://www.mongodb.com/docs/manual/reference/command/]
+
 type UsersInfo struct {
 	Users []interface{} `json:"users" bson:"users"`
 }
@@ -53,10 +62,10 @@ func connectToDB(ctx context.Context, uri, dbName string) (*mongo.Database, erro
 	return db, nil
 }
 
-func (r *DatabaseReconciler) updateManagedResource(ctx context.Context, mdb *mongodb.Database, condition metav1.Condition) error {
+func (r *DatabaseReconciler) updateManagedResource(ctx context.Context, condition metav1.Condition) error {
 	meta.SetStatusCondition(&r.mres.Status.Conditions, condition)
 	if err := r.Status().Update(ctx, r.mres); err != nil {
-		r.logger.Infof("could not update mres status")
+		r.logger.Infof("could not update managed resource status")
 		return err
 	}
 	return nil
@@ -137,23 +146,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	logger.Debugf("secret data: %+v", mSecret.Data)
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(string(mSecret.Data["URI"])))
-	if err != nil {
-		logger.Infof("could not create mongodb client")
-		return reconcileResult.FailedE(err)
-	}
-	if err = client.Connect(ctx); err != nil {
-		logger.Infof("could not connect to specified mongodb service")
-		return reconcileResult.FailedE(err)
-	}
-
-	password, err := fn.CleanerNanoid(64)
-	if err != nil {
-		logger.Infof("could not generate password")
-		return reconcileResult.FailedE(err)
-	}
-
-	db, err := connectToDB(ctx, string(mSecret.Data["URI"]), "admin")
+	db, err := connectToDB(ctx, string(mSecret.Data["DB_URL"]), "admin")
 	if err != nil {
 		return reconcileResult.FailedE(err)
 	}
@@ -175,8 +168,13 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return reconcileResult.Failed()
 	}
 
-	// ASSERT user does not exist here
 	var user bson.M
+	password, err := fn.CleanerNanoid(64)
+	if err != nil {
+		logger.Infof("could not generate password")
+		return reconcileResult.FailedE(err)
+	}
+	// ASSERT user does not exist here
 	err = db.RunCommand(ctx, bson.D{
 		{Key: "createUser", Value: mdb.Name},
 		{Key: "pwd", Value: password},
@@ -198,9 +196,10 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	body := map[string]string{
-		"USERNAME": mdb.Name,
-		"PASSWORD": password,
-		"URI":      fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=admin", mdb.Name, password, mSecret.Data["HOST"], mdb.Name),
+		DbUser:     mdb.Name,
+		DbPassword: password,
+		DbHosts:    string(mSecret.Data["HOSTS"]),
+		DbUrl:      fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=admin", mdb.Name, password, string(mSecret.Data["HOST"]), mdb.Name),
 	}
 
 	jsonB, err := json.Marshal(body)
@@ -229,7 +228,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		Message: fmt.Sprintf("mongodb (db=%s, user=%s) created", mdb.Name, mdb.Name),
 	})
 	if err := r.Status().Update(ctx, r.mres); err != nil {
-		reconcileResult.FailedE(err)
+		return reconcileResult.FailedE(err)
 	}
 
 	logger.Info("Reconcile Completed")

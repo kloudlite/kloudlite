@@ -3,5 +3,12 @@ kind: Database
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
+  ownerReferences:
+    - apiVersion: {{.APIVersion}}
+      kind: {{.Kind}}
+      name: {{.Name}}
+      uid: {{.UID}}
+      controller: true
+      blockOwnerDeletion: true
 spec:
   managed_svc: {{.Spec.ManagedSvc }}
