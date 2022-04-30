@@ -78,30 +78,6 @@ func (i *infraClient) DeletePeer(cxt context.Context, action domain.DeletePeerAc
 
 }
 
-//func (i *infraClient) setupMaster(ip string) error {
-//	fmt.Println("ssh",
-//		"-o",
-//		"StrictHostKeyChecking=no",
-//		"-o", "UserKnownHostsFile=/dev/null",
-//		"-i",
-//		fmt.Sprintf("%v/access", i.env.SshKeysPath),
-//		"root@"+ip,
-//		"/root/scripts/wait-for-on.sh")
-//
-//	e := exec.Command(
-//		"ssh",
-//		"-o",
-//		"StrictHostKeyChecking=no",
-//		"-o", "UserKnownHostsFile=/dev/null",
-//		"-i",
-//		fmt.Sprintf("%v/access", i.env.SshKeysPath),
-//		"root@"+ip,
-//		"/root/scripts/wait-for-on.sh",
-//	).Run()
-//
-//	return e
-//}
-
 func (i *infraClient) setupNodeWireguards(
 	nodeIps []string,
 	clusterId string,
@@ -316,27 +292,28 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, k3sToken strin
 	if len(masterIps) < 2 {
 		return nil
 	}
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(len(masterIps) - 1)
+	//var waitGroup sync.WaitGroup
+	//waitGroup.Add(len(masterIps) - 1)
 	var outErr error
 	for index, ip := range masterIps {
 		if index == 0 {
 			continue
 		}
-		go func(ip string) error {
+		func(ip string) error {
 			i.waitForSshAvailability(ip)
+			nodeName := fmt.Sprintf("master-%v", index)
 			rClient := rexec.NewSshRclient(ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
-			run := rClient.Run("./join-master.sh", k3sToken, masterIp)
+			run := rClient.Run("./join-master.sh", k3sToken, masterIp, nodeName)
 			_, err := run.Output()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("unable to attach", err)
 				outErr = err
 			}
-			waitGroup.Done()
+			//waitGroup.Done()
 			return err
 		}(ip)
 	}
-	waitGroup.Wait()
+	//waitGroup.Wait()
 	return outErr
 }
 
@@ -345,28 +322,30 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, k3sToken
 	if len(agentIps) < 1 {
 		return nil
 	}
-
+	fmt.Println(agentIps, "HEREERE")
 	if agentIps[0] == "" {
 		return nil
 	}
 
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(len(agentIps))
+	//var waitGroup sync.WaitGroup
+	//waitGroup.Add(len(agentIps))
 	var outErr error
-	for _, ip := range agentIps {
-		go func(ip string) error {
+	for index, ip := range agentIps {
+		func(ip string) error {
 			i.waitForSshAvailability(ip)
-			rClient := rexec.NewSshRclient(masterIp, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
-			run := rClient.Run("./join-master.sh", k3sToken, ip)
+			nodeName := fmt.Sprintf("agent-%v", index)
+			fmt.Println(ip, nodeName)
+			rClient := rexec.NewSshRclient(ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
+			run := rClient.Run("./join-agent.sh", k3sToken, masterIp, nodeName)
 			_, err := run.Output()
 			if err != nil {
 				outErr = err
 			}
-			waitGroup.Done()
+			//waitGroup.Done()
 			return err
 		}(ip)
 	}
-	waitGroup.Wait()
+	//waitGroup.Wait()
 	return outErr
 }
 
@@ -460,6 +439,7 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	}()
 
 	go func() {
+		i.waitForKubernetesAPIAvailability(action.ClusterID)
 		i.installSecondaryMasters(strings.Split(masterIps, ","), string(joinToken))
 		fmt.Println("#2 sec masters installed")
 		waitGroup.Done()
@@ -480,8 +460,70 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 }
 
 func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClusterAction) (e error) {
-	panic("implement me")
-	return nil
+	masterNodesCountStr, e := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count")
+	agentNodesCountStr, e := i.getOutputTerraformInFolder(action.ClusterID, "agent-nodes-count")
+
+	masterNodesCount, e := strconv.Atoi(masterNodesCountStr)
+	agentNodesCount, e := strconv.Atoi(agentNodesCountStr)
+
+	dropNodes := make([]string, 0)
+
+	expectedMasterCount := func() int {
+		if action.NodesCount >= 3 {
+			return 3
+		}
+		return 1
+	}()
+
+	expectedAgentNodeCount := action.NodesCount - expectedMasterCount
+
+	if expectedMasterCount < masterNodesCount {
+		for i := expectedMasterCount; i < masterNodesCount; i++ {
+			dropNodes = append(dropNodes, fmt.Sprintf("master-%v", i))
+		}
+	}
+
+	if expectedAgentNodeCount < agentNodesCount {
+		for i := expectedAgentNodeCount; i < agentNodesCount; i++ {
+			dropNodes = append(dropNodes, fmt.Sprintf("agent-%v", i))
+		}
+	}
+	fmt.Println(dropNodes, "drop nodes")
+
+	if len(dropNodes) == 0 {
+		_, _, e := i.CreateCluster(cxt, domain.SetupClusterAction{
+			ClusterID:  action.ClusterID,
+			Region:     action.Region,
+			Provider:   action.Provider,
+			NodesCount: action.NodesCount,
+		})
+		return e
+	}
+
+	for _, node := range dropNodes {
+		cmd := exec.Command(
+			"kubectl",
+			"drain",
+			node,
+			"--ignore-daemonsets",
+			"--delete-local-data",
+		)
+		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID)))
+		_, e := cmd.Output()
+		if e != nil {
+			fmt.Println(fmt.Errorf("unable to drain node %v %v", node, e))
+			continue
+		}
+	}
+	time.AfterFunc(2*time.Minute, func() {
+		i.CreateCluster(cxt, domain.SetupClusterAction{
+			ClusterID:  action.ClusterID,
+			Region:     action.Region,
+			Provider:   action.Provider,
+			NodesCount: action.NodesCount,
+		})
+	})
+	return e
 }
 
 func (i *infraClient) waitForKubernetesAPIAvailability(clusterId string) error {
