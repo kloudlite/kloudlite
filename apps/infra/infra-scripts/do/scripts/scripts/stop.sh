@@ -1,1 +1,0 @@
-pkill k3s

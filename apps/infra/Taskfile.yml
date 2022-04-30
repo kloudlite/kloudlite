@@ -15,7 +15,7 @@ tasks:
       KAFKA_INFRA_RESP_TOPIC: dev-hotspot-infra-resp
       KAFKA_GROUP_ID: infra-cli
       DO_API_KEY: ***REMOVED***
-      DO_IMAGE_ID: 106482075
+      DO_IMAGE_ID: 107221780
     cmds:
       - go run -tags dynamic main.go
 
