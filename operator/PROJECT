@@ -58,15 +58,6 @@ resources:
     namespaced: true
   controller: true
   domain: kloudlite.io
-  group: crds
-  kind: Pipeline
-  path: operators.kloudlite.io/api/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
   group: msvc
   kind: MongoDB
   path: operators.kloudlite.io/apis/msvc/v1
