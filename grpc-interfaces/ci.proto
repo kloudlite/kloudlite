@@ -12,6 +12,7 @@ message PipelineIn {
   string userId =11;
   string projectId =12;
   string RepoName = 13;
+  map<string, string> Metadata =14;
   string name = 1;
   string imageName = 2;
   string pipelineEnv = 3;

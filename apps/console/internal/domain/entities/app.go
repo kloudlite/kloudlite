@@ -57,6 +57,7 @@ type PipelineIn struct {
 	GithubInstallationId int64
 	BuildArgs            map[string]interface{}
 	RepoName             string
+	Metadata             map[string]interface{}
 }
 
 type ContainerIn struct {

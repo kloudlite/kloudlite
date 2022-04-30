@@ -25,7 +25,12 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 			ba[k] = v
 		}
 	}
-	fmt.Println(in)
+	md := make(map[string]interface{}, 0)
+	if in.Metadata != nil {
+		for k, v := range in.Metadata {
+			md[k] = v
+		}
+	}
 	pipeline, err := s.d.CretePipeline(ctx, repos.ID(in.UserId), domain.Pipeline{
 		ProjectId:            in.ProjectId,
 		Name:                 in.Name,
@@ -39,6 +44,7 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 		GithubInstallationId: &i,
 		GitlabTokenId:        in.GitlabTokenId,
 		BuildArgs:            ba,
+		Metadata:             md,
 	})
 	if err != nil {
 		return nil, err
