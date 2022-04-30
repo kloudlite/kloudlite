@@ -8,16 +8,16 @@ import (
 type Pipeline struct {
 	repos.BaseEntity     `bson:",inline"`
 	Name                 string                 `json:"name,omitempty"`
-	ProjectId            string                 `json:"project_id,omitempty"`
-	ImageName            string                 `json:"image_name,omitempty"`
-	PipelineEnv          string                 `json:"pipeline_env,omitempty"`
-	GitProvider          string                 `json:"git_provider,omitempty"`
-	GitRepoUrl           string                 `json:"git_repo_url,omitempty"`
-	DockerFile           *string                `json:"docker_file,omitempty"`
-	ContextDir           *string                `json:"context_dir,omitempty"`
-	GithubInstallationId *int                   `json:"github_installation_id,omitempty"`
-	GitlabTokenId        string                 `json:"gitlab_token,omitempty"`
-	BuildArgs            map[string]interface{} `json:"build_args,omitempty"`
+	ProjectId            string                 `json:"project_id,omitempty" bson:"project_id"`
+	ImageName            string                 `json:"image_name,omitempty" bson:"image_name"`
+	PipelineEnv          string                 `json:"pipeline_env,omitempty" bson:"pipeline_env"`
+	GitProvider          string                 `json:"git_provider,omitempty" bson:"git_provider"`
+	GitRepoUrl           string                 `json:"git_repo_url,omitempty" bson:"git_repo_url"`
+	DockerFile           *string                `json:"docker_file,omitempty" bson:"docker_file"`
+	ContextDir           *string                `json:"context_dir,omitempty" bson:"context_dir"`
+	GithubInstallationId *int                   `json:"github_installation_id,omitempty" bson:"github_installation_id"`
+	GitlabTokenId        string                 `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
+	BuildArgs            map[string]interface{} `json:"build_args,omitempty" bson:"build_args"`
 }
 
 var PipelineIndexes = []repos.IndexField{
