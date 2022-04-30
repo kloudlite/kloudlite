@@ -56,7 +56,7 @@ func (i *infraMessengerImpl) SendAction(action any) error {
 
 func fxInfraMessenger(env *InfraConsumerEnv, p messaging.Producer[messaging.Json]) domain.InfraMessenger {
 	return &infraMessengerImpl{
-		topic:    env.ResponseTopic,
+		topic:    env.Topic,
 		producer: p,
 	}
 }
