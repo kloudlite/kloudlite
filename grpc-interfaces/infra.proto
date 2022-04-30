@@ -13,6 +13,6 @@ message GetInput {
 }
 
 message Output {
- string output = 1;
+ map<string, string> output = 1;
 }
 

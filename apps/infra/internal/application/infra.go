@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	fn "kloudlite.io/pkg/functions"
@@ -23,10 +24,18 @@ type infraClient struct {
 	env *InfraEnv
 }
 
-func (i *infraClient) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error) {
-	cmd := exec.Command("kubectl", "get", fmt.Sprintf("configmap/%v", fmt.Sprintf("mres-%v", resName)), "-n", namespace, "-o", "jsonpath='{.data}'")
+func (i *infraClient) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) (map[string]string, error) {
+	cmd := exec.Command("kubectl", "get", fmt.Sprintf("secrets/%v", fmt.Sprintf("mres-%v", resName)), "-n", namespace, "-o", "json")
 	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
-	return cmd.Output()
+	output, err := cmd.Output()
+	var res struct {
+		Data map[string]string `json:"data"`
+	}
+	err = json.Unmarshal(output, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res.Data, err
 }
 
 func (i *infraClient) DeleteCluster(cxt context.Context, action domain.DeleteClusterAction) (e error) {
