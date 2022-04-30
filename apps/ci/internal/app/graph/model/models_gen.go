@@ -16,6 +16,7 @@ type GitPipeline struct {
 	ContextDir           *string                `json:"contextDir"`
 	GithubInstallationID *int                   `json:"githubInstallationId"`
 	BuildArgs            map[string]interface{} `json:"buildArgs"`
+	Metadata             map[string]interface{} `json:"metadata"`
 }
 
 type GitPipelineIn struct {
