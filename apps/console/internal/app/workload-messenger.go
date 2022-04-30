@@ -20,7 +20,7 @@ func (i *workloadMessengerImpl) SendAction(action string, resId string, res any)
 
 func fxWorkloadMessenger(env *WorkloadConsumerEnv, p messaging.Producer[messaging.Json]) domain.WorkloadMessenger {
 	return &workloadMessengerImpl{
-		topic:    env.ResponseTopic,
+		topic:    env.Topic,
 		producer: p,
 	}
 }

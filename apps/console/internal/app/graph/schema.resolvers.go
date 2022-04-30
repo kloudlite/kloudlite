@@ -330,6 +330,7 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 	}
 	return r.Domain.InstallAppFlow(ctx, session.UserId, projectID, entities.AppIn{
 		Name:         app.Name,
+		ProjectId:    projectID,
 		ReadableId:   app.Readable,
 		Description:  app.Description,
 		Replicas:     1,
