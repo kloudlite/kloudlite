@@ -52,7 +52,7 @@ func (i *WorkloadConsumerEnv) GetSubscriptionTopics() []string {
 }
 
 func (i *WorkloadConsumerEnv) GetConsumerGroupId() string {
-	return "console-workload-consumer"
+	return "console-workload-consumer-2"
 }
 
 type Env struct {
@@ -165,10 +165,11 @@ var Module = fx.Module(
 	fx.Provide(fxWorkloadMessenger),
 	messaging.NewFxKafkaConsumer[*WorkloadConsumerEnv](),
 	fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], domain domain.Domain) {
+		fmt.Println(env.ResponseTopic, "env.ResponseTopic")
 		consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
 			var d map[string]any
 			err := message.Unmarshal(&d)
-			fmt.Println(string(message))
+			fmt.Println(string(message), "HERE")
 			if err != nil {
 				return err
 			}
