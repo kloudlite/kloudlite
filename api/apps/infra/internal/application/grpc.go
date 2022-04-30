@@ -23,7 +23,7 @@ func (i InfraGrpcSvc) GetResourceOutput(ctx context.Context, input *infra.GetInp
 		return nil, err
 	}
 	return &infra.Output{
-		Output: string(output),
+		Output: output,
 	}, nil
 }
 

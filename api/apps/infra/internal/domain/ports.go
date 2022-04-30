@@ -11,7 +11,7 @@ type InfraClient interface {
 	DeleteCluster(cxt context.Context, action DeleteClusterAction) (e error)
 	AddPeer(cxt context.Context, action AddPeerAction) (e error)
 	DeletePeer(cxt context.Context, action DeletePeerAction) (e error)
-	GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error)
+	GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) (map[string]string, error)
 }
 
 type InfraJobResponder interface {
