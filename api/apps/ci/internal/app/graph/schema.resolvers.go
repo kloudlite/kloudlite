@@ -142,6 +142,7 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 			ContextDir:           pipelineE.ContextDir,
 			GithubInstallationID: pipelineE.GithubInstallationId,
 			BuildArgs:            pipelineE.BuildArgs,
+			Metadata:             pipelineE.Metadata,
 		}
 	}
 	return pipelines, nil
@@ -162,6 +163,7 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		ContextDir:           pipelineE.ContextDir,
 		GithubInstallationID: pipelineE.GithubInstallationId,
 		BuildArgs:            pipelineE.BuildArgs,
+		Metadata:             pipelineE.Metadata,
 	}, nil
 }
 

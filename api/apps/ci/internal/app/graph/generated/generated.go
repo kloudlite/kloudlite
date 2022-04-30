@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 		GithubInstallationID func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		ImageName            func(childComplexity int) int
+		Metadata             func(childComplexity int) int
 		Name                 func(childComplexity int) int
 	}
 
@@ -174,6 +175,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GitPipeline.ImageName(childComplexity), true
+
+	case "GitPipeline.metadata":
+		if e.complexity.GitPipeline.Metadata == nil {
+			break
+		}
+
+		return e.complexity.GitPipeline.Metadata(childComplexity), true
 
 	case "GitPipeline.name":
 		if e.complexity.GitPipeline.Name == nil {
@@ -463,6 +471,7 @@ type GitPipeline {
   contextDir: String
   githubInstallationId: Int
   buildArgs: Json
+  metadata: Json
 }
 
 type Mutation {
@@ -1121,6 +1130,38 @@ func (ec *executionContext) _GitPipeline_buildArgs(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BuildArgs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOJson2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipeline_metadata(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipeline",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Metadata, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3221,6 +3262,13 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 		case "buildArgs":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._GitPipeline_buildArgs(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "metadata":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._GitPipeline_metadata(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
