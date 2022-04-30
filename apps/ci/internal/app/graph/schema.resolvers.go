@@ -126,7 +126,25 @@ func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoID string,
 }
 
 func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) ([]*model.GitPipeline, error) {
-	panic(fmt.Errorf("not implemented"))
+	pipelineEntities, err := r.Domain.GetPipelines(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	pipelines := make([]*model.GitPipeline, len(pipelineEntities))
+	for i, pipelineE := range pipelineEntities {
+		pipelines[i] = &model.GitPipeline{
+			ID:                   pipelineE.Id,
+			Name:                 pipelineE.Name,
+			ImageName:            pipelineE.ImageName,
+			GitProvider:          pipelineE.GitProvider,
+			GitRepoURL:           pipelineE.GitRepoUrl,
+			DockerFile:           pipelineE.DockerFile,
+			ContextDir:           pipelineE.ContextDir,
+			GithubInstallationID: pipelineE.GithubInstallationId,
+			BuildArgs:            pipelineE.BuildArgs,
+		}
+	}
+	return pipelines, nil
 }
 
 func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error) {

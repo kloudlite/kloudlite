@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
@@ -167,6 +168,7 @@ var Module = fx.Module(
 		consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
 			var d map[string]any
 			err := message.Unmarshal(&d)
+			fmt.Println(string(message))
 			if err != nil {
 				return err
 			}

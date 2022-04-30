@@ -21,6 +21,18 @@ type domainI struct {
 	harborAccRepo repos.DbRepo[*HarborAccount]
 }
 
+func (d *domainI) GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error) {
+	find, err := d.pipelineRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"project_id": projectId,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return find, nil
+}
+
 func (d *domainI) GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error) {
 	token, err := d.getAccessToken(ctx, "gitlab", userId)
 	if err != nil {
