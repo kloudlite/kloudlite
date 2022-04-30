@@ -116,12 +116,12 @@ var Module = fx.Module("domain",
 				//	Done:      true,
 				//})
 				go func() {
-					//d.CreateCluster(ctx, SetupClusterAction{
-					//	ClusterID:  "hotspot-dev",
-					//	Region:     "blr1",
-					//	Provider:   "do",
-					//	NodesCount: 3,
-					//})
+					d.CreateCluster(ctx, SetupClusterAction{
+						ClusterID:  "hotspot-dev-k3s",
+						Region:     "blr1",
+						Provider:   "do",
+						NodesCount: 3,
+					})
 					//d.UpdateCluster(ctx, UpdateClusterAction{
 					//	ClusterID:  "hotspot-dev",
 					//	Region:     "blr1",
