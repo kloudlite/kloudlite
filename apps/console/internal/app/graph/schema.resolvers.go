@@ -323,6 +323,7 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				ContextDir:           container.PipelineData.ContextDir,
 				GithubInstallationId: int64(i),
 				BuildArgs:            container.PipelineData.BuildArgs,
+				Metadata:             container.PipelineData.Metadata,
 			}
 		}
 		containers = append(containers, in)
