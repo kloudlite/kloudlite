@@ -18,6 +18,7 @@ type Pipeline struct {
 	GithubInstallationId *int                   `json:"github_installation_id,omitempty" bson:"github_installation_id"`
 	GitlabTokenId        string                 `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
 	BuildArgs            map[string]interface{} `json:"build_args,omitempty" bson:"build_args"`
+	RepoName             string                 `json:"repo_name,omitempty" bson:"repo_name"`
 }
 
 var PipelineIndexes = []repos.IndexField{
