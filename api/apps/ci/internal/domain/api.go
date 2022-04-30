@@ -10,6 +10,7 @@ import (
 
 type Domain interface {
 	GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error)
+	GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error)
 	CretePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error)
 
 	GithubInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error)
