@@ -3,7 +3,10 @@ package application
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/rexec"
 	"os"
 	"os/exec"
 	"strconv"
@@ -105,7 +108,6 @@ func (i *infraClient) setupNodeWireguards(
 	clusterIp string,
 	clusterPublicKey string,
 ) (err error) {
-
 	serverWg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId),
@@ -115,6 +117,9 @@ func (i *infraClient) setupNodeWireguards(
 		true,
 	)
 	for _, ip := range nodeIps {
+		if ip == "" {
+			continue
+		}
 		func(ip string) {
 			wg := wgman.NewSshWgManager(
 				"/etc/wireguard/wg0.conf",
@@ -124,37 +129,27 @@ func (i *infraClient) setupNodeWireguards(
 				"./",
 				false,
 			)
-
-			// if !wg.IsSetupDone() {
-			if true {
-				_ip, e := wg.GetNodeIp()
-				if e != nil {
-
-					fmt.Println(fmt.Errorf("unable to get nodeip %v", e))
-					return
-				}
-				nodePublicKey, e := wg.Init(_ip)
-				if e != nil {
-					fmt.Println(fmt.Errorf("failed to setup wireguard for node %v", e))
-					return
-				}
-				endpoint := fmt.Sprintf("%v:31820", clusterIp)
-				e = wg.AddPeer(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16,10.13.13.0/24", &endpoint)
-				if e != nil {
-					fmt.Println(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", endpoint)
-					panic(e)
-
-					// fmt.Println(fmt.Errorf("failed to add peer to wireguard for node %v", e))
-					// return
-				}
-				e = serverWg.AddPeer(nodePublicKey, fmt.Sprintf("%v/32", strings.TrimSpace(_ip)), nil)
-				if e != nil {
-
-					fmt.Println(fmt.Errorf("unable to add node as peer to wireguard server %v", e))
-					return
-				}
+			_ip, e := wg.GetNodeIp()
+			if e != nil {
+				fmt.Println(fmt.Errorf("unable to get nodeip %v", e))
+				return
 			}
-
+			nodePublicKey, e := wg.Init(_ip)
+			if e != nil {
+				fmt.Println(fmt.Errorf("failed to setup wireguard for node %v", e))
+				return
+			}
+			endpoint := fmt.Sprintf("%v:31820", clusterIp)
+			e = wg.AddPeer(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16,10.13.13.0/24", &endpoint)
+			if e != nil {
+				fmt.Println(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", endpoint)
+				panic(e)
+			}
+			e = serverWg.AddPeer(nodePublicKey, fmt.Sprintf("%v/32", strings.TrimSpace(_ip)), nil)
+			if e != nil {
+				fmt.Println(fmt.Errorf("unable to add node as peer to wireguard server %v", e))
+				return
+			}
 		}(ip)
 	}
 
@@ -182,9 +177,6 @@ func (i *infraClient) waitForWireguardAvailability(clusterId string) error {
 
 func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
 
-	// cmd := exec.Command("kubectl", "wait", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
-	// cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%v/%v/kubeconfig", i.env.DataPath, clusterId))
-	// err := cmd.Run()
 	err := i.waitForWireguardAvailability(clusterId)
 
 	if err != nil {
@@ -281,26 +273,36 @@ func (i *infraClient) waitForSshAvailability(ip string) error {
 }
 
 func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([]byte, error) {
-
+	if file, err := ioutil.ReadFile(fmt.Sprintf("%v/%v/join-token", i.env.DataPath, clusterId)); err == nil {
+		return file, nil
+	}
 	i.waitForSshAvailability(masterIp)
-
-	cmd := exec.Command(
-		"k3sup",
-		"install",
-		fmt.Sprintf("--ip=%v", masterIp),
-		"--cluster",
-		"--k3s-version=v1.23.5+k3s1",
-		"--user=root",
-		"--no-extras",
-		"--k3s-extra-args='--node-name=master'",
-	)
-
-	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)
-
-	return cmd.Output()
+	rClient := rexec.NewSshRclient(masterIp, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
+	k3sToken, e := fn.CleanerNanoid(32)
+	if e != nil {
+		return nil, e
+	}
+	install := rClient.Run("./install.sh", k3sToken)
+	_, e = install.Output()
+	if e != nil {
+		fmt.Println("error on kube server start:", e)
+		return nil, e
+	}
+	e = ioutil.WriteFile(fmt.Sprintf("%v/%v/join-token", i.env.DataPath, clusterId), []byte(k3sToken), 0644)
+	if e != nil {
+		return nil, e
+	}
+	configData, e := rClient.Readfile("/etc/rancher/k3s/k3s.yaml")
+	if e != nil {
+		return nil, e
+	}
+	all := strings.ReplaceAll(string(configData), "127.0.0.1", masterIp)
+	e = ioutil.WriteFile(fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId), []byte(all), 0644)
+	return []byte(k3sToken), e
 }
 
 func (i *infraClient) setupAllKubernetes(clusterId string, provider string) ([]byte, error) {
+	i.waitForKubernetesAPIAvailability(clusterId)
 	cmd := exec.Command("bash", "init.sh")
 	cmd.Dir = fmt.Sprintf("./infra-scripts/%v/init-scripts", provider)
 	cmd.Env = os.Environ()
@@ -308,48 +310,37 @@ func (i *infraClient) setupAllKubernetes(clusterId string, provider string) ([]b
 	return cmd.Output()
 }
 
-func (i *infraClient) installSecondaryMasters(masterIps []string, clusterId string) (err error) {
+func (i *infraClient) installSecondaryMasters(masterIps []string, k3sToken string) (err error) {
 	masterIp := masterIps[0]
+	fmt.Println(masterIps)
 	if len(masterIps) < 2 {
 		return nil
 	}
-
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(len(masterIps) - 1)
+	var outErr error
 	for index, ip := range masterIps {
 		if index == 0 {
 			continue
 		}
 		go func(ip string) error {
 			i.waitForSshAvailability(ip)
-			cmd := exec.Command(
-				"k3sup",
-				"join",
-				fmt.Sprintf("--ip=%v", ip),
-				fmt.Sprintf("--server-ip=%v", masterIp),
-				"--k3s-version=v1.23.5+k3s1",
-				"--user=root",
-				"--server-user=root",
-				"--server",
-				"--no-extras",
-			)
-			cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
-			_, err := cmd.Output()
-			waitGroup.Done()
+			rClient := rexec.NewSshRclient(ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
+			run := rClient.Run("./join-master.sh", k3sToken, masterIp)
+			_, err := run.Output()
 			if err != nil {
-				return err
+				fmt.Println(err)
+				outErr = err
 			}
-			return nil
+			waitGroup.Done()
+			return err
 		}(ip)
 	}
 	waitGroup.Wait()
-	fmt.Println("done joining masters")
-	return err
+	return outErr
 }
 
-func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterId string) error {
-
-	// masterIp := masterIps[0]
+func (i *infraClient) installAgents(masterIp string, agentIps []string, k3sToken string) error {
 
 	if len(agentIps) < 1 {
 		return nil
@@ -359,36 +350,24 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, clusterI
 		return nil
 	}
 
-	c := make(chan error, len(agentIps))
-
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(len(agentIps))
+	var outErr error
 	for _, ip := range agentIps {
 		go func(ip string) error {
-			cmd := exec.Command(
-				"k3sup",
-				"join",
-				fmt.Sprintf("--ip=%v", ip),
-				fmt.Sprintf("--server-ip=%v", masterIp),
-				"--k3s-version=v1.23.5+k3s1",
-				"--user=root",
-				"--server-user=root",
-			)
-
-			_, err := cmd.Output()
-			c <- err
-
+			i.waitForSshAvailability(ip)
+			rClient := rexec.NewSshRclient(masterIp, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
+			run := rClient.Run("./join-master.sh", k3sToken, ip)
+			_, err := run.Output()
 			if err != nil {
-				return err
+				outErr = err
 			}
-
-			return nil
+			waitGroup.Done()
+			return err
 		}(ip)
-
 	}
-
-	err := <-c
-	fmt.Println("done joining agents")
-
-	return err
+	waitGroup.Wait()
+	return outErr
 }
 
 func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
@@ -415,19 +394,19 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
 
-	//masterCount := func() int {
-	//	if action.NodesCount > 3 {
-	//		return 3
-	//	}
-	//	return 1
-	//}()
+	masterCount := func() int {
+		if action.NodesCount >= 3 {
+			return 3
+		}
+		return 1
+	}()
 
 	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), map[string]any{
 		"cluster-id":         action.ClusterID,
 		"do-token":           i.env.DoAPIKey,
 		"keys-path":          i.env.SshKeysPath,
-		"master-nodes-count": 1,
-		"agent-nodes-count":  action.NodesCount - 1,
+		"master-nodes-count": masterCount,
+		"agent-nodes-count":  action.NodesCount - masterCount,
 		"do-image-id":        i.env.DoImageId,
 	})
 
@@ -443,9 +422,7 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	var clusterPublicKeyWaitGroup sync.WaitGroup
 	clusterPublicKeyWaitGroup.Add(1)
 
-	out, e := i.installPrimaryMaster(clusterIp, action.ClusterID)
-	fmt.Println(string(out), e)
-
+	joinToken, e := i.installPrimaryMaster(clusterIp, action.ClusterID)
 	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
 
 	var waitGroup sync.WaitGroup
@@ -458,6 +435,7 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 			clusterIp,
 			clusterPublicKey,
 		)
+		fmt.Println("#5 node wireguards done")
 		waitGroup.Done()
 	}()
 
@@ -470,22 +448,26 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 		}
 		clusterPublicKey = wireguardPub
 		clusterPublicKeyWaitGroup.Done()
+		fmt.Println("#4 wireguard setup done")
 		waitGroup.Done()
 	}()
 
 	go func() {
 		kubernetes, _ := i.setupAllKubernetes(action.ClusterID, action.Provider)
 		fmt.Println(string(kubernetes))
+		fmt.Println("#3 kubernetes setup done")
 		waitGroup.Done()
 	}()
 
 	go func() {
-		i.installSecondaryMasters(strings.Split(masterIps, ","), action.ClusterID)
+		i.installSecondaryMasters(strings.Split(masterIps, ","), string(joinToken))
+		fmt.Println("#2 sec masters installed")
 		waitGroup.Done()
 	}()
 
 	go func() {
-		i.installAgents(clusterIp, strings.Split(agentIps, ","), action.ClusterID)
+		i.installAgents(clusterIp, strings.Split(agentIps, ","), string(joinToken))
+		fmt.Println("#1 agents installed")
 		waitGroup.Done()
 	}()
 
@@ -500,6 +482,28 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClusterAction) (e error) {
 	panic("implement me")
 	return nil
+}
+
+func (i *infraClient) waitForKubernetesAPIAvailability(clusterId string) error {
+	count := 0
+	for count < 20 {
+		cmd := exec.Command(
+			"kubectl",
+			"get",
+			"nodes",
+		)
+		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
+		e := cmd.Run()
+		if e == nil {
+			return nil
+		}
+
+		fmt.Println("waiting for kubernetes availability")
+		time.Sleep(time.Second * 3)
+		count++
+	}
+
+	return errors.New("not able to access kubernetes after 10 attempts")
 }
 
 func fxInfraClient(env *InfraEnv) domain.InfraClient {
