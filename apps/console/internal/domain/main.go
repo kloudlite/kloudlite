@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -47,32 +46,32 @@ type domain struct {
 	notifier             rcn.ResourceChangeNotifier
 }
 
-func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error) {
+func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error) {
 	mres, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err != nil {
 		return nil, err
 	}
-	project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	//project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
 	if err != nil {
 		return nil, err
 	}
-	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+	/*cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
 		"account_id": project.AccountId,
-	})
+	})*/
 	if err != nil {
 		return nil, err
 	}
 	output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
 		ManagedResName: mres.Name,
-		ClusterId:      string(cluster.Id),
-		Namespace:      mres.Namespace,
+		//ClusterId:      string(cluster.Id),
+		ClusterId: "dev-kloudlite",
+		Namespace: mres.Namespace,
 	})
-	m := make(map[string]interface{}, 0)
-	err = json.Unmarshal([]byte(output.Output), &m)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
-	return m, err
+	return output.Output, err
 }
 
 func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn) (*entities.App, error) {

@@ -127,7 +127,15 @@ func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (
 }
 
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
-	return r.Domain.GetResourceOutputs(ctx, obj.ID)
+	outputs, err := r.Domain.GetResourceOutputs(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	res := map[string]interface{}{}
+	for k, v := range outputs {
+		res[k] = v
+	}
+	return res, nil
 }
 
 func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error) {

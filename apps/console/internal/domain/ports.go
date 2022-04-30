@@ -87,7 +87,7 @@ type Domain interface {
 		app entities.AppIn,
 	) (bool, error)
 
-	GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]interface{}, error)
+	GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error)
 }
 
 type InfraActionMessage interface {

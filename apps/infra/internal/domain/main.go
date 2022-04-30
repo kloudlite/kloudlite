@@ -14,7 +14,7 @@ type Domain interface {
 	DeleteCluster(cxt context.Context, action DeleteClusterAction) error
 	AddPeerToCluster(cxt context.Context, action AddPeerAction) error
 	DeletePeerFromCluster(cxt context.Context, action DeletePeerAction) error
-	GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error)
+	GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) (map[string]string, error)
 }
 
 type domain struct {
@@ -23,7 +23,7 @@ type domain struct {
 	jobResponder InfraJobResponder
 }
 
-func (d *domain) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) ([]byte, error) {
+func (d *domain) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) (map[string]string, error) {
 	return d.infraCli.GetResourceOutput(ctx, clusterId, resName, namespace)
 }
 
@@ -117,12 +117,12 @@ var Module = fx.Module("domain",
 					//	Provider:   "do",
 					//	NodesCount: 4,
 					//})
-					d.UpdateCluster(ctx, UpdateClusterAction{
-						ClusterID:  "hotspot-dev-k3s",
-						Region:     "blr1",
-						Provider:   "do",
-						NodesCount: 3,
-					})
+					//d.UpdateCluster(ctx, UpdateClusterAction{
+					//	ClusterID:  "hotspot-dev-k3s",
+					//	Region:     "blr1",
+					//	Provider:   "do",
+					//	NodesCount: 3,
+					//})
 					//key1, _ := wgtypes.GenerateKey()
 					//fmt.Println(key1.String())
 					//d.AddPeerToCluster(ctx, AddPeerAction{
