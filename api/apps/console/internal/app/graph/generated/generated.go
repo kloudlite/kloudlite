@@ -1952,6 +1952,7 @@ input PipelineDataInput{
   githubInstallationId: Int
   buildArgs: Json
   branch: String!
+  metadata: Json
 }
 
 input AppContainerInput{
@@ -10868,6 +10869,14 @@ func (ec *executionContext) unmarshalInputPipelineDataInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("branch"))
 			it.Branch, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			it.Metadata, err = ec.unmarshalOJson2map(ctx, v)
 			if err != nil {
 				return it, err
 			}

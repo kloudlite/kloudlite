@@ -87,12 +87,15 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 	for _, c := range app.Containers {
 		var pipelineId string
 		if c.Pipeline != nil {
-			m := make(map[string]string, 0)
+			b := make(map[string]string, 0)
 			for k, v := range c.Pipeline.BuildArgs {
+				b[k] = v.(string)
+			}
+			m := make(map[string]string, 0)
+			for k, v := range c.Pipeline.Metadata {
 				m[k] = v.(string)
 			}
 			if c.Pipeline != nil {
-				fmt.Println("sending projectid", app.ProjectId)
 				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
 					UserId:               string(userId),
 					Name:                 c.Pipeline.Name,
@@ -105,7 +108,8 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 					ContextDir:           c.Pipeline.ContextDir,
 					GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
 					// TODO Gitlab
-					BuildArgs: m,
+					BuildArgs: b,
+					Metadata:  m,
 				})
 				if err != nil {
 					return nil, err

@@ -212,6 +212,7 @@ type PipelineDataInput struct {
 	GithubInstallationID *int                   `json:"githubInstallationId"`
 	BuildArgs            map[string]interface{} `json:"buildArgs"`
 	Branch               string                 `json:"branch"`
+	Metadata             map[string]interface{} `json:"metadata"`
 }
 
 type Project struct {
