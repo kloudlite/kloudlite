@@ -48,6 +48,7 @@ type GitPipeline {
   contextDir: String
   githubInstallationId: Int
   buildArgs: Json
+  metadata: Json
 }
 
 type Mutation {
