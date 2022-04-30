@@ -204,6 +204,7 @@ type NewResourcesIn struct {
 type PipelineDataInput struct {
 	Name                 string                 `json:"name"`
 	ImageName            string                 `json:"imageName"`
+	RepoName             string                 `json:"repoName"`
 	GitProvider          string                 `json:"gitProvider"`
 	GitRepoURL           string                 `json:"gitRepoUrl"`
 	DockerFile           string                 `json:"dockerFile"`

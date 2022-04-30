@@ -1944,6 +1944,7 @@ type AppContainer{
 input PipelineDataInput{
   name: String!
   imageName: String!
+  repoName: String!
   gitProvider: String!
   gitRepoUrl: String!
   dockerFile: String!
@@ -10803,6 +10804,14 @@ func (ec *executionContext) unmarshalInputPipelineDataInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageName"))
 			it.ImageName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "repoName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoName"))
+			it.RepoName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
