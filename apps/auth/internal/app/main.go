@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -46,28 +45,6 @@ func (env *Env) GitlabConfig() (clientId string, clientSecret string, callbackUr
 
 func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string) {
 	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
-}
-
-type authGrpcServerImpl struct {
-	auth.UnimplementedAuthServer
-	d domain.Domain
-}
-
-func (a *authGrpcServerImpl) GetAccessToken(ctx context.Context, request *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
-	token, err := a.d.GetAccessToken(ctx, request.Provider, request.UserId)
-	if err != nil {
-		return nil, err
-	}
-	return &auth.AccessTokenOut{
-		UserId:   string(token.UserId),
-		Email:    token.Email,
-		Provider: token.Provider,
-		OauthToken: &auth.OauthToken{
-			AccessToken:  token.Token.AccessToken,
-			RefreshToken: token.Token.RefreshToken,
-			Expiry:       token.Token.Expiry.UnixMilli(),
-		},
-	}, err
 }
 
 func fxRPCServer(d domain.Domain) auth.AuthServer {
