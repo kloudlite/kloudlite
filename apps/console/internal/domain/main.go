@@ -92,6 +92,7 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 				m[k] = v.(string)
 			}
 			if c.Pipeline != nil {
+				fmt.Println("sending projectid", app.ProjectId)
 				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
 					UserId:               string(userId),
 					Name:                 c.Pipeline.Name,
