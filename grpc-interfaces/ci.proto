@@ -10,6 +10,7 @@ service CI {
 
 message PipelineIn {
   string userId =11;
+  string projectId =12;
   string name = 1;
   string imageName = 2;
   string pipelineEnv = 3;

@@ -8,6 +8,7 @@ import (
 type Pipeline struct {
 	repos.BaseEntity     `bson:",inline"`
 	Name                 string                 `json:"name,omitempty"`
+	ProjectId            string                 `json:"project_id,omitempty"`
 	ImageName            string                 `json:"image_name,omitempty"`
 	PipelineEnv          string                 `json:"pipeline_env,omitempty"`
 	GitProvider          string                 `json:"git_provider,omitempty"`

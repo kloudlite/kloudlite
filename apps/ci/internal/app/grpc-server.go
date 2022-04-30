@@ -26,6 +26,7 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 		}
 	}
 	pipeline, err := s.d.CretePipeline(ctx, repos.ID(in.UserId), domain.Pipeline{
+		ProjectId:            in.ProjectId,
 		Name:                 in.Name,
 		ImageName:            in.ImageName,
 		PipelineEnv:          in.PipelineEnv,
