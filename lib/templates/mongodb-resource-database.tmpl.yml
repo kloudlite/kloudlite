@@ -3,6 +3,8 @@ kind: Database
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
+  finalizers:
+    - finalizers.kloudlite.io/managed-resource
   ownerReferences:
     - apiVersion: {{.APIVersion}}
       kind: {{.Kind}}

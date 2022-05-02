@@ -113,8 +113,8 @@ func (r *MongoDBReconciler) buildOutput(ctx context.Context, depl appsv1.Deploym
 
 	body := map[string]string{
 		RootPassword: string(mongoCfg.Data["mongodb-root-password"]),
-		DbHosts:      fmt.Sprintf("%s.%s.svc.cluster.local", depl.Name, depl.Namespace),
-		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local/admin?authSource=admin", "root", string(mongoCfg.Data["mongodb-root-password"]), depl.Name, depl.Namespace),
+		DbHosts:      fmt.Sprintf("%s.%s.svc.cluster.local:27017", depl.Name, depl.Namespace),
+		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s.%s.svc.cluster.local:27017/admin?authSource=admin", "root", string(mongoCfg.Data["mongodb-root-password"]), depl.Name, depl.Namespace),
 	}
 
 	connSecret := corev1.Secret{

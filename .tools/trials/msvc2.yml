@@ -1,7 +1,7 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: sample2
+  name: sample
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-service

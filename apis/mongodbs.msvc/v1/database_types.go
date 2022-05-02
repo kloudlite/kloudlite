@@ -14,10 +14,11 @@ type DatabaseSpec struct {
 
 // DatabaseStatus defines the observed state of Database
 type DatabaseStatus struct {
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Database is the Schema for the databases API
 type Database struct {
@@ -32,7 +33,11 @@ func (d *Database) String() string {
 	return fmt.Sprintf("(%s, kind=%s) %s/%s", d.TypeMeta.APIVersion, d.TypeMeta.Kind, d.Namespace, d.Name)
 }
 
-//+kubebuilder:object:root=true
+func (d *Database) LogRef() string {
+	return fmt.Sprintf("%s/%s/%s", d.Namespace, d.Kind, d.Name)
+}
+
+// +kubebuilder:object:root=true
 
 // DatabaseList contains a list of Database
 type DatabaseList struct {
