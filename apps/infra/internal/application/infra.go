@@ -514,7 +514,7 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 		}
 	}
 
-	time.AfterFunc(time.Duration(i.env.NodeDrainTime)*time.Minute, func() {
+	time.AfterFunc(time.Duration(i.env.NodeDrainTime)*time.Second, func() {
 		for _, node := range dropNodes {
 			cmd := exec.Command(
 				"kubectl",
