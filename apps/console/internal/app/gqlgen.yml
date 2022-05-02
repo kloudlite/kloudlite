@@ -49,6 +49,10 @@ models:
     fields:
       devices:
         resolver: true
+  Project:
+    fields:
+      memberships:
+        resolver: true
   Account:
     fields:
       projects:

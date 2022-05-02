@@ -444,6 +444,23 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, routerID repos.
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
+	entities, err := r.Domain.GetProjectMemberships(ctx, obj.ID)
+	accountMemberships := make([]*model.ProjectMembership, len(entities))
+	for i, entity := range entities {
+		accountMemberships[i] = &model.ProjectMembership{
+			Project: &model.Project{
+				ID: entity.ProjectId,
+			},
+			User: &model.User{
+				ID: entity.UserId,
+			},
+			Role: string(entity.Role),
+		}
+	}
+	return accountMemberships, err
+}
+
 func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) ([]*model.Project, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -724,6 +741,9 @@ func (r *Resolver) ManagedSvc() generated.ManagedSvcResolver { return &managedSv
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
+// Project returns generated.ProjectResolver implementation.
+func (r *Resolver) Project() generated.ProjectResolver { return &projectResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
@@ -736,5 +756,6 @@ type deviceResolver struct{ *Resolver }
 type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

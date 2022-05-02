@@ -45,6 +45,7 @@ type ResolverRoot interface {
 	ManagedRes() ManagedResResolver
 	ManagedSvc() ManagedSvcResolver
 	Mutation() MutationResolver
+	Project() ProjectResolver
 	Query() QueryResolver
 	User() UserResolver
 }
@@ -343,6 +344,9 @@ type MutationResolver interface {
 	CoreCreateRouter(ctx context.Context, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) (*model.Router, error)
 	CoreUpdateRouter(ctx context.Context, routerID repos.ID, domains []string, routes []*model.RouteInput) (bool, error)
 	CoreDeleteRouter(ctx context.Context, routerID repos.ID) (bool, error)
+}
+type ProjectResolver interface {
+	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
 }
 type QueryResolver interface {
 	CoreProjects(ctx context.Context, accountID *repos.ID) ([]*model.Project, error)
@@ -7617,14 +7621,14 @@ func (ec *executionContext) _Project_memberships(ctx context.Context, field grap
 		Object:     "Project",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Memberships, nil
+		return ec.resolvers.Project().Memberships(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12552,7 +12556,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12562,7 +12566,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "displayName":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12572,7 +12576,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "readableId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12582,7 +12586,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "logo":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12606,18 +12610,28 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "memberships":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Project_memberships(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_memberships(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
