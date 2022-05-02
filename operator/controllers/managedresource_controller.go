@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"context"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fn "operators.kloudlite.io/lib/functions"
-
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
+	mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
+	"operators.kloudlite.io/lib/finalizers"
+	fn "operators.kloudlite.io/lib/functions"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,17 +27,17 @@ import (
 // ManagedResourceReconciler reconciles a ManagedResource object
 type ManagedResourceReconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	ClientSet   *kubernetes.Clientset
-	SendMessage func(key string, msg lib.MessageReply) error
-	JobMgr      lib.Job
-	logger      *zap.SugaredLogger
-	mres        *crdsv1.ManagedResource
+	Scheme    *runtime.Scheme
+	ClientSet *kubernetes.Clientset
+	lib.MessageSender
+	JobMgr lib.Job
+	logger *zap.SugaredLogger
+	mres   *crdsv1.ManagedResource
 }
 
 const mresFinalizer = "finalizers.kloudlite.io/managed-resource"
 
-func (r *ManagedResourceReconciler) NotifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
+func (r *ManagedResourceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
 	meta.SetStatusCondition(&r.mres.Status.Conditions, metav1.Condition{
 		Type:    "Ready",
 		Status:  "False",
@@ -43,10 +45,10 @@ func (r *ManagedResourceReconciler) NotifyAndDie(ctx context.Context, err error)
 		Message: err.Error(),
 	})
 
-	return r.Notify(ctx)
+	return r.notify(ctx)
 }
 
-func (r *ManagedResourceReconciler) Notify(ctx context.Context) (ctrl.Result, error) {
+func (r *ManagedResourceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 	r.logger.Infof("Notify conditions: %+v", r.mres.Status.Conditions)
 	err := r.SendMessage(r.mres.LogRef(), lib.MessageReply{
 		Key:        r.mres.LogRef(),
@@ -63,9 +65,9 @@ func (r *ManagedResourceReconciler) Notify(ctx context.Context) (ctrl.Result, er
 	return reconcileResult.OK()
 }
 
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
 
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
@@ -77,9 +79,9 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
 		}
-		//return reconcileResult.Retry()
 		return reconcileResult.Failed()
 	}
+	r.mres = mres
 
 	if mres.DeletionTimestamp != nil {
 		logger.Debug("ManagedResource is being deleted")
@@ -88,33 +90,58 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	b, err := templates.Parse(templates.MongoDBResourceDatabase, mres)
 	if err != nil {
-		return r.NotifyAndDie(ctx, err)
+		return r.notifyAndDie(ctx, err)
 	}
 
 	if err := fn.KubectlApply(b); err != nil {
-		return r.NotifyAndDie(ctx, errors.NewEf(err, "could not apply mongodb resource %s", mres.LogRef()))
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply mongodb resource %s", mres.LogRef()))
 	}
 
-	return r.Notify(ctx)
+	var mdb mongodb.Database
+	if err := r.Get(ctx, req.NamespacedName, &mdb); err != nil {
+		return ctrl.Result{}, err
+	}
+	if mdb.Name != "" {
+		mres.Status.Conditions = mdb.Status.Conditions
+		return r.notify(ctx)
+	}
 
-	////STEP: check if managedsvc is ready
-	//if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
+	return r.notify(ctx)
+
+	// //STEP: check if managedsvc is ready
+	// if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
 	//	return reconcileResult.FailedE(errors.Newf("managedSvc %s is not ready", toRefString(managedSvc)))
-	//}
+	// }
 
-	//msvcSecretName := fmt.Sprintf("msvc-%s", mres.Spec.ManagedSvc)
-	//var msvcSecret corev1.Secret
-	//if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: msvcSecretName}, &msvcSecret); err != nil {
+	// msvcSecretName := fmt.Sprintf("msvc-%s", mres.Spec.ManagedSvc)
+	// var msvcSecret corev1.Secret
+	// if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: msvcSecretName}, &msvcSecret); err != nil {
 	//	logger.Errorf("ManagedSvc secret %s/%s not found, aborting reconcilation", mres.Namespace, msvcSecretName)
 	//	return reconcileResult.Failed()
-	//}
+	// }
 
-	//logger.Infof("Secret: %+v\n", string(msvcSecret.Data["mongodb-root-password"]))
+	// logger.Infof("Secret: %+v\n", string(msvcSecret.Data["mongodb-root-password"]))
 
-	//return reconcileResult.OK()
+	// return reconcileResult.OK()
 }
 
 func (r *ManagedResourceReconciler) finalize(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {
+	if controllerutil.ContainsFinalizer(mres, finalizers.ManagedResource.String()) {
+		controllerutil.RemoveFinalizer(mres, finalizers.ManagedResource.String())
+		if err := r.Update(ctx, mres); err != nil {
+			return ctrl.Result{}, err
+		}
+		return reconcileResult.OK()
+	}
+
+	if controllerutil.ContainsFinalizer(mres, finalizers.Foreground.String()) {
+		controllerutil.RemoveFinalizer(mres, finalizers.Foreground.String())
+		if err := r.Update(ctx, mres); err != nil {
+			return ctrl.Result{}, err
+		}
+		return reconcileResult.OK()
+	}
+
 	return reconcileResult.OK()
 }
 
@@ -337,5 +364,6 @@ func (r *ManagedResourceReconciler) finalize(ctx context.Context, mres *crdsv1.M
 func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.ManagedResource{}).
+		Owns(&mongodb.Database{}).
 		Complete(r)
 }

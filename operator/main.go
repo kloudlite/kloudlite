@@ -33,6 +33,7 @@ import (
 	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watchersmsvcv1 "operators.kloudlite.io/apis/watchers.msvc/v1"
+	mongodbsmsvcControllers "operators.kloudlite.io/controllers/mongodbs.msvc"
 	watchersmsvccontrollers "operators.kloudlite.io/controllers/watchers.msvc"
 	// +kubebuilder:scaffold:imports
 )
@@ -163,17 +164,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	//
-	// if err = (&controllers.ManagedResourceReconciler{
-	//	Client:      mgr.GetClient(),
-	//	Scheme:      mgr.GetScheme(),
-	//	ClientSet:   clientset,
-	//	SendMessage: sendMessage,
-	//	JobMgr:      lib.NewJobber(clientset),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-	//	os.Exit(1)
-	// }
+	if err = (&controllers.ManagedResourceReconciler{
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		MessageSender: sender,
+		ClientSet:     clientset,
+		JobMgr:        lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
+		os.Exit(1)
+	}
 
 	// if err = (&msvcControllers.MongoDBReconciler{
 	// 	Client: mgr.GetClient(),
@@ -182,13 +182,13 @@ func main() {
 	// 	setupLog.Error(err, "unable to create controller", "controller", "MongoDBStatus")
 	// 	os.Exit(1)
 	// }
-	// if err = (&mongodbsmsvccontrollers.DatabaseReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
-	//	os.Exit(1)
-	// }
+	if err = (&mongodbsmsvcControllers.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
 
 	if err = (&watchersmsvccontrollers.MongoDBReconciler{
 		Client: mgr.GetClient(),
