@@ -1,10 +1,27 @@
 package domain
 
+func getMasterNodesCount(totalNodes int) int {
+	return func() int {
+		if totalNodes >= 3 {
+			return 3
+		}
+		return 1
+	}()
+}
+
 type SetupClusterAction struct {
 	ClusterID  string `json:"cluster_id"`
 	Region     string `json:"region"`
 	Provider   string `json:"provider"`
 	NodesCount int    `json:"nodes_count"`
+}
+
+func (s *SetupClusterAction) MasterNodesCount() int {
+	return getMasterNodesCount(s.NodesCount)
+}
+
+func (s *SetupClusterAction) AgentNodesCount() int {
+	return s.NodesCount - getMasterNodesCount(s.NodesCount)
 }
 
 type SetupClusterResponse struct {
@@ -44,6 +61,14 @@ type UpdateClusterAction struct {
 	Region     string `json:"region"`
 	Provider   string `json:"provider"`
 	NodesCount int    `json:"nodes_count"`
+}
+
+func (s *UpdateClusterAction) MasterNodesCount() int {
+	return getMasterNodesCount(s.NodesCount)
+}
+
+func (s *UpdateClusterAction) AgentNodesCount() int {
+	return s.NodesCount - getMasterNodesCount(s.NodesCount)
 }
 
 type UpdateClusterResponse struct {
