@@ -86,7 +86,7 @@ func (d *domain) UpdateCluster(cxt context.Context, action UpdateClusterAction) 
 			Region:     action.Region,
 			Provider:   action.Provider,
 			NodesCount: action.NodesCount,
-			Done:       true,
+			Done:       false,
 		})
 	}
 	return d.jobResponder.SendUpdateClusterResponse(cxt, UpdateClusterResponse{
@@ -94,7 +94,7 @@ func (d *domain) UpdateCluster(cxt context.Context, action UpdateClusterAction) 
 		Region:     action.Region,
 		Provider:   action.Provider,
 		NodesCount: action.NodesCount,
-		Done:       false,
+		Done:       true,
 	})
 }
 func fxDomain(
