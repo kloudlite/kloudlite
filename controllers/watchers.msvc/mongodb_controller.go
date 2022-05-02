@@ -46,11 +46,9 @@ func (c ConditionType) String() string {
 // MongoDBReconciler reconciles a HelmMongoDB object
 type MongoDBReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger *zap.SugaredLogger
-	mdb    *watcherMsvc.MongoDB
-	msvc   *watcherMsvc.MongoDB
-	// msvc   *crdsv1.ManagedService
+	Scheme    *runtime.Scheme
+	logger    *zap.SugaredLogger
+	mdb       *watcherMsvc.MongoDB
 	watchList []types.NamespacedName
 	lt        metav1.Time
 }
@@ -72,15 +70,15 @@ type HelmMongoDB struct {
 }
 
 func (r *MongoDBReconciler) notifyAndDie(ctx context.Context, cond *metav1.Condition) (reconcile.Result, error) {
-	meta.SetStatusCondition(&r.msvc.Status.Conditions, *cond)
-	if err := r.Status().Update(ctx, r.msvc); err != nil {
+	meta.SetStatusCondition(&r.mdb.Status.Conditions, *cond)
+	if err := r.Status().Update(ctx, r.mdb); err != nil {
 		return reconcileResult.FailedE(err)
 	}
 	return reconcileResult.OK()
 }
 
 func (r *MongoDBReconciler) buildConditions(source string, conditions ...metav1.Condition) {
-	meta.SetStatusCondition(&r.msvc.Status.Conditions, metav1.Condition{
+	meta.SetStatusCondition(&r.mdb.Status.Conditions, metav1.Condition{
 		Type:               "Ready",
 		Status:             "False",
 		Reason:             "ChecksNotCompleted",
@@ -89,7 +87,7 @@ func (r *MongoDBReconciler) buildConditions(source string, conditions ...metav1.
 	})
 	for _, c := range conditions {
 		if c.Reason == "" {
-			c.Reason = "Unknown"
+			c.Reason = "NotSpecified"
 		}
 		if !c.LastTransitionTime.IsZero() {
 			if c.LastTransitionTime.Time.Sub(r.lt.Time).Seconds() > 0 {
@@ -103,7 +101,7 @@ func (r *MongoDBReconciler) buildConditions(source string, conditions ...metav1.
 			c.Reason = fmt.Sprintf("%s:%s", source, c.Reason)
 			c.Type = fmt.Sprintf("%s%s", source, c.Type)
 		}
-		meta.SetStatusCondition(&r.msvc.Status.Conditions, c)
+		meta.SetStatusCondition(&r.mdb.Status.Conditions, c)
 	}
 }
 
@@ -272,19 +270,7 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	mdb.Status.Conditions = []metav1.Condition{}
 	r.mdb = &mdb
-	r.msvc = &mdb
 	logger.Infof("HERE")
-
-	// var msvc crdsv1.ManagedService
-	// if err := r.Get(ctx, req.NamespacedName, &msvc); err != nil {
-	// 	if apiErrors.IsNotFound(err) {
-	// 		// INFO: might have been deleted
-	// 		return reconcileResult.OK()
-	// 	}
-	// 	return reconcileResult.Failed()
-	// }
-	//
-	// r.msvc = &msvc
 
 	if err := r.getMongoDBStatus(ctx, req.NamespacedName); err != nil {
 		logger.Info("\nmongodb reconcilation failed", err)
@@ -297,12 +283,7 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		})
 	}
 
-	fmt.Println("msvc.status.conditions", len(r.msvc.Status.Conditions))
-	for _, condition := range r.msvc.Status.Conditions {
-		r.logger.Infof("c.Type: %s c.Status %s c.Reason %s, timestamp: %s\n", condition.Type, condition.Status, condition.Reason, condition.LastTransitionTime)
-	}
-
-	if err := r.Status().Update(ctx, r.msvc); err != nil {
+	if err := r.Status().Update(ctx, r.mdb); err != nil {
 		logger.Info("failed", err.Error())
 		return reconcileResult.FailedE(err)
 	}
