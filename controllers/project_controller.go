@@ -33,17 +33,43 @@ type ProjectReconciler struct {
 	Scheme    *runtime.Scheme
 	ClientSet *kubernetes.Clientset
 	lib.MessageSender
-	SendMessage    func(key string, msg lib.MessageReply) error
 	JobMgr         lib.Job
 	logger         *zap.SugaredLogger
 	HarborUserName string
 	HarborPassword string
-	resource       *crdsv1.Project
+	project        *crdsv1.Project
+	lt             metav1.Time
+}
+
+func (r *ProjectReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
+	r.buildConditions("", metav1.Condition{
+		Type:    "Ready",
+		Status:  "False",
+		Reason:  "ErrWhileReconcilation",
+		Message: err.Error(),
+	})
+	return r.notify(ctx)
+}
+
+func (r *ProjectReconciler) notify(ctx context.Context) (ctrl.Result, error) {
+	err := r.SendMessage(r.project.LogRef(), lib.MessageReply{
+		Key:        r.project.LogRef(),
+		Conditions: r.project.Status.Conditions,
+		Status:     meta.IsStatusConditionTrue(r.project.Status.Conditions, "Ready"),
+	})
+	if err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not send message into kafka"))
+	}
+
+	if err := r.Status().Update(ctx, r.project); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for %s", r.project.LogRef()))
+	}
+	return reconcileResult.OK()
 }
 
 func (r *ProjectReconciler) apply(ctx context.Context, obj client.Object, fn ...controllerutil.MutateFn) error {
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
-		if err := ctrl.SetControllerReference(r.resource, obj, r.Scheme); err != nil {
+		if err := ctrl.SetControllerReference(r.project, obj, r.Scheme); err != nil {
 			r.logger.Infof("could not update controller reference")
 			return err
 		}
@@ -55,9 +81,37 @@ func (r *ProjectReconciler) apply(ctx context.Context, obj client.Object, fn ...
 	return err
 }
 
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
+func (r *ProjectReconciler) buildConditions(source string, conditions ...metav1.Condition) {
+	meta.SetStatusCondition(&r.project.Status.Conditions, metav1.Condition{
+		Type:               "Ready",
+		Status:             "False",
+		Reason:             "ChecksNotCompleted",
+		LastTransitionTime: r.lt,
+		Message:            "Not All Checks completed",
+	})
+	for _, c := range conditions {
+		if c.Reason == "" {
+			c.Reason = "NotSpecified"
+		}
+		if !c.LastTransitionTime.IsZero() {
+			if c.LastTransitionTime.Time.Sub(r.lt.Time).Seconds() > 0 {
+				r.lt = c.LastTransitionTime
+			}
+		}
+		if c.LastTransitionTime.IsZero() {
+			c.LastTransitionTime = r.lt
+		}
+		if source != "" {
+			c.Reason = fmt.Sprintf("%s:%s", source, c.Reason)
+			c.Type = fmt.Sprintf("%s%s", source, c.Type)
+		}
+		meta.SetStatusCondition(&r.project.Status.Conditions, c)
+	}
+}
+
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
 func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
@@ -72,9 +126,9 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return reconcileResult.Failed()
 	}
-	r.resource = project
+	r.project = project
 
-	if project.HasToBeDeleted() {
+	if project.GetDeletionTimestamp() != nil {
 		return r.finalizeProject(ctx, project)
 	}
 
@@ -89,9 +143,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	namespace := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}}
-	err := r.apply(ctx, &namespace)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+	if err := r.apply(ctx, &namespace); err != nil {
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not create/update namespace"))
 	}
 
 	encAuthPass := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", r.HarborUserName, r.HarborPassword)))
@@ -103,8 +156,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		},
 	})
 	if err != nil {
-		e := errors.NewEf(err, "could not unmarshal dockerconfigjson")
-		return reconcileResult.FailedE(e)
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not unmarshal dockerconfigjson"))
 	}
 
 	imgPullSecret := corev1.Secret{
@@ -119,9 +171,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		Type: corev1.SecretTypeDockerConfigJson,
 	}
 
-	err = r.apply(ctx, &imgPullSecret)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+	if err := r.apply(ctx, &imgPullSecret); err != nil {
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply imagePullSecret"))
 	}
 
 	// Role
@@ -145,9 +196,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		},
 	}
 
-	err = r.apply(ctx, &adminRole)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+	if err := r.apply(ctx, &adminRole); err != nil {
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply namespace admin role"))
 	}
 
 	adminRoleBinding := rbacv1.RoleBinding{
@@ -171,9 +221,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		},
 	}
 
-	err = r.apply(ctx, &adminRoleBinding)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+	if err := r.apply(ctx, &adminRoleBinding); err != nil {
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply namespace admin role binding"))
 	}
 
 	// service account
@@ -183,22 +232,18 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		ImagePullSecrets: []corev1.LocalObjectReference{{Name: ImagePullSecretName}},
 	}
 
-	r.apply(ctx, &svcAccount)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+	if err := r.apply(ctx, &svcAccount); err != nil {
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply service account"))
 	}
 
 	// set conditions
-	meta.SetStatusCondition(&project.Status.Conditions, metav1.Condition{
-		Type:   "Ready",
-		Status: "True",
-		Reason: "ReconcilationSuccessfull",
+	r.buildConditions("", metav1.Condition{
+		Type:    "Ready",
+		Status:  metav1.ConditionTrue,
+		Reason:  "AllChecksPassed",
+		Message: "Project is ready",
 	})
-	if err := r.Status().Update(ctx, project); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	logger.Infof("Reconcile Completed")
-	return reconcileResult.OK()
+	return r.notify(ctx)
 }
 
 func (r *ProjectReconciler) finalizeProject(ctx context.Context, project *crdsv1.Project) (ctrl.Result, error) {
