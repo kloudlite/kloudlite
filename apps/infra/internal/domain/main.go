@@ -96,7 +96,6 @@ func (d *domain) UpdateCluster(cxt context.Context, action UpdateClusterAction) 
 		NodesCount: action.NodesCount,
 		Done:       false,
 	})
-	return err
 }
 func fxDomain(
 	env *Env,
