@@ -204,8 +204,8 @@ func (r *mutationResolver) InfraCreateCluster(ctx context.Context, name string, 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (*model.Cluster, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (bool, error) {
+	return r.Domain.UpdateCluster(ctx, clusterID, name, nodesCount)
 }
 
 func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error) {

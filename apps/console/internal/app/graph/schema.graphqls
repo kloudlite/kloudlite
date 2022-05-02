@@ -58,7 +58,7 @@ type Mutation {
   managedRes_delete(resId: ID!): Boolean
 
   infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
-  infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
+  infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Boolean!
   infra_deleteCluster(clusterId: ID!): Boolean!
   infra_addDevice(clusterId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!

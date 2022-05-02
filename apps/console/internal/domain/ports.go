@@ -9,7 +9,7 @@ import (
 
 type Domain interface {
 	CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
-	UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (*entities.Cluster, error)
+	UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
 	DeleteCluster(ctx context.Context, clusterId repos.ID) error
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
 	ListClusters(ctx context.Context, accountId repos.ID) ([]*entities.Cluster, error)
