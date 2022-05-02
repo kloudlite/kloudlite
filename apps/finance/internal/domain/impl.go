@@ -24,6 +24,22 @@ type domainI struct {
 	ciClient    ci.CIClient
 }
 
+func (domain *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error) {
+	membership, err := domain.iamCli.GetMembership(ctx, &iam.InGetMembership{
+		UserId:       string(userId),
+		ResourceType: "account",
+		ResourceId:   string(accountId),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &Membership{
+		AccountId: repos.ID(membership.ResourceId),
+		UserId:    repos.ID(membership.UserId),
+		Role:      common.Role(membership.Role),
+	}, nil
+}
+
 func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
 	rbs, err := domain.iamCli.ListResourceMemberships(ctx, &iam.InResourceMemberships{
 		ResourceId:   string(id),

@@ -41,6 +41,7 @@ type BillingInput struct {
 type User struct {
 	ID                 repos.ID             `json:"id"`
 	AccountMemberships []*AccountMembership `json:"accountMemberships"`
+	AccountMembership  *AccountMembership   `json:"accountMembership"`
 }
 
 func (User) IsEntity() {}

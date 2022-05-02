@@ -156,7 +156,6 @@ func (r *queryResolver) FinanceAccount(ctx context.Context, accountID repos.ID) 
 
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
 	entities, err := r.domain.GetAccountMemberships(ctx, obj.ID)
-	fmt.Println(entities, err, "entities")
 	accountMemberships := make([]*model.AccountMembership, len(entities))
 	for i, entity := range entities {
 		accountMemberships[i] = &model.AccountMembership{
@@ -170,6 +169,22 @@ func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) 
 		}
 	}
 	return accountMemberships, err
+}
+
+func (r *userResolver) AccountMembership(ctx context.Context, obj *model.User, accountID *repos.ID) (*model.AccountMembership, error) {
+	membership, err := r.domain.GetAccountMembership(ctx, obj.ID, *accountID)
+	if err != nil {
+		return nil, err
+	}
+	return &model.AccountMembership{
+		Account: &model.Account{
+			ID: membership.AccountId,
+		},
+		User: &model.User{
+			ID: membership.UserId,
+		},
+		Role: string(membership.Role),
+	}, nil
 }
 
 // Account returns generated.AccountResolver implementation.

@@ -7,6 +7,7 @@ service IAM {
   rpc Ping(Message) returns (Message);
   rpc Can(InCan) returns (OutCan);
   rpc ListUserMemberships(InUserMemberships) returns (OutListMemberships);
+  rpc GetMembership(InGetMembership) returns (OutGetMembership);
   rpc ListResourceMemberships(InResourceMemberships) returns (OutListMemberships);
 
   // Mutation
@@ -22,12 +23,25 @@ message RoleBinding {
   string role = 4;
 }
 
+message InGetMembership {
+  string userId = 1;
+  string resourceType = 2;
+  string resourceId = 3;
+}
+
 message InAddMembership {
   string userId = 1;
   string resourceType = 2;
   string resourceId = 3;
   string role = 4;
   string filter = 5;
+}
+
+message OutGetMembership {
+  string userId=1;
+  string resourceId=2;
+  string role=3;
+
 }
 
 message OutAddMembership {
