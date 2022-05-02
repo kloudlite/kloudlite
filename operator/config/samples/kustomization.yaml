@@ -12,4 +12,5 @@ resources:
 - crds_v1_mongodbhelm.yaml
 - mres.mongodbs.msvc_v1_database.yaml
 - mongodbs.msvc_v1_database.yaml
+- watchers.msvc_v1_mongodb.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

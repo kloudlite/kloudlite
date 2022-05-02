@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: mongodatabases.mres.kloudlite.io
+  name: mongodbs.watchers.msvc.kloudlite.io
 spec:
-  group: mres.kloudlite.io
+  group: watchers.msvc.kloudlite.io
   names:
-    kind: MongoDatabase
-    listKind: MongoDatabaseList
-    plural: mongodatabases
-    singular: mongodatabase
+    kind: MongoDB
+    listKind: MongoDBList
+    plural: mongodbs
+    singular: mongodb
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: MongoDatabase is the Schema for the mongodatabases API
+        description: MongoDB is the Schema for the mongodbs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,46 +33,10 @@ spec:
           metadata:
             type: object
           spec:
-            description: MongoDatabaseSpec defines the desired state of MongoDatabase
-            properties:
-              managed_svc:
-                properties:
-                  config_ref:
-                    properties:
-                      name:
-                        type: string
-                    required:
-                    - name
-                    type: object
-                  name:
-                    type: string
-                  secret_ref:
-                    properties:
-                      name:
-                        type: string
-                    required:
-                    - name
-                    type: object
-                required:
-                - name
-                type: object
-              outputs:
-                items:
-                  properties:
-                    description:
-                      type: string
-                    name:
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
-            required:
-            - managed_svc
-            - outputs
+            description: MongoDBSpec defines the desired state of MongoDB
             type: object
           status:
-            description: MongoDatabaseStatus defines the observed state of MongoDatabase
+            description: MongoDBStatus defines the observed state of MongoDB
             properties:
               conditions:
                 items:
@@ -142,15 +106,6 @@ spec:
                   - type
                   type: object
                 type: array
-              secret_ref:
-                properties:
-                  name:
-                    type: string
-                required:
-                - name
-                type: object
-            required:
-            - secret_ref
             type: object
         type: object
     served: true

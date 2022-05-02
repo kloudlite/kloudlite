@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	libJson "encoding/json"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"regexp"
 	"strings"
 
@@ -13,6 +14,13 @@ import (
 
 func NewBool(b bool) *bool {
 	return &b
+}
+
+func StatusFromBool(b bool) metav1.ConditionStatus {
+	if b {
+		return metav1.ConditionTrue
+	}
+	return metav1.ConditionFalse
 }
 
 type JsonFeatures interface {

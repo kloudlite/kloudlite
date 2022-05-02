@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	fn "operators.kloudlite.io/lib/functions"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
@@ -10,11 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/yaml"
 
-	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	crdsv1 "operators.kloudlite.io/api/v1"
 	// mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	"operators.kloudlite.io/lib"
@@ -31,9 +30,38 @@ type ManagedResourceReconciler struct {
 	SendMessage func(key string, msg lib.MessageReply) error
 	JobMgr      lib.Job
 	logger      *zap.SugaredLogger
+	mres        *crdsv1.ManagedResource
 }
 
 const mresFinalizer = "finalizers.kloudlite.io/managed-resource"
+
+func (r *ManagedResourceReconciler) NotifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
+	meta.SetStatusCondition(&r.mres.Status.Conditions, metav1.Condition{
+		Type:    "Ready",
+		Status:  "False",
+		Reason:  "ErrUnknown",
+		Message: err.Error(),
+	})
+
+	return r.Notify(ctx)
+}
+
+func (r *ManagedResourceReconciler) Notify(ctx context.Context) (ctrl.Result, error) {
+	r.logger.Infof("Notify conditions: %+v", r.mres.Status.Conditions)
+	err := r.SendMessage(r.mres.LogRef(), lib.MessageReply{
+		Key:        r.mres.LogRef(),
+		Conditions: r.mres.Status.Conditions,
+		Status:     meta.IsStatusConditionTrue(r.mres.Status.Conditions, "Ready"),
+	})
+	if err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not send message into kafka"))
+	}
+
+	if err := r.Status().Update(ctx, r.mres); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.mres.LogRef()))
+	}
+	return reconcileResult.OK()
+}
 
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
@@ -47,11 +75,10 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	mres := &crdsv1.ManagedResource{}
 	if err := r.Get(ctx, req.NamespacedName, mres); err != nil {
 		if apiErrors.IsNotFound(err) {
-			logger.Debug("ManagedResource has been deleted")
 			return reconcileResult.OK()
 		}
-		logger.Debugf("Failed to get ManagedResource: %v", err)
-		return reconcileResult.RetryE(0, err)
+		//return reconcileResult.Retry()
+		return reconcileResult.Failed()
 	}
 
 	if mres.DeletionTimestamp != nil {
@@ -59,43 +86,16 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r.finalize(ctx, mres)
 	}
 
-	kt, err := templates.UseTemplate(templates.MongoDBResourceDatabase)
+	b, err := templates.Parse(templates.MongoDBResourceDatabase, mres)
 	if err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not useTemplate"))
-	}
-	b, err := kt.WithValues(mres)
-	if err != nil {
-		logger.Info(b, err)
+		return r.NotifyAndDie(ctx, err)
 	}
 
-	var ry unstructured.Unstructured
-	if err = yaml.Unmarshal(b, &ry.Object); err != nil {
-		logger.Error(err)
-		logger.Info("could not convert template %s []byte into mongodb", templates.MongoDBResourceDatabase)
-		return reconcileResult.Failed()
+	if err := fn.KubectlApply(b); err != nil {
+		return r.NotifyAndDie(ctx, errors.NewEf(err, "could not apply mongodb resource %s", mres.LogRef()))
 	}
 
-	logger.Info("ry.Spec:", ry.Object["spec"])
-
-	m := new(unstructured.Unstructured)
-	m.Object = map[string]interface{}{
-		"apiVersion": ry.Object["apiVersion"],
-		"kind":       ry.Object["kind"],
-		"metadata":   ry.Object["metadata"],
-		"spec":       ry.Object["spec"],
-	}
-
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, m, func() error {
-		m = m.DeepCopy()
-		m.Object["spec"] = ry.Object["spec"]
-		if err = controllerutil.SetControllerReference(mres, m, r.Scheme); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not create/update resource"))
-	}
+	return r.Notify(ctx)
 
 	////STEP: check if managedsvc is ready
 	//if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
@@ -111,7 +111,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	//logger.Infof("Secret: %+v\n", string(msvcSecret.Data["mongodb-root-password"]))
 
-	return reconcileResult.OK()
+	//return reconcileResult.OK()
 }
 
 func (r *ManagedResourceReconciler) finalize(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {

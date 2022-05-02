@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -76,14 +75,22 @@ func (r *DatabaseReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.
 		Type:    "Ready",
 		Status:  "False",
 		Reason:  "ErrUnknown",
-		Message: errors.NewEf(err, "failed to create mongodb Database").Error(),
+		Message: err.Error(),
 	})
 
 	if err2 := r.Status().Update(ctx, r.mres); err2 != nil {
 		r.logger.Infof("could not update mres status")
-		return reconcileResult.FailedE(errors.New("could not update managed resource"))
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update managed resource %s", r.mres.LogRef()))
 	}
 	return reconcileResult.FailedE(err)
+}
+
+func (r *DatabaseReconciler) notify(ctx context.Context) (ctrl.Result, error) {
+	if err := r.Status().Update(ctx, r.mres); err != nil {
+		r.logger.Infof("could not update mres status")
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update managed resource %s", r.mres.LogRef()))
+	}
+	return reconcileResult.OK()
 }
 
 //+kubebuilder:rbac:groups=mongodbs.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
@@ -123,21 +130,18 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	logger.Infof("MongoDatabase %+v", mdb.Spec.ManagedSvc)
 	managedSvc := &crdsv1.ManagedService{}
 	if err := r.Get(ctx, types.NamespacedName{Name: mdb.Spec.ManagedSvc, Namespace: mdb.Namespace}, managedSvc); err != nil {
-		logger.Info(err.Error())
-		logger.Infof("failing to get %s, queing for later", managedSvc.String())
-		return reconcileResult.FailedE(err)
+		return r.notifyAndDie(ctx, errors.NewEf(err, "failing to get %s, queing for later", managedSvc.LogRef()))
 	}
 
 	//STEP: check if managedsvc is ready
 	if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
-		return reconcileResult.FailedE(errors.Newf("%s is not ready", managedSvc.String()))
+		return r.notifyAndDie(ctx, errors.Newf("%s is not ready", managedSvc.LogRef()))
 	}
 
 	msvcSecretName := fmt.Sprintf("msvc-%s", mdb.Spec.ManagedSvc)
 	var mSecret corev1.Secret
 	if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: msvcSecretName}, &mSecret); err != nil {
-		logger.Errorf("ManagedSvc secret %s/%s not found, aborting reconcilation", mdb.Namespace, msvcSecretName)
-		return reconcileResult.Failed()
+		return r.notifyAndDie(ctx, errors.NewEf(err, "ManagedSvc secret %s/%s not found, aborting reconcilation", mdb.Namespace, msvcSecretName))
 	}
 
 	if mdb.GetDeletionTimestamp() != nil {
@@ -148,7 +152,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	db, err := connectToDB(ctx, string(mSecret.Data["DB_URL"]), "admin")
 	if err != nil {
-		return reconcileResult.FailedE(err)
+		return r.notifyAndDie(ctx, err)
 	}
 
 	sr := db.RunCommand(ctx, bson.D{
@@ -157,11 +161,8 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	var usersInfo UsersInfo
 	if err = sr.Decode(&usersInfo); err != nil {
-		logger.Debug(errors.NewEf(err, "could not decode usersInfo"))
-		return reconcileResult.FailedE(err)
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not decode usersInfo"))
 	}
-
-	logger.Debugf("UserInfo.Users: %+v", usersInfo.Users)
 
 	if len(usersInfo.Users) > 0 {
 		logger.Infof("MongoDB Account with (user=%s, db=%s) already exists", mdb.Name, mdb.Name)

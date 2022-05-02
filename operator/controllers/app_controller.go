@@ -28,12 +28,11 @@ import (
 // AppReconciler reconciles a Deployment object
 type AppReconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	ClientSet   *kubernetes.Clientset
-	JobMgr      lib.Job
-	logger      *zap.SugaredLogger
-	SendMessage func(key string, msg lib.MessageReply) error
-
+	Scheme    *runtime.Scheme
+	ClientSet *kubernetes.Clientset
+	JobMgr    lib.Job
+	logger    *zap.SugaredLogger
+	lib.MessageSender
 	app *crdsv1.App
 
 	HarborUserName string
@@ -52,8 +51,9 @@ func (r *AppReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Resul
 }
 
 func (r *AppReconciler) notify(ctx context.Context) (ctrl.Result, error) {
-	r.logger.Infof("notify conditions: %+v", r.app.Status.Conditions)
+	r.logger.Infof("Notify conditions: %+v", r.app.Status.Conditions)
 	err := r.SendMessage(r.app.LogRef(), lib.MessageReply{
+		Key:        r.app.LogRef(),
 		Conditions: r.app.Status.Conditions,
 		Status:     meta.IsStatusConditionTrue(r.app.Status.Conditions, "Ready"),
 	})
@@ -86,6 +86,7 @@ func (r *AppReconciler) IfDeployment(ctx context.Context, req ctrl.Request) (*me
 		LabelSelector: labels2.SelectorFromValidatedSet(deployment.Spec.Template.GetLabels()),
 		Namespace:     req.Namespace,
 	}
+	// TODO [x]: read container status from pod to figure out the real status
 	p := corev1.PodList{}
 	err := r.List(ctx, &p, opts)
 	if err != nil {
@@ -130,6 +131,8 @@ func (r *AppReconciler) IfDeployment(ctx context.Context, req ctrl.Request) (*me
 		}
 		//r.logger.Infof("----------")
 	}
+
+	// TODO: try to read conditions from replicaset also, to aggregate SYSTEM errors
 	return &readyCond, nil
 }
 

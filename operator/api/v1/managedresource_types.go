@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,6 +27,10 @@ type ManagedResource struct {
 
 	Spec   ManagedResourceSpec   `json:"spec,omitempty"`
 	Status ManagedResourceStatus `json:"status,omitempty"`
+}
+
+func (m *ManagedResource) LogRef() string {
+	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
 }
 
 //+kubebuilder:object:root=true

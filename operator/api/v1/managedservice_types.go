@@ -2,9 +2,7 @@ package v1
 
 import (
 	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // ManagedServiceSpec defines the desired state of ManagedService
@@ -31,8 +29,8 @@ type ManagedService struct {
 	Status ManagedServiceStatus `json:"status,omitempty"`
 }
 
-func (m *ManagedService) String() string {
-	return fmt.Sprintf("(APIVersion=%s, kind=%s) %s/%s", m.TypeMeta.APIVersion, m.TypeMeta.Kind, m.Namespace, m.Name)
+func (m *ManagedService) LogRef() string {
+	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
 }
 
 //+kubebuilder:object:root=true
@@ -44,13 +42,6 @@ type ManagedServiceList struct {
 	Items           []ManagedService `json:"items"`
 }
 
-//+kubebuilder:object:root=true
-type K8sYaml struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              unstructured.Unstructured `json:"spec"`
-}
-
 func init() {
-	SchemeBuilder.Register(&ManagedService{}, &ManagedServiceList{}, &K8sYaml{})
+	SchemeBuilder.Register(&ManagedService{}, &ManagedServiceList{})
 }

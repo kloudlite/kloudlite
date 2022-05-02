@@ -4,24 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	crdsv1 "operators.kloudlite.io/api/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib/errors"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // MongoDBReconciler reconciles a MongoDB object
@@ -29,17 +27,39 @@ type MongoDBReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger *zap.SugaredLogger
+	msvc   *crdsv1.ManagedService
 }
 
-//+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=msvc.kloudlite.io,resources=mongodbs/finalizers,verbs=update
 
 const (
 	RootPassword string = "ROOT_PASSWORD"
 	DbHosts      string = "HOSTS"
 	DbUrl        string = "DB_URL"
 )
+
+func (r *MongoDBReconciler) notifyMsvc(ctx context.Context, c metav1.Condition) error {
+	meta.SetStatusCondition(&r.msvc.Status.Conditions, c)
+	if err := r.Status().Update(ctx, r.msvc); err != nil {
+		return errors.NewEf(err, "could not update resource %s", r.msvc.LogRef())
+	}
+	return nil
+}
+
+func (r *MongoDBReconciler) IfDeployment(ctx context.Context, req ctrl.Request) (*metav1.Condition, error) {
+	var deployment appsv1.Deployment
+	if err := r.Get(ctx, req.NamespacedName, &deployment); err != nil {
+		// not a deployment request
+		return nil, nil
+	}
+	if deployment.Name == "" {
+		return nil, nil
+	}
+	r.logger.Infof("request is a deployment request")
+	return nil, nil
+}
 
 func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = controllers.GetLogger(req.NamespacedName)
@@ -57,6 +77,8 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if mdb.GetDeletionTimestamp() != nil {
 		return reconcileResult.OK()
 	}
+
+	r.IfDeployment(ctx, req)
 
 	logger.Debugf("Reconilation started ...")
 
@@ -84,11 +106,9 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: mdb.Name}, &msvc); err != nil {
 		return reconcileResult.FailedE(err)
 	}
+	r.msvc = &msvc
 
-	meta.SetStatusCondition(&msvc.Status.Conditions, x)
-
-	if err := r.Status().Update(ctx, &msvc); err != nil {
-		logger.Infof("could not update msvc status")
+	if err := r.notifyMsvc(ctx, x); err != nil {
 		return reconcileResult.FailedE(err)
 	}
 
@@ -143,5 +163,6 @@ func (r *MongoDBReconciler) retry() (ctrl.Result, error) {
 func (r *MongoDBReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&msvcv1.MongoDB{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
