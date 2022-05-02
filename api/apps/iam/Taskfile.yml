@@ -15,8 +15,8 @@ tasks:
     env:
       GRPC_PORT: 3000
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
-      MONGO_DB_URI: mongodb://mongodb-dev.hotspot.svc.cluster.local:27017
-      MONGO_DB_NAME: iam-go
+      MONGO_DB_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
+      MONGO_DB_NAME: iam
     sources:
       - ./**/*.go
       - main.go

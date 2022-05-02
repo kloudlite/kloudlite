@@ -27,6 +27,9 @@ func (s *server) GetMembership(ctx context.Context, membership *iam.InGetMembers
 	if err != nil {
 		return nil, err
 	}
+	if one == nil {
+		return nil, errors.New(fmt.Sprintf("role binding not found for resource %s and user %s", membership.ResourceId, membership.UserId))
+	}
 	return &iam.OutGetMembership{
 		UserId:     one.UserId,
 		ResourceId: one.ResourceId,
