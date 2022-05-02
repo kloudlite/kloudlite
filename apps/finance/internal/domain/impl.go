@@ -134,14 +134,14 @@ func (domain *domainI) CreateAccount(
 		return nil, err
 	}
 	fmt.Println("sending message to console")
-	// _, err = domain.consoleCli.CreateDefaultCluster(ctx, &console.CreateClusterIn{
-	// 	AccountId:   string(acc.HarborId),
-	// 	AccountName: acc.Name,
-	// })
-	// fmt.Println("sent message", err)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	_, err = domain.consoleCli.CreateDefaultCluster(ctx, &console.CreateClusterIn{
+		AccountId:   string(acc.Id),
+		AccountName: acc.Name,
+	})
+	fmt.Println("sent message", err)
+	if err != nil {
+		return nil, err
+	}
 
 	return acc, err
 }
