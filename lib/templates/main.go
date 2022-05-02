@@ -59,7 +59,9 @@ func (tf templateFile) String() string {
 
 const (
 	MongoDBStandalone       templateFile = "mongodb-helm-standalone.tmpl.yml"
+	MongoDBWatcher          templateFile = "mongo-msvc-watcher.tmpl.yml"
 	Deployment              templateFile = "deployment.tmpl.yml"
 	Service                 templateFile = "service.tmpl.yml"
+	Secret                  templateFile = "secret.tmpl.yml"
 	MongoDBResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
 )

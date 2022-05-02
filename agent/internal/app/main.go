@@ -47,7 +47,10 @@ type Message struct {
 func readMessages(kConsumer *kafka.Consumer) {
 	for {
 		msg, err := kConsumer.ReadMessage(-1)
-		fmt.Println("###############  MSg received", string(msg.Value))
+		if msg == nil {
+			continue
+		}
+		fmt.Println("###############  Msg received", string(msg.Value))
 		if err != nil {
 			fmt.Printf("could not read kafka message because %v\n", err)
 		}

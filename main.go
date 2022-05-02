@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"operators.kloudlite.io/controllers"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -22,7 +23,6 @@ import (
 
 	"operators.kloudlite.io/agent"
 	crdsv1 "operators.kloudlite.io/api/v1"
-	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
 
@@ -32,7 +32,9 @@ import (
 	// mrescontrollers "operators.kloudlite.io/controllers/mres"
 	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
-	//+kubebuilder:scaffold:imports
+	watchersmsvcv1 "operators.kloudlite.io/apis/watchers.msvc/v1"
+	watchersmsvccontrollers "operators.kloudlite.io/controllers/watchers.msvc"
+	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -47,7 +49,8 @@ func init() {
 	utilruntime.Must(mresv1.AddToScheme(scheme))
 	utilruntime.Must(msvcv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbsmsvcv1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	utilruntime.Must(watchersmsvcv1.AddToScheme(scheme))
+	// +kubebuilder:scaffold:scheme
 }
 
 func fromEnv(key string) string {
@@ -112,94 +115,89 @@ func main() {
 
 	fmt.Println("kafka producer connected")
 
-	sendMessage := func(key string, message lib.MessageReply) error {
-		msgBody, e := json.Marshal(message)
-		if e != nil {
-			fmt.Println(e)
-			return e
-		}
-		return kafkaProducer.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{
-				Topic:     &kafkaReplyTopic,
-				Partition: int32(kafka.PartitionAny),
-			},
-			Key:   []byte(key),
-			Value: msgBody,
-		}, nil)
-	}
+	sender := NewMsgSender(kafkaProducer, kafkaReplyTopic)
 
-	//if err = (&controllers.ProjectReconciler{
-	//	Client:         mgr.GetClient(),
-	//	Scheme:         mgr.GetScheme(),
-	//	ClientSet:      clientset,
-	//	SendMessage:    sendMessage,
-	//	JobMgr:         lib.NewJobber(clientset),
-	//	HarborUserName: harborUserName,
-	//	HarborPassword: harborPassword,
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Project")
-	//	os.Exit(1)
-	//}
-
-	if err = (&controllers.AppReconciler{
+	if err = (&controllers.ProjectReconciler{
 		Client:         mgr.GetClient(),
 		Scheme:         mgr.GetScheme(),
 		ClientSet:      clientset,
+		MessageSender:  sender,
 		JobMgr:         lib.NewJobber(clientset),
-		SendMessage:    sendMessage,
 		HarborUserName: harborUserName,
 		HarborPassword: harborPassword,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "App")
+		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
 	}
 
-	//if err = (&controllers.RouterReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Router")
+	// if err = (&controllers.AppReconciler{
+	//	Client:         mgr.GetClient(),
+	//	Scheme:         mgr.GetScheme(),
+	//	ClientSet:      clientset,
+	//	JobMgr:         lib.NewJobber(clientset),
+	//	MessageSender:  sender,
+	//	HarborUserName: harborUserName,
+	//	HarborPassword: harborPassword,
+	// }).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "App")
 	//	os.Exit(1)
-	//}
+	// }
 	//
-	//if err = (&controllers.ManagedServiceReconciler{
+	if err = (&controllers.RouterReconciler{
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		MessageSender: sender,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Router")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.ManagedServiceReconciler{
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		ClientSet:     clientset,
+		MessageSender: sender,
+		JobMgr:        lib.NewJobber(clientset),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
+		os.Exit(1)
+	}
+
+	//
+	// if err = (&controllers.ManagedResourceReconciler{
 	//	Client:      mgr.GetClient(),
 	//	Scheme:      mgr.GetScheme(),
 	//	ClientSet:   clientset,
 	//	SendMessage: sendMessage,
 	//	JobMgr:      lib.NewJobber(clientset),
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
-	//	os.Exit(1)
-	//}
-	//
-	//if err = (&controllers.ManagedResourceReconciler{
-	//	Client:      mgr.GetClient(),
-	//	Scheme:      mgr.GetScheme(),
-	//	ClientSet:   clientset,
-	//	SendMessage: sendMessage,
-	//	JobMgr:      lib.NewJobber(clientset),
-	//}).SetupWithManager(mgr); err != nil {
+	// }).SetupWithManager(mgr); err != nil {
 	//	setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
 	//	os.Exit(1)
-	//}
-	//
-	//if err = (&msvccontrollers.MongoDBReconciler{
+	// }
+
+	// if err = (&msvcControllers.MongoDBReconciler{
+	// 	Client: mgr.GetClient(),
+	// 	Scheme: mgr.GetScheme(),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "MongoDBStatus")
+	// 	os.Exit(1)
+	// }
+	// if err = (&mongodbsmsvccontrollers.DatabaseReconciler{
 	//	Client: mgr.GetClient(),
 	//	Scheme: mgr.GetScheme(),
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "MongoDB")
-	//	os.Exit(1)
-	//}
-	//if err = (&mongodbsmsvccontrollers.DatabaseReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	//}).SetupWithManager(mgr); err != nil {
+	// }).SetupWithManager(mgr); err != nil {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
 	//	os.Exit(1)
-	//}
+	// }
 
-	//+kubebuilder:scaffold:builder
+	if err = (&watchersmsvccontrollers.MongoDBReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MongoDBStatus")
+		os.Exit(1)
+	}
+	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
@@ -255,4 +253,31 @@ func main() {
 	)
 
 	app.Run()
+}
+
+type msgSender struct {
+	kp     *kafka.Producer
+	ktopic *string
+}
+
+func (m *msgSender) SendMessage(key string, msg lib.MessageReply) error {
+	msgBody, e := json.Marshal(msg)
+	if e != nil {
+		fmt.Println(e)
+		return e
+	}
+	return m.kp.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{
+			Topic: m.ktopic,
+		},
+		Key:   []byte(key),
+		Value: msgBody,
+	}, nil)
+}
+
+func NewMsgSender(kp *kafka.Producer, ktopic string) lib.MessageSender {
+	return &msgSender{
+		kp,
+		&ktopic,
+	}
 }

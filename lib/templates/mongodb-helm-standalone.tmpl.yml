@@ -13,7 +13,7 @@ metadata:
 spec:
   auth:
     enabled: true
-    rootPassword: {{.Spec.Inputs.RootPassword | default uuidv4 }}
+    rootPassword: {{index .Spec.Inputs "root_password"}}
   persistence:
     enabled: true
     size: {{index .Spec.Inputs "size" | default "1Gi" }}

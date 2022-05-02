@@ -3,6 +3,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"operators.kloudlite.io/lib"
 
 	"go.uber.org/zap"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -23,9 +25,38 @@ import (
 // RouterReconciler reconciles a Router object
 type RouterReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	logger   *zap.SugaredLogger
-	resource *crdsv1.Router
+	Scheme *runtime.Scheme
+	logger *zap.SugaredLogger
+	router *crdsv1.Router
+	lib.MessageSender
+}
+
+func (r *RouterReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
+	meta.SetStatusCondition(&r.router.Status.Conditions, metav1.Condition{
+		Type:    "Ready",
+		Status:  "False",
+		Reason:  "ErrUnknown",
+		Message: err.Error(),
+	})
+
+	return r.notify(ctx)
+}
+
+func (r *RouterReconciler) notify(ctx context.Context) (ctrl.Result, error) {
+	r.logger.Infof("Notify conditions: %+v", r.router.Status.Conditions)
+	err := r.SendMessage(r.router.LogRef(), lib.MessageReply{
+		Key:        r.router.LogRef(),
+		Conditions: r.router.Status.Conditions,
+		Status:     meta.IsStatusConditionTrue(r.router.Status.Conditions, "Ready"),
+	})
+	if err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not send message into kafka"))
+	}
+
+	if err := r.Status().Update(ctx, r.router); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.router.LogRef()))
+	}
+	return reconcileResult.OK()
 }
 
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
@@ -43,12 +74,12 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
 		}
-		return reconcileResult.FailedE(err)
+		return reconcileResult.Failed()
 	}
-	r.resource = router
+	r.router = router
 
 	if router.GetDeletionTimestamp() != nil {
-		r.finalizeRouter(ctx, router)
+		return r.finalizeRouter(ctx, router)
 	}
 
 	var ingRules []networkingv1.IngressRule
@@ -96,13 +127,11 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 		ing.Spec.Rules = ingRules
 		if err := controllerutil.SetControllerReference(router, ing, r.Scheme); err != nil {
-			logger.Info("could not set controller references")
-			return err
+			return errors.NewEf(err, "could not set controller reference")
 		}
 		return nil
 	}); err != nil {
-		e := errors.NewEf(err, "could not apply ingress")
-		return reconcileResult.FailedE(e)
+		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply ingress"))
 	}
 
 	router.Status.IPs = []string{}
@@ -111,41 +140,15 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			router.Status.IPs = append(router.Status.IPs, item.IP)
 		}
 	}
-
-	if err := r.Status().Update(ctx, router); err != nil {
-		return reconcileResult.FailedE(errors.StatusUpdate(err))
-	}
-	// ingress := networkingv1.Ingress{}
-
-	// logger.Info("Ingress: %+\n")
-	// if err := r.apply(ctx, &ingress, func() error {
-	// 	logger.Infof("INgress: %v", ingress.Spec.Rules)
-	// 	return nil
-	// }); err != nil {
-	// 	e := errors.NewEf(err, "could not apply ingress resource")
-	// 	logger.Info(e.Error())
-	// 	return reconcileResult.FailedE(e)
-	// }
+	meta.SetStatusCondition(&router.Status.Conditions, metav1.Condition{
+		Type:    "Ready",
+		Status:  metav1.ConditionTrue,
+		Reason:  "IngressIsLive",
+		Message: "ingress resource is active",
+	})
 
 	logger.Info("Reconcile Completed ...")
-
-	return ctrl.Result{}, nil
-}
-
-func (r *RouterReconciler) apply(ctx context.Context, obj client.Object, fn ...controllerutil.MutateFn) error {
-	x, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
-		if err := ctrl.SetControllerReference(r.resource, obj, r.Scheme); err != nil {
-			r.logger.Infof("could not update controller reference")
-			return err
-		}
-
-		if len(fn) > 0 {
-			return fn[0]()
-		}
-		return nil
-	})
-	r.logger.Info(x, err)
-	return err
+	return r.notify(ctx)
 }
 
 func (r *RouterReconciler) finalizeRouter(ctx context.Context, router *crdsv1.Router) (ctrl.Result, error) {

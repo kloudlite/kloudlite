@@ -3,7 +3,7 @@ version: '3'
 dotenv: [".secrets/env"]
 
 includes:
-  helm: 
+  helm:
     taskfile: ./.tools/Taskfile.helm.yml
     dir: ./helm/
 
@@ -24,17 +24,21 @@ tasks:
     cmds:
       - operator-sdk create api --group msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
 
+  new-msvc-watcher-kind:
+    cmds:
+      - operator-sdk create api --group watchers.msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
+
   new-mres-kind:
     cmds:
       - operator-sdk create api --group mres --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
 
   run:
     run: always
-    deps:
-      # - pre
     cmds:
       - task: kill-port
       - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go |& pp -rel-path || exit 1'
+#      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go || exit 0'
+#      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
     sources:
       - ./**/*.go
     method: timestamp
@@ -45,10 +49,11 @@ tasks:
   pre:
     run: once
     cmds:
+      - go version
       - go mod tidy
       - make manifests
-      - make generate
       - task: apply
+      - make generate
 
   apply:
     run: once

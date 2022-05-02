@@ -30,8 +30,9 @@ import (
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Scheme         *runtime.Scheme
-	ClientSet      *kubernetes.Clientset
+	Scheme    *runtime.Scheme
+	ClientSet *kubernetes.Clientset
+	lib.MessageSender
 	SendMessage    func(key string, msg lib.MessageReply) error
 	JobMgr         lib.Job
 	logger         *zap.SugaredLogger
@@ -61,6 +62,7 @@ func (r *ProjectReconciler) apply(ctx context.Context, obj client.Object, fn ...
 func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", "true")
+	logger.Info("Reconcilation request received")
 
 	project := &crdsv1.Project{}
 	if err := r.Get(ctx, req.NamespacedName, project); err != nil {
@@ -190,9 +192,11 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	meta.SetStatusCondition(&project.Status.Conditions, metav1.Condition{
 		Type:   "Ready",
 		Status: "True",
-		Reason: "Reconcilation Successfull",
+		Reason: "ReconcilationSuccessfull",
 	})
-
+	if err := r.Status().Update(ctx, project); err != nil {
+		return reconcileResult.FailedE(err)
+	}
 	logger.Infof("Reconcile Completed")
 	return reconcileResult.OK()
 }

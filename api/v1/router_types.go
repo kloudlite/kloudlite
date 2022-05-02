@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,6 +33,10 @@ type Router struct {
 
 	Spec   RouterSpec   `json:"spec,omitempty"`
 	Status RouterStatus `json:"status,omitempty"`
+}
+
+func (rt *Router) LogRef() string {
+	return fmt.Sprintf("%s/%s/%s", rt.Namespace, rt.Kind, rt.Name)
 }
 
 //+kubebuilder:object:root=true

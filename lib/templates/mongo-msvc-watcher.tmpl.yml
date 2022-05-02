@@ -1,0 +1,5 @@
+apiVersion: watchers.msvc.kloudlite.io/v1
+kind: MongoDB
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}

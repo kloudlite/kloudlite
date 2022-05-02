@@ -86,32 +86,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - pipelines
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - pipelines/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - pipelines/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
   - projects
   verbs:
   - create
@@ -188,32 +162,6 @@ rules:
   - patch
   - update
 - apiGroups:
-  - mres.kloudlite.io
-  resources:
-  - mongodatabases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mres.kloudlite.io
-  resources:
-  - mongodatabases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mres.kloudlite.io
-  resources:
-  - mongodatabases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - msvc.kloudlite.io
   resources:
   - mongodbs
@@ -233,6 +181,32 @@ rules:
   - update
 - apiGroups:
   - msvc.kloudlite.io
+  resources:
+  - mongodbs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - watchers.msvc.kloudlite.io
+  resources:
+  - mongodbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - watchers.msvc.kloudlite.io
+  resources:
+  - mongodbs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - watchers.msvc.kloudlite.io
   resources:
   - mongodbs/status
   verbs:

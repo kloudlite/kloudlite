@@ -71,4 +71,13 @@ resources:
   kind: Database
   path: operators.kloudlite.io/apis/mongodbs.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: watchers.msvc
+  kind: MongoDB
+  path: operators.kloudlite.io/apis/watchers.msvc/v1
+  version: v1
 version: "3"

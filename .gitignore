@@ -27,3 +27,4 @@ testbin/*
 .secrets
 .kube
 helm-charts
+*.auto.env
