@@ -80,6 +80,22 @@ func (d *domain) CreateCluster(cxt context.Context, action SetupClusterAction) e
 
 func (d *domain) UpdateCluster(cxt context.Context, action UpdateClusterAction) error {
 	err := d.infraCli.UpdateCluster(cxt, action)
+	if err != nil {
+		return d.jobResponder.SendUpdateClusterResponse(cxt, UpdateClusterResponse{
+			ClusterID:  action.ClusterID,
+			Region:     action.Region,
+			Provider:   action.Provider,
+			NodesCount: action.NodesCount,
+			Done:       true,
+		})
+	}
+	return d.jobResponder.SendUpdateClusterResponse(cxt, UpdateClusterResponse{
+		ClusterID:  action.ClusterID,
+		Region:     action.Region,
+		Provider:   action.Provider,
+		NodesCount: action.NodesCount,
+		Done:       false,
+	})
 	return err
 }
 func fxDomain(
@@ -111,12 +127,12 @@ var Module = fx.Module("domain",
 				//	Done:      true,
 				//})
 				go func() {
-					d.CreateCluster(ctx, SetupClusterAction{
-						ClusterID:  "test-to-dlete",
-						Region:     "blr1",
-						Provider:   "do",
-						NodesCount: 1,
-					})
+					//d.CreateCluster(ctx, SetupClusterAction{
+					//	ClusterID:  "test-to-dlete",
+					//	Region:     "blr1",
+					//	Provider:   "do",
+					//	NodesCount: 1,
+					//})
 					//d.UpdateCluster(ctx, UpdateClusterAction{
 					//	ClusterID:  "hotspot-dev-k3s",
 					//	Region:     "blr1",
