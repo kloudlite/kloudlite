@@ -12,6 +12,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
@@ -1095,6 +1096,9 @@ func (d *domain) UpdateCluster(
 	nodeCount *int,
 ) (bool, error) {
 	c, err := d.clusterRepo.FindById(ctx, id)
+	if c.Status != entities.ClusterStateSyncing {
+		return false, errors.New("Cluster is still syncing")
+	}
 	if err != nil {
 		return false, err
 	}
