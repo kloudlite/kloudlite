@@ -1,7 +1,7 @@
 apiVersion: "crds.kloudlite.io/v1"
 kind: App
 metadata:
-  name: sample-app
+  name: example-app
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/app
@@ -12,7 +12,7 @@ spec:
       type: tcp
   containers:
     - name: samplen
-      image: nginx12323
+      image: nginx
       image_pull_policy: Always
       resource_cpu:
         min: "100"

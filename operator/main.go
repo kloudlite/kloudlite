@@ -130,18 +130,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	// if err = (&controllers.AppReconciler{
-	//	Client:         mgr.GetClient(),
-	//	Scheme:         mgr.GetScheme(),
-	//	ClientSet:      clientset,
-	//	JobMgr:         lib.NewJobber(clientset),
-	//	MessageSender:  sender,
-	//	HarborUserName: harborUserName,
-	//	HarborPassword: harborPassword,
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "App")
-	//	os.Exit(1)
-	// }
+	if err = (&controllers.AppReconciler{
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		ClientSet:      clientset,
+		JobMgr:         lib.NewJobber(clientset),
+		MessageSender:  sender,
+		HarborUserName: harborUserName,
+		HarborPassword: harborPassword,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "App")
+		os.Exit(1)
+	}
 	//
 	if err = (&controllers.RouterReconciler{
 		Client:        mgr.GetClient(),
