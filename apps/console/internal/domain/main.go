@@ -1093,10 +1093,10 @@ func (d *domain) UpdateCluster(
 	id repos.ID,
 	name *string,
 	nodeCount *int,
-) (*entities.Cluster, error) {
+) (bool, error) {
 	c, err := d.clusterRepo.FindById(ctx, id)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	if name != nil {
 		c.Name = *name
@@ -1107,7 +1107,7 @@ func (d *domain) UpdateCluster(
 	}
 	updated, err := d.clusterRepo.UpdateById(ctx, id, c)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	if c.Status == entities.ClusterStateSyncing {
 		err = SendAction(d.infraMessenger, entities.UpdateClusterAction{
@@ -1117,10 +1117,10 @@ func (d *domain) UpdateCluster(
 			NodesCount: updated.NodesCount,
 		})
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 	}
-	return updated, nil
+	return true, nil
 }
 
 func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {

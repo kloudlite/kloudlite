@@ -321,7 +321,7 @@ type MutationResolver interface {
 	ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error)
 	ManagedResDelete(ctx context.Context, resID repos.ID) (*bool, error)
 	InfraCreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error)
-	InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (*model.Cluster, error)
+	InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (bool, error)
 	InfraDeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error)
 	InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error)
 	InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
@@ -1836,7 +1836,7 @@ type Mutation {
   managedRes_delete(resId: ID!): Boolean
 
   infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
-  infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Cluster!
+  infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Boolean!
   infra_deleteCluster(clusterId: ID!): Boolean!
   infra_addDevice(clusterId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
@@ -6489,9 +6489,9 @@ func (ec *executionContext) _Mutation_infra_updateCluster(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Cluster)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_infra_deleteCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
