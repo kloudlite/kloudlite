@@ -8,6 +8,7 @@ type RoleBinding struct {
 	ResourceType     string `json:"resource_type" bson:"resource_type"`
 	ResourceId       string `json:"resource_id" bson:"resource_id"`
 	Role             string `json:"role" bson:"role"`
+	Accepted         bool   `json:"accepted" bson:"accepted"`
 }
 
 var RoleBindingIndexes = []string{"id", "user_id", "resource_id", "role"}

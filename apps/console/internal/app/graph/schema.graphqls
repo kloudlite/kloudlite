@@ -67,7 +67,7 @@ type Mutation {
   core_updateProject(projectId: ID!, displayName: String, cluster: String, logo: String, description: String): Boolean!
   core_deleteProject(projectId: ID!): Boolean!
 
-  iam_inviteProjectMember(projectId: ID!, email: String!, name: String!, role: String!): Boolean!
+  iam_inviteProjectMember(projectId: ID!, email: String!, role: String!): Boolean!
   iam_removeProjectMember(projectId: ID!, userId: ID!): Boolean!
   iam_updateProjectMember(projectId: ID!, userId: ID!, role: String!): Boolean!
 

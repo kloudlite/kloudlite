@@ -62,9 +62,10 @@ type ComplexityRoot struct {
 	}
 
 	AccountMembership struct {
-		Account func(childComplexity int) int
-		Role    func(childComplexity int) int
-		User    func(childComplexity int) int
+		Accepted func(childComplexity int) int
+		Account  func(childComplexity int) int
+		Role     func(childComplexity int) int
+		User     func(childComplexity int) int
 	}
 
 	Billing struct {
@@ -80,10 +81,10 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		FinanceActivateAccount      func(childComplexity int, accountID repos.ID) int
-		FinanceAddAccountMember     func(childComplexity int, accountID string, userID repos.ID, role string) int
 		FinanceCreateAccount        func(childComplexity int, name string, billing model.BillingInput) int
 		FinanceDeactivateAccount    func(childComplexity int, accountID repos.ID) int
 		FinanceDeleteAccount        func(childComplexity int, accountID repos.ID) int
+		FinanceInviteAccountMember  func(childComplexity int, accountID string, name *string, email string, role string) int
 		FinanceRemoveAccountMember  func(childComplexity int, accountID repos.ID, userID repos.ID) int
 		FinanceUpdateAccount        func(childComplexity int, accountID repos.ID, name *string, contactEmail *string) int
 		FinanceUpdateAccountBilling func(childComplexity int, accountID repos.ID, billing model.BillingInput) int
@@ -123,7 +124,7 @@ type MutationResolver interface {
 	FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error)
 	FinanceUpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error)
 	FinanceUpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error)
-	FinanceAddAccountMember(ctx context.Context, accountID string, userID repos.ID, role string) (bool, error)
+	FinanceInviteAccountMember(ctx context.Context, accountID string, name *string, email string, role string) (bool, error)
 	FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error)
 	FinanceUpdateAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID, role string) (bool, error)
 	FinanceDeactivateAccount(ctx context.Context, accountID repos.ID) (bool, error)
@@ -209,6 +210,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Account.ReadableID(childComplexity), true
 
+	case "AccountMembership.accepted":
+		if e.complexity.AccountMembership.Accepted == nil {
+			break
+		}
+
+		return e.complexity.AccountMembership.Accepted(childComplexity), true
+
 	case "AccountMembership.account":
 		if e.complexity.AccountMembership.Account == nil {
 			break
@@ -287,18 +295,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.FinanceActivateAccount(childComplexity, args["accountId"].(repos.ID)), true
 
-	case "Mutation.finance_addAccountMember":
-		if e.complexity.Mutation.FinanceAddAccountMember == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_finance_addAccountMember_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.FinanceAddAccountMember(childComplexity, args["accountId"].(string), args["userId"].(repos.ID), args["role"].(string)), true
-
 	case "Mutation.finance_createAccount":
 		if e.complexity.Mutation.FinanceCreateAccount == nil {
 			break
@@ -334,6 +330,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.FinanceDeleteAccount(childComplexity, args["accountId"].(repos.ID)), true
+
+	case "Mutation.finance_inviteAccountMember":
+		if e.complexity.Mutation.FinanceInviteAccountMember == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_finance_inviteAccountMember_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.FinanceInviteAccountMember(childComplexity, args["accountId"].(string), args["name"].(*string), args["email"].(string), args["role"].(string)), true
 
 	case "Mutation.finance_removeAccountMember":
 		if e.complexity.Mutation.FinanceRemoveAccountMember == nil {
@@ -519,7 +527,7 @@ type Mutation {
     finance_createAccount(name: String!, billing: BillingInput!): Account!
     finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
     finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
-    finance_addAccountMember(accountId: String!, userId: ID!, role: String!): Boolean!
+    finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean!
     finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean!
     finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
     finance_deactivateAccount(accountId: ID!): Boolean!
@@ -551,6 +559,7 @@ type AccountMembership {
     user: User!
     role: String!
     account: Account!
+    accepted: Boolean!
 }
 
 type Billing {
@@ -648,39 +657,6 @@ func (ec *executionContext) field_Mutation_finance_activateAccount_args(ctx cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_finance_addAccountMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg0
-	var arg1 repos.ID
-	if tmp, ok := rawArgs["userId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userId"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["role"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["role"] = arg2
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_finance_createAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -732,6 +708,48 @@ func (ec *executionContext) field_Mutation_finance_deleteAccount_args(ctx contex
 		}
 	}
 	args["accountId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_finance_inviteAccountMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountId"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["role"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["role"] = arg3
 	return args, nil
 }
 
@@ -1332,6 +1350,41 @@ func (ec *executionContext) _AccountMembership_account(ctx context.Context, fiel
 	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _AccountMembership_accepted(ctx context.Context, field graphql.CollectedField, obj *model.AccountMembership) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AccountMembership",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Accepted, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Billing_stripeCustomerId(ctx context.Context, field graphql.CollectedField, obj *model.Billing) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1647,7 +1700,7 @@ func (ec *executionContext) _Mutation_finance_updateAccountBilling(ctx context.C
 	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_finance_addAccountMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_finance_inviteAccountMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1664,7 +1717,7 @@ func (ec *executionContext) _Mutation_finance_addAccountMember(ctx context.Conte
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_finance_addAccountMember_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_finance_inviteAccountMember_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1672,7 +1725,7 @@ func (ec *executionContext) _Mutation_finance_addAccountMember(ctx context.Conte
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceAddAccountMember(rctx, args["accountId"].(string), args["userId"].(repos.ID), args["role"].(string))
+		return ec.resolvers.Mutation().FinanceInviteAccountMember(rctx, args["accountId"].(string), args["name"].(*string), args["email"].(string), args["role"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3665,6 +3718,16 @@ func (ec *executionContext) _AccountMembership(ctx context.Context, sel ast.Sele
 				return innerFunc(ctx)
 
 			})
+		case "accepted":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._AccountMembership_accepted(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3852,9 +3915,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "finance_addAccountMember":
+		case "finance_inviteAccountMember":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_finance_addAccountMember(ctx, field)
+				return ec._Mutation_finance_inviteAccountMember(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)

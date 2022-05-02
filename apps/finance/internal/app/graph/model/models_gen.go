@@ -20,9 +20,10 @@ type Account struct {
 func (Account) IsEntity() {}
 
 type AccountMembership struct {
-	User    *User    `json:"user"`
-	Role    string   `json:"role"`
-	Account *Account `json:"account"`
+	User     *User    `json:"user"`
+	Role     string   `json:"role"`
+	Account  *Account `json:"account"`
+	Accepted bool     `json:"accepted"`
 }
 
 type Billing struct {

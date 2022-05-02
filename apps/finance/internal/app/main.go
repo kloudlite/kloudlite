@@ -24,6 +24,7 @@ var Module = fx.Module(
 	CiClientFx,
 	IAMClientFx,
 	ConsoleClientFx,
+	AuthClientFx,
 	fx.Invoke(func(
 		server *fiber.App,
 		d domain.Domain,

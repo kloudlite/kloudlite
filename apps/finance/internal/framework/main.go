@@ -12,6 +12,15 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type AuthGRPCEnv struct {
+	AuthServerHost string `env:"AUTH_SERVER_HOST"`
+	AuthServerPort uint16 `env:"AUTH_SERVER_PORT"`
+}
+
+func (e *AuthGRPCEnv) GetGCPServerURL() string {
+	return fmt.Sprintf("%v:%v", e.AuthServerHost, e.AuthServerPort)
+}
+
 type ConsoleGRPCEnv struct {
 	ConsoleServerHost string `env:"CONSOLE_SERVER_HOST"`
 	ConsoleServerPort uint16 `env:"CONSOLE_SERVER_PORT"`
@@ -71,9 +80,11 @@ var Module = fx.Module("framework",
 	config.EnvFx[ConsoleGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),
 	config.EnvFx[CiGrpcEnv](),
+	config.EnvFx[AuthGRPCEnv](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
 	rpc.NewGrpcClientFx[*CiGrpcEnv, app.CIGrpcClientConn](),
+	rpc.NewGrpcClientFx[*AuthGRPCEnv, app.AuthGrpcClientConn](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),

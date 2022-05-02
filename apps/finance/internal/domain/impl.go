@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"math"
 	"math/rand"
 	"regexp"
@@ -18,6 +19,7 @@ import (
 )
 
 type domainI struct {
+	authClient  auth.AuthClient
 	iamCli      iam.IAMClient
 	consoleCli  console.ConsoleClient
 	accountRepo repos.DbRepo[*Account]
@@ -78,6 +80,7 @@ func (domain *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) (
 			AccountId: repos.ID(rb.ResourceId),
 			UserId:    repos.ID(rb.UserId),
 			Role:      common.Role(rb.Role),
+			Accepted:  rb.Accepted,
 		})
 	}
 
@@ -184,11 +187,15 @@ func (domain *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, d 
 func (domain *domainI) AddAccountMember(
 	ctx context.Context,
 	accountId repos.ID,
-	userId repos.ID,
+	email string,
 	role common.Role,
 ) (bool, error) {
-	_, err := domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
-		UserId:       string(userId),
+	byEmail, err := domain.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
+	if err != nil {
+		return false, err
+	}
+	_, err = domain.iamCli.InviteMembership(ctx, &iam.InAddMembership{
+		UserId:       byEmail.UserId,
 		ResourceType: string(common.ResourceAccount),
 		ResourceId:   string(accountId),
 		Role:         string(role),
@@ -224,7 +231,7 @@ func (domain *domainI) UpdateAccountMember(
 		UserId:       string(userId),
 		ResourceType: string(common.ResourceAccount),
 		ResourceId:   string(accountId),
-		Role:         string(role),
+		Role:         role,
 	})
 	if err != nil {
 		return false, err
@@ -282,8 +289,10 @@ func fxDomain(
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
 	ciClient ci.CIClient,
+	authClient auth.AuthClient,
 ) Domain {
 	return &domainI{
+		authClient,
 		iamCli,
 		consoleClient,
 		accountRepo,

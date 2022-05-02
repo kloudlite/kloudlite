@@ -18,7 +18,7 @@ type Domain interface {
 	AddAccountMember(
 		ctx context.Context,
 		accountId repos.ID,
-		userId repos.ID,
+		email string,
 		role common.Role,
 	) (bool, error)
 	RemoveAccountMember(

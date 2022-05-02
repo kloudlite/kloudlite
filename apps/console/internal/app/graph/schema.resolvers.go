@@ -252,8 +252,8 @@ func (r *mutationResolver) CoreDeleteProject(ctx context.Context, projectID repo
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, name string, role string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error) {
+	return r.Domain.InviteProjectMember(ctx, projectID, email, role)
 }
 
 func (r *mutationResolver) IamRemoveProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID) (bool, error) {
