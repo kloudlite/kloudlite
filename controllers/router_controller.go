@@ -29,21 +29,20 @@ type RouterReconciler struct {
 	logger *zap.SugaredLogger
 	router *crdsv1.Router
 	lib.MessageSender
+	lt metav1.Time
 }
 
 func (r *RouterReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
-	meta.SetStatusCondition(&r.router.Status.Conditions, metav1.Condition{
+	r.buildConditions("", metav1.Condition{
 		Type:    "Ready",
 		Status:  "False",
-		Reason:  "ErrUnknown",
+		Reason:  "ErrWhileReconcilation",
 		Message: err.Error(),
 	})
-
 	return r.notify(ctx)
 }
 
 func (r *RouterReconciler) notify(ctx context.Context) (ctrl.Result, error) {
-	r.logger.Infof("Notify conditions: %+v", r.router.Status.Conditions)
 	err := r.SendMessage(r.router.LogRef(), lib.MessageReply{
 		Key:        r.router.LogRef(),
 		Conditions: r.router.Status.Conditions,
@@ -59,9 +58,37 @@ func (r *RouterReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 	return reconcileResult.OK()
 }
 
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/finalizers,verbs=update
+func (r *RouterReconciler) buildConditions(source string, conditions ...metav1.Condition) {
+	meta.SetStatusCondition(&r.router.Status.Conditions, metav1.Condition{
+		Type:               "Ready",
+		Status:             "False",
+		Reason:             "ChecksNotCompleted",
+		LastTransitionTime: r.lt,
+		Message:            "Not All Checks completed",
+	})
+	for _, c := range conditions {
+		if c.Reason == "" {
+			c.Reason = "NotSpecified"
+		}
+		if !c.LastTransitionTime.IsZero() {
+			if c.LastTransitionTime.Time.Sub(r.lt.Time).Seconds() > 0 {
+				r.lt = c.LastTransitionTime
+			}
+		}
+		if c.LastTransitionTime.IsZero() {
+			c.LastTransitionTime = r.lt
+		}
+		if source != "" {
+			c.Reason = fmt.Sprintf("%s:%s", source, c.Reason)
+			c.Type = fmt.Sprintf("%s%s", source, c.Type)
+		}
+		meta.SetStatusCondition(&r.router.Status.Conditions, c)
+	}
+}
+
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/finalizers,verbs=update
 
 func (r *RouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
@@ -140,13 +167,12 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			router.Status.IPs = append(router.Status.IPs, item.IP)
 		}
 	}
-	meta.SetStatusCondition(&router.Status.Conditions, metav1.Condition{
+	r.buildConditions("", metav1.Condition{
 		Type:    "Ready",
 		Status:  metav1.ConditionTrue,
 		Reason:  "IngressIsLive",
-		Message: "ingress resource is active",
+		Message: "Ingress resource has acquired IP",
 	})
-
 	logger.Info("Reconcile Completed ...")
 	return r.notify(ctx)
 }
