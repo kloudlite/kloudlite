@@ -89,6 +89,7 @@ type Domain interface {
 
 	GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error)
 
+	GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error)
 	InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
 }
 

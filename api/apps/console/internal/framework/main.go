@@ -24,12 +24,12 @@ func (e *GrpcInfraConfig) GetGCPServerURL() string {
 }
 
 type GrpcAuthConfig struct {
-	InfraGrpcHost string `env:"AUTH_HOST" required:"true"`
-	InfraGrpcPort string `env:"AUTH_PORT" required:"true"`
+	AuthGrpcHost string `env:"AUTH_HOST" required:"true"`
+	AuthGrpcPort string `env:"AUTH_PORT" required:"true"`
 }
 
 func (e *GrpcAuthConfig) GetGCPServerURL() string {
-	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
+	return e.AuthGrpcHost + ":" + e.AuthGrpcPort
 }
 
 type GrpcCIConfig struct {
