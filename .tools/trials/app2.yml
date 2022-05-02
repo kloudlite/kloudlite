@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sample-app3
-  namespace: default
+  name: example
+  namespace: hotspot
 spec:
   selector:
     matchLabels:

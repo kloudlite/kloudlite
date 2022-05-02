@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels2 "k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	fn "operators.kloudlite.io/lib/functions"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,6 +35,7 @@ type AppReconciler struct {
 	logger    *zap.SugaredLogger
 	lib.MessageSender
 	app *crdsv1.App
+	lt  metav1.Time
 
 	HarborUserName string
 	HarborPassword string
@@ -43,7 +45,7 @@ func (r *AppReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Resul
 	meta.SetStatusCondition(&r.app.Status.Conditions, metav1.Condition{
 		Type:    "Ready",
 		Status:  "False",
-		Reason:  "ErrUnknown",
+		Reason:  "ErrWhileReconcilation",
 		Message: err.Error(),
 	})
 
@@ -51,7 +53,6 @@ func (r *AppReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Resul
 }
 
 func (r *AppReconciler) notify(ctx context.Context) (ctrl.Result, error) {
-	r.logger.Infof("Notify conditions: %+v", r.app.Status.Conditions)
 	err := r.SendMessage(r.app.LogRef(), lib.MessageReply{
 		Key:        r.app.LogRef(),
 		Conditions: r.app.Status.Conditions,
@@ -67,101 +68,130 @@ func (r *AppReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 	return reconcileResult.OK()
 }
 
-func (r *AppReconciler) IfDeployment(ctx context.Context, req ctrl.Request) (*metav1.Condition, error) {
-	var deployment appsv1.Deployment
-	if err := r.Get(ctx, req.NamespacedName, &deployment); err != nil {
-		//not a deployment request
-		return nil, nil
-	}
-
-	// ASSERT: not a deployment request
-	if deployment.Name == "" {
-		return nil, nil
-	}
-
-	// ASSERT: deployment request
-	r.logger.Infof("resource request is a Deployment")
-	//r.logger.Infof("Deployment.Status: %+v", deployment.Status)
-	opts := &client.ListOptions{
-		LabelSelector: labels2.SelectorFromValidatedSet(deployment.Spec.Template.GetLabels()),
-		Namespace:     req.Namespace,
-	}
-	// TODO [x]: read container status from pod to figure out the real status
-	p := corev1.PodList{}
-	err := r.List(ctx, &p, opts)
-	if err != nil {
-		return nil, nil
-	}
-
-	readyCond := metav1.Condition{
-		Type:   "Ready",
-		Status: metav1.ConditionFalse,
-		//ObservedGeneration: 0,
-		//LastTransitionTime: metav1.Time{},
-		//Reason:  "Initialized",
-		//Message: "Initialized",
-	}
-
-	if len(p.Items) == 0 {
-		readyCond.Reason = "Initialized"
-		readyCond.Message = "Init"
-		return &readyCond, nil
-	}
-
-	for _, item := range p.Items {
-		//r.logger.Infof("----------")
-		for _, condition := range item.Status.Conditions {
-			if condition.Type == corev1.PodReady {
-				readyCond.Reason = "PodIsReady"
-				readyCond.Status = metav1.ConditionTrue
-				readyCond.Message = "all pods are ready"
-			}
-			//r.logger.Infof("Pod.Status.Condition: %+v", condition)
-			if condition.Status != corev1.ConditionTrue {
-				readyCond.Status = metav1.ConditionFalse
-				for _, status := range item.Status.ContainerStatuses {
-					//r.logger.Infof("Pod.Status.ContainerStatus: %+v", status)
-					if status.State.Waiting != nil {
-						readyCond.Reason = status.State.Waiting.Reason
-						readyCond.Message = status.State.Waiting.Message
-						return &readyCond, nil
-					}
-				}
+func (r *AppReconciler) buildConditions(source string, conditions ...metav1.Condition) {
+	meta.SetStatusCondition(&r.app.Status.Conditions, metav1.Condition{
+		Type:               "Ready",
+		Status:             "False",
+		Reason:             "ChecksNotCompleted",
+		LastTransitionTime: r.lt,
+		Message:            "Not All Checks completed",
+	})
+	for _, c := range conditions {
+		if c.Reason == "" {
+			c.Reason = "NotSpecified"
+		}
+		if !c.LastTransitionTime.IsZero() {
+			if c.LastTransitionTime.Time.Sub(r.lt.Time).Seconds() > 0 {
+				r.lt = c.LastTransitionTime
 			}
 		}
-		//r.logger.Infof("----------")
+		if c.LastTransitionTime.IsZero() {
+			c.LastTransitionTime = r.lt
+		}
+		if source != "" {
+			c.Reason = fmt.Sprintf("%s:%s", source, c.Reason)
+			c.Type = fmt.Sprintf("%s%s", source, c.Type)
+		}
+		meta.SetStatusCondition(&r.app.Status.Conditions, c)
 	}
-
-	// TODO: try to read conditions from replicaset also, to aggregate SYSTEM errors
-	return &readyCond, nil
 }
 
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
+func (r *AppReconciler) HandleDeployments(ctx context.Context) error {
+	var depl appsv1.Deployment
+	if err := r.Get(ctx, types.NamespacedName{Name: r.app.Name, Namespace: r.app.Namespace}, &depl); err != nil {
+		return err
+	}
+
+	var deplConditions []metav1.Condition
+	for _, cond := range depl.Status.Conditions {
+		deplConditions = append(deplConditions, metav1.Condition{
+			Type:               string(cond.Type),
+			Status:             metav1.ConditionStatus(cond.Status),
+			LastTransitionTime: cond.LastTransitionTime,
+			Reason:             cond.Reason,
+			Message:            cond.Message,
+		})
+	}
+
+	r.buildConditions("Deployment", deplConditions...)
+	if !meta.IsStatusConditionTrue(deplConditions, string(appsv1.DeploymentAvailable)) {
+		var podsList corev1.PodList
+		if err := r.List(ctx, &podsList, &client.ListOptions{
+			LabelSelector: labels2.SelectorFromValidatedSet(depl.Spec.Template.GetLabels()),
+			Namespace:     depl.Namespace,
+		}); err != nil {
+			return errors.NewEf(err, "could not list pods for deployment")
+		}
+
+		for _, pod := range podsList.Items {
+			var podC []metav1.Condition
+			for _, condition := range pod.Status.Conditions {
+				podC = append(podC, metav1.Condition{
+					Type:               string(condition.Type),
+					Status:             metav1.ConditionStatus(condition.Status),
+					LastTransitionTime: condition.LastTransitionTime,
+					Reason:             "NotSpecified",
+					Message:            condition.Message,
+				})
+			}
+			r.buildConditions("Pod", podC...)
+			var containerC []metav1.Condition
+			for _, cs := range pod.Status.ContainerStatuses {
+				p := metav1.Condition{
+					Type:   fmt.Sprintf("Name-%s", cs.Name),
+					Status: fn.StatusFromBool(cs.Ready),
+				}
+				if cs.State.Waiting != nil {
+					p.Reason = cs.State.Waiting.Reason
+					p.Message = cs.State.Waiting.Message
+				}
+				if cs.State.Running != nil {
+					p.Reason = "Running"
+					p.Message = fmt.Sprintf("Container running since %s", cs.State.Running.StartedAt.String())
+				}
+				containerC = append(containerC, p)
+			}
+			r.buildConditions("Container", containerC...)
+			return nil
+		}
+	}
+
+	r.buildConditions("", metav1.Condition{
+		Type:    "Ready",
+		Status:  metav1.ConditionTrue,
+		Reason:  "AllChecksPassed",
+		Message: "Deployment is ready",
+	})
+
+	return nil
+}
+
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := GetLogger(req.NamespacedName)
 	r.logger = logger.With("Name", req.NamespacedName)
 
 	app := &crdsv1.App{}
-
 	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
 		}
 		return reconcileResult.Failed()
 	}
+	app.Status.Conditions = []metav1.Condition{}
 	r.app = app
 
-	deplCondition, err := r.IfDeployment(ctx, req)
-	if err != nil {
-		fmt.Println()
-	}
-	if deplCondition != nil {
-		r.logger.Infof("deployment condition received: %+v", *deplCondition)
-		meta.SetStatusCondition(&app.Status.Conditions, *deplCondition)
-	}
+	// deplCondition, err := r.IfDeployment(ctx, req)
+	// if err != nil {
+	// 	fmt.Println()
+	// }
+	// if deplCondition != nil {
+	// 	r.logger.Infof("deployment condition received: %+v", *deplCondition)
+	// 	meta.SetStatusCondition(&app.Status.Conditions, *deplCondition)
+	// }
 
 	if app.GetDeletionTimestamp() != nil {
 		return r.finalize(ctx, app)
@@ -182,6 +212,12 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if err2 := fn.KubectlApply(depl, svc); err2 != nil {
 		return r.notifyAndDie(ctx, errors.NewEf(err2, "could not apply app"))
 	}
+
+	if err := r.HandleDeployments(ctx); err != nil {
+		e := errors.NewEf(err, "err handling deployments")
+		r.logger.Error(e)
+		return r.notifyAndDie(ctx, e)
+	}
 	logger.Info("App has been applied")
 	return r.notify(ctx)
 }
@@ -199,7 +235,7 @@ func (r *AppReconciler) finalize(ctx context.Context, app *crdsv1.App) (ctrl.Res
 
 const ImageRegistry = "harbor.dev.madhouselabs.io"
 
-//func (r *AppReconciler) checkImagesAvailable(ctx context.Context, app *crdsv1.App) (map[string]bool, error) {
+// func (r *AppReconciler) checkImagesAvailable(ctx context.Context, app *crdsv1.App) (map[string]bool, error) {
 //	checks := map[string]bool{}
 //	for _, c := range app.Spec.Containers {
 //		if !strings.HasPrefix(c.Image, ImageRegistry) {
@@ -232,9 +268,9 @@ const ImageRegistry = "harbor.dev.madhouselabs.io"
 //	}
 //
 //	return checks, nil
-//}
+// }
 //
-//func (r *AppReconciler) checkDependency(ctx context.Context, app *crdsv1.App) *map[string]string {
+// func (r *AppReconciler) checkDependency(ctx context.Context, app *crdsv1.App) *map[string]string {
 //	checks := map[string]string{}
 //	for _, container := range app.Spec.Containers {
 //		for _, env := range container.Env {
@@ -279,13 +315,12 @@ const ImageRegistry = "harbor.dev.madhouselabs.io"
 //		}
 //	}
 //	return nil
-//}
+// }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.App{}).
 		Owns(&appsv1.Deployment{}).
-		Owns(&corev1.Pod{}).
 		Complete(r)
 }
