@@ -1096,7 +1096,7 @@ func (d *domain) UpdateCluster(
 	nodeCount *int,
 ) (bool, error) {
 	c, err := d.clusterRepo.FindById(ctx, id)
-	if c.Status != entities.ClusterStateSyncing {
+	if c.Status == entities.ClusterStateSyncing {
 		return false, errors.New("Cluster is still syncing")
 	}
 	if err != nil {
