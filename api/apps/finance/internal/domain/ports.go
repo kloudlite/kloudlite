@@ -32,5 +32,6 @@ type Domain interface {
 	DeleteAccount(ctx context.Context, id repos.ID) (bool, error)
 	GetAccount(ctx context.Context, id repos.ID) (*Account, error)
 	GetAccountMemberships(ctx context.Context, userId repos.ID) ([]*Membership, error)
+	GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error)
 	GetUserMemberships(ctx context.Context, resourceId repos.ID) ([]*Membership, error)
 }
