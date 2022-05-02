@@ -19,6 +19,21 @@ type server struct {
 	rbRepo repos.DbRepo[*entities.RoleBinding]
 }
 
+func (s *server) GetMembership(ctx context.Context, membership *iam.InGetMembership) (*iam.OutGetMembership, error) {
+	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
+		"resource_id": membership.ResourceId,
+		"user_id":     membership.UserId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &iam.OutGetMembership{
+		UserId:     one.UserId,
+		ResourceId: one.ResourceId,
+		Role:       one.Role,
+	}, nil
+}
+
 func (s *server) ListResourceMemberships(ctx context.Context, in *iam.InResourceMemberships) (*iam.OutListMemberships, error) {
 	filter := repos.Filter{}
 	if in.ResourceId != "" {

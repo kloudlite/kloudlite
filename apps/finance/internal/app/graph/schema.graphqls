@@ -32,6 +32,7 @@ type Account @key(fields: "id") {
 extend type User @key(fields: "id") {
     id: ID! @external
     accountMemberships:[AccountMembership!]!
+    accountMembership(accountId: ID):AccountMembership!
 }
 type AccountMembership {
     user: User!
