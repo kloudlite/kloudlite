@@ -11,6 +11,22 @@ type authGrpcServerImpl struct {
 	d domain.Domain
 }
 
+func (a *authGrpcServerImpl) EnsureUserByEmail(ctx context.Context, request *auth.GetUserByEmailRequest) (*auth.GetUserByEmailOut, error) {
+	user, err := a.d.GetUserByEmail(ctx, request.Email)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		user, err = a.d.EnsureUserByEmail(ctx, request.Email)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &auth.GetUserByEmailOut{
+		UserId: string(user.Id),
+	}, nil
+}
+
 func (a *authGrpcServerImpl) GetAccessToken(ctx context.Context, request *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
 	token, err := a.d.GetAccessToken(ctx, request.Provider, request.UserId)
 	if err != nil {
@@ -26,4 +42,10 @@ func (a *authGrpcServerImpl) GetAccessToken(ctx context.Context, request *auth.G
 			Expiry:       token.Token.Expiry.UnixMilli(),
 		},
 	}, err
+}
+
+func fxRPCServer(d domain.Domain) auth.AuthServer {
+	return &authGrpcServerImpl{
+		d: d,
+	}
 }

@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthClient interface {
 	GetAccessToken(ctx context.Context, in *GetAccessTokenRequest, opts ...grpc.CallOption) (*AccessTokenOut, error)
+	EnsureUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*GetUserByEmailOut, error)
 }
 
 type authClient struct {
@@ -42,11 +43,21 @@ func (c *authClient) GetAccessToken(ctx context.Context, in *GetAccessTokenReque
 	return out, nil
 }
 
+func (c *authClient) EnsureUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*GetUserByEmailOut, error) {
+	out := new(GetUserByEmailOut)
+	err := c.cc.Invoke(ctx, "/Auth/EnsureUserByEmail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
 type AuthServer interface {
 	GetAccessToken(context.Context, *GetAccessTokenRequest) (*AccessTokenOut, error)
+	EnsureUserByEmail(context.Context, *GetUserByEmailRequest) (*GetUserByEmailOut, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedAuthServer struct {
 
 func (UnimplementedAuthServer) GetAccessToken(context.Context, *GetAccessTokenRequest) (*AccessTokenOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
+}
+func (UnimplementedAuthServer) EnsureUserByEmail(context.Context, *GetUserByEmailRequest) (*GetUserByEmailOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnsureUserByEmail not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -88,6 +102,24 @@ func _Auth_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_EnsureUserByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).EnsureUserByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Auth/EnsureUserByEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).EnsureUserByEmail(ctx, req.(*GetUserByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccessToken",
 			Handler:    _Auth_GetAccessToken_Handler,
+		},
+		{
+			MethodName: "EnsureUserByEmail",
+			Handler:    _Auth_EnsureUserByEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -7,8 +7,10 @@ import (
 	"google.golang.org/grpc"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -61,6 +63,7 @@ type Env struct {
 }
 
 type InfraClientConnection *grpc.ClientConn
+type IAMClientConnection *grpc.ClientConn
 type AuthClientConnection *grpc.ClientConn
 type CIClientConnection *grpc.ClientConn
 
@@ -87,6 +90,14 @@ var Module = fx.Module(
 
 	fx.Provide(func(conn CIClientConnection) ci.CIClient {
 		return ci.NewCIClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(conn CIClientConnection) iam.IAMClient {
+		return iam.NewIAMClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(conn CIClientConnection) auth.AuthClient {
+		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
 
 	fx.Provide(fxConsoleGrpcServer),

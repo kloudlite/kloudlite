@@ -29,6 +29,7 @@ type Membership struct {
 	AccountId repos.ID
 	UserId    repos.ID
 	Role      common.Role
+	Accepted  bool
 }
 
 var AccountIndexes = []repos.IndexField{

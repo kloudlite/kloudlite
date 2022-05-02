@@ -9,7 +9,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
@@ -45,6 +47,28 @@ type domain struct {
 	ciClient             ci.CIClient
 	imageRepoUrlPrefix   string
 	notifier             rcn.ResourceChangeNotifier
+	iamClient            iam.IAMClient
+	authClient           auth.AuthClient
+}
+
+func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error) {
+	byEmail, err := d.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
+	if err != nil {
+		return false, err
+	}
+	if byEmail == nil {
+		return false, errors.New("user not found")
+	}
+	_, err = d.iamClient.InviteMembership(ctx, &iam.InAddMembership{
+		UserId:       byEmail.UserId,
+		ResourceType: "project",
+		ResourceId:   string(projectID),
+		Role:         role,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error) {
@@ -1302,12 +1326,16 @@ func fxDomain(
 	workloadMessenger WorkloadMessenger,
 	infraClient infra.InfraClient,
 	ciClient ci.CIClient,
+	iamClient iam.IAMClient,
+	authClient auth.AuthClient,
 ) Domain {
 	return &domain{
 		notifier:             notifier,
 		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
 		ciClient:             ciClient,
+		authClient:           authClient,
 		infraClient:          infraClient,
+		iamClient:            iamClient,
 		infraMessenger:       infraMessenger,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,

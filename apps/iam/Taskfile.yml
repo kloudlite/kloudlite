@@ -13,7 +13,7 @@ tasks:
   run:
     deps: [killPort]
     env:
-      GRPC_PORT: 3000
+      GRPC_PORT: 3046
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       MONGO_DB_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       MONGO_DB_NAME: iam

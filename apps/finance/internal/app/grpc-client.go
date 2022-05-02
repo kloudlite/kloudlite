@@ -3,12 +3,14 @@ package app
 import (
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 )
 
 type CIGrpcClientConn *grpc.ClientConn
+type AuthGrpcClientConn *grpc.ClientConn
 type ConsoleClientConnection *grpc.ClientConn
 type IAMClientConnection *grpc.ClientConn
 
@@ -23,5 +25,11 @@ var IAMClientFx = fx.Provide(func(conn IAMClientConnection) iam.IAMClient {
 var CiClientFx = fx.Provide(
 	func(conn CIGrpcClientConn) ci.CIClient {
 		return ci.NewCIClient((*grpc.ClientConn)(conn))
+	},
+)
+
+var AuthClientFx = fx.Provide(
+	func(conn AuthGrpcClientConn) auth.AuthClient {
+		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	},
 )

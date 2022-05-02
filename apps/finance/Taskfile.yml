@@ -10,11 +10,13 @@ tasks:
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       PORT: 4002
       IAM_SERVER_HOST: localhost
-      IAM_SERVER_PORT: 3000
-      CONSOLE_SERVER_HOST: localhost
-      CONSOLE_SERVER_PORT: 8083
-      CI_SERVER_HOST: localhost
-      CI_SERVER_PORT: 6748
+      IAM_SERVER_PORT: 3046
+      CONSOLE_SERVER_HOST: console-api.hotspot.svc.cluster.local
+      CONSOLE_SERVER_PORT: 3001
+      CI_SERVER_HOST: ci-api.hotspot.svc.cluster.local
+      CI_SERVER_PORT: 3001
+      AUTH_SERVER_HOST: localhost
+      AUTH_SERVER_PORT: 8081
     cmds:
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   gql:

@@ -10,6 +10,7 @@ import (
 type Domain interface {
 	Login(ctx context.Context, email string, password string) (*common.AuthSession, error)
 	SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error)
+	EnsureUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserById(ctx context.Context, id repos.ID) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	SetUserMetadata(ctx context.Context, userId repos.ID, metadata UserMetadata) (*User, error)

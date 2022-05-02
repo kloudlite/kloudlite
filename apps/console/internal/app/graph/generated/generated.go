@@ -199,7 +199,7 @@ type ComplexityRoot struct {
 		CoreUpdateProject      func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
 		CoreUpdateRouter       func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
 		CoreUpdateSecret       func(childComplexity int, secretID repos.ID, description *string, data []*model.CSEntryIn) int
-		IamInviteProjectMember func(childComplexity int, projectID repos.ID, email string, name string, role string) int
+		IamInviteProjectMember func(childComplexity int, projectID repos.ID, email string, role string) int
 		IamRemoveProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID) int
 		IamUpdateProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
 		InfraAddDevice         func(childComplexity int, clusterID repos.ID, name string) int
@@ -328,7 +328,7 @@ type MutationResolver interface {
 	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string) (*model.Project, error)
 	CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
 	CoreDeleteProject(ctx context.Context, projectID repos.ID) (bool, error)
-	IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, name string, role string) (bool, error)
+	IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
 	IamRemoveProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID) (bool, error)
 	IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error)
 	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error)
@@ -1145,7 +1145,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.IamInviteProjectMember(childComplexity, args["projectId"].(repos.ID), args["email"].(string), args["name"].(string), args["role"].(string)), true
+		return e.complexity.Mutation.IamInviteProjectMember(childComplexity, args["projectId"].(repos.ID), args["email"].(string), args["role"].(string)), true
 
 	case "Mutation.iam_removeProjectMember":
 		if e.complexity.Mutation.IamRemoveProjectMember == nil {
@@ -1845,7 +1845,7 @@ type Mutation {
   core_updateProject(projectId: ID!, displayName: String, cluster: String, logo: String, description: String): Boolean!
   core_deleteProject(projectId: ID!): Boolean!
 
-  iam_inviteProjectMember(projectId: ID!, email: String!, name: String!, role: String!): Boolean!
+  iam_inviteProjectMember(projectId: ID!, email: String!, role: String!): Boolean!
   iam_removeProjectMember(projectId: ID!, userId: ID!): Boolean!
   iam_updateProjectMember(projectId: ID!, userId: ID!, role: String!): Boolean!
 
@@ -2695,23 +2695,14 @@ func (ec *executionContext) field_Mutation_iam_inviteProjectMember_args(ctx cont
 	}
 	args["email"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["role"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["role"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["role"] = arg3
+	args["role"] = arg2
 	return args, nil
 }
 
@@ -6771,7 +6762,7 @@ func (ec *executionContext) _Mutation_iam_inviteProjectMember(ctx context.Contex
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().IamInviteProjectMember(rctx, args["projectId"].(repos.ID), args["email"].(string), args["name"].(string), args["role"].(string))
+		return ec.resolvers.Mutation().IamInviteProjectMember(rctx, args["projectId"].(repos.ID), args["email"].(string), args["role"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
