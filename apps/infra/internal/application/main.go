@@ -29,6 +29,7 @@ type InfraEnv struct {
 	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC", required:"true"`
 	KafkaInfraResponseTopic string `env:"KAFKA_INFRA_RESP_TOPIC", required:"true"`
 	KafkaGroupId            string `env:"KAFKA_GROUP_ID", required:"true"`
+	NodeDrainTime           int    `env:"NODE_DRAIN_TIME", required:"true"`
 }
 
 func (i *InfraEnv) GetSubscriptionTopics() []string {
