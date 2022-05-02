@@ -19,6 +19,20 @@ type server struct {
 	rbRepo repos.DbRepo[*entities.RoleBinding]
 }
 
+func (s *server) InviteMembership(ctx context.Context, in *iam.InAddMembership) (*iam.OutAddMembership, error) {
+	_, err := s.rbRepo.Create(ctx, &entities.RoleBinding{
+		UserId:       in.UserId,
+		ResourceType: in.ResourceType,
+		ResourceId:   in.ResourceId,
+		Role:         in.Role,
+		Accepted:     false,
+	})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not create rolebinding")
+	}
+	return &iam.OutAddMembership{Result: true}, nil
+}
+
 func (s *server) GetMembership(ctx context.Context, membership *iam.InGetMembership) (*iam.OutGetMembership, error) {
 	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
 		"resource_id": membership.ResourceId,
@@ -34,6 +48,7 @@ func (s *server) GetMembership(ctx context.Context, membership *iam.InGetMembers
 		UserId:     one.UserId,
 		ResourceId: one.ResourceId,
 		Role:       one.Role,
+		Accepted:   one.Accepted,
 	}, nil
 }
 
@@ -125,6 +140,7 @@ func (s *server) AddMembership(ctx context.Context, in *iam.InAddMembership) (*i
 		ResourceType: in.ResourceType,
 		ResourceId:   in.ResourceId,
 		Role:         in.Role,
+		Accepted:     true,
 	})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not create rolebinding")

@@ -12,6 +12,7 @@ service IAM {
 
   // Mutation
   rpc AddMembership(InAddMembership) returns (OutAddMembership);
+  rpc InviteMembership(InAddMembership) returns (OutAddMembership);
   rpc RemoveMembership(InRemoveMembership) returns (OutRemoveMembership);
   rpc RemoveResource(InRemoveResource) returns (OutRemoveResource);
 }
@@ -21,12 +22,14 @@ message RoleBinding {
   string resourceId = 2;
   string resourceType = 3;
   string role = 4;
+  bool accepted = 5;
 }
 
 message InGetMembership {
   string userId = 1;
   string resourceType = 2;
   string resourceId = 3;
+  bool accepted = 5;
 }
 
 message InAddMembership {
@@ -41,7 +44,7 @@ message OutGetMembership {
   string userId=1;
   string resourceId=2;
   string role=3;
-
+  bool accepted = 5;
 }
 
 message OutAddMembership {

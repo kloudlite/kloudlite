@@ -39,6 +39,16 @@ type domainI struct {
 	google          Google
 }
 
+func (d *domainI) EnsureUserByEmail(ctx context.Context, email string) (*User, error) {
+	u, err := d.userRepo.Create(ctx, &User{
+		Email: email,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return u, err
+}
+
 func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider string, state string, code string) (bool, error) {
 	user, err := d.userRepo.FindById(ctx, userId)
 	if err != nil {

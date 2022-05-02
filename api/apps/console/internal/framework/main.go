@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/pkg/cache"
@@ -38,6 +39,15 @@ type GrpcCIConfig struct {
 
 func (e *GrpcCIConfig) GetGCPServerURL() string {
 	return e.CIGrpcHost + ":" + e.CIGrpcPort
+}
+
+type IAMGRPCEnv struct {
+	IAMServerHost string `env:"IAM_SERVER_HOST"`
+	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
+}
+
+func (e *IAMGRPCEnv) GetGCPServerURL() string {
+	return fmt.Sprintf("%v:%v", e.IAMServerHost, e.IAMServerPort)
 }
 
 type Env struct {
@@ -84,6 +94,7 @@ func (e *Env) GetNotifierUrl() string {
 
 var Module = fx.Module("framework",
 	config.EnvFx[*Env](),
+	config.EnvFx[IAMGRPCEnv](),
 	fx.Provide(config.LoadEnv[Env]()),
 	fx.Provide(config.LoadEnv[GrpcInfraConfig]()),
 	fx.Provide(config.LoadEnv[GrpcAuthConfig]()),
@@ -91,6 +102,7 @@ var Module = fx.Module("framework",
 	fx.Provide(logger.NewLogger),
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
+	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcInfraConfig, app.InfraClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
