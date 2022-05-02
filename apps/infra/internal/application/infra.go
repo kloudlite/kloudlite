@@ -358,18 +358,17 @@ func (i *infraClient) installAgents(masterIp string, agentIps []string, k3sToken
 	return outErr
 }
 
-func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
-
+func (i *infraClient) applyCluster(cxt context.Context, clusterId string, provider string, masterNodesCount int, agentNodesCount int) (publicIp string, publicKey string, e error) {
 	defer errors.HandleErr(&e)
 
-	if _, err := os.Stat(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)); os.IsNotExist(err) {
+	if _, err := os.Stat(fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)); os.IsNotExist(err) {
 
 		// TODO: check if cluster already exists
 		copyTemplateDirCommand := exec.Command(
 			"cp",
 			"-r",
-			fmt.Sprintf("./infra-scripts/%v/tf/", action.Provider),
-			fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID),
+			fmt.Sprintf("./infra-scripts/%v/tf/", provider),
+			fmt.Sprintf("%v/%v", i.env.DataPath, clusterId),
 		)
 
 		copyTemplateDirCommand.Stdout = os.Stdout
@@ -379,29 +378,22 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 		errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
 
 	}
-	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID))
+	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, clusterId))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
 
-	masterCount := func() int {
-		if action.NodesCount >= 3 {
-			return 3
-		}
-		return 1
-	}()
-
-	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID), map[string]any{
-		"cluster-id":         action.ClusterID,
+	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, clusterId), map[string]any{
+		"cluster-id":         clusterId,
 		"do-token":           i.env.DoAPIKey,
 		"keys-path":          i.env.SshKeysPath,
-		"master-nodes-count": masterCount,
-		"agent-nodes-count":  action.NodesCount - masterCount,
+		"master-nodes-count": masterNodesCount,
+		"agent-nodes-count":  agentNodesCount,
 		"do-image-id":        i.env.DoImageId,
 	})
 
 	errors.AssertNoError(e, fmt.Errorf("unable to apply terraform primary"))
 
-	masterIps, e := i.getOutputTerraformInFolder(action.ClusterID, "master-ips")
-	agentIps, e := i.getOutputTerraformInFolder(action.ClusterID, "agent-ips")
+	masterIps, e := i.getOutputTerraformInFolder(clusterId, "master-ips")
+	agentIps, e := i.getOutputTerraformInFolder(clusterId, "agent-ips")
 
 	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ip"))
 
@@ -410,7 +402,7 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	var clusterPublicKeyWaitGroup sync.WaitGroup
 	clusterPublicKeyWaitGroup.Add(1)
 
-	joinToken, e := i.installPrimaryMaster(clusterIp, action.ClusterID)
+	joinToken, e := i.installPrimaryMaster(clusterIp, clusterId)
 	errors.AssertNoError(e, fmt.Errorf("unable to install primary master"))
 
 	var waitGroup sync.WaitGroup
@@ -419,7 +411,7 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 		clusterPublicKeyWaitGroup.Wait()
 		i.setupNodeWireguards(
 			append(strings.Split(masterIps, ","), strings.Split(agentIps, ",")...),
-			action.ClusterID,
+			clusterId,
 			clusterIp,
 			clusterPublicKey,
 		)
@@ -428,7 +420,7 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	}()
 
 	go func() {
-		wireguardPub, err := i.setupKubeWireguard(clusterIp, action.ClusterID)
+		wireguardPub, err := i.setupKubeWireguard(clusterIp, clusterId)
 		if err != nil {
 			fmt.Println(fmt.Errorf("unable to setup wireguard %v", err))
 			waitGroup.Done()
@@ -441,14 +433,14 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	}()
 
 	go func() {
-		kubernetes, _ := i.setupAllKubernetes(action.ClusterID, action.Provider)
+		kubernetes, _ := i.setupAllKubernetes(clusterId, provider)
 		fmt.Println(string(kubernetes))
 		fmt.Println("#3 kubernetes setup done")
 		waitGroup.Done()
 	}()
 
 	go func() {
-		i.waitForKubernetesAPIAvailability(action.ClusterID)
+		i.waitForKubernetesAPIAvailability(clusterId)
 		i.installSecondaryMasters(strings.Split(masterIps, ","), string(joinToken))
 		fmt.Println("#2 sec masters installed")
 		waitGroup.Done()
@@ -468,6 +460,10 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	return clusterIp, clusterPublicKey, e
 }
 
+func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
+	return i.applyCluster(cxt, action.ClusterID, action.Provider, action.MasterNodesCount(), action.AgentNodesCount())
+}
+
 func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClusterAction) (e error) {
 	masterNodesCountStr, e := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count")
 	agentNodesCountStr, e := i.getOutputTerraformInFolder(action.ClusterID, "agent-nodes-count")
@@ -477,35 +473,28 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 
 	dropNodes := make([]string, 0)
 
-	expectedMasterCount := func() int {
-		if action.NodesCount >= 3 {
-			return 3
-		}
-		return 1
-	}()
+	firstPassExpectedMasterCount := masterNodesCount
+	firstPassExpectedAgentCount := agentNodesCount
 
-	expectedAgentNodeCount := action.NodesCount - expectedMasterCount
-
-	if expectedMasterCount < masterNodesCount {
-		for i := expectedMasterCount; i < masterNodesCount; i++ {
+	if action.MasterNodesCount() < masterNodesCount {
+		for i := action.MasterNodesCount(); i < masterNodesCount; i++ {
 			dropNodes = append(dropNodes, fmt.Sprintf("master-%v", i))
 		}
+	} else {
+		firstPassExpectedMasterCount = action.MasterNodesCount()
 	}
 
-	if expectedAgentNodeCount < agentNodesCount {
-		for i := expectedAgentNodeCount; i < agentNodesCount; i++ {
+	if action.AgentNodesCount() < agentNodesCount {
+		for i := action.AgentNodesCount(); i < agentNodesCount; i++ {
 			dropNodes = append(dropNodes, fmt.Sprintf("agent-%v", i))
 		}
+	} else {
+		firstPassExpectedAgentCount = action.AgentNodesCount()
 	}
-	fmt.Println(dropNodes, "drop nodes")
 
-	if len(dropNodes) == 0 {
-		_, _, e := i.CreateCluster(cxt, domain.SetupClusterAction{
-			ClusterID:  action.ClusterID,
-			Region:     action.Region,
-			Provider:   action.Provider,
-			NodesCount: action.NodesCount,
-		})
+	_, _, e = i.applyCluster(cxt, action.ClusterID, action.Provider, firstPassExpectedMasterCount, firstPassExpectedAgentCount)
+
+	if e != nil {
 		return e
 	}
 
@@ -524,13 +513,22 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 			continue
 		}
 	}
-	time.AfterFunc(2*time.Minute, func() {
-		i.CreateCluster(cxt, domain.SetupClusterAction{
-			ClusterID:  action.ClusterID,
-			Region:     action.Region,
-			Provider:   action.Provider,
-			NodesCount: action.NodesCount,
-		})
+
+	time.AfterFunc(4*time.Minute, func() {
+		for _, node := range dropNodes {
+			cmd := exec.Command(
+				"kubectl",
+				"delete", "node",
+				node,
+			)
+			cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID)))
+			_, e := cmd.Output()
+			if e != nil {
+				fmt.Println(fmt.Errorf("unable to drain node %v %v", node, e))
+				continue
+			}
+		}
+		i.applyCluster(cxt, action.ClusterID, action.Provider, action.MasterNodesCount(), action.AgentNodesCount())
 	})
 	return e
 }
