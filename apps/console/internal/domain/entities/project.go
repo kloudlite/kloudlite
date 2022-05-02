@@ -2,6 +2,7 @@ package entities
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -39,4 +40,11 @@ var ProjectIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
+}
+
+type ProjectMembership struct {
+	ProjectId repos.ID
+	UserId    repos.ID
+	Role      common.Role
+	Accepted  bool
 }

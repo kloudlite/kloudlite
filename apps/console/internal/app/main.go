@@ -92,11 +92,11 @@ var Module = fx.Module(
 		return ci.NewCIClient((*grpc.ClientConn)(conn))
 	}),
 
-	fx.Provide(func(conn CIClientConnection) iam.IAMClient {
+	fx.Provide(func(conn IAMClientConnection) iam.IAMClient {
 		return iam.NewIAMClient((*grpc.ClientConn)(conn))
 	}),
 
-	fx.Provide(func(conn CIClientConnection) auth.AuthClient {
+	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
 

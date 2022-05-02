@@ -10,17 +10,17 @@ tasks:
       MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       IMAGE_REGISTRY_PREFIX: harbor.dev.madhouselabs.io/ci
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
+      # REDIS_USERNAME: hotspot-user
+      # REDIS_PASSWORD: ***REMOVED***
       MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
-      INFRA_HOST: localhost
-      INFRA_PORT: 50051
-      AUTH_HOST: localhost
-      AUTH_PORT: 50051
-      CI_HOST: localhost
-      CI_PORT: 6748
-      IAM_SERVER_HOST: localhost
-      IAM_SERVER_PORT: 3046
-#      REDIS_USERNAME: hotspot-user
-#      REDIS_PASSWORD: ***REMOVED***
+      INFRA_HOST: infra-api.hotspot.svc.cluster.local
+      INFRA_PORT: 3001
+      AUTH_HOST: auth-api.hotspot.svc.cluster.local
+      AUTH_PORT: 3001
+      CI_HOST: ci-api.hotspot.svc.cluster.local
+      CI_PORT: 3001
+      IAM_SERVER_HOST: iam.hotspot.svc.cluster.local
+      IAM_SERVER_PORT: 3001
       MONGO_DB_NAME: console-go
       PORT: 4001
       GRPC_PORT: 8083

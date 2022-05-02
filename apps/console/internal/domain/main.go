@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -49,6 +50,29 @@ type domain struct {
 	notifier             rcn.ResourceChangeNotifier
 	iamClient            iam.IAMClient
 	authClient           auth.AuthClient
+}
+
+func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error) {
+	rbs, err := d.iamClient.ListResourceMemberships(ctx, &iam.InResourceMemberships{
+		ResourceId:   string(projectID),
+		ResourceType: string(common.ResourceProject),
+	})
+	if err != nil {
+		return nil, err
+	}
+	var memberships []*entities.ProjectMembership
+	for _, rb := range rbs.RoleBindings {
+		memberships = append(memberships, &entities.ProjectMembership{
+			ProjectId: repos.ID(rb.ResourceId),
+			UserId:    repos.ID(rb.UserId),
+			Role:      common.Role(rb.Role),
+		})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return memberships, nil
 }
 
 func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error) {
