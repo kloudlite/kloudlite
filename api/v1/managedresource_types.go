@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib"
 )
 
 // ManagedResourceSpec defines the desired state of ManagedResource
@@ -17,8 +18,8 @@ type ManagedResourceStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // ManagedResource is the Schema for the managedresources API
 type ManagedResource struct {
@@ -33,7 +34,24 @@ func (m *ManagedResource) LogRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
 }
 
-//+kubebuilder:object:root=true
+const (
+	OfMsvcLabelKey lib.LabelKey = "mres.kloudlite.io/of-msvc"
+)
+
+func (m *ManagedResource) HasLabels() bool {
+	if s := m.Labels[OfMsvcLabelKey.String()]; s != m.Spec.ManagedSvc {
+		return false
+	}
+	return true
+}
+
+func (m *ManagedResource) EnsureLabels() {
+	m.SetLabels(map[string]string{
+		OfMsvcLabelKey.String(): m.Spec.ManagedSvc,
+	})
+}
+
+// +kubebuilder:object:root=true
 
 // ManagedResourceList contains a list of ManagedResource
 type ManagedResourceList struct {

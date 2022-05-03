@@ -94,12 +94,21 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 		return reconcileResult.Failed()
 	}
+
+	if !msvc.HasLabels() {
+		msvc.EnsureLabels()
+		if err := r.Update(ctx, msvc); err != nil {
+			return ctrl.Result{}, err
+		}
+		return reconcileResult.OK()
+	}
+
 	r.msvc = msvc
 	if msvc.GetDeletionTimestamp() != nil {
 		return r.finalize(ctx, msvc)
 	}
 
-	if msvc.Spec.Type != "MongoDBStandalone" {
+	if msvc.Spec.Type != MongoDBStandalone.String() {
 		return reconcileResult.Failed()
 	}
 

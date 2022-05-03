@@ -28,9 +28,8 @@ import (
 
 	"go.uber.org/fx"
 
-	mresv1 "operators.kloudlite.io/apis/mres/v1"
-	// mrescontrollers "operators.kloudlite.io/controllers/mres"
 	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
+	mresv1 "operators.kloudlite.io/apis/mres/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watchersmsvcv1 "operators.kloudlite.io/apis/watchers.msvc/v1"
 	mongodbsmsvcControllers "operators.kloudlite.io/controllers/mongodbs.msvc"
@@ -123,7 +122,6 @@ func main() {
 		Scheme:         mgr.GetScheme(),
 		ClientSet:      clientset,
 		MessageSender:  sender,
-		JobMgr:         lib.NewJobber(clientset),
 		HarborUserName: harborUserName,
 		HarborPassword: harborPassword,
 	}).SetupWithManager(mgr); err != nil {
@@ -135,7 +133,6 @@ func main() {
 		Client:         mgr.GetClient(),
 		Scheme:         mgr.GetScheme(),
 		ClientSet:      clientset,
-		JobMgr:         lib.NewJobber(clientset),
 		MessageSender:  sender,
 		HarborUserName: harborUserName,
 		HarborPassword: harborPassword,
@@ -158,7 +155,6 @@ func main() {
 		Scheme:        mgr.GetScheme(),
 		ClientSet:     clientset,
 		MessageSender: sender,
-		JobMgr:        lib.NewJobber(clientset),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
 		os.Exit(1)
@@ -169,19 +165,11 @@ func main() {
 		Scheme:        mgr.GetScheme(),
 		MessageSender: sender,
 		ClientSet:     clientset,
-		JobMgr:        lib.NewJobber(clientset),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
 		os.Exit(1)
 	}
 
-	// if err = (&msvcControllers.MongoDBReconciler{
-	// 	Client: mgr.GetClient(),
-	// 	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "MongoDBStatus")
-	// 	os.Exit(1)
-	// }
 	if err = (&mongodbsmsvcControllers.DatabaseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

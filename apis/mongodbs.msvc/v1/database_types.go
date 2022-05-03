@@ -2,7 +2,6 @@ package v1
 
 import (
 	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,6 +34,19 @@ func (d *Database) String() string {
 
 func (d *Database) LogRef() string {
 	return fmt.Sprintf("%s/%s/%s", d.Namespace, d.Kind, d.Name)
+}
+
+func (d *Database) HasLabels() bool {
+	if s := d.Labels[fmt.Sprintf("%s/of-msvc", GroupVersion.Group)]; s != d.Spec.ManagedSvc {
+		return false
+	}
+	return true
+}
+
+func (d *Database) EnsureLabels() {
+	d.SetLabels(map[string]string{
+		fmt.Sprintf("%s/of-msvc", GroupVersion.Group): d.Spec.ManagedSvc,
+	})
 }
 
 // +kubebuilder:object:root=true
