@@ -100,13 +100,13 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	if err != nil {
 		return nil, err
 	}
-	//project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
 	if err != nil {
 		return nil, err
 	}
-	/*cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
 		"account_id": project.AccountId,
-	})*/
+	})
 	if err != nil {
 		return nil, err
 	}
