@@ -57,12 +57,11 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 	switch provider {
 	case common.ProviderGithub:
 		{
-			_, t, err := d.github.Callback(ctx, code, state)
-			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			u, t, err := d.github.Callback(ctx, code, state)
 			if err != nil {
 				return false, errors.NewEf(err, "could not login to github")
 			}
-			_, err = d.addOAuthLogin(ctx, provider, t, user)
+			_, err = d.addOAuthLogin(ctx, provider, t, user, u.AvatarURL)
 			if err != nil {
 				return false, err
 			}
@@ -71,12 +70,11 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 
 	case common.ProviderGitlab:
 		{
-			_, t, err := d.gitlab.Callback(ctx, code, state)
-			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			u, t, err := d.gitlab.Callback(ctx, code, state)
 			if err != nil {
 				return false, errors.NewEf(err, "could not login to gitlab")
 			}
-			_, err = d.afterOAuthLogin(ctx, provider, t, user)
+			_, err = d.afterOAuthLogin(ctx, provider, t, user, &u.AvatarURL)
 			if err != nil {
 				return false, err
 			}
@@ -336,7 +334,7 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
 }
 
-func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, u *User) (*User, error) {
+func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, u *User, avatarUrl *string) (*User, error) {
 	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find user")
@@ -362,7 +360,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		return nil, errors.NewEf(err, "could not store access token in repo")
 	}
 
-	p := &ProviderDetail{TokenId: t.Id, Avatar: user.Avatar}
+	p := &ProviderDetail{TokenId: t.Id, Avatar: avatarUrl}
 
 	if provider == common.ProviderGithub {
 		user.ProviderGithub = p
@@ -384,12 +382,14 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 	return user, nil
 }
 
-func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User) (*common.AuthSession, error) {
-	user, err := d.addOAuthLogin(ctx, provider, token, newUser)
+func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User, avatarUrl *string) (*common.AuthSession, error) {
+	user, err := d.addOAuthLogin(ctx, provider, token, newUser, avatarUrl)
 	if err != nil {
 		return nil, err
 	}
-	return common.NewSession(user.Id, user.Email, user.Verified, fmt.Sprintf("oauth2/%s", provider)), nil
+	session := common.NewSession(user.Id, user.Email, user.Verified, fmt.Sprintf("oauth2/%s", provider))
+	fmt.Println("session: ", session)
+	return session, nil
 }
 
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
@@ -397,25 +397,20 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 	case common.ProviderGithub:
 		{
 			u, t, err := d.github.Callback(ctx, code, state)
-			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
 				return nil, errors.NewEf(err, "could not login to github")
 			}
-			d.logger.Infof("PRE AVATAR: %V\n", *u.AvatarURL)
 			user := &User{
 				Name:   *u.Name,
 				Avatar: u.AvatarURL,
 				Email:  *u.Email,
 			}
-
-			d.logger.Infof("AVATAR: %v\n", *user.Avatar)
-			return d.afterOAuthLogin(ctx, provider, t, user)
+			return d.afterOAuthLogin(ctx, provider, t, user, u.AvatarURL)
 		}
 
 	case common.ProviderGitlab:
 		{
 			u, t, err := d.gitlab.Callback(ctx, code, state)
-			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
 				return nil, errors.NewEf(err, "could not login to gitlab")
 			}
@@ -427,7 +422,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 			}
 			d.logger.Infof("AVATAR: %v\n", *user.Avatar)
 
-			return d.afterOAuthLogin(ctx, provider, t, user)
+			return d.afterOAuthLogin(ctx, provider, t, user, &u.AvatarURL)
 		}
 
 	case common.ProviderGoogle:
@@ -446,7 +441,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 
 			d.logger.Infof("AVATAR: %v\n", user.Avatar)
 
-			return d.afterOAuthLogin(ctx, provider, t, user)
+			return d.afterOAuthLogin(ctx, provider, t, user, u.AvatarURL)
 		}
 	default:
 		{
