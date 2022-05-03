@@ -51,6 +51,15 @@ func (m *ManagedResource) EnsureLabels() {
 	})
 }
 
+func (mr *ManagedResource) OwnedByMsvc(svc *ManagedService) bool {
+	for _, c := range mr.OwnerReferences {
+		if c.APIVersion == svc.APIVersion && c.Kind == svc.Kind && c.Name == svc.Name && c.UID == svc.UID {
+			return true
+		}
+	}
+	return false
+}
+
 // +kubebuilder:object:root=true
 
 // ManagedResourceList contains a list of ManagedResource
