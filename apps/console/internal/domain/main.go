@@ -1354,7 +1354,7 @@ func fxDomain(
 	authClient auth.AuthClient,
 ) Domain {
 	var x repos.DbRepo[*entities.Cluster]
-	x = mockClusterRepo[*entities.Cluster]{}
+	x = mockClusterRepo{}
 	return &domain{
 		notifier:             notifier,
 		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
