@@ -49,7 +49,7 @@ query: |
     }
   }
 variables:
-  code: 7f749df57239c9b05d6a7860420233bdea797b9ad3234ef19b65b7ff1f75e182
+  code: c3e68eb0e0cd32920f1c3dafefda4ef28fa4c04ddba36335fcc89999e3799c9c
   provider: gitlab
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
 
@@ -62,6 +62,7 @@ query: |
       id
       email
       providerGitlab
+      providerGithub
     }
   }
 

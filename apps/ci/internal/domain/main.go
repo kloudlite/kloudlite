@@ -94,7 +94,6 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 			RefreshToken: accTokenOut.OauthToken.RefreshToken,
 			Expiry:       time.UnixMilli(accTokenOut.OauthToken.Expiry),
 		},
-		Data: nil,
 	}, err
 }
 
