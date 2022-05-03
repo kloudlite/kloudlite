@@ -38,6 +38,7 @@ func (a *authGrpcServerImpl) GetAccessToken(ctx context.Context, request *auth.G
 		Provider: token.Provider,
 		OauthToken: &auth.OauthToken{
 			AccessToken:  token.Token.AccessToken,
+			TokenType:    token.Token.TokenType,
 			RefreshToken: token.Token.RefreshToken,
 			Expiry:       token.Token.Expiry.UnixMilli(),
 		},
