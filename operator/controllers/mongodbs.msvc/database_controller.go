@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	crdsv1 "operators.kloudlite.io/api/v1"
 	mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib"
@@ -141,15 +140,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	logger.Infof("MongoDatabase %+v", mdb.Spec.ManagedSvc)
-	// managedSvc := &crdsv1.ManagedService{}
-	// if err := r.Get(ctx, types.NamespacedName{Name: mdb.Spec.ManagedSvc, Namespace: mdb.Namespace}, managedSvc); err != nil {
-	// 	return r.notifyAndDie(ctx, errors.NewEf(err, "failing to get managed-svc(name=%s, namespace=%s), would start again when it is available", mdb.Spec.ManagedSvc, mdb.Namespace))
-	// }
-	//
-	// // STEP: check if managedsvc is ready
-	// if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
-	// 	return r.notifyAndDie(ctx, errors.Newf("%s is not ready, would start again when it is ready", managedSvc.LogRef()))
-	// }
 
 	msvcSecretName := fmt.Sprintf("msvc-%s", mdb.Spec.ManagedSvc)
 	var mSecret corev1.Secret
@@ -243,15 +233,6 @@ func (r *DatabaseReconciler) finalize(ctx context.Context, mdb *mongodb.Database
 
 	if controllerutil.ContainsFinalizer(mdb, finalizers.ManagedResource.String()) {
 
-		managedSvc := &crdsv1.ManagedService{}
-		if err := r.Get(ctx, types.NamespacedName{Name: mdb.Spec.ManagedSvc, Namespace: mdb.Namespace}, managedSvc); err != nil {
-			controllerutil.RemoveFinalizer(mdb, finalizers.ManagedResource.String())
-			if err := r.Update(ctx, mdb); err != nil {
-				return ctrl.Result{}, err
-			}
-			return reconcileResult.OK()
-		}
-
 		msvcSecretName := fmt.Sprintf("msvc-%s", mdb.Spec.ManagedSvc)
 		var mSecret corev1.Secret
 		if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: msvcSecretName}, &mSecret); err != nil {
@@ -309,34 +290,5 @@ func (r *DatabaseReconciler) finalize(ctx context.Context, mdb *mongodb.Database
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongodb.Database{}).
-		// Watches(&source.Kind{
-		// 	Type: &crdsv1.ManagedService{},
-		// }, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
-		// 	if s := c.GetLabels()["msvc.kloudlite.io/type"]; s != controllers.MongoDBStandalone.String() {
-		// 		return nil
-		// 	}
-		//
-		// 	var dbsList mongodb.DatabaseList
-		// 	fmt.Println("group: %s", mongodb.GroupVersion.Group)
-		// 	if err := r.List(context.TODO(), &dbsList, &client.ListOptions{
-		// 		LabelSelector: labels2.SelectorFromValidatedSet(map[string]string{
-		// 			fmt.Sprintf("%s/of-msvc", mongodb.GroupVersion.Group): c.GetName(),
-		// 		}),
-		// 		Namespace: c.GetNamespace(),
-		// 	}); err != nil {
-		// 		return nil
-		// 	}
-		//
-		// 	var reqs []reconcile.Request
-		//
-		// 	for _, resDb := range dbsList.Items {
-		// 		reqs = append(reqs, reconcile.Request{
-		// 			NamespacedName: types.NamespacedName{Namespace: resDb.Namespace, Name: resDb.Name},
-		// 		})
-		// 	}
-		//
-		// 	fmt.Printf("Database Reconciler: %+v\n", reqs)
-		// 	return reqs
-		// })).
 		Complete(r)
 }
