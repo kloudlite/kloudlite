@@ -19,15 +19,22 @@ const NamespaceAdminRole = "kloudlite-ns-admin"
 const NamespaceAdminRoleBinding = "kloudlite-ns-admin"
 const SvcAccountName = "kloudlite-svc-account"
 
-var TypeNamespace = metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"}
 var TypeSecret = metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"}
-var TypeConfigMap = metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"}
 var TypeRole = metav1.TypeMeta{APIVersion: "rbac.authorization.k8s.io/v1", Kind: "Role"}
-var TypeIngress = metav1.TypeMeta{APIVersion: "networking.k8s.io", Kind: "Ingress"}
 var TypeRoleBinding = metav1.TypeMeta{APIVersion: "rbac.authorization.k8s.io/v1", Kind: "RoleBinding"}
 var TypeSvcAccount = metav1.TypeMeta{APIVersion: "v1", Kind: "ServiceAccount"}
 
 var IngressAnnotations = map[string]string{
 	"kubernetes.io/ingress.class":    "nginx",
 	"cert-manager.io/cluster-issuer": "prod-cert-issuer",
+}
+
+type ManagedServiceType string
+
+const (
+	MongoDBStandalone ManagedServiceType = "MongoDBStandalone"
+)
+
+func (m ManagedServiceType) String() string {
+	return string(m)
 }

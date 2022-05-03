@@ -33,7 +33,6 @@ type ProjectReconciler struct {
 	Scheme    *runtime.Scheme
 	ClientSet *kubernetes.Clientset
 	lib.MessageSender
-	JobMgr         lib.Job
 	logger         *zap.SugaredLogger
 	HarborUserName string
 	HarborPassword string

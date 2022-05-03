@@ -11,6 +11,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	labels2 "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	crdsv1 "operators.kloudlite.io/api/v1"
@@ -24,6 +25,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -115,6 +119,8 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	r.logger = controllers.GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
 
+	logger.Infof("DBReconciler: Reconcile request received for  %s", req.NamespacedName)
+
 	var mdb mongodb.Database
 	if err := r.Get(ctx, req.NamespacedName, &mdb); err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -124,27 +130,35 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return reconcileResult.FailedE(err)
 	}
 	logger.Infof("Reconcile started...")
+
+	if !mdb.HasLabels() {
+		mdb.EnsureLabels()
+		if err := r.Update(ctx, &mdb); err != nil {
+			return reconcileResult.FailedE(err)
+		}
+		return reconcileResult.OK()
+	}
 	r.mdb = &mdb
+
+	if mdb.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, &mdb)
+	}
 
 	logger.Infof("MongoDatabase %+v", mdb.Spec.ManagedSvc)
 	managedSvc := &crdsv1.ManagedService{}
 	if err := r.Get(ctx, types.NamespacedName{Name: mdb.Spec.ManagedSvc, Namespace: mdb.Namespace}, managedSvc); err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "failing to get %s, queing for later", managedSvc.LogRef()))
+		return r.notifyAndDie(ctx, errors.NewEf(err, "failing to get managed-svc(name=%s, namespace=%s), would start again when it is available", mdb.Spec.ManagedSvc, mdb.Namespace))
 	}
 
 	// STEP: check if managedsvc is ready
 	if ok := meta.IsStatusConditionTrue(managedSvc.Status.Conditions, "Ready"); !ok {
-		return r.notifyAndDie(ctx, errors.Newf("%s is not ready", managedSvc.LogRef()))
+		return r.notifyAndDie(ctx, errors.Newf("%s is not ready, would start again when it is ready", managedSvc.LogRef()))
 	}
 
 	msvcSecretName := fmt.Sprintf("msvc-%s", mdb.Spec.ManagedSvc)
 	var mSecret corev1.Secret
 	if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: msvcSecretName}, &mSecret); err != nil {
 		return r.notifyAndDie(ctx, errors.NewEf(err, "ManagedSvc secret %s/%s not found, aborting reconcilation", mdb.Namespace, msvcSecretName))
-	}
-
-	if mdb.GetDeletionTimestamp() != nil {
-		return r.finalize(ctx, &mdb, &mSecret)
 	}
 
 	// logger.Debugf("secret data: %+v", mSecret.Data)
@@ -227,14 +241,35 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	return r.notify(ctx)
 }
 
-func (r *DatabaseReconciler) finalize(ctx context.Context, mdb *mongodb.Database, connSecret *corev1.Secret) (ctrl.Result, error) {
+func (r *DatabaseReconciler) finalize(ctx context.Context, mdb *mongodb.Database) (ctrl.Result, error) {
 	logger := r.logger.With("FINALIZER", "true")
 	logger.Debug("finalizing ...")
 
 	if controllerutil.ContainsFinalizer(mdb, finalizers.ManagedResource.String()) {
-		logger.Debug("HERE", string(connSecret.Data["DB_URL"]))
+
+		managedSvc := &crdsv1.ManagedService{}
+		if err := r.Get(ctx, types.NamespacedName{Name: mdb.Spec.ManagedSvc, Namespace: mdb.Namespace}, managedSvc); err != nil {
+			controllerutil.RemoveFinalizer(mdb, finalizers.ManagedResource.String())
+			if err := r.Update(ctx, mdb); err != nil {
+				return ctrl.Result{}, err
+			}
+			return reconcileResult.OK()
+		}
+
+		msvcSecretName := fmt.Sprintf("msvc-%s", mdb.Spec.ManagedSvc)
+		var mSecret corev1.Secret
+		if err := r.Get(ctx, types.NamespacedName{Namespace: mdb.Namespace, Name: msvcSecretName}, &mSecret); err != nil {
+			// return r.notifyAndDie(ctx, errors.NewEf(err, "ManagedSvc secret %s/%s not found, forcing deletion though", mdb.Namespace, msvcSecretName))
+			controllerutil.RemoveFinalizer(mdb, finalizers.ManagedResource.String())
+			if err := r.Update(ctx, mdb); err != nil {
+				return ctrl.Result{}, err
+			}
+			return reconcileResult.OK()
+		}
+
+		logger.Debug("HERE", string(mSecret.Data["DB_URL"]))
 		// go to database and delete that user
-		db, err := connectToDB(ctx, string(connSecret.Data["DB_URL"]), "admin")
+		db, err := connectToDB(ctx, string(mSecret.Data["DB_URL"]), "admin")
 		if err != nil {
 			return r.notifyAndDie(ctx, err)
 		}
@@ -278,9 +313,34 @@ func (r *DatabaseReconciler) finalize(ctx context.Context, mdb *mongodb.Database
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongodb.Database{}).
-		// Watches(&source.Kind{
-		// 	Type: &crdsv1.ManagedService{},
-		// }, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
-		// })).
+		Watches(&source.Kind{
+			Type: &crdsv1.ManagedService{},
+		}, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
+			if s := c.GetLabels()["msvc.kloudlite.io/type"]; s != controllers.MongoDBStandalone.String() {
+				return nil
+			}
+
+			var dbsList mongodb.DatabaseList
+			fmt.Println("group: %s", mongodb.GroupVersion.Group)
+			if err := r.List(context.TODO(), &dbsList, &client.ListOptions{
+				LabelSelector: labels2.SelectorFromValidatedSet(map[string]string{
+					fmt.Sprintf("%s/of-msvc", mongodb.GroupVersion.Group): c.GetName(),
+				}),
+				Namespace: c.GetNamespace(),
+			}); err != nil {
+				return nil
+			}
+
+			var reqs []reconcile.Request
+
+			for _, resDb := range dbsList.Items {
+				reqs = append(reqs, reconcile.Request{
+					NamespacedName: types.NamespacedName{Namespace: resDb.Namespace, Name: resDb.Name},
+				})
+			}
+
+			fmt.Printf("Database Reconciler: %+v\n", reqs)
+			return reqs
+		})).
 		Complete(r)
 }

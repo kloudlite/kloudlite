@@ -19,3 +19,9 @@ type Notifier interface {
 type MessageSender interface {
 	SendMessage(key string, msg MessageReply) error
 }
+
+type LabelKey string
+
+func (lk LabelKey) String() string {
+	return string(lk)
+}

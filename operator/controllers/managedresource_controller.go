@@ -81,6 +81,13 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 		return reconcileResult.Failed()
 	}
+	if !mres.HasLabels() {
+		mres.EnsureLabels()
+		if err := r.Update(ctx, mres); err != nil {
+			return ctrl.Result{}, err
+		}
+		return reconcileResult.OK()
+	}
 	r.mres = mres
 
 	if mres.DeletionTimestamp != nil {

@@ -5,6 +5,8 @@ metadata:
   namespace: {{.Namespace}}
   finalizers:
     - finalizers.kloudlite.io/managed-resource
+  labels:
+    mongodbs.msvc.kloudlite.io/of-msvc: {{.Spec.ManagedSvc}}
   ownerReferences:
     - apiVersion: {{.APIVersion}}
       kind: {{.Kind}}

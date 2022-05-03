@@ -17,8 +17,8 @@ type ManagedServiceStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // ManagedService is the Schema for the managedservices API
 type ManagedService struct {
@@ -33,7 +33,20 @@ func (m *ManagedService) LogRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
 }
 
-//+kubebuilder:object:root=true
+func (m *ManagedService) HasLabels() bool {
+	if _, ok := m.Labels["msvc.kloudlite.io/type"]; !ok {
+		return false
+	}
+	return true
+}
+
+func (m *ManagedService) EnsureLabels() {
+	m.SetLabels(map[string]string{
+		"msvc.kloudlite.io/type": m.Spec.Type,
+	})
+}
+
+// +kubebuilder:object:root=true
 
 // ManagedServiceList contains a list of ManagedService
 type ManagedServiceList struct {
