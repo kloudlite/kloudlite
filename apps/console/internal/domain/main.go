@@ -112,9 +112,8 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	}
 	output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
 		ManagedResName: mres.Name,
-		//ClusterId:      string(cluster.Id),
-		ClusterId: "dev-kloudlite",
-		Namespace: mres.Namespace,
+		ClusterId:      string(cluster.Id),
+		Namespace:      mres.Namespace,
 	})
 	if err != nil {
 		fmt.Println(err)
