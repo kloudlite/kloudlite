@@ -100,21 +100,20 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	if err != nil {
 		return nil, err
 	}
-	//project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
 	if err != nil {
 		return nil, err
 	}
-	/*cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
 		"account_id": project.AccountId,
-	})*/
+	})
 	if err != nil {
 		return nil, err
 	}
 	output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
 		ManagedResName: mres.Name,
-		//ClusterId:      string(cluster.Id),
-		ClusterId: "dev-kloudlite",
-		Namespace: mres.Namespace,
+		ClusterId:      string(cluster.Id),
+		Namespace:      mres.Namespace,
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -1354,7 +1353,7 @@ func fxDomain(
 	authClient auth.AuthClient,
 ) Domain {
 	var x repos.DbRepo[*entities.Cluster]
-	x = mockClusterRepo[*entities.Cluster]{}
+	x = mockClusterRepo{}
 	return &domain{
 		notifier:             notifier,
 		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
