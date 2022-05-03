@@ -1353,6 +1353,8 @@ func fxDomain(
 	iamClient iam.IAMClient,
 	authClient auth.AuthClient,
 ) Domain {
+	var x repos.DbRepo[*entities.Cluster]
+	x = mockClusterRepo[*entities.Cluster]{}
 	return &domain{
 		notifier:             notifier,
 		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
@@ -1363,7 +1365,7 @@ func fxDomain(
 		infraMessenger:       infraMessenger,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,
-		clusterRepo:          clusterRepo,
+		clusterRepo:          x,
 		projectRepo:          projectRepo,
 		routerRepo:           routerRepo,
 		secretRepo:           secretRepo,
