@@ -86,8 +86,8 @@ func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64
 	total, e := repo.db.Collection(repo.collectionName).CountDocuments(ctx, query.Filter)
 
 	return PaginatedRecord[T]{
-		results:    results,
-		totalCount: total,
+		Results:    results,
+		TotalCount: total,
 	}, e
 }
 
