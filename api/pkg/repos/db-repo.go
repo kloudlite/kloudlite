@@ -21,8 +21,8 @@ type Query struct {
 type ID string
 
 type PaginatedRecord[T Entity] struct {
-	results    []T
-	totalCount int64
+	Results    []T
+	TotalCount int64
 }
 
 type UpdateOpts struct {
