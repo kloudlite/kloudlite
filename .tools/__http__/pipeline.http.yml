@@ -23,8 +23,8 @@ query: |
   }
 variables:
   in:
-    name: xyz-pipeline
-    imageName: sample-image
+    name: example-pipeline
+    imageName: example-image
     gitProvider: gitlab
     dockerFile: ./Dockerfile
     gitRepoUrl: https://gitlab.com/nxtcoder17/sample
