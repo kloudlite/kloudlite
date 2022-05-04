@@ -17,6 +17,7 @@ type Pipeline struct {
 	ContextDir           *string                `json:"context_dir,omitempty" bson:"context_dir"`
 	GithubInstallationId *int                   `json:"github_installation_id,omitempty" bson:"github_installation_id"`
 	GitlabTokenId        string                 `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
+	GitlabRepoId         *int                   `json:"gitlab_repo_id,omitempty" bson:"gitlab_repo_id"`
 	BuildArgs            map[string]interface{} `json:"build_args,omitempty" bson:"build_args"`
 	RepoName             string                 `json:"repo_name,omitempty" bson:"repo_name"`
 	Metadata             map[string]interface{} `json:"metadata,omitempty" bson:"metadata"`

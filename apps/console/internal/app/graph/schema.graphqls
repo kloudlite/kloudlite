@@ -169,6 +169,7 @@ input PipelineDataInput{
   repoName: String!
   gitProvider: String!
   gitRepoUrl: String!
+  gitlabRepoId: Int!
   dockerFile: String!
   contextDir: String!
   githubInstallationId: Int
