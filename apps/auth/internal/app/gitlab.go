@@ -14,6 +14,10 @@ type gitlabI struct {
 	cfg *oauth2.Config
 }
 
+func (gl *gitlabI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
+	return gl.cfg.TokenSource(ctx, token).Token()
+}
+
 func (gl *gitlabI) Authorize(_ context.Context, state string) (string, error) {
 	return gl.cfg.AuthCodeURL(state), nil
 }

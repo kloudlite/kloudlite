@@ -28,7 +28,6 @@ variables:
   password: sample
 
 ---
-
 label: "OAuth Login Request"
 query: |
   query Query($provider: String!) {
@@ -36,7 +35,7 @@ query: |
   }
 
 variables:
-  provider: gitlab
+  provider: github
 
 ---
 label: OAuth Login
@@ -49,8 +48,8 @@ query: |
     }
   }
 variables:
-  code: 7f749df57239c9b05d6a7860420233bdea797b9ad3234ef19b65b7ff1f75e182
-  provider: gitlab
+  code: 56dabae2f1b3dfd5f59e
+  provider: github
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
 
 ---
@@ -62,6 +61,7 @@ query: |
       id
       email
       providerGitlab
+      providerGithub
     }
   }
 
@@ -90,8 +90,8 @@ query: |
   }
 variables:
   installationId: 22487879
-  page: 1
-  limit: 20
+  # page: 1
+  # limit: 20
 
 ---
 
