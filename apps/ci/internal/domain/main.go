@@ -26,9 +26,18 @@ func (d *domainI) GitlabPullToken(ctx context.Context, pipelineId repos.ID) (str
 	if err != nil {
 		return "", err
 	}
+	fmt.Printf("pipeline: %++v\n", pipeline)
 	accessToken, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
 		TokenId: pipeline.GitlabTokenId,
 	})
+	fmt.Println("accessToken: ", accessToken, "err:", err)
+
+	if err != nil || accessToken == nil {
+		return "", errors.NewEf(err, "could not get gitlab access token")
+	}
+
+	fmt.Println("accessToken: ", *accessToken)
+
 	accToken := AccessToken{
 		UserId:   repos.ID(accessToken.UserId),
 		Email:    accessToken.Email,
@@ -93,7 +102,7 @@ func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId 
 }
 
 func (d *domainI) SaveUserAcc(ctx context.Context, acc *HarborAccount) error {
-	acc, err := d.harborAccRepo.Create(ctx, acc)
+	_, err := d.harborAccRepo.Create(ctx, acc)
 	if err != nil {
 		return errors.NewEf(err, "[dbRepo] failed to create harbor account")
 	}

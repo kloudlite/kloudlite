@@ -1,5 +1,5 @@
-
-label: Create Pipeline
+---
+label: Create Github Pipeline
 query: |
   mutation Ci_createPipeline($in: GitPipelineIn!) {
     ci_createPipeline(in: $in)
@@ -13,3 +13,21 @@ variables:
     gitRepoUrl: https://github.com/nxtcoder17/sample
     contextDir: ./
     githubInstallationId: 22487879
+
+---
+
+label: Create Gitlab Pipeline
+query: |
+  mutation Ci_createPipeline($in: GitPipelineIn!) {
+    ci_createPipeline(in: $in)
+  }
+variables:
+  in:
+    name: xyz-pipeline
+    imageName: sample-image
+    gitProvider: gitlab
+    dockerFile: ./Dockerfile
+    gitRepoUrl: https://gitlab.com/nxtcoder17/sample
+    contextDir: ./
+    gitlabRepoId: 35883531
+
