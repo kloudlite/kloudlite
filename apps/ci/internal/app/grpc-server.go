@@ -38,6 +38,7 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 		ImageName:            in.ImageName,
 		PipelineEnv:          in.PipelineEnv,
 		GitProvider:          in.GitProvider,
+		GitBranch:            in.GitBranch,
 		GitRepoUrl:           in.GitRepoUrl,
 		GitlabRepoId:         &gitlabRepoId,
 		RepoName:             in.RepoName,

@@ -12,6 +12,7 @@ type GitPipeline struct {
 	ImageName            string                 `json:"imageName"`
 	GitProvider          string                 `json:"gitProvider"`
 	GitRepoURL           string                 `json:"gitRepoUrl"`
+	GitBranch            string                 `json:"gitBranch"`
 	DockerFile           *string                `json:"dockerFile"`
 	ContextDir           *string                `json:"contextDir"`
 	GithubInstallationID *int                   `json:"githubInstallationId"`
@@ -25,6 +26,7 @@ type GitPipelineIn struct {
 	ImageName            string                 `json:"imageName"`
 	GitProvider          string                 `json:"gitProvider"`
 	GitRepoURL           string                 `json:"gitRepoUrl"`
+	GitBranch            string                 `json:"gitBranch"`
 	DockerFile           *string                `json:"dockerFile"`
 	ContextDir           *string                `json:"contextDir"`
 	GithubInstallationID *int                   `json:"githubInstallationId"`

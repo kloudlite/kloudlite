@@ -18,6 +18,7 @@ message PipelineIn {
   string imageName = 2;
   string pipelineEnv = 3;
   string GitProvider = 4;
+  string GitBranch = 16;
   string GitRepoUrl = 5;
   string DockerFile = 6;
   string ContextDir = 7;
