@@ -212,7 +212,14 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		}
 
 	}
-	return d.pipelineRepo.Create(ctx, &pipeline)
+	p, err := d.pipelineRepo.Create(ctx, &pipeline)
+	if err != nil {
+		return nil, err
+	}
+	if err = p.TriggerHook(); err != nil {
+		return nil, errors.NewEf(err, "failed to trigger webhook")
+	}
+	return p, nil
 }
 
 func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error) {
