@@ -34,6 +34,7 @@ input GitPipelineIn {
   dockerFile: String
   contextDir: String
   githubInstallationId: Int
+  gitlabRepoId: Int
   buildArgs: Json
 }
 
@@ -46,6 +47,7 @@ type GitPipeline {
   dockerFile: String
   contextDir: String
   githubInstallationId: Int
+  gitlabRepoId: Int
   buildArgs: Json
   metadata: Json
 }
