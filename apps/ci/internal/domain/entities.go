@@ -33,12 +33,29 @@ type Pipeline struct {
 }
 
 const (
-	gitlabWebhook string = "https://webhook.dev.madhouselabs.io/gitlab"
-	githubWebhook string = "https://webhook.dev.madhouselabs.io/github"
+	gitlabWebhook string = "https://webhooks.dev.madhouselabs.io/gitlab"
+	githubWebhook string = "https://webhooks.dev.madhouselabs.io/github"
 )
 
 func (p *Pipeline) TriggerHook() error {
+	var req *http.Request
 	if p.GitProvider == common.ProviderGithub {
+		body := t.M{
+			"ref":   fmt.Sprintf("refs/heads/%s", p.GitBranch),
+			"after": "",
+			"repository": t.M{
+				"html_url": p.GitRepoUrl,
+			},
+		}
+
+		b, err := json.Marshal(body)
+		if err != nil {
+			return errors.ErrMarshal(err)
+		}
+		req, err = http.NewRequest(http.MethodPost, fmt.Sprintf("%s?pipelineId=%s", githubWebhook, p.Id), bytes.NewBuffer(b))
+		if err != nil {
+			return errors.NewEf(err, "could not build http request")
+		}
 	}
 
 	if p.GitProvider == common.ProviderGitlab {
@@ -53,14 +70,20 @@ func (p *Pipeline) TriggerHook() error {
 		if err != nil {
 			return errors.ErrMarshal(err)
 		}
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s?pipelineId=%s", gitlabWebhook, p.Id), bytes.NewBuffer(b))
+		req, err = http.NewRequest(http.MethodPost, fmt.Sprintf("%s?pipelineId=%s", gitlabWebhook, p.Id), bytes.NewBuffer(b))
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
 		}
+	}
+
+	if req != nil {
+		fmt.Println("HERE......")
 		r, err := http.DefaultClient.Do(req)
+		fmt.Printf("r: %+v | err: %v\n", r, err)
 		if err != nil {
 			return errors.NewEf(err, "while making request")
 		}
+		fmt.Println("HERE response......")
 		if r.StatusCode == http.StatusAccepted {
 			return nil
 		}

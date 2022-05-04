@@ -23,11 +23,12 @@ query: |
   }
 variables:
   in:
-    name: example-pipeline2
-    imageName: example-image
+    name: example-pipelinen
+    imageName: example-image3
     gitProvider: gitlab
     dockerFile: ./Dockerfile
     gitRepoUrl: https://gitlab.com/nxtcoder17/sample
+    gitBranch: master
     contextDir: ./
     gitlabRepoId: 35883531
 
