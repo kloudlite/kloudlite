@@ -17,8 +17,8 @@ tasks:
       INFRA_PORT: 3001
       AUTH_HOST: auth-api.hotspot.svc.cluster.local
       AUTH_PORT: 3001
-      CI_HOST: localhost
-      CI_PORT: 6748
+      CI_HOST: ci-api.hotspot.svc.cluster.local
+      CI_PORT: 3001
       IAM_SERVER_HOST: iam.hotspot.svc.cluster.local
       IAM_SERVER_PORT: 3001
       MONGO_DB_NAME: console-go
