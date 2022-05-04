@@ -14,6 +14,7 @@ type authGrpcServer struct {
 
 func (a *authGrpcServer) FromAccToken(token domain.AccessToken) *auth.AccessTokenOut {
 	return &auth.AccessTokenOut{
+		Id:       string(token.Id),
 		UserId:   string(token.UserId),
 		Email:    token.Email,
 		Provider: token.Provider,

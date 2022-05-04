@@ -22,6 +22,7 @@ message GetAccessTokenRequest {
 }
 
 message AccessTokenOut {
+  string id = 5;
   string userId  = 1;
   string email  = 2;
   string provider  = 3;
