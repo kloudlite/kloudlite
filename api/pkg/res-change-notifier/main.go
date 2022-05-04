@@ -16,7 +16,7 @@ type rcn struct {
 }
 
 func (r *rcn) Notify(resourceId repos.ID) error {
-	_, err := http.Post(fmt.Sprintf("%s/publish/resource-update/%s", r.serviceUrl, resourceId), "text/plain", nil)
+	_, err := http.Post(fmt.Sprintf("%s/publish/resource_update/%s", r.serviceUrl, resourceId), "text/plain", nil)
 	fmt.Println(err)
 	return err
 }
