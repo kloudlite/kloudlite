@@ -15,6 +15,7 @@ type GitPipeline struct {
 	DockerFile           *string                `json:"dockerFile"`
 	ContextDir           *string                `json:"contextDir"`
 	GithubInstallationID *int                   `json:"githubInstallationId"`
+	GitlabRepoID         *int                   `json:"gitlabRepoId"`
 	BuildArgs            map[string]interface{} `json:"buildArgs"`
 	Metadata             map[string]interface{} `json:"metadata"`
 }
@@ -27,6 +28,7 @@ type GitPipelineIn struct {
 	DockerFile           *string                `json:"dockerFile"`
 	ContextDir           *string                `json:"contextDir"`
 	GithubInstallationID *int                   `json:"githubInstallationId"`
+	GitlabRepoID         *int                   `json:"gitlabRepoId"`
 	BuildArgs            map[string]interface{} `json:"buildArgs"`
 }
 
