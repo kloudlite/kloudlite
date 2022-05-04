@@ -3,11 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"kloudlite.io/apps/ci/internal/domain"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/types"
-	"net/url"
-	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"

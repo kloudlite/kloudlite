@@ -23,7 +23,7 @@ query: |
   }
 variables:
   in:
-    name: example-pipeline
+    name: example-pipeline2
     imageName: example-image
     gitProvider: gitlab
     dockerFile: ./Dockerfile
