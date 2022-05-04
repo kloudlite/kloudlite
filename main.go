@@ -29,7 +29,6 @@ import (
 	"go.uber.org/fx"
 
 	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
-	mresv1 "operators.kloudlite.io/apis/mres/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watchersmsvcv1 "operators.kloudlite.io/apis/watchers.msvc/v1"
 	mongodbsmsvcControllers "operators.kloudlite.io/controllers/mongodbs.msvc"
@@ -46,7 +45,6 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
-	utilruntime.Must(mresv1.AddToScheme(scheme))
 	utilruntime.Must(msvcv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbsmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(watchersmsvcv1.AddToScheme(scheme))

@@ -42,6 +42,19 @@ tasks:
     sources:
       - ./**/*.go
     method: timestamp
+  build:
+    cmds:
+      - operator-sdk build harbor.dev.madhouselabs.io/kloudlite/operator:latest
+
+  deploy:
+    env:
+      IMG: harbor.dev.madhouselabs.io/kloudlite/koperator:latest
+      NAMESPACE: koperator
+    cmds:
+      - make docker-build docker-push
+      - cd config/manager && kustomize edit set image controller=${IMG} && kustomize edit set namespace ${NAMESPACE}
+      - cd config/default && kustomize edit set namespace ${NAMESPACE}
+      - make deploy
 
   mongo-operator:
     cmds:

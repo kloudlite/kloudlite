@@ -15,7 +15,12 @@ func UseTemplate(tfile templateFile, tList ...templateFile) (KlTemplate, error) 
 	t := template.New(tfile.String())
 	tList = append(tList, tfile)
 	for _, f := range tList {
-		tPath := path.Join(os.Getenv("PWD"), fmt.Sprintf("lib/templates/%s", f.String()))
+		templatesDir := path.Join(os.Getenv("PWD"), "lib/templates")
+		if v, hasTemplatesDir := os.LookupEnv("TEMPLATES_DIR"); hasTemplatesDir {
+			templatesDir = v
+		}
+
+		tPath := fmt.Sprintf("%s/%s", templatesDir, f.String())
 		_, err := t.New(f.String()).Funcs(sprig.TxtFuncMap()).ParseFiles(tPath)
 		if err != nil {
 			return nil, errors.NewEf(err, "could not parse template %s", f.String())

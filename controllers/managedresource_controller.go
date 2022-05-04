@@ -41,8 +41,6 @@ type ManagedResourceReconciler struct {
 	mres   *crdsv1.ManagedResource
 }
 
-const mresFinalizer = "finalizers.kloudlite.io/managed-resource"
-
 func (r *ManagedResourceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
 	meta.SetStatusCondition(&r.mres.Status.Conditions, metav1.Condition{
 		Type:    "Ready",
