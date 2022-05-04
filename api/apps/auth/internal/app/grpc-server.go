@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"kloudlite.io/apps/auth/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
@@ -15,7 +14,6 @@ type authGrpcServer struct {
 }
 
 func (a *authGrpcServer) FromAccToken(token domain.AccessToken) *auth.AccessTokenOut {
-	fmt.Printf("token: %v\n", token)
 	return &auth.AccessTokenOut{
 		Id:       string(token.Id),
 		UserId:   string(token.UserId),
