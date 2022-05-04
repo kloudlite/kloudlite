@@ -322,6 +322,7 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				DockerFile:           container.PipelineData.DockerFile,
 				ContextDir:           container.PipelineData.ContextDir,
 				GithubInstallationId: int64(i),
+				GitLabRepoId:         int64(container.PipelineData.GitlabRepoID),
 				BuildArgs:            container.PipelineData.BuildArgs,
 				Metadata:             container.PipelineData.Metadata,
 			}

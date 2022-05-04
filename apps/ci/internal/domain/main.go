@@ -84,7 +84,7 @@ func (d *domainI) GitlabListBranches(ctx context.Context, userId repos.ID, repoI
 	return d.gitlab.ListBranches(ctx, token, repoId, query, pagination)
 }
 
-func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId string) (*gitlab.ProjectHook, error) {
+func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId int, pipelineId string) (*gitlab.ProjectHook, error) {
 	token, err := d.getAccessToken(ctx, "gitlab", userId)
 	if err != nil {
 		return nil, err
@@ -141,12 +141,12 @@ func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoU
 	return d.github.ListBranches(ctx, token, repoUrl, pagination)
 }
 
-func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, refId string, repoUrl string) error {
+func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId string, repoUrl string) error {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
 		return err
 	}
-	return d.github.AddWebhook(ctx, token, refId, repoUrl)
+	return d.github.AddWebhook(ctx, token, pipelineId, repoUrl)
 }
 
 func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (any, error) {
@@ -183,9 +183,19 @@ func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, 
 
 func (d *domainI) CretePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error) {
 	pipeline.Id = d.pipelineRepo.NewId()
-	err := d.GithubAddWebhook(ctx, userId, string(pipeline.Id), pipeline.GitRepoUrl)
-	if err != nil {
-		return nil, err
+	if pipeline.GitProvider == "github" {
+		err := d.GithubAddWebhook(ctx, userId, string(pipeline.Id), pipeline.GitRepoUrl)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if pipeline.GitProvider == "gitlab" {
+		// TODO check webhook id
+		_, err := d.GitlabAddWebhook(ctx, userId, *pipeline.GitlabRepoId, string(pipeline.Id))
+		if err != nil {
+			return nil, err
+		}
+
 	}
 	return d.pipelineRepo.Create(ctx, &pipeline)
 }

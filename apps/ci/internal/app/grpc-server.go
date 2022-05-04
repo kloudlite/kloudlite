@@ -18,7 +18,8 @@ type server struct {
 }
 
 func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.PipelineOutput, error) {
-	i := int(in.GithubInstallationId)
+	githubInstallationId := int(in.GithubInstallationId)
+	gitlabRepoId := int(in.GitlabRepoId)
 	ba := make(map[string]interface{}, 0)
 	if in.BuildArgs != nil {
 		for k, v := range in.BuildArgs {
@@ -38,10 +39,11 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 		PipelineEnv:          in.PipelineEnv,
 		GitProvider:          in.GitProvider,
 		GitRepoUrl:           in.GitRepoUrl,
+		GitlabRepoId:         &gitlabRepoId,
 		RepoName:             in.RepoName,
 		DockerFile:           &in.DockerFile,
 		ContextDir:           &in.ContextDir,
-		GithubInstallationId: &i,
+		GithubInstallationId: &githubInstallationId,
 		GitlabTokenId:        in.GitlabTokenId,
 		BuildArgs:            ba,
 		Metadata:             md,
