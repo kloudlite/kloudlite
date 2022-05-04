@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/repos"
@@ -13,6 +14,7 @@ type InfraGrpcSvc struct {
 }
 
 func (i InfraGrpcSvc) GetResourceOutput(ctx context.Context, input *infra.GetInput) (*infra.Output, error) {
+	fmt.Println(input)
 	output, err := i.d.GetResourceOutput(
 		ctx,
 		repos.ID(input.ClusterId),
