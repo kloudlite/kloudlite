@@ -14,7 +14,6 @@ type Query {
 
   ci_getPipelines(projectId: ID!): [GitPipeline!]
   ci_getPipeline(pipelineId: ID!): GitPipeline
-
 }
 
 input PaginationIn {
