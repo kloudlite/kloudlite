@@ -18,15 +18,11 @@ type gitlabI struct {
 	webhookUrl string
 }
 
-func (gl *gitlabI) getToken(ctx context.Context, token *domain.AccessToken) (*oauth2.Token, error) {
+func (gl *gitlabI) getToken(_ context.Context, token *domain.AccessToken) (*oauth2.Token, error) {
 	if token == nil {
 		return nil, errors.New("token is nil")
 	}
-	t, err := gl.cfg.TokenSource(ctx, token.Token).Token()
-	if err != nil {
-		return nil, errors.NewEf(err, "could not get token from token source")
-	}
-	return t, nil
+	return token.Token, nil
 }
 
 func (gl *gitlabI) getClient(ctx context.Context, token *domain.AccessToken) (*gitlab.Client, error) {
@@ -124,7 +120,7 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, re
 }
 
 func (gl *gitlabI) RemoveWebhook(ctx context.Context, token *domain.AccessToken) error {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 

@@ -1,8 +1,10 @@
 mode: dev
 dev:
   url2: http://auth-api.hotspot.svc.cluster.local
-  url: http://localhost:8085/query
+  # url: http://localhost:8085/query
   # url: http://localhost:3000/query
+  # url: http://ci-api.hotspot.svc.cluster.local/query
+  url: http://localhost:8085/query
   headers:
-    cookie: hotspot-session=ses-xhfej-vftg69aeo4k6e21his4pfc; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None
+    cookie: hotspot-session=ses-qqxntz7q9gy7etm-q9x6ijofq2uj; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None
 

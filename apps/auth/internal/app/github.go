@@ -23,6 +23,10 @@ type githubI struct {
 	webhookUrl   string
 }
 
+func (gh *githubI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
+	return gh.cfg.TokenSource(ctx, token).Token()
+}
+
 func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
 	csrfToken := fn.Must(fn.CleanerNanoid(32))
 	b64state, err := fn.Json.ToB64Url(map[string]string{"csrf": csrfToken, "state": state})

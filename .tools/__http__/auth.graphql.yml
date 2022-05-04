@@ -28,7 +28,6 @@ variables:
   password: sample
 
 ---
-
 label: "OAuth Login Request"
 query: |
   query Query($provider: String!) {
@@ -49,7 +48,7 @@ query: |
     }
   }
 variables:
-  code: c3e68eb0e0cd32920f1c3dafefda4ef28fa4c04ddba36335fcc89999e3799c9c
+  code: 57d3553375c6d333b3b4346519caeff7906e0bf743b60a04112c9997ebf625df
   provider: gitlab
   state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
 
