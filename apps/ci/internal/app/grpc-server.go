@@ -38,6 +38,7 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 		ImageName:            in.ImageName,
 		PipelineEnv:          in.PipelineEnv,
 		GitProvider:          in.GitProvider,
+		GitBranch:            in.GitBranch,
 		GitRepoUrl:           in.GitRepoUrl,
 		GitlabRepoId:         &gitlabRepoId,
 		RepoName:             in.RepoName,
@@ -49,6 +50,9 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 	})
 	if err != nil {
 		return nil, err
+	}
+	if err = pipeline.TriggerHook(); err != nil {
+		return nil, errors.NewEf(err, "failed to trigger webhook")
 	}
 	return &ci.PipelineOutput{PipelineId: string(pipeline.Id)}, err
 }
