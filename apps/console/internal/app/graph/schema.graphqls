@@ -34,6 +34,7 @@ type ManagedRes {
   installation: ManagedSvc!
   values: Json!
   outputs: Json!
+  status: String!
 }
 
 type ManagedSvc {
@@ -43,6 +44,7 @@ type ManagedSvc {
   source: String!
   values: Json!
   resources: [ManagedRes!]!
+  status: String!
 }
 
 
@@ -116,6 +118,7 @@ type App {
   containers: [AppContainer!]!
   project: Project!
   version: Int
+  status: String!
 }
 
 
@@ -209,6 +212,7 @@ type Router {
   project: Project!
   domains: [String!]
   routes: [Route!]
+  status: String!
 }
 
 type Route {
@@ -245,6 +249,7 @@ type Project {
   description: String
   account: Account!
   memberships: [ProjectMembership!]!
+  status: String!
 }
 
 type ProjectMembership {
@@ -279,6 +284,7 @@ type Secret {
   description: String
   namespace: String!
   entries: [CSEntry]!
+  status: String!
 }
 
 type Config {
@@ -288,6 +294,7 @@ type Config {
   description: String
   namespace: String!
   entries: [CSEntry]!
+  status: String!
 }
 
 type CSEntry {
