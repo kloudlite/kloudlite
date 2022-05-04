@@ -181,7 +181,7 @@ func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, 
 	return i, nil
 }
 
-func (d *domainI) CretePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error) {
+func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error) {
 	pipeline.Id = d.pipelineRepo.NewId()
 	if pipeline.GitProvider == "github" {
 		err := d.GithubAddWebhook(ctx, userId, string(pipeline.Id), pipeline.GitRepoUrl)

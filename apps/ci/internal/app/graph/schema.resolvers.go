@@ -27,7 +27,7 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 	if session == nil {
 		return nil, errors.New("not authorized")
 	}
-	pipeline, err := r.Domain.CretePipeline(ctx, session.UserId, domain.Pipeline{
+	pipeline, err := r.Domain.CreatePipeline(ctx, session.UserId, domain.Pipeline{
 		Name:                 in.Name,
 		ImageName:            in.ImageName,
 		GitProvider:          in.GitProvider,
