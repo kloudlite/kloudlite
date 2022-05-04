@@ -3,7 +3,9 @@ package domain
 import (
 	"context"
 	"crypto/md5"
+	b64 "encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -160,12 +162,12 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 }
 
 func (d *domainI) GetLoginDetails(ctx context.Context, provider string, state *string) (string, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (d *domainI) InviteUser(ctx context.Context, email string, name string) (repos.ID, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -264,7 +266,7 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 }
 
 func (d *domainI) LoginWithInviteToken(ctx context.Context, token string) (*common.AuthSession, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -450,6 +452,14 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 	}
 }
 
+func (gl *domainI) Hash(t *oauth2.Token) (string, error) {
+	b, err := json.Marshal(t)
+	if err != nil {
+		return "", err
+	}
+	return b64.StdEncoding.EncodeToString(b), nil
+}
+
 func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string) (*AccessToken, error) {
 	q := repos.Filter{"user_id": userId, "provider": provider}
 	d.logger.Debugf("q: %+v\n", q)
@@ -457,6 +467,45 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 	if err != nil {
 		return nil, errors.NewEf(err, "finding access token")
 	}
+
+	hash, err := d.Hash(accToken.Token)
+	if err != nil {
+		return nil, err
+	}
+
+	if provider == "github" {
+		token, err := d.github.GetOAuthToken(ctx, accToken.Token)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not get oauth token")
+		}
+		hash2, err := d.Hash(token)
+		if err != nil {
+			return nil, err
+		}
+		if hash != hash2 {
+			accToken.Token = token
+		}
+	}
+
+	if provider == "gitlab" {
+		token, err := d.gitlab.GetOAuthToken(ctx, accToken.Token)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not get oauth token")
+		}
+		hash2, err := d.Hash(token)
+		if err != nil {
+			return nil, err
+		}
+		if hash != hash2 {
+			accToken.Token = token
+		}
+	}
+
+	_, err = d.accessTokenRepo.UpdateById(ctx, accToken.Id, accToken)
+	if err != nil {
+		return nil, errors.NewEf(err, "could not update access token")
+	}
+	// fmt.Println("accToken: ", accToken)
 	return accToken, nil
 }
 

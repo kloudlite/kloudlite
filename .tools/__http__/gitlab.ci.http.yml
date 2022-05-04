@@ -1,0 +1,21 @@
+---
+global:
+  sample: true
+---
+label: Gitlab Repo Branches
+query: |
+  query Query($repoId: String!) {
+    ci_gitlabRepoBranches(repoId: $repoId)
+  }
+variables:
+  repoId: "26232015"
+---
+label: "OAuth Login Request"
+query: |
+  query Query($provider: String!) {
+    oAuth_requestLogin(provider: $provider)
+  }
+
+variables:
+  provider: gitlab
+
