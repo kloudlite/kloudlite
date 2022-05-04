@@ -69,13 +69,13 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 			"name":      resourceName,
 			"namespace": resourceNamespace,
 		})
-		if err != nil {
+		if err != nil || one == nil {
 			return false, err
 		}
 		if one.Status != entities.ManagedResourceStatus(status) {
 			one.Status = entities.ManagedResourceStatus(status)
 			_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
-			if err != nil {
+			if err != nil || one == nil {
 				return false, err
 			}
 			d.changeNotifier.Notify(one.Id)
@@ -87,7 +87,7 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 			"name":      resourceName,
 			"namespace": resourceNamespace,
 		})
-		if err != nil {
+		if err != nil || one == nil {
 			return false, err
 		}
 		if one.Status != entities.ManagedServiceStatus(status) {
@@ -105,7 +105,7 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 			"readable_id": resourceName,
 			"namespace":   resourceNamespace,
 		})
-		if err != nil {
+		if err != nil || one == nil {
 			fmt.Println(err)
 			return false, err
 		}
@@ -124,7 +124,7 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 			"name":      resourceName,
 			"namespace": resourceNamespace,
 		})
-		if err != nil {
+		if err != nil || one == nil {
 			return false, err
 		}
 		if one.Status != entities.RouterStatus(status) {
