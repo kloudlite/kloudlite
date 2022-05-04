@@ -70,6 +70,7 @@ type ComplexityRoot struct {
 		ReadableID  func(childComplexity int) int
 		Replicas    func(childComplexity int) int
 		Services    func(childComplexity int) int
+		Status      func(childComplexity int) int
 		Version     func(childComplexity int) int
 	}
 
@@ -125,6 +126,7 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 		Namespace   func(childComplexity int) int
 		Project     func(childComplexity int) int
+		Status      func(childComplexity int) int
 	}
 
 	Device struct {
@@ -172,6 +174,7 @@ type ComplexityRoot struct {
 		Name         func(childComplexity int) int
 		Outputs      func(childComplexity int) int
 		ResourceType func(childComplexity int) int
+		Status       func(childComplexity int) int
 		Values       func(childComplexity int) int
 	}
 
@@ -181,6 +184,7 @@ type ComplexityRoot struct {
 		Project   func(childComplexity int) int
 		Resources func(childComplexity int) int
 		Source    func(childComplexity int) int
+		Status    func(childComplexity int) int
 		Values    func(childComplexity int) int
 	}
 
@@ -225,6 +229,7 @@ type ComplexityRoot struct {
 		Memberships func(childComplexity int) int
 		Name        func(childComplexity int) int
 		ReadableID  func(childComplexity int) int
+		Status      func(childComplexity int) int
 	}
 
 	ProjectMembership struct {
@@ -267,6 +272,7 @@ type ComplexityRoot struct {
 		Name    func(childComplexity int) int
 		Project func(childComplexity int) int
 		Routes  func(childComplexity int) int
+		Status  func(childComplexity int) int
 	}
 
 	Secret struct {
@@ -276,6 +282,7 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 		Namespace   func(childComplexity int) int
 		Project     func(childComplexity int) int
+		Status      func(childComplexity int) int
 	}
 
 	User struct {
@@ -469,6 +476,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Services(childComplexity), true
+
+	case "App.status":
+		if e.complexity.App.Status == nil {
+			break
+		}
+
+		return e.complexity.App.Status(childComplexity), true
 
 	case "App.version":
 		if e.complexity.App.Version == nil {
@@ -708,6 +722,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Config.Project(childComplexity), true
 
+	case "Config.status":
+		if e.complexity.Config.Status == nil {
+			break
+		}
+
+		return e.complexity.Config.Status(childComplexity), true
+
 	case "Device.cluster":
 		if e.complexity.Device.Cluster == nil {
 			break
@@ -910,6 +931,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedRes.ResourceType(childComplexity), true
 
+	case "ManagedRes.status":
+		if e.complexity.ManagedRes.Status == nil {
+			break
+		}
+
+		return e.complexity.ManagedRes.Status(childComplexity), true
+
 	case "ManagedRes.values":
 		if e.complexity.ManagedRes.Values == nil {
 			break
@@ -951,6 +979,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ManagedSvc.Source(childComplexity), true
+
+	case "ManagedSvc.status":
+		if e.complexity.ManagedSvc.Status == nil {
+			break
+		}
+
+		return e.complexity.ManagedSvc.Status(childComplexity), true
 
 	case "ManagedSvc.values":
 		if e.complexity.ManagedSvc.Values == nil {
@@ -1363,6 +1398,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.ReadableID(childComplexity), true
 
+	case "Project.status":
+		if e.complexity.Project.Status == nil {
+			break
+		}
+
+		return e.complexity.Project.Status(childComplexity), true
+
 	case "ProjectMembership.project":
 		if e.complexity.ProjectMembership.Project == nil {
 			break
@@ -1653,6 +1695,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Router.Routes(childComplexity), true
 
+	case "Router.status":
+		if e.complexity.Router.Status == nil {
+			break
+		}
+
+		return e.complexity.Router.Status(childComplexity), true
+
 	case "Secret.description":
 		if e.complexity.Secret.Description == nil {
 			break
@@ -1694,6 +1743,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Secret.Project(childComplexity), true
+
+	case "Secret.status":
+		if e.complexity.Secret.Status == nil {
+			break
+		}
+
+		return e.complexity.Secret.Status(childComplexity), true
 
 	case "User.devices":
 		if e.complexity.User.Devices == nil {
@@ -1816,6 +1872,7 @@ type ManagedRes {
   installation: ManagedSvc!
   values: Json!
   outputs: Json!
+  status: String!
 }
 
 type ManagedSvc {
@@ -1825,6 +1882,7 @@ type ManagedSvc {
   source: String!
   values: Json!
   resources: [ManagedRes!]!
+  status: String!
 }
 
 
@@ -1898,6 +1956,7 @@ type App {
   containers: [AppContainer!]!
   project: Project!
   version: Int
+  status: String!
 }
 
 
@@ -1991,6 +2050,7 @@ type Router {
   project: Project!
   domains: [String!]
   routes: [Route!]
+  status: String!
 }
 
 type Route {
@@ -2027,6 +2087,7 @@ type Project {
   description: String
   account: Account!
   memberships: [ProjectMembership!]!
+  status: String!
 }
 
 type ProjectMembership {
@@ -2061,6 +2122,7 @@ type Secret {
   description: String
   namespace: String!
   entries: [CSEntry]!
+  status: String!
 }
 
 type Config {
@@ -2070,6 +2132,7 @@ type Config {
   description: String
   namespace: String!
   entries: [CSEntry]!
+  status: String!
 }
 
 type CSEntry {
@@ -3852,6 +3915,41 @@ func (ec *executionContext) _App_version(ctx context.Context, field graphql.Coll
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _App_status(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _AppContainer_name(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4986,6 +5084,41 @@ func (ec *executionContext) _Config_entries(ctx context.Context, field graphql.C
 	return ec.marshalNCSEntry2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCSEntry(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Config_status(ctx context.Context, field graphql.CollectedField, obj *model.Config) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Config",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Device_id(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5950,6 +6083,41 @@ func (ec *executionContext) _ManagedRes_outputs(ctx context.Context, field graph
 	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ManagedRes_status(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedRes",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ManagedSvc_id(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6158,6 +6326,41 @@ func (ec *executionContext) _ManagedSvc_resources(ctx context.Context, field gra
 	res := resTmp.([]*model.ManagedRes)
 	fc.Result = res
 	return ec.marshalNManagedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ManagedSvc_status(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedSvc",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_mangedSvc_install(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7646,6 +7849,41 @@ func (ec *executionContext) _Project_memberships(ctx context.Context, field grap
 	return ec.marshalNProjectMembership2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProjectMembershipᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Project_status(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ProjectMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -8849,6 +9087,41 @@ func (ec *executionContext) _Router_routes(ctx context.Context, field graphql.Co
 	return ec.marshalORoute2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRouteᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Router_status(ctx context.Context, field graphql.CollectedField, obj *model.Router) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Router",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Secret_id(ctx context.Context, field graphql.CollectedField, obj *model.Secret) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -9054,6 +9327,41 @@ func (ec *executionContext) _Secret_entries(ctx context.Context, field graphql.C
 	res := resTmp.([]*model.CSEntry)
 	fc.Result = res
 	return ec.marshalNCSEntry2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCSEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Secret_status(ctx context.Context, field graphql.CollectedField, obj *model.Secret) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Secret",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -11146,6 +11454,16 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 
 			out.Values[i] = innerFunc(ctx)
 
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._App_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11615,6 +11933,16 @@ func (ec *executionContext) _Config(ctx context.Context, sel ast.SelectionSet, o
 		case "entries":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Config_entries(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Config_status(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -12131,6 +12459,16 @@ func (ec *executionContext) _ManagedRes(ctx context.Context, sel ast.SelectionSe
 				return innerFunc(ctx)
 
 			})
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ManagedRes_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12222,6 +12560,16 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 				return innerFunc(ctx)
 
 			})
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ManagedSvc_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12641,6 +12989,16 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Project_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13265,6 +13623,16 @@ func (ec *executionContext) _Router(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Router_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13336,6 +13704,16 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 		case "entries":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Secret_entries(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Secret_status(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
