@@ -1,0 +1,35 @@
+---
+global:
+  sample: true
+---
+label: Gitlab Groups
+query: |
+  query Query($query: String) {
+    ci_gitlabGroups(query: $query)
+  }
+variables:
+  query: madh
+
+---
+
+label: Gitlab Repos with Search
+query: |
+  query Query($groupId: String!, $search: String) {
+    ci_gitlabRepos(groupId: $groupId, search: $search)
+  }
+
+variables:
+  groupId: "8508925"
+  search: "oper"
+
+---
+
+label: Gitlab Repo Branches
+query: |
+  query Query($repoId: String!) {
+    ci_gitlabRepoBranches(repoId: $repoId)
+  }
+variables:
+  repoId: "26232015"
+
+---
