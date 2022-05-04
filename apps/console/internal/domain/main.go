@@ -28,6 +28,14 @@ import (
 	"time"
 )
 
+type ResourceStatus string
+
+const (
+	ResourceStatusLive       = ResourceStatus("live")
+	ResourceStatusInProgress = ResourceStatus("sync-in-progress")
+	ResourceStatusError      = ResourceStatus("error")
+)
+
 type domain struct {
 	deviceRepo           repos.DbRepo[*entities.Device]
 	clusterRepo          repos.DbRepo[*entities.Cluster]
@@ -50,6 +58,69 @@ type domain struct {
 	notifier             rcn.ResourceChangeNotifier
 	iamClient            iam.IAMClient
 	authClient           auth.AuthClient
+}
+
+func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, resourceNamespace string, resourceName string, status ResourceStatus) (bool, error) {
+	switch resourceType {
+	case "ManagedResource":
+		one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
+			"name":      resourceName,
+			"namespace": resourceNamespace,
+		})
+		if err != nil {
+			return false, err
+		}
+		one.Status = entities.ManagedResourceStatus(status)
+		_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	case "ManagedService":
+		one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
+			"name":      resourceName,
+			"namespace": resourceNamespace,
+		})
+		if err != nil {
+			return false, err
+		}
+		one.Status = entities.ManagedServiceStatus(status)
+		_, err = d.managedSvcRepo.UpdateById(ctx, one.Id, one)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	case "App":
+		one, err := d.appRepo.FindOne(ctx, repos.Filter{
+			"name":      resourceName,
+			"namespace": resourceNamespace,
+		})
+		if err != nil {
+			return false, err
+		}
+		one.Status = entities.AppStatus(status)
+		_, err = d.appRepo.UpdateById(ctx, one.Id, one)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	case "Router":
+		one, err := d.routerRepo.FindOne(ctx, repos.Filter{
+			"name":      resourceName,
+			"namespace": resourceNamespace,
+		})
+		if err != nil {
+			return false, err
+		}
+		one.Status = entities.RouterStatus(status)
+		_, err = d.routerRepo.UpdateById(ctx, one.Id, one)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	default:
+		return false, errors.New("unsupported resource type")
+	}
 }
 
 func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error) {
