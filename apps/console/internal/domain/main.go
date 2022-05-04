@@ -62,6 +62,7 @@ type domain struct {
 }
 
 func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, resourceNamespace string, resourceName string, status ResourceStatus) (bool, error) {
+	fmt.Println(resourceType, resourceNamespace, resourceName, status)
 	switch resourceType {
 	case "ManagedResource":
 		one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
@@ -71,12 +72,15 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		if err != nil {
 			return false, err
 		}
-		one.Status = entities.ManagedResourceStatus(status)
-		_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
-		if err != nil {
-			return false, err
+		if one.Status != entities.ManagedResourceStatus(status) {
+			one.Status = entities.ManagedResourceStatus(status)
+			_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
+			if err != nil {
+				return false, err
+			}
+			d.changeNotifier.Notify(one.Id)
+			return true, nil
 		}
-		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	case "ManagedService":
 		one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
@@ -86,27 +90,34 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		if err != nil {
 			return false, err
 		}
-		one.Status = entities.ManagedServiceStatus(status)
-		_, err = d.managedSvcRepo.UpdateById(ctx, one.Id, one)
-		if err != nil {
-			return false, err
+		if one.Status != entities.ManagedServiceStatus(status) {
+			one.Status = entities.ManagedServiceStatus(status)
+			_, err = d.managedSvcRepo.UpdateById(ctx, one.Id, one)
+			if err != nil {
+				return false, err
+			}
+			d.changeNotifier.Notify(one.Id)
+			return true, nil
 		}
-		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	case "App":
 		one, err := d.appRepo.FindOne(ctx, repos.Filter{
-			"name":      resourceName,
-			"namespace": resourceNamespace,
+			"readable_id": resourceName,
+			"namespace":   resourceNamespace,
 		})
 		if err != nil {
+			fmt.Println(err)
 			return false, err
 		}
-		one.Status = entities.AppStatus(status)
-		_, err = d.appRepo.UpdateById(ctx, one.Id, one)
-		if err != nil {
-			return false, err
+		if one.Status != entities.AppStatus(status) {
+			one.Status = entities.AppStatus(status)
+			_, err = d.appRepo.UpdateById(ctx, one.Id, one)
+			if err != nil {
+				return false, err
+			}
+			d.changeNotifier.Notify(one.Id)
+			return true, nil
 		}
-		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	case "Router":
 		one, err := d.routerRepo.FindOne(ctx, repos.Filter{
@@ -116,12 +127,15 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		if err != nil {
 			return false, err
 		}
-		one.Status = entities.RouterStatus(status)
-		_, err = d.routerRepo.UpdateById(ctx, one.Id, one)
-		if err != nil {
-			return false, err
+		if one.Status != entities.RouterStatus(status) {
+			one.Status = entities.RouterStatus(status)
+			_, err = d.routerRepo.UpdateById(ctx, one.Id, one)
+			if err != nil {
+				return false, err
+			}
+			d.changeNotifier.Notify(one.Id)
+			return true, nil
 		}
-		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	default:
 		return false, errors.New("unsupported resource type")
@@ -209,7 +223,16 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 		ExposedPorts: app.ExposedPorts,
 	}
 	for _, c := range app.Containers {
-		var pipelineId string
+		container := entities.Container{
+			Name:              c.Name,
+			Image:             c.Image,
+			ImagePullSecret:   c.ImagePullSecret,
+			EnvVars:           c.EnvVars,
+			CPULimits:         c.CPULimits,
+			MemoryLimits:      c.MemoryLimits,
+			AttachedResources: c.AttachedResources,
+		}
+
 		if c.Pipeline != nil {
 			b := make(map[string]string, 0)
 			for k, v := range c.Pipeline.BuildArgs {
@@ -219,39 +242,29 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 			for k, v := range c.Pipeline.Metadata {
 				m[k] = v.(string)
 			}
-			if c.Pipeline != nil {
-				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
-					GitlabRepoId:         c.Pipeline.GitLabRepoId,
-					UserId:               string(userId),
-					ProjectId:            string(app.ProjectId),
-					RepoName:             c.Pipeline.RepoName,
-					Metadata:             m,
-					Name:                 c.Pipeline.Name,
-					ImageName:            fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName),
-					GitProvider:          c.Pipeline.GitProvider,
-					GitRepoUrl:           c.Pipeline.GitRepoUrl,
-					DockerFile:           c.Pipeline.DockerFile,
-					ContextDir:           c.Pipeline.ContextDir,
-					GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
-					BuildArgs:            b,
-				})
-				fmt.Println(pipeline, err)
-				if err != nil {
-					return nil, err
-				}
-				pipelineId = pipeline.PipelineId
+			imageName := fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName)
+			pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
+				GitlabRepoId:         c.Pipeline.GitLabRepoId,
+				UserId:               string(userId),
+				ProjectId:            string(app.ProjectId),
+				RepoName:             c.Pipeline.RepoName,
+				Metadata:             m,
+				Name:                 c.Pipeline.Name,
+				ImageName:            imageName,
+				GitProvider:          c.Pipeline.GitProvider,
+				GitRepoUrl:           c.Pipeline.GitRepoUrl,
+				DockerFile:           c.Pipeline.DockerFile,
+				ContextDir:           c.Pipeline.ContextDir,
+				GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
+				BuildArgs:            b,
+			})
+			if err != nil {
+				return nil, err
 			}
+			container.PipelineId = repos.ID(pipeline.PipelineId)
+			container.Image = &imageName
 		}
-		a.Containers = append(a.Containers, entities.Container{
-			PipelineId:        repos.ID(pipelineId),
-			Name:              c.Name,
-			Image:             c.Image,
-			ImagePullSecret:   c.ImagePullSecret,
-			EnvVars:           c.EnvVars,
-			CPULimits:         c.CPULimits,
-			MemoryLimits:      c.MemoryLimits,
-			AttachedResources: c.AttachedResources,
-		})
+		a.Containers = append(a.Containers, container)
 	}
 	return &a, nil
 }
@@ -288,13 +301,24 @@ func (d *domain) InstallAppFlow(
 	for _, c := range app.Containers {
 		env := make([]op_crds.EnvEntry, 0)
 		for _, e := range c.EnvVars {
-			env = append(env, op_crds.EnvEntry{
-				Value:   e.Value,
-				Key:     e.Key,
-				Type:    e.Type,
-				RefName: e.Ref,
-				RefKey:  e.RefKey,
-			})
+			if e.Type == "managed_resource" {
+				ref := fmt.Sprintf("mres-%v", *e.Ref)
+				env = append(env, op_crds.EnvEntry{
+					Value:   e.Value,
+					Key:     e.Key,
+					Type:    "secret",
+					RefName: &ref,
+					RefKey:  e.RefKey,
+				})
+			} else {
+				env = append(env, op_crds.EnvEntry{
+					Value:   e.Value,
+					Key:     e.Key,
+					Type:    e.Type,
+					RefName: e.Ref,
+					RefKey:  e.RefKey,
+				})
+			}
 		}
 		containers = append(containers, op_crds.Container{
 			Name:  c.Name,
@@ -315,7 +339,7 @@ func (d *domain) InstallAppFlow(
 		APIVersion: op_crds.AppAPIVersion,
 		Kind:       op_crds.AppKind,
 		Metadata: op_crds.AppMetadata{
-			Name:      app.Name,
+			Name:      app.ReadableId,
 			Namespace: app.Namespace,
 		},
 		Spec: op_crds.AppSpec{
