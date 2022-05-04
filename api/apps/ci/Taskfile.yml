@@ -16,8 +16,8 @@ tasks:
       MONGO_DB_NAME: ci
 #      AUTH_HOST: auth-api.hotspot.svc.cluster.local
 #      AUTH_PORT: 3001
-      AUTH_HOST: localhost
-      AUTH_PORT: 10021
+      AUTH_HOST: auth-api.hotspot.svc.cluster.local
+      AUTH_PORT: 3001
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
 
       GITHUB_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/github

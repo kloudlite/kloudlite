@@ -55,6 +55,7 @@ type PipelineIn struct {
 	DockerFile           string
 	ContextDir           string
 	GithubInstallationId int64
+	GitLabRepoId         int64
 	BuildArgs            map[string]interface{}
 	RepoName             string
 	Metadata             map[string]interface{}

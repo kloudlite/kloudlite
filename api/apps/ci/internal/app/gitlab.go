@@ -6,6 +6,8 @@ import (
 	"kloudlite.io/apps/ci/internal/domain"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/types"
+	"net/url"
+	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
@@ -97,7 +99,15 @@ func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, 
 	return branches, nil
 }
 
-func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId string, pipelineId string) (*gitlab.ProjectHook, error) {
+func (gl *gitlabI) getRepoId(repoUrl string) string {
+	split := strings.Split(repoUrl, "https://gitlab.com/")
+	i := strings.Split(split[1], ".git")
+	x := url.PathEscape(i[0])
+	fmt.Println("X:", x)
+	return x
+}
+
+func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId int, pipelineId string) (*gitlab.ProjectHook, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, err
