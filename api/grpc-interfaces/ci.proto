@@ -22,7 +22,6 @@ message PipelineIn {
   string DockerFile = 6;
   string ContextDir = 7;
   int32 GithubInstallationId = 8;
-  string GitlabTokenId  = 9;
   map<string, string>  BuildArgs = 10;
 }
 

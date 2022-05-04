@@ -198,6 +198,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 			return nil, err
 		}
 	}
+
 	if pipeline.GitProvider == "gitlab" {
 		token, err := d.getAccessToken(ctx, pipeline.GitProvider, userId)
 		if err != nil {
