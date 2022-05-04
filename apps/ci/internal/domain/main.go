@@ -199,8 +199,13 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		}
 	}
 	if pipeline.GitProvider == "gitlab" {
+		token, err := d.getAccessToken(ctx, pipeline.GitProvider, userId)
+		if err != nil {
+			return nil, err
+		}
+		pipeline.GitlabTokenId = string(token.Id)
 		// TODO check webhook id
-		_, err := d.GitlabAddWebhook(ctx, userId, *pipeline.GitlabRepoId, string(pipeline.Id))
+		_, err = d.GitlabAddWebhook(ctx, userId, *pipeline.GitlabRepoId, string(pipeline.Id))
 		if err != nil {
 			return nil, err
 		}
