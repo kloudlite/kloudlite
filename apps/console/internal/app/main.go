@@ -186,7 +186,6 @@ var Module = fx.Module(
 					Reason string `json:"reason"`
 				} `json:"conditions"`
 			}
-
 			err := message.Unmarshal(&msg)
 			if err != nil {
 				fmt.Println("Unable to parse messages!!!", err)
@@ -197,12 +196,14 @@ var Module = fx.Module(
 			resourceType := split[1]
 			resourceName := split[2]
 			var s domain.ResourceStatus
-			if len(msg.Conditions) > 0 {
-				s = domain.ResourceStatusInProgress
-			} else if msg.Status {
-				s = domain.ResourceStatusError
-			} else {
+			if msg.Status {
 				s = domain.ResourceStatusLive
+			} else {
+				if len(msg.Conditions) > 0 {
+					s = domain.ResourceStatusInProgress
+				} else if msg.Status {
+					s = domain.ResourceStatusError
+				}
 			}
 			_, err = d.UpdateResourceStatus(context, resourceType, namespace, resourceName, s)
 			return err

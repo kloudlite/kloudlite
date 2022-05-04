@@ -523,7 +523,7 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 				AttachedResources: res,
 			})
 		}
-
+		fmt.Println(a)
 		apps = append(apps, &model.App{
 			ID:          a.Id,
 			Name:        a.Name,
@@ -534,6 +534,7 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 			Services:    services,
 			Containers:  containers,
 			Project:     &model.Project{ID: projectID},
+			Status:      string(a.Status),
 		})
 	}
 	return apps, nil
@@ -596,6 +597,7 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 		Services:    services,
 		Containers:  containers,
 		Project:     &model.Project{ID: a.ProjectId},
+		Status:      string(a.Status),
 	}, nil
 }
 
