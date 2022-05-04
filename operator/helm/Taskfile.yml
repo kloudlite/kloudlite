@@ -1,0 +1,12 @@
+version: 3 
+
+tasks:
+  deploy:
+    env:
+      IMG: harbor.dev.madhouselabs.io/kloudlite/koperator-helm:latest
+      NAMESPACE: koperator
+    cmds:
+      - make docker-build docker-push
+      - cd config/manager && kustomize edit set image controller=${IMG} && kustomize edit set namespace ${NAMESPACE}
+      - cd config/default && kustomize edit set namespace ${NAMESPACE}
+      - make deploy

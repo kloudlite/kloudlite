@@ -2,3 +2,8 @@
 # Ignore build and test binaries.
 bin/
 testbin/
+.tools
+helm
+Taskfile.yml
+Dockerfile
+.dockerignore

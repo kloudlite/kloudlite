@@ -11,7 +11,7 @@ spec:
       target_port: 80
       type: tcp
   containers:
-    - name: samplen
+    - name: samplex
       image: nginx
       image_pull_policy: Always
       resource_cpu:
