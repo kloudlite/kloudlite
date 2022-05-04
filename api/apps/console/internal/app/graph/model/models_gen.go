@@ -25,6 +25,7 @@ type App struct {
 	Containers  []*AppContainer   `json:"containers"`
 	Project     *Project          `json:"project"`
 	Version     *int              `json:"version"`
+	Status      string            `json:"status"`
 }
 
 type AppContainer struct {
@@ -117,6 +118,7 @@ type Config struct {
 	Description *string    `json:"description"`
 	Namespace   string     `json:"namespace"`
 	Entries     []*CSEntry `json:"entries"`
+	Status      string     `json:"status"`
 }
 
 type Device struct {
@@ -183,6 +185,7 @@ type ManagedRes struct {
 	Installation *ManagedSvc            `json:"installation"`
 	Values       map[string]interface{} `json:"values"`
 	Outputs      map[string]interface{} `json:"outputs"`
+	Status       string                 `json:"status"`
 }
 
 type ManagedSvc struct {
@@ -192,6 +195,7 @@ type ManagedSvc struct {
 	Source    string                 `json:"source"`
 	Values    map[string]interface{} `json:"values"`
 	Resources []*ManagedRes          `json:"resources"`
+	Status    string                 `json:"status"`
 }
 
 type NewResourcesIn struct {
@@ -225,6 +229,7 @@ type Project struct {
 	Description *string              `json:"description"`
 	Account     *Account             `json:"account"`
 	Memberships []*ProjectMembership `json:"memberships"`
+	Status      string               `json:"status"`
 }
 
 type ProjectMembership struct {
@@ -251,6 +256,7 @@ type Router struct {
 	Project *Project `json:"project"`
 	Domains []string `json:"domains"`
 	Routes  []*Route `json:"routes"`
+	Status  string   `json:"status"`
 }
 
 type Secret struct {
@@ -260,6 +266,7 @@ type Secret struct {
 	Description *string    `json:"description"`
 	Namespace   string     `json:"namespace"`
 	Entries     []*CSEntry `json:"entries"`
+	Status      string     `json:"status"`
 }
 
 type User struct {

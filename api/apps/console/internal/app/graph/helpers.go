@@ -16,6 +16,7 @@ func projectModelFromEntity(projectEntity *entities.Project) *model.Project {
 		Account: &model.Account{
 			ID: projectEntity.AccountId,
 		},
+		Status: string(projectEntity.Status),
 	}
 }
 
@@ -32,6 +33,7 @@ func configModelFromEntity(configEntity *entities.Config) *model.Config {
 		Name:    configEntity.Name,
 		Project: &model.Project{ID: configEntity.ProjectId},
 		Entries: entries,
+		Status:  string(configEntity.Status),
 	}
 }
 
@@ -54,6 +56,7 @@ func routerModelFromEntity(routerEntity *entities.Router) *model.Router {
 		Project: &model.Project{ID: routerEntity.ProjectId},
 		Domains: d,
 		Routes:  entries,
+		Status:  string(routerEntity.Status),
 	}
 }
 
@@ -70,6 +73,7 @@ func secretModelFromEntity(secretEntity *entities.Secret) *model.Secret {
 		Name:    secretEntity.Name,
 		Project: &model.Project{ID: secretEntity.ProjectId},
 		Entries: entries,
+		Status:  string(secretEntity.Status),
 	}
 }
 
@@ -80,6 +84,7 @@ func managedSvcModelFromEntity(svcEntity *entities.ManagedService) *model.Manage
 		Project: &model.Project{ID: svcEntity.ProjectId},
 		Source:  string(svcEntity.ServiceType),
 		Values:  svcEntity.Values,
+		Status:  string(svcEntity.Status),
 	}
 }
 
@@ -96,5 +101,6 @@ func managedResourceModelFromEntity(resEntity *entities.ManagedResource) *model.
 			ID: resEntity.ServiceId,
 		},
 		Values: kvs,
+		Status: string(resEntity.Status),
 	}
 }
