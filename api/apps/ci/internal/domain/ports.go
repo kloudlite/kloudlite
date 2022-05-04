@@ -12,13 +12,11 @@ type Github interface {
 	Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error)
 	GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error)
 	GetInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error)
-	ListInstallations(ctx context.Context, accToken *AccessToken) ([]*github.Installation, error)
-	ListRepos(ctx context.Context, accToken *AccessToken, instId int64, page, size int) (*github.ListRepositories, error)
-	SearchRepos(ctx context.Context, accToken *AccessToken, q string, org string, page, size int) (*github.RepositoriesSearchResult, error)
-	ListBranches(ctx context.Context, accToken *AccessToken, repoUrl string, page, size int) ([]*github.Branch, error)
+	ListInstallations(ctx context.Context, accToken *AccessToken, pagination *types.Pagination) ([]*github.Installation, error)
+	ListRepos(ctx context.Context, accToken *AccessToken, instId int64, pagination *types.Pagination) (*github.ListRepositories, error)
+	SearchRepos(ctx context.Context, accToken *AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error)
+	ListBranches(ctx context.Context, accToken *AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error)
 	AddWebhook(ctx context.Context, accToken *AccessToken, refId string, repoUrl string) error
-	GetAppToken()
-	GetRepoToken()
 }
 
 type Gitlab interface {
