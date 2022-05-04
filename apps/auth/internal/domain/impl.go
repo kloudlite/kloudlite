@@ -460,8 +460,14 @@ func (gl *domainI) Hash(t *oauth2.Token) (string, error) {
 	return b64.StdEncoding.EncodeToString(b), nil
 }
 
-func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string) (*AccessToken, error) {
-	q := repos.Filter{"user_id": userId, "provider": provider}
+func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*AccessToken, error) {
+	if tokenId == "" && (provider == "" || userId == "") {
+		return nil, errors.Newf("bad params: [tokenId, (provider, userId)]")
+	}
+	q := repos.Filter{"id": tokenId}
+	if tokenId == "" {
+		q = repos.Filter{"user_id": userId, "provider": provider}
+	}
 	d.logger.Debugf("q: %+v\n", q)
 	accToken, err := d.accessTokenRepo.FindOne(ctx, q)
 	if err != nil {

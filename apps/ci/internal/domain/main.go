@@ -21,6 +21,33 @@ type domainI struct {
 	harborAccRepo repos.DbRepo[*HarborAccount]
 }
 
+func (d *domainI) GitlabPullToken(ctx context.Context, pipelineId repos.ID) (string, error) {
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+	if err != nil {
+		return "", err
+	}
+	accessToken, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
+		TokenId: pipeline.GitlabTokenId,
+	})
+	accToken := AccessToken{
+		UserId:   repos.ID(accessToken.UserId),
+		Email:    accessToken.Email,
+		Provider: accessToken.Provider,
+		Token: &oauth2.Token{
+			AccessToken:  accessToken.OauthToken.AccessToken,
+			TokenType:    accessToken.OauthToken.TokenType,
+			RefreshToken: accessToken.OauthToken.RefreshToken,
+			Expiry:       time.UnixMilli(accessToken.OauthToken.Expiry),
+		},
+		Data: nil,
+	}
+	repoToken, err := d.gitlab.RepoToken(ctx, &accToken)
+	if err != nil || repoToken == nil {
+		return "", errors.NewEf(err, "could not get repoToken")
+	}
+	return repoToken.AccessToken, nil
+}
+
 func (d *domainI) GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error) {
 	find, err := d.pipelineRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
@@ -98,16 +125,20 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 	}, err
 }
 
-func (d *domainI) GithubInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error) {
-	return d.github.GetInstallationToken(ctx, repoUrl, instId)
+func (d *domainI) GithubInstallationToken(ctx context.Context, pipelineId repos.ID) (string, error) {
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+	if err != nil || pipeline == nil {
+		return "", err
+	}
+	return d.github.GetInstallationToken(ctx, "", int64(*pipeline.GithubInstallationId))
 }
 
-func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, page int, size int) (any, error) {
+func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) (any, error) {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
 		return "", err
 	}
-	return d.github.ListBranches(ctx, token, repoUrl, page, size)
+	return d.github.ListBranches(ctx, token, repoUrl, pagination)
 }
 
 func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, refId string, repoUrl string) error {
@@ -118,7 +149,7 @@ func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, refId s
 	return d.github.AddWebhook(ctx, token, refId, repoUrl)
 }
 
-func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q string, org string, page int, size int) (any, error) {
+func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (any, error) {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
 		return nil, err
@@ -126,23 +157,23 @@ func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q stri
 	if err != nil {
 		return nil, errors.NewEf(err, "while finding accessToken")
 	}
-	return d.github.SearchRepos(ctx, token, q, org, page, size)
+	return d.github.SearchRepos(ctx, token, q, org, pagination)
 }
 
-func (d *domainI) GithubListRepos(ctx context.Context, userId repos.ID, instId int64, page int, size int) (any, error) {
+func (d *domainI) GithubListRepos(ctx context.Context, userId repos.ID, installationId int64, pagination *types.Pagination) (any, error) {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
 		return nil, err
 	}
-	return d.github.ListRepos(ctx, token, instId, page, size)
+	return d.github.ListRepos(ctx, token, installationId, pagination)
 }
 
-func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID) (any, error) {
+func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, pagination *types.Pagination) (any, error) {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
 		return nil, err
 	}
-	i, err := d.github.ListInstallations(ctx, token)
+	i, err := d.github.ListInstallations(ctx, token, pagination)
 	if err != nil {
 		return nil, err
 	}

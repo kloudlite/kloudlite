@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"kloudlite.io/apps/ci/internal/domain"
+	"kloudlite.io/pkg/types"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,22 +26,27 @@ type githubI struct {
 	webhookUrl   string
 }
 
-func getOwnerAndRepo(repoUrl string) (string, string) {
+func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
 	sp := strings.Split(repoUrl, "https://github.com/")
 	sp = strings.Split(sp[1], ".git")
 	sp = strings.Split(sp[0], "/")
-	owner := sp[0]
-	repo := sp[1]
-	return owner, repo
+	return sp[0], sp[1]
 }
 
-func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, page int, size int) ([]*github.Branch, error) {
-	owner, repo := getOwnerAndRepo(repoUrl)
+func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
+	if p == nil {
+		return github.ListOptions{}
+	}
+	return github.ListOptions{
+		Page:    p.Page,
+		PerPage: p.PerPage,
+	}
+}
+
+func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error) {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
 	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(ctx, owner, repo, &github.BranchListOptions{
-		ListOptions: github.ListOptions{
-			Page:    page,
-			PerPage: size,
-		},
+		ListOptions: gh.buildListOptions(pagination),
 	})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list branches")
@@ -48,36 +54,38 @@ func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToke
 	return branches, nil
 }
 
-func (gh *githubI) SearchRepos(ctx context.Context, accToken *domain.AccessToken, q string, org string, page int, size int) (*github.RepositoriesSearchResult, error) {
-	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{})
+func (gh *githubI) SearchRepos(ctx context.Context, accToken *domain.AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error) {
+	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{
+		ListOptions: gh.buildListOptions(pagination),
+	})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not search repositories")
 	}
 	return rsr, nil
 }
 
-func (gh *githubI) ListInstallations(ctx context.Context, accToken *domain.AccessToken) ([]*github.Installation, error) {
-	i, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserInstallations(ctx, &github.ListOptions{})
+func (gh *githubI) ListInstallations(ctx context.Context, accToken *domain.AccessToken, pagination *types.Pagination) ([]*github.Installation, error) {
+	opts := gh.buildListOptions(pagination)
+	i, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserInstallations(ctx, &opts)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list user installations")
 	}
 	return i, nil
 }
 
-func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, instId int64, page int, size int) (*github.ListRepositories, error) {
-	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, instId, &github.ListOptions{
-		Page:    page,
-		PerPage: size,
-	})
+func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, instId int64, pagination *types.Pagination) (*github.ListRepositories, error) {
+	opts := gh.buildListOptions(pagination)
+	fmt.Println("opts: ", opts)
+	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, instId, &opts)
+	// repos, _, err := gh.ghCli.Apps.ListUserRepos(ctx, instId, &opts)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list user repositories")
 	}
-
 	return repos, nil
 }
 
 func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, refId string, repoUrl string) error {
-	owner, repo := getOwnerAndRepo(repoUrl)
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
 	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, refId)
 	hookName := "kloudlite-pipeline"
 
@@ -125,8 +133,8 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error) {
 	installationId := instId
 	if installationId == 0 {
-		gitRepo := strings.Split(repoUrl, "/")
-		inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, gitRepo[0], gitRepo[1])
+		owner, repo := gh.getOwnerAndRepo(repoUrl)
+		inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
 		if err != nil {
 			return "", errors.NewEf(err, "could not fetch repository installation")
 		}
@@ -138,13 +146,6 @@ func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string, ins
 		return "", errors.NewEf(err, "failed to get installation token")
 	}
 	return it.GetToken(), err
-}
-
-func (gh *githubI) GetAppToken() {
-}
-
-func (gh *githubI) GetRepoToken() {
-	panic("not implemented") // TODO: Implement
 }
 
 type GithubOAuth interface {

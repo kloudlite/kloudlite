@@ -73,13 +73,13 @@ type ComplexityRoot struct {
 		CiGetPipeline             func(childComplexity int, pipelineID repos.ID) int
 		CiGetPipelines            func(childComplexity int, projectID repos.ID) int
 		CiGithubInstallationToken func(childComplexity int, repoURL *string, instID *int) int
-		CiGithubInstallations     func(childComplexity int) int
-		CiGithubRepoBranches      func(childComplexity int, repoURL string, limit *int, page *int) int
-		CiGithubRepos             func(childComplexity int, installationID int, limit *int, page *int) int
+		CiGithubInstallations     func(childComplexity int, pagination *types.Pagination) int
+		CiGithubRepoBranches      func(childComplexity int, repoURL string, pagination *types.Pagination) int
+		CiGithubRepos             func(childComplexity int, installationID int, pagination *types.Pagination) int
 		CiGitlabGroups            func(childComplexity int, query *string, pagination *types.Pagination) int
 		CiGitlabRepoBranches      func(childComplexity int, repoID string, search *string, pagination *types.Pagination) int
 		CiGitlabRepos             func(childComplexity int, groupID string, search *string, pagination *types.Pagination) int
-		CiSearchGithubRepos       func(childComplexity int, search *string, org string, limit *int, page *int) int
+		CiSearchGithubRepos       func(childComplexity int, search *string, org string, pagination *types.Pagination) int
 		__resolve__service        func(childComplexity int) int
 	}
 
@@ -93,11 +93,11 @@ type MutationResolver interface {
 	CiCreatePipeline(ctx context.Context, in model.GitPipelineIn) (map[string]interface{}, error)
 }
 type QueryResolver interface {
-	CiGithubInstallations(ctx context.Context) (interface{}, error)
+	CiGithubInstallations(ctx context.Context, pagination *types.Pagination) (interface{}, error)
 	CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error)
-	CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error)
-	CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) (interface{}, error)
-	CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) (interface{}, error)
+	CiGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (interface{}, error)
+	CiGithubRepoBranches(ctx context.Context, repoURL string, pagination *types.Pagination) (interface{}, error)
+	CiSearchGithubRepos(ctx context.Context, search *string, org string, pagination *types.Pagination) (interface{}, error)
 	CiGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) (interface{}, error)
 	CiGitlabRepos(ctx context.Context, groupID string, search *string, pagination *types.Pagination) (interface{}, error)
 	CiGitlabRepoBranches(ctx context.Context, repoID string, search *string, pagination *types.Pagination) (interface{}, error)
@@ -269,7 +269,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.CiGithubInstallations(childComplexity), true
+		args, err := ec.field_Query_ci_githubInstallations_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CiGithubInstallations(childComplexity, args["pagination"].(*types.Pagination)), true
 
 	case "Query.ci_githubRepoBranches":
 		if e.complexity.Query.CiGithubRepoBranches == nil {
@@ -281,7 +286,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGithubRepoBranches(childComplexity, args["repoUrl"].(string), args["limit"].(*int), args["page"].(*int)), true
+		return e.complexity.Query.CiGithubRepoBranches(childComplexity, args["repoUrl"].(string), args["pagination"].(*types.Pagination)), true
 
 	case "Query.ci_githubRepos":
 		if e.complexity.Query.CiGithubRepos == nil {
@@ -293,7 +298,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGithubRepos(childComplexity, args["installationId"].(int), args["limit"].(*int), args["page"].(*int)), true
+		return e.complexity.Query.CiGithubRepos(childComplexity, args["installationId"].(int), args["pagination"].(*types.Pagination)), true
 
 	case "Query.ci_gitlabGroups":
 		if e.complexity.Query.CiGitlabGroups == nil {
@@ -341,7 +346,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiSearchGithubRepos(childComplexity, args["search"].(*string), args["org"].(string), args["limit"].(*int), args["page"].(*int)), true
+		return e.complexity.Query.CiSearchGithubRepos(childComplexity, args["search"].(*string), args["org"].(string), args["pagination"].(*types.Pagination)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -425,11 +430,11 @@ var sources = []*ast.Source{
 scalar Any
 
 type Query {
-  ci_githubInstallations: Any!
+  ci_githubInstallations(pagination: PaginationIn): Any!
   ci_githubInstallationToken(repoUrl: String, instId: Int): Any!
-  ci_githubRepos(installationId: Int!, limit: Int, page: Int): Any!
-  ci_githubRepoBranches(repoUrl: String!, limit: Int, page: Int): Any!
-  ci_searchGithubRepos(search: String, org: String!, limit: Int, page: Int): Any!
+  ci_githubRepos(installationId: Int!, pagination: PaginationIn): Any!
+  ci_githubRepoBranches(repoUrl: String!, pagination: PaginationIn): Any!
+  ci_searchGithubRepos(search: String, org: String!, pagination: PaginationIn): Any!
 
   ci_gitlabGroups(query: String, pagination: PaginationIn): Any!
   ci_gitlabRepos(groupId: String!, search: String, pagination: PaginationIn): Any!
@@ -442,7 +447,7 @@ type Query {
 
 input PaginationIn {
   page: Int!
-  PerPage: Int!
+  perPage: Int!
 }
 
 type KV {
@@ -604,6 +609,21 @@ func (ec *executionContext) field_Query_ci_githubInstallationToken_args(ctx cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_ci_githubInstallations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *types.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg0, err = ec.unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_ci_githubRepoBranches_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -616,24 +636,15 @@ func (ec *executionContext) field_Query_ci_githubRepoBranches_args(ctx context.C
 		}
 	}
 	args["repoUrl"] = arg0
-	var arg1 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg1 *types.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg1, err = ec.unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["limit"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg2
+	args["pagination"] = arg1
 	return args, nil
 }
 
@@ -649,24 +660,15 @@ func (ec *executionContext) field_Query_ci_githubRepos_args(ctx context.Context,
 		}
 	}
 	args["installationId"] = arg0
-	var arg1 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg1 *types.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg1, err = ec.unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["limit"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg2
+	args["pagination"] = arg1
 	return args, nil
 }
 
@@ -781,24 +783,15 @@ func (ec *executionContext) field_Query_ci_searchGithubRepos_args(ctx context.Co
 		}
 	}
 	args["org"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg2 *types.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg2, err = ec.unmarshalOPaginationIn2ᚖkloudliteᚗioᚋpkgᚋtypesᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["limit"] = arg2
-	var arg3 *int
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg3
+	args["pagination"] = arg2
 	return args, nil
 }
 
@@ -1345,9 +1338,16 @@ func (ec *executionContext) _Query_ci_githubInstallations(ctx context.Context, f
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_ci_githubInstallations_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGithubInstallations(rctx)
+		return ec.resolvers.Query().CiGithubInstallations(rctx, args["pagination"].(*types.Pagination))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1431,7 +1431,7 @@ func (ec *executionContext) _Query_ci_githubRepos(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGithubRepos(rctx, args["installationId"].(int), args["limit"].(*int), args["page"].(*int))
+		return ec.resolvers.Query().CiGithubRepos(rctx, args["installationId"].(int), args["pagination"].(*types.Pagination))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1473,7 +1473,7 @@ func (ec *executionContext) _Query_ci_githubRepoBranches(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGithubRepoBranches(rctx, args["repoUrl"].(string), args["limit"].(*int), args["page"].(*int))
+		return ec.resolvers.Query().CiGithubRepoBranches(rctx, args["repoUrl"].(string), args["pagination"].(*types.Pagination))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1515,7 +1515,7 @@ func (ec *executionContext) _Query_ci_searchGithubRepos(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiSearchGithubRepos(rctx, args["search"].(*string), args["org"].(string), args["limit"].(*int), args["page"].(*int))
+		return ec.resolvers.Query().CiSearchGithubRepos(rctx, args["search"].(*string), args["org"].(string), args["pagination"].(*types.Pagination))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3156,10 +3156,10 @@ func (ec *executionContext) unmarshalInputPaginationIn(ctx context.Context, obj 
 			if err != nil {
 				return it, err
 			}
-		case "PerPage":
+		case "perPage":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("PerPage"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("perPage"))
 			it.PerPage, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err

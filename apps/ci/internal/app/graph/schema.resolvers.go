@@ -49,65 +49,44 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 	return x, err
 }
 
-func (r *queryResolver) CiGithubInstallations(ctx context.Context) (interface{}, error) {
+func (r *queryResolver) CiGithubInstallations(ctx context.Context, pagination *types.Pagination) (interface{}, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
-	return r.Domain.GithubListInstallations(ctx, session.UserId)
+	return r.Domain.GithubListInstallations(ctx, session.UserId, pagination)
 }
 
 func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error) {
 	if instID == nil {
-		return r.Domain.GithubInstallationToken(ctx, *repoURL, 0)
+		return r.Domain.GithubInstallationToken(ctx, "")
 	}
-	return r.Domain.GithubInstallationToken(ctx, "", int64(*instID))
+	return r.Domain.GithubInstallationToken(ctx, "")
 }
 
-func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, limit *int, page *int) (interface{}, error) {
+func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (interface{}, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
-	p, l := 1, 20
-	if page != nil {
-		p = *page
-	}
-	if limit != nil {
-		p = *limit
-	}
-	return r.Domain.GithubListRepos(ctx, session.UserId, int64(installationID), p, l)
+	return r.Domain.GithubListRepos(ctx, session.UserId, int64(installationID), pagination)
 }
 
-func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string, limit *int, page *int) (interface{}, error) {
+func (r *queryResolver) CiGithubRepoBranches(ctx context.Context, repoURL string, pagination *types.Pagination) (interface{}, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
-	p, l := 1, 20
-	if page != nil {
-		p = *page
-	}
-	if limit != nil {
-		p = *limit
-	}
-	branches, err := r.Domain.GithubListBranches(ctx, session.UserId, repoURL, p, l)
+	branches, err := r.Domain.GithubListBranches(ctx, session.UserId, repoURL, pagination)
 	return branches, err
 }
 
-func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string, org string, limit *int, page *int) (interface{}, error) {
+func (r *queryResolver) CiSearchGithubRepos(ctx context.Context, search *string, org string, pagination *types.Pagination) (interface{}, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authenticated")
 	}
-	p, l := 1, 20
-	if page != nil {
-		p = *page
-	}
-	if limit != nil {
-		p = *limit
-	}
-	return r.Domain.GithubSearchRepos(ctx, session.UserId, *search, org, p, l)
+	return r.Domain.GithubSearchRepos(ctx, session.UserId, *search, org, pagination)
 }
 
 func (r *queryResolver) CiGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) (interface{}, error) {

@@ -18,6 +18,7 @@ message GetUserByEmailOut {
 message GetAccessTokenRequest {
   string userId = 1;
   string provider = 2;
+  string tokenId = 3;
 }
 
 message AccessTokenOut {

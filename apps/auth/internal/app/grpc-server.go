@@ -42,8 +42,8 @@ func (a *authGrpcServer) EnsureUserByEmail(ctx context.Context, request *auth.Ge
 	}, nil
 }
 
-func (a *authGrpcServer) GetAccessToken(ctx context.Context, request *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
-	token, err := a.d.GetAccessToken(ctx, request.Provider, request.UserId)
+func (a *authGrpcServer) GetAccessToken(ctx context.Context, in *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
+	token, err := a.d.GetAccessToken(ctx, in.Provider, in.UserId, in.TokenId)
 	if err != nil {
 		return nil, err
 	}
