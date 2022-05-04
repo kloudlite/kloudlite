@@ -77,6 +77,9 @@ var Module = fx.Module("app",
 
 	// FiberApp
 	fx.Invoke(func(app *fiber.App, d domain.Domain, gitlab domain.Gitlab) {
+		app.Get("/healthy", func(ctx *fiber.Ctx) error {
+			return ctx.JSON("hello world")
+		})
 		app.Get("/pipelines/:pipeline", func(ctx *fiber.Ctx) error {
 			pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(ctx.Params("pipeline")))
 			if err != nil {
