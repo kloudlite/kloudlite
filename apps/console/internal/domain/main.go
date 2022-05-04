@@ -58,6 +58,7 @@ type domain struct {
 	notifier             rcn.ResourceChangeNotifier
 	iamClient            iam.IAMClient
 	authClient           auth.AuthClient
+	changeNotifier       rcn.ResourceChangeNotifier
 }
 
 func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, resourceNamespace string, resourceName string, status ResourceStatus) (bool, error) {
@@ -75,6 +76,7 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		if err != nil {
 			return false, err
 		}
+		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	case "ManagedService":
 		one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
@@ -89,6 +91,7 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		if err != nil {
 			return false, err
 		}
+		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	case "App":
 		one, err := d.appRepo.FindOne(ctx, repos.Filter{
@@ -103,6 +106,7 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		if err != nil {
 			return false, err
 		}
+		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	case "Router":
 		one, err := d.routerRepo.FindOne(ctx, repos.Filter{
@@ -117,6 +121,7 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		if err != nil {
 			return false, err
 		}
+		d.changeNotifier.Notify(one.Id)
 		return true, nil
 	default:
 		return false, errors.New("unsupported resource type")
@@ -1423,10 +1428,12 @@ func fxDomain(
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,
 	authClient auth.AuthClient,
+	changeNotifier rcn.ResourceChangeNotifier,
 ) Domain {
 	var x repos.DbRepo[*entities.Cluster]
 	x = mockClusterRepo{}
 	return &domain{
+		changeNotifier:       changeNotifier,
 		notifier:             notifier,
 		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
 		ciClient:             ciClient,
