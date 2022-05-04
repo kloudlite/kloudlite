@@ -6,9 +6,10 @@ query: |
   }
 variables:
   in:
-    name: sample-pipeline
+    name: sample-pipeline2
     imageName: abcd-image
     gitProvider: github
+    gitBranch: master
     dockerFile: ./Dockerfile
     gitRepoUrl: https://github.com/nxtcoder17/sample
     contextDir: ./
