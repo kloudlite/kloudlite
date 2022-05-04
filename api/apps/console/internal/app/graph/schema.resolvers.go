@@ -693,7 +693,11 @@ func (r *queryResolver) ManagedSvcListInstallations(ctx context.Context, project
 }
 
 func (r *queryResolver) ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error) {
-	panic(fmt.Errorf("not implemented"))
+	res, err := r.Domain.GetManagedRes(ctx, resID)
+	if err != nil {
+		return nil, err
+	}
+	return managedResourceModelFromEntity(res), nil
 }
 
 func (r *queryResolver) ManagedResListResources(ctx context.Context, installationID repos.ID) ([]*model.ManagedRes, error) {
