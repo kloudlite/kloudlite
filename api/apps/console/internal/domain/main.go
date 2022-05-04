@@ -123,13 +123,6 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 }
 
 func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn) (*entities.App, error) {
-	token, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
-		UserId:   string(userId),
-		Provider: "gitlab",
-	})
-	if err != nil {
-		return nil, err
-	}
 	a := entities.App{
 		ReadableId:   app.ReadableId,
 		ProjectId:    app.ProjectId,
@@ -151,6 +144,14 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 				m[k] = v.(string)
 			}
 			if c.Pipeline != nil {
+				token, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
+					UserId:   string(userId),
+					Provider: c.Pipeline.GitProvider,
+				})
+				fmt.Println(token.Id, err)
+				if err != nil {
+					return nil, err
+				}
 				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
 					UserId:               string(userId),
 					Name:                 c.Pipeline.Name,
@@ -166,6 +167,7 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 					BuildArgs:            b,
 					Metadata:             m,
 				})
+				fmt.Println(pipeline, err)
 				if err != nil {
 					return nil, err
 				}
