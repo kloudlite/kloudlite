@@ -34,6 +34,7 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 		GitRepoUrl:           in.GitRepoURL,
 		DockerFile:           in.DockerFile,
 		ContextDir:           in.ContextDir,
+		GitlabRepoId:         in.GitlabRepoID,
 		GithubInstallationId: in.GithubInstallationID,
 		BuildArgs:            in.BuildArgs,
 	})

@@ -461,6 +461,7 @@ func (gl *domainI) Hash(t *oauth2.Token) (string, error) {
 }
 
 func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*AccessToken, error) {
+	fmt.Printf("provider: %v userId: %v tokenId: %v\n", provider, userId, tokenId)
 	if tokenId == "" && (provider == "" || userId == "") {
 		return nil, errors.Newf("bad params: [tokenId, (provider, userId)]")
 	}

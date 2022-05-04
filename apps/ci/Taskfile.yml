@@ -14,10 +14,10 @@ tasks:
       MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       MONGO_DB_NAME: ci
-#      AUTH_HOST: auth-api.hotspot.svc.cluster.local
-#      AUTH_PORT: 3001
-      AUTH_HOST: auth-api.hotspot.svc.cluster.local
-      AUTH_PORT: 3001
+      # AUTH_HOST: auth-api.hotspot.svc.cluster.local
+      # AUTH_PORT: 3001
+      AUTH_HOST: localhost
+      AUTH_PORT: 10021
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
 
       GITHUB_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/github
