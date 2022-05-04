@@ -223,9 +223,10 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 		ExposedPorts: app.ExposedPorts,
 	}
 	for _, c := range app.Containers {
+		iName := fmt.Sprintf("%s:latest", *c.Image)
 		container := entities.Container{
 			Name:              c.Name,
-			Image:             c.Image,
+			Image:             &iName,
 			ImagePullSecret:   c.ImagePullSecret,
 			EnvVars:           c.EnvVars,
 			CPULimits:         c.CPULimits,
