@@ -123,13 +123,6 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 }
 
 func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn) (*entities.App, error) {
-	token, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
-		UserId:   string(userId),
-		Provider: "gitlab",
-	})
-	if err != nil {
-		return nil, err
-	}
 	a := entities.App{
 		ReadableId:   app.ReadableId,
 		ProjectId:    app.ProjectId,
@@ -151,11 +144,20 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 				m[k] = v.(string)
 			}
 			if c.Pipeline != nil {
+				token, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
+					UserId:   string(userId),
+					Provider: c.Pipeline.GitProvider,
+				})
+				if err != nil {
+					return nil, err
+				}
 				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
+					GitlabRepoId:         c.Pipeline.GitLabRepoId,
 					UserId:               string(userId),
-					Name:                 c.Pipeline.Name,
-					RepoName:             c.Pipeline.RepoName,
 					ProjectId:            string(app.ProjectId),
+					RepoName:             c.Pipeline.RepoName,
+					Metadata:             m,
+					Name:                 c.Pipeline.Name,
 					ImageName:            fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName),
 					GitProvider:          c.Pipeline.GitProvider,
 					GitRepoUrl:           c.Pipeline.GitRepoUrl,
@@ -164,8 +166,8 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 					GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
 					GitlabTokenId:        token.Id,
 					BuildArgs:            b,
-					Metadata:             m,
 				})
+				fmt.Println(pipeline, err)
 				if err != nil {
 					return nil, err
 				}

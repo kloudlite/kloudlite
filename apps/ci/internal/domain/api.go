@@ -23,7 +23,7 @@ type Domain interface {
 	GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error)
 	GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) (any, error)
 	GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) (any, error)
-	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId string) (*gitlab.ProjectHook, error)
+	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId int, pipelineId string) (*gitlab.ProjectHook, error)
 	GitlabPullToken(ctx context.Context, pipelineId repos.ID) (string, error)
 }
 

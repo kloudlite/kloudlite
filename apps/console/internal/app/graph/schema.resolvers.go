@@ -322,6 +322,7 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 				DockerFile:           container.PipelineData.DockerFile,
 				ContextDir:           container.PipelineData.ContextDir,
 				GithubInstallationId: int64(i),
+				GitLabRepoId:         int64(container.PipelineData.GitlabRepoID),
 				BuildArgs:            container.PipelineData.BuildArgs,
 				Metadata:             container.PipelineData.Metadata,
 			}
@@ -693,7 +694,11 @@ func (r *queryResolver) ManagedSvcListInstallations(ctx context.Context, project
 }
 
 func (r *queryResolver) ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error) {
-	panic(fmt.Errorf("not implemented"))
+	res, err := r.Domain.GetManagedRes(ctx, resID)
+	if err != nil {
+		return nil, err
+	}
+	return managedResourceModelFromEntity(res), nil
 }
 
 func (r *queryResolver) ManagedResListResources(ctx context.Context, installationID repos.ID) ([]*model.ManagedRes, error) {

@@ -84,9 +84,9 @@ func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, 
 	return repos, nil
 }
 
-func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, refId string, repoUrl string) error {
+func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, pipelineId string, repoUrl string) error {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, refId)
+	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, pipelineId)
 	hookName := "kloudlite-pipeline"
 
 	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(ctx, owner, repo, &github.Hook{
