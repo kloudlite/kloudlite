@@ -148,15 +148,16 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 					UserId:   string(userId),
 					Provider: c.Pipeline.GitProvider,
 				})
-				fmt.Println(token.Id, err)
 				if err != nil {
 					return nil, err
 				}
 				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
+					GitlabRepoId:         c.Pipeline.GitLabRepoId,
 					UserId:               string(userId),
-					Name:                 c.Pipeline.Name,
-					RepoName:             c.Pipeline.RepoName,
 					ProjectId:            string(app.ProjectId),
+					RepoName:             c.Pipeline.RepoName,
+					Metadata:             m,
+					Name:                 c.Pipeline.Name,
 					ImageName:            fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName),
 					GitProvider:          c.Pipeline.GitProvider,
 					GitRepoUrl:           c.Pipeline.GitRepoUrl,
@@ -165,7 +166,6 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 					GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
 					GitlabTokenId:        token.Id,
 					BuildArgs:            b,
-					Metadata:             m,
 				})
 				fmt.Println(pipeline, err)
 				if err != nil {
