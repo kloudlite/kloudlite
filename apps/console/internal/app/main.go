@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc"
-	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
-	"kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
+	"strings"
 
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
@@ -175,92 +174,38 @@ var Module = fx.Module(
 
 	fx.Provide(fxWorkloadMessenger),
 	messaging.NewFxKafkaConsumer[*WorkloadConsumerEnv](),
-	fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], domain domain.Domain) {
+	fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], d domain.Domain) {
 		fmt.Println(env.ResponseTopic, "env.ResponseTopic")
 		consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
-			var d map[string]any
-			err := message.Unmarshal(&d)
-			fmt.Println(string(message), "HERE")
-			if err != nil {
-				return err
-			}
-			if d["type"] == nil || d["payload"] == nil {
-				return errors.New("invalid message")
+			var msg struct {
+				Status     bool   `json:"status"`
+				Key        string `json:"key"`
+				Conditions []struct {
+					Type   string `json:"type"`
+					Status string `json:"status"`
+					Reason string `json:"reason"`
+				} `json:"conditions"`
 			}
 
-			switch d["type"].(string) {
-			case "project-update":
-				var m struct {
-					Type    string
-					Payload *op_crds.Project
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateProject(context, m.Payload)
-			case "app-update":
-				var m struct {
-					Type    string
-					Payload *op_crds.App
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateApp(context, m.Payload)
-			case "config-update":
-				var m struct {
-					Type    string
-					Payload repos.ID
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateConfig(context, m.Payload)
-			case "secret-update":
-				var m struct {
-					Type    string
-					Payload repos.ID
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateSecret(context, m.Payload)
-			case "router-update":
-				var m struct {
-					Type    string
-					Payload *op_crds.Router
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateRouter(context, m.Payload)
-			case "managed-svc-update":
-				var m struct {
-					Type    string
-					Payload *op_crds.ManagedService
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateManagedSvc(context, m.Payload)
-			case "managed-res-update":
-				var m struct {
-					Type    string
-					Payload *op_crds.ManagedResource
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateManagedRes(context, m.Payload)
+			err := message.Unmarshal(&msg)
+			if err != nil {
+				fmt.Println("Unable to parse messages!!!", err)
+				return err
 			}
-			return nil
+			split := strings.Split(msg.Key, "/")
+			namespace := split[0]
+			resourceType := split[1]
+			resourceName := split[2]
+			var s domain.ResourceStatus
+			if len(msg.Conditions) > 0 {
+				s = domain.ResourceStatusInProgress
+			} else if msg.Status {
+				s = domain.ResourceStatusError
+			} else {
+				s = domain.ResourceStatusLive
+			}
+			_, err = d.UpdateResourceStatus(context, resourceType, namespace, resourceName, s)
+			return err
 		})
 	}),
 
