@@ -32,7 +32,7 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 			md[k] = v
 		}
 	}
-	pipeline, err := s.d.CretePipeline(ctx, repos.ID(in.UserId), domain.Pipeline{
+	pipeline, err := s.d.CreatePipeline(ctx, repos.ID(in.UserId), domain.Pipeline{
 		ProjectId:            in.ProjectId,
 		Name:                 in.Name,
 		ImageName:            in.ImageName,
