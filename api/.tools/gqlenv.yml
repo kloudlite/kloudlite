@@ -6,5 +6,4 @@ dev:
   # url: http://ci-api.hotspot.svc.cluster.local/query
   url: http://localhost:8085/query
   headers:
-    cookie: hotspot-session=ses-qqxntz7q9gy7etm-q9x6ijofq2uj; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None
-
+    cookie: hotspot-session=ses-jpxd1dcmjebkoc4tkqe-ighzkid3; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None

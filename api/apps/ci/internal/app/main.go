@@ -12,6 +12,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/harbor"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
@@ -75,7 +76,7 @@ var Module = fx.Module("app",
 	}),
 
 	// FiberApp
-	fx.Invoke(func(app *fiber.App, d domain.Domain, github domain.Github) {
+	fx.Invoke(func(app *fiber.App, d domain.Domain, gitlab domain.Gitlab) {
 		app.Get("/pipelines/:pipeline", func(ctx *fiber.Ctx) error {
 			pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(ctx.Params("pipeline")))
 			if err != nil {
@@ -84,15 +85,26 @@ var Module = fx.Module("app",
 			return ctx.JSON(pipeline)
 		})
 
-		app.Get("/access-repo-token/:installation_id", func(ctx *fiber.Ctx) error {
-			paramsInt, err := ctx.ParamsInt("installation_id")
-			if err != nil {
-				return err
+		app.Get("/access-token/:provider/:pipelineId", func(ctx *fiber.Ctx) error {
+			provider := ctx.Params("provider")
+			pipelineId := ctx.Params("pipelineId")
+			if provider == "gitlab" {
+				token, err := d.GitlabPullToken(ctx.Context(), repos.ID(pipelineId))
+				if err != nil {
+					return errors.NewEf(err, "while getting gitlab pull token")
+				}
+				return ctx.JSON(token)
 			}
-			token, err := github.GetInstallationToken(ctx.Context(), "", int64(paramsInt))
-			return ctx.JSON(token)
-		})
 
+			if provider == "github" {
+				token, err := d.GithubInstallationToken(ctx.Context(), repos.ID(pipelineId))
+				if err != nil {
+					return errors.NewEf(err, "while getting gitlab pull token")
+				}
+				return ctx.JSON(token)
+			}
+			return errors.Newf("unknown (provider=%s) not one of [github,gitlab]", provider)
+		})
 	}),
 
 	// GraphQL App
