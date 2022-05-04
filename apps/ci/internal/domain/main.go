@@ -105,7 +105,6 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 		UserId:   string(userId),
 		Provider: provider,
 	})
-	fmt.Println("Acc token out: ", accTokenOut)
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +112,7 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 		return nil, errors.NewEf(err, "finding accessToken")
 	}
 	return &AccessToken{
+		Id:       repos.ID(accTokenOut.Id),
 		UserId:   repos.ID(accTokenOut.UserId),
 		Email:    accTokenOut.Email,
 		Provider: accTokenOut.Provider,
