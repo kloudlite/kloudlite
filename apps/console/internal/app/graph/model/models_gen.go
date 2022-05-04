@@ -207,6 +207,7 @@ type PipelineDataInput struct {
 	RepoName             string                 `json:"repoName"`
 	GitProvider          string                 `json:"gitProvider"`
 	GitRepoURL           string                 `json:"gitRepoUrl"`
+	GitlabRepoID         int                    `json:"gitlabRepoId"`
 	DockerFile           string                 `json:"dockerFile"`
 	ContextDir           string                 `json:"contextDir"`
 	GithubInstallationID *int                   `json:"githubInstallationId"`

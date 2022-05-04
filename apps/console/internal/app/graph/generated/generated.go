@@ -1951,6 +1951,7 @@ input PipelineDataInput{
   repoName: String!
   gitProvider: String!
   gitRepoUrl: String!
+  gitlabRepoId: Int!
   dockerFile: String!
   contextDir: String!
   githubInstallationId: Int
@@ -10824,6 +10825,14 @@ func (ec *executionContext) unmarshalInputPipelineDataInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitRepoUrl"))
 			it.GitRepoURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitlabRepoId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitlabRepoId"))
+			it.GitlabRepoID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
