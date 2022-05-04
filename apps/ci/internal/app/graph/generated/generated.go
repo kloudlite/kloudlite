@@ -53,6 +53,7 @@ type ComplexityRoot struct {
 		GitProvider          func(childComplexity int) int
 		GitRepoURL           func(childComplexity int) int
 		GithubInstallationID func(childComplexity int) int
+		GitlabRepoID         func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		ImageName            func(childComplexity int) int
 		Metadata             func(childComplexity int) int
@@ -161,6 +162,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GitPipeline.GithubInstallationID(childComplexity), true
+
+	case "GitPipeline.gitlabRepoId":
+		if e.complexity.GitPipeline.GitlabRepoID == nil {
+			break
+		}
+
+		return e.complexity.GitPipeline.GitlabRepoID(childComplexity), true
 
 	case "GitPipeline.id":
 		if e.complexity.GitPipeline.ID == nil {
@@ -442,7 +450,6 @@ type Query {
 
   ci_getPipelines(projectId: ID!): [GitPipeline!]
   ci_getPipeline(pipelineId: ID!): GitPipeline
-
 }
 
 input PaginationIn {
@@ -463,6 +470,7 @@ input GitPipelineIn {
   dockerFile: String
   contextDir: String
   githubInstallationId: Int
+  gitlabRepoId: Int
   buildArgs: Json
 }
 
@@ -475,6 +483,7 @@ type GitPipeline {
   dockerFile: String
   contextDir: String
   githubInstallationId: Int
+  gitlabRepoId: Int
   buildArgs: Json
   metadata: Json
 }
@@ -1091,6 +1100,38 @@ func (ec *executionContext) _GitPipeline_githubInstallationId(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.GithubInstallationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipeline_gitlabRepoId(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipeline",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GitlabRepoID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3125,6 +3166,14 @@ func (ec *executionContext) unmarshalInputGitPipelineIn(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
+		case "gitlabRepoId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitlabRepoId"))
+			it.GitlabRepoID, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "buildArgs":
 			var err error
 
@@ -3255,6 +3304,13 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 		case "githubInstallationId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._GitPipeline_githubInstallationId(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "gitlabRepoId":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._GitPipeline_gitlabRepoId(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
