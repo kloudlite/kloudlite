@@ -215,13 +215,6 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 				m[k] = v.(string)
 			}
 			if c.Pipeline != nil {
-				token, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
-					UserId:   string(userId),
-					Provider: c.Pipeline.GitProvider,
-				})
-				if err != nil {
-					return nil, err
-				}
 				pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
 					GitlabRepoId:         c.Pipeline.GitLabRepoId,
 					UserId:               string(userId),
@@ -235,7 +228,6 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 					DockerFile:           c.Pipeline.DockerFile,
 					ContextDir:           c.Pipeline.ContextDir,
 					GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
-					GitlabTokenId:        token.Id,
 					BuildArgs:            b,
 				})
 				fmt.Println(pipeline, err)
