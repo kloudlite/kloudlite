@@ -9,6 +9,7 @@ import (
 	"kloudlite.io/apps/auth/internal/domain"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -47,12 +48,18 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
+type CommsClientConnection *grpc.ClientConn
+
 var Module = fx.Module("app",
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
 	cache.NewFxRepo[*domain.VerifyToken](),
 	cache.NewFxRepo[*domain.ResetPasswordToken](),
+
+	fx.Provide(func(conn CommsClientConnection) comms.CommsClient {
+		return comms.NewCommsClient((*grpc.ClientConn)(conn))
+	}),
 
 	fx.Provide(fxGithub),
 	fx.Provide(fxGitlab),
@@ -63,7 +70,6 @@ var Module = fx.Module("app",
 		auth.RegisterAuthServer(server, authServer)
 	}),
 
-	fx.Provide(fxMessenger),
 	fx.Invoke(func(
 		server *fiber.App,
 		d domain.Domain,

@@ -11,6 +11,15 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type CommsGrpcEnv struct {
+	CommsHost string `env:"COMMS_HOST" required:"true"`
+	CommsPort string `env:"COMMS_PORT" required:"true"`
+}
+
+func (c CommsGrpcEnv) GetGCPServerURL() string {
+	return c.CommsHost + ":" + c.CommsPort
+}
+
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
@@ -44,10 +53,12 @@ func (e *Env) GetGRPCPort() uint16 {
 
 var Module = fx.Module("framework",
 	config.EnvFx[Env](),
+	config.EnvFx[CommsGrpcEnv](),
 	fx.Provide(logger.NewLogger),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
+	rpc.NewGrpcClientFx[*CommsGrpcEnv, app.CommsClientConnection](),
 	app.Module,
 )

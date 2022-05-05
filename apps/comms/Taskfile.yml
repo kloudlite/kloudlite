@@ -1,0 +1,11 @@
+version: "3"
+
+dotenv: [".secrets/env"]
+
+tasks:
+  run:
+    env:
+      GRPC_PORT: 50051
+      SUPPORT_EMAIL: support@kloudlite.io
+    cmds:
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
