@@ -15,8 +15,8 @@ type email struct {
 }
 
 func loadEmailFromYaml(templateName string, params any) (*email, error) {
-	file, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v.yaml", templateName))
-	htmlFile, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v.html", templateName))
+	file, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v/email.yaml", templateName))
+	htmlFile, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v/email.html", templateName))
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func loadEmailFromYaml(templateName string, params any) (*email, error) {
 }
 
 func constructVerificationEmail(name string, token string) (subject string, plainText string, htmlContent string, err error) {
-	email, err := loadEmailFromYaml("verification-email", struct {
+	email, err := loadEmailFromYaml("user-verification", struct {
 		Name string
 		Link string
 	}{
@@ -63,7 +63,7 @@ func constructVerificationEmail(name string, token string) (subject string, plai
 }
 
 func constructResetPasswordEmail(name string, token string) (subject string, plainText string, htmlContent string, err error) {
-	email, err := loadEmailFromYaml("reset-password-email", struct {
+	email, err := loadEmailFromYaml("reset-password", struct {
 		Name string
 		Link string
 	}{
