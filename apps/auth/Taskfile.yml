@@ -31,6 +31,10 @@ tasks:
 
       GITHUB_WEBHOOK_URL: https://webhooks.dev.madhouselabs.io/github
       GITLAB_WEBHOOK_URL: https://webhooks.dev.madhouselabs.io/gitlab
+
+      COMMS_HOST: localhost
+      COMMS_PORT: 50051
+
     cmds:
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   gql:

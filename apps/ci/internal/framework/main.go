@@ -11,6 +11,15 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type GrpcAuthConfig struct {
+	InfraGrpcHost string `env:"AUTH_HOST" required:"true"`
+	InfraGrpcPort string `env:"AUTH_PORT" required:"true"`
+}
+
+func (e *GrpcAuthConfig) GetGCPServerURL() string {
+	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
+}
+
 type Env struct {
 	DBName        string `env:"MONGO_DB_NAME" required:"true"`
 	DBUrl         string `env:"MONGO_URI" required:"true"`
@@ -20,15 +29,11 @@ type Env struct {
 	HttpPort      uint16 `env:"PORT" required:"true"`
 	HttpCors      string `env:"ORIGINS" required:"true"`
 	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
+	SendGridKey   string `env:"SENDGRID_API_KEY" required:"true"`
 }
 
-type GrpcAuthConfig struct {
-	InfraGrpcHost string `env:"AUTH_HOST" required:"true"`
-	InfraGrpcPort string `env:"AUTH_PORT" required:"true"`
-}
-
-func (e *GrpcAuthConfig) GetGCPServerURL() string {
-	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
+func (e *Env) GetSendGridApiKey() string {
+	return e.SendGridKey
 }
 
 func (e *Env) GetGRPCPort() uint16 {
@@ -59,6 +64,7 @@ var Module = fx.Module("framework",
 	httpServer.NewHttpServerFx[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
+
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	app.Module,
 )
