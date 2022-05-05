@@ -7,17 +7,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
-	"kloudlite.io/pkg/logger"
-	"kloudlite.io/pkg/messaging"
-
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -32,7 +31,7 @@ func generateId(prefix string) string {
 type domainI struct {
 	userRepo        repos.DbRepo[*User]
 	accessTokenRepo repos.DbRepo[*AccessToken]
-	messenger       Messenger
+	commsClient     comms.CommsClient
 	verifyTokenRepo cache.Repo[*VerifyToken]
 	resetTokenRepo  cache.Repo[*ResetPasswordToken]
 	logger          logger.Logger
@@ -517,19 +516,27 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 }
 
 func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user *User) error {
-	return d.messenger.SendEmail(ctx, "reset-password", messaging.Json{
-		"token":    token,
-		"userName": user.Name,
-		"userId":   user.Id,
+	_, err := d.commsClient.SendPasswordResetEmail(ctx, &comms.PasswordResetEmailInput{
+		Email:      user.Email,
+		Name:       user.Name,
+		ResetToken: token,
 	})
+	if err != nil {
+		return errors.NewEf(err, "could not send password reset email")
+	}
+	return nil
 }
 
 func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user *User) error {
-	return d.messenger.SendEmail(ctx, "verify-email", messaging.Json{
-		"token":    token,
-		"userName": user.Name,
-		"userId":   user.Id,
+	_, err := d.commsClient.SendVerificationEmail(ctx, &comms.VerificationEmailInput{
+		Email:             user.Email,
+		Name:              user.Name,
+		VerificationToken: token,
 	})
+	if err != nil {
+		return errors.NewEf(err, "could not send verification email")
+	}
+	return nil
 }
 
 func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *User) error {
@@ -553,16 +560,16 @@ func fxDomain(
 	accessTokenRepo repos.DbRepo[*AccessToken],
 	verifyTokenRepo cache.Repo[*VerifyToken],
 	resetTokenRepo cache.Repo[*ResetPasswordToken],
-	messenger Messenger,
 	github Github,
 	gitlab Gitlab,
 	google Google,
 	logger logger.Logger,
+	commsClient comms.CommsClient,
 ) Domain {
 	return &domainI{
+		commsClient:     commsClient,
 		userRepo:        userRepo,
 		accessTokenRepo: accessTokenRepo,
-		messenger:       messenger,
 		verifyTokenRepo: verifyTokenRepo,
 		resetTokenRepo:  resetTokenRepo,
 		github:          github,

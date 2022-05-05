@@ -1,0 +1,26 @@
+<mjml>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-image align="left" width="120px" src="https://ik.imagekit.io/kloudlite/logo-scalable_c56EcJLdd.png?ik-sdk-version=javascript-1.4.3&updatedAt=1651786453856"></mj-image>
+      </mj-column>
+		</mj-section>
+    <mj-section>
+      <mj-column>
+              <mj-text font-family="Open Sans, Arial" line-height="1.5">
+Hey {{.Name}},
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" line-height="1.5">
+We are happy you singed up for kloudlite. To start exploring kloudlite. Please confirm your email address.
+</mj-text>
+        <mj-button align="left" background-color="#2563EB">Verify Email</mj-button>
+<mj-text font-family="Open Sans, Arial" line-height="1.5">
+Or Copy this url in the browser: <a href="https://mjml.io/try-it-live/JiyoIAC3N">https://mjml.io/try-it-live/JiyoIAC3N</a>
+</mj-text>
+      <mj-text font-family="Open Sans, Arial">
+- Team Kloudlite
+        </mj-text>
+</mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

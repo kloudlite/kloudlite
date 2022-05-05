@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/comms";
+
+service Comms {
+  rpc SendVerificationEmail(VerificationEmailInput) returns (Void);
+  rpc SendPasswordResetEmail(PasswordResetEmailInput) returns (Void);
+}
+
+message VerificationEmailInput{
+  string email = 1;
+  string name = 2;
+  string verificationToken = 3;
+}
+
+message PasswordResetEmailInput{
+  string email = 1;
+  string name = 2;
+  string resetToken = 3;
+}
+
+message Void{
+
+}
