@@ -71,10 +71,10 @@ type CIClientConnection *grpc.ClientConn
 var Module = fx.Module(
 	"app",
 
+	// Configs
 	config.EnvFx[Env](),
-	config.EnvFx[InfraConsumerEnv](),
-	config.EnvFx[WorkloadConsumerEnv](),
 
+	// Repos
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
 	repos.NewFxMongoRepo[*entities.Device]("devices", "dev", entities.DeviceIndexes),
 	repos.NewFxMongoRepo[*entities.Project]("project", "proj", entities.ProjectIndexes),
@@ -85,6 +85,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.App]("app", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
 
+	// Grpc Clients
 	fx.Provide(func(conn InfraClientConnection) infra.InfraClient {
 		return infra.NewInfraClient((*grpc.ClientConn)(conn))
 	}),
@@ -101,6 +102,7 @@ var Module = fx.Module(
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
 	}),
 
+	// Grpc Server
 	fx.Provide(fxConsoleGrpcServer),
 	fx.Invoke(func(server *grpc.Server, consoleServer console.ConsoleServer) {
 		console.RegisterConsoleServer(server, consoleServer)
@@ -109,7 +111,11 @@ var Module = fx.Module(
 	// Common Producer
 	messaging.NewFxKafkaProducer[messaging.Json](),
 
+	// Infra Message Producer
 	fx.Provide(fxInfraMessenger),
+
+	// Infra Message Consumer
+	config.EnvFx[InfraConsumerEnv](),
 	messaging.NewFxKafkaConsumer[*InfraConsumerEnv](),
 	fx.Invoke(func(env *InfraConsumerEnv, consumer messaging.Consumer[*InfraConsumerEnv], domain domain.Domain) {
 		consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
@@ -174,7 +180,10 @@ var Module = fx.Module(
 		})
 	}),
 
+	// Workload Message Producer
 	fx.Provide(fxWorkloadMessenger),
+	// Workload Message Consumer
+	config.EnvFx[WorkloadConsumerEnv](),
 	messaging.NewFxKafkaConsumer[*WorkloadConsumerEnv](),
 	fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], d domain.Domain) {
 		fmt.Println(env.ResponseTopic, "env.ResponseTopic")
@@ -214,9 +223,10 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Invoke(func(server loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient cache.Client) {
+	// Log Service
+	fx.Invoke(func(logServer loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient cache.Client) {
 		var a *fiber.App
-		a = server
+		a = logServer
 		a.Use(httpServer.NewSessionMiddleware[*common.AuthSession](
 			cacheClient,
 			"hotspot-session",
@@ -235,6 +245,7 @@ var Module = fx.Module(
 		}))
 	}),
 
+	// GraphQL Service
 	fx.Invoke(func(
 		server *fiber.App,
 		d domain.Domain,
