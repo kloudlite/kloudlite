@@ -1,11 +1,7 @@
 package framework
 
 import (
-	"context"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/websocket/v2"
-
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/pkg/cache"
@@ -68,12 +64,6 @@ func (l *LogServerEnv) GetLogServerPort() uint64 {
 	return l.LogServerPort
 }
 
-func (l *LogServerEnv) GetQueryFilter() map[string]string {
-	return map[string]string{
-		"namespace": "hotspot",
-	}
-}
-
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
@@ -116,8 +106,6 @@ func (e *Env) GetNotifierUrl() string {
 	return e.NotifierUrl
 }
 
-type LogServer *fiber.App
-
 var Module = fx.Module("framework",
 	config.EnvFx[Env](),
 	config.EnvFx[LogServerEnv](),
@@ -137,45 +125,6 @@ var Module = fx.Module("framework",
 	messaging.NewKafkaClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
-	fx.Provide(func(env *LogServerEnv) LogServer {
-		return fiber.New()
-	}),
-	fx.Invoke(func(env *LogServerEnv, app LogServer, lifecycle fx.Lifecycle) {
-		var a *fiber.App
-		a = app
-		lifecycle.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return a.Listen(fmt.Sprintf(":%v", env.GetLogServerPort()))
-			},
-			OnStop: func(ctx context.Context) error {
-				return a.Shutdown()
-			},
-		})
-	}),
-	fx.Provide(func(env *LogServerEnv) (loki_server.LokiClient, error) {
-		return loki_server.NewLokiClient(env.GetLokiServerUrl())
-	}),
-	fx.Invoke(func(app LogServer, lokiServer loki_server.LokiClient) {
-		var a *fiber.App
-		a = app
-		a.Use("/", func(c *fiber.Ctx) error {
-			if websocket.IsWebSocketUpgrade(c) {
-				c.Locals("allowed", true)
-				return c.Next()
-			}
-			return fiber.ErrUpgradeRequired
-		})
-
-		a.Get("/", websocket.New(func(conn *websocket.Conn) {
-			lokiServer.Tail([]loki_server.StreamSelector{
-				loki_server.StreamSelector{
-					Key:       "namespace",
-					Operation: "=",
-					Value:     "hotspot",
-				},
-			}, nil, nil, nil, nil, conn)
-			}),
-		}))
-	}),
+	loki_server.NewLokiClientFx[*LogServerEnv](),
 	app.Module,
 )
