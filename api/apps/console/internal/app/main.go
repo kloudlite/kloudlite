@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	fWebsocket "github.com/gofiber/websocket/v2"
 	"google.golang.org/grpc"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
@@ -12,6 +13,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	httpServer "kloudlite.io/pkg/http-server"
+	loki_server "kloudlite.io/pkg/loki-server"
 	"strings"
 
 	"kloudlite.io/pkg/cache"
@@ -211,6 +213,27 @@ var Module = fx.Module(
 	}),
 
 	domain.Module,
+
+	fx.Invoke(func(server loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient cache.Client) {
+		var a *fiber.App
+		a = server
+		a.Use(httpServer.NewSessionMiddleware[*common.AuthSession](
+			cacheClient,
+			"hotspot-session",
+			env.CookieDomain,
+			"hotspot:auth:sessions",
+		))
+		a.Get("/", fWebsocket.New(func(conn *fWebsocket.Conn) {
+			// Crosscheck session
+			client.Tail([]loki_server.StreamSelector{
+				{
+					Key:       "namespace",
+					Operation: "=",
+					Value:     "hotspot",
+				},
+			}, nil, nil, nil, nil, conn)
+		}))
+	}),
 
 	fx.Invoke(func(
 		server *fiber.App,
