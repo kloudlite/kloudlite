@@ -104,7 +104,7 @@ type LokiClientOptions interface {
 	GetLogServerPort() uint64
 }
 
-func NewLokiClientFx[T LokiClientOptions]() fx.Option {
+func NewLogServerFx[T LokiClientOptions]() fx.Option {
 	return fx.Module("loki-client",
 		fx.Provide(func() LogServer {
 			return fiber.New()
