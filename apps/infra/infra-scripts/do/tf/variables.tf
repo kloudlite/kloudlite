@@ -4,7 +4,9 @@ variable "cluster-id" {
 variable "do-token" {
   default = "***REMOVED***"
 }
-variable "master-nodes-count" {}
+variable "master-nodes" {
+
+}
 variable "agent-nodes-count" {}
 variable "size" {
   default = "s-4vcpu-8gb"
