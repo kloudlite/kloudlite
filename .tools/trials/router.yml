@@ -2,9 +2,11 @@ apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
   name: sample-router
-  namespace: hotspot
+  # namespace: hotspot
+  namespace: demo-project-91504
 spec:
-  domains: ['abcd.kl.madhouselabs.io']
+  domains: ['sample.kl.madhouselabs.io']
   routes:
-    - app: auth-web-sdaf
+    - app: sample-app
       path: /
+      port: 80
