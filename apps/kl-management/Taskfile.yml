@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+  build:
+    cmds:
+      - go build main.go
+  run:
+    env:
+      DO_API_KEY: ***REMOVED***
+      DO_IMAGE_ID: 107231152
+    cmds:
+      - go run ./main setup
