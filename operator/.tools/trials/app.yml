@@ -2,17 +2,17 @@ apiVersion: "crds.kloudlite.io/v1"
 kind: App
 metadata:
   name: example-app
-  namespace: hotspot
+  namespace: demo-project-91504
   finalizers:
     - finalizers.kloudlite.io/app
 spec:
   services:
     - port: 80
-      target_port: 80
+      target_port: 3000
       type: tcp
   containers:
     - name: samplex
-      image: nginx
+      image: harbor.dev.madhouselabs.io/ci/example-image:latest
       image_pull_policy: Always
       resource_cpu:
         min: "100"
@@ -20,3 +20,16 @@ spec:
       resource_memory:
         min: "100"
         max: "200"
+
+---
+apiVersion: crds.kloudlite.io/v1
+kind: Router
+metadata:
+  name: example-router
+  namespace: demo-project-91504
+spec:
+  domains: ['example.kl.madhouselabs.io']
+  routes:
+    - app: example-app
+      path: /
+      port: 80

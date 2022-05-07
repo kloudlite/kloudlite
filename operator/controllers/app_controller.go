@@ -52,7 +52,7 @@ func (r *AppReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Resul
 	return r.notify(ctx)
 }
 
-func (r *AppReconciler) notify(ctx context.Context) (ctrl.Result, error) {
+func (r *AppReconciler) notify(ctx context.Context, retry ...bool) (ctrl.Result, error) {
 	err := r.SendMessage(r.app.LogRef(), lib.MessageReply{
 		Key:        r.app.LogRef(),
 		Conditions: r.app.Status.Conditions,
@@ -64,6 +64,10 @@ func (r *AppReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 
 	if err := r.Status().Update(ctx, r.app); err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (app=%s)", r.app.LogRef()))
+	}
+	if len(retry) > 0 {
+		// TODO: find a better way to handle image from deployments
+		return reconcileResult.Retry(1)
 	}
 	return reconcileResult.OK()
 }
@@ -152,8 +156,8 @@ func (r *AppReconciler) HandleDeployments(ctx context.Context) error {
 				containerC = append(containerC, p)
 			}
 			r.buildConditions("Container", containerC...)
-			return nil
 		}
+		return nil
 	}
 
 	r.buildConditions("", metav1.Condition{
@@ -184,15 +188,6 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	app.Status.Conditions = []metav1.Condition{}
 	r.app = app
 
-	// deplCondition, err := r.IfDeployment(ctx, req)
-	// if err != nil {
-	// 	fmt.Println()
-	// }
-	// if deplCondition != nil {
-	// 	r.logger.Infof("deployment condition received: %+v", *deplCondition)
-	// 	meta.SetStatusCondition(&app.Status.Conditions, *deplCondition)
-	// }
-
 	if app.GetDeletionTimestamp() != nil {
 		return r.finalize(ctx, app)
 	}
@@ -218,6 +213,11 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		r.logger.Error(e)
 		return r.notifyAndDie(ctx, e)
 	}
+
+	if meta.IsStatusConditionFalse(app.Status.Conditions, "Ready") {
+		return r.notify(ctx, true)
+	}
+
 	logger.Info("App has been applied")
 	return r.notify(ctx)
 }

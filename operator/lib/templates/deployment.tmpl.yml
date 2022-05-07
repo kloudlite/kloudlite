@@ -19,6 +19,7 @@ spec:
       labels:
         app: {{.Name}}
     spec:
+      serviceAccount: kloudlite-svc-account
     {{- if .Spec.Containers }}
       containers:
       {{- range $k, $v := .Spec.Containers }}
