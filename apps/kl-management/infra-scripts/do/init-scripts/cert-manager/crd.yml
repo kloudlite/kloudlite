@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: prod-cert-issuer
+spec:
+  acme:
+    email: support@kloudlite.io
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: prod-cert-issuer
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
