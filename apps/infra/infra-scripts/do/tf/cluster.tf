@@ -42,30 +42,6 @@ resource "digitalocean_droplet" "agent-nodes"  {
   })
 }
 
-
-# resource "digitalocean_floating_ip" "floating-ips" {
-#   count = var.master-nodes-count
-#   region = var.region
-# }
-
-# resource "digitalocean_floating_ip_assignment" "ip-assignments" {
-#   count = var.master-nodes-count
-#   depends_on = [
-#     digitalocean_droplet.master-nodes,
-#     digitalocean_floating_ip.floating-ips
-#   ]
-#   droplet_id = digitalocean_droplet.master-nodes[count.index].id
-#   ip_address = digitalocean_floating_ip.floating-ips[count.index].ip_address
-# }
-
-# output "master-floating-ips" {
-#   value = join(",", digitalocean_floating_ip.floating-ips.*.ip_address)
-# }
-# output master-wg-ips {
-#   count = var.master-nodes-count
-#   value = join(",", "10.13.13.${count.index + 2}")
-# }
-
 output "master-nodes-count" {
   value = var.master-nodes-count
 }
