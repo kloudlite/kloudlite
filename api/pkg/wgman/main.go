@@ -221,7 +221,6 @@ func (wgc *wgManager) GetNodeIp() (string, error) {
 	out, err := wgc.remoteClient.Readfile("wg-ip")
 	if err != nil {
 		return "10.13.13.1", nil
-		//return "", fmt.Errorf("failed to get node ip: %v", err)
 	}
 	return string(out), nil
 }
