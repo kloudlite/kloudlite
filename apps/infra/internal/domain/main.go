@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/messaging"
@@ -80,6 +81,7 @@ func (d *domain) CreateCluster(cxt context.Context, action SetupClusterAction) e
 
 func (d *domain) UpdateCluster(cxt context.Context, action UpdateClusterAction) error {
 	err := d.infraCli.UpdateCluster(cxt, action)
+	fmt.Println("UpdateCluster", err)
 	if err != nil {
 		return d.jobResponder.SendUpdateClusterResponse(cxt, UpdateClusterResponse{
 			ClusterID:  action.ClusterID,
@@ -130,14 +132,14 @@ var Module = fx.Module("domain",
 					//	ClusterID:  "test-to-dlete",
 					//	Region:     "blr1",
 					//	Provider:   "do",
-					//	NodesCount: 1,
+					//	NodesCount: 0,
 					//})
-					//d.UpdateCluster(ctx, UpdateClusterAction{
-					//	ClusterID:  "hotspot-dev-k3s",
-					//	Region:     "blr1",
-					//	Provider:   "do",
-					//	NodesCount: 3,
-					//})
+					d.UpdateCluster(ctx, UpdateClusterAction{
+						ClusterID:  "test-to-dlete",
+						Region:     "blr1",
+						Provider:   "do",
+						NodesCount: 1,
+					})
 					//key1, _ := wgtypes.GenerateKey()
 					//fmt.Println(key1.String())
 					//d.AddPeerToCluster(ctx, AddPeerAction{

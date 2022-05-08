@@ -4,12 +4,18 @@ variable "agent-node-data" {
     ip = string
   }))
   default = {
-
+    {{ range $i, $node := .AgentNodes }}{{if $i}},{{end}}"{{$node.Name}}":{
+        name:"{{$node.Name}}"
+        ip: "{{$node.Ip}}"
+    }{{ end}}
   }
 }
+
 variable "agent-nodes" {
-  type = set(string)
-  default = []
+ type = set(string)
+  default = [
+    {{ range $i, $node := .AgentNodes }}{{if $i}},{{end}} "{{$node.Name}}"{{ end}}
+  ]
 }
 variable "cluster-id" {
   default = "{{ .ClusterID }}"

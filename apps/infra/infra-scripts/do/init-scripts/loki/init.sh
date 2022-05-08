@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-NAMESPACE=helm-ingress
+NAMESPACE=helm-loki
 REPO_URL="https://grafana.github.io/loki/charts"
 CHART_NAME=loki
 RELEASE=loki-stack
