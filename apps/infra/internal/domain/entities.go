@@ -1,12 +1,7 @@
 package domain
 
 func getMasterNodesCount(totalNodes int) int {
-	return func() int {
-		if totalNodes >= 3 {
-			return 3
-		}
-		return 1
-	}()
+	return 3
 }
 
 type SetupClusterAction struct {
@@ -68,7 +63,7 @@ func (s *UpdateClusterAction) MasterNodesCount() int {
 }
 
 func (s *UpdateClusterAction) AgentNodesCount() int {
-	return s.NodesCount - getMasterNodesCount(s.NodesCount)
+	return s.NodesCount
 }
 
 type UpdateClusterResponse struct {
