@@ -15,49 +15,50 @@ provider "digitalocean" {
   token = var.do-token
 }
 
-resource "digitalocean_droplet" "master-nodes"  {
-  count    = var.master-nodes-count
+resource "digitalocean_droplet" "master-node-instances"  {
+  for_each = var.master-nodes
   image    = var.do-image-id
-  name     = "${var.cluster-id}-master-node-${count.index}"
+  name     = var.master-node-data[each.value].name
   region = var.region
-  size     = var.size
+  size     = var.master-node-size
   ssh_keys = var.ssh_keys
-
   user_data = templatefile("./init.sh", {
     pubkey = file("${var.keys-path}/access.pub")
-    wg_ip  = "10.13.13.${count.index + 2}"
+    wg_ip  = var.master-node-data[each.value].ip
   })
 }
 
-resource "digitalocean_droplet" "agent-nodes"  {
-  count    = var.agent-nodes-count
+resource "digitalocean_droplet" "agent-node-instances"  {
+  for_each    = var.agent-nodes
   image    = var.do-image-id
-  name     = "${var.cluster-id}-agent-node-${count.index}"
+  name     = var.agent-node-data[each.value].name
   region = var.region
-  size     = var.size
+  size     = var.agent-node-size
   ssh_keys = var.ssh_keys
   user_data = templatefile("./init.sh", {
     pubkey = file("${var.keys-path}/access.pub")
-    wg_ip  = "10.13.13.${count.index + 5}"
+    wg_ip  = var.agent-node-data[each.value].ip
   })
 }
 
 output "master-nodes-count" {
-  value = var.master-nodes-count
+  value = length(var.master-nodes)
 }
 
 output "agent-nodes-count" {
-  value = var.agent-nodes-count
+  value = length(var.agent-nodes)
 }
 
+
 output "master-ips" {
-  value = join(",", digitalocean_droplet.master-nodes.*.ipv4_address)
+  value = join(",", [for instance in digitalocean_droplet.master-node-instances : instance.ipv4_address])
 }
 
 output "agent-ips" {
-  value = join(",", digitalocean_droplet.agent-nodes.*.ipv4_address)
+  value = join(",", [for name,instance in digitalocean_droplet.agent-node-instances : "${name}:${instance.ipv4_address}"])
 }
 
+
 output "master-internal-ip" {
-  value = digitalocean_droplet.master-nodes[0].ipv4_address
+  value = digitalocean_droplet.master-node-instances["master"].ipv4_address
 }

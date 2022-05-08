@@ -1,10 +1,12 @@
 package application
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/rexec"
@@ -13,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"kloudlite.io/apps/infra/internal/domain"
@@ -210,12 +213,98 @@ func initTerraformInFolder(folder string) error {
 	return nil
 }
 
-func applyTerraformInFolder(folder string, values map[string]any) error {
+type AgentNode struct {
+	Name     string
+	Ip       string
+	PublicIp string
+	Dropping bool
+}
+
+type ClusterNodesData struct {
+	Nodes []*AgentNode
+}
+
+type TerraformVariables struct {
+	ClusterID  string
+	AgentNodes []*AgentNode
+	DOToken    string
+	KeysPath   string
+	DOImageID  string
+	Region     string
+}
+
+func (i *infraClient) getClusterData(clusterId string) (ClusterNodesData, error) {
+	file, err := ioutil.ReadFile(fmt.Sprintf("%v/%v/cluster-nodes.data", i.env.DataPath, clusterId))
+	var data ClusterNodesData
+	if err == nil {
+		err = json.Unmarshal(file, &data)
+	}
+	err = nil
+	return data, err
+}
+
+func (i *infraClient) saveClusterData(clusterId string, data ClusterNodesData) error {
+	marshal, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(fmt.Sprintf("%v/%v/cluster-nodes.data", i.env.DataPath, clusterId), marshal, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (i *infraClient) generateNewNodeIp(clusterId string, nodeName string) (string, error) {
+	data, err := i.getClusterData(clusterId)
+	if err != nil {
+		return "", err
+	}
+	saveIp := func(ip string) (string, error) {
+		data.Nodes = append(data.Nodes, &AgentNode{Name: nodeName, Ip: ip})
+		marshal, err := json.Marshal(data)
+		if err != nil {
+			return "", err
+		}
+		err = ioutil.WriteFile(fmt.Sprintf("%v/%v/cluster-nodes.data", i.env.DataPath, clusterId), marshal, 0644)
+		if err != nil {
+			return "", err
+		}
+		return ip, nil
+	}
+	for ipind := 4; ipind <= 254; ipind++ {
+		ip := fmt.Sprintf("10.12.12.%v", ipind)
+		if len(data.Nodes) == 0 {
+			return saveIp(ip)
+		}
+		for ind, node := range data.Nodes {
+			if node.Ip == ip {
+				break
+			}
+			if ind == len(data.Nodes)-1 {
+				return saveIp(ip)
+			}
+		}
+	}
+	return "", errors.New("no more ip available")
+}
+
+func applyTerraformInFolder(folder string, values TerraformVariables) error {
 	vars := []string{"apply", "-auto-approve"}
 
-	for k, v := range values {
-		vars = append(vars, fmt.Sprintf("-var=%v=%v", k, v))
+	file, err := ioutil.ReadFile(fmt.Sprintf("%v/variables.tmpl", folder))
+	if err != nil {
+		return err
 	}
+
+	parse, err := template.New("").Parse(string(file))
+	if err != nil {
+		return err
+	}
+	var variablesData bytes.Buffer
+	parse.Execute(&variablesData, values)
+
+	ioutil.WriteFile(fmt.Sprintf("%v/variables.tf", folder), variablesData.Bytes(), 0644)
 
 	cmd := exec.Command("terraform", vars...)
 
@@ -223,7 +312,7 @@ func applyTerraformInFolder(folder string, values map[string]any) error {
 	cmd.Stderr = os.Stderr
 
 	cmd.Dir = folder
-	err := cmd.Run()
+	err = cmd.Run()
 
 	if err != nil {
 		return err
@@ -305,7 +394,6 @@ func (i *infraClient) setupAllKubernetes(clusterId string, provider string) ([]b
 
 func (i *infraClient) installSecondaryMasters(masterIps []string, k3sToken string) (err error) {
 	masterIp := masterIps[0]
-	fmt.Println(masterIps)
 	if len(masterIps) < 2 {
 		return nil
 	}
@@ -334,76 +422,88 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, k3sToken strin
 	return outErr
 }
 
-func (i *infraClient) installAgents(masterIp string, agentIps []string, k3sToken string) error {
+func (i *infraClient) installAgents(masterIp string, agentNodes []*AgentNode, k3sToken string) error {
 
-	if len(agentIps) < 1 {
-		return nil
-	}
-	fmt.Println(agentIps, "HEREERE")
-	if agentIps[0] == "" {
+	if len(agentNodes) < 1 {
 		return nil
 	}
 
-	//var waitGroup sync.WaitGroup
-	//waitGroup.Add(len(agentIps))
 	var outErr error
-	for index, ip := range agentIps {
+	for _, agentNode := range agentNodes {
+		if agentNode.Dropping {
+			continue
+		}
 		func(ip string) error {
+			fmt.Println("waiting for ssh availability", ip)
 			i.waitForSshAvailability(ip)
-			nodeName := fmt.Sprintf("agent-%v", index)
-			fmt.Println(ip, nodeName)
 			rClient := rexec.NewSshRclient(ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
-			run := rClient.Run("./join-agent.sh", k3sToken, masterIp, nodeName)
+			run := rClient.Run("./join-agent.sh", k3sToken, masterIp, agentNode.Name)
 			_, err := run.Output()
 			if err != nil {
 				outErr = err
 			}
-			//waitGroup.Done()
 			return err
-		}(ip)
+		}(agentNode.PublicIp)
 	}
-	//waitGroup.Wait()
 	return outErr
 }
 
-func (i *infraClient) applyCluster(cxt context.Context, clusterId string, provider string, masterNodesCount int, agentNodesCount int) (publicIp string, publicKey string, e error) {
+func (i *infraClient) applyCluster(
+	cxt context.Context,
+	clusterId string,
+	provider string,
+	region string,
+	agentNodes []*AgentNode,
+) (publicIp string, publicKey string, e error) {
 	defer errors.HandleErr(&e)
-
 	if _, err := os.Stat(fmt.Sprintf("%v/%v", i.env.DataPath, clusterId)); os.IsNotExist(err) {
-
-		// TODO: check if cluster already exists
 		copyTemplateDirCommand := exec.Command(
 			"cp",
 			"-r",
 			fmt.Sprintf("./infra-scripts/%v/tf/", provider),
 			fmt.Sprintf("%v/%v", i.env.DataPath, clusterId),
 		)
-
 		copyTemplateDirCommand.Stdout = os.Stdout
 		copyTemplateDirCommand.Stderr = os.Stderr
 		e = copyTemplateDirCommand.Run()
-
 		errors.AssertNoError(e, fmt.Errorf("unable to copy template directory"))
-
 	}
 	e = initTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, clusterId))
 	errors.AssertNoError(e, fmt.Errorf("unable to init terraform primary"))
 
-	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, clusterId), map[string]any{
-		"cluster-id":         clusterId,
-		"do-token":           i.env.DoAPIKey,
-		"keys-path":          i.env.SshKeysPath,
-		"master-nodes-count": masterNodesCount,
-		"agent-nodes-count":  agentNodesCount,
-		"do-image-id":        i.env.DoImageId,
-	})
+	e = applyTerraformInFolder(fmt.Sprintf("%v/%v", i.env.DataPath, clusterId),
+		TerraformVariables{
+			ClusterID:  clusterId,
+			AgentNodes: agentNodes,
+			DOToken:    i.env.DoAPIKey,
+			KeysPath:   i.env.SshKeysPath,
+			DOImageID:  i.env.DoImageId,
+			Region:     region,
+		})
 
 	errors.AssertNoError(e, fmt.Errorf("unable to apply terraform primary"))
 
 	masterIps, e := i.getOutputTerraformInFolder(clusterId, "master-ips")
-	agentIps, e := i.getOutputTerraformInFolder(clusterId, "agent-ips")
-
-	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ip"))
+	agentIpsMap, e := i.getOutputTerraformInFolder(clusterId, "agent-ips")
+	errors.AssertNoError(e, fmt.Errorf("unable to get cluster ips"))
+	data, err := i.getClusterData(clusterId)
+	errors.AssertNoError(err, fmt.Errorf("unable to get cluster data"))
+	for _, agentIpEntry := range strings.Split(agentIpsMap, ",") {
+		if agentIpEntry == "" {
+			continue
+		}
+		for _, agentNode := range data.Nodes {
+			nodeName := strings.Split(agentIpEntry, ":")[0]
+			publicIp := strings.Split(agentIpEntry, ":")[1]
+			fmt.Println("node name", nodeName, "public ip", publicIp)
+			if agentNode.Name == nodeName {
+				agentNode.PublicIp = publicIp
+				break
+			}
+		}
+	}
+	e = i.saveClusterData(clusterId, data)
+	errors.AssertNoError(e, fmt.Errorf("unable to save cluster data"))
 
 	clusterIp := strings.Split(masterIps, ",")[0]
 	var clusterPublicKey string
@@ -417,12 +517,21 @@ func (i *infraClient) applyCluster(cxt context.Context, clusterId string, provid
 	waitGroup.Add(5)
 	go func() {
 		clusterPublicKeyWaitGroup.Wait()
-		i.setupNodeWireguards(
-			append(strings.Split(masterIps, ","), strings.Split(agentIps, ",")...),
+		var agentIps []string
+		for _, agentNode := range data.Nodes {
+			if !agentNode.Dropping {
+				agentIps = append(agentIps, agentNode.PublicIp)
+			}
+		}
+		err := i.setupNodeWireguards(
+			append(strings.Split(masterIps, ","), agentIps...),
 			clusterId,
 			clusterIp,
 			clusterPublicKey,
 		)
+		if err != nil {
+			fmt.Println("[Error] unable to setup wireguard", err)
+		}
 		fmt.Println("#5 node wireguards done")
 		waitGroup.Done()
 	}()
@@ -441,21 +550,28 @@ func (i *infraClient) applyCluster(cxt context.Context, clusterId string, provid
 	}()
 
 	go func() {
-		kubernetes, _ := i.setupAllKubernetes(clusterId, provider)
-		fmt.Println(string(kubernetes))
+		_, err := i.setupAllKubernetes(clusterId, provider)
+		if err != nil {
+			fmt.Println(fmt.Errorf("unable to setup kubernetes %v", err))
+		}
 		fmt.Println("#3 kubernetes setup done")
 		waitGroup.Done()
 	}()
 
 	go func() {
-		i.waitForKubernetesAPIAvailability(clusterId)
-		i.installSecondaryMasters(strings.Split(masterIps, ","), string(joinToken))
-		fmt.Println("#2 sec masters installed")
+		err := i.installSecondaryMasters(strings.Split(masterIps, ","), string(joinToken))
+		if err != nil {
+			fmt.Println(fmt.Errorf("unable to get cluster data %v", err))
+		}
+		fmt.Println("#1 secondary masters installed")
 		waitGroup.Done()
 	}()
 
 	go func() {
-		i.installAgents(clusterIp, strings.Split(agentIps, ","), string(joinToken))
+		err := i.installAgents(clusterIp, data.Nodes, string(joinToken))
+		if err != nil {
+			fmt.Println(fmt.Errorf("unable to get cluster data %v", err))
+		}
 		fmt.Println("#1 agents installed")
 		waitGroup.Done()
 	}()
@@ -469,51 +585,83 @@ func (i *infraClient) applyCluster(cxt context.Context, clusterId string, provid
 }
 
 func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClusterAction) (publicIp string, publicKey string, e error) {
-	return i.applyCluster(cxt, action.ClusterID, action.Provider, action.MasterNodesCount(), action.AgentNodesCount())
+	agentNodes := make([]*AgentNode, 0)
+	for in := 0; in < action.NodesCount; in++ {
+		newUUID := uuid.NewUUID()
+		nodeName := fmt.Sprintf("agent-%v-%v", in, newUUID)
+		ip, e := i.generateNewNodeIp(action.ClusterID, nodeName)
+		if e != nil {
+			return "", "", e
+		}
+		agentNodes = append(agentNodes, &AgentNode{
+			Name: nodeName,
+			Ip:   ip,
+		})
+	}
+	cluster, key, e := i.applyCluster(cxt, action.ClusterID, action.Provider, action.Region, agentNodes)
+	i.getClusterData(action.ClusterID)
+	return cluster, key, e
 }
 
+var dropNodeTimer *time.Timer
+
 func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClusterAction) (e error) {
-	masterNodesCountStr, e := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count")
-	agentNodesCountStr, e := i.getOutputTerraformInFolder(action.ClusterID, "agent-nodes-count")
-
-	masterNodesCount, e := strconv.Atoi(masterNodesCountStr)
-	agentNodesCount, e := strconv.Atoi(agentNodesCountStr)
-
-	dropNodes := make([]string, 0)
-
-	firstPassExpectedMasterCount := masterNodesCount
-	firstPassExpectedAgentCount := agentNodesCount
-
-	if action.MasterNodesCount() < masterNodesCount {
-		for i := action.MasterNodesCount(); i < masterNodesCount; i++ {
-			dropNodes = append(dropNodes, fmt.Sprintf("master-%v", i))
-		}
-	} else {
-		firstPassExpectedMasterCount = action.MasterNodesCount()
+	if dropNodeTimer != nil {
+		dropNodeTimer.Stop()
 	}
 
-	if action.AgentNodesCount() < agentNodesCount {
-		for i := action.AgentNodesCount(); i < agentNodesCount; i++ {
-			dropNodes = append(dropNodes, fmt.Sprintf("agent-%v", i))
-		}
-	} else {
-		firstPassExpectedAgentCount = action.AgentNodesCount()
+	data, e := i.getClusterData(action.ClusterID)
+	if e != nil {
+		return e
 	}
 
-	_, _, e = i.applyCluster(cxt, action.ClusterID, action.Provider, firstPassExpectedMasterCount, firstPassExpectedAgentCount)
+	if action.AgentNodesCount() < len(data.Nodes) {
+		for in, node := range data.Nodes {
+			if in >= action.AgentNodesCount() {
+				node.Dropping = true
+			} else {
+				node.Dropping = false
+			}
+		}
+	} else {
+		for in := len(data.Nodes); in < action.AgentNodesCount(); in++ {
+			newUUID := uuid.NewUUID()
+			nodeName := fmt.Sprintf("agent-%v-%v", in, newUUID)
+			ip, err := i.generateNewNodeIp(action.ClusterID, nodeName)
+			if err != nil {
+				return err
+			}
+			data.Nodes = append(data.Nodes, &AgentNode{
+				Name:     nodeName,
+				Ip:       ip,
+				Dropping: false,
+			})
+		}
+	}
+	i.saveClusterData(action.ClusterID, data)
+	_, _, e = i.applyCluster(cxt, action.ClusterID, action.Provider, action.Region, data.Nodes)
 
 	if e != nil {
 		return e
 	}
 
-	for _, node := range dropNodes {
-		cmd := exec.Command(
-			"kubectl",
-			"drain",
-			node,
-			"--ignore-daemonsets",
-			"--delete-local-data",
-		)
+	for _, node := range data.Nodes {
+		var cmd *exec.Cmd
+		if !node.Dropping {
+			cmd = exec.Command(
+				"kubectl",
+				"uncordon",
+				node.Name,
+			)
+		} else {
+			cmd = exec.Command(
+				"kubectl",
+				"drain",
+				node.Name,
+				"--ignore-daemonsets",
+				"--delete-local-data",
+			)
+		}
 		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID)))
 		_, e := cmd.Output()
 		if e != nil {
@@ -522,21 +670,37 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 		}
 	}
 
-	time.AfterFunc(time.Duration(i.env.NodeDrainTime)*time.Second, func() {
-		for _, node := range dropNodes {
-			cmd := exec.Command(
-				"kubectl",
-				"delete", "node",
-				node,
-			)
-			cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID)))
-			_, e := cmd.Output()
-			if e != nil {
-				fmt.Println(fmt.Errorf("unable to drain node %v %v", node, e))
-				continue
+	dropNodeTimer = time.AfterFunc(time.Duration(i.env.NodeDrainTime)*time.Second, func() {
+		data, e := i.getClusterData(action.ClusterID)
+		if e != nil {
+			return
+		}
+		for _, node := range data.Nodes {
+			if node.Dropping {
+				cmd := exec.Command(
+					"kubectl",
+					"delete", "node",
+					node.Name,
+				)
+				cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID)))
+				_, e := cmd.Output()
+				if e != nil {
+					fmt.Println(fmt.Errorf("unable to delete node %v %v", node, e))
+					continue
+				}
 			}
 		}
-		i.applyCluster(cxt, action.ClusterID, action.Provider, action.MasterNodesCount(), action.AgentNodesCount())
+		newNodes := make([]*AgentNode, 0)
+		for _, node := range data.Nodes {
+			if node.Dropping {
+				continue
+			}
+			newNodes = append(newNodes, node)
+		}
+		data.Nodes = newNodes
+		cluster, key, e := i.applyCluster(cxt, action.ClusterID, action.Provider, action.Region, newNodes)
+		fmt.Println(cluster, key, e)
+		i.saveClusterData(action.ClusterID, data)
 	})
 	return e
 }
