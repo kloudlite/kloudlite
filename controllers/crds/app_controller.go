@@ -1,4 +1,4 @@
-package controllers
+package crds
 
 import (
 	"context"
@@ -10,12 +10,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels2 "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	fn "operators.kloudlite.io/lib/functions"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"

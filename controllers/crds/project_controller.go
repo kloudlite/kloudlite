@@ -1,10 +1,11 @@
-package controllers
+package crds
 
 import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -17,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/client-go/kubernetes"
-	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"
