@@ -1,5 +1,4 @@
 domain: kloudlite.io
-multigroup: true
 layout:
 - go.kubebuilder.io/v3
 multigroup: true
@@ -80,5 +79,14 @@ resources:
   group: watchers.msvc
   kind: MongoDB
   path: operators.kloudlite.io/apis/watchers.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: crds
+  kind: Account
+  path: operators.kloudlite.io/apis/crds/v1
   version: v1
 version: "3"

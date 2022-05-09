@@ -1,8 +1,9 @@
-package controllers
+package crds
 
 import (
 	"context"
 	"fmt"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -21,7 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	crdsv1 "operators.kloudlite.io/api/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
 	"operators.kloudlite.io/lib"

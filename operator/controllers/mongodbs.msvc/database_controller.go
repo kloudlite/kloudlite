@@ -3,6 +3,7 @@ package mongodbsmsvc
 import (
 	"context"
 	"fmt"
+	"operators.kloudlite.io/controllers/crds"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
-	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"
@@ -113,7 +113,7 @@ func (r *DatabaseReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 // +kubebuilder:rbac:groups=mongodbs.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.logger = controllers.GetLogger(req.NamespacedName)
+	r.logger = crds.GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
 
 	logger.Infof("DBReconciler: Reconcile request received for  %s", req.NamespacedName)
