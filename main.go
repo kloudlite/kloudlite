@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/redhat-cop/operator-utils/pkg/util"
 	"os"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
@@ -79,12 +80,13 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "bf38d2f9.kloudlite.io",
+		Scheme:                     scheme,
+		MetricsBindAddress:         metricsAddr,
+		Port:                       9443,
+		HealthProbeBindAddress:     probeAddr,
+		LeaderElection:             enableLeaderElection,
+		LeaderElectionID:           "bf38d2f9.kloudlite.io",
+		LeaderElectionResourceLock: "configmaps",
 	})
 
 	if err != nil {
@@ -186,8 +188,14 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&crdscontrollers.AccountReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		ReconcilerBase: util.NewReconcilerBase(
+			mgr.GetClient(),
+			mgr.GetScheme(),
+			mgr.GetConfig(),
+			mgr.GetEventRecorderFor("Account_controller"),
+			mgr.GetAPIReader(),
+		),
+		Log: ctrl.Log.WithName("controllers").WithName("Account"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Account")
 		os.Exit(1)

@@ -71,4 +71,5 @@ const (
 	Service                 templateFile = "service.tmpl.yml"
 	Secret                  templateFile = "secret.tmpl.yml"
 	MongoDBResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
+	AccountWireguard        templateFile = "account-deploy.tmpl.yml"
 )
