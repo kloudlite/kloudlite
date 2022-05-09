@@ -1,4 +1,4 @@
-package controllers
+package crds
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	labels2 "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"operators.kloudlite.io/apis/crds/v1"
 	mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	"operators.kloudlite.io/lib/finalizers"
 	fn "operators.kloudlite.io/lib/functions"
@@ -22,7 +23,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	crdsv1 "operators.kloudlite.io/api/v1"
 	// mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
@@ -38,7 +38,7 @@ type ManagedResourceReconciler struct {
 	lib.MessageSender
 	JobMgr lib.Job
 	logger *zap.SugaredLogger
-	mres   *crdsv1.ManagedResource
+	mres   *v1.ManagedResource
 }
 
 func (r *ManagedResourceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
@@ -78,7 +78,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	logger := r.logger.With("RECONCILE", "true")
 	logger.Debug("Reconciling ManagedResource")
 
-	mres := &crdsv1.ManagedResource{}
+	mres := &v1.ManagedResource{}
 	if err := r.Get(ctx, req.NamespacedName, mres); err != nil {
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
@@ -99,7 +99,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r.finalize(ctx, mres)
 	}
 
-	managedSvc := &crdsv1.ManagedService{}
+	managedSvc := &v1.ManagedService{}
 	if err := r.Get(ctx, types.NamespacedName{Name: mres.Spec.ManagedSvc, Namespace: mres.Namespace}, managedSvc); err != nil {
 		return r.notifyAndDie(ctx, errors.NewEf(err, "failing to get managed-svc(name=%s, namespace=%s), would start again when it is available", mres.Spec.ManagedSvc, mres.Namespace))
 	}
@@ -163,7 +163,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// return reconcileResult.OK()
 }
 
-func (r *ManagedResourceReconciler) finalize(ctx context.Context, mres *crdsv1.ManagedResource) (ctrl.Result, error) {
+func (r *ManagedResourceReconciler) finalize(ctx context.Context, mres *v1.ManagedResource) (ctrl.Result, error) {
 	if controllerutil.ContainsFinalizer(mres, finalizers.ManagedResource.String()) {
 		controllerutil.RemoveFinalizer(mres, finalizers.ManagedResource.String())
 		if err := r.Update(ctx, mres); err != nil {
@@ -186,16 +186,16 @@ func (r *ManagedResourceReconciler) finalize(ctx context.Context, mres *crdsv1.M
 // SetupWithManager sets up the controller with the Manager.
 func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&crdsv1.ManagedResource{}).
+		For(&v1.ManagedResource{}).
 		Owns(&mongodb.Database{}).
 		Watches(&source.Kind{
-			Type: &crdsv1.ManagedService{},
+			Type: &v1.ManagedService{},
 		}, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
 			if s := c.GetLabels()["msvc.kloudlite.io/type"]; s != MongoDBStandalone.String() {
 				return nil
 			}
 
-			var mresList crdsv1.ManagedResourceList
+			var mresList v1.ManagedResourceList
 			if err := r.List(context.TODO(), &mresList, &client.ListOptions{
 				LabelSelector: labels2.SelectorFromValidatedSet(map[string]string{
 					fmt.Sprintf("mres.kloudlite.io/of-msvc"): c.GetName(),

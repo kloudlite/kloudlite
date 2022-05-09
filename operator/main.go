@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/redhat-cop/operator-utils/pkg/util"
 	"os"
 
-	"operators.kloudlite.io/controllers"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	"operators.kloudlite.io/controllers/crds"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -22,7 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"operators.kloudlite.io/agent"
-	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
 
@@ -31,6 +33,7 @@ import (
 	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watchersmsvcv1 "operators.kloudlite.io/apis/watchers.msvc/v1"
+	crdscontrollers "operators.kloudlite.io/controllers/crds"
 	mongodbsmsvcControllers "operators.kloudlite.io/controllers/mongodbs.msvc"
 	watchersmsvccontrollers "operators.kloudlite.io/controllers/watchers.msvc"
 	// +kubebuilder:scaffold:imports
@@ -77,12 +80,13 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "bf38d2f9.kloudlite.io",
+		Scheme:                     scheme,
+		MetricsBindAddress:         metricsAddr,
+		Port:                       9443,
+		HealthProbeBindAddress:     probeAddr,
+		LeaderElection:             enableLeaderElection,
+		LeaderElectionID:           "bf38d2f9.kloudlite.io",
+		LeaderElectionResourceLock: "configmaps",
 	})
 
 	if err != nil {
@@ -115,7 +119,7 @@ func main() {
 
 	sender := NewMsgSender(kafkaProducer, kafkaReplyTopic)
 
-	if err = (&controllers.ProjectReconciler{
+	if err = (&crds.ProjectReconciler{
 		Client:         mgr.GetClient(),
 		Scheme:         mgr.GetScheme(),
 		ClientSet:      clientset,
@@ -127,7 +131,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.AppReconciler{
+	if err = (&crds.AppReconciler{
 		Client:         mgr.GetClient(),
 		Scheme:         mgr.GetScheme(),
 		ClientSet:      clientset,
@@ -139,7 +143,7 @@ func main() {
 		os.Exit(1)
 	}
 	//
-	if err = (&controllers.RouterReconciler{
+	if err = (&crds.RouterReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		MessageSender: sender,
@@ -148,7 +152,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.ManagedServiceReconciler{
+	if err = (&crds.ManagedServiceReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		ClientSet:     clientset,
@@ -158,7 +162,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.ManagedResourceReconciler{
+	if err = (&crds.ManagedResourceReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		MessageSender: sender,
@@ -181,6 +185,19 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MongoDBStatus")
+		os.Exit(1)
+	}
+	if err = (&crdscontrollers.AccountReconciler{
+		ReconcilerBase: util.NewReconcilerBase(
+			mgr.GetClient(),
+			mgr.GetScheme(),
+			mgr.GetConfig(),
+			mgr.GetEventRecorderFor("Account_controller"),
+			mgr.GetAPIReader(),
+		),
+		Log: ctrl.Log.WithName("controllers").WithName("Account"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Account")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

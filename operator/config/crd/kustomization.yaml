@@ -5,4 +5,5 @@ resources:
 - bases/msvc.kloudlite.io_mongodbs.yaml
 - bases/mongodbs.msvc.kloudlite.io_databases.yaml
 - bases/watchers.msvc.kloudlite.io_mongodbs.yaml
+- bases/crds.kloudlite.io_accounts.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
