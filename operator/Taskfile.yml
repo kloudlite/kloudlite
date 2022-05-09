@@ -36,7 +36,7 @@ tasks:
     run: always
     cmds:
       - task: kill-port
-      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go |& pp -rel-path || exit 1'
+      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go || exit 0'
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
     sources:
@@ -76,7 +76,7 @@ tasks:
     dir: config/crd/bases
     cmds:
       - kubectl apply -f .
-  
+
   kill-port:
     run: always
     cmds:

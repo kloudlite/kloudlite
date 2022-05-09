@@ -18,36 +18,79 @@ package crds
 
 import (
 	"context"
+	"github.com/go-logr/logr"
+	"operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/templates"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
+	"github.com/redhat-cop/operator-utils/pkg/util"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
+
+const controllerName = "Account_controller"
 
 // AccountReconciler reconciles a Account object
 type AccountReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	util.ReconcilerBase
+	Log logr.Logger
 }
 
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Account object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *AccountReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := r.Log.WithValues("project", req.NamespacedName)
+	instance := &crdsv1.Account{}
+	err := r.GetClient().Get(ctx, req.NamespacedName, instance)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+
+	if ok, err := r.IsValid(instance); !ok {
+		return r.ManageError(ctx, instance, err)
+	}
+
+	if ok := r.IsInitialized(instance); !ok {
+		err := r.GetClient().Update(ctx, instance)
+		if err != nil {
+			log.Error(err, "unable to update instance", "instance", instance)
+			return r.ManageError(ctx, instance, err)
+		}
+		return reconcile.Result{}, nil
+	}
+
+	if util.IsBeingDeleted(instance) {
+		if !util.HasFinalizer(instance, controllerName) {
+			return reconcile.Result{}, nil
+		}
+		err := r.manageCleanUpLogic(ctx, instance)
+		if err != nil {
+			log.Error(err, "unable to delete instance", "instance", instance)
+			return r.ManageError(ctx, instance, err)
+		}
+		util.RemoveFinalizer(instance, controllerName)
+		err = r.GetClient().Update(ctx, instance)
+		if err != nil {
+			log.Error(err, "unable to update instance", "instance", instance)
+			return r.ManageError(ctx, instance, err)
+		}
+		return reconcile.Result{}, nil
+	}
+
+	parse, err := templates.Parse(templates.AccountWireguard, instance)
+	if err != nil {
+		return r.ManageError(ctx, instance, err)
+	}
+	if err := functions.KubectlApply(parse); err != nil {
+		return r.ManageError(ctx, instance, err)
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -56,4 +99,8 @@ func (r *AccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.Account{}).
 		Complete(r)
+}
+
+func (r *AccountReconciler) manageCleanUpLogic(ctx context.Context, instance *crdsv1.Account) error {
+	return nil
 }

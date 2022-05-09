@@ -40,6 +40,7 @@ type AccountStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 
 // Account is the Schema for the accounts API
 type Account struct {
