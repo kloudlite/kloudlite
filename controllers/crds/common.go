@@ -1,4 +1,4 @@
-package controllers
+package crds
 
 import (
 	"go.uber.org/zap"

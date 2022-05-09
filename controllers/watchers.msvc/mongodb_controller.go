@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"operators.kloudlite.io/controllers/crds"
 	"os"
 	"os/exec"
 	"strings"
@@ -28,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
-	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
@@ -383,7 +383,7 @@ func (r *MongoDBReconciler) getMongoDBStatus(ctx context.Context, name types.Nam
 // +kubebuilder:rbac:groups=watchers.msvc.kloudlite.io,resources=mongodbs/finalizers,verbs=update
 
 func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.logger = controllers.GetLogger(req.NamespacedName)
+	r.logger = crds.GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true).With("MongoDBWatcher", "true")
 
 	logger.Infof("Reconcilation Request Received")

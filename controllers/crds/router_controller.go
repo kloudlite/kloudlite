@@ -1,9 +1,10 @@
-package controllers
+package crds
 
 import (
 	"context"
 	"fmt"
 	"k8s.io/apimachinery/pkg/api/meta"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib"
 
 	"go.uber.org/zap"
@@ -16,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	crdsv1 "operators.kloudlite.io/api/v1"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
