@@ -1,4 +1,7 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
 - msvc_v1_mongodb.yaml
+- crds_v1_mongodb.yaml
+- msvc_v1_mysqldb.yaml
+- msvc_v1_elasticsearch.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

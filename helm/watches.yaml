@@ -3,4 +3,12 @@
   version: v1
   kind: MongoDB
   chart: helm-charts/mongodb
+- group: msvc.kloudlite.io
+  version: v1
+  kind: MySqlDB
+  chart: helm-charts/mysql
+- group: msvc.kloudlite.io
+  version: v1
+  kind: ElasticSearch
+  chart: helm-charts/elasticsearch
 #+kubebuilder:scaffold:watch

@@ -1,0 +1,24 @@
+# permissions for end users to edit mysqldbs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mysqldb-editor-role
+rules:
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - mysqldbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - mysqldbs/status
+  verbs:
+  - get

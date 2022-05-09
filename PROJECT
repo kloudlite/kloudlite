@@ -1,4 +1,5 @@
 domain: kloudlite.io
+multigroup: true
 layout:
 - go.kubebuilder.io/v3
 multigroup: true

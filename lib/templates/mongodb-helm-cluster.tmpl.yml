@@ -11,16 +11,26 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
+  architecture: "replicaset"
+  replicaCount: {{index .Spec.Inputs "replica_count" | int64 }}
+  replicaSetName: rs
+  replicaSetHostnames: true
+
   auth:
     enabled: true
-    rootPassword: {{index .Spec.Inputs "root_password" | quote}}
+    rootPassword: {{index .Spec.Inputs "root_password" | quote }}
+    replicaSetKey: {{index .Spec.Inputs "replica_set_key" | quote }}
+
   persistence:
     enabled: true
     size: {{index .Spec.Inputs "size" | default "1Gi" }}
+
   volumePermissions:
     enabled: true
+
   metrics:
     enabled: true
+
   resources:
     requests:
       cpu: 200m

@@ -3,6 +3,7 @@ package mongodbsmsvc
 import (
 	"context"
 	"fmt"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -13,6 +14,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	"operators.kloudlite.io/controllers"
 	"operators.kloudlite.io/lib"
@@ -20,9 +25,6 @@ import (
 	"operators.kloudlite.io/lib/finalizers"
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -174,7 +176,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	var user bson.M
-	password, err := fn.CleanerNanoid(64)
+	password := fn.CleanerNanoid(64)
 	if err != nil {
 		return r.notifyAndDie(ctx, errors.NewEf(err, "could not generate password using nanoid"))
 	}

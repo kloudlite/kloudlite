@@ -2,13 +2,25 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	labels2 "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
 	crdsv1 "operators.kloudlite.io/api/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
@@ -18,12 +30,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // ManagedServiceReconciler reconciles a ManagedService object
@@ -83,6 +89,14 @@ func (r *ManagedServiceReconciler) notifyAndUpdate(ctx context.Context) (ctrl.Re
 	return reconcileResult.OK()
 }
 
+var availableMsvc = map[ManagedServiceType]bool{
+	MongoDBStandalone: true,
+	MongoDBCluster:    true,
+	ElasticSearch:     false,
+	MySqlStandalone:   false,
+	MySqlCluster:      false,
+}
+
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
@@ -95,6 +109,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcileResult.Failed()
 	}
 
+	fmt.Println("HERE 1..................................")
 	if !msvc.HasLabels() {
 		msvc.EnsureLabels()
 		if err := r.Update(ctx, msvc); err != nil {
@@ -103,36 +118,93 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcileResult.OK()
 	}
 
+	fmt.Println("HERE 2..................................")
 	r.msvc = msvc
 	if msvc.GetDeletionTimestamp() != nil {
 		return r.finalize(ctx, msvc)
 	}
 
-	if msvc.Spec.Type != MongoDBStandalone.String() {
+	if isAvail, ok := availableMsvc[ManagedServiceType(msvc.Spec.Type)]; !ok || !isAvail {
+		logger.Info("Invalid ManagedSvc Type: ", msvc.Spec.Type)
 		return reconcileResult.Failed()
+	}
+
+	fmt.Println("HERE 3..................................")
+	switch ManagedServiceType(msvc.Spec.Type) {
+	case MongoDBStandalone:
+		{
+			var helmSecret corev1.Secret
+			nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
+			if err := r.Get(ctx, nn, &helmSecret); err != nil {
+				logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
+			}
+			x, ok := helmSecret.Data["mongodb-root-password"]
+			msvc.Spec.Inputs["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string)
+
+			b, err := templates.Parse(templates.MongoDBStandalone, msvc)
+			if err != nil {
+				r.logger.Info(err)
+				return r.notifyAndDie(ctx, err)
+			}
+			watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
+			if err != nil {
+				r.logger.Info(err)
+				return r.notifyAndDie(ctx, err)
+			}
+			if err := fn.KubectlApply(b, watcher); err != nil {
+				return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
+			}
+		}
+
+	case MongoDBCluster:
+		{
+			var helmSecret corev1.Secret
+			nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
+			if err := r.Get(ctx, nn, &helmSecret); err != nil {
+				logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
+			}
+
+			x, ok := helmSecret.Data["mongodb-root-password"]
+			msvc.Spec.Inputs["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string)
+			y, ok2 := helmSecret.Data["mongodb-replica-set-key"]
+			msvc.Spec.Inputs["replica_set_key"] = fn.IfThenElse(ok2, string(y), fn.CleanerNanoid(41)).(string)
+
+			b, err := templates.Parse(templates.MongoDBCluster, msvc)
+			if err != nil {
+				r.logger.Info(err)
+				return r.notifyAndDie(ctx, err)
+			}
+			watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
+			if err != nil {
+				r.logger.Info(err)
+				return r.notifyAndDie(ctx, err)
+			}
+			if err := fn.KubectlApply(b, watcher); err != nil {
+				return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
+			}
+			fmt.Println("HERE 4..................................")
+		}
+
+	case ElasticSearch:
+		{
+		}
+	case MySqlStandalone:
+		{
+		}
+	case MySqlCluster:
+		{
+		}
 	}
 
 	mWatcher := &watcherMsvc.MongoDB{}
 	if err := r.Get(ctx, req.NamespacedName, mWatcher); err != nil {
 	}
 	if mWatcher.Name != "" {
+		logger.Infof("watcher: %+v", mWatcher.Name)
 		msvc.Status.Conditions = mWatcher.Status.Conditions
 		return r.notifyAndUpdate(ctx)
 	}
 
-	b, err := templates.Parse(templates.MongoDBStandalone, msvc)
-	if err != nil {
-		r.logger.Info(err)
-		return r.notifyAndDie(ctx, err)
-	}
-	watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
-	if err != nil {
-		r.logger.Info(err)
-		return r.notifyAndDie(ctx, err)
-	}
-	if err := fn.KubectlApply(b, watcher); err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
-	}
 	logger.Infof("applied managed service")
 	return r.notifyAndUpdate(ctx)
 }
@@ -168,12 +240,31 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&crdsv1.ManagedService{}).
 		Owns(&msvcv1.MongoDB{}).
 		Watches(&source.Kind{
-			Type: &watcherMsvc.MongoDB{},
+			Type: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "msvc.kloudlite.io/v1",
+					"kind":       "MongoDB",
+				},
+			},
 		}, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
+			var msvcList crdsv1.ManagedServiceList
+
+			ref := fmt.Sprintf("msvc.kloudlite.io/ref: %s-%s-%s", c.GetNamespace(), c.GetObjectKind().GroupVersionKind().Kind, c.GetName())
+			fmt.Printf("label is| %s\n", ref)
+			if err := r.List(context.TODO(), &msvcList, &client.ListOptions{
+				LabelSelector: labels2.SelectorFromValidatedSet(map[string]string{
+					"msvc.kloudlite.io/ref": ref,
+				}),
+			}); err != nil {
+				return nil
+			}
 			var reqs []reconcile.Request
-			reqs = append(reqs, reconcile.Request{
-				NamespacedName: types.NamespacedName{Namespace: c.GetNamespace(), Name: c.GetName()},
-			})
+			for _, item := range msvcList.Items {
+				reqs = append(reqs, reconcile.Request{
+					NamespacedName: types.NamespacedName{Namespace: item.GetNamespace(), Name: item.GetName()},
+				})
+			}
+			fmt.Println("reqs:", reqs)
 			return reqs
 		})).
 		Complete(r)

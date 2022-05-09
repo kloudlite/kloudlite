@@ -61,4 +61,101 @@ rules:
   resources:
   - "deployments"
 
+##
+## Rules for crds.kloudlite.io/v1, Kind: MongoDB
+##
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - mongodbs
+  - mongodbs/status
+  - mongodbs/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "deployments"
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "configmaps"
+  - "persistentvolumeclaims"
+  - "secrets"
+  - "serviceaccounts"
+  - "services"
+
+##
+## Rules for msvc.kloudlite.io/v1, Kind: MySqlDB
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - mysqldbs
+  - mysqldbs/status
+  - mysqldbs/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "configmaps"
+  - "secrets"
+  - "serviceaccounts"
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "statefulsets"
+
+##
+## Rules for msvc.kloudlite.io/v1, Kind: ElasticSearch
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - elasticsearches
+  - elasticsearches/status
+  - elasticsearches/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "statefulsets"
+
 #+kubebuilder:scaffold:rules
