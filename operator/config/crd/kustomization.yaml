@@ -6,4 +6,8 @@ resources:
 - bases/mongodbs.msvc.kloudlite.io_databases.yaml
 - bases/watchers.msvc.kloudlite.io_mongodbs.yaml
 - bases/crds.kloudlite.io_accounts.yaml
+- bases/mongodb-standalone.msvc.kloudlite.io_services.yaml
+- bases/mongodb-standalone.msvc.kloudlite.io_databases.yaml
+- bases/mongodb-cluster.msvc.kloudlite.io_databases.yaml
+- bases/mongodb-cluster.msvc.kloudlite.io_services.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

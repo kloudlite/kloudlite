@@ -14,4 +14,8 @@ resources:
 - mongodbs.msvc_v1_database.yaml
 - watchers.msvc_v1_mongodb.yaml
 - crds_v1_account.yaml
+- mongodb-standalone.msvc_v1_service.yaml
+- mongodb-standalone.msvc_v1_database.yaml
+- mongodb-cluster.msvc_v1_database.yaml
+- mongodb-cluster.msvc_v1_service.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

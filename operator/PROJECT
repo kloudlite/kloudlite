@@ -89,4 +89,40 @@ resources:
   kind: Account
   path: operators.kloudlite.io/apis/crds/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: mongodb-standalone.msvc
+  kind: Service
+  path: operators.kloudlite.io/apis/mongodb-standalone.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: mongodb-standalone.msvc
+  kind: Database
+  path: operators.kloudlite.io/apis/mongodb-standalone.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: mongodb-cluster.msvc
+  kind: Database
+  path: operators.kloudlite.io/apis/mongodb-cluster.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: mongodb-cluster.msvc
+  kind: Service
+  path: operators.kloudlite.io/apis/mongodb-cluster.msvc/v1
+  version: v1
 version: "3"

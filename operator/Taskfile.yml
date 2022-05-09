@@ -14,11 +14,13 @@ tasks:
       - go run -tags dynamic main.go |& pp -rel-path
 
   new-kind:
+    silent: true
     cmds:
-      - |
+      - | 
         [ -z "{{.Group}}" ] && echo env-var 'Group' not provided && exit 1
         [ -z "{{.Kind}}" ] && echo env-var 'Kind' not provided && exit 1
-      - echo operator-sdk create api --group {{.Group}} --version v1 --resource --controller --kind "{{.Kind}}"
+        exit 0
+      - operator-sdk create api --group {{.Group}} --version v1 --resource --controller --kind "{{.Kind}}"
 
   new-mongo-res:
       - operator-sdk create api --group mongodbs.msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
