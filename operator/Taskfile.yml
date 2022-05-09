@@ -15,7 +15,10 @@ tasks:
 
   new-kind:
     cmds:
-      - operator-sdk create api --group crds --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
+      - |
+        [ -z "{{.Group}}" ] && echo env-var 'Group' not provided && exit 1
+        [ -z "{{.Kind}}" ] && echo env-var 'Kind' not provided && exit 1
+      - echo operator-sdk create api --group {{.Group}} --version v1 --resource --controller --kind "{{.Kind}}"
 
   new-mongo-res:
       - operator-sdk create api --group mongodbs.msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
@@ -59,13 +62,12 @@ tasks:
   helm-operators:
     dir: ./helm
     cmds:
-      - operator-sdk create api --plugins=helm --group msvc --version v2 --kind MongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
+      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind MongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
       - operator-sdk create api --plugins=helm --group msvc --version v1 --kind MySqlDB --helm-chart mysql --helm-chart-repo https://charts.bitnami.com/bitnami
       - operator-sdk create api --plugins=helm --group msvc --version v1 --kind ElasticSearch --helm-chart elasticsearch --helm-chart-repo https://charts.bitnami.com/bitnami
   pre:
     run: once
     cmds:
-      - go version
       - go mod tidy
       - make manifests
       - task: apply
