@@ -1,0 +1,20 @@
+apiVersion: msvc.kloudlite.io/v1
+kind: MySqlDB
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences:
+    - apiVersion: {{.APIVersion}}
+      kind: {{.Kind}}
+      name: {{.Name}}
+      uid: {{.UID}}
+      controller: true
+      blockOwnerDeletion: true
+spec:
+  architecture: standalone
+  auth:
+    rootPassword: {{index .Spec.Inputs "root_password" }}
+  primary:
+    persistence:
+      enabled: true
+      size: {{index .Spec.Inputs "size" | default "1Gi" }}

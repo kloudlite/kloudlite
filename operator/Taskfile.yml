@@ -56,9 +56,12 @@ tasks:
       - cd config/default && kustomize edit set namespace ${NAMESPACE}
       - make deploy
 
-  mongo-operator:
+  helm-operators:
+    dir: ./helm
     cmds:
-      - operator-sdk create api --plugins=helm --group crds --version v1 --kind MongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
+      - operator-sdk create api --plugins=helm --group msvc --version v2 --kind MongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
+      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind MySqlDB --helm-chart mysql --helm-chart-repo https://charts.bitnami.com/bitnami
+      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind ElasticSearch --helm-chart elasticsearch --helm-chart-repo https://charts.bitnami.com/bitnami
   pre:
     run: once
     cmds:

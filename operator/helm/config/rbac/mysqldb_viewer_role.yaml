@@ -1,0 +1,20 @@
+# permissions for end users to view mysqldbs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mysqldb-viewer-role
+rules:
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - mysqldbs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - mysqldbs/status
+  verbs:
+  - get

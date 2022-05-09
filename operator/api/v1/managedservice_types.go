@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,8 +34,12 @@ func (m *ManagedService) LogRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
 }
 
+func (m *ManagedService) labelRef() string {
+	return fmt.Sprintf("%s-%s-%s", m.Namespace, m.Kind, m.Name)
+}
+
 func (m *ManagedService) HasLabels() bool {
-	if _, ok := m.Labels["msvc.kloudlite.io/type"]; !ok {
+	if _, ok := m.Labels["msvc.kloudlite.io/ref"]; !ok {
 		return false
 	}
 	return true
@@ -42,7 +47,7 @@ func (m *ManagedService) HasLabels() bool {
 
 func (m *ManagedService) EnsureLabels() {
 	m.SetLabels(map[string]string{
-		"msvc.kloudlite.io/type": m.Spec.Type,
+		"msvc.kloudlite.io/ref": m.labelRef(),
 	})
 }
 

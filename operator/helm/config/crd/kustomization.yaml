@@ -3,4 +3,6 @@
 # It should be run by config/default
 resources:
 - bases/msvc.kloudlite.io_mongodbs.yaml
+- bases/msvc.kloudlite.io_mysqldbs.yaml
+- bases/msvc.kloudlite.io_elasticsearches.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

@@ -33,6 +33,10 @@ type ManagedServiceType string
 
 const (
 	MongoDBStandalone ManagedServiceType = "MongoDBStandalone"
+	MongoDBCluster    ManagedServiceType = "MongoDBCluster"
+	ElasticSearch     ManagedServiceType = "ElasticSearch"
+	MySqlStandalone   ManagedServiceType = "MySqlStandalone"
+	MySqlCluster      ManagedServiceType = "MySqlCluster"
 )
 
 func (m ManagedServiceType) String() string {

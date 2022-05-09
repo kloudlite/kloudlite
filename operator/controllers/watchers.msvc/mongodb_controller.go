@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
+
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,20 +20,18 @@ import (
 	labels2 "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
-	"operators.kloudlite.io/controllers"
-	"operators.kloudlite.io/lib/errors"
-	fn "operators.kloudlite.io/lib/functions"
-	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
-	"os"
-	"os/exec"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
+
+	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
+	"operators.kloudlite.io/controllers"
+	"operators.kloudlite.io/lib/errors"
+	fn "operators.kloudlite.io/lib/functions"
+	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 )
 
 type ConditionType string
@@ -105,7 +108,7 @@ func (r *MongoDBReconciler) buildConditions(source string, conditions ...metav1.
 	}
 }
 
-func (r *MongoDBReconciler) buildOutput(ctx context.Context, depl appsv1.Deployment) error {
+func (r *MongoDBReconciler) buildStandaloneOutput(ctx context.Context, depl appsv1.Deployment) error {
 	var mongoCfg corev1.Secret
 	if err := r.Get(ctx, types.NamespacedName{Namespace: depl.Namespace, Name: depl.Name}, &mongoCfg); err != nil {
 		return err
@@ -140,6 +143,50 @@ func (r *MongoDBReconciler) buildOutput(ctx context.Context, depl appsv1.Deploym
 	return nil
 }
 
+func (r *MongoDBReconciler) buildClusterOutput(ctx context.Context, sts appsv1.StatefulSet, arbiter appsv1.StatefulSet) error {
+	var mongoCfg corev1.Secret
+	if err := r.Get(ctx, types.NamespacedName{Namespace: sts.Namespace, Name: sts.Name}, &mongoCfg); err != nil {
+		return err
+	}
+
+	var hosts []string
+
+	for i := 0; int32(i) < sts.Status.ReadyReplicas; i++ {
+		hosts = append(hosts, fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:27017", sts.Name, i, sts.Name, sts.Namespace))
+	}
+	for i := 0; int32(i) < arbiter.Status.ReadyReplicas; i++ {
+		hosts = append(hosts, fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:27017", arbiter.Name, i, arbiter.Name, arbiter.Namespace))
+	}
+
+	body := make(map[string]string, 3)
+	body[RootPassword] = string(mongoCfg.Data["mongodb-root-password"])
+	body[DbHosts] = strings.Join(hosts, ",")
+	body[DbUrl] = fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", string(mongoCfg.Data["mongodb-root-password"]), body[DbHosts])
+
+	connSecret := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: sts.Namespace,
+			Name:      fmt.Sprintf("msvc-%s", r.mdb.Name),
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &connSecret, func() error {
+		connSecret.StringData = body
+		if len(connSecret.OwnerReferences) == 1 && connSecret.OwnerReferences[0].UID != r.mdb.UID {
+			r.logger.Debugf("owned by other")
+			return nil
+		}
+		if err := controllerutil.SetControllerReference(r.mdb, &connSecret, r.Scheme); err != nil {
+			return errors.NewEf(err, "could not set controller reference over conn secret")
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *MongoDBReconciler) ifMongoStandalone(ctx context.Context, _ *HelmMongoDB) error {
 	var depl appsv1.Deployment
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: r.mdb.Namespace, Name: fmt.Sprintf("%s-mongodb", r.mdb.Name)}, &depl); err != nil {
@@ -149,11 +196,10 @@ func (r *MongoDBReconciler) ifMongoStandalone(ctx context.Context, _ *HelmMongoD
 	var deplConditions []metav1.Condition
 	for _, cond := range depl.Status.Conditions {
 		deplConditions = append(deplConditions, metav1.Condition{
-			Type:               string(cond.Type),
-			Status:             metav1.ConditionStatus(cond.Status),
-			LastTransitionTime: cond.LastTransitionTime,
-			Reason:             cond.Reason,
-			Message:            cond.Message,
+			Type:    string(cond.Type),
+			Status:  metav1.ConditionStatus(cond.Status),
+			Reason:  cond.Reason,
+			Message: cond.Message,
 		})
 	}
 
@@ -201,6 +247,7 @@ func (r *MongoDBReconciler) ifMongoStandalone(ctx context.Context, _ *HelmMongoD
 			r.buildConditions("Container", containerC...)
 			return nil
 		}
+		return nil
 	}
 
 	r.buildConditions("", metav1.Condition{
@@ -211,16 +258,98 @@ func (r *MongoDBReconciler) ifMongoStandalone(ctx context.Context, _ *HelmMongoD
 		Message:            "Mongo is Ready to use",
 	})
 
-	return r.buildOutput(ctx, depl)
+	return r.buildStandaloneOutput(ctx, depl)
 }
 
-func (r *MongoDBReconciler) ifMongoReplicaset(_ context.Context, _ *HelmMongoDB) error {
-	// TODO: Implement me
-	panic("implement me")
+func (r *MongoDBReconciler) ifMongoReplicaset(ctx context.Context, _ *HelmMongoDB) error {
+	var arbiter appsv1.StatefulSet
+	if err := r.Get(ctx, types.NamespacedName{Namespace: r.mdb.Namespace, Name: fmt.Sprintf("%s-mongodb-arbiter", r.mdb.Name)}, &arbiter); err != nil {
+		return err
+	}
+
+	if arbiter.Status.ReadyReplicas != arbiter.Status.Replicas {
+		return errors.Newf("sts %s is not ready", arbiter.Name)
+	}
+
+	var sts appsv1.StatefulSet
+	if err := r.Get(ctx, types.NamespacedName{Namespace: r.mdb.Namespace, Name: fmt.Sprintf("%s-mongodb", r.mdb.Name)}, &sts); err != nil {
+		return errors.NewEf(err, "could not find statefulset related to mongodb (cluster) installation")
+	}
+
+	if sts.Status.ReadyReplicas != sts.Status.Replicas {
+		var pl corev1.PodList
+		if err := r.List(ctx, &pl, &client.ListOptions{
+			LabelSelector: labels2.SelectorFromValidatedSet(sts.Spec.Selector.MatchLabels),
+			Namespace:     r.mdb.Namespace,
+		}); err != nil {
+			return errors.NewEf(err, "could not list pods with selectors from statefulset")
+		}
+
+		for _, pod := range pl.Items {
+			var podC []metav1.Condition
+			for _, condition := range pod.Status.Conditions {
+				podC = append(podC, metav1.Condition{
+					Type:               string(condition.Type),
+					Status:             metav1.ConditionStatus(condition.Status),
+					LastTransitionTime: condition.LastTransitionTime,
+					Message:            condition.Message,
+				})
+			}
+			r.buildConditions("Pod", podC...)
+
+			var initContainerSt []metav1.Condition
+			for idx, st := range pod.Status.InitContainerStatuses {
+				c := metav1.Condition{
+					Type:   fmt.Sprintf("Idx%d", idx),
+					Status: fn.StatusFromBool(st.Ready),
+				}
+				if st.State.Terminated != nil {
+					c.Reason = st.State.Terminated.Reason
+					c.Message = fmt.Sprintf("terminated with exit-code %d\n", st.State.Terminated.ExitCode)
+					c.LastTransitionTime = st.State.Terminated.FinishedAt
+				}
+
+				initContainerSt = append(initContainerSt, c)
+			}
+
+			r.buildConditions("InitContainer", initContainerSt...)
+
+			var containerC []metav1.Condition
+			for idx, cs := range pod.Status.ContainerStatuses {
+				p := metav1.Condition{
+					Type:   fmt.Sprintf("Idx%d", idx),
+					Status: fn.StatusFromBool(cs.Ready),
+				}
+				if cs.State.Waiting != nil {
+					p.Reason = cs.State.Waiting.Reason
+					p.Message = fmt.Sprintf("container(%s): %s", cs.Name, cs.State.Waiting.Message)
+				}
+				if cs.State.Running != nil {
+					p.Reason = "Running"
+					p.Message = fmt.Sprintf("Container (%s) running since %s",
+						cs.Name,
+						cs.State.Running.StartedAt.String(),
+					)
+				}
+				containerC = append(containerC, p)
+			}
+			r.buildConditions("Container", containerC...)
+			return nil
+		}
+		return nil
+	}
+
+	// ASSERT: all replicas are ready
+	r.buildConditions("", metav1.Condition{
+		Type:    "Ready",
+		Status:  metav1.ConditionTrue,
+		Reason:  "ReplicasAreReady",
+		Message: "All replicasets are ready",
+	})
+	return r.buildClusterOutput(ctx, sts, arbiter)
 }
 
 func (r *MongoDBReconciler) getMongoDBStatus(ctx context.Context, name types.NamespacedName) error {
-	r.logger.Infof("HEllo here")
 	w := bytes.NewBuffer([]byte{})
 	command := exec.Command("kubectl", "get", "-o", "json", "-n", name.Namespace, fmt.Sprintf("mongodbs.msvc.kloudlite.io/%s", name.Name))
 	command.Stderr = os.Stderr
@@ -270,7 +399,6 @@ func (r *MongoDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	mdb.Status.Conditions = []metav1.Condition{}
 	r.mdb = &mdb
-	logger.Infof("HERE")
 
 	if err := r.getMongoDBStatus(ctx, req.NamespacedName); err != nil {
 		logger.Info("\nmongodb reconcilation failed", err)
