@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/redhat-cop/operator-utils/pkg/util"
 	"os"
+
+	"github.com/redhat-cop/operator-utils/pkg/util"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/controllers/crds"
@@ -30,10 +31,14 @@ import (
 
 	"go.uber.org/fx"
 
+	mongodbclustermsvcv1 "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
+	mongodbstandalonemsvcv1 "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watchersmsvcv1 "operators.kloudlite.io/apis/watchers.msvc/v1"
 	crdscontrollers "operators.kloudlite.io/controllers/crds"
+	mongodbclustermsvccontrollers "operators.kloudlite.io/controllers/mongodb-cluster.msvc"
+	mongodbstandalonemsvccontrollers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
 	mongodbsmsvcControllers "operators.kloudlite.io/controllers/mongodbs.msvc"
 	watchersmsvccontrollers "operators.kloudlite.io/controllers/watchers.msvc"
 	// +kubebuilder:scaffold:imports
@@ -51,6 +56,8 @@ func init() {
 	utilruntime.Must(msvcv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbsmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(watchersmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(mongodbstandalonemsvcv1.AddToScheme(scheme))
+	utilruntime.Must(mongodbclustermsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -198,6 +205,34 @@ func main() {
 		Log: ctrl.Log.WithName("controllers").WithName("Account"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Account")
+		os.Exit(1)
+	}
+	if err = (&mongodbstandalonemsvccontrollers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&mongodbstandalonemsvccontrollers.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
+	if err = (&mongodbclustermsvccontrollers.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
+	if err = (&mongodbclustermsvccontrollers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
