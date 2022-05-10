@@ -1,17 +1,20 @@
 package v1
 
 import (
+	"encoding/json"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"operators.kloudlite.io/lib"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	Inputs t.KV `json:"inputs"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	Inputs json.RawMessage `json:"inputs,omitempty"`
 }
 
 // ServiceStatus defines the observed state of Service
