@@ -2,9 +2,10 @@ package functions
 
 import (
 	"bytes"
-	"operators.kloudlite.io/lib/errors"
 	"os"
 	"os/exec"
+
+	"operators.kloudlite.io/lib/errors"
 )
 
 func KubectlApply(stdin ...[]byte) error {
@@ -17,4 +18,16 @@ func KubectlApply(stdin ...[]byte) error {
 		return errors.NewEf(err, errB.String())
 	}
 	return nil
+}
+
+func KubectlGet(namespace string, resourceRef string) ([]byte, error) {
+	c := exec.Command("kubectl", "get", "-o", "json", "-n", namespace, resourceRef)
+	errB := bytes.NewBuffer([]byte{})
+	outB := bytes.NewBuffer([]byte{})
+	c.Stderr = errB
+	c.Stdout = outB
+	if err := c.Run(); err != nil {
+		return nil, errors.NewEf(err, errB.String())
+	}
+	return outB.Bytes(), nil
 }
