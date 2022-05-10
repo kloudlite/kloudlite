@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsoleClient interface {
-	CreateDefaultCluster(ctx context.Context, in *CreateClusterIn, opts ...grpc.CallOption) (*CreateClusterOut, error)
+	SetupClusterForAccount(ctx context.Context, in *AccountIn, opts ...grpc.CallOption) (*SetupClusterVoid, error)
 }
 
 type consoleClient struct {
@@ -33,9 +33,9 @@ func NewConsoleClient(cc grpc.ClientConnInterface) ConsoleClient {
 	return &consoleClient{cc}
 }
 
-func (c *consoleClient) CreateDefaultCluster(ctx context.Context, in *CreateClusterIn, opts ...grpc.CallOption) (*CreateClusterOut, error) {
-	out := new(CreateClusterOut)
-	err := c.cc.Invoke(ctx, "/Console/CreateDefaultCluster", in, out, opts...)
+func (c *consoleClient) SetupClusterForAccount(ctx context.Context, in *AccountIn, opts ...grpc.CallOption) (*SetupClusterVoid, error) {
+	out := new(SetupClusterVoid)
+	err := c.cc.Invoke(ctx, "/Console/SetupClusterForAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *consoleClient) CreateDefaultCluster(ctx context.Context, in *CreateClus
 // All implementations must embed UnimplementedConsoleServer
 // for forward compatibility
 type ConsoleServer interface {
-	CreateDefaultCluster(context.Context, *CreateClusterIn) (*CreateClusterOut, error)
+	SetupClusterForAccount(context.Context, *AccountIn) (*SetupClusterVoid, error)
 	mustEmbedUnimplementedConsoleServer()
 }
 
@@ -54,8 +54,8 @@ type ConsoleServer interface {
 type UnimplementedConsoleServer struct {
 }
 
-func (UnimplementedConsoleServer) CreateDefaultCluster(context.Context, *CreateClusterIn) (*CreateClusterOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateDefaultCluster not implemented")
+func (UnimplementedConsoleServer) SetupClusterForAccount(context.Context, *AccountIn) (*SetupClusterVoid, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetupClusterForAccount not implemented")
 }
 func (UnimplementedConsoleServer) mustEmbedUnimplementedConsoleServer() {}
 
@@ -70,20 +70,20 @@ func RegisterConsoleServer(s grpc.ServiceRegistrar, srv ConsoleServer) {
 	s.RegisterService(&Console_ServiceDesc, srv)
 }
 
-func _Console_CreateDefaultCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateClusterIn)
+func _Console_SetupClusterForAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AccountIn)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConsoleServer).CreateDefaultCluster(ctx, in)
+		return srv.(ConsoleServer).SetupClusterForAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Console/CreateDefaultCluster",
+		FullMethod: "/Console/SetupClusterForAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).CreateDefaultCluster(ctx, req.(*CreateClusterIn))
+		return srv.(ConsoleServer).SetupClusterForAccount(ctx, req.(*AccountIn))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,8 +96,8 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ConsoleServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateDefaultCluster",
-			Handler:    _Console_CreateDefaultCluster_Handler,
+			MethodName: "SetupClusterForAccount",
+			Handler:    _Console_SetupClusterForAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

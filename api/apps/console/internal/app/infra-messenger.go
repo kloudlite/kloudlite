@@ -21,6 +21,13 @@ func (i *infraMessengerImpl) SendAction(action any) error {
 				"payload": action,
 			})
 		}
+	case entities.SetupClusterAccountAction:
+		{
+			return i.producer.SendMessage(i.topic, string(a.ClusterID), messaging.Json{
+				"type":    "setup-cluster-account",
+				"payload": action,
+			})
+		}
 	case entities.DeleteClusterAction:
 		{
 			return i.producer.SendMessage(i.topic, string(a.ClusterID), messaging.Json{
