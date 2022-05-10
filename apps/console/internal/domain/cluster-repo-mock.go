@@ -9,15 +9,14 @@ import (
 type mockClusterRepo struct {
 }
 
-var clusterIp = "64.227.166.70"
+var clusterIp = "159.65.146.93"
 var publicKey = "YioH2JQff3T3OgJPuETlvwZKLKNK1OMoY2PBgYgvrw0="
 
 var cluster = entities.Cluster{
 	BaseEntity: repos.BaseEntity{
-		Id: "dev-cluster",
+		Id: "test-to-dlete",
 	},
-	AccountId:  "account-id",
-	Name:       "dev-cluster",
+	Name:       "test-to-dlete",
 	Provider:   "do",
 	Region:     "blr1",
 	Ip:         &clusterIp,

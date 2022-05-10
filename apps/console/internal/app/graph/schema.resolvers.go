@@ -30,65 +30,52 @@ func (r *accountResolver) Projects(ctx context.Context, obj *model.Account) ([]*
 	return projectModels, err
 }
 
-func (r *accountResolver) Clusters(ctx context.Context, obj *model.Account) ([]*model.Cluster, error) {
-	clusterEntities, err := r.Domain.ListClusters(ctx, obj.ID)
+func (r *accountResolver) ClusterSubscriptions(ctx context.Context, obj *model.Account) ([]*model.ClusterSubscription, error) {
+	subscriptionEntities, err := r.Domain.ListClusterSubscriptions(ctx, obj.ID)
 	if err != nil {
 		return nil, err
 	}
-	clusters := make([]*model.Cluster, 0)
-	for _, cle := range clusterEntities {
-		clusters = append(clusters, &model.Cluster{
-			ID:         cle.Id,
-			Name:       cle.Name,
-			Provider:   cle.Provider,
-			Region:     cle.Region,
-			IP:         cle.Ip,
-			NodesCount: cle.NodesCount,
-			Status:     string(cle.Status),
-			Account: &model.Account{
-				ID: repos.ID(cle.AccountId),
-			},
-		})
+	subscriptionModels := make([]*model.ClusterSubscription, 0)
+	for _, se := range subscriptionEntities {
+		subscriptionModels = append(subscriptionModels, subscriptionModelFromEntity(se))
 	}
-	return clusters, err
+	return subscriptionModels, err
 }
 
-func (r *clusterResolver) Devices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error) {
-	var e error
-	defer wErrors.HandleErr(&e)
-	cluster := obj
-	deviceEntities, e := r.Domain.ListClusterDevices(ctx, cluster.ID)
-	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of cluster %s", cluster.ID))
-	devices := make([]*model.Device, len(deviceEntities))
-	for i, d := range deviceEntities {
-		devices[i] = &model.Device{
-			ID:      d.Id,
-			User:    &model.User{ID: d.UserId},
-			Name:    d.Name,
-			Cluster: cluster,
-			IP:      d.Ip,
-		}
+func (r *clusterSubscriptionResolver) Cluster(ctx context.Context, obj *model.ClusterSubscription) (*model.Cluster, error) {
+	clusterE, err := r.Domain.GetCluster(ctx, obj.Cluster.ID)
+	if err != nil {
+		return nil, err
 	}
-	return devices, e
+	return clusterModelFromEntity(clusterE), nil
 }
 
-func (r *clusterResolver) UserDevices(ctx context.Context, obj *model.Cluster) ([]*model.Device, error) {
-	var e error
-	defer wErrors.HandleErr(&e)
-	user := obj
-	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID), &obj.ID)
-	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
-	devices := make([]*model.Device, 0)
-	for _, device := range deviceEntities {
-		devices = append(devices, &model.Device{
-			ID:      device.Id,
-			User:    &model.User{ID: user.ID},
-			Name:    device.Name,
-			Cluster: &model.Cluster{ID: device.ClusterId},
-			IP:      device.Ip,
-		})
+func (r *clusterSubscriptionResolver) Devices(ctx context.Context, obj *model.ClusterSubscription) ([]*model.Device, error) {
+	deviceEntities, err := r.Domain.ListClusterDevices(ctx, &obj.Cluster.ID, &obj.Account.ID)
+	if err != nil {
+		return nil, err
 	}
-	return devices, e
+	deviceModels := make([]*model.Device, 0)
+	for _, de := range deviceEntities {
+		deviceModels = append(deviceModels, deviceModelFromEntity(de))
+	}
+	return deviceModels, err
+}
+
+func (r *clusterSubscriptionResolver) UserDevices(ctx context.Context, obj *model.ClusterSubscription) ([]*model.Device, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	deviceEntities, err := r.Domain.ListUserDevices(ctx, session.UserId, &obj.Cluster.ID, &obj.Account.ID)
+	if err != nil {
+		return nil, err
+	}
+	deviceModels := make([]*model.Device, 0)
+	for _, de := range deviceEntities {
+		deviceModels = append(deviceModels, deviceModelFromEntity(de))
+	}
+	return deviceModels, err
 }
 
 func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.User, error) {
@@ -124,6 +111,17 @@ func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model
 
 func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
 	return r.Domain.GetDeviceConfig(ctx, obj.ID)
+}
+
+func (r *deviceResolver) Account(ctx context.Context, obj *model.Device) (*model.Account, error) {
+	var e error
+	defer wErrors.HandleErr(&e)
+	device := obj
+	deviceEntity, e := r.Domain.GetDevice(ctx, device.ID)
+	wErrors.AssertNoError(e, fmt.Errorf("not able to get device"))
+	return &model.Account{
+		ID: deviceEntity.AccountId,
+	}, e
 }
 
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
@@ -212,12 +210,12 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, clusterID rep
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, name string) (*model.Device, error) {
+func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, accountID repos.ID, name string) (*model.Device, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
-	device, err := r.Domain.AddDevice(ctx, name, clusterID, session.UserId)
+	device, err := r.Domain.AddDevice(ctx, name, clusterID, accountID, session.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -715,7 +713,7 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 	var e error
 	defer wErrors.HandleErr(&e)
 	user := obj
-	deviceEntities, e := r.Domain.ListUserDevices(ctx, repos.ID(user.ID), nil)
+	deviceEntities, e := r.Domain.ListUserDevices(ctx, user.ID, nil, nil)
 	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
@@ -733,8 +731,10 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
-// Cluster returns generated.ClusterResolver implementation.
-func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver{r} }
+// ClusterSubscription returns generated.ClusterSubscriptionResolver implementation.
+func (r *Resolver) ClusterSubscription() generated.ClusterSubscriptionResolver {
+	return &clusterSubscriptionResolver{r}
+}
 
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
@@ -758,7 +758,7 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
 type accountResolver struct{ *Resolver }
-type clusterResolver struct{ *Resolver }
+type clusterSubscriptionResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
 type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }

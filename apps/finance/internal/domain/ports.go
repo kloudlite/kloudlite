@@ -12,6 +12,8 @@ type Domain interface {
 		userId repos.ID,
 		name string,
 		billing Billing,
+		initialProvider string,
+		initialRegion string,
 	) (*Account, error)
 	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
 	UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error)

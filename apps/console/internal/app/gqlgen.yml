@@ -53,11 +53,19 @@ models:
     fields:
       memberships:
         resolver: true
+  ClusterSubscription:
+    fields:
+      cluster:
+        resolver: true
+      devices:
+        resolver: true
+      userDevices:
+        resolver: true
   Account:
     fields:
       projects:
         resolver: true
-      clusters:
+      clusterSubscriptions:
         resolver: true
   Cluster:
     fields:
@@ -78,6 +86,8 @@ models:
       user:
         resolver: true
       cluster:
+        resolver: true
+      account:
         resolver: true
       configuration:
         resolver: true

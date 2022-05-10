@@ -17,7 +17,25 @@ type SetupClusterResponse struct {
 	Message   string   `json:"message"`
 }
 
+type SetupClusterAccountAction struct {
+	ClusterID repos.ID `json:"cluster_id"`
+	Region    string   `json:"region"`
+	Provider  string   `json:"provider"`
+	AccountId string   `json:"account_id"`
+	AccountIp string   `json:"account_ip"`
+}
+
+type SetupClusterAccountResponse struct {
+	ClusterId   string `json:"cluster_id"`
+	AccountId   string `json:"account_id"`
+	Message     string `json:"message"`
+	Done        bool   `json:"done"`
+	WgPublicKey string `json:"wg_public_key"`
+	WgPort      string `json:"wg_port"`
+}
+
 type AddPeerAction struct {
+	AccountId string   `json:"account_id"`
 	ClusterID repos.ID `json:"cluster_id"`
 	PublicKey string   `json:"public_key"`
 	PeerIp    string   `json:"peer_ip"`

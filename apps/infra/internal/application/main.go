@@ -61,6 +61,14 @@ var Module = fx.Module("application",
 				action.Unmarshal(&m)
 				return d.CreateCluster(context, m.Payload)
 				break
+			case "setup-cluster-account":
+				var m struct {
+					Type    string
+					Payload domain.AddAccountAction
+				}
+				action.Unmarshal(&m)
+				return d.AddAccountToCluster(context, m.Payload)
+				break
 			case "update-cluster":
 				var m struct {
 					Type    string

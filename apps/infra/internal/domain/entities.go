@@ -1,5 +1,7 @@
 package domain
 
+import "kloudlite.io/pkg/repos"
+
 func getMasterNodesCount(totalNodes int) int {
 	return 3
 }
@@ -17,6 +19,15 @@ type SetupClusterResponse struct {
 	PublicKey string `json:"public_key"`
 	Done      bool   `json:"done"`
 	Message   string `json:"message"`
+}
+
+type SetupAccountResponse struct {
+	ClusterId   string `json:"cluster_id"`
+	AccountId   string `json:"account_id"`
+	Message     string `json:"message"`
+	Done        bool   `json:"done"`
+	WgPublicKey string `json:"wg_public_key"`
+	WgPort      string `json:"wg_port"`
 }
 
 func (s *SetupClusterAction) MasterNodesCount() int {
@@ -44,10 +55,11 @@ type AddPeerResponse struct {
 }
 
 type AddAccountAction struct {
-	ClusterId string `json:"cluster_id"`
-	Provider  string `json:"provider"`
-	AccountId string `json:"account_id"`
-	AccountIp string `json:"account_ip"`
+	ClusterId repos.ID `json:"cluster_id"`
+	Region    string   `json:"region"`
+	Provider  string   `json:"provider"`
+	AccountId string   `json:"account_id"`
+	AccountIp string   `json:"account_ip"`
 }
 
 type AddAccountResponse struct {

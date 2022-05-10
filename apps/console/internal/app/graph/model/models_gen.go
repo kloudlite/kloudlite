@@ -7,9 +7,9 @@ import (
 )
 
 type Account struct {
-	ID       repos.ID   `json:"id"`
-	Projects []*Project `json:"projects"`
-	Clusters []*Cluster `json:"clusters"`
+	ID                   repos.ID               `json:"id"`
+	Projects             []*Project             `json:"projects"`
+	ClusterSubscriptions []*ClusterSubscription `json:"clusterSubscriptions"`
 }
 
 func (Account) IsEntity() {}
@@ -97,19 +97,23 @@ type CSEntryIn struct {
 }
 
 type Cluster struct {
-	ID          repos.ID  `json:"id"`
-	Name        string    `json:"name"`
-	Provider    string    `json:"provider"`
-	Region      string    `json:"region"`
-	IP          *string   `json:"ip"`
-	Devices     []*Device `json:"devices"`
-	UserDevices []*Device `json:"userDevices"`
-	NodesCount  int       `json:"nodesCount"`
-	Status      string    `json:"status"`
-	Account     *Account  `json:"account"`
+	ID         repos.ID `json:"id"`
+	Name       string   `json:"name"`
+	Provider   string   `json:"provider"`
+	Region     string   `json:"region"`
+	IP         *string  `json:"ip"`
+	NodesCount int      `json:"nodesCount"`
+	Status     string   `json:"status"`
 }
 
 func (Cluster) IsEntity() {}
+
+type ClusterSubscription struct {
+	Cluster     *Cluster  `json:"cluster"`
+	Account     *Account  `json:"account"`
+	Devices     []*Device `json:"devices"`
+	UserDevices []*Device `json:"userDevices"`
+}
 
 type Config struct {
 	ID          repos.ID   `json:"id"`
@@ -128,6 +132,7 @@ type Device struct {
 	Cluster       *Cluster `json:"cluster"`
 	Configuration string   `json:"configuration"`
 	IP            string   `json:"ip"`
+	Account       *Account `json:"account"`
 }
 
 func (Device) IsEntity() {}

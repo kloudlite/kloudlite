@@ -12,6 +12,13 @@ type infraResponder struct {
 	responseTopic string
 }
 
+func (i *infraResponder) SendSetupAccountResponse(cxt context.Context, action domain.SetupAccountResponse) error {
+	return i.kProducer.SendMessage(i.responseTopic, "resp", messaging.Json{
+		"type":    "setup-cluster-account",
+		"payload": action,
+	})
+}
+
 // SendAddPeerResponse implements domain.InfraJobResponder
 func (i *infraResponder) SendAddPeerResponse(cxt context.Context, action domain.AddPeerResponse) error {
 	return i.kProducer.SendMessage(i.responseTopic, "resp", messaging.Json{

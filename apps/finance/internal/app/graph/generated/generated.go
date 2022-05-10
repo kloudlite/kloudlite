@@ -81,7 +81,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		FinanceActivateAccount      func(childComplexity int, accountID repos.ID) int
-		FinanceCreateAccount        func(childComplexity int, name string, billing model.BillingInput) int
+		FinanceCreateAccount        func(childComplexity int, name string, billing model.BillingInput, initProvider string, initRegion string) int
 		FinanceDeactivateAccount    func(childComplexity int, accountID repos.ID) int
 		FinanceDeleteAccount        func(childComplexity int, accountID repos.ID) int
 		FinanceInviteAccountMember  func(childComplexity int, accountID string, name *string, email string, role string) int
@@ -121,7 +121,7 @@ type EntityResolver interface {
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
 type MutationResolver interface {
-	FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error)
+	FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput, initProvider string, initRegion string) (*model.Account, error)
 	FinanceUpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error)
 	FinanceUpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error)
 	FinanceInviteAccountMember(ctx context.Context, accountID string, name *string, email string, role string) (bool, error)
@@ -305,7 +305,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceCreateAccount(childComplexity, args["name"].(string), args["billing"].(model.BillingInput)), true
+		return e.complexity.Mutation.FinanceCreateAccount(childComplexity, args["name"].(string), args["billing"].(model.BillingInput), args["initProvider"].(string), args["initRegion"].(string)), true
 
 	case "Mutation.finance_deactivateAccount":
 		if e.complexity.Mutation.FinanceDeactivateAccount == nil {
@@ -524,7 +524,7 @@ var sources = []*ast.Source{
 }
 
 type Mutation {
-    finance_createAccount(name: String!, billing: BillingInput!): Account!
+    finance_createAccount(name: String!, billing: BillingInput!, initProvider: String!, initRegion: String!): Account!
     finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
     finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
     finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean!
@@ -678,6 +678,24 @@ func (ec *executionContext) field_Mutation_finance_createAccount_args(ctx contex
 		}
 	}
 	args["billing"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["initProvider"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initProvider"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["initProvider"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["initRegion"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initRegion"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["initRegion"] = arg3
 	return args, nil
 }
 
@@ -1599,7 +1617,7 @@ func (ec *executionContext) _Mutation_finance_createAccount(ctx context.Context,
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceCreateAccount(rctx, args["name"].(string), args["billing"].(model.BillingInput))
+		return ec.resolvers.Mutation().FinanceCreateAccount(rctx, args["name"].(string), args["billing"].(model.BillingInput), args["initProvider"].(string), args["initRegion"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

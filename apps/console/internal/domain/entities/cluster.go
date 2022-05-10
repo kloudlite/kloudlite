@@ -13,7 +13,6 @@ const (
 
 type Cluster struct {
 	repos.BaseEntity `bson:",inline"`
-	AccountId        string        `json:"account_id" bson:"account_id"`
 	Name             string        `json:"name" bson:"name"`
 	Provider         string        `json:"provider" bson:"provider"`
 	Region           string        `json:"region" bson:"region"`

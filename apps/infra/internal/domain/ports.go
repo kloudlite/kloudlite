@@ -20,5 +20,6 @@ type InfraJobResponder interface {
 	SendUpdateClusterResponse(cxt context.Context, action UpdateClusterResponse) error
 	SendDeleteClusterResponse(cxt context.Context, action DeleteClusterResponse) error
 	SendAddPeerResponse(cxt context.Context, action AddPeerResponse) error
+	SendSetupAccountResponse(cxt context.Context, action SetupAccountResponse) error
 	SendDeletePeerResponse(cxt context.Context, action DeletePeerResponse) error
 }

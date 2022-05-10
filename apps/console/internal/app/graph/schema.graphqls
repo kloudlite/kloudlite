@@ -62,7 +62,7 @@ type Mutation {
   infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
   infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Boolean!
   infra_deleteCluster(clusterId: ID!): Boolean!
-  infra_addDevice(clusterId: ID!, name: String!): Device!
+  infra_addDevice(clusterId: ID!, accountId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
 
   core_createProject(accountId: ID!, name: String!, displayName: String!, logo: String, description: String): Project!
@@ -221,10 +221,17 @@ type Route {
   port: Int!
 }
 
+type ClusterSubscription {
+  cluster: Cluster!
+  account: Account!
+  devices: [Device!]
+  userDevices: [Device!]
+}
+
 extend type Account @key(fields: "id") {
   id: ID! @external
   projects: [Project!]!
-  clusters:[Cluster!]!
+  clusterSubscriptions:[ClusterSubscription!]!
 }
 
 
@@ -269,13 +276,6 @@ input AppServiceInput {
   port: Int!
   targetPort: Int
 }
-
-
-
-
-
-
-
 
 type Secret {
   id: ID!
@@ -325,8 +325,6 @@ input NewResourcesIN {
   mResources: [Json!]
 }
 
-
-
 extend type User @key(fields: "id") {
   id: ID! @external
   devices: [Device]
@@ -338,11 +336,8 @@ type Cluster @key(fields: "id") {
   provider: String!
   region: String!
   ip: String
-  devices: [Device]
-  userDevices: [Device]
   nodesCount: Int!
   status: String!
-  account: Account!
 }
 
 type Device @key(fields: "id") {
@@ -352,4 +347,5 @@ type Device @key(fields: "id") {
   cluster: Cluster!
   configuration: String!
   ip: String!
+  account: Account!
 }

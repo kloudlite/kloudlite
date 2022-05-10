@@ -13,7 +13,7 @@ tasks:
       KAFKA_BOOTSTRAP_SERVERS: dev-kafka-headless.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
       KAFKA_INFRA_RESP_TOPIC: dev-hotspot-infra-resp
-      KAFKA_GROUP_ID: infra-cli
+      KAFKA_GROUP_ID: infra-cli-local
       DO_API_KEY: ***REMOVED***
       DO_IMAGE_ID: 107908623
       NODE_DRAIN_TIME: 120

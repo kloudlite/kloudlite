@@ -104,3 +104,43 @@ func managedResourceModelFromEntity(resEntity *entities.ManagedResource) *model.
 		Status: string(resEntity.Status),
 	}
 }
+
+func subscriptionModelFromEntity(e *entities.ClusterAccount) *model.ClusterSubscription {
+	return &model.ClusterSubscription{
+		Cluster: &model.Cluster{
+			ID: e.ClusterID,
+		},
+		Account: &model.Account{
+			ID: e.AccountID,
+		},
+	}
+}
+
+func deviceModelFromEntity(e *entities.Device) *model.Device {
+	return &model.Device{
+		ID:   e.Id,
+		Name: e.Name,
+		User: &model.User{
+			ID: e.UserId,
+		},
+		Cluster: &model.Cluster{
+			ID: e.ClusterId,
+		},
+		Account: &model.Account{
+			ID: e.AccountId,
+		},
+		IP: e.Ip,
+	}
+}
+
+func clusterModelFromEntity(e *entities.Cluster) *model.Cluster {
+	return &model.Cluster{
+		ID:         e.Id,
+		Name:       e.Name,
+		Provider:   e.Provider,
+		Region:     e.Region,
+		IP:         e.Ip,
+		NodesCount: e.NodesCount,
+		Status:     string(e.Status),
+	}
+}
