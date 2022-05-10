@@ -9,19 +9,21 @@ import (
 
 type Domain interface {
 	CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
+	CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error)
 	UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
 	DeleteCluster(ctx context.Context, clusterId repos.ID) error
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
-	ListClusters(ctx context.Context, accountId repos.ID) ([]*entities.Cluster, error)
+	ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.ClusterAccount, error)
 	OnSetupCluster(cxt context.Context, response entities.SetupClusterResponse) error
 	OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
+	OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error
 
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
 	GetDeviceConfig(ctx context.Context, id repos.ID) (string, error)
-	AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, userId repos.ID) (dev *entities.Device, e error)
+	AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, accountId repos.ID, userId repos.ID) (dev *entities.Device, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
-	ListClusterDevices(ctx context.Context, clusterId repos.ID) ([]*entities.Device, error)
-	ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID) ([]*entities.Device, error)
+	ListClusterDevices(ctx context.Context, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error)
+	ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error)
 	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
 
 	CreateProject(ctx context.Context, id repos.ID, projectName string, displayName string, logo *string, description *string) (*entities.Project, error)
@@ -96,7 +98,7 @@ type Domain interface {
 }
 
 type InfraActionMessage interface {
-	entities.SetupClusterAction | entities.DeleteClusterAction | entities.UpdateClusterAction | entities.AddPeerAction | entities.DeletePeerAction
+	entities.SetupClusterAccountAction | entities.SetupClusterAction | entities.DeleteClusterAction | entities.UpdateClusterAction | entities.AddPeerAction | entities.DeletePeerAction
 }
 
 type InfraMessenger interface {

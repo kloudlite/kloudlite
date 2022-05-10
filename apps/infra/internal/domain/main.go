@@ -50,23 +50,22 @@ func (d *domain) AddPeerToAccount(cxt context.Context, action AddPeerAction) err
 
 func (d *domain) AddAccountToCluster(ctx context.Context, action AddAccountAction) error {
 	port, publicKey, err := d.infraCli.AddAccount(ctx, action)
-	fmt.Println(err)
 	if err != nil {
-		d.jobResponder.SendAddPeerResponse(ctx, AddPeerResponse{
-			ClusterId: action.ClusterId,
+		d.jobResponder.SendSetupAccountResponse(ctx, SetupAccountResponse{
+			ClusterId: string(action.ClusterId),
 			AccountId: action.AccountId,
 			Message:   err.Error(),
 			Done:      false,
 		})
 		return err
 	}
-	d.jobResponder.SendAddPeerResponse(ctx, AddPeerResponse{
-		ClusterId:     action.ClusterId,
-		AccountId:     action.AccountId,
-		PublicKey:     publicKey,
-		WireguardPort: port,
-		Message:       "Peer added",
-		Done:          true,
+	d.jobResponder.SendSetupAccountResponse(ctx, SetupAccountResponse{
+		ClusterId:   string(action.ClusterId),
+		AccountId:   action.AccountId,
+		WgPublicKey: publicKey,
+		WgPort:      port,
+		Message:     "Peer added",
+		Done:        true,
 	})
 	return err
 }
@@ -160,12 +159,12 @@ var Module = fx.Module("domain",
 					//	Provider:   "do",
 					//	NodesCount: 0,
 					//})
-					d.AddPeerToAccount(ctx, AddPeerAction{
-						ClusterId: "test-to-dlete",
-						AccountId: "test-account",
-						PublicKey: "BeNQy7XnndbfgtiCuhv3wMzW/ennPk2Ee4FZyRJkISg=",
-						PeerIp:    "10.12.1.2",
-					})
+					//d.AddPeerToAccount(ctx, AddPeerAction{
+					//	ClusterId: "test-to-dlete",
+					//	AccountId: "test-account",
+					//	PublicKey: "BeNQy7XnndbfgtiCuhv3wMzW/ennPk2Ee4FZyRJkISg=",
+					//	PeerIp:    "10.12.1.2",
+					//})
 					//d.AddAccountToCluster(ctx, AddAccountAction{
 					//	ClusterId: "test-to-dlete",
 					//	Provider:  "do",

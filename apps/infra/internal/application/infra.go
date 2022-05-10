@@ -34,7 +34,7 @@ func (i *infraClient) AddAccount(cxt context.Context, action domain.AddAccountAc
 	cmd.Output()
 
 	namespace := fmt.Sprintf("wg-%v", action.AccountId)
-	err = i.waitForWireguardAvailability(action.ClusterId, namespace)
+	err = i.waitForWireguardAvailability(string(action.ClusterId), namespace)
 	if err != nil {
 		return
 	}
@@ -78,7 +78,7 @@ func (i *infraClient) AddAccount(cxt context.Context, action domain.AddAccountAc
 	if err != nil {
 		return
 	}
-	port, err = i.getWireguardPort(action.ClusterId, action.AccountId)
+	port, err = i.getWireguardPort(string(action.ClusterId), action.AccountId)
 	if err != nil {
 		return
 	}
@@ -100,7 +100,7 @@ func (i *infraClient) getWireguardPort(clusterId string, accountId string) (stri
 	if err != nil {
 		return "", err
 	}
-	return string(output), nil
+	return strings.ReplaceAll(string(output), "\"", ""), nil
 }
 
 func (i *infraClient) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) (map[string]string, error) {
@@ -234,7 +234,7 @@ func (i *infraClient) setupNodeWireguards(
 }
 
 func (i *infraClient) waitForWireguardAvailability(clusterId, namespace string) error {
-
+	fmt.Println(namespace)
 	count := 0
 	for count < 200 {
 		cmd := exec.Command(

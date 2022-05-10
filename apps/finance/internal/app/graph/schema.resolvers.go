@@ -51,30 +51,22 @@ func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.Acco
 	return AccountModelFromEntity(ae), nil
 }
 
-func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error) {
+func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput, initProvider string, initRegion string) (*model.Account, error) {
 	fmt.Println("create account")
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")
 	}
 
-	account, err := r.domain.CreateAccount(ctx, repos.ID(session.UserId), name, domain.Billing{
+	account, err := r.domain.CreateAccount(ctx, session.UserId, name, domain.Billing{
 		StripeSetupIntentId: billing.StripeSetupIntentID,
 		CardholderName:      billing.CardholderName,
 		Address:             billing.Address,
-	})
+	}, initProvider, initRegion)
 	if err != nil {
 		return nil, err
 	}
 	return AccountModelFromEntity(account), nil
-}
-
-func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accountID string, name *string, email string, role string) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.AddAccountMember(ctx, repos.ID(accountID), email, common.Role(role))
 }
 
 func (r *mutationResolver) FinanceUpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error) {
@@ -103,6 +95,14 @@ func (r *mutationResolver) FinanceUpdateAccountBilling(ctx context.Context, acco
 		return nil, err
 	}
 	return AccountModelFromEntity(account), nil
+}
+
+func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accountID string, name *string, email string, role string) (bool, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("not logged in")
+	}
+	return r.domain.AddAccountMember(ctx, repos.ID(accountID), email, common.Role(role))
 }
 
 func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {

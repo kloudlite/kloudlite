@@ -76,6 +76,7 @@ var Module = fx.Module(
 
 	// Repos
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
+	repos.NewFxMongoRepo[*entities.ClusterAccount]("cluster_accounts", "clacc", entities.ClusterAccountIndexes),
 	repos.NewFxMongoRepo[*entities.Device]("devices", "dev", entities.DeviceIndexes),
 	repos.NewFxMongoRepo[*entities.Project]("project", "proj", entities.ProjectIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("config", "cfg", entities.ConfigIndexes),
@@ -131,10 +132,22 @@ var Module = fx.Module(
 					Payload entities.SetupClusterResponse
 				}
 				err := message.Unmarshal(&m)
+				fmt.Println(err, m)
 				if err != nil {
 					return err
 				}
 				return domain.OnSetupCluster(context, m.Payload)
+			case "setup-cluster-account":
+				var m struct {
+					Type    string
+					Payload entities.SetupClusterAccountResponse
+				}
+				err := message.Unmarshal(&m)
+				if err != nil {
+					return err
+				}
+				fmt.Println(err, m)
+				return domain.OnSetupClusterAccount(context, m.Payload)
 			case "delete-cluster":
 				var m struct {
 					Type    string
@@ -145,6 +158,7 @@ var Module = fx.Module(
 					return err
 				}
 				return nil
+
 			case "update-cluster":
 				var m struct {
 					Type    string

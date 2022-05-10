@@ -102,6 +102,8 @@ func (domain *domainI) CreateAccount(
 	userId repos.ID,
 	name string,
 	billing Billing,
+	initialProvider string,
+	initialRegion string,
 ) (*Account, error) {
 
 	id := domain.accountRepo.NewId()
@@ -138,10 +140,12 @@ func (domain *domainI) CreateAccount(
 	}
 	fmt.Println("sending message to console")
 	// TODO
-	//_, err = domain.consoleCli.CreateDefaultCluster(ctx, &console.CreateClusterIn{
-	//	AccountId:   string(acc.Id),
-	//	AccountName: acc.Name,
-	//})
+	_, err = domain.consoleCli.SetupClusterForAccount(ctx, &console.AccountIn{
+		AccountId:   string(acc.Id),
+		AccountName: acc.Name,
+		Provider:    initialProvider,
+		Region:      initialRegion,
+	})
 	fmt.Println("sent message", err)
 	if err != nil {
 		return nil, err
