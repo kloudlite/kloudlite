@@ -4,12 +4,15 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	t "operators.kloudlite.io/lib/types"
 )
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	Type   string            `json:"type"`
-	Inputs map[string]string `json:"inputs"`
+	ApiVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Inputs     t.KV   `json:"inputs"`
 }
 
 // ManagedServiceStatus defines the observed state of ManagedService

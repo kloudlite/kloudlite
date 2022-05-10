@@ -34,6 +34,11 @@ spec:
             type: object
           spec:
             description: ServiceSpec defines the desired state of Service
+            properties:
+              inputs:
+                type: object
+            required:
+            - inputs
             type: object
           status:
             description: ServiceStatus defines the observed state of Service

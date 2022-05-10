@@ -35,15 +35,17 @@ spec:
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
+              apiVersion:
+                type: string
               inputs:
-                additionalProperties:
-                  type: string
                 type: object
-              type:
+                x-kubernetes-preserve-unknown-fields: true
+              kind:
                 type: string
             required:
+            - apiVersion
             - inputs
-            - type
+            - kind
             type: object
           status:
             description: ManagedServiceStatus defines the observed state of ManagedService

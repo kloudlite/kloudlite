@@ -3,6 +3,7 @@ package crds
 import (
 	"context"
 	"fmt"
+
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -10,20 +11,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels2 "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	fn "operators.kloudlite.io/lib/functions"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // AppReconciler reconciles a Deployment object
@@ -256,7 +259,7 @@ const ImageRegistry = "harbor.dev.madhouselabs.io"
 //		if err != nil {
 //			return nil, errors.NewEf(err, "could not create http object")
 //		}
-//		req.Header.Add("Content-Type", "application/vnd.oci.image.index.v1+json")
+//		req.Header.Add("Content-Kind", "application/vnd.oci.image.index.v1+json")
 //		req.SetBasicAuth(r.HarborUserName, r.HarborPassword)
 //
 //		resp, err := http.DefaultClient.Do(req)
