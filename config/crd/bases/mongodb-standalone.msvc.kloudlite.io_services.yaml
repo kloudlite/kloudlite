@@ -37,8 +37,7 @@ spec:
             properties:
               inputs:
                 type: object
-            required:
-            - inputs
+                x-kubernetes-preserve-unknown-fields: true
             type: object
           status:
             description: ServiceStatus defines the observed state of Service

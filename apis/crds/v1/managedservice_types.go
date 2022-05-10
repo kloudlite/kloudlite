@@ -1,18 +1,21 @@
 package v1
 
 import (
+	"encoding/json"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
 	ApiVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
-	Inputs     t.KV   `json:"inputs"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	Inputs json.RawMessage `json:"inputs"`
+	// Inputs     t.KV   `json:"inputs"`
 }
 
 // ManagedServiceStatus defines the observed state of ManagedService

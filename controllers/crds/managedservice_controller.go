@@ -3,27 +3,19 @@ package crds
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"go.uber.org/zap"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	labels2 "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	t "operators.kloudlite.io/lib/types"
-
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
 	"operators.kloudlite.io/lib"
@@ -98,14 +90,14 @@ var availableMsvc = map[ManagedServiceType]bool{
 }
 
 type Service struct {
-	ApiVersion string `json:"api_version,omitempty"`
+	ApiVersion string `json:"apiVersion,omitempty"`
 	Kind       string `json:"kind,omitempty"`
 	Metadata   struct {
 		Name      string `json:"name"`
 		Namespace string `json:"namespace"`
-	}
+	} `json:"metadata"`
 	Spec struct {
-		Inputs t.KV `json:"inputs,omitempty"`
+		Inputs json.RawMessage `json:"inputs,omitempty"`
 	} `json:"spec"`
 }
 
@@ -151,6 +143,8 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err != nil {
 		return r.notifyAndDie(ctx, err)
 	}
+
+	logger.Infof("bytes: %s", string(b))
 
 	if err := fn.KubectlApply(b); err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not apply service %s:%s", svc.ApiVersion, svc.Kind))
@@ -254,33 +248,33 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.ManagedService{}).
 		Owns(&msvcv1.MongoDB{}).
-		Watches(&source.Kind{
-			Type: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "msvc.kloudlite.io/v1",
-					"kind":       "MongoDB",
-				},
-			},
-		}, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
-			var msvcList crdsv1.ManagedServiceList
-
-			ref := fmt.Sprintf("msvc.kloudlite.io/ref: %s-%s-%s", c.GetNamespace(), c.GetObjectKind().GroupVersionKind().Kind, c.GetName())
-			fmt.Printf("label is| %s\n", ref)
-			if err := r.List(context.TODO(), &msvcList, &client.ListOptions{
-				LabelSelector: labels2.SelectorFromValidatedSet(map[string]string{
-					"msvc.kloudlite.io/ref": ref,
-				}),
-			}); err != nil {
-				return nil
-			}
-			var reqs []reconcile.Request
-			for _, item := range msvcList.Items {
-				reqs = append(reqs, reconcile.Request{
-					NamespacedName: types.NamespacedName{Namespace: item.GetNamespace(), Name: item.GetName()},
-				})
-			}
-			fmt.Println("reqs:", reqs)
-			return reqs
-		})).
+		// Watches(&source.Kind{
+		// 	Type: &unstructured.Unstructured{
+		// 		Object: map[string]interface{}{
+		// 			"apiVersion": "msvc.kloudlite.io/v1",
+		// 			"kind":       "MongoDB",
+		// 		},
+		// 	},
+		// }, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
+		// 	var msvcList crdsv1.ManagedServiceList
+		//
+		// 	ref := fmt.Sprintf("msvc.kloudlite.io/ref: %s-%s-%s", c.GetNamespace(), c.GetObjectKind().GroupVersionKind().Kind, c.GetName())
+		// 	fmt.Printf("label is| %s\n", ref)
+		// 	if err := r.List(context.TODO(), &msvcList, &client.ListOptions{
+		// 		LabelSelector: labels2.SelectorFromValidatedSet(map[string]string{
+		// 			"msvc.kloudlite.io/ref": ref,
+		// 		}),
+		// 	}); err != nil {
+		// 		return nil
+		// 	}
+		// 	var reqs []reconcile.Request
+		// 	for _, item := range msvcList.Items {
+		// 		reqs = append(reqs, reconcile.Request{
+		// 			NamespacedName: types.NamespacedName{Namespace: item.GetNamespace(), Name: item.GetName()},
+		// 		})
+		// 	}
+		// 	fmt.Println("reqs:", reqs)
+		// 	return reqs
+		// })).
 		Complete(r)
 }
