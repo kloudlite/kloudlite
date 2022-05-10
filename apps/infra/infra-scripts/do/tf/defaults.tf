@@ -10,15 +10,15 @@ variable "master-node-data" {
   default = {
     "master" : {
       name = "master",
-      ip   = "10.12.12.2"
+      ip   = "10.13.13.2"
     },
     "master-1" : {
       name = "master-1",
-      ip   = "10.12.12.3"
+      ip   = "10.13.13.3"
     },
     "master-2" : {
       name = "master-2",
-      ip   = "10.12.12.4"
+      ip   = "10.13.13.4"
     },
   }
 }

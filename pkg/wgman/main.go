@@ -26,7 +26,10 @@ func NewSshWgManager(configPath, hostIp, user, accessPath, configDataPath string
 	}
 }
 
-func NewKubeWgManager(configPath, kubeConfigPath, namespace, name, configDataPath string, isServer bool) *wgManager {
+func NewKubeWgManager(
+	configPath, kubeConfigPath, namespace, name, configDataPath string,
+	isServer bool,
+) *wgManager {
 	return &wgManager{
 		configPath:     configPath,
 		configDataPath: configDataPath,
@@ -81,9 +84,9 @@ func (c *Config) writeConfig(w wgManager) error {
 	err = remoteClient.Run("wg-quick", "up", "wg0").Run()
 
 	if err != nil {
-		panic(err)
+		return err
 	}
-	return err
+	return nil
 }
 
 func (c *Config) getWgConfig() (string, error) {
@@ -162,7 +165,7 @@ func (wgc *wgManager) IsSetupDone() bool {
 	return true
 }
 
-func (wgc *wgManager) Init(ip string) (string, error) {
+func (wgc *wgManager) Init(nodeIp string) (string, error) {
 	fmt.Println("Initializing wireguard")
 
 	out, err := wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath))
@@ -178,7 +181,6 @@ func (wgc *wgManager) Init(ip string) (string, error) {
 			return "", fmt.Errorf("failed to generate public, private keys: %v", err)
 		}
 
-		nodeIp, err := wgc.GetNodeIp()
 		c = Config{
 			PublicKey:    key.PublicKey().String(),
 			PrivateKey:   key.String(),
@@ -188,7 +190,7 @@ func (wgc *wgManager) Init(ip string) (string, error) {
 		}
 	} else {
 		fmt.Println("config found using old remote peers")
-		err := json.Unmarshal([]byte(out), &c)
+		err := json.Unmarshal(out, &c)
 
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal config.json: %v", err)
@@ -204,12 +206,12 @@ func (wgc *wgManager) Init(ip string) (string, error) {
 		return "", fmt.Errorf("failed to masrshal config: %v ", err)
 	}
 
+	fmt.Println(fmt.Sprintf("%v/config.json", wgc.configDataPath), string(marshal))
 	if err := wgc.remoteClient.WriteFile(fmt.Sprintf("%v/config.json", wgc.configDataPath), marshal); err != nil {
 		return "", fmt.Errorf("failed to write config: %v ", err)
 	}
 
 	if err := c.writeConfig(*wgc); err != nil {
-		panic(err)
 		return "", fmt.Errorf("unable to write config file: %v", err)
 	}
 
@@ -217,12 +219,26 @@ func (wgc *wgManager) Init(ip string) (string, error) {
 
 }
 
-func (wgc *wgManager) GetNodeIp() (string, error) {
+func (wgc *wgManager) GetEmbededWireguardIp() (string, error) {
 	out, err := wgc.remoteClient.Readfile("wg-ip")
 	if err != nil {
 		return "10.13.13.1", nil
 	}
 	return string(out), nil
+}
+
+func (wgc *wgManager) GetPublicKey() (string, error) {
+	var c Config
+	var configsRaw []byte
+	var err error
+
+	if configsRaw, err = wgc.remoteClient.Readfile(fmt.Sprintf("%v/config.json", wgc.configDataPath)); err != nil {
+		return "", fmt.Errorf("unable read config.json: %v", err)
+	}
+	if err := json.Unmarshal(configsRaw, &c); err != nil {
+		return "", fmt.Errorf("unable to parse config error: %v", err)
+	}
+	return c.PublicKey, nil
 }
 
 func (wgc *wgManager) AddRemotePeer(publicKey string, allowedIps string, endpoint *string) error {

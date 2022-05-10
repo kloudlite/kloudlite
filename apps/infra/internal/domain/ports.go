@@ -12,6 +12,7 @@ type InfraClient interface {
 	AddPeer(cxt context.Context, action AddPeerAction) (e error)
 	DeletePeer(cxt context.Context, action DeletePeerAction) (e error)
 	GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) (map[string]string, error)
+	AddAccount(cxt context.Context, action AddAccountAction) (port string, publicKey string, err error)
 }
 
 type InfraJobResponder interface {

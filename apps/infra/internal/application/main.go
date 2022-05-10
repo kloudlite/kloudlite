@@ -77,13 +77,21 @@ var Module = fx.Module("application",
 				action.Unmarshal(&m)
 				return d.DeleteCluster(context, m.Payload)
 				break
+			case "add-account":
+				var m struct {
+					Type    string
+					Payload domain.AddAccountAction
+				}
+				action.Unmarshal(&m)
+				return d.AddAccountToCluster(context, m.Payload)
+				break
 			case "add-peer":
 				var m struct {
 					Type    string
 					Payload domain.AddPeerAction
 				}
 				action.Unmarshal(&m)
-				return d.AddPeerToCluster(context, m.Payload)
+				return d.AddPeerToAccount(context, m.Payload)
 				break
 			case "delete-peer":
 				var m struct {
