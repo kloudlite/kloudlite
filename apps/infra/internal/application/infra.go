@@ -27,6 +27,82 @@ type infraClient struct {
 	env *InfraEnv
 }
 
+func (i *infraClient) AddAccount(cxt context.Context, action domain.AddAccountAction) (port string, publicKey string, err error) {
+	cmd := exec.Command("bash", "./account-wireguard/init.sh", action.AccountId)
+	cmd.Dir = fmt.Sprintf("./infra-scripts/%v/init-scripts", action.Provider)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterId)))
+	cmd.Output()
+
+	namespace := fmt.Sprintf("wg-%v", action.AccountId)
+	err = i.waitForWireguardAvailability(action.ClusterId, namespace)
+	if err != nil {
+		return
+	}
+	clusterWg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterId),
+		"wireguard",
+		"deploy/wireguard-deployment",
+		"/config",
+		true,
+	)
+
+	clusterWgPublicKey, err := clusterWg.GetPublicKey()
+
+	if err != nil {
+		return
+	}
+	wg := wgman.NewKubeWgManager(
+		"/etc/wireguard/wg0.conf",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterId),
+		namespace,
+		"deploy/wireguard-deployment",
+		"/etc/wireguard",
+		true,
+	)
+
+	accountWgPublicKey, err := wg.Init(action.AccountIp)
+	clusterWgEndpoint := "wireguard-service.wireguard.svc.cluster.local:51820"
+	if err != nil {
+		return
+	}
+
+	accountWgEndpoint := fmt.Sprintf("wireguard-service.%v.svc.cluster.local:51820", namespace)
+	if err != nil {
+		return
+	}
+
+	accountIpSplits := strings.Split(action.AccountIp, ".")
+	wg.AddRemotePeer(clusterWgPublicKey, "10.13.13.1/32", &clusterWgEndpoint)
+	clusterWg.AddRemotePeer(accountWgPublicKey, fmt.Sprintf("10.12.%v.0/24", accountIpSplits[2]), &accountWgEndpoint)
+	if err != nil {
+		return
+	}
+	port, err = i.getWireguardPort(action.ClusterId, action.AccountId)
+	if err != nil {
+		return
+	}
+	return port, accountWgPublicKey, err
+}
+
+func (i *infraClient) getWireguardPort(clusterId string, accountId string) (string, error) {
+	cmd := exec.Command(
+		"kubectl",
+		"get",
+		"services/wireguard-service",
+		"-n",
+		fmt.Sprintf("wg-%v", accountId),
+		"-o",
+		"jsonpath=\"{.spec.ports[0].nodePort}\"",
+	)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
+}
+
 func (i *infraClient) GetResourceOutput(ctx context.Context, clusterId repos.ID, resName string, namespace string) (map[string]string, error) {
 	cmd := exec.Command(
 		"kubectl",
@@ -52,20 +128,20 @@ func (i *infraClient) GetResourceOutput(ctx context.Context, clusterId repos.ID,
 func (i *infraClient) DeleteCluster(cxt context.Context, action domain.DeleteClusterAction) (e error) {
 	var masterCount, agentCount int
 
-	if masterCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "master-nodes-count"); err == nil {
+	if masterCountstr, err := i.getOutputTerraformInFolder(action.ClusterId, "master-nodes-count"); err == nil {
 		masterCount, _ = strconv.Atoi(masterCountstr)
 	} else {
 		return err
 	}
 
-	if agentCountstr, err := i.getOutputTerraformInFolder(action.ClusterID, "agent-nodes-count"); err == nil {
+	if agentCountstr, err := i.getOutputTerraformInFolder(action.ClusterId, "agent-nodes-count"); err == nil {
 		agentCount, _ = strconv.Atoi(agentCountstr)
 	} else {
 		return err
 	}
 
 	cmd := exec.Command("terraform", "destroy", "-auto-approve", fmt.Sprintf("-var=master-nodes-count=%v", masterCount), fmt.Sprintf("-var=agent-nodes-count=%v", agentCount), fmt.Sprintf("-var=keys-path=%v", i.env.SshKeysPath))
-	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterID)
+	cmd.Dir = fmt.Sprintf("%v/%v", i.env.DataPath, action.ClusterId)
 	// cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -73,12 +149,16 @@ func (i *infraClient) DeleteCluster(cxt context.Context, action domain.DeleteClu
 }
 
 func (i *infraClient) AddPeer(cxt context.Context, action domain.AddPeerAction) (e error) {
+	err := i.waitForWireguardAvailability(action.ClusterId, fmt.Sprintf("wg-%v", action.AccountId))
+	if err != nil {
+		return err
+	}
 	serverWg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
-		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
-		"wireguard",
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterId),
+		fmt.Sprintf("wg-%v", action.AccountId), // namespace
 		"deploy/wireguard-deployment",
-		"/config",
+		"/etc/wireguard",
 		true,
 	)
 	return serverWg.AddRemotePeer(action.PublicKey, fmt.Sprintf("%v/32", action.PeerIp), nil)
@@ -87,7 +167,7 @@ func (i *infraClient) AddPeer(cxt context.Context, action domain.AddPeerAction) 
 func (i *infraClient) DeletePeer(cxt context.Context, action domain.DeletePeerAction) (e error) {
 	serverWg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
-		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID),
+		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterId),
 		"wireguard",
 		"deploy/wireguard-deployment",
 		"/config",
@@ -125,7 +205,7 @@ func (i *infraClient) setupNodeWireguards(
 				"./",
 				false,
 			)
-			_ip, e := wg.GetNodeIp()
+			_ip, e := wg.GetEmbededWireguardIp()
 			if e != nil {
 				fmt.Println(fmt.Errorf("unable to get nodeip %v", e))
 				return
@@ -136,12 +216,13 @@ func (i *infraClient) setupNodeWireguards(
 				return
 			}
 			endpoint := fmt.Sprintf("%v:31820", clusterIp)
-			e = wg.AddPeer(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16,10.13.13.0/24", &endpoint)
+			e = wg.AddPeer(clusterPublicKey, "10.13.13.1/32,10.12.0.0/16", &endpoint)
 			if e != nil {
 				fmt.Println(clusterPublicKey, "10.42.0.0/16,10.43.0.0/16", endpoint)
-				panic(e)
+				return
 			}
 			e = serverWg.AddPeer(nodePublicKey, fmt.Sprintf("%v/32", strings.TrimSpace(_ip)), nil)
+			fmt.Println(fmt.Sprintf("wireguard for node %v setup %v", ip, nodePublicKey))
 			if e != nil {
 				fmt.Println(fmt.Errorf("unable to add node as peer to wireguard server %v", e))
 				return
@@ -152,11 +233,19 @@ func (i *infraClient) setupNodeWireguards(
 	return nil
 }
 
-func (i *infraClient) waitForWireguardAvailability(clusterId string) error {
+func (i *infraClient) waitForWireguardAvailability(clusterId, namespace string) error {
 
 	count := 0
 	for count < 200 {
-		cmd := exec.Command("kubectl", "wait", "--timeout=3s", "--for=condition=Available=True", "deploy/wireguard-deployment", "-n", "wireguard")
+		cmd := exec.Command(
+			"kubectl",
+			"wait",
+			"--timeout=3s",
+			"--for=condition=Available=True",
+			"deploy/wireguard-deployment",
+			"-n",
+			namespace,
+		)
 		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId)))
 		o, e := cmd.Output()
 		fmt.Println(e, string(o))
@@ -171,9 +260,9 @@ func (i *infraClient) waitForWireguardAvailability(clusterId string) error {
 	return errors.New("not able to access wireguard after 12 minute")
 }
 
-func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
+func (i *infraClient) setupKubeWireguard(ip, namespace, clusterId string) (string, error) {
 
-	err := i.waitForWireguardAvailability(clusterId)
+	err := i.waitForWireguardAvailability(clusterId, namespace)
 
 	if err != nil {
 		fmt.Println("error on kube server start:", err)
@@ -183,7 +272,7 @@ func (i *infraClient) setupKubeWireguard(ip, clusterId string) (string, error) {
 	wg := wgman.NewKubeWgManager(
 		"/etc/wireguard/wg0.conf",
 		fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, clusterId),
-		"wireguard",
+		namespace,
 		"deploy/wireguard-deployment",
 		"/config",
 		true,
@@ -273,7 +362,7 @@ func (i *infraClient) generateNewNodeIp(clusterId string, nodeName string) (stri
 		return ip, nil
 	}
 	for ipind := 4; ipind <= 254; ipind++ {
-		ip := fmt.Sprintf("10.12.12.%v", ipind)
+		ip := fmt.Sprintf("10.13.13.%v", ipind)
 		if len(data.Nodes) == 0 {
 			return saveIp(ip)
 		}
@@ -537,7 +626,7 @@ func (i *infraClient) applyCluster(
 	}()
 
 	go func() {
-		wireguardPub, err := i.setupKubeWireguard(clusterIp, clusterId)
+		wireguardPub, err := i.setupKubeWireguard("10.13.13.1", "wireguard", clusterId)
 		if err != nil {
 			fmt.Println(fmt.Errorf("unable to setup wireguard %v", err))
 			waitGroup.Done()
@@ -589,7 +678,7 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 	for in := 0; in < action.NodesCount; in++ {
 		newUUID := uuid.NewUUID()
 		nodeName := fmt.Sprintf("agent-%v-%v", in, newUUID)
-		ip, e := i.generateNewNodeIp(action.ClusterID, nodeName)
+		ip, e := i.generateNewNodeIp(action.ClusterId, nodeName)
 		if e != nil {
 			return "", "", e
 		}
@@ -598,8 +687,8 @@ func (i *infraClient) CreateCluster(cxt context.Context, action domain.SetupClus
 			Ip:   ip,
 		})
 	}
-	cluster, key, e := i.applyCluster(cxt, action.ClusterID, action.Provider, action.Region, agentNodes)
-	i.getClusterData(action.ClusterID)
+	cluster, key, e := i.applyCluster(cxt, action.ClusterId, action.Provider, action.Region, agentNodes)
+	i.getClusterData(action.ClusterId)
 	return cluster, key, e
 }
 
@@ -610,7 +699,7 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 		dropNodeTimer.Stop()
 	}
 
-	data, e := i.getClusterData(action.ClusterID)
+	data, e := i.getClusterData(action.ClusterId)
 	if e != nil {
 		return e
 	}
@@ -627,7 +716,7 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 		for in := len(data.Nodes); in < action.AgentNodesCount(); in++ {
 			newUUID := uuid.NewUUID()
 			nodeName := fmt.Sprintf("agent-%v-%v", in, newUUID)
-			ip, err := i.generateNewNodeIp(action.ClusterID, nodeName)
+			ip, err := i.generateNewNodeIp(action.ClusterId, nodeName)
 			if err != nil {
 				return err
 			}
@@ -638,8 +727,8 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 			})
 		}
 	}
-	i.saveClusterData(action.ClusterID, data)
-	_, _, e = i.applyCluster(cxt, action.ClusterID, action.Provider, action.Region, data.Nodes)
+	i.saveClusterData(action.ClusterId, data)
+	_, _, e = i.applyCluster(cxt, action.ClusterId, action.Provider, action.Region, data.Nodes)
 
 	if e != nil {
 		return e
@@ -662,7 +751,7 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 				"--delete-local-data",
 			)
 		}
-		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID)))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterId)))
 		_, e := cmd.Output()
 		if e != nil {
 			fmt.Println(fmt.Errorf("unable to drain node %v %v", node, e))
@@ -671,7 +760,7 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 	}
 
 	dropNodeTimer = time.AfterFunc(time.Duration(i.env.NodeDrainTime)*time.Second, func() {
-		data, e := i.getClusterData(action.ClusterID)
+		data, e := i.getClusterData(action.ClusterId)
 		if e != nil {
 			return
 		}
@@ -682,7 +771,7 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 					"delete", "node",
 					node.Name,
 				)
-				cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterID)))
+				cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%v", fmt.Sprintf("%v/%v/kubeconfig", i.env.DataPath, action.ClusterId)))
 				_, e := cmd.Output()
 				if e != nil {
 					fmt.Println(fmt.Errorf("unable to delete node %v %v", node, e))
@@ -698,9 +787,9 @@ func (i *infraClient) UpdateCluster(cxt context.Context, action domain.UpdateClu
 			newNodes = append(newNodes, node)
 		}
 		data.Nodes = newNodes
-		cluster, key, e := i.applyCluster(cxt, action.ClusterID, action.Provider, action.Region, newNodes)
+		cluster, key, e := i.applyCluster(cxt, action.ClusterId, action.Provider, action.Region, newNodes)
 		fmt.Println(cluster, key, e)
-		i.saveClusterData(action.ClusterID, data)
+		i.saveClusterData(action.ClusterId, data)
 	})
 	return e
 }
