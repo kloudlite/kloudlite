@@ -2,11 +2,10 @@ package crds
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +21,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	t "operators.kloudlite.io/lib/types"
+
 	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
 	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
 	"operators.kloudlite.io/lib"
@@ -29,7 +31,6 @@ import (
 	"operators.kloudlite.io/lib/finalizers"
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
-	"operators.kloudlite.io/lib/templates"
 )
 
 // ManagedServiceReconciler reconciles a ManagedService object
@@ -67,7 +68,6 @@ func (r *ManagedServiceReconciler) notifyAndDie(ctx context.Context, err error) 
 }
 
 func (r *ManagedServiceReconciler) notify() error {
-	// fmt.Printf("Notify conditions: %+v", r.msvc.Status.Conditions)
 	err := r.SendMessage(r.msvc.LogRef(), lib.MessageReply{
 		Key:        r.msvc.LogRef(),
 		Conditions: r.msvc.Status.Conditions,
@@ -97,6 +97,18 @@ var availableMsvc = map[ManagedServiceType]bool{
 	MySqlCluster:      false,
 }
 
+type Service struct {
+	ApiVersion string `json:"api_version,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	Metadata   struct {
+		Name      string `json:"name"`
+		Namespace string `json:"namespace"`
+	}
+	Spec struct {
+		Inputs t.KV `json:"inputs,omitempty"`
+	} `json:"spec"`
+}
+
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
 	logger := r.logger.With("RECONCILE", true)
@@ -109,7 +121,6 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcileResult.Failed()
 	}
 
-	fmt.Println("HERE 1..................................")
 	if !msvc.HasLabels() {
 		msvc.EnsureLabels()
 		if err := r.Update(ctx, msvc); err != nil {
@@ -118,83 +129,87 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcileResult.OK()
 	}
 
-	fmt.Println("HERE 2..................................")
 	r.msvc = msvc
 	if msvc.GetDeletionTimestamp() != nil {
 		return r.finalize(ctx, msvc)
 	}
 
-	if isAvail, ok := availableMsvc[ManagedServiceType(msvc.Spec.Type)]; !ok || !isAvail {
-		logger.Info("Invalid ManagedSvc Type: ", msvc.Spec.Type)
-		return reconcileResult.Failed()
+	// if isAvail, ok := availableMsvc[ManagedServiceType(msvc.Spec.Kind)]; !ok || !isAvail {
+	// 	logger.Info("Invalid ManagedSvc Kind: ", msvc.Spec.Kind)
+	// 	return reconcileResult.Failed()
+	// }
+	//
+	svc := Service{
+		ApiVersion: msvc.Spec.ApiVersion,
+		Kind:       msvc.Spec.Kind,
+	}
+	svc.Metadata.Name = msvc.Name
+	svc.Metadata.Namespace = msvc.Namespace
+	svc.Spec.Inputs = msvc.Spec.Inputs
+
+	b, err := json.Marshal(svc)
+	if err != nil {
+		return r.notifyAndDie(ctx, err)
 	}
 
-	fmt.Println("HERE 3..................................")
-	switch ManagedServiceType(msvc.Spec.Type) {
-	case MongoDBStandalone:
-		{
-			var helmSecret corev1.Secret
-			nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
-			if err := r.Get(ctx, nn, &helmSecret); err != nil {
-				logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
-			}
-			x, ok := helmSecret.Data["mongodb-root-password"]
-			msvc.Spec.Inputs["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string)
-
-			b, err := templates.Parse(templates.MongoDBStandalone, msvc)
-			if err != nil {
-				r.logger.Info(err)
-				return r.notifyAndDie(ctx, err)
-			}
-			watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
-			if err != nil {
-				r.logger.Info(err)
-				return r.notifyAndDie(ctx, err)
-			}
-			if err := fn.KubectlApply(b, watcher); err != nil {
-				return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
-			}
-		}
-
-	case MongoDBCluster:
-		{
-			var helmSecret corev1.Secret
-			nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
-			if err := r.Get(ctx, nn, &helmSecret); err != nil {
-				logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
-			}
-
-			x, ok := helmSecret.Data["mongodb-root-password"]
-			msvc.Spec.Inputs["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string)
-			y, ok2 := helmSecret.Data["mongodb-replica-set-key"]
-			msvc.Spec.Inputs["replica_set_key"] = fn.IfThenElse(ok2, string(y), fn.CleanerNanoid(41)).(string)
-
-			b, err := templates.Parse(templates.MongoDBCluster, msvc)
-			if err != nil {
-				r.logger.Info(err)
-				return r.notifyAndDie(ctx, err)
-			}
-			watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
-			if err != nil {
-				r.logger.Info(err)
-				return r.notifyAndDie(ctx, err)
-			}
-			if err := fn.KubectlApply(b, watcher); err != nil {
-				return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
-			}
-			fmt.Println("HERE 4..................................")
-		}
-
-	case ElasticSearch:
-		{
-		}
-	case MySqlStandalone:
-		{
-		}
-	case MySqlCluster:
-		{
-		}
+	if err := fn.KubectlApply(b); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not apply service %s:%s", svc.ApiVersion, svc.Kind))
 	}
+
+	// switch ManagedServiceType(msvc.Spec.Kind) {
+	// case MongoDBStandalone:
+	// 	{
+	// 		var helmSecret corev1.Secret
+	// 		nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
+	// 		if err := r.Get(ctx, nn, &helmSecret); err != nil {
+	// 			logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
+	// 		}
+	// 		x, ok := helmSecret.Data["mongodb-root-password"]
+	// 		msvc.Spec.Inputs.Set("root_password", fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
+	//
+	// 		b, err := templates.Parse(templates.MongoDBStandalone, msvc)
+	// 		if err != nil {
+	// 			r.logger.Info(err)
+	// 			return r.notifyAndDie(ctx, err)
+	// 		}
+	// 		watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
+	// 		if err != nil {
+	// 			r.logger.Info(err)
+	// 			return r.notifyAndDie(ctx, err)
+	// 		}
+	// 		if err := fn.KubectlApply(b, watcher); err != nil {
+	// 			return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
+	// 		}
+	// 	}
+	//
+	// case MongoDBCluster:
+	// 	{
+	// 		var helmSecret corev1.Secret
+	// 		nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
+	// 		if err := r.Get(ctx, nn, &helmSecret); err != nil {
+	// 			logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
+	// 		}
+	//
+	// 		x, ok := helmSecret.Data["mongodb-root-password"]
+	// 		msvc.Spec.Inputs.Set("root_password", fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
+	// 		y, ok2 := helmSecret.Data["mongodb-replica-set-key"]
+	// 		msvc.Spec.Inputs.Set("replica_set_key", fn.IfThenElse(ok2, string(y), fn.CleanerNanoid(41)))
+	//
+	// 		b, err := templates.Parse(templates.MongoDBCluster, msvc)
+	// 		if err != nil {
+	// 			r.logger.Info(err)
+	// 			return r.notifyAndDie(ctx, err)
+	// 		}
+	// 		watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
+	// 		if err != nil {
+	// 			r.logger.Info(err)
+	// 			return r.notifyAndDie(ctx, err)
+	// 		}
+	// 		if err := fn.KubectlApply(b, watcher); err != nil {
+	// 			return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
+	// 		}
+	// 	}
+	// }
 
 	mWatcher := &watcherMsvc.MongoDB{}
 	if err := r.Get(ctx, req.NamespacedName, mWatcher); err != nil {

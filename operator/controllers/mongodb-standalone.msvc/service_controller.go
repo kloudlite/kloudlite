@@ -119,6 +119,7 @@ func (r *ServiceReconciler) walk(ctx context.Context) error {
 	}
 
 	// ASSERT: helm mongodb deployment is standalone
+	return nil
 }
 
 func (r *ServiceReconciler) walkDeployment(ctx context.Context) error {
@@ -178,12 +179,12 @@ func (r *ServiceReconciler) walkDeployment(ctx context.Context) error {
 				}
 				containerC = append(containerC, p)
 			}
-			r.buildConditions("Container", containerC...)
+			r.mongoSvc.Status.Conditions.Build("Container", containerC...)
 			return nil
 		}
 		return nil
 	}
-
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

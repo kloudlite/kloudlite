@@ -1,12 +1,13 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: example
+  name: n-msvc
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-service
     - foreground
 spec:
-  type: MongoDBCluster
+  apiVersion: mongodb-standalone.msvc.kloudlite.io
+  kind: Service
   inputs:
-    replica_count: "1"
+    replica_count: 1

@@ -43,7 +43,7 @@ package app
 // 			{
 // 				Port:       21323,
 // 				TargetPort: 21345,
-// 				Type:       "tcp",
+// 				Kind:       "tcp",
 // 			},
 // 		},
 // 		Containers: []domain.AppContainer{
@@ -70,7 +70,7 @@ package app
 // 	Namespace:    "hotspot",
 // 	Spec: domain.ManagedRes{
 // 		Name:       "sample-mres",
-// 		Type:       "db",
+// 		Kind:       "db",
 // 		Namespace:  "hotspot",
 // 		ManagedSvc: "sample1234",
 // 		Values: map[string]interface{}{
