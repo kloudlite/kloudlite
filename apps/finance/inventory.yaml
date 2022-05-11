@@ -1,0 +1,43 @@
+- name: BlockStorage
+  type: Storage
+  unit: 100GB
+  price_per_hour: 0.0138
+  price_per_month: 10$
+
+- name: ObjectStorage
+  type: Storage
+  unit: GB
+  price_per_hour: 0.0138
+  price_per_month: 10$
+
+- type: Compute
+  name: DigitalOceanBasic (Shared)
+  unit: 1 GB 1 VCPU
+  price_per_hour: 0.0108$
+  price_per_month: 8.192$
+
+- type: Compute
+  name: DigitalOceanGeneralPurpose
+  unit: 4 GB 1 VCPU
+  price_per_hour: 0.0534$
+  price_per_month: 38.448$
+
+- type: Compute
+  name: DigitalOceanCPUOptimised
+  unit: 2 GB 1 VCPU
+  price_per_hour: 0.036$
+  price_per_month: 24.576$
+
+- type: Compute
+  name: DigitalOceanMemoryOptimised
+  unit: 8 GB 1 VCPU
+  price_per_hour: 0.0714$
+  price_per_month: 49.152$
+
+- type: CiHours
+  name: Tekton Hours
+  price_per_min: 0.00006$
+
+- type: UserAccess
+  price_per_day: 0.5$
+  price_per_month: 15$
