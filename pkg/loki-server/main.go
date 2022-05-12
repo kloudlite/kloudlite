@@ -36,6 +36,14 @@ type lokiClient struct {
 	url *url.URL
 }
 
+type logResult struct {
+	Data struct {
+		Result []struct {
+			Values [][]string `json:"values,omitempty"`
+		} `json:"result,omitempty"`
+	} `json:"data"`
+}
+
 func (l *lokiClient) Tail(
 	streamSelectors []StreamSelector,
 	filter *string,
@@ -67,8 +75,8 @@ func (l *lokiClient) Tail(
 	} else {
 		query.Set("limit", fmt.Sprintf("%v", 30))
 	}
-	u := url.URL{Scheme: "https", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
 	for {
+		u := url.URL{Scheme: "https", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
 		get, _ := http.Get(u.String())
 		all, _ := ioutil.ReadAll(get.Body)
 		connection.WriteMessage(websocket.TextMessage, all)
