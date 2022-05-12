@@ -16,4 +16,5 @@ FROM golang:1.18-alpine
 USER 1001
 WORKDIR /tmp/app
 COPY --from=base --chown=1001 /tmp/bin/comms ./
+COPY --chown=1001 ./email-templates ./email-templates
 ENTRYPOINT ["./comms"]
