@@ -248,6 +248,7 @@ var Module = fx.Module(
 			"hotspot:auth:sessions",
 		))
 		a.Get("/", fWebsocket.New(func(conn *fWebsocket.Conn) {
+			fmt.Println("New connection")
 			// Crosscheck session
 			client.Tail([]loki_server.StreamSelector{
 				{
