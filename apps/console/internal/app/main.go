@@ -253,7 +253,12 @@ var Module = fx.Module(
 				{
 					Key:       "namespace",
 					Operation: "=",
-					Value:     "hotspot",
+					Value:     "demo-project-222222",
+				},
+				{
+					Key:       "app",
+					Operation: "=",
+					Value:     "demo-app-23676",
 				},
 			}, nil, nil, nil, nil, conn)
 		}))
