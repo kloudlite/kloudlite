@@ -21,6 +21,15 @@ func (e *AuthGRPCEnv) GetGCPServerURL() string {
 	return fmt.Sprintf("%v:%v", e.AuthServerHost, e.AuthServerPort)
 }
 
+type CommsGRPCEnv struct {
+	CommsServerHost string `env:"COMMS_SERVER_HOST"`
+	CommsServerPort uint16 `env:"COMMS_SERVER_PORT"`
+}
+
+func (e *CommsGRPCEnv) GetGCPServerURL() string {
+	return fmt.Sprintf("%v:%v", e.CommsServerHost, e.CommsServerPort)
+}
+
 type ConsoleGRPCEnv struct {
 	ConsoleServerHost string `env:"CONSOLE_SERVER_HOST"`
 	ConsoleServerPort uint16 `env:"CONSOLE_SERVER_PORT"`
@@ -56,6 +65,7 @@ type Env struct {
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	HttpPort      uint16 `env:"PORT"`
 	HttpCors      string `env:"ORIGINS"`
+	GrpcPort      uint16 `env:"GRPC_PORT"`
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -81,6 +91,9 @@ var Module = fx.Module("framework",
 	config.EnvFx[IAMGRPCEnv](),
 	config.EnvFx[CiGrpcEnv](),
 	config.EnvFx[AuthGRPCEnv](),
+	config.EnvFx[CommsGRPCEnv](),
+	//rpc.NewGrpcServerFx[*Env](),
+	rpc.NewGrpcClientFx[*CommsGRPCEnv, app.CommsClientConnection](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
 	rpc.NewGrpcClientFx[*CiGrpcEnv, app.CIGrpcClientConn](),

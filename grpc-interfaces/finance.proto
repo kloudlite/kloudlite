@@ -1,18 +1,26 @@
 syntax = "proto3";
 
-option go_package = "kloudlite.io/rpc/infra";
+option go_package = "kloudlite.io/rpc/finance";
 
-service Infra {
-  rpc GetResourceOutput(GetInput) returns (Output);
+service Finance {
+  rpc startBillable(StartBillableIn) returns (StartBillableOut);
+  rpc stopBillable(StopBillableIn) returns (StopBillableOut);
 }
 
-message GetInput {
-  string managedResName = 1;
-  string clusterId = 2;
-  string namespace = 3;
+message StartBillableIn {
+  string accountId = 1;
+  string BillableType = 2;
+  float quantity = 3;
 }
 
-message Output {
- map<string, string> output = 1;
+message StopBillableIn {
+  string BillableId = 1;
 }
 
+message StartBillableOut {
+  string billingId = 1;
+}
+
+message StopBillableOut {
+  string billingId = 1;
+}

@@ -13,8 +13,19 @@ service IAM {
   // Mutation
   rpc AddMembership(InAddMembership) returns (OutAddMembership);
   rpc InviteMembership(InAddMembership) returns (OutAddMembership);
+  rpc ConfirmMembership(InConfirmMembership) returns (OutConfirmMembership);
   rpc RemoveMembership(InRemoveMembership) returns (OutRemoveMembership);
   rpc RemoveResource(InRemoveResource) returns (OutRemoveResource);
+}
+
+message InConfirmMembership{
+  string user_id = 1;
+  string resource_id = 2;
+  string role = 3;
+}
+
+message OutConfirmMembership {
+
 }
 
 message RoleBinding {

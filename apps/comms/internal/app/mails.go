@@ -45,13 +45,13 @@ func loadEmailFromYaml(templateName string, params any) (*email, error) {
 	return &email, nil
 }
 
-func constructVerificationEmail(name string, token string) (subject string, plainText string, htmlContent string, err error) {
+func constructVerificationEmail(name string, token string, emailLinksBaseUrl string) (subject string, plainText string, htmlContent string, err error) {
 	email, err := loadEmailFromYaml("user-verification", struct {
 		Name string
 		Link string
 	}{
 		Name: name,
-		Link: fmt.Sprintf("http://localhost:8080/verify/%v", token),
+		Link: fmt.Sprintf("%v/verify-email/?token=%v", emailLinksBaseUrl, token),
 	})
 	if err != nil {
 		return
@@ -62,14 +62,33 @@ func constructVerificationEmail(name string, token string) (subject string, plai
 	return
 }
 
-func constructResetPasswordEmail(name string, token string) (subject string, plainText string, htmlContent string, err error) {
+func constructResetPasswordEmail(name string, token string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
 	email, err := loadEmailFromYaml("reset-password", struct {
 		Name string
 		Link string
 	}{
 		Name: name,
-		Link: fmt.Sprintf("http://localhost:8080/verify/%v", token),
+		Link: fmt.Sprintf("%v/reset-password/?token=%v", baseUrl, token),
 	})
+	fmt.Println(fmt.Sprintf("%v/reset-password/?token=%v", baseUrl, token))
+	if err != nil {
+		return
+	}
+	subject = email.Subject
+	plainText = email.PlainText
+	htmlContent = email.HTMLText
+	return
+}
+
+func constructAccountInvitationEmail(name string, accountName string, invitationToken string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := loadEmailFromYaml("account-invite", struct {
+		Name string
+		Link string
+	}{
+		Name: name,
+		Link: fmt.Sprintf("%v/invite-callback/?token=%v", baseUrl, invitationToken),
+	})
+	fmt.Sprintf("%v/invite-callback/?token=%v", baseUrl, invitationToken)
 	if err != nil {
 		return
 	}

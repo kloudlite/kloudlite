@@ -7,6 +7,13 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type AccountInviteToken struct {
+	Token     string   `json:"token"`
+	UserId    repos.ID `json:"user_id"`
+	Role      string   `json:"role"`
+	AccountId repos.ID `json:"account_id"`
+}
+
 type Billing struct {
 	StripeCustomerId    string
 	StripeSetupIntentId string
@@ -38,5 +45,28 @@ var AccountIndexes = []repos.IndexField{
 			{Key: "id", Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+}
+
+type Billable struct {
+	repos.BaseEntity `bson:",inline"`
+	AccountId        repos.ID  `json:"account_id" bson:"account_id"`
+	ResourceType     string    `json:"resource_type" bson:"resource_type"`
+	Quantity         float32   `json:"quantity" bson:"quantity"`
+	StartTime        time.Time `json:"start_time" bson:"start_time"`
+	EndTime          time.Time `json:"end_time" bson:"end_time"`
+}
+
+var BillableIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "account_id", Value: repos.IndexAsc},
+		},
 	},
 }
