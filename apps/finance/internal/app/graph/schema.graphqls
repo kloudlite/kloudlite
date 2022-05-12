@@ -7,6 +7,7 @@ type Mutation {
     finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
     finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
     finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean!
+    finance_acceptAccountInvite(invitationToken: String!): Boolean
     finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean!
     finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
     finance_deactivateAccount(accountId: ID!): Boolean!

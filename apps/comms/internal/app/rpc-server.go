@@ -8,8 +8,9 @@ import (
 
 type rpcImpl struct {
 	comms.UnimplementedCommsServer
-	mailer       mail.Mailer
-	supportEmail string
+	mailer            mail.Mailer
+	supportEmail      string
+	emailLinksBaseUrl string
 }
 
 func (r *rpcImpl) sendSupportEmail(
@@ -34,8 +35,22 @@ func (r *rpcImpl) sendSupportEmail(
 	return nil
 }
 
+func (r *rpcImpl) SendAccountMemberInviteEmail(ctx context.Context, input *comms.AccountMemberInviteEmailInput) (*comms.Void, error) {
+	subject, plainText, htmlContent, err := constructAccountInvitationEmail(
+		input.Name, input.AccountName, input.InvitationToken, r.emailLinksBaseUrl,
+	)
+	if err != nil {
+		return nil, err
+	}
+	err = r.sendSupportEmail(subject, input.Email, input.Name, plainText, htmlContent)
+	if err != nil {
+		return nil, err
+	}
+	return &comms.Void{}, nil
+}
+
 func (r *rpcImpl) SendPasswordResetEmail(_ context.Context, input *comms.PasswordResetEmailInput) (*comms.Void, error) {
-	subject, plainText, htmlContent, err := constructResetPasswordEmail(input.Name, input.ResetToken)
+	subject, plainText, htmlContent, err := constructResetPasswordEmail(input.Name, input.ResetToken, r.emailLinksBaseUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +62,11 @@ func (r *rpcImpl) SendPasswordResetEmail(_ context.Context, input *comms.Passwor
 }
 
 func (r *rpcImpl) SendVerificationEmail(_ context.Context, input *comms.VerificationEmailInput) (*comms.Void, error) {
-	subject, plainText, htmlContent, err := constructVerificationEmail(input.Name, input.VerificationToken)
+	subject, plainText, htmlContent, err := constructVerificationEmail(
+		input.Name,
+		input.VerificationToken,
+		r.emailLinksBaseUrl,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +79,8 @@ func (r *rpcImpl) SendVerificationEmail(_ context.Context, input *comms.Verifica
 
 func fxRPCServer(mailer mail.Mailer, env *Env) comms.CommsServer {
 	return &rpcImpl{
-		mailer:       mailer,
-		supportEmail: env.SupportEmail,
+		mailer:            mailer,
+		supportEmail:      env.SupportEmail,
+		emailLinksBaseUrl: env.EmailsBaseUrl,
 	}
 }

@@ -23,6 +23,10 @@ type Domain interface {
 		email string,
 		role common.Role,
 	) (bool, error)
+	ConfirmAccountMembership(
+		ctx context.Context,
+		invitationToken string,
+	) (bool, error)
 	RemoveAccountMember(
 		ctx context.Context,
 		accountId repos.ID,
@@ -36,4 +40,12 @@ type Domain interface {
 	GetAccountMemberships(ctx context.Context, userId repos.ID) ([]*Membership, error)
 	GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error)
 	GetUserMemberships(ctx context.Context, resourceId repos.ID) ([]*Membership, error)
+
+	StartBillable(
+		ctx context.Context,
+		accountId repos.ID,
+		resourceType string,
+		quantity float32,
+	) (*Billable, error)
+	StopBillable(ctx context.Context, billableId repos.ID) error
 }
