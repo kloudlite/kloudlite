@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/infra";
+
+service Infra {
+  rpc GetResourceOutput(GetInput) returns (Output);
+}
+
+message GetInput {
+  string managedResName = 1;
+  string clusterId = 2;
+  string namespace = 3;
+}
+
+message Output {
+ map<string, string> output = 1;
+}
+
