@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/signintech/gopdf"
 )
 
@@ -46,7 +48,7 @@ func main() {
 	base()
 	summary(&pdf)
 
-	pdf.SetY(pdf.GetY() + 55)
+	// pdf.SetY(pdf.GetY() + 55)
 	tableSection(&pdf, &Table{
 		Header: []string{"Droplets", "Hours", "Start", "End", "$29.81"},
 		rows: [][]string{
@@ -54,15 +56,165 @@ func main() {
 			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
 			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
 			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
 		},
 	})
+
+	tableSection(&pdf, &Table{
+		Header: []string{"Droplets", "Hours", "Start", "End", "$29.81"},
+		rows: [][]string{
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"remote-baby(s-4vcpu-8gb-amd)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+			{"plaxlb (s-vcpu-1gb)", "744", "01-01 00:00", "01-01 00:00", "$29.81"},
+		},
+	})
+
+	setPage(&pdf)
 
 	pdf.AddOutline("Kloudlite Bill")
 	pdf.WritePdf("hello.pdf")
 }
 
+func setPage(goPdf *gopdf.GoPdf) {
+	goPdf.SetFont("OpenSans-Medium", "", 9)
+
+	goPdf.SetX(gopdf.PageSizeA4.W - leftMargin - effectiveWidth/2)
+	goPdf.SetY(gopdf.PageSizeA4.H - topMargin)
+
+	goPdf.CellWithOption(&gopdf.Rect{
+		W: effectiveWidth / 2,
+		H: 30,
+	}, fmt.Sprintf("Page %v", goPdf.GetNumberOfPages()), gopdf.CellOption{
+		Align: gopdf.Right,
+	})
+}
+
 func tableSection(goPdf *gopdf.GoPdf, table *Table) {
-	tableTop := goPdf.GetY()
+	tableTop := goPdf.GetY() + 30
+
+	if tableTop >= gopdf.PageSizeA4.H-topMargin*2 {
+		setPage(goPdf)
+		goPdf.AddPage()
+		tableTop = topMargin
+	}
 
 	titleText, hoursText, startText, endText, priceText := table.Header[0], table.Header[1], table.Header[2], table.Header[3], table.Header[4]
 
@@ -113,7 +265,66 @@ func tableSection(goPdf *gopdf.GoPdf, table *Table) {
 
 	goPdf.Line(leftMargin, goPdf.GetY(), gopdf.PageSizeA4.W-leftMargin, goPdf.GetY())
 
+	goPdf.SetY(goPdf.GetY() + 6)
 
+	// for in table.rows
+	for _, row := range table.rows {
+
+		titleText, hoursText, startText, endText, priceText := row[0], row[1], row[2], row[3], row[4]
+
+		tableTop = goPdf.GetY()
+
+		if tableTop >= gopdf.PageSizeA4.H-topMargin-15 {
+			setPage(goPdf)
+			goPdf.AddPage()
+			tableTop = topMargin
+		}
+
+		goPdf.SetFont("OpenSans-Regular", "", 8)
+		// goPdf.SetTextColor(71, 85, 105)
+		goPdf.SetY(tableTop + 2)
+		goPdf.SetX(leftMargin)
+		goPdf.MultiCell(&gopdf.Rect{
+			W: effectiveWidth/2 + leftMargin,
+			H: 20,
+		}, titleText)
+
+		goPdf.SetY(tableTop + 2)
+		goPdf.SetX(leftMargin + 277)
+
+		goPdf.MultiCell(&gopdf.Rect{
+			W: effectiveWidth/2 + leftMargin,
+			H: 20,
+		}, hoursText)
+
+		goPdf.SetY(tableTop + 2)
+		goPdf.SetX(leftMargin + 326)
+
+		goPdf.MultiCell(&gopdf.Rect{
+			W: effectiveWidth/2 + leftMargin,
+			H: 20,
+		}, startText)
+
+		goPdf.SetY(tableTop + 2)
+		goPdf.SetX(leftMargin + 394)
+
+		goPdf.MultiCell(&gopdf.Rect{
+			W: effectiveWidth/2 + leftMargin,
+			H: 20,
+		}, endText)
+
+		goPdf.SetY(tableTop + 2)
+		goPdf.SetX(gopdf.PageSizeA4.W - effectiveWidth/2 - leftMargin)
+
+		goPdf.CellWithOption(&gopdf.Rect{
+			W: effectiveWidth / 2,
+			H: 30,
+		}, priceText, gopdf.CellOption{
+			Align: gopdf.Right,
+		})
+
+		goPdf.SetY(goPdf.GetY() + 19)
+	}
 }
 
 func fromAdress(pdf *gopdf.GoPdf) {
@@ -219,6 +430,8 @@ func summary(pdf *gopdf.GoPdf) {
 		W: effectiveWidth / 2,
 		H: 30,
 	}, "Detailed usage infromation is avaailable via the API or can be downloaded from the billing section of your account")
+
+	pdf.SetY(pdf.GetY() + 15)
 
 }
 
