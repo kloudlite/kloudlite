@@ -5,6 +5,7 @@ option go_package = "kloudlite.io/rpc/comms";
 service Comms {
   rpc SendVerificationEmail(VerificationEmailInput) returns (Void);
   rpc SendPasswordResetEmail(PasswordResetEmailInput) returns (Void);
+  rpc SendAccountMemberInviteEmail(AccountMemberInviteEmailInput) returns (Void);
 }
 
 message VerificationEmailInput{
@@ -17,6 +18,13 @@ message PasswordResetEmailInput{
   string email = 1;
   string name = 2;
   string resetToken = 3;
+}
+
+message AccountMemberInviteEmailInput{
+  string accountName = 1;
+  string invitationToken = 2;
+  string email = 3;
+  string name = 4;
 }
 
 message Void{

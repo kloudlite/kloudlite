@@ -5,6 +5,7 @@ dotenv: [".secrets/env"]
 tasks:
   run:
     env:
+      EMAIL_LINKS_BASE_URL: "https://auth.local.kl.madhouselabs.io"
       GRPC_PORT: 50051
       SUPPORT_EMAIL: support@kloudlite.io
     cmds:

@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/functions"
 	"math"
 	"math/rand"
 	"regexp"
@@ -18,12 +21,80 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+func generateId(prefix string) string {
+	id, e := functions.CleanerNanoid(28)
+	if e != nil {
+		panic(fmt.Errorf("could not get cleanerNanoid()"))
+	}
+	return fmt.Sprintf("%s-%s", prefix, strings.ToLower(id))
+}
+
 type domainI struct {
-	authClient  auth.AuthClient
-	iamCli      iam.IAMClient
-	consoleCli  console.ConsoleClient
-	accountRepo repos.DbRepo[*Account]
-	ciClient    ci.CIClient
+	authClient             auth.AuthClient
+	iamCli                 iam.IAMClient
+	consoleCli             console.ConsoleClient
+	accountRepo            repos.DbRepo[*Account]
+	ciClient               ci.CIClient
+	commsClient            comms.CommsClient
+	billableRepo           repos.DbRepo[*Billable]
+	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
+}
+
+func (domain *domainI) ConfirmAccountMembership(ctx context.Context, invitationToken string) (bool, error) {
+	existingToken, err := domain.accountInviteTokenRepo.Get(ctx, invitationToken)
+	if err != nil {
+		return false, err
+	}
+	if existingToken == nil {
+		return false, errors.New("invitation token not found")
+	}
+	err = domain.accountInviteTokenRepo.Drop(ctx, invitationToken)
+	if err != nil {
+		return false, err
+	}
+	_, err = domain.iamCli.ConfirmMembership(ctx, &iam.InConfirmMembership{
+		UserId:     string(existingToken.UserId),
+		ResourceId: string(existingToken.AccountId),
+		Role:       existingToken.Role,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (domain *domainI) StartBillable(
+	ctx context.Context,
+	accountId repos.ID,
+	resourceType string,
+	quantity float32,
+) (*Billable, error) {
+	create, err := domain.billableRepo.Create(ctx, &Billable{
+		AccountId:    accountId,
+		ResourceType: resourceType,
+		Quantity:     quantity,
+		StartTime:    time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func (domain *domainI) StopBillable(
+	ctx context.Context,
+	billableId repos.ID,
+) error {
+	id, err := domain.billableRepo.FindById(ctx, billableId)
+	if err != nil {
+		return err
+	}
+	id.EndTime = time.Now()
+	_, err = domain.billableRepo.UpdateById(ctx, billableId, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (domain *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error) {
@@ -195,6 +266,11 @@ func (domain *domainI) AddAccountMember(
 	email string,
 	role common.Role,
 ) (bool, error) {
+	account, err := domain.accountRepo.FindById(ctx, accountId)
+	if err != nil {
+		return false, err
+	}
+
 	byEmail, err := domain.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
 	if err != nil {
 		return false, err
@@ -204,6 +280,25 @@ func (domain *domainI) AddAccountMember(
 		ResourceType: string(common.ResourceAccount),
 		ResourceId:   string(accountId),
 		Role:         string(role),
+	})
+	if err != nil {
+		return false, err
+	}
+	token := generateId("acc-invite")
+	err = domain.accountInviteTokenRepo.Set(ctx, token, &AccountInviteToken{
+		Token:     token,
+		UserId:    repos.ID(byEmail.UserId),
+		Role:      string(role),
+		AccountId: accountId,
+	})
+	if err != nil {
+		return false, err
+	}
+	_, err = domain.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
+		AccountName:     account.Name,
+		InvitationToken: token,
+		Email:           email,
+		Name:            "",
 	})
 	if err != nil {
 		return false, err
@@ -291,10 +386,13 @@ func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, e
 
 func fxDomain(
 	accountRepo repos.DbRepo[*Account],
+	billableRepo repos.DbRepo[*Billable],
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
+	commsClient comms.CommsClient,
+	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 ) Domain {
 	return &domainI{
 		authClient,
@@ -302,5 +400,8 @@ func fxDomain(
 		consoleClient,
 		accountRepo,
 		ciClient,
+		commsClient,
+		billableRepo,
+		accountInviteTokenRepo,
 	}
 }

@@ -105,6 +105,14 @@ func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accou
 	return r.domain.AddAccountMember(ctx, repos.ID(accountID), email, common.Role(role))
 }
 
+func (r *mutationResolver) FinanceAcceptAccountInvite(ctx context.Context, invitationToken string) (*bool, error) {
+	membership, err := r.domain.ConfirmAccountMembership(ctx, invitationToken)
+	if err != nil {
+		return nil, err
+	}
+	return &membership, nil
+}
+
 func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
