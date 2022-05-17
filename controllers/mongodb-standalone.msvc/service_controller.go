@@ -129,45 +129,18 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return r.notify(ctx)
 }
 
-type HelmResource struct {
-	Status struct {
-		Conditions []metav1.Condition `json:"conditions,omitempty"`
-	} `json:"status"`
-}
-
-func (r *ServiceReconciler) getHelmMongoDB(ctx context.Context) (*HelmResource, error) {
-	hm := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": constants.MsvcApiVersion,
-			"kind":       constants.HelmMongoDBKind,
-		},
-	}
-	if err := r.Get(ctx, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}, &hm); err != nil {
-		return nil, err
-	}
-	b, err := hm.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	var hmdb HelmResource
-	if err := json.Unmarshal(b, &hmdb); err != nil {
-		return nil, err
-	}
-	return &hmdb, nil
-}
-
 func (r *ServiceReconciler) walk(ctx context.Context) error {
-	hmdb, err := r.getHelmMongoDB(ctx)
-	if err != nil {
+	if err := r.mongoSvc.Status.Conditions.FromHelmMsvc(ctx, r.Client, constants.HelmMongoDBKind, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
 		return err
 	}
-	r.mongoSvc.Status.Conditions.Build("helm", hmdb.Status.Conditions...)
-	if !meta.IsStatusConditionTrue(hmdb.Status.Conditions, "Deployed") {
-		return nil
+
+	if err := r.mongoSvc.Status.Conditions.FromDeployment(ctx, r.Client, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
+		return err
 	}
 
-	// ASSERT: helm mongodb deployment is standalone
-	return r.walkDeployment(ctx)
+	return nil
+	// // ASSERT: helm mongodb deployment is standalone
+	// return r.walkDeployment(ctx)
 }
 
 func (r *ServiceReconciler) walkDeployment(ctx context.Context) error {

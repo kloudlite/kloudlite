@@ -178,7 +178,6 @@ func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.Ma
 			}
 		}
 
-		r.logger.Infof("resource: %+v", resource)
 		if resource.GetName() != "" {
 			if err := r.Delete(ctx, &resource); err != nil {
 				return r.notifyAndDie(ctx, err)

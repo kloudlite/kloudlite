@@ -109,36 +109,39 @@ func (c *Conditions) FromHelmMsvc(ctx context.Context, reconciler client.Client,
 	return nil
 }
 
-func (c *Conditions) FromStatefulset(ctx context.Context, reconciler client.Client, nn types.NamespacedName) error {
+func (c *Conditions) FromStatefulset(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
 	sts := new(appsv1.StatefulSet)
-	if err := reconciler.Get(ctx, nn, sts); err != nil {
+	if err := apiClient.Get(ctx, nn, sts); err != nil {
 		return err
 	}
+	fmt.Printf("sts.Status: %+v\n", sts.Status)
 	if sts.Status.ReadyReplicas == sts.Status.Replicas {
-		cond := metav1.Condition{
+		c.Build("", metav1.Condition{
 			Type:    constants.ConditionReady.Type,
 			Status:  metav1.ConditionTrue,
 			Reason:  constants.ConditionReady.SuccessReason,
 			Message: "StatefulSet Ready",
-		}
-		c.Build("", cond)
+		})
 		return nil
 	}
 
 	podsList := new(corev1.PodList)
-	if err := reconciler.List(ctx, podsList, &client.ListOptions{
+	if err := apiClient.List(ctx, podsList, &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(sts.Spec.Template.Labels),
 		Namespace:     sts.Namespace,
 	}); err != nil {
+		fmt.Println("error getting pods:", err)
 		return err
 	}
+
+	fmt.Printf("\npodslist length: %+v\n", len(podsList.Items))
 
 	return c.FromPods(podsList.Items...)
 }
 
-func (c *Conditions) FromDeployment(ctx context.Context, reconciler client.Client, nn types.NamespacedName) error {
+func (c *Conditions) FromDeployment(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
 	depl := new(appsv1.Deployment)
-	if err := reconciler.Get(ctx, nn, depl); err != nil {
+	if err := apiClient.Get(ctx, nn, depl); err != nil {
 		return err
 	}
 	var deplConditions []metav1.Condition
@@ -169,7 +172,7 @@ func (c *Conditions) FromDeployment(ctx context.Context, reconciler client.Clien
 		Namespace:     depl.Namespace,
 	}
 	podsList := new(corev1.PodList)
-	if err := reconciler.List(ctx, podsList, opts); err != nil {
+	if err := apiClient.List(ctx, podsList, opts); err != nil {
 		return errors.NewEf(err, "could not list pods for deployment")
 	}
 	return c.FromPods(podsList.Items...)
@@ -178,6 +181,7 @@ func (c *Conditions) FromDeployment(ctx context.Context, reconciler client.Clien
 func (c *Conditions) FromPods(pl ...corev1.Pod) error {
 	for idx, pod := range pl {
 		var podC []metav1.Condition
+		fmt.Printf("pod info: Name: %s LenConditions: %d LenContainerStatus: %d\n", pod.Name, len(pod.Status.Conditions), len(pod.Status.ContainerStatuses))
 		for _, condition := range pod.Status.Conditions {
 			podC = append(podC, metav1.Condition{
 				Type:               fmt.Sprintf("Pod-idx-%d-%s", idx, condition.Type),
@@ -187,6 +191,7 @@ func (c *Conditions) FromPods(pl ...corev1.Pod) error {
 				Message:            condition.Message,
 			})
 		}
+		fmt.Printf("podC: %+v\n", podC)
 		c.Build("", podC...)
 		var containerC []metav1.Condition
 		for _, cs := range pod.Status.ContainerStatuses {
@@ -204,6 +209,7 @@ func (c *Conditions) FromPods(pl ...corev1.Pod) error {
 			}
 			containerC = append(containerC, p)
 		}
+		fmt.Printf("container: %+v\n", containerC)
 		c.Build("Container", containerC...)
 		return nil
 	}

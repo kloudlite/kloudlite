@@ -2,9 +2,11 @@ package mysqlstandalonemsvc
 
 import (
 	"context"
+	"encoding/json"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -83,13 +85,32 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.finalize(ctx, r.mysqlSvc)
 	}
 
-	b, err := templates.Parse(templates.MySqlStandalone, r.mysqlSvc)
-	r.logger.Infof("parsed template: %s", b)
-	if err != nil {
+	var helmSecret corev1.Secret
+	if err := r.Get(ctx, (types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}), &helmSecret); err != nil {
+		r.logger.Error(err)
+		r.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}.String())
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal(r.mysqlSvc.Spec.Inputs, &m); err != nil {
 		return reconcileResult.FailedE(err)
 	}
+	x, ok := helmSecret.Data["mysql-root-password"]
+	m["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40))
+	y, ok := helmSecret.Data["mysql-password"]
+	m["password"] = fn.IfThenElse(ok, string(y), fn.CleanerNanoid(40))
+	marshal, err := json.Marshal(m)
+	if err != nil {
+		return r.notifyAndDie(ctx, err)
+	}
+	r.mysqlSvc.Spec.Inputs = marshal
+
+	b, err := templates.Parse(templates.MySqlStandalone, r.mysqlSvc)
+	if err != nil {
+		return r.notifyAndDie(ctx, err)
+	}
+	r.logger.Infof("parsed template: %s", b)
 	if err := fn.KubectlApply(b); err != nil {
-		return reconcileResult.FailedE(err)
+		return r.notifyAndDie(ctx, err)
 	}
 
 	if err := r.walk(ctx); err != nil {
@@ -104,6 +125,7 @@ func (r *ServiceReconciler) walk(ctx context.Context) error {
 	}
 
 	if err := r.mysqlSvc.Status.Conditions.FromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
+		r.logger.Error(err)
 		return err
 	}
 
@@ -132,6 +154,22 @@ func (r *ServiceReconciler) finalize(ctx context.Context, m *mysqlStandalone.Ser
 		return reconcileResult.OK()
 	}
 	return reconcileResult.OK()
+}
+
+func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
+	labels := o.GetLabels()
+	if s := labels["app.kubernetes.io/component"]; s != "primary" {
+		return nil
+	}
+	if s := labels["app.kubernetes.io/name"]; s != "mysql" {
+		return nil
+	}
+	resourceName := labels["app.kubernetes.io/instance"]
+	nn := types.NamespacedName{Namespace: o.GetNamespace(), Name: resourceName}
+
+	return []reconcile.Request{
+		{NamespacedName: nn},
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -167,23 +205,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 			return reqs
 		})).
-		Watches(&source.Kind{
-			Type: &appsv1.StatefulSet{},
-		}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
-			labels := o.GetLabels()
-
-			if s := labels["app.kubernetes.io/component"]; s != "primary" {
-				return nil
-			}
-			if s := labels["app.kubernetes.io/name"]; s != "mysql" {
-				return nil
-			}
-			resourceName := labels["app.kubernetes.io/instance"]
-			nn := types.NamespacedName{Namespace: o.GetNamespace(), Name: resourceName}
-
-			return []reconcile.Request{
-				{NamespacedName: nn},
-			}
-		})).
+		Watches(&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
+		Watches(&source.Kind{Type: &corev1.Pod{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Complete(r)
 }
