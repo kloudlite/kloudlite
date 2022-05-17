@@ -7,7 +7,7 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/Masterminds/sprig"
+	"github.com/Masterminds/sprig/v3"
 
 	"operators.kloudlite.io/lib/errors"
 )
@@ -72,4 +72,5 @@ const (
 	Secret                  templateFile = "secret.tmpl.yml"
 	MongoDBResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
 	AccountWireguard        templateFile = "account-deploy.tmpl.yml"
+	CommonMsvcService       templateFile = "msvc-common-service.tmpl.yml"
 )

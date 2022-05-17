@@ -158,4 +158,101 @@ rules:
   resources:
   - "statefulsets"
 
+##
+## Rules for msvc.kloudlite.io/v1, Kind: HelmMySqlDB
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helmmysqldbs
+  - helmmysqldbs/status
+  - helmmysqldbs/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "configmaps"
+  - "secrets"
+  - "serviceaccounts"
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "statefulsets"
+
+##
+## Rules for msvc.kloudlite.io/v1, Kind: HelmElasticSearch
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helmelasticsearches
+  - helmelasticsearches/status
+  - helmelasticsearches/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "statefulsets"
+
+##
+## Rules for msvc.kloudlite.io/v1, Kind: HelmMongoDB
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helmmongodbs
+  - helmmongodbs/status
+  - helmmongodbs/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "deployments"
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "configmaps"
+  - "persistentvolumeclaims"
+  - "secrets"
+  - "serviceaccounts"
+  - "services"
+
 #+kubebuilder:scaffold:rules

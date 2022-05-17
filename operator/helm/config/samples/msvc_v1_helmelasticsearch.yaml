@@ -1,7 +1,7 @@
 apiVersion: msvc.kloudlite.io/v1
-kind: ElasticSearch
+kind: HelmElasticSearch
 metadata:
-  name: elasticsearch-sample
+  name: helmelasticsearch-sample
 spec:
   # Default values copied from <project_dir>/helm-charts/elasticsearch/values.yaml
   clusterDomain: cluster.local

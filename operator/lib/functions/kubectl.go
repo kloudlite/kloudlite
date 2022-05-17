@@ -31,3 +31,15 @@ func KubectlGet(namespace string, resourceRef string) ([]byte, error) {
 	}
 	return outB.Bytes(), nil
 }
+
+func KubectlDelete(namespace, resourceRef string) error {
+	c := exec.Command("kubectl", "delete", "-n", namespace, resourceRef)
+	errB := bytes.NewBuffer([]byte{})
+	outB := bytes.NewBuffer([]byte{})
+	c.Stderr = errB
+	c.Stdout = outB
+	if err := c.Run(); err != nil {
+		return errors.NewEf(err, errB.String())
+	}
+	return nil
+}

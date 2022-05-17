@@ -12,20 +12,20 @@ resources:
     namespaced: true
   domain: kloudlite.io
   group: msvc
-  kind: MongoDB
+  kind: HelmMySqlDB
   version: v1
 - api:
     crdVersion: v1
     namespaced: true
   domain: kloudlite.io
   group: msvc
-  kind: MySqlDB
+  kind: HelmElasticSearch
   version: v1
 - api:
     crdVersion: v1
     namespaced: true
   domain: kloudlite.io
   group: msvc
-  kind: ElasticSearch
+  kind: HelmMongoDB
   version: v1
 version: "3"

@@ -1,0 +1,16 @@
+apiVersion: {{.Spec.ApiVersion}}
+kind: Service
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  finalizers:
+    - finalizers.kloudlite.io/msvc-common-service
+  ownerReferences:
+    - apiVersion: {{.APIVersion}}
+      kind: {{.Kind}}
+      name: {{.Name}}
+      uid: {{.UID}}
+      controller: true
+      blockOwnerDeletion: true
+spec:
+  inputs: {{.Spec.Inputs | toJson }}

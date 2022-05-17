@@ -11,9 +11,7 @@ metadata:
       blockOwnerDeletion: true
   labels:
     accountId: {{ .Name }}
-
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:

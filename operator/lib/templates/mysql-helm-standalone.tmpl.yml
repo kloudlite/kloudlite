@@ -11,6 +11,8 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
+  global:
+    storageClass: do-block-storage
   architecture: standalone
   auth:
     rootPassword: {{index .Spec.Inputs "root_password" }}

@@ -6,7 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"operators.kloudlite.io/lib"
+	"operators.kloudlite.io/lib/types"
 )
 
 // ServiceSpec defines the desired state of Service
@@ -19,7 +19,7 @@ type ServiceSpec struct {
 
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
-	Conditions lib.Conditions `json:"inline,omitempty"`
+	Conditions types.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -36,6 +36,23 @@ type Service struct {
 
 func (s *Service) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
+}
+
+func (s Service) LabelRef() (string, string) {
+	return "msvc.kloudlite.io/service", GroupVersion.Group
+}
+
+func (s *Service) HasLabels() bool {
+	key, value := s.LabelRef()
+	if s.Labels[key] != value {
+		return false
+	}
+	return true
+}
+
+func (s *Service) EnsureLabels() {
+	key, value := s.LabelRef()
+	s.SetLabels(map[string]string{key: value})
 }
 
 // +kubebuilder:object:root=true
