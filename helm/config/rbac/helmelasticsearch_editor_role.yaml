@@ -1,13 +1,13 @@
-# permissions for end users to edit mysqldbs.
+# permissions for end users to edit helmelasticsearches.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mysqldb-editor-role
+  name: helmelasticsearch-editor-role
 rules:
 - apiGroups:
   - msvc.kloudlite.io
   resources:
-  - mysqldbs
+  - helmelasticsearches
   verbs:
   - create
   - delete
@@ -19,6 +19,6 @@ rules:
 - apiGroups:
   - msvc.kloudlite.io
   resources:
-  - mysqldbs/status
+  - helmelasticsearches/status
   verbs:
   - get

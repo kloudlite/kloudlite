@@ -1,20 +1,24 @@
-# permissions for end users to view mongodbs.
+# permissions for end users to edit helmmongodbs.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mongodb-viewer-role
+  name: helmmongodb-editor-role
 rules:
 - apiGroups:
   - msvc.kloudlite.io
   resources:
-  - mongodbs
+  - helmmongodbs
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - msvc.kloudlite.io
   resources:
-  - mongodbs/status
+  - helmmongodbs/status
   verbs:
   - get

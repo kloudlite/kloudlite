@@ -2,20 +2,20 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: elasticsearches.msvc.kloudlite.io
+  name: helmmongodbs.msvc.kloudlite.io
 spec:
   group: msvc.kloudlite.io
   names:
-    kind: ElasticSearch
-    listKind: ElasticSearchList
-    plural: elasticsearches
-    singular: elasticsearch
+    kind: HelmMongoDB
+    listKind: HelmMongoDBList
+    plural: helmmongodbs
+    singular: helmmongodb
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: ElasticSearch is the Schema for the elasticsearches API
+        description: HelmMongoDB is the Schema for the helmmongodbs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -30,11 +30,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: Spec defines the desired state of ElasticSearch
+            description: Spec defines the desired state of HelmMongoDB
             type: object
             x-kubernetes-preserve-unknown-fields: true
           status:
-            description: Status defines the observed state of ElasticSearch
+            description: Status defines the observed state of HelmMongoDB
             type: object
             x-kubernetes-preserve-unknown-fields: true
         type: object

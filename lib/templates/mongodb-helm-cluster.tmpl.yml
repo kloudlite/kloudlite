@@ -11,19 +11,21 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
+#  global:
+#    storageClass: do-block-storage
   architecture: "replicaset"
-  replicaCount: {{index .Spec.Inputs "replica_count" | int64 }}
+  replicaCount: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_count" | int64 }}
   replicaSetName: rs
   replicaSetHostnames: true
 
   auth:
     enabled: true
-    rootPassword: {{index .Spec.Inputs "root_password" | quote }}
-    replicaSetKey: {{index .Spec.Inputs "replica_set_key" | quote }}
+    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "root_password" | quote }}
+    replicaSetKey: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_set_key" | quote }}
 
   persistence:
     enabled: true
-    size: {{index .Spec.Inputs "size" | default "1Gi" }}
+    size: {{ index (mustFromJson (.Spec.Inputs | toJson)) "size" | default "1Gi" | quote }}
 
   volumePermissions:
     enabled: true
@@ -33,8 +35,8 @@ spec:
 
   resources:
     requests:
-      cpu: 200m
-      memory: 200Mi
+      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_min" | default 400 }}m
+      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_min" | default 400 }}Mi
     limits:
-      cpu: 300m
-      memory: 300Mi
+      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
+      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi

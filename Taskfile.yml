@@ -64,9 +64,9 @@ tasks:
   helm-operators:
     dir: ./helm
     cmds:
-      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind MongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
-      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind MySqlDB --helm-chart mysql --helm-chart-repo https://charts.bitnami.com/bitnami
-      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind ElasticSearch --helm-chart elasticsearch --helm-chart-repo https://charts.bitnami.com/bitnami
+      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
+#      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMySqlDB --helm-chart mysql --helm-chart-repo https://charts.bitnami.com/bitnami
+#      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmElasticSearch --helm-chart elasticsearch --helm-chart-repo https://charts.bitnami.com/bitnami
   pre:
     run: once
     cmds:

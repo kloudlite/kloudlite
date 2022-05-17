@@ -40,12 +40,8 @@ spec:
               inputs:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
-              kind:
-                type: string
             required:
             - apiVersion
-            - inputs
-            - kind
             type: object
           status:
             description: ManagedServiceStatus defines the observed state of ManagedService

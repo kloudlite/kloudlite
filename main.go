@@ -33,14 +33,9 @@ import (
 
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
-	mongodbsmsvcv1 "operators.kloudlite.io/apis/mongodbs.msvc/v1"
-	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
-	watchersmsvcv1 "operators.kloudlite.io/apis/watchers.msvc/v1"
 	crdsControllers "operators.kloudlite.io/controllers/crds"
 	mongodbClusterControllers "operators.kloudlite.io/controllers/mongodb-cluster.msvc"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
-	mongodbsmsvcControllers "operators.kloudlite.io/controllers/mongodbs.msvc"
-	watchersmsvccontrollers "operators.kloudlite.io/controllers/watchers.msvc"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -53,9 +48,6 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
-	utilruntime.Must(msvcv1.AddToScheme(scheme))
-	utilruntime.Must(mongodbsmsvcv1.AddToScheme(scheme))
-	utilruntime.Must(watchersmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbStandalone.AddToScheme(scheme))
 	utilruntime.Must(mongodbCluster.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
@@ -179,21 +171,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&mongodbsmsvcControllers.DatabaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Database")
-		os.Exit(1)
-	}
-
-	if err = (&watchersmsvccontrollers.MongoDBReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MongoDBStatus")
-		os.Exit(1)
-	}
 	if err = (&crdsControllers.AccountReconciler{
 		ReconcilerBase: util.NewReconcilerBase(
 			mgr.GetClient(),

@@ -42,7 +42,7 @@ spec:
           status:
             description: ServiceStatus defines the observed state of Service
             properties:
-              inline:
+              conditions:
                 properties:
                   conditions:
                     items:

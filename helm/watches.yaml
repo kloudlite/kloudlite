@@ -1,14 +1,14 @@
 # Use the 'create api' subcommand to add watches to this file.
 - group: msvc.kloudlite.io
   version: v1
-  kind: MongoDB
-  chart: helm-charts/mongodb
-- group: msvc.kloudlite.io
-  version: v1
-  kind: MySqlDB
+  kind: HelmMySqlDB
   chart: helm-charts/mysql
 - group: msvc.kloudlite.io
   version: v1
-  kind: ElasticSearch
+  kind: HelmElasticSearch
   chart: helm-charts/elasticsearch
+- group: msvc.kloudlite.io
+  version: v1
+  kind: HelmMongoDB
+  chart: helm-charts/mongodb
 #+kubebuilder:scaffold:watch

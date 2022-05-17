@@ -4,4 +4,7 @@ resources:
 - crds_v1_mongodb.yaml
 - msvc_v1_mysqldb.yaml
 - msvc_v1_elasticsearch.yaml
+- msvc_v1_helmmysqldb.yaml
+- msvc_v1_helmelasticsearch.yaml
+- msvc_v1_helmmongodb.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

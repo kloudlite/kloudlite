@@ -1,5 +1,5 @@
 apiVersion: msvc.kloudlite.io/v1
-kind: MongoDB
+kind: HelmMongoDB
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
@@ -11,20 +11,25 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
+#  global:
+#    storageClass: do-block-storage
+  image:
+    tag: 5.0.8-debian-10-r20
   auth:
     enabled: true
-    rootPassword: {{index .Spec.Inputs "root_password" | quote}}
+    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "root_password" }}
   persistence:
     enabled: true
-    size: {{index .Spec.Inputs "size" | default "1Gi" }}
+    size: {{ index (mustFromJson (.Spec.Inputs | toJson )) "size" | default "1Gi" }}
   volumePermissions:
     enabled: true
   metrics:
-    enabled: true
+    enabled: false
+
   resources:
     requests:
-      cpu: 200m
-      memory: 200Mi
+      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_min" | default 400 }}m
+      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_min" | default 400 }}Mi
     limits:
-      cpu: 300m
-      memory: 300Mi
+      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
+      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi

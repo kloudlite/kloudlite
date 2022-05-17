@@ -3,26 +3,33 @@ package crds
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"go.uber.org/zap"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	msvcv1 "operators.kloudlite.io/apis/msvc/v1"
-	watcherMsvc "operators.kloudlite.io/apis/watchers.msvc/v1"
 	"operators.kloudlite.io/lib"
+	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
+	"operators.kloudlite.io/lib/templates"
+	t "operators.kloudlite.io/lib/types"
 )
 
 // ManagedServiceReconciler reconciles a ManagedService object
@@ -32,8 +39,9 @@ type ManagedServiceReconciler struct {
 	ClientSet *kubernetes.Clientset
 	JobMgr    lib.Job
 	lib.MessageSender
-	logger *zap.SugaredLogger
-	msvc   *crdsv1.ManagedService
+	logger    *zap.SugaredLogger
+	msvc      *crdsv1.ManagedService
+	watchList t.WatchList
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices,verbs=get;list;watch;create;update;patch;delete
@@ -54,14 +62,14 @@ func (r *ManagedServiceReconciler) notifyAndDie(ctx context.Context, err error) 
 		return reconcileResult.FailedE(err)
 	}
 	if err := r.Status().Update(ctx, r.msvc); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.msvc.LogRef()))
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.msvc.NameRef()))
 	}
 	return reconcileResult.OK()
 }
 
 func (r *ManagedServiceReconciler) notify() error {
-	err := r.SendMessage(r.msvc.LogRef(), lib.MessageReply{
-		Key:        r.msvc.LogRef(),
+	err := r.SendMessage(r.msvc.NameRef(), lib.MessageReply{
+		Key:        r.msvc.NameRef(),
 		Conditions: r.msvc.Status.Conditions,
 		Status:     meta.IsStatusConditionTrue(r.msvc.Status.Conditions, "Ready"),
 	})
@@ -81,29 +89,8 @@ func (r *ManagedServiceReconciler) notifyAndUpdate(ctx context.Context) (ctrl.Re
 	return reconcileResult.OK()
 }
 
-var availableMsvc = map[ManagedServiceType]bool{
-	MongoDBStandalone: true,
-	MongoDBCluster:    true,
-	ElasticSearch:     false,
-	MySqlStandalone:   false,
-	MySqlCluster:      false,
-}
-
-type Service struct {
-	ApiVersion string `json:"apiVersion,omitempty"`
-	Kind       string `json:"kind,omitempty"`
-	Metadata   struct {
-		Name      string `json:"name"`
-		Namespace string `json:"namespace"`
-	} `json:"metadata"`
-	Spec struct {
-		Inputs json.RawMessage `json:"inputs,omitempty"`
-	} `json:"spec"`
-}
-
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = GetLogger(req.NamespacedName)
-	logger := r.logger.With("RECONCILE", true)
 
 	msvc := &crdsv1.ManagedService{}
 	if err := r.Get(ctx, req.NamespacedName, msvc); err != nil {
@@ -126,95 +113,41 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return r.finalize(ctx, msvc)
 	}
 
-	// if isAvail, ok := availableMsvc[ManagedServiceType(msvc.Spec.Kind)]; !ok || !isAvail {
-	// 	logger.Info("Invalid ManagedSvc Kind: ", msvc.Spec.Kind)
-	// 	return reconcileResult.Failed()
-	// }
-	//
-	svc := Service{
-		ApiVersion: msvc.Spec.ApiVersion,
-		Kind:       msvc.Spec.Kind,
-	}
-	svc.Metadata.Name = msvc.Name
-	svc.Metadata.Namespace = msvc.Namespace
-	svc.Spec.Inputs = msvc.Spec.Inputs
-
-	b, err := json.Marshal(svc)
+	b, err := templates.Parse(templates.CommonMsvcService, &msvc)
 	if err != nil {
 		return r.notifyAndDie(ctx, err)
 	}
 
-	logger.Infof("bytes: %s", string(b))
-
 	if err := fn.KubectlApply(b); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not apply service %s:%s", svc.ApiVersion, svc.Kind))
+		return reconcileResult.FailedE(errors.NewEf(err, "could not apply service %s:%s", msvc.APIVersion, msvc.Kind))
 	}
 
-	// switch ManagedServiceType(msvc.Spec.Kind) {
-	// case MongoDBStandalone:
-	// 	{
-	// 		var helmSecret corev1.Secret
-	// 		nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
-	// 		if err := r.Get(ctx, nn, &helmSecret); err != nil {
-	// 			logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
-	// 		}
-	// 		x, ok := helmSecret.Data["mongodb-root-password"]
-	// 		msvc.Spec.Inputs.Set("root_password", fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
-	//
-	// 		b, err := templates.Parse(templates.MongoDBStandalone, msvc)
-	// 		if err != nil {
-	// 			r.logger.Info(err)
-	// 			return r.notifyAndDie(ctx, err)
-	// 		}
-	// 		watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
-	// 		if err != nil {
-	// 			r.logger.Info(err)
-	// 			return r.notifyAndDie(ctx, err)
-	// 		}
-	// 		if err := fn.KubectlApply(b, watcher); err != nil {
-	// 			return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
-	// 		}
-	// 	}
-	//
-	// case MongoDBCluster:
-	// 	{
-	// 		var helmSecret corev1.Secret
-	// 		nn := types.NamespacedName{Namespace: msvc.Namespace, Name: fmt.Sprintf("%s-mongodb", msvc.Name)}
-	// 		if err := r.Get(ctx, nn, &helmSecret); err != nil {
-	// 			logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
-	// 		}
-	//
-	// 		x, ok := helmSecret.Data["mongodb-root-password"]
-	// 		msvc.Spec.Inputs.Set("root_password", fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
-	// 		y, ok2 := helmSecret.Data["mongodb-replica-set-key"]
-	// 		msvc.Spec.Inputs.Set("replica_set_key", fn.IfThenElse(ok2, string(y), fn.CleanerNanoid(41)))
-	//
-	// 		b, err := templates.Parse(templates.MongoDBCluster, msvc)
-	// 		if err != nil {
-	// 			r.logger.Info(err)
-	// 			return r.notifyAndDie(ctx, err)
-	// 		}
-	// 		watcher, err := templates.Parse(templates.MongoDBWatcher, msvc)
-	// 		if err != nil {
-	// 			r.logger.Info(err)
-	// 			return r.notifyAndDie(ctx, err)
-	// 		}
-	// 		if err := fn.KubectlApply(b, watcher); err != nil {
-	// 			return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply managed service"))
-	// 		}
-	// 	}
-	// }
-
-	mWatcher := &watcherMsvc.MongoDB{}
-	if err := r.Get(ctx, req.NamespacedName, mWatcher); err != nil {
-	}
-	if mWatcher.Name != "" {
-		logger.Infof("watcher: %+v", mWatcher.Name)
-		msvc.Status.Conditions = mWatcher.Status.Conditions
-		return r.notifyAndUpdate(ctx)
+	svcObj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": msvc.Spec.ApiVersion,
+			"kind":       "Service",
+		},
 	}
 
-	logger.Infof("applied managed service")
+	if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: msvc.Name}, &svcObj); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	mj, err := svcObj.MarshalJSON()
+
+	if err != nil {
+		return r.notifyAndDie(ctx, err)
+	}
+	var j struct {
+		Status struct {
+			Conditions t.Conditions `json:"conditions,omitempty"`
+		} `json:"status,omitempty"`
+	}
+	if err := json.Unmarshal(mj, &j); err != nil {
+		return r.notifyAndDie(ctx, err)
+	}
+	r.msvc.Status.Conditions = j.Status.Conditions.GetConditions()
+
 	return r.notifyAndUpdate(ctx)
 }
 
@@ -228,8 +161,14 @@ func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.Ma
 	}
 
 	if controllerutil.ContainsFinalizer(msvc, finalizers.Foreground.String()) {
-		var mdb msvcv1.MongoDB
-		if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: "MongoDB"}, &mdb); err != nil {
+		resource := unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": msvc.Spec.ApiVersion,
+				"kind":       "Service",
+			},
+		}
+		if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: msvc.Name}, &resource); err != nil {
+			r.logger.Infof("ERR: %+v", err)
 			if apiErrors.IsNotFound(err) {
 				controllerutil.RemoveFinalizer(msvc, finalizers.Foreground.String())
 				if err := r.Update(ctx, msvc); err != nil {
@@ -238,43 +177,56 @@ func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.Ma
 				return reconcileResult.OK()
 			}
 		}
+		if resource.GetName() != "" {
+			if err := r.Delete(ctx, &resource); err != nil {
+				return r.notifyAndDie(ctx, err)
+			}
+		}
 	}
 
-	return reconcileResult.OK()
+	// return reconcileResult.FailedE(errors.New("trying to finalize managed service"))
+	return reconcileResult.Failed()
+}
+
+func (r *ManagedServiceReconciler) watcherFuncMap(c client.Object) []reconcile.Request {
+	var msvcList crdsv1.ManagedServiceList
+
+	key, _ := crdsv1.ManagedService{}.LabelRef()
+	if err := r.List(context.TODO(), &msvcList, &client.ListOptions{
+		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{key: c.GetObjectKind().GroupVersionKind().Group}),
+	}); err != nil {
+		return nil
+	}
+	var reqs []reconcile.Request
+	for _, item := range msvcList.Items {
+		nn := types.NamespacedName{Namespace: item.GetNamespace(), Name: item.GetName()}
+		if !r.watchList.Exists(nn) {
+			r.watchList.Add(nn)
+			reqs = append(reqs, reconcile.Request{NamespacedName: nn})
+		}
+	}
+	return reqs
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.ManagedService{}).
-		Owns(&msvcv1.MongoDB{}).
-		// Watches(&source.Kind{
-		// 	Type: &unstructured.Unstructured{
-		// 		Object: map[string]interface{}{
-		// 			"apiVersion": "msvc.kloudlite.io/v1",
-		// 			"kind":       "MongoDB",
-		// 		},
-		// 	},
-		// }, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
-		// 	var msvcList crdsv1.ManagedServiceList
-		//
-		// 	ref := fmt.Sprintf("msvc.kloudlite.io/ref: %s-%s-%s", c.GetNamespace(), c.GetObjectKind().GroupVersionKind().Kind, c.GetName())
-		// 	fmt.Printf("label is| %s\n", ref)
-		// 	if err := r.List(context.TODO(), &msvcList, &client.ListOptions{
-		// 		LabelSelector: labels2.SelectorFromValidatedSet(map[string]string{
-		// 			"msvc.kloudlite.io/ref": ref,
-		// 		}),
-		// 	}); err != nil {
-		// 		return nil
-		// 	}
-		// 	var reqs []reconcile.Request
-		// 	for _, item := range msvcList.Items {
-		// 		reqs = append(reqs, reconcile.Request{
-		// 			NamespacedName: types.NamespacedName{Namespace: item.GetNamespace(), Name: item.GetName()},
-		// 		})
-		// 	}
-		// 	fmt.Println("reqs:", reqs)
-		// 	return reqs
-		// })).
+		Watches(&source.Kind{
+			Type: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": fmt.Sprintf("mongodb-standalone.%s", constants.MsvcApiVersion),
+					"kind":       "Service",
+				},
+			},
+		}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap)).
+		Watches(&source.Kind{
+			Type: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": fmt.Sprintf("mongodb-cluster.%s", constants.MsvcApiVersion),
+					"kind":       "Service",
+				},
+			},
+		}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap)).
 		Complete(r)
 }

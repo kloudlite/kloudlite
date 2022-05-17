@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -10,12 +11,10 @@ import (
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
 	ApiVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Type=object
-	Inputs json.RawMessage `json:"inputs"`
-	// Inputs     t.KV   `json:"inputs"`
+	Inputs json.RawMessage `json:"inputs,omitempty"`
 }
 
 // ManagedServiceStatus defines the observed state of ManagedService
@@ -36,25 +35,25 @@ type ManagedService struct {
 	Status ManagedServiceStatus `json:"status,omitempty"`
 }
 
-func (m *ManagedService) LogRef() string {
+func (m *ManagedService) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
 }
 
-func (m *ManagedService) labelRef() string {
-	return fmt.Sprintf("%s-%s-%s", m.Namespace, m.Kind, m.Name)
+func (m ManagedService) LabelRef() (key, value string) {
+	return "msvc.kloudlite.io/for", strings.Split(m.Spec.ApiVersion, "/")[0]
 }
 
 func (m *ManagedService) HasLabels() bool {
-	if _, ok := m.Labels["msvc.kloudlite.io/ref"]; !ok {
+	key, value := m.LabelRef()
+	if m.Labels[key] != value {
 		return false
 	}
 	return true
 }
 
 func (m *ManagedService) EnsureLabels() {
-	m.SetLabels(map[string]string{
-		"msvc.kloudlite.io/ref": m.labelRef(),
-	})
+	key, value := m.LabelRef()
+	m.SetLabels(map[string]string{key: value})
 }
 
 // +kubebuilder:object:root=true
