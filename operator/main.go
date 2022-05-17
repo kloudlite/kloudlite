@@ -33,9 +33,11 @@ import (
 
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
+	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	crdsControllers "operators.kloudlite.io/controllers/crds"
 	mongodbClusterControllers "operators.kloudlite.io/controllers/mongodb-cluster.msvc"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
+	mysqlStandaloneControllers "operators.kloudlite.io/controllers/mysql-standalone.msvc"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -50,6 +52,7 @@ func init() {
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbStandalone.AddToScheme(scheme))
 	utilruntime.Must(mongodbCluster.AddToScheme(scheme))
+	utilruntime.Must(mysqlstandalonemsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -210,6 +213,20 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&mysqlStandaloneControllers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&mysqlStandaloneControllers.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

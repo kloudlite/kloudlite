@@ -4,6 +4,7 @@ const MsvcApiVersion = "msvc.kloudlite.io/v1"
 
 const (
 	HelmMongoDBKind string = "HelmMongoDB"
+	HelmMySqlDBKind string = "HelmMySqlDB"
 )
 
 var (
@@ -12,8 +13,4 @@ var (
 		ErrorReason:   "SomeChecksFailed",
 		SuccessReason: "AllChecksCompleted",
 	}
-)
-
-const (
-	ConditionDefaultMessage string = "ErrWhileReconciling"
 )

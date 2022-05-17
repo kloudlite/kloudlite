@@ -10,4 +10,6 @@ resources:
 - bases/mongodb-standalone.msvc.kloudlite.io_databases.yaml
 - bases/mongodb-cluster.msvc.kloudlite.io_databases.yaml
 - bases/mongodb-cluster.msvc.kloudlite.io_services.yaml
+- bases/mysql-standalone.msvc.kloudlite.io_services.yaml
+- bases/mysql-standalone.msvc.kloudlite.io_databases.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

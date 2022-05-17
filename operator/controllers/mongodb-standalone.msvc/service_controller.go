@@ -31,7 +31,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 )
 
 type Output struct {
@@ -46,8 +45,7 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 	logger *zap.SugaredLogger
 	lib.MessageSender
-	mongoSvc  *mongoStandalone.Service
-	watchList t.WatchList
+	mongoSvc *mongoStandalone.Service
 }
 
 func (r *ServiceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
@@ -62,7 +60,6 @@ func (r *ServiceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.R
 }
 
 func (r *ServiceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
-	r.watchList.Reset()
 	if err := r.Status().Update(ctx, r.mongoSvc); err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.mongoSvc.NameRef()))
 	}
@@ -288,10 +285,13 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					Namespace: item.Namespace,
 				}
 
-				if !r.watchList.Exists(nn) {
-					r.watchList.Add(nn)
-					reqs = append(reqs, reconcile.Request{NamespacedName: nn})
+				for _, req := range reqs {
+					if req.NamespacedName.String() == nn.String() {
+						return nil
+					}
 				}
+
+				reqs = append(reqs, reconcile.Request{NamespacedName: nn})
 			}
 			return reqs
 		})).
@@ -308,16 +308,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 			resourceName := labels["app.kubernetes.io/instance"]
 			nn := types.NamespacedName{Namespace: o.GetNamespace(), Name: resourceName}
-
-			var reqs []reconcile.Request
-			if !r.watchList.Exists(nn) {
-				r.watchList.Add(nn)
-				reqs = append(reqs, reconcile.Request{NamespacedName: nn})
-			}
-			if len(reqs) > 0 {
-				fmt.Println("\nDB deployment reconciliations: ", reqs)
-			}
-			return reqs
+			return []reconcile.Request{{NamespacedName: nn}}
 		})).
 		Complete(r)
 }

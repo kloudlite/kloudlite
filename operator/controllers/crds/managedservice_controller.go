@@ -39,9 +39,8 @@ type ManagedServiceReconciler struct {
 	ClientSet *kubernetes.Clientset
 	JobMgr    lib.Job
 	lib.MessageSender
-	logger    *zap.SugaredLogger
-	msvc      *crdsv1.ManagedService
-	watchList t.WatchList
+	logger *zap.SugaredLogger
+	msvc   *crdsv1.ManagedService
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices,verbs=get;list;watch;create;update;patch;delete
@@ -167,6 +166,7 @@ func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.Ma
 				"kind":       "Service",
 			},
 		}
+
 		if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: msvc.Name}, &resource); err != nil {
 			r.logger.Infof("ERR: %+v", err)
 			if apiErrors.IsNotFound(err) {
@@ -177,6 +177,8 @@ func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.Ma
 				return reconcileResult.OK()
 			}
 		}
+
+		r.logger.Infof("resource: %+v", resource)
 		if resource.GetName() != "" {
 			if err := r.Delete(ctx, &resource); err != nil {
 				return r.notifyAndDie(ctx, err)
@@ -200,10 +202,12 @@ func (r *ManagedServiceReconciler) watcherFuncMap(c client.Object) []reconcile.R
 	var reqs []reconcile.Request
 	for _, item := range msvcList.Items {
 		nn := types.NamespacedName{Namespace: item.GetNamespace(), Name: item.GetName()}
-		if !r.watchList.Exists(nn) {
-			r.watchList.Add(nn)
-			reqs = append(reqs, reconcile.Request{NamespacedName: nn})
+		for _, req := range reqs {
+			if req.NamespacedName.String() == nn.String() {
+				return nil
+			}
 		}
+		reqs = append(reqs, reconcile.Request{NamespacedName: nn})
 	}
 	return reqs
 }
@@ -224,6 +228,14 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			Type: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": fmt.Sprintf("mongodb-cluster.%s", constants.MsvcApiVersion),
+					"kind":       "Service",
+				},
+			},
+		}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap)).
+		Watches(&source.Kind{
+			Type: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": fmt.Sprintf("mysql-standalone.%s", constants.MsvcApiVersion),
 					"kind":       "Service",
 				},
 			},
