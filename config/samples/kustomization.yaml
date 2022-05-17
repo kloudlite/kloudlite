@@ -18,4 +18,6 @@ resources:
 - mongodb-standalone.msvc_v1_database.yaml
 - mongodb-cluster.msvc_v1_database.yaml
 - mongodb-cluster.msvc_v1_service.yaml
+- mysql-standalone.msvc_v1_service.yaml
+- mysql-standalone.msvc_v1_database.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

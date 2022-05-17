@@ -22,27 +22,12 @@ tasks:
         exit 0
       - operator-sdk create api --group {{.Group}} --version v1 --resource --controller --kind "{{.Kind}}"
 
-  new-mongo-res:
-      - operator-sdk create api --group mongodbs.msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
-
-  new-msvc-kind:
-    cmds:
-      - operator-sdk create api --group msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
-
-  new-msvc-watcher-kind:
-    cmds:
-      - operator-sdk create api --group watchers.msvc --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
-
-  new-mres-kind:
-    cmds:
-      - operator-sdk create api --group mres --version v1 --resource --controller --kind "{{.CLI_ARGS}}"
-
   run:
     run: always
     cmds:
       - task: kill-port
-      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
-#      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go || exit 0'
+      - go run -tags dynamic main.go
+#      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
     sources:
       - ./**/*.go
@@ -64,7 +49,8 @@ tasks:
   helm-operators:
     dir: ./helm
     cmds:
-      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
+      - echo "this is to create new helm operators/kind"
+#      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
 #      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMySqlDB --helm-chart mysql --helm-chart-repo https://charts.bitnami.com/bitnami
 #      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmElasticSearch --helm-chart elasticsearch --helm-chart-repo https://charts.bitnami.com/bitnami
   pre:

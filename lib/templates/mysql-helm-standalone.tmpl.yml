@@ -1,5 +1,5 @@
 apiVersion: msvc.kloudlite.io/v1
-kind: MySqlDB
+kind: HelmMySqlDB
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
@@ -11,12 +11,20 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
-  global:
-    storageClass: do-block-storage
+#  global:
+#    storageClass: do-block-storage
   architecture: standalone
   auth:
-    rootPassword: {{index .Spec.Inputs "root_password" }}
+    enabled: true
+    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "root_password" }}
   primary:
     persistence:
       enabled: true
-      size: {{index .Spec.Inputs "size" | default "1Gi" }}
+      size: {{ index (mustFromJson (.Spec.Inputs | toJson )) "size" | default "1Gi" }}
+  resources:
+    requests:
+      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_min" | default 400 }}m
+      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_min" | default 400 }}Mi
+    limits:
+      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
+      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi
