@@ -4,6 +4,7 @@ import (
 	"context"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
+	"time"
 )
 
 type Domain interface {
@@ -48,4 +49,6 @@ type Domain interface {
 		quantity float32,
 	) (*Billable, error)
 	StopBillable(ctx context.Context, billableId repos.ID) error
+	GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*Billable, time.Time, error)
+	GetComputeInventory(provider *string) ([]*InventoryItem, error)
 }
