@@ -1,8 +1,13 @@
+scalar Json
+scalar Date
+
 type Query {
     finance_account(accountId: ID!): Account
+    finance_getComputeInventory(provider: String): [ComputeInventoryItem!]!
 }
 
 type Mutation {
+    finance_getCurrentMonthlyBilling(accountId: ID!): CurrentMonthBilling!
     finance_createAccount(name: String!, billing: BillingInput!, initProvider: String!, initRegion: String!): Account!
     finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
     finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
@@ -13,10 +18,48 @@ type Mutation {
     finance_deactivateAccount(accountId: ID!): Boolean!
     finance_activateAccount(accountId: ID!): Boolean!
     finance_deleteAccount(accountId: ID!): Boolean!
+
 }
 
-scalar Json
-scalar Date
+type ComputeInventoryItem {
+    name: String!
+    provider: String!
+    desc: String!
+    data: ComputeInventoryData!
+    price_perHour: ItemPrice
+    price_perMonth: ItemPrice!
+}
+
+type ComputeInventoryData {
+    memory: ComputeInventoryMetricSize!
+    cpu: ComputeInventoryMetricSize!
+}
+
+type ComputeInventoryMetricSize {
+    quantity: Float!
+    unit: String!
+}
+
+type ItemPrice {
+    quantity: Float!
+    currency: String!
+}
+
+type CurrentMonthBilling {
+    accountId: ID!
+    billables: [Billable!]!
+    startDate: String!
+}
+
+type Billable {
+    accountId: ID!
+    resourceType: String!
+    quantity: Float!
+    StartTime: Date
+    EndTime: Date
+}
+
+
 
 type Account @key(fields: "id") {
     id: ID!
