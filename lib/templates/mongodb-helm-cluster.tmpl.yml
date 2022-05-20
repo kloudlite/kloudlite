@@ -1,5 +1,5 @@
 apiVersion: msvc.kloudlite.io/v1
-kind: MongoDB
+kind: HelmMongoDB
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
@@ -13,8 +13,13 @@ metadata:
 spec:
 #  global:
 #    storageClass: do-block-storage
+  image:
+    tag: 5.0.8-debian-10-r20
+
+  fullnameOverride: {{.Name}}
+
   architecture: "replicaset"
-  replicaCount: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_count" | int64 }}
+  replicaCount: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_count" | default 1 | int64 }}
   replicaSetName: rs
   replicaSetHostnames: true
 
@@ -30,8 +35,8 @@ spec:
   volumePermissions:
     enabled: true
 
-  metrics:
-    enabled: true
+#  metrics:
+#    enabled: true
 
   resources:
     requests:

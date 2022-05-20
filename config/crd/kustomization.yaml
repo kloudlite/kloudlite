@@ -12,4 +12,10 @@ resources:
 - bases/mongodb-cluster.msvc.kloudlite.io_services.yaml
 - bases/mysql-standalone.msvc.kloudlite.io_services.yaml
 - bases/mysql-standalone.msvc.kloudlite.io_databases.yaml
+- bases/mysql-cluster.msvc.kloudlite.io_services.yaml
+- bases/mysql-cluster.msvc.kloudlite.io_databases.yaml
+- bases/redis-standalone.msvc.kloudlite.io_redis.yaml
+- bases/redis-cluster.msvc.kloudlite.io_redis.yaml
+- bases/elasticsearch.msvc.kloudlite.io_elasticsearches.yaml
+- bases/influxdb.msvc.kloudlite.io_influxdbs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

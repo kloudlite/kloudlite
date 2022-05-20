@@ -20,4 +20,10 @@ resources:
 - mongodb-cluster.msvc_v1_service.yaml
 - mysql-standalone.msvc_v1_service.yaml
 - mysql-standalone.msvc_v1_database.yaml
+- mysql-cluster.msvc_v1_service.yaml
+- mysql-cluster.msvc_v1_database.yaml
+- redis-standalone.msvc_v1_redis.yaml
+- redis-cluster.msvc_v1_redis.yaml
+- elasticsearch.msvc_v1_elasticsearch.yaml
+- influxdb.msvc_v1_influxdb.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

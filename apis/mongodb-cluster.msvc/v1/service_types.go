@@ -1,25 +1,25 @@
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
+	"encoding/json"
+	"fmt"
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"operators.kloudlite.io/lib/types"
+)
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Service. Edit service_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	Inputs json.RawMessage `json:"inputs,omitempty"`
 }
 
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions types.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -32,6 +32,27 @@ type Service struct {
 
 	Spec   ServiceSpec   `json:"spec,omitempty"`
 	Status ServiceStatus `json:"status,omitempty"`
+}
+
+func (s *Service) NameRef() string {
+	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
+}
+
+func (s Service) LabelRef() (string, string) {
+	return "msvc.kloudlite.io/service", GroupVersion.Group
+}
+
+func (s *Service) HasLabels() bool {
+	key, value := s.LabelRef()
+	if s.Labels[key] != value {
+		return false
+	}
+	return true
+}
+
+func (s *Service) EnsureLabels() {
+	key, value := s.LabelRef()
+	s.SetLabels(map[string]string{key: value})
 }
 
 // +kubebuilder:object:root=true

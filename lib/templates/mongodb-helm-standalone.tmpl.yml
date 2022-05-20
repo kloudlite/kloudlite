@@ -13,6 +13,7 @@ metadata:
 spec:
 #  global:
 #    storageClass: do-block-storage
+  fullnameOverride: {{.Name}}
   image:
     tag: 5.0.8-debian-10-r20
   auth:

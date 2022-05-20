@@ -9,7 +9,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -39,6 +38,18 @@ type Output struct {
 	DbUrl        string `json:"DB_URL"`
 }
 
+func (out *Output) toMap() (map[string]string, error) {
+	marshal, err := json.Marshal(out)
+	if err != nil {
+		return nil, err
+	}
+	var j map[string]string
+	if err := json.Unmarshal(marshal, &j); err != nil {
+		return nil, nil
+	}
+	return j, nil
+}
+
 // ServiceReconciler reconciles a Service object
 type ServiceReconciler struct {
 	client.Client
@@ -48,63 +59,55 @@ type ServiceReconciler struct {
 	mongoSvc *mongoStandalone.Service
 }
 
-func (r *ServiceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
-	r.mongoSvc.Status.Conditions.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  metav1.ConditionFalse,
-		Reason:  constants.ConditionReady.ErrorReason,
-		Message: err.Error(),
-	})
-
-	return r.notify(ctx)
-}
-
-func (r *ServiceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
-	if err := r.Status().Update(ctx, r.mongoSvc); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.mongoSvc.NameRef()))
-	}
-	return reconcileResult.OK()
+type Req struct {
+	ctrl.Request
+	logger   *zap.SugaredLogger
+	mongoSvc *mongoStandalone.Service
 }
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.logger = crds.GetLogger(req.NamespacedName)
-	r.logger.Infof("reconciling common service %s", req.NamespacedName)
-	var mongoSvc mongoStandalone.Service
+// 1. no CR resource exists
+// 2. Apply Resource
+// 3. BuildConditions
+// 4. Notify
 
-	if err := r.Get(ctx, req.NamespacedName, &mongoSvc); err != nil {
+func (r *ServiceReconciler) Reconcile(ctx context.Context, oreq ctrl.Request) (ctrl.Result, error) {
+	req := &Req{Request: oreq}
+	r.logger = crds.GetLogger(req.NamespacedName)
+	r.mongoSvc = new(mongoStandalone.Service)
+	if err := r.Get(ctx, req.NamespacedName, r.mongoSvc); err != nil {
 		r.logger.Infof("err: %v", err)
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
 		}
 		return reconcileResult.Failed()
 	}
-	r.mongoSvc = &mongoSvc
+
 	r.mongoSvc.Status.Conditions.Reset()
 
-	if !mongoSvc.HasLabels() {
-		mongoSvc.EnsureLabels()
-		if err := r.Update(ctx, &mongoSvc); err != nil {
+	if !r.mongoSvc.HasLabels() {
+		r.mongoSvc.EnsureLabels()
+		if err := r.Update(ctx, r.mongoSvc); err != nil {
 			return reconcileResult.FailedE(err)
 		}
 		return reconcileResult.OK()
 	}
 
-	if mongoSvc.GetDeletionTimestamp() != nil {
-		return r.finalize(ctx, &mongoSvc)
+	if r.mongoSvc.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, r.mongoSvc)
 	}
 
 	var helmSecret corev1.Secret
-	nn := types.NamespacedName{Namespace: mongoSvc.Namespace, Name: fmt.Sprintf("%s-mongodb", mongoSvc.Name)}
+	nn := types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}
 	if err := r.Get(ctx, nn, &helmSecret); err != nil {
 		r.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
 	}
 	x, ok := helmSecret.Data["mongodb-root-password"]
 	var m map[string]interface{}
-	if err := json.Unmarshal(mongoSvc.Spec.Inputs, &m); err != nil {
+	if err := json.Unmarshal(r.mongoSvc.Spec.Inputs, &m); err != nil {
 		return reconcileResult.FailedE(err)
 	}
 	m["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40))
@@ -112,21 +115,71 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err != nil {
 		return r.notifyAndDie(ctx, err)
 	}
-	mongoSvc.Spec.Inputs = marshal
+	r.mongoSvc.Spec.Inputs = marshal
 
-	b, err := templates.Parse(templates.MongoDBStandalone, mongoSvc)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	if err := fn.KubectlApply(b); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not apply kubectl for mongodb standalone"))
+	if err := r.reconBuild(); err != nil {
+		return r.notifyAndDie(ctx, err)
 	}
 
 	if err := r.walk(ctx); err != nil {
 		return r.notifyAndDie(ctx, err)
 	}
+
+	if err := r.buildOutput(ctx); err != nil {
+		return r.notifyAndDie(ctx, err)
+	}
 	return r.notify(ctx)
+}
+
+func (r *ServiceReconciler) reconBuild() error {
+	b, err := templates.Parse(templates.MongoDBStandalone, r.mongoSvc)
+	if err != nil {
+		return err
+	}
+
+	if err := fn.KubectlApply(b); err != nil {
+		return errors.NewEf(err, "could not apply kubectl for mongodb standalone")
+	}
+
+	return nil
+}
+
+func (r *ServiceReconciler) buildOutput(ctx context.Context) error {
+	m, err := r.mongoSvc.Spec.Inputs.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	var j map[string]interface{}
+	if err := json.Unmarshal(m, &j); err != nil {
+		return err
+	}
+	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", r.mongoSvc.Name, r.mongoSvc.Namespace)
+	out := Output{
+		RootPassword: j["root_password"].(string),
+		DbHosts:      hostUrl,
+		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", j["root_password"], hostUrl),
+	}
+
+	outMap, err := out.toMap()
+	if err != nil {
+		return err
+	}
+
+	scrt := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("msvc-%s", r.mongoSvc.Name),
+			Namespace: r.mongoSvc.Namespace,
+		},
+	}
+
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
+		scrt.StringData = outMap
+		return controllerutil.SetControllerReference(r.mongoSvc, scrt, r.Scheme)
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *ServiceReconciler) walk(ctx context.Context) error {
@@ -138,77 +191,6 @@ func (r *ServiceReconciler) walk(ctx context.Context) error {
 		return err
 	}
 
-	return nil
-	// // ASSERT: helm mongodb deployment is standalone
-	// return r.walkDeployment(ctx)
-}
-
-func (r *ServiceReconciler) walkDeployment(ctx context.Context) error {
-	var depl appsv1.Deployment
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: fmt.Sprintf("%s-mongodb", r.mongoSvc.Name)}, &depl); err != nil {
-		return errors.NewEf(err, "could not get deployment for helm resource")
-	}
-
-	var deplConditions []metav1.Condition
-	for _, cond := range depl.Status.Conditions {
-		deplConditions = append(deplConditions, metav1.Condition{
-			Type:    string(cond.Type),
-			Status:  metav1.ConditionStatus(cond.Status),
-			Reason:  cond.Reason,
-			Message: cond.Message,
-		})
-	}
-
-	r.mongoSvc.Status.Conditions.Build("Deployment", deplConditions...)
-	if !meta.IsStatusConditionTrue(deplConditions, string(appsv1.DeploymentAvailable)) {
-		opts := &client.ListOptions{
-			LabelSelector: apiLabels.SelectorFromValidatedSet(depl.Spec.Template.GetLabels()),
-			Namespace:     depl.Namespace,
-		}
-		var podsList corev1.PodList
-		if err := r.List(ctx, &podsList, opts); err != nil {
-			return errors.NewEf(err, "could not list pods for deployment")
-		}
-
-		for idx, pod := range podsList.Items {
-			var podC []metav1.Condition
-			for _, condition := range pod.Status.Conditions {
-				podC = append(podC, metav1.Condition{
-					Type:               fmt.Sprintf("Pod-idx-%d-%s", idx, condition.Type),
-					Status:             metav1.ConditionStatus(condition.Status),
-					LastTransitionTime: condition.LastTransitionTime,
-					Reason:             fmt.Sprintf("Pod:Idx:%d:NotSpecified", idx),
-					Message:            condition.Message,
-				})
-			}
-			r.mongoSvc.Status.Conditions.Build("", podC...)
-			var containerC []metav1.Condition
-			for _, cs := range pod.Status.ContainerStatuses {
-				p := metav1.Condition{
-					Type:   fmt.Sprintf("Name-%s", cs.Name),
-					Status: fn.StatusFromBool(cs.Ready),
-				}
-				if cs.State.Waiting != nil {
-					p.Reason = cs.State.Waiting.Reason
-					p.Message = cs.State.Waiting.Message
-				}
-				if cs.State.Running != nil {
-					p.Reason = "Running"
-					p.Message = fmt.Sprintf("Container running since %s", cs.State.Running.StartedAt.String())
-				}
-				containerC = append(containerC, p)
-			}
-			r.mongoSvc.Status.Conditions.Build("Container", containerC...)
-			return nil
-		}
-		return nil
-	}
-	r.mongoSvc.Status.Conditions.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  metav1.ConditionTrue,
-		Reason:  constants.ConditionReady.SuccessReason,
-		Message: "Deployment is Available",
-	})
 	return nil
 }
 
@@ -232,6 +214,39 @@ func (r *ServiceReconciler) finalize(ctx context.Context, m *mongoStandalone.Ser
 		return reconcileResult.FailedE(err)
 	}
 	return reconcileResult.OK()
+}
+
+func (r *ServiceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
+	r.mongoSvc.Status.Conditions.Build("", metav1.Condition{
+		Type:    constants.ConditionReady.Type,
+		Status:  metav1.ConditionFalse,
+		Reason:  constants.ConditionReady.ErrorReason,
+		Message: err.Error(),
+	})
+
+	return r.notify(ctx)
+}
+
+func (r *ServiceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
+	if err := r.Status().Update(ctx, r.mongoSvc); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.mongoSvc.NameRef()))
+	}
+	return reconcileResult.OK()
+}
+
+func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
+	labels := o.GetLabels()
+	if s := labels["app.kubernetes.io/component"]; s != "mongodb" {
+		return nil
+	}
+	if s := labels["app.kubernetes.io/name"]; s != "mongodb" {
+		return nil
+	}
+	resourceName := labels["app.kubernetes.io/instance"]
+	nn := types.NamespacedName{Namespace: o.GetNamespace(), Name: resourceName}
+	return []reconcile.Request{
+		{NamespacedName: nn},
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -268,20 +283,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 			return reqs
 		})).
-		Watches(&source.Kind{
-			Type: &appsv1.Deployment{},
-		}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
-			labels := o.GetLabels()
-
-			if s := labels["app.kubernetes.io/component"]; s != "mongodb" {
-				return nil
-			}
-			if s := labels["app.kubernetes.io/name"]; s != "mongodb" {
-				return nil
-			}
-			resourceName := labels["app.kubernetes.io/instance"]
-			nn := types.NamespacedName{Namespace: o.GetNamespace(), Name: resourceName}
-			return []reconcile.Request{{NamespacedName: nn}}
-		})).
+		Watches(&source.Kind{Type: &appsv1.Deployment{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
+		Watches(&source.Kind{Type: &corev1.Pod{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Complete(r)
 }
