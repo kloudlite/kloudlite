@@ -3,6 +3,7 @@ package mysqlstandalonemsvc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -54,6 +55,11 @@ func (r *ServiceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.mysqlSvc.NameRef()))
 	}
 	return reconcileResult.OK()
+}
+
+type Output struct {
+	RootPassword string `json:"ROOT_PASSWORD"`
+	DbHosts      string `json:"HOSTS"`
 }
 
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -116,6 +122,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err := r.walk(ctx); err != nil {
 		return r.notifyAndDie(ctx, err)
 	}
+	if err := r.buildOutput(ctx); err != nil {
+		return r.notifyAndDie(ctx, err)
+	}
 	return r.notify(ctx)
 }
 
@@ -129,6 +138,38 @@ func (r *ServiceReconciler) walk(ctx context.Context) error {
 		return err
 	}
 
+	return nil
+}
+
+func (r *ServiceReconciler) buildOutput(ctx context.Context) error {
+	m, err := fn.Json.FromRawMessage(r.mysqlSvc.Spec.Inputs)
+	if err != nil {
+		return err
+	}
+	out := Output{
+		RootPassword: m["root_password"].(string),
+		DbHosts:      fmt.Sprintf("%s.%s.svc.cluster.local", r.mysqlSvc.Name, r.mysqlSvc.Namespace),
+	}
+
+	var outMap map[string]string
+	if err := fn.Json.FromTo(out, &outMap); err != nil {
+		return err
+	}
+
+	scrt := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("msvc-%s", r.mysqlSvc.Name),
+			Namespace: r.mysqlSvc.Namespace,
+		},
+	}
+
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
+		scrt.StringData = outMap
+		return controllerutil.SetControllerReference(r.mysqlSvc, scrt, r.Scheme)
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

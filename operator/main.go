@@ -31,13 +31,23 @@ import (
 
 	"go.uber.org/fx"
 
+	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
+	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
+	mysqlclustermsvcv1 "operators.kloudlite.io/apis/mysql-cluster.msvc/v1"
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
+	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
+	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	crdsControllers "operators.kloudlite.io/controllers/crds"
+	elasticsearchmsvccontrollers "operators.kloudlite.io/controllers/elasticsearch.msvc"
+	influxdbmsvccontrollers "operators.kloudlite.io/controllers/influxdb.msvc"
 	mongodbClusterControllers "operators.kloudlite.io/controllers/mongodb-cluster.msvc"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
+	mysqlclustermsvccontrollers "operators.kloudlite.io/controllers/mysql-cluster.msvc"
 	mysqlStandaloneControllers "operators.kloudlite.io/controllers/mysql-standalone.msvc"
+	redisclustermsvccontrollers "operators.kloudlite.io/controllers/redis-cluster.msvc"
+	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -53,6 +63,11 @@ func init() {
 	utilruntime.Must(mongodbStandalone.AddToScheme(scheme))
 	utilruntime.Must(mongodbCluster.AddToScheme(scheme))
 	utilruntime.Must(mysqlstandalonemsvcv1.AddToScheme(scheme))
+	utilruntime.Must(mysqlclustermsvcv1.AddToScheme(scheme))
+	utilruntime.Must(redisstandalonemsvcv1.AddToScheme(scheme))
+	utilruntime.Must(redisclustermsvcv1.AddToScheme(scheme))
+	utilruntime.Must(elasticsearchmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(influxdbmsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -227,6 +242,48 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
+	if err = (&mysqlclustermsvccontrollers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&mysqlclustermsvccontrollers.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
+	if err = (&redisstandalonemsvccontrollers.RedisReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Redis")
+		os.Exit(1)
+	}
+	if err = (&redisclustermsvccontrollers.RedisReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Redis")
+		os.Exit(1)
+	}
+	if err = (&elasticsearchmsvccontrollers.ElasticSearchReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ElasticSearch")
+		os.Exit(1)
+	}
+	if err = (&influxdbmsvccontrollers.InfluxDBReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "InfluxDB")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

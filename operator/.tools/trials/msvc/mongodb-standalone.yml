@@ -1,7 +1,7 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: n-msvc
+  name: mongo-standalone2
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-service
@@ -9,7 +9,6 @@ metadata:
 spec:
   apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
   inputs:
-    replica_count: 1
     cpu_min: 400
     cpu_max: 800
     memory_min: 500

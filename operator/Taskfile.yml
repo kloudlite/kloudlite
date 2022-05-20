@@ -26,7 +26,7 @@ tasks:
     run: always
     cmds:
       - task: kill-port
-      - go run -tags dynamic main.go
+      - go run -tags dynamic main.go |& pp -rel-path
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
     sources:

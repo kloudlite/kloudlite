@@ -29,6 +29,8 @@ type JsonFeatures interface {
 	ToB64Url(v interface{}) (string, error)
 	ToB64String(v interface{}) (string, error)
 	FromB64Url(s string, v interface{}) error
+	FromTo(v interface{}, rt interface{}) error
+	FromRawMessage(msg json.RawMessage, result interface{}) error
 }
 
 type jsonFeatures struct{}
@@ -54,6 +56,29 @@ func (j *jsonFeatures) FromB64Url(s string, v interface{}) error {
 	}
 
 	return nil
+}
+
+func (j *jsonFeatures) FromTo(from interface{}, to interface{}) error {
+	marshal, err := json.Marshal(from)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(marshal, to); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (j *jsonFeatures) FromRawMessage(msg json.RawMessage) (map[string]interface{}, error) {
+	m, err := msg.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]interface{}
+	if err := json.Unmarshal(m, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 var Json = &jsonFeatures{}

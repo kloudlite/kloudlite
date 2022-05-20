@@ -46,14 +46,6 @@ func (c *Conditions) Reset() {
 }
 
 func (c *Conditions) Build(group string, conditions ...metav1.Condition) {
-	meta.SetStatusCondition(&c.Conditions, metav1.Condition{
-		Type:               "Ready",
-		Status:             "False",
-		Reason:             "ChecksNotCompleted",
-		LastTransitionTime: c.lt,
-		Message:            "Not All Checks completed",
-	})
-
 	for _, cond := range conditions {
 		if cond.Reason == "" {
 			cond.Reason = "NotSpecified"
@@ -80,14 +72,14 @@ type HelmResource struct {
 	} `json:"status"`
 }
 
-func (c *Conditions) FromHelmMsvc(ctx context.Context, reconciler client.Client, kind string, nn types.NamespacedName) error {
+func (c *Conditions) FromHelmMsvc(ctx context.Context, apiClient client.Client, kind string, nn types.NamespacedName) error {
 	hm := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": constants.MsvcApiVersion,
 			"kind":       kind,
 		},
 	}
-	if err := reconciler.Get(ctx, nn, &hm); err != nil {
+	if err := apiClient.Get(ctx, nn, &hm); err != nil {
 		return err
 	}
 	b, err := hm.MarshalJSON()
@@ -114,29 +106,28 @@ func (c *Conditions) FromStatefulset(ctx context.Context, apiClient client.Clien
 	if err := apiClient.Get(ctx, nn, sts); err != nil {
 		return err
 	}
-	fmt.Printf("sts.Status: %+v\n", sts.Status)
-	if sts.Status.ReadyReplicas == sts.Status.Replicas {
-		c.Build("", metav1.Condition{
-			Type:    constants.ConditionReady.Type,
-			Status:  metav1.ConditionTrue,
-			Reason:  constants.ConditionReady.SuccessReason,
-			Message: "StatefulSet Ready",
-		})
-		return nil
-	}
+
+	fmt.Println("sts:", sts.Status.ReadyReplicas == sts.Status.Replicas)
+
+	c.Build("", metav1.Condition{
+		Type:    constants.ConditionReady.Type,
+		Status:  fn.IfThenElse(sts.Status.ReadyReplicas == sts.Status.Replicas, metav1.ConditionTrue, metav1.ConditionFalse).(metav1.ConditionStatus),
+		Reason:  "AllReplicasReady",
+		Message: "StatefulSet Ready",
+	})
+
+	fmt.Println("sts2 :", meta.IsStatusConditionTrue(c.Conditions, "Ready"))
 
 	podsList := new(corev1.PodList)
 	if err := apiClient.List(ctx, podsList, &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(sts.Spec.Template.Labels),
 		Namespace:     sts.Namespace,
 	}); err != nil {
-		fmt.Println("error getting pods:", err)
 		return err
 	}
 
-	fmt.Printf("\npodslist length: %+v\n", len(podsList.Items))
-
-	return c.FromPods(podsList.Items...)
+	err := c.FromPods(podsList.Items...)
+	return err
 }
 
 func (c *Conditions) FromDeployment(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
@@ -156,16 +147,12 @@ func (c *Conditions) FromDeployment(ctx context.Context, apiClient client.Client
 
 	c.Build("Deployment", deplConditions...)
 
-	if meta.IsStatusConditionTrue(deplConditions, string(appsv1.DeploymentAvailable)) {
-		// deployment aavaiabel mark as ready
-		c.Build("", metav1.Condition{
-			Type:    constants.ConditionReady.Type,
-			Status:  metav1.ConditionTrue,
-			Reason:  constants.ConditionReady.SuccessReason,
-			Message: "Deployment is Available",
-		})
-		return nil
-	}
+	c.Build("", metav1.Condition{
+		Type:    constants.ConditionReady.Type,
+		Status:  fn.IfThenElse(meta.IsStatusConditionTrue(deplConditions, string(appsv1.DeploymentAvailable)), metav1.ConditionTrue, metav1.ConditionFalse).(metav1.ConditionStatus),
+		Reason:  constants.ConditionReady.SuccessReason,
+		Message: "Deployment is Available",
+	})
 
 	opts := &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(depl.Spec.Template.GetLabels()),
@@ -191,7 +178,6 @@ func (c *Conditions) FromPods(pl ...corev1.Pod) error {
 				Message:            condition.Message,
 			})
 		}
-		fmt.Printf("podC: %+v\n", podC)
 		c.Build("", podC...)
 		var containerC []metav1.Condition
 		for _, cs := range pod.Status.ContainerStatuses {
@@ -209,7 +195,6 @@ func (c *Conditions) FromPods(pl ...corev1.Pod) error {
 			}
 			containerC = append(containerC, p)
 		}
-		fmt.Printf("container: %+v\n", containerC)
 		c.Build("Container", containerC...)
 		return nil
 	}

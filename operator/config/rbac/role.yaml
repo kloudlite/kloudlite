@@ -162,6 +162,58 @@ rules:
   - patch
   - update
 - apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - elasticsearches
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - elasticsearches/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - elasticsearches/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - influxdbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - influxdbs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - influxdbs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - mongodb-cluster.msvc.kloudlite.io
   resources:
   - databases
@@ -266,6 +318,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - mysql-cluster.msvc.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql-cluster.msvc.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql-cluster.msvc.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - mysql-standalone.msvc.kloudlite.io
   resources:
   - databases
@@ -313,6 +391,58 @@ rules:
   - mysql-standalone.msvc.kloudlite.io
   resources:
   - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redis-cluster.msvc.kloudlite.io
+  resources:
+  - redis
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis-cluster.msvc.kloudlite.io
+  resources:
+  - redis/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redis-cluster.msvc.kloudlite.io
+  resources:
+  - redis/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redis-standalone.msvc.kloudlite.io
+  resources:
+  - redis
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis-standalone.msvc.kloudlite.io
+  resources:
+  - redis/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redis-standalone.msvc.kloudlite.io
+  resources:
+  - redis/status
   verbs:
   - get
   - patch

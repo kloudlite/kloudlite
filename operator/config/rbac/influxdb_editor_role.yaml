@@ -1,0 +1,24 @@
+# permissions for end users to edit influxdbs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: influxdb-editor-role
+rules:
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - influxdbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - influxdbs/status
+  verbs:
+  - get
