@@ -73,11 +73,11 @@ func (req *ServiceReq) notify(ctx context.Context) (ctrl.Result, error) {
 func (req *ServiceReq) reconcileStatus(ctx context.Context) (*ctrl.Result, error) {
 	prevStatus := req.mysqlSvc.Status
 
-	if err := req.mysqlSvc.Status.Conditions.FromHelmMsvc(ctx, req.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}); err != nil {
+	if err := req.mysqlSvc.Status.Conditions.BuildFromHelmMsvc(ctx, req.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}); err != nil {
 		return &ctrl.Result{}, errors.NewEf(err, "while building conditions from Helm Resource")
 	}
 
-	if err := req.mysqlSvc.Status.Conditions.FromStatefulset(ctx, req.Client, types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}); err != nil {
+	if err := req.mysqlSvc.Status.Conditions.BuildFromStatefulset(ctx, req.Client, types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}); err != nil {
 		return &ctrl.Result{}, errors.NewEf(err, "while building conditions from statefulset resource")
 	}
 
@@ -127,6 +127,7 @@ func (req *ServiceReq) reconcileOps(ctx context.Context) (*ctrl.Result, error) {
 	return &ctrl.Result{}, nil
 }
 
+<<<<<<< HEAD
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
@@ -144,6 +145,16 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 			return reconcileResult.OK()
 		}
 		return reconcileResult.Failed()
+=======
+func (r *ServiceReconciler) walk(ctx context.Context) error {
+	if err := r.mysqlSvc.Status.Conditions.BuildFromHelmMsvc(ctx, r.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
+		return err
+	}
+
+	if err := r.mysqlSvc.Status.Conditions.BuildFromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
+		r.logger.Error(err)
+		return err
+>>>>>>> d0c2aef00fc08bca0da8093d13bb49627acf0c99
 	}
 
 	if !req.mysqlSvc.HasLabels() {
