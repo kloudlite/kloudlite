@@ -62,7 +62,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return reconcileResult.Failed()
 	}
-	r.mongoSvc.Status.Conditions.Reset()
 
 	if !r.mongoSvc.HasLabels() {
 		r.mongoSvc.EnsureLabels()
