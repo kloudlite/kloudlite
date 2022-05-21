@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -26,7 +24,6 @@ import (
 
 	mongoStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/controllers/crds"
-	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"
@@ -35,6 +32,27 @@ import (
 	"operators.kloudlite.io/lib/templates"
 	t "operators.kloudlite.io/lib/types"
 )
+
+type ServiceReconReq struct {
+	req       ctrl.Request
+	logger    *zap.SugaredLogger
+	stateData map[string]string
+	mongoSvc  *mongoStandalone.Service
+}
+
+func (req *ServiceReconReq) GetStateData(key string) string {
+	if req.stateData == nil {
+		req.stateData = map[string]string{}
+	}
+	return req.stateData[key]
+}
+
+func (req *ServiceReconReq) SetStateData(key string, val string) {
+	if req.stateData == nil {
+		req.stateData = map[string]string{}
+	}
+	req.stateData[key] = val
+}
 
 type Output struct {
 	RootPassword string `json:"ROOT_PASSWORD"`
@@ -46,67 +64,115 @@ type Output struct {
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	// logger *zap.SugaredLogger
-	lib.MessageSender
-	// mongoSvc *mongoStandalone.Service
 }
 
-type serviceReq struct {
-	ctrl.Request
-	client.Client
-	logger   *zap.SugaredLogger
-	mongoSvc *mongoStandalone.Service
+func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (ctrl.Result, error) {
+	req.mongoSvc.Status.Conditions.Build("", metav1.Condition{
+		Type:    constants.ConditionReady.Type,
+		Status:  metav1.ConditionFalse,
+		Reason:  constants.ConditionReady.ErrorReason,
+		Message: err.Error(),
+	})
+	err = r.Status().Update(ctx, req.mongoSvc)
+	return reconcileResult.FailedE(err)
 }
 
-func (req *serviceReq) failWithErr(ctx context.Context, err error) (ctrl.Result, error) {
-	if err != nil {
-		req.mongoSvc.Status.Conditions.Build("", metav1.Condition{
-			Type:    constants.ConditionReady.Type,
-			Status:  metav1.ConditionFalse,
-			Reason:  constants.ConditionReady.ErrorReason,
-			Message: err.Error(),
-		})
-	}
-	return req.updateStatus(ctx)
-}
-
-func (req *serviceReq) reconcileStatus(ctx context.Context) (*ctrl.Result, error) {
+func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
 	prevStatus := req.mongoSvc.Status
-	err := req.mongoSvc.Status.Conditions.FromHelmMsvc(ctx, req.Client, constants.HelmMongoDBKind, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name})
+
+	err := req.mongoSvc.Status.Conditions.BuildFromHelmMsvc(
+		ctx,
+		r.Client,
+		constants.HelmMongoDBKind,
+		types.NamespacedName{
+			Namespace: req.mongoSvc.GetNamespace(),
+			Name:      req.mongoSvc.GetName(),
+		},
+	)
 	if err != nil {
+		return nil, err
+	}
+
+	err = req.mongoSvc.Status.Conditions.BuildFromDeployment(
+		ctx,
+		r.Client,
+		types.NamespacedName{
+			Namespace: req.mongoSvc.GetNamespace(),
+			Name:      req.mongoSvc.GetName(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if cmp.Equal(prevStatus, req.mongoSvc.Status.Conditions, cmpopts.IgnoreUnexported(t.Conditions{})) {
 		return nil, nil
 	}
-	if err := req.mongoSvc.Status.Conditions.FromDeployment(ctx, req.Client, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name}); err != nil {
-		if err := req.Status().Update(ctx, req.mongoSvc); err != nil {
-			return nil, err
-		}
-		return &ctrl.Result{}, nil
+
+	req.logger.Infof("status is different, so updating status ...")
+	err = r.Status().Update(ctx, req.mongoSvc)
+	if err != nil {
+		return nil, err
 	}
 
-	if !cmp.Equal(prevStatus, req.mongoSvc.Status, cmpopts.IgnoreUnexported(t.Conditions{})) {
-		req.logger.Infof("status is different, so updating status ...")
-		req.mongoSvc.Status = prevStatus
-
-		if err := req.Status().Update(ctx, req.mongoSvc); err != nil {
-			return nil, err
-		}
-		return &ctrl.Result{}, nil
+	var helmSecret corev1.Secret
+	nn := types.NamespacedName{
+		Namespace: req.mongoSvc.GetNamespace(),
+		Name:      req.mongoSvc.GetName(),
+	}
+	if err := r.Get(ctx, nn, &helmSecret); err != nil {
+		req.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
+	}
+	if x, ok := helmSecret.Data["mongodb-root-password"]; ok {
+		req.SetStateData("mongodb-root-password", string(x))
+	} else {
+		req.SetStateData("mongodb-root-password", fn.CleanerNanoid(40))
 	}
 
-	return nil, nil
+	return reconcileResult.OKP()
 }
 
-func (req *serviceReq) reconcileOperations() error {
+func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
+	var m map[string]interface{}
+	if err := json.Unmarshal(req.mongoSvc.Spec.Inputs, &m); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+	m["root_password"] = req.GetStateData("mongodb-root-password")
+	marshal, err := json.Marshal(m)
+	if err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	req.mongoSvc.Spec.Inputs = marshal
+
+	hash := req.mongoSvc.Hash()
+
+	if hash == req.mongoSvc.Status.LastHash {
+		return reconcileResult.OK()
+	}
+
 	b, err := templates.Parse(templates.MongoDBStandalone, req.mongoSvc)
 	if err != nil {
-		return err
+		return reconcileResult.FailedE(err)
 	}
 
 	if _, err := fn.KubectlApply(b); err != nil {
-		return errors.NewEf(err, "could not apply kubectl for mongodb standalone")
+		return reconcileResult.FailedE(errors.NewEf(err, "could not apply kubectl for mongodb standalone"))
 	}
 
-	return nil
+	if err := r.reconcileOutput(ctx, req); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	req.mongoSvc.Status.LastHash = hash
+
+	err = r.Status().Update(ctx, req.mongoSvc)
+
+	if err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	return reconcileResult.OK()
 }
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -114,10 +180,13 @@ func (req *serviceReq) reconcileOperations() error {
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
-	req := &serviceReq{Request: orgReq, Client: r.Client}
-	req.logger = crds.GetLogger(req.NamespacedName)
-	req.mongoSvc = new(mongoStandalone.Service)
-	if err := r.Get(ctx, req.NamespacedName, req.mongoSvc); err != nil {
+	req := &ServiceReconReq{
+		req:      orgReq,
+		logger:   crds.GetLogger(orgReq.NamespacedName),
+		mongoSvc: new(mongoStandalone.Service),
+	}
+
+	if err := r.Get(ctx, orgReq.NamespacedName, req.mongoSvc); err != nil {
 		req.logger.Infof("err: %v", err)
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
@@ -137,59 +206,20 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 		return r.finalize(ctx, req)
 	}
 
-	if err := req.reconcileStatus(ctx); err != nil {
-		return req.failWithErr(ctx, err)
+	reconResult, err := r.reconcileStatus(ctx, req)
+
+	if err != nil {
+		return r.failWithErr(ctx, req, err)
+	}
+	if reconResult != nil {
+		return *reconResult, err
 	}
 
 	req.logger.Infof("status is in sync, so proceeding with ops")
-
-	// req.mongoSvc.Status.Conditions.Reset()
-
-	var helmSecret corev1.Secret
-	nn := types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name}
-	if err := r.Get(ctx, nn, &helmSecret); err != nil {
-		req.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
-	}
-	x, ok := helmSecret.Data["mongodb-root-password"]
-	var m map[string]interface{}
-	if err := json.Unmarshal(req.mongoSvc.Spec.Inputs, &m); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	m["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40))
-	marshal, err := json.Marshal(m)
-	if err != nil {
-		return req.failWithErr(ctx, err)
-	}
-
-	req.mongoSvc.Spec.Inputs = marshal
-
-	condition := meta.FindStatusCondition(req.mongoSvc.Status.Conditions.GetConditions(), constants.ConditionReady.Type)
-	if condition == nil {
-		req.mongoSvc.Status.Conditions.Build("", metav1.Condition{Type: constants.ConditionReady.Type, Reason: constants.ConditionReady.InProgressReason, Message: "reconcilation waiting up on child resources, to provide status updates"})
-	}
-
-	if err := req.reconcileOperations(); err != nil {
-		return reconcileResult.OK()
-	}
-
-	hash, err := fn.Json.Hash(req.mongoSvc.FilterHashable())
-	req.logger.Infof("\nhash: %s\n", hash)
-	if err != nil {
-		return req.failWithErr(ctx, err)
-	}
-	if hash == req.mongoSvc.Status.LastHash {
-		return req.updateStatus(ctx)
-	}
-
-	req.mongoSvc.Status.LastHash = hash
-	if err := r.buildOutput(ctx, req); err != nil {
-		return req.failWithErr(ctx, err)
-	}
-
-	return req.updateStatus(ctx)
+	return r.reconcileOperations(ctx, req)
 }
 
-func (r *ServiceReconciler) buildOutput(ctx context.Context, req *serviceReq) error {
+func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
 	m, err := req.mongoSvc.Spec.Inputs.MarshalJSON()
 	if err != nil {
 		return err
@@ -226,19 +256,7 @@ func (r *ServiceReconciler) buildOutput(ctx context.Context, req *serviceReq) er
 	return nil
 }
 
-func (r *ServiceReconciler) walk(ctx context.Context, req *serviceReq) error {
-	if err := req.mongoSvc.Status.Conditions.FromHelmMsvc(ctx, r.Client, constants.HelmMongoDBKind, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name}); err != nil {
-		return err
-	}
-
-	if err := req.mongoSvc.Status.Conditions.FromDeployment(ctx, r.Client, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *ServiceReconciler) finalize(ctx context.Context, req *serviceReq) (ctrl.Result, error) {
+func (r *ServiceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
 	req.logger.Infof("finalizing: %+v", req.mongoSvc.NameRef())
 	if err := r.Delete(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": constants.MsvcApiVersion,

@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	fn "operators.kloudlite.io/lib/functions"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -56,12 +57,13 @@ func (s *Service) EnsureLabels() {
 	s.SetLabels(map[string]string{key: value})
 }
 
-func (s *Service) FilterHashable() interface{} {
+func (s *Service) Hash() string {
 	m := make(map[string]interface{}, 3)
 	m["name"] = s.Name
 	m["namespace"] = s.Namespace
 	m["spec"] = s.Spec
-	return m
+	hash, _ := fn.Json.Hash(m)
+	return hash
 }
 
 // +kubebuilder:object:root=true

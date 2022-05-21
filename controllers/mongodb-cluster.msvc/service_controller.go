@@ -156,11 +156,11 @@ func (r *ServiceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 }
 
 func (r *ServiceReconciler) walk(ctx context.Context) error {
-	if err := r.mongoSvc.Status.Conditions.FromHelmMsvc(ctx, r.Client, constants.HelmMongoDBKind, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
+	if err := r.mongoSvc.Status.Conditions.BuildFromHelmMsvc(ctx, r.Client, constants.HelmMongoDBKind, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
 		return err
 	}
 
-	if err := r.mongoSvc.Status.Conditions.FromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
+	if err := r.mongoSvc.Status.Conditions.BuildFromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
 		return err
 	}
 

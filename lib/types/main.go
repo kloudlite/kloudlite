@@ -72,7 +72,7 @@ type HelmResource struct {
 	} `json:"status"`
 }
 
-func (c *Conditions) FromHelmMsvc(ctx context.Context, apiClient client.Client, kind string, nn types.NamespacedName) error {
+func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Client, kind string, nn types.NamespacedName) error {
 	hm := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": constants.MsvcApiVersion,
@@ -101,7 +101,7 @@ func (c *Conditions) FromHelmMsvc(ctx context.Context, apiClient client.Client, 
 	return nil
 }
 
-func (c *Conditions) FromStatefulset(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
+func (c *Conditions) BuildFromStatefulset(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
 	sts := new(appsv1.StatefulSet)
 	if err := apiClient.Get(ctx, nn, sts); err != nil {
 		return err
@@ -126,11 +126,11 @@ func (c *Conditions) FromStatefulset(ctx context.Context, apiClient client.Clien
 		return err
 	}
 
-	err := c.FromPods(podsList.Items...)
+	err := c.BuildFromPods(podsList.Items...)
 	return err
 }
 
-func (c *Conditions) FromDeployment(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
+func (c *Conditions) BuildFromDeployment(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
 	depl := new(appsv1.Deployment)
 	if err := apiClient.Get(ctx, nn, depl); err != nil {
 		return err
@@ -162,10 +162,10 @@ func (c *Conditions) FromDeployment(ctx context.Context, apiClient client.Client
 	if err := apiClient.List(ctx, podsList, opts); err != nil {
 		return errors.NewEf(err, "could not list pods for deployment")
 	}
-	return c.FromPods(podsList.Items...)
+	return c.BuildFromPods(podsList.Items...)
 }
 
-func (c *Conditions) FromPods(pl ...corev1.Pod) error {
+func (c *Conditions) BuildFromPods(pl ...corev1.Pod) error {
 	for idx, pod := range pl {
 		var podC []metav1.Condition
 		fmt.Printf("pod info: Name: %s LenConditions: %d LenContainerStatus: %d\n", pod.Name, len(pod.Status.Conditions), len(pod.Status.ContainerStatuses))

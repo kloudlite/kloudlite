@@ -128,11 +128,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *ServiceReconciler) walk(ctx context.Context) error {
-	if err := r.mysqlSvc.Status.Conditions.FromHelmMsvc(ctx, r.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
+	if err := r.mysqlSvc.Status.Conditions.BuildFromHelmMsvc(ctx, r.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
 		return err
 	}
 
-	if err := r.mysqlSvc.Status.Conditions.FromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
+	if err := r.mysqlSvc.Status.Conditions.BuildFromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
 		r.logger.Error(err)
 		return err
 	}
