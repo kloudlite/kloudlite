@@ -4,20 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"operators.kloudlite.io/lib/errors"
+	fn "operators.kloudlite.io/lib/functions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"operators.kloudlite.io/lib/constants"
-	"operators.kloudlite.io/lib/errors"
-	fn "operators.kloudlite.io/lib/functions"
 )
 
 // +kubebuilder:object:generate=true
@@ -48,6 +47,23 @@ func (c *Conditions) Reset() {
 
 func (c *Conditions) Remove(t string) {
 	meta.RemoveStatusCondition(&c.Conditions, t)
+}
+
+func (c *Conditions) MarkNotReady(err error) {
+	c.SetReady(metav1.ConditionFalse, constants.ConditionReady.ErrorReason, err.Error())
+}
+
+func (c *Conditions) MarkReady(msg string) {
+	c.SetReady(metav1.ConditionFalse, constants.ConditionReady.SuccessReason, msg)
+}
+
+func (c *Conditions) SetReady(t metav1.ConditionStatus, reason string, msg string) {
+	c.Build("", metav1.Condition{
+		Type:    constants.ConditionReady.Type,
+		Status:  t,
+		Reason:  reason,
+		Message: msg,
+	})
 }
 
 func (c *Conditions) Build(group string, conditions ...metav1.Condition) {
@@ -98,7 +114,7 @@ func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Cli
 		}
 		return err
 	}
-	req.mongoSvc.Status.Conditions.Remove("HelmNotCreated")
+
 	b, err := hm.MarshalJSON()
 	if err != nil {
 		return err
