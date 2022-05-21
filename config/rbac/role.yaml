@@ -447,3 +447,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - redis-standalone.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis-standalone.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redis-standalone.msvc.kloudlite.io
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update

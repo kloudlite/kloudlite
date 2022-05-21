@@ -74,4 +74,5 @@ const (
 	MongoDBResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
 	AccountWireguard        templateFile = "account-deploy.tmpl.yml"
 	CommonMsvcService       templateFile = "msvc-common-service.tmpl.yml"
+	RedisStandalone         templateFile = "redis-helm-standalone.tmpl.yml"
 )

@@ -197,4 +197,13 @@ resources:
   kind: InfluxDB
   path: operators.kloudlite.io/apis/influxdb.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: redis-standalone.msvc
+  kind: Service
+  path: operators.kloudlite.io/apis/redis-standalone.msvc/v1
+  version: v1
 version: "3"

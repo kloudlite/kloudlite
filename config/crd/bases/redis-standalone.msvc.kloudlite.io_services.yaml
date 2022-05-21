@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: services.mysql-standalone.msvc.kloudlite.io
+  name: services.redis-standalone.msvc.kloudlite.io
 spec:
-  group: mysql-standalone.msvc.kloudlite.io
+  group: redis-standalone.msvc.kloudlite.io
   names:
     kind: Service
     listKind: ServiceList

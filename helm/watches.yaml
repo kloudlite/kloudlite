@@ -11,4 +11,8 @@
   version: v1
   kind: HelmMongoDB
   chart: helm-charts/mongodb
+- group: msvc.kloudlite.io
+  version: v1
+  kind: HelmRedis
+  chart: helm-charts/redis
 #+kubebuilder:scaffold:watch

@@ -5,4 +5,5 @@ resources:
 - bases/msvc.kloudlite.io_helmmongodbs.yaml
 - bases/msvc.kloudlite.io_helmmysqldbs.yaml
 - bases/msvc.kloudlite.io_helmelasticsearches.yaml
+- bases/msvc.kloudlite.io_helmredis.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

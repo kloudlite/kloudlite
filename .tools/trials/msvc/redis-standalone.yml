@@ -1,0 +1,12 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: redis-standalone
+  namespace: hotspot
+  finalizers:
+    - finalizers.kloudlite.io/managed-service
+    - foreground
+spec:
+  apiVersion: redis-standalone.msvc.kloudlite.io/v1
+  inputs:
+    size: 2Gi

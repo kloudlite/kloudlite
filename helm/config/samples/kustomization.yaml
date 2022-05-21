@@ -7,4 +7,5 @@ resources:
 - msvc_v1_helmmysqldb.yaml
 - msvc_v1_helmelasticsearch.yaml
 - msvc_v1_helmmongodb.yaml
+- msvc_v1_helmredis.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

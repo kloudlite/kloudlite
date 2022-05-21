@@ -255,4 +255,37 @@ rules:
   - "serviceaccounts"
   - "services"
 
+##
+## Rules for msvc.kloudlite.io/v1, Kind: HelmRedis
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helmredis
+  - helmredis/status
+  - helmredis/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "configmaps"
+  - "secrets"
+  - "serviceaccounts"
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "statefulsets"
+
 #+kubebuilder:scaffold:rules

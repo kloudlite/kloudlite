@@ -26,4 +26,5 @@ resources:
 - redis-cluster.msvc_v1_redis.yaml
 - elasticsearch.msvc_v1_elasticsearch.yaml
 - influxdb.msvc_v1_influxdb.yaml
+- redis-standalone.msvc_v1_service.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
