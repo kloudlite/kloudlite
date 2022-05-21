@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"time"
+
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -30,7 +30,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 )
 
 type ServiceReconReq struct {
@@ -62,6 +61,7 @@ type Output struct {
 
 // ServiceReconciler reconciles a Service object
 type ServiceReconciler struct {
+	lt metav1.Time
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -78,8 +78,9 @@ func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconRe
 }
 
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	prevStatus := req.mongoSvc.Status
+	req.mongoSvc.Status.Conditions.Init(r.lt)
 
+	prevStatus := req.mongoSvc.Status
 	req.mongoSvc.Status.Conditions.Reset()
 
 	err := req.mongoSvc.Status.Conditions.BuildFromHelmMsvc(
@@ -110,17 +111,6 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 			return nil, err
 		}
 	}
-
-	if cmp.Equal(prevStatus, req.mongoSvc.Status, cmpopts.IgnoreUnexported(t.Conditions{})) {
-		return nil, nil
-	}
-
-	req.logger.Infof("status is different, so updating status ...")
-	err = r.Status().Update(ctx, req.mongoSvc)
-	if err != nil {
-		return nil, err
-	}
-
 	var helmSecret corev1.Secret
 	nn := types.NamespacedName{
 		Namespace: req.mongoSvc.GetNamespace(),
@@ -129,10 +119,18 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 	if err := r.Get(ctx, nn, &helmSecret); err != nil {
 		req.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
 	}
-	if x, ok := helmSecret.Data["mongodb-root-password"]; ok {
-		req.SetStateData("mongodb-root-password", string(x))
-	} else {
-		req.SetStateData("mongodb-root-password", fn.CleanerNanoid(40))
+	x, ok := helmSecret.Data["mongodb-root-password"]
+	req.SetStateData("mongodb-root-password", fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string))
+
+	if req.mongoSvc.Status.Conditions.Equal(prevStatus.Conditions) {
+		req.logger.Infof("Status is already in sync, so moving forward with ops")
+		return nil, nil
+	}
+
+	req.logger.Infof("status is different, so updating status ...")
+	err = r.Status().Update(ctx, req.mongoSvc)
+	if err != nil {
+		return nil, err
 	}
 
 	return reconcileResult.OKP()
@@ -193,7 +191,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 	}
 
 	if err := r.Get(ctx, orgReq.NamespacedName, req.mongoSvc); err != nil {
-		req.logger.Infof("err: %v", err)
 		if apiErrors.IsNotFound(err) {
 			return reconcileResult.OK()
 		}
@@ -301,6 +298,7 @@ func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.lt = metav1.Time{Time: time.Now()}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongoStandalone.Service{}).
 		Watches(&source.Kind{Type: &unstructured.Unstructured{

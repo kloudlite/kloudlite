@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,17 +13,22 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"operators.kloudlite.io/lib/constants"
 )
 
 // +kubebuilder:object:generate=true
 type Conditions struct {
-	lt         metav1.Time        `json:"lt,omitempty"`
+	lt         *metav1.Time       `json:"lt,omitempty"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
+func (c *Conditions) Init(t metav1.Time) {
+	c.lt = &t
 }
 
 func (c *Conditions) GetConditions() []metav1.Condition {
@@ -43,6 +49,10 @@ func (c *Conditions) IsFalse(t string) bool {
 
 func (c *Conditions) Reset() {
 	c.Conditions = []metav1.Condition{}
+}
+
+func (c *Conditions) GetLt() *metav1.Time {
+	return c.lt
 }
 
 func (c *Conditions) Remove(t string) {
@@ -66,18 +76,34 @@ func (c *Conditions) SetReady(t metav1.ConditionStatus, reason string, msg strin
 	})
 }
 
+func (c Conditions) Equal(c2 Conditions) bool {
+	if len(c.Conditions) != len(c2.Conditions) {
+		return false
+	}
+	for _, c := range c.Conditions {
+		st := meta.FindStatusCondition(c2.Conditions, c.Type)
+		if st.Reason != c.Reason || st.Message != c.Message || st.Status != c.Status {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *Conditions) Build(group string, conditions ...metav1.Condition) {
+	if c.lt == nil {
+		c.lt = &metav1.Time{}
+	}
 	for _, cond := range conditions {
 		if cond.Reason == "" {
 			cond.Reason = "NotSpecified"
 		}
 		if !cond.LastTransitionTime.IsZero() {
 			if cond.LastTransitionTime.Time.Sub(c.lt.Time).Seconds() > 0 {
-				c.lt = cond.LastTransitionTime
+				c.lt = &cond.LastTransitionTime
 			}
 		}
 		if cond.LastTransitionTime.IsZero() {
-			cond.LastTransitionTime = c.lt
+			cond.LastTransitionTime = *c.lt
 		}
 		if group != "" {
 			cond.Reason = fmt.Sprintf("%s:%s", group, cond.Reason)
@@ -104,12 +130,10 @@ func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Cli
 	if err := apiClient.Get(ctx, nn, &hm); err != nil {
 		if apiErrors.IsNotFound(err) {
 			c.Build("Helm", metav1.Condition{
-				Type:               "NotCreated",
-				Status:             "True",
-				ObservedGeneration: 0,
-				LastTransitionTime: metav1.Time{},
-				Reason:             "Helm Not not found",
-				Message:            err.Error(),
+				Type:    "NotCreated",
+				Status:  "True",
+				Reason:  "HelmResourceNotFound",
+				Message: err.Error(),
 			})
 		}
 		return err
@@ -168,12 +192,10 @@ func (c *Conditions) BuildFromDeployment(ctx context.Context, apiClient client.C
 	if err := apiClient.Get(ctx, nn, depl); err != nil {
 		if apiErrors.IsNotFound(err) {
 			c.Build("Deployment", metav1.Condition{
-				Type:               "NotCreated",
-				Status:             "True",
-				ObservedGeneration: 0,
-				LastTransitionTime: metav1.Time{},
-				Reason:             "Deployment Not not found",
-				Message:            err.Error(),
+				Type:    "NotCreated",
+				Status:  "True",
+				Reason:  "DeploymentNotFound",
+				Message: err.Error(),
 			})
 		}
 		return err
