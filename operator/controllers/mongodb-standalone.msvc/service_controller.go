@@ -26,7 +26,6 @@ import (
 
 	mongoStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/controllers/crds"
-	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/finalizers"
@@ -46,9 +45,6 @@ type Output struct {
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	// logger *zap.SugaredLogger
-	lib.MessageSender
-	// mongoSvc *mongoStandalone.Service
 }
 
 type serviceReq struct {
