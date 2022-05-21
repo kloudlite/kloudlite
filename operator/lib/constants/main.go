@@ -5,6 +5,7 @@ const MsvcApiVersion = "msvc.kloudlite.io/v1"
 const (
 	HelmMongoDBKind string = "HelmMongoDB"
 	HelmMySqlDBKind string = "HelmMySqlDB"
+	HelmRedisKind   string = "HelmRedis"
 )
 
 var (

@@ -1,0 +1,46 @@
+apiVersion: msvc.kloudlite.io/v1
+kind: HelmRedis
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences:
+    - apiVersion: {{.APIVersion}}
+      kind: {{.Kind}}
+      name: {{.Name}}
+      uid: {{.UID}}
+      controller: true
+      blockOwnerDeletion: true
+spec:
+#  global:
+#    storageClass: do-block-storage
+  fullnameOverride: {{.Name}}
+  image:
+    tag: 6.2.7-debian-10-r0
+
+  master:
+    resources:
+      requests:
+        cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_min" | default 400 }}m
+        memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_min" | default 400 }}Mi
+      limits:
+        cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
+        memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi
+
+  replica:
+    replicaCount: 0
+
+  architecture: standalone
+
+  auth:
+    enabled: true
+    password: {{ index (mustFromJson (.Spec.Inputs | toJson)) "redis-password" }}
+
+  persistence:
+    enabled: true
+    size: {{ index (mustFromJson (.Spec.Inputs | toJson )) "size" | default "1Gi" }}
+
+  volumePermissions:
+    enabled: true
+
+  metrics:
+    enabled: false

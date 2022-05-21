@@ -49,6 +49,7 @@ tasks:
 #      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
 #      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMySqlDB --helm-chart mysql --helm-chart-repo https://charts.bitnami.com/bitnami
 #      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmElasticSearch --helm-chart elasticsearch --helm-chart-repo https://charts.bitnami.com/bitnami
+      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmRedis --helm-chart redis --helm-chart-repo https://charts.bitnami.com/bitnami
   pre:
     run: once
     cmds:

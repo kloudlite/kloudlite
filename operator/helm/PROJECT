@@ -28,4 +28,11 @@ resources:
   group: msvc
   kind: HelmMongoDB
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: msvc
+  kind: HelmRedis
+  version: v1
 version: "3"
