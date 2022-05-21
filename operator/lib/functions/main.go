@@ -1,7 +1,9 @@
 package functions
 
 import (
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
 	"regexp"
@@ -79,6 +81,17 @@ func (j *jsonFeatures) FromRawMessage(msg json.RawMessage) (map[string]interface
 		return nil, err
 	}
 	return out, nil
+}
+
+func (j *jsonFeatures) Hash(v interface{}) (string, error) {
+	marshal, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+
+	h := md5.New()
+	h.Write(marshal)
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 var Json = &jsonFeatures{}

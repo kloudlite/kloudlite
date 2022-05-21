@@ -19,6 +19,7 @@ type ServiceSpec struct {
 
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
+	LastHash   string           `json:"lastHash,omitempty"`
 	Conditions types.Conditions `json:"conditions,omitempty"`
 }
 
@@ -53,6 +54,14 @@ func (s *Service) HasLabels() bool {
 func (s *Service) EnsureLabels() {
 	key, value := s.LabelRef()
 	s.SetLabels(map[string]string{key: value})
+}
+
+func (s *Service) FilterHashable() interface{} {
+	m := make(map[string]interface{}, 3)
+	m["name"] = s.Name
+	m["namespace"] = s.Namespace
+	m["spec"] = s.Spec
+	return m
 }
 
 // +kubebuilder:object:root=true

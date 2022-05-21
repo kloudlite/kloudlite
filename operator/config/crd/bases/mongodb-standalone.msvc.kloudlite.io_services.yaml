@@ -119,6 +119,8 @@ spec:
                     format: date-time
                     type: string
                 type: object
+              lastHash:
+                type: string
             type: object
         type: object
     served: true

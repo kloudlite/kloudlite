@@ -1,7 +1,7 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: mongo-standalone2
+  name: mongo-standalone
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-service

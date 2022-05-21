@@ -115,7 +115,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.notifyAndDie(ctx, err)
 	}
 	r.logger.Infof("parsed template: %s", b)
-	if err := fn.KubectlApply(b); err != nil {
+	if _, err := fn.KubectlApply(b); err != nil {
 		return r.notifyAndDie(ctx, err)
 	}
 

@@ -101,7 +101,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	if err := fn.KubectlApply(b); err != nil {
+	if _, err := fn.KubectlApply(b); err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not apply kubectl for mongodb cluster"))
 	}
 
