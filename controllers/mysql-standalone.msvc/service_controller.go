@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,32 +31,13 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
+	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceReconciler reconciles a Service object
 type ServiceReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	logger   *zap.SugaredLogger
-	mysqlSvc *mysqlStandalone.Service
-}
-
-func (r *ServiceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
-	r.mysqlSvc.Status.Conditions.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  metav1.ConditionFalse,
-		Reason:  constants.ConditionReady.ErrorReason,
-		Message: err.Error(),
-	})
-
-	return r.notify(ctx)
-}
-
-func (r *ServiceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
-	if err := r.Status().Update(ctx, r.mysqlSvc); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.mysqlSvc.NameRef()))
-	}
-	return reconcileResult.OK()
+	Scheme *runtime.Scheme
 }
 
 type Output struct {
@@ -62,43 +45,65 @@ type Output struct {
 	DbHosts      string `json:"HOSTS"`
 }
 
-// +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
+type ServiceReq struct {
+	client.Client
+	ctrl.Request
+	mysqlSvc *mysqlStandalone.Service
+	logger   *zap.SugaredLogger
+}
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.logger = crds.GetLogger(req.NamespacedName)
-	r.logger.Infof("reconciling common service %s", req.NamespacedName)
+func (req *ServiceReq) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
+	req.mysqlSvc.Status.Conditions.Build("", metav1.Condition{
+		Type:    constants.ConditionReady.Type,
+		Status:  metav1.ConditionFalse,
+		Reason:  constants.ConditionReady.ErrorReason,
+		Message: err.Error(),
+	})
 
-	r.mysqlSvc = &mysqlStandalone.Service{}
-	if err := r.Get(ctx, req.NamespacedName, r.mysqlSvc); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return reconcileResult.OK()
-		}
-		return reconcileResult.Failed()
+	return req.notify(ctx)
+}
+
+func (req *ServiceReq) notify(ctx context.Context) (ctrl.Result, error) {
+	if err := req.Status().Update(ctx, req.mysqlSvc); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", req.mysqlSvc.NameRef()))
 	}
-	r.logger.Infof("name: %v", r.mysqlSvc.Name)
-	r.mysqlSvc.Status.Conditions.Reset()
-	if !r.mysqlSvc.HasLabels() {
-		r.mysqlSvc.EnsureLabels()
-		if err := r.Update(ctx, r.mysqlSvc); err != nil {
-			return reconcileResult.FailedE(err)
-		}
-		return reconcileResult.OK()
+	return reconcileResult.OK()
+}
+
+func (req *ServiceReq) reconcileStatus(ctx context.Context) (*ctrl.Result, error) {
+	prevStatus := req.mysqlSvc.Status
+
+	if err := req.mysqlSvc.Status.Conditions.FromHelmMsvc(ctx, req.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}); err != nil {
+		return &ctrl.Result{}, errors.NewEf(err, "while building conditions from Helm Resource")
 	}
 
-	if r.mysqlSvc.GetDeletionTimestamp() != nil {
-		return r.finalize(ctx, r.mysqlSvc)
+	if err := req.mysqlSvc.Status.Conditions.FromStatefulset(ctx, req.Client, types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}); err != nil {
+		return &ctrl.Result{}, errors.NewEf(err, "while building conditions from statefulset resource")
 	}
 
+	if !cmp.Equal(prevStatus, req.mysqlSvc.Status, cmpopts.IgnoreUnexported(t.Conditions{})) {
+		return &ctrl.Result{}, nil
+	}
+
+	return nil, nil
+}
+
+func (req *ServiceReq) updateStatus(ctx context.Context, ctrlResult ctrl.Result) (ctrl.Result, error) {
+	if err := req.Status().Update(ctx, req.mysqlSvc); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", req.mysqlSvc.NameRef()))
+	}
+	return ctrlResult, nil
+}
+
+func (req *ServiceReq) reconcileOps(ctx context.Context) (*ctrl.Result, error) {
 	var helmSecret corev1.Secret
-	if err := r.Get(ctx, (types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}), &helmSecret); err != nil {
-		r.logger.Error(err)
-		r.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}.String())
+	if err := req.Get(ctx, (types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}), &helmSecret); err != nil {
+		req.logger.Error(err)
+		req.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", types.NamespacedName{Namespace: req.mysqlSvc.Namespace, Name: req.mysqlSvc.Name}.String())
 	}
 	var m map[string]interface{}
-	if err := json.Unmarshal(r.mysqlSvc.Spec.Inputs, &m); err != nil {
-		return reconcileResult.FailedE(err)
+	if err := json.Unmarshal(req.mysqlSvc.Spec.Inputs, &m); err != nil {
+		return &ctrl.Result{}, errors.NewEf(err, "while unmarshalling inputs")
 	}
 	x, ok := helmSecret.Data["mysql-root-password"]
 	m["root_password"] = fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40))
@@ -106,49 +111,88 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	m["password"] = fn.IfThenElse(ok, string(y), fn.CleanerNanoid(40))
 	marshal, err := json.Marshal(m)
 	if err != nil {
-		return r.notifyAndDie(ctx, err)
+		return &ctrl.Result{}, err
 	}
-	r.mysqlSvc.Spec.Inputs = marshal
+	req.mysqlSvc.Spec.Inputs = marshal
 
 	b, err := templates.Parse(templates.MySqlStandalone, r.mysqlSvc)
 	if err != nil {
-		return r.notifyAndDie(ctx, err)
+		return &ctrl.Result{}, err
 	}
-	r.logger.Infof("parsed template: %s", b)
+	req.logger.Infof("parsed template: %s", b)
 	if _, err := fn.KubectlApply(b); err != nil {
-		return r.notifyAndDie(ctx, err)
+		return &ctrl.Result{}, err
 	}
 
-	if err := r.walk(ctx); err != nil {
-		return r.notifyAndDie(ctx, err)
-	}
-	if err := r.buildOutput(ctx); err != nil {
-		return r.notifyAndDie(ctx, err)
-	}
-	return r.notify(ctx)
+	return &ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) walk(ctx context.Context) error {
-	if err := r.mysqlSvc.Status.Conditions.FromHelmMsvc(ctx, r.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
-		return err
+// +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
+
+func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
+	req := &ServiceReq{
+		Client:   r.Client,
+		Request:  orgReq,
+		logger:   crds.GetLogger(orgReq.NamespacedName),
+		mysqlSvc: new(mysqlStandalone.Service),
 	}
 
-	if err := r.mysqlSvc.Status.Conditions.FromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
-		r.logger.Error(err)
-		return err
+	if err := r.Get(ctx, req.NamespacedName, req.mysqlSvc); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return reconcileResult.OK()
+		}
+		return reconcileResult.Failed()
 	}
 
-	return nil
+	if !req.mysqlSvc.HasLabels() {
+		req.mysqlSvc.EnsureLabels()
+		if err := req.Update(ctx, req.mysqlSvc); err != nil {
+			return reconcileResult.FailedE(err)
+		}
+		return reconcileResult.OK()
+	}
+
+	if req.mysqlSvc.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, req.mysqlSvc)
+	}
+
+	if ctrlResult, err := req.reconcileStatus(ctx); ctrlResult != nil {
+		if err != nil {
+			req.mysqlSvc.Status.Conditions.MarkNotReady(err)
+		}
+		if err := req.Status().Update(ctx, req.mysqlSvc); err != nil {
+			return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", req.mysqlSvc.NameRef()))
+		}
+		return *ctrlResult, nil
+	}
+
+	if ctrlResult, err := req.reconcileOps(ctx); ctrlResult != nil {
+		if err != nil {
+			req.mysqlSvc.Status.Conditions.MarkNotReady(err)
+		}
+		if err := req.Status().Update(ctx, req.mysqlSvc); err != nil {
+			return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", req.mysqlSvc.NameRef()))
+		}
+		return *ctrlResult, nil
+	}
+
+	if err := r.buildOutput(ctx, req); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return reconcileResult.OK()
 }
 
-func (r *ServiceReconciler) buildOutput(ctx context.Context) error {
-	m, err := fn.Json.FromRawMessage(r.mysqlSvc.Spec.Inputs)
+func (r *ServiceReconciler) buildOutput(ctx context.Context, req *ServiceReq) error {
+	m, err := fn.Json.FromRawMessage(req.mysqlSvc.Spec.Inputs)
 	if err != nil {
 		return err
 	}
 	out := Output{
 		RootPassword: m["root_password"].(string),
-		DbHosts:      fmt.Sprintf("%s.%s.svc.cluster.local", r.mysqlSvc.Name, r.mysqlSvc.Namespace),
+		DbHosts:      fmt.Sprintf("%s.%s.svc.cluster.local", req.mysqlSvc.Name, req.mysqlSvc.Namespace),
 	}
 
 	var outMap map[string]string
@@ -158,14 +202,14 @@ func (r *ServiceReconciler) buildOutput(ctx context.Context) error {
 
 	scrt := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("msvc-%s", r.mysqlSvc.Name),
-			Namespace: r.mysqlSvc.Namespace,
+			Name:      fmt.Sprintf("msvc-%s", req.mysqlSvc.Name),
+			Namespace: req.mysqlSvc.Namespace,
 		},
 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, req.Client, scrt, func() error {
 		scrt.StringData = outMap
-		return controllerutil.SetControllerReference(r.mysqlSvc, scrt, r.Scheme)
+		return controllerutil.SetControllerReference(req.mysqlSvc, scrt, r.Scheme)
 	})
 	if err != nil {
 		return err

@@ -45,6 +45,23 @@ func (c *Conditions) Reset() {
 	c.Conditions = []metav1.Condition{}
 }
 
+func (c *Conditions) MarkNotReady(err error) {
+	c.SetReady(metav1.ConditionFalse, constants.ConditionReady.ErrorReason, err.Error())
+}
+
+func (c *Conditions) MarkReady(msg string) {
+	c.SetReady(metav1.ConditionFalse, constants.ConditionReady.SuccessReason, msg)
+}
+
+func (c *Conditions) SetReady(t metav1.ConditionStatus, reason string, msg string) {
+	c.Build("", metav1.Condition{
+		Type:    constants.ConditionReady.Type,
+		Status:  t,
+		Reason:  reason,
+		Message: msg,
+	})
+}
+
 func (c *Conditions) Build(group string, conditions ...metav1.Condition) {
 	for _, cond := range conditions {
 		if cond.Reason == "" {
