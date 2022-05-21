@@ -16,8 +16,8 @@ spec:
   architecture: standalone
   auth:
     enabled: true
-    password: {{ index (mustFromJson (.Spec.Inputs | toJson)) "password" }}
-    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "root_password" }}
+    password: {{ index (mustFromJson (.Spec.Inputs | toJson)) "mysql-password" }}
+    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "mysql-root-password" }}
   primary:
     persistence:
       enabled: true

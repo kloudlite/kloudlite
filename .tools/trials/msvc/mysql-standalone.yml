@@ -1,7 +1,7 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: n-mysql
+  name: n-mysql-2
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-service
