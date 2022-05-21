@@ -12,6 +12,10 @@ func OK() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
+func OKP() (*reconcile.Result, error) {
+	return &reconcile.Result{}, nil
+}
+
 func Failed() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
