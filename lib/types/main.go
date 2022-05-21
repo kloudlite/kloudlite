@@ -45,6 +45,10 @@ func (c *Conditions) Reset() {
 	c.Conditions = []metav1.Condition{}
 }
 
+func (c *Conditions) Remove(t string) {
+	meta.RemoveStatusCondition(&c.Conditions, t)
+}
+
 func (c *Conditions) Build(group string, conditions ...metav1.Condition) {
 	for _, cond := range conditions {
 		if cond.Reason == "" {
