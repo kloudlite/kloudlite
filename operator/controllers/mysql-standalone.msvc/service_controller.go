@@ -115,11 +115,10 @@ func (req *ServiceReq) reconcileOps(ctx context.Context) (*ctrl.Result, error) {
 	}
 	req.mysqlSvc.Spec.Inputs = marshal
 
-	b, err := templates.Parse(templates.MySqlStandalone, r.mysqlSvc)
+	b, err := templates.Parse(templates.MySqlStandalone, req.mysqlSvc)
 	if err != nil {
 		return &ctrl.Result{}, err
 	}
-	req.logger.Infof("parsed template: %s", b)
 	if _, err := fn.KubectlApply(b); err != nil {
 		return &ctrl.Result{}, err
 	}
@@ -127,7 +126,6 @@ func (req *ServiceReq) reconcileOps(ctx context.Context) (*ctrl.Result, error) {
 	return &ctrl.Result{}, nil
 }
 
-<<<<<<< HEAD
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
@@ -145,16 +143,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 			return reconcileResult.OK()
 		}
 		return reconcileResult.Failed()
-=======
-func (r *ServiceReconciler) walk(ctx context.Context) error {
-	if err := r.mysqlSvc.Status.Conditions.BuildFromHelmMsvc(ctx, r.Client, constants.HelmMySqlDBKind, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
-		return err
-	}
-
-	if err := r.mysqlSvc.Status.Conditions.BuildFromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mysqlSvc.Namespace, Name: r.mysqlSvc.Name}); err != nil {
-		r.logger.Error(err)
-		return err
->>>>>>> d0c2aef00fc08bca0da8093d13bb49627acf0c99
 	}
 
 	if !req.mysqlSvc.HasLabels() {
