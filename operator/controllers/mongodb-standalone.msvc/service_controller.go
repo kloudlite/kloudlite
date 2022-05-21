@@ -80,6 +80,8 @@ func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconRe
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
 	prevStatus := req.mongoSvc.Status
 
+	req.mongoSvc.Status.Conditions.Reset()
+
 	err := req.mongoSvc.Status.Conditions.BuildFromHelmMsvc(
 		ctx,
 		r.Client,
@@ -90,19 +92,10 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		},
 	)
 	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			req.mongoSvc.Status.Conditions.Build("", metav1.Condition{
-				Type:               "HelmNotCreated",
-				Status:             "True",
-				ObservedGeneration: 0,
-				LastTransitionTime: metav1.Time{},
-				Reason:             "Helm Not not found",
-				Message:            err.Error(),
-			})
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
 		}
-		return nil, err
 	}
-	req.mongoSvc.Status.Conditions.Remove("HelmNotCreated")
 
 	err = req.mongoSvc.Status.Conditions.BuildFromDeployment(
 		ctx,
@@ -113,21 +106,12 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		},
 	)
 	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			req.mongoSvc.Status.Conditions.Build("", metav1.Condition{
-				Type:               "DeploymentNotCreated",
-				Status:             "True",
-				ObservedGeneration: 0,
-				LastTransitionTime: metav1.Time{},
-				Reason:             "Helm Not not found",
-				Message:            err.Error(),
-			})
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
 		}
-		return nil, err
 	}
-	req.mongoSvc.Status.Conditions.Remove("DeploymentNotCreated")
 
-	if cmp.Equal(prevStatus, req.mongoSvc.Status.Conditions, cmpopts.IgnoreUnexported(t.Conditions{})) {
+	if cmp.Equal(prevStatus, req.mongoSvc.Status, cmpopts.IgnoreUnexported(t.Conditions{})) {
 		return nil, nil
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -83,9 +84,21 @@ func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Cli
 			"kind":       kind,
 		},
 	}
+
 	if err := apiClient.Get(ctx, nn, &hm); err != nil {
+		if apiErrors.IsNotFound(err) {
+			c.Build("Helm", metav1.Condition{
+				Type:               "NotCreated",
+				Status:             "True",
+				ObservedGeneration: 0,
+				LastTransitionTime: metav1.Time{},
+				Reason:             "Helm Not not found",
+				Message:            err.Error(),
+			})
+		}
 		return err
 	}
+	req.mongoSvc.Status.Conditions.Remove("HelmNotCreated")
 	b, err := hm.MarshalJSON()
 	if err != nil {
 		return err
@@ -137,6 +150,16 @@ func (c *Conditions) BuildFromStatefulset(ctx context.Context, apiClient client.
 func (c *Conditions) BuildFromDeployment(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
 	depl := new(appsv1.Deployment)
 	if err := apiClient.Get(ctx, nn, depl); err != nil {
+		if apiErrors.IsNotFound(err) {
+			c.Build("Deployment", metav1.Condition{
+				Type:               "NotCreated",
+				Status:             "True",
+				ObservedGeneration: 0,
+				LastTransitionTime: metav1.Time{},
+				Reason:             "Deployment Not not found",
+				Message:            err.Error(),
+			})
+		}
 		return err
 	}
 	var deplConditions []metav1.Condition
