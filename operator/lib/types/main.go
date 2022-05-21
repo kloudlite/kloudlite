@@ -161,6 +161,14 @@ func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Cli
 func (c *Conditions) BuildFromStatefulset(ctx context.Context, apiClient client.Client, nn types.NamespacedName) error {
 	sts := new(appsv1.StatefulSet)
 	if err := apiClient.Get(ctx, nn, sts); err != nil {
+		if apiErrors.IsNotFound(err) {
+			c.Build("StatefulSet", metav1.Condition{
+				Type:    "NotCreated",
+				Status:  "True",
+				Reason:  "StsResourceNotFound",
+				Message: err.Error(),
+			})
+		}
 		return err
 	}
 
