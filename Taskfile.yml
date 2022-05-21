@@ -8,11 +8,6 @@ includes:
     dir: ./helm/
 
 tasks:
-  dev:
-    cmds:
-      - task: kill-port
-      - go run -tags dynamic main.go |& pp -rel-path
-
   new-kind:
     silent: true
     cmds:
@@ -32,6 +27,7 @@ tasks:
     sources:
       - ./**/*.go
     method: timestamp
+
   build:
     cmds:
       - operator-sdk build harbor.dev.madhouselabs.io/kloudlite/operator:latest

@@ -8,9 +8,13 @@ const (
 )
 
 var (
-	ConditionReady = struct{ Type, InitReason, ErrorReason, SuccessReason string }{
-		Type:          "Ready",
-		ErrorReason:   "SomeChecksFailed",
-		SuccessReason: "AllChecksCompleted",
+	ConditionReady = struct {
+		Type, InitReason, InProgressReason, ErrorReason, SuccessReason string
+	}{
+		Type:             "Ready",
+		InitReason:       "Initialized",
+		InProgressReason: "ReconcilationInProgress",
+		ErrorReason:      "SomeChecksFailed",
+		SuccessReason:    "AllChecksCompleted",
 	}
 )

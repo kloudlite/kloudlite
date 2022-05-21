@@ -18,15 +18,18 @@ package crds
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	"operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/templates"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/redhat-cop/operator-utils/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 )
 
 const controllerName = "Account_controller"
@@ -37,9 +40,9 @@ type AccountReconciler struct {
 	Log logr.Logger
 }
 
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts/finalizers,verbs=update
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts/finalizers,verbs=update
 
 func (r *AccountReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("project", req.NamespacedName)
@@ -87,7 +90,7 @@ func (r *AccountReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err != nil {
 		return r.ManageError(ctx, instance, err)
 	}
-	if err := functions.KubectlApply(parse); err != nil {
+	if _, err := functions.KubectlApply(parse); err != nil {
 		return r.ManageError(ctx, instance, err)
 	}
 

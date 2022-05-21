@@ -117,7 +117,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return r.notifyAndDie(ctx, err)
 	}
 
-	if err := fn.KubectlApply(b); err != nil {
+	if _, err := fn.KubectlApply(b); err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not apply service %s:%s", msvc.APIVersion, msvc.Kind))
 	}
 

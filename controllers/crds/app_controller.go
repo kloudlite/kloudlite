@@ -207,7 +207,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return r.notifyAndDie(ctx, err)
 	}
 
-	if err2 := fn.KubectlApply(depl, svc); err2 != nil {
+	if _, err2 := fn.KubectlApply(depl, svc); err2 != nil {
 		return r.notifyAndDie(ctx, errors.NewEf(err2, "could not apply app"))
 	}
 

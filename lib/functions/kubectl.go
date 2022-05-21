@@ -2,22 +2,21 @@ package functions
 
 import (
 	"bytes"
-	"os"
 	"os/exec"
 
 	"operators.kloudlite.io/lib/errors"
 )
 
-func KubectlApply(stdin ...[]byte) error {
+func KubectlApply(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 	c := exec.Command("kubectl", "apply", "-f", "-")
-	errB := bytes.NewBuffer([]byte{})
+	wStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
 	c.Stdin = bytes.NewBuffer(bytes.Join(stdin, []byte("\n---\n")))
-	c.Stdout = os.Stdout
-	c.Stderr = errB
+	c.Stdout = wStream
+	c.Stderr = errStream
 	if err := c.Run(); err != nil {
-		return errors.NewEf(err, errB.String())
+		return stdout, errors.NewEf(err, errStream.String())
 	}
-	return nil
+	return stdout, nil
 }
 
 func KubectlGet(namespace string, resourceRef string) ([]byte, error) {
