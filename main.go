@@ -378,7 +378,7 @@ func (m *msgSender) SendMessage(key string, msg lib.MessageReply) error {
 		fmt.Println(e)
 		return e
 	}
-	return m.kp.Produce(
+	err := m.kp.Produce(
 		&kafka.Message{
 			TopicPartition: kafka.TopicPartition{
 				Topic: m.ktopic,
@@ -387,6 +387,10 @@ func (m *msgSender) SendMessage(key string, msg lib.MessageReply) error {
 			Value: msgBody,
 		}, nil,
 	)
+	if err != nil {
+		return errors.NewEf(err, "could not send message into kafka")
+	}
+	return nil
 }
 
 func NewMsgSender(kp *kafka.Producer, ktopic string) lib.MessageSender {

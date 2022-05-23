@@ -7,7 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	fn "operators.kloudlite.io/lib/functions"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceSpec defines the desired state of Service
@@ -20,8 +19,8 @@ type ServiceSpec struct {
 
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
-	LastHash   string       `json:"lastHash,omitempty"`
-	Conditions t.Conditions `json:"conditions,omitempty"`
+	LastHash   string             `json:"lastHash,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

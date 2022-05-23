@@ -32,6 +32,7 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
+	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceReconciler reconciles a Service object
@@ -46,53 +47,41 @@ type ServiceReconciler struct {
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 type ServiceReconReq struct {
-	req       ctrl.Request
-	logger    *zap.SugaredLogger
-	stateData map[string]string
-	redisSvc  *redisStandalone.Service
+	req    ctrl.Request
+	logger *zap.SugaredLogger
+	t.ReconReq
+	condBuilder fn.StatusConditions
+	redisSvc    *redisStandalone.Service
 }
 
 const (
 	RedisPasswordKey string = "redis-password"
 )
 
-func (req *ServiceReconReq) GetStateData(key string) string {
-	if req.stateData == nil {
-		req.stateData = map[string]string{}
-	}
-	return req.stateData[key]
-}
-
-func (req *ServiceReconReq) SetStateData(key string, val string) {
-	if req.stateData == nil {
-		req.stateData = map[string]string{}
-	}
-	req.stateData[key] = val
-}
-
 type Output struct {
 	RootPassword string `json:"ROOT_PASSWORD"`
 	DbHosts      string `json:"HOSTS"`
 }
 
+func (r *ServiceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
+	req.redisSvc.Status.Conditions = req.condBuilder.GetAll()
+	return r.Status().Update(ctx, req.redisSvc)
+}
+
 func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (ctrl.Result, error) {
-	req.redisSvc.Status.Conditions.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  metav1.ConditionFalse,
-		Reason:  constants.ConditionReady.ErrorReason,
-		Message: err.Error(),
-	})
-	err = r.Status().Update(ctx, req.redisSvc)
+	req.condBuilder.MarkNotReady(err)
+	if err2 := r.statusUpdate(ctx, req); err2 != nil {
+		return ctrl.Result{}, err2
+	}
 	return reconcileResult.FailedE(err)
 }
 
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	req.redisSvc.Status.Conditions.Init(r.lt)
-
 	prevStatus := req.redisSvc.Status
-	req.redisSvc.Status.Conditions.Reset()
 
-	err := req.redisSvc.Status.Conditions.BuildFromHelmMsvc(
+	req.condBuilder.Reset()
+
+	err := req.condBuilder.BuildFromHelmMsvc(
 		ctx,
 		r.Client,
 		constants.HelmMongoDBKind,
@@ -107,7 +96,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		}
 	}
 
-	err = req.redisSvc.Status.Conditions.BuildFromDeployment(
+	err = req.condBuilder.BuildFromDeployment(
 		ctx,
 		r.Client,
 		types.NamespacedName{
@@ -120,25 +109,28 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 			return nil, err
 		}
 	}
+
 	var helmSecret corev1.Secret
 	nn := types.NamespacedName{
 		Namespace: req.redisSvc.GetNamespace(),
 		Name:      req.redisSvc.GetName(),
 	}
 	if err := r.Get(ctx, nn, &helmSecret); err != nil {
-		req.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
+		req.logger.Info(
+			"helm release %s is not available yet, assuming resource not yet installed, so installing",
+			nn.String(),
+		)
 	}
 	x, ok := helmSecret.Data[RedisPasswordKey]
 	req.SetStateData(RedisPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string))
 
-	if req.redisSvc.Status.Conditions.Equal(prevStatus.Conditions) {
+	if req.condBuilder.Equal(prevStatus.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
-	err = r.Status().Update(ctx, req.redisSvc)
-	if err != nil {
+	if err := r.statusUpdate(ctx, req); err != nil {
 		return nil, err
 	}
 
@@ -250,14 +242,16 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 		},
 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
-		var outMap map[string]string
-		if err := fn.Json.FromTo(out, &outMap); err != nil {
-			return err
-		}
-		scrt.StringData = outMap
-		return controllerutil.SetControllerReference(req.redisSvc, scrt, r.Scheme)
-	})
+	_, err = controllerutil.CreateOrUpdate(
+		ctx, r.Client, scrt, func() error {
+			var outMap map[string]string
+			if err := fn.Json.FromTo(out, &outMap); err != nil {
+				return err
+			}
+			scrt.StringData = outMap
+			return controllerutil.SetControllerReference(req.redisSvc, scrt, r.Scheme)
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -266,14 +260,18 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 
 func (r *ServiceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
 	req.logger.Infof("finalizing: %+v", req.redisSvc.NameRef())
-	if err := r.Delete(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": constants.MsvcApiVersion,
-		"kind":       constants.HelmRedisKind,
-		"metadata": map[string]interface{}{
-			"name":      req.redisSvc.Name,
-			"namespace": req.redisSvc.Namespace,
+	if err := r.Delete(
+		ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": constants.MsvcApiVersion,
+				"kind":       constants.HelmRedisKind,
+				"metadata": map[string]interface{}{
+					"name":      req.redisSvc.Name,
+					"namespace": req.redisSvc.Namespace,
+				},
+			},
 		},
-	}}); err != nil {
+	); err != nil {
 		req.logger.Infof("could not delete helm resource: %+v", err)
 		if !apiErrors.IsNotFound(err) {
 			return reconcileResult.FailedE(err)
@@ -306,36 +304,44 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.lt = metav1.Time{Time: time.Now()}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redisStandalone.Service{}).
-		Watches(&source.Kind{Type: &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": constants.MsvcApiVersion,
-				"kind":       constants.HelmRedisKind,
-			},
-		}}, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
-			var svcList redisStandalone.ServiceList
-			key, value := redisStandalone.Service{}.LabelRef()
-			if err := r.List(context.TODO(), &svcList, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{key: value}),
-			}); err != nil {
-				return nil
-			}
-			var reqs []reconcile.Request
-			for _, item := range svcList.Items {
-				nn := types.NamespacedName{
-					Name:      item.Name,
-					Namespace: item.Namespace,
-				}
-
-				for _, req := range reqs {
-					if req.NamespacedName.String() == nn.String() {
+		Watches(
+			&source.Kind{
+				Type: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": constants.MsvcApiVersion,
+						"kind":       constants.HelmRedisKind,
+					},
+				},
+			}, handler.EnqueueRequestsFromMapFunc(
+				func(c client.Object) []reconcile.Request {
+					var svcList redisStandalone.ServiceList
+					key, value := redisStandalone.Service{}.LabelRef()
+					if err := r.List(
+						context.TODO(), &svcList, &client.ListOptions{
+							LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{key: value}),
+						},
+					); err != nil {
 						return nil
 					}
-				}
+					var reqs []reconcile.Request
+					for _, item := range svcList.Items {
+						nn := types.NamespacedName{
+							Name:      item.Name,
+							Namespace: item.Namespace,
+						}
 
-				reqs = append(reqs, reconcile.Request{NamespacedName: nn})
-			}
-			return reqs
-		})).
+						for _, req := range reqs {
+							if req.NamespacedName.String() == nn.String() {
+								return nil
+							}
+						}
+
+						reqs = append(reqs, reconcile.Request{NamespacedName: nn})
+					}
+					return reqs
+				},
+			),
+		).
 		Watches(&source.Kind{Type: &appsv1.Deployment{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Watches(&source.Kind{Type: &corev1.Pod{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Complete(r)

@@ -10,7 +10,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -31,12 +30,20 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
+	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceReconciler reconciles a Service object
 type ServiceReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
+	logger   *zap.SugaredLogger
+	mongoSvc *mongoCluster.Service
+}
+
+type ServiceReconReq struct {
+	t.ReconReq
+	ctrl.Request
 	logger   *zap.SugaredLogger
 	mongoSvc *mongoCluster.Service
 }
@@ -78,7 +85,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	var helmSecret corev1.Secret
 	nn := types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}
 	if err := r.Get(ctx, nn, &helmSecret); err != nil {
-		r.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
+		r.logger.Info(
+			"helm release %s is not available yet, assuming resource not yet installed, so installing",
+			nn.String(),
+		)
 	}
 	var m map[string]interface{}
 	if err := json.Unmarshal(r.mongoSvc.Spec.Inputs, &m); err != nil {
@@ -116,14 +126,18 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 func (r *ServiceReconciler) finalize(ctx context.Context, m *mongoCluster.Service) (ctrl.Result, error) {
 	r.logger.Infof("finalizing: %+v", m.NameRef())
-	if err := r.Delete(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": constants.MsvcApiVersion,
-		"kind":       constants.HelmMongoDBKind,
-		"metadata": map[string]interface{}{
-			"name":      m.Name,
-			"namespace": m.Namespace,
+	if err := r.Delete(
+		ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": constants.MsvcApiVersion,
+				"kind":       constants.HelmMongoDBKind,
+				"metadata": map[string]interface{}{
+					"name":      m.Name,
+					"namespace": m.Namespace,
+				},
+			},
 		},
-	}}); err != nil {
+	); err != nil {
 		r.logger.Infof("could not delete helm resource: %+v", err)
 		if !apiErrors.IsNotFound(err) {
 			return reconcileResult.FailedE(err)
@@ -136,14 +150,16 @@ func (r *ServiceReconciler) finalize(ctx context.Context, m *mongoCluster.Servic
 	return reconcileResult.OK()
 }
 
-func (r *ServiceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
-	r.mongoSvc.Status.Conditions.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  metav1.ConditionFalse,
-		Reason:  constants.ConditionReady.ErrorReason,
-		Message: err.Error(),
-	})
-
+func (r *ServiceReconciler) notifyAndDie(ctx context.Context, _ error) (ctrl.Result, error) {
+	// r.mongoSvc.Status.Conditions.Build(
+	// 	"", metav1.Condition{
+	// 		Type:    constants.ConditionReady.Type,
+	// 		Status:  metav1.ConditionFalse,
+	// 		Reason:  constants.ConditionReady.ErrorReason,
+	// 		Message: err.Error(),
+	// 	},
+	// )
+	//
 	return r.notify(ctx)
 }
 
@@ -155,16 +171,26 @@ func (r *ServiceReconciler) notify(ctx context.Context) (ctrl.Result, error) {
 }
 
 func (r *ServiceReconciler) walk(ctx context.Context) error {
-	if err := r.mongoSvc.Status.Conditions.BuildFromHelmMsvc(ctx, r.Client, constants.HelmMongoDBKind, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
-		return err
-	}
-
-	if err := r.mongoSvc.Status.Conditions.BuildFromStatefulset(ctx, r.Client, types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name}); err != nil {
-		return err
-	}
-
-	readyCond2 := meta.FindStatusCondition(r.mongoSvc.Status.Conditions.GetConditions(), constants.ConditionReady.Type)
-	r.logger.Infof("POST: readyCond: %+v\n", readyCond2)
+	// if err := r.mongoSvc.Status.Conditions.BuildFromHelmMsvc(
+	// 	ctx,
+	// 	r.Client,
+	// 	constants.HelmMongoDBKind,
+	// 	types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name},
+	// ); err != nil {
+	// 	return err
+	// }
+	//
+	// if err := r.mongoSvc.Status.Conditions.BuildFromStatefulset(
+	// 	ctx,
+	// 	r.Client,
+	// 	types.NamespacedName{Namespace: r.mongoSvc.Namespace, Name: r.mongoSvc.Name},
+	// ); err != nil {
+	// 	return err
+	// }
+	//
+	// readyCond2 := meta.FindStatusCondition(r.mongoSvc.Status.Conditions.GetConditions(), constants.ConditionReady.Type)
+	// r.logger.Infof("POST: readyCond: %+v\n", readyCond2)
+	// return nil
 	return nil
 }
 
@@ -199,10 +225,12 @@ func (r *ServiceReconciler) buildOutput(ctx context.Context) error {
 		},
 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
-		scrt.StringData = outMap
-		return controllerutil.SetControllerReference(r.mongoSvc, scrt, r.Scheme)
-	})
+	_, err = controllerutil.CreateOrUpdate(
+		ctx, r.Client, scrt, func() error {
+			scrt.StringData = outMap
+			return controllerutil.SetControllerReference(r.mongoSvc, scrt, r.Scheme)
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -228,36 +256,44 @@ func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongoCluster.Service{}).
-		Watches(&source.Kind{Type: &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": constants.MsvcApiVersion,
-				"kind":       constants.HelmMongoDBKind,
-			},
-		}}, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
-			var svcList mongoCluster.ServiceList
-			key, value := mongoCluster.Service{}.LabelRef()
-			if err := r.List(context.TODO(), &svcList, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{key: value}),
-			}); err != nil {
-				return nil
-			}
-			var reqs []reconcile.Request
-			for _, item := range svcList.Items {
-				nn := types.NamespacedName{
-					Name:      item.Name,
-					Namespace: item.Namespace,
-				}
-
-				for _, req := range reqs {
-					if req.NamespacedName.String() == nn.String() {
+		Watches(
+			&source.Kind{
+				Type: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": constants.MsvcApiVersion,
+						"kind":       constants.HelmMongoDBKind,
+					},
+				},
+			}, handler.EnqueueRequestsFromMapFunc(
+				func(c client.Object) []reconcile.Request {
+					var svcList mongoCluster.ServiceList
+					key, value := mongoCluster.Service{}.LabelRef()
+					if err := r.List(
+						context.TODO(), &svcList, &client.ListOptions{
+							LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{key: value}),
+						},
+					); err != nil {
 						return nil
 					}
-				}
+					var reqs []reconcile.Request
+					for _, item := range svcList.Items {
+						nn := types.NamespacedName{
+							Name:      item.Name,
+							Namespace: item.Namespace,
+						}
 
-				reqs = append(reqs, reconcile.Request{NamespacedName: nn})
-			}
-			return reqs
-		})).
+						for _, req := range reqs {
+							if req.NamespacedName.String() == nn.String() {
+								return nil
+							}
+						}
+
+						reqs = append(reqs, reconcile.Request{NamespacedName: nn})
+					}
+					return reqs
+				},
+			),
+		).
 		Watches(&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Watches(&source.Kind{Type: &corev1.Pod{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Complete(r)

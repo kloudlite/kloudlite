@@ -6,9 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"operators.kloudlite.io/lib"
 	fn "operators.kloudlite.io/lib/functions"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ManagedResourceSpec defines the desired state of ManagedResource
@@ -24,8 +22,8 @@ type ManagedResourceSpec struct {
 
 // ManagedResourceStatus defines the observed state of ManagedResource
 type ManagedResourceStatus struct {
-	LastHash   string       `json:"lastHash,omitempty"`
-	Conditions t.Conditions `json:"conditions,omitempty"`
+	LastHash   string             `json:"lastHash,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -43,10 +41,6 @@ type ManagedResource struct {
 func (m *ManagedResource) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }
-
-const (
-	OfMsvcLabelKey lib.LabelKey = "mres.kloudlite.io/of-msvc"
-)
 
 func (m ManagedResource) LabelRef() (key, value string) {
 	return "mres.kloudlite.io/for", GroupVersion.Group

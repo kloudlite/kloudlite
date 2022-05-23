@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	fn "operators.kloudlite.io/lib/functions"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ManagedServiceSpec defines the desired state of ManagedService
@@ -22,8 +21,8 @@ type ManagedServiceSpec struct {
 
 // ManagedServiceStatus defines the observed state of ManagedService
 type ManagedServiceStatus struct {
-	LastHash   string       `json:"lastHash,omitempty"`
-	Conditions t.Conditions `json:"conditions,omitempty"`
+	LastHash   string             `json:"lastHash,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
