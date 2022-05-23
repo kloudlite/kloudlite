@@ -7,7 +7,14 @@ import (
 )
 
 func GetLogger(nn types.NamespacedName) *zap.SugaredLogger {
-	logger, _ := zap.NewDevelopment()
+	cfg := zap.NewDevelopmentConfig()
+	cfg.EncoderConfig.LineEnding = "\n\n"
+	cfg.EncoderConfig.TimeKey = ""
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(err)
+	}
+	// logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 	sugar := logger.Sugar()
 	return sugar.With("REF", nn.String())

@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+
 	fn "operators.kloudlite.io/lib/functions"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +22,7 @@ type ServiceSpec struct {
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
 	LastHash   string           `json:"lastHash,omitempty"`
-	Conditions types.Conditions `json:"conditions,omitempty"`
+	Conditions types.Conditions `json:",inline,omitempty"`
 }
 
 // +kubebuilder:object:root=true

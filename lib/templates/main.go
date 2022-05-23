@@ -64,15 +64,17 @@ func (tf templateFile) String() string {
 }
 
 const (
-	MongoDBStandalone       templateFile = "mongodb-helm-standalone.tmpl.yml"
-	MySqlStandalone         templateFile = "mysql-helm-standalone.tmpl.yml"
-	MongoDBCluster          templateFile = "mongodb-helm-cluster.tmpl.yml"
-	MongoDBWatcher          templateFile = "mongo-msvc-watcher.tmpl.yml"
-	Deployment              templateFile = "deployment.tmpl.yml"
-	Service                 templateFile = "service.tmpl.yml"
-	Secret                  templateFile = "secret.tmpl.yml"
-	MongoDBResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
-	AccountWireguard        templateFile = "account-deploy.tmpl.yml"
-	CommonMsvcService       templateFile = "msvc-common-service.tmpl.yml"
-	RedisStandalone         templateFile = "redis-helm-standalone.tmpl.yml"
+	MongoDBStandalone                 templateFile = "mongodb-helm-standalone.tmpl.yml"
+	MySqlStandalone                   templateFile = "mysql-helm-standalone.tmpl.yml"
+	MongoDBCluster                    templateFile = "mongodb-helm-cluster.tmpl.yml"
+	MongoDBWatcher                    templateFile = "mongo-msvc-watcher.tmpl.yml"
+	Deployment                        templateFile = "deployment.tmpl.yml"
+	Service                           templateFile = "service.tmpl.yml"
+	Secret                            templateFile = "secret.tmpl.yml"
+	MongoDBClusterResourceDatabase    templateFile = "mongodb-resource-database.tmpl.yml"
+	MongoDBStandaloneResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
+	AccountWireguard                  templateFile = "account-deploy.tmpl.yml"
+	CommonMsvc                        templateFile = "msvc-common-service.tmpl.yml"
+	CommonMres                        templateFile = "mres-common.tmpl.yml"
+	RedisStandalone                   templateFile = "redis-helm-standalone.tmpl.yml"
 )

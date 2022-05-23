@@ -18,7 +18,7 @@ spec:
     tag: 5.0.8-debian-10-r20
   auth:
     enabled: true
-    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "root_password" }}
+    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "mongodb-root-password" }}
   persistence:
     enabled: true
     size: {{ index (mustFromJson (.Spec.Inputs | toJson )) "size" | default "1Gi" }}
