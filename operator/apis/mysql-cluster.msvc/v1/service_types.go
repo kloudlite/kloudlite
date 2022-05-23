@@ -6,7 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	t "operators.kloudlite.io/lib/types"
+	fn "operators.kloudlite.io/lib/functions"
 )
 
 // ServiceSpec defines the desired state of Service
@@ -19,7 +19,8 @@ type ServiceSpec struct {
 
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
-	Conditions t.Conditions `json:"conditions,omitempty"`
+	LastHash   string             `json:"lastHash,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -48,6 +49,15 @@ func (s *Service) HasLabels() bool {
 		return false
 	}
 	return true
+}
+
+func (s *Service) Hash() string {
+	m := make(map[string]interface{}, 3)
+	m["name"] = s.Name
+	m["namespace"] = s.Namespace
+	m["spec"] = s.Spec
+	hash, _ := fn.Json.Hash(m)
+	return hash
 }
 
 func (s *Service) EnsureLabels() {

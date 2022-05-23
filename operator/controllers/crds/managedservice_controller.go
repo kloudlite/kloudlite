@@ -41,8 +41,9 @@ type ManagedServiceReconciler struct {
 type MsvcReconReq struct {
 	t.ReconReq
 	ctrl.Request
-	logger *zap.SugaredLogger
-	msvc   *crdsv1.ManagedService
+	condBuilder fn.StatusConditions
+	logger      *zap.SugaredLogger
+	msvc        *crdsv1.ManagedService
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices,verbs=get;list;watch;create;update;patch;delete
@@ -54,13 +55,13 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Re
 	if err := r.Get(ctx, req.NamespacedName, req.msvc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	req.condBuilder = fn.Conditions.From(req.msvc.Status.Conditions)
 
 	if !req.msvc.HasLabels() {
 		req.msvc.EnsureLabels()
 		if err := r.Update(ctx, req.msvc); err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		return reconcileResult.OK()
 	}
 
 	if req.msvc.GetDeletionTimestamp() != nil {
@@ -79,20 +80,26 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Re
 	return r.reconcileOperations(ctx, req)
 }
 
+func (r *ManagedServiceReconciler) statusUpdate(ctx context.Context, req *MsvcReconReq) error {
+	req.msvc.Status.Conditions = req.condBuilder.GetAll()
+	if err := r.notify(req); err != nil {
+		return err
+	}
+	return r.Status().Update(ctx, req.msvc)
+}
+
 func (r *ManagedServiceReconciler) failWithErr(
 	ctx context.Context,
 	req *MsvcReconReq,
 	err error,
 ) (ctrl.Result, error) {
-	req.msvc.Status.Conditions.MarkNotReady(err)
-	return ctrl.Result{}, r.Status().Update(ctx, req.msvc)
+	req.condBuilder.MarkNotReady(err)
+	return ctrl.Result{}, r.statusUpdate(ctx, req)
 }
 
 func (r *ManagedServiceReconciler) reconcileStatus(ctx context.Context, req *MsvcReconReq) (*ctrl.Result, error) {
-	req.msvc.Status.Conditions.Init(r.lt)
-
 	prevStatus := req.msvc.Status
-	req.msvc.Status.Conditions.Reset()
+	req.condBuilder.Reset()
 
 	svcObj := unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -106,7 +113,7 @@ func (r *ManagedServiceReconciler) reconcileStatus(ctx context.Context, req *Msv
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
-		req.msvc.Status.Conditions.Build(
+		req.condBuilder.Build(
 			"", metav1.Condition{
 				Type:   "NotFound",
 				Status: metav1.ConditionTrue,
@@ -127,25 +134,24 @@ func (r *ManagedServiceReconciler) reconcileStatus(ctx context.Context, req *Msv
 
 	var j struct {
 		Status struct {
-			Conditions t.Conditions `json:"conditions,omitempty"`
+			Conditions []metav1.Condition `json:"conditions,omitempty"`
 		} `json:"status,omitempty"`
 	}
 
 	if err := json.Unmarshal(mj, &j); err != nil {
 		return nil, err
 	}
-
-	req.msvc.Status.Conditions = j.Status.Conditions
-	if req.msvc.Status.Conditions.Equal(prevStatus.Conditions) {
+	req.condBuilder.Build("", j.Status.Conditions...)
+	if req.condBuilder.Equal(prevStatus.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
-	if err := r.notify(req); err != nil {
+	if err := r.statusUpdate(ctx, req); err != nil {
 		return nil, err
 	}
-	return &ctrl.Result{}, r.Status().Update(ctx, req.msvc)
+	return reconcileResult.OKP()
 }
 
 func (r *ManagedServiceReconciler) reconcileOperations(ctx context.Context, req *MsvcReconReq) (ctrl.Result, error) {
@@ -174,22 +180,32 @@ func (r *ManagedServiceReconciler) reconcileOperations(ctx context.Context, req 
 }
 
 func (r *ManagedServiceReconciler) notify(req *MsvcReconReq) error {
-	err := r.SendMessage(
+	return r.SendMessage(
 		req.msvc.NameRef(), lib.MessageReply{
 			Key:        req.msvc.NameRef(),
-			Conditions: req.msvc.Status.Conditions.GetConditions(),
-			Status:     req.msvc.Status.Conditions.IsTrue(constants.ConditionReady.Type),
+			Conditions: req.condBuilder.GetAll(),
+			Status:     req.condBuilder.IsTrue(constants.ConditionReady.Type),
 		},
 	)
-	if err != nil {
-		return errors.NewEf(err, "could not send message into kafka")
-	}
-	return nil
 }
 
 func (r *ManagedServiceReconciler) finalize(ctx context.Context, req *MsvcReconReq) (ctrl.Result, error) {
+	panic("not implemented")
 	msvc := req.msvc
 	msvcFinalizer := finalizers.ManagedService.String()
+
+	req.msvc.Status.Conditions = []metav1.Condition{}
+	return ctrl.Result{}, r.Status().Update(ctx, req.msvc)
+	// if err := r.Status().Update(ctx, req); err != nil {
+	// 	return ctrl.Result{}, err
+	// }
+
+	// controllerutil.RemoveFinalizer(msvc, msvcFinalizer)
+	// controllerutil.RemoveFinalizer(msvc, finalizers.Foreground.String())
+	// if err := r.Update(ctx, msvc); err != nil {
+	// 	return ctrl.Result{}, err
+	// }
+
 	if controllerutil.ContainsFinalizer(msvc, msvcFinalizer) {
 		controllerutil.RemoveFinalizer(msvc, msvcFinalizer)
 		return ctrl.Result{}, r.Update(ctx, msvc)
@@ -269,6 +285,5 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		)
 	}
 
-	fmt.Println("HEREEEEEEEEEEEEEEEEEEEEE##################################")
 	return builder.Complete(r)
 }

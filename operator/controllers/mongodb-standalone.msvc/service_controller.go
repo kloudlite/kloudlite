@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -33,11 +32,18 @@ import (
 	t "operators.kloudlite.io/lib/types"
 )
 
+// ServiceReconciler reconciles a Service object
+type ServiceReconciler struct {
+	client.Client
+	Scheme *runtime.Scheme
+}
+
 type ServiceReconReq struct {
-	req    ctrl.Request
-	logger *zap.SugaredLogger
 	t.ReconReq
-	mongoSvc *mongoStandalone.Service
+	req         ctrl.Request
+	logger      *zap.SugaredLogger
+	mongoSvc    *mongoStandalone.Service
+	condBuilder fn.StatusConditions
 }
 
 type Output struct {
@@ -49,13 +55,6 @@ type Output struct {
 const (
 	MongoDbRootPasswordKey = "mongodb-root-password"
 )
-
-// ServiceReconciler reconciles a Service object
-type ServiceReconciler struct {
-	lt metav1.Time
-	client.Client
-	Scheme *runtime.Scheme
-}
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
@@ -74,6 +73,8 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 		}
 		return reconcileResult.Failed()
 	}
+
+	req.condBuilder = fn.Conditions.From(req.mongoSvc.Status.Conditions)
 
 	if !req.mongoSvc.HasLabels() {
 		req.mongoSvc.EnsureLabels()
@@ -100,8 +101,13 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 	return r.reconcileOperations(ctx, req)
 }
 
+func (r *ServiceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
+	req.mongoSvc.Status.Conditions = req.condBuilder.GetAll()
+	return r.Status().Update(ctx, req.mongoSvc)
+}
+
 func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (ctrl.Result, error) {
-	req.mongoSvc.Status.Conditions.Build(
+	req.condBuilder.Build(
 		"", metav1.Condition{
 			Type:    constants.ConditionReady.Type,
 			Status:  metav1.ConditionFalse,
@@ -109,17 +115,16 @@ func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconRe
 			Message: err.Error(),
 		},
 	)
-	err = r.Status().Update(ctx, req.mongoSvc)
+	if err := r.statusUpdate(ctx, req); err != nil {
+		return ctrl.Result{}, err
+	}
 	return reconcileResult.FailedE(err)
 }
 
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	req.mongoSvc.Status.Conditions.Init(r.lt)
-
 	prevStatus := req.mongoSvc.Status
-	req.mongoSvc.Status.Conditions.Reset()
-
-	err := req.mongoSvc.Status.Conditions.BuildFromHelmMsvc(
+	req.condBuilder.Reset()
+	err := req.condBuilder.BuildFromHelmMsvc(
 		ctx,
 		r.Client,
 		constants.HelmMongoDBKind,
@@ -134,7 +139,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		}
 	}
 
-	err = req.mongoSvc.Status.Conditions.BuildFromDeployment(
+	err = req.condBuilder.BuildFromDeployment(
 		ctx,
 		r.Client,
 		types.NamespacedName{
@@ -164,22 +169,19 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 	req.logger.Debugf("prevStatus.Conditions: %+v", prevStatus.Conditions)
 	req.logger.Debugf("req.mongoSvc.Status.Conditions: %+v", req.mongoSvc.Status.Conditions)
 
-	if req.mongoSvc.Status.Conditions.Equal(prevStatus.Conditions) {
+	if req.condBuilder.Equal(prevStatus.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
-	err = r.Status().Update(ctx, req.mongoSvc)
-	if err != nil {
+	if err := r.statusUpdate(ctx, req); err != nil {
 		return nil, err
 	}
-
 	return reconcileResult.OKP()
 }
 
 func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
-	panic("asdfsdf")
 	m, err := fn.Json.FromRawMessage(req.mongoSvc.Spec.Inputs)
 	if err != nil {
 		return reconcileResult.FailedE(err)
@@ -231,7 +233,7 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 	}
 	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", req.mongoSvc.Name, req.mongoSvc.Namespace)
 	out := Output{
-		RootPassword: j["root_password"].(string),
+		RootPassword: j[MongoDbRootPasswordKey].(string),
 		DbHosts:      hostUrl,
 		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", j["root_password"], hostUrl),
 	}
@@ -302,7 +304,6 @@ func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.lt = metav1.Time{Time: time.Now()}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongoStandalone.Service{}).
 		Watches(

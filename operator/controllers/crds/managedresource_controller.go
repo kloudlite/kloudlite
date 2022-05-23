@@ -7,6 +7,7 @@ import (
 
 	"go.uber.org/zap"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	labels2 "k8s.io/apimachinery/pkg/labels"
@@ -41,42 +42,34 @@ type ManagedResourceReconciler struct {
 	lt     metav1.Time
 }
 
-func (r *ManagedResourceReconciler) notify(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
-	r.logger.Infof("Notify conditions: %+v", req.mres.Status.Conditions)
-	err := r.SendMessage(
+func (r *ManagedResourceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
+	req.mres.Status.Conditions = req.condBuilder.GetAll()
+	if err := r.notify(req); err != nil {
+		return err
+	}
+	return r.Status().Update(ctx, req.mres)
+}
+
+func (r *ManagedResourceReconciler) notify(req *ServiceReconReq) error {
+	return r.SendMessage(
 		req.mres.NameRef(), lib.MessageReply{
 			Key:        req.mres.NameRef(),
-			Conditions: req.mres.Status.Conditions.GetConditions(),
+			Conditions: req.condBuilder.GetAll(),
 		},
 	)
-	if err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not send message into kafka"))
-	}
-
-	if err := r.Status().Update(ctx, req.mres); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", req.mres.NameRef()))
-	}
-	return reconcileResult.OK()
 }
 
 func (r *ManagedResourceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (
 	ctrl.Result,
 	error,
 ) {
-	req.mres.Status.Conditions.Build(
-		"", metav1.Condition{
-			Type:    constants.ConditionReady.Type,
-			Status:  metav1.ConditionFalse,
-			Reason:  constants.ConditionReady.ErrorReason,
-			Message: err.Error(),
-		},
-	)
-	err = r.Status().Update(ctx, req.mres)
-	return reconcileResult.FailedE(err)
+	req.condBuilder.MarkNotReady(err)
+	return ctrl.Result{}, r.statusUpdate(ctx, req)
 }
 
 func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	req.mres.Status.Conditions.Init(r.lt)
+	prevStatus := req.mres.Status
+	req.condBuilder.Reset()
 
 	msvc := new(v1.ManagedService)
 	if err := r.Get(
@@ -87,21 +80,16 @@ func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *Se
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
-		req.mres.Status.Conditions.MarkNotReady(
+		req.condBuilder.MarkNotReady(
 			errors.NewEf(
-				err,
-				"could not find managed service (%s)",
-				req.mres.Spec.ManagedSvcName,
+				err, "could not find managed service (%s)", req.mres.Spec.ManagedSvcName,
 			),
 		)
 	}
 
-	if msvc.Status.Conditions.IsTrue(constants.ConditionReady.Type) {
+	if meta.IsStatusConditionTrue(msvc.Status.Conditions, constants.ConditionReady.Type) {
 		return nil, errors.Newf("managed service (%s) is not ready", msvc.Name)
 	}
-
-	prevStatus := req.mres.Status
-	req.mres.Status.Conditions.Reset()
 
 	resObj := unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -114,7 +102,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *Se
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
-		req.mres.Status.Conditions.MarkNotReady(
+		req.condBuilder.MarkNotReady(
 			errors.NewEf(
 				err,
 				"could not find %s/%s/(%s)",
@@ -131,22 +119,22 @@ func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *Se
 	}
 	var j struct {
 		Status struct {
-			Conditions t.Conditions `json:"conditions,omitempty"`
+			Conditions []metav1.Condition `json:"conditions,omitempty"`
 		} `json:"status,omitempty"`
 	}
 	if err := json.Unmarshal(mj, &j); err != nil {
 		return nil, err
 	}
 
-	req.mres.Status.Conditions = j.Status.Conditions
+	req.condBuilder.Build("", j.Status.Conditions...)
 
-	if req.mres.Status.Conditions.Equal(prevStatus.Conditions) {
+	if req.condBuilder.Equal(prevStatus.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
-	if err := r.Status().Update(ctx, req.mres); err != nil {
+	if err := r.statusUpdate(ctx, req); err != nil {
 		return nil, err
 	}
 
@@ -182,24 +170,11 @@ func (r *ManagedResourceReconciler) reconcileOperations(ctx context.Context, req
 }
 
 type ServiceReconReq struct {
+	t.ReconReq
 	ctrl.Request
-	logger    *zap.SugaredLogger
-	stateData map[string]string
-	mres      *v1.ManagedResource
-}
-
-func (req *ServiceReconReq) GetStateData(key string) string {
-	if req.stateData == nil {
-		req.stateData = map[string]string{}
-	}
-	return req.stateData[key]
-}
-
-func (req *ServiceReconReq) SetStateData(key string, val string) {
-	if req.stateData == nil {
-		req.stateData = map[string]string{}
-	}
-	req.stateData[key] = val
+	logger      *zap.SugaredLogger
+	condBuilder fn.StatusConditions
+	mres        *v1.ManagedResource
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
@@ -220,6 +195,8 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, orgReq ctrl.R
 		return reconcileResult.Failed()
 	}
 
+	req.condBuilder = fn.Conditions.From(req.mres.Status.Conditions)
+
 	if !req.mres.HasLabels() {
 		req.mres.EnsureLabels()
 		if err := r.Update(ctx, req.mres); err != nil {
@@ -229,7 +206,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, orgReq ctrl.R
 	}
 
 	if req.mres.GetDeletionTimestamp() != nil {
-		return r.finalize(ctx, req.mres)
+		return r.finalize(ctx, req)
 	}
 
 	reconResult, err := r.reconcileStatus(ctx, req)
@@ -245,97 +222,14 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, orgReq ctrl.R
 	return r.reconcileOperations(ctx, req)
 }
 
-// func (r *ManagedResourceReconciler) ReconcileOld(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-// 	r.logger = GetLogger(req.NamespacedName)
-// 	logger := r.logger.With("RECONCILE", "true")
-// 	logger.Debug("Reconciling ManagedResource")
-//
-// 	mres := &v1.ManagedResource{}
-// 	if err := r.Get(ctx, req.NamespacedName, mres); err != nil {
-// 		if apiErrors.IsNotFound(err) {
-// 			return reconcileResult.OK()
-// 		}
-// 		return reconcileResult.Failed()
-// 	}
-// 	if !mres.HasLabels() {
-// 		mres.EnsureLabels()
-// 		if err := r.Update(ctx, mres); err != nil {
-// 			return ctrl.Result{}, err
-// 		}
-// 		return reconcileResult.OK()
-// 	}
-// 	r.mres = mres
-//
-// 	if mres.DeletionTimestamp != nil {
-// 		logger.Debug("ManagedResource is being deleted")
-// 		return r.finalize(ctx, mres)
-// 	}
-//
-// 	managedSvc := &v1.ManagedService{}
-// 	if err := r.Get(ctx, types.NamespacedName{Name: mres.Spec.ManagedSvc, Namespace: mres.Namespace}, managedSvc); err != nil {
-// 		return r.notifyAndDie(ctx, errors.NewEf(err, "failing to get managed-svc(name=%s, namespace=%s), would start again when it is available", mres.Spec.ManagedSvc, mres.Namespace))
-// 	}
-//
-// 	if !mres.OwnedByMsvc(managedSvc) {
-// 		a := mres.OwnerReferences
-// 		a = append(a, metav1.OwnerReference{
-// 			APIVersion:         managedSvc.APIVersion,
-// 			Kind:               managedSvc.Kind,
-// 			Name:               managedSvc.Name,
-// 			UID:                managedSvc.UID,
-// 			Controller:         fn.NewBool(false),
-// 			BlockOwnerDeletion: fn.NewBool(true),
-// 		})
-// 		mres.SetOwnerReferences(a)
-// 		if err := r.Update(ctx, mres); err != nil {
-// 			return ctrl.Result{}, err
-// 		}
-// 		return reconcileResult.OK()
-// 	}
-//
-// 	// STEP: check if managedsvc is ready
-// 	if ok := meta.IsStatusConditionTrue(managedSvc.Status.conditions, "Ready"); !ok {
-// 		return r.notifyAndDie(ctx, errors.Newf("%s is not ready, would start again when it is ready", managedSvc.NameRef()))
-// 	}
-//
-// 	b, err := templates.Parse(templates.MongoDBResourceDatabase, mres)
-// 	if err != nil {
-// 		return r.notifyAndDie(ctx, err)
-// 	}
-//
-// 	if err := fn.KubectlApply(b); err != nil {
-// 		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply mongodb resource %s", mres.NameRef()))
-// 	}
-//
-// 	var mdb mongodb.Database
-// 	if err := r.Get(ctx, req.NamespacedName, &mdb); err != nil {
-// 		return ctrl.Result{}, err
-// 	}
-// 	if mdb.Name != "" {
-// 		mres.Status.conditions = mdb.Status.conditions
-// 		return r.notify(ctx)
-// 	}
-//
-// 	return r.notify(ctx)
-//
-// 	// //STEP: check if managedsvc is ready
-// 	// if ok := meta.IsStatusConditionTrue(managedSvc.Status.conditions, "Ready"); !ok {
-// 	//	return reconcileResult.FailedE(errors.Newf("managedSvc %s is not ready", toRefString(managedSvc)))
-// 	// }
-//
-// 	// msvcSecretName := fmt.Sprintf("msvc-%s", mres.Spec.ManagedSvc)
-// 	// var msvcSecret corev1.Secret
-// 	// if err := r.Get(ctx, types.NamespacedName{Namespace: mres.Namespace, Name: msvcSecretName}, &msvcSecret); err != nil {
-// 	//	logger.Errorf("ManagedSvc secret %s/%s not found, aborting reconcilation", mres.Namespace, msvcSecretName)
-// 	//	return reconcileResult.Failed()
-// 	// }
-//
-// 	// logger.Infof("Secret: %+v\n", string(msvcSecret.Data["mongodb-root-password"]))
-//
-// 	// return reconcileResult.OK()
-// }
+func (r *ManagedResourceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
+	mres := req.mres
+	mres.Status.Conditions = []metav1.Condition{}
+	return ctrl.Result{}, r.statusUpdate(ctx, req)
+	// if err := r.statusUpdate(ctx, req); err != nil {
+	// 	return ctrl.Result{}, err
+	// }
 
-func (r *ManagedResourceReconciler) finalize(ctx context.Context, mres *v1.ManagedResource) (ctrl.Result, error) {
 	if controllerutil.ContainsFinalizer(mres, finalizers.ManagedResource.String()) {
 		controllerutil.RemoveFinalizer(mres, finalizers.ManagedResource.String())
 		if err := r.Update(ctx, mres); err != nil {

@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"operators.kloudlite.io/lib/types"
 )
 
 type DatabaseSpec struct {
@@ -18,8 +16,8 @@ type DatabaseSpec struct {
 }
 
 type DatabaseStatus struct {
-	LastHash   string           `json:"lastHash,omitempty"`
-	Conditions types.Conditions `json:"conditions,omitempty"`
+	LastHash   string             `json:"lastHash,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -36,8 +36,9 @@ type DatabaseReconciler struct {
 type DatabaseReconReq struct {
 	t.ReconReq
 	ctrl.Request
-	logger   *zap.SugaredLogger
-	database *mongodbStandalone.Database
+	logger      *zap.SugaredLogger
+	condBuilder fn.StatusConditions
+	database    *mongodbStandalone.Database
 }
 
 const (
@@ -59,10 +60,11 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request)
 	}
 
 	req.logger.Infof("Reconciling Database %s", req.database.Name)
-
 	if err := r.Client.Get(ctx, req.NamespacedName, req.database); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	req.condBuilder = fn.Conditions.From(req.database.Status.Conditions)
 
 	if req.database.HasLabels() {
 		req.database.EnsureLabels()
@@ -86,10 +88,16 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request)
 	return r.reconcileOperations(ctx, req)
 }
 
+func (r *DatabaseReconciler) finalize(ctx context.Context, req *DatabaseReconReq) (ctrl.Result, error) {
+	panic("ASDFASdf")
+	req.database.Status.Conditions = []metav1.Condition{}
+	return ctrl.Result{}, r.Status().Update(ctx, req.database)
+}
+
 func (r *DatabaseReconciler) failWithErr(ctx context.Context, req *DatabaseReconReq, err error) (ctrl.Result, error) {
 	req.logger.Error(err)
-	req.database.Status.Conditions.MarkNotReady(err)
-	return ctrl.Result{}, r.Status().Update(ctx, req.database)
+	req.condBuilder.MarkNotReady(err)
+	return ctrl.Result{}, r.updateStatus(ctx, req)
 }
 
 func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseReconReq) (*ctrl.Result, error) {
@@ -147,7 +155,7 @@ func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *Datab
 	}
 
 	if len(usersInfo.Users) > 0 {
-		req.database.Status.Conditions.MarkReady(
+		req.condBuilder.MarkReady(
 			fmt.Sprintf(
 				"MongoDB account with (user=%s,db=%s) already exists",
 				req.database.Name,
@@ -214,15 +222,11 @@ func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *Datab
 		return r.failWithErr(ctx, req, errors.NewEf(err, "could not create secret %s", resultScrt.Name))
 	}
 
-	req.database.Status.Conditions.SetReady(
+	req.condBuilder.SetReady(
 		metav1.ConditionTrue,
 		"OutputCreated",
 		"managed resource output has been created",
 	)
-	return reconcileResult.OK()
-}
-
-func (r *DatabaseReconciler) finalize(ctx context.Context, req *DatabaseReconReq) (ctrl.Result, error) {
 	return reconcileResult.OK()
 }
 
@@ -232,4 +236,9 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongodbStandalone.Database{}).
 		Complete(r)
+}
+
+func (r *DatabaseReconciler) updateStatus(ctx context.Context, req *DatabaseReconReq) error {
+	req.database.Status.Conditions = req.condBuilder.GetAll()
+	return r.Status().Update(ctx, req.database)
 }
