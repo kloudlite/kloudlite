@@ -1,45 +1,29 @@
-/*
-Copyright 2022.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package v1
 
 import (
+	"encoding/json"
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"operators.kloudlite.io/lib/types"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Database. Edit database_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	ManagedSvcName string `json:"managedSvcName,omitempty"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	Inputs json.RawMessage `json:"inputs,omitempty"`
 }
 
-// DatabaseStatus defines the observed state of Database
 type DatabaseStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	LastHash   string           `json:"lastHash,omitempty"`
+	Conditions types.Conditions `json:"conditions,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Database is the Schema for the databases API
 type Database struct {
@@ -50,7 +34,28 @@ type Database struct {
 	Status DatabaseStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+func (s *Database) NameRef() string {
+	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
+}
+
+func (s Database) LabelRef() (string, string) {
+	return "mres.kloudlite.io/for", GroupVersion.Group
+}
+
+func (s *Database) HasLabels() bool {
+	key, value := s.LabelRef()
+	if s.Labels[key] != value {
+		return false
+	}
+	return true
+}
+
+func (s *Database) EnsureLabels() {
+	key, value := s.LabelRef()
+	s.SetLabels(map[string]string{key: value})
+}
+
+// +kubebuilder:object:root=true
 
 // DatabaseList contains a list of Database
 type DatabaseList struct {

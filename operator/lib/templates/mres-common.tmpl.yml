@@ -1,15 +1,15 @@
 apiVersion: {{.Spec.ApiVersion}}
-kind: Database
+kind: {{.Spec.Kind}}
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
-  finalizers:
-    - finalizers.kloudlite.io/managed-resource
   labels:
-    {{- range $k,$v := .Labels}}
+  {{- range $k,$v := .Labels}}
     {{$k}}: {{$v}}
-    mongodbs.msvc.kloudlite.io/of-msvc: {{.Spec.ManagedSvc}}
-    {{- end}}
+  {{- end}}
+    mongodbs.msvc.kloudlite.io/of-msvc: {{.Spec.ManagedSvcName}}
+  finalizers:
+    - finalizers.kloudlite.io/msvc-common-service
   ownerReferences:
     - apiVersion: {{.APIVersion}}
       kind: {{.Kind}}
@@ -18,4 +18,5 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
-  managed_svc: {{.Spec.ManagedSvc }}
+  managedSvcName: {{.Spec.ManagedSvcName}}
+  inputs: {{.Spec.Inputs | toJson }}

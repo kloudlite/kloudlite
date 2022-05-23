@@ -85,9 +85,11 @@ func main() {
 	var probeAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":9091", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":9092", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+	flag.BoolVar(
+		&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+			"Enabling this will ensure there is only one active controller manager.",
+	)
 	opts := zap.Options{
 		Development: true,
 	}
@@ -96,15 +98,17 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                     scheme,
-		MetricsBindAddress:         metricsAddr,
-		Port:                       9443,
-		HealthProbeBindAddress:     probeAddr,
-		LeaderElection:             enableLeaderElection,
-		LeaderElectionID:           "bf38d2f9.kloudlite.io",
-		LeaderElectionResourceLock: "configmaps",
-	})
+	mgr, err := ctrl.NewManager(
+		ctrl.GetConfigOrDie(), ctrl.Options{
+			Scheme:                     scheme,
+			MetricsBindAddress:         metricsAddr,
+			Port:                       9443,
+			HealthProbeBindAddress:     probeAddr,
+			LeaderElection:             enableLeaderElection,
+			LeaderElectionID:           "bf38d2f9.kloudlite.io",
+			LeaderElectionResourceLock: "configmaps",
+		},
+	)
 
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -172,7 +176,6 @@ func main() {
 	if err = (&crds.ManagedServiceReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
-		ClientSet:     clientset,
 		MessageSender: sender,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
@@ -183,7 +186,6 @@ func main() {
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		MessageSender: sender,
-		ClientSet:     clientset,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
 		os.Exit(1)
@@ -310,42 +312,56 @@ func main() {
 	app := fx.New(
 		agent.App(),
 
-		fx.Provide(func() *kafka.Producer {
-			return kafkaProducer
-		}),
+		fx.Provide(
+			func() *kafka.Producer {
+				return kafkaProducer
+			},
+		),
 
-		fx.Provide(func() *kafka.Consumer {
-			c, e := kafka.NewConsumer(&kafka.ConfigMap{
-				"bootstrap.servers":  kafkaBrokers,
-				"group.id":           agentKafkaGroupId,
-				"auto.offset.reset":  "earliest",
-				"enable.auto.commit": "false",
-			})
-			if e != nil {
-				panic(errors.NewEf(err, "could not create kafka consumer"))
-			}
-			return c
-		}),
-		fx.Invoke(func(lf fx.Lifecycle, k *kafka.Consumer) {
-			lf.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					return k.Subscribe(agentKafkaTopic, nil)
-				},
-			})
-		}),
-		fx.Invoke(func(lf fx.Lifecycle) {
-			lf.Append(fx.Hook{
-				OnStart: func(context.Context) error {
-					go func() {
-						if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-							setupLog.Error(err, "problem running manager")
-							panic(err)
-						}
-					}()
-					return nil
-				},
-			})
-		}),
+		fx.Provide(
+			func() *kafka.Consumer {
+				c, e := kafka.NewConsumer(
+					&kafka.ConfigMap{
+						"bootstrap.servers":  kafkaBrokers,
+						"group.id":           agentKafkaGroupId,
+						"auto.offset.reset":  "earliest",
+						"enable.auto.commit": "false",
+					},
+				)
+				if e != nil {
+					panic(errors.NewEf(err, "could not create kafka consumer"))
+				}
+				return c
+			},
+		),
+		fx.Invoke(
+			func(lf fx.Lifecycle, k *kafka.Consumer) {
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return k.Subscribe(agentKafkaTopic, nil)
+						},
+					},
+				)
+			},
+		),
+		fx.Invoke(
+			func(lf fx.Lifecycle) {
+				lf.Append(
+					fx.Hook{
+						OnStart: func(context.Context) error {
+							go func() {
+								if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+									setupLog.Error(err, "problem running manager")
+									panic(err)
+								}
+							}()
+							return nil
+						},
+					},
+				)
+			},
+		),
 	)
 
 	app.Run()
@@ -362,13 +378,15 @@ func (m *msgSender) SendMessage(key string, msg lib.MessageReply) error {
 		fmt.Println(e)
 		return e
 	}
-	return m.kp.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{
-			Topic: m.ktopic,
-		},
-		Key:   []byte(key),
-		Value: msgBody,
-	}, nil)
+	return m.kp.Produce(
+		&kafka.Message{
+			TopicPartition: kafka.TopicPartition{
+				Topic: m.ktopic,
+			},
+			Key:   []byte(key),
+			Value: msgBody,
+		}, nil,
+	)
 }
 
 func NewMsgSender(kp *kafka.Producer, ktopic string) lib.MessageSender {

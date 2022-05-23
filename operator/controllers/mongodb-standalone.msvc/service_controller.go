@@ -30,27 +30,14 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
+	t "operators.kloudlite.io/lib/types"
 )
 
 type ServiceReconReq struct {
-	req       ctrl.Request
-	logger    *zap.SugaredLogger
-	stateData map[string]string
-	mongoSvc  *mongoStandalone.Service
-}
-
-func (req *ServiceReconReq) GetStateData(key string) string {
-	if req.stateData == nil {
-		req.stateData = map[string]string{}
-	}
-	return req.stateData[key]
-}
-
-func (req *ServiceReconReq) SetStateData(key string, val string) {
-	if req.stateData == nil {
-		req.stateData = map[string]string{}
-	}
-	req.stateData[key] = val
+	req    ctrl.Request
+	logger *zap.SugaredLogger
+	t.ReconReq
+	mongoSvc *mongoStandalone.Service
 }
 
 type Output struct {
@@ -59,124 +46,15 @@ type Output struct {
 	DbUrl        string `json:"DB_URL"`
 }
 
+const (
+	MongoDbRootPasswordKey = "mongodb-root-password"
+)
+
 // ServiceReconciler reconciles a Service object
 type ServiceReconciler struct {
 	lt metav1.Time
 	client.Client
 	Scheme *runtime.Scheme
-}
-
-func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (ctrl.Result, error) {
-	req.mongoSvc.Status.Conditions.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  metav1.ConditionFalse,
-		Reason:  constants.ConditionReady.ErrorReason,
-		Message: err.Error(),
-	})
-	err = r.Status().Update(ctx, req.mongoSvc)
-	return reconcileResult.FailedE(err)
-}
-
-func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	req.mongoSvc.Status.Conditions.Init(r.lt)
-
-	prevStatus := req.mongoSvc.Status
-	req.mongoSvc.Status.Conditions.Reset()
-
-	err := req.mongoSvc.Status.Conditions.BuildFromHelmMsvc(
-		ctx,
-		r.Client,
-		constants.HelmMongoDBKind,
-		types.NamespacedName{
-			Namespace: req.mongoSvc.GetNamespace(),
-			Name:      req.mongoSvc.GetName(),
-		},
-	)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return nil, err
-		}
-	}
-
-	err = req.mongoSvc.Status.Conditions.BuildFromDeployment(
-		ctx,
-		r.Client,
-		types.NamespacedName{
-			Namespace: req.mongoSvc.GetNamespace(),
-			Name:      req.mongoSvc.GetName(),
-		},
-	)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return nil, err
-		}
-	}
-	var helmSecret corev1.Secret
-	nn := types.NamespacedName{
-		Namespace: req.mongoSvc.GetNamespace(),
-		Name:      req.mongoSvc.GetName(),
-	}
-	if err := r.Get(ctx, nn, &helmSecret); err != nil {
-		req.logger.Info("helm release %s is not available yet, assuming resource not yet installed, so installing", nn.String())
-	}
-	x, ok := helmSecret.Data["mongodb-root-password"]
-	req.SetStateData("mongodb-root-password", fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string))
-
-	if req.mongoSvc.Status.Conditions.Equal(prevStatus.Conditions) {
-		req.logger.Infof("Status is already in sync, so moving forward with ops")
-		return nil, nil
-	}
-
-	req.logger.Infof("status is different, so updating status ...")
-	err = r.Status().Update(ctx, req.mongoSvc)
-	if err != nil {
-		return nil, err
-	}
-
-	return reconcileResult.OKP()
-}
-
-func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
-	var m map[string]interface{}
-	if err := json.Unmarshal(req.mongoSvc.Spec.Inputs, &m); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	m["root_password"] = req.GetStateData("mongodb-root-password")
-	marshal, err := json.Marshal(m)
-	if err != nil {
-		return reconcileResult.FailedE(err)
-	}
-
-	req.mongoSvc.Spec.Inputs = marshal
-
-	hash := req.mongoSvc.Hash()
-
-	if hash == req.mongoSvc.Status.LastHash {
-		return reconcileResult.OK()
-	}
-
-	b, err := templates.Parse(templates.MongoDBStandalone, req.mongoSvc)
-	if err != nil {
-		return reconcileResult.FailedE(err)
-	}
-
-	if _, err := fn.KubectlApply(b); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not apply kubectl for mongodb standalone"))
-	}
-
-	if err := r.reconcileOutput(ctx, req); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-
-	req.mongoSvc.Status.LastHash = hash
-
-	err = r.Status().Update(ctx, req.mongoSvc)
-
-	if err != nil {
-		return reconcileResult.FailedE(err)
-	}
-
-	return reconcileResult.OK()
 }
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -222,6 +100,126 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 	return r.reconcileOperations(ctx, req)
 }
 
+func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (ctrl.Result, error) {
+	req.mongoSvc.Status.Conditions.Build(
+		"", metav1.Condition{
+			Type:    constants.ConditionReady.Type,
+			Status:  metav1.ConditionFalse,
+			Reason:  constants.ConditionReady.ErrorReason,
+			Message: err.Error(),
+		},
+	)
+	err = r.Status().Update(ctx, req.mongoSvc)
+	return reconcileResult.FailedE(err)
+}
+
+func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
+	req.mongoSvc.Status.Conditions.Init(r.lt)
+
+	prevStatus := req.mongoSvc.Status
+	req.mongoSvc.Status.Conditions.Reset()
+
+	err := req.mongoSvc.Status.Conditions.BuildFromHelmMsvc(
+		ctx,
+		r.Client,
+		constants.HelmMongoDBKind,
+		types.NamespacedName{
+			Namespace: req.mongoSvc.GetNamespace(),
+			Name:      req.mongoSvc.GetName(),
+		},
+	)
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+	}
+
+	err = req.mongoSvc.Status.Conditions.BuildFromDeployment(
+		ctx,
+		r.Client,
+		types.NamespacedName{
+			Namespace: req.mongoSvc.GetNamespace(),
+			Name:      req.mongoSvc.GetName(),
+		},
+	)
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+	}
+	var helmSecret corev1.Secret
+	nn := types.NamespacedName{
+		Namespace: req.mongoSvc.GetNamespace(),
+		Name:      req.mongoSvc.GetName(),
+	}
+	if err := r.Get(ctx, nn, &helmSecret); err != nil {
+		req.logger.Info(
+			"helm release %s is not available yet, assuming resource not yet installed, so installing",
+			nn.String(),
+		)
+	}
+	x, ok := helmSecret.Data[MongoDbRootPasswordKey]
+	req.SetStateData(MongoDbRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string))
+
+	req.logger.Debugf("prevStatus.Conditions: %+v", prevStatus.Conditions)
+	req.logger.Debugf("req.mongoSvc.Status.Conditions: %+v", req.mongoSvc.Status.Conditions)
+
+	if req.mongoSvc.Status.Conditions.Equal(prevStatus.Conditions) {
+		req.logger.Infof("Status is already in sync, so moving forward with ops")
+		return nil, nil
+	}
+
+	req.logger.Infof("status is different, so updating status ...")
+	err = r.Status().Update(ctx, req.mongoSvc)
+	if err != nil {
+		return nil, err
+	}
+
+	return reconcileResult.OKP()
+}
+
+func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
+	panic("asdfsdf")
+	m, err := fn.Json.FromRawMessage(req.mongoSvc.Spec.Inputs)
+	if err != nil {
+		return reconcileResult.FailedE(err)
+	}
+	m[MongoDbRootPasswordKey] = req.GetStateData(MongoDbRootPasswordKey)
+
+	req.mongoSvc.Spec.Inputs, err = json.Marshal(m)
+	if err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	hash := req.mongoSvc.Hash()
+
+	if hash == req.mongoSvc.Status.LastHash {
+		return reconcileResult.OK()
+	}
+
+	b, err := templates.Parse(templates.MongoDBStandalone, req.mongoSvc)
+	if err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	if _, err := fn.KubectlApply(b); err != nil {
+		return reconcileResult.FailedE(errors.NewEf(err, "could not apply kubectl for mongodb standalone"))
+	}
+
+	if err := r.reconcileOutput(ctx, req); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	req.mongoSvc.Status.LastHash = hash
+
+	err = r.Status().Update(ctx, req.mongoSvc)
+
+	if err != nil {
+		return reconcileResult.FailedE(err)
+	}
+
+	return reconcileResult.OK()
+}
 func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
 	m, err := req.mongoSvc.Spec.Inputs.MarshalJSON()
 	if err != nil {
@@ -245,14 +243,16 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 		},
 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
-		var outMap map[string]string
-		if err := fn.Json.FromTo(out, &outMap); err != nil {
-			return err
-		}
-		scrt.StringData = outMap
-		return controllerutil.SetControllerReference(req.mongoSvc, scrt, r.Scheme)
-	})
+	_, err = controllerutil.CreateOrUpdate(
+		ctx, r.Client, scrt, func() error {
+			var outMap map[string]string
+			if err := fn.Json.FromTo(out, &outMap); err != nil {
+				return err
+			}
+			scrt.StringData = outMap
+			return controllerutil.SetControllerReference(req.mongoSvc, scrt, r.Scheme)
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -261,14 +261,18 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 
 func (r *ServiceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
 	req.logger.Infof("finalizing: %+v", req.mongoSvc.NameRef())
-	if err := r.Delete(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": constants.MsvcApiVersion,
-		"kind":       constants.HelmMongoDBKind,
-		"metadata": map[string]interface{}{
-			"name":      req.mongoSvc.Name,
-			"namespace": req.mongoSvc.Namespace,
+	if err := r.Delete(
+		ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": constants.MsvcApiVersion,
+				"kind":       constants.HelmMongoDBKind,
+				"metadata": map[string]interface{}{
+					"name":      req.mongoSvc.Name,
+					"namespace": req.mongoSvc.Namespace,
+				},
+			},
 		},
-	}}); err != nil {
+	); err != nil {
 		req.logger.Infof("could not delete helm resource: %+v", err)
 		if !apiErrors.IsNotFound(err) {
 			return reconcileResult.FailedE(err)
@@ -301,36 +305,44 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.lt = metav1.Time{Time: time.Now()}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongoStandalone.Service{}).
-		Watches(&source.Kind{Type: &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": constants.MsvcApiVersion,
-				"kind":       constants.HelmMongoDBKind,
-			},
-		}}, handler.EnqueueRequestsFromMapFunc(func(c client.Object) []reconcile.Request {
-			var svcList mongoStandalone.ServiceList
-			key, value := mongoStandalone.Service{}.LabelRef()
-			if err := r.List(context.TODO(), &svcList, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{key: value}),
-			}); err != nil {
-				return nil
-			}
-			var reqs []reconcile.Request
-			for _, item := range svcList.Items {
-				nn := types.NamespacedName{
-					Name:      item.Name,
-					Namespace: item.Namespace,
-				}
-
-				for _, req := range reqs {
-					if req.NamespacedName.String() == nn.String() {
+		Watches(
+			&source.Kind{
+				Type: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": constants.MsvcApiVersion,
+						"kind":       constants.HelmMongoDBKind,
+					},
+				},
+			}, handler.EnqueueRequestsFromMapFunc(
+				func(c client.Object) []reconcile.Request {
+					var svcList mongoStandalone.ServiceList
+					key, value := mongoStandalone.Service{}.LabelRef()
+					if err := r.List(
+						context.TODO(), &svcList, &client.ListOptions{
+							LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{key: value}),
+						},
+					); err != nil {
 						return nil
 					}
-				}
+					var reqs []reconcile.Request
+					for _, item := range svcList.Items {
+						nn := types.NamespacedName{
+							Name:      item.Name,
+							Namespace: item.Namespace,
+						}
 
-				reqs = append(reqs, reconcile.Request{NamespacedName: nn})
-			}
-			return reqs
-		})).
+						for _, req := range reqs {
+							if req.NamespacedName.String() == nn.String() {
+								return nil
+							}
+						}
+
+						reqs = append(reqs, reconcile.Request{NamespacedName: nn})
+					}
+					return reqs
+				},
+			),
+		).
 		Watches(&source.Kind{Type: &appsv1.Deployment{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Watches(&source.Kind{Type: &corev1.Pod{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Complete(r)

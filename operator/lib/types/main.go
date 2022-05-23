@@ -39,12 +39,12 @@ func (c *Conditions) GetCondition(t string) *metav1.Condition {
 	return meta.FindStatusCondition(c.Conditions, t)
 }
 
-func (c *Conditions) IsTrue(t string) bool {
-	return meta.IsStatusConditionTrue(c.Conditions, t)
+func (c *Conditions) IsTrue(conditionType string) bool {
+	return meta.IsStatusConditionTrue(c.Conditions, conditionType)
 }
 
-func (c *Conditions) IsFalse(t string) bool {
-	return meta.IsStatusConditionFalse(c.Conditions, t)
+func (c *Conditions) IsFalse(conditionType string) bool {
+	return meta.IsStatusConditionFalse(c.Conditions, conditionType)
 }
 
 func (c *Conditions) Reset() {
@@ -63,17 +63,23 @@ func (c *Conditions) MarkNotReady(err error) {
 	c.SetReady(metav1.ConditionFalse, constants.ConditionReady.ErrorReason, err.Error())
 }
 
-func (c *Conditions) MarkReady(msg string) {
-	c.SetReady(metav1.ConditionFalse, constants.ConditionReady.SuccessReason, msg)
+func (c *Conditions) MarkReady(msg string, reason ...string) {
+	c.SetReady(
+		metav1.ConditionFalse,
+		fn.IfThenElse(len(reason) > 0, reason[0], constants.ConditionReady.SuccessReason).(string),
+		msg,
+	)
 }
 
 func (c *Conditions) SetReady(t metav1.ConditionStatus, reason string, msg string) {
-	c.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  t,
-		Reason:  reason,
-		Message: msg,
-	})
+	c.Build(
+		"", metav1.Condition{
+			Type:    constants.ConditionReady.Type,
+			Status:  t,
+			Reason:  reason,
+			Message: msg,
+		},
+	)
 }
 
 func (c Conditions) Equal(c2 Conditions) bool {
@@ -115,11 +121,16 @@ func (c *Conditions) Build(group string, conditions ...metav1.Condition) {
 
 type HelmResource struct {
 	Status struct {
-		Conditions []metav1.Condition `json:"conditions,omitempty"`
+		Conditions []metav1.Condition `json:"Conditions,omitempty"`
 	} `json:"status"`
 }
 
-func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Client, kind string, nn types.NamespacedName) error {
+func (c *Conditions) BuildFromHelmMsvc(
+	ctx context.Context,
+	apiClient client.Client,
+	kind string,
+	nn types.NamespacedName,
+) error {
 	hm := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": constants.MsvcApiVersion,
@@ -129,12 +140,14 @@ func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Cli
 
 	if err := apiClient.Get(ctx, nn, &hm); err != nil {
 		if apiErrors.IsNotFound(err) {
-			c.Build("Helm", metav1.Condition{
-				Type:    "NotCreated",
-				Status:  "True",
-				Reason:  "HelmResourceNotFound",
-				Message: err.Error(),
-			})
+			c.Build(
+				"Helm", metav1.Condition{
+					Type:    "NotCreated",
+					Status:  "True",
+					Reason:  "HelmResourceNotFound",
+					Message: err.Error(),
+				},
+			)
 		}
 		return err
 	}
@@ -145,7 +158,7 @@ func (c *Conditions) BuildFromHelmMsvc(ctx context.Context, apiClient client.Cli
 	}
 	var helmSvc struct {
 		Status struct {
-			Conditions []metav1.Condition `json:"conditions,omitempty"`
+			Conditions []metav1.Condition `json:"Conditions,omitempty"`
 		} `json:"status"`
 	}
 	if err := json.Unmarshal(b, &helmSvc); err != nil {
@@ -162,32 +175,42 @@ func (c *Conditions) BuildFromStatefulset(ctx context.Context, apiClient client.
 	sts := new(appsv1.StatefulSet)
 	if err := apiClient.Get(ctx, nn, sts); err != nil {
 		if apiErrors.IsNotFound(err) {
-			c.Build("StatefulSet", metav1.Condition{
-				Type:    "NotCreated",
-				Status:  "True",
-				Reason:  "StsResourceNotFound",
-				Message: err.Error(),
-			})
+			c.Build(
+				"StatefulSet", metav1.Condition{
+					Type:    "NotCreated",
+					Status:  "True",
+					Reason:  "StsResourceNotFound",
+					Message: err.Error(),
+				},
+			)
 		}
 		return err
 	}
 
 	fmt.Println("sts:", sts.Status.ReadyReplicas == sts.Status.Replicas)
 
-	c.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  fn.IfThenElse(sts.Status.ReadyReplicas == sts.Status.Replicas, metav1.ConditionTrue, metav1.ConditionFalse).(metav1.ConditionStatus),
-		Reason:  "AllReplicasReady",
-		Message: "StatefulSet Ready",
-	})
+	c.Build(
+		"", metav1.Condition{
+			Type: constants.ConditionReady.Type,
+			Status: fn.IfThenElse(
+				sts.Status.ReadyReplicas == sts.Status.Replicas,
+				metav1.ConditionTrue,
+				metav1.ConditionFalse,
+			).(metav1.ConditionStatus),
+			Reason:  "AllReplicasReady",
+			Message: "StatefulSet Ready",
+		},
+	)
 
 	fmt.Println("sts2 :", meta.IsStatusConditionTrue(c.Conditions, "Ready"))
 
 	podsList := new(corev1.PodList)
-	if err := apiClient.List(ctx, podsList, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(sts.Spec.Template.Labels),
-		Namespace:     sts.Namespace,
-	}); err != nil {
+	if err := apiClient.List(
+		ctx, podsList, &client.ListOptions{
+			LabelSelector: apiLabels.SelectorFromValidatedSet(sts.Spec.Template.Labels),
+			Namespace:     sts.Namespace,
+		},
+	); err != nil {
 		return err
 	}
 
@@ -199,33 +222,43 @@ func (c *Conditions) BuildFromDeployment(ctx context.Context, apiClient client.C
 	depl := new(appsv1.Deployment)
 	if err := apiClient.Get(ctx, nn, depl); err != nil {
 		if apiErrors.IsNotFound(err) {
-			c.Build("Deployment", metav1.Condition{
-				Type:    "NotCreated",
-				Status:  "True",
-				Reason:  "DeploymentNotFound",
-				Message: err.Error(),
-			})
+			c.Build(
+				"Deployment", metav1.Condition{
+					Type:    "NotCreated",
+					Status:  "True",
+					Reason:  "DeploymentNotFound",
+					Message: err.Error(),
+				},
+			)
 		}
 		return err
 	}
 	var deplConditions []metav1.Condition
 	for _, cond := range depl.Status.Conditions {
-		deplConditions = append(deplConditions, metav1.Condition{
-			Type:    string(cond.Type),
-			Status:  metav1.ConditionStatus(cond.Status),
-			Reason:  cond.Reason,
-			Message: cond.Message,
-		})
+		deplConditions = append(
+			deplConditions, metav1.Condition{
+				Type:    string(cond.Type),
+				Status:  metav1.ConditionStatus(cond.Status),
+				Reason:  cond.Reason,
+				Message: cond.Message,
+			},
+		)
 	}
 
 	c.Build("Deployment", deplConditions...)
 
-	c.Build("", metav1.Condition{
-		Type:    constants.ConditionReady.Type,
-		Status:  fn.IfThenElse(meta.IsStatusConditionTrue(deplConditions, string(appsv1.DeploymentAvailable)), metav1.ConditionTrue, metav1.ConditionFalse).(metav1.ConditionStatus),
-		Reason:  constants.ConditionReady.SuccessReason,
-		Message: "Deployment is Available",
-	})
+	c.Build(
+		"", metav1.Condition{
+			Type: constants.ConditionReady.Type,
+			Status: fn.IfThenElse(
+				meta.IsStatusConditionTrue(deplConditions, string(appsv1.DeploymentAvailable)),
+				metav1.ConditionTrue,
+				metav1.ConditionFalse,
+			).(metav1.ConditionStatus),
+			Reason:  constants.ConditionReady.SuccessReason,
+			Message: "Deployment is Available",
+		},
+	)
 
 	opts := &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(depl.Spec.Template.GetLabels()),
@@ -241,15 +274,22 @@ func (c *Conditions) BuildFromDeployment(ctx context.Context, apiClient client.C
 func (c *Conditions) BuildFromPods(pl ...corev1.Pod) error {
 	for idx, pod := range pl {
 		var podC []metav1.Condition
-		fmt.Printf("pod info: Name: %s LenConditions: %d LenContainerStatus: %d\n", pod.Name, len(pod.Status.Conditions), len(pod.Status.ContainerStatuses))
+		fmt.Printf(
+			"pod info: Name: %s LenConditions: %d LenContainerStatus: %d\n",
+			pod.Name,
+			len(pod.Status.Conditions),
+			len(pod.Status.ContainerStatuses),
+		)
 		for _, condition := range pod.Status.Conditions {
-			podC = append(podC, metav1.Condition{
-				Type:               fmt.Sprintf("Pod-idx-%d-%s", idx, condition.Type),
-				Status:             metav1.ConditionStatus(condition.Status),
-				LastTransitionTime: condition.LastTransitionTime,
-				Reason:             fmt.Sprintf("Pod:Idx:%d:NotSpecified", idx),
-				Message:            condition.Message,
-			})
+			podC = append(
+				podC, metav1.Condition{
+					Type:               fmt.Sprintf("Pod-idx-%d-%s", idx, condition.Type),
+					Status:             metav1.ConditionStatus(condition.Status),
+					LastTransitionTime: condition.LastTransitionTime,
+					Reason:             fmt.Sprintf("Pod:Idx:%d:NotSpecified", idx),
+					Message:            condition.Message,
+				},
+			)
 		}
 		c.Build("", podC...)
 		var containerC []metav1.Condition
@@ -272,4 +312,22 @@ func (c *Conditions) BuildFromPods(pl ...corev1.Pod) error {
 		return nil
 	}
 	return nil
+}
+
+type ReconReq struct {
+	stateData map[string]string
+}
+
+func (req *ReconReq) GetStateData(key string) string {
+	if req.stateData == nil {
+		req.stateData = map[string]string{}
+	}
+	return req.stateData[key]
+}
+
+func (req *ReconReq) SetStateData(key, value string) {
+	if req.stateData == nil {
+		req.stateData = map[string]string{}
+	}
+	req.stateData[key] = value
 }

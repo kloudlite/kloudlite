@@ -1,21 +1,31 @@
 package v1
 
 import (
+	"encoding/json"
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"operators.kloudlite.io/lib"
+	fn "operators.kloudlite.io/lib/functions"
+	t "operators.kloudlite.io/lib/types"
 )
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	Type       string            `json:"type"`
-	ManagedSvc string            `json:"managedSvc"`
-	Inputs     map[string]string `json:"inputs,omitempty"`
+	ApiVersion     string `json:"apiVersion"`
+	Kind           string `json:"kind"`
+	ManagedSvcName string `json:"managedSvcName"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	Inputs json.RawMessage `json:"inputs,omitempty"`
 }
 
 // ManagedResourceStatus defines the observed state of ManagedResource
 type ManagedResourceStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	LastHash   string       `json:"lastHash,omitempty"`
+	Conditions t.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -30,25 +40,38 @@ type ManagedResource struct {
 	Status ManagedResourceStatus `json:"status,omitempty"`
 }
 
-func (m *ManagedResource) LogRef() string {
-	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
+func (m *ManagedResource) NameRef() string {
+	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }
 
 const (
 	OfMsvcLabelKey lib.LabelKey = "mres.kloudlite.io/of-msvc"
 )
 
+func (m ManagedResource) LabelRef() (key, value string) {
+	return "mres.kloudlite.io/for", GroupVersion.Group
+}
+
 func (m *ManagedResource) HasLabels() bool {
-	if s := m.Labels[OfMsvcLabelKey.String()]; s != m.Spec.ManagedSvc {
+	k, v := m.LabelRef()
+	if v != m.Labels[k] {
 		return false
 	}
 	return true
 }
 
 func (m *ManagedResource) EnsureLabels() {
-	m.SetLabels(map[string]string{
-		OfMsvcLabelKey.String(): m.Spec.ManagedSvc,
-	})
+	k, v := m.LabelRef()
+	m.SetLabels(map[string]string{k: v})
+}
+
+func (s *ManagedResource) Hash() string {
+	m := make(map[string]interface{}, 3)
+	m["name"] = s.Name
+	m["namespace"] = s.Namespace
+	m["spec"] = s.Spec
+	hash, _ := fn.Json.Hash(m)
+	return hash
 }
 
 func (mr *ManagedResource) OwnedByMsvc(svc *ManagedService) bool {

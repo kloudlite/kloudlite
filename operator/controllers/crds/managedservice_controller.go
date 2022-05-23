@@ -7,13 +7,11 @@ import (
 
 	"go.uber.org/zap"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -35,10 +33,14 @@ import (
 // ManagedServiceReconciler reconciles a ManagedService object
 type ManagedServiceReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	ClientSet *kubernetes.Clientset
-	JobMgr    lib.Job
+	Scheme *runtime.Scheme
 	lib.MessageSender
+	lt metav1.Time
+}
+
+type MsvcReconReq struct {
+	t.ReconReq
+	ctrl.Request
 	logger *zap.SugaredLogger
 	msvc   *crdsv1.ManagedService
 }
@@ -47,116 +49,150 @@ type ManagedServiceReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/finalizers,verbs=update
 
-const msvcFinalizer = "finalizers.kloudlite.io/managed-service"
-
-func (r *ManagedServiceReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
-	meta.SetStatusCondition(&r.msvc.Status.Conditions, metav1.Condition{
-		Type:    "Ready",
-		Status:  "False",
-		Reason:  "ErrUnknown",
-		Message: err.Error(),
-	})
-
-	if err := r.notify(); err != nil {
-		return reconcileResult.FailedE(err)
+func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
+	req := &MsvcReconReq{Request: orgReq, logger: GetLogger(orgReq.NamespacedName), msvc: new(crdsv1.ManagedService)}
+	if err := r.Get(ctx, req.NamespacedName, req.msvc); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	if err := r.Status().Update(ctx, r.msvc); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for (%s)", r.msvc.NameRef()))
+
+	if !req.msvc.HasLabels() {
+		req.msvc.EnsureLabels()
+		if err := r.Update(ctx, req.msvc); err != nil {
+			return ctrl.Result{}, err
+		}
+		return reconcileResult.OK()
 	}
-	return reconcileResult.OK()
+
+	if req.msvc.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, req)
+	}
+
+	ctrlRequest, err := r.reconcileStatus(ctx, req)
+	req.logger.Error(err)
+	if err != nil {
+		return r.failWithErr(ctx, req, err)
+	}
+	if ctrlRequest != nil {
+		return *ctrlRequest, nil
+	}
+
+	return r.reconcileOperations(ctx, req)
 }
 
-func (r *ManagedServiceReconciler) notify() error {
-	err := r.SendMessage(r.msvc.NameRef(), lib.MessageReply{
-		Key:        r.msvc.NameRef(),
-		Conditions: r.msvc.Status.Conditions,
-		Status:     meta.IsStatusConditionTrue(r.msvc.Status.Conditions, "Ready"),
-	})
+func (r *ManagedServiceReconciler) failWithErr(
+	ctx context.Context,
+	req *MsvcReconReq,
+	err error,
+) (ctrl.Result, error) {
+	req.msvc.Status.Conditions.MarkNotReady(err)
+	return ctrl.Result{}, r.Status().Update(ctx, req.msvc)
+}
+
+func (r *ManagedServiceReconciler) reconcileStatus(ctx context.Context, req *MsvcReconReq) (*ctrl.Result, error) {
+	req.msvc.Status.Conditions.Init(r.lt)
+
+	prevStatus := req.msvc.Status
+	req.msvc.Status.Conditions.Reset()
+
+	svcObj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": req.msvc.Spec.ApiVersion,
+			"kind":       "Service",
+		},
+	}
+
+	nn := types.NamespacedName{Namespace: req.msvc.Namespace, Name: req.msvc.Name}
+	if err := r.Get(ctx, nn, &svcObj); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+		req.msvc.Status.Conditions.Build(
+			"", metav1.Condition{
+				Type:   "NotFound",
+				Status: metav1.ConditionTrue,
+				Reason: "ResourceNotFound",
+				Message: fmt.Sprintf(
+					"resource (ApiVersion=%s, Kind=%s) %s not found", req.msvc.Spec.ApiVersion,
+					"Service", nn.String(),
+				),
+			},
+		)
+	}
+
+	mj, err := svcObj.MarshalJSON()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var j struct {
+		Status struct {
+			Conditions t.Conditions `json:"conditions,omitempty"`
+		} `json:"status,omitempty"`
+	}
+
+	if err := json.Unmarshal(mj, &j); err != nil {
+		return nil, err
+	}
+
+	req.msvc.Status.Conditions = j.Status.Conditions
+	if req.msvc.Status.Conditions.Equal(prevStatus.Conditions) {
+		req.logger.Infof("Status is already in sync, so moving forward with ops")
+		return nil, nil
+	}
+
+	req.logger.Infof("status is different, so updating status ...")
+	if err := r.notify(req); err != nil {
+		return nil, err
+	}
+	return &ctrl.Result{}, r.Status().Update(ctx, req.msvc)
+}
+
+func (r *ManagedServiceReconciler) reconcileOperations(ctx context.Context, req *MsvcReconReq) (ctrl.Result, error) {
+	hash, err := req.msvc.Hash()
+	req.logger.Infof("Hash == req.msvc.Status.LastHash %v", hash == req.msvc.Status.LastHash)
+	if hash == req.msvc.Status.LastHash {
+		return reconcileResult.OK()
+	}
+
+	b, err := templates.Parse(templates.CommonMsvc, req.msvc)
+	if err != nil {
+		return r.failWithErr(ctx, req, err)
+	}
+
+	if _, err := fn.KubectlApply(b); err != nil {
+		return reconcileResult.FailedE(
+			errors.NewEf(
+				err, "could not apply service %s:%s", req.msvc.APIVersion,
+				req.msvc.Kind,
+			),
+		)
+	}
+
+	req.msvc.Status.LastHash = hash
+	return ctrl.Result{}, r.Status().Update(ctx, req.msvc)
+}
+
+func (r *ManagedServiceReconciler) notify(req *MsvcReconReq) error {
+	err := r.SendMessage(
+		req.msvc.NameRef(), lib.MessageReply{
+			Key:        req.msvc.NameRef(),
+			Conditions: req.msvc.Status.Conditions.GetConditions(),
+			Status:     req.msvc.Status.Conditions.IsTrue(constants.ConditionReady.Type),
+		},
+	)
 	if err != nil {
 		return errors.NewEf(err, "could not send message into kafka")
 	}
 	return nil
 }
 
-func (r *ManagedServiceReconciler) notifyAndUpdate(ctx context.Context) (ctrl.Result, error) {
-	if err := r.notify(); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	if err := r.Status().Update(ctx, r.msvc); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	return reconcileResult.OK()
-}
-
-func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.logger = GetLogger(req.NamespacedName)
-
-	msvc := &crdsv1.ManagedService{}
-	if err := r.Get(ctx, req.NamespacedName, msvc); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return reconcileResult.OK()
-		}
-		return reconcileResult.Failed()
-	}
-
-	if !msvc.HasLabels() {
-		msvc.EnsureLabels()
-		if err := r.Update(ctx, msvc); err != nil {
-			return ctrl.Result{}, err
-		}
-		return reconcileResult.OK()
-	}
-
-	r.msvc = msvc
-	if msvc.GetDeletionTimestamp() != nil {
-		return r.finalize(ctx, msvc)
-	}
-
-	b, err := templates.Parse(templates.CommonMsvcService, &msvc)
-	if err != nil {
-		return r.notifyAndDie(ctx, err)
-	}
-
-	if _, err := fn.KubectlApply(b); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not apply service %s:%s", msvc.APIVersion, msvc.Kind))
-	}
-
-	svcObj := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": msvc.Spec.ApiVersion,
-			"kind":       "Service",
-		},
-	}
-
-	if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: msvc.Name}, &svcObj); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-
-	mj, err := svcObj.MarshalJSON()
-
-	if err != nil {
-		return r.notifyAndDie(ctx, err)
-	}
-	var j struct {
-		Status struct {
-			Conditions t.Conditions `json:"conditions,omitempty"`
-		} `json:"status,omitempty"`
-	}
-	if err := json.Unmarshal(mj, &j); err != nil {
-		return r.notifyAndDie(ctx, err)
-	}
-	r.msvc.Status.Conditions = j.Status.Conditions.GetConditions()
-
-	return r.notifyAndUpdate(ctx)
-}
-
-func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.ManagedService) (ctrl.Result, error) {
+func (r *ManagedServiceReconciler) finalize(ctx context.Context, req *MsvcReconReq) (ctrl.Result, error) {
+	msvc := req.msvc
+	msvcFinalizer := finalizers.ManagedService.String()
 	if controllerutil.ContainsFinalizer(msvc, msvcFinalizer) {
 		controllerutil.RemoveFinalizer(msvc, msvcFinalizer)
-		if err := r.Update(ctx, msvc); err != nil {
-			return reconcileResult.FailedE(err)
-		}
-		return reconcileResult.OK()
+		return ctrl.Result{}, r.Update(ctx, msvc)
 	}
 
 	if controllerutil.ContainsFinalizer(msvc, finalizers.Foreground.String()) {
@@ -168,34 +204,33 @@ func (r *ManagedServiceReconciler) finalize(ctx context.Context, msvc *crdsv1.Ma
 		}
 
 		if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: msvc.Name}, &resource); err != nil {
-			r.logger.Infof("ERR: %+v", err)
+			req.logger.Infof("ERR: %+v", err)
 			if apiErrors.IsNotFound(err) {
 				controllerutil.RemoveFinalizer(msvc, finalizers.Foreground.String())
-				if err := r.Update(ctx, msvc); err != nil {
-					return reconcileResult.FailedE(err)
-				}
-				return reconcileResult.OK()
+				return ctrl.Result{}, r.Update(ctx, msvc)
 			}
 		}
 
+		// HACK: this is a hack to get the service to be deleted, IDK ownerReferences somehow not getting it deleted
 		if resource.GetName() != "" {
 			if err := r.Delete(ctx, &resource); err != nil {
-				return r.notifyAndDie(ctx, err)
+				return r.failWithErr(ctx, req, err)
 			}
 		}
 	}
 
-	// return reconcileResult.FailedE(errors.New("trying to finalize managed service"))
-	return reconcileResult.Failed()
+	return reconcileResult.OK()
 }
 
 func (r *ManagedServiceReconciler) watcherFuncMap(c client.Object) []reconcile.Request {
 	var msvcList crdsv1.ManagedServiceList
 
 	key, _ := crdsv1.ManagedService{}.LabelRef()
-	if err := r.List(context.TODO(), &msvcList, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{key: c.GetObjectKind().GroupVersionKind().Group}),
-	}); err != nil {
+	if err := r.List(
+		context.TODO(), &msvcList, &client.ListOptions{
+			LabelSelector: labels.SelectorFromValidatedSet(map[string]string{key: c.GetObjectKind().GroupVersionKind().Group}),
+		},
+	); err != nil {
 		return nil
 	}
 	var reqs []reconcile.Request
@@ -213,31 +248,27 @@ func (r *ManagedServiceReconciler) watcherFuncMap(c client.Object) []reconcile.R
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&crdsv1.ManagedService{}).
-		Watches(&source.Kind{
-			Type: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": fmt.Sprintf("mongodb-standalone.%s", constants.MsvcApiVersion),
-					"kind":       "Service",
+	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
+
+	allMsvcs := []string{
+		"mongodb-standalone",
+		"mongodb-cluster",
+		"mysql-standalone",
+	}
+
+	for _, msvc := range allMsvcs {
+		builder.Watches(
+			&source.Kind{
+				Type: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": fmt.Sprintf("%s.%s", msvc, constants.MsvcApiVersion),
+						"kind":       "Service",
+					},
 				},
-			},
-		}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap)).
-		Watches(&source.Kind{
-			Type: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": fmt.Sprintf("mongodb-cluster.%s", constants.MsvcApiVersion),
-					"kind":       "Service",
-				},
-			},
-		}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap)).
-		Watches(&source.Kind{
-			Type: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": fmt.Sprintf("mysql-standalone.%s", constants.MsvcApiVersion),
-					"kind":       "Service",
-				},
-			},
-		}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap)).
-		Complete(r)
+			}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap),
+		)
+	}
+
+	fmt.Println("HEREEEEEEEEEEEEEEEEEEEEE##################################")
+	return builder.Complete(r)
 }
