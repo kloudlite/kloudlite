@@ -42,29 +42,70 @@ type ManagedResourceReconciler struct {
 	lt     metav1.Time
 }
 
-func (r *ManagedResourceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
-	req.mres.Status.Conditions = req.condBuilder.GetAll()
-	if err := r.notify(req); err != nil {
-		return err
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
+
+func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
+	req := &ServiceReconReq{
+		Request: orgReq,
+		logger:  GetLogger(orgReq.NamespacedName),
+		mres:    new(v1.ManagedResource),
 	}
-	return r.Status().Update(ctx, req.mres)
+
+	if err := r.Get(ctx, orgReq.NamespacedName, req.mres); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return reconcileResult.OK()
+		}
+		return reconcileResult.Failed()
+	}
+
+	req.condBuilder = fn.Conditions.From(req.mres.Status.Conditions)
+
+	if !req.mres.HasLabels() {
+		req.mres.EnsureLabels()
+		if err := r.Update(ctx, req.mres); err != nil {
+			return reconcileResult.FailedE(err)
+		}
+		return reconcileResult.OK()
+	}
+
+	if req.mres.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, req)
+	}
+
+	reconResult, err := r.reconcileStatus(ctx, req)
+
+	if err != nil {
+		return r.failWithErr(ctx, req, err)
+	}
+	if reconResult != nil {
+		return *reconResult, nil
+	}
+
+	req.logger.Infof("status is in sync, so proceeding with ops")
+	return r.reconcileOperations(ctx, req)
 }
 
-func (r *ManagedResourceReconciler) notify(req *ServiceReconReq) error {
-	return r.SendMessage(
-		req.mres.NameRef(), lib.MessageReply{
-			Key:        req.mres.NameRef(),
-			Conditions: req.condBuilder.GetAll(),
-		},
-	)
-}
+func (r *ManagedResourceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
+	mres := req.mres
+	if controllerutil.ContainsFinalizer(mres, finalizers.ManagedResource.String()) {
+		controllerutil.RemoveFinalizer(mres, finalizers.ManagedResource.String())
+		if err := r.Update(ctx, mres); err != nil {
+			return ctrl.Result{}, err
+		}
+		return reconcileResult.OK()
+	}
 
-func (r *ManagedResourceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (
-	ctrl.Result,
-	error,
-) {
-	req.condBuilder.MarkNotReady(err)
-	return ctrl.Result{}, r.statusUpdate(ctx, req)
+	if controllerutil.ContainsFinalizer(mres, finalizers.Foreground.String()) {
+		controllerutil.RemoveFinalizer(mres, finalizers.Foreground.String())
+		if err := r.Update(ctx, mres); err != nil {
+			return ctrl.Result{}, err
+		}
+		return reconcileResult.OK()
+	}
+
+	return reconcileResult.OK()
 }
 
 func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
@@ -87,7 +128,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *Se
 		)
 	}
 
-	if meta.IsStatusConditionTrue(msvc.Status.Conditions, constants.ConditionReady.Type) {
+	if !meta.IsStatusConditionTrue(msvc.Status.Conditions, constants.ConditionReady.Type) {
 		return nil, errors.Newf("managed service (%s) is not ready", msvc.Name)
 	}
 
@@ -141,6 +182,31 @@ func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *Se
 	return reconcileResult.OKP()
 }
 
+func (r *ManagedResourceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
+	req.mres.Status.Conditions = req.condBuilder.GetAll()
+	if err := r.notify(req); err != nil {
+		return err
+	}
+	return r.Status().Update(ctx, req.mres)
+}
+
+func (r *ManagedResourceReconciler) notify(req *ServiceReconReq) error {
+	return r.SendMessage(
+		req.mres.NameRef(), lib.MessageReply{
+			Key:        req.mres.NameRef(),
+			Conditions: req.condBuilder.GetAll(),
+		},
+	)
+}
+
+func (r *ManagedResourceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (
+	ctrl.Result,
+	error,
+) {
+	req.condBuilder.MarkNotReady(err)
+	return ctrl.Result{}, r.statusUpdate(ctx, req)
+}
+
 func (r *ManagedResourceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (
 	ctrl.Result,
 	error,
@@ -175,78 +241,6 @@ type ServiceReconReq struct {
 	logger      *zap.SugaredLogger
 	condBuilder fn.StatusConditions
 	mres        *v1.ManagedResource
-}
-
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
-
-func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
-	req := &ServiceReconReq{
-		Request: orgReq,
-		logger:  GetLogger(orgReq.NamespacedName),
-		mres:    new(v1.ManagedResource),
-	}
-
-	if err := r.Get(ctx, orgReq.NamespacedName, req.mres); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return reconcileResult.OK()
-		}
-		return reconcileResult.Failed()
-	}
-
-	req.condBuilder = fn.Conditions.From(req.mres.Status.Conditions)
-
-	if !req.mres.HasLabels() {
-		req.mres.EnsureLabels()
-		if err := r.Update(ctx, req.mres); err != nil {
-			return reconcileResult.FailedE(err)
-		}
-		return reconcileResult.OK()
-	}
-
-	if req.mres.GetDeletionTimestamp() != nil {
-		return r.finalize(ctx, req)
-	}
-
-	reconResult, err := r.reconcileStatus(ctx, req)
-
-	if err != nil {
-		return r.failWithErr(ctx, req, err)
-	}
-	if reconResult != nil {
-		return *reconResult, nil
-	}
-
-	req.logger.Infof("status is in sync, so proceeding with ops")
-	return r.reconcileOperations(ctx, req)
-}
-
-func (r *ManagedResourceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
-	mres := req.mres
-	mres.Status.Conditions = []metav1.Condition{}
-	return ctrl.Result{}, r.statusUpdate(ctx, req)
-	// if err := r.statusUpdate(ctx, req); err != nil {
-	// 	return ctrl.Result{}, err
-	// }
-
-	if controllerutil.ContainsFinalizer(mres, finalizers.ManagedResource.String()) {
-		controllerutil.RemoveFinalizer(mres, finalizers.ManagedResource.String())
-		if err := r.Update(ctx, mres); err != nil {
-			return ctrl.Result{}, err
-		}
-		return reconcileResult.OK()
-	}
-
-	if controllerutil.ContainsFinalizer(mres, finalizers.Foreground.String()) {
-		controllerutil.RemoveFinalizer(mres, finalizers.Foreground.String())
-		if err := r.Update(ctx, mres); err != nil {
-			return ctrl.Result{}, err
-		}
-		return reconcileResult.OK()
-	}
-
-	return reconcileResult.OK()
 }
 
 // SetupWithManager sets up the controller with the Manager.

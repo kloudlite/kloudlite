@@ -121,3 +121,7 @@ func IfThenElse(cond bool, v interface{}, y interface{}) interface{} {
 	}
 	return y
 }
+
+func IsNil(v any) bool {
+	return v == nil
+}

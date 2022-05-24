@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -89,18 +90,22 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request)
 }
 
 func (r *DatabaseReconciler) finalize(ctx context.Context, req *DatabaseReconReq) (ctrl.Result, error) {
-	panic("ASDFASdf")
 	req.database.Status.Conditions = []metav1.Condition{}
 	return ctrl.Result{}, r.Status().Update(ctx, req.database)
 }
 
 func (r *DatabaseReconciler) failWithErr(ctx context.Context, req *DatabaseReconReq, err error) (ctrl.Result, error) {
-	req.logger.Error(err)
 	req.condBuilder.MarkNotReady(err)
-	return ctrl.Result{}, r.updateStatus(ctx, req)
+	if err2 := r.updateStatus(ctx, req); err2 != nil {
+		return ctrl.Result{}, err2
+	}
+	return reconcileResult.FailedE(err)
 }
 
 func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseReconReq) (*ctrl.Result, error) {
+	prevStatus := req.database.Status
+	req.condBuilder.Reset()
+
 	msvcSecret := new(corev1.Secret)
 	if err := r.Client.Get(
 		ctx,
@@ -112,10 +117,70 @@ func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseR
 		return nil, err
 	}
 
-	req.SetStateData(DbUrl, string(msvcSecret.Data["DB_URL"]))
+	dbUrl := string(msvcSecret.Data["DB_URL"])
+
+	req.SetStateData(DbUrl, dbUrl)
 	req.SetStateData(DbHosts, string(msvcSecret.Data["HOSTS"]))
 
-	return nil, nil
+	// check output exists
+	output := new(corev1.Secret)
+	if err := r.Get(
+		ctx, types.NamespacedName{Namespace: req.database.Namespace, Name: req.database.Name}, output,
+	); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+		req.condBuilder.MarkNotReady(err, "OutputSecretNotFound")
+		output = nil
+	}
+
+	req.logger.Debugf("dbUrl: %+v", dbUrl)
+	db, err := connectToDB(ctx, dbUrl, "admin")
+	if err != nil {
+		return nil, err
+	}
+
+	var usersInfo struct {
+		Users []interface{} `json:"users" bson:"users"`
+	}
+
+	sr := db.RunCommand(
+		ctx, bson.D{
+			{Key: "usersInfo", Value: req.database.Name},
+		},
+	)
+	if err = sr.Decode(&usersInfo); err != nil {
+		return nil, errors.NewEf(err, "could not decode usersInfo")
+	}
+
+	if len(usersInfo.Users) > 0 {
+		req.condBuilder.MarkReady(
+			fmt.Sprintf(
+				"MongoDB account with (user=%s,db=%s) already exists",
+				req.database.Name,
+				req.database.Name,
+			), "MongoAccountAlreadyExists",
+		)
+		req.condBuilder.MarkReady("Db and User already exists", "DbAndUserAlreadyExists")
+
+		if fn.IsNil(output) {
+			req.condBuilder.MarkReady(
+				"Db and User already exists, but output secret does not exist, could not reconcile further, aborting...",
+				"IrrReconcilable",
+			)
+		}
+	}
+
+	// check if conditions match or not
+	if req.condBuilder.Equal(prevStatus.Conditions) {
+		req.logger.Infof("conditions match, proceeding with reconcile ops")
+		return nil, nil
+	}
+
+	if err := r.updateStatus(ctx, req); err != nil {
+		return nil, err
+	}
+	return &ctrl.Result{}, nil
 }
 
 func connectToDB(ctx context.Context, uri, dbName string) (*mongo.Database, error) {

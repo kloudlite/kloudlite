@@ -54,6 +54,7 @@ type Output struct {
 
 const (
 	MongoDbRootPasswordKey = "mongodb-root-password"
+	StorageClassKey        = "storage-class"
 )
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -166,8 +167,17 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 	x, ok := helmSecret.Data[MongoDbRootPasswordKey]
 	req.SetStateData(MongoDbRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string))
 
-	req.logger.Debugf("prevStatus.Conditions: %+v", prevStatus.Conditions)
-	req.logger.Debugf("req.mongoSvc.Status.Conditions: %+v", req.mongoSvc.Status.Conditions)
+	// check output exists
+	output := new(corev1.Secret)
+	if err := r.Get(
+		ctx, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name}, output,
+	); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+		req.condBuilder.MarkNotReady(errors.NewEf(err, "output secret not found for resource"), "OutputSecretNotFound")
+		output = nil
+	}
 
 	if req.condBuilder.Equal(prevStatus.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
@@ -187,17 +197,18 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return reconcileResult.FailedE(err)
 	}
 	m[MongoDbRootPasswordKey] = req.GetStateData(MongoDbRootPasswordKey)
+	m[StorageClassKey] = "do-block-storage-xfs"
 
 	req.mongoSvc.Spec.Inputs, err = json.Marshal(m)
 	if err != nil {
 		return reconcileResult.FailedE(err)
 	}
 
-	hash := req.mongoSvc.Hash()
-
-	if hash == req.mongoSvc.Status.LastHash {
-		return reconcileResult.OK()
-	}
+	// hash := req.mongoSvc.Hash()
+	//
+	// if hash == req.mongoSvc.Status.LastHash {
+	// 	return reconcileResult.OK()
+	// }
 
 	b, err := templates.Parse(templates.MongoDBStandalone, req.mongoSvc)
 	if err != nil {
@@ -212,16 +223,11 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return reconcileResult.FailedE(err)
 	}
 
-	req.mongoSvc.Status.LastHash = hash
+	req.mongoSvc.Status.LastHash = req.mongoSvc.Hash()
 
-	err = r.Status().Update(ctx, req.mongoSvc)
-
-	if err != nil {
-		return reconcileResult.FailedE(err)
-	}
-
-	return reconcileResult.OK()
+	return ctrl.Result{}, r.statusUpdate(ctx, req)
 }
+
 func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
 	m, err := req.mongoSvc.Spec.Inputs.MarshalJSON()
 	if err != nil {
@@ -235,7 +241,7 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 	out := Output{
 		RootPassword: j[MongoDbRootPasswordKey].(string),
 		DbHosts:      hostUrl,
-		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", j["root_password"], hostUrl),
+		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", j[MongoDbRootPasswordKey], hostUrl),
 	}
 
 	scrt := &corev1.Secret{

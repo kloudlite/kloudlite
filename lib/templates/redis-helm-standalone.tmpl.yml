@@ -17,6 +17,24 @@ spec:
   image:
     tag: 6.2.7-debian-10-r0
 
+  auth:
+    enabled: true
+    password: {{ index (mustFromJson (.Spec.Inputs | toJson)) "redis-password" }}
+
+  replica:
+    replicaCount: 0
+
+  architecture: standalone
+
+  commonConfig: |+
+  {{- if .Spec.ACLAccounts}}
+  {{-range $k, $v := .Spec.ACLAccounts}}
+  {{- with $v}}
+    USER {{.Username}} on ~{{.Prefix}}:* +@all -@dangerous +info resetpass > {{.Password}}
+  {{-end }}
+  {{-end }}
+  {{-end }}
+
   master:
     resources:
       requests:
@@ -26,14 +44,6 @@ spec:
         cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
         memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi
 
-  replica:
-    replicaCount: 0
-
-  architecture: standalone
-
-  auth:
-    enabled: true
-    password: {{ index (mustFromJson (.Spec.Inputs | toJson)) "redis-password" }}
 
   persistence:
     enabled: true
