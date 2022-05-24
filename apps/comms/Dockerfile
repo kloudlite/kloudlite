@@ -15,6 +15,7 @@ RUN chmod +x /tmp/bin/comms
 FROM golang:1.18-alpine
 USER 1001
 WORKDIR /tmp/app
+ARG APP_DIR
 COPY --from=base --chown=1001 /tmp/bin/comms ./
-COPY --chown=1001 ./email-templates ./email-templates
+COPY --chown=1001 ./${APP_DIR}/email-templates ./
 ENTRYPOINT ["./comms"]
