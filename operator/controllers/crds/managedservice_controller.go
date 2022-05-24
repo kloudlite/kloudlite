@@ -69,7 +69,6 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Re
 	}
 
 	ctrlRequest, err := r.reconcileStatus(ctx, req)
-	req.logger.Error(err)
 	if err != nil {
 		return r.failWithErr(ctx, req, err)
 	}
@@ -80,6 +79,42 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Re
 	return r.reconcileOperations(ctx, req)
 }
 
+func (r *ManagedServiceReconciler) finalize(ctx context.Context, req *MsvcReconReq) (ctrl.Result, error) {
+	msvc := req.msvc
+	msvcFinalizer := finalizers.ManagedService.String()
+
+	if controllerutil.ContainsFinalizer(msvc, msvcFinalizer) {
+		controllerutil.RemoveFinalizer(msvc, msvcFinalizer)
+		return ctrl.Result{}, r.Update(ctx, msvc)
+	}
+
+	if controllerutil.ContainsFinalizer(msvc, finalizers.Foreground.String()) {
+		resource := unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": msvc.Spec.ApiVersion,
+				"kind":       "Service",
+			},
+		}
+
+		if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: msvc.Name}, &resource); err != nil {
+			req.logger.Infof("ERR: %+v", err)
+			if apiErrors.IsNotFound(err) {
+				controllerutil.RemoveFinalizer(msvc, finalizers.Foreground.String())
+				return ctrl.Result{}, r.Update(ctx, msvc)
+			}
+		}
+
+		// HACK: this is a hack to get the service to be deleted, IDK ownerReferences somehow not getting it deleted
+		if resource.GetName() != "" {
+			if err := r.Delete(ctx, &resource); err != nil {
+				return r.failWithErr(ctx, req, err)
+			}
+		}
+	}
+
+	return reconcileResult.OK()
+}
+
 func (r *ManagedServiceReconciler) statusUpdate(ctx context.Context, req *MsvcReconReq) error {
 	req.msvc.Status.Conditions = req.condBuilder.GetAll()
 	if err := r.notify(req); err != nil {
@@ -88,11 +123,10 @@ func (r *ManagedServiceReconciler) statusUpdate(ctx context.Context, req *MsvcRe
 	return r.Status().Update(ctx, req.msvc)
 }
 
-func (r *ManagedServiceReconciler) failWithErr(
-	ctx context.Context,
-	req *MsvcReconReq,
-	err error,
-) (ctrl.Result, error) {
+func (r *ManagedServiceReconciler) failWithErr(ctx context.Context, req *MsvcReconReq, err error) (
+	ctrl.Result,
+	error,
+) {
 	req.condBuilder.MarkNotReady(err)
 	return ctrl.Result{}, r.statusUpdate(ctx, req)
 }
@@ -187,55 +221,6 @@ func (r *ManagedServiceReconciler) notify(req *MsvcReconReq) error {
 			Status:     req.condBuilder.IsTrue(constants.ConditionReady.Type),
 		},
 	)
-}
-
-func (r *ManagedServiceReconciler) finalize(ctx context.Context, req *MsvcReconReq) (ctrl.Result, error) {
-	panic("not implemented")
-	msvc := req.msvc
-	msvcFinalizer := finalizers.ManagedService.String()
-
-	req.msvc.Status.Conditions = []metav1.Condition{}
-	return ctrl.Result{}, r.Status().Update(ctx, req.msvc)
-	// if err := r.Status().Update(ctx, req); err != nil {
-	// 	return ctrl.Result{}, err
-	// }
-
-	// controllerutil.RemoveFinalizer(msvc, msvcFinalizer)
-	// controllerutil.RemoveFinalizer(msvc, finalizers.Foreground.String())
-	// if err := r.Update(ctx, msvc); err != nil {
-	// 	return ctrl.Result{}, err
-	// }
-
-	if controllerutil.ContainsFinalizer(msvc, msvcFinalizer) {
-		controllerutil.RemoveFinalizer(msvc, msvcFinalizer)
-		return ctrl.Result{}, r.Update(ctx, msvc)
-	}
-
-	if controllerutil.ContainsFinalizer(msvc, finalizers.Foreground.String()) {
-		resource := unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": msvc.Spec.ApiVersion,
-				"kind":       "Service",
-			},
-		}
-
-		if err := r.Get(ctx, types.NamespacedName{Namespace: msvc.Namespace, Name: msvc.Name}, &resource); err != nil {
-			req.logger.Infof("ERR: %+v", err)
-			if apiErrors.IsNotFound(err) {
-				controllerutil.RemoveFinalizer(msvc, finalizers.Foreground.String())
-				return ctrl.Result{}, r.Update(ctx, msvc)
-			}
-		}
-
-		// HACK: this is a hack to get the service to be deleted, IDK ownerReferences somehow not getting it deleted
-		if resource.GetName() != "" {
-			if err := r.Delete(ctx, &resource); err != nil {
-				return r.failWithErr(ctx, req, err)
-			}
-		}
-	}
-
-	return reconcileResult.OK()
 }
 
 func (r *ManagedServiceReconciler) watcherFuncMap(c client.Object) []reconcile.Request {

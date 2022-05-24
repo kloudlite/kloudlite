@@ -11,8 +11,8 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
-#  global:
-#    storageClass: do-block-storage
+  global:
+    storageClass: {{ index (mustFromJson (.Spec.Inputs | toJson)) "storage-class" | default "" }}
   fullnameOverride: {{.Name}}
   image:
     tag: 5.0.8-debian-10-r20

@@ -270,14 +270,26 @@ func (s *statusConditions) IsFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(s.conditions, conditionType)
 }
 
-func (s *statusConditions) MarkNotReady(err error) {
-	s.SetReady(metav1.ConditionFalse, constants.ConditionReady.ErrorReason, err.Error())
+func (s *statusConditions) MarkNotReady(err error, reason ...string) {
+	r := constants.ConditionReady.ErrorReason
+	if len(reason) > 0 {
+		r = reason[0]
+	}
+	s.SetReady(
+		metav1.ConditionFalse,
+		r,
+		err.Error(),
+	)
 }
 
 func (c *statusConditions) MarkReady(msg string, reason ...string) {
+	r := constants.ConditionReady.SuccessReason
+	if len(reason) > 0 {
+		r = reason[0]
+	}
 	c.SetReady(
 		metav1.ConditionFalse,
-		IfThenElse(len(reason) > 0, reason[0], constants.ConditionReady.SuccessReason).(string),
+		r,
 		msg,
 	)
 }
@@ -318,7 +330,7 @@ type StatusConditions interface {
 	BuildFromPods(pl ...corev1.Pod) error
 	IsTrue(conditionType string) bool
 	IsFalse(conditionType string) bool
-	MarkNotReady(err error)
+	MarkNotReady(err error, reason ...string)
 	MarkReady(msg string, reason ...string)
 	SetReady(t metav1.ConditionStatus, reason string, msg string)
 	Reset()

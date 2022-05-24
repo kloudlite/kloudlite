@@ -47,7 +47,7 @@ type ServiceReconciler struct {
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 type ServiceReconReq struct {
-	req    ctrl.Request
+	ctrl.Request
 	logger *zap.SugaredLogger
 	t.ReconReq
 	condBuilder fn.StatusConditions
@@ -61,6 +61,71 @@ const (
 type Output struct {
 	RootPassword string `json:"ROOT_PASSWORD"`
 	DbHosts      string `json:"HOSTS"`
+}
+
+func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
+	req := &ServiceReconReq{
+		Request:  orgReq,
+		logger:   crds.GetLogger(orgReq.NamespacedName),
+		redisSvc: new(redisStandalone.Service),
+	}
+
+	if err := r.Get(ctx, orgReq.NamespacedName, req.redisSvc); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return reconcileResult.OK()
+		}
+		return reconcileResult.Failed()
+	}
+
+	if !req.redisSvc.HasLabels() {
+		req.redisSvc.EnsureLabels()
+		if err := r.Update(ctx, req.redisSvc); err != nil {
+			return reconcileResult.FailedE(err)
+		}
+		return reconcileResult.OK()
+	}
+
+	if req.redisSvc.GetDeletionTimestamp() != nil {
+		return r.finalize(ctx, req)
+	}
+
+	reconResult, err := r.reconcileStatus(ctx, req)
+
+	if err != nil {
+		return r.failWithErr(ctx, req, err)
+	}
+	if reconResult != nil {
+		return *reconResult, nil
+	}
+
+	req.logger.Infof("status is in sync, so proceeding with ops")
+	return r.reconcileOperations(ctx, req)
+}
+
+func (r *ServiceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
+	req.logger.Infof("finalizing: %+v", req.redisSvc.NameRef())
+	if err := r.Delete(
+		ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": constants.MsvcApiVersion,
+				"kind":       constants.HelmRedisKind,
+				"metadata": map[string]interface{}{
+					"name":      req.redisSvc.Name,
+					"namespace": req.redisSvc.Namespace,
+				},
+			},
+		},
+	); err != nil {
+		req.logger.Infof("could not delete helm resource: %+v", err)
+		if !apiErrors.IsNotFound(err) {
+			return reconcileResult.FailedE(err)
+		}
+	}
+	controllerutil.RemoveFinalizer(req.redisSvc, finalizers.MsvcCommonService.String())
+	if err := r.Update(ctx, req.redisSvc); err != nil {
+		return reconcileResult.FailedE(err)
+	}
+	return reconcileResult.OK()
 }
 
 func (r *ServiceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
@@ -180,45 +245,6 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 	return reconcileResult.OK()
 }
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
-	req := &ServiceReconReq{
-		req:      orgReq,
-		logger:   crds.GetLogger(orgReq.NamespacedName),
-		redisSvc: new(redisStandalone.Service),
-	}
-
-	if err := r.Get(ctx, orgReq.NamespacedName, req.redisSvc); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return reconcileResult.OK()
-		}
-		return reconcileResult.Failed()
-	}
-
-	if !req.redisSvc.HasLabels() {
-		req.redisSvc.EnsureLabels()
-		if err := r.Update(ctx, req.redisSvc); err != nil {
-			return reconcileResult.FailedE(err)
-		}
-		return reconcileResult.OK()
-	}
-
-	if req.redisSvc.GetDeletionTimestamp() != nil {
-		return r.finalize(ctx, req)
-	}
-
-	reconResult, err := r.reconcileStatus(ctx, req)
-
-	if err != nil {
-		return r.failWithErr(ctx, req, err)
-	}
-	if reconResult != nil {
-		return *reconResult, nil
-	}
-
-	req.logger.Infof("status is in sync, so proceeding with ops")
-	return r.reconcileOperations(ctx, req)
-}
-
 func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
 	m, err := req.redisSvc.Spec.Inputs.MarshalJSON()
 	if err != nil {
@@ -256,32 +282,6 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 		return err
 	}
 	return nil
-}
-
-func (r *ServiceReconciler) finalize(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
-	req.logger.Infof("finalizing: %+v", req.redisSvc.NameRef())
-	if err := r.Delete(
-		ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": constants.MsvcApiVersion,
-				"kind":       constants.HelmRedisKind,
-				"metadata": map[string]interface{}{
-					"name":      req.redisSvc.Name,
-					"namespace": req.redisSvc.Namespace,
-				},
-			},
-		},
-	); err != nil {
-		req.logger.Infof("could not delete helm resource: %+v", err)
-		if !apiErrors.IsNotFound(err) {
-			return reconcileResult.FailedE(err)
-		}
-	}
-	controllerutil.RemoveFinalizer(req.redisSvc, finalizers.MsvcCommonService.String())
-	if err := r.Update(ctx, req.redisSvc); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	return reconcileResult.OK()
 }
 
 func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
