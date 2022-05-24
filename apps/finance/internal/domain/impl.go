@@ -42,6 +42,24 @@ type domainI struct {
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
 }
 
+func (domain *domainI) GetComputeInventoryByName(ctx context.Context, name string) (*InventoryItem, error) {
+	file, err := ioutil.ReadFile("./inventory.yaml")
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*InventoryItem, 0)
+	err = yaml.Unmarshal(file, &items)
+	if err != nil {
+		return nil, err
+	}
+	for _, i := range items {
+		if i.Name == name {
+			return i, nil
+		}
+	}
+	return nil, errors.New("inventory item not found")
+}
+
 func (domain *domainI) GetComputeInventory(provider *string) ([]*InventoryItem, error) {
 	file, err := ioutil.ReadFile("./inventory.yaml")
 	if err != nil {
@@ -72,7 +90,7 @@ func (domain *domainI) GetCurrentMonthBilling(ctx context.Context, accountID rep
 		Filter: repos.Filter{
 			"account_id": accountID,
 			"start_time": repos.Filter{
-				"gte": firstOfMonth.String(),
+				"$gte": firstOfMonth,
 			},
 		},
 	})

@@ -105,6 +105,8 @@ input AppFlowInput{
   description: String
   exposed_services: [ExposedServiceInput!]!
   containers:[AppContainerInput!]!
+  provider: String!
+  region: String!
 }
 
 type App {
@@ -181,16 +183,30 @@ input PipelineDataInput{
   metadata: Json
 }
 
+extend type ComputeInventoryItem @key(fields: "name") {
+  name: String! @external
+  data: ComputeInventoryData!
+}
+
+type ComputeInventoryData {
+  memory: ComputeInventoryMetricSize!
+  cpu: ComputeInventoryMetricSize!
+}
+
+type ComputeInventoryMetricSize {
+  quantity: Float!
+  unit: String!
+}
+
+
 input AppContainerInput{
   name: String!
   image: String
   pipelineData: PipelineDataInput,
   pull_secret: String
   env_vars:[EnvVarInput!]!
-  cpu_min:String!
-  cpu_max:String!
-  mem_min:String!
-  mem_max:String!
+  computePlan: String!
+  compute_size: Float!
   attached_resources:[AttachedResInput!]!
 }
 

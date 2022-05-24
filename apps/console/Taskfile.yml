@@ -18,6 +18,8 @@ tasks:
       INFRA_PORT: 3001
       AUTH_HOST: auth-api.hotspot.svc.cluster.local
       AUTH_PORT: 3001
+      FINANCE_HOST: localhost
+      FINANCE_PORT: 50054
       CI_HOST: ci-api.hotspot.svc.cluster.local
       CI_PORT: 3001
       IAM_SERVER_HOST: iam.hotspot.svc.cluster.local

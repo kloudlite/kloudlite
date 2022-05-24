@@ -23,8 +23,8 @@
 
 - type: Compute
   provider: do
-  name: DigitalOceanBasic (Shared)
-  desc: 1 GB 1 VCPU
+  name: DigitalOceanBasic
+  desc: 1 GB 1 VCPU  (Shared)
   pricePerHour:
     quantity: 0.0108
     currency: $

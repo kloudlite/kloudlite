@@ -84,6 +84,10 @@ func (e *Env) GetHttpCors() string {
 	return e.HttpCors
 }
 
+func (e *Env) GetGRPCPort() uint16 {
+	return e.GrpcPort
+}
+
 var Module = fx.Module("framework",
 	fx.Provide(logger.NewLogger),
 	config.EnvFx[Env](),
@@ -92,7 +96,7 @@ var Module = fx.Module("framework",
 	config.EnvFx[CiGrpcEnv](),
 	config.EnvFx[AuthGRPCEnv](),
 	config.EnvFx[CommsGRPCEnv](),
-	//rpc.NewGrpcServerFx[*Env](),
+	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*CommsGRPCEnv, app.CommsClientConnection](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),

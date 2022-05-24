@@ -8,6 +8,9 @@ import (
 )
 
 type Domain interface {
+	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
+	GetComputePlans(ctx context.Context, provider string, region string) ([]*entities.ComputePlan, error)
+
 	CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
 	CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error)
 	UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
