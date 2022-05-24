@@ -295,19 +295,13 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 		}
 
 		in := entities.ContainerIn{
-			Name:            container.Name,
-			Image:           container.Image,
-			ImagePullSecret: container.PullSecret,
-			EnvVars:         e,
-			CPULimits: entities.Limit{
-				Min: container.CPUMin,
-				Max: container.CPUMax,
-			},
-			MemoryLimits: entities.Limit{
-				Min: container.MemMin,
-				Max: container.MemMax,
-			},
-			AttachedResources: a,
+			Name:                container.Name,
+			Image:               container.Image,
+			ImagePullSecret:     container.PullSecret,
+			EnvVars:             e,
+			ComputePlanName:     container.ComputePlan,
+			ComputePlanQuantity: container.ComputeSize,
+			AttachedResources:   a,
 		}
 		if container.PipelineData != nil {
 			i := *container.PipelineData.GithubInstallationID
@@ -336,6 +330,8 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 		Replicas:     1,
 		ExposedPorts: ports,
 		Containers:   containers,
+		Provider:     app.Provider,
+		Region:       app.Region,
 	})
 }
 

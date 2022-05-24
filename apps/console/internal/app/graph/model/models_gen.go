@@ -46,10 +46,8 @@ type AppContainerInput struct {
 	PipelineData      *PipelineDataInput  `json:"pipelineData"`
 	PullSecret        *string             `json:"pull_secret"`
 	EnvVars           []*EnvVarInput      `json:"env_vars"`
-	CPUMin            string              `json:"cpu_min"`
-	CPUMax            string              `json:"cpu_max"`
-	MemMin            string              `json:"mem_min"`
-	MemMax            string              `json:"mem_max"`
+	ComputePlan       string              `json:"computePlan"`
+	ComputeSize       float64             `json:"compute_size"`
 	AttachedResources []*AttachedResInput `json:"attached_resources"`
 }
 
@@ -59,6 +57,8 @@ type AppFlowInput struct {
 	Description     *string                `json:"description"`
 	ExposedServices []*ExposedServiceInput `json:"exposed_services"`
 	Containers      []*AppContainerInput   `json:"containers"`
+	Provider        string                 `json:"provider"`
+	Region          string                 `json:"region"`
 }
 
 type AppService struct {
@@ -113,6 +113,23 @@ type ClusterSubscription struct {
 	Account     *Account  `json:"account"`
 	Devices     []*Device `json:"devices"`
 	UserDevices []*Device `json:"userDevices"`
+}
+
+type ComputeInventoryData struct {
+	Memory *ComputeInventoryMetricSize `json:"memory"`
+	CPU    *ComputeInventoryMetricSize `json:"cpu"`
+}
+
+type ComputeInventoryItem struct {
+	Name string                `json:"name"`
+	Data *ComputeInventoryData `json:"data"`
+}
+
+func (ComputeInventoryItem) IsEntity() {}
+
+type ComputeInventoryMetricSize struct {
+	Quantity float64 `json:"quantity"`
+	Unit     string  `json:"unit"`
 }
 
 type Config struct {

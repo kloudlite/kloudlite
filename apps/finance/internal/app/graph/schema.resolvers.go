@@ -174,7 +174,7 @@ func (r *queryResolver) FinanceGetComputeInventory(ctx context.Context, provider
 	inventory, err := r.domain.GetComputeInventory(provider)
 	inventoryModel := make([]*model.ComputeInventoryItem, 0)
 	for _, i := range inventory {
-		entity := computeInventoryItemFromEntity(i)
+		entity := ComputeInventoryItemFromEntity(i)
 		inventoryModel = append(inventoryModel, entity)
 		fmt.Println(fmt.Sprintf("%v, %v", entity.PricePerHour, entity.PricePerMonth))
 	}

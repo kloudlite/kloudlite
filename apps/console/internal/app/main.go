@@ -10,6 +10,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -66,6 +67,7 @@ type Env struct {
 type InfraClientConnection *grpc.ClientConn
 type IAMClientConnection *grpc.ClientConn
 type AuthClientConnection *grpc.ClientConn
+type FinanceClientConnection *grpc.ClientConn
 type CIClientConnection *grpc.ClientConn
 
 var Module = fx.Module(
@@ -101,6 +103,10 @@ var Module = fx.Module(
 
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(conn FinanceClientConnection) finance.FinanceClient {
+		return finance.NewFinanceClient((*grpc.ClientConn)(conn))
 	}),
 
 	// Grpc Server

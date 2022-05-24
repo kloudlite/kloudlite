@@ -62,14 +62,16 @@ type PipelineIn struct {
 }
 
 type ContainerIn struct {
-	Name              string
-	Image             *string
-	ImagePullSecret   *string
-	Pipeline          *PipelineIn
-	EnvVars           []EnvVar
-	CPULimits         Limit
-	MemoryLimits      Limit
-	AttachedResources []AttachedResource
+	Name            string
+	Image           *string
+	ImagePullSecret *string
+	Pipeline        *PipelineIn
+	EnvVars         []EnvVar
+	//CPULimits         Limit
+	//MemoryLimits      Limit
+	ComputePlanName     string
+	ComputePlanQuantity float64
+	AttachedResources   []AttachedResource
 }
 
 type AppStatus string
@@ -92,6 +94,8 @@ type AppIn struct {
 	Containers   []ContainerIn
 	Status       AppStatus
 	Conditions   []metav1.Condition
+	Provider     string
+	Region       string
 }
 
 type App struct {

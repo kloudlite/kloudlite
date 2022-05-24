@@ -19,6 +19,26 @@ func (r *entityResolver) FindClusterByID(ctx context.Context, id repos.ID) (*mod
 	return r.Query().InfraGetCluster(ctx, id)
 }
 
+func (r *entityResolver) FindComputeInventoryItemByName(ctx context.Context, name string) (*model.ComputeInventoryItem, error) {
+	plan, err := r.Domain.GetComputePlan(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ComputeInventoryItem{
+		Name: name,
+		Data: &model.ComputeInventoryData{
+			Memory: &model.ComputeInventoryMetricSize{
+				Quantity: plan.Memory.Quantity,
+				Unit:     plan.Memory.Unit,
+			},
+			CPU: &model.ComputeInventoryMetricSize{
+				Quantity: plan.Cpu.Quantity,
+				Unit:     plan.Cpu.Unit,
+			},
+		},
+	}, nil
+}
+
 func (r *entityResolver) FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error) {
 	device, err := r.Domain.GetDevice(ctx, id)
 	return &model.Device{

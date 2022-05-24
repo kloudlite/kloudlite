@@ -24,6 +24,15 @@ func (e *GrpcInfraConfig) GetGCPServerURL() string {
 	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
 }
 
+type GrpcFinanceConfig struct {
+	FinanceGrpcHost string `env:"FINANCE_HOST" required:"true"`
+	FinanceGrpcPort string `env:"FINANCE_PORT" required:"true"`
+}
+
+func (e *GrpcFinanceConfig) GetGCPServerURL() string {
+	return e.FinanceGrpcHost + ":" + e.FinanceGrpcPort
+}
+
 type GrpcAuthConfig struct {
 	AuthGrpcHost string `env:"AUTH_HOST" required:"true"`
 	AuthGrpcPort string `env:"AUTH_PORT" required:"true"`
@@ -112,6 +121,7 @@ var Module = fx.Module("framework",
 	config.EnvFx[IAMGRPCEnv](),
 	config.EnvFx[GrpcInfraConfig](),
 	config.EnvFx[GrpcAuthConfig](),
+	config.EnvFx[GrpcFinanceConfig](),
 	config.EnvFx[GrpcCIConfig](),
 
 	fx.Provide(logger.NewLogger),
@@ -121,6 +131,7 @@ var Module = fx.Module("framework",
 	rpc.NewGrpcClientFx[*GrpcInfraConfig, app.InfraClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
+	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),
 	mongo_db.NewMongoClientFx[*Env](),
 	messaging.NewKafkaClientFx[*Env](),
 	cache.NewRedisFx[*Env](),

@@ -7,6 +7,14 @@ service Finance {
   rpc stopBillable(StopBillableIn) returns (StopBillableOut);
 }
 
+message ComputePlan {
+  string provider = 1;
+  string name =2;
+  string desc = 3;
+  float  memoryUnitSize = 4;
+  float cpuUnitSize = 5;
+}
+
 message StartBillableIn {
   string accountId = 1;
   string BillableType = 2;

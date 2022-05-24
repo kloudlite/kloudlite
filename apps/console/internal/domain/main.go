@@ -6,12 +6,14 @@ import (
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/yaml.v3"
+	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
@@ -60,10 +62,52 @@ type domain struct {
 	authClient           auth.AuthClient
 	changeNotifier       rcn.ResourceChangeNotifier
 	clusterAccountRepo   repos.DbRepo[*entities.ClusterAccount]
+	financeClient        finance.FinanceClient
+}
+
+func getComputePlan(name string) (*entities.ComputePlan, error) {
+	file, err := ioutil.ReadFile("compute-plans.yaml")
+	if err != nil {
+		return nil, err
+	}
+	plans := make([]entities.ComputePlan, 0)
+	err = yaml.Unmarshal(file, &plans)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, plan := range plans {
+		if plan.Name == name {
+			return &plan, nil
+		}
+	}
+	return nil, errors.New("plan not found")
+}
+
+func (d *domain) GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error) {
+	return getComputePlan(name)
+}
+
+func (d *domain) GetComputePlans(ctx context.Context, provider string, region string) ([]*entities.ComputePlan, error) {
+	file, err := ioutil.ReadFile("compute-plans.yaml")
+	if err != nil {
+		return nil, err
+	}
+	plans := make([]*entities.ComputePlan, 0)
+	err = yaml.Unmarshal(file, &plans)
+	if err != nil {
+		return nil, err
+	}
+	filteredPlans := make([]*entities.ComputePlan, 0)
+	for _, plan := range plans {
+		if plan.Provider == provider && plan.Region == region {
+			filteredPlans = append(filteredPlans, plan)
+		}
+	}
+	return filteredPlans, nil
 }
 
 func (d *domain) OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error {
-	fmt.Println("OnSetupClusterAccount", payload)
 	one, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
 		"cluster_id": payload.ClusterId,
 		"account_id": payload.AccountId,
@@ -307,7 +351,8 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	return output.Output, err
 }
 
-func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn) (*entities.App, error) {
+func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn, accountId repos.ID) (*entities.App, []*finance.StartBillableIn, error) {
+	startBillables := make([]*finance.StartBillableIn, 0)
 	a := entities.App{
 		ReadableId:   app.ReadableId,
 		ProjectId:    app.ProjectId,
@@ -318,18 +363,32 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 		ExposedPorts: app.ExposedPorts,
 	}
 	for _, c := range app.Containers {
-		// TODO
 		var iName string
 		if c.Image != nil {
 			iName = fmt.Sprintf("%s:latest", *c.Image)
 		}
+		plan, err := getComputePlan(c.ComputePlanName)
+		startBillables = append(startBillables, &finance.StartBillableIn{
+			AccountId:    string(accountId),
+			BillableType: c.ComputePlanName,
+			Quantity:     float32(c.ComputePlanQuantity),
+		})
+		if err != nil {
+			return nil, startBillables, err
+		}
 		container := entities.Container{
-			Name:              c.Name,
-			Image:             &iName,
-			ImagePullSecret:   c.ImagePullSecret,
-			EnvVars:           c.EnvVars,
-			CPULimits:         c.CPULimits,
-			MemoryLimits:      c.MemoryLimits,
+			Name:            c.Name,
+			Image:           &iName,
+			ImagePullSecret: c.ImagePullSecret,
+			EnvVars:         c.EnvVars,
+			CPULimits: entities.Limit{
+				Min: fmt.Sprintf("%v%v", plan.Cpu.Quantity*c.ComputePlanQuantity, plan.Cpu.Unit),
+				Max: fmt.Sprintf("%v%v", plan.Cpu.Quantity, plan.Cpu.Unit),
+			},
+			MemoryLimits: entities.Limit{
+				Min: fmt.Sprintf("%v%v", plan.Memory.Quantity*c.ComputePlanQuantity, plan.Memory.Unit),
+				Max: fmt.Sprintf("%v%v", plan.Memory.Quantity, plan.Memory.Unit),
+			},
 			AttachedResources: c.AttachedResources,
 		}
 
@@ -359,14 +418,14 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 				BuildArgs:            b,
 			})
 			if err != nil {
-				return nil, err
+				return nil, startBillables, err
 			}
 			container.PipelineId = repos.ID(pipeline.PipelineId)
 			container.Image = &imageName
 		}
 		a.Containers = append(a.Containers, container)
 	}
-	return &a, nil
+	return &a, startBillables, nil
 }
 
 func (d *domain) InstallAppFlow(
@@ -375,11 +434,12 @@ func (d *domain) InstallAppFlow(
 	projectId repos.ID,
 	appIn entities.AppIn,
 ) (bool, error) {
+	var startBillables []*finance.StartBillableIn
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return false, err
 	}
-	app, err := d.createPipelinesOfApp(ctx, userId, appIn)
+	app, startBillables, err := d.createPipelinesOfApp(ctx, userId, appIn, prj.AccountId)
 	if err != nil {
 		return false, err
 	}
@@ -435,6 +495,18 @@ func (d *domain) InstallAppFlow(
 		})
 	}
 
+	billIds := make([]string, 0)
+
+	for _, billable := range startBillables {
+		startBillable, err := d.financeClient.StartBillable(ctx, billable)
+		if err != nil {
+			err := errors.Newf("[FinanceError] failed to start billable: %v, need to stop bills %v", err, billIds)
+			d.logger.Error(err)
+			return false, err
+		}
+		billIds = append(billIds, startBillable.BillingId)
+	}
+
 	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
 		APIVersion: op_crds.AppAPIVersion,
 		Kind:       op_crds.AppKind,
@@ -448,6 +520,7 @@ func (d *domain) InstallAppFlow(
 			Replicas:   1,
 		},
 	})
+
 	return true, nil
 }
 
@@ -1572,6 +1645,7 @@ func fxDomain(
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,
 	authClient auth.AuthClient,
+	financeClient finance.FinanceClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 ) Domain {
 	var x repos.DbRepo[*entities.Cluster]
@@ -1600,6 +1674,7 @@ func fxDomain(
 		messageTopic:         env.KafkaInfraTopic,
 		managedTemplatesPath: env.ManagedTemplatesPath,
 		logger:               logger,
+		financeClient:        financeClient,
 	}
 }
 

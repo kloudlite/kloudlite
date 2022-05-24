@@ -47,24 +47,15 @@ type BillingInput struct {
 	Address             map[string]interface{} `json:"address"`
 }
 
-type ComputeInventoryData struct {
-	Memory *ComputeInventoryMetricSize `json:"memory"`
-	CPU    *ComputeInventoryMetricSize `json:"cpu"`
-}
-
 type ComputeInventoryItem struct {
-	Name          string                `json:"name"`
-	Provider      string                `json:"provider"`
-	Desc          string                `json:"desc"`
-	Data          *ComputeInventoryData `json:"data"`
-	PricePerHour  *ItemPrice            `json:"price_perHour"`
-	PricePerMonth *ItemPrice            `json:"price_perMonth"`
+	Name          string     `json:"name"`
+	Provider      string     `json:"provider"`
+	Desc          string     `json:"desc"`
+	PricePerHour  *ItemPrice `json:"price_perHour"`
+	PricePerMonth *ItemPrice `json:"price_perMonth"`
 }
 
-type ComputeInventoryMetricSize struct {
-	Quantity float64 `json:"quantity"`
-	Unit     string  `json:"unit"`
-}
+func (ComputeInventoryItem) IsEntity() {}
 
 type CurrentMonthBilling struct {
 	AccountID repos.ID    `json:"accountId"`
