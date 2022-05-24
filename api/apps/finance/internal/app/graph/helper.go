@@ -46,7 +46,7 @@ func currentMonthBillingModelFromBillables(startDate time.Time, accountId repos.
 	}
 }
 
-func computeInventoryItemFromEntity(item *domain.InventoryItem) *model.ComputeInventoryItem {
+func ComputeInventoryItemFromEntity(item *domain.InventoryItem) *model.ComputeInventoryItem {
 	var modelPricePerHour *model.ItemPrice
 	if item.PricePerHour != nil {
 		modelPricePerHour = &model.ItemPrice{
@@ -55,27 +55,10 @@ func computeInventoryItemFromEntity(item *domain.InventoryItem) *model.ComputeIn
 		}
 	}
 
-	var data map[string]any
-	data = item.Data
-
-	memoryData := model.ComputeInventoryMetricSize{
-		Quantity: data["memory"].(map[any]any)["quantity"].(float64),
-		Unit:     data["memory"].(map[any]any)["unit"].(string),
-	}
-
-	cpuData := model.ComputeInventoryMetricSize{
-		Quantity: data["cpu"].(map[any]any)["quantity"].(float64),
-		Unit:     data["cpu"].(map[any]any)["unit"].(string),
-	}
-
 	return &model.ComputeInventoryItem{
-		Name:     item.Name,
-		Provider: item.Provider,
-		Desc:     item.Desc,
-		Data: &model.ComputeInventoryData{
-			Memory: &memoryData,
-			CPU:    &cpuData,
-		},
+		Name:         item.Name,
+		Provider:     item.Provider,
+		Desc:         item.Desc,
 		PricePerHour: modelPricePerHour,
 		PricePerMonth: &model.ItemPrice{
 			Quantity: item.PricePerMonth.Quantity,

@@ -51,4 +51,5 @@ type Domain interface {
 	StopBillable(ctx context.Context, billableId repos.ID) error
 	GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*Billable, time.Time, error)
 	GetComputeInventory(provider *string) ([]*InventoryItem, error)
+	GetComputeInventoryByName(ctx context.Context, name string) (*InventoryItem, error)
 }

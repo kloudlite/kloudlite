@@ -21,23 +21,12 @@ type Mutation {
 
 }
 
-type ComputeInventoryItem {
+type ComputeInventoryItem @key(fields: "name") {
     name: String!
     provider: String!
     desc: String!
-    data: ComputeInventoryData!
     price_perHour: ItemPrice
     price_perMonth: ItemPrice!
-}
-
-type ComputeInventoryData {
-    memory: ComputeInventoryMetricSize!
-    cpu: ComputeInventoryMetricSize!
-}
-
-type ComputeInventoryMetricSize {
-    quantity: Float!
-    unit: String!
 }
 
 type ItemPrice {

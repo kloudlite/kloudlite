@@ -9,6 +9,7 @@ import (
 	"kloudlite.io/apps/finance/internal/domain"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -34,10 +35,10 @@ var Module = fx.Module(
 		return comms.NewCommsClient((*grpc.ClientConn)(conn))
 	}),
 	// Grpc Server
-	//fx.Provide(fxFinanceGrpcServer),
-	//fx.Invoke(func(server *grpc.Server, financeServer finance.FinanceServer) {
-	//	finance.RegisterFinanceServer(server, financeServer)
-	//}),
+	fx.Provide(fxFinanceGrpcServer),
+	fx.Invoke(func(server *grpc.Server, financeServer finance.FinanceServer) {
+		finance.RegisterFinanceServer(server, financeServer)
+	}),
 
 	fx.Invoke(func(
 		server *fiber.App,
