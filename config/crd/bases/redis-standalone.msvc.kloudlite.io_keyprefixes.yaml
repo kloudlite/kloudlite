@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: services.redis-standalone.msvc.kloudlite.io
+  name: keyprefixes.redis-standalone.msvc.kloudlite.io
 spec:
   group: redis-standalone.msvc.kloudlite.io
   names:
-    kind: Service
-    listKind: ServiceList
-    plural: services
-    singular: service
+    kind: KeyPrefix
+    listKind: KeyPrefixList
+    plural: keyprefixes
+    singular: keyprefix
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Service is the Schema for the services API
+        description: KeyPrefix is the Schema for the keyprefixes API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,15 +33,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServiceSpec defines the desired state of Service
             properties:
-              aclAccounts:
-                additionalProperties:
-                  type: string
-                type: object
               inputs:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              managedSvcName:
+                type: string
+            required:
+            - managedSvcName
             type: object
           status:
             properties:
@@ -113,8 +112,6 @@ spec:
                   - type
                   type: object
                 type: array
-              lastHash:
-                type: string
             type: object
         type: object
     served: true

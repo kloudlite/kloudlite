@@ -398,7 +398,7 @@ rules:
 - apiGroups:
   - redis-cluster.msvc.kloudlite.io
   resources:
-  - redis
+  - keyprefixes
   verbs:
   - create
   - delete
@@ -410,13 +410,13 @@ rules:
 - apiGroups:
   - redis-cluster.msvc.kloudlite.io
   resources:
-  - redis/finalizers
+  - keyprefixes/finalizers
   verbs:
   - update
 - apiGroups:
   - redis-cluster.msvc.kloudlite.io
   resources:
-  - redis/status
+  - keyprefixes/status
   verbs:
   - get
   - patch
@@ -424,7 +424,7 @@ rules:
 - apiGroups:
   - redis-standalone.msvc.kloudlite.io
   resources:
-  - redis
+  - keyprefixes
   verbs:
   - create
   - delete
@@ -436,13 +436,13 @@ rules:
 - apiGroups:
   - redis-standalone.msvc.kloudlite.io
   resources:
-  - redis/finalizers
+  - keyprefixes/finalizers
   verbs:
   - update
 - apiGroups:
   - redis-standalone.msvc.kloudlite.io
   resources:
-  - redis/status
+  - keyprefixes/status
   verbs:
   - get
   - patch

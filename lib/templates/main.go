@@ -77,4 +77,5 @@ const (
 	CommonMsvc                        templateFile = "msvc-common-service.tmpl.yml"
 	CommonMres                        templateFile = "mres-common.tmpl.yml"
 	RedisStandalone                   templateFile = "redis-helm-standalone.tmpl.yml"
+	ConfigMap                         templateFile = "configmap.tmpl.yml"
 )

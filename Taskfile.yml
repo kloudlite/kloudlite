@@ -4,7 +4,7 @@ dotenv: [".secrets/env"]
 
 includes:
   helm:
-    taskfile: ./.tools/Taskfile.helm.yml
+    taskfile: ./helm/Taskfile.yml
     dir: ./helm/
 
 tasks:
@@ -21,6 +21,7 @@ tasks:
     run: always
     cmds:
       - task: kill-port
+#      - go run -tags dynamic main.go -dev |& pp -rel-path
       - go run -tags dynamic main.go |& pp -rel-path
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'

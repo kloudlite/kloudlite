@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: redis.redis-cluster.msvc.kloudlite.io
+  name: keyprefixes.redis-cluster.msvc.kloudlite.io
 spec:
   group: redis-cluster.msvc.kloudlite.io
   names:
-    kind: Redis
-    listKind: RedisList
-    plural: redis
-    singular: redis
+    kind: KeyPrefix
+    listKind: KeyPrefixList
+    plural: keyprefixes
+    singular: keyprefix
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Redis is the Schema for the redis API
+        description: KeyPrefix is the Schema for the keyprefixes API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,15 +33,15 @@ spec:
           metadata:
             type: object
           spec:
-            description: RedisSpec defines the desired state of Redis
+            description: KeyPrefixSpec defines the desired state of KeyPrefix
             properties:
               foo:
-                description: Foo is an example field of Redis. Edit redis_types.go
+                description: Foo is an example field of KeyPrefix. Edit keyprefix_types.go
                   to remove/update
                 type: string
             type: object
           status:
-            description: RedisStatus defines the observed state of Redis
+            description: KeyPrefixStatus defines the observed state of KeyPrefix
             type: object
         type: object
     served: true
