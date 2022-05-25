@@ -60,11 +60,7 @@ func (r *KeyPrefixReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request
 		return reconcileResult.Failed()
 	}
 
-	if req.keyPrefix.Status.Conditions != nil {
-		req.condBuilder = fn.Conditions.From(req.keyPrefix.Status.Conditions)
-	} else {
-		req.condBuilder = fn.Conditions.From([]metav1.Condition{})
-	}
+	req.condBuilder = fn.Conditions.From(req.keyPrefix.Status.Conditions)
 
 	if !req.keyPrefix.HasLabels() {
 		req.keyPrefix.EnsureLabels()

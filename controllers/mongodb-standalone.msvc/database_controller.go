@@ -163,7 +163,7 @@ func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseR
 		)
 		req.condBuilder.MarkReady("Db and User already exists", "DbAndUserAlreadyExists")
 
-		if fn.IsNil(output) {
+		if output == nil {
 			req.condBuilder.MarkReady(
 				"Db and User already exists, but output secret does not exist, could not reconcile further, aborting...",
 				"IrrReconcilable",
