@@ -183,9 +183,9 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		)
 	}
 	x, ok := helmSecret.Data[MysqlRootPasswordKey]
-	req.SetStateData(MysqlRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string))
+	req.SetStateData(MysqlRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
 	y, ok := helmSecret.Data[MysqlPasswordKey]
-	req.SetStateData(MysqlPasswordKey, fn.IfThenElse(ok, string(y), fn.CleanerNanoid(40)).(string))
+	req.SetStateData(MysqlPasswordKey, fn.IfThenElse(ok, string(y), fn.CleanerNanoid(40)))
 
 	if req.condBuilder.Equal(prevStatus.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")

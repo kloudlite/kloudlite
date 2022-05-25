@@ -115,13 +115,11 @@ func CleanerNanoid(n int) string {
 	return res
 }
 
-func IfThenElse(cond bool, v interface{}, y interface{}) interface{} {
+func IfThenElse[T any](cond bool, v T, y T) T {
 	if cond {
 		return v
 	}
 	return y
 }
 
-func IsNil(v any) bool {
-	return v == nil
-}
+func IfThenElseFn[T any](cond bool, v1 func() T, v) {}

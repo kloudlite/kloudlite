@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -37,6 +38,10 @@ type Service struct {
 
 func (s *Service) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
+}
+
+func (s Service) NamespacedName() types.NamespacedName {
+	return types.NamespacedName{Namespace: s.Namespace, Name: s.Name}
 }
 
 func (s Service) LabelRef() (key, value string) {

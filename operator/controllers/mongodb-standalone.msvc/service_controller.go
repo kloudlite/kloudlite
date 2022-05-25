@@ -165,7 +165,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		)
 	}
 	x, ok := helmSecret.Data[MongoDbRootPasswordKey]
-	req.SetStateData(MongoDbRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)).(string))
+	req.SetStateData(MongoDbRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
 
 	// check output exists
 	output := new(corev1.Secret)
