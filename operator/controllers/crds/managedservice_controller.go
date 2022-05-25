@@ -255,6 +255,7 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		"mongodb-standalone",
 		"mongodb-cluster",
 		"mysql-standalone",
+		"redis-standalone",
 	}
 
 	for _, msvc := range allMsvcs {

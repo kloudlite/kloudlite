@@ -14,10 +14,10 @@ type ServiceSpec struct {
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Type=object
-	Inputs json.RawMessage `json:"inputs,omitempty"`
+	Inputs      json.RawMessage   `json:"inputs,omitempty"`
+	ACLAccounts map[string]string `json:"aclAccounts,omitempty"`
 }
 
-// ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
 	LastHash   string             `json:"lastHash,omitempty"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`

@@ -9,7 +9,6 @@ import (
 
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,7 +36,6 @@ import (
 
 // ServiceReconciler reconciles a Service object
 type ServiceReconciler struct {
-	lt metav1.Time
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -60,7 +58,8 @@ const (
 
 type Output struct {
 	RootPassword string `json:"ROOT_PASSWORD"`
-	DbHosts      string `json:"HOSTS"`
+	Hosts        string `json:"HOSTS"`
+	Uri          string `json:"URI"`
 }
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
@@ -76,6 +75,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 		}
 		return reconcileResult.Failed()
 	}
+	req.condBuilder = fn.Conditions.From(req.redisSvc.Status.Conditions)
 
 	if !req.redisSvc.HasLabels() {
 		req.redisSvc.EnsureLabels()
@@ -143,16 +143,15 @@ func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconRe
 
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
 	prevStatus := req.redisSvc.Status
-
 	req.condBuilder.Reset()
 
 	err := req.condBuilder.BuildFromHelmMsvc(
 		ctx,
 		r.Client,
-		constants.HelmMongoDBKind,
+		constants.HelmRedisKind,
 		types.NamespacedName{
-			Namespace: req.redisSvc.GetNamespace(),
-			Name:      req.redisSvc.GetName(),
+			Namespace: req.redisSvc.Namespace,
+			Name:      req.redisSvc.Name,
 		},
 	)
 	if err != nil {
@@ -161,12 +160,12 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		}
 	}
 
-	err = req.condBuilder.BuildFromDeployment(
+	err = req.condBuilder.BuildFromStatefulset(
 		ctx,
 		r.Client,
 		types.NamespacedName{
-			Namespace: req.redisSvc.GetNamespace(),
-			Name:      req.redisSvc.GetName(),
+			Namespace: req.redisSvc.Namespace,
+			Name:      fmt.Sprintf("%s-master", req.redisSvc.Name),
 		},
 	)
 	if err != nil {
@@ -175,6 +174,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		}
 	}
 
+	// STEP: service output exists
 	var helmSecret corev1.Secret
 	nn := types.NamespacedName{
 		Namespace: req.redisSvc.GetNamespace(),
@@ -198,7 +198,6 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 	if err := r.statusUpdate(ctx, req); err != nil {
 		return nil, err
 	}
-
 	return reconcileResult.OKP()
 }
 
@@ -214,11 +213,13 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 	}
 
 	req.redisSvc.Spec.Inputs = marshal
+	// hash := req.redisSvc.Hash()
+	// if hash == req.redisSvc.Status.LastHash {
+	// 	return reconcileResult.OK()
+	// }
 
-	hash := req.redisSvc.Hash()
-
-	if hash == req.redisSvc.Status.LastHash {
-		return reconcileResult.OK()
+	if err := r.preOps(ctx, req); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	b, err := templates.Parse(templates.RedisStandalone, req.redisSvc)
@@ -234,15 +235,46 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return reconcileResult.FailedE(err)
 	}
 
-	req.redisSvc.Status.LastHash = hash
+	req.redisSvc.Status.LastHash = req.redisSvc.Hash()
+	return ctrl.Result{}, r.statusUpdate(ctx, req)
+}
 
-	err = r.Status().Update(ctx, req.redisSvc)
+func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) error {
+	cfg := new(corev1.ConfigMap)
+	cfgName := fmt.Sprintf("msvc-%s-acl-accounts", req.redisSvc.Name)
+	nn := types.NamespacedName{Namespace: req.redisSvc.Namespace, Name: cfgName}
+	if err := r.Get(ctx, nn, cfg); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
+		}
 
-	if err != nil {
-		return reconcileResult.FailedE(err)
+		nCfg := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cfgName,
+				Namespace: req.redisSvc.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					fn.AsOwner(req.redisSvc, true),
+				},
+			},
+		}
+		req.logger.Debugf("nCfg.OwnerReferences: %+v", nCfg.OwnerReferences)
+
+		b, err := templates.Parse(templates.ConfigMap, nCfg)
+		if err != nil {
+			return err
+		}
+		req.logger.Debugf("b: %s", b)
+		stdout, err := fn.KubectlApply(b)
+		req.logger.Debugf("stdout: %+v", stdout)
+		req.logger.Debugf("err: %+v", err)
+		if err != nil {
+			return err
+		}
+		cfg = nCfg
 	}
-
-	return reconcileResult.OK()
+	req.redisSvc.Spec.ACLAccounts = cfg.Data
+	req.logger.Debugf("req.redisSvc.Spec.ACLAccounts: %+v", req.redisSvc.Spec.ACLAccounts)
+	return nil
 }
 
 func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
@@ -254,11 +286,12 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 	if err := json.Unmarshal(m, &j); err != nil {
 		return err
 	}
-	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", req.redisSvc.Name, req.redisSvc.Namespace)
+
+	hostUrl := fmt.Sprintf("%s-headless.%s.svc.cluster.local:6379", req.redisSvc.Name, req.redisSvc.Namespace)
 	out := Output{
 		RootPassword: j[RedisPasswordKey].(string),
-		DbHosts:      hostUrl,
-		// DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", j["root_password"], hostUrl),
+		Hosts:        hostUrl,
+		Uri:          fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", j[RedisPasswordKey], hostUrl),
 	}
 
 	scrt := &corev1.Secret{
@@ -278,9 +311,7 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 			return controllerutil.SetControllerReference(req.redisSvc, scrt, r.Scheme)
 		},
 	)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -301,7 +332,6 @@ func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.lt = metav1.Time{Time: time.Now()}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redisStandalone.Service{}).
 		Watches(
@@ -344,5 +374,18 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Watches(&source.Kind{Type: &appsv1.Deployment{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
 		Watches(&source.Kind{Type: &corev1.Pod{}}, handler.EnqueueRequestsFromMapFunc(r.kWatcherMap)).
+		Watches(
+			&source.Kind{Type: &corev1.ConfigMap{}}, handler.EnqueueRequestsFromMapFunc(
+				func(o client.Object) []reconcile.Request {
+					name, ok := o.GetLabels()["msvc.kloudlite.io/ref"]
+					if !ok {
+						return nil
+					}
+					return []reconcile.Request{
+						{NamespacedName: types.NamespacedName{Name: name, Namespace: o.GetNamespace()}},
+					}
+				},
+			),
+		).
 		Complete(r)
 }

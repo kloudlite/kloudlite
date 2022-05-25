@@ -1,6 +1,10 @@
-version: 3 
+version: 3
 
 tasks:
+  init:
+    cmds:
+      - operator-sdk init --plugins helm --domain kloudlite.io --group msvc --version v1 --kind MongoDB --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
+
   deploy:
     env:
       IMG: harbor.dev.madhouselabs.io/kloudlite/koperator-helm:latest
@@ -10,3 +14,12 @@ tasks:
       - cd config/manager && kustomize edit set image controller=${IMG} && kustomize edit set namespace ${NAMESPACE}
       - cd config/default && kustomize edit set namespace ${NAMESPACE}
       - make deploy
+
+  run:
+    cmds:
+      - make install
+      - bin/helm-operator run --metrics-bind-address=":10017" --health-probe-bind-address=":10016"
+
+  clean:
+    cmds:
+      - rm -rf ./helm-charts

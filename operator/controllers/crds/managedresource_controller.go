@@ -109,7 +109,7 @@ func (r *ManagedResourceReconciler) finalize(ctx context.Context, req *ServiceRe
 }
 
 func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	prevStatus := req.mres.Status
+	prevConditions := req.mres.Status.Conditions
 	req.condBuilder.Reset()
 
 	msvc := new(v1.ManagedService)
@@ -169,7 +169,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *Se
 
 	req.condBuilder.Build("", j.Status.Conditions...)
 
-	if req.condBuilder.Equal(prevStatus.Conditions) {
+	if req.condBuilder.Equal(prevConditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}

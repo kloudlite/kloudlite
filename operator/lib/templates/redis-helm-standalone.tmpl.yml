@@ -26,14 +26,14 @@ spec:
 
   architecture: standalone
 
-  commonConfig: |+
-  {{- if .Spec.ACLAccounts}}
-  {{-range $k, $v := .Spec.ACLAccounts}}
-  {{- with $v}}
-    USER {{.Username}} on ~{{.Prefix}}:* +@all -@dangerous +info resetpass > {{.Password}}
-  {{-end }}
-  {{-end }}
-  {{-end }}
+  redis:
+    configmap: |
+    {{- if .Spec.ACLAccounts}}
+    {{- range $k, $v := .Spec.ACLAccounts}}
+      {{ $v }}
+    {{- end }}
+    {{- end }}
+      USER auth-user on ~auth:* +@all -@dangerous +info resetpass >sample
 
   master:
     resources:
@@ -43,7 +43,6 @@ spec:
       limits:
         cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
         memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi
-
 
   persistence:
     enabled: true

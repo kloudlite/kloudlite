@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/redhat-cop/operator-utils/pkg/util"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/controllers/crds"
@@ -90,6 +92,10 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.",
 	)
+
+	var isDev bool
+	flag.BoolVar(&isDev, "dev", false, "Enable development mode")
+
 	opts := zap.Options{
 		Development: true,
 	}
@@ -98,21 +104,44 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	mgr, err := ctrl.NewManager(
-		ctrl.GetConfigOrDie(), ctrl.Options{
-			Scheme:                     scheme,
-			MetricsBindAddress:         metricsAddr,
-			Port:                       9443,
-			HealthProbeBindAddress:     probeAddr,
-			LeaderElection:             enableLeaderElection,
-			LeaderElectionID:           "bf38d2f9.kloudlite.io",
-			LeaderElectionResourceLock: "configmaps",
-		},
-	)
-
-	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+	var mgr manager.Manager
+	if isDev {
+		mr, err := ctrl.NewManager(
+			&rest.Config{
+				Host: "localhost:8080",
+			},
+			ctrl.Options{
+				Scheme:                     scheme,
+				MetricsBindAddress:         metricsAddr,
+				Port:                       9443,
+				HealthProbeBindAddress:     probeAddr,
+				LeaderElection:             enableLeaderElection,
+				LeaderElectionID:           "bf38d2f9.kloudlite.io",
+				LeaderElectionResourceLock: "configmaps",
+			},
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to start manager")
+			os.Exit(1)
+		}
+		mgr = mr
+	} else {
+		mr, err := ctrl.NewManager(
+			ctrl.GetConfigOrDie(), ctrl.Options{
+				Scheme:                     scheme,
+				MetricsBindAddress:         metricsAddr,
+				Port:                       9443,
+				HealthProbeBindAddress:     probeAddr,
+				LeaderElection:             enableLeaderElection,
+				LeaderElectionID:           "bf38d2f9.kloudlite.io",
+				LeaderElectionResourceLock: "configmaps",
+			},
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to start manager")
+			os.Exit(1)
+		}
+		mgr = mr
 	}
 
 	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
@@ -204,6 +233,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Account")
 		os.Exit(1)
 	}
+
 	if err = (&mongodbStandaloneControllers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -211,6 +241,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
+
 	if err = (&mongodbStandaloneControllers.DatabaseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -218,6 +249,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)
 	}
+
 	if err = (&mongodbClusterControllers.DatabaseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -225,6 +257,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)
 	}
+
 	if err = (&mongodbClusterControllers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -232,6 +265,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
+
 	if err = (&mysqlStandaloneControllers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -239,6 +273,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
+
 	if err = (&mysqlStandaloneControllers.DatabaseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -246,6 +281,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)
 	}
+
 	if err = (&mysqlclustermsvccontrollers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -253,6 +289,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
+
 	if err = (&mysqlclustermsvccontrollers.DatabaseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -260,20 +297,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)
 	}
-	if err = (&redisstandalonemsvccontrollers.RedisReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Redis")
-		os.Exit(1)
-	}
-	if err = (&redisclustermsvccontrollers.RedisReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Redis")
-		os.Exit(1)
-	}
+
 	if err = (&elasticsearchmsvccontrollers.ElasticSearchReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -281,6 +305,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ElasticSearch")
 		os.Exit(1)
 	}
+
 	if err = (&influxdbmsvccontrollers.InfluxDBReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -288,11 +313,26 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "InfluxDB")
 		os.Exit(1)
 	}
+
 	if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&redisstandalonemsvccontrollers.KeyPrefixReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KeyPrefix")
+		os.Exit(1)
+	}
+	if err = (&redisclustermsvccontrollers.KeyPrefixReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KeyPrefix")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

@@ -4,19 +4,22 @@ import (
 	"bytes"
 	"os/exec"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"operators.kloudlite.io/lib/errors"
 )
 
 func KubectlApply(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 	c := exec.Command("kubectl", "apply", "-f", "-")
-	wStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
+	outStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
 	c.Stdin = bytes.NewBuffer(bytes.Join(stdin, []byte("\n---\n")))
-	c.Stdout = wStream
+	c.Stdout = outStream
 	c.Stderr = errStream
 	if err := c.Run(); err != nil {
-		return stdout, errors.NewEf(err, errStream.String())
+		return outStream, errors.NewEf(err, errStream.String())
 	}
-	return stdout, nil
+	return outStream, nil
 }
 
 func KubectlGet(namespace string, resourceRef string) ([]byte, error) {
@@ -41,4 +44,15 @@ func KubectlDelete(namespace, resourceRef string) error {
 		return errors.NewEf(err, errB.String())
 	}
 	return nil
+}
+
+func AsOwner(r client.Object, controller bool) metav1.OwnerReference {
+	return metav1.OwnerReference{
+		APIVersion:         r.GetObjectKind().GroupVersionKind().Version,
+		Kind:               r.GetObjectKind().GroupVersionKind().Kind,
+		Name:               r.GetName(),
+		UID:                r.GetUID(),
+		Controller:         NewBool(controller),
+		BlockOwnerDeletion: NewBool(true),
+	}
 }
