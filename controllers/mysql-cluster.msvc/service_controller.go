@@ -224,18 +224,19 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 }
 
 func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) error {
-	if _, err := fn.JsonGet[string](req.mysqlSvc.Status.GeneratedVars, MysqlRootPasswordKey); err != nil {
-		m, err := req.mysqlSvc.Status.GeneratedVars.ToMap()
-		if err != nil {
-			return err
-		}
-		m[MysqlRootPasswordKey] = fn.CleanerNanoid(40)
-		m[MysqlPasswordKey] = fn.CleanerNanoid(40)
-		if err := req.mysqlSvc.Status.GeneratedVars.FillFrom(m); err != nil {
-			return err
-		}
-		return r.Status().Update(ctx, req.mysqlSvc)
-	}
+	// TODO: FIX ME asap
+	//if _, err := fn.JsonGet[string](req.mysqlSvc.Status.GeneratedVars, MysqlRootPasswordKey); err != nil {
+	//	m, err := req.mysqlSvc.Status.GeneratedVars.ToMap()
+	//	if err != nil {
+	//		return err
+	//	}
+	//	m[MysqlRootPasswordKey] = fn.CleanerNanoid(40)
+	//	m[MysqlPasswordKey] = fn.CleanerNanoid(40)
+	//	if err := req.mysqlSvc.Status.GeneratedVars.Patch(m); err != nil {
+	//		return err
+	//	}
+	//	return r.Status().Update(ctx, req.mysqlSvc)
+	//}
 	return nil
 }
 

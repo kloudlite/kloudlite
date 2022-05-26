@@ -236,10 +236,14 @@ func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) er
 	}
 
 	if _, ok := gVars[RedisPasswordKey]; !ok {
-		gVars[RedisPasswordKey] = fn.CleanerNanoid(40)
-		if err := req.redisSvc.Status.GeneratedVars.FillFrom(gVars); err != nil {
-			return err
+		if gVars == nil {
+			gVars = map[string]any{}
 		}
+		gVars[RedisPasswordKey] = fn.CleanerNanoid(40)
+		// FIXME:
+		//if err := req.redisSvc.Status.GeneratedVars.Patch(gVars); err != nil {
+		//	return err
+		//}
 		return r.Status().Update(ctx, req.redisSvc)
 	}
 

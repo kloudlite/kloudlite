@@ -2,12 +2,11 @@ package conditions
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	fn "operators.kloudlite.io/lib/functions"
@@ -17,6 +16,7 @@ import (
 
 func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Condition, bool, error) {
 	res := make([]metav1.Condition, 0)
+	x := metav1.Now()
 	updated := false
 	for _, c := range dest {
 		sourceCondition := meta.FindStatusCondition(source, c.Type)
@@ -24,12 +24,21 @@ func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Conditi
 			if sourceCondition.Status != c.Status || sourceCondition.Reason != c.Reason || sourceCondition.Message != c.Message {
 				updated = true
 				if c.LastTransitionTime.IsZero() {
-					sourceCondition.LastTransitionTime = metav1.Time{
-						Time: time.UnixMilli(time.Now().Unix()),
-					}
+					sourceCondition.LastTransitionTime = x
 				}
 				res = append(res, *sourceCondition)
+				continue
 			}
+			res = append(res, c)
+		} else {
+			updated = true
+		}
+	}
+
+	for _, c := range source {
+		if meta.FindStatusCondition(dest, c.Type) == nil {
+			updated = true
+			c.LastTransitionTime = x
 			res = append(res, c)
 		}
 	}
@@ -91,26 +100,39 @@ func FromResource(
 	groupVersionKind metav1.GroupVersionKind,
 	typePrefix string,
 	nn types.NamespacedName) ([]metav1.Condition, error) {
-	type statusStruct struct {
-		Conditions []metav1.Condition `json:"conditions,omitempty"`
-	}
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": strings.Split(groupVersionKind.String(), ", ")[0],
 			"kind":       groupVersionKind.Kind,
-			"status": statusStruct{
-				Conditions: []metav1.Condition{},
-			},
 		},
 	}
 
-	err := client.Get(ctx, nn, &obj)
+	if err := client.Get(ctx, nn, &obj); err != nil {
+		return nil, err
+	}
+
+	type X struct {
+		Status struct {
+			Conditions []metav1.Condition `json:"conditions,omitempty"`
+		} `json:"status"`
+	}
+
+	m, err := json.Marshal(obj.Object)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]metav1.Condition, len(obj.Object["status"].(statusStruct).Conditions))
-	for i, condition := range obj.Object["status"].(statusStruct).Conditions {
+	var x X
+	if err := json.Unmarshal(m, &x); err != nil {
+		return nil, err
+	}
+
+	c := x.Status.Conditions
+
+	res := make([]metav1.Condition, len(c))
+	for i, condition := range c {
 		condition.Type = fmt.Sprintf("%s-%s", typePrefix, condition.Type)
+		condition.Reason = fn.IfThenElse(len(condition.Reason) == 0, "NotSpecified", condition.Reason)
+		condition.Message = fn.IfThenElse(len(condition.Message) == 0, "", condition.Message)
 		res[i] = condition
 	}
 	return res, nil
