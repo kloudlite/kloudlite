@@ -26,14 +26,13 @@ spec:
 
   architecture: standalone
 
-  redis:
-    configmap: |
+  commonConfiguration: |+
     {{- if .Spec.ACLAccounts}}
     {{- range $k, $v := .Spec.ACLAccounts}}
       {{ $v }}
     {{- end }}
     {{- end }}
-      USER auth-user on ~auth:* +@all -@dangerous +info resetpass >sample
+      user auth-user on ~auth:* +@all -@dangerous +info resetpass >sample
 
   master:
     resources:

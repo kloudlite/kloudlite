@@ -45,22 +45,26 @@ type AppReconciler struct {
 }
 
 func (r *AppReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
-	r.buildConditions("", metav1.Condition{
-		Type:    "Ready",
-		Status:  "False",
-		Reason:  "ErrWhileReconcilation",
-		Message: err.Error(),
-	})
+	r.buildConditions(
+		"", metav1.Condition{
+			Type:    "Ready",
+			Status:  "False",
+			Reason:  "ErrWhileReconcilation",
+			Message: err.Error(),
+		},
+	)
 
 	return r.notify(ctx)
 }
 
 func (r *AppReconciler) notify(ctx context.Context, retry ...bool) (ctrl.Result, error) {
-	err := r.SendMessage(r.app.LogRef(), lib.MessageReply{
-		Key:        r.app.LogRef(),
-		Conditions: r.app.Status.Conditions,
-		Status:     meta.IsStatusConditionTrue(r.app.Status.Conditions, "Ready"),
-	})
+	err := r.SendMessage(
+		r.app.LogRef(), lib.MessageReply{
+			Key:        r.app.LogRef(),
+			Conditions: r.app.Status.Conditions,
+			Status:     meta.IsStatusConditionTrue(r.app.Status.Conditions, "Ready"),
+		},
+	)
 	if err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not send message into kafka"))
 	}
@@ -76,13 +80,15 @@ func (r *AppReconciler) notify(ctx context.Context, retry ...bool) (ctrl.Result,
 }
 
 func (r *AppReconciler) buildConditions(source string, conditions ...metav1.Condition) {
-	meta.SetStatusCondition(&r.app.Status.Conditions, metav1.Condition{
-		Type:               "Ready",
-		Status:             "False",
-		Reason:             "ChecksNotCompleted",
-		LastTransitionTime: r.lt,
-		Message:            "Not All Checks completed",
-	})
+	meta.SetStatusCondition(
+		&r.app.Status.Conditions, metav1.Condition{
+			Type:               "Ready",
+			Status:             "False",
+			Reason:             "ChecksNotCompleted",
+			LastTransitionTime: r.lt,
+			Message:            "Not All Checks completed",
+		},
+	)
 	for _, c := range conditions {
 		if c.Reason == "" {
 			c.Reason = "NotSpecified"
@@ -111,35 +117,41 @@ func (r *AppReconciler) HandleDeployments(ctx context.Context) error {
 
 	var deplConditions []metav1.Condition
 	for _, cond := range depl.Status.Conditions {
-		deplConditions = append(deplConditions, metav1.Condition{
-			Type:               string(cond.Type),
-			Status:             metav1.ConditionStatus(cond.Status),
-			LastTransitionTime: cond.LastTransitionTime,
-			Reason:             cond.Reason,
-			Message:            cond.Message,
-		})
+		deplConditions = append(
+			deplConditions, metav1.Condition{
+				Type:               string(cond.Type),
+				Status:             metav1.ConditionStatus(cond.Status),
+				LastTransitionTime: cond.LastTransitionTime,
+				Reason:             cond.Reason,
+				Message:            cond.Message,
+			},
+		)
 	}
 
 	r.buildConditions("Deployment", deplConditions...)
 	if !meta.IsStatusConditionTrue(deplConditions, string(appsv1.DeploymentAvailable)) {
 		var podsList corev1.PodList
-		if err := r.List(ctx, &podsList, &client.ListOptions{
-			LabelSelector: labels2.SelectorFromValidatedSet(depl.Spec.Template.GetLabels()),
-			Namespace:     depl.Namespace,
-		}); err != nil {
+		if err := r.List(
+			ctx, &podsList, &client.ListOptions{
+				LabelSelector: labels2.SelectorFromValidatedSet(depl.Spec.Template.GetLabels()),
+				Namespace:     depl.Namespace,
+			},
+		); err != nil {
 			return errors.NewEf(err, "could not list pods for deployment")
 		}
 
 		for _, pod := range podsList.Items {
 			var podC []metav1.Condition
 			for _, condition := range pod.Status.Conditions {
-				podC = append(podC, metav1.Condition{
-					Type:               string(condition.Type),
-					Status:             metav1.ConditionStatus(condition.Status),
-					LastTransitionTime: condition.LastTransitionTime,
-					Reason:             "NotSpecified",
-					Message:            condition.Message,
-				})
+				podC = append(
+					podC, metav1.Condition{
+						Type:               string(condition.Type),
+						Status:             metav1.ConditionStatus(condition.Status),
+						LastTransitionTime: condition.LastTransitionTime,
+						Reason:             "NotSpecified",
+						Message:            condition.Message,
+					},
+				)
 			}
 			r.buildConditions("Pod", podC...)
 			var containerC []metav1.Condition
@@ -163,12 +175,14 @@ func (r *AppReconciler) HandleDeployments(ctx context.Context) error {
 		return nil
 	}
 
-	r.buildConditions("", metav1.Condition{
-		Type:    "Ready",
-		Status:  metav1.ConditionTrue,
-		Reason:  "AllChecksPassed",
-		Message: "Deployment is ready",
-	})
+	r.buildConditions(
+		"", metav1.Condition{
+			Type:    "Ready",
+			Status:  metav1.ConditionTrue,
+			Reason:  "AllChecksPassed",
+			Message: "Deployment is ready",
+		},
+	)
 
 	return nil
 }
@@ -207,7 +221,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return r.notifyAndDie(ctx, err)
 	}
 
-	if _, err2 := fn.KubectlApply(depl, svc); err2 != nil {
+	if _, err2 := fn.KubectlApplyExec(depl, svc); err2 != nil {
 		return r.notifyAndDie(ctx, errors.NewEf(err2, "could not apply app"))
 	}
 

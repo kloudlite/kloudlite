@@ -2,7 +2,6 @@ package mysqlstandalonemsvc
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -29,7 +28,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceReconciler reconciles a Service object
@@ -50,11 +48,10 @@ const (
 )
 
 type ServiceReconReq struct {
-	t.ReconReq
 	ctrl.Request
-	logger      *zap.SugaredLogger
-	condBuilder fn.StatusConditions
-	mysqlSvc    *mysqlStandalone.Service
+	logger    *zap.SugaredLogger
+	mysqlSvc  *mysqlStandalone.Service
+	stateData map[string]string
 }
 
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -63,16 +60,15 @@ type ServiceReconReq struct {
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
 	req := &ServiceReconReq{
-		Request:  orgReq,
-		logger:   crds.GetLogger(orgReq.NamespacedName),
-		mysqlSvc: new(mysqlStandalone.Service),
+		Request:   orgReq,
+		logger:    crds.GetLogger(orgReq.NamespacedName),
+		mysqlSvc:  new(mysqlStandalone.Service),
+		stateData: map[string]string{},
 	}
 
 	if err := r.Get(ctx, orgReq.NamespacedName, req.mysqlSvc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	req.condBuilder = fn.Conditions.From(req.mysqlSvc.Status.Conditions)
 
 	if !req.mysqlSvc.HasLabels() {
 		req.mysqlSvc.EnsureLabels()
@@ -124,24 +120,19 @@ func (r *ServiceReconciler) finalize(ctx context.Context, m *mysqlStandalone.Ser
 	return reconcileResult.OK()
 }
 
-func (r *ServiceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
-	req.mysqlSvc.Status.Conditions = req.condBuilder.GetAll()
-	return r.Status().Update(ctx, req.mysqlSvc)
-}
-
 func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (ctrl.Result, error) {
-	req.condBuilder.MarkNotReady(err)
-	if err2 := r.statusUpdate(ctx, req); err2 != nil {
+	fn.Conditions2.MarkNotReady(&req.mysqlSvc.Status.OpsConditions, err, "ReconFailedWithErr")
+	if err2 := r.Status().Update(ctx, req.mysqlSvc); err2 != nil {
 		return ctrl.Result{}, err2
 	}
-	return reconcileResult.FailedE(err)
+	return ctrl.Result{}, err
 }
 
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	prevStatus := req.mysqlSvc.Status
-	req.condBuilder.Reset()
+	var conditions []metav1.Condition
 
-	err := req.condBuilder.BuildFromHelmMsvc(
+	err := fn.Conditions2.BuildFromHelmMsvc(
+		&conditions,
 		ctx,
 		r.Client,
 		constants.HelmMySqlDBKind,
@@ -157,7 +148,8 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		}
 	}
 
-	err = req.condBuilder.BuildFromStatefulset(
+	err = fn.Conditions2.BuildFromStatefulset(
+		&conditions,
 		ctx,
 		r.Client,
 		types.NamespacedName{
@@ -171,61 +163,85 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		}
 	}
 
-	var helmSecret corev1.Secret
+	helmSecret := new(corev1.Secret)
 	nn := types.NamespacedName{
 		Namespace: req.mysqlSvc.GetNamespace(),
 		Name:      req.mysqlSvc.GetName(),
 	}
-	if err := r.Get(ctx, nn, &helmSecret); err != nil {
-		req.logger.Info(
-			"helm release %s is not available yet, assuming resource not yet installed, so installing",
-			nn.String(),
+	if err := r.Get(ctx, nn, helmSecret); err != nil {
+		fn.Conditions2.Build(
+			&conditions, "Helm", metav1.Condition{
+				Type:    "ReleaseSecretExists",
+				Status:  metav1.ConditionFalse,
+				Reason:  "SecretNotFound",
+				Message: err.Error(),
+			},
+		)
+		helmSecret = nil
+	}
+
+	if helmSecret != nil {
+		fn.Conditions2.Build(
+			&conditions, "Helm", metav1.Condition{
+				Type:    "ReleaseSecretExists",
+				Status:  metav1.ConditionTrue,
+				Reason:  "SecretFound",
+				Message: fmt.Sprintf("secret %s found", helmSecret.Name),
+			},
 		)
 	}
-	x, ok := helmSecret.Data[MysqlRootPasswordKey]
-	req.SetStateData(MysqlRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
-	y, ok := helmSecret.Data[MysqlPasswordKey]
-	req.SetStateData(MysqlPasswordKey, fn.IfThenElse(ok, string(y), fn.CleanerNanoid(40)))
 
-	if req.condBuilder.Equal(prevStatus.Conditions) {
+	//x, ok := helmSecret.Data[MysqlRootPasswordKey]
+	//req.SetStateData(MysqlRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
+	//y, ok := helmSecret.Data[MysqlPasswordKey]
+	//req.SetStateData(MysqlPasswordKey, fn.IfThenElse(ok, string(y), fn.CleanerNanoid(40)))
+	//
+	if fn.Conditions2.Equal(conditions, req.mysqlSvc.Status.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
-	if err := r.statusUpdate(ctx, req); err != nil {
+	if err := r.Status().Update(ctx, req.mysqlSvc); err != nil {
 		return nil, err
 	}
 
 	return reconcileResult.OKP()
 }
 
+func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) error {
+	if _, err := fn.JsonGet[string](req.mysqlSvc.Status.GeneratedVars, MysqlRootPasswordKey); err != nil {
+		m, err := req.mysqlSvc.Status.GeneratedVars.ToMap()
+		if err != nil {
+			return err
+		}
+		m[MysqlRootPasswordKey] = fn.CleanerNanoid(40)
+		m[MysqlPasswordKey] = fn.CleanerNanoid(40)
+		if err := req.mysqlSvc.Status.GeneratedVars.FillFrom(m); err != nil {
+			return err
+		}
+		return r.Status().Update(ctx, req.mysqlSvc)
+	}
+	return nil
+}
+
 func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
-	var m map[string]interface{}
-	if err := json.Unmarshal(req.mysqlSvc.Spec.Inputs, &m); err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	m[MysqlRootPasswordKey] = req.GetStateData(MysqlRootPasswordKey)
-	m[MysqlPasswordKey] = req.GetStateData(MysqlPasswordKey)
-	marshal, err := json.Marshal(m)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+
+	if err := r.preOps(ctx, req); err != nil {
+		return r.failWithErr(ctx, req, err)
 	}
 
-	req.mysqlSvc.Spec.Inputs = marshal
-
-	hash := req.mysqlSvc.Hash()
-
-	if hash == req.mysqlSvc.Status.LastHash {
-		return reconcileResult.OK()
-	}
+	//hash := req.mysqlSvc.Hash()
+	//if hash == req.mysqlSvc.Status.LastHash {
+	//	return reconcileResult.OK()
+	//}
 
 	b, err := templates.Parse(templates.MySqlStandalone, req.mysqlSvc)
 	if err != nil {
 		return reconcileResult.FailedE(err)
 	}
 
-	if _, err := fn.KubectlApply(b); err != nil {
+	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not apply kubectl for mysql standalone"))
 	}
 
@@ -233,9 +249,9 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return reconcileResult.FailedE(err)
 	}
 
-	req.mysqlSvc.Status.LastHash = hash
+	//req.mysqlSvc.Status.LastHash = hash
 
-	if err := r.statusUpdate(ctx, req); err != nil {
+	if err := r.Status().Update(ctx, req.mysqlSvc); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -243,44 +259,32 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 }
 
 func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
-	m, err := req.mysqlSvc.Spec.Inputs.MarshalJSON()
+	rootPasswd, err := fn.JsonGet[string](req.mysqlSvc.Status.GeneratedVars, MysqlRootPasswordKey)
 	if err != nil {
 		return err
 	}
-	var j map[string]interface{}
-	if err := json.Unmarshal(m, &j); err != nil {
-		return err
-	}
+
 	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", req.mysqlSvc.Name, req.mysqlSvc.Namespace)
-	out := Output{
-		RootPassword: req.GetStateData(MysqlRootPasswordKey),
-		DbHosts:      hostUrl,
-	}
 
 	scrt := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("msvc-%s", req.mysqlSvc.Name),
 			Namespace: req.mysqlSvc.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(req.mysqlSvc, true),
+			},
+			Labels: req.mysqlSvc.GetLabels(),
+		},
+		StringData: map[string]string{
+			"ROOT_PASSWORD": rootPasswd,
+			"HOSTS":         hostUrl,
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(
-		ctx, r.Client, scrt, func() error {
-
-			outMap := map[string]string{
-				MysqlRootPasswordKey: out.RootPassword,
-				MysqlPasswordKey:     out.DbHosts,
-			}
-
-			if err := fn.Json.FromTo(out, &outMap); err != nil {
-				return err
-			}
-			scrt.StringData = outMap
-			return controllerutil.SetControllerReference(req.mysqlSvc, scrt, r.Scheme)
-		},
-	); err != nil {
+	if err := fn.KubectlApply(ctx, r.Client, scrt); err != nil {
 		return err
 	}
+
 	return nil
 }
 

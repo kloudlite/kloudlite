@@ -90,7 +90,7 @@ func (r *AccountReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err != nil {
 		return r.ManageError(ctx, instance, err)
 	}
-	if _, err := functions.KubectlApply(parse); err != nil {
+	if _, err := functions.KubectlApplyExec(parse); err != nil {
 		return r.ManageError(ctx, instance, err)
 	}
 

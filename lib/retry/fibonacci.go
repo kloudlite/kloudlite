@@ -1,3 +1,0 @@
-package retry
-
-func Next() {}

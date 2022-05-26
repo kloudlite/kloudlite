@@ -1,7 +1,7 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: redis-auth-kp
+  name: redis-auth-kp2
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-service
