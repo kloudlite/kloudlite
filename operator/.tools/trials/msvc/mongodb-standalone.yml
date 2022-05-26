@@ -1,11 +1,11 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: mongo-standalone
+  name: mongo-standalone-x
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-service
-    - foreground
+    - foregroundDeletion
 spec:
   apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
   inputs:

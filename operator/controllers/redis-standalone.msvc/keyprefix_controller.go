@@ -261,9 +261,10 @@ func (r *KeyPrefixReconciler) preOps(ctx context.Context, req *KeyPrefixReconReq
 			gVars = map[string]any{}
 		}
 		gVars["auth-password"] = fn.CleanerNanoid(40)
-		if err := req.keyPrefix.Status.GeneratedVars.FillFrom(gVars); err != nil {
-			return err
-		}
+		// FIXME
+		//if err := req.keyPrefix.Status.GeneratedVars.Patch(gVars); err != nil {
+		//	return err
+		//}
 		return r.Status().Update(ctx, req.keyPrefix)
 	}
 	return nil
@@ -278,6 +279,9 @@ func (r *KeyPrefixReconciler) reconcileOperations(ctx context.Context, req *KeyP
 	}
 
 	redisCli, err := newRedisClient(ctx, hosts, rootPassword)
+	if redisCli == nil || err != nil {
+		return reconcileResult.FailedE(err)
+	}
 
 	authPasswd, err := fn.JsonGet[string](req.keyPrefix.Status.GeneratedVars, "auth-password")
 	if err != nil {

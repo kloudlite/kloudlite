@@ -18,7 +18,7 @@ var (
 		Kind:    "Deployment",
 	}
 	HelmMongoDBGroup metav1.GroupVersionKind = metav1.GroupVersionKind{
-		Group:   "mongodb-standalone.msvc.kloudlite.io",
+		Group:   "msvc.kloudlite.io",
 		Version: "v1",
 		Kind:    "HelmMongoDB",
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
+	"fmt"
 	t "operators.kloudlite.io/lib/types"
 	"regexp"
 	"strings"
@@ -171,4 +172,29 @@ func JsonGet[T any](s t.RawJson, key string) (T, error) {
 		return *new(T), errors.NewEf(err, "key %s not found", key)
 	}
 	return value, nil
+}
+
+func JsonSet[T any](s t.RawJson, val map[string]T) t.RawJson {
+	fmt.Printf("SAMPLE-1 %+v %+v\n", s, val)
+	m, err := s.ToMap()
+	fmt.Printf("SAMPLE0 %+v %v\n", m, err)
+	if err != nil {
+		return s
+	}
+
+	fmt.Printf("SAMPLE1 %+v\n", m)
+
+	fmt.Printf("m==nil:  %+v\n", m == nil)
+
+	for k, v := range val {
+		m[k] = v
+	}
+
+	fmt.Printf("SAMPLE2 %+v\n", m)
+
+	b, err := json.Marshal(m)
+	if err != nil {
+		return s
+	}
+	return t.RawJson{RawMessage: b}
 }

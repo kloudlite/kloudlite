@@ -203,7 +203,7 @@ package mongodbstandalonemsvc
 //			return nil, err
 //		}
 //		m[DbPasswordKey] = fn.CleanerNanoid(40)
-//		if err := req.database.Status.GeneratedVars.FillFrom(m); err != nil {
+//		if err := req.database.Status.GeneratedVars.Patch(m); err != nil {
 //			return nil, err
 //		}
 //		return nil, r.Status().Update(ctx, req.database)

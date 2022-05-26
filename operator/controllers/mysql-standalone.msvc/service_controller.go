@@ -217,9 +217,10 @@ func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) er
 		}
 		m[MysqlRootPasswordKey] = fn.CleanerNanoid(40)
 		m[MysqlPasswordKey] = fn.CleanerNanoid(40)
-		if err := req.mysqlSvc.Status.GeneratedVars.FillFrom(m); err != nil {
-			return err
-		}
+		// FIXME: asdsff
+		//if err := req.mysqlSvc.Status.GeneratedVars.Patch(m); err != nil {
+		//	return err
+		//}
 		return r.Status().Update(ctx, req.mysqlSvc)
 	}
 	return nil
