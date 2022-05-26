@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
+	t "operators.kloudlite.io/lib/types"
 	"regexp"
 	"strings"
 
@@ -122,4 +123,52 @@ func IfThenElse[T any](cond bool, v T, y T) T {
 	return y
 }
 
-func IfThenElseFn[T any](cond bool, v1 func() T, v) {}
+func IfThenElseFn[T any](cond bool, v1 func() T, v2 func() T) T {
+	if cond {
+		return v1()
+	}
+	return v2()
+}
+
+func mapGet[T any](m map[string]any, key string) (T, bool) {
+	if m == nil {
+		return *new(T), false
+	}
+	v, ok := m[key]
+	if !ok {
+		return *new(T), false
+	}
+	tv, ok := v.(T)
+	if !ok {
+		return *new(T), false
+	}
+	return tv, ok
+}
+
+func MapGet[T any](m map[string]any, key string) (T, bool) {
+	return mapGet[T](m, key)
+}
+
+func MapSet[T any](m map[string]T, key string, value T) {
+	if m == nil {
+		m = map[string]T{}
+	}
+	m[key] = value
+}
+
+func JsonGet[T any](s t.RawJson, key string) (T, error) {
+	m, err := s.MarshalJSON()
+	if err != nil {
+		return *new(T), err
+	}
+	var j map[string]any
+	if err := json.Unmarshal(m, &j); err != nil {
+		return *new(T), err
+	}
+
+	value, ok := mapGet[T](j, key)
+	if !ok {
+		return *new(T), errors.NewEf(err, "key %s not found", key)
+	}
+	return value, nil
+}

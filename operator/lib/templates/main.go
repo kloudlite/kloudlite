@@ -2,6 +2,7 @@ package templates
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -51,6 +52,22 @@ func Parse(f templateFile, values interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return t.WithValues(values)
+}
+
+func ParseToMap(f templateFile, values interface{}) (map[string]any, error) {
+	t, err := UseTemplate(f)
+	if err != nil {
+		return nil, err
+	}
+	b, err := t.WithValues(values)
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]any
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 type KlTemplate interface {

@@ -3,9 +3,12 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
+	"operators.kloudlite.io/lib/conditions"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,17 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/controllers/crds"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -35,11 +33,10 @@ type DatabaseReconciler struct {
 }
 
 type DatabaseReconReq struct {
-	t.ReconReq
 	ctrl.Request
-	logger      *zap.SugaredLogger
-	condBuilder fn.StatusConditions
-	database    *mongodbStandalone.Database
+	stateData map[string]string
+	logger    *zap.SugaredLogger
+	database  *mongodbStandalone.Database
 }
 
 const (
@@ -47,6 +44,10 @@ const (
 	DbPassword string = "DB_PASSWORD"
 	DbHosts    string = "DB_HOSTS"
 	DbUrl      string = "DB_URL"
+)
+
+const (
+	DbPasswordKey string = "db-password"
 )
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
@@ -64,8 +65,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request)
 	if err := r.Client.Get(ctx, req.NamespacedName, req.database); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	req.condBuilder = fn.Conditions.From(req.database.Status.Conditions)
 
 	if req.database.HasLabels() {
 		req.database.EnsureLabels()
@@ -90,37 +89,23 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request)
 }
 
 func (r *DatabaseReconciler) finalize(ctx context.Context, req *DatabaseReconReq) (ctrl.Result, error) {
-	req.database.Status.Conditions = []metav1.Condition{}
-	return ctrl.Result{}, r.Status().Update(ctx, req.database)
+	return reconcileResult.OK()
 }
 
 func (r *DatabaseReconciler) failWithErr(ctx context.Context, req *DatabaseReconReq, err error) (ctrl.Result, error) {
-	req.condBuilder.MarkNotReady(err)
-	if err2 := r.updateStatus(ctx, req); err2 != nil {
+	fn.Conditions2.MarkNotReady(&req.database.Status.OpsConditions, err, "ReconFailedWithErr")
+	if err2 := r.Status().Update(ctx, req.database); err2 != nil {
 		return ctrl.Result{}, err2
 	}
 	return reconcileResult.FailedE(err)
 }
 
 func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseReconReq) (*ctrl.Result, error) {
-	prevStatus := req.database.Status
-	req.condBuilder.Reset()
+	cMap := map[string]metav1.Condition{}
+}
 
-	msvcSecret := new(corev1.Secret)
-	if err := r.Client.Get(
-		ctx,
-		types.NamespacedName{
-			Namespace: req.database.Namespace, Name: fmt.Sprintf("msvc-%s", req.database.Spec.ManagedSvcName),
-		},
-		msvcSecret,
-	); err != nil {
-		return nil, err
-	}
-
-	dbUrl := string(msvcSecret.Data["DB_URL"])
-
-	req.SetStateData(DbUrl, dbUrl)
-	req.SetStateData(DbHosts, string(msvcSecret.Data["HOSTS"]))
+func (r *DatabaseReconciler) reconcileStatus2(ctx context.Context, req *DatabaseReconReq) (*ctrl.Result, error) {
+	cMap := map[string]metav1.Condition{}
 
 	// check output exists
 	output := new(corev1.Secret)
@@ -130,45 +115,80 @@ func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseR
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
-		req.condBuilder.MarkNotReady(err, "OutputSecretNotFound")
+		fn.Conditions2.Build(
+			&conditions, "Output", metav1.Condition{
+				Type:    "Exists",
+				Status:  metav1.ConditionFalse,
+				Reason:  "SecretNotFound",
+				Message: err.Error(),
+			},
+		)
 		output = nil
 	}
 
-	req.logger.Debugf("dbUrl: %+v", dbUrl)
-	db, err := connectToDB(ctx, dbUrl, "admin")
-	if err != nil {
-		return nil, err
+	if output != nil {
+		fn.Conditions2.Build(
+			&conditions, "Output", metav1.Condition{
+				Type:    "Exists",
+				Status:  metav1.ConditionTrue,
+				Reason:  "SecretFound",
+				Message: fmt.Sprintf("Secret %s exists", output.Name),
+			},
+		)
 	}
 
 	var usersInfo struct {
 		Users []interface{} `json:"users" bson:"users"`
 	}
 
-	sr := db.RunCommand(
-		ctx, bson.D{
-			{Key: "usersInfo", Value: req.database.Name},
+	msvcSecret := new(corev1.Secret)
+	if err := r.Client.Get(
+		ctx,
+		types.NamespacedName{
+			Namespace: req.database.Namespace, Name: fmt.Sprintf("msvc-%s", req.database.Spec.ManagedSvcName),
 		},
-	)
-	if err = sr.Decode(&usersInfo); err != nil {
-		return nil, errors.NewEf(err, "could not decode usersInfo")
+		msvcSecret,
+	); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+		msvcSecret = nil
 	}
 
-	if len(usersInfo.Users) > 0 {
-		req.condBuilder.MarkReady(
-			fmt.Sprintf(
-				"MongoDB account with (user=%s,db=%s) already exists",
-				req.database.Name,
-				req.database.Name,
-			), "MongoAccountAlreadyExists",
-		)
-		req.condBuilder.MarkReady("Db and User already exists", "DbAndUserAlreadyExists")
-
-		if output == nil {
-			req.condBuilder.MarkReady(
-				"Db and User already exists, but output secret does not exist, could not reconcile further, aborting...",
-				"IrrReconcilable",
-			)
+	if msvcSecret != nil {
+		uri := string(msvcSecret.Data["DB_URL"])
+		db, err := connectToDB(ctx, uri, "admin")
+		if err != nil {
+			return nil, err
 		}
+
+		sr := db.RunCommand(
+			ctx, bson.D{
+				{Key: "usersInfo", Value: req.database.Name},
+			},
+		)
+		if err = sr.Decode(&usersInfo); err != nil {
+			return nil, errors.NewEf(err, "could not decode usersInfo")
+		}
+
+		if len(usersInfo.Users) > 0 {
+			fn.Conditions2.Build(&conditions, .MarkReady(
+				fmt.Sprintf(
+					"MongoDB account with (user=%s,db=%s) already exists",
+					req.database.Name,
+					req.database.Name,
+				), "MongoAccountAlreadyExists",
+			)
+			req.condBuilder.MarkReady("Db and User already exists", "DbAndUserAlreadyExists")
+
+			if output == nil {
+				req.condBuilder.MarkReady(
+					"Db and User already exists, but output secret does not exist, could not reconcile further, aborting...",
+					"IrrReconcilable",
+				)
+			}
+		}
+
 	}
 
 	// check if conditions match or not
@@ -177,7 +197,7 @@ func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseR
 		return nil, nil
 	}
 
-	if err := r.updateStatus(ctx, req); err != nil {
+	if err := r.Status().Update(ctx, req.database); err != nil {
 		return nil, err
 	}
 	return &ctrl.Result{}, nil
@@ -196,14 +216,39 @@ func connectToDB(ctx context.Context, uri, dbName string) (*mongo.Database, erro
 	return db, nil
 }
 
-func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *DatabaseReconReq) (ctrl.Result, error) {
-	req.logger.Infof("Reconciling Operations")
-	db, err := connectToDB(ctx, req.GetStateData(DbUrl), "admin")
+func (r *DatabaseReconciler) preOps(ctx context.Context, req *DatabaseReconReq) (map[string]string, error) {
+	var opVars map[string]string
+
+	dbPasswd, err := fn.JsonGet[string](req.database.Status.GeneratedVars, DbPasswordKey)
 	if err != nil {
-		req.logger.Error(err)
+		m, err := req.database.Status.GeneratedVars.ToMap()
+		if err != nil {
+			return nil, err
+		}
+		m[DbPasswordKey] = fn.CleanerNanoid(40)
+		if err := req.database.Status.GeneratedVars.FillFrom(m); err != nil {
+			return nil, err
+		}
+		return nil, r.Status().Update(ctx, req.database)
+	}
+	opVars["db-password"] = dbPasswd
+
+	opVars["hosts"] = string(msvcSecret.Data["HOSTS"])
+	opVars["root-uri"] = string(msvcSecret.Data["DB_URL"])
+	return opVars, nil
+}
+
+func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *DatabaseReconReq) (ctrl.Result, error) {
+	opVars, err := r.preOps(ctx, req)
+	if err != nil {
 		return r.failWithErr(ctx, req, err)
 	}
-	req.logger.Info("\tConnected to DB")
+	req.logger.Infof("Reconciling Operations")
+	db, err := connectToDB(ctx, opVars["root-uri"], "admin")
+	if err != nil {
+		return r.failWithErr(ctx, req, err)
+	}
+	req.logger.Info("Connected to DB")
 
 	sr := db.RunCommand(
 		ctx, bson.D{
@@ -220,18 +265,14 @@ func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *Datab
 	}
 
 	if len(usersInfo.Users) > 0 {
-		req.condBuilder.MarkReady(
-			fmt.Sprintf(
-				"MongoDB account with (user=%s,db=%s) already exists",
-				req.database.Name,
-				req.database.Name,
-			), "MongoAccountAlreadyExists",
+		return r.failWithErr(
+			ctx,
+			req,
+			errors.Newf("MongoDB account with (user=%s,db=%s) already exists", req.database.Name, req.database.Name),
 		)
-		return reconcileResult.OK()
 	}
 
 	var user bson.M
-	password := fn.CleanerNanoid(64)
 	if err != nil {
 		return r.failWithErr(ctx, req, errors.NewEf(err, "could not generate password using nanoid"))
 	}
@@ -240,7 +281,7 @@ func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *Datab
 	err = db.RunCommand(
 		ctx, bson.D{
 			{Key: "createUser", Value: req.database.Name},
-			{Key: "pwd", Value: password},
+			{Key: "pwd", Value: opVars["db-password"]},
 			{
 				Key: "roles", Value: []bson.M{
 					{"role": "dbAdmin", "db": req.database.Name},
@@ -254,44 +295,30 @@ func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *Datab
 	}
 	req.logger.Info(user)
 
-	resultScrt := &corev1.Secret{
+	outScrt := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: req.database.Namespace,
 			Name:      fmt.Sprintf("mres-%s", req.database.Name),
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(req.database, true),
+			},
+			Labels: req.database.GetLabels(),
+		},
+		StringData: map[string]string{
+			"PASSWORD": opVars["db-password"],
+			"USERNAME": req.database.Name,
+			"HOSTS":    opVars["hosts"],
+			"URI": fmt.Sprintf(
+				"mongodb://%s:%s@%s/%s",
+				req.database.Name, opVars["db-password"], opVars["hosts"], req.database.Name,
+			),
 		},
 	}
 
-	body := map[string]string{
-		DbUser:     req.database.Name,
-		DbPassword: password,
-		DbHosts:    req.GetStateData("dbHosts"),
-		DbUrl: fmt.Sprintf(
-			"mongodb://%s:%s@%s/%s?authSource=admin",
-			req.database.Name,
-			password,
-			req.GetStateData("dbHosts"),
-			req.database.Name,
-		),
+	if err := fn.KubectlApply(ctx, r.Client, outScrt); err != nil {
+		return r.failWithErr(ctx, req, err)
 	}
 
-	if _, err = controllerutil.CreateOrUpdate(
-		ctx, r.Client, resultScrt, func() error {
-			resultScrt.Immutable = fn.NewBool(true)
-			resultScrt.StringData = body
-			if err = controllerutil.SetControllerReference(req.database, resultScrt, r.Scheme); err != nil {
-				return err
-			}
-			return nil
-		},
-	); err != nil {
-		return r.failWithErr(ctx, req, errors.NewEf(err, "could not create secret %s", resultScrt.Name))
-	}
-
-	req.condBuilder.SetReady(
-		metav1.ConditionTrue,
-		"OutputCreated",
-		"managed resource output has been created",
-	)
 	return reconcileResult.OK()
 }
 
@@ -301,9 +328,4 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongodbStandalone.Database{}).
 		Complete(r)
-}
-
-func (r *DatabaseReconciler) updateStatus(ctx context.Context, req *DatabaseReconReq) error {
-	req.database.Status.Conditions = req.condBuilder.GetAll()
-	return r.Status().Update(ctx, req.database)
 }

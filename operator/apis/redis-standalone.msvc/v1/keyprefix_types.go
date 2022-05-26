@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"encoding/json"
 	"fmt"
+	t "operators.kloudlite.io/lib/types"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -11,15 +11,14 @@ import (
 )
 
 type KeyPrefixSpec struct {
-	// +kubebuilder:validation:Schemaless
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Type=object
-	Inputs         json.RawMessage `json:"inputs,omitempty"`
-	ManagedSvcName string          `json:"managedSvcName"`
+	Inputs         t.RawJson `json:"inputs,omitempty"`
+	ManagedSvcName string    `json:"managedSvcName"`
 }
 
 type KeyPrefixStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	GeneratedVars t.RawJson          `json:"generatedVars,omitempty"`
+	Conditions    []metav1.Condition `json:"conditions,omitempty"`
+	OpsConditions []metav1.Condition `json:"opsConditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

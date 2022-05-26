@@ -3,19 +3,22 @@ package redisstandalonemsvc
 import (
 	"context"
 	"fmt"
-
+	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"operators.kloudlite.io/lib/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"github.com/go-redis/redis/v8"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	"operators.kloudlite.io/controllers/crds"
@@ -23,8 +26,6 @@ import (
 	"operators.kloudlite.io/lib/finalizers"
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
-	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // KeyPrefixReconciler reconciles a KeyPrefix object
@@ -34,13 +35,18 @@ type KeyPrefixReconciler struct {
 }
 
 type KeyPrefixReconReq struct {
-	t.ReconReq
 	ctrl.Request
-	logger      *zap.SugaredLogger
-	condBuilder fn.StatusConditions
-	keyPrefix   *redisStandalone.KeyPrefix
-	redisCli    *redis.Client
+	stateData map[stateKey]string
+	logger    *zap.SugaredLogger
+	keyPrefix *redisStandalone.KeyPrefix
 }
+
+type stateKey string
+
+const (
+	RootPasswordKey stateKey = "root-password"
+	HostsKey        stateKey = "hosts"
+)
 
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=keyprefixes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=keyprefixes/status,verbs=get;update;patch
@@ -51,16 +57,12 @@ func (r *KeyPrefixReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request
 		Request:   orgReq,
 		logger:    crds.GetLogger(orgReq.NamespacedName),
 		keyPrefix: new(redisStandalone.KeyPrefix),
+		stateData: map[stateKey]string{},
 	}
 
 	if err := r.Get(ctx, orgReq.NamespacedName, req.keyPrefix); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return reconcileResult.OK()
-		}
-		return reconcileResult.Failed()
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	req.condBuilder = fn.Conditions.From(req.keyPrefix.Status.Conditions)
 
 	if !req.keyPrefix.HasLabels() {
 		req.keyPrefix.EnsureLabels()
@@ -108,60 +110,46 @@ func (r *KeyPrefixReconciler) finalize(ctx context.Context, req *KeyPrefixReconR
 	return reconcileResult.OK()
 }
 
-func (r *KeyPrefixReconciler) statusUpdate(ctx context.Context, req *KeyPrefixReconReq) error {
-	req.keyPrefix.Status.Conditions = req.condBuilder.GetAll()
-	req.logger.Infof("Conditions: %+v", req.keyPrefix.Status.Conditions)
-	return r.Status().Update(ctx, req.keyPrefix)
-}
-
 func (r *KeyPrefixReconciler) failWithErr(ctx context.Context, req *KeyPrefixReconReq, err error) (ctrl.Result, error) {
-	req.condBuilder.MarkNotReady(err)
-	if err2 := r.statusUpdate(ctx, req); err2 != nil {
+	fn.Conditions2.MarkNotReady(&req.keyPrefix.Status.OpsConditions, err, "ReconFailedWithErr")
+	if err2 := r.Status().Update(ctx, req.keyPrefix); err2 != nil {
+		if apiErrors.IsConflict(err2) {
+			return reconcileResult.OK()
+		}
 		return ctrl.Result{}, err2
 	}
-	return reconcileResult.FailedE(err)
+	//return reconcileResult.FailedE(err)
+	return ctrl.Result{}, nil
+
 }
 
 func (r *KeyPrefixReconciler) reconcileStatus(ctx context.Context, req *KeyPrefixReconReq) (*ctrl.Result, error) {
-	prevConditions := req.keyPrefix.Status.Conditions
-	req.condBuilder.Reset()
+	var conditions []metav1.Condition
 
 	redisMsvcSecret := new(corev1.Secret)
 	nn := types.NamespacedName{
 		Namespace: req.keyPrefix.Namespace, Name: fmt.Sprintf("msvc-%s", req.keyPrefix.Spec.ManagedSvcName),
 	}
+
 	if err := r.Get(ctx, nn, redisMsvcSecret); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
 		req.logger.Infof("secret for managed resource (%s) is not available yet, aborting ...", nn)
-		req.condBuilder.MarkNotReady(err, "MsvcSecretNotFound")
-	}
-
-	rootPassword := string(redisMsvcSecret.Data["ROOT_PASSWORD"])
-	hosts := string(redisMsvcSecret.Data["HOSTS"])
-
-	req.SetStateData("ROOT_PASSWORD", rootPassword)
-	req.SetStateData("HOSTS", hosts)
-
-	rCli := redis.NewClient(
-		&redis.Options{
-			Addr:     hosts,
-			Password: rootPassword,
-		},
-	)
-
-	if err := rCli.Ping(ctx).Err(); err != nil {
-		req.condBuilder.MarkNotReady(err, "IrrReconcilable")
-		req.condBuilder.Build(
-			"Redis", metav1.Condition{
-				Type:    "PingFailed",
-				Status:  "True",
-				Reason:  "BadHostAddr",
-				Message: fmt.Sprintf("could not reach to redis hosts %s", req.GetStateData("HOSTS")),
+		fn.Conditions2.Build(
+			&conditions, "Msvc", metav1.Condition{
+				Type:    "OutputExists",
+				Status:  metav1.ConditionFalse,
+				Reason:  "SecretNotFound",
+				Message: err.Error(),
 			},
 		)
-		req.logger.Debugf("ping failed, so aborting  conditions: ... %+v", req.condBuilder.GetAll())
+		redisMsvcSecret = nil
+	}
+
+	if redisMsvcSecret != nil {
+		req.stateData[RootPasswordKey] = string(redisMsvcSecret.Data["ROOT_PASSWORD"])
+		req.stateData[HostsKey] = string(redisMsvcSecret.Data["HOSTS"])
 	}
 
 	// output cfgMap exists
@@ -176,11 +164,12 @@ func (r *KeyPrefixReconciler) reconcileStatus(ctx context.Context, req *KeyPrefi
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
-		req.condBuilder.Build(
+		fn.Conditions2.Build(
+			&conditions,
 			"Output", metav1.Condition{
 				Type:    "NotFound",
 				Status:  "True",
-				Reason:  "NotExists",
+				Reason:  "ConfigmapNotFound",
 				Message: fmt.Sprintf("keyPrefix output does not exist yet"),
 			},
 		)
@@ -188,64 +177,118 @@ func (r *KeyPrefixReconciler) reconcileStatus(ctx context.Context, req *KeyPrefi
 	}
 
 	if cfgMap != nil {
-		if _, ok := cfgMap.Data[req.keyPrefix.Name]; !ok {
-			req.SetStateData("UserPassword", fn.CleanerNanoid(40))
-		} else {
-			req.SetStateData("UserExists", "true")
-			req.condBuilder.Build(
+		if _, ok := cfgMap.Data[req.keyPrefix.Name]; ok {
+			fn.Conditions2.Build(
+				&conditions,
 				"ACLAccounts", metav1.Condition{
 					Type:    "EntryExists",
 					Status:  metav1.ConditionTrue,
 					Reason:  "Exists",
-					Message: "",
+					Message: "Entry in configmap exists",
 				},
 			)
 		}
 	}
 
-	req.redisCli = rCli
-
-	req.logger.Debugf("prevConditions: %+v", prevConditions)
-	req.logger.Debugf("req.condBuilder.GetAll(): %+v", req.condBuilder.GetAll())
-
-	if req.condBuilder.Equal(prevConditions) {
+	if fn.Conditions2.Equal(conditions, req.keyPrefix.Status.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
-	if err := r.statusUpdate(ctx, req); err != nil {
+	req.logger.Debugf("conditions: %+v", conditions)
+	req.logger.Debugf("req.keyPrefix.Status.Conditions: %+v", req.keyPrefix.Status.Conditions)
+	req.keyPrefix.Status.Conditions = conditions
+	if err := r.Status().Update(ctx, req.keyPrefix); err != nil {
 		return nil, err
 	}
 
 	return reconcileResult.OKP()
 }
 
-func (r *KeyPrefixReconciler) createACLAcc(
+func newRedisClient(ctx context.Context, hosts, authPassword string) (*redis.Client, error) {
+	rCli := redis.NewClient(
+		&redis.Options{
+			Addr:     hosts,
+			Password: authPassword,
+		},
+	)
+	if rCli == nil {
+		return nil, errors.Newf("could not build redis client")
+	}
+
+	if err := rCli.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+	return rCli, nil
+	//if err := rCli.Ping(ctx).Err(); err != nil {
+	//	fn.Conditions2.Build(
+	//		&conditions,
+	//		"Redis", metav1.Condition{
+	//			Type:    "PingFailed",
+	//			Status:  "True",
+	//			Reason:  "BadHostAddr",
+	//			Message: fmt.Sprintf("could not reach to redis hosts %s", req.GetStateData("HOSTS")),
+	//		},
+	//	)
+	//}
+}
+
+func createACLAcc(
 	ctx context.Context, redisCli *redis.Client, username, prefix,
 	password string,
 ) error {
-	return redisCli.Do(
+	if err := redisCli.Do(
 		ctx,
-		"ACL",
-		"SETUSER",
-		username,
-		"on",
+		"ACL", "SETUSER", username, "on",
 		fmt.Sprintf("~%s:*", prefix),
-		fmt.Sprintf("+@all -@dangerous +info resetpass >%s", password),
-	).Err()
+		"+@all", "-@dangerous", "+info", "resetpass", fmt.Sprintf(">%s", password),
+	).Err(); err != nil {
+		return err
+	}
+	return nil
+	//return redisCli.Do(ctx, "CONFIG", "REWRITE").Err()
+}
+
+func (r *KeyPrefixReconciler) preOps(ctx context.Context, req *KeyPrefixReconReq) error {
+	gVars, err := req.keyPrefix.Status.GeneratedVars.ToMap()
+	if err != nil {
+		return err
+	}
+
+	if _, ok := gVars["auth-password"]; !ok {
+		if gVars == nil {
+			gVars = map[string]any{}
+		}
+		gVars["auth-password"] = fn.CleanerNanoid(40)
+		if err := req.keyPrefix.Status.GeneratedVars.FillFrom(gVars); err != nil {
+			return err
+		}
+		return r.Status().Update(ctx, req.keyPrefix)
+	}
+	return nil
 }
 
 func (r *KeyPrefixReconciler) reconcileOperations(ctx context.Context, req *KeyPrefixReconReq) (ctrl.Result, error) {
-	password := req.GetStateData("UserPassword")
-	userExists := req.GetStateData("UserExists")
-	if userExists == "true" {
-		return reconcileResult.OK()
+	rootPassword := req.stateData[RootPasswordKey]
+	hosts := req.stateData[HostsKey]
+
+	if err := r.preOps(ctx, req); err != nil {
+		return ctrl.Result{}, err
 	}
 
-	inputs, err := fn.Json.FromRawMessage(req.keyPrefix.Spec.Inputs)
+	redisCli, err := newRedisClient(ctx, hosts, rootPassword)
+
+	authPasswd, err := fn.JsonGet[string](req.keyPrefix.Status.GeneratedVars, "auth-password")
 	if err != nil {
-		return reconcileResult.FailedE(err)
+		return r.failWithErr(ctx, req, err)
+	}
+
+	if err := createACLAcc(
+		ctx, redisCli, req.keyPrefix.Name, req.keyPrefix.Name,
+		authPasswd,
+	); err != nil {
+		return r.failWithErr(ctx, req, err)
 	}
 
 	cfgMap := new(corev1.ConfigMap)
@@ -265,26 +308,70 @@ func (r *KeyPrefixReconciler) reconcileOperations(ctx context.Context, req *KeyP
 	cfgMap.Data[req.keyPrefix.Name] = fmt.Sprintf(
 		"USER %s on ~%s:* +@all -@dangerous +info resetpass >%s",
 		req.keyPrefix.Name,
-		inputs["prefix"],
-		password,
+		req.keyPrefix.Name,
+		authPasswd,
 	)
-
-	b, err := templates.Parse(templates.ConfigMap, cfgMap)
-	if err != nil {
-		return reconcileResult.FailedE(err)
-	}
-	req.logger.Debugf("b: %s", b)
-	stdout, err := fn.KubectlApply(b)
-	if err != nil {
+	if err := fn.KubectlApply(ctx, r.Client, cfgMap); err != nil {
 		return ctrl.Result{}, err
 	}
-	req.logger.Debugf("stdout: %+v", stdout)
+	if err := r.reconcileOutput(ctx, req); err != nil {
+		return r.failWithErr(ctx, req, err)
+	}
 	return reconcileResult.OK()
+}
+
+func (r *KeyPrefixReconciler) reconcileOutput(ctx context.Context, req *KeyPrefixReconReq) error {
+	password, ok := req.keyPrefix.Status.GeneratedVars.Get("auth-password")
+	if !ok {
+		return errors.New("auth-password not found")
+	}
+	scrt := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("mres-%s", req.keyPrefix.Name),
+			Namespace: req.keyPrefix.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(req.keyPrefix, true),
+			},
+			Labels: req.keyPrefix.GetLabels(),
+		},
+		StringData: map[string]string{
+			"USERNAME":   req.keyPrefix.Name,
+			"PASSWORD":   password.(string),
+			"KEY_PREFIX": req.keyPrefix.Name,
+			"HOSTS":      req.stateData[HostsKey],
+			"URI": fmt.Sprintf(
+				"redis://%s:%s@%s?allowUsernameInUri=true", req.keyPrefix.Name, password, req.stateData[HostsKey],
+			),
+		},
+	}
+	return fn.KubectlApply(ctx, r.Client, scrt)
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KeyPrefixReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redisStandalone.KeyPrefix{}).
+		Watches(
+			&source.Kind{Type: &corev1.Secret{}}, handler.EnqueueRequestsFromMapFunc(
+				func(obj client.Object) []reconcile.Request {
+					list := new(redisStandalone.KeyPrefixList)
+					if err := r.List(
+						context.TODO(), list, &client.ListOptions{
+							LabelSelector: labels.SelectorFromValidatedSet(obj.GetLabels()),
+						},
+					); err != nil {
+						return nil
+					}
+
+					var reqs []reconcile.Request
+					for _, item := range list.Items {
+						reqs = append(
+							reqs, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}},
+						)
+					}
+					return reqs
+				},
+			),
+		).
 		Complete(r)
 }

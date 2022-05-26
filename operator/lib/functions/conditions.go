@@ -351,10 +351,6 @@ func (wc *wConditions) From(conditions []metav1.Condition) StatusConditions {
 
 var Conditions = &wConditions{}
 
-func init() {
-	Conditions.sc.lt = metav1.Time{Time: time.Now()}
-}
-
 type conditions2 struct {
 	lt metav1.Time
 }
@@ -383,10 +379,14 @@ func (c *conditions2) Build(cl *[]metav1.Condition, group string, conditions ...
 func (c *conditions2) MarkReady(cl *[]metav1.Condition, reason string, msg ...string) {
 	c.Build(
 		cl, "", metav1.Condition{
-			Type:    constants.ConditionReady.Type,
-			Status:  metav1.ConditionTrue,
-			Reason:  reason,
-			Message: IfThenElse(len(msg) > 0, msg[0], ""),
+			Type:   constants.ConditionReady.Type,
+			Status: metav1.ConditionTrue,
+			Reason: reason,
+			Message: IfThenElseFn(
+				len(msg) > 0,
+				func() string { return msg[0] },
+				func() string { return "" },
+			),
 		},
 	)
 }
@@ -394,9 +394,13 @@ func (c *conditions2) MarkReady(cl *[]metav1.Condition, reason string, msg ...st
 func (c *conditions2) MarkNotReady(cl *[]metav1.Condition, err error, reason ...string) {
 	c.Build(
 		cl, "", metav1.Condition{
-			Type:    constants.ConditionReady.Type,
-			Status:  metav1.ConditionTrue,
-			Reason:  IfThenElse(len(reason) > 0, reason[0], constants.ConditionReady.ErrorReason),
+			Type:   constants.ConditionReady.Type,
+			Status: metav1.ConditionFalse,
+			Reason: IfThenElseFn(
+				len(reason) > 0,
+				func() string { return reason[0] },
+				func() string { return constants.ConditionReady.ErrorReason },
+			),
 			Message: err.Error(),
 		},
 	)
@@ -622,5 +626,10 @@ func (c *conditions2) BuildFromPods(conditions *[]metav1.Condition, pl ...corev1
 }
 
 var Conditions2 = &conditions2{
-	lt: metav1.Time{Time: time.Now()},
+	lt: metav1.Time{Time: time.UnixMilli(time.Now().Unix())},
+}
+
+func init() {
+	Conditions.sc.lt = metav1.Time{Time: time.UnixMilli(time.Now().Unix())}
+	//Conditions2.lt = metav1.Time{Time: time.Now()}
 }

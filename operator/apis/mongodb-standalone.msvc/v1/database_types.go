@@ -1,23 +1,23 @@
 package v1
 
 import (
-	"encoding/json"
 	"fmt"
+	t "operators.kloudlite.io/lib/types"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type DatabaseSpec struct {
-	ManagedSvcName string `json:"managedSvcName,omitempty"`
-	// +kubebuilder:validation:Schemaless
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Type=object
-	Inputs json.RawMessage `json:"inputs,omitempty"`
+	ManagedSvcName string    `json:"managedSvcName,omitempty"`
+	Inputs         t.RawJson `json:"inputs,omitempty"`
 }
 
 type DatabaseStatus struct {
-	LastHash   string             `json:"lastHash,omitempty"`
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	LastHash string `json:"lastHash,omitempty"`
+
+	GeneratedVars t.RawJson          `json:"generatedVars,omitempty"`
+	Conditions    []metav1.Condition `json:"conditions,omitempty"`
+	OpsConditions []metav1.Condition `json:"opsConditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

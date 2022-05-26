@@ -217,7 +217,7 @@ func (r *ManagedResourceReconciler) reconcileOperations(ctx context.Context, req
 		return r.failWithErr(ctx, req, err)
 	}
 
-	if _, err := fn.KubectlApply(b); err != nil {
+	if _, err := fn.KubectlApplyExec(b); err != nil {
 		req.logger.Error(err)
 		return r.failWithErr(ctx, req, errors.NewEf(err, "could not apply mongodb resource %s", req.mres.NameRef()))
 	}

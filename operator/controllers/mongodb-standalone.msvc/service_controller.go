@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,7 +28,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceReconciler reconciles a Service object
@@ -39,17 +37,10 @@ type ServiceReconciler struct {
 }
 
 type ServiceReconReq struct {
-	t.ReconReq
-	req         ctrl.Request
-	logger      *zap.SugaredLogger
-	mongoSvc    *mongoStandalone.Service
-	condBuilder fn.StatusConditions
-}
-
-type Output struct {
-	RootPassword string `json:"ROOT_PASSWORD"`
-	DbHosts      string `json:"HOSTS"`
-	DbUrl        string `json:"DB_URL"`
+	req       ctrl.Request
+	stateData map[string]string
+	logger    *zap.SugaredLogger
+	mongoSvc  *mongoStandalone.Service
 }
 
 const (
@@ -63,19 +54,15 @@ const (
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
 	req := &ServiceReconReq{
-		req:      orgReq,
-		logger:   crds.GetLogger(orgReq.NamespacedName),
-		mongoSvc: new(mongoStandalone.Service),
+		req:       orgReq,
+		logger:    crds.GetLogger(orgReq.NamespacedName),
+		mongoSvc:  new(mongoStandalone.Service),
+		stateData: map[string]string{},
 	}
 
 	if err := r.Get(ctx, orgReq.NamespacedName, req.mongoSvc); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return reconcileResult.OK()
-		}
-		return reconcileResult.Failed()
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	req.condBuilder = fn.Conditions.From(req.mongoSvc.Status.Conditions)
 
 	if !req.mongoSvc.HasLabels() {
 		req.mongoSvc.EnsureLabels()
@@ -102,37 +89,23 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 	return r.reconcileOperations(ctx, req)
 }
 
-func (r *ServiceReconciler) statusUpdate(ctx context.Context, req *ServiceReconReq) error {
-	req.mongoSvc.Status.Conditions = req.condBuilder.GetAll()
-	return r.Status().Update(ctx, req.mongoSvc)
-}
-
 func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconReq, err error) (ctrl.Result, error) {
-	req.condBuilder.Build(
-		"", metav1.Condition{
-			Type:    constants.ConditionReady.Type,
-			Status:  metav1.ConditionFalse,
-			Reason:  constants.ConditionReady.ErrorReason,
-			Message: err.Error(),
-		},
-	)
-	if err := r.statusUpdate(ctx, req); err != nil {
+	fn.Conditions2.MarkNotReady(&req.mongoSvc.Status.OpsConditions, err, "ReconFailedWithErr")
+	if err := r.Status().Update(ctx, req.mongoSvc); err != nil {
 		return ctrl.Result{}, err
 	}
 	return reconcileResult.FailedE(err)
 }
 
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
-	prevStatus := req.mongoSvc.Status
-	req.condBuilder.Reset()
-	err := req.condBuilder.BuildFromHelmMsvc(
+	var conditions []metav1.Condition
+
+	err := fn.Conditions2.BuildFromHelmMsvc(
+		&conditions,
 		ctx,
 		r.Client,
 		constants.HelmMongoDBKind,
-		types.NamespacedName{
-			Namespace: req.mongoSvc.GetNamespace(),
-			Name:      req.mongoSvc.GetName(),
-		},
+		fn.NamespacedName(req.mongoSvc),
 	)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -140,68 +113,81 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		}
 	}
 
-	err = req.condBuilder.BuildFromDeployment(
+	err = fn.Conditions2.BuildFromDeployment(
+		&conditions,
 		ctx,
 		r.Client,
-		types.NamespacedName{
-			Namespace: req.mongoSvc.GetNamespace(),
-			Name:      req.mongoSvc.GetName(),
-		},
+		fn.NamespacedName(req.mongoSvc),
 	)
+
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
 	}
-	var helmSecret corev1.Secret
-	nn := types.NamespacedName{
-		Namespace: req.mongoSvc.GetNamespace(),
-		Name:      req.mongoSvc.GetName(),
-	}
-	if err := r.Get(ctx, nn, &helmSecret); err != nil {
-		req.logger.Info(
-			"helm release %s is not available yet, assuming resource not yet installed, so installing",
-			nn.String(),
-		)
-	}
-	x, ok := helmSecret.Data[MongoDbRootPasswordKey]
-	req.SetStateData(MongoDbRootPasswordKey, fn.IfThenElse(ok, string(x), fn.CleanerNanoid(40)))
 
-	// check output exists
-	output := new(corev1.Secret)
+	helmSecret := new(corev1.Secret)
+	if err := r.Get(ctx, fn.NamespacedName(req.mongoSvc), helmSecret); err != nil {
+		req.logger.Info(
+			"helm release is not available yet, assuming resource not yet installed, so installing",
+		)
+		helmSecret = nil
+	}
+
+	if helmSecret != nil {
+		req.stateData[MongoDbRootPasswordKey] = string(helmSecret.Data[MongoDbRootPasswordKey])
+	}
+
+	// check outputSecret exists
+	outputSecret := new(corev1.Secret)
 	if err := r.Get(
-		ctx, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name}, output,
+		ctx, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: req.mongoSvc.Name}, outputSecret,
 	); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
-		req.condBuilder.MarkNotReady(errors.NewEf(err, "output secret not found for resource"), "OutputSecretNotFound")
-		output = nil
+
+		fn.Conditions2.MarkNotReady(
+			&conditions, errors.NewEf(err, "outputSecret secret not found for resource"),
+			"OutputSecretNotFound",
+		)
+		outputSecret = nil
 	}
 
-	if req.condBuilder.Equal(prevStatus.Conditions) {
+	if fn.Conditions2.Equal(conditions, req.mongoSvc.Status.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
-	if err := r.statusUpdate(ctx, req); err != nil {
+	req.mongoSvc.Status.Conditions = conditions
+	if err := r.Status().Update(ctx, req.mongoSvc); err != nil {
 		return nil, err
 	}
 	return reconcileResult.OKP()
 }
 
-func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
-	m, err := fn.Json.FromRawMessage(req.mongoSvc.Spec.Inputs)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) error {
+	if _, err := fn.JsonGet(req.mongoSvc.Status.GeneratedVars, MongoDbRootPasswordKey); err != nil {
+		m, err := req.mongoSvc.Status.GeneratedVars.ToMap()
+		if err != nil {
+			return err
+		}
+		m[MongoDbRootPasswordKey] = fn.CleanerNanoid(40)
+		m[StorageClassKey] = "do-block-storage-xfs"
+		if err := req.mongoSvc.Status.GeneratedVars.FillFrom(m); err != nil {
+			return err
+		}
+		return r.Status().Update(ctx, req.mongoSvc)
 	}
-	m[MongoDbRootPasswordKey] = req.GetStateData(MongoDbRootPasswordKey)
-	m[StorageClassKey] = "do-block-storage-xfs"
 
-	req.mongoSvc.Spec.Inputs, err = json.Marshal(m)
-	if err != nil {
-		return reconcileResult.FailedE(err)
+	return nil
+}
+
+func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
+
+	if err := r.preOps(ctx, req); err != nil {
+		return r.failWithErr(ctx, req, err)
 	}
 
 	// hash := req.mongoSvc.Hash()
@@ -215,17 +201,14 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return reconcileResult.FailedE(err)
 	}
 
-	if _, err := fn.KubectlApply(b); err != nil {
+	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return reconcileResult.FailedE(errors.NewEf(err, "could not apply kubectl for mongodb standalone"))
 	}
 
 	if err := r.reconcileOutput(ctx, req); err != nil {
-		return reconcileResult.FailedE(err)
+		return r.failWithErr(ctx, req, err)
 	}
-
-	req.mongoSvc.Status.LastHash = req.mongoSvc.Hash()
-
-	return ctrl.Result{}, r.statusUpdate(ctx, req)
+	return reconcileResult.OK()
 }
 
 func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
@@ -237,30 +220,30 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 	if err := json.Unmarshal(m, &j); err != nil {
 		return err
 	}
+
 	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", req.mongoSvc.Name, req.mongoSvc.Namespace)
-	out := Output{
-		RootPassword: j[MongoDbRootPasswordKey].(string),
-		DbHosts:      hostUrl,
-		DbUrl:        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", j[MongoDbRootPasswordKey], hostUrl),
+	authPasswd, err := fn.JsonGet[string](req.mongoSvc.Status.GeneratedVars, MongoDbRootPasswordKey)
+	if err != nil {
+		return err
 	}
 
 	scrt := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("msvc-%s", req.mongoSvc.Name),
 			Namespace: req.mongoSvc.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(req.mongoSvc, true),
+			},
+			Labels: req.mongoSvc.GetLabels(),
+		},
+		StringData: map[string]string{
+			"ROOT_PASSWORD": authPasswd,
+			"DB_HOSTS":      hostUrl,
+			"DB_URL":        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", authPasswd, hostUrl),
 		},
 	}
 
-	_, err = controllerutil.CreateOrUpdate(
-		ctx, r.Client, scrt, func() error {
-			var outMap map[string]string
-			if err := fn.Json.FromTo(out, &outMap); err != nil {
-				return err
-			}
-			scrt.StringData = outMap
-			return controllerutil.SetControllerReference(req.mongoSvc, scrt, r.Scheme)
-		},
-	)
+	err = fn.KubectlApply(ctx, r.Client, scrt)
 	if err != nil {
 		return err
 	}
