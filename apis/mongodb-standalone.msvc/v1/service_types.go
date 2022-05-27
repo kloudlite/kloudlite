@@ -2,24 +2,23 @@ package v1
 
 import (
 	"fmt"
-	t "operators.kloudlite.io/lib/types"
-
 	fn "operators.kloudlite.io/lib/functions"
+	rawJson "operators.kloudlite.io/lib/raw-json"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	Inputs t.RawJson `json:"inputs,omitempty"`
+	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
-	LastHash      string             `json:"lastHash,omitempty"`
-	GeneratedVars t.RawJson          `json:"generatedVars,omitempty"`
-	Conditions    []metav1.Condition `json:"conditions,omitempty"`
-	OpsConditions []metav1.Condition `json:"opsConditions,omitempty"`
+	LastHash      string              `json:"lastHash,omitempty"`
+	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
+	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
+	OpsConditions []metav1.Condition  `json:"opsConditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

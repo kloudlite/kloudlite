@@ -25,7 +25,6 @@ import (
 	"operators.kloudlite.io/lib/finalizers"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 
 	// mongodb "operators.kloudlite.io/apis/mongodbs.msvc/v1"
 	"operators.kloudlite.io/lib"
@@ -236,7 +235,6 @@ func (r *ManagedResourceReconciler) reconcileOperations(ctx context.Context, req
 }
 
 type ServiceReconReq struct {
-	t.ReconReq
 	ctrl.Request
 	logger      *zap.SugaredLogger
 	condBuilder fn.StatusConditions

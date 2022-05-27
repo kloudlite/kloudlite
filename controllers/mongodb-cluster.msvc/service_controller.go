@@ -30,7 +30,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ServiceReconciler reconciles a Service object
@@ -42,7 +41,6 @@ type ServiceReconciler struct {
 }
 
 type ServiceReconReq struct {
-	t.ReconReq
 	ctrl.Request
 	logger   *zap.SugaredLogger
 	mongoSvc *mongoCluster.Service

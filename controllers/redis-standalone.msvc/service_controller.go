@@ -2,7 +2,6 @@ package redisstandalonemsvc
 
 import (
 	"context"
-	t "operators.kloudlite.io/lib/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -44,7 +43,6 @@ type ServiceReconciler struct {
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 type ServiceReconReq struct {
-	t.ReconReq
 	stateData map[string]any
 	logger    *zap.SugaredLogger
 	redisSvc  *redisStandalone.Service
