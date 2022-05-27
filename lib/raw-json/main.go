@@ -16,7 +16,7 @@ type KubeRawJson struct {
 
 func (k *KubeRawJson) DeepCopyInto(out *KubeRawJson) {
 	*out = *k
-	k.RawJson.DeepCopyInto(&out.RawJson)
+	//k.RawJson.DeepCopyInto(&out.RawJson)
 }
 
 func (k *KubeRawJson) DeepCopy() *KubeRawJson {
@@ -28,39 +28,23 @@ func (k *KubeRawJson) DeepCopy() *KubeRawJson {
 	return out
 }
 
-func (k *KubeRawJson) UnmarshalJSON(data []byte) error {
-	return k.UnmarshalJSON(data)
-}
-
-func (k *KubeRawJson) MarshalJSON() ([]byte, error) {
-	return k.MarshalJSON()
-}
-
 type RawJson[K ~string, V any] struct {
 	json.RawMessage `json:",inline"`
 }
 
-func (k *RawJson[K, V]) DeepCopyInto(out *RawJson[K, V]) {
-	*out = *k
-	k.DeepCopyInto(out)
-}
+//func (k *RawJson[K, V]) DeepCopyInto(out *RawJson[K, V]) {
+//	*out = *k
+//	k.RawMessage.DeepCopyInto(out)
+//}
 
-func (k *RawJson[K, V]) DeepCopy() *RawJson[K, V] {
-	if k == nil {
-		return nil
-	}
-	out := new(RawJson[K, V])
-	k.DeepCopyInto(out)
-	return out
-}
-
-func (k *RawJson[K, V]) UnmarshalJSON(data []byte) error {
-	return k.UnmarshalJSON(data)
-}
-
-func (k *RawJson[K, V]) MarshalJSON() ([]byte, error) {
-	return k.MarshalJSON()
-}
+//func (k *RawJson[K, V]) DeepCopy() *RawJson[K, V] {
+//	if k == nil {
+//		return nil
+//	}
+//	out := new(RawJson[K, V])
+//	k.DeepCopyInto(out)
+//	return out
+//}
 
 func (s RawJson[K, V]) toMap() (map[K]V, error) {
 	m, err := s.RawMessage.MarshalJSON()

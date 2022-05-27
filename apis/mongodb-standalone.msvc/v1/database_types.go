@@ -12,8 +12,8 @@ type DatabaseSpec struct {
 }
 
 type DatabaseStatus struct {
-	LastHash string `json:"lastHash,omitempty"`
-
+	LastHash      string              `json:"lastHash,omitempty"`
+	IsReady       bool                `json:"isReady"`
 	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
 	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
 	OpsConditions []metav1.Condition  `json:"opsConditions,omitempty"`

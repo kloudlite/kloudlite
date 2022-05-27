@@ -31,6 +31,9 @@ func (s *statusConditions) Equal(other []metav1.Condition) bool {
 	}
 	for _, c := range s.conditions {
 		st := meta.FindStatusCondition(other, c.Type)
+		if st == nil {
+			return false
+		}
 		if st.Reason != c.Reason || st.Message != c.Message || st.Status != c.Status {
 			return false
 		}

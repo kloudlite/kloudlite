@@ -164,7 +164,7 @@ To connect to your database from outside the cluster execute the following comma
 
     export NODE_IP=$(kubectl get nodes --namespace {{ template "mongodb.namespace" . }} -o jsonpath="{.items[0].status.addresses[0].address}")
     export NODE_PORT=$(kubectl get --namespace {{ template "mongodb.namespace" . }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "mongodb.fullname" . }})
-    mongo --host $NODE_IP --port $NODE_PORT {{- if .Values.auth.enabled }} --authenticationDatabase admin -p $MONGODB_ROOT_PASSWORD{{- end }}
+    mongox --host $NODE_IP --port $NODE_PORT {{- if .Values.auth.enabled }} --authenticationDatabase admin -p $MONGODB_ROOT_PASSWORD{{- end }}
 
 {{- else if contains "LoadBalancer" .Values.service.type }}
 

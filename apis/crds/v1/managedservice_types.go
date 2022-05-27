@@ -22,6 +22,7 @@ type ManagedServiceSpec struct {
 // ManagedServiceStatus defines the observed state of ManagedService
 type ManagedServiceStatus struct {
 	LastHash   string             `json:"lastHash,omitempty"`
+	IsReady    bool               `json:"isReady"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 

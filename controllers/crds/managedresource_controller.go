@@ -7,7 +7,6 @@ import (
 
 	"go.uber.org/zap"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	labels2 "k8s.io/apimachinery/pkg/labels"
@@ -21,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/finalizers"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/templates"
@@ -127,7 +125,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(ctx context.Context, req *Se
 		)
 	}
 
-	if !meta.IsStatusConditionTrue(msvc.Status.Conditions, constants.ConditionReady.Type) {
+	if !msvc.Status.IsReady {
 		return nil, errors.Newf("managed service (%s) is not ready", msvc.Name)
 	}
 
@@ -217,7 +215,6 @@ func (r *ManagedResourceReconciler) reconcileOperations(ctx context.Context, req
 	}
 
 	if _, err := fn.KubectlApplyExec(b); err != nil {
-		req.logger.Error(err)
 		return r.failWithErr(ctx, req, errors.NewEf(err, "could not apply mongodb resource %s", req.mres.NameRef()))
 	}
 	hash := req.mres.Hash()

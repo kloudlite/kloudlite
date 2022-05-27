@@ -113,6 +113,8 @@ spec:
               generatedVars:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              isReady:
+                type: boolean
               lastHash:
                 type: string
               opsConditions:
