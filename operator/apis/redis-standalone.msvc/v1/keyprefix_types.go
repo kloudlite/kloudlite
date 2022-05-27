@@ -2,23 +2,22 @@ package v1
 
 import (
 	"fmt"
-	t "operators.kloudlite.io/lib/types"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	rawJson "operators.kloudlite.io/lib/raw-json"
 
 	fn "operators.kloudlite.io/lib/functions"
 )
 
 type KeyPrefixSpec struct {
-	Inputs         t.RawJson `json:"inputs,omitempty"`
-	ManagedSvcName string    `json:"managedSvcName"`
+	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
+	ManagedSvcName string              `json:"managedSvcName"`
 }
 
 type KeyPrefixStatus struct {
-	GeneratedVars t.RawJson          `json:"generatedVars,omitempty"`
-	Conditions    []metav1.Condition `json:"conditions,omitempty"`
-	OpsConditions []metav1.Condition `json:"opsConditions,omitempty"`
+	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
+	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
+	OpsConditions []metav1.Condition  `json:"opsConditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

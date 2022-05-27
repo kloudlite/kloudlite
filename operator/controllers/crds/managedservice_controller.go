@@ -27,7 +27,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 )
 
 // ManagedServiceReconciler reconciles a ManagedService object
@@ -39,7 +38,6 @@ type ManagedServiceReconciler struct {
 }
 
 type MsvcReconReq struct {
-	t.ReconReq
 	ctrl.Request
 	condBuilder fn.StatusConditions
 	logger      *zap.SugaredLogger

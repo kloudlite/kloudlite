@@ -3,7 +3,6 @@ package mysqlclustermsvc
 import (
 	"context"
 	"fmt"
-
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -90,9 +89,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 }
 
 func (r *ServiceReconciler) buildOutput(ctx context.Context, req *ServiceReconReq) error {
-	rootPasswd, err := fn.JsonGet[string](req.mysqlSvc.Status.GeneratedVars, MysqlRootPasswordKey)
-	if err != nil {
-		return err
+	rootPasswd, ok := req.mysqlSvc.Status.GeneratedVars.GetString(MysqlPasswordKey)
+	//rootPasswd, ok := req.mysqlSvc.Status.GeneratedVars.Get(MysqlPasswordKey)
+	if !ok {
+		return errors.Newf("asdfasf")
 	}
 
 	scrt := &corev1.Secret{
@@ -110,8 +110,7 @@ func (r *ServiceReconciler) buildOutput(ctx context.Context, req *ServiceReconRe
 		},
 	}
 
-	err = fn.KubectlApply(ctx, r.Client, scrt)
-	if err != nil {
+	if err := fn.KubectlApply(ctx, r.Client, scrt); err != nil {
 		return err
 	}
 	return nil

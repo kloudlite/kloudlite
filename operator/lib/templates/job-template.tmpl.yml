@@ -1,8 +1,8 @@
 piVersion: batch/v1
 kind: Job
 metadata:
-  generateName: {{ .Name }}-
-  namespace: {{ .Namespace }}
+  generateName: {{.Name}}-
+  namespace: {{.Namespace}}
 spec:
   template:
     spec:
@@ -31,4 +31,4 @@ spec:
           {{- end}}
         {{- end }}
       restartPolicy: OnFailure
-  backoffLimit: 2 
+  backoffLimit: 2

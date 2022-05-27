@@ -251,22 +251,18 @@ func createACLAcc(
 }
 
 func (r *KeyPrefixReconciler) preOps(ctx context.Context, req *KeyPrefixReconReq) error {
-	gVars, err := req.keyPrefix.Status.GeneratedVars.ToMap()
-	if err != nil {
-		return err
-	}
-
-	if _, ok := gVars["auth-password"]; !ok {
-		if gVars == nil {
-			gVars = map[string]any{}
-		}
-		gVars["auth-password"] = fn.CleanerNanoid(40)
-		// FIXME
-		//if err := req.keyPrefix.Status.GeneratedVars.Patch(gVars); err != nil {
-		//	return err
-		//}
-		return r.Status().Update(ctx, req.keyPrefix)
-	}
+	//authP, b := rawJson.Get[string](req.keyPrefix.Status.GeneratedVars, "auth-password")
+	//if _, ok := gVars["auth-password"]; !ok {
+	//	if gVars == nil {
+	//		gVars = map[string]any{}
+	//	}
+	//	gVars["auth-password"] = fn.CleanerNanoid(40)
+	//	// FIXME
+	//	//if err := req.keyPrefix.Status.GeneratedVars.Patch(gVars); err != nil {
+	//	//	return err
+	//	//}
+	//	return r.Status().Update(ctx, req.keyPrefix)
+	//}
 	return nil
 }
 
