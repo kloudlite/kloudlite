@@ -336,7 +336,11 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 }
 
 func (r *mutationResolver) CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	_, err := r.Domain.DeleteApp(ctx, appID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error) {

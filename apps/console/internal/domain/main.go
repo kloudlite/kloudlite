@@ -65,7 +65,26 @@ type domain struct {
 	financeClient        finance.FinanceClient
 }
 
-func getComputePlan(name string) (*entities.ComputePlan, error) {
+func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string) error {
+	one, err := d.appRepo.FindOne(ctx, repos.Filter{
+		"name":      name,
+		"namespace": namespace,
+	})
+	if err != nil {
+		return err
+	}
+	if one == nil {
+		return nil
+	}
+	err = d.appRepo.DeleteById(ctx, one.Id)
+	if err != nil {
+		return err
+	}
+	d.changeNotifier.Notify(one.Id)
+	return nil
+}
+
+func (d *domain) getComputePlan(name string) (*entities.ComputePlan, error) {
 	file, err := ioutil.ReadFile("compute-plans.yaml")
 	if err != nil {
 		return nil, err
@@ -85,7 +104,7 @@ func getComputePlan(name string) (*entities.ComputePlan, error) {
 }
 
 func (d *domain) GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error) {
-	return getComputePlan(name)
+	return d.getComputePlan(name)
 }
 
 func (d *domain) GetComputePlans(ctx context.Context, provider string, region string) ([]*entities.ComputePlan, error) {
@@ -361,13 +380,14 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 		Description:  app.Description,
 		Replicas:     app.Replicas,
 		ExposedPorts: app.ExposedPorts,
+		Status:       entities.AppStateSyncing,
 	}
 	for _, c := range app.Containers {
 		var iName string
 		if c.Image != nil {
 			iName = fmt.Sprintf("%s:latest", *c.Image)
 		}
-		plan, err := getComputePlan(c.ComputePlanName)
+		plan, err := d.getComputePlan(c.ComputePlanName)
 		startBillables = append(startBillables, &finance.StartBillableIn{
 			AccountId:    string(accountId),
 			BillableType: c.ComputePlanName,
@@ -899,7 +919,17 @@ func (d *domain) UpdateApp(ctx context.Context, managedResID repos.ID, values ma
 }
 
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
-	err := d.appRepo.DeleteById(ctx, appID)
+	app, err := d.appRepo.FindById(ctx, appID)
+	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
+		APIVersion: op_crds.AppAPIVersion,
+		Kind:       op_crds.AppKind,
+		Metadata: op_crds.AppMetadata{
+			Name:      app.Name,
+			Namespace: app.Namespace,
+		},
+	})
+	app.Status = entities.AppStateSyncing
+	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	if err != nil {
 		return false, err
 	}
