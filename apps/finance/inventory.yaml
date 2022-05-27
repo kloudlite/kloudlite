@@ -13,7 +13,7 @@
 - type: Storage
   name: ObjectStorage
   provider: do
-  desc: GB
+  desc: 100 GB
   pricePerHour:
     quantity: 0.0138
     currency: $

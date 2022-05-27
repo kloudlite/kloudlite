@@ -84,6 +84,7 @@ type Domain interface {
 	UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.App) error
+	OnDeleteApp(ctx context.Context, name string, namespace string) error
 	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
 	InstallAppFlow(
 		ctx context.Context,
