@@ -13,6 +13,8 @@ RUN go build -tags musl -o /tmp/bin/console ./main.go
 RUN chmod +x /tmp/bin/console
 
 FROM golang:1.18-alpine
+RUN mkdir /tmp/app
+RUN chown -R 1001 /tmp/app
 USER 1001
 WORKDIR /tmp/app
 COPY --from=base --chown=1001 /tmp/bin/console ./
