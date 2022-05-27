@@ -15,6 +15,7 @@ type ServiceSpec struct {
 
 // ServiceStatus defines the observed state of Service
 type ServiceStatus struct {
+	IsReady       bool                `json:"isReady,omitempty"`
 	LastHash      string              `json:"lastHash,omitempty"`
 	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
 	Conditions    []metav1.Condition  `json:"conditions,omitempty"`

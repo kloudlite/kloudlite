@@ -12,12 +12,12 @@ const (
 )
 
 var (
-	DeploymentGroup metav1.GroupVersionKind = metav1.GroupVersionKind{
+	DeploymentGroup = metav1.GroupVersionKind{
 		Group:   "apps",
 		Version: "v1",
 		Kind:    "Deployment",
 	}
-	HelmMongoDBGroup metav1.GroupVersionKind = metav1.GroupVersionKind{
+	HelmMongoDBGroup = metav1.GroupVersionKind{
 		Group:   "msvc.kloudlite.io",
 		Version: "v1",
 		Kind:    "HelmMongoDB",

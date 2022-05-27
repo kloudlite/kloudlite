@@ -166,6 +166,7 @@ func (r *ManagedServiceReconciler) reconcileStatus(ctx context.Context, req *Msv
 
 	var j struct {
 		Status struct {
+			IsReady    bool               `json:"isReady"`
 			Conditions []metav1.Condition `json:"conditions,omitempty"`
 		} `json:"status,omitempty"`
 	}
@@ -173,6 +174,7 @@ func (r *ManagedServiceReconciler) reconcileStatus(ctx context.Context, req *Msv
 	if err := json.Unmarshal(mj, &j); err != nil {
 		return nil, err
 	}
+	req.msvc.Status.IsReady = j.Status.IsReady
 	req.condBuilder.Build("", j.Status.Conditions...)
 	if req.condBuilder.Equal(prevStatus.Conditions) {
 		req.logger.Infof("Status is already in sync, so moving forward with ops")

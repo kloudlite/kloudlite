@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redhat-cop/operator-utils/pkg/util"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -17,7 +16,6 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,15 +39,7 @@ import (
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
-	crdsControllers "operators.kloudlite.io/controllers/crds"
-	elasticsearchmsvccontrollers "operators.kloudlite.io/controllers/elasticsearch.msvc"
-	influxdbmsvccontrollers "operators.kloudlite.io/controllers/influxdb.msvc"
-	mongodbClusterControllers "operators.kloudlite.io/controllers/mongodb-cluster.msvc"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
-	mysqlclustermsvccontrollers "operators.kloudlite.io/controllers/mysql-cluster.msvc"
-	mysqlStandaloneControllers "operators.kloudlite.io/controllers/mysql-standalone.msvc"
-	redisclustermsvccontrollers "operators.kloudlite.io/controllers/redis-cluster.msvc"
-	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -144,10 +134,10 @@ func main() {
 		mgr = mr
 	}
 
-	clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
+	//clientset := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
-	harborUserName := fromEnv("HARBOR_USERNAME")
-	harborPassword := fromEnv("HARBOR_PASSWORD")
+	//harborUserName := fromEnv("HARBOR_USERNAME")
+	//harborPassword := fromEnv("HARBOR_PASSWORD")
 
 	kafkaBrokers := fromEnv("KAFKA_BROKERS")
 	kafkaReplyTopic := fromEnv("KAFKA_REPLY_TOPIC")
@@ -169,38 +159,38 @@ func main() {
 
 	sender := NewMsgSender(kafkaProducer, kafkaReplyTopic)
 
-	if err = (&crds.ProjectReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		ClientSet:      clientset,
-		MessageSender:  sender,
-		HarborUserName: harborUserName,
-		HarborPassword: harborPassword,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Project")
-		os.Exit(1)
-	}
-
-	if err = (&crds.AppReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		ClientSet:      clientset,
-		MessageSender:  sender,
-		HarborUserName: harborUserName,
-		HarborPassword: harborPassword,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "App")
-		os.Exit(1)
-	}
+	//if err = (&crds.ProjectReconciler{
+	//	Client:         mgr.GetClient(),
+	//	Scheme:         mgr.GetScheme(),
+	//	ClientSet:      clientset,
+	//	MessageSender:  sender,
+	//	HarborUserName: harborUserName,
+	//	HarborPassword: harborPassword,
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Project")
+	//	os.Exit(1)
+	//}
 	//
-	if err = (&crds.RouterReconciler{
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		MessageSender: sender,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Router")
-		os.Exit(1)
-	}
+	//if err = (&crds.AppReconciler{
+	//	Client:         mgr.GetClient(),
+	//	Scheme:         mgr.GetScheme(),
+	//	ClientSet:      clientset,
+	//	MessageSender:  sender,
+	//	HarborUserName: harborUserName,
+	//	HarborPassword: harborPassword,
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "App")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&crds.RouterReconciler{
+	//	Client:        mgr.GetClient(),
+	//	Scheme:        mgr.GetScheme(),
+	//	MessageSender: sender,
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Router")
+	//	os.Exit(1)
+	//}
 
 	if err = (&crds.ManagedServiceReconciler{
 		Client:        mgr.GetClient(),
@@ -219,21 +209,21 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
 		os.Exit(1)
 	}
-
-	if err = (&crdsControllers.AccountReconciler{
-		ReconcilerBase: util.NewReconcilerBase(
-			mgr.GetClient(),
-			mgr.GetScheme(),
-			mgr.GetConfig(),
-			mgr.GetEventRecorderFor("Account_controller"),
-			mgr.GetAPIReader(),
-		),
-		Log: ctrl.Log.WithName("controllers").WithName("Account"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Account")
-		os.Exit(1)
-	}
-
+	//
+	//if err = (&crdsControllers.AccountReconciler{
+	//	ReconcilerBase: util.NewReconcilerBase(
+	//		mgr.GetClient(),
+	//		mgr.GetScheme(),
+	//		mgr.GetConfig(),
+	//		mgr.GetEventRecorderFor("Account_controller"),
+	//		mgr.GetAPIReader(),
+	//	),
+	//	Log: ctrl.Log.WithName("controllers").WithName("Account"),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Account")
+	//	os.Exit(1)
+	//}
+	//
 	if err = (&mongodbStandaloneControllers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -242,99 +232,99 @@ func main() {
 		os.Exit(1)
 	}
 
-	//if err = (&mongodbStandaloneControllers.DatabaseReconciler{
+	if err = (&mongodbStandaloneControllers.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
+
+	//if err = (&mongodbClusterControllers.DatabaseReconciler{
 	//	Client: mgr.GetClient(),
 	//	Scheme: mgr.GetScheme(),
 	//}).SetupWithManager(mgr); err != nil {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
 	//	os.Exit(1)
 	//}
-
-	if err = (&mongodbClusterControllers.DatabaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Database")
-		os.Exit(1)
-	}
-
-	if err = (&mongodbClusterControllers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-
-	if err = (&mysqlStandaloneControllers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-
-	if err = (&mysqlStandaloneControllers.DatabaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Database")
-		os.Exit(1)
-	}
-
-	if err = (&mysqlclustermsvccontrollers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-
-	if err = (&mysqlclustermsvccontrollers.DatabaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Database")
-		os.Exit(1)
-	}
-
-	if err = (&elasticsearchmsvccontrollers.ElasticSearchReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ElasticSearch")
-		os.Exit(1)
-	}
-
-	if err = (&influxdbmsvccontrollers.InfluxDBReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "InfluxDB")
-		os.Exit(1)
-	}
-
-	if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-	if err = (&redisstandalonemsvccontrollers.KeyPrefixReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KeyPrefix")
-		os.Exit(1)
-	}
-	if err = (&redisclustermsvccontrollers.KeyPrefixReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KeyPrefix")
-		os.Exit(1)
-	}
+	//
+	//if err = (&mongodbClusterControllers.ServiceReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&mysqlStandaloneControllers.ServiceReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&mysqlStandaloneControllers.DatabaseReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&mysqlclustermsvccontrollers.ServiceReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&mysqlclustermsvccontrollers.DatabaseReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&elasticsearchmsvccontrollers.ElasticSearchReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "ElasticSearch")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&influxdbmsvccontrollers.InfluxDBReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "InfluxDB")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
+	//	os.Exit(1)
+	//}
+	//if err = (&redisstandalonemsvccontrollers.KeyPrefixReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "KeyPrefix")
+	//	os.Exit(1)
+	//}
+	//if err = (&redisclustermsvccontrollers.KeyPrefixReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "KeyPrefix")
+	//	os.Exit(1)
+	//}
 	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

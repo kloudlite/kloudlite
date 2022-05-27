@@ -14,31 +14,57 @@ import (
 	"strings"
 )
 
+func reasondiff(r1, r2 string) bool {
+	if r1 == "" {
+		r1 = "NotSpecified"
+	}
+	if r2 == "" {
+		r2 = "NotSpecified"
+	}
+	return r1 != r2
+}
+
 func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Condition, bool, error) {
 	res := make([]metav1.Condition, 0)
+	//x := metav1.Time{Time: time.UnixMilli(time.Now().UnixMilli())}
 	x := metav1.Now()
 	updated := false
 	for _, c := range dest {
 		sourceCondition := meta.FindStatusCondition(source, c.Type)
-		if sourceCondition != nil {
-			if sourceCondition.Status != c.Status || sourceCondition.Reason != c.Reason || sourceCondition.Message != c.Message {
-				updated = true
-				if c.LastTransitionTime.IsZero() {
-					sourceCondition.LastTransitionTime = x
-				}
-				res = append(res, *sourceCondition)
-				continue
-			}
-			res = append(res, c)
-		} else {
+		if sourceCondition == nil {
 			updated = true
+			continue
 		}
+
+		if sourceCondition.Status != c.Status || reasondiff(
+			sourceCondition.Reason,
+			c.Reason,
+		) || sourceCondition.Message != c.Message {
+			updated = true
+
+			if sourceCondition.LastTransitionTime.IsZero() {
+				sourceCondition.LastTransitionTime = x
+			}
+
+			if sourceCondition.Reason == "" {
+				sourceCondition.Reason = "NotSpecified"
+			}
+
+			res = append(res, *sourceCondition)
+			continue
+		}
+		res = append(res, c)
 	}
 
 	for _, c := range source {
 		if meta.FindStatusCondition(dest, c.Type) == nil {
 			updated = true
-			c.LastTransitionTime = x
+			if c.LastTransitionTime.IsZero() {
+				c.LastTransitionTime = x
+			}
+			if c.Reason == "" {
+				c.Reason = "NotSpecified"
+			}
 			res = append(res, c)
 		}
 	}

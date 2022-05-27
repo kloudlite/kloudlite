@@ -38,7 +38,6 @@ type ServiceReconciler struct {
 }
 
 type ServiceReconReq struct {
-	req       ctrl.Request
 	stateData map[string]string
 	logger    *zap.SugaredLogger
 	mongoSvc  *mongoStandalone.Service
@@ -55,7 +54,6 @@ const (
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) (ctrl.Result, error) {
 	req := &ServiceReconReq{
-		req:       orgReq,
 		logger:    crds.GetLogger(orgReq.NamespacedName),
 		mongoSvc:  new(mongoStandalone.Service),
 		stateData: map[string]string{},
@@ -108,6 +106,8 @@ func (r *ServiceReconciler) failWithErr(ctx context.Context, req *ServiceReconRe
 }
 
 func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceReconReq) (*ctrl.Result, error) {
+	isReady := true
+
 	cs, err := conditions.FromResource(
 		ctx,
 		r.Client,
@@ -120,6 +120,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
+		isReady = false
 	}
 
 	deploymentConditions, err := conditions.FromResource(
@@ -134,7 +135,10 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		if !apiErrors.IsNotFound(err) {
 			return nil, err
 		}
+		isReady = false
 	}
+
+	isReady = meta.IsStatusConditionTrue(deploymentConditions, "Deployment-Available")
 
 	cs = append(cs, deploymentConditions...)
 
@@ -149,9 +153,10 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 				Message: "Helm secret not found, so assuming resource not yet installed, so installing",
 			},
 		)
+		isReady = false
 	}
 
-	if _, err := fn.JsonGet[string](req.mongoSvc.Status.GeneratedVars, MongoDbRootPasswordKey); err != nil {
+	if _, ok := req.mongoSvc.Status.GeneratedVars.GetString(MongoDbRootPasswordKey); !ok {
 		cs = append(
 			cs, metav1.Condition{
 				Type:    "GeneratedVars",
@@ -160,18 +165,28 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 				Message: "",
 			},
 		)
+		isReady = false
 	}
 
-	req.logger.Debugf("req.mongoSvc.Status: %+v", req.mongoSvc.Status)
+	outputSecret := new(corev1.Secret)
+	if err := r.Get(
+		ctx, types.NamespacedName{Namespace: req.mongoSvc.Namespace, Name: fmt.Sprintf(
+			"msvc-%s",
+			req.mongoSvc.Name,
+		)}, outputSecret,
+	); err != nil {
+		isReady = false
+	}
 
+	//req.logger.Debugf("req.mongoSvc.Status: %+v", req.mongoSvc.Status)
 	newConditions, updated, err := conditions.Patch(req.mongoSvc.Status.Conditions, cs)
-	req.logger.Debugf("newConditions: %+v, updated: %+v, err: %+v", newConditions, updated, err)
 
 	if !updated {
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
+	req.mongoSvc.Status.IsReady = isReady
 	req.mongoSvc.Status.Conditions = newConditions
 	if err := r.Status().Update(ctx, req.mongoSvc); err != nil {
 		req.logger.Debugf("err: %v", err)
@@ -183,12 +198,15 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 
 func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *ServiceReconReq) (ctrl.Result, error) {
 	if meta.IsStatusConditionFalse(req.mongoSvc.Status.Conditions, "GeneratedVars") {
-		req.mongoSvc.Status.GeneratedVars = fn.JsonSet(
-			req.mongoSvc.Status.GeneratedVars, map[string]any{
+		if err := req.mongoSvc.Status.GeneratedVars.Merge(
+			map[string]any{
 				MongoDbRootPasswordKey: fn.CleanerNanoid(40),
-				StorageClassKey:        "do-block-storage-xfs",
+				//StorageClassKey:        "do-block-storage-xfs",
+				StorageClassKey: "local-path-xfs",
 			},
-		)
+		); err != nil {
+			return ctrl.Result{}, err
+		}
 		req.logger.Debugf("req.mongoSvc.Status.GeneratedVars: %s", req.mongoSvc.Status.GeneratedVars)
 		return ctrl.Result{}, r.Status().Update(ctx, req.mongoSvc)
 	}
@@ -211,9 +229,9 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 
 func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceReconReq) error {
 	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", req.mongoSvc.Name, req.mongoSvc.Namespace)
-	authPasswd, err := fn.JsonGet[string](req.mongoSvc.Status.GeneratedVars, MongoDbRootPasswordKey)
-	if err != nil {
-		return err
+	authPasswd, ok := req.mongoSvc.Status.GeneratedVars.GetString(MongoDbRootPasswordKey)
+	if !ok {
+		return errors.Newf("could not find key(%s) in req.mongoSvc.Status.GeneratedVars", MongoDbRootPasswordKey)
 	}
 
 	scrt := &corev1.Secret{
@@ -232,8 +250,7 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 		},
 	}
 
-	err = fn.KubectlApply(ctx, r.Client, scrt)
-	if err != nil {
+	if err := fn.KubectlApply(ctx, r.Client, scrt); err != nil {
 		return err
 	}
 	return nil

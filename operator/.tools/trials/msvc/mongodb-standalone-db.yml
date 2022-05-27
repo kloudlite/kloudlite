@@ -9,6 +9,6 @@ metadata:
 spec:
   apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
   kind: Database
-  managedSvcName: mongo-standalone
+  managedSvcName: mongo-standalone-n
   inputs:
     name: auth-db

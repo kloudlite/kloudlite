@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
+	"k8s.io/apimachinery/pkg/types"
 	"regexp"
 	"strings"
 
@@ -155,46 +156,6 @@ func MapSet[T any](m map[string]T, key string, value T) {
 	m[key] = value
 }
 
-//func JsonGet[T any](s rawJson.RawJson, key string) (T, error) {
-
-//func JsonGet[T any](s rawJson.RawJson, key string) (T, error) {
-//	m, err := s.MarshalJSON()
-//	if err != nil {
-//		return *new(T), err
-//	}
-//	var j map[string]any
-//	if err := json.Unmarshal(m, &j); err != nil {
-//		return *new(T), err
-//	}
-//
-//	value, ok := mapGet[T](j, key)
-//	if !ok {
-//		return *new(T), errors.NewEf(err, "key %s not found", key)
-//	}
-//	return value, nil
-//}
-//
-//func JsonSet[T any](s rawJson.RawJson, val map[string]T) rawJson.RawJson {
-//	fmt.Printf("SAMPLE-1 %+v %+v\n", s, val)
-//	m, err := s.ToMap()
-//	fmt.Printf("SAMPLE0 %+v %v\n", m, err)
-//	if err != nil {
-//		return s
-//	}
-//
-//	fmt.Printf("SAMPLE1 %+v\n", m)
-//
-//	fmt.Printf("m==nil:  %+v\n", m == nil)
-//
-//	for k, v := range val {
-//		m[k] = v
-//	}
-//
-//	fmt.Printf("SAMPLE2 %+v\n", m)
-//
-//	b, err := json.Marshal(m)
-//	if err != nil {
-//		return s
-//	}
-//	return rawJson.RawJson{RawMessage: b}
-//}
+func NN(namespace, name string) types.NamespacedName {
+	return types.NamespacedName{Namespace: namespace, Name: name}
+}
