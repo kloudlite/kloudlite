@@ -1,29 +1,21 @@
 package v1
 
 import (
-	"encoding/json"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	fn "operators.kloudlite.io/lib/functions"
+	libOperator "operators.kloudlite.io/lib/operator"
+	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	ApiVersion     string `json:"apiVersion"`
-	Kind           string `json:"kind"`
-	ManagedSvcName string `json:"managedSvcName"`
-	// +kubebuilder:validation:Schemaless
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Type=object
-	Inputs json.RawMessage `json:"inputs,omitempty"`
-}
-
-// ManagedResourceStatus defines the observed state of ManagedResource
-type ManagedResourceStatus struct {
-	LastHash   string             `json:"lastHash,omitempty"`
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	ApiVersion     string              `json:"apiVersion"`
+	Kind           string              `json:"kind"`
+	ManagedSvcName string              `json:"managedSvcName"`
+	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -33,43 +25,35 @@ type ManagedResourceStatus struct {
 type ManagedResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   ManagedResourceSpec   `json:"spec,omitempty"`
-	Status ManagedResourceStatus `json:"status,omitempty"`
+	Spec              ManagedResourceSpec `json:"spec,omitempty"`
+	Status            libOperator.Status  `json:"status,omitempty"`
 }
 
 func (m *ManagedResource) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }
 
-func (m ManagedResource) LabelRef() (key, value string) {
-	return "mres.kloudlite.io/for", GroupVersion.Group
+func (m *ManagedResource) GetStatus() *libOperator.Status {
+	return &m.Status
 }
 
-func (m *ManagedResource) HasLabels() bool {
-	k, v := m.LabelRef()
-	if v != m.Labels[k] {
-		return false
+func (m *ManagedResource) GetEnsuredLabels() map[string]string {
+	return map[string]string{
+		"msvc.kloudlite.io/ref": m.Spec.ManagedSvcName,
 	}
-	return true
 }
 
-func (m *ManagedResource) EnsureLabels() {
-	k, v := m.LabelRef()
-	m.SetLabels(map[string]string{k: v})
-}
-
-func (s *ManagedResource) Hash() string {
-	m := make(map[string]interface{}, 3)
-	m["name"] = s.Name
-	m["namespace"] = s.Namespace
-	m["spec"] = s.Spec
-	hash, _ := fn.Json.Hash(m)
+func (m *ManagedResource) Hash() string {
+	x := make(map[string]interface{}, 3)
+	x["name"] = m.Name
+	x["namespace"] = m.Namespace
+	x["spec"] = m.Spec
+	hash, _ := fn.Json.Hash(x)
 	return hash
 }
 
-func (mr *ManagedResource) OwnedByMsvc(svc *ManagedService) bool {
-	for _, c := range mr.OwnerReferences {
+func (m *ManagedResource) OwnedByMsvc(svc *ManagedService) bool {
+	for _, c := range m.OwnerReferences {
 		if c.APIVersion == svc.APIVersion && c.Kind == svc.Kind && c.Name == svc.Name && c.UID == svc.UID {
 			return true
 		}

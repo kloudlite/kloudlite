@@ -56,8 +56,8 @@ tasks:
     cmds:
       - go mod tidy
       - make manifests
-      - task: apply
       - make generate
+      - task: apply
 
   apply:
     run: once

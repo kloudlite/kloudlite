@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	fn "operators.kloudlite.io/lib/functions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
+
+	fn "operators.kloudlite.io/lib/functions"
 )
 
 func reasondiff(r1, r2 string) bool {
@@ -26,8 +29,8 @@ func reasondiff(r1, r2 string) bool {
 
 func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Condition, bool, error) {
 	res := make([]metav1.Condition, 0)
-	//x := metav1.Time{Time: time.UnixMilli(time.Now().UnixMilli())}
-	x := metav1.Now()
+	x := metav1.Time{Time: time.UnixMilli(time.Now().UnixMilli())}
+	// x := metav1.Now()
 	updated := false
 	for _, c := range dest {
 		sourceCondition := meta.FindStatusCondition(source, c.Type)
@@ -162,4 +165,20 @@ func FromResource(
 		res[i] = condition
 	}
 	return res, nil
+}
+
+func New(cType string, status bool, reason string, msg ...string) metav1.Condition {
+	s := metav1.ConditionFalse
+	if status {
+		s = metav1.ConditionTrue
+	}
+
+	msg = append(msg, "")
+
+	return metav1.Condition{
+		Type:    cType,
+		Status:  s,
+		Reason:  reason,
+		Message: msg[0],
+	}
 }

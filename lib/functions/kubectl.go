@@ -3,9 +3,13 @@ package functions
 import (
 	"bytes"
 	"context"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+	"encoding/json"
+
 	"os/exec"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,10 +30,43 @@ func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 }
 
 func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) error {
-	if err := cli.Update(ctx, obj); err != nil {
-		if apiErrors.IsNotFound(err) {
-			return cli.Create(ctx, obj)
-		}
+	x := unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+			"kind":       obj.GetObjectKind().GroupVersionKind().Kind,
+			"metadata": map[string]any{
+				"name":      obj.GetName(),
+				"namespace": obj.GetNamespace(),
+			},
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(
+		ctx, cli, &x, func() error {
+			b, err := json.Marshal(obj)
+			if err != nil {
+				return err
+			}
+			y := unstructured.Unstructured{
+				Object: map[string]any{
+					"apiVersion": obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+					"kind":       obj.GetObjectKind().GroupVersionKind().Kind,
+					"metadata": map[string]any{
+						"name":      obj.GetName(),
+						"namespace": obj.GetNamespace(),
+					},
+				},
+			}
+			if err := json.Unmarshal(b, &y); err != nil {
+				return err
+			}
+			x.SetAnnotations(y.GetAnnotations())
+			x.SetLabels(y.GetLabels())
+			x.Object["spec"] = y.Object["spec"]
+			x.Object["status"] = y.Object["status"]
+			return nil
+		},
+	); err != nil {
 		return err
 	}
 	return nil

@@ -115,8 +115,6 @@ spec:
                 x-kubernetes-preserve-unknown-fields: true
               isReady:
                 type: boolean
-              lastHash:
-                type: string
               opsConditions:
                 items:
                   description: "Condition contains details for one aspect of the current

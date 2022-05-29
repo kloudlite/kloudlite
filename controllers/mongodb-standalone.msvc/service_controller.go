@@ -3,6 +3,7 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
+
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,13 +14,14 @@ import (
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"operators.kloudlite.io/lib/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"operators.kloudlite.io/lib/conditions"
 
 	mongoStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/controllers/crds"
@@ -178,7 +180,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		isReady = false
 	}
 
-	//req.logger.Debugf("req.mongoSvc.Status: %+v", req.mongoSvc.Status)
+	// req.logger.Debugf("req.mongoSvc.Status: %+v", req.mongoSvc.Status)
 	newConditions, updated, err := conditions.Patch(req.mongoSvc.Status.Conditions, cs)
 
 	if !updated {
@@ -201,7 +203,7 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		if err := req.mongoSvc.Status.GeneratedVars.Merge(
 			map[string]any{
 				MongoDbRootPasswordKey: fn.CleanerNanoid(40),
-				//StorageClassKey:        "do-block-storage-xfs",
+				// StorageClassKey:        "do-block-storage-xfs",
 				StorageClassKey: "local-path-xfs",
 			},
 		); err != nil {
@@ -211,7 +213,7 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return ctrl.Result{}, r.Status().Update(ctx, req.mongoSvc)
 	}
 
-	//req.logger.Error("gVArs:", req.mongoSvc.Status.GeneratedVars)
+	// req.logger.Error("gVArs:", req.mongoSvc.Status.GeneratedVars)
 	b, err := templates.Parse(templates.MongoDBStandalone, req.mongoSvc)
 	if err != nil {
 		return reconcileResult.FailedE(err)
@@ -235,6 +237,10 @@ func (r *ServiceReconciler) reconcileOutput(ctx context.Context, req *ServiceRec
 	}
 
 	scrt := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("msvc-%s", req.mongoSvc.Name),
 			Namespace: req.mongoSvc.Namespace,

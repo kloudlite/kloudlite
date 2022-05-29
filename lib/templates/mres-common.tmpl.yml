@@ -3,11 +3,13 @@ kind: {{.Spec.Kind}}
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
+{{- if .Labels }}
   labels:
   {{- range $k,$v := .Labels}}
     {{$k}}: {{$v}}
   {{- end}}
-    mongodbs.msvc.kloudlite.io/of-msvc: {{.Spec.ManagedSvcName}}
+    mres.kloudlite.io/ref: {{.Name}}
+  {{- end }}
   finalizers:
     - finalizers.kloudlite.io/msvc-common-service
   ownerReferences:
