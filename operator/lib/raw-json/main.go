@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 )
 
-// +kubebuilder:object:generate=false
-
 // +kubebuilder:pruning:PreserveUnknownFields
 // +kubebuilder:validation:Schemaless
 // +kubebuilder:validation:Type=object
@@ -16,7 +14,6 @@ type KubeRawJson struct {
 
 func (k *KubeRawJson) DeepCopyInto(out *KubeRawJson) {
 	*out = *k
-	//k.RawJson.DeepCopyInto(&out.RawJson)
 }
 
 func (k *KubeRawJson) DeepCopy() *KubeRawJson {
@@ -31,20 +28,6 @@ func (k *KubeRawJson) DeepCopy() *KubeRawJson {
 type RawJson[K ~string, V any] struct {
 	json.RawMessage `json:",inline"`
 }
-
-//func (k *RawJson[K, V]) DeepCopyInto(out *RawJson[K, V]) {
-//	*out = *k
-//	k.RawMessage.DeepCopyInto(out)
-//}
-
-//func (k *RawJson[K, V]) DeepCopy() *RawJson[K, V] {
-//	if k == nil {
-//		return nil
-//	}
-//	out := new(RawJson[K, V])
-//	k.DeepCopyInto(out)
-//	return out
-//}
 
 func (s RawJson[K, V]) toMap() (map[K]V, error) {
 	m, err := s.RawMessage.MarshalJSON()

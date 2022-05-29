@@ -3,6 +3,7 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
+
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -10,6 +11,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/controllers/crds"
 	"operators.kloudlite.io/lib/conditions"
@@ -17,8 +21,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	libMongo "operators.kloudlite.io/lib/mongo"
 	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -60,7 +62,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request)
 		database: new(mongodbStandalone.Database),
 	}
 
-	req.logger.Debugf("------------------------------------------ NEW RECONCILATION ------------------------")
+	req.logger.Debugf("-------------------------- NEW RECONCILATION ------------------------")
 
 	if err := r.Client.Get(ctx, req.NamespacedName, req.database); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -209,24 +211,25 @@ func (r *DatabaseReconciler) reconcileStatus(ctx context.Context, req *DatabaseR
 
 	// STEP: Output Exists
 	outputSecret := new(corev1.Secret)
-	if err := r.Get(ctx, fn.NN(req.Namespace, fmt.Sprintf("msvc-%s", req.database.Name)), outputSecret); err != nil {
+	if err := r.Get(ctx, fn.NN(req.Namespace, fmt.Sprintf("mres-%s", req.database.Name)), outputSecret); err != nil {
 		isReady = false
 	}
 
-	req.logger.Debugf("cs: %+v", cs)
-
-	req.database.Status.IsReady = isReady
 	newConditions, updated, err := conditions.Patch(req.database.Status.Conditions, cs)
 	if err != nil {
 		return nil, err
 	}
-	if !updated {
+	if !updated && isReady == req.database.Status.IsReady {
 		return nil, nil
 	}
 
 	req.logger.Infof("status is different, so updating status ...")
+	req.logger.Debugf("newConditions: %+v", newConditions)
+	req.logger.Debugf("req.database.Status.Conditions: %+v", req.database.Status.Conditions)
+
 	req.database.Status.IsReady = isReady
 	req.database.Status.Conditions = newConditions
+	req.database.Status.OpsConditions = []metav1.Condition{}
 	if err := r.Status().Update(ctx, req.database); err != nil {
 		req.logger.Debugf("err: %v", err)
 		return nil, err
@@ -259,6 +262,10 @@ func (r *DatabaseReconciler) reconcileOperations(ctx context.Context, req *Datab
 
 	hosts := req.state[DbHosts].(string)
 	outScrt := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: req.database.Namespace,
 			Name:      fmt.Sprintf("mres-%s", req.database.Name),

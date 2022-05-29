@@ -1,7 +1,7 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: auth-db
+  name: console-db
   namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/managed-resource
@@ -11,4 +11,4 @@ spec:
   kind: Database
   managedSvcName: mongo-standalone-n
   inputs:
-    name: auth-db
+    name: console-db

@@ -2,11 +2,14 @@ package templates
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
 	"text/template"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/sprig/v3"
 
@@ -54,7 +57,7 @@ func Parse(f templateFile, values interface{}) ([]byte, error) {
 	return t.WithValues(values)
 }
 
-func ParseToMap(f templateFile, values interface{}) (map[string]any, error) {
+func ParseObject(f templateFile, values interface{}) (client.Object, error) {
 	t, err := UseTemplate(f)
 	if err != nil {
 		return nil, err
@@ -64,10 +67,10 @@ func ParseToMap(f templateFile, values interface{}) (map[string]any, error) {
 		return nil, err
 	}
 	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
+	if err := yaml.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return m, nil
+	return &unstructured.Unstructured{Object: m}, nil
 }
 
 type KlTemplate interface {

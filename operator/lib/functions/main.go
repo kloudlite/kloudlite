@@ -6,9 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
-	"k8s.io/apimachinery/pkg/types"
 	"regexp"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/types"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -154,6 +155,26 @@ func MapSet[T any](m map[string]T, key string, value T) {
 		m = map[string]T{}
 	}
 	m[key] = value
+}
+
+func MapContains[T comparable](target map[string]T, m map[string]T) bool {
+	for k, v := range m {
+		if target[k] != v {
+			return false
+		}
+	}
+	return true
+}
+
+func MapMerge[T any](m1 map[string]T, m2 map[string]T) map[string]T {
+	x := map[string]T{}
+	for k, v := range m1 {
+		x[k] = v
+	}
+	for k, v := range m2 {
+		x[k] = v
+	}
+	return x
 }
 
 func NN(namespace, name string) types.NamespacedName {
