@@ -11,6 +11,11 @@ const (
 	HelmRedisKind   string = "HelmRedis"
 )
 
+const (
+	CommonFinalizer     string = "finalizers.kloudlite.io"
+	ForegroundFinalizer string = "foregroundDeletion"
+)
+
 var (
 	DeploymentGroup = metav1.GroupVersionKind{
 		Group:   "apps",

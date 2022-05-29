@@ -40,7 +40,6 @@ spec:
                 x-kubernetes-preserve-unknown-fields: true
             type: object
           status:
-            description: ServiceStatus defines the observed state of Service
             properties:
               conditions:
                 items:
@@ -115,8 +114,6 @@ spec:
                 x-kubernetes-preserve-unknown-fields: true
               isReady:
                 type: boolean
-              lastHash:
-                type: string
               opsConditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -185,6 +182,8 @@ spec:
                   - type
                   type: object
                 type: array
+            required:
+            - isReady
             type: object
         type: object
     served: true

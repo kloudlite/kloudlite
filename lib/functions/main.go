@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -158,6 +159,9 @@ func MapSet[T any](m map[string]T, key string, value T) {
 }
 
 func MapContains[T comparable](target map[string]T, m map[string]T) bool {
+	if target == nil || m == nil {
+		return true
+	}
 	for k, v := range m {
 		if target[k] != v {
 			return false
@@ -179,4 +183,19 @@ func MapMerge[T any](m1 map[string]T, m2 map[string]T) map[string]T {
 
 func NN(namespace, name string) types.NamespacedName {
 	return types.NamespacedName{Namespace: namespace, Name: name}
+}
+
+func NewUnstructured(t metav1.TypeMeta, m ...metav1.ObjectMeta) *unstructured.Unstructured {
+	obj := &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": t.APIVersion,
+			"kind":       t.Kind,
+		},
+	}
+
+	if len(m) > 0 {
+		obj.Object["metadata"] = m[0]
+	}
+
+	return obj
 }

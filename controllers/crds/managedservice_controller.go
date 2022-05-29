@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -19,8 +20,9 @@ import (
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
-	libOperator "operators.kloudlite.io/lib/operator"
+	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
 )
 
@@ -37,7 +39,7 @@ type ManagedServiceReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/finalizers,verbs=update
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := libOperator.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedService{})
+	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedService{})
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -68,26 +70,24 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 	return ctrl.Result{}, nil
 }
 
-func (r *ManagedServiceReconciler) reconcileStatus(req *libOperator.Request[*v1.ManagedService]) libOperator.
-	StepResult {
+func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
 	ctx := req.Context()
 	msvc := req.Object
 
+	isReady := true
 	var cs []metav1.Condition
-	svcObj, err := libOperator.Get(
-		ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": msvc.Spec.ApiVersion,
-				"kind":       "Service",
-			},
-		},
+
+	svcObj, err := rApi.Get(
+		ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), fn.NewUnstructured(
+			metav1.TypeMeta{Kind: "Service", APIVersion: msvc.Spec.ApiVersion},
+		),
 	)
 
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
-
+		isReady = false
 		cs = append(cs, conditions.New("ServiceExists", false, "ObjectNotFound", err.Error()))
 	}
 
@@ -97,21 +97,56 @@ func (r *ManagedServiceReconciler) reconcileStatus(req *libOperator.Request[*v1.
 	}
 
 	var j struct {
-		Status libOperator.Status `json:"status"`
+		Status rApi.Status `json:"status"`
 	}
+
 	if err := json.Unmarshal(mj, &j); err != nil {
 		return req.FailWithStatusError(err)
 	}
 
-	msvc.Status.IsReady = j.Status.IsReady
-	msvc.Status.Conditions = j.Status.Conditions
+	cs = append(cs, j.Status.Conditions...)
+
+	if !j.Status.IsReady {
+		isReady = false
+	}
+
+	newConditions, hasUpdated, err := conditions.Patch(msvc.Status.Conditions, cs)
+	if err != nil {
+		return req.FailWithStatusError(errors.NewEf(err, "while patching conditions"))
+	}
+
+	if !hasUpdated {
+		return req.Next()
+	}
+
+	msvc.Status.Conditions = newConditions
+	msvc.Status.IsReady = isReady
+
+	if err := r.Status().Update(ctx, msvc); err != nil {
+		return req.FailWithStatusError(err)
+	}
 
 	return req.Done()
 }
 
-func (r *ManagedServiceReconciler) reconcileOperations(req *libOperator.Request[*v1.ManagedService]) libOperator.
-	StepResult {
+func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
+	ctx := req.Context()
+	msvc := req.Object
+
+	if !controllerutil.ContainsFinalizer(msvc, constants.CommonFinalizer) {
+		controllerutil.AddFinalizer(msvc, constants.CommonFinalizer)
+		controllerutil.AddFinalizer(msvc, constants.ForegroundFinalizer)
+
+		if err := r.Update(ctx, msvc); err != nil {
+			return req.FailWithStatusError(err)
+		}
+		return req.Next()
+	}
+
 	obj, err := templates.ParseObject(templates.CommonMsvc, req.Object)
+	obj.SetLabels(
+		fn.MapMerge(obj.GetLabels(), msvc.GetWatchLabels()),
+	)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
@@ -122,7 +157,7 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *libOperator.Request[
 	return req.Done()
 }
 
-func (r *ManagedServiceReconciler) notify(req *libOperator.Request[*v1.ManagedService]) error {
+func (r *ManagedServiceReconciler) notify(req *rApi.Request[*v1.ManagedService]) error {
 	return nil
 	// return r.SendMessage(
 	// 	req.msvc.NameRef(), lib.MessageReply{
@@ -133,17 +168,8 @@ func (r *ManagedServiceReconciler) notify(req *libOperator.Request[*v1.ManagedSe
 	// )
 }
 
-func (r *ManagedServiceReconciler) finalize(req *libOperator.Request[*v1.ManagedService]) libOperator.StepResult {
+func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
 	return req.Finalize()
-}
-
-func (r *ManagedServiceReconciler) watcherFuncMap(obj client.Object) []reconcile.Request {
-	labels := obj.GetLabels()
-	s, ok := labels["msvc.kloudlite.io/ref"]
-	if !ok {
-		return nil
-	}
-	return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), s)}}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -166,7 +192,16 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 						"kind":       "Service",
 					},
 				},
-			}, handler.EnqueueRequestsFromMapFunc(r.watcherFuncMap),
+			}, handler.EnqueueRequestsFromMapFunc(
+				func(obj client.Object) []reconcile.Request {
+					labels := obj.GetLabels()
+					s, ok := labels["msvc.kloudlite.io/ref"]
+					if !ok {
+						return nil
+					}
+					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), s)}}
+				},
+			),
 		)
 	}
 

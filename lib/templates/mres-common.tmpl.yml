@@ -10,8 +10,6 @@ metadata:
   {{- end}}
     mres.kloudlite.io/ref: {{.Name}}
   {{- end }}
-  finalizers:
-    - finalizers.kloudlite.io/msvc-common-service
   ownerReferences:
     - apiVersion: {{.APIVersion}}
       kind: {{.Kind}}

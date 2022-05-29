@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -19,9 +20,10 @@ import (
 	"operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/conditions"
+	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
-	libOperator "operators.kloudlite.io/lib/operator"
+	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
 )
 
@@ -37,7 +39,7 @@ type ManagedResourceReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
 
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := libOperator.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedResource{})
+	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedResource{})
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -73,15 +75,15 @@ func (r *ManagedResourceReconciler) notify(mres *v1.ManagedResource) error {
 	)
 }
 
-func (r *ManagedResourceReconciler) finalize(req *libOperator.Request[*v1.ManagedResource]) libOperator.StepResult {
+func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
 	return req.Finalize()
 }
 
-func (r *ManagedResourceReconciler) reconcileStatus(req *libOperator.Request[*v1.ManagedResource]) libOperator.StepResult {
+func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
 	// STEP: PRE if msvc is ready
 	ctx := req.Context()
 	mres := req.Object
-	msvc, err := libOperator.Get(ctx, r.Client, fn.NN(mres.Namespace, mres.Spec.ManagedSvcName), &v1.ManagedService{})
+	msvc, err := rApi.Get(ctx, r.Client, fn.NN(mres.Namespace, mres.Spec.ManagedSvcName), &v1.ManagedService{})
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
@@ -89,6 +91,8 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *libOperator.Request[*v1
 	if !msvc.Status.IsReady {
 		return req.FailWithStatusError(errors.Newf("msvc %s is not ready yet", msvc.Name))
 	}
+
+	rApi.SetLocal(req, "msvc", msvc)
 
 	isReady := true
 	var cs []metav1.Condition
@@ -113,7 +117,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *libOperator.Request[*v1
 	cs = append(cs, resourceC...)
 
 	// STEP: resource output is ready
-	mresOutput, err := libOperator.Get(
+	mresOutput, err := rApi.Get(
 		ctx,
 		r.Client,
 		fn.NN(mres.Namespace, fmt.Sprintf("mres-%s", mres.Name)),
@@ -143,14 +147,37 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *libOperator.Request[*v1
 	}
 
 	mres.Status.Conditions = newConditions
+	mres.Status.OpsConditions = []metav1.Condition{}
 	if err := r.Status().Update(ctx, mres); err != nil {
 		return req.FailWithStatusError(err)
 	}
 	return req.Done()
 }
 
-func (r *ManagedResourceReconciler) reconcileOperations(req *libOperator.Request[*v1.ManagedResource]) libOperator.StepResult {
+func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
+	ctx := req.Context()
+	mres := req.Object
+
+	if !controllerutil.ContainsFinalizer(mres, constants.CommonFinalizer) {
+		controllerutil.AddFinalizer(mres, constants.CommonFinalizer)
+		controllerutil.AddFinalizer(mres, constants.ForegroundFinalizer)
+
+		if err := r.Update(ctx, mres); err != nil {
+			return req.FailWithStatusError(err)
+		}
+		return req.Next()
+	}
+
 	obj, err := templates.ParseObject(templates.CommonMres, req.Object)
+	msvc, ok := rApi.GetLocal[*v1.ManagedService](req, "msvc")
+	if !ok {
+		return req.FailWithOpError(errors.Newf("%s key not found in locals", "msvc"))
+	}
+	obj.SetOwnerReferences(
+		[]metav1.OwnerReference{
+			fn.AsOwner(msvc, true),
+		},
+	)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}

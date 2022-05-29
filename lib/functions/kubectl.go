@@ -30,16 +30,15 @@ func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 }
 
 func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) error {
-	x := unstructured.Unstructured{
-		Object: map[string]any{
-			"apiVersion": obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-			"kind":       obj.GetObjectKind().GroupVersionKind().Kind,
-			"metadata": map[string]any{
-				"name":      obj.GetName(),
-				"namespace": obj.GetNamespace(),
-			},
-		},
+	b, err := json.Marshal(obj.DeepCopyObject())
+	if err != nil {
+		return err
 	}
+	var j map[string]any
+	if err := json.Unmarshal(b, &j); err != nil {
+		return err
+	}
+	x := unstructured.Unstructured{Object: j}
 
 	if _, err := controllerutil.CreateOrUpdate(
 		ctx, cli, &x, func() error {
@@ -47,21 +46,13 @@ func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) err
 			if err != nil {
 				return err
 			}
-			y := unstructured.Unstructured{
-				Object: map[string]any{
-					"apiVersion": obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-					"kind":       obj.GetObjectKind().GroupVersionKind().Kind,
-					"metadata": map[string]any{
-						"name":      obj.GetName(),
-						"namespace": obj.GetNamespace(),
-					},
-				},
-			}
-			if err := json.Unmarshal(b, &y); err != nil {
+			y := unstructured.Unstructured{Object: map[string]any{}}
+			if err := json.Unmarshal(b, &y.Object); err != nil {
 				return err
 			}
 			x.SetAnnotations(y.GetAnnotations())
 			x.SetLabels(y.GetLabels())
+			x.SetOwnerReferences(y.GetOwnerReferences())
 			x.Object["spec"] = y.Object["spec"]
 			x.Object["status"] = y.Object["status"]
 			return nil
