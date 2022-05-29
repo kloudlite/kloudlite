@@ -40,6 +40,12 @@ func (m *ManagedService) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
 }
 
+func (m *ManagedService) GetWatchLabels() map[string]string {
+	return map[string]string{
+		"msvc.kloudlite.io/ref": m.Name,
+	}
+}
+
 func (s *ManagedService) Hash() (string, error) {
 	m := make(map[string]interface{}, 3)
 	m["name"] = s.Name

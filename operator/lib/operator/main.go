@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"operators.kloudlite.io/lib/conditions"
+	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/logger"
 	rawJson "operators.kloudlite.io/lib/raw-json"
@@ -100,7 +101,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 
 func (r *Request[T]) EnsureLabels() StepResult {
 	el := r.Object.GetEnsuredLabels()
-	if fn.MapContains(r.Object.GetLabels(), el) {
+	if !fn.MapContains(r.Object.GetLabels(), el) {
 		x := r.Object.GetLabels()
 		if x == nil {
 			x = map[string]string{}
@@ -116,7 +117,7 @@ func (r *Request[T]) EnsureLabels() StepResult {
 }
 
 func (r *Request[T]) FailWithStatusError(err error) StepResult {
-	newConditions, _, err := conditions.Patch(
+	newConditions, _, err2 := conditions.Patch(
 		r.Object.GetStatus().Conditions, []metav1.Condition{
 			{
 				Type:    "FailedWithErr",
@@ -126,8 +127,8 @@ func (r *Request[T]) FailWithStatusError(err error) StepResult {
 			},
 		},
 	)
-	if err != nil {
-		return NewStepResult(nil, err)
+	if err2 != nil {
+		return NewStepResult(nil, err2)
 	}
 
 	r.Object.GetStatus().Conditions = newConditions
@@ -169,56 +170,10 @@ func (r *Request[T]) Next() StepResult {
 }
 
 func (r *Request[T]) Finalize() StepResult {
-	controllerutil.RemoveFinalizer(r.Object, "finalizers.kloudlite.io")
-	controllerutil.RemoveFinalizer(r.Object, "foregroundDeletion")
+	controllerutil.RemoveFinalizer(r.Object, constants.CommonFinalizer)
+	controllerutil.RemoveFinalizer(r.Object, constants.ForegroundFinalizer)
 	return NewStepResult(&ctrl.Result{}, r.client.Update(r.ctx, r.Object))
 }
-
-// type Api interface {
-// 	FailWithErr(ctx context.Context, err error) (ctrl.Result, error)
-// 	Update(ctx context.Context) (ctrl.Result, error)
-// 	UpdateStatus(ctx context.Context) (ctrl.Result, error)
-// }
-//
-// func NewApiClient(client client.Client, object client.Object, status *Status, logger ...*zap.SugaredLogger) Api {
-// 	return &cli{client: client, object: object, status: status}
-// }
-//
-// func (c *cli) FailWithErr(ctx context.Context, err error) (ctrl.Result, error) {
-// 	meta.SetStatusCondition(
-// 		&c.status.OpsConditions, metav1.Condition{
-// 			Type:    "ReconFailedWithErr",
-// 			Status:  metav1.ConditionFalse,
-// 			Reason:  "ErrDuringReconcile",
-// 			Message: err.Error(),
-// 		},
-// 	)
-// 	if err2 := c.client.Status().Update(ctx, c.object); err2 != nil {
-// 		return ctrl.Result{}, err2
-// 	}
-// 	return ctrl.Result{}, err
-// }
-//
-// func (c *cli) Update(ctx context.Context) (ctrl.Result, error) {
-// 	return ctrl.Result{}, c.client.Update(ctx, c.object)
-// }
-//
-// func (c *cli) UpdateStatus(ctx context.Context) (ctrl.Result, error) {
-// 	return ctrl.Result{}, c.client.Status().Update(ctx, c.object)
-// }
-//
-// type ResType[T any] interface {
-// 	MakeList() []T
-// 	New() T
-// }
-
-// func GetX(ctx context.Context, cli client.Client, nn types.NamespacedName) (T, error) {
-//
-// 	if err := cli.Get(ctx, nn, ts[0]); err != nil {
-// 		return *new(T), err
-// 	}
-// 	return ts[0], nil
-// }
 
 func Get[T client.Object](ctx context.Context, cli client.Client, nn types.NamespacedName, obj T) (T, error) {
 	if err := cli.Get(ctx, nn, obj); err != nil {

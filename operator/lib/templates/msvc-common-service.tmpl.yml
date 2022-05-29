@@ -3,14 +3,11 @@ kind: Service
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
-  finalizers:
-    - finalizers.kloudlite.io
 {{- if .Labels }}
   labels:
   {{- range $k, $v := .Labels}}
     {{$k}}: {{$v}}
   {{- end }}
-    msvc.kloudlite.io/ref: {{.Name}}
 {{- end }}
   ownerReferences:
     - apiVersion: {{.APIVersion}}

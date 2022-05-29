@@ -5,21 +5,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	libOperator "operators.kloudlite.io/lib/operator"
+	rApi "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 type DatabaseSpec struct {
 	ManagedSvcName string              `json:"managedSvcName,omitempty"`
 	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
-}
-
-type DatabaseStatus struct {
-	LastHash      string              `json:"lastHash,omitempty"`
-	IsReady       bool                `json:"isReady"`
-	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
-	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
-	OpsConditions []metav1.Condition  `json:"opsConditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -30,29 +22,19 @@ type Database struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DatabaseSpec       `json:"spec,omitempty"`
-	Status libOperator.Status `json:"status,omitempty"`
+	Spec   DatabaseSpec `json:"spec,omitempty"`
+	Status rApi.Status  `json:"status,omitempty"`
 }
 
 func (s *Database) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
 }
-
-func (s Database) LabelRef() (string, string) {
-	return "mres.kloudlite.io/for", GroupVersion.Group
+func (s *Database) GetStatus() *rApi.Status {
+	return &s.Status
 }
 
-func (s *Database) HasLabels() bool {
-	key, value := s.LabelRef()
-	if s.Labels[key] != value {
-		return false
-	}
-	return true
-}
-
-func (s *Database) EnsureLabels() {
-	key, value := s.LabelRef()
-	s.SetLabels(map[string]string{key: value})
+func (s *Database) GetEnsuredLabels() map[string]string {
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true
