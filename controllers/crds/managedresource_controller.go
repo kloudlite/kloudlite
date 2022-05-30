@@ -41,6 +41,10 @@ type ManagedResourceReconciler struct {
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedResource{})
 
+	if req == nil {
+		return ctrl.Result{}, nil
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.Result(), x.Err()
@@ -136,7 +140,6 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 		cs = append(cs, conditions.New("MresOutputExists", true, "SecretFound"))
 	}
 
-	mres.Status.IsReady = isReady
 	newConditions, hasUpdated, err := conditions.Patch(mres.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(errors.NewEf(err, "while patching conditions"))
@@ -146,6 +149,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 		return req.Next()
 	}
 
+	mres.Status.IsReady = isReady
 	mres.Status.Conditions = newConditions
 	mres.Status.OpsConditions = []metav1.Condition{}
 	if err := r.Status().Update(ctx, mres); err != nil {

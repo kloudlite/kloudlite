@@ -22,6 +22,7 @@ import (
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
+	"operators.kloudlite.io/lib/templates"
 )
 
 // ServiceReconciler reconciles a Service object
@@ -42,6 +43,9 @@ const (
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Service{})
+	if req == nil {
+		return ctrl.Result{}, nil
+	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -49,7 +53,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		}
 	}
 
-	req.Logger.Info("-------------------- NEW RECONCILATION------------------")
+	req.Logger.Info("--------------------NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
@@ -63,6 +67,8 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		return x.Result(), x.Err()
 	}
 
+	req.Logger.Info("--------------------NEW RECONCILATION FINISH------------------")
+
 	return ctrl.Result{}, nil
 }
 
@@ -75,10 +81,13 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	svcObj := req.Object
 
 	isReady := true
+	var cs []metav1.Condition
 
-	cs, err := conditions.FromResource(
+	helmConditions, err := conditions.FromResource(
 		ctx, r.Client, constants.HelmMongoDBGroup, "Helm", fn.NamespacedName(svcObj),
 	)
+
+	cs = append(cs, helmConditions...)
 
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -90,6 +99,16 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	deploymentConditions, err := conditions.FromResource(
 		ctx, r.Client, constants.DeploymentGroup, "Deployment", fn.NamespacedName(svcObj),
 	)
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.FailWithStatusError(err)
+		}
+		isReady = false
+	}
+
+	cs = append(cs, deploymentConditions...)
+
+	podConditions, err := conditions.FromPod(ctx, r.Client, constants.PodGroup, "Pod", fn.NamespacedName(svcObj))
 
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -98,9 +117,9 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 		isReady = false
 	}
 
-	isReady = meta.IsStatusConditionTrue(deploymentConditions, "Deployment-Available")
-
-	cs = append(cs, deploymentConditions...)
+	if !meta.IsStatusConditionTrue(deploymentConditions, "Deployment-Available") {
+		isReady = false
+	}
 
 	// STEP: Helm Secret check
 	_, err = rApi.Get(ctx, r.Client, fn.NamespacedName(svcObj), &corev1.Secret{})
@@ -109,7 +128,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 			return req.FailWithStatusError(err)
 		}
 		cs = append(
-			cs, conditions.New("HelmSecretAvailable", false, "HelmSecretNotFound", err.Error()),
+			cs, conditions.New("HelmReleaseSecretExists", false, "SecretNotFound", err.Error()),
 		)
 		isReady = false
 	}
@@ -151,6 +170,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStandalone.Service]) rApi.StepResult {
 	ctx := req.Context()
 	svcObj := req.Object
+
 	if meta.IsStatusConditionFalse(svcObj.Status.Conditions, "GeneratedVars") {
 		if err := svcObj.Status.GeneratedVars.Merge(
 			map[string]any{
@@ -161,7 +181,27 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 		); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, req.Object))
+
+		if err := r.Status().Update(ctx, req.Object); err != nil {
+			return req.FailWithOpError(err)
+		}
+
+		return req.Done()
+	}
+
+	obj, err := templates.ParseObject(templates.MongoDBStandalone, svcObj)
+	if err != nil {
+		return req.FailWithOpError(err)
+	}
+
+	obj.SetOwnerReferences(
+		[]metav1.OwnerReference{
+			fn.AsOwner(svcObj, false),
+		},
+	)
+
+	if err := fn.KubectlApply(ctx, r.Client, obj); err != nil {
+		return req.FailWithOpError(err)
 	}
 
 	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", svcObj.Name, svcObj.Namespace)
@@ -209,7 +249,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&source.Kind{Type: kind},
 			handler.EnqueueRequestsFromMapFunc(
 				func(c client.Object) []reconcile.Request {
-					s, ok := c.GetLabels()[mongodbStandalone.GroupVersion.Group]
+					s, ok := c.GetLabels()[fmt.Sprintf("%s/ref", mongodbStandalone.GroupVersion.Group)]
 					if !ok {
 						return nil
 					}

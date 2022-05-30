@@ -17,15 +17,34 @@ const (
 )
 
 var (
+	PodGroup = metav1.GroupVersionKind{
+		Group:   "",
+		Version: "v1",
+		Kind:    "Pod",
+	}
+
 	DeploymentGroup = metav1.GroupVersionKind{
 		Group:   "apps",
 		Version: "v1",
 		Kind:    "Deployment",
 	}
+
+	StatefulsetGroup = metav1.GroupVersionKind{
+		Group:   "apps",
+		Version: "v1",
+		Kind:    "Deployment",
+	}
+
 	HelmMongoDBGroup = metav1.GroupVersionKind{
 		Group:   "msvc.kloudlite.io",
 		Version: "v1",
 		Kind:    "HelmMongoDB",
+	}
+
+	HelmRedisGroup = metav1.GroupVersionKind{
+		Group:   "msvc.kloudlite.io",
+		Version: "v1",
+		Kind:    "HelmREdis",
 	}
 )
 

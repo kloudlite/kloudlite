@@ -3,6 +3,12 @@ kind: HelmMongoDB
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
+{{- if .Labels }}
+  labels:
+  {{- range $k, $v := .Labels }}
+    {{$k}}: {{$v}}
+  {{- end }}
+{{- end}}
   ownerReferences:
     - apiVersion: {{.APIVersion}}
       kind: {{.Kind}}
@@ -16,6 +22,14 @@ spec:
   fullnameOverride: {{.Name}}
   image:
     tag: 5.0.8-debian-10-r20
+
+{{- if .Labels }}
+  commonLabels:
+  {{- range $k, $v := .Labels }}
+    {{$k}}: {{$v}}
+  {{- end }}
+{{- end}}
+
   auth:
     enabled: true
     rootPassword: {{ index (mustFromJson (.Status.GeneratedVars | toJson)) "mongodb-root-password" }}
