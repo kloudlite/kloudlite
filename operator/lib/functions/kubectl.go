@@ -50,8 +50,9 @@ func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) err
 			if err := json.Unmarshal(b, &y.Object); err != nil {
 				return err
 			}
-			x.SetAnnotations(y.GetAnnotations())
-			x.SetLabels(y.GetLabels())
+
+			x.SetAnnotations(MapMerge(x.GetAnnotations(), y.GetAnnotations()))
+			x.SetLabels(MapMerge(x.GetLabels(), y.GetLabels()))
 			x.SetOwnerReferences(y.GetOwnerReferences())
 			x.Object["spec"] = y.Object["spec"]
 			x.Object["status"] = y.Object["status"]

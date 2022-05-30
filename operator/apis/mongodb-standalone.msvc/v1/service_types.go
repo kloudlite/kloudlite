@@ -3,7 +3,6 @@ package v1
 import (
 	"fmt"
 
-	fn "operators.kloudlite.io/lib/functions"
 	libOperator "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 
@@ -36,16 +35,9 @@ func (s *Service) GetStatus() *libOperator.Status {
 }
 
 func (s *Service) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
-}
-
-func (s *Service) Hash() string {
-	m := make(map[string]interface{}, 3)
-	m["name"] = s.Name
-	m["namespace"] = s.Namespace
-	m["spec"] = s.Spec
-	hash, _ := fn.Json.Hash(m)
-	return hash
+	return map[string]string{
+		fmt.Sprintf("%s/ref", GroupVersion.Group): s.Name,
+	}
 }
 
 // +kubebuilder:object:root=true

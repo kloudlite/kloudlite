@@ -40,6 +40,9 @@ type ManagedServiceReconciler struct {
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedService{})
+	if req == nil {
+		return ctrl.Result{}, nil
+	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
