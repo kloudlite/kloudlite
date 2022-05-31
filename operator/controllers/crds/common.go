@@ -35,17 +35,3 @@ var IngressAnnotations = map[string]string{
 	"kubernetes.io/ingress.class":    "nginx",
 	"cert-manager.io/cluster-issuer": "prod-cert-issuer",
 }
-
-type ManagedServiceType string
-
-const (
-	MongoDBStandalone ManagedServiceType = "MongoDBStandalone"
-	MongoDBCluster    ManagedServiceType = "MongoDBCluster"
-	ElasticSearch     ManagedServiceType = "ElasticSearch"
-	MySqlStandalone   ManagedServiceType = "MySqlStandalone"
-	MySqlCluster      ManagedServiceType = "MySqlCluster"
-)
-
-func (m ManagedServiceType) String() string {
-	return string(m)
-}

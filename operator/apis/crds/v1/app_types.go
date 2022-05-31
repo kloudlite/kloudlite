@@ -2,7 +2,10 @@ package v1
 
 import (
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	rApi "operators.kloudlite.io/lib/operator"
 )
 
 type ContainerResource struct {
@@ -49,16 +52,19 @@ type AppSvc struct {
 	Type       string `json:"type,omitempty"`
 }
 
+type HPA struct {
+	MinReplicas     int `json:"minReplicas,omitempty"`
+	MaxReplicas     int `json:"maxReplicas,omitempty"`
+	ThresholdCpu    int `json:"thresholdCpu,omitempty"`
+	ThresholdMemory int `json:"thresholdMemory,omitempty"`
+}
+
 // AppSpec defines the desired state of App
 type AppSpec struct {
 	Replicas   int            `json:"replicas,omitempty"`
 	Services   []AppSvc       `json:"services,omitempty"`
 	Containers []AppContainer `json:"containers"`
-}
-
-// AppStatus defines the observed state of App
-type AppStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	Hpa        HPA            `json:"hpa,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -69,8 +75,18 @@ type App struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AppSpec   `json:"spec,omitempty"`
-	Status AppStatus `json:"status,omitempty"`
+	Spec   AppSpec     `json:"spec,omitempty"`
+	Status rApi.Status `json:"status,omitempty"`
+}
+
+func (app *App) GetStatus() *rApi.Status {
+	return &app.Status
+}
+
+func (app *App) GetEnsuredLabels() map[string]string {
+	return map[string]string{
+		fmt.Sprintf("%s/ref", GroupVersion.Group): app.Name,
+	}
 }
 
 func (app *App) LogRef() string {

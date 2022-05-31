@@ -108,7 +108,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 
 	cs = append(cs, deploymentConditions...)
 
-	podConditions, err := conditions.FromPod(ctx, r.Client, constants.PodGroup, "Pod", fn.NamespacedName(svcObj))
+	// _, err := conditions.FromPod(ctx, r.Client, constants.PodGroup, "Pod", fn.NamespacedName(svcObj))
 
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {

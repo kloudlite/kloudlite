@@ -1,8 +1,8 @@
 apiVersion: "crds.kloudlite.io/v1"
 kind: App
 metadata:
-  name: example-app
-  namespace: demo-project-91504
+  name: sample
+  namespace: hotspot
   finalizers:
     - finalizers.kloudlite.io/app
 spec:
@@ -25,8 +25,8 @@ spec:
 apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
-  name: example-router
-  namespace: demo-project-91504
+  name: sample
+  namespace: hotspot
 spec:
   domains: ['example.kl.madhouselabs.io']
   routes:

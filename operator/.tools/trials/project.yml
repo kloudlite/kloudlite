@@ -1,9 +1,6 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Project
 metadata:
-  name: sample-example2
-  finalizers:
-    - finalizers.kloudlite.io/project
-    - foreground
+  name: sample-project
 spec:
   displayName: how are you guys ?

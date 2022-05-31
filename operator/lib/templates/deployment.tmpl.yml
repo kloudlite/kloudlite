@@ -11,6 +11,7 @@ metadata:
       controller: true
       blockOwnerDeletion: true
 spec:
+  replicas: {{.Spec.Replicas | default 1}}
   selector:
     matchLabels:
       app: {{.Name}}
@@ -60,3 +61,39 @@ spec:
       {{- end }}
       {{- end }}
     {{- end }}
+
+{{- if .Spec.Hpa }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences:
+    - apiVersion: {{.APIVersion}}
+      kind: {{.Kind}}
+      name: {{.Name}}
+      uid: {{.UID}}
+      controller: true
+      blockOwnerDeletion: true
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{.Name}}
+  minReplicas: {{ .Spec.Hpa.MinReplicas | default 1 }}
+  maxReplicas: {{ .Spec.Hpa.MaxReplicas | default 5 }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{.Spec.Hpa.ThresholdCpu | default 90}}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{.Spec.Hpa.ThresholdMemory | default 75}}
+{{- end }}
