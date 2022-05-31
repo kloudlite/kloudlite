@@ -30,26 +30,7 @@ func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 }
 
 func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) error {
-	// b, err := json.Marshal(obj.DeepCopyObject())
-	// if err != nil {
-	// 	return err
-	// }
-	// var j map[string]any
-	// if err := json.Unmarshal(b, &j); err != nil {
-	// 	return err
-	// }
-	// x := unstructured.Unstructured{Object: j}
-	//
 	x := obj
-
-	// cli.Update(
-	// 	ctx, obj, &client.UpdateOptions{
-	// 		DryRun:       nil,
-	// 		FieldManager: "",
-	// 		Raw:          nil,
-	// 	},
-	// )
-
 	if _, err := controllerutil.CreateOrUpdate(
 		ctx, cli, x, func() error {
 			b1, err := json.Marshal(x.DeepCopyObject())
@@ -71,14 +52,8 @@ func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) err
 				return err
 			}
 
-			y.DeepCopyInto(&serverX)
-			// serverX.DeepCopyInto(&y)
-			// x = &y
-			// x.SetAnnotations(MapMerge(x.GetAnnotations(), y.GetAnnotations()))
-			// x.SetLabels(MapMerge(x.GetLabels(), y.GetLabels()))
-			// x.SetOwnerReferences(y.GetOwnerReferences())
-			// x.Object["spec"] = y.Object["spec"]
-			// x.Object["status"] = y.Object["status"]
+			serverX.DeepCopyInto(&y)
+			x = &y
 			return nil
 		},
 	); err != nil {
