@@ -153,6 +153,9 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: project.Name,
 			Name:      ImagePullSecretName,
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(project, true),
+			},
 		},
 		Data: map[string][]byte{
 			".dockerconfigjson": dockerConfigJson,
@@ -168,6 +171,9 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: project.Name,
 			Name:      NamespaceAdminRole,
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(project, true),
+			},
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -192,6 +198,9 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: project.Name,
 			Name:      NamespaceAdminRoleBinding,
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(project, true),
+			},
 		},
 		Subjects: []rbacv1.Subject{
 			{
@@ -216,6 +225,9 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kloudlite-svc-account",
 			Namespace: project.Name,
+			OwnerReferences: []metav1.OwnerReference{
+				fn.AsOwner(project, true),
+			},
 		},
 		ImagePullSecrets: []corev1.LocalObjectReference{
 			{
@@ -250,5 +262,9 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.Project{}).
 		Owns(&corev1.Namespace{}).
+		Owns(&corev1.ServiceAccount{}).
+		Owns(&corev1.Secret{}).
+		Owns(&rbacv1.Role{}).
+		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)
 }
