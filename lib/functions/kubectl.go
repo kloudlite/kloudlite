@@ -30,32 +30,55 @@ func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 }
 
 func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) error {
-	b, err := json.Marshal(obj.DeepCopyObject())
-	if err != nil {
-		return err
-	}
-	var j map[string]any
-	if err := json.Unmarshal(b, &j); err != nil {
-		return err
-	}
-	x := unstructured.Unstructured{Object: j}
+	// b, err := json.Marshal(obj.DeepCopyObject())
+	// if err != nil {
+	// 	return err
+	// }
+	// var j map[string]any
+	// if err := json.Unmarshal(b, &j); err != nil {
+	// 	return err
+	// }
+	// x := unstructured.Unstructured{Object: j}
+	//
+	x := obj
+
+	// cli.Update(
+	// 	ctx, obj, &client.UpdateOptions{
+	// 		DryRun:       nil,
+	// 		FieldManager: "",
+	// 		Raw:          nil,
+	// 	},
+	// )
 
 	if _, err := controllerutil.CreateOrUpdate(
-		ctx, cli, &x, func() error {
-			b, err := json.Marshal(obj)
+		ctx, cli, x, func() error {
+			b1, err := json.Marshal(x.DeepCopyObject())
+			if err != nil {
+				return err
+			}
+			var j map[string]any
+			if err := json.Unmarshal(b1, &j); err != nil {
+				return err
+			}
+			serverX := unstructured.Unstructured{Object: j}
+
+			b2, err := json.Marshal(obj)
 			if err != nil {
 				return err
 			}
 			y := unstructured.Unstructured{Object: map[string]any{}}
-			if err := json.Unmarshal(b, &y.Object); err != nil {
+			if err := json.Unmarshal(b2, &y.Object); err != nil {
 				return err
 			}
 
-			x.SetAnnotations(MapMerge(x.GetAnnotations(), y.GetAnnotations()))
-			x.SetLabels(MapMerge(x.GetLabels(), y.GetLabels()))
-			x.SetOwnerReferences(y.GetOwnerReferences())
-			x.Object["spec"] = y.Object["spec"]
-			x.Object["status"] = y.Object["status"]
+			y.DeepCopyInto(&serverX)
+			// serverX.DeepCopyInto(&y)
+			// x = &y
+			// x.SetAnnotations(MapMerge(x.GetAnnotations(), y.GetAnnotations()))
+			// x.SetLabels(MapMerge(x.GetLabels(), y.GetLabels()))
+			// x.SetOwnerReferences(y.GetOwnerReferences())
+			// x.Object["spec"] = y.Object["spec"]
+			// x.Object["status"] = y.Object["status"]
 			return nil
 		},
 	); err != nil {

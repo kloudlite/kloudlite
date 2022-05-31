@@ -5,161 +5,151 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 
-	"go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	"operators.kloudlite.io/lib/conditions"
+	"operators.kloudlite.io/lib/constants"
+	fn "operators.kloudlite.io/lib/functions"
+	rApi "operators.kloudlite.io/lib/operator"
+
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-
-	"k8s.io/client-go/kubernetes"
-	"operators.kloudlite.io/lib"
-	"operators.kloudlite.io/lib/errors"
-	"operators.kloudlite.io/lib/finalizers"
-	reconcileResult "operators.kloudlite.io/lib/reconcile-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"operators.kloudlite.io/lib"
 )
 
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	ClientSet *kubernetes.Clientset
+	Scheme *runtime.Scheme
 	lib.MessageSender
-	logger         *zap.SugaredLogger
 	HarborUserName string
 	HarborPassword string
-	project        *crdsv1.Project
-	lt             metav1.Time
-}
-
-func (r *ProjectReconciler) notifyAndDie(ctx context.Context, err error) (ctrl.Result, error) {
-	r.buildConditions("", metav1.Condition{
-		Type:    "Ready",
-		Status:  "False",
-		Reason:  "ErrWhileReconcilation",
-		Message: err.Error(),
-	})
-	return r.notify(ctx)
-}
-
-func (r *ProjectReconciler) notify(ctx context.Context) (ctrl.Result, error) {
-	err := r.SendMessage(r.project.LogRef(), lib.MessageReply{
-		Key:        r.project.LogRef(),
-		Conditions: r.project.Status.Conditions,
-		Status:     meta.IsStatusConditionTrue(r.project.Status.Conditions, "Ready"),
-	})
-	if err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not send message into kafka"))
-	}
-
-	if err := r.Status().Update(ctx, r.project); err != nil {
-		return reconcileResult.FailedE(errors.NewEf(err, "could not update status for %s", r.project.LogRef()))
-	}
-	return reconcileResult.OK()
-}
-
-func (r *ProjectReconciler) apply(ctx context.Context, obj client.Object, fn ...controllerutil.MutateFn) error {
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
-		if err := ctrl.SetControllerReference(r.project, obj, r.Scheme); err != nil {
-			r.logger.Infof("could not update controller reference")
-			return err
-		}
-		if len(fn) > 0 {
-			return fn[0]()
-		}
-		return nil
-	})
-	return err
-}
-
-func (r *ProjectReconciler) buildConditions(source string, conditions ...metav1.Condition) {
-	meta.SetStatusCondition(&r.project.Status.Conditions, metav1.Condition{
-		Type:               "Ready",
-		Status:             "False",
-		Reason:             "ChecksNotCompleted",
-		LastTransitionTime: r.lt,
-		Message:            "Not All Checks completed",
-	})
-	for _, c := range conditions {
-		if c.Reason == "" {
-			c.Reason = "NotSpecified"
-		}
-		if !c.LastTransitionTime.IsZero() {
-			if c.LastTransitionTime.Time.Sub(r.lt.Time).Seconds() > 0 {
-				r.lt = c.LastTransitionTime
-			}
-		}
-		if c.LastTransitionTime.IsZero() {
-			c.LastTransitionTime = r.lt
-		}
-		if source != "" {
-			c.Reason = fmt.Sprintf("%s:%s", source, c.Reason)
-			c.Type = fmt.Sprintf("%s%s", source, c.Type)
-		}
-		meta.SetStatusCondition(&r.project.Status.Conditions, c)
-	}
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
-func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.logger = GetLogger(req.NamespacedName)
-	logger := r.logger.With("RECONCILE", "true")
-	logger.Info("Reconcilation request received")
+func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
+	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Project{})
 
-	project := &crdsv1.Project{}
-	if err := r.Get(ctx, req.NamespacedName, project); err != nil {
-		if apiErrors.IsNotFound(err) {
-			// INFO: might have been deleted
-			return reconcileResult.OK()
+	if req == nil {
+		return ctrl.Result{}, nil
+	}
+
+	if req.Object.GetDeletionTimestamp() != nil {
+		if x := r.finalize(req); !x.ShouldProceed() {
+			return x.Result(), x.Err()
 		}
-		return reconcileResult.Failed()
-	}
-	r.project = project
-
-	if project.GetDeletionTimestamp() != nil {
-		return r.finalizeProject(ctx, project)
 	}
 
-	logger.Infof("request received")
+	req.Logger.Info("-------------------- NEW RECONCILATION------------------")
 
-	// check for namespace existence
-	var ns corev1.Namespace
-	if err := r.Get(ctx, types.NamespacedName{Name: project.Name}, &ns); err != nil {
+	if x := req.EnsureLabels(); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
+
+	if x := r.reconcileStatus(req); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
+
+	if x := r.reconcileOperations(req); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+	return req.Finalize()
+}
+
+func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+	ctx := req.Context()
+	project := req.Object
+
+	isReady := true
+	var cs []metav1.Condition
+
+	ns, err := rApi.Get(ctx, r.Client, fn.NN(project.Namespace, project.Name), &corev1.Namespace{})
+	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return ctrl.Result{}, err
+			return req.FailWithStatusError(err)
 		}
+		isReady = false
+		cs = append(cs, conditions.New("NamespaceExists", false, "NotFound", err.Error()))
+		ns = nil
 	}
 
-	namespace := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}}
-	if err := r.apply(ctx, &namespace); err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "could not create/update namespace"))
+	if ns != nil {
+		cs = append(cs, conditions.New("NamespaceExists", true, "Found"))
+	}
+
+	newConditions, hasUpdated, err := conditions.Patch(project.Status.Conditions, cs)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+	if !hasUpdated && isReady == project.Status.IsReady {
+		return req.Next()
+	}
+
+	project.Status.IsReady = isReady
+	project.Status.Conditions = newConditions
+	if err := r.Status().Update(ctx, project); err != nil {
+		return req.FailWithOpError(err)
+	}
+
+	return req.Done()
+}
+
+func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+	ctx := req.Context()
+	project := req.Object
+
+	if !controllerutil.ContainsFinalizer(project, constants.CommonFinalizer) ||
+		!controllerutil.ContainsFinalizer(project, constants.ForegroundFinalizer) {
+		controllerutil.AddFinalizer(project, constants.CommonFinalizer)
+		controllerutil.AddFinalizer(project, constants.ForegroundFinalizer)
+		if err := r.Update(ctx, project); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
+	}
+
+	if err := fn.KubectlApply(
+		ctx, r.Client, &corev1.Namespace{
+			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+			ObjectMeta: metav1.ObjectMeta{Name: project.Name},
+		},
+	); err != nil {
+		return req.FailWithOpError(err)
 	}
 
 	encAuthPass := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", r.HarborUserName, r.HarborPassword)))
-	dockerConfigJson, err := json.Marshal(map[string]interface{}{
-		"auths": map[string]interface{}{
-			ImageRegistry: map[string]interface{}{
-				"auth": encAuthPass,
+	dockerConfigJson, err := json.Marshal(
+		map[string]interface{}{
+			"auths": map[string]interface{}{
+				ImageRegistry: map[string]interface{}{
+					"auth": encAuthPass,
+				},
 			},
 		},
-	})
+	)
 	if err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "could not unmarshal dockerconfigjson"))
+		return req.FailWithOpError(err)
 	}
 
 	imgPullSecret := corev1.Secret{
-		TypeMeta: TypeSecret,
+		// TypeMeta: TypeSecret,
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: project.Name,
 			Name:      ImagePullSecretName,
@@ -170,13 +160,11 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		Type: corev1.SecretTypeDockerConfigJson,
 	}
 
-	if err := r.apply(ctx, &imgPullSecret); err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply imagePullSecret"))
+	if err := fn.KubectlApply(ctx, r.Client, &imgPullSecret); err != nil {
+		return req.FailWithOpError(err)
 	}
 
-	// Role
 	adminRole := rbacv1.Role{
-		TypeMeta: TypeRole,
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: project.Name,
 			Name:      NamespaceAdminRole,
@@ -195,8 +183,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		},
 	}
 
-	if err := r.apply(ctx, &adminRole); err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply namespace admin role"))
+	if err := fn.KubectlApply(ctx, r.Client, &adminRole); err != nil {
+		return req.FailWithOpError(err)
 	}
 
 	adminRoleBinding := rbacv1.RoleBinding{
@@ -220,59 +208,41 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		},
 	}
 
-	if err := r.apply(ctx, &adminRoleBinding); err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply namespace admin role binding"))
+	if err := fn.KubectlApply(ctx, r.Client, &adminRoleBinding); err != nil {
+		return req.FailWithOpError(err)
 	}
 
-	// service account
 	svcAccount := corev1.ServiceAccount{
-		TypeMeta:         TypeSvcAccount,
-		ObjectMeta:       metav1.ObjectMeta{Name: SvcAccountName, Namespace: project.Name},
-		ImagePullSecrets: []corev1.LocalObjectReference{{Name: ImagePullSecretName}},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kloudlite-svc-account",
+			Namespace: project.Name,
+		},
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: ImagePullSecretName,
+			},
+		},
 	}
 
-	if err := r.apply(ctx, &svcAccount); err != nil {
-		return r.notifyAndDie(ctx, errors.NewEf(err, "could not apply service account"))
+	if err := fn.KubectlApply(ctx, r.Client, &svcAccount); err != nil {
+		return req.FailWithOpError(err)
 	}
 
-	// set conditions
-	r.buildConditions("", metav1.Condition{
-		Type:    "Ready",
-		Status:  metav1.ConditionTrue,
-		Reason:  "AllChecksPassed",
-		Message: "Project is ready",
-	})
-	return r.notify(ctx)
+	return req.Done()
 }
 
-func (r *ProjectReconciler) finalizeProject(ctx context.Context, project *crdsv1.Project) (ctrl.Result, error) {
-	logger := r.logger.With("FINALIZER", "true")
-	logger.Debug("finalizing ...")
+func (r *ProjectReconciler) notify(req *rApi.Request[*crdsv1.Project]) error {
+	project := req.Object
 
-	if controllerutil.ContainsFinalizer(project, finalizers.Project.String()) {
-		controllerutil.RemoveFinalizer(project, finalizers.Project.String())
-		err := r.Update(ctx, project)
-		if err != nil {
-			return reconcileResult.Retry()
-		}
-		logger.Infof("Deletion in Progress, removed %s finalizer", finalizers.Project.String())
-		return reconcileResult.Retry(3)
-	}
+	return nil
 
-	if controllerutil.ContainsFinalizer(project, finalizers.Foreground.String()) {
-		var ns corev1.Namespace
-		if err := r.Get(ctx, types.NamespacedName{Name: project.Name}, &ns); err != nil {
-			if apiErrors.IsNotFound(err) {
-				controllerutil.RemoveFinalizer(project, finalizers.Foreground.String())
-				err := r.Update(ctx, project)
-				if err != nil {
-					return reconcileResult.Retry()
-				}
-				logger.Info("Reconcile Completed, removed foreground finalizer")
-			}
-		}
-	}
-	return reconcileResult.OK()
+	return r.SendMessage(
+		project.LogRef(), lib.MessageReply{
+			Key:        project.LogRef(),
+			Conditions: project.Status.Conditions,
+			Status:     project.Status.IsReady,
+		},
+	)
 }
 
 // SetupWithManager sets up the controller with the Manager.

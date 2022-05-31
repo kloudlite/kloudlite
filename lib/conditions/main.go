@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,28 +74,28 @@ func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Conditi
 	return res, updated, nil
 }
 
-func Fetch[T any](
-	ctx context.Context,
-	client client.Client,
-	groupVersionKind metav1.GroupVersionKind,
-	typePrefix string,
-	nn types.NamespacedName,
-) ([]metav1.Condition, error) {
-	var res T
-	switch res.(type) {
-	case corev1.Pod:
-		{
-			return fromPod(ctx, client, groupVersionKind, typePrefix, nn)
-		}
-	case appsv1.Deployment:
-		{
-			return fromResource(ctx, client, groupVersionKind, typePrefix, nn)
-		}
-	}
-	return nil, nil
-}
+// func Fetch[T any](
+// 	ctx context.Context,
+// 	client client.Client,
+// 	groupVersionKind metav1.GroupVersionKind,
+// 	typePrefix string,
+// 	nn types.NamespacedName,
+// ) ([]metav1.Condition, error) {
+// 	var res T
+// 	switch res.(type) {
+// 	case corev1.Pod:
+// 		{
+// 			return fromPod(ctx, client, groupVersionKind, typePrefix, nn)
+// 		}
+// 	case appsv1.Deployment:
+// 		{
+// 			return fromResource(ctx, client, groupVersionKind, typePrefix, nn)
+// 		}
+// 	}
+// 	return nil, nil
+// }
 
-func fromPod(
+func FromPod(
 	ctx context.Context,
 	client client.Client,
 	groupVersionKind metav1.GroupVersionKind,
@@ -145,7 +144,7 @@ func fromPod(
 	return res, nil
 }
 
-func fromResource(
+func FromResource(
 	ctx context.Context,
 	client client.Client,
 	groupVersionKind metav1.GroupVersionKind,
