@@ -206,7 +206,7 @@ var Module = fx.Module(
 	config.EnvFx[WorkloadConsumerEnv](),
 	messaging.NewFxKafkaConsumer[*WorkloadConsumerEnv](),
 	fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], d domain.Domain) {
-		fmt.Println(env.ResponseTopic, "env.ResponseTopic")
+		return
 		consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
 			var msg struct {
 				Status     bool   `json:"status"`
