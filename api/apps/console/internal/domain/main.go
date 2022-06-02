@@ -134,6 +134,9 @@ func (d *domain) OnSetupClusterAccount(ctx context.Context, payload entities.Set
 	if err != nil {
 		return err
 	}
+	if one == nil {
+		return errors.New("cluster account not found")
+	}
 	if payload.Done {
 		one.Status = entities.ClusterAccountStateLive
 		one.WgPubKey = payload.WgPublicKey
