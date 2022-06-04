@@ -8,6 +8,10 @@ import (
 )
 
 type Domain interface {
+	SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID, authHeader string) error
+	GetRemoteLogin(ctx context.Context, loginId repos.ID, secret string) (*RemoteLogin, error)
+	CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error)
+
 	Login(ctx context.Context, email string, password string) (*common.AuthSession, error)
 	SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error)
 	EnsureUserByEmail(ctx context.Context, email string) (*User, error)
