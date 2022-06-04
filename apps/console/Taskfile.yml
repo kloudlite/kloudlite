@@ -43,7 +43,8 @@ tasks:
       - ./internal/**/*.go
       - ./main.go
     cmds:
-      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+      - ./main
+#      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   docker-build:
     dir: ../..
     vars:

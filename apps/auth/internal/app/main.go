@@ -54,6 +54,7 @@ var Module = fx.Module("app",
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
+	repos.NewFxMongoRepo[*domain.AccessToken]("remote_logins", "rml", domain.RemoteTokenIndexes),
 	cache.NewFxRepo[*domain.VerifyToken](),
 	cache.NewFxRepo[*domain.ResetPasswordToken](),
 
@@ -89,6 +90,41 @@ var Module = fx.Module("app",
 				common.CacheSessionPrefix,
 			),
 		)
+	}),
+	fx.Invoke(func(server *fiber.App, d domain.Domain) {
+		server.Post("/cli/new-remote-login", func(ctx *fiber.Ctx) error {
+			type RemoteLoginData struct {
+				Secret string `json:"secret"`
+			}
+			var loginData RemoteLoginData
+			err := ctx.JSON(&loginData)
+			login, err := d.CreateRemoteLogin(ctx.Context(), loginData.Secret)
+			if err != nil {
+				return err
+			}
+			ctx.JSON(login)
+			return nil
+		})
+		server.Post("/cli/remote-login/:loginId", func(c *fiber.Ctx) error {
+			loginId := c.Params("loginId")
+			type RemoteLoginStatusRequest struct {
+				Secret string `json:"secret"`
+			}
+			var request RemoteLoginStatusRequest
+			err := c.JSON(&request)
+			if err != nil {
+				return err
+			}
+			login, err := d.GetRemoteLogin(c.Context(), repos.ID(loginId), request.Secret)
+			if err != nil {
+				return err
+			}
+			c.JSON(map[string]string{
+				"status":      string(login.LoginStatus),
+				"auth_header": login.AuthHeader,
+			})
+			return nil
+		})
 	}),
 	domain.Module,
 )
