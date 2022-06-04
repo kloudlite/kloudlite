@@ -15,7 +15,7 @@ RUN chmod +x /tmp/bin/infra
 FROM alpine
 
 RUN apk update && apk add curl openssh terraform bash
-RUN curl -sLS https://get.k3sup.dev | sh
+# RUN curl -sLS https://get.k3sup.dev | sh
 RUN curl -L0 https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz >  helm.tar.gz && tar -xzf helm.tar.gz && mv linux-amd64/helm /usr/local/bin/helm && rm -rf helm.tar.gz linux-amd64
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
 RUN chmod +x ./kubectl
