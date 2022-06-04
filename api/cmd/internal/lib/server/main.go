@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	authUrl = "https://auth.kl.kloudlite.io/cli"
+	authUrl = "https://auth.kl.local.madhouselabs.io/api"
 )
 
 type User struct {
@@ -32,8 +32,13 @@ func CreateRemoteLogin() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	body := map[string]string{
-		"secret": authSecret,
+	body := map[string]any{
+		"method": "createRemoteLogin",
+		"args": []map[string]string{
+			{
+				"secret": authSecret,
+			},
+		},
 	}
 	marshal, err := json.Marshal(body)
 	if err != nil {
