@@ -107,3 +107,27 @@ type ChangeEmailToken struct {
 	Token  string   `json:"token"`
 	UserId repos.ID `json:"user_id"`
 }
+
+type LoginStatus string
+
+const (
+	LoginStatusPending   = "pending"
+	LoginStatusFailed    = "failed"
+	LoginStatusSucceeded = "succeeded"
+)
+
+type RemoteLogin struct {
+	repos.BaseEntity `bson:",inline"`
+	LoginStatus      LoginStatus `json:"login_status"`
+	Secret           string      `json:"secret"`
+	AuthHeader       string      `json:"auth_header"`
+}
+
+var RemoteTokenIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}

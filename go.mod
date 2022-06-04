@@ -17,6 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
+	github.com/spf13/cobra v1.4.0
 	github.com/vektah/gqlparser/v2 v2.4.0
 	github.com/xanzy/go-gitlab v0.63.0
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54
@@ -24,6 +25,7 @@ require (
 	go.uber.org/fx v1.17.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
+	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220330030906-9490840b0b01
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
@@ -60,6 +62,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.8 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/matryer/moq v0.2.3 // indirect
@@ -93,6 +96,8 @@ require (
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.1.9 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	golang.zx2c4.com/go118/netip v0.0.0-20211111135330-a4a02eeacf9d // indirect
+	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
