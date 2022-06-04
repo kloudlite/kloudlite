@@ -7,8 +7,11 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/lib/server"
 	"os/exec"
 )
+
+const loginUrl = "https://auth.local.kl.madhouselabs.io/cli-login"
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
@@ -21,10 +24,23 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := exec.Command("open", "https://www.google.com").Start()
+		loginId, err := server.CreateRemoteLogin()
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
+		command := exec.Command("open", fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId))
+		err = command.Run()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		err = server.Login(loginId)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("Login successful")
 	},
 }
 
