@@ -10,10 +10,15 @@ import (
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
 	"golang.zx2c4.com/wireguard/tun"
+	"kloudlite.io/cmd/internal/cmd"
 	"os"
 )
 
 func main() {
+	cmd.Execute()
+}
+
+func main2() {
 	var err error
 	tun, err := func() (tun.Device, error) {
 		return tun.CreateTUN("utun1729", device.DefaultMTU)
