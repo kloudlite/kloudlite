@@ -1681,8 +1681,8 @@ func fxDomain(
 	financeClient finance.FinanceClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 ) Domain {
-	var x repos.DbRepo[*entities.Cluster]
-	x = mockClusterRepo{}
+	//var x repos.DbRepo[*entities.Cluster]
+	//x = mockClusterRepo{}
 	return &domain{
 		clusterAccountRepo:   clusterAccountRepo,
 		changeNotifier:       changeNotifier,
@@ -1695,7 +1695,7 @@ func fxDomain(
 		infraMessenger:       infraMessenger,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,
-		clusterRepo:          x,
+		clusterRepo:          clusterRepo,
 		projectRepo:          projectRepo,
 		routerRepo:           routerRepo,
 		secretRepo:           secretRepo,
