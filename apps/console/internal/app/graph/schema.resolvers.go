@@ -206,6 +206,9 @@ func (r *mutationResolver) InfraCreateCluster(ctx context.Context, name string, 
 		Region:     region,
 		NodesCount: nodesCount,
 	})
+	if err != nil {
+		return nil, err
+	}
 	return clusterModelFromEntity(cluster), err
 }
 
