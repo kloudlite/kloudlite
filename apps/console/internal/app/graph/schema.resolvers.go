@@ -199,7 +199,14 @@ func (r *mutationResolver) ManagedResDelete(ctx context.Context, resID repos.ID)
 }
 
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error) {
-	panic(fmt.Errorf("not implemented"))
+	cluster, err := r.Domain.CreateCluster(ctx, &entities.Cluster{
+		BaseEntity: repos.BaseEntity{},
+		Name:       name,
+		Provider:   provider,
+		Region:     region,
+		NodesCount: nodesCount,
+	})
+	return clusterModelFromEntity(cluster), err
 }
 
 func (r *mutationResolver) InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (bool, error) {
