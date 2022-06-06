@@ -1,3 +1,0 @@
-package redisstandalonemsvc
-
-const ()
