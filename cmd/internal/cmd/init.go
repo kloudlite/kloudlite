@@ -5,12 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"errors"
-	"fmt"
-	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
 )
 
 // initCmd represents the init command
@@ -24,35 +19,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if _, err := os.Stat("/path/to/whatever"); errors.Is(err, os.ErrNotExist) {
-			fmt.Println("This will initialize a new kloudlite application. Please select a project name:")
-			type Track struct {
-				Name      string
-				AlbumName string
-				Artist    string
-			}
-			var tracks = []Track{
-				{"foo", "album1", "artist1"},
-				{"bar", "album1", "artist1"},
-				{"foo", "album2", "artist1"},
-				{"baz", "album2", "artist2"},
-				{"baz", "album3", "artist2"},
-			}
 
-			idx, err := fuzzyfinder.Find(
-				tracks,
-				func(i int) string {
-					return tracks[i].Name
-				},
-				fuzzyfinder.WithPromptString("Project:"),
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("selected: %v\n", idx)
-			return
-		}
-		fmt.Println("Application is already initialized")
 	},
 }
 
