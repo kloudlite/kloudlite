@@ -6,6 +6,11 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type RemoteLogin struct {
+	Status     string  `json:"status"`
+	AuthHeader *string `json:"authHeader"`
+}
+
 type Session struct {
 	ID           repos.ID `json:"id"`
 	UserID       repos.ID `json:"userId"`
