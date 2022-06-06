@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: keyprefixes.redis-standalone.msvc.kloudlite.io
+  name: aclaccounts.redis-standalone.msvc.kloudlite.io
 spec:
   group: redis-standalone.msvc.kloudlite.io
   names:
-    kind: KeyPrefix
-    listKind: KeyPrefixList
-    plural: keyprefixes
-    singular: keyprefix
+    kind: ACLAccount
+    listKind: ACLAccountList
+    plural: aclaccounts
+    singular: aclaccount
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: KeyPrefix is the Schema for the keyprefixes API
+        description: ACLAccount is the Schema for the aclaccounts API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,6 +33,7 @@ spec:
           metadata:
             type: object
           spec:
+            description: ACLAccountSpec defines the desired state of ACLAccount
             properties:
               inputs:
                 type: object

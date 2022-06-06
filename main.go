@@ -41,6 +41,7 @@ import (
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
+	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -301,13 +302,22 @@ func main() {
 	//	os.Exit(1)
 	// }
 	//
-	// if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
-	//	os.Exit(1)
-	// }
+	if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+
+	if err = (&redisstandalonemsvccontrollers.ACLAccountReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ACLAccount")
+		os.Exit(1)
+	}
+
 	// if err = (&redisstandalonemsvccontrollers.KeyPrefixReconciler{
 	//	Client: mgr.GetClient(),
 	//	Scheme: mgr.GetScheme(),
@@ -322,6 +332,7 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "KeyPrefix")
 	//	os.Exit(1)
 	// }
+
 	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -400,6 +411,7 @@ type msgSender struct {
 }
 
 func (m *msgSender) SendMessage(key string, msg lib.MessageReply) error {
+	return nil
 	msgBody, e := json.Marshal(msg)
 	if e != nil {
 		fmt.Println(e)

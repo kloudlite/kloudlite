@@ -2,25 +2,13 @@ package redisstandalonemsvc
 
 import (
 	"context"
-
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"fmt"
-
-	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
+	"k8s.io/apimachinery/pkg/runtime"
 	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -28,22 +16,16 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
+	t "operators.kloudlite.io/lib/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // ServiceReconciler reconciles a Service object
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-}
-
-// +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
-
-type ServiceReconReq struct {
-	stateData map[string]any
-	logger    *zap.SugaredLogger
-	redisSvc  *redisStandalone.Service
 }
 
 const (
@@ -56,6 +38,15 @@ type Output struct {
 	Hosts        string `json:"HOSTS"`
 	Uri          string `json:"URI"`
 }
+
+const (
+	ACLConfigMapName t.Fstring = "msvc-%s-acl-accounts"
+	RedisStsName     t.Fstring = "%s-master"
+)
+
+// +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &redisStandalone.Service{})
@@ -98,31 +89,46 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 	isReady := true
 	var cs []metav1.Condition
 
+	// CHECK: fetch conditions from helm resource
 	helmConditions, err := conditions.FromResource(
 		ctx, r.Client, constants.HelmRedisGroup, "Helm",
-		fn.NamespacedName(redisSvc),
+		fn.NN(redisSvc.Namespace, redisSvc.Name),
 	)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
+		cs = append(cs, conditions.New("HelmResourceExists", false, "NotFound", err.Error()))
 		isReady = false
+		helmConditions = nil
 	}
-	cs = append(cs, helmConditions...)
 
-	deplConditions, err := conditions.FromResource(
+	if helmConditions != nil {
+		cs = append(cs, conditions.New("HelmResourceExists", true, "Found"))
+		cs = append(cs, helmConditions...)
+	}
+
+	// CHECK: fetch conditions from redis statefulset
+	stsConditions, err := conditions.FromResource(
 		ctx, r.Client, constants.StatefulsetGroup, "Statefulset",
-		fn.NamespacedName(redisSvc),
+		fn.NN(redisSvc.Namespace, RedisStsName.Format(redisSvc.Name)),
+		// fn.NN(redisSvc.Namespace, fmt.Sprintf(RedisStsName, redisSvc.Name)),
 	)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
+		cs = append(cs, conditions.New("StatefulsetExists", false, "NotFound", err.Error()))
 		isReady = false
+		stsConditions = nil
 	}
-	cs = append(cs, deplConditions...)
 
-	// STEP: Helm Release Secret
+	if stsConditions != nil {
+		cs = append(cs, conditions.New("StatefulsetExists", true, "Found"))
+		cs = append(cs, stsConditions...)
+	}
+
+	// CHECK: whether Helm Release Secret Exists
 	helmSecret, err := rApi.Get(ctx, r.Client, fn.NN(redisSvc.Namespace, redisSvc.Name), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -137,15 +143,18 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 		cs = append(cs, conditions.New("HelmReleaseSecretExists", true, "SecretFound"))
 	}
 
-	// STEP: ACL configmap
-	aclCfg, err := rApi.Get(ctx, r.Client, fn.NN(redisSvc.Namespace, redisSvc.Name), &corev1.ConfigMap{})
+	// CHECK: wether ACL configmap exists
+	aclCfg, err := rApi.Get(
+		ctx, r.Client, fn.NN(redisSvc.Namespace, ACLConfigMapName.Format(redisSvc.Name)),
+		&corev1.ConfigMap{},
+	)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
 		isReady = false
 		cs = append(cs, conditions.New("ACLConfigExists", false, "ConfigMapNotFound", err.Error()))
-		helmSecret = nil
+		aclCfg = nil
 	}
 
 	if aclCfg != nil {
@@ -153,9 +162,30 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 		rApi.SetLocal(req, "AclAccounts", aclCfg.Data)
 	}
 
-	// STEP: generated vars
-	if _, ok := redisSvc.Status.GeneratedVars.GetString(RedisPasswordKey); !ok {
+	// CHECK: whether generated vars ?
+	_, ok := redisSvc.Status.GeneratedVars.GetString(RedisPasswordKey)
+
+	if ok {
+		cs = append(cs, conditions.New("GeneratedVars", true, "Generated"))
+	} else {
 		cs = append(cs, conditions.New("GeneratedVars", false, "NotGeneratedYet"))
+	}
+
+	// CHECK: whether service output exists
+	svcOutput, err := rApi.Get(
+		ctx,
+		r.Client,
+		fn.NN(redisSvc.Namespace, fmt.Sprintf("msvc-%s", redisSvc.Name)), &corev1.Secret{},
+	)
+
+	if err != nil {
+		isReady = false
+		svcOutput = nil
+		cs = append(cs, conditions.New("OutputExists", false, "NotFound", err.Error()))
+	}
+
+	if svcOutput != nil {
+		cs = append(cs, conditions.New("OutputExists", true, "Found"))
 	}
 
 	newConditions, hasUpdated, err := conditions.Patch(redisSvc.Status.Conditions, cs)
@@ -201,18 +231,16 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 	}
 
 	aclAccountsMap, ok := rApi.GetLocal[map[string]string](req, "AclAccounts")
-	if !ok {
-		return req.FailWithOpError(errors.New("ACL account map not found"))
+	if ok && aclAccountsMap != nil {
+		redisSvc.Spec.ACLAccounts = aclAccountsMap
 	}
-
-	redisSvc.Spec.ACLAccounts = aclAccountsMap
 
 	obj, err := templates.ParseObject(templates.RedisStandalone, redisSvc)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
-	err = fn.KubectlApply(req.Context(), r.Client, obj)
-	if err != nil {
+
+	if err := fn.KubectlApply(ctx, r.Client, obj); err != nil {
 		return req.FailWithOpError(err)
 	}
 
@@ -237,13 +265,13 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		},
 	}
 
-	if err := fn.KubectlApply(ctx, r.Client, scrt); err != nil {
+	if err := fn.KubectlApply(ctx, r.Client, fn.ParseSecret(scrt)); err != nil {
 		return req.FailWithOpError(err)
 	}
 
 	cfgName := fmt.Sprintf("msvc-%s-acl-accounts", redisSvc.Name)
 	aclCfg := new(corev1.ConfigMap)
-	if err := r.Get(ctx, types.NamespacedName{Namespace: redisSvc.Namespace, Name: cfgName}, aclCfg); err != nil {
+	if err := r.Get(ctx, fn.NN(redisSvc.Namespace, cfgName), aclCfg); err != nil {
 		if apiErrors.IsNotFound(err) {
 			nCfg := &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
@@ -255,56 +283,24 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 					Labels: redisSvc.GetLabels(),
 				},
 			}
-			err := r.Create(ctx, nCfg)
-			return req.FailWithStatusError(err)
+			if err := r.Create(ctx, nCfg); err != nil {
+				return req.FailWithOpError(err)
+			}
 		}
 	}
 
 	return req.Done()
 }
 
-func (r *ServiceReconciler) kWatcherMap(o client.Object) []reconcile.Request {
-	labels := o.GetLabels()
-	if s := labels["app.kubernetes.io/component"]; s != "mongodb" {
-		return nil
-	}
-	if s := labels["app.kubernetes.io/name"]; s != "mongodb" {
-		return nil
-	}
-	resourceName := labels["app.kubernetes.io/instance"]
-	nn := types.NamespacedName{Namespace: o.GetNamespace(), Name: resourceName}
-	return []reconcile.Request{
-		{NamespacedName: nn},
-	}
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	builder := ctrl.NewControllerManagedBy(mgr).For(&redisStandalone.Service{})
-
-	kinds := []client.Object{
-		fn.NewUnstructured(metav1.TypeMeta{APIVersion: constants.MsvcApiVersion, Kind: constants.HelmRedisKind}),
-		&appsv1.StatefulSet{},
-		&corev1.Pod{},
-		&corev1.ConfigMap{},
-	}
-
-	for _, kind := range kinds {
-		builder.Watches(
-			&source.Kind{Type: kind},
-			handler.EnqueueRequestsFromMapFunc(
-				func(c client.Object) []reconcile.Request {
-					s, ok := c.GetLabels()[fmt.Sprintf("%s/ref", redisStandalone.GroupVersion.Group)]
-					if !ok {
-						return nil
-					}
-					return []reconcile.Request{
-						{NamespacedName: fn.NN(c.GetNamespace(), s)},
-					}
-				},
-			),
-		)
-	}
-
-	return builder.Complete(r)
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&redisStandalone.Service{}).
+		Owns(fn.NewUnstructured(metav1.TypeMeta{Kind: constants.HelmRedisKind, APIVersion: constants.MsvcApiVersion})).
+		Owns(&redisStandalone.ACLAccount{}).
+		Owns(&appsv1.StatefulSet{}).
+		Owns(&corev1.Pod{}).
+		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.Secret{}).
+		Complete(r)
 }

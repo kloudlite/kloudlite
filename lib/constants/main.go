@@ -32,7 +32,7 @@ var (
 	StatefulsetGroup = metav1.GroupVersionKind{
 		Group:   "apps",
 		Version: "v1",
-		Kind:    "Deployment",
+		Kind:    "StatefulSet",
 	}
 
 	HelmMongoDBGroup = metav1.GroupVersionKind{
@@ -44,7 +44,7 @@ var (
 	HelmRedisGroup = metav1.GroupVersionKind{
 		Group:   "msvc.kloudlite.io",
 		Version: "v1",
-		Kind:    "HelmREdis",
+		Kind:    "HelmRedis",
 	}
 )
 

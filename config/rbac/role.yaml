@@ -424,7 +424,7 @@ rules:
 - apiGroups:
   - redis-standalone.msvc.kloudlite.io
   resources:
-  - keyprefixes
+  - aclaccounts
   verbs:
   - create
   - delete
@@ -436,13 +436,13 @@ rules:
 - apiGroups:
   - redis-standalone.msvc.kloudlite.io
   resources:
-  - keyprefixes/finalizers
+  - aclaccounts/finalizers
   verbs:
   - update
 - apiGroups:
   - redis-standalone.msvc.kloudlite.io
   resources:
-  - keyprefixes/status
+  - aclaccounts/status
   verbs:
   - get
   - patch
