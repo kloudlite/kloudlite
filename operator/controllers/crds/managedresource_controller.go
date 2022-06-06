@@ -215,6 +215,7 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	resources := []metav1.TypeMeta{
 		{Kind: "ACLAccount", APIVersion: "redis-standalone.msvc.kloudlite.io/v1"},
 		{Kind: "Database", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
+		{Kind: "Service", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
 	}
 
 	for _, resource := range resources {
