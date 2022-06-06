@@ -47,6 +47,7 @@ func (d *domainI) SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID
 		return errors.NewEf(err, "could not find remote login")
 	}
 	remoteLogin.AuthHeader = authHeader
+	remoteLogin.LoginStatus = LoginStatusSucceeded
 	_, err = d.remoteLoginRepo.UpdateById(ctx, loginId, remoteLogin)
 	if err != nil {
 		return errors.NewEf(err, "could not update remote login")

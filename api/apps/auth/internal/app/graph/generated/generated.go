@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 		AuthChangeEmail             func(childComplexity int, email string) int
 		AuthChangePassword          func(childComplexity int, currentPassword string, newPassword string) int
 		AuthClearMetadata           func(childComplexity int) int
+		AuthCreateRemoteLogin       func(childComplexity int, secret *string) int
 		AuthInviteSignup            func(childComplexity int, email string, name string) int
 		AuthLogin                   func(childComplexity int, email string, password string) int
 		AuthLoginWithInviteToken    func(childComplexity int, inviteToken string) int
@@ -63,6 +64,7 @@ type ComplexityRoot struct {
 		AuthResendVerificationEmail func(childComplexity int) int
 		AuthResetPassword           func(childComplexity int, token string, password string) int
 		AuthSetMetadata             func(childComplexity int, values map[string]interface{}) int
+		AuthSetRemoteAuthHeader     func(childComplexity int, loginID string, authHeader *string) int
 		AuthSignup                  func(childComplexity int, name string, email string, password string) int
 		AuthVerifyEmail             func(childComplexity int, token string) int
 		OAuthAddLogin               func(childComplexity int, provider string, state string, code string) int
@@ -71,10 +73,16 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AuthFindByEmail    func(childComplexity int, email string) int
+		AuthGetRemoteLogin func(childComplexity int, loginID string, secret string) int
 		AuthMe             func(childComplexity int) int
 		OAuthRequestLogin  func(childComplexity int, provider string, state *string) int
 		__resolve__service func(childComplexity int) int
 		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
+	}
+
+	RemoteLogin struct {
+		AuthHeader func(childComplexity int) int
+		Status     func(childComplexity int) int
 	}
 
 	Session struct {
@@ -108,6 +116,8 @@ type EntityResolver interface {
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
 type MutationResolver interface {
+	AuthSetRemoteAuthHeader(ctx context.Context, loginID string, authHeader *string) (bool, error)
+	AuthCreateRemoteLogin(ctx context.Context, secret *string) (string, error)
 	AuthLogin(ctx context.Context, email string, password string) (*model.Session, error)
 	AuthSignup(ctx context.Context, name string, email string, password string) (*model.Session, error)
 	AuthLogout(ctx context.Context) (bool, error)
@@ -128,6 +138,7 @@ type QueryResolver interface {
 	AuthMe(ctx context.Context) (*model.User, error)
 	AuthFindByEmail(ctx context.Context, email string) (*model.User, error)
 	OAuthRequestLogin(ctx context.Context, provider string, state *string) (string, error)
+	AuthGetRemoteLogin(ctx context.Context, loginID string, secret string) (*model.RemoteLogin, error)
 }
 
 type executableSchema struct {
@@ -187,6 +198,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AuthClearMetadata(childComplexity), true
+
+	case "Mutation.auth_createRemoteLogin":
+		if e.complexity.Mutation.AuthCreateRemoteLogin == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_createRemoteLogin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthCreateRemoteLogin(childComplexity, args["secret"].(*string)), true
 
 	case "Mutation.auth_inviteSignup":
 		if e.complexity.Mutation.AuthInviteSignup == nil {
@@ -274,6 +297,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AuthSetMetadata(childComplexity, args["values"].(map[string]interface{})), true
 
+	case "Mutation.auth_setRemoteAuthHeader":
+		if e.complexity.Mutation.AuthSetRemoteAuthHeader == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_setRemoteAuthHeader_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthSetRemoteAuthHeader(childComplexity, args["loginId"].(string), args["authHeader"].(*string)), true
+
 	case "Mutation.auth_signup":
 		if e.complexity.Mutation.AuthSignup == nil {
 			break
@@ -334,6 +369,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.AuthFindByEmail(childComplexity, args["email"].(string)), true
 
+	case "Query.auth_getRemoteLogin":
+		if e.complexity.Query.AuthGetRemoteLogin == nil {
+			break
+		}
+
+		args, err := ec.field_Query_auth_getRemoteLogin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AuthGetRemoteLogin(childComplexity, args["loginId"].(string), args["secret"].(string)), true
+
 	case "Query.auth_me":
 		if e.complexity.Query.AuthMe == nil {
 			break
@@ -371,6 +418,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.__resolve_entities(childComplexity, args["representations"].([]map[string]interface{})), true
+
+	case "RemoteLogin.authHeader":
+		if e.complexity.RemoteLogin.AuthHeader == nil {
+			break
+		}
+
+		return e.complexity.RemoteLogin.AuthHeader(childComplexity), true
+
+	case "RemoteLogin.status":
+		if e.complexity.RemoteLogin.Status == nil {
+			break
+		}
+
+		return e.complexity.RemoteLogin.Status(childComplexity), true
 
 	case "Session.id":
 		if e.complexity.Session.ID == nil {
@@ -565,9 +626,18 @@ type Query {
   auth_me: User # Done
   auth_findByEmail(email: String!): User # Done
   oAuth_requestLogin(provider: String!, state: String): URL!
+  auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin
+}
+
+type RemoteLogin {
+    status: String!
+    authHeader: String
 }
 
 type Mutation {
+  auth_setRemoteAuthHeader(loginId: String!, authHeader:String):Boolean!
+  auth_createRemoteLogin(secret: String):String!
+
   auth_login(email: String!, password: String!): Session # Done
   auth_signup(name: String!, email: String!, password: String!): Session # Done
   auth_logout: Boolean! # Done
@@ -699,6 +769,21 @@ func (ec *executionContext) field_Mutation_auth_changePassword_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_auth_createRemoteLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["secret"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["secret"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_auth_inviteSignup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -813,6 +898,30 @@ func (ec *executionContext) field_Mutation_auth_setMetadata_args(ctx context.Con
 		}
 	}
 	args["values"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_auth_setRemoteAuthHeader_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["loginId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("loginId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["loginId"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["authHeader"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authHeader"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["authHeader"] = arg1
 	return args, nil
 }
 
@@ -975,6 +1084,30 @@ func (ec *executionContext) field_Query_auth_findByEmail_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_auth_getRemoteLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["loginId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("loginId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["loginId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["secret"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["secret"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_oAuth_requestLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1077,6 +1210,90 @@ func (ec *executionContext) _Entity_findUserByID(ctx context.Context, field grap
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_auth_setRemoteAuthHeader(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_auth_setRemoteAuthHeader_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AuthSetRemoteAuthHeader(rctx, args["loginId"].(string), args["authHeader"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_auth_createRemoteLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_auth_createRemoteLogin_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AuthCreateRemoteLogin(rctx, args["secret"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_auth_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1792,6 +2009,45 @@ func (ec *executionContext) _Query_oAuth_requestLogin(ctx context.Context, field
 	return ec.marshalNURL2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_auth_getRemoteLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_auth_getRemoteLogin_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AuthGetRemoteLogin(rctx, args["loginId"].(string), args["secret"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.RemoteLogin)
+	fc.Result = res
+	return ec.marshalORemoteLogin2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐRemoteLogin(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1938,6 +2194,73 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RemoteLogin_status(ctx context.Context, field graphql.CollectedField, obj *model.RemoteLogin) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RemoteLogin",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RemoteLogin_authHeader(ctx context.Context, field graphql.CollectedField, obj *model.RemoteLogin) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RemoteLogin",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AuthHeader, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Session_id(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
@@ -3799,6 +4122,26 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "auth_setRemoteAuthHeader":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_auth_setRemoteAuthHeader(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "auth_createRemoteLogin":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_auth_createRemoteLogin(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "auth_login":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_auth_login(ctx, field)
@@ -4033,6 +4376,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "auth_getRemoteLogin":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_auth_getRemoteLogin(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "_entities":
 			field := field
 
@@ -4092,6 +4455,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var remoteLoginImplementors = []string{"RemoteLogin"}
+
+func (ec *executionContext) _RemoteLogin(ctx context.Context, sel ast.SelectionSet, obj *model.RemoteLogin) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, remoteLoginImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RemoteLogin")
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._RemoteLogin_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "authHeader":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._RemoteLogin_authHeader(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -5286,6 +5687,13 @@ func (ec *executionContext) marshalOProviderDetail2map(ctx context.Context, sel 
 	}
 	res := graphql.MarshalMap(v)
 	return res
+}
+
+func (ec *executionContext) marshalORemoteLogin2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐRemoteLogin(ctx context.Context, sel ast.SelectionSet, v *model.RemoteLogin) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RemoteLogin(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model.Session) graphql.Marshaler {
