@@ -7,6 +7,7 @@ import (
 	"kloudlite.io/pkg/errors"
 	"log"
 	"os"
+	"os/exec"
 )
 
 func getConfigFolder() (configFolder string, err error) {
@@ -28,18 +29,26 @@ func getConfigFolder() (configFolder string, err error) {
 	return configFolder, nil
 }
 
-func CheckLogin() error {
-	_, err := server.Me()
+const loginUrl = "https://auth.local.kl.madhouselabs.io/cli-login"
+
+func Login() {
+	loginId, err := server.CreateRemoteLogin()
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return
 	}
-	return nil
+	command := exec.Command("open", fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId))
+	err = command.Run()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = server.Login(loginId)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
-
-func Login(authToken string) error {
-	return ioutil.WriteFile("/tmp/auth.token", []byte(authToken), 0644)
-}
-
 func SelectAccount(accountId string) error {
 	configFolder, err := getConfigFolder()
 	if err != nil {
@@ -47,7 +56,6 @@ func SelectAccount(accountId string) error {
 	}
 	return ioutil.WriteFile(configFolder+"/account", []byte(accountId), 0644)
 }
-
 func SelectProject(projectId string) error {
 	configFolder, err := getConfigFolder()
 	if err != nil {

@@ -16,11 +16,57 @@ type User struct {
 	UserId string `json:"userId"`
 }
 
-func Me() (*User, error) {
-	return &User{}, nil
+type Account struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type Project struct {
+	Id          string `json:"id"`
+	ReadableId  string `json:"readableId"`
+	DisplayName string `json:"displayName"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type App struct {
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	ReadableId string `json:"readableId"`
+	Containers []struct {
+		Name    string `json:"name"`
+		EnvVars []struct {
+			Key   string `json:"key"`
+			Value struct {
+				Key   string `json:"key"`
+				Ref   string `json:"ref"`
+				Type  string `json:"type"`
+				Value string `json:"value"`
+			} `json:"value"`
+		} `json:"env_vars"`
+	} `json:"containers"`
 }
 
 var authSecret string
+
+func getConfigFolder() (configFolder string, err error) {
+	var dirName string
+	dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
+	if !ok {
+		dirName, err = os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+	}
+	configFolder = fmt.Sprintf("%s/.kl", dirName)
+	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(configFolder, os.ModePerm)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return configFolder, nil
+}
 
 func CreateRemoteLogin() (loginId string, err error) {
 	authSecret, err = nanoid.New(32)
@@ -49,25 +95,6 @@ func CreateRemoteLogin() (loginId string, err error) {
 		return "", err
 	}
 	return resp.Data.Id, nil
-}
-
-func getConfigFolder() (configFolder string, err error) {
-	var dirName string
-	dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
-	if !ok {
-		dirName, err = os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-	}
-	configFolder = fmt.Sprintf("%s/.kl", dirName)
-	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(configFolder, os.ModePerm)
-		if err != nil {
-			log.Println(err)
-		}
-	}
-	return configFolder, nil
 }
 
 func Login(loginId string) error {
@@ -120,41 +147,6 @@ func Login(loginId string) error {
 	}
 
 	return nil
-}
-
-func SelectProject(projectId string) error {
-	return nil
-}
-
-type Account struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type Project struct {
-	Id          string `json:"id"`
-	ReadableId  string `json:"readableId"`
-	DisplayName string `json:"displayName"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type App struct {
-	Id         string `json:"id"`
-	Name       string `json:"name"`
-	ReadableId string `json:"readableId"`
-	Containers []struct {
-		Name    string `json:"name"`
-		EnvVars []struct {
-			Key   string `json:"key"`
-			Value struct {
-				Key   string `json:"key"`
-				Ref   string `json:"ref"`
-				Type  string `json:"type"`
-				Value string `json:"value"`
-			} `json:"value"`
-		} `json:"env_vars"`
-	} `json:"containers"`
 }
 
 func currentAccountId() (string, error) {
@@ -316,6 +308,53 @@ func GetApps() ([]App, error) {
 		return nil, err
 	}
 	return resp.Data.CoreApps, nil
+}
+
+func GetApp(appId string) (*App, error) {
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+	respData, err := gql(`
+		query Core_app($appId: ID!) {
+          core_app(appId: $appId) {
+            id
+            name
+            readableId
+            containers {
+              name
+              env_vars {
+                key
+                value {
+                  key
+                  ref
+                  type
+                  value
+                }
+              }
+            }
+          }
+        }
+		`, map[string]any{
+		"appId": appId,
+	}, &cookie)
+
+	if err != nil {
+		return nil, err
+	}
+
+	type Response struct {
+		Data struct {
+			CoreApp App `json:"core_app"`
+		} `json:"data"`
+	}
+	var resp Response
+	fmt.Println(resp)
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Data.CoreApp, nil
 }
 
 func LoadApp() {
