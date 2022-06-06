@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"text/template"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,53 +16,58 @@ import (
 	"operators.kloudlite.io/lib/errors"
 )
 
-func UseTemplate(tfile templateFile, tList ...templateFile) (KlTemplate, error) {
-	t := template.New(tfile.String())
-	tList = append(tList, tfile)
-	for _, f := range tList {
-		templatesDir := path.Join(os.Getenv("PWD"), "lib/templates")
-		if v, hasTemplatesDir := os.LookupEnv("TEMPLATES_DIR"); hasTemplatesDir {
-			templatesDir = v
-		}
+func useTemplate(file templateFile) (*kt, error) {
+	tFiles := []string{file.Path()}
+	tFiles = append(tFiles, helperFiles...)
 
-		tPath := fmt.Sprintf("%s/%s", templatesDir, f.String())
-		_, err := t.New(f.String()).Funcs(sprig.TxtFuncMap()).ParseFiles(tPath)
-		if err != nil {
-			return nil, errors.NewEf(err, "could not parse template %s", f.String())
-		}
+	// SOURCE: https://github.com/helm/helm/blob/8648ccf5d35d682dcd5f7a9c2082f0aaf071e817/pkg/engine/engine.go#L147-L154
+	t := template.New(filepath.Base(file.Path()))
+	var funcMap template.FuncMap = map[string]any{}
+	for k, v := range sprig.TxtFuncMap() {
+		funcMap[k] = v
 	}
-	return &kt{list: tList, Template: t}, nil
+
+	funcMap["include"] = func(name string, data any) (string, error) {
+		buf := bytes.NewBuffer(nil)
+		if err := t.ExecuteTemplate(buf, name, data); err != nil {
+			return "", err
+		}
+		return buf.String(), nil
+	}
+
+	_, err := t.Funcs(funcMap).ParseFiles(tFiles...)
+	if err != nil {
+		return nil, err
+	}
+	return &kt{Template: t}, nil
 }
 
 type kt struct {
-	list []templateFile
 	*template.Template
 }
 
-func (kt *kt) WithValues(v interface{}) ([]byte, error) {
+func (kt *kt) withValues(v interface{}) ([]byte, error) {
 	w := new(bytes.Buffer)
-	for _, t := range kt.list {
-		if err := kt.ExecuteTemplate(w, t.String(), v); err != nil {
-			return nil, errors.NewEf(err, "could not execute template")
-		}
+	if err := kt.ExecuteTemplate(w, kt.Name(), v); err != nil {
+		return nil, errors.NewEf(err, "could not execute template")
 	}
 	return w.Bytes(), nil
 }
 
 func Parse(f templateFile, values interface{}) ([]byte, error) {
-	t, err := UseTemplate(f)
+	t, err := useTemplate(f)
 	if err != nil {
 		return nil, err
 	}
-	return t.WithValues(values)
+	return t.withValues(values)
 }
 
 func ParseObject(f templateFile, values interface{}) (client.Object, error) {
-	t, err := UseTemplate(f)
+	t, err := useTemplate(f)
 	if err != nil {
 		return nil, err
 	}
-	b, err := t.WithValues(values)
+	b, err := t.withValues(values)
 	if err != nil {
 		return nil, err
 	}
@@ -73,14 +78,32 @@ func ParseObject(f templateFile, values interface{}) (client.Object, error) {
 	return &unstructured.Unstructured{Object: m}, nil
 }
 
-type KlTemplate interface {
-	WithValues(v interface{}) ([]byte, error)
+var templateDir = filepath.Join(os.Getenv("PWD"), "lib/templates")
+
+var helperFiles []string
+
+func init() {
+	if v, ok := os.LookupEnv("TEMPLATES_DIR"); ok {
+		templateDir = v
+	}
+
+	helpersDir := filepath.Join(templateDir, "_helpers")
+	dir, err := os.ReadDir(helpersDir)
+	if err != nil {
+		fmt.Printf("ERR listing templateDir.... %+v\n", err)
+		panic(err)
+	}
+	for _, entry := range dir {
+		if !entry.IsDir() {
+			helperFiles = append(helperFiles, filepath.Join(helpersDir, entry.Name()))
+		}
+	}
 }
 
 type templateFile string
 
-func (tf templateFile) String() string {
-	return string(tf)
+func (tf templateFile) Path() string {
+	return filepath.Join(templateDir, string(tf))
 }
 
 const (
