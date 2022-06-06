@@ -40,8 +40,10 @@ import (
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
 	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
+	serverlesscontrollers "operators.kloudlite.io/controllers/serverless"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -62,6 +64,7 @@ func init() {
 	utilruntime.Must(redisclustermsvcv1.AddToScheme(scheme))
 	utilruntime.Must(elasticsearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(influxdbmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(serverlessv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -333,6 +336,13 @@ func main() {
 	//	os.Exit(1)
 	// }
 
+	if err = (&serverlesscontrollers.LambdaReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Lambda")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

@@ -223,11 +223,6 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 	ctx := req.Context()
 	aclAccObj := req.Object
 
-	redisMsvc, ok := rApi.GetLocal[*redisStandalone.Service](req, RedisMsvcKey)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("redis msvc not found in req.locals"))
-	}
-
 	if !controllerutil.ContainsFinalizer(aclAccObj, constants.CommonFinalizer) {
 		controllerutil.AddFinalizer(aclAccObj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(aclAccObj, constants.ForegroundFinalizer)

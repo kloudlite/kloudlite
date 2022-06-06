@@ -30,4 +30,5 @@ resources:
 - redis-standalone.msvc_v1_keyprefix.yaml
 - redis-cluster.msvc_v1_keyprefix.yaml
 - redis-standalone.msvc_v1_aclaccount.yaml
+- serverless_v1_lambda.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
