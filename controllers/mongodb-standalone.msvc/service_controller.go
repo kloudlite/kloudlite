@@ -67,7 +67,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		return x.Result(), x.Err()
 	}
 
-	req.Logger.Info("--------------------NEW RECONCILATION FINISH------------------")
+	req.Logger.Info("--------------------RECONCILATION FINISH------------------")
 
 	return ctrl.Result{}, nil
 }
@@ -87,14 +87,13 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 		ctx, r.Client, constants.HelmMongoDBGroup, "Helm", fn.NamespacedName(svcObj),
 	)
 
-	cs = append(cs, helmConditions...)
-
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
 		isReady = false
 	}
+	cs = append(cs, helmConditions...)
 
 	deploymentConditions, err := conditions.FromResource(
 		ctx, r.Client, constants.DeploymentGroup, "Deployment", fn.NamespacedName(svcObj),
@@ -109,15 +108,15 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	cs = append(cs, deploymentConditions...)
 
 	// _, err := conditions.FromPod(ctx, r.Client, constants.PodGroup, "Pod", fn.NamespacedName(svcObj))
+	// if err != nil {
+	// 	if !apiErrors.IsNotFound(err) {
+	// 		return req.FailWithStatusError(err)
+	// 	}
+	// 	isReady = false
+	// }
+	//
 
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
-		isReady = false
-	}
-
-	if !meta.IsStatusConditionTrue(deploymentConditions, "Deployment-Available") {
+	if !meta.IsStatusConditionTrue(deploymentConditions, "DeploymentAvailable") {
 		isReady = false
 	}
 
@@ -134,9 +133,12 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	}
 
 	// STEP: Generated Vars check
-	if _, ok := svcObj.Status.GeneratedVars.GetString(MongoDbRootPasswordKey); !ok {
+	_, ok := svcObj.Status.GeneratedVars.GetString(MongoDbRootPasswordKey)
+	if !ok {
 		cs = append(cs, conditions.New("GeneratedVars", false, "NotGeneratedYet"))
 		isReady = false
+	} else {
+		cs = append(cs, conditions.New("GeneratedVars", true, "Generated"))
 	}
 
 	// STEP: output check
@@ -149,16 +151,18 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	}
 
 	// req.logger.Debugf("req.mongoSvc.Status: %+v", req.mongoSvc.Status)
-	newConditions, updated, err := conditions.Patch(svcObj.Status.Conditions, cs)
+	newConditions, hasUpdated, err := conditions.Patch(svcObj.Status.Conditions, cs)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
 
-	if !updated && isReady == svcObj.Status.IsReady {
+	if !hasUpdated && isReady == svcObj.Status.IsReady {
 		return req.Next()
 	}
 
 	svcObj.Status.IsReady = isReady
 	svcObj.Status.Conditions = newConditions
 	svcObj.Status.OpsConditions = []metav1.Condition{}
-
 	if err := r.Status().Update(ctx, svcObj); err != nil {
 		req.Logger.Error(err)
 		req.FailWithStatusError(err)

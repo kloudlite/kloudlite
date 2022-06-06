@@ -34,6 +34,7 @@ const (
 
 const (
 	UserPassword = "UserPassword"
+	RedisMsvcKey = "RedisMsvc"
 )
 
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=aclaccounts,verbs=get;list;watch;create;update;patch;delete
@@ -115,8 +116,10 @@ func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalon
 	}
 
 	if !redisMsvc.Status.IsReady {
-		return req.FailWithStatusError(errors.NewEf(err, "msvc is not ready"))
+		return req.FailWithStatusError(errors.Newf("msvc is not ready"))
 	}
+
+	rApi.SetLocal(req, RedisMsvcKey, redisMsvc)
 
 	// ASSERT: whether managed service output is available or not
 	msvcOutput, err := rApi.Get(
@@ -219,6 +222,11 @@ func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalon
 func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStandalone.ACLAccount]) rApi.StepResult {
 	ctx := req.Context()
 	aclAccObj := req.Object
+
+	redisMsvc, ok := rApi.GetLocal[*redisStandalone.Service](req, RedisMsvcKey)
+	if !ok {
+		return req.FailWithOpError(errors.Newf("redis msvc not found in req.locals"))
+	}
 
 	if !controllerutil.ContainsFinalizer(aclAccObj, constants.CommonFinalizer) {
 		controllerutil.AddFinalizer(aclAccObj, constants.CommonFinalizer)
