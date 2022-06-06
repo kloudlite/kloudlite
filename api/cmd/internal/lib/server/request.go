@@ -3,12 +3,12 @@ package server
 import (
 	"encoding/json"
 	"io/ioutil"
+	"kloudlite.io/pkg/errors"
 	"net/http"
 	"strings"
 )
 
 func gql(query string, variables map[string]any, cookie *string) ([]byte, error) {
-
 	url := "https://gateway-01.kl.madhouselabs.io/"
 	method := "POST"
 	marshal, err := json.Marshal(map[string]any{
@@ -43,6 +43,23 @@ func gql(query string, variables map[string]any, cookie *string) ([]byte, error)
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
+	}
+	type RespData struct {
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	var respData RespData
+	err = json.Unmarshal(body, &respData)
+	if err != nil {
+		return nil, err
+	}
+	if len(respData.Errors) > 0 {
+		var errorMessages []string
+		for _, e := range respData.Errors {
+			errorMessages = append(errorMessages, e.Message)
+		}
+		return nil, errors.New(strings.Join(errorMessages, "\n"))
 	}
 	return body, nil
 }

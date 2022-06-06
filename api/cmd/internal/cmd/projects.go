@@ -8,15 +8,17 @@ import (
 	"fmt"
 	"github.com/briandowns/spinner"
 	"github.com/ktr0731/go-fuzzyfinder"
-	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/lib"
 	"kloudlite.io/cmd/internal/lib/server"
 	"log"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
-// appsCmd represents the apps command
-var appsCmd = &cobra.Command{
-	Use:   "apps",
+// projectsCmd represents the projects command
+var projectsCmd = &cobra.Command{
+	Use:   "projects",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -25,39 +27,39 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		appId := TriggerSelectApp()
-		fmt.Println("Selected App: " + appId)
+		TriggerSelectProject()
 	},
 }
 
-func TriggerSelectApp() string {
+func TriggerSelectProject() {
 	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
 	s.Start()
-	apps, err := server.GetApps()
+	projects, err := server.GetProjects()
 	s.Stop()
 	if err != nil {
 		log.Fatal(err)
 	}
 	selectedIndex, err := fuzzyfinder.Find(
-		apps,
+		projects,
 		func(i int) string {
-			return apps[i].Name
+			return projects[i].Name
 		},
 		fuzzyfinder.WithPromptString("Select Project >"),
 	)
-	return apps[selectedIndex].Id
+	lib.SelectProject(projects[selectedIndex].Id)
+	fmt.Println("Selected project: " + projects[selectedIndex].Name)
 }
 
 func init() {
-	rootCmd.AddCommand(appsCmd)
+	rootCmd.AddCommand(projectsCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// appsCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// projectsCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// appsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// projectsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
