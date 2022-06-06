@@ -7,14 +7,27 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"kloudlite.io/pkg/http-server"
 
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/app/graph/model"
 	"kloudlite.io/common"
 	klErrors "kloudlite.io/pkg/errors"
+	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 )
+
+func (r *mutationResolver) AuthSetRemoteAuthHeader(ctx context.Context, loginID string, authHeader *string) (bool, error) {
+	err := r.d.SetRemoteLoginAuthHeader(ctx, repos.ID(loginID), *authHeader)
+	return err == nil, err
+}
+
+func (r *mutationResolver) AuthCreateRemoteLogin(ctx context.Context, secret *string) (string, error) {
+	login, err := r.d.CreateRemoteLogin(ctx, *secret)
+	if err != nil {
+		return "", err
+	}
+	return string(login), nil
+}
 
 func (r *mutationResolver) AuthLogin(ctx context.Context, email string, password string) (*model.Session, error) {
 	sessionEntity, err := r.d.Login(ctx, email, password)
@@ -163,6 +176,17 @@ func (r *queryResolver) OAuthRequestLogin(ctx context.Context, provider string, 
 		return "", klErrors.NewE(err)
 	}
 	return url, nil
+}
+
+func (r *queryResolver) AuthGetRemoteLogin(ctx context.Context, loginID string, secret string) (*model.RemoteLogin, error) {
+	login, err := r.d.GetRemoteLogin(ctx, repos.ID(loginID), secret)
+	if err != nil {
+		return nil, klErrors.NewE(err)
+	}
+	return &model.RemoteLogin{
+		Status:     string(login.LoginStatus),
+		AuthHeader: &login.AuthHeader,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

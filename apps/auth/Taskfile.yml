@@ -39,12 +39,14 @@ tasks:
 #      - ./main
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   gql:
+    env:
+      CGO_ENABLED: 0
     sources:
       - graph/schema.graphqls
       - gqlgen.yml
     dir: internal/app
     cmds:
-      - go run github.com/99designs/gqlgen generate
+      - go run -tags dynamic github.com/99designs/gqlgen generate
 
   docker-build:
     dir: ../..
