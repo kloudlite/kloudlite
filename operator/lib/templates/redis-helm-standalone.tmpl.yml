@@ -3,12 +3,12 @@ kind: HelmRedis
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
-{{- if .Labels }}
-  labels:
-{{- range $k, $v := .Labels }}
-  {{$k}}: {{$v}}
-{{- end }}
-{{- end}}
+#{{- if .Labels }}
+#  labels:
+#  {{- range $k, $v := .Labels }}
+#    {{$k}}: {{$v}}
+#  {{- end }}
+#{{- end}}
   ownerReferences:
     - apiVersion: {{.APIVersion}}
       kind: {{.Kind}}
@@ -33,7 +33,7 @@ spec:
 
   auth:
     enabled: true
-    password: {{ index (mustFromJson (.Spec.Inputs | toJson)) "redis-password" }}
+    password: {{ index (mustFromJson (.Status.GeneratedVars | toJson)) "redis-password" }}
 
   replica:
     replicaCount: 0

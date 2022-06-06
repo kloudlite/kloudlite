@@ -117,13 +117,17 @@ func (r *Request[T]) EnsureLabels() StepResult {
 }
 
 func (r *Request[T]) FailWithStatusError(err error) StepResult {
+	e := ""
+	if err != nil {
+		e = err.Error()
+	}
 	newConditions, _, err2 := conditions.Patch(
 		r.Object.GetStatus().Conditions, []metav1.Condition{
 			{
 				Type:    "FailedWithErr",
 				Status:  metav1.ConditionFalse,
 				Reason:  "StatusFailedWithErr",
-				Message: err.Error(),
+				Message: e,
 			},
 		},
 	)

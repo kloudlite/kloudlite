@@ -1,9 +1,11 @@
 apiVersion: crds.kloudlite.io/v1
-kind: ManagedService
+kind: ManagedResource
 metadata:
-  name: redis-standalone
+  name: redis-auth
   namespace: hotspot
 spec:
   apiVersion: redis-standalone.msvc.kloudlite.io/v1
+  kind: ACLAccount
+  managedSvcName: redis-standalone
   inputs:
-    size: 2Gi
+    prefix: auth

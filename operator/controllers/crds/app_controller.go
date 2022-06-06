@@ -2,8 +2,6 @@ package crds
 
 import (
 	"context"
-
-	v2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -249,6 +247,5 @@ func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&crdsv1.App{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
-		Owns(&v2.HorizontalPodAutoscaler{}).
 		Complete(r)
 }

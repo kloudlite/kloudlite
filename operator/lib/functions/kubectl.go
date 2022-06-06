@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-
-	"os/exec"
-
+	"fmt"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os/exec"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"operators.kloudlite.io/lib/errors"
@@ -26,40 +24,63 @@ func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 	if err := c.Run(); err != nil {
 		return outStream, errors.NewEf(err, errStream.String())
 	}
+	fmt.Printf("stdout: %s\n", outStream.Bytes())
 	return outStream, nil
 }
 
+func toUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
+	b, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	var m map[string]interface{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+
+	t := &unstructured.Unstructured{Object: m}
+	return t, nil
+}
+
 func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) error {
-	x := obj
-	if _, err := controllerutil.CreateOrUpdate(
-		ctx, cli, x, func() error {
-			b1, err := json.Marshal(x.DeepCopyObject())
-			if err != nil {
-				return err
-			}
-			var j map[string]any
-			if err := json.Unmarshal(b1, &j); err != nil {
-				return err
-			}
-			serverX := unstructured.Unstructured{Object: j}
-
-			b2, err := json.Marshal(obj)
-			if err != nil {
-				return err
-			}
-			y := unstructured.Unstructured{Object: map[string]any{}}
-			if err := json.Unmarshal(b2, &y.Object); err != nil {
-				return err
-			}
-
-			serverX.DeepCopyInto(&y)
-			x = &y
-			return nil
-		},
-	); err != nil {
+	t, err := toUnstructured(obj)
+	if err != nil {
 		return err
 	}
-	return nil
+	if err := cli.Get(
+		ctx, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, t,
+	); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return errors.NewEf(err, "could not get k8s resource")
+		}
+		// CREATE it
+		return cli.Create(ctx, obj)
+	}
+
+	// UPDATE it
+	x, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	var j map[string]interface{}
+	if err := json.Unmarshal(x, &j); err != nil {
+		return err
+	}
+
+	if _, ok := j["spec"]; ok {
+		t.Object["spec"] = j["spec"]
+	}
+
+	if _, ok := j["data"]; ok {
+		t.Object["data"] = j["data"]
+	}
+
+	if _, ok := j["stringData"]; ok {
+		t.Object["stringData"] = j["stringData"]
+	}
+	return cli.Update(ctx, t)
 }
 
 func KubectlGet(namespace string, resourceRef string) ([]byte, error) {
@@ -97,6 +118,23 @@ func AsOwner(r client.Object, controller bool) metav1.OwnerReference {
 	}
 }
 
+func IsOwner(obj client.Object, ownerRef metav1.OwnerReference) bool {
+	for _, ref := range obj.GetOwnerReferences() {
+		if ref.Name == ownerRef.Name &&
+			ref.UID == ownerRef.UID &&
+			ref.Kind == ownerRef.Kind && ref.
+			APIVersion == ownerRef.APIVersion {
+			return true
+		}
+	}
+	return false
+}
+
 func NamespacedName(obj client.Object) types.NamespacedName {
 	return types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+}
+
+func ToYaml(obj client.Object) ([]byte, error) {
+	b, err := json.Marshal(obj)
+	return b, err
 }

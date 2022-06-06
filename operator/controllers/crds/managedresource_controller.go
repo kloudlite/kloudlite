@@ -108,7 +108,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 			Version: strings.Split(mres.Spec.ApiVersion, "/")[1],
 			Kind:    mres.Spec.Kind,
 		},
-		"Res", fn.NN(mres.Namespace, mres.Name),
+		"", fn.NN(mres.Namespace, mres.Name),
 	)
 
 	if err != nil {
@@ -162,6 +162,25 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 	ctx := req.Context()
 	mres := req.Object
 
+	msvc, ok := rApi.GetLocal[*v1.ManagedService](req, "msvc")
+	if !ok {
+		return req.FailWithOpError(errors.Newf("%s key not found in locals", "msvc"))
+	}
+
+	if !fn.IsOwner(mres, fn.AsOwner(msvc, true)) {
+		mres.SetOwnerReferences(
+			[]metav1.OwnerReference{
+				fn.AsOwner(msvc, true),
+			},
+		)
+
+		if err := r.Update(ctx, mres); err != nil {
+			return req.FailWithOpError(err)
+		}
+
+		return req.Done()
+	}
+
 	if !controllerutil.ContainsFinalizer(mres, constants.CommonFinalizer) {
 		controllerutil.AddFinalizer(mres, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(mres, constants.ForegroundFinalizer)
@@ -173,13 +192,10 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 	}
 
 	obj, err := templates.ParseObject(templates.CommonMres, req.Object)
-	msvc, ok := rApi.GetLocal[*v1.ManagedService](req, "msvc")
-	if !ok {
-		return req.FailWithOpError(errors.Newf("%s key not found in locals", "msvc"))
-	}
+
 	obj.SetOwnerReferences(
 		[]metav1.OwnerReference{
-			fn.AsOwner(msvc, true),
+			fn.AsOwner(mres, true),
 		},
 	)
 	if err != nil {
@@ -194,36 +210,43 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1.ManagedResource{}).
-		Watches(
-			&source.Kind{
-				Type: &v1.ManagedService{},
-			}, handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ManagedResource{})
 
-					var mresList v1.ManagedResourceList
+	resources := []metav1.TypeMeta{
+		{Kind: "ACLAccount", APIVersion: "redis-standalone.msvc.kloudlite.io/v1"},
+		{Kind: "Database", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
+	}
 
-					if err := r.List(
-						context.TODO(), &mresList, &client.ListOptions{
-							LabelSelector: labels.SelectorFromValidatedSet(
-								map[string]string{
-									"msvc.kloudlite.io/ref": obj.GetName(),
-								},
-							),
-							Namespace: obj.GetNamespace(),
-						},
-					); err != nil {
-						return nil
-					}
+	for _, resource := range resources {
+		builder.Owns(fn.NewUnstructured(resource))
+	}
 
-					var reqs []reconcile.Request
-					for _, item := range mresList.Items {
-						reqs = append(reqs, reconcile.Request{NamespacedName: fn.NamespacedName(&item)})
-					}
-					return reqs
-				},
-			),
-		).
-		Complete(r)
+	builder.Watches(
+		&source.Kind{Type: &v1.ManagedService{}},
+		handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+				var mresList v1.ManagedResourceList
+				if err := r.List(
+					context.TODO(), &mresList, &client.ListOptions{
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{
+								"msvc.kloudlite.io/ref": obj.GetName(),
+							},
+						),
+						Namespace: obj.GetNamespace(),
+					},
+				); err != nil {
+					return nil
+				}
+
+				var reqs []reconcile.Request
+				for _, item := range mresList.Items {
+					reqs = append(reqs, reconcile.Request{NamespacedName: fn.NamespacedName(&item)})
+				}
+				return reqs
+			},
+		),
+	)
+
+	return builder.Complete(r)
 }

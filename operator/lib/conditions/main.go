@@ -180,7 +180,7 @@ func FromResource(
 
 	res := make([]metav1.Condition, len(c))
 	for i, condition := range c {
-		condition.Type = fmt.Sprintf("%s-%s", typePrefix, condition.Type)
+		condition.Type = fmt.Sprintf("%s%s", typePrefix, condition.Type)
 		condition.Reason = fn.IfThenElse(len(condition.Reason) == 0, "NotSpecified", condition.Reason)
 		condition.Message = fn.IfThenElse(len(condition.Message) == 0, "", condition.Message)
 		res[i] = condition

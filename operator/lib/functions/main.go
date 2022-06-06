@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
+	corev1 "k8s.io/api/core/v1"
 	"regexp"
 	"strings"
 
@@ -198,4 +199,20 @@ func NewUnstructured(t metav1.TypeMeta, m ...metav1.ObjectMeta) *unstructured.Un
 	}
 
 	return obj
+}
+
+func ParseSecret(s *corev1.Secret) *corev1.Secret {
+	s.TypeMeta = metav1.TypeMeta{
+		Kind:       "Secret",
+		APIVersion: "v1",
+	}
+	return s
+}
+
+func ParseConfigMap(s *corev1.ConfigMap) *corev1.ConfigMap {
+	s.TypeMeta = metav1.TypeMeta{
+		Kind:       "ConfigMap",
+		APIVersion: "v1",
+	}
+	return s
 }

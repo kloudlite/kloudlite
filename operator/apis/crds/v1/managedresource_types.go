@@ -39,7 +39,8 @@ func (m *ManagedResource) GetStatus() *libOperator.Status {
 
 func (m *ManagedResource) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		"msvc.kloudlite.io/ref": m.Spec.ManagedSvcName,
+		"msvc.kloudlite.io/ref":                   m.Spec.ManagedSvcName,
+		fmt.Sprintf("%s/ref", GroupVersion.Group): m.Name,
 	}
 }
 
