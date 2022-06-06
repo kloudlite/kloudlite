@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -50,6 +51,25 @@ func CreateRemoteLogin() (loginId string, err error) {
 	return resp.Data.Id, nil
 }
 
+func getConfigFolder() (configFolder string, err error) {
+	var dirName string
+	dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
+	if !ok {
+		dirName, err = os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+	}
+	configFolder = fmt.Sprintf("%s/.kl", dirName)
+	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(configFolder, os.ModePerm)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return configFolder, nil
+}
+
 func Login(loginId string) error {
 	for true {
 		respData, err := gql(`
@@ -80,22 +100,11 @@ func Login(loginId string) error {
 			return err
 		}
 		if loginStatusResponse.Data.RemoteLogin.Status == "succeeded" {
-			var dirName string
-			dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
-			if !ok {
-				dirName, err = os.UserHomeDir()
-				if err != nil {
-					return err
-				}
+			configFolder, err := getConfigFolder()
+			if err != nil {
+				return err
 			}
-			configFolder := fmt.Sprintf("%s/.kl", dirName)
-			if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
-				err := os.Mkdir(configFolder, os.ModePerm)
-				if err != nil {
-					log.Println(err)
-				}
-			}
-			err := ioutil.WriteFile(fmt.Sprintf("%v/session", configFolder), []byte(loginStatusResponse.Data.RemoteLogin.AuthHeader), 0644)
+			err = ioutil.WriteFile(fmt.Sprintf("%v/session", configFolder), []byte(loginStatusResponse.Data.RemoteLogin.AuthHeader), 0644)
 			if err != nil {
 				return err
 			}
@@ -112,15 +121,203 @@ func Login(loginId string) error {
 
 	return nil
 }
+
 func SelectProject(projectId string) error {
 	return nil
 }
-func GetProjects() {
 
+type Account struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
+
+type Project struct {
+	Id          string `json:"id"`
+	ReadableId  string `json:"readableId"`
+	DisplayName string `json:"displayName"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type App struct {
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	ReadableId string `json:"readableId"`
+	Containers []struct {
+		Name    string `json:"name"`
+		EnvVars []struct {
+			Key   string `json:"key"`
+			Value struct {
+				Key   string `json:"key"`
+				Ref   string `json:"ref"`
+				Type  string `json:"type"`
+				Value string `json:"value"`
+			} `json:"value"`
+		} `json:"env_vars"`
+	} `json:"containers"`
+}
+
+func currentAccountId() (string, error) {
+	folder, err := getConfigFolder()
+	if err != nil {
+		return "", err
+	}
+	file, err := ioutil.ReadFile(fmt.Sprintf("%s/account", folder))
+	return string(file), nil
+}
+
+func currentProjectId() (string, error) {
+	folder, err := getConfigFolder()
+	if err != nil {
+		return "", err
+	}
+	file, err := ioutil.ReadFile(fmt.Sprintf("%s/project", folder))
+	return string(file), nil
+}
+
+func getCookie() (string, error) {
+	folder, err := getConfigFolder()
+	if err != nil {
+		return "", err
+	}
+	file, err := ioutil.ReadFile(fmt.Sprintf("%s/session", folder))
+	return strings.TrimSpace(string(file)), nil
+}
+
+func GetAccounts() ([]Account, error) {
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+	respData, err := gql(`
+		query AccountMemberships {
+          auth_me {
+            accountMemberships {
+              account {
+                id
+                name
+              }
+            }
+          }
+        }
+		`, map[string]any{
+		"secret": authSecret,
+	}, &cookie)
+
+	if err != nil {
+		return nil, err
+	}
+	type Response struct {
+		Data struct {
+			AuthMe struct {
+				AccountMemberships []struct {
+					Account Account `json:"account"`
+				} `json:"accountMemberships"`
+			} `json:"auth_me"`
+		} `json:"data"`
+	}
+	var resp Response
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
+	accounts := make([]Account, len(resp.Data.AuthMe.AccountMemberships))
+	for i, v := range resp.Data.AuthMe.AccountMemberships {
+		accounts[i] = v.Account
+	}
+	return accounts, nil
+}
+
+func GetProjects() ([]Project, error) {
+	cookie, err := getCookie()
+	accountId, err := currentAccountId()
+	if err != nil {
+		return nil, err
+	}
+	respData, err := gql(`
+		query Projects($accountId: ID!) {
+          finance_account(accountId: $accountId) {
+            projects {
+              id
+              readableId
+			  displayName
+			  name
+			  description
+            }
+          }
+        }
+		`, map[string]any{
+		"accountId": accountId,
+	}, &cookie)
+
+	if err != nil {
+		return nil, err
+	}
+
+	type Response struct {
+		Data struct {
+			FinanceAccount struct {
+				Projects []Project `json:"projects"`
+			} `json:"finance_account"`
+		} `json:"data"`
+	}
+	var resp Response
+	fmt.Println(resp)
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data.FinanceAccount.Projects, nil
+}
+
+func GetApps() ([]App, error) {
+	cookie, err := getCookie()
+	projectId, err := currentProjectId()
+	if err != nil {
+		return nil, err
+	}
+	respData, err := gql(`
+		query Core_apps($projectId: ID!) {
+          core_apps(projectId: $projectId) {
+            id
+            name
+            readableId
+            containers {
+              name
+              env_vars {
+                key
+                value {
+                  key
+                  ref
+                  type
+                  value
+                }
+              }
+            }
+          }
+        }
+		`, map[string]any{
+		"projectId": projectId,
+	}, &cookie)
+
+	if err != nil {
+		return nil, err
+	}
+
+	type Response struct {
+		Data struct {
+			CoreApps []App `json:"core_apps"`
+		} `json:"data"`
+	}
+	var resp Response
+	fmt.Println(resp)
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data.CoreApps, nil
+}
+
 func LoadApp() {
-
-}
-func GetApps() {
 
 }

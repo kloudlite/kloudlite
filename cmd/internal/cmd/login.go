@@ -40,7 +40,7 @@ to quickly create a Cobra application.`,
 			fmt.Println(err)
 			return
 		}
-		fmt.Println("Login successful")
+		TriggerSelectAccount()
 	},
 }
 
