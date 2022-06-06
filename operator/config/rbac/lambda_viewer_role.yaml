@@ -1,0 +1,20 @@
+# permissions for end users to view lambdas.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lambda-viewer-role
+rules:
+- apiGroups:
+  - serverless.kloudlite.io
+  resources:
+  - lambdas
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - serverless.kloudlite.io
+  resources:
+  - lambdas/status
+  verbs:
+  - get

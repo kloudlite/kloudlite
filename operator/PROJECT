@@ -215,4 +215,13 @@ resources:
   kind: ACLAccount
   path: operators.kloudlite.io/apis/redis-standalone.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: serverless
+  kind: Lambda
+  path: operators.kloudlite.io/apis/serverless/v1
+  version: v1
 version: "3"
