@@ -79,6 +79,7 @@ type Mutation {
     projectId: ID!,
     app: AppFlowInput!,
   ): Boolean!
+  # TODO Update app
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
