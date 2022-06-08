@@ -75,11 +75,15 @@ type Mutation {
 
 
   # App
-  core_createAppFlow(
+  core_createApp(
     projectId: ID!,
-    app: AppFlowInput!,
+    app: AppInput!,
   ): Boolean!
-  # TODO Update app
+  core_updateApp(
+    projectId: ID!,
+    appId: ID!,
+    app: AppInput!,
+  ): Boolean!
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
@@ -100,7 +104,7 @@ type Mutation {
 
 }
 
-input AppFlowInput{
+input AppInput{
   name: String!
   readable: String!
   description: String
@@ -169,20 +173,6 @@ type AppContainer{
   attached_resources:[AttachedRes!]!
 }
 
-input PipelineDataInput{
-  name: String!
-  imageName: String!
-  repoName: String!
-  gitProvider: String!
-  gitRepoUrl: String!
-  gitlabRepoId: Int!
-  dockerFile: String!
-  contextDir: String!
-  githubInstallationId: Int
-  buildArgs: Json
-  branch: String!
-  metadata: Json
-}
 
 extend type ComputeInventoryItem @key(fields: "name") {
   name: String! @external
@@ -203,7 +193,6 @@ type ComputeInventoryMetricSize {
 input AppContainerInput{
   name: String!
   image: String
-  pipelineData: PipelineDataInput,
   pull_secret: String
   env_vars:[EnvVarInput!]!
   computePlan: String!

@@ -373,8 +373,7 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	return output.Output, err
 }
 
-func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn, accountId repos.ID) (*entities.App, []*finance.StartBillableIn, error) {
-	startBillables := make([]*finance.StartBillableIn, 0)
+func (d *domain) createApp(ctx context.Context, app entities.AppIn) (*entities.App, error) {
 	a := entities.App{
 		ReadableId:   app.ReadableId,
 		ProjectId:    app.ProjectId,
@@ -391,13 +390,9 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 			iName = fmt.Sprintf("%s:latest", *c.Image)
 		}
 		plan, err := d.getComputePlan(c.ComputePlanName)
-		startBillables = append(startBillables, &finance.StartBillableIn{
-			AccountId:    string(accountId),
-			BillableType: c.ComputePlanName,
-			Quantity:     float32(c.ComputePlanQuantity),
-		})
+
 		if err != nil {
-			return nil, startBillables, err
+			return nil, err
 		}
 		container := entities.Container{
 			Name:            c.Name,
@@ -415,54 +410,100 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 			AttachedResources: c.AttachedResources,
 		}
 
-		if c.Pipeline != nil {
-			b := make(map[string]string, 0)
-			for k, v := range c.Pipeline.BuildArgs {
-				b[k] = v.(string)
-			}
-			m := make(map[string]string, 0)
-			for k, v := range c.Pipeline.Metadata {
-				m[k] = v.(string)
-			}
-			imageName := fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName)
-			pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
-				GitlabRepoId:         c.Pipeline.GitLabRepoId,
-				UserId:               string(userId),
-				ProjectId:            string(app.ProjectId),
-				RepoName:             c.Pipeline.RepoName,
-				Metadata:             m,
-				Name:                 c.Pipeline.Name,
-				ImageName:            imageName,
-				GitProvider:          c.Pipeline.GitProvider,
-				GitRepoUrl:           c.Pipeline.GitRepoUrl,
-				DockerFile:           c.Pipeline.DockerFile,
-				ContextDir:           c.Pipeline.ContextDir,
-				GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
-				BuildArgs:            b,
-			})
-			if err != nil {
-				return nil, startBillables, err
-			}
-			container.PipelineId = repos.ID(pipeline.PipelineId)
-			container.Image = &imageName
-		}
 		a.Containers = append(a.Containers, container)
 	}
-	return &a, startBillables, nil
+	return &a, nil
 }
 
-func (d *domain) InstallAppFlow(
+func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, appIn entities.AppIn) (bool, error) {
+	prj, err := d.projectRepo.FindById(ctx, appIn.ProjectId)
+	if err != nil {
+		return false, err
+	}
+	app, err := d.createApp(ctx, appIn)
+	if err != nil {
+		return false, err
+	}
+	app.Namespace = prj.Name
+	app.ProjectId = prj.Id
+	app.Id = appId
+	_, err = d.appRepo.UpdateById(ctx, appId, app)
+	if err != nil {
+		return false, err
+	}
+	svcs := make([]op_crds.Service, 0)
+	for _, ep := range app.ExposedPorts {
+		svcs = append(svcs, op_crds.Service{
+			Port:       int(ep.Port),
+			TargetPort: int(ep.TargetPort),
+			Type:       string(ep.Type),
+		})
+	}
+	containers := make([]op_crds.Container, 0)
+	for _, c := range app.Containers {
+		env := make([]op_crds.EnvEntry, 0)
+		for _, e := range c.EnvVars {
+			if e.Type == "managed_resource" {
+				ref := fmt.Sprintf("mres-%v", *e.Ref)
+				env = append(env, op_crds.EnvEntry{
+					Value:   e.Value,
+					Key:     e.Key,
+					Type:    "secret",
+					RefName: &ref,
+					RefKey:  e.RefKey,
+				})
+			} else {
+				env = append(env, op_crds.EnvEntry{
+					Value:   e.Value,
+					Key:     e.Key,
+					Type:    e.Type,
+					RefName: e.Ref,
+					RefKey:  e.RefKey,
+				})
+			}
+		}
+		containers = append(containers, op_crds.Container{
+			Name:  c.Name,
+			Image: c.Image,
+			ResourceCpu: op_crds.Limit{
+				Min: c.CPULimits.Min,
+				Max: c.CPULimits.Max,
+			},
+			ResourceMemory: op_crds.Limit{
+				Min: c.MemoryLimits.Min,
+				Max: c.MemoryLimits.Max,
+			},
+			Env: env,
+		})
+	}
+
+	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+		APIVersion: op_crds.AppAPIVersion,
+		Kind:       op_crds.AppKind,
+		Metadata: op_crds.AppMetadata{
+			Name:      app.ReadableId,
+			Namespace: app.Namespace,
+		},
+		Spec: op_crds.AppSpec{
+			Services:   svcs,
+			Containers: containers,
+			Replicas:   1,
+		},
+	})
+
+	return true, nil
+}
+
+func (d *domain) InstallApp(
 	ctx context.Context,
-	userId repos.ID,
 	projectId repos.ID,
 	appIn entities.AppIn,
 ) (bool, error) {
-	var startBillables []*finance.StartBillableIn
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return false, err
 	}
-	app, startBillables, err := d.createPipelinesOfApp(ctx, userId, appIn, prj.AccountId)
+	app, err := d.createApp(ctx, appIn)
 	if err != nil {
 		return false, err
 	}
@@ -517,19 +558,6 @@ func (d *domain) InstallAppFlow(
 			Env: env,
 		})
 	}
-
-	billIds := make([]string, 0)
-
-	for _, billable := range startBillables {
-		startBillable, err := d.financeClient.StartBillable(ctx, billable)
-		if err != nil {
-			err := errors.Newf("[FinanceError] failed to start billable: %v, need to stop bills %v", err, billIds)
-			d.logger.Error(err)
-			return false, err
-		}
-		billIds = append(billIds, startBillable.BillingId)
-	}
-
 	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
 		APIVersion: op_crds.AppAPIVersion,
 		Kind:       op_crds.AppKind,
@@ -914,11 +942,6 @@ func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.A
 		return nil, err
 	}
 	return apps, nil
-}
-
-func (d *domain) UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {

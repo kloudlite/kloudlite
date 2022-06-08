@@ -38,6 +38,7 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 		GitlabRepoId:         in.GitlabRepoID,
 		GithubInstallationId: in.GithubInstallationID,
 		BuildArgs:            in.BuildArgs,
+		RepoName:             in.RepoName,
 	})
 	marshal, err := json.Marshal(pipeline)
 	if err != nil {
