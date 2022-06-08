@@ -164,7 +164,7 @@ func (d domainI) CreateRecord(
 	recordType string,
 	host string,
 	answer string,
-	ttl int64,
+	ttl uint32,
 	priority int64,
 ) (*Record, error) {
 	create, err := d.recordsRepo.Create(ctx, &Record{
