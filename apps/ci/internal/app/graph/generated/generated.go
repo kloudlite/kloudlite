@@ -59,6 +59,7 @@ type ComplexityRoot struct {
 		ImageName            func(childComplexity int) int
 		Metadata             func(childComplexity int) int
 		Name                 func(childComplexity int) int
+		RepoName             func(childComplexity int) int
 	}
 
 	KV struct {
@@ -205,6 +206,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GitPipeline.Name(childComplexity), true
+
+	case "GitPipeline.repoName":
+		if e.complexity.GitPipeline.RepoName == nil {
+			break
+		}
+
+		return e.complexity.GitPipeline.RepoName(childComplexity), true
 
 	case "KV.key":
 		if e.complexity.KV.Key == nil {
@@ -460,6 +468,22 @@ type Query {
   ci_getPipeline(pipelineId: ID!): GitPipeline
 }
 
+input PipelineDataInput{
+  name: String!
+  imageName: String!
+  repoName: String!
+  gitProvider: String!
+  gitRepoUrl: String!
+  gitlabRepoId: Int!
+  dockerFile: String!
+  contextDir: String!
+  githubInstallationId: Int
+  buildArgs: Json
+  branch: String!
+  metadata: Json
+}
+
+
 input PaginationIn {
   page: Int!
   perPage: Int!
@@ -475,6 +499,7 @@ input GitPipelineIn {
   imageName: String!
   gitProvider: String!
   gitRepoUrl: String!
+  repoName: String!
   gitBranch: String!
   dockerFile: String
   contextDir: String
@@ -485,6 +510,7 @@ input GitPipelineIn {
 
 type GitPipeline {
   id: ID!
+  repoName: String!
   name: String!
   imageName: String!
   gitProvider: String!
@@ -885,6 +911,41 @@ func (ec *executionContext) _GitPipeline_id(ctx context.Context, field graphql.C
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipeline_repoName(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipeline",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RepoName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _GitPipeline_name(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
@@ -3187,6 +3248,14 @@ func (ec *executionContext) unmarshalInputGitPipelineIn(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
+		case "repoName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoName"))
+			it.RepoName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "gitBranch":
 			var err error
 
@@ -3272,6 +3341,117 @@ func (ec *executionContext) unmarshalInputPaginationIn(ctx context.Context, obj 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPipelineDataInput(ctx context.Context, obj interface{}) (model.PipelineDataInput, error) {
+	var it model.PipelineDataInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "imageName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageName"))
+			it.ImageName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "repoName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoName"))
+			it.RepoName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitProvider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitProvider"))
+			it.GitProvider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitRepoUrl":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitRepoUrl"))
+			it.GitRepoURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitlabRepoId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitlabRepoId"))
+			it.GitlabRepoID, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dockerFile":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerFile"))
+			it.DockerFile, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "contextDir":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contextDir"))
+			it.ContextDir, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "githubInstallationId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("githubInstallationId"))
+			it.GithubInstallationID, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "buildArgs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildArgs"))
+			it.BuildArgs, err = ec.unmarshalOJson2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "branch":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("branch"))
+			it.Branch, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			it.Metadata, err = ec.unmarshalOJson2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3293,6 +3473,16 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 		case "id":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._GitPipeline_id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "repoName":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._GitPipeline_repoName(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)

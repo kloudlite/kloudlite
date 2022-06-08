@@ -8,6 +8,7 @@ import (
 
 type GitPipeline struct {
 	ID                   repos.ID               `json:"id"`
+	RepoName             string                 `json:"repoName"`
 	Name                 string                 `json:"name"`
 	ImageName            string                 `json:"imageName"`
 	GitProvider          string                 `json:"gitProvider"`
@@ -26,6 +27,7 @@ type GitPipelineIn struct {
 	ImageName            string                 `json:"imageName"`
 	GitProvider          string                 `json:"gitProvider"`
 	GitRepoURL           string                 `json:"gitRepoUrl"`
+	RepoName             string                 `json:"repoName"`
 	GitBranch            string                 `json:"gitBranch"`
 	DockerFile           *string                `json:"dockerFile"`
 	ContextDir           *string                `json:"contextDir"`
@@ -37,4 +39,19 @@ type GitPipelineIn struct {
 type Kv struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+type PipelineDataInput struct {
+	Name                 string                 `json:"name"`
+	ImageName            string                 `json:"imageName"`
+	RepoName             string                 `json:"repoName"`
+	GitProvider          string                 `json:"gitProvider"`
+	GitRepoURL           string                 `json:"gitRepoUrl"`
+	GitlabRepoID         int                    `json:"gitlabRepoId"`
+	DockerFile           string                 `json:"dockerFile"`
+	ContextDir           string                 `json:"contextDir"`
+	GithubInstallationID *int                   `json:"githubInstallationId"`
+	BuildArgs            map[string]interface{} `json:"buildArgs"`
+	Branch               string                 `json:"branch"`
+	Metadata             map[string]interface{} `json:"metadata"`
 }

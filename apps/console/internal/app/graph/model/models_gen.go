@@ -43,7 +43,6 @@ type AppContainer struct {
 type AppContainerInput struct {
 	Name              string              `json:"name"`
 	Image             *string             `json:"image"`
-	PipelineData      *PipelineDataInput  `json:"pipelineData"`
 	PullSecret        *string             `json:"pull_secret"`
 	EnvVars           []*EnvVarInput      `json:"env_vars"`
 	ComputePlan       string              `json:"computePlan"`
@@ -51,7 +50,7 @@ type AppContainerInput struct {
 	AttachedResources []*AttachedResInput `json:"attached_resources"`
 }
 
-type AppFlowInput struct {
+type AppInput struct {
 	Name            string                 `json:"name"`
 	Readable        string                 `json:"readable"`
 	Description     *string                `json:"description"`
@@ -225,21 +224,6 @@ type NewResourcesIn struct {
 	Secrets    []map[string]interface{} `json:"secrets"`
 	MServices  []map[string]interface{} `json:"mServices"`
 	MResources []map[string]interface{} `json:"mResources"`
-}
-
-type PipelineDataInput struct {
-	Name                 string                 `json:"name"`
-	ImageName            string                 `json:"imageName"`
-	RepoName             string                 `json:"repoName"`
-	GitProvider          string                 `json:"gitProvider"`
-	GitRepoURL           string                 `json:"gitRepoUrl"`
-	GitlabRepoID         int                    `json:"gitlabRepoId"`
-	DockerFile           string                 `json:"dockerFile"`
-	ContextDir           string                 `json:"contextDir"`
-	GithubInstallationID *int                   `json:"githubInstallationId"`
-	BuildArgs            map[string]interface{} `json:"buildArgs"`
-	Branch               string                 `json:"branch"`
-	Metadata             map[string]interface{} `json:"metadata"`
 }
 
 type Project struct {

@@ -17,7 +17,7 @@ type server struct {
 	dh        domain.Harbor
 }
 
-func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.PipelineOutput, error) {
+func (s *server) UpsertPipeline(ctx context.Context, in *ci.PipelineIn) (*ci.PipelineOutput, error) {
 	githubInstallationId := int(in.GithubInstallationId)
 	gitlabRepoId := int(in.GitlabRepoId)
 	ba := make(map[string]interface{}, 0)

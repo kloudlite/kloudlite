@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/ktr0731/go-fuzzyfinder v0.6.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
+	github.com/miekg/dns v1.1.49
 	github.com/pkg/errors v0.9.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
