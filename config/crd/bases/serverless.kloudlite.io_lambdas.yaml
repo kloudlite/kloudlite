@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: keyprefixes.redis-standalone.msvc.kloudlite.io
+  name: lambdas.serverless.kloudlite.io
 spec:
-  group: redis-standalone.msvc.kloudlite.io
+  group: serverless.kloudlite.io
   names:
-    kind: KeyPrefix
-    listKind: KeyPrefixList
-    plural: keyprefixes
-    singular: keyprefix
+    kind: Lambda
+    listKind: LambdaList
+    plural: lambdas
+    singular: lambda
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: KeyPrefix is the Schema for the keyprefixes API
+        description: Lambda is the Schema for the lambdas API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,14 +33,92 @@ spec:
           metadata:
             type: object
           spec:
+            description: LambdaSpec defines the desired state of Lambda
             properties:
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              managedSvcName:
-                type: string
-            required:
-            - managedSvcName
+              containers:
+                items:
+                  properties:
+                    args:
+                      items:
+                        type: string
+                      type: array
+                    command:
+                      items:
+                        type: string
+                      type: array
+                    env:
+                      items:
+                        properties:
+                          key:
+                            type: string
+                          ref_key:
+                            type: string
+                          ref_name:
+                            type: string
+                          type:
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - key
+                        type: object
+                      type: array
+                    image:
+                      type: string
+                    image_pull_policy:
+                      type: string
+                    name:
+                      type: string
+                    resource_cpu:
+                      properties:
+                        max:
+                          type: string
+                        min:
+                          type: string
+                      type: object
+                    resource_memory:
+                      properties:
+                        max:
+                          type: string
+                        min:
+                          type: string
+                      type: object
+                    volumes:
+                      items:
+                        properties:
+                          items:
+                            items:
+                              properties:
+                                fileName:
+                                  type: string
+                                key:
+                                  type: string
+                              required:
+                              - fileName
+                              - key
+                              type: object
+                            type: array
+                          mountPath:
+                            type: string
+                          name:
+                            type: string
+                          refName:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - items
+                        - mountPath
+                        - name
+                        - refName
+                        - type
+                        type: object
+                      type: array
+                  required:
+                  - image
+                  - name
+                  type: object
+                type: array
             type: object
           status:
             properties:

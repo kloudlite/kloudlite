@@ -21,47 +21,10 @@ spec:
         app: {{.Name}}
     spec:
       serviceAccount: kloudlite-svc-account
-    {{- if .Spec.Containers }}
+      {{- if .Spec.Containers }}
       containers:
-      {{- range $k, $v := .Spec.Containers }}
-      {{- with $v}}
-        - name: {{.Name}}
-          image: {{.Image}}
-          imagePullPolicy: {{.ImagePullPolicy | default "Always"}}
-        {{- if .Env}}
-          env:
-          {{- range .Env }}
-          {{- with .}}
-            - name: {{.Key}}
-          {{- if .Value }}
-              value: {{.Value}}
-          {{- else }}
-              valueFrom:
-              {{- if eq .Type "config" }}
-                configMapKeyRef:
-                  name: {{.RefName}}
-                  key: {{.RefKey}}
-              {{- end }}
-              {{- if eq .Type "secret" }}
-                secretKeyRef:
-                  name: {{.RefName}}
-                  key: {{.RefKey}}
-              {{- end }}
-          {{- end}}
-          {{- end }}
-          {{- end }}
-        {{- end }}
-          resources:
-            requests:
-              cpu: {{ .ResourceCpu.Min  | default "200"}}m
-              memory: {{ .ResourceMemory.Min  | default "200"}}Mi
-            limits:
-              cpu: {{ .ResourceCpu.Max  | default "300"}}m
-              memory: {{ .ResourceMemory.Max  | default "300"}}Mi
+      {{- include "TemplateContainer" .Spec.Containers | indent 6 }}
       {{- end }}
-      {{- end }}
-    {{- end }}
-
 {{- if .Spec.Hpa }}
 ---
 #apiVersion: autoscaling/v2

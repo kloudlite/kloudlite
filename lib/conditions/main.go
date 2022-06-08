@@ -74,27 +74,6 @@ func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Conditi
 	return res, updated, nil
 }
 
-// func Fetch[T any](
-// 	ctx context.Context,
-// 	client client.Client,
-// 	groupVersionKind metav1.GroupVersionKind,
-// 	typePrefix string,
-// 	nn types.NamespacedName,
-// ) ([]metav1.Condition, error) {
-// 	var res T
-// 	switch res.(type) {
-// 	case corev1.Pod:
-// 		{
-// 			return fromPod(ctx, client, groupVersionKind, typePrefix, nn)
-// 		}
-// 	case appsv1.Deployment:
-// 		{
-// 			return fromResource(ctx, client, groupVersionKind, typePrefix, nn)
-// 		}
-// 	}
-// 	return nil, nil
-// }
-
 func FromPod(
 	ctx context.Context,
 	client client.Client,
@@ -144,34 +123,23 @@ func FromPod(
 	return res, nil
 }
 
-func FromResource(
-	ctx context.Context,
-	client client.Client,
-	groupVersionKind metav1.GroupVersionKind,
-	typePrefix string,
-	nn types.NamespacedName) ([]metav1.Condition, error) {
-	obj := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": strings.Split(groupVersionKind.String(), ", ")[0],
-			"kind":       groupVersionKind.Kind,
-		},
-	}
-
-	if err := client.Get(ctx, nn, &obj); err != nil {
+func FromResource(ctx context.Context, client client.Client, typeMeta metav1.TypeMeta, typePrefix string, nn types.NamespacedName) ([]metav1.Condition, error) {
+	obj := fn.NewUnstructured(typeMeta)
+	if err := client.Get(ctx, nn, obj); err != nil {
 		return nil, err
-	}
-
-	type X struct {
-		Status struct {
-			Conditions []metav1.Condition `json:"conditions,omitempty"`
-		} `json:"status"`
 	}
 
 	m, err := json.Marshal(obj.Object)
 	if err != nil {
 		return nil, err
 	}
-	var x X
+
+	var x struct {
+		Status struct {
+			Conditions []metav1.Condition `json:"conditions,omitempty"`
+		} `json:"status"`
+	}
+
 	if err := json.Unmarshal(m, &x); err != nil {
 		return nil, err
 	}
