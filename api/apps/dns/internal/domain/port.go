@@ -14,7 +14,7 @@ type Domain interface {
 		recordType string,
 		host string,
 		answer string,
-		ttl int64,
+		ttl uint32,
 		priority int64,
 	) (*Record, error)
 }
