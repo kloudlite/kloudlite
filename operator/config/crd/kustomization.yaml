@@ -20,4 +20,5 @@ resources:
 - bases/redis-standalone.msvc.kloudlite.io_keyprefixes.yaml
 - bases/redis-cluster.msvc.kloudlite.io_keyprefixes.yaml
 - bases/redis-standalone.msvc.kloudlite.io_aclaccounts.yaml
+- bases/serverless.kloudlite.io_lambdas.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

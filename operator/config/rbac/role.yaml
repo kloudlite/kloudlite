@@ -473,3 +473,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - serverless.kloudlite.io
+  resources:
+  - lambdas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - serverless.kloudlite.io
+  resources:
+  - lambdas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - serverless.kloudlite.io
+  resources:
+  - lambdas/status
+  verbs:
+  - get
+  - patch
+  - update

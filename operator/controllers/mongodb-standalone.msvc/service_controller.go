@@ -84,7 +84,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	var cs []metav1.Condition
 
 	helmConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.HelmMongoDBGroup, "Helm", fn.NamespacedName(svcObj),
+		ctx, r.Client, constants.HelmMongoDBType, "Helm", fn.NamespacedName(svcObj),
 	)
 
 	if err != nil {
@@ -96,7 +96,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	cs = append(cs, helmConditions...)
 
 	deploymentConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.DeploymentGroup, "Deployment", fn.NamespacedName(svcObj),
+		ctx, r.Client, constants.DeploymentType, "Deployment", fn.NamespacedName(svcObj),
 	)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -179,8 +179,8 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 		if err := svcObj.Status.GeneratedVars.Merge(
 			map[string]any{
 				MongoDbRootPasswordKey: fn.CleanerNanoid(40),
-				// StorageClassKey:        "do-block-storage-xfs",
-				StorageClassKey: "local-path-xfs",
+				StorageClassKey:        "do-block-storage-xfs",
+				// StorageClassKey: "local-path-xfs",
 			},
 		); err != nil {
 			return req.FailWithOpError(err)
@@ -244,7 +244,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		&appsv1.Deployment{},
 		&corev1.Pod{},
 		fn.NewUnstructured(
-			metav1.TypeMeta{Kind: constants.HelmMongoDBGroup.Kind, APIVersion: constants.MsvcApiVersion},
+			metav1.TypeMeta{Kind: constants.HelmMongoDBType.Kind, APIVersion: constants.MsvcApiVersion},
 		),
 	}
 

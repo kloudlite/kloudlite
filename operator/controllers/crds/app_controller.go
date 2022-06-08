@@ -81,7 +81,7 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 	dConditions, err := conditions.FromResource(
 		ctx,
 		r.Client,
-		constants.DeploymentGroup,
+		constants.DeploymentType,
 		"Deployment",
 		fn.NN(app.Namespace, app.Name),
 	)
