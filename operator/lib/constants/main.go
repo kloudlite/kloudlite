@@ -17,34 +17,36 @@ const (
 )
 
 var (
-	PodGroup = metav1.GroupVersionKind{
-		Group:   "",
-		Version: "v1",
-		Kind:    "Pod",
+	PodGroup = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "Pod",
 	}
 
-	DeploymentGroup = metav1.GroupVersionKind{
-		Group:   "apps",
-		Version: "v1",
-		Kind:    "Deployment",
+	DeploymentType = metav1.TypeMeta{
+		APIVersion: "apps/v1",
+		Kind:       "Deployment",
 	}
 
-	StatefulsetGroup = metav1.GroupVersionKind{
-		Group:   "apps",
-		Version: "v1",
-		Kind:    "StatefulSet",
+	StatefulsetType = metav1.TypeMeta{
+		APIVersion: "apps/v1",
+		Kind:       "StatefulSet",
 	}
 
-	HelmMongoDBGroup = metav1.GroupVersionKind{
-		Group:   "msvc.kloudlite.io",
-		Version: "v1",
-		Kind:    "HelmMongoDB",
+	HelmMongoDBType = metav1.TypeMeta{
+		APIVersion: MsvcApiVersion,
+		Kind:       "HelmMongoDB",
 	}
 
-	HelmRedisGroup = metav1.GroupVersionKind{
-		Group:   "msvc.kloudlite.io",
-		Version: "v1",
-		Kind:    "HelmRedis",
+	HelmRedisType = metav1.TypeMeta{
+		APIVersion: MsvcApiVersion,
+		Kind:       "HelmRedis",
+	}
+)
+
+var (
+	KnativeServiceType = metav1.TypeMeta{
+		Kind:       "Service",
+		APIVersion: "serving.knative.dev/v1",
 	}
 )
 

@@ -121,4 +121,6 @@ const (
 	CommonMres                        templateFile = "mres-common.tmpl.yml"
 	RedisStandalone                   templateFile = "redis-helm-standalone.tmpl.yml"
 	ConfigMap                         templateFile = "configmap.tmpl.yml"
+
+	ServerlessLambda templateFile = "./serverless/lambda.yml.tpl"
 )

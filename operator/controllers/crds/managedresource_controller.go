@@ -3,8 +3,6 @@ package crds
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,10 +101,9 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 
 	// STEP: fetch conditions from real managed resource
 	resourceC, err := conditions.FromResource(
-		ctx, r.Client, metav1.GroupVersionKind{
-			Group:   strings.Split(mres.Spec.ApiVersion, "/")[0],
-			Version: strings.Split(mres.Spec.ApiVersion, "/")[1],
-			Kind:    mres.Spec.Kind,
+		ctx, r.Client, metav1.TypeMeta{
+			APIVersion: mres.Spec.ApiVersion,
+			Kind:       mres.Spec.Kind,
 		},
 		"", fn.NN(mres.Namespace, mres.Name),
 	)
