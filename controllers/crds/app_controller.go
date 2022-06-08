@@ -2,7 +2,6 @@ package crds
 
 import (
 	"context"
-	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -76,19 +75,13 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 	ctx := req.Context()
 	app := req.Object
 
-	depl, err := templates.Parse(templates.Deployment, app)
-	fmt.Println("DEPL: ", depl)
-	if err != nil {
-		return req.FailWithOpError(err)
-	}
-
 	var cs []metav1.Condition
 	isReady := true
 
 	dConditions, err := conditions.FromResource(
 		ctx,
 		r.Client,
-		constants.DeploymentGroup,
+		constants.DeploymentType,
 		"Deployment",
 		fn.NN(app.Namespace, app.Name),
 	)

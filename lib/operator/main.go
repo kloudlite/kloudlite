@@ -22,6 +22,7 @@ import (
 
 type Status struct {
 	IsReady       bool                `json:"isReady"`
+	DisplayVars   rawJson.KubeRawJson `json:"displayVars,omitempty"`
 	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
 	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
 	OpsConditions []metav1.Condition  `json:"opsConditions,omitempty"`

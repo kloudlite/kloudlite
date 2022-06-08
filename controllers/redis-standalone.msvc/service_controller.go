@@ -91,7 +91,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 
 	// CHECK: fetch conditions from helm resource
 	helmConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.HelmRedisGroup, "Helm",
+		ctx, r.Client, constants.HelmRedisType, "Helm",
 		fn.NN(redisSvc.Namespace, redisSvc.Name),
 	)
 	if err != nil {
@@ -110,7 +110,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 
 	// CHECK: fetch conditions from redis statefulset
 	stsConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.StatefulsetGroup, "Statefulset",
+		ctx, r.Client, constants.StatefulsetType, "Statefulset",
 		fn.NN(redisSvc.Namespace, RedisStsName.Format(redisSvc.Name)),
 		// fn.NN(redisSvc.Namespace, fmt.Sprintf(RedisStsName, redisSvc.Name)),
 	)

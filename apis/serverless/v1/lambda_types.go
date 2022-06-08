@@ -2,14 +2,14 @@ package v1
 
 import (
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "operators.kloudlite.io/apis/crds/v1"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
 // LambdaSpec defines the desired state of Lambda
 type LambdaSpec struct {
-	Containers []corev1.Container `json:"Containers,omitempty"`
+	Containers []v1.AppContainer `json:"containers,omitempty"`
 }
 
 // +kubebuilder:object:root=true
