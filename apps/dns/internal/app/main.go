@@ -3,12 +3,23 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"github.com/miekg/dns"
 	"go.uber.org/fx"
+	"kloudlite.io/apps/dns/internal/app/graph"
+	"kloudlite.io/apps/dns/internal/app/graph/generated"
 	"kloudlite.io/apps/dns/internal/domain"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/config"
+	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 	"net"
 )
+
+type Env struct {
+	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
+}
 
 type DNSHandler struct {
 	domain domain.Domain
@@ -45,10 +56,31 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 var Module = fx.Module(
 	"app",
+	config.EnvFx[*Env](),
 	repos.NewFxMongoRepo[*domain.Record]("records", "acc", domain.RecordIndexes),
 	fx.Provide(func(s *dns.Server, d domain.Domain) {
 		s.Handler = &DNSHandler{
 			d,
 		}
+	}),
+	fx.Invoke(func(
+		server *fiber.App,
+		d domain.Domain,
+		env *Env,
+		cacheClient cache.Client,
+	) {
+		schema := generated.NewExecutableSchema(
+			generated.Config{Resolvers: graph.NewResolver(d)},
+		)
+		httpServer.SetupGQLServer(
+			server,
+			schema,
+			httpServer.NewSessionMiddleware[*common.AuthSession](
+				cacheClient,
+				common.CookieName,
+				env.CookieDomain,
+				common.CacheSessionPrefix,
+			),
+		)
 	}),
 )
