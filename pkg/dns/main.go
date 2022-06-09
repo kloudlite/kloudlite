@@ -46,8 +46,8 @@ type ServerOptions interface {
 
 func Fx[T ServerOptions]() fx.Option {
 	return fx.Module(
-		"dns", fx.Provide(func(env T) {
-			NewServer(env.GetDNSPort())
+		"dns", fx.Provide(func(env T) *dns.Server {
+			return NewServer(env.GetDNSPort())
 		}),
 		fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server) {
 			lifecycle.Append(fx.Hook{
@@ -60,9 +60,6 @@ func Fx[T ServerOptions]() fx.Option {
 						return nil
 					}()
 					return nil
-				},
-				OnStop: func(ctx context.Context) error {
-
 				},
 			})
 		}),

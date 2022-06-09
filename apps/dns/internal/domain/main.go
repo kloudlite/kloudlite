@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	nanoid "github.com/matoous/go-nanoid/v2"
+	"go.uber.org/fx"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 	"net"
@@ -190,3 +191,8 @@ func fxDomain(
 		verifyRepo,
 	}
 }
+
+var Module = fx.Module(
+	"domain",
+	fx.Provide(fxDomain),
+)

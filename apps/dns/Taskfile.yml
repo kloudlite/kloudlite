@@ -1,0 +1,33 @@
+version: "3"
+
+dotenv: [".secrets/env"]
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
+  run:
+    env:
+      DNS_PORT: 5353
+      PORT: 8085
+      MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
+      REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
+      MONGO_DB_NAME: dns
+      COOKIE_DOMAIN: kl.madhouselabs.io
+
+    sources:
+      - ./internal/**/*.go
+      - ./main.go
+    cmds:
+      - go version
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+
+  docker-build:
+    dir: ../..
+    vars:
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/dns:v2
+      APP_DIR: ./apps/ci
+    cmds:
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker push {{.IMAGE}}
