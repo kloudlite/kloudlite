@@ -18,7 +18,7 @@ import (
 )
 
 type Env struct {
-	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
+	CookieDomain string `env:"COOKIE_DOMAIN"`
 }
 
 type DNSHandler struct {
@@ -35,7 +35,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			msg.Authoritative = true
 			domain := q.Name
 			todo := context.TODO()
-			records, err := h.domain.GetRecords(todo, domain)
+			records, err := h.domain.GetRecords(todo, domain[:len(domain)-1])
 			if err != nil {
 				fmt.Println("ERROR:", err)
 				return

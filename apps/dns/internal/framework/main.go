@@ -13,14 +13,14 @@ import (
 
 type Env struct {
 	DNSPort       uint16 `env:"DNS_PORT" required:"true"`
-	DBName        string `env:"MONGO_DB_NAME"`
-	DBUrl         string `env:"MONGO_URI"`
-	RedisHosts    string `env:"REDIS_HOSTS"`
-	RedisUsername string `env:"REDIS_USERNAME"`
+	MongoUri      string `env:"MONGO_URI" required:"true"`
+	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
+	RedisUserName string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
-	HttpPort      uint16 `env:"PORT"`
-	HttpCors      string `env:"ORIGINS"`
-	GrpcPort      uint16 `env:"GRPC_PORT"`
+	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
+	Port          uint16 `env:"PORT" required:"true"`
+	IsDev         bool   `env:"DEV" default:"false" required:"true"`
+	CorsOrigins   string `env:"ORIGINS" required:"true"`
 }
 
 func (e *Env) GetDNSPort() uint16 {
@@ -28,26 +28,26 @@ func (e *Env) GetDNSPort() uint16 {
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
-	return e.DBUrl, e.DBName
+	return e.MongoUri, e.MongoDbName
 }
 
 func (e *Env) RedisOptions() (hosts, username, password string) {
-	return e.RedisHosts, e.RedisUsername, e.RedisPassword
+	return e.RedisHosts, e.RedisUserName, e.RedisPassword
 }
 
 func (e *Env) GetHttpPort() uint16 {
-	return e.HttpPort
+	return e.Port
 }
 
 func (e *Env) GetHttpCors() string {
-	return e.HttpCors
+	return e.CorsOrigins
 }
 
 var Module = fx.Module("framework",
 	config.EnvFx[Env](),
 	fx.Provide(logger.NewLogger),
-	cache.NewRedisFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
+	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
 	dns.Fx[*Env](),
 	app.Module,

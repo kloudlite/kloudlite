@@ -17,7 +17,23 @@ type domainI struct {
 	verifyRepo  repos.DbRepo[*Verification]
 }
 
-func (d domainI) CreateSite(ctx context.Context, domain string, accountId repos.ID) (*Verification, error) {
+func (d *domainI) GetVerification(ctx context.Context, accountId repos.ID, siteId repos.ID) (*Verification, error) {
+	return d.verifyRepo.FindOne(ctx, repos.Filter{
+		"accountId": accountId,
+		"siteId":    siteId,
+	})
+}
+
+func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, error) {
+	fmt.Println(accountId)
+	return d.sitesRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"accountId": accountId,
+		},
+	})
+}
+
+func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos.ID) (*Verification, error) {
 	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
 		"domain": domain,
 	})
@@ -81,11 +97,8 @@ func (d domainI) CreateSite(ctx context.Context, domain string, accountId repos.
 	return verification, nil
 }
 
-func (d domainI) VerifySite(ctx context.Context, siteId repos.ID, accountId repos.ID) error {
-	matchedVerificaton, err := d.verifyRepo.FindOne(ctx, repos.Filter{
-		"siteId":    siteId,
-		"accountId": accountId,
-	})
+func (d *domainI) VerifySite(ctx context.Context, vid repos.ID) error {
+	matchedVerificaton, err := d.verifyRepo.FindById(ctx, vid)
 	if err != nil {
 		return err
 	}
@@ -106,7 +119,7 @@ func (d domainI) VerifySite(ctx context.Context, siteId repos.ID, accountId repo
 	for _, txt := range txts {
 		if matchedVerificaton.VerifyText == strings.TrimSpace(txt) {
 			matchedSite.Verified = true
-			matchedSite.AccountId = accountId
+			matchedSite.AccountId = matchedVerificaton.AccountId
 			_, err := d.sitesRepo.UpdateById(ctx, matchedSite.Id, matchedSite)
 			if err != nil {
 				return err
@@ -121,9 +134,9 @@ func (d domainI) VerifySite(ctx context.Context, siteId repos.ID, accountId repo
 	return errors.New("NoTxtRecordFound")
 }
 
-func (d domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
-	domainSplits := strings.Split(host, ".")
-	filters := make([]repos.Filter, len(domainSplits))
+func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
+	domainSplits := strings.Split(strings.TrimSpace(host), ".")
+	filters := make([]repos.Filter, 0)
 	for i := range domainSplits {
 		filters = append(filters, repos.Filter{
 			"host": strings.Join(domainSplits[i:], "."),
@@ -174,7 +187,7 @@ func (d domainI) GetRecords(ctx context.Context, host string) ([]*Record, error)
 
 }
 
-func (d domainI) CreateRecord(
+func (d *domainI) CreateRecord(
 	ctx context.Context,
 	siteId repos.ID,
 	recordType string,

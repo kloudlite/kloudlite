@@ -2,37 +2,42 @@ scalar Json
 scalar Any
 
 type Query {
-  dns_getSites(accountId:String): [Site]
-  dns_getSite(siteId:String): Site
-  dns_getRecords(siteId:String): [Record]
+  dns_getSites(accountId:String!): [Site]!
+  dns_getSite(siteId:String!): Site!
+  dns_getRecords(siteId:String!): [Record!]!
 }
 
 type Verification {
-  id: ID
-  VerifyText: String
-  Site: Site
+  id: ID!
+  VerifyText: String!
+  Site: Site!
 }
 
 type Site{
-  id :ID
-  accountId: ID
-  domain: String
-  verified: Boolean
-  verifications(accountId:ID): [Verification]
+  id :ID!
+  accountId: ID!
+  domain: String!
+  verified: Boolean!
+  verification(accountId:ID!): Verification!
 }
 
 type Record{
-  id :ID
-  siteId: ID
-  recordType: String
-  host: String
-  answer: String
-  ttl: Int
+  id :ID!
+  siteId: ID!
+  recordType: String!
+  host: String!
+  answer: String!
+  ttl: Int!
   priority: Int
 }
 
 type Mutation {
-  dns_createSite(domain:String, accountId:String) :Site
-  dns_createRecord(siteId:ID, recordType: String, host:String, ttl:Int, priority: Int): Record
-  dns_VerifySite(vid:ID) :Boolean
+  dns_createSite(domain:String!, accountId:ID!) :Verification!
+  dns_deleteSite(siteId:ID!) :Verification!
+
+  dns_createRecord(siteId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Record!
+  dns_deleteRecord(recordId:ID!): Boolean!
+  dns_updateRecord(recordId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Boolean!
+
+  dns_VerifySite(vid:ID!) :Boolean!
 }

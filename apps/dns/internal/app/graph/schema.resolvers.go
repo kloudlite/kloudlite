@@ -12,28 +12,85 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain *string, accountID *string) (*model.Site, error) {
+func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, accountID repos.ID) (*model.Verification, error) {
+	vE, err := r.d.CreateSite(ctx, domain, repos.ID(accountID))
+	if err != nil {
+		return nil, err
+	}
+	return &model.Verification{
+		ID:         vE.Id,
+		VerifyText: vE.VerifyText,
+	}, nil
+}
+
+func (r *mutationResolver) DNSDeleteSite(ctx context.Context, siteID repos.ID) (*model.Verification, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) DNSCreateRecord(ctx context.Context, siteID *repos.ID, recordType *string, host *string, ttl *int, priority *int) (*model.Record, error) {
+func (r *mutationResolver) DNSCreateRecord(ctx context.Context, siteID repos.ID, recordType string, host string, answer string, ttl int, priority *int) (*model.Record, error) {
+	record, err := r.d.CreateRecord(ctx, siteID, recordType, host, answer, uint32(ttl), int64(*priority))
+	if err != nil {
+		return nil, err
+	}
+	p := int(record.Priority)
+	return &model.Record{
+		ID:         record.Id,
+		SiteID:     record.SiteId,
+		RecordType: record.Type,
+		Host:       record.Host,
+		Answer:     record.Answer,
+		TTL:        int(record.TTL),
+		Priority:   &p,
+	}, nil
+}
+
+func (r *mutationResolver) DNSDeleteRecord(ctx context.Context, recordID repos.ID) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) DNSVerifySite(ctx context.Context, vid *repos.ID) (*bool, error) {
+func (r *mutationResolver) DNSUpdateRecord(ctx context.Context, recordID repos.ID, recordType string, host string, answer string, ttl int, priority *int) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) DNSGetSites(ctx context.Context, accountID *string) ([]*model.Site, error) {
+func (r *mutationResolver) DNSVerifySite(ctx context.Context, vid repos.ID) (bool, error) {
+	err := r.d.VerifySite(ctx, vid)
+	return err == nil, err
+}
+
+func (r *queryResolver) DNSGetSites(ctx context.Context, accountID string) ([]*model.Site, error) {
+	sitesEntities, err := r.d.GetSites(ctx, accountID)
+	if err != nil {
+		return nil, err
+	}
+	sites := make([]*model.Site, 0)
+	for _, e := range sitesEntities {
+		sites = append(sites, &model.Site{
+			ID:        e.Id,
+			AccountID: e.AccountId,
+			Domain:    e.Domain,
+			Verified:  e.Verified,
+		})
+	}
+	return sites, nil
+}
+
+func (r *queryResolver) DNSGetSite(ctx context.Context, siteID string) (*model.Site, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) DNSGetSite(ctx context.Context, siteID *string) (*model.Site, error) {
+func (r *queryResolver) DNSGetRecords(ctx context.Context, siteID string) ([]*model.Record, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) DNSGetRecords(ctx context.Context, siteID *string) ([]*model.Record, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *siteResolver) Verification(ctx context.Context, obj *model.Site, accountID repos.ID) (*model.Verification, error) {
+	verification, err := r.d.GetVerification(ctx, accountID, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Verification{
+		ID:         verification.Id,
+		VerifyText: verification.VerifyText,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -42,5 +99,9 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Site returns generated.SiteResolver implementation.
+func (r *Resolver) Site() generated.SiteResolver { return &siteResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type siteResolver struct{ *Resolver }
