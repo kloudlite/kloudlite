@@ -35,7 +35,38 @@ var RecordIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "Host", Value: repos.IndexAsc},
+			{Key: "host", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
+
+var SiteIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "domain", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
+
+var VerificationIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountId", Value: repos.IndexAsc},
+			{Key: "siteId", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

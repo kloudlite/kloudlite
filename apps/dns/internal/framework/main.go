@@ -2,6 +2,8 @@ package framework
 
 import (
 	"go.uber.org/fx"
+	"kloudlite.io/apps/dns/internal/app"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/dns"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -44,7 +46,9 @@ func (e *Env) GetHttpCors() string {
 var Module = fx.Module("framework",
 	config.EnvFx[Env](),
 	fx.Provide(logger.NewLogger),
+	cache.NewRedisFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
 	dns.Fx[*Env](),
+	app.Module,
 )
