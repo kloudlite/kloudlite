@@ -7,25 +7,25 @@ import (
 )
 
 type Record struct {
-	ID         *repos.ID `json:"id"`
-	SiteID     *repos.ID `json:"siteId"`
-	RecordType *string   `json:"recordType"`
-	Host       *string   `json:"host"`
-	Answer     *string   `json:"answer"`
-	TTL        *int      `json:"ttl"`
-	Priority   *int      `json:"priority"`
+	ID         repos.ID `json:"id"`
+	SiteID     repos.ID `json:"siteId"`
+	RecordType string   `json:"recordType"`
+	Host       string   `json:"host"`
+	Answer     string   `json:"answer"`
+	TTL        int      `json:"ttl"`
+	Priority   *int     `json:"priority"`
 }
 
 type Site struct {
-	ID            *repos.ID       `json:"id"`
-	AccountID     *repos.ID       `json:"accountId"`
-	Domain        *string         `json:"domain"`
-	Verified      *bool           `json:"verified"`
-	Verifications []*Verification `json:"verifications"`
+	ID           repos.ID      `json:"id"`
+	AccountID    repos.ID      `json:"accountId"`
+	Domain       string        `json:"domain"`
+	Verified     bool          `json:"verified"`
+	Verification *Verification `json:"verification"`
 }
 
 type Verification struct {
-	ID         *repos.ID `json:"id"`
-	VerifyText *string   `json:"VerifyText"`
-	Site       *Site     `json:"Site"`
+	ID         repos.ID `json:"id"`
+	VerifyText string   `json:"VerifyText"`
+	Site       *Site    `json:"Site"`
 }

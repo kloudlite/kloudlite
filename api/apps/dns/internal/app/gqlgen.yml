@@ -45,6 +45,10 @@ autobind:
 # your liking
 skip_validation: true
 models:
+  Site:
+    fields:
+      verification:
+        resolver: true
   ID:
     model:
       - kloudlite.io/pkg/repos.ID

@@ -39,6 +39,7 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Site() SiteResolver
 }
 
 type DirectiveRoot struct {
@@ -46,15 +47,18 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		DNSCreateRecord func(childComplexity int, siteID *repos.ID, recordType *string, host *string, ttl *int, priority *int) int
-		DNSCreateSite   func(childComplexity int, domain *string, accountID *string) int
-		DNSVerifySite   func(childComplexity int, vid *repos.ID) int
+		DNSCreateRecord func(childComplexity int, siteID repos.ID, recordType string, host string, answer string, ttl int, priority *int) int
+		DNSCreateSite   func(childComplexity int, domain string, accountID repos.ID) int
+		DNSDeleteRecord func(childComplexity int, recordID repos.ID) int
+		DNSDeleteSite   func(childComplexity int, siteID repos.ID) int
+		DNSUpdateRecord func(childComplexity int, recordID repos.ID, recordType string, host string, answer string, ttl int, priority *int) int
+		DNSVerifySite   func(childComplexity int, vid repos.ID) int
 	}
 
 	Query struct {
-		DNSGetRecords      func(childComplexity int, siteID *string) int
-		DNSGetSite         func(childComplexity int, siteID *string) int
-		DNSGetSites        func(childComplexity int, accountID *string) int
+		DNSGetRecords      func(childComplexity int, siteID string) int
+		DNSGetSite         func(childComplexity int, siteID string) int
+		DNSGetSites        func(childComplexity int, accountID string) int
 		__resolve__service func(childComplexity int) int
 	}
 
@@ -69,11 +73,11 @@ type ComplexityRoot struct {
 	}
 
 	Site struct {
-		AccountID     func(childComplexity int) int
-		Domain        func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Verifications func(childComplexity int, accountID *repos.ID) int
-		Verified      func(childComplexity int) int
+		AccountID    func(childComplexity int) int
+		Domain       func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Verification func(childComplexity int, accountID repos.ID) int
+		Verified     func(childComplexity int) int
 	}
 
 	Verification struct {
@@ -88,14 +92,20 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	DNSCreateSite(ctx context.Context, domain *string, accountID *string) (*model.Site, error)
-	DNSCreateRecord(ctx context.Context, siteID *repos.ID, recordType *string, host *string, ttl *int, priority *int) (*model.Record, error)
-	DNSVerifySite(ctx context.Context, vid *repos.ID) (*bool, error)
+	DNSCreateSite(ctx context.Context, domain string, accountID repos.ID) (*model.Verification, error)
+	DNSDeleteSite(ctx context.Context, siteID repos.ID) (*model.Verification, error)
+	DNSCreateRecord(ctx context.Context, siteID repos.ID, recordType string, host string, answer string, ttl int, priority *int) (*model.Record, error)
+	DNSDeleteRecord(ctx context.Context, recordID repos.ID) (bool, error)
+	DNSUpdateRecord(ctx context.Context, recordID repos.ID, recordType string, host string, answer string, ttl int, priority *int) (bool, error)
+	DNSVerifySite(ctx context.Context, vid repos.ID) (bool, error)
 }
 type QueryResolver interface {
-	DNSGetSites(ctx context.Context, accountID *string) ([]*model.Site, error)
-	DNSGetSite(ctx context.Context, siteID *string) (*model.Site, error)
-	DNSGetRecords(ctx context.Context, siteID *string) ([]*model.Record, error)
+	DNSGetSites(ctx context.Context, accountID string) ([]*model.Site, error)
+	DNSGetSite(ctx context.Context, siteID string) (*model.Site, error)
+	DNSGetRecords(ctx context.Context, siteID string) ([]*model.Record, error)
+}
+type SiteResolver interface {
+	Verification(ctx context.Context, obj *model.Site, accountID repos.ID) (*model.Verification, error)
 }
 
 type executableSchema struct {
@@ -123,7 +133,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DNSCreateRecord(childComplexity, args["siteId"].(*repos.ID), args["recordType"].(*string), args["host"].(*string), args["ttl"].(*int), args["priority"].(*int)), true
+		return e.complexity.Mutation.DNSCreateRecord(childComplexity, args["siteId"].(repos.ID), args["recordType"].(string), args["host"].(string), args["answer"].(string), args["ttl"].(int), args["priority"].(*int)), true
 
 	case "Mutation.dns_createSite":
 		if e.complexity.Mutation.DNSCreateSite == nil {
@@ -135,7 +145,43 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DNSCreateSite(childComplexity, args["domain"].(*string), args["accountId"].(*string)), true
+		return e.complexity.Mutation.DNSCreateSite(childComplexity, args["domain"].(string), args["accountId"].(repos.ID)), true
+
+	case "Mutation.dns_deleteRecord":
+		if e.complexity.Mutation.DNSDeleteRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dns_deleteRecord_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DNSDeleteRecord(childComplexity, args["recordId"].(repos.ID)), true
+
+	case "Mutation.dns_deleteSite":
+		if e.complexity.Mutation.DNSDeleteSite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dns_deleteSite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DNSDeleteSite(childComplexity, args["siteId"].(repos.ID)), true
+
+	case "Mutation.dns_updateRecord":
+		if e.complexity.Mutation.DNSUpdateRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dns_updateRecord_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DNSUpdateRecord(childComplexity, args["recordId"].(repos.ID), args["recordType"].(string), args["host"].(string), args["answer"].(string), args["ttl"].(int), args["priority"].(*int)), true
 
 	case "Mutation.dns_VerifySite":
 		if e.complexity.Mutation.DNSVerifySite == nil {
@@ -147,7 +193,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DNSVerifySite(childComplexity, args["vid"].(*repos.ID)), true
+		return e.complexity.Mutation.DNSVerifySite(childComplexity, args["vid"].(repos.ID)), true
 
 	case "Query.dns_getRecords":
 		if e.complexity.Query.DNSGetRecords == nil {
@@ -159,7 +205,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.DNSGetRecords(childComplexity, args["siteId"].(*string)), true
+		return e.complexity.Query.DNSGetRecords(childComplexity, args["siteId"].(string)), true
 
 	case "Query.dns_getSite":
 		if e.complexity.Query.DNSGetSite == nil {
@@ -171,7 +217,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.DNSGetSite(childComplexity, args["siteId"].(*string)), true
+		return e.complexity.Query.DNSGetSite(childComplexity, args["siteId"].(string)), true
 
 	case "Query.dns_getSites":
 		if e.complexity.Query.DNSGetSites == nil {
@@ -183,7 +229,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.DNSGetSites(childComplexity, args["accountId"].(*string)), true
+		return e.complexity.Query.DNSGetSites(childComplexity, args["accountId"].(string)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -262,17 +308,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Site.ID(childComplexity), true
 
-	case "Site.verifications":
-		if e.complexity.Site.Verifications == nil {
+	case "Site.verification":
+		if e.complexity.Site.Verification == nil {
 			break
 		}
 
-		args, err := ec.field_Site_verifications_args(context.TODO(), rawArgs)
+		args, err := ec.field_Site_verification_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Site.Verifications(childComplexity, args["accountId"].(*repos.ID)), true
+		return e.complexity.Site.Verification(childComplexity, args["accountId"].(repos.ID)), true
 
 	case "Site.verified":
 		if e.complexity.Site.Verified == nil {
@@ -377,39 +423,44 @@ var sources = []*ast.Source{
 scalar Any
 
 type Query {
-  dns_getSites(accountId:String): [Site]
-  dns_getSite(siteId:String): Site
-  dns_getRecords(siteId:String): [Record]
+  dns_getSites(accountId:String!): [Site]!
+  dns_getSite(siteId:String!): Site!
+  dns_getRecords(siteId:String!): [Record!]!
 }
 
 type Verification {
-  id: ID
-  VerifyText: String
-  Site: Site
+  id: ID!
+  VerifyText: String!
+  Site: Site!
 }
 
 type Site{
-  id :ID
-  accountId: ID
-  domain: String
-  verified: Boolean
-  verifications(accountId:ID): [Verification]
+  id :ID!
+  accountId: ID!
+  domain: String!
+  verified: Boolean!
+  verification(accountId:ID!): Verification!
 }
 
 type Record{
-  id :ID
-  siteId: ID
-  recordType: String
-  host: String
-  answer: String
-  ttl: Int
+  id :ID!
+  siteId: ID!
+  recordType: String!
+  host: String!
+  answer: String!
+  ttl: Int!
   priority: Int
 }
 
 type Mutation {
-  dns_createSite(domain:String, accountId:String) :Site
-  dns_createRecord(siteId:ID, recordType: String, host:String, ttl:Int, priority: Int): Record
-  dns_VerifySite(vid:ID) :Boolean
+  dns_createSite(domain:String!, accountId:ID!) :Verification!
+  dns_deleteSite(siteId:ID!) :Verification!
+
+  dns_createRecord(siteId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Record!
+  dns_deleteRecord(recordId:ID!): Boolean!
+  dns_updateRecord(recordId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Boolean!
+
+  dns_VerifySite(vid:ID!) :Boolean!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -441,10 +492,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_dns_VerifySite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *repos.ID
+	var arg0 repos.ID
 	if tmp, ok := rawArgs["vid"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vid"))
-		arg0, err = ec.unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -456,75 +507,174 @@ func (ec *executionContext) field_Mutation_dns_VerifySite_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_dns_createRecord_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *repos.ID
+	var arg0 repos.ID
 	if tmp, ok := rawArgs["siteId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteId"))
-		arg0, err = ec.unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["siteId"] = arg0
-	var arg1 *string
+	var arg1 string
 	if tmp, ok := rawArgs["recordType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recordType"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["recordType"] = arg1
-	var arg2 *string
+	var arg2 string
 	if tmp, ok := rawArgs["host"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("host"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["host"] = arg2
-	var arg3 *int
+	var arg3 string
+	if tmp, ok := rawArgs["answer"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("answer"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["answer"] = arg3
+	var arg4 int
 	if tmp, ok := rawArgs["ttl"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ttl"))
-		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg4, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["ttl"] = arg3
-	var arg4 *int
+	args["ttl"] = arg4
+	var arg5 *int
 	if tmp, ok := rawArgs["priority"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
-		arg4, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg5, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["priority"] = arg4
+	args["priority"] = arg5
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_dns_createSite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["domain"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["domain"] = arg0
-	var arg1 *string
+	var arg1 repos.ID
 	if tmp, ok := rawArgs["accountId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["accountId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_dns_deleteRecord_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["recordId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recordId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["recordId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_dns_deleteSite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["siteId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["siteId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_dns_updateRecord_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["recordId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recordId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["recordId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["recordType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recordType"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["recordType"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["host"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("host"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["host"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["answer"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("answer"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["answer"] = arg3
+	var arg4 int
+	if tmp, ok := rawArgs["ttl"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ttl"))
+		arg4, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ttl"] = arg4
+	var arg5 *int
+	if tmp, ok := rawArgs["priority"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+		arg5, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["priority"] = arg5
 	return args, nil
 }
 
@@ -546,10 +696,10 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_dns_getRecords_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["siteId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteId"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -561,10 +711,10 @@ func (ec *executionContext) field_Query_dns_getRecords_args(ctx context.Context,
 func (ec *executionContext) field_Query_dns_getSite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["siteId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteId"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -576,10 +726,10 @@ func (ec *executionContext) field_Query_dns_getSite_args(ctx context.Context, ra
 func (ec *executionContext) field_Query_dns_getSites_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["accountId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -588,13 +738,13 @@ func (ec *executionContext) field_Query_dns_getSites_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Site_verifications_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Site_verification_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *repos.ID
+	var arg0 repos.ID
 	if tmp, ok := rawArgs["accountId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -666,18 +816,63 @@ func (ec *executionContext) _Mutation_dns_createSite(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DNSCreateSite(rctx, args["domain"].(*string), args["accountId"].(*string))
+		return ec.resolvers.Mutation().DNSCreateSite(rctx, args["domain"].(string), args["accountId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Site)
+	res := resTmp.(*model.Verification)
 	fc.Result = res
-	return ec.marshalOSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+	return ec.marshalNVerification2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_dns_deleteSite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_dns_deleteSite_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DNSDeleteSite(rctx, args["siteId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Verification)
+	fc.Result = res
+	return ec.marshalNVerification2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_dns_createRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -705,18 +900,105 @@ func (ec *executionContext) _Mutation_dns_createRecord(ctx context.Context, fiel
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DNSCreateRecord(rctx, args["siteId"].(*repos.ID), args["recordType"].(*string), args["host"].(*string), args["ttl"].(*int), args["priority"].(*int))
+		return ec.resolvers.Mutation().DNSCreateRecord(rctx, args["siteId"].(repos.ID), args["recordType"].(string), args["host"].(string), args["answer"].(string), args["ttl"].(int), args["priority"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Record)
 	fc.Result = res
-	return ec.marshalORecord2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx, field.Selections, res)
+	return ec.marshalNRecord2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_dns_deleteRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_dns_deleteRecord_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DNSDeleteRecord(rctx, args["recordId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_dns_updateRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_dns_updateRecord_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DNSUpdateRecord(rctx, args["recordId"].(repos.ID), args["recordType"].(string), args["host"].(string), args["answer"].(string), args["ttl"].(int), args["priority"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_dns_VerifySite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -744,18 +1026,21 @@ func (ec *executionContext) _Mutation_dns_VerifySite(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DNSVerifySite(rctx, args["vid"].(*repos.ID))
+		return ec.resolvers.Mutation().DNSVerifySite(rctx, args["vid"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_dns_getSites(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -783,18 +1068,21 @@ func (ec *executionContext) _Query_dns_getSites(ctx context.Context, field graph
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DNSGetSites(rctx, args["accountId"].(*string))
+		return ec.resolvers.Query().DNSGetSites(rctx, args["accountId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Site)
 	fc.Result = res
-	return ec.marshalOSite2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+	return ec.marshalNSite2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_dns_getSite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -822,18 +1110,21 @@ func (ec *executionContext) _Query_dns_getSite(ctx context.Context, field graphq
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DNSGetSite(rctx, args["siteId"].(*string))
+		return ec.resolvers.Query().DNSGetSite(rctx, args["siteId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Site)
 	fc.Result = res
-	return ec.marshalOSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+	return ec.marshalNSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_dns_getRecords(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -861,18 +1152,21 @@ func (ec *executionContext) _Query_dns_getRecords(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DNSGetRecords(rctx, args["siteId"].(*string))
+		return ec.resolvers.Query().DNSGetRecords(rctx, args["siteId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Record)
 	fc.Result = res
-	return ec.marshalORecord2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx, field.Selections, res)
+	return ec.marshalNRecord2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecordᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__service(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1006,11 +1300,14 @@ func (ec *executionContext) _Record_id(ctx context.Context, field graphql.Collec
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*repos.ID)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_siteId(ctx context.Context, field graphql.CollectedField, obj *model.Record) (ret graphql.Marshaler) {
@@ -1038,11 +1335,14 @@ func (ec *executionContext) _Record_siteId(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*repos.ID)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_recordType(ctx context.Context, field graphql.CollectedField, obj *model.Record) (ret graphql.Marshaler) {
@@ -1070,11 +1370,14 @@ func (ec *executionContext) _Record_recordType(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_host(ctx context.Context, field graphql.CollectedField, obj *model.Record) (ret graphql.Marshaler) {
@@ -1102,11 +1405,14 @@ func (ec *executionContext) _Record_host(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_answer(ctx context.Context, field graphql.CollectedField, obj *model.Record) (ret graphql.Marshaler) {
@@ -1134,11 +1440,14 @@ func (ec *executionContext) _Record_answer(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_ttl(ctx context.Context, field graphql.CollectedField, obj *model.Record) (ret graphql.Marshaler) {
@@ -1166,11 +1475,14 @@ func (ec *executionContext) _Record_ttl(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_priority(ctx context.Context, field graphql.CollectedField, obj *model.Record) (ret graphql.Marshaler) {
@@ -1230,11 +1542,14 @@ func (ec *executionContext) _Site_id(ctx context.Context, field graphql.Collecte
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*repos.ID)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Site_accountId(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
@@ -1262,11 +1577,14 @@ func (ec *executionContext) _Site_accountId(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*repos.ID)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Site_domain(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
@@ -1294,11 +1612,14 @@ func (ec *executionContext) _Site_domain(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Site_verified(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
@@ -1326,14 +1647,17 @@ func (ec *executionContext) _Site_verified(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Site_verifications(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+func (ec *executionContext) _Site_verification(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1344,13 +1668,13 @@ func (ec *executionContext) _Site_verifications(ctx context.Context, field graph
 		Object:     "Site",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Site_verifications_args(ctx, rawArgs)
+	args, err := ec.field_Site_verification_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1358,18 +1682,21 @@ func (ec *executionContext) _Site_verifications(ctx context.Context, field graph
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Verifications, nil
+		return ec.resolvers.Site().Verification(rctx, obj, args["accountId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Verification)
+	res := resTmp.(*model.Verification)
 	fc.Result = res
-	return ec.marshalOVerification2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx, field.Selections, res)
+	return ec.marshalNVerification2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Verification_id(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
@@ -1397,11 +1724,14 @@ func (ec *executionContext) _Verification_id(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*repos.ID)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Verification_VerifyText(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
@@ -1429,11 +1759,14 @@ func (ec *executionContext) _Verification_VerifyText(ctx context.Context, field 
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Verification_Site(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
@@ -1461,11 +1794,14 @@ func (ec *executionContext) _Verification_Site(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Site)
 	fc.Result = res
-	return ec.marshalOSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+	return ec.marshalNSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) __Service_sdl(ctx context.Context, field graphql.CollectedField, obj *fedruntime.Service) (ret graphql.Marshaler) {
@@ -2720,6 +3056,19 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "dns_deleteSite":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_dns_deleteSite(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "dns_createRecord":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_dns_createRecord(ctx, field)
@@ -2727,6 +3076,29 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "dns_deleteRecord":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_dns_deleteRecord(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "dns_updateRecord":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_dns_updateRecord(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "dns_VerifySite":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_dns_VerifySite(ctx, field)
@@ -2734,6 +3106,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2774,6 +3149,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_dns_getSites(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -2794,6 +3172,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_dns_getSite(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -2814,6 +3195,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_dns_getRecords(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -2889,6 +3273,9 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "siteId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Record_siteId(ctx, field, obj)
@@ -2896,6 +3283,9 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "recordType":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Record_recordType(ctx, field, obj)
@@ -2903,6 +3293,9 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "host":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Record_host(ctx, field, obj)
@@ -2910,6 +3303,9 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "answer":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Record_answer(ctx, field, obj)
@@ -2917,6 +3313,9 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "ttl":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Record_ttl(ctx, field, obj)
@@ -2924,6 +3323,9 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "priority":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Record_priority(ctx, field, obj)
@@ -2959,6 +3361,9 @@ func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "accountId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Site_accountId(ctx, field, obj)
@@ -2966,6 +3371,9 @@ func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "domain":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Site_domain(ctx, field, obj)
@@ -2973,6 +3381,9 @@ func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "verified":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Site_verified(ctx, field, obj)
@@ -2980,13 +3391,29 @@ func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "verifications":
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "verification":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Site_verifications(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Site_verification(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3015,6 +3442,9 @@ func (ec *executionContext) _Verification(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "VerifyText":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Verification_VerifyText(ctx, field, obj)
@@ -3022,6 +3452,9 @@ func (ec *executionContext) _Verification(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "Site":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Verification_Site(ctx, field, obj)
@@ -3029,6 +3462,9 @@ func (ec *executionContext) _Verification(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = innerFunc(ctx)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3506,6 +3942,147 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := repos.ID(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v repos.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNRecord2kloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx context.Context, sel ast.SelectionSet, v model.Record) graphql.Marshaler {
+	return ec._Record(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRecord2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Record) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRecord2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRecord2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx context.Context, sel ast.SelectionSet, v *model.Record) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Record(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSite2kloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx context.Context, sel ast.SelectionSet, v model.Site) graphql.Marshaler {
+	return ec._Site(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSite2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx context.Context, sel ast.SelectionSet, v []*model.Site) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx context.Context, sel ast.SelectionSet, v *model.Site) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Site(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3519,6 +4096,20 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNVerification2kloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx context.Context, sel ast.SelectionSet, v model.Verification) graphql.Marshaler {
+	return ec._Verification(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNVerification2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx context.Context, sel ast.SelectionSet, v *model.Verification) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Verification(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalN_FieldSet2string(ctx context.Context, v interface{}) (string, error) {
@@ -3819,23 +4410,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (*repos.ID, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := repos.ID(tmp)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v *repos.ID) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(string(*v))
-	return res
-}
-
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -3850,95 +4424,6 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	}
 	res := graphql.MarshalInt(*v)
 	return res
-}
-
-func (ec *executionContext) marshalORecord2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx context.Context, sel ast.SelectionSet, v []*model.Record) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalORecord2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalORecord2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecord(ctx context.Context, sel ast.SelectionSet, v *model.Record) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Record(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSite2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx context.Context, sel ast.SelectionSet, v []*model.Site) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
 }
 
 func (ec *executionContext) marshalOSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx context.Context, sel ast.SelectionSet, v *model.Site) graphql.Marshaler {
@@ -3972,54 +4457,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOVerification2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx context.Context, sel ast.SelectionSet, v []*model.Verification) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOVerification2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOVerification2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx context.Context, sel ast.SelectionSet, v *model.Verification) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Verification(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
