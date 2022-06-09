@@ -4,6 +4,8 @@ import (
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/dns"
+	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -31,8 +33,18 @@ func (e *Env) RedisOptions() (hosts, username, password string) {
 	return e.RedisHosts, e.RedisUsername, e.RedisPassword
 }
 
+func (e *Env) GetHttpPort() uint16 {
+	return e.HttpPort
+}
+
+func (e *Env) GetHttpCors() string {
+	return e.HttpCors
+}
+
 var Module = fx.Module("framework",
 	config.EnvFx[Env](),
+	fx.Provide(logger.NewLogger),
 	repos.NewMongoClientFx[*Env](),
-	dns.Fx(),
+	httpServer.NewHttpServerFx[*Env](),
+	dns.Fx[*Env](),
 )
