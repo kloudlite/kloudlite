@@ -56,12 +56,20 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 var Module = fx.Module(
 	"app",
-	config.EnvFx[*Env](),
-	repos.NewFxMongoRepo[*domain.Record]("records", "acc", domain.RecordIndexes),
-	fx.Provide(func(s *dns.Server, d domain.Domain) {
-		s.Handler = &DNSHandler{
-			d,
-		}
+	config.EnvFx[Env](),
+	repos.NewFxMongoRepo[*domain.Record]("records", "rec", domain.RecordIndexes),
+	repos.NewFxMongoRepo[*domain.Site]("sites", "site", domain.SiteIndexes),
+	repos.NewFxMongoRepo[*domain.Verification]("site_verifications", "svrf", domain.VerificationIndexes),
+	domain.Module,
+	fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server, d domain.Domain) {
+		lifecycle.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				s.Handler = &DNSHandler{
+					d,
+				}
+				return nil
+			},
+		})
 	}),
 	fx.Invoke(func(
 		server *fiber.App,
