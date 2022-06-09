@@ -9,8 +9,8 @@ tasks:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
     env:
-      DNS_PORT: 5353
-      PORT: 8085
+      DNS_PORT: 8080
+      PORT: 4001
       MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       MONGO_DB_NAME: dns
