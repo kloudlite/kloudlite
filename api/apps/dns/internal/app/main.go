@@ -9,8 +9,8 @@ import (
 	"kloudlite.io/apps/dns/internal/app/graph"
 	"kloudlite.io/apps/dns/internal/app/graph/generated"
 	"kloudlite.io/apps/dns/internal/domain"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/cache"
+	// "kloudlite.io/common"
+	// "kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
@@ -40,14 +40,26 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				fmt.Println("ERROR:", err)
 				return
 			}
+
+			matched := false
+
 			for _, r := range records {
 				if r.Type == "A" {
 					msg.Answer[i] = &dns.A{
 						Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
 						A:   net.ParseIP(r.Answer),
 					}
+					matched = true
+					// fmt.Println("Answer:", msg.Answer[i])
 				}
 			}
+
+			if !matched {
+				msg.Answer[i] = &dns.A{
+					Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 300},
+				}
+			}
+
 		}
 	}
 
@@ -74,8 +86,8 @@ var Module = fx.Module(
 	fx.Invoke(func(
 		server *fiber.App,
 		d domain.Domain,
-		env *Env,
-		cacheClient cache.Client,
+		// env *Env,
+		// cacheClient cache.Client,
 	) {
 		schema := generated.NewExecutableSchema(
 			generated.Config{Resolvers: graph.NewResolver(d)},
@@ -83,12 +95,12 @@ var Module = fx.Module(
 		httpServer.SetupGQLServer(
 			server,
 			schema,
-			httpServer.NewSessionMiddleware[*common.AuthSession](
-				cacheClient,
-				common.CookieName,
-				env.CookieDomain,
-				common.CacheSessionPrefix,
-			),
+			// httpServer.NewSessionMiddleware[*common.AuthSession](
+			// 	cacheClient,
+			// 	common.CookieName,
+			// 	env.CookieDomain,
+			// 	common.CacheSessionPrefix,
+			// ),
 		)
 	}),
 )
