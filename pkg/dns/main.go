@@ -2,11 +2,13 @@ package dns
 
 import (
 	"context"
-	"github.com/miekg/dns"
-	"go.uber.org/fx"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
+
+	"github.com/miekg/dns"
+	"go.uber.org/fx"
 )
 
 var domainsToAddresses map[string]string = map[string]string{
@@ -35,7 +37,7 @@ func (h *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func NewServer(port uint16) *dns.Server {
-	srv := &dns.Server{Addr: ":" + strconv.Itoa(53), Net: "udp"}
+	srv := &dns.Server{Addr: fmt.Sprintf(":%d", port), Net: "udp"}
 	srv.Handler = &handler{}
 	return srv
 }
