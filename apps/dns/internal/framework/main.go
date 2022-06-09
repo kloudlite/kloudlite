@@ -3,7 +3,7 @@ package framework
 import (
 	"go.uber.org/fx"
 	"kloudlite.io/apps/dns/internal/app"
-	"kloudlite.io/pkg/cache"
+	// "kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/dns"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -47,7 +47,7 @@ var Module = fx.Module("framework",
 	config.EnvFx[Env](),
 	fx.Provide(logger.NewLogger),
 	repos.NewMongoClientFx[*Env](),
-	cache.NewRedisFx[*Env](),
+	// cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
 	dns.Fx[*Env](),
 	app.Module,

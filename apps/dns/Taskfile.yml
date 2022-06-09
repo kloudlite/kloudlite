@@ -10,7 +10,7 @@ tasks:
   run:
     env:
       DNS_PORT: 8080
-      PORT: 4001
+      PORT: 4004
       MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
       REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
       MONGO_DB_NAME: dns
@@ -27,7 +27,7 @@ tasks:
     dir: ../..
     vars:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/dns:v2
-      APP_DIR: ./apps/ci
+      APP_DIR: ./apps/dns
     cmds:
       - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
       - docker push {{.IMAGE}}
