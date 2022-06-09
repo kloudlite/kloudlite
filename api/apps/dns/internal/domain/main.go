@@ -34,12 +34,18 @@ func (d domainI) CreateSite(ctx context.Context, domain string, accountId repos.
 		}
 
 		verifyTxt, err := nanoid.New(32)
+
+		if err != nil {
+			return nil, err
+		}
+
 		vtext := fmt.Sprintf("kloudlite_verify_%v", verifyTxt)
 		verification, err := d.verifyRepo.Create(ctx, &Verification{
 			AccountId:  accountId,
 			SiteId:     one.Id,
 			VerifyText: vtext,
 		})
+
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +59,16 @@ func (d domainI) CreateSite(ctx context.Context, domain string, accountId repos.
 		Verified:  false,
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	verifyTxt, err := nanoid.New(32)
+
+	if err != nil {
+		return nil, err
+	}
+
 	vtext := fmt.Sprintf("kloudlite_verify_%v", verifyTxt)
 	verification, err := d.verifyRepo.Create(ctx, &Verification{
 		AccountId:  accountId,
@@ -129,7 +144,7 @@ func (d domainI) GetRecords(ctx context.Context, host string) ([]*Record, error)
 	var site *Site
 	for _, s := range matchedSites {
 		if site != nil {
-			if len(site.Domain) > len(site.Domain) {
+			if len(s.Domain) > len(site.Domain) {
 				site = s
 			}
 		} else {
@@ -150,7 +165,7 @@ func (d domainI) GetRecords(ctx context.Context, host string) ([]*Record, error)
 	return d.recordsRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"siteId": site.Id,
-			"$or":    filters,
+			"$or":    recordFilters,
 		},
 		Sort: map[string]interface{}{
 			"priority": 1,
