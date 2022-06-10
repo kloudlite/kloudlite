@@ -137,8 +137,3 @@ func IsOwner(obj client.Object, ownerRef metav1.OwnerReference) bool {
 func NamespacedName(obj client.Object) types.NamespacedName {
 	return types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}
 }
-
-func ToYaml(obj client.Object) ([]byte, error) {
-	b, err := json.Marshal(obj)
-	return b, err
-}

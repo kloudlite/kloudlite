@@ -120,7 +120,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 		isReady = false
 	}
 
-	// STEP: Helm Secret check
+	// STEP: Helm SecretType check
 	_, err = rApi.Get(ctx, r.Client, fn.NamespacedName(svcObj), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -216,7 +216,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 
 	scrt := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
+			Kind:       "SecretType",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{

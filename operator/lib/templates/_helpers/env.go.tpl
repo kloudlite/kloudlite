@@ -3,7 +3,7 @@
 {{- with $v }}
   - name: {{.Key}}
   {{- if .Value }}
-    value: {{.Value}}
+    value: {{.Value | squote }}
   {{- else }}
     valueFrom:
     {{- if eq .Type "config" }}
@@ -18,5 +18,5 @@
     {{- end }}
   {{- end }}
 {{- end}}
-{{- end -}}
+{{- end }}
 {{- end }}

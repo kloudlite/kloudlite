@@ -1,90 +1,11 @@
 package v1
 
 import (
-	// "fmt"
-	"time"
+	corev1 "k8s.io/api/core/v1"
+	fn "operators.kloudlite.io/lib/functions"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-type Recon struct {
-	HasStarted  bool      `json:"has_started,omitempty"`
-	HasFinished bool      `json:"has_finished,omitempty"`
-	Job         *ReconJob `json:"job,omitempty"`
-	LastChecked int64     `json:"last_checked"`
-	Message     string    `json:"message,omitempty"`
-	Status      bool      `json:"status,omitempty"`
-}
-
-func (re *Recon) ShouldCheck() bool {
-	if re.HasFinished == false && re.HasStarted == false {
-		return true
-	}
-	return false
-}
-
-func (re *Recon) reset() {
-	re.HasStarted = false
-	re.HasFinished = false
-	re.Job = nil
-	re.Status = false
-	re.Message = ""
-}
-
-func (re *Recon) SetStarted() {
-	re.HasFinished = false
-	re.HasStarted = true
-	re.LastChecked = time.Now().Unix()
-}
-
-func (re *Recon) SetFinishedWith(status bool, msg string) {
-	re.HasStarted = false
-	re.HasFinished = true
-	re.Status = status
-	re.Message = msg
-	re.LastChecked = time.Now().Unix()
-}
-
-// makes sense only for reconcile requests where a period check of any other resource is required
-func (re *Recon) IsRunning() bool {
-	if re.HasFinished == false && re.HasStarted == true {
-		return true
-	}
-	return false
-}
-
-func (re *Recon) ShouldRetry(coolingTime int) bool {
-	t1 := time.Now().Unix()
-	t2 := re.LastChecked
-	if t1-t2 >= int64(coolingTime) {
-		re.reset()
-		return true
-	}
-	return false
-}
-
-func (re *Recon) ConditionStatus() metav1.ConditionStatus {
-	if re.HasFinished && re.Status {
-		return metav1.ConditionTrue
-	}
-	if re.HasFinished && !re.Status {
-		return metav1.ConditionFalse
-	}
-	return metav1.ConditionUnknown
-}
-
-func (re *Recon) Reason() string {
-	if re.HasFinished && re.Status {
-		return "Success"
-	}
-	if re.HasFinished && !re.Status {
-		return "Failed"
-	}
-	if !re.HasFinished && re.HasStarted {
-		return "Running"
-	}
-	return "Unknown"
-}
 
 type Bool bool
 
@@ -111,4 +32,118 @@ type Operations struct {
 type Output struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
+}
+
+type ResourceType string
+
+const (
+	SecretType ResourceType = "secret"
+	ConfigType ResourceType = "config"
+)
+
+func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMounts [][]corev1.VolumeMount) {
+	m := map[string][]ContainerVolume{}
+
+	for _, container := range containers {
+		var mounts []corev1.VolumeMount
+		for _, volume := range container.Volumes {
+			volName := fn.Md5([]byte(volume.MountPath))
+			mounts = append(
+				mounts, corev1.VolumeMount{
+					Name:      volName,
+					MountPath: volume.MountPath,
+				},
+			)
+			if m[volName] == nil {
+				m[volName] = []ContainerVolume{}
+			}
+			m[volName] = append(m[volName], volume)
+		}
+
+		volumeMounts = append(volumeMounts, mounts)
+	}
+
+	for k, cVolumes := range m {
+		volume := corev1.Volume{Name: k}
+
+		// len == 1, without projection
+		if len(cVolumes) == 1 {
+			volm := cVolumes[0]
+
+			var kp []corev1.KeyToPath
+			if len(volm.Items) > 0 {
+				for _, item := range volm.Items {
+					kp = append(
+						kp, corev1.KeyToPath{
+							Key:  item.Key,
+							Path: item.FileName,
+							Mode: nil,
+						},
+					)
+				}
+			}
+
+			switch volm.Type {
+			case SecretType:
+				{
+					volume.VolumeSource.Secret = &corev1.SecretVolumeSource{
+						SecretName: volm.RefName,
+						Items:      kp,
+					}
+				}
+			case ConfigType:
+				{
+					volume.VolumeSource.ConfigMap = &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: volm.RefName,
+						},
+						Items: kp,
+					}
+				}
+			}
+		}
+
+		// len > 1, with projection
+		if len(cVolumes) > 1 {
+			volume.VolumeSource.Projected = &corev1.ProjectedVolumeSource{}
+			for _, volm := range cVolumes {
+				projection := corev1.VolumeProjection{}
+				var kp []corev1.KeyToPath
+				if len(volm.Items) > 0 {
+					for _, item := range volm.Items {
+						kp = append(
+							kp, corev1.KeyToPath{
+								Key:  item.Key,
+								Path: item.FileName,
+								Mode: nil,
+							},
+						)
+					}
+				}
+				switch volm.Type {
+				case SecretType:
+					{
+						projection.Secret = &corev1.SecretProjection{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: volm.RefName,
+							},
+							Items: kp,
+						}
+					}
+				case ConfigType:
+					{
+						projection.ConfigMap = &corev1.ConfigMapProjection{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: volm.RefName,
+							},
+							Items: kp,
+						}
+					}
+				}
+			}
+		}
+		volumes = append(volumes, volume)
+	}
+
+	return volumes, volumeMounts
 }

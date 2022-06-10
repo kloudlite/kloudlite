@@ -128,7 +128,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 		cs = append(cs, stsConditions...)
 	}
 
-	// CHECK: whether Helm Release Secret Exists
+	// CHECK: whether Helm Release SecretType Exists
 	helmSecret, err := rApi.Get(ctx, r.Client, fn.NN(redisSvc.Namespace, redisSvc.Name), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
