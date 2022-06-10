@@ -203,7 +203,7 @@ func NewUnstructured(t metav1.TypeMeta, m ...metav1.ObjectMeta) *unstructured.Un
 
 func ParseSecret(s *corev1.Secret) *corev1.Secret {
 	s.TypeMeta = metav1.TypeMeta{
-		Kind:       "Secret",
+		Kind:       "SecretType",
 		APIVersion: "v1",
 	}
 	return s
@@ -215,4 +215,9 @@ func ParseConfigMap(s *corev1.ConfigMap) *corev1.ConfigMap {
 		APIVersion: "v1",
 	}
 	return s
+}
+
+func Md5(b []byte) string {
+	sum := md5.New().Sum(b)
+	return hex.EncodeToString(sum)
 }

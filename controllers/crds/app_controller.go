@@ -221,7 +221,7 @@ const ImageRegistry = "harbor.dev.madhouselabs.io"
 //			}
 //
 //			if sp[0] == "secret" {
-//				var scrt corev1.Secret
+//				var scrt corev1.SecretType
 //				err := r.Get(ctx, types.NamespacedName{Namespace: app.Namespace, Name: sp[1]}, &scrt)
 //				if err != nil {
 //					if apiErrors.IsNotFound(err) {

@@ -6,6 +6,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
@@ -152,7 +153,15 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 		return req.Done()
 	}
 
-	pObj, err := templates.ParseObject(templates.ServerlessLambda, lambdaSvc)
+	volumes, vMounts := crdsv1.ParseVolumes(lambdaSvc.Spec.Containers)
+	// pObj, err := templates.ParseObject(templates.ServerlessLambda, lambdaSvc)
+	pObj, err := templates.ParseObject(
+		templates.ServerlessLambda, map[string]any{
+			"obj":          lambdaSvc,
+			"volumes":      volumes,
+			"volumeMounts": vMounts,
+		},
+	)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}

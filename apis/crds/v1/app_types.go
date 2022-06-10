@@ -2,9 +2,8 @@ package v1
 
 import (
 	"fmt"
-
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -26,12 +25,17 @@ type ContainerVolumeItem struct {
 	FileName string `json:"fileName"`
 }
 
+type EnvFrom struct {
+	Config string `json:"config,omitempty"`
+	Secret string `json:"secret,omitempty"`
+}
+
 type ContainerVolume struct {
 	Name      string                `json:"name"`
 	MountPath string                `json:"mountPath"`
-	Type      string                `json:"type"`
+	Type      ResourceType          `json:"type"`
 	RefName   string                `json:"refName"`
-	Items     []ContainerVolumeItem `json:"items"`
+	Items     []ContainerVolumeItem `json:"items,omitempty"`
 }
 
 type AppContainer struct {
@@ -43,6 +47,7 @@ type AppContainer struct {
 	ResourceCpu     ContainerResource `json:"resource_cpu,omitempty"`
 	ResourceMemory  ContainerResource `json:"resource_memory,omitempty"`
 	Env             []ContainerEnv    `json:"env,omitempty"`
+	EnvFrom         []EnvFrom         `json:"envFrom,omitempty"`
 	Volumes         []ContainerVolume `json:"volumes,omitempty"`
 }
 
@@ -61,10 +66,11 @@ type HPA struct {
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
-	Replicas   int            `json:"replicas,omitempty"`
-	Services   []AppSvc       `json:"services,omitempty"`
-	Containers []AppContainer `json:"containers"`
-	Hpa        HPA            `json:"hpa,omitempty"`
+	Replicas   int             `json:"replicas,omitempty"`
+	Services   []AppSvc        `json:"services,omitempty"`
+	Containers []AppContainer  `json:"containers"`
+	Volumes    []corev1.Volume `json:"volumes,omitempty"`
+	Hpa        HPA             `json:"hpa,omitempty"`
 }
 
 // +kubebuilder:object:root=true
