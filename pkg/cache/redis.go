@@ -82,26 +82,48 @@ func NewRedisClient(hosts, username, password string) Client {
 	}
 }
 
+type TypedRedisClient[T Client] struct {
+	opts   *redis.Options
+	client T
+}
+
+func NewTypedRedisClient[T Client](hosts, username, password string) *TypedRedisClient[T] {
+	return &TypedRedisClient[T]{
+		opts: &redis.Options{
+			Addr:     hosts,
+			Username: username,
+			Password: password,
+		},
+	}
+}
+
 type RedisConfig interface {
 	RedisOptions() (hosts, username, password string)
 }
 
 func NewRedisFx[T RedisConfig]() fx.Option {
-	return fx.Module("redis",
-		fx.Provide(func(env T) Client {
-			options, username, password := env.RedisOptions()
-			fmt.Println(env, "redisenv")
-			return NewRedisClient(options, username, password)
-		}),
-		fx.Invoke(func(lf fx.Lifecycle, r Client) {
-			lf.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					return r.Connect(ctx)
-				},
-				OnStop: func(ctx context.Context) error {
-					return r.Close(ctx)
-				},
-			})
-		}),
+	return fx.Module(
+		"redis",
+		fx.Provide(
+			func(env T) Client {
+				options, username, password := env.RedisOptions()
+				fmt.Println(env, "redisenv")
+				return NewRedisClient(options, username, password)
+			},
+		),
+		fx.Invoke(
+			func(lf fx.Lifecycle, r Client) {
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return r.Connect(ctx)
+						},
+						OnStop: func(ctx context.Context) error {
+							return r.Close(ctx)
+						},
+					},
+				)
+			},
+		),
 	)
 }

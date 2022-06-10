@@ -45,9 +45,11 @@ func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
 
 func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error) {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(ctx, owner, repo, &github.BranchListOptions{
-		ListOptions: gh.buildListOptions(pagination),
-	})
+	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(
+		ctx, owner, repo, &github.BranchListOptions{
+			ListOptions: gh.buildListOptions(pagination),
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list branches")
 	}
@@ -55,9 +57,11 @@ func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToke
 }
 
 func (gh *githubI) SearchRepos(ctx context.Context, accToken *domain.AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error) {
-	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{
-		ListOptions: gh.buildListOptions(pagination),
-	})
+	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(
+		ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{
+			ListOptions: gh.buildListOptions(pagination),
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not search repositories")
 	}
@@ -89,15 +93,17 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, pipelineId)
 	hookName := "kloudlite-pipeline"
 
-	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(ctx, owner, repo, &github.Hook{
-		Config: map[string]interface{}{
-			"url":          hookUrl,
-			"content_type": "json",
+	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(
+		ctx, owner, repo, &github.Hook{
+			Config: map[string]interface{}{
+				"url":          hookUrl,
+				"content_type": "json",
+			},
+			Events: []string{"push"},
+			Active: fn.NewBool(true),
+			Name:   &hookName,
 		},
-		Events: []string{"push"},
-		Active: fn.NewBool(true),
-		Name:   &hookName,
-	})
+	)
 	if err != nil {
 		fmt.Println(res.Status, res.Body)
 		// ASSERT: github returns 422 only if hook already exists on the repository
