@@ -203,7 +203,7 @@ func NewUnstructured(t metav1.TypeMeta, m ...metav1.ObjectMeta) *unstructured.Un
 
 func ParseSecret(s *corev1.Secret) *corev1.Secret {
 	s.TypeMeta = metav1.TypeMeta{
-		Kind:       "SecretType",
+		Kind:       "Secret",
 		APIVersion: "v1",
 	}
 	return s

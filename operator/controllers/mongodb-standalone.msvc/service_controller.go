@@ -215,10 +215,6 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 	}
 
 	scrt := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "SecretType",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
 			Namespace: svcObj.Namespace,
@@ -233,7 +229,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 		},
 	}
 
-	return rApi.NewStepResult(&ctrl.Result{}, fn.KubectlApply(ctx, r.Client, scrt))
+	return rApi.NewStepResult(&ctrl.Result{}, fn.KubectlApply(ctx, r.Client, fn.ParseSecret(scrt)))
 }
 
 // SetupWithManager sets up the controller with the Manager.

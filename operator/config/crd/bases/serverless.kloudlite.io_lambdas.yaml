@@ -74,7 +74,7 @@ spec:
                       type: array
                     image:
                       type: string
-                    image_pull_policy:
+                    imagePullPolicy:
                       type: string
                     name:
                       type: string
@@ -109,15 +109,12 @@ spec:
                             type: array
                           mountPath:
                             type: string
-                          name:
-                            type: string
                           refName:
                             type: string
                           type:
                             type: string
                         required:
                         - mountPath
-                        - name
                         - refName
                         - type
                         type: object
