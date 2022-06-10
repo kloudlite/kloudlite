@@ -45,11 +45,13 @@ func (gl *gitlabI) ListGroups(ctx context.Context, token *domain.AccessToken, qu
 	if err != nil {
 		return nil, err
 	}
-	groups, _, err := client.Groups.ListGroups(&gitlab.ListGroupsOptions{
-		Search:       query,
-		ListOptions:  buildListOptions(pagination),
-		TopLevelOnly: fn.NewBool(true),
-	})
+	groups, _, err := client.Groups.ListGroups(
+		&gitlab.ListGroupsOptions{
+			Search:       query,
+			ListOptions:  buildListOptions(pagination),
+			TopLevelOnly: fn.NewBool(true),
+		},
+	)
 	if err != nil {
 		return nil, nil
 	}
@@ -71,12 +73,14 @@ func (gl *gitlabI) ListRepos(ctx context.Context, token *domain.AccessToken, gid
 	if err != nil {
 		return nil, err
 	}
-	projects, _, err := client.Groups.ListGroupProjects(gid, &gitlab.ListGroupProjectsOptions{
-		IncludeSubGroups: fn.NewBool(true),
-		ListOptions:      buildListOptions(pagination),
-		Search:           query,
-		Simple:           fn.NewBool(true),
-	})
+	projects, _, err := client.Groups.ListGroupProjects(
+		gid, &gitlab.ListGroupProjectsOptions{
+			IncludeSubGroups: fn.NewBool(true),
+			ListOptions:      buildListOptions(pagination),
+			Search:           query,
+			Simple:           fn.NewBool(true),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +92,12 @@ func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, 
 	if err != nil {
 		return nil, err
 	}
-	branches, _, err := client.Branches.ListBranches(repoId, &gitlab.ListBranchesOptions{
-		ListOptions: buildListOptions(pagination),
-		Search:      query,
-	})
+	branches, _, err := client.Branches.ListBranches(
+		repoId, &gitlab.ListBranchesOptions{
+			ListOptions: buildListOptions(pagination),
+			Search:      query,
+		},
+	)
 
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list branches")
@@ -118,12 +124,14 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, re
 		return nil, err
 	}
 	webhookUrl := fmt.Sprintf("%s?pipelineId=%s", gl.webhookUrl, pipelineId)
-	hook, _, err := client.Projects.AddProjectHook(repoId, &gitlab.AddProjectHookOptions{
-		PushEvents:    fn.NewBool(true),
-		TagPushEvents: fn.NewBool(true),
-		Token:         &id,
-		URL:           &webhookUrl,
-	})
+	hook, _, err := client.Projects.AddProjectHook(
+		repoId, &gitlab.AddProjectHookOptions{
+			PushEvents:    fn.NewBool(true),
+			TagPushEvents: fn.NewBool(true),
+			Token:         &id,
+			URL:           &webhookUrl,
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not add gitlab webhook")
 	}

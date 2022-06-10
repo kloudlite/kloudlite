@@ -32,6 +32,21 @@ type Pipeline struct {
 	Metadata             map[string]interface{} `json:"metadata,omitempty" bson:"metadata"`
 }
 
+type TektonVars struct {
+	GitRepo       string `json:"gitRepo,omitempty"`
+	GitUser       string `json:"gitUser,omitempty"`
+	GitPassword   string `json:"gitPassword,omitempty"`
+	GitRef        string `json:"gitRef,omitempty"`
+	GitCommitHash string `json:"gitCommitHash,omitempty"`
+
+	// Dockerfile       string `json:"dockerfile,omitempty"`
+	// DockerContextDir string `json:"dockerContextDir,omitempty"`
+	// DockerBuildArgs  string `json:"dockerBuildArgs,omitempty"`
+
+	DockerImageName string `json:"dockerImageName,omitempty"`
+	DockerImageTag  string `json:"dockerImageTag,omitempty"`
+}
+
 const (
 	gitlabWebhook string = "https://webhooks.dev.madhouselabs.io/gitlab"
 	githubWebhook string = "https://webhooks.dev.madhouselabs.io/github"
@@ -52,13 +67,18 @@ func (p *Pipeline) TriggerHook() error {
 		if err != nil {
 			return errors.ErrMarshal(err)
 		}
-		req, err = http.NewRequest(http.MethodPost, fmt.Sprintf("%s?pipelineId=%s", githubWebhook, p.Id), bytes.NewBuffer(b))
+		req, err = http.NewRequest(
+			http.MethodPost,
+			fmt.Sprintf("%s?pipelineId=%s", githubWebhook, p.Id),
+			bytes.NewBuffer(b),
+		)
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
 		}
 	}
 
 	if p.GitProvider == common.ProviderGitlab {
+
 		body := t.M{
 			"ref":          fmt.Sprintf("refs/heads/%s", p.GitBranch),
 			"checkout_sha": "",
@@ -70,7 +90,11 @@ func (p *Pipeline) TriggerHook() error {
 		if err != nil {
 			return errors.ErrMarshal(err)
 		}
-		req, err = http.NewRequest(http.MethodPost, fmt.Sprintf("%s?pipelineId=%s", gitlabWebhook, p.Id), bytes.NewBuffer(b))
+		req, err = http.NewRequest(
+			http.MethodPost,
+			fmt.Sprintf("%s?pipelineId=%s", gitlabWebhook, p.Id),
+			bytes.NewBuffer(b),
+		)
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
 		}

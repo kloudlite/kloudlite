@@ -24,12 +24,17 @@ type Env struct {
 	DBName        string `env:"MONGO_DB_NAME" required:"true"`
 	DBUrl         string `env:"MONGO_URI" required:"true"`
 	RedisHost     string `env:"REDIS_HOSTS" required:"true"`
-	RedisUserName string `env:"REDIS_USERNAME"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
-	HttpPort      uint16 `env:"PORT" required:"true"`
-	HttpCors      string `env:"ORIGINS" required:"true"`
-	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
-	SendGridKey   string `env:"SENDGRID_API_KEY" required:"true"`
+	RedisUserName string `env:"REDIS_USERNAME" required:"true""`
+	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
+
+	HttpPort    uint16 `env:"PORT" required:"true"`
+	HttpCors    string `env:"ORIGINS" required:"true"`
+	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
+	SendGridKey string `env:"SENDGRID_API_KEY" required:"true"`
+
+	AuthRedisHost     string `env:"AUTH_REDIS_HOSTS" required:"true"`
+	AuthRedisUsername string `env:"AUTH_REDIS_USERNAME" required:"true"`
+	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 }
 
 func (e *Env) GetSendGridApiKey() string {
@@ -56,15 +61,26 @@ func (e *Env) GetHttpCors() string {
 	return e.HttpCors
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	fx.Provide(logger.NewLogger),
 	config.EnvFx[Env](),
 	config.EnvFx[GrpcAuthConfig](),
-	cache.NewRedisFx[*Env](),
+	fx.Provide(
+		func(env *Env) app.AuthCacheClient {
+			options, username, password := env.RedisOptions()
+			return cache.NewRedisClient(options, username, password)
+		},
+	),
+	fx.Provide(
+		func(env *Env) app.CacheClient {
+			options, username, password := env.RedisOptions()
+			return cache.NewRedisClient(options, username, password)
+		},
+	),
 	httpServer.NewHttpServerFx[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
-
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	app.Module,
 )

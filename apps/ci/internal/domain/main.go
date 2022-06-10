@@ -2,14 +2,19 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/google/go-github/v43/github"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"golang.org/x/oauth2"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
+	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -21,22 +26,132 @@ type domainI struct {
 	harborAccRepo repos.DbRepo[*HarborAccount]
 }
 
-func (d *domainI) GitlabPullToken(ctx context.Context, pipelineId repos.ID) (string, error) {
-	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Request) *tekton.Response {
+	reqUrl, err := url.Parse(req.Context.EventURL)
 	if err != nil {
-		return "", err
+		return tekton.NewResponse(req).Err(err, http.StatusBadRequest)
 	}
-	fmt.Printf("pipeline: %++v\n", pipeline)
-	accessToken, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
-		TokenId: pipeline.GitlabTokenId,
-	})
+
+	if !reqUrl.Query().Has("pipelineId") {
+		return tekton.NewResponse(req).Err(
+			errors.NewEf(err, "url does not have query params 'pipelineId'"),
+			http.StatusBadRequest,
+		)
+	}
+
+	pipeline, err := d.pipelineRepo.FindById(ctx, repos.ID(reqUrl.Query().Get("pipelineId")))
+	if err != nil {
+		return tekton.NewResponse(req).Err(err, http.StatusInternalServerError)
+	}
+
+	token, err := d.github.GetInstallationToken(ctx, "", int64(*pipeline.GithubInstallationId))
+	if err != nil {
+		return tekton.NewResponse(req).Err(err)
+	}
+
+	hook, err := github.ParseWebHook(req.Header["X-Github-Event"][0], []byte(req.Body))
+	if err != nil {
+		return tekton.NewResponse(req).Err(err)
+	}
+	event, ok := hook.(*github.PushEvent)
+	if !ok {
+		return tekton.NewResponse(req).Err(err)
+	}
+
+	if event.GetRef() != pipeline.GitBranch {
+		return tekton.NewResponse(req).Err(
+			errors.Newf(
+				"pipeline is not configured to run on this (ref=%s)",
+				event.GetRef(),
+			),
+		)
+	}
+
+	tkVars := TektonVars{
+		GitRepo:         pipeline.GitRepoUrl,
+		GitUser:         "x-access-token",
+		GitPassword:     token,
+		GitRef:          pipeline.GitBranch,
+		GitCommitHash:   event.GetAfter()[:10],
+		DockerImageName: pipeline.ImageName,
+		DockerImageTag:  pipeline.PipelineEnv,
+	}
+
+	marshal, err := json.Marshal(tkVars)
+	if err != nil {
+		return tekton.NewResponse(req).Err(err)
+	}
+
+	var m map[string]any
+	if err := json.Unmarshal(marshal, &m); err != nil {
+		return nil
+	}
+
+	return tekton.NewResponse(req).Extend(m).Ok()
+}
+
+func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) *tekton.Response {
+	reqUrl, err := url.Parse(req.Context.EventURL)
+	if err != nil {
+		return tekton.NewResponse(req).Err(err, http.StatusBadRequest)
+	}
+
+	if !reqUrl.Query().Has("pipelineId") {
+		return tekton.NewResponse(req).Err(
+			errors.NewEf(err, "url does not have query params 'pipelineId'"),
+			http.StatusBadRequest,
+		)
+	}
+
+	pipeline, err := d.pipelineRepo.FindById(ctx, repos.ID(reqUrl.Query().Get("pipelineId")))
+	if err != nil {
+		return tekton.NewResponse(req).Err(err, http.StatusInternalServerError)
+	}
+
+	token, err := d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: pipeline.GitlabTokenId})
+	if err != nil {
+		return tekton.NewResponse(req).Err(err)
+	}
+
+	hook, err := gitlab.ParseWebhook(gitlab.EventTypePush, []byte(req.Body))
+	if err != nil {
+		return tekton.NewResponse(req).Err(err)
+	}
+	event, ok := hook.(*gitlab.PushEvent)
+	if !ok {
+		return tekton.NewResponse(req).Err(err)
+	}
+
+	tkVars := TektonVars{
+		GitRepo:         pipeline.GitRepoUrl,
+		GitUser:         "oauth2",
+		GitPassword:     token,
+		GitRef:          pipeline.GitBranch,
+		GitCommitHash:   event.CheckoutSHA[:10],
+		DockerImageName: pipeline.ImageName,
+		DockerImageTag:  pipeline.PipelineEnv,
+	}
+
+	marshal, err := json.Marshal(tkVars)
+	if err != nil {
+		return tekton.NewResponse(req).Err(err)
+	}
+
+	var m map[string]any
+	if err := json.Unmarshal(marshal, &m); err != nil {
+		return nil
+	}
+
+	return tekton.NewResponse(req).Extend(m).Ok()
+}
+
+func (d *domainI) gitlabPullToken(ctx context.Context, accTokenReq *auth.GetAccessTokenRequest) (string, error) {
+	accessToken, err := d.authClient.GetAccessToken(ctx, accTokenReq)
 	fmt.Println("accessToken: ", accessToken, "err:", err)
 
 	if err != nil || accessToken == nil {
 		return "", errors.NewEf(err, "could not get gitlab access token")
 	}
-
-	fmt.Println("accessToken: ", *accessToken)
 
 	accToken := AccessToken{
 		UserId:   repos.ID(accessToken.UserId),
@@ -57,12 +172,22 @@ func (d *domainI) GitlabPullToken(ctx context.Context, pipelineId repos.ID) (str
 	return repoToken.AccessToken, nil
 }
 
+func (d *domainI) GitlabPullToken(ctx context.Context, pipelineId repos.ID) (string, error) {
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+	if err != nil {
+		return "", err
+	}
+	return d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: pipeline.GitlabTokenId})
+}
+
 func (d *domainI) GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error) {
-	find, err := d.pipelineRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"project_id": projectId,
+	find, err := d.pipelineRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"project_id": projectId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +235,12 @@ func (d *domainI) SaveUserAcc(ctx context.Context, acc *HarborAccount) error {
 }
 
 func (d *domainI) getAccessToken(ctx context.Context, provider string, userId repos.ID) (*AccessToken, error) {
-	accTokenOut, err := d.authClient.GetAccessToken(ctx, &auth.GetAccessTokenRequest{
-		UserId:   string(userId),
-		Provider: provider,
-	})
+	accTokenOut, err := d.authClient.GetAccessToken(
+		ctx, &auth.GetAccessTokenRequest{
+			UserId:   string(userId),
+			Provider: provider,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -241,6 +368,7 @@ func fxDomain(pipelineRepo repos.DbRepo[*Pipeline], harborAccRepo repos.DbRepo[*
 	return &d, &d
 }
 
-var Module = fx.Module("domain",
+var Module = fx.Module(
+	"domain",
 	fx.Provide(fxDomain),
 )
