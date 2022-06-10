@@ -154,7 +154,6 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 	}
 
 	volumes, vMounts := crdsv1.ParseVolumes(lambdaSvc.Spec.Containers)
-	// pObj, err := templates.ParseObject(templates.ServerlessLambda, lambdaSvc)
 	pObj, err := templates.ParseObject(
 		templates.ServerlessLambda, map[string]any{
 			"obj":          lambdaSvc,

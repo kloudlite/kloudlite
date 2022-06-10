@@ -23,8 +23,8 @@ type RouterStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Router is the Schema for the routers API
 type Router struct {
@@ -39,7 +39,7 @@ func (rt *Router) LogRef() string {
 	return fmt.Sprintf("%s/%s/%s", rt.Namespace, rt.Kind, rt.Name)
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // RouterList contains a list of Router
 type RouterList struct {
