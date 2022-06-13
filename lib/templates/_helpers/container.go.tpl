@@ -7,6 +7,14 @@
     image: {{.Image}}
     imagePullPolicy: {{.ImagePullPolicy | default "IfNotPresent"}}
 
+    {{- if .Command }}
+    command: {{.Command | toPrettyJson | indent 2 }}
+    {{- end}}
+
+    {{- if .Args }}
+    args: {{.Args | toPrettyJson | indent 2}}
+    {{- end}}
+
   {{- if .Env }}
     env:
     {{- include "TemplateEnv" .Env | indent 4}}
@@ -44,10 +52,6 @@
   {{ $vMounts := index $volumeMounts $idx }}
   {{- if $vMounts }}
     volumeMounts: {{- $vMounts | toPrettyJson | indent 4 }}
-{{/*    {{- range $v := $vMounts }}*/}}
-{{/*      - name: {{$v.Name}}*/}}
-{{/*        mountPath: {{$v.MountPath}}*/}}
-{{/*    {{- end }}*/}}
   {{- end}}
 {{- end }}
 {{- end }}

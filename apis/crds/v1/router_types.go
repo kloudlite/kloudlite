@@ -3,24 +3,21 @@ package v1
 import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	rApi "operators.kloudlite.io/lib/operator"
 )
 
 type Routes struct {
-	Path string `json:"path"`
-	App  string `json:"app"`
-	Port uint16 `json:"port"`
+	Path             string `json:"path"`
+	App              string `json:"app,omitempty"`
+	Lambda           string `json:"lambda,omitempty"`
+	ForceSSLRedirect bool   `json:"forceSSLRedirect,omitempty"`
+	Port             uint16 `json:"port"`
 }
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
 	Domains []string `json:"domains"`
 	Routes  []Routes `json:"routes"`
-}
-
-// RouterStatus defines the observed state of Router
-type RouterStatus struct {
-	IPs        []string           `json:"ips,omitempty"`
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -31,12 +28,23 @@ type Router struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RouterSpec   `json:"spec,omitempty"`
-	Status RouterStatus `json:"status,omitempty"`
+	Spec   RouterSpec  `json:"spec,omitempty"`
+	Status rApi.Status `json:"status,omitempty"`
 }
 
-func (rt *Router) LogRef() string {
-	return fmt.Sprintf("%s/%s/%s", rt.Namespace, rt.Kind, rt.Name)
+func (r *Router) NameRef() string {
+	return ""
+	// return fmt.Sprintf("%s")
+}
+
+func (r *Router) GetStatus() *rApi.Status {
+	return &r.Status
+}
+
+func (r *Router) GetEnsuredLabels() map[string]string {
+	return map[string]string{
+		fmt.Sprintf("%s/ref", GroupVersion.Group): r.Name,
+	}
 }
 
 // +kubebuilder:object:root=true
