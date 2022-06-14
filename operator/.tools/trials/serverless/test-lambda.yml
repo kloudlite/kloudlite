@@ -1,7 +1,7 @@
 apiVersion: serverless.kloudlite.io/v1
 kind: Lambda
 metadata:
-  name: sample
+  name: example
   namespace: hotspot
 spec:
   containers:
@@ -10,7 +10,7 @@ spec:
     #   name: main
     #   command: ["gunicorn"]
     #   args: ["-b", "0.0.0.0:8080", "httpbin:app"]
-    - image: gcr.io/knative-samples/autoscale-go:0.1
-      imagePullPolicy: IfNotPresent
+    - image: harbor.dev.madhouselabs.io/public/serverless/node:latest
+      imagePullPolicy: Always
       name: main
 

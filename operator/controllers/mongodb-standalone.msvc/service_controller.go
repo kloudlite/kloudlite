@@ -10,12 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -23,6 +17,8 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ServiceReconciler reconciles a Service object
@@ -84,7 +80,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	var cs []metav1.Condition
 
 	helmConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.HelmMongoDBType, "Helm", fn.NamespacedName(svcObj),
+		ctx, r.Client, constants.HelmMongoDBType, "Helm", fn.NN(svcObj.Namespace, svcObj.Name),
 	)
 
 	if err != nil {
@@ -234,32 +230,13 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Service{})
-
-	kinds := []client.Object{
-		&appsv1.Deployment{},
-		&corev1.Pod{},
-		fn.NewUnstructured(
-			metav1.TypeMeta{Kind: constants.HelmMongoDBType.Kind, APIVersion: constants.MsvcApiVersion},
-		),
-	}
-
-	for _, kind := range kinds {
-		builder.Watches(
-			&source.Kind{Type: kind},
-			handler.EnqueueRequestsFromMapFunc(
-				func(c client.Object) []reconcile.Request {
-					s, ok := c.GetLabels()[fmt.Sprintf("%s/ref", mongodbStandalone.GroupVersion.Group)]
-					if !ok {
-						return nil
-					}
-					return []reconcile.Request{
-						{NamespacedName: fn.NN(c.GetNamespace(), s)},
-					}
-				},
+	return ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Service{}).
+		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Pod{}).
+		Owns(
+			fn.NewUnstructured(
+				metav1.TypeMeta{Kind: constants.HelmMongoDBType.Kind, APIVersion: constants.MsvcApiVersion},
 			),
-		)
-	}
-
-	return builder.Complete(r)
+		).
+		Complete(r)
 }
