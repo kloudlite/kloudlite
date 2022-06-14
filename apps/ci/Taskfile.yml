@@ -11,8 +11,8 @@ tasks:
     env:
       GRPC_PORT: 6748
       PORT: 8085
-      MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
-      MONGO_DB_NAME: ci
+      MONGO_URI: mongodb://ci-db:eqSb9sJdjStKTXmzibkdzcgWCPsLUi7t2wigqdnS@mongo-standalone.hotspot.svc.cluster.local/ci-db
+      MONGO_DB_NAME: ci-db
 
       REDIS_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
       REDIS_USERNAME: ci
