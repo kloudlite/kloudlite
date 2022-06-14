@@ -23,8 +23,8 @@ func (c CommsGrpcEnv) GetGCPServerURL() string {
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
-	RedisUserName string `env:"REDIS_USERNAME"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
+	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
+	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
 	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
 	Port          uint16 `env:"PORT" required:"true"`
 	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
@@ -51,7 +51,8 @@ func (e *Env) GetGRPCPort() uint16 {
 	return e.GrpcPort
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[CommsGrpcEnv](),
 	fx.Provide(logger.NewLogger),
