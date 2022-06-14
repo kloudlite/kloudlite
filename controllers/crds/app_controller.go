@@ -2,12 +2,11 @@ package crds
 
 import (
 	"context"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -94,7 +93,7 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 	}
 	cs = append(cs, dConditions...)
 
-	if !meta.IsStatusConditionTrue(dConditions, "Deployment-Available") {
+	if !meta.IsStatusConditionTrue(dConditions, "DeploymentAvailable") {
 		isReady = false
 	}
 
@@ -156,90 +155,6 @@ func (r *AppReconciler) notify(req *rApi.Request[*crdsv1.App]) error {
 		},
 	)
 }
-
-const ImageRegistry = "harbor.dev.madhouselabs.io"
-
-// func (r *AppReconciler) checkImagesAvailable(ctx context.Context, app *crdsv1.App) (map[string]bool, error) {
-//	checks := map[string]bool{}
-//	for _, c := range app.Spec.Containers {
-//		if !strings.HasPrefix(c.Image, ImageRegistry) {
-//			checks[c.Image] = true
-//			continue
-//		}
-//
-//		imageName := strings.Replace(c.Image, fmt.Sprintf("%s/ci/", ImageRegistry), "", 1)
-//		artifact := strings.Split(imageName, ":")
-//		artifactName := artifact[0]
-//		tag := artifact[1]
-//
-//		req, err := http.NewRequest(
-//			http.MethodGet,
-//			fmt.Sprintf("https://harbor.dev.madhouselabs.io/api/v2.0/projects/ci/repositories/%s/artifacts/%s/tags", url.QueryEscape(artifactName), tag),
-//			nil,
-//		)
-//		if err != nil {
-//			return nil, errors.NewEf(err, "could not create http object")
-//		}
-//		req.Header.Add("Content-Kind", "application/vnd.oci.image.index.v1+json")
-//		req.SetBasicAuth(r.HarborUserName, r.HarborPassword)
-//
-//		resp, err := http.DefaultClient.Do(req)
-//		if err != nil {
-//			return nil, errors.NewEf(err, "could not make http request")
-//		}
-//		r.logger.Infof("resp.StatusCode=%v", resp.StatusCode)
-//		checks[c.Image] = resp.StatusCode == 200
-//	}
-//
-//	return checks, nil
-// }
-//
-// func (r *AppReconciler) checkDependency(ctx context.Context, app *crdsv1.App) *map[string]string {
-//	checks := map[string]string{}
-//	for _, container := range app.Spec.Containers {
-//		for _, env := range container.Env {
-//			if env.Value != "" {
-//				continue
-//			}
-//
-//			sp := strings.Split(env.RefName, "/")
-//			if sp[0] == "config" {
-//				var cfg corev1.ConfigMap
-//				err := r.Get(ctx, types.NamespacedName{Namespace: app.Namespace, Name: sp[1]}, &cfg)
-//				if err != nil {
-//					if apiErrors.IsNotFound(err) {
-//						checks[env.RefName] = "NotFound"
-//						return &checks
-//					}
-//					checks[env.RefName] = err.Error()
-//					return &checks
-//				}
-//				if _, ok := cfg.Data[env.RefKey]; !ok {
-//					checks[fmt.Sprintf("%s/%s", env.RefName, env.RefKey)] = "NotFound"
-//					return &checks
-//				}
-//			}
-//
-//			if sp[0] == "secret" {
-//				var scrt corev1.SecretType
-//				err := r.Get(ctx, types.NamespacedName{Namespace: app.Namespace, Name: sp[1]}, &scrt)
-//				if err != nil {
-//					if apiErrors.IsNotFound(err) {
-//						checks[env.RefName] = "NotFound"
-//						return &checks
-//					}
-//					checks[env.RefName] = err.Error()
-//					return &checks
-//				}
-//				if _, ok := scrt.Data[env.RefKey]; !ok {
-//					checks[fmt.Sprintf("%s/%s", env.RefName, env.RefKey)] = "NotFound"
-//					return &checks
-//				}
-//			}
-//		}
-//	}
-//	return nil
-// }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {

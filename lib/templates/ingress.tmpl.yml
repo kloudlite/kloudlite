@@ -28,11 +28,7 @@ spec:
           {{- range $route := $obj.Spec.Routes }}
           - backend:
               service:
-                {{- if $route.App }}
                 name: {{$route.App}}
-                {{- else if $route.Lambda }}
-                name: {{$route.Lambda}}
-                {{- end}}
                 port:
                   number: {{$route.Port}}
             path: {{$route.Path}}

@@ -35,6 +35,10 @@ type ProjectReconciler struct {
 	HarborPassword string
 }
 
+var (
+	ImageRegistry = "harbor.dev.kloudlite.io"
+)
+
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
@@ -127,8 +131,13 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 
 	if err := fn.KubectlApply(
 		ctx, r.Client, &corev1.Namespace{
-			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: project.Name},
+			TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: project.Name,
+				OwnerReferences: []metav1.OwnerReference{
+					fn.AsOwner(project, true),
+				},
+			},
 		},
 	); err != nil {
 		return req.FailWithOpError(err)
@@ -149,7 +158,6 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 	}
 
 	imgPullSecret := corev1.Secret{
-		// TypeMeta: TypeSecret,
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: project.Name,
 			Name:      ImagePullSecretName,
@@ -163,7 +171,7 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		Type: corev1.SecretTypeDockerConfigJson,
 	}
 
-	if err := fn.KubectlApply(ctx, r.Client, &imgPullSecret); err != nil {
+	if err := fn.KubectlApply(ctx, r.Client, fn.ParseSecret(&imgPullSecret)); err != nil {
 		return req.FailWithOpError(err)
 	}
 
