@@ -5,10 +5,15 @@ dotenv: [".secrets/oauth.env"]
 tasks:
   run:
     env:
-      MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
-      MONGO_DB_NAME: auth
-      REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
-      PORT: 3000
+      MONGO_URI: ***REMOVED***
+      MONGO_DB_NAME: auth-db
+
+      PORT: 12345
+
+      REDIS_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
+      REDIS_USERNAME: redis-auth
+      REDIS_PASSWORD: uZA40FrMG9QTmz-G5WgNNKDjj-H3PEKCvPCIcOii
+
       GRPC_PORT: 10021
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
 #      COOKIE_DOMAIN: localhost
@@ -51,6 +56,6 @@ tasks:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/auth:v2
       APP_DIR: ./apps/auth
     cmds:
-      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker buildx build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
       - docker push {{.IMAGE}}
 

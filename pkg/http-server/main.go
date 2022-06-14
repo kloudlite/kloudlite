@@ -31,7 +31,6 @@ func Start(ctx context.Context, port uint16, app *fiber.App, logger logger.Logge
 		logger.Infof("Graphql Server started @ (port=%v)", port)
 	}
 	return nil
-
 }
 
 func SetupGQLServer(
@@ -54,24 +53,38 @@ type ServerOptions interface {
 }
 
 func NewHttpServerFx[T ServerOptions]() fx.Option {
-	return fx.Module("http-server",
-		fx.Provide(func() *fiber.App {
-			return fiber.New()
-		}),
-		fx.Invoke(func(lf fx.Lifecycle, env T, logger logger.Logger, app *fiber.App) {
-			if env.GetHttpCors() != "" {
-				app.Use(cors.New(cors.Config{
-					AllowOrigins:     env.GetHttpCors(),
-					AllowCredentials: true,
-					AllowMethods:     strings.Join([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions}, ","),
-				}))
-			}
+	return fx.Module(
+		"http-server",
+		fx.Provide(
+			func() *fiber.App {
+				return fiber.New()
+			},
+		),
+		fx.Invoke(
+			func(lf fx.Lifecycle, env T, logger logger.Logger, app *fiber.App) {
+				if env.GetHttpCors() != "" {
+					app.Use(
+						cors.New(
+							cors.Config{
+								AllowOrigins:     env.GetHttpCors(),
+								AllowCredentials: true,
+								AllowMethods: strings.Join(
+									[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+									",",
+								),
+							},
+						),
+					)
+				}
 
-			lf.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					return Start(ctx, env.GetHttpPort(), app, logger)
-				},
-			})
-		}),
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return Start(ctx, env.GetHttpPort(), app, logger)
+						},
+					},
+				)
+			},
+		),
 	)
 }
