@@ -1,0 +1,16 @@
+apiVersion: serverless.kloudlite.io/v1
+kind: Lambda
+metadata:
+  name: example
+  namespace: hotspot
+spec:
+  containers:
+    # - image: docker.io/kennethreitz/httpbin
+    #   imagePullPolicy: IfNotPresent
+    #   name: main
+    #   command: ["gunicorn"]
+    #   args: ["-b", "0.0.0.0:8080", "httpbin:app"]
+    - image: harbor.dev.madhouselabs.io/public/serverless/node:latest
+      imagePullPolicy: Always
+      name: main
+

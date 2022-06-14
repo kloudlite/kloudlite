@@ -1,0 +1,37 @@
+{{- $obj := get . "object" }}
+{{- $ingressClass := get . "ingress-class" }}
+{{- $sslRedirect := get . "force-ssl-redirect" | default true }}
+{{- $clusterIssuer := get . "cluster-issuer" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{$obj.Name}}
+  namespace: {{$obj.Namespace}}
+  annotations:
+    kubernetes.io/ingress-class: {{$ingressClass}}
+    cert-manager.io/cluster-issuer: {{$clusterIssuer}}
+    {{- if or $sslRedirect $obj.Spec.ForceSSLRedirect }}
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{- end }}
+spec:
+  tls:
+    - hosts:
+      {{- range $v := $obj.Spec.Domains }}
+        - {{$v}}
+      secretName: {{$obj.Name}}-tls-secret
+      {{- end }}
+  rules:
+    {{- range $domain := $obj.Spec.Domains }}
+    - host: {{$domain}}
+      http:
+        paths:
+          {{- range $route := $obj.Spec.Routes }}
+          - backend:
+              service:
+                name: {{$route.App}}
+                port:
+                  number: {{$route.Port}}
+            path: {{$route.Path}}
+            pathType: Prefix
+          {{- end}}
+    {{- end }}
