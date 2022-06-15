@@ -1,15 +1,15 @@
 apiVersion: serverless.kloudlite.io/v1
 kind: Lambda
 metadata:
-  name: ci-api
+  name: auth-api
   namespace: hotspot
 spec:
   containers:
-    - image: harbor.dev.madhouselabs.io/kloudlite/ci:v2
+    - image: harbor.dev.madhouselabs.io/kloudlite/auth:v2
       imagePullPolicy: Always
       name: main
       envFrom:
-        - secret: ci-env
+        - secret: auth-env
       volumes:
         - type: secret
           refName: auth-api-github-app-pk
