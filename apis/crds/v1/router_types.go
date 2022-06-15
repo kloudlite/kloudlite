@@ -6,18 +6,18 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
-type Routes struct {
-	Path             string `json:"path"`
-	App              string `json:"app,omitempty"`
-	Lambda           string `json:"lambda,omitempty"`
-	ForceSSLRedirect bool   `json:"forceSSLRedirect,omitempty"`
-	Port             uint16 `json:"port"`
+type Route struct {
+	Path   string `json:"path"`
+	App    string `json:"app,omitempty"`
+	Lambda string `json:"lambda,omitempty"`
+	Port   uint16 `json:"port"`
 }
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Domains []string `json:"domains"`
-	Routes  []Routes `json:"routes"`
+	ForceSSLRedirect bool             `json:"forceSSLRedirect,omitempty"`
+	Domains          []string         `json:"domains"`
+	Routes           map[string]Route `json:"routes"`
 }
 
 // +kubebuilder:object:root=true

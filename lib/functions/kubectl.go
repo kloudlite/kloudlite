@@ -64,19 +64,53 @@ func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) err
 		return err
 	}
 
-	var j map[string]interface{}
+	var j map[string]any
 	if err := json.Unmarshal(x, &j); err != nil {
 		return err
 	}
 
+	if m, ok := j["metadata"].(map[string]any); ok {
+		annotations := map[string]string{}
+
+		for k, v := range t.GetAnnotations() {
+			annotations[k] = v
+		}
+
+		if m2, ok := m["labels"].(map[string]string); ok {
+			for k, v := range m2 {
+				annotations[k] = v
+			}
+		}
+		t.SetAnnotations(annotations)
+	}
+
+	if m, ok := j["metadata"].(map[string]any); ok {
+		labels := map[string]string{}
+
+		for k, v := range t.GetLabels() {
+			labels[k] = v
+		}
+
+		if m2, ok := m["labels"].(map[string]string); ok {
+			for k, v := range m2 {
+				labels[k] = v
+			}
+		}
+
+		t.SetLabels(labels)
+	}
+
+	// for general types
 	if _, ok := j["spec"]; ok {
 		t.Object["spec"] = j["spec"]
 	}
 
+	// For Configmap/secret
 	if _, ok := j["data"]; ok {
 		t.Object["data"] = j["data"]
 	}
 
+	// for secret
 	if _, ok := j["stringData"]; ok {
 		t.Object["stringData"] = j["stringData"]
 	}

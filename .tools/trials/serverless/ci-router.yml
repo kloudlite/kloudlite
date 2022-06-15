@@ -6,6 +6,11 @@ metadata:
 spec:
   domains: ['ci-api.dev.kloudlite.io']
   routes:
-    - lambda: ci
+    /:
+      lambda: ci
+      path: /
+      port: 80
+    /auth:
+      app: auth
       path: /
       port: 80

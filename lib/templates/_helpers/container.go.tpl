@@ -54,15 +54,18 @@
   {{- end}}
 
     readinessProbe:
-      periodSeconds: 0
+      periodSeconds: 0 # opt out of aggressive probing
+{{/*      successThreshold: 1*/}}
+{{/*      tcpSocket:*/}}
+{{/*        port: 0*/}}
 
-    livenessProbe:
-      initialDelaySeconds: 3
-      periodSeconds: 1
-      httpGet:
-        path: /
-        port: 8080
-        scheme: HTTP
+{{/*    livenessProbe:*/}}
+{{/*      initialDelaySeconds: 3*/}}
+{{/*      periodSeconds: 1*/}}
+{{/*      httpGet:*/}}
+{{/*        path: /*/}}
+{{/*        port: 8080*/}}
+{{/*        scheme: HTTP*/}}
 
 {{- end }}
 {{- end }}

@@ -39,13 +39,13 @@ spec:
                 items:
                   type: string
                 type: array
+              forceSSLRedirect:
+                type: boolean
               routes:
-                items:
+                additionalProperties:
                   properties:
                     app:
                       type: string
-                    forceSSLRedirect:
-                      type: boolean
                     lambda:
                       type: string
                     path:
@@ -56,7 +56,7 @@ spec:
                   - path
                   - port
                   type: object
-                type: array
+                type: object
             required:
             - domains
             - routes

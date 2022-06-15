@@ -35,6 +35,14 @@ func useTemplate(file templateFile) (*kt, error) {
 		return buf.String(), nil
 	}
 
+	funcMap["toYAML"] = func(string string) (string, error) {
+		ys, err := yaml.JSONToYAML([]byte(string))
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s", ys), nil
+	}
+
 	_, err := t.Funcs(funcMap).ParseFiles(tFiles...)
 	if err != nil {
 		return nil, err
@@ -122,6 +130,8 @@ const (
 	RedisStandalone                   templateFile = "redis-helm-standalone.tmpl.yml"
 	ConfigMap                         templateFile = "configmap.tmpl.yml"
 	Ingress                           templateFile = "./ingress.tmpl.yml"
+
+	IngressLambda templateFile = "./ingress-lambda.tmpl.yml"
 
 	ServerlessLambda    templateFile = "./serverless/lambda.yml.tpl"
 	ServerlessLambdaSvc templateFile = "./serverless/lambda-svc.yml.tpl"
