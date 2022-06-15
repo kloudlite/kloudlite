@@ -1,12 +1,12 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
-  name: ci-api
+  name: auth-api
   namespace: hotspot
 spec:
-  domains: ['ci-api.dev.kloudlite.io']
+  domains: ['auth-api.dev.kloudlite.io']
   routes:
     /:
-      lambda: ci-api
+      lambda: auth-api
       path: /
       port: 80
