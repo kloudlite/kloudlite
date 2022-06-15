@@ -123,19 +123,66 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rA
 func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
 	router := req.Object
 
-	ingressObj, err := templates.ParseObject(
+	lambdaGroups := map[string]map[string]crdsv1.Route{}
+	appRoutes := map[string]crdsv1.Route{}
+
+	for routePath, route := range router.Spec.Routes {
+		if s := route.Lambda; s != "" {
+			if _, ok := lambdaGroups[route.Lambda]; !ok {
+				lambdaGroups[route.Lambda] = map[string]crdsv1.Route{}
+			}
+
+			lambdaGroups[route.Lambda][routePath] = route
+		}
+
+		if s := route.App; s != "" {
+			appRoutes[routePath] = route
+		}
+	}
+
+	var kubeYamls [][]byte
+
+	for lName, lg := range lambdaGroups {
+		b, err := templates.Parse(
+			templates.IngressLambda, map[string]any{
+				"router":         router,
+				"ingress-class":  "nginx",
+				"cluster-issuer": "kl-cert-issuer",
+				"lambda-name":    lName,
+				"routes":         lg,
+				"owner-refs": []metav1.OwnerReference{
+					fn.AsOwner(router, true),
+				},
+			},
+		)
+
+		if err != nil {
+			return req.FailWithOpError(
+				errors.NewEf(err, "could not parse (template=%s) into Object", templates.IngressLambda),
+			)
+		}
+
+		kubeYamls = append(kubeYamls, b)
+	}
+
+	b, err := templates.Parse(
 		templates.Ingress, map[string]any{
-			"object":         router,
-			"cluster-issuer": "contour-cert-issuer",
-			"ingress-class":  "contour",
-			"cluster-domain": "svc.cluster.local",
+			"router":         router,
+			"cluster-issuer": "kl-cert-issuer",
+			"ingress-class":  "nginx",
+			"routes":         appRoutes,
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(router, true),
+			},
 		},
 	)
 	if err != nil {
 		return req.FailWithOpError(errors.NewEf(err, "could not parse (template=%s) into Object", templates.Ingress))
 	}
 
-	if err := fn.KubectlApply(req.Context(), r.Client, ingressObj); err != nil {
+	kubeYamls = append(kubeYamls, b)
+
+	if _, err := fn.KubectlApplyExec(kubeYamls...); err != nil {
 		return req.FailWithOpError(errors.NewEf(err, "could not apply ingress ingressObj"))
 	}
 

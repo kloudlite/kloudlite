@@ -189,15 +189,15 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 	}
 
 	obj, err := templates.ParseObject(templates.CommonMres, req.Object)
+	if err != nil {
+		return req.FailWithOpError(err)
+	}
 
 	obj.SetOwnerReferences(
 		[]metav1.OwnerReference{
 			fn.AsOwner(mres, true),
 		},
 	)
-	if err != nil {
-		return req.FailWithOpError(err)
-	}
 	err = fn.KubectlApply(req.Context(), r.Client, obj)
 	if err != nil {
 		return req.FailWithOpError(err)

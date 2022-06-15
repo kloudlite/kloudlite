@@ -147,12 +147,12 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 	}
 
 	obj, err := templates.ParseObject(templates.CommonMsvc, req.Object)
-	obj.SetLabels(
-		fn.MapMerge(obj.GetLabels(), msvc.GetWatchLabels()),
-	)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
+	obj.SetLabels(
+		fn.MapMerge(obj.GetLabels(), msvc.GetWatchLabels()),
+	)
 	err = fn.KubectlApply(req.Context(), r.Client, obj)
 	if err != nil {
 		return req.FailWithOpError(err)
