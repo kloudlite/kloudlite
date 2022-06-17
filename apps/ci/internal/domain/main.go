@@ -8,6 +8,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"golang.org/x/oauth2"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
@@ -24,6 +25,51 @@ type domainI struct {
 	github        Github
 	gitlab        Gitlab
 	harborAccRepo repos.DbRepo[*HarborAccount]
+}
+
+type GitWebhookPayload struct {
+	GitProvider string `json:"git_provider,omitempty"`
+	RepoUrl     string `json:"repo_url,omitempty"`
+	GitRef      string `json:"git_ref,omitempty"`
+	CommitHash  string `json:"commit_hash,omitempty"`
+}
+
+type githubPingEvent struct {
+	Repo *github.Repository `json:"repository,omitempty"`
+}
+
+func (d *domainI) parseGithubHook(eventType string, hookBody []byte) (*GitWebhookPayload, error) {
+	hook, err := github.ParseWebHook(eventType, hookBody)
+	if err != nil {
+		return nil, err
+	}
+	switch t := hook.(type) {
+	case *github.PushEvent:
+		{
+			payload := GitWebhookPayload{
+				GitProvider: common.ProviderGithub,
+				RepoUrl:     *t.Repo.HTMLURL,
+				GitRef:      *t.Ref,
+				CommitHash:  t.GetAfter()[:10],
+			}
+			return &payload, nil
+		}
+	}
+
+	if eventType == "ping" {
+		var x githubPingEvent
+		if err := json.Unmarshal(hookBody, &x); err != nil {
+			return nil, err
+		}
+		return &GitWebhookPayload{
+			GitProvider: "github",
+			RepoUrl:     *x.Repo.HTMLURL,
+			GitRef:      "",
+			CommitHash:  "",
+		}, nil
+	}
+
+	return nil, errors.Newf("unknown event type")
 }
 
 func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Request) *tekton.Response {
@@ -44,50 +90,56 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 		return tekton.NewResponse(req).Err(err, http.StatusInternalServerError)
 	}
 
-	token, err := d.github.GetInstallationToken(ctx, "", int64(*pipeline.GithubInstallationId))
+	eventType := ""
+	headers := req.Header["X-Github-Event"]
+	if headers != nil {
+		eventType = headers[0]
+	}
+
+	if eventType == "" {
+		return tekton.NewResponse(req).Err(errors.Newf("could not recognize github event type, aborting ..."))
+	}
+
+	hookPayload, err := d.parseGithubHook(eventType, []byte(req.Body))
+	if err != nil {
+		err := errors.NewEf(err, "github (event=%s) is not a push/ping event", eventType)
+		fmt.Printf("ERR occurred: %+v\n", err)
+		return tekton.NewResponse(req).Err(err)
+	}
+
+	token, err := d.github.GetInstallationToken(ctx, hookPayload.RepoUrl)
 	if err != nil {
 		return tekton.NewResponse(req).Err(err)
 	}
 
-	hook, err := github.ParseWebHook(req.Header["X-Github-Event"][0], []byte(req.Body))
-	if err != nil {
-		return tekton.NewResponse(req).Err(err)
-	}
-	event, ok := hook.(*github.PushEvent)
-	if !ok {
-		return tekton.NewResponse(req).Err(err)
-	}
-
-	if event.GetRef() != pipeline.GitBranch {
-		return tekton.NewResponse(req).Err(
-			errors.Newf(
-				"pipeline is not configured to run on this (ref=%s)",
-				event.GetRef(),
-			),
-		)
-	}
+	// if hookPayload.GitRef != pipeline.GitBranch {
+	// 	return tekton.NewResponse(req).Err(
+	// 		errors.Newf(
+	// 			"pipeline is not configured to run on this (ref=%s)", hookPayload.GitRef,
+	// 		),
+	// 	)
+	// }
 
 	tkVars := TektonVars{
-		GitRepo:         pipeline.GitRepoUrl,
-		GitUser:         "x-access-token",
-		GitPassword:     token,
-		GitRef:          pipeline.GitBranch,
-		GitCommitHash:   event.GetAfter()[:10],
-		DockerImageName: pipeline.ImageName,
-		DockerImageTag:  pipeline.PipelineEnv,
+		GitRepo:                 hookPayload.RepoUrl,
+		GitUser:                 "x-access-token",
+		GitPassword:             token,
+		GitRef:                  fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
+		GitCommitHash:           hookPayload.CommitHash,
+		BuildBaseImage:          pipeline.Build.BaseImage,
+		BuildCmd:                pipeline.Build.Cmd,
+		RunBaseImage:            pipeline.Run.BaseImage,
+		RunCmd:                  pipeline.Run.Cmd,
+		ArtifactDockerImageName: pipeline.ArtifactRef.DockerImageName,
+		ArtifactDockerImageTag:  pipeline.ArtifactRef.DockerImageTag,
 	}
 
-	marshal, err := json.Marshal(tkVars)
+	j, err := tkVars.ToJson()
 	if err != nil {
 		return tekton.NewResponse(req).Err(err)
 	}
 
-	var m map[string]any
-	if err := json.Unmarshal(marshal, &m); err != nil {
-		return nil
-	}
-
-	return tekton.NewResponse(req).Extend(m).Ok()
+	return tekton.NewResponse(req).Extend(j).Ok()
 }
 
 func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) *tekton.Response {
@@ -123,13 +175,11 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 	}
 
 	tkVars := TektonVars{
-		GitRepo:         pipeline.GitRepoUrl,
-		GitUser:         "oauth2",
-		GitPassword:     token,
-		GitRef:          pipeline.GitBranch,
-		GitCommitHash:   event.CheckoutSHA[:10],
-		DockerImageName: pipeline.ImageName,
-		DockerImageTag:  pipeline.PipelineEnv,
+		GitRepo:       pipeline.GitRepoUrl,
+		GitUser:       "oauth2",
+		GitPassword:   token,
+		GitRef:        pipeline.GitBranch,
+		GitCommitHash: event.CheckoutSHA[:10],
 	}
 
 	marshal, err := json.Marshal(tkVars)
@@ -218,7 +268,7 @@ func (d *domainI) GitlabListBranches(ctx context.Context, userId repos.ID, repoI
 	return d.gitlab.ListBranches(ctx, token, repoId, query, pagination)
 }
 
-func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId int, pipelineId string) (*gitlab.ProjectHook, error) {
+func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId string) (*gitlab.ProjectHook, error) {
 	token, err := d.getAccessToken(ctx, "gitlab", userId)
 	if err != nil {
 		return nil, err
@@ -266,7 +316,7 @@ func (d *domainI) GithubInstallationToken(ctx context.Context, pipelineId repos.
 	if err != nil || pipeline == nil {
 		return "", err
 	}
-	return d.github.GetInstallationToken(ctx, "", int64(*pipeline.GithubInstallationId))
+	return d.github.GetInstallationToken(ctx, "")
 }
 
 func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) (any, error) {
@@ -333,7 +383,8 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		}
 		pipeline.GitlabTokenId = string(token.Id)
 		// TODO check webhook id
-		_, err = d.GitlabAddWebhook(ctx, userId, *pipeline.GitlabRepoId, string(pipeline.Id))
+		// _, err = d.GitlabAddWebhook(ctx, userId, *pipeline.GitlabRepoId, string(pipeline.Id))
+		_, err = d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), string(pipeline.Id))
 		if err != nil {
 			return nil, err
 		}

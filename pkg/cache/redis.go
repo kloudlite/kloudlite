@@ -11,29 +11,9 @@ import (
 )
 
 type RedisClient struct {
-	opts   *redis.Options
-	client *redis.Client
-}
-
-func (c *RedisClient) Drop(ctx context.Context, key string) error {
-	err := c.client.Del(ctx, key).Err()
-	if err != nil {
-		return errors.NewEf(err, "could not drop key (%s)", key)
-	}
-	return nil
-}
-
-func (c *RedisClient) SetWithExpiry(
-	ctx context.Context,
-	key string,
-	value []byte,
-	duration time.Duration,
-) error {
-	err := c.client.Set(ctx, key, value, duration).Err()
-	if err != nil {
-		return errors.NewEf(err, "coult not set key (%s)", key)
-	}
-	return nil
+	opts       *redis.Options
+	client     *redis.Client
+	basePrefix string
 }
 
 func (c *RedisClient) Connect(ctx context.Context) error {
@@ -45,7 +25,7 @@ func (c *RedisClient) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (c *RedisClient) Close(context.Context) error {
+func (c *RedisClient) Disconnect(context.Context) error {
 	err := c.client.Close()
 	if err != nil {
 		return err
@@ -54,31 +34,60 @@ func (c *RedisClient) Close(context.Context) error {
 	return nil
 }
 
+func (c *RedisClient) getKey(key string) string {
+	return fmt.Sprintf("%s:%s", c.basePrefix, key)
+}
+
 func (c *RedisClient) Set(ctx context.Context, key string, value []byte) error {
-	err := c.client.Set(ctx, key, value, 0).Err()
+	k := c.getKey(key)
+	err := c.client.Set(ctx, k, value, 0).Err()
 	if err != nil {
-		return errors.NewEf(err, "coult not set key (%s)", key)
+		return errors.NewEf(err, "could not set key (%s)", k)
 	}
 	return nil
 }
 
 func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
-	status := c.client.Get(ctx, key)
+	status := c.client.Get(ctx, c.getKey(key))
 	err := status.Err()
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(status.Val())
 	return []byte(status.Val()), nil
 }
 
-func NewRedisClient(hosts, username, password string) Client {
+func (c *RedisClient) Drop(ctx context.Context, key string) error {
+	k := c.getKey(key)
+	err := c.client.Del(ctx, k).Err()
+	if err != nil {
+		return errors.NewEf(err, "could not drop key=%s", k)
+	}
+
+	return nil
+}
+
+func (c *RedisClient) SetWithExpiry(
+	ctx context.Context,
+	key string,
+	value []byte,
+	duration time.Duration,
+) error {
+	k := c.getKey(key)
+	err := c.client.Set(ctx, k, value, duration).Err()
+	if err != nil {
+		return errors.NewEf(err, "could not set value for key=%s", k)
+	}
+	return nil
+}
+
+func NewRedisClient(hosts, username, password, basePrefix string) Client {
 	return &RedisClient{
 		opts: &redis.Options{
 			Addr:     hosts,
 			Username: username,
 			Password: password,
 		},
+		basePrefix: basePrefix,
 	}
 }
 
@@ -87,18 +96,32 @@ type TypedRedisClient[T Client] struct {
 	client T
 }
 
-func NewTypedRedisClient[T Client](hosts, username, password string) *TypedRedisClient[T] {
-	return &TypedRedisClient[T]{
-		opts: &redis.Options{
-			Addr:     hosts,
-			Username: username,
-			Password: password,
-		},
-	}
+type RedisConfig interface {
+	RedisOptions() (hosts, username, password, basePrefix string)
 }
 
-type RedisConfig interface {
-	RedisOptions() (hosts, username, password string)
+type RedisConfigTyped[T Client] interface {
+	RedisOptions() (hosts, username, password, basePrefix string)
+}
+
+func FxLifeCycle[T Client]() fx.Option {
+	return fx.Module(
+		"redis-fx-lifecycle",
+		fx.Invoke(
+			func(c T, lf fx.Lifecycle) {
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return c.Connect(ctx)
+						},
+						OnStop: func(ctx context.Context) error {
+							return c.Disconnect(ctx)
+						},
+					},
+				)
+			},
+		),
+	)
 }
 
 func NewRedisFx[T RedisConfig]() fx.Option {
@@ -106,9 +129,8 @@ func NewRedisFx[T RedisConfig]() fx.Option {
 		"redis",
 		fx.Provide(
 			func(env T) Client {
-				options, username, password := env.RedisOptions()
-				fmt.Println(env, "redisenv")
-				return NewRedisClient(options, username, password)
+				options, username, password, basePrefix := env.RedisOptions()
+				return NewRedisClient(options, username, password, basePrefix)
 			},
 		),
 		fx.Invoke(
@@ -119,7 +141,7 @@ func NewRedisFx[T RedisConfig]() fx.Option {
 							return r.Connect(ctx)
 						},
 						OnStop: func(ctx context.Context) error {
-							return r.Close(ctx)
+							return r.Disconnect(ctx)
 						},
 					},
 				)

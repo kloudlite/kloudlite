@@ -41,9 +41,11 @@ type domainI struct {
 }
 
 func (d *domainI) EnsureUserByEmail(ctx context.Context, email string) (*User, error) {
-	u, err := d.userRepo.Create(ctx, &User{
-		Email: email,
-	})
+	u, err := d.userRepo.Create(
+		ctx, &User{
+			Email: email,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +105,11 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 	if err != nil {
 		return nil, err
 	}
+
+	if matched == nil {
+		return nil, errors.Newf("no such user(email=%s) exists", email)
+	}
+
 	bytes := md5.Sum([]byte(password + matched.PasswordSalt))
 	if matched.Password != hex.EncodeToString(bytes[:]) {
 		return nil, errors.New("not valid credentials")
@@ -133,15 +140,17 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 
 	salt := generateId("salt")
 	sum := md5.Sum([]byte(password + salt))
-	create, err := d.userRepo.Create(ctx, &User{
-		Name:         name,
-		Email:        email,
-		Password:     hex.EncodeToString(sum[:]),
-		Verified:     false,
-		Metadata:     nil,
-		Joined:       time.Now(),
-		PasswordSalt: salt,
-	})
+	create, err := d.userRepo.Create(
+		ctx, &User{
+			Name:         name,
+			Email:        email,
+			Password:     hex.EncodeToString(sum[:]),
+			Verified:     false,
+			Metadata:     nil,
+			Joined:       time.Now(),
+			PasswordSalt: salt,
+		},
+	)
 
 	if err != nil {
 		return nil, err
@@ -253,7 +262,12 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 	if err != nil {
 		return false, err
 	}
-	err = d.resetTokenRepo.SetWithExpiry(ctx, resetToken, &ResetPasswordToken{Token: resetToken, UserId: one.Id}, time.Second*24*60*60)
+	err = d.resetTokenRepo.SetWithExpiry(
+		ctx,
+		resetToken,
+		&ResetPasswordToken{Token: resetToken, UserId: one.Id},
+		time.Second*24*60*60,
+	)
 	if err != nil {
 		return false, err
 	}
@@ -350,12 +364,14 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		}
 	}
 
-	t, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
-		UserId:   user.Id,
-		Email:    user.Email,
-		Provider: provider,
-		Token:    token,
-	})
+	t, err := d.accessTokenRepo.Upsert(
+		ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
+			UserId:   user.Id,
+			Email:    user.Email,
+			Provider: provider,
+			Token:    token,
+		},
+	)
 
 	if err != nil {
 		return nil, errors.NewEf(err, "could not store access token in repo")
@@ -516,11 +532,13 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 }
 
 func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user *User) error {
-	_, err := d.commsClient.SendPasswordResetEmail(ctx, &comms.PasswordResetEmailInput{
-		Email:      user.Email,
-		Name:       user.Name,
-		ResetToken: token,
-	})
+	_, err := d.commsClient.SendPasswordResetEmail(
+		ctx, &comms.PasswordResetEmailInput{
+			Email:      user.Email,
+			Name:       user.Name,
+			ResetToken: token,
+		},
+	)
 	if err != nil {
 		return errors.NewEf(err, "could not send password reset email")
 	}
@@ -528,11 +546,13 @@ func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user
 }
 
 func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user *User) error {
-	_, err := d.commsClient.SendVerificationEmail(ctx, &comms.VerificationEmailInput{
-		Email:             user.Email,
-		Name:              user.Name,
-		VerificationToken: token,
-	})
+	_, err := d.commsClient.SendVerificationEmail(
+		ctx, &comms.VerificationEmailInput{
+			Email:             user.Email,
+			Name:              user.Name,
+			VerificationToken: token,
+		},
+	)
 	if err != nil {
 		return errors.NewEf(err, "could not send verification email")
 	}
@@ -541,10 +561,12 @@ func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user 
 
 func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *User) error {
 	verificationToken := generateId("invite")
-	err := d.verifyTokenRepo.SetWithExpiry(ctx, verificationToken, &VerifyToken{
-		Token:  verificationToken,
-		UserId: user.Id,
-	}, time.Second*24*60*60)
+	err := d.verifyTokenRepo.SetWithExpiry(
+		ctx, verificationToken, &VerifyToken{
+			Token:  verificationToken,
+			UserId: user.Id,
+		}, time.Second*24*60*60,
+	)
 	if err != nil {
 		return err
 	}

@@ -8,44 +8,8 @@ tasks:
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
-    env:
-      GRPC_PORT: 6748
-      PORT: 8085
-      MONGO_URI: mongodb://ci-db:eqSb9sJdjStKTXmzibkdzcgWCPsLUi7t2wigqdnS@mongo-standalone.hotspot.svc.cluster.local/ci-db
-      MONGO_DB_NAME: ci-db
-
-      REDIS_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
-      REDIS_USERNAME: ci
-      REDIS_PASSWORD: GTkyK2aR4eNQjZ2aBT78jKaD6gqJT88Re8jvWYmP
-
-      AUTH_REDIS_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
-      AUTH_REDIS_USERNAME: redis-auth
-      AUTH_REDIS_PASSWORD: uZA40FrMG9QTmz-G5WgNNKDjj-H3PEKCvPCIcOii
-
-      # AUTH_HOST: auth-api.hotspot.svc.cluster.local
-      # AUTH_PORT: 3001
-      AUTH_HOST: localhost
-      AUTH_PORT: 10021
-      ORIGINS: http://localhost:4001,https://studio.apollographql.com
-
-      GITHUB_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/github
-      GITHUB_CLIENT_ID: ***REMOVED***
-      GITHUB_CLIENT_SECRET: ***REMOVED***
-      GITHUB_APP_ID: ***REMOVED***
-      GITHUB_APP_PK_FILE: ./.secrets/github-app-pk.pem
-
-      GITLAB_CALLBACK_URL: https://auth.kl.madhouselabs.io/oauth2/callback/gitlab
-      GITLAB_CLIENT_ID: ***REMOVED***
-      GITLAB_CLIENT_SECRET: ***REMOVED***
-
-      GOOGLE_CALLBACK_URL: https://auth.dev.madhouselabs.io/oauth2/callback/google
-      GOOGLE_CLIENT_ID: ***REMOVED***
-      GOOGLE_CLIENT_SECRET: ***REMOVED***
-
-      COOKIE_DOMAIN: kl.madhouselabs.io
-      GITHUB_WEBHOOK_URL: https://webhooks.dev.madhouselabs.io/github
-      GITLAB_WEBHOOK_URL: https://webhooks.dev.madhouselabs.io/gitlab
-
+    dotenv:
+      - .secrets/env
     sources:
       - ./internal/**/*.go
       - ./main.go

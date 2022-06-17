@@ -7,34 +7,53 @@ import (
 )
 
 type GitPipeline struct {
-	ID                   repos.ID               `json:"id"`
-	Name                 string                 `json:"name"`
-	ImageName            string                 `json:"imageName"`
-	GitProvider          string                 `json:"gitProvider"`
-	GitRepoURL           string                 `json:"gitRepoUrl"`
-	GitBranch            string                 `json:"gitBranch"`
-	DockerFile           *string                `json:"dockerFile"`
-	ContextDir           *string                `json:"contextDir"`
-	GithubInstallationID *int                   `json:"githubInstallationId"`
-	GitlabRepoID         *int                   `json:"gitlabRepoId"`
-	BuildArgs            map[string]interface{} `json:"buildArgs"`
-	Metadata             map[string]interface{} `json:"metadata"`
+	ID          repos.ID               `json:"id"`
+	Name        string                 `json:"name"`
+	GitProvider string                 `json:"gitProvider"`
+	GitRepoURL  string                 `json:"gitRepoUrl"`
+	GitBranch   string                 `json:"gitBranch"`
+	Build       *GitPipelineBuild      `json:"build"`
+	Run         *GitPipelineRun        `json:"run"`
+	Metadata    map[string]interface{} `json:"metadata"`
+}
+
+type GitPipelineArtifact struct {
+	DockerImageName *string `json:"dockerImageName"`
+	DockerImageTag  *string `json:"dockerImageTag"`
+}
+
+type GitPipelineArtifactIn struct {
+	DockerImageName *string `json:"dockerImageName"`
+	DockerImageTag  *string `json:"dockerImageTag"`
+}
+
+type GitPipelineBuild struct {
+	BaseImage *string `json:"baseImage"`
+	Cmd       string  `json:"cmd"`
+}
+
+type GitPipelineBuildIn struct {
+	BaseImage string `json:"baseImage"`
+	Cmd       string `json:"cmd"`
 }
 
 type GitPipelineIn struct {
-	Name                 string                 `json:"name"`
-	ImageName            string                 `json:"imageName"`
-	GitProvider          string                 `json:"gitProvider"`
-	GitRepoURL           string                 `json:"gitRepoUrl"`
-	GitBranch            string                 `json:"gitBranch"`
-	DockerFile           *string                `json:"dockerFile"`
-	ContextDir           *string                `json:"contextDir"`
-	GithubInstallationID *int                   `json:"githubInstallationId"`
-	GitlabRepoID         *int                   `json:"gitlabRepoId"`
-	BuildArgs            map[string]interface{} `json:"buildArgs"`
+	Name        string                 `json:"name"`
+	ProjectID   *string                `json:"projectId"`
+	GitProvider string                 `json:"gitProvider"`
+	GitRepoURL  string                 `json:"gitRepoUrl"`
+	GitBranch   string                 `json:"gitBranch"`
+	Build       *GitPipelineBuildIn    `json:"build"`
+	Run         *GitPipelineRunIn      `json:"run"`
+	ArtifactRef *GitPipelineArtifactIn `json:"artifactRef"`
 }
 
-type Kv struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+type GitPipelineRun struct {
+	BaseImage *string `json:"baseImage"`
+	Cmd       string  `json:"cmd"`
+}
+
+type GitPipelineRunIn struct {
+	BaseImage *string `json:"baseImage"`
+	Cmd       string  `json:"cmd"`
 }

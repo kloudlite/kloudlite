@@ -1,9 +1,9 @@
 package tekton
 
 import (
+	"encoding/json"
 	triggers "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	"google.golang.org/grpc/codes"
-	fn "kloudlite.io/pkg/functions"
 	"net/http"
 )
 
@@ -43,15 +43,27 @@ func (r *Response) Err(err error, statusCode ...codes.Code) *Response {
 
 func (r *Response) Extend(m map[string]any) *Response {
 	for k, v := range m {
+		if r.InterceptorResponse.Extensions == nil {
+			r.InterceptorResponse.Extensions = map[string]any{}
+		}
 		r.InterceptorResponse.Extensions[k] = v
 	}
 	return r
 }
 
 func (r *Response) Ok(message ...string) *Response {
-	r.InterceptorResponse.Status = triggers.Status{
-		Code:    http.StatusOK,
-		Message: fn.First(message),
-	}
+	r.InterceptorResponse.Continue = true
+	// r.InterceptorResponse.Status = triggers.Status{
+	// 	Code:    http.StatusOK,
+	// 	Message: "success",
+	// }
 	return r
+}
+
+func (r *Response) ToJson() ([]byte, error) {
+	m, err := json.Marshal(r.InterceptorResponse)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
 }

@@ -1,4 +1,5 @@
 scalar Json
+# noinspection GraphQLTypeRedefinition
 scalar Any
 
 type Query {
@@ -21,36 +22,61 @@ input PaginationIn {
   perPage: Int!
 }
 
-type KV {
-  key: String!
-  value: String!
-}
-
 input GitPipelineIn {
   name: String!
-  imageName: String!
+  projectId: String
+
   gitProvider: String!
   gitRepoUrl: String!
   gitBranch: String!
-  dockerFile: String
-  contextDir: String
-  githubInstallationId: Int
-  gitlabRepoId: Int
-  buildArgs: Json
+
+  build: GitPipelineBuildIn
+  run: GitPipelineRunIn
+
+  artifactRef: GitPipelineArtifactIn
+}
+
+input GitPipelineBuildIn {
+  baseImage: String!
+  cmd: String!
+}
+
+type GitPipelineBuild {
+  baseImage: String
+  cmd: String!
+}
+
+input GitPipelineRunIn {
+  baseImage: String
+  cmd: String!
+}
+
+type GitPipelineRun {
+  baseImage: String
+  cmd: String!
+}
+
+input GitPipelineArtifactIn {
+  dockerImageName: String
+  dockerImageTag: String
+}
+
+type GitPipelineArtifact {
+  dockerImageName: String
+  dockerImageTag: String
 }
 
 type GitPipeline {
   id: ID!
   name: String!
-  imageName: String!
+
   gitProvider: String!
   gitRepoUrl: String!
   gitBranch: String!
-  dockerFile: String
-  contextDir: String
-  githubInstallationId: Int
-  gitlabRepoId: Int
-  buildArgs: Json
+
+  build: GitPipelineBuild
+  run: GitPipelineRun
+
   metadata: Json
 }
 

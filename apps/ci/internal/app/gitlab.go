@@ -109,12 +109,15 @@ func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, 
 func (gl *gitlabI) getRepoId(repoUrl string) string {
 	split := strings.Split(repoUrl, "https://gitlab.com/")
 	i := strings.Split(split[1], ".git")
-	x := url.PathEscape(i[0])
-	fmt.Println("X:", x)
-	return x
+	return url.PathEscape(i[0])
 }
 
-func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId int, pipelineId string) (*gitlab.ProjectHook, error) {
+func (gl *gitlabI) GetRepoId(repoUrl string) string {
+	return gl.getRepoId(repoUrl)
+}
+
+func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId string,
+	pipelineId string) (*gitlab.ProjectHook, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, err

@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"github.com/go-redis/redis/v8"
 	"time"
 
 	"go.uber.org/fx"
@@ -48,6 +49,10 @@ func (r *redisRepo[T]) Drop(c context.Context, key string) error {
 	return r.cli.Drop(c, key)
 }
 
+func (r *redisRepo[T]) ErrNoRecord(err error) bool {
+	return err == redis.Nil
+}
+
 func NewRepo[T any](cli Client) Repo[T] {
 	return &redisRepo[T]{
 		cli,
@@ -57,8 +62,10 @@ func NewRepo[T any](cli Client) Repo[T] {
 func NewFxRepo[T any]() fx.Option {
 	return fx.Module(
 		"cache",
-		fx.Provide(func(cli Client) Repo[T] {
-			return NewRepo[T](cli)
-		}),
+		fx.Provide(
+			func(cli Client) Repo[T] {
+				return NewRepo[T](cli)
+			},
+		),
 	)
 }

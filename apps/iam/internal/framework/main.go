@@ -16,8 +16,8 @@ type Env struct {
 	RedisHosts  string `env:"REDIS_HOSTS" required:"true"`
 }
 
-func (env *Env) RedisOptions() (hosts string, username string, password string) {
-	return env.RedisHosts, "", ""
+func (env *Env) RedisOptions() (hosts, username, password, basePrefix string) {
+	return env.RedisHosts, "", "", basePrefix
 }
 
 func (env *Env) GetMongoConfig() (url, dbName string) {
@@ -28,7 +28,8 @@ func (env *Env) GetGRPCPort() uint16 {
 	return env.Port
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	config.EnvFx[Env](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),

@@ -18,8 +18,6 @@ type server struct {
 }
 
 func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.PipelineOutput, error) {
-	githubInstallationId := int(in.GithubInstallationId)
-	gitlabRepoId := int(in.GitlabRepoId)
 	ba := make(map[string]interface{}, 0)
 	if in.BuildArgs != nil {
 		for k, v := range in.BuildArgs {
@@ -32,22 +30,16 @@ func (s *server) CreatePipeline(ctx context.Context, in *ci.PipelineIn) (*ci.Pip
 			md[k] = v
 		}
 	}
-	pipeline, err := s.d.CreatePipeline(ctx, repos.ID(in.UserId), domain.Pipeline{
-		ProjectId:            in.ProjectId,
-		Name:                 in.Name,
-		ImageName:            in.ImageName,
-		PipelineEnv:          in.PipelineEnv,
-		GitProvider:          in.GitProvider,
-		GitBranch:            in.GitBranch,
-		GitRepoUrl:           in.GitRepoUrl,
-		GitlabRepoId:         &gitlabRepoId,
-		RepoName:             in.RepoName,
-		DockerFile:           &in.DockerFile,
-		ContextDir:           &in.ContextDir,
-		GithubInstallationId: &githubInstallationId,
-		BuildArgs:            ba,
-		Metadata:             md,
-	})
+	pipeline, err := s.d.CreatePipeline(
+		ctx, repos.ID(in.UserId), domain.Pipeline{
+			ProjectId:   in.ProjectId,
+			Name:        in.Name,
+			GitProvider: in.GitProvider,
+			GitBranch:   in.GitBranch,
+			GitRepoUrl:  in.GitRepoUrl,
+			Metadata:    md,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -63,14 +55,16 @@ func (s *server) CreateHarborProject(ctx context.Context, in *ci.HarborProjectIn
 		return nil, err
 	}
 	fmt.Println("useracc:", userAcc)
-	if err := s.dh.SaveUserAcc(ctx, &domain.HarborAccount{
-		BaseEntity: repos.BaseEntity{
-			Id: repos.ID(fmt.Sprintf("%d", userAcc.Id)),
+	if err := s.dh.SaveUserAcc(
+		ctx, &domain.HarborAccount{
+			BaseEntity: repos.BaseEntity{
+				Id: repos.ID(fmt.Sprintf("%d", userAcc.Id)),
+			},
+			ProjectName: in.Name,
+			Username:    userAcc.Name,
+			Password:    userAcc.Secret,
 		},
-		ProjectName: in.Name,
-		Username:    userAcc.Name,
-		Password:    userAcc.Secret,
-	}); err != nil {
+	); err != nil {
 		return nil, errors.NewEf(err, "could not save harbor user account into DB")
 	}
 	return &ci.HarborProjectOut{Status: true}, nil
