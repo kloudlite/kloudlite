@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -61,7 +62,6 @@ func (env *Env) GetHarborConfig() (username, password, registryUrl string) {
 }
 
 type AuthCacheClient cache.Client
-
 type CacheClient cache.Client
 
 type AuthClientConnection *grpc.ClientConn
@@ -132,10 +132,16 @@ var Module = fx.Module(
 	// Tekton Interceptor
 	fx.Invoke(
 		func(app *fiber.App, d domain.Domain) error {
+			app.Get(
+				"/tekton/interceptor", func(ctx *fiber.Ctx) error {
+					return ctx.JSON(map[string]string{"hello": "world"})
+				},
+			)
 			app.Post(
-				"/tekton/interceptor/:git-provider", func(ctx *fiber.Ctx) error {
+				"/tekton/interceptor/:gitProvider", func(ctx *fiber.Ctx) error {
+					fmt.Println("HERE, req received ....")
 
-					gitProvider := ctx.Params("git-provider")
+					gitProvider := ctx.Params("gitProvider")
 
 					var req tekton.Request
 					err := json.Unmarshal(ctx.Body(), &req)
@@ -147,7 +153,13 @@ var Module = fx.Module(
 					case common.ProviderGithub:
 						{
 							resp := d.TektonInterceptorGithub(ctx.Context(), &req)
-							return ctx.JSON(resp)
+							jsonBody, err := resp.ToJson()
+							if err != nil {
+								return ctx.JSON(err)
+							}
+
+							fmt.Printf("jsonBody: %s\n", jsonBody)
+							return ctx.Send(jsonBody)
 						}
 					case common.ProviderGitlab:
 						{
@@ -169,7 +181,7 @@ var Module = fx.Module(
 			server *fiber.App,
 			d domain.Domain,
 			env *Env,
-			authCacheClient AuthCacheClient,
+			cacheClient AuthCacheClient,
 		) {
 			schema := generated.NewExecutableSchema(
 				generated.Config{Resolvers: &graph.Resolver{Domain: d}},
@@ -178,7 +190,7 @@ var Module = fx.Module(
 				server,
 				schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
-					authCacheClient,
+					cacheClient,
 					common.CookieName,
 					env.CookieDomain,
 					common.CacheSessionPrefix,

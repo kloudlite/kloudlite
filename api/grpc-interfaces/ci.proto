@@ -9,21 +9,13 @@ service CI {
 }
 
 message PipelineIn {
-  int64 gitlabRepoId = 15;
-  string userId =11;
-  string projectId =12;
-  string RepoName = 13;
-  map<string, string> Metadata =14;
   string name = 1;
-  string imageName = 2;
-  string pipelineEnv = 3;
-  string GitProvider = 4;
-  string GitBranch = 16;
-  string GitRepoUrl = 5;
-  string DockerFile = 6;
-  string ContextDir = 7;
-  int32 GithubInstallationId = 8;
-  map<string, string>  BuildArgs = 10;
+  string gitProvider = 4;
+  string gitRepoUrl = 5;
+  string gitBranch = 6;
+  string userId = 9;
+  string projectId = 10;
+  map<string, string> metadata = 11;
 }
 
 message PipelineOutput {

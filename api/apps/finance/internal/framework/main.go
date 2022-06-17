@@ -62,8 +62,8 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 	return e.DBUrl, e.DBName
 }
 
-func (e *Env) RedisOptions() (hosts, username, password string) {
-	return e.RedisHosts, e.RedisUsername, e.RedisPassword
+func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
+	return e.RedisHosts, e.RedisUsername, e.RedisPassword, basePrefix
 }
 
 func (e *Env) GetHttpPort() uint16 {
@@ -74,7 +74,8 @@ func (e *Env) GetHttpCors() string {
 	return e.HttpCors
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	fx.Provide(logger.NewLogger),
 	config.EnvFx[Env](),
 	config.EnvFx[ConsoleGRPCEnv](),

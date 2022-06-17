@@ -33,9 +33,11 @@ func (repo dbRepo[T]) NewId() ID {
 
 func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	var results []T
-	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.Filter, &options.FindOptions{
-		Sort: query.Sort,
-	})
+	curr, err := repo.db.Collection(repo.collectionName).Find(
+		ctx, query.Filter, &options.FindOptions{
+			Sort: query.Sort,
+		},
+	)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return results, nil
@@ -51,7 +53,7 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 
 func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	res := fn.New[T]()
+	res := fn.NewTypeFromPointer[T]()
 	err := one.Decode(&res)
 	if err != nil {
 		fmt.Println("ERR: ", err)
@@ -62,25 +64,28 @@ func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 
 func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	res := fn.New[T]()
-	err := one.Decode(&res)
+	t := make([]T, 1)
+	// res := fn.NewTypeFromPointer[T]()
+	err := one.Decode(&t[0])
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return res, nil
+			return t[0], nil
 		}
-		return res, err
+		return t[0], err
 	}
-	return res, nil
+	return t[0], nil
 }
 
 func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
 	results := make([]T, 0)
 	var offset int64 = (page - 1) * size
-	curr, e := repo.db.Collection(repo.collectionName).Find(ctx, query.Filter, &options.FindOptions{
-		Limit: &size,
-		Skip:  &offset,
-		Sort:  query.Sort,
-	})
+	curr, e := repo.db.Collection(repo.collectionName).Find(
+		ctx, query.Filter, &options.FindOptions{
+			Limit: &size,
+			Skip:  &offset,
+			Sort:  query.Sort,
+		},
+	)
 	e = curr.All(ctx, results)
 
 	total, e := repo.db.Collection(repo.collectionName).CountDocuments(ctx, query.Filter)
@@ -133,7 +138,8 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 		updateOpts.Upsert = &opt.Upsert
 	}
 
-	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(ctx,
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
+		ctx,
 		&Filter{"id": id},
 		bson.M{"$set": updatedData},
 		updateOpts,
@@ -150,9 +156,11 @@ func (repo dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, err
 	}
 
 	data.SetId(id)
-	return repo.UpdateById(ctx, id, data, UpdateOpts{
-		Upsert: true,
-	})
+	return repo.UpdateById(
+		ctx, id, data, UpdateOpts{
+			Upsert: true,
+		},
+	)
 }
 
 func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
@@ -185,18 +193,20 @@ func (repo dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) err
 				b = append(b, bson.E{Key: field.Key, Value: -1})
 			}
 		}
-		models = append(models, mongo.IndexModel{
-			Keys: b,
-			Options: &options.IndexOptions{
-				Unique: &f.Unique,
+		models = append(
+			models, mongo.IndexModel{
+				Keys: b,
+				Options: &options.IndexOptions{
+					Unique: &f.Unique,
+				},
 			},
-		})
+		)
 	}
 	_, err := repo.db.Collection(repo.collectionName).Indexes().CreateMany(ctx, models)
 	return err
 }
 
-//func (repo dbRepo[T]) Delete(ctx context.Context, query Query) error {
+// func (repo dbRepo[T]) Delete(ctx context.Context, query Query) error {
 //	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.filter, &options.FindOptions{
 //		Sort: query.sort,
 //	})
@@ -211,7 +221,7 @@ func (repo dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) err
 //	dr, e := repo.db.Collection(repo.collectionName).DeleteMany(ctx, query.filter)
 //
 //	return e
-//}
+// }
 
 type MongoRepoOptions struct {
 	IndexFields []string
@@ -232,23 +242,29 @@ func NewMongoRepo[T Entity](
 func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []IndexField) fx.Option {
 	return fx.Module(
 		"repo",
-		fx.Provide(func(db *mongo.Database) DbRepo[T] {
-			return NewMongoRepo[T](
-				db,
-				collectionName,
-				shortName,
-			)
-		}),
-		fx.Invoke(func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
-			lifecycle.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					err := repo.IndexFields(ctx, indexFields)
-					if err != nil {
-						return errors.NewEf(err, "could not create indexes on DB")
-					}
-					return nil
-				},
-			})
-		}),
+		fx.Provide(
+			func(db *mongo.Database) DbRepo[T] {
+				return NewMongoRepo[T](
+					db,
+					collectionName,
+					shortName,
+				)
+			},
+		),
+		fx.Invoke(
+			func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
+				lifecycle.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							err := repo.IndexFields(ctx, indexFields)
+							if err != nil {
+								return errors.NewEf(err, "could not create indexes on DB")
+							}
+							return nil
+						},
+					},
+				)
+			},
+		),
 	)
 }
