@@ -136,16 +136,13 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
-func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error) {
-	installationId := instId
-	if installationId == 0 {
-		owner, repo := gh.getOwnerAndRepo(repoUrl)
-		inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
-		if err != nil {
-			return "", errors.NewEf(err, "could not fetch repository installation")
-		}
-		installationId = *inst.ID
+func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (string, error) {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
+	if err != nil {
+		return "", errors.NewEf(err, "could not fetch repository installation")
 	}
+	installationId := *inst.ID
 	it, _, err := gh.ghCli.Apps.CreateInstallationToken(ctx, installationId, &github.InstallationTokenOptions{})
 	fmt.Println(it)
 	if err != nil {

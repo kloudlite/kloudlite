@@ -13,6 +13,7 @@ import (
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
+	fn "kloudlite.io/pkg/functions"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/types"
@@ -27,18 +28,27 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 	if session == nil {
 		return nil, errors.New("not authorized")
 	}
-	pipeline, err := r.Domain.CreatePipeline(ctx, session.UserId, domain.Pipeline{
-		Name:                 in.Name,
-		ImageName:            in.ImageName,
-		GitProvider:          in.GitProvider,
-		GitBranch:            in.GitBranch,
-		GitRepoUrl:           in.GitRepoURL,
-		DockerFile:           in.DockerFile,
-		ContextDir:           in.ContextDir,
-		GitlabRepoId:         in.GitlabRepoID,
-		GithubInstallationId: in.GithubInstallationID,
-		BuildArgs:            in.BuildArgs,
-	})
+	var pipeline, err = r.Domain.CreatePipeline(
+		ctx, session.UserId, domain.Pipeline{
+			Name:        in.Name,
+			ProjectId:   fn.DefaultIfNil(in.ProjectID),
+			GitProvider: in.GitProvider,
+			GitRepoUrl:  in.GitRepoURL,
+			GitBranch:   in.GitBranch,
+			Build: domain.ContainerImageBuild{
+				BaseImage: in.Build.BaseImage,
+				Cmd:       in.Build.Cmd,
+			},
+			Run: domain.ContainerImageRun{
+				BaseImage: fn.DefaultIfNil(in.Run.BaseImage),
+				Cmd:       in.Run.Cmd,
+			},
+			ArtifactRef: domain.ArtifactRef{
+				DockerImageName: fn.DefaultIfNil(in.ArtifactRef.DockerImageName),
+				DockerImageTag:  fn.DefaultIfNil(in.ArtifactRef.DockerImageTag),
+			},
+		},
+	)
 	marshal, err := json.Marshal(pipeline)
 	if err != nil {
 		return nil, err
@@ -114,16 +124,11 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 	pipelines := make([]*model.GitPipeline, len(pipelineEntities))
 	for i, pipelineE := range pipelineEntities {
 		pipelines[i] = &model.GitPipeline{
-			ID:                   pipelineE.Id,
-			Name:                 pipelineE.Name,
-			ImageName:            pipelineE.ImageName,
-			GitProvider:          pipelineE.GitProvider,
-			GitRepoURL:           pipelineE.GitRepoUrl,
-			DockerFile:           pipelineE.DockerFile,
-			ContextDir:           pipelineE.ContextDir,
-			GithubInstallationID: pipelineE.GithubInstallationId,
-			BuildArgs:            pipelineE.BuildArgs,
-			Metadata:             pipelineE.Metadata,
+			ID:          pipelineE.Id,
+			Name:        pipelineE.Name,
+			GitProvider: pipelineE.GitProvider,
+			GitRepoURL:  pipelineE.GitRepoUrl,
+			Metadata:    pipelineE.Metadata,
 		}
 	}
 	return pipelines, nil
@@ -135,16 +140,11 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		return nil, err
 	}
 	return &model.GitPipeline{
-		ID:                   pipelineE.Id,
-		Name:                 pipelineE.Name,
-		ImageName:            pipelineE.ImageName,
-		GitProvider:          pipelineE.GitProvider,
-		GitRepoURL:           pipelineE.GitRepoUrl,
-		DockerFile:           pipelineE.DockerFile,
-		ContextDir:           pipelineE.ContextDir,
-		GithubInstallationID: pipelineE.GithubInstallationId,
-		BuildArgs:            pipelineE.BuildArgs,
-		Metadata:             pipelineE.Metadata,
+		ID:          pipelineE.Id,
+		Name:        pipelineE.Name,
+		GitProvider: pipelineE.GitProvider,
+		GitRepoURL:  pipelineE.GitRepoUrl,
+		Metadata:    pipelineE.Metadata,
 	}, nil
 }
 

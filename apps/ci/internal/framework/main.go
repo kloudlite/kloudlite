@@ -26,6 +26,7 @@ type Env struct {
 	RedisHost     string `env:"REDIS_HOSTS" required:"true"`
 	RedisUserName string `env:"REDIS_USERNAME" required:"true""`
 	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
+	RedisPrefix   string `env:"REDIS_PREFIX" required:"true"`
 
 	HttpPort    uint16 `env:"PORT" required:"true"`
 	HttpCors    string `env:"ORIGINS" required:"true"`
@@ -35,6 +36,7 @@ type Env struct {
 	AuthRedisHost     string `env:"AUTH_REDIS_HOSTS" required:"true"`
 	AuthRedisUsername string `env:"AUTH_REDIS_USERNAME" required:"true"`
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
+	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 }
 
 func (e *Env) GetSendGridApiKey() string {
@@ -45,8 +47,8 @@ func (e *Env) GetGRPCPort() uint16 {
 	return e.GrpcPort
 }
 
-func (e *Env) RedisOptions() (hosts, username, password string) {
-	return e.RedisHost, e.RedisUserName, e.RedisPassword
+func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
+	return e.RedisHost, e.RedisUserName, e.RedisPassword, basePrefix
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -66,18 +68,21 @@ var Module = fx.Module(
 	fx.Provide(logger.NewLogger),
 	config.EnvFx[Env](),
 	config.EnvFx[GrpcAuthConfig](),
+
 	fx.Provide(
 		func(env *Env) app.AuthCacheClient {
-			options, username, password := env.RedisOptions()
-			return cache.NewRedisClient(options, username, password)
+			return cache.NewRedisClient(env.AuthRedisHost, env.AuthRedisUsername, env.AuthRedisPassword, env.AuthRedisPrefix)
 		},
 	),
+	cache.FxLifeCycle[app.AuthCacheClient](),
+
 	fx.Provide(
 		func(env *Env) app.CacheClient {
-			options, username, password := env.RedisOptions()
-			return cache.NewRedisClient(options, username, password)
+			return cache.NewRedisClient(env.RedisOptions())
 		},
 	),
+	cache.FxLifeCycle[app.CacheClient](),
+
 	httpServer.NewHttpServerFx[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
