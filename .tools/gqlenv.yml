@@ -5,4 +5,4 @@ dev:
   # url: http://localhost:12345/query
   url: http://localhost:8085/query
   headers:
-    cookie: hotspot-session=ses-r-q-rnudifjus-e8igdx3j9bfpas; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None
+    cookie: hotspot-session=ses-wazordx4enb21ou23ku5ft5vrwkg; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None

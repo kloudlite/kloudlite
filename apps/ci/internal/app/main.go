@@ -157,13 +157,18 @@ var Module = fx.Module(
 							if err != nil {
 								return ctx.JSON(err)
 							}
-
 							fmt.Printf("jsonBody: %s\n", jsonBody)
 							return ctx.Send(jsonBody)
 						}
 					case common.ProviderGitlab:
 						{
-							resp := d.TektonInterceptorGithub(ctx.Context(), &req)
+							resp := d.TektonInterceptorGitlab(ctx.Context(), &req)
+							jsonBody, err := resp.ToJson()
+							if err != nil {
+								return ctx.JSON(err)
+							}
+							fmt.Printf("jsonBody: %s\n", jsonBody)
+							return ctx.Send(jsonBody)
 							return ctx.JSON(resp)
 						}
 					}

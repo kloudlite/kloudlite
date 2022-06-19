@@ -7,8 +7,8 @@ import (
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/pkg/types"
 	"net/http"
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -27,10 +27,9 @@ type githubI struct {
 }
 
 func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
-	sp := strings.Split(repoUrl, "https://github.com/")
-	sp = strings.Split(sp[1], ".git")
-	sp = strings.Split(sp[0], "/")
-	return sp[0], sp[1]
+	re := regexp.MustCompile("https://(.*?)/(.*)/(.git)?")
+	matches := re.FindStringSubmatch(repoUrl)
+	return matches[2], matches[3]
 }
 
 func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {

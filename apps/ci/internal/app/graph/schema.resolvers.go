@@ -49,6 +49,9 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 			},
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
 	marshal, err := json.Marshal(pipeline)
 	if err != nil {
 		return nil, err

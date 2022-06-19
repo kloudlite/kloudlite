@@ -115,7 +115,7 @@ var Module = fx.Module(
 	config.EnvFx[GrpcAuthConfig](),
 	config.EnvFx[GrpcCIConfig](),
 
-	fx.Provide(logger.NewLogger),
+	logger.FxProvider(),
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
