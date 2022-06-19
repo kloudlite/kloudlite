@@ -142,7 +142,7 @@ func (p *Pipeline) TriggerHook() error {
 		}
 		return errors.Newf("trigger for repo=%s failed as received StatusCode=%s", p.GitRepoUrl, r.StatusCode)
 	}
-	return errors.Newf("unknown gitprovider=%s, aborting trigger", p.GitProvider)
+	return errors.Newf("unknown gitProvider=%s, aborting trigger", p.GitProvider)
 }
 
 var PipelineIndexes = []repos.IndexField{

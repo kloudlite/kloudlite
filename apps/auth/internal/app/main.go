@@ -13,6 +13,7 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -50,45 +51,54 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 
 type CommsClientConnection *grpc.ClientConn
 
-var Module = fx.Module("app",
+var Module = fx.Module(
+	"app",
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
 	cache.NewFxRepo[*domain.VerifyToken](),
 	cache.NewFxRepo[*domain.ResetPasswordToken](),
 
-	fx.Provide(func(conn CommsClientConnection) comms.CommsClient {
-		return comms.NewCommsClient((*grpc.ClientConn)(conn))
-	}),
+	fx.Provide(
+		func(conn CommsClientConnection) comms.CommsClient {
+			return comms.NewCommsClient((*grpc.ClientConn)(conn))
+		},
+	),
 
 	fx.Provide(fxGithub),
 	fx.Provide(fxGitlab),
 	fx.Provide(fxGoogle),
 
 	fx.Provide(fxRPCServer),
-	fx.Invoke(func(server *grpc.Server, authServer auth.AuthServer) {
-		auth.RegisterAuthServer(server, authServer)
-	}),
+	fx.Invoke(
+		func(server *grpc.Server, authServer auth.AuthServer) {
+			auth.RegisterAuthServer(server, authServer)
+		},
+	),
 
-	fx.Invoke(func(
-		server *fiber.App,
-		d domain.Domain,
-		env *Env,
-		cacheClient cache.Client,
-	) {
-		schema := generated.NewExecutableSchema(
-			generated.Config{Resolvers: graph.NewResolver(d)},
-		)
-		httpServer.SetupGQLServer(
-			server,
-			schema,
-			httpServer.NewSessionMiddleware[*common.AuthSession](
-				cacheClient,
-				common.CookieName,
-				env.CookieDomain,
-				common.CacheSessionPrefix,
-			),
-		)
-	}),
+	logger.FxProvider(),
+
+	fx.Invoke(
+		func(
+			server *fiber.App,
+			d domain.Domain,
+			env *Env,
+			cacheClient cache.Client,
+		) {
+			schema := generated.NewExecutableSchema(
+				generated.Config{Resolvers: graph.NewResolver(d)},
+			)
+			httpServer.SetupGQLServer(
+				server,
+				schema,
+				httpServer.NewSessionMiddleware[*common.AuthSession](
+					cacheClient,
+					common.CookieName,
+					env.CookieDomain,
+					common.CacheSessionPrefix,
+				),
+			)
+		},
+	),
 	domain.Module,
 )

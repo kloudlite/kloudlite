@@ -476,7 +476,6 @@ func (gl *domainI) Hash(t *oauth2.Token) (string, error) {
 }
 
 func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*AccessToken, error) {
-	fmt.Printf("provider: %v userId: %v tokenId: %v\n", provider, userId, tokenId)
 	if tokenId == "" && (provider == "" || userId == "") {
 		return nil, errors.Newf("bad params: [tokenId, (provider, userId)]")
 	}
@@ -484,10 +483,12 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 	if tokenId == "" {
 		q = repos.Filter{"user_id": userId, "provider": provider}
 	}
-	d.logger.Debugf("q: %+v\n", q)
 	accToken, err := d.accessTokenRepo.FindOne(ctx, q)
 	if err != nil {
 		return nil, errors.NewEf(err, "finding access token")
+	}
+	if accToken == nil {
+		return nil, errors.Newf("no token found  for (tokenId=%s, provider=%s, userId=%s)", tokenId, provider, userId)
 	}
 
 	hash, err := d.Hash(accToken.Token)

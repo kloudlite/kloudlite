@@ -18,12 +18,15 @@ func (env *Env) GetGRPCPort() uint16 {
 	return env.Port
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	config.EnvFx[Env](),
-	fx.Provide(logger.NewLogger),
+	logger.FxProvider(),
 	rpc.NewGrpcServerFx[*Env](),
-	fx.Provide(func(env *Env) messaging.KafkaClient {
-		return messaging.NewKafkaClient(env.KafkaBrokers)
-	}),
+	fx.Provide(
+		func(env *Env) messaging.KafkaClient {
+			return messaging.NewKafkaClient(env.KafkaBrokers)
+		},
+	),
 	application.Module,
 )

@@ -7,7 +7,6 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -56,7 +55,6 @@ var Module = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[CommsGrpcEnv](),
-	fx.Provide(logger.NewLogger),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
