@@ -42,6 +42,7 @@ import (
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
+	mysqlStandaloneController "operators.kloudlite.io/controllers/mysql-standalone.msvc"
 	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
 	serverlesscontrollers "operators.kloudlite.io/controllers/serverless"
 	// +kubebuilder:scaffold:imports
@@ -256,23 +257,23 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
 	//	os.Exit(1)
 	// }
-	//
-	// if err = (&mysqlStandaloneControllers.ServiceReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
-	//	os.Exit(1)
-	// }
-	//
-	// if err = (&mysqlStandaloneControllers.DatabaseReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
-	//	os.Exit(1)
-	// }
-	//
+
+	if err = (&mysqlStandaloneController.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+
+	if err = (&mysqlStandaloneController.DatabaseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
+
 	// if err = (&mysqlclustermsvccontrollers.ServiceReconciler{
 	//	Client: mgr.GetClient(),
 	//	Scheme: mgr.GetScheme(),
