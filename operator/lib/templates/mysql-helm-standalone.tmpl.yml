@@ -1,31 +1,33 @@
+{{- $ownerRefs := get . "owner-refs" }}
+{{- $storageClass := get . "storage-class"}}
+{{- $obj := get . "object"}}
+{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
+{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
+
+{{- with $obj }}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMySqlDB
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
-  ownerReferences:
-    - apiVersion: {{.APIVersion}}
-      kind: {{.Kind}}
-      name: {{.Name}}
-      uid: {{.UID}}
-      controller: true
-      blockOwnerDeletion: true
+  ownerReferences: {{ $ownerRefs | toPrettyJson | toYAML | nindent 4 }}
 spec:
-#  global:
-#    storageClass: do-block-storage
+  global:
+    storageClass: do-block-storage
   architecture: standalone
   auth:
     enabled: true
-    password: {{ index (mustFromJson (.Spec.Inputs | toJson)) "mysql-password" }}
-    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "mysql-root-password" }}
+    password: {{ index $generatedVars "mysql-password" }}
+    rootPassword: {{ index $generatedVars "mysql-root-password" }}
   primary:
     persistence:
       enabled: true
-      size: {{ index (mustFromJson (.Spec.Inputs | toJson )) "size" | default "1Gi" }}
+      size: {{ index $inputs "size" | default "1Gi" }}
   resources:
     requests:
-      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_min" | default 400 }}m
-      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_min" | default 400 }}Mi
+      cpu: {{ index $inputs "cpu_min" | default 400 }}m
+      memory: {{ index $inputs "memory_min" | default 400 }}Mi
     limits:
-      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
-      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi
+      cpu: {{ index $inputs "cpu_max" |  default 400}}m
+      memory: {{ index $inputs "memory_max" | default 500}}Mi
+{{- end}}
