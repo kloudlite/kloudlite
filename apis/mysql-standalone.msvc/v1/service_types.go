@@ -3,22 +3,13 @@ package v1
 import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	rApi "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
-
-	fn "operators.kloudlite.io/lib/functions"
 )
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
 	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
-}
-
-// ServiceStatus defines the observed state of Service
-type ServiceStatus struct {
-	LastHash      string              `json:"lastHash,omitempty"`
-	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
-	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
-	OpsConditions []metav1.Condition  `json:"opsConditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -29,38 +20,20 @@ type Service struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ServiceSpec   `json:"spec,omitempty"`
-	Status ServiceStatus `json:"status,omitempty"`
+	Spec   ServiceSpec `json:"spec,omitempty"`
+	Status rApi.Status `json:"status,omitempty"`
 }
 
 func (s *Service) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
 }
 
-func (s Service) LabelRef() (key, value string) {
-	return "msvc.kloudlite.io/service", GroupVersion.Group
+func (s *Service) GetStatus() *rApi.Status {
+	return &s.Status
 }
 
-func (s *Service) HasLabels() bool {
-	key, value := s.LabelRef()
-	if s.Labels[key] != value {
-		return false
-	}
-	return true
-}
-
-func (s *Service) Hash() string {
-	m := make(map[string]interface{}, 3)
-	m["name"] = s.Name
-	m["namespace"] = s.Namespace
-	m["spec"] = s.Spec
-	hash, _ := fn.Json.Hash(m)
-	return hash
-}
-
-func (s *Service) EnsureLabels() {
-	key, value := s.LabelRef()
-	s.SetLabels(map[string]string{key: value})
+func (s *Service) GetEnsuredLabels() map[string]string {
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true
