@@ -60,7 +60,17 @@ func SetLocal[T any, V Resource](r *Request[V], key string, value T) {
 	r.locals[key] = value
 }
 
+type StepResult interface {
+	Err() error
+	Result() ctrl.Result
+	ShouldProceed() bool
+}
+
 func NewStepResult(result *ctrl.Result, err error) StepResult {
+	return newStepResult(result, err)
+}
+
+func newStepResult(result *ctrl.Result, err error) StepResult {
 	return &stepResult{result: result, err: err}
 }
 
@@ -77,12 +87,6 @@ func (s stepResult) Result() ctrl.Result {
 
 func (s stepResult) ShouldProceed() bool {
 	return s.result == nil && s.err == nil
-}
-
-type StepResult interface {
-	Err() error
-	Result() ctrl.Result
-	ShouldProceed() bool
 }
 
 func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName,
@@ -136,7 +140,7 @@ func (r *Request[T]) FailWithStatusError(err error) StepResult {
 	}
 
 	r.Object.GetStatus().Conditions = newConditions
-	return NewStepResult(&ctrl.Result{}, r.client.Status().Update(r.ctx, r.Object))
+	return newStepResult(&ctrl.Result{}, r.client.Status().Update(r.ctx, r.Object))
 }
 
 func (r *Request[T]) FailWithOpError(err error) StepResult {
@@ -155,7 +159,7 @@ func (r *Request[T]) FailWithOpError(err error) StepResult {
 	}
 
 	r.Object.GetStatus().OpsConditions = newConditions
-	return NewStepResult(&ctrl.Result{}, r.client.Status().Update(r.ctx, r.Object))
+	return newStepResult(&ctrl.Result{}, r.client.Status().Update(r.ctx, r.Object))
 }
 
 func (r *Request[T]) Context() context.Context {
@@ -164,13 +168,13 @@ func (r *Request[T]) Context() context.Context {
 
 func (r *Request[T]) Done(result ...*ctrl.Result) StepResult {
 	if len(result) > 0 {
-		return NewStepResult(result[0], nil)
+		return newStepResult(result[0], nil)
 	}
-	return NewStepResult(&ctrl.Result{}, nil)
+	return newStepResult(nil, nil)
 }
 
 func (r *Request[T]) Next() StepResult {
-	return NewStepResult(nil, nil)
+	return newStepResult(nil, nil)
 }
 
 func (r *Request[T]) Finalize() StepResult {
