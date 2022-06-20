@@ -2,24 +2,14 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	rApi "operators.kloudlite.io/lib/operator"
+	rawJson "operators.kloudlite.io/lib/raw-json"
 )
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Database. Edit database_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
-}
-
-// DatabaseStatus defines the observed state of Database
-type DatabaseStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	ManagedSvcName string              `json:"managedSvcName,omitempty"`
+	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -30,8 +20,16 @@ type Database struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DatabaseSpec   `json:"spec,omitempty"`
-	Status DatabaseStatus `json:"status,omitempty"`
+	Spec   DatabaseSpec `json:"spec,omitempty"`
+	Status rApi.Status  `json:"status,omitempty"`
+}
+
+func (db *Database) GetStatus() *rApi.Status {
+	return &db.Status
+}
+
+func (db *Database) GetEnsuredLabels() map[string]string {
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true
