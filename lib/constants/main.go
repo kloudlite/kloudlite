@@ -41,6 +41,11 @@ var (
 		APIVersion: MsvcApiVersion,
 		Kind:       "HelmRedis",
 	}
+
+	HelmMysqlType = metav1.TypeMeta{
+		APIVersion: MsvcApiVersion,
+		Kind:       "HelmMySqlDB",
+	}
 )
 
 var (

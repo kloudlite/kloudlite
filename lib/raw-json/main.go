@@ -70,6 +70,19 @@ func (s *RawJson[K, V]) Merge(val map[K]V) error {
 	return nil
 }
 
+func (s *RawJson[K, V]) Exists(keys ...K) bool {
+	m, err := s.toMap()
+	if err != nil {
+		return false
+	}
+	for _, key := range keys {
+		if _, ok := m[key]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *RawJson[K, V]) Get(key K) (V, bool) {
 	m, err := s.toMap()
 	if err != nil {

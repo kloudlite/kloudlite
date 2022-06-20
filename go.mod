@@ -7,6 +7,7 @@ require (
 	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/go-logr/logr v1.2.0
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
