@@ -38,11 +38,15 @@ import (
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	mysqlclustermsvcv1 "operators.kloudlite.io/apis/mysql-cluster.msvc/v1"
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
+	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
+	elasticsearchmsvccontrollers "operators.kloudlite.io/controllers/elasticsearch.msvc"
+	influxdbmsvccontrollers "operators.kloudlite.io/controllers/influxdb.msvc"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
 	mysqlStandaloneController "operators.kloudlite.io/controllers/mysql-standalone.msvc"
+	opensearchmsvccontrollers "operators.kloudlite.io/controllers/opensearch.msvc"
 	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
 	serverlesscontrollers "operators.kloudlite.io/controllers/serverless"
 	// +kubebuilder:scaffold:imports
@@ -63,9 +67,10 @@ func init() {
 	utilruntime.Must(mysqlclustermsvcv1.AddToScheme(scheme))
 	utilruntime.Must(redisstandalonemsvcv1.AddToScheme(scheme))
 	utilruntime.Must(redisclustermsvcv1.AddToScheme(scheme))
-	utilruntime.Must(elasticsearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(influxdbmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(serverlessv1.AddToScheme(scheme))
+	utilruntime.Must(elasticsearchmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(opensearchmsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -290,22 +295,6 @@ func main() {
 	//	os.Exit(1)
 	// }
 	//
-	// if err = (&elasticsearchmsvccontrollers.ElasticSearchReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "ElasticSearch")
-	//	os.Exit(1)
-	// }
-	//
-	// if err = (&influxdbmsvccontrollers.InfluxDBReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "InfluxDB")
-	//	os.Exit(1)
-	// }
-	//
 	if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -330,6 +319,34 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&elasticsearchmsvccontrollers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&opensearchmsvccontrollers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&influxdbmsvccontrollers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	if err = (&influxdbmsvccontrollers.BucketReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Bucket")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

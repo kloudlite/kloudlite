@@ -5,6 +5,13 @@ tasks:
     cmds:
       - operator-sdk init --plugins helm --domain kloudlite.io --group msvc --version v1 --kind MongoDB --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
 
+  new-kind:
+    vars:
+      Domain: kloudlite.io
+      Group: msvc
+    cmds:
+      - operator-sdk create api --plugins helm --group {{.Group}} --version v1 --kind {{.Kind}} --helm-chart-repo {{.Repo}} --helm-chart {{.Chart}}
+
   deploy:
     env:
       IMG: harbor.dev.madhouselabs.io/kloudlite/koperator-helm:latest

@@ -1,0 +1,49 @@
+{{- $obj := get . "object" }}
+{{- $ownerRefs := get .  "owner-refs" }}
+{{- $storageClass := get . "storage-class"}}
+
+{{- $adminBucket := get . "admin-bucket" |default "primary" }}
+{{- $adminOrg := get . "admin-org" | default "primary"}}
+{{- $adminUsername := get . "admin-username" | default "admin" }}
+
+{{- $inputs := mustFromJson ($obj.Spec.Inputs |toJson) }}
+{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars |toJson) }}
+
+{{- with $obj}}
+apiVersion: msvc.kloudlite.io/v1
+kind: HelmInfluxDB
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences:  {{ $ownerRefs | toYAML | nindent 4}}
+spec:
+  fullnameOverride: {{.Name}}
+  auth:
+    enabled: true
+    admin:
+      bucket: {{ $adminBucket }}
+      org: {{ $adminOrg }}
+      password: {{ index $generatedVars "admin-password" }}
+      token: {{index $generatedVars "admin-token" }}
+      username: {{ $adminUsername }}
+
+  metrics:
+    enabled: true
+
+  volumePermissions:
+    enabled: true
+
+  persistence:
+    accessModes:
+      - ReadWriteOnce
+    enabled: true
+    size: {{ index $inputs "size" }}
+    storageClass: {{$storageClass}}
+
+  influxdb:
+    resources:
+      requests: &resources
+        cpu: {{ index $inputs "cpu"}}m
+        memory: {{index $inputs "memory"}}Mi
+      limits: *resources
+{{- end }}

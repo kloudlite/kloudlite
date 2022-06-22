@@ -1,0 +1,24 @@
+# permissions for end users to edit helminfluxdbs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: helminfluxdb-editor-role
+rules:
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helminfluxdbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helminfluxdbs/status
+  verbs:
+  - get

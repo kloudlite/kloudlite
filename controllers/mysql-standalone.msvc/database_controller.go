@@ -41,7 +41,7 @@ const (
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mysqlStandalone.Database{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mysqlStandalone.Database{})
 
 	if req == nil {
 		return ctrl.Result{}, nil

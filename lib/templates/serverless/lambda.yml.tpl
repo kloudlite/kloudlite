@@ -1,11 +1,13 @@
 {{- $obj := get . "obj" }}
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volumeMounts"}}
+
+{{- with $obj }}
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: {{$obj.Name}}
-  namespace: {{$obj.Namespace}}
+  name: {{.Name}}
+  namespace: {{.Namespace}}
 spec:
   template:
     metadata:
@@ -20,8 +22,9 @@ spec:
     spec:
       serviceAccountName: kloudlite-svc-account
       containers:
-      {{- $myDict := dict "containers" $obj.Spec.Containers "volumeMounts" $vMounts }}
+      {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}
       {{- include "TemplateContainer" $myDict | indent 6 }}
       {{- if $volumes }}
-      volumes: {{- $volumes| toPrettyJson | indent 6 }}
+      volumes: {{- $volumes| toYAML | indent 6 }}
       {{- end}}
+{{- end }}

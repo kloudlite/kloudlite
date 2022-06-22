@@ -14,9 +14,11 @@ resources:
 - bases/mysql-standalone.msvc.kloudlite.io_databases.yaml
 - bases/mysql-cluster.msvc.kloudlite.io_services.yaml
 - bases/mysql-cluster.msvc.kloudlite.io_databases.yaml
-- bases/elasticsearch.msvc.kloudlite.io_elasticsearches.yaml
-- bases/influxdb.msvc.kloudlite.io_influxdbs.yaml
 - bases/redis-standalone.msvc.kloudlite.io_services.yaml
 - bases/redis-standalone.msvc.kloudlite.io_aclaccounts.yaml
 - bases/serverless.kloudlite.io_lambdas.yaml
+- bases/elasticsearch.msvc.kloudlite.io_services.yaml
+- bases/opensearch.msvc.kloudlite.io_services.yaml
+- bases/influxdb.msvc.kloudlite.io_services.yaml
+- bases/influxdb.msvc.kloudlite.io_buckets.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

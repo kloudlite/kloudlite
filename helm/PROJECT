@@ -19,13 +19,6 @@ resources:
     namespaced: true
   domain: kloudlite.io
   group: msvc
-  kind: HelmElasticSearch
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: msvc
   kind: HelmMongoDB
   version: v1
 - api:
@@ -34,5 +27,26 @@ resources:
   domain: kloudlite.io
   group: msvc
   kind: HelmRedis
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: msvc
+  kind: HelmElasticSearch
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: msvc
+  kind: HelmOpenSearch
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: msvc
+  kind: HelmInfluxDB
   version: v1
 version: "3"

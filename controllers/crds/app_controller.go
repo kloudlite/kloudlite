@@ -37,7 +37,7 @@ type AppReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.App{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.App{})
 
 	if req == nil {
 		return ctrl.Result{}, nil

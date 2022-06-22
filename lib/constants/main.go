@@ -16,6 +16,13 @@ const (
 	ForegroundFinalizer string = "foregroundDeletion"
 )
 
+type StorageClass string
+
+const (
+	DoBlockStorage    StorageClass = "do-block-storage"
+	DoBlockStorageXFS StorageClass = "do-block-storage-xfs"
+)
+
 var (
 	PodGroup = metav1.TypeMeta{
 		APIVersion: "v1",
@@ -31,7 +38,9 @@ var (
 		APIVersion: "apps/v1",
 		Kind:       "StatefulSet",
 	}
+)
 
+var (
 	HelmMongoDBType = metav1.TypeMeta{
 		APIVersion: MsvcApiVersion,
 		Kind:       "HelmMongoDB",
@@ -45,6 +54,21 @@ var (
 	HelmMysqlType = metav1.TypeMeta{
 		APIVersion: MsvcApiVersion,
 		Kind:       "HelmMySqlDB",
+	}
+
+	HelmElasticType = metav1.TypeMeta{
+		Kind:       "HelmElasticSearch",
+		APIVersion: MsvcApiVersion,
+	}
+
+	HelmOpenSearchType = metav1.TypeMeta{
+		Kind:       "HelmOpenSearch",
+		APIVersion: MsvcApiVersion,
+	}
+
+	HelmInfluxDBType = metav1.TypeMeta{
+		Kind:       "HelmInfluxDB",
+		APIVersion: MsvcApiVersion,
 	}
 )
 

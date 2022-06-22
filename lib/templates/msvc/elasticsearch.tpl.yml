@@ -1,0 +1,40 @@
+{{- $ownerRefs := get . "owner-refs"}}
+{{- $storageClass := get . "storage-class" }}
+{{- $obj := get . "object"}}
+
+{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
+{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
+
+{{- with $obj}}
+apiVersion: msvc.kloudlite.io/v1
+kind: HelmElasticSearch
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences: {{ $ownerRefs | toPrettyJson | toYAML | nindent 4}}
+spec:
+  replicas: {{index $inputs "replicaCount"}}
+  minimumMasterNodes: {{index $inputs "replicaCount"}}
+
+  volumeClaimTemplate:
+    accessModes: [ "ReadWriteOnce" ]
+    storageClassName: {{$storageClass}}
+    resources:
+      requests:
+        storage: {{index $inputs "size" | default "5Gi" }}
+
+  resources:
+    requests:
+      cpu: {{ index $inputs "cpu" }}m
+      memory: {{ index $inputs "memory" }}Mi
+    limits:
+      cpu: {{ index $inputs "cpu" }}m
+      memory: {{ index $inputs "memory" }}Mi
+
+  secret:
+    enabled: true
+    password: {{ index $generatedVars "password" }}
+
+  service:
+    enabled: false
+{{- end}}
