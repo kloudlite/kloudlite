@@ -6,7 +6,5 @@ metadata:
 spec:
   apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
   inputs:
-    cpu_min: 400
-    cpu_max: 800
-    memory_min: 500
-    memory_max: 500
+    cpu: 600
+    memory: 600

@@ -39,7 +39,7 @@ type ManagedServiceReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/finalizers,verbs=update
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedService{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedService{})
 	if req == nil {
 		return ctrl.Result{}, nil
 	}

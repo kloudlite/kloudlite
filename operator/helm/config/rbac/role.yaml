@@ -288,4 +288,129 @@ rules:
   resources:
   - "statefulsets"
 
+##
+## Rules for msvc.kloudlite.io/v1, Kind: HelmElasticSearch
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helmelasticsearches
+  - helmelasticsearches/status
+  - helmelasticsearches/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "statefulsets"
+- verbs:
+  - "*"
+  apiGroups:
+  - "policy"
+  resources:
+  - "poddisruptionbudgets"
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "services"
+
+##
+## Rules for msvc.kloudlite.io/v1, Kind: HelmOpenSearch
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helmopensearches
+  - helmopensearches/status
+  - helmopensearches/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - "policy"
+  resources:
+  - "poddisruptionbudgets"
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "configmaps"
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "statefulsets"
+
+##
+## Rules for msvc.kloudlite.io/v1, Kind: HelmInfluxDB
+##
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helminfluxdbs
+  - helminfluxdbs/status
+  - helminfluxdbs/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - services/finalizers
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
 #+kubebuilder:scaffold:rules

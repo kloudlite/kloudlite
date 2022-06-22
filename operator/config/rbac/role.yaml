@@ -164,7 +164,7 @@ rules:
 - apiGroups:
   - elasticsearch.msvc.kloudlite.io
   resources:
-  - elasticsearches
+  - services
   verbs:
   - create
   - delete
@@ -176,13 +176,13 @@ rules:
 - apiGroups:
   - elasticsearch.msvc.kloudlite.io
   resources:
-  - elasticsearches/finalizers
+  - services/finalizers
   verbs:
   - update
 - apiGroups:
   - elasticsearch.msvc.kloudlite.io
   resources:
-  - elasticsearches/status
+  - services/status
   verbs:
   - get
   - patch
@@ -190,7 +190,7 @@ rules:
 - apiGroups:
   - influxdb.msvc.kloudlite.io
   resources:
-  - influxdbs
+  - buckets
   verbs:
   - create
   - delete
@@ -202,13 +202,39 @@ rules:
 - apiGroups:
   - influxdb.msvc.kloudlite.io
   resources:
-  - influxdbs/finalizers
+  - buckets/finalizers
   verbs:
   - update
 - apiGroups:
   - influxdb.msvc.kloudlite.io
   resources:
-  - influxdbs/status
+  - buckets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - services/status
   verbs:
   - get
   - patch
@@ -389,6 +415,32 @@ rules:
   - update
 - apiGroups:
   - mysql-standalone.msvc.kloudlite.io
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - opensearch.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - opensearch.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - opensearch.msvc.kloudlite.io
   resources:
   - services/status
   verbs:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	corev1 "k8s.io/api/core/v1"
@@ -29,16 +30,17 @@ type DatabaseReconciler struct {
 }
 
 const (
-	DbUser     string = "DB_USER"
-	DbPassword string = "DB_PASSWORD"
-	DbHosts    string = "DB_HOSTS"
-	DbUrl      string = "DB_URL"
+	MsvcOutputKey   = "msvc-output"
+	MsvcOutputHosts = "DB_HOSTS"
+	MsvcOutputURL   = "DB_URL"
+)
+
+const (
+	MongoUserExists conditions.Type = "MongoUserExists"
 )
 
 const (
 	DbPasswordKey string = "db-password"
-	RootUri       string = "DB_URL"
-	MongoMsvcKey  string = "MongoMsvc"
 )
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
@@ -46,10 +48,9 @@ const (
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Database{})
-
-	if req == nil {
-		return ctrl.Result{}, nil
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Database{})
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -58,7 +59,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 		}
 	}
 
-	req.Logger.Info("-------------------- NEW RECONCILATION------------------")
+	req.Logger.Info("----------------database reconciler -- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
@@ -78,6 +79,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 func (r *DatabaseReconciler) finalize(req *rApi.Request[*mongodbStandalone.Database]) rApi.StepResult {
 	return req.Finalize()
 }
+
 func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone.Database]) rApi.StepResult {
 	ctx := req.Context()
 	databaseObj := req.Object
@@ -92,63 +94,66 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalon
 	)
 
 	if err != nil {
-		return req.FailWithStatusError(err)
-	}
-
-	if !msvc.Status.IsReady {
-		return req.FailWithStatusError(errors.Newf("msvc is not ready"))
-	}
-
-	rApi.SetLocal(req, MongoMsvcKey, msvc)
-
-	// STEP: check managed service output is ready
-	msvcOutput, err2 := rApi.Get(
-		ctx,
-		r.Client,
-		fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-		&corev1.Secret{},
-	)
-	if err2 != nil {
+		isReady = false
+		msvc = nil
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
-		cs = append(cs, conditions.New("MsvcOutputExists", false, "SecretNotFound", err.Error()))
-		isReady = false
+		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
+	} else {
+		cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
+		cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
 	}
 
-	if msvcOutput != nil {
-		rootUri := string(msvcOutput.Data[RootUri])
-		rApi.SetLocal(req, RootUri, rootUri)
-		rApi.SetLocal(req, DbHosts, string(msvcOutput.Data[DbHosts]))
-
-		// STEP: mongo user userExists
-		mc, err := libMongo.NewClient(rootUri)
+	// STEP: retrieve managed svc output (usually secret)
+	if msvc != nil {
+		msvcOutput, err := rApi.Get(
+			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
+			&corev1.Secret{},
+		)
 		if err != nil {
-			return req.FailWithStatusError(err)
-		}
-
-		rApi.SetLocal(req, "MongoCli", mc)
-
-		userExists, err := mc.UserExists(ctx, databaseObj.Name)
-		if err != nil {
-			return req.FailWithStatusError(err)
-		}
-
-		if !userExists {
-			cs = append(cs, conditions.New("MongoUserExists", false, "NotFound"))
 			isReady = false
+			if !apiErrors.IsNotFound(err) {
+				return req.FailWithStatusError(err)
+			}
+			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
+		} else {
+			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
+			rApi.SetLocal(req, MsvcOutputKey, msvcOutput)
 		}
+
+		// STEP: check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
+		mc, err := libMongo.NewClient(string(msvcOutput.Data["DB_URL"]))
+		if err != nil {
+			return req.FailWithStatusError(err)
+		}
+		if err := mc.Connect(ctx); err != nil {
+			return req.FailWithStatusError(err)
+		}
+		defer mc.Close()
+
+		func() {
+			userExists, err := mc.UserExists(ctx, databaseObj.Name)
+			if err != nil {
+				cs = append(cs, conditions.New(MongoUserExists, false, conditions.NotFound, err.Error()))
+				return
+			}
+			if !userExists {
+				cs = append(cs, conditions.New(MongoUserExists, false, conditions.NotFound))
+				return
+			}
+			cs = append(cs, conditions.New(MongoUserExists, true, conditions.Found))
+		}()
 	}
 
 	// STEP: check generated vars
-	_, ok := databaseObj.Status.GeneratedVars.GetString(DbPasswordKey)
-	if !ok {
-		cs = append(cs, conditions.New("GeneratedVars", false, "NotGeneratedYet"))
-		isReady = false
+	if msvc != nil && !databaseObj.Status.GeneratedVars.Exists(DbPasswordKey) {
+		cs = append(cs, conditions.New(conditions.GeneratedVars, false, conditions.NotReconciledYet))
 	} else {
-		cs = append(cs, conditions.New("GeneratedVars", true, "Generated"))
+		cs = append(cs, conditions.New(conditions.GeneratedVars, true, conditions.Found))
 	}
 
+	// STEP: patch conditions
 	newConditions, updated, err := conditions.Patch(databaseObj.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
@@ -161,40 +166,44 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalon
 	databaseObj.Status.IsReady = isReady
 	databaseObj.Status.Conditions = newConditions
 	databaseObj.Status.OpsConditions = []metav1.Condition{}
-	if err := r.Status().Update(ctx, databaseObj); err != nil {
-		return req.FailWithStatusError(err)
-	}
-	return req.Done()
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, databaseObj))
 }
 
 func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStandalone.Database]) rApi.StepResult {
 	ctx := req.Context()
 	databaseObj := req.Object
 
+	// STEP: 1. add finalizers if needed
 	if !controllerutil.ContainsFinalizer(databaseObj, constants.CommonFinalizer) {
 		controllerutil.AddFinalizer(databaseObj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(databaseObj, constants.ForegroundFinalizer)
 
-		if err := r.Update(ctx, databaseObj); err != nil {
-			return req.FailWithStatusError(err)
-		}
-		return req.Next()
+		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, databaseObj))
 	}
 
-	if meta.IsStatusConditionFalse(databaseObj.Status.Conditions, "GeneratedVars") {
+	// STEP: 2. generate vars if needed to
+	if meta.IsStatusConditionFalse(databaseObj.Status.Conditions, conditions.GeneratedVars.String()) {
 		if err := databaseObj.Status.GeneratedVars.Set(DbPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		if err := r.Status().Update(ctx, databaseObj); err != nil {
-			return req.FailWithStatusError(err)
-		}
-		return req.Done()
+		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, databaseObj))
 	}
 
-	mc, ok := rApi.GetLocal[*libMongo.Client](req, "MongoCli")
+	// STEP: 3. retrieve msvc output, need it in creating reconciler output
+	msvcOutput, ok := rApi.GetLocal[corev1.Secret](req, MsvcOutputKey)
 	if !ok {
-		return req.FailWithOpError(errors.Newf("mongo client not found in locals"))
+		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals", MsvcOutputKey))
 	}
+
+	// STEP: 4. create child components like mongo-user, redis-acl etc.
+	mc, err := libMongo.NewClient(string(msvcOutput.Data[MsvcOutputURL]))
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+	if err := mc.Connect(ctx); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	defer mc.Close()
 
 	dbPasswd, ok := databaseObj.Status.GeneratedVars.GetString(DbPasswordKey)
 	if !ok {
@@ -204,10 +213,83 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStand
 		return req.FailWithOpError(err)
 	}
 
-	hosts, ok := rApi.GetLocal[string](req, DbHosts)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key %s not found in locals", DbHosts))
+	// STEP: 5. create reconciler output (eg. secret)
+	if errt := func() error {
+		b, err := templates.Parse(
+			templates.Secret, &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("mres-%s", databaseObj.Name),
+					Namespace: databaseObj.Namespace,
+					OwnerReferences: []metav1.OwnerReference{
+						fn.AsOwner(databaseObj, true),
+					},
+				},
+				StringData: map[string]string{
+					"DB_PASSWORD": dbPasswd,
+					"DB_USER":     databaseObj.Name,
+					"DB_HOSTS":    string(msvcOutput.Data[MsvcOutputHosts]),
+					"DB_URL": fmt.Sprintf(
+						"mongodb://%s:%s@%s/%s",
+						databaseObj.Name, dbPasswd, string(msvcOutput.Data[MsvcOutputHosts]), databaseObj.Name,
+					),
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if _, err := fn.KubectlApplyExec(b); err != nil {
+			return err
+		}
+		return nil
+	}(); errt != nil {
+		return req.FailWithOpError(errt)
 	}
+
+	return req.Done()
+}
+
+func (r *DatabaseReconciler) reconcileOperations2(req *rApi.Request[*mongodbStandalone.Database]) rApi.StepResult {
+	ctx := req.Context()
+	databaseObj := req.Object
+
+	if !controllerutil.ContainsFinalizer(databaseObj, constants.CommonFinalizer) {
+		controllerutil.AddFinalizer(databaseObj, constants.CommonFinalizer)
+		controllerutil.AddFinalizer(databaseObj, constants.ForegroundFinalizer)
+
+		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, databaseObj))
+	}
+
+	if meta.IsStatusConditionFalse(databaseObj.Status.Conditions, conditions.GeneratedVars.String()) {
+		if err := databaseObj.Status.GeneratedVars.Set(DbPasswordKey, fn.CleanerNanoid(40)); err != nil {
+			return req.FailWithStatusError(err)
+		}
+		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, databaseObj))
+	}
+
+	msvcOutput, ok := rApi.GetLocal[corev1.Secret](req, MsvcOutputKey)
+	if !ok {
+		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals"))
+	}
+
+	mc, err := libMongo.NewClient(string(msvcOutput.Data[MsvcOutputURL]))
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+	if err := mc.Connect(ctx); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	defer mc.Close()
+
+	dbPasswd, ok := databaseObj.Status.GeneratedVars.GetString(DbPasswordKey)
+	if !ok {
+		return req.FailWithOpError(errors.Newf("key %s not found in GeneratedVars", DbPasswordKey))
+	}
+	if err := mc.UpsertUser(ctx, databaseObj.Name, databaseObj.Name, dbPasswd); err != nil {
+		return req.FailWithOpError(err)
+	}
+
 	outScrt := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: databaseObj.Namespace,
@@ -217,12 +299,12 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStand
 			},
 		},
 		StringData: map[string]string{
-			DbPassword: dbPasswd,
-			DbUser:     databaseObj.Name,
-			DbHosts:    hosts,
-			DbUrl: fmt.Sprintf(
+			"DB_PASSWORD": dbPasswd,
+			"DB_USER":     databaseObj.Name,
+			"DB_HOSTS":    string(msvcOutput.Data[MsvcOutputHosts]),
+			"DB_URL": fmt.Sprintf(
 				"mongodb://%s:%s@%s/%s",
-				databaseObj.Name, dbPasswd, hosts, databaseObj.Name,
+				databaseObj.Name, dbPasswd, string(msvcOutput.Data[MsvcOutputHosts]), databaseObj.Name,
 			),
 		},
 	}

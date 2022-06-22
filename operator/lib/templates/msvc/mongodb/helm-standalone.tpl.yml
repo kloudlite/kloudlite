@@ -1,0 +1,44 @@
+{{- $ownerRefs := get . "owner-refs"}}
+{{- $storageClass := get . "storage-class"}}
+{{- $obj :=  get . "object" }}
+
+{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson)}}
+{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
+
+{{- with $obj }}
+apiVersion: msvc.kloudlite.io/v1
+kind: HelmMongoDB
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  {{- if .Labels }}
+  labels: {{ .Labels | toYAML | nindent 4 }}
+  {{- end}}
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
+spec:
+  global:
+    storageClass: {{ $storageClass }}
+  fullnameOverride: {{.Name}}
+  image:
+    tag: 5.0.8-debian-10-r20
+
+  {{- if .Labels }}
+  commonLabels: {{.Labels | toYAML | nindent 4}}
+  {{- end}}
+
+  auth:
+    enabled: true
+    rootPassword: {{ index $generatedVars "root-password" }}
+  persistence:
+    enabled: true
+    size: {{ index $inputs "size" | default "1Gi" }}
+  volumePermissions:
+    enabled: true
+  metrics:
+    enabled: false
+  resources:
+    requests: &cpu-and-mem
+      cpu: {{ index $inputs "cpu" }}m
+      memory: {{ index $inputs "memory" }}Mi
+    limits: *cpu-and-mem
+{{- end }}

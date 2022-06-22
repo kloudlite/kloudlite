@@ -31,7 +31,7 @@ const (
 )
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mysqlStandalone.Service{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mysqlStandalone.Service{})
 
 	if req == nil {
 		return ctrl.Result{}, nil

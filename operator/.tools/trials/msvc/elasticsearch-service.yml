@@ -1,0 +1,12 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: elastic
+  namespace: hotspot
+spec:
+  apiVersion: elasticsearch.msvc.kloudlite.io/v1
+  inputs:
+    replicaCount: 1
+    cpu: 500
+    memory: 700
+    size: 2Gi

@@ -1,0 +1,20 @@
+# permissions for end users to view helminfluxdbs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: helminfluxdb-viewer-role
+rules:
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helminfluxdbs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - msvc.kloudlite.io
+  resources:
+  - helminfluxdbs/status
+  verbs:
+  - get

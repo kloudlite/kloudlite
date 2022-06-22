@@ -1,0 +1,11 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: influx-example
+  namespace: hotspot
+spec:
+  apiVersion: influxdb.msvc.kloudlite.io/v1
+  inputs:
+    cpu: 500
+    memory: 700
+    size: 2Gi
