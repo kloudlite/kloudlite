@@ -7,6 +7,8 @@ import (
 
 type Domain interface {
 	GetRecords(ctx context.Context, host string) ([]*Record, error)
+	DeleteRecords(ctx context.Context, host string, siteId string) error
+	AddARecords(ctx context.Context, host string, aRecords []string, siteId string) error
 	VerifySite(ctx context.Context, vid repos.ID) error
 	GetVerification(ctx context.Context, accountId repos.ID, siteId repos.ID) (*Verification, error)
 	GetSites(ctx context.Context, accountId string) ([]*Site, error)
