@@ -4,907 +4,148 @@ metadata:
   name: helmelasticsearch-sample
 spec:
   # Default values copied from <project_dir>/helm-charts/elasticsearch/values.yaml
-  clusterDomain: cluster.local
-  clusterName: elastic
-  common:
-    exampleValue: common-chart
-    global:
-      elasticsearch:
-        service:
-          name: elasticsearch
-          ports:
-            restAPI: 9200
-      imagePullSecrets: []
-      imageRegistry: ""
-      kibanaEnabled: false
-      storageClass: ""
-  commonAnnotations: {}
-  commonLabels: {}
-  config: {}
-  containerPorts:
-    restAPI: 9200
-    transport: 9300
-  coordinating:
-    affinity: {}
-    args: []
-    autoscaling:
-      enabled: false
-      maxReplicas: 11
-      minReplicas: 3
-      targetCPU: ""
-      targetMemory: ""
-    command: []
-    containerSecurityContext:
-      enabled: true
-      runAsNonRoot: true
-      runAsUser: 1001
-    customLivenessProbe: {}
-    customReadinessProbe: {}
-    customStartupProbe: {}
-    extraEnvVars: []
-    extraEnvVarsCM: ""
-    extraEnvVarsSecret: ""
-    extraVolumeMounts: []
-    extraVolumes: []
-    fullnameOverride: ""
-    heapSize: 128m
-    hostAliases: []
-    initContainers: []
-    lifecycleHooks: {}
-    livenessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    nameOverride: ""
-    nodeAffinityPreset:
-      key: ""
-      type: ""
-      values: []
-    nodeSelector: {}
-    podAffinityPreset: ""
-    podAnnotations: {}
-    podAntiAffinityPreset: ""
-    podLabels: {}
-    podManagementPolicy: Parallel
-    podSecurityContext:
-      enabled: true
-      fsGroup: 1001
-    priorityClassName: ""
-    readinessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    replicaCount: 2
-    resources:
-      limits: {}
-      requests:
-        cpu: 25m
-        memory: 256Mi
-    schedulerName: ""
-    serviceAccount:
-      annotations: {}
-      automountServiceAccountToken: true
-      create: false
-      name: ""
-    sidecars: []
-    startupProbe:
-      enabled: false
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    terminationGracePeriodSeconds: ""
-    tolerations: []
-    topologySpreadConstraints: []
-    updateStrategy:
-      type: RollingUpdate
-  curator:
-    affinity: {}
-    args: []
-    command: []
-    configMaps:
-      action_file_yml: ""
-      config_yml: ""
-    containerSecurityContext:
-      enabled: true
-      runAsNonRoot: true
-      runAsUser: 1001
-    cronjob:
-      concurrencyPolicy: ""
-      cronjobAnnotations: {}
-      cronjobLabels: {}
-      failedJobsHistoryLimit: ""
-      jobAnnotations: {}
-      jobLabels: {}
-      jobRestartPolicy: Never
-      schedule: 0 1 * * *
-      successfulJobsHistoryLimit: ""
-    dryRun: false
-    enabled: false
-    extraEnvVars: []
-    extraEnvVarsCM: ""
-    extraEnvVarsSecret: ""
-    extraVolumeMounts: []
-    extraVolumes: []
-    fullnameOverride: ""
-    hooks:
-      install: false
-      upgrade: false
-    hostAliases: []
-    image:
-      pullPolicy: IfNotPresent
-      pullSecrets: []
-      registry: docker.io
-      repository: bitnami/elasticsearch-curator
-      tag: 5.8.4-debian-10-r333
-    initContainers: []
-    jobAnnotations: {}
-    jobLabels: {}
-    lifecycleHooks: {}
-    nameOverride: ""
-    nodeAffinityPreset:
-      key: ""
-      type: ""
-      values: []
-    nodeSelector: {}
-    podAffinityPreset: ""
-    podAnnotations: {}
-    podAntiAffinityPreset: ""
-    podLabels: {}
-    podSecurityContext:
-      enabled: true
-      fsGroup: 1001
-    priorityClassName: ""
-    psp:
-      create: false
-    rbac:
-      enabled: false
-      rules: []
-    resources:
-      limits: {}
-      requests: {}
-    schedulerName: ""
-    serviceAccount:
-      annotations: {}
-      automountServiceAccountToken: true
-      create: true
-      name: ""
-    sidecars: []
-    tolerations: []
-    topologySpreadConstraints: []
-  data:
-    affinity: {}
-    args: []
-    autoscaling:
-      enabled: false
-      maxReplicas: 11
-      minReplicas: 3
-      targetCPU: ""
-      targetMemory: ""
-    command: []
-    containerSecurityContext:
-      enabled: true
-      runAsNonRoot: true
-      runAsUser: 1001
-    customLivenessProbe: {}
-    customReadinessProbe: {}
-    customStartupProbe: {}
-    extraEnvVars: []
-    extraEnvVarsCM: ""
-    extraEnvVarsSecret: ""
-    extraVolumeMounts: []
-    extraVolumes: []
-    fullnameOverride: ""
-    heapSize: 1024m
-    hostAliases: []
-    initContainers: []
-    lifecycleHooks: {}
-    livenessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    nameOverride: ""
-    nodeAffinityPreset:
-      key: ""
-      type: ""
-      values: []
-    nodeSelector: {}
-    persistence:
-      accessModes:
-      - ReadWriteOnce
-      annotations: {}
-      enabled: true
-      existingClaim: ""
-      existingVolume: ""
-      selector: {}
-      size: 8Gi
-      storageClass: ""
-    podAffinityPreset: ""
-    podAnnotations: {}
-    podAntiAffinityPreset: ""
-    podLabels: {}
-    podManagementPolicy: Parallel
-    podSecurityContext:
-      enabled: true
-      fsGroup: 1001
-    priorityClassName: ""
-    readinessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    replicaCount: 2
-    resources:
-      limits: {}
-      requests:
-        cpu: 25m
-        memory: 2048Mi
-    schedulerName: ""
-    serviceAccount:
-      annotations: {}
-      automountServiceAccountToken: true
-      create: false
-      name: ""
-    sidecars: []
-    startupProbe:
-      enabled: false
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    terminationGracePeriodSeconds: ""
-    tolerations: []
-    topologySpreadConstraints: []
-    updateStrategy:
-      type: RollingUpdate
-  diagnosticMode:
-    args:
-    - infinity
-    command:
-    - sleep
-    enabled: false
-  extraConfig: {}
-  extraDeploy: []
-  extraEnvVars: []
-  extraEnvVarsCM: ""
-  extraEnvVarsSecret: ""
+  antiAffinity: hard
+  antiAffinityTopologyKey: kubernetes.io/hostname
+  clusterDeprecationIndexing: "false"
+  clusterHealthCheckParams: wait_for_status=green&timeout=1s
+  clusterName: elasticsearch
+  enableServiceLinks: true
+  envFrom: []
+  esConfig: {}
+  esJavaOpts: ""
+  esJvmOptions: {}
+  esMajorVersion: ""
+  extraContainers: []
+  extraEnvs: []
+  extraInitContainers: []
   extraVolumeMounts: []
   extraVolumes: []
+  fsGroup: ""
   fullnameOverride: ""
-  global:
-    elasticsearch:
-      service:
-        name: elasticsearch
-        ports:
-          restAPI: 9200
-    imagePullSecrets: []
-    imageRegistry: ""
-    kibanaEnabled: false
-    storageClass: ""
-  image:
-    debug: false
-    pullPolicy: IfNotPresent
-    pullSecrets: []
-    registry: docker.io
-    repository: bitnami/elasticsearch
-    tag: 8.2.0-debian-10-r1
-  ingest:
-    affinity: {}
-    args: []
-    autoscaling:
-      enabled: false
-      maxReplicas: 11
-      minReplicas: 3
-      targetCPU: ""
-      targetMemory: ""
-    command: []
-    containerPorts:
-      restAPI: 9200
-      transport: 9300
-    containerSecurityContext:
-      enabled: true
-      runAsNonRoot: true
-      runAsUser: 1001
-    customLivenessProbe: {}
-    customReadinessProbe: {}
-    customStartupProbe: {}
-    extraEnvVars: []
-    extraEnvVarsCM: ""
-    extraEnvVarsSecret: ""
-    extraVolumeMounts: []
-    extraVolumes: []
-    fullnameOverride: ""
-    heapSize: 128m
-    hostAliases: []
-    ingress:
-      annotations: {}
-      apiVersion: ""
-      enabled: false
-      extraHosts: []
-      extraPaths: []
-      extraRules: []
-      extraTls: []
-      hostname: elasticsearch-ingest.local
-      ingressClassName: ""
-      path: /
-      pathType: ImplementationSpecific
-      secrets: []
-      selfSigned: false
-      tls: false
-    initContainers: []
-    lifecycleHooks: {}
-    livenessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    nameOverride: ""
-    nodeAffinityPreset:
-      key: ""
-      type: ""
-      values: []
-    nodeSelector: {}
-    podAffinityPreset: ""
-    podAnnotations: {}
-    podAntiAffinityPreset: ""
-    podLabels: {}
-    podManagementPolicy: Parallel
-    podSecurityContext:
-      enabled: true
-      fsGroup: 1001
-    priorityClassName: ""
-    readinessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    replicaCount: 2
-    resources:
-      limits: {}
-      requests:
-        cpu: 25m
-        memory: 256Mi
-    schedulerName: ""
-    service:
-      annotations: {}
-      clusterIP: ""
-      enabled: false
-      externalTrafficPolicy: Cluster
-      extraPorts: []
-      loadBalancerIP: ""
-      loadBalancerSourceRanges: []
-      nodePorts:
-        restAPI: ""
-        transport: ""
-      ports:
-        restAPI: 9200
-        transport: 9300
-      sessionAffinity: None
-      sessionAffinityConfig: {}
-      type: ClusterIP
-    serviceAccount:
-      annotations: {}
-      automountServiceAccountToken: true
-      create: false
-      name: ""
-    sidecars: []
-    startupProbe:
-      enabled: false
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    terminationGracePeriodSeconds: ""
-    tolerations: []
-    topologySpreadConstraints: []
-    updateStrategy:
-      type: RollingUpdate
+  healthNameOverride: ""
+  hostAliases: []
+  httpPort: 9200
+  image: docker.elastic.co/elasticsearch/elasticsearch
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+  imageTag: 7.17.3
   ingress:
     annotations: {}
-    apiVersion: ""
+    className: nginx
     enabled: false
-    extraHosts: []
-    extraPaths: []
-    extraRules: []
-    extraTls: []
-    hostname: elasticsearch.local
-    ingressClassName: ""
-    path: /
-    pathType: ImplementationSpecific
-    secrets: []
-    selfSigned: false
-    tls: false
-  initContainers: []
-  initScripts: {}
-  initScriptsCM: ""
-  initScriptsSecret: ""
-  kibana:
-    affinity: {}
-    args: []
-    clusterDomain: cluster.local
-    command: []
-    common:
-      exampleValue: common-chart
-      global:
-        elasticsearch:
-          service:
-            name: elasticsearch
-            ports:
-              restAPI: 9200
-        imagePullSecrets: []
-        imageRegistry: ""
-        kibanaEnabled: false
-        storageClass: ""
-    commonAnnotations: {}
-    commonLabels: {}
-    configuration:
-      server:
-        basePath: ""
-        rewriteBasePath: false
-    configurationCM: ""
-    containerPorts:
-      http: 5601
-    containerSecurityContext:
-      enabled: true
-      runAsNonRoot: true
-      runAsUser: 1001
-    customLivenessProbe: {}
-    customReadinessProbe: {}
-    customStartupProbe: {}
-    diagnosticMode:
-      args:
-      - infinity
-      command:
-      - sleep
-      enabled: false
-    elasticsearch:
-      hosts:
-      - '{{ include "elasticsearch.service.name" . }}'
-      port: '{{ include "elasticsearch.service.ports.restAPI" . }}'
-      security:
-        auth:
-          createSystemUser: false
-          elasticsearchPasswordSecret: ""
-          enabled: false
-          existingSecret: ""
-          kibanaPassword: ""
-        tls:
-          enabled: false
-          existingSecret: ""
-          passwordsSecret: ""
-          truststorePassword: ""
-          usePemCerts: false
-          verificationMode: full
-    extraConfiguration: {}
-    extraDeploy: []
-    extraEnvVars: []
-    extraEnvVarsCM: ""
-    extraEnvVarsSecret: ""
-    extraVolumeMounts: []
-    extraVolumes: []
-    forceInitScripts: false
-    fullnameOverride: ""
-    global:
-      elasticsearch:
-        service:
-          name: elasticsearch
-          ports:
-            restAPI: 9200
-      imagePullSecrets: []
-      imageRegistry: ""
-      kibanaEnabled: false
-      storageClass: ""
-    hostAliases: []
-    image:
-      debug: false
-      pullPolicy: IfNotPresent
-      pullSecrets: []
-      registry: docker.io
-      repository: bitnami/kibana
-      tag: 8.2.0-debian-10-r0
-    ingress:
-      annotations: {}
-      apiVersion: ""
-      enabled: false
-      extraHosts: []
-      extraPaths: []
-      extraRules: []
-      extraTls: []
-      hostname: kibana.local
-      ingressClassName: ""
-      path: /
-      pathType: ImplementationSpecific
-      secrets: []
-      selfSigned: false
-      tls: false
-    initContainers: []
-    initScriptsCM: ""
-    initScriptsSecret: ""
-    kubeVersion: ""
-    lifecycleHooks: {}
-    livenessProbe:
-      enabled: true
-      failureThreshold: 6
-      initialDelaySeconds: 120
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    metrics:
-      enabled: false
-      service:
-        annotations:
-          prometheus.io/path: _prometheus/metrics
-          prometheus.io/port: "80"
-          prometheus.io/scrape: "true"
-      serviceMonitor:
-        enabled: false
-        honorLabels: false
-        interval: ""
-        jobLabel: ""
-        labels: {}
-        metricRelabelings: []
-        namespace: ""
-        relabelings: []
-        scrapeTimeout: ""
-        selector: {}
-    nameOverride: ""
-    nodeAffinityPreset:
-      key: ""
-      type: ""
-      values: []
-    nodeSelector: {}
-    persistence:
-      accessModes:
-      - ReadWriteOnce
-      annotations: {}
-      dataSource: {}
-      enabled: true
-      existingClaim: ""
-      selector: {}
-      size: 10Gi
-      storageClass: ""
-      subPath: ""
-    plugins: []
-    podAffinityPreset: ""
-    podAnnotations: {}
-    podAntiAffinityPreset: soft
-    podLabels: {}
-    podSecurityContext:
-      enabled: true
-      fsGroup: 1001
-    priorityClassName: ""
-    readinessProbe:
-      enabled: true
-      failureThreshold: 6
-      initialDelaySeconds: 30
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    replicaCount: 1
-    resources:
-      limits: {}
-      requests: {}
-    savedObjects:
-      configmap: ""
-      urls: []
-    schedulerName: ""
-    service:
-      annotations: {}
-      clusterIP: ""
-      externalTrafficPolicy: Cluster
-      extraPorts: []
-      labels: {}
-      loadBalancerIP: ""
-      loadBalancerSourceRanges: []
-      nodePorts:
-        http: ""
-      ports:
-        http: 5601
-      sessionAffinity: None
-      sessionAffinityConfig: {}
-      type: ClusterIP
-    serviceAccount:
-      annotations: {}
-      automountServiceAccountToken: true
-      create: true
-      name: ""
-    sidecars: []
-    startupProbe:
-      enabled: false
-      failureThreshold: 6
-      initialDelaySeconds: 120
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    terminationGracePeriodSeconds: ""
-    tls:
-      autoGenerated: false
-      enabled: false
-      existingSecret: ""
-      keyPassword: ""
-      keystorePassword: ""
-      passwordsSecret: ""
-      usePemCerts: false
-    tolerations: []
-    topologySpreadConstraints: []
-    updateStrategy:
-      type: RollingUpdate
-    volumePermissions:
-      enabled: false
-      image:
-        pullPolicy: IfNotPresent
-        pullSecrets: []
-        registry: docker.io
-        repository: bitnami/bitnami-shell
-        tag: 10-debian-10-r415
-      resources: {}
-  kubeVersion: ""
-  master:
-    affinity: {}
-    args: []
-    autoscaling:
-      enabled: false
-      maxReplicas: 11
-      minReplicas: 3
-      targetCPU: ""
-      targetMemory: ""
-    command: []
-    containerSecurityContext:
-      enabled: true
-      runAsNonRoot: true
-      runAsUser: 1001
-    customLivenessProbe: {}
-    customReadinessProbe: {}
-    customStartupProbe: {}
-    extraEnvVars: []
-    extraEnvVarsCM: ""
-    extraEnvVarsSecret: ""
-    extraVolumeMounts: []
-    extraVolumes: []
-    fullnameOverride: ""
-    heapSize: 128m
-    hostAliases: []
-    initContainers: []
-    lifecycleHooks: {}
-    livenessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    masterOnly: true
-    nameOverride: ""
-    nodeAffinityPreset:
-      key: ""
-      type: ""
-      values: []
-    nodeSelector: {}
-    persistence:
-      accessModes:
-      - ReadWriteOnce
-      annotations: {}
-      enabled: true
-      existingClaim: ""
-      existingVolume: ""
-      selector: {}
-      size: 8Gi
-      storageClass: ""
-    podAffinityPreset: ""
-    podAnnotations: {}
-    podAntiAffinityPreset: ""
-    podLabels: {}
-    podManagementPolicy: Parallel
-    podSecurityContext:
-      enabled: true
-      fsGroup: 1001
-    priorityClassName: ""
-    readinessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    replicaCount: 2
-    resources:
-      limits: {}
-      requests:
-        cpu: 25m
-        memory: 256Mi
-    schedulerName: ""
-    serviceAccount:
-      annotations: {}
-      automountServiceAccountToken: true
-      create: false
-      name: ""
-    sidecars: []
-    startupProbe:
-      enabled: false
-      failureThreshold: 5
-      initialDelaySeconds: 90
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    terminationGracePeriodSeconds: ""
-    tolerations: []
-    topologySpreadConstraints: []
-    updateStrategy:
-      type: RollingUpdate
-  metrics:
-    affinity: {}
-    args: []
-    command: []
-    containerSecurityContext:
-      enabled: true
-      runAsNonRoot: true
-      runAsUser: 1001
-    customLivenessProbe: {}
-    customReadinessProbe: {}
-    customStartupProbe: {}
-    enabled: false
-    extraArgs: []
-    extraEnvVars: []
-    extraEnvVarsCM: ""
-    extraEnvVarsSecret: ""
-    extraVolumeMounts: []
-    extraVolumes: []
-    fullnameOverride: ""
-    hostAliases: []
-    image:
-      pullPolicy: IfNotPresent
-      pullSecrets: []
-      registry: docker.io
-      repository: bitnami/elasticsearch-exporter
-      tag: 1.3.0-debian-10-r188
-    initContainers: []
-    livenessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 60
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 5
-    nameOverride: ""
-    nodeAffinityPreset:
-      key: ""
-      type: ""
-      values: []
-    nodeSelector: {}
-    podAffinityPreset: ""
-    podAnnotations:
-      prometheus.io/port: "9114"
-      prometheus.io/scrape: "true"
-    podAntiAffinityPreset: ""
-    podLabels: {}
-    podSecurityContext:
-      enabled: true
-      fsGroup: 1001
-    priorityClassName: ""
-    readinessProbe:
-      enabled: true
-      failureThreshold: 5
-      initialDelaySeconds: 5
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 1
-    resources:
-      limits: {}
-      requests: {}
-    schedulerName: ""
-    service:
-      annotations:
-        prometheus.io/port: "9114"
-        prometheus.io/scrape: "true"
-      port: 9114
-      type: ClusterIP
-    serviceMonitor:
-      enabled: false
-      honorLabels: false
-      interval: ""
-      jobLabel: ""
-      labels: {}
-      metricRelabelings: []
-      namespace: ""
-      relabelings: []
-      scrapeTimeout: ""
-      selector: {}
-    sidecars: []
-    startupProbe:
-      enabled: false
-      failureThreshold: 5
-      initialDelaySeconds: 5
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 1
-    tolerations: []
-    topologySpreadConstraints: []
+    hosts:
+    - host: chart-example.local
+      paths:
+      - path: /
+    pathtype: ImplementationSpecific
+    tls: []
+  initResources: {}
+  keystore: []
+  labels: {}
+  lifecycle: {}
+  masterService: ""
+  maxUnavailable: 1
+  minimumMasterNodes: 2
   nameOverride: ""
-  namespaceOverride: ""
-  plugins: ""
-  security:
-    elasticPassword: ""
-    enabled: false
-    existingSecret: ""
-    fipsMode: false
-    tls:
-      autoGenerated: false
-      coordinating:
-        existingSecret: ""
-      data:
-        existingSecret: ""
-      ingest:
-        existingSecret: ""
-      keyPassword: ""
-      keystoreFilename: elasticsearch.keystore.jks
-      keystorePassword: ""
-      master:
-        existingSecret: ""
-      passwordsSecret: ""
-      restEncryption: true
-      secretKey: ""
-      secretKeystoreKey: ""
-      secretTruststoreKey: ""
-      truststoreFilename: elasticsearch.truststore.jks
-      truststorePassword: ""
-      usePemCerts: false
-      verificationMode: full
+  networkHost: 0.0.0.0
+  networkPolicy:
+    http:
+      enabled: false
+    transport:
+      enabled: false
+  nodeAffinity: {}
+  nodeGroup: master
+  nodeSelector: {}
+  persistence:
+    annotations: {}
+    enabled: true
+    labels:
+      enabled: false
+  podAnnotations: {}
+  podManagementPolicy: Parallel
+  podSecurityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+  podSecurityPolicy:
+    create: false
+    name: ""
+    spec:
+      fsGroup:
+        rule: RunAsAny
+      privileged: true
+      runAsUser:
+        rule: RunAsAny
+      seLinux:
+        rule: RunAsAny
+      supplementalGroups:
+        rule: RunAsAny
+      volumes:
+      - secret
+      - configMap
+      - persistentVolumeClaim
+      - emptyDir
+  priorityClassName: ""
+  protocol: http
+  rbac:
+    automountToken: true
+    create: false
+    serviceAccountAnnotations: {}
+    serviceAccountName: ""
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 3
+    timeoutSeconds: 5
+  replicas: 3
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  roles:
+    data: "true"
+    ingest: "true"
+    master: "true"
+    ml: "true"
+    remote_cluster_client: "true"
+  schedulerName: ""
+  secretMounts: []
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    runAsNonRoot: true
+    runAsUser: 1000
   service:
     annotations: {}
-    clusterIP: ""
-    externalTrafficPolicy: Cluster
-    extraPorts: []
+    enabled: true
+    externalTrafficPolicy: ""
+    httpPortName: http
+    labels: {}
+    labelsHeadless: {}
     loadBalancerIP: ""
     loadBalancerSourceRanges: []
-    nodePorts:
-      restAPI: ""
-      transport: ""
-    ports:
-      restAPI: 9200
-      transport: 9300
-    sessionAffinity: None
-    sessionAffinityConfig: {}
+    nodePort: ""
+    publishNotReadyAddresses: false
+    transportPortName: transport
     type: ClusterIP
-  sidecars: []
-  snapshotRepoPath: ""
-  sysctlImage:
+  sysctlInitContainer:
     enabled: true
-    pullPolicy: IfNotPresent
-    pullSecrets: []
-    registry: docker.io
-    repository: bitnami/bitnami-shell
+  sysctlVmMaxMapCount: 262144
+  terminationGracePeriod: 120
+  tests:
+    enabled: true
+  tolerations: []
+  transportPort: 9300
+  updateStrategy: RollingUpdate
+  volumeClaimTemplate:
+    accessModes:
+    - ReadWriteOnce
     resources:
-      limits: {}
-      requests: {}
-    tag: 10-debian-10-r415
-  volumePermissions:
-    enabled: false
-    image:
-      pullPolicy: IfNotPresent
-      pullSecrets: []
-      registry: docker.io
-      repository: bitnami/bitnami-shell
-      tag: 10-debian-10-r415
-    resources:
-      limits: {}
-      requests: {}
+      requests:
+        storage: 30Gi
   
   

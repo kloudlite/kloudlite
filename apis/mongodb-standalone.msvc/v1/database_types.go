@@ -29,6 +29,7 @@ type Database struct {
 func (s *Database) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
 }
+
 func (s *Database) GetStatus() *rApi.Status {
 	return &s.Status
 }

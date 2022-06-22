@@ -8,4 +8,6 @@ resources:
 - msvc_v1_helmelasticsearch.yaml
 - msvc_v1_helmmongodb.yaml
 - msvc_v1_helmredis.yaml
+- msvc_v1_helmopensearch.yaml
+- msvc_v1_helminfluxdb.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

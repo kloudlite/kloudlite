@@ -2,23 +2,20 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
-  name: elasticsearches.elasticsearch.msvc.kloudlite.io
+  name: helmopensearches.msvc.kloudlite.io
 spec:
-  group: elasticsearch.msvc.kloudlite.io
+  group: msvc.kloudlite.io
   names:
-    kind: ElasticSearch
-    listKind: ElasticSearchList
-    plural: elasticsearches
-    singular: elasticsearch
+    kind: HelmOpenSearch
+    listKind: HelmOpenSearchList
+    plural: helmopensearches
+    singular: helmopensearch
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: ElasticSearch is the Schema for the elasticsearches API
+        description: HelmOpenSearch is the Schema for the helmopensearches API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,24 +30,15 @@ spec:
           metadata:
             type: object
           spec:
-            description: ElasticSearchSpec defines the desired state of ElasticSearch
-            properties:
-              foo:
-                description: Foo is an example field of ElasticSearch. Edit elasticsearch_types.go
-                  to remove/update
-                type: string
+            description: Spec defines the desired state of HelmOpenSearch
             type: object
+            x-kubernetes-preserve-unknown-fields: true
           status:
-            description: ElasticSearchStatus defines the observed state of ElasticSearch
+            description: Status defines the observed state of HelmOpenSearch
             type: object
+            x-kubernetes-preserve-unknown-fields: true
         type: object
     served: true
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

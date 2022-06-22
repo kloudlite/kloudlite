@@ -32,7 +32,7 @@ type RouterReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/finalizers,verbs=update
 
 func (r *RouterReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Router{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Router{})
 
 	if req == nil {
 		return ctrl.Result{}, nil

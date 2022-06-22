@@ -49,7 +49,7 @@ const (
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &redisStandalone.Service{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &redisStandalone.Service{})
 
 	if req == nil {
 		return ctrl.Result{}, nil

@@ -3,6 +3,9 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,8 +32,7 @@ type ServiceReconciler struct {
 }
 
 const (
-	MongoDbRootPasswordKey = "mongodb-root-password"
-	StorageClassKey        = "storage-class"
+	SvcRootPasswordKey = "root-password"
 )
 
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -38,9 +40,9 @@ const (
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Service{})
-	if req == nil {
-		return ctrl.Result{}, nil
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Service{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -78,165 +80,197 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 
 	isReady := true
 	var cs []metav1.Condition
+	var childC []metav1.Condition
 
-	helmConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.HelmMongoDBType, "Helm", fn.NN(svcObj.Namespace, svcObj.Name),
+	// STEP:  helm resource
+	helmResource, err := rApi.Get(
+		ctx, r.Client, fn.NN(svcObj.Namespace, svcObj.Name), fn.NewUnstructured(constants.HelmMongoDBType),
 	)
 
 	if err != nil {
+		isReady = false
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
-		isReady = false
-	}
-	cs = append(cs, helmConditions...)
+		cs = append(cs, conditions.New(conditions.HelmResourceExists, false, conditions.NotFound, err.Error()))
+	} else {
+		cs = append(cs, conditions.New(conditions.HelmResourceExists, true, conditions.Found))
 
-	deploymentConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.DeploymentType, "Deployment", fn.NamespacedName(svcObj),
-	)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
+		rConditions, err := conditions.ParseFromResource(helmResource, "Helm")
+		if err != nil {
 			return req.FailWithStatusError(err)
 		}
-		isReady = false
-	}
-
-	cs = append(cs, deploymentConditions...)
-
-	// _, err := conditions.FromPod(ctx, r.Client, constants.PodGroup, "Pod", fn.NamespacedName(svcObj))
-	// if err != nil {
-	// 	if !apiErrors.IsNotFound(err) {
-	// 		return req.FailWithStatusError(err)
-	// 	}
-	// 	isReady = false
-	// }
-	//
-
-	if !meta.IsStatusConditionTrue(deploymentConditions, "DeploymentAvailable") {
-		isReady = false
-	}
-
-	// STEP: Helm SecretType check
-	_, err = rApi.Get(ctx, r.Client, fn.NamespacedName(svcObj), &corev1.Secret{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
+		childC = append(childC, rConditions...)
+		rReady := meta.IsStatusConditionTrue(rConditions, "HelmDeployed")
+		if !rReady {
+			isReady = false
 		}
 		cs = append(
-			cs, conditions.New("HelmReleaseSecretExists", false, "SecretNotFound", err.Error()),
+			cs, conditions.New(conditions.HelmResourceReady, rReady, conditions.Empty),
 		)
-		isReady = false
 	}
 
-	// STEP: Generated Vars check
-	_, ok := svcObj.Status.GeneratedVars.GetString(MongoDbRootPasswordKey)
-	if !ok {
-		cs = append(cs, conditions.New("GeneratedVars", false, "NotGeneratedYet"))
+	// 2. deployment/sts
+	deploymentRes, err := rApi.Get(ctx, r.Client, fn.NN(svcObj.Namespace, svcObj.Name), &appsv1.Deployment{})
+	if err != nil {
 		isReady = false
+		if !apiErrors.IsNotFound(err) {
+			return req.FailWithStatusError(err)
+		}
+		cs = append(cs, conditions.New(conditions.DeploymentExists, false, conditions.NotFound, err.Error()))
 	} else {
-		cs = append(cs, conditions.New("GeneratedVars", true, "Generated"))
+		cs = append(cs, conditions.New(conditions.DeploymentExists, true, conditions.Found))
+		rConditions, err := conditions.ParseFromResource(deploymentRes, "Deployment")
+		if err != nil {
+			return req.FailWithStatusError(err)
+		}
+		childC = append(childC, rConditions...)
+		rReady := meta.IsStatusConditionTrue(rConditions, "DeploymentAvailable")
+		if !rReady {
+			isReady = false
+		}
+		cs = append(
+			cs, conditions.New(conditions.DeploymentReady, rReady, conditions.Empty),
+		)
 	}
 
-	// STEP: output check
+	// STEP: if vars generated ?
+	if !svcObj.Status.GeneratedVars.Exists(SvcRootPasswordKey) {
+		isReady = false
+		cs = append(
+			cs, conditions.New(
+				conditions.GeneratedVars, false, conditions.NotReconciledYet,
+			),
+		)
+	} else {
+		cs = append(cs, conditions.New(conditions.GeneratedVars, true, conditions.Found))
+	}
+
+	// STEP: if reconciler output exists
 	_, err = rApi.Get(
 		ctx, r.Client, fn.NN(svcObj.Namespace, fmt.Sprintf("msvc-%s", svcObj.Name)), &corev1.Secret{},
 	)
 	if err != nil {
 		isReady = false
-		cs = append(cs, conditions.New("OutputExists", false, "SecretNotFound"))
+		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, false, conditions.NotFound, err.Error()))
+	} else {
+		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, true, conditions.Found))
 	}
 
-	// req.logger.Debugf("req.mongoSvc.Status: %+v", req.mongoSvc.Status)
-	newConditions, hasUpdated, err := conditions.Patch(svcObj.Status.Conditions, cs)
+	// STEP: patch aggregated conditions
+	newChildConditions, hasUpdated, err := conditions.Patch(svcObj.Status.ChildConditions, childC)
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
 
-	if !hasUpdated && isReady == svcObj.Status.IsReady {
+	newConditions, hasUpdated2, err := conditions.Patch(svcObj.Status.Conditions, cs)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+
+	if !hasUpdated && !hasUpdated2 && isReady == svcObj.Status.IsReady {
 		return req.Next()
 	}
 
 	svcObj.Status.IsReady = isReady
 	svcObj.Status.Conditions = newConditions
+	svcObj.Status.ChildConditions = newChildConditions
 	svcObj.Status.OpsConditions = []metav1.Condition{}
-	if err := r.Status().Update(ctx, svcObj); err != nil {
-		req.Logger.Error(err)
-		req.FailWithStatusError(err)
-	}
 
-	return req.Done()
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
 }
 
 func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStandalone.Service]) rApi.StepResult {
 	ctx := req.Context()
 	svcObj := req.Object
 
-	if meta.IsStatusConditionFalse(svcObj.Status.Conditions, "GeneratedVars") {
-		if err := svcObj.Status.GeneratedVars.Merge(
-			map[string]any{
-				MongoDbRootPasswordKey: fn.CleanerNanoid(40),
-				StorageClassKey:        "do-block-storage-xfs",
-				// StorageClassKey: "local-path-xfs",
-			},
-		); err != nil {
+	if meta.IsStatusConditionFalse(svcObj.Status.Conditions, conditions.GeneratedVars.String()) {
+		if err := svcObj.Status.GeneratedVars.Set(SvcRootPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithOpError(err)
 		}
+		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+	}
 
-		if err := r.Status().Update(ctx, req.Object); err != nil {
-			return req.FailWithOpError(err)
+	if errP := func() error {
+		b1, err := templates.Parse(
+			templates.MongoDBStandalone, map[string]any{
+				"object": svcObj,
+				// TODO: storage-class
+				"storage-class": constants.DoBlockStorageXFS,
+				"owner-refs": []metav1.OwnerReference{
+					fn.AsOwner(svcObj, true),
+				},
+			},
+		)
+
+		if err != nil {
+			return err
 		}
 
-		return req.Done()
-	}
+		hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", svcObj.Name, svcObj.Namespace)
+		authPasswd, ok := svcObj.Status.GeneratedVars.GetString(SvcRootPasswordKey)
+		if !ok {
+			return errors.Newf("%s key not found in generated vars", SvcRootPasswordKey)
+		}
 
-	obj, err := templates.ParseObject(templates.MongoDBStandalone, svcObj)
-	if err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	obj.SetOwnerReferences(
-		[]metav1.OwnerReference{
-			fn.AsOwner(svcObj, false),
-		},
-	)
-
-	if err := fn.KubectlApply(ctx, r.Client, obj); err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", svcObj.Name, svcObj.Namespace)
-	authPasswd, ok := svcObj.Status.GeneratedVars.GetString(MongoDbRootPasswordKey)
-	if !ok {
-		return req.FailWithStatusError(errors.Newf("%s key not found in generated vars", MongoDbRootPasswordKey))
-	}
-
-	scrt := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
-			Namespace: svcObj.Namespace,
-			OwnerReferences: []metav1.OwnerReference{
-				fn.AsOwner(svcObj, true),
+		b2, err := templates.Parse(
+			templates.Secret, &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
+					Namespace: svcObj.Namespace,
+					OwnerReferences: []metav1.OwnerReference{
+						fn.AsOwner(svcObj, true),
+					},
+				},
+				StringData: map[string]string{
+					"ROOT_PASSWORD": authPasswd,
+					"DB_HOSTS":      hostUrl,
+					"DB_URL":        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", authPasswd, hostUrl),
+				},
 			},
-		},
-		StringData: map[string]string{
-			"ROOT_PASSWORD": authPasswd,
-			"DB_HOSTS":      hostUrl,
-			"DB_URL":        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", authPasswd, hostUrl),
-		},
+		)
+		if err != nil {
+			return err
+		}
+
+		if _, err := fn.KubectlApplyExec(b1, b2); err != nil {
+			return err
+		}
+		return nil
+	}(); errP != nil {
+		return req.FailWithOpError(errP)
 	}
 
-	return rApi.NewStepResult(&ctrl.Result{}, fn.KubectlApply(ctx, r.Client, fn.ParseSecret(scrt)))
+	return req.Done()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Service{}).
-		Owns(&appsv1.Deployment{}).
-		Owns(&corev1.Pod{}).
-		Owns(
-			fn.NewUnstructured(
-				metav1.TypeMeta{Kind: constants.HelmMongoDBType.Kind, APIVersion: constants.MsvcApiVersion},
+	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Service{})
+
+	builder.Owns(fn.NewUnstructured(constants.HelmMongoDBType))
+	builder.Owns(&corev1.Secret{})
+
+	refWatchList := []client.Object{
+		&appsv1.Deployment{},
+		&corev1.Pod{},
+	}
+
+	for _, item := range refWatchList {
+		builder.Watches(
+			&source.Kind{Type: item}, handler.EnqueueRequestsFromMapFunc(
+				func(obj client.Object) []reconcile.Request {
+					value, ok := obj.GetLabels()[fmt.Sprintf("%s/ref", mongodbStandalone.GroupVersion.Group)]
+					if !ok {
+						return nil
+					}
+					return []reconcile.Request{
+						{NamespacedName: fn.NN(obj.GetNamespace(), value)},
+					}
+				},
 			),
-		).
-		Complete(r)
+		)
+	}
+
+	return builder.Complete(r)
 }

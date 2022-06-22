@@ -44,7 +44,7 @@ var (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
 func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Project{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Project{})
 
 	if req == nil {
 		return ctrl.Result{}, nil

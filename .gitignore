@@ -1,3 +1,5 @@
+.GOPATH
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -27,3 +29,4 @@ testbin/*
 .kube
 helm-charts
 *.auto.env
+

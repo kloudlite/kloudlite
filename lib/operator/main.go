@@ -20,11 +20,12 @@ import (
 // +kubebuilder:object:generate=true
 
 type Status struct {
-	IsReady       bool                `json:"isReady"`
-	DisplayVars   rawJson.KubeRawJson `json:"displayVars,omitempty"`
-	GeneratedVars rawJson.KubeRawJson `json:"generatedVars,omitempty"`
-	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
-	OpsConditions []metav1.Condition  `json:"opsConditions,omitempty"`
+	IsReady         bool                `json:"isReady"`
+	DisplayVars     rawJson.KubeRawJson `json:"displayVars,omitempty"`
+	GeneratedVars   rawJson.KubeRawJson `json:"generatedVars,omitempty"`
+	Conditions      []metav1.Condition  `json:"conditions,omitempty"`
+	ChildConditions []metav1.Condition  `json:"childConditions,omitempty"`
+	OpsConditions   []metav1.Condition  `json:"opsConditions,omitempty"`
 }
 
 type Resource interface {
@@ -90,9 +91,9 @@ func (s stepResult) ShouldProceed() bool {
 }
 
 func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName,
-	resInstance T) *Request[T] {
+	resInstance T) (*Request[T], error) {
 	if err := c.Get(ctx, nn, resInstance); err != nil {
-		return nil
+		return nil, err
 	}
 	return &Request[T]{
 		ctx:    ctx,
@@ -100,7 +101,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		Object: resInstance,
 		Logger: logger.New(nn),
 		locals: map[string]any{},
-	}
+	}, nil
 }
 
 func (r *Request[T]) EnsureLabels() StepResult {
@@ -140,7 +141,10 @@ func (r *Request[T]) FailWithStatusError(err error) StepResult {
 	}
 
 	r.Object.GetStatus().Conditions = newConditions
-	return newStepResult(&ctrl.Result{}, r.client.Status().Update(r.ctx, r.Object))
+	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
+		return newStepResult(&ctrl.Result{}, err2)
+	}
+	return newStepResult(&ctrl.Result{}, err)
 }
 
 func (r *Request[T]) FailWithOpError(err error) StepResult {
@@ -159,7 +163,10 @@ func (r *Request[T]) FailWithOpError(err error) StepResult {
 	}
 
 	r.Object.GetStatus().OpsConditions = newConditions
-	return newStepResult(&ctrl.Result{}, r.client.Status().Update(r.ctx, r.Object))
+	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
+		return newStepResult(&ctrl.Result{}, err2)
+	}
+	return newStepResult(&ctrl.Result{}, err)
 }
 
 func (r *Request[T]) Context() context.Context {

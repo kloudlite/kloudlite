@@ -37,7 +37,7 @@ type ManagedResourceReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
 
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedResource{})
+	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedResource{})
 
 	if req == nil {
 		return ctrl.Result{}, nil
@@ -69,8 +69,8 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Req
 func (r *ManagedResourceReconciler) notify(mres *v1.ManagedResource) error {
 	return nil
 	return r.SendMessage(
-		fn.NamespacedName(mres).String(), lib.MessageReply{
-			Key:        fn.NamespacedName(mres).String(),
+		fn.NN(mres.Namespace, mres.Name).String(), lib.MessageReply{
+			Key:        fn.NN(mres.Namespace, mres.Name).String(),
 			Conditions: mres.Status.Conditions,
 			Status:     mres.Status.IsReady,
 		},
@@ -171,21 +171,14 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 			},
 		)
 
-		if err := r.Update(ctx, mres); err != nil {
-			return req.FailWithOpError(err)
-		}
-
-		return req.Done()
+		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, mres))
 	}
 
 	if !controllerutil.ContainsFinalizer(mres, constants.CommonFinalizer) {
 		controllerutil.AddFinalizer(mres, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(mres, constants.ForegroundFinalizer)
 
-		if err := r.Update(ctx, mres); err != nil {
-			return req.FailWithStatusError(err)
-		}
-		return req.Next()
+		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, mres))
 	}
 
 	obj, err := templates.ParseObject(templates.CommonMres, req.Object)
@@ -239,7 +232,7 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 				var reqs []reconcile.Request
 				for _, item := range mresList.Items {
-					reqs = append(reqs, reconcile.Request{NamespacedName: fn.NamespacedName(&item)})
+					reqs = append(reqs, reconcile.Request{NamespacedName: fn.NN(item.Namespace, item.Name)})
 				}
 				return reqs
 			},

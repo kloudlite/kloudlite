@@ -157,7 +157,36 @@ func FromResource(ctx context.Context, client client.Client, typeMeta metav1.Typ
 	return res, nil
 }
 
-func New(cType string, status bool, reason string, msg ...string) metav1.Condition {
+func ParseFromResource(resource any, cTypePrefix string) ([]metav1.Condition, error) {
+	m, err := json.Marshal(resource)
+	if err != nil {
+		return nil, err
+	}
+
+	var x struct {
+		Status struct {
+			Conditions []metav1.Condition `json:"conditions,omitempty"`
+		} `json:"status"`
+	}
+
+	if err := json.Unmarshal(m, &x); err != nil {
+		return nil, err
+	}
+
+	c := x.Status.Conditions
+
+	res := make([]metav1.Condition, len(c))
+	for i, condition := range c {
+		condition.Type = fmt.Sprintf("%s%s", cTypePrefix, condition.Type)
+		condition.Reason = fn.IfThenElse(len(condition.Reason) == 0, "NotSpecified", condition.Reason)
+		condition.Message = fn.IfThenElse(len(condition.Message) == 0, "", condition.Message)
+		res[i] = condition
+	}
+
+	return res, nil
+}
+
+func New[K Type | string, V Reason | string](cType K, status bool, reason V, msg ...string) metav1.Condition {
 	s := metav1.ConditionFalse
 	if status {
 		s = metav1.ConditionTrue
@@ -166,9 +195,19 @@ func New(cType string, status bool, reason string, msg ...string) metav1.Conditi
 	msg = append(msg, "")
 
 	return metav1.Condition{
-		Type:    cType,
+		Type:    string(cType),
 		Status:  s,
-		Reason:  reason,
+		Reason:  string(reason),
 		Message: msg[0],
 	}
 }
+
+type Type string
+
+func (t Type) String() string {
+	return string(t)
+}
+
+const ()
+
+type Reason string

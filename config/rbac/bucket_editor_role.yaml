@@ -1,0 +1,24 @@
+# permissions for end users to edit buckets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bucket-editor-role
+rules:
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - buckets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - buckets/status
+  verbs:
+  - get

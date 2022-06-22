@@ -1,0 +1,9 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedResource
+metadata:
+  name: log-bucket
+  namespace: hotspot
+spec:
+  apiVersion: influxdb.msvc.kloudlite.io/v1
+  kind: Bucket
+  managedSvcName: influx-example

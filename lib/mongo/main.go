@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -10,8 +11,13 @@ import (
 )
 
 type Client struct {
-	conn *mongo.Client
+	conn        *mongo.Client
+	isConnected bool
 }
+
+var (
+	ErrNotConnected = fmt.Errorf("is not connected to db yet, call Connect() method")
+)
 
 func NewClient(uri string) (*Client, error) {
 	cli, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -21,21 +27,25 @@ func NewClient(uri string) (*Client, error) {
 	return &Client{conn: cli}, nil
 }
 
-func (c *Client) connect(ctx context.Context) error {
-	if err := c.conn.Ping(ctx, &readpref.ReadPref{}); err != nil {
-		if err := c.conn.Connect(ctx); err != nil {
-			return errors.NewEf(err, "could not connect to specified mongodb service")
-		}
+func (c *Client) Connect(ctx context.Context) error {
+	if err := c.conn.Connect(ctx); err != nil {
+		return errors.NewEf(err, "could not connect to specified mongodb service")
 	}
+	if err := c.conn.Ping(ctx, &readpref.ReadPref{}); err != nil {
+		return errors.NewEf(err, "could not ping mongodb")
+	}
+	c.isConnected = true
 	return nil
 }
 
-func (c *Client) UpsertUser(ctx context.Context, dbName string, userName string, password string) error {
-	if err := c.connect(ctx); err != nil {
-		return err
-	}
+func (c *Client) Close() error {
+	return c.conn.Disconnect(context.TODO())
+}
 
-	defer c.conn.Disconnect(ctx)
+func (c *Client) UpsertUser(ctx context.Context, dbName string, userName string, password string) error {
+	if !c.isConnected {
+		return ErrNotConnected
+	}
 
 	if v, _ := c.userExists(ctx, userName); v {
 		return nil
@@ -67,8 +77,8 @@ func (c *Client) UserExists(ctx context.Context, userName string) (bool, error) 
 }
 
 func (c *Client) userExists(ctx context.Context, userName string) (bool, error) {
-	if err := c.connect(ctx); err != nil {
-		return false, err
+	if !c.isConnected {
+		return false, ErrNotConnected
 	}
 
 	db := c.conn.Database(userName)

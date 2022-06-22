@@ -11,7 +11,7 @@ tasks:
   new-kind:
     silent: true
     cmds:
-      - | 
+      - |
         [ -z "{{.Group}}" ] && echo env-var 'Group' not provided && exit 1
         [ -z "{{.Kind}}" ] && echo env-var 'Kind' not provided && exit 1
         exit 0
@@ -45,14 +45,6 @@ tasks:
       - cd config/default && kustomize edit set namespace ${NAMESPACE}
       - make deploy
 
-  helm-operators:
-    dir: ./helm
-    cmds:
-      - echo "this is to create new helm operators/kind"
-#      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMongoDB --helm-chart mongodb --helm-chart-repo https://charts.bitnami.com/bitnami
-#      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmMySqlDB --helm-chart mysql --helm-chart-repo https://charts.bitnami.com/bitnami
-#      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmElasticSearch --helm-chart elasticsearch --helm-chart-repo https://charts.bitnami.com/bitnami
-      - operator-sdk create api --plugins=helm --group msvc --version v1 --kind HelmRedis --helm-chart redis --helm-chart-repo https://charts.bitnami.com/bitnami
   pre:
     run: once
     cmds:

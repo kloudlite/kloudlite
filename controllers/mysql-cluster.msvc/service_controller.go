@@ -90,7 +90,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, orgReq ctrl.Request) 
 
 func (r *ServiceReconciler) buildOutput(ctx context.Context, req *ServiceReconReq) error {
 	rootPasswd, ok := req.mysqlSvc.Status.GeneratedVars.GetString(MysqlPasswordKey)
-	//rootPasswd, ok := req.mysqlSvc.Status.GeneratedVars.Get(MysqlPasswordKey)
+	// rootPasswd, ok := req.mysqlSvc.Status.GeneratedVars.Get(MysqlPasswordKey)
 	if !ok {
 		return errors.Newf("asdfasf")
 	}
@@ -162,7 +162,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		ctx,
 		r.Client,
 		constants.HelmMySqlDBKind,
-		fn.NamespacedName(req.mysqlSvc),
+		fn.NN(req.mysqlSvc.Namespace, req.mysqlSvc.Name),
 	)
 
 	if err != nil {
@@ -175,7 +175,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 		&conditions,
 		ctx,
 		r.Client,
-		fn.NamespacedName(req.mysqlSvc),
+		fn.NN(req.mysqlSvc.Namespace, req.mysqlSvc.Name),
 	)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -184,7 +184,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 	}
 
 	helmSecret := new(corev1.Secret)
-	if err := r.Get(ctx, fn.NamespacedName(req.mysqlSvc), helmSecret); err != nil {
+	if err := r.Get(ctx, fn.NN(req.mysqlSvc.Namespace, req.mysqlSvc.Name), helmSecret); err != nil {
 		req.logger.Info(
 			"helm release is not available yet, assuming resource not yet installed, so installing",
 		)
@@ -224,7 +224,7 @@ func (r *ServiceReconciler) reconcileStatus(ctx context.Context, req *ServiceRec
 
 func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) error {
 	// TODO: FIX ME asap
-	//if _, err := fn.JsonGet[string](req.mysqlSvc.Status.GeneratedVars, MysqlRootPasswordKey); err != nil {
+	// if _, err := fn.JsonGet[string](req.mysqlSvc.Status.GeneratedVars, MysqlRootPasswordKey); err != nil {
 	//	m, err := req.mysqlSvc.Status.GeneratedVars.ToMap()
 	//	if err != nil {
 	//		return err
@@ -235,7 +235,7 @@ func (r *ServiceReconciler) preOps(ctx context.Context, req *ServiceReconReq) er
 	//		return err
 	//	}
 	//	return r.Status().Update(ctx, req.mysqlSvc)
-	//}
+	// }
 	return nil
 }
 
@@ -244,10 +244,10 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return r.failWithErr(ctx, req, err)
 	}
 
-	//hash := req.mysqlSvc.Hash()
-	//if hash == req.mysqlSvc.Status.LastHash {
+	// hash := req.mysqlSvc.Hash()
+	// if hash == req.mysqlSvc.Status.LastHash {
 	//	return reconcileResult.OK()
-	//}
+	// }
 
 	b, err := templates.Parse(templates.MySqlStandalone, req.mysqlSvc)
 	if err != nil {
@@ -262,7 +262,7 @@ func (r *ServiceReconciler) reconcileOperations(ctx context.Context, req *Servic
 		return reconcileResult.FailedE(err)
 	}
 
-	//req.mysqlSvc.Status.LastHash = hash
+	// req.mysqlSvc.Status.LastHash = hash
 	if err := r.Status().Update(ctx, req.mysqlSvc); err != nil {
 		return r.failWithErr(ctx, req, err)
 	}

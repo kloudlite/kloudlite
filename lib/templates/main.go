@@ -20,30 +20,33 @@ func useTemplate(file templateFile) (*kt, error) {
 	tFiles := []string{file.Path()}
 	tFiles = append(tFiles, helperFiles...)
 
+	var klFuncs template.FuncMap = map[string]any{}
+
 	// SOURCE: https://github.com/helm/helm/blob/8648ccf5d35d682dcd5f7a9c2082f0aaf071e817/pkg/engine/engine.go#L147-L154
 	t := template.New(filepath.Base(file.Path()))
-	var funcMap template.FuncMap = map[string]any{}
-	for k, v := range sprig.TxtFuncMap() {
-		funcMap[k] = v
-	}
+	funcMap := sprig.TxtFuncMap()
 
-	funcMap["include"] = func(name string, data any) (string, error) {
+	klFuncs["include"] = func(templateName string, templateData any) (string, error) {
 		buf := bytes.NewBuffer(nil)
-		if err := t.ExecuteTemplate(buf, name, data); err != nil {
+		if err := t.ExecuteTemplate(buf, templateName, templateData); err != nil {
 			return "", err
 		}
 		return buf.String(), nil
 	}
 
-	funcMap["toYAML"] = func(string string) (string, error) {
-		ys, err := yaml.JSONToYAML([]byte(string))
+	klFuncs["toYAML"] = func(txt any) (string, error) {
+		a, ok := funcMap["toPrettyJson"].(func(any) string)
+		if !ok {
+			panic("could not convert sprig.TxtFuncMap[toPrettyJson] into func(any) string")
+		}
+		ys, err := yaml.JSONToYAML([]byte(a(txt)))
 		if err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("%s", ys), nil
+		return string(ys), nil
 	}
 
-	_, err := t.Funcs(funcMap).ParseFiles(tFiles...)
+	_, err := t.Funcs(funcMap).Funcs(klFuncs).ParseFiles(tFiles...)
 	if err != nil {
 		return nil, err
 	}
@@ -115,24 +118,25 @@ func (tf templateFile) Path() string {
 }
 
 const (
-	MongoDBStandalone                 templateFile = "mongodb-helm-standalone.tmpl.yml"
-	MySqlStandalone                   templateFile = "mysql-helm-standalone.tmpl.yml"
-	MongoDBCluster                    templateFile = "mongodb-helm-cluster.tmpl.yml"
-	MongoDBWatcher                    templateFile = "mongo-msvc-watcher.tmpl.yml"
-	Deployment                        templateFile = "deployment.tmpl.yml"
-	Service                           templateFile = "service.tmpl.yml"
-	Secret                            templateFile = "secret.tmpl.yml"
-	MongoDBClusterResourceDatabase    templateFile = "mongodb-resource-database.tmpl.yml"
-	MongoDBStandaloneResourceDatabase templateFile = "mongodb-resource-database.tmpl.yml"
-	AccountWireguard                  templateFile = "account-deploy.tmpl.yml"
-	CommonMsvc                        templateFile = "msvc-common-service.tmpl.yml"
-	CommonMres                        templateFile = "mres-common.tmpl.yml"
-	RedisStandalone                   templateFile = "redis-helm-standalone.tmpl.yml"
-	ConfigMap                         templateFile = "configmap.tmpl.yml"
-	Ingress                           templateFile = "./ingress.tmpl.yml"
+	MongoDBStandalone templateFile = "./msvc/mongodb/helm-standalone.tpl.yml"
+	MongoDBCluster    templateFile = "mongodb-helm-cluster.tmpl.yml"
+	MySqlStandalone   templateFile = "mysql-helm-standalone.tmpl.yml"
+	MongoDBWatcher    templateFile = "mongo-msvc-watcher.tmpl.yml"
+	Deployment        templateFile = "deployment.tmpl.yml"
+	Service           templateFile = "service.tmpl.yml"
+	Secret            templateFile = "secret.tmpl.yml"
+	AccountWireguard  templateFile = "account-deploy.tmpl.yml"
+	CommonMsvc        templateFile = "msvc-common-service.tmpl.yml"
+	CommonMres        templateFile = "mres-common.tmpl.yml"
+	RedisStandalone   templateFile = "redis-helm-standalone.tmpl.yml"
+	ConfigMap         templateFile = "configmap.tmpl.yml"
+	Ingress           templateFile = "./ingress.tmpl.yml"
 
 	IngressLambda templateFile = "./ingress-lambda.tmpl.yml"
 
-	ServerlessLambda    templateFile = "./serverless/lambda.yml.tpl"
-	ServerlessLambdaSvc templateFile = "./serverless/lambda-svc.yml.tpl"
+	ServerlessLambda templateFile = "./serverless/lambda.yml.tpl"
+
+	ElasticSearch templateFile = "./msvc/elasticsearch.tpl.yml"
+	OpenSearch    templateFile = "./msvc/opensearch/helm.tpl.yml"
+	InfluxDB      templateFile = "./msvc/influx/helm.tpl.yml"
 )
