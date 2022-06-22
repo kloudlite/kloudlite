@@ -207,6 +207,30 @@ func (d *domainI) CreateRecord(
 	return create, err
 }
 
+func (d *domainI) DeleteRecords(ctx context.Context, host string, siteId string) error {
+
+	return d.recordsRepo.DeleteMany(ctx, repos.Filter{
+		"host": host,
+	})
+}
+
+func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string, siteId string) error {
+	var err error
+
+	for _, aRecord := range aRecords {
+		_, err = d.recordsRepo.Create(ctx, &Record{
+			SiteId:   repos.ID(siteId),
+			Type:     "A",
+			Host:     host,
+			Answer:   aRecord,
+			TTL:      30,
+			Priority: 0,
+		})
+
+	}
+	return err
+}
+
 func fxDomain(
 	recordsRepo repos.DbRepo[*Record],
 	sitesRepo repos.DbRepo[*Site],
