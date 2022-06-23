@@ -30,7 +30,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg := dns.Msg{}
 	msg.SetReply(r)
 	msg.Answer = []dns.RR{}
-	for i, q := range r.Question {
+	for _, q := range r.Question {
 		switch q.Qtype {
 		case dns.TypeA:
 
@@ -42,9 +42,10 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			records, err := h.domain.GetRecords(todo, host)
 
 			if err != nil || len(records) == 0 {
-				msg.Answer[i] = &dns.A{
+
+				msg.Answer = append(msg.Answer, &dns.A{
 					Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
-				}
+				})
 			}
 
 			for _, r := range records {
