@@ -89,6 +89,39 @@ var Module = fx.Module(
 		schema := generated.NewExecutableSchema(
 			generated.Config{Resolvers: graph.NewResolver(d)},
 		)
+
+		server.Post("/upsert-domain", func(c *fiber.Ctx) error {
+			var data struct {
+				Domain   string
+				ARecords []string
+			}
+			err := c.JSONP(&data)
+			if err != nil {
+				return err
+			}
+			err = d.AddARecords(c.Context(), data.Domain, data.ARecords, "kloudlite")
+
+			if err != nil {
+				return err
+			}
+
+			c.Send([]byte("done"))
+			return nil
+
+		})
+
+		server.Delete("/delete-domain/:domain_name", func(c *fiber.Ctx) error {
+			domainName := c.Params("domain_name")
+			err := d.DeleteRecords(c.Context(), domainName, "kloudlite")
+
+			if err != nil {
+				return err
+			}
+
+			c.Send([]byte("done"))
+			return nil
+		})
+
 		httpServer.SetupGQLServer(
 			server,
 			schema,
