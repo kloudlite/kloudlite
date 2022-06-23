@@ -4,10 +4,20 @@
 	isReady := true
 	var cs []metav1.Condition
 
-	// STEP: check managed service is ready
+	// -- cut to top
+	type MsvcOutputRef struct {
+		// TODO: (user)
+	}
+	
+	func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
+		return &MsvcOutputRef{}
+	}
+	// -- cut to top
+
+	// STEP: 1. check managed service is ready
 	msvc, err := rApi.Get(
 		ctx, r.Client, fn.NN($objectVar$.Namespace, $objectVar$.Spec.ManagedSvcName),
-		&mongodbStandalone.Service{},
+		&$managedSvcPackage$.Service{},
 	)
 
 	if err != nil {
@@ -20,38 +30,52 @@
 	} else {
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
 		cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
+		if !msvc.Status.IsReady {
+			isReady = false
+			msvc = nil
+		}
 	}
 
-	// STEP: retrieve managed svc output (usually secret)
+	// STEP: 2. retrieve managed svc output (usually secret)
 	if msvc != nil {
-		msvcOutput, err := rApi.Get(
-			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-			&corev1.Secret{},
-		)
-		if err != nil {
-			isReady = false
-			if !apiErrors.IsNotFound(err) {
-				return req.FailWithStatusError(err)
+		msvcRef, err2 := func () (*MsvcOutputRef, error) {
+			msvcOutput, err := rApi.Get(
+				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
+				&corev1.Secret{},
+			)
+			if err != nil {
+				isReady = false
+				cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
+				return nil, err
 			}
-			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
-		} else {
 			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
-			rApi.SetLocal(req, MsvcOutputKey, msvcOutput)
+			outputRef := parseMsvcOutput(msvcOutput)
+			rApi.SetLocal(req, "msvc-output-ref", outputRef)
+			return outputRef, nil
+		}()
+		if err2 != nil {
+			return req.FailWithStatusError(err2)
 		}
 
-    // STEP: check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
-    // TODO: (user)
+		if err2 := func () error {
+			// STEP: 3. check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
+			// TODO: (user) use msvcRef values
+
+			return nil
+		}(); err2 != nil {
+			return req.FailWithStatusError(err2)
+		}
 	}
 
 
-	// STEP: check generated vars
-	if msvc != nil && !$objectVar$.Status.GeneratedVars.Exists() {
+	// STEP: 4. check generated vars
+	if msvc != nil && !$objectVar$.Status.GeneratedVars.Exists(...) {
 		cs = append(cs, conditions.New(conditions.GeneratedVars, false, conditions.NotReconciledYet))
 	} else {
 		cs = append(cs, conditions.New(conditions.GeneratedVars, true, conditions.Found))
 	}
 
-	// STEP: patch conditions
+	// STEP: 5. patch conditions
 	newConditions, updated, err := conditions.Patch($objectVar$.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
