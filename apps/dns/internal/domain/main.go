@@ -25,7 +25,7 @@ func (d *domainI) GetVerification(ctx context.Context, accountId repos.ID, siteI
 }
 
 func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, error) {
-	fmt.Println(accountId)
+	// fmt.Println(accountId)
 	return d.sitesRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"accountId": accountId,
@@ -217,7 +217,7 @@ func (d *domainI) DeleteRecords(ctx context.Context, host string, siteId string)
 func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string, siteId string) error {
 	var err error
 
-	fmt.Println(aRecords, host, siteId)
+	// fmt.Println(aRecords, host, siteId)
 
 	for _, aRecord := range aRecords {
 		_, err = d.recordsRepo.Create(ctx, &Record{
