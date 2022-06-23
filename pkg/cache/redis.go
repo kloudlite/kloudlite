@@ -68,7 +68,7 @@ func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(status.Val())
+	// fmt.Println(status.Val())
 	return []byte(status.Val()), nil
 }
 
