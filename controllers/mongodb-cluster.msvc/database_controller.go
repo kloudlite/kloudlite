@@ -2,13 +2,12 @@ package mongodbclustermsvc
 
 import (
 	"context"
+	rApi "operators.kloudlite.io/lib/operator"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	mongodbclustermsvcv1 "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	mongodbclustermsvcv1 "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -17,25 +16,49 @@ type DatabaseReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=mongodb-cluster.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=mongodb-cluster.msvc.kloudlite.io,resources=databases/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=mongodb-cluster.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
+// +kubebuilder:rbac:groups=mongodb-cluster.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mongodb-cluster.msvc.kloudlite.io,resources=databases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mongodb-cluster.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Database object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
-func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbclustermsvcv1.Database{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-	// TODO(user): your logic here
+	if req.Object.GetDeletionTimestamp() != nil {
+		if x := r.finalize(req); !x.ShouldProceed() {
+			return x.Result(), x.Err()
+		}
+	}
+
+	req.Logger.Info("----------------[Type: mongodbclustermsvcv1.Database] NEW RECONCILATION ----------------")
+
+	if x := req.EnsureLabels(); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
+
+	if x := r.reconcileStatus(req); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
+
+	if x := r.reconcileOperations(req); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *DatabaseReconciler) finalize(req *rApi.Request[*mongodbclustermsvcv1.Database]) rApi.StepResult {
+	return req.Finalize()
+}
+
+func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbclustermsvcv1.Database]) rApi.StepResult {
+	return req.Done()
+}
+
+func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbclustermsvcv1.Database]) rApi.StepResult {
+	return req.Done()
 }
 
 // SetupWithManager sets up the controller with the Manager.

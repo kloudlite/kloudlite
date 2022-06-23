@@ -6,6 +6,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -26,15 +27,35 @@ type LambdaReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+const (
+	KnativeServingExists conditions.Type = "KnativeServingExists"
+	KnativeServingReady  conditions.Type = "KnativeServingReady"
+)
+
+func parseServingConditions(obj *unstructured.Unstructured) ([]metav1.Condition, error) {
+	b, err := json.Marshal(obj.Object)
+	if err != nil {
+		return nil, err
+	}
+	var j struct {
+		Status struct {
+			Conditions []metav1.Condition `json:"conditions,omitempty"`
+		} `json:"status"`
+	}
+	if err := json.Unmarshal(b, &j); err != nil {
+		return nil, err
+	}
+	return j.Status.Conditions, nil
+}
+
 // +kubebuilder:rbac:groups=serverless.kloudlite.io,resources=lambdas,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=serverless.kloudlite.io,resources=lambdas/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=serverless.kloudlite.io,resources=lambdas/finalizers,verbs=update
 
 func (r *LambdaReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &serverlessv1.Lambda{})
-
-	if req == nil {
-		return ctrl.Result{}, nil
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &serverlessv1.Lambda{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -66,6 +87,64 @@ func (r *LambdaReconciler) finalize(req *rApi.Request[*serverlessv1.Lambda]) rAp
 
 func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
 	ctx := req.Context()
+	obj := req.Object
+
+	isReady := true
+	var cs []metav1.Condition
+	var childC []metav1.Condition
+
+	// STEP: 1. sync conditions from Knative Serving
+	knativeRes, err := rApi.Get(
+		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.KnativeServiceType),
+	)
+
+	if err != nil {
+		isReady = false
+		if !apiErrors.IsNotFound(err) {
+			return req.FailWithStatusError(err)
+		}
+		cs = append(cs, conditions.New(KnativeServingExists, false, conditions.NotFound, err.Error()))
+	} else {
+		cs = append(cs, conditions.New(KnativeServingExists, true, conditions.Found))
+
+		ksConditions, err := parseServingConditions(knativeRes)
+		if err != nil {
+			return req.FailWithStatusError(err)
+		}
+		childC = append(childC, ksConditions...)
+		rReady := meta.IsStatusConditionTrue(ksConditions, "Ready")
+		if !rReady {
+			isReady = false
+		}
+		cs = append(
+			cs, conditions.New(KnativeServingReady, rReady, conditions.Empty),
+		)
+	}
+
+	// STEP: 5. patch aggregated conditions
+	nConditionsC, hasUpdatedC, err := conditions.Patch(obj.Status.ChildConditions, childC)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+
+	nConditions, hasSUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+
+	if !hasUpdatedC && !hasSUpdated && isReady == obj.Status.IsReady {
+		return req.Next()
+	}
+
+	obj.Status.IsReady = isReady
+	obj.Status.Conditions = nConditions
+	obj.Status.ChildConditions = nConditionsC
+	obj.Status.OpsConditions = []metav1.Condition{}
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+}
+
+func (r *LambdaReconciler) reconcileStatus2(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
+	ctx := req.Context()
 	lambdaSvc := req.Object
 
 	isReady := true
@@ -75,6 +154,7 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 	knativeSvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(lambdaSvc.Namespace, lambdaSvc.Name), fn.NewUnstructured(constants.KnativeServiceType),
 	)
+
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
@@ -143,6 +223,44 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 
 func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
 	ctx := req.Context()
+	obj := req.Object
+
+	// STEP: 1. add finalizers if needed
+	if !controllerutil.ContainsFinalizer(obj, constants.CommonFinalizer) {
+		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
+		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
+
+		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+	}
+
+	// STEP: 3. apply CRs of helm/custom controller
+	if errP := func() error {
+		b, err := templates.Parse(
+			templates.ServerlessLambda, map[string]any{
+				"object": obj,
+				"owner-refs": []metav1.OwnerReference{
+					fn.AsOwner(obj, true),
+				},
+			},
+		)
+
+		if err != nil {
+			return err
+		}
+
+		if _, err := fn.KubectlApplyExec(b); err != nil {
+			return err
+		}
+		return nil
+	}(); errP != nil {
+		req.FailWithOpError(errP)
+	}
+
+	return req.Done()
+}
+
+func (r *LambdaReconciler) reconcileOperations2(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
+	ctx := req.Context()
 	lambdaSvc := req.Object
 
 	if !controllerutil.ContainsFinalizer(lambdaSvc, constants.CommonFinalizer) {
@@ -181,13 +299,6 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 func (r *LambdaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&serverlessv1.Lambda{}).
-		Owns(
-			fn.NewUnstructured(
-				metav1.TypeMeta{
-					Kind:       "Service",
-					APIVersion: "serving.knative.dev/v1",
-				},
-			),
-		).
+		Owns(fn.NewUnstructured(constants.KnativeServiceType)).
 		Complete(r)
 }

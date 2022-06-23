@@ -2,9 +2,6 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/msvc.kloudlite.io_mongodbs.yaml
-- bases/mongodbs.msvc.kloudlite.io_databases.yaml
-- bases/watchers.msvc.kloudlite.io_mongodbs.yaml
 - bases/crds.kloudlite.io_accounts.yaml
 - bases/mongodb-standalone.msvc.kloudlite.io_services.yaml
 - bases/mongodb-standalone.msvc.kloudlite.io_databases.yaml
