@@ -33,7 +33,9 @@ func (s *Service) GetStatus() *rApi.Status {
 }
 
 func (s *Service) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		fmt.Sprintf("%s/ref", GroupVersion.Group): s.Name,
+	}
 }
 
 // +kubebuilder:object:root=true

@@ -7,7 +7,7 @@
 
 	// STEP: 1. sync conditions from CRs of helm/custom controllers
 	helmResource, err := rApi.Get(
-		ctx, r.Client, fn.NN($objectVar$.Namespace, $objectVar$.Name), fn.NewUnstructured(constants.HelmMongoDBType),
+		ctx, r.Client, fn.NN($objectVar$.Namespace, $objectVar$.Name), fn.NewUnstructured(constants.$TypeMeta$),
 	)
 
 	if err != nil {
@@ -24,7 +24,7 @@
 			return req.FailWithStatusError(err)
 		}
 		childC = append(childC, rConditions...)
-		rReady := meta.IsStatusConditionTrue(rConditions, "Deployed")
+		rReady := meta.IsStatusConditionTrue(rConditions, "HelmDeployed")
 		if !rReady {
 			isReady = false
 		}
@@ -48,7 +48,7 @@
 			return req.FailWithStatusError(err)
 		}
 		childC = append(childC, rConditions...)
-		rReady := meta.IsStatusConditionTrue(rConditions, "Available")
+		rReady := meta.IsStatusConditionTrue(rConditions, "DeploymentAvailable")
 		if !rReady {
 			isReady = false
 		}
@@ -58,7 +58,7 @@
 	}
 
 	// STEP: 3. if vars generated ?
-  if !$objectVar$.Status.GeneratedVars.Exists(SvcRootPasswordKey) {
+  if !$objectVar$.Status.GeneratedVars.Exists(....) {
 		isReady = false
 		cs = append(
 			cs, conditions.New(
@@ -69,7 +69,7 @@
 		cs = append(cs, conditions.New(conditions.GeneratedVars, true, conditions.Found))
 	}
 
-	// STEP: if reconciler output exists
+	// STEP: 4. if reconciler output exists
   _, err = rApi.Get(
 		ctx, r.Client, fn.NN($objectVar$.Namespace, fmt.Sprintf("msvc-%s", $objectVar$.Name)), &corev1.Secret{},
 	)
@@ -80,7 +80,7 @@
 		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, true, conditions.Found))
 	}
 
-	// STEP: patch aggregated conditions
+	// STEP: 5. patch aggregated conditions
   nConditionsC, hasUpdatedC, err := conditions.Patch($objectVar$.Status.ChildConditions, childC)
 	if err != nil {
 		return req.FailWithStatusError(err)

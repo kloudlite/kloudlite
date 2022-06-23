@@ -32,7 +32,7 @@ func (c *Client) sanitizeDbName(dbname string) string {
 	return strings.ReplaceAll(dbname, "-", "_")
 }
 
-func (c *Client) Disconnect() error {
+func (c *Client) Close() error {
 	return c.db.Close()
 }
 
