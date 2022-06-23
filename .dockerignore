@@ -7,3 +7,4 @@ helm
 Taskfile.yml
 Dockerfile
 .dockerignore
+.GOPATH

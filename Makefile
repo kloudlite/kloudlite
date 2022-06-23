@@ -158,7 +158,7 @@ KUSTOMIZE = $(shell pwd)/bin/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
 	@#$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
-	GOBIN=$(shell pwd)/bin go install sigs.k8s.io/kustomize/kustomize/v3@v3.8.7
+	#GOBIN=$(shell pwd)/bin go install sigs.k8s.io/kustomize/kustomize/v3@v3.8.7
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 .PHONY: envtest
@@ -236,5 +236,20 @@ catalog-build: opm ## Build a catalog image.
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
 
+##### nxtcoder17: >>> ############
 dev: manifests generate deploy
 	go run ./main.go
+
+.PHONY: dev-test
+dev-test: manifests generate fmt
+#	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+
+.PHONY: dev-docker-build
+dev-docker-build: dev-test ## Build docker image with the manager.
+	docker build -t ${IMG} .
+
+.PHONY: dev-docker-push
+dev-docker-push: ## Push docker image with the manager.
+	docker push ${IMG}
+
+##### nxtcoder17 <<< ############

@@ -1,4 +1,4 @@
-{{- $obj := get . "obj" }}
+{{- $obj := get . "object" }}
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volumeMounts"}}
 
