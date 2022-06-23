@@ -120,6 +120,7 @@ func (tf templateFile) Path() string {
 const (
 	MongoDBStandalone templateFile = "./msvc/mongodb/helm-standalone.tpl.yml"
 	MySqlStandalone   templateFile = "./msvc/mysql/helm-standalone.tpl.yml"
+	RedisStandalone   templateFile = "./msvc/redis/helm-standalone.tpl.yml"
 
 	// ---
 
@@ -131,7 +132,6 @@ const (
 	AccountWireguard templateFile = "account-deploy.tmpl.yml"
 	CommonMsvc       templateFile = "msvc-common-service.tmpl.yml"
 	CommonMres       templateFile = "mres-common.tmpl.yml"
-	RedisStandalone  templateFile = "redis-helm-standalone.tmpl.yml"
 	ConfigMap        templateFile = "configmap.tmpl.yml"
 	Ingress          templateFile = "./ingress.tmpl.yml"
 

@@ -1,0 +1,60 @@
+{{- $ownerRefs := get . "owner-refs" }}
+{{- $storageClass := get . "storage-class"}}
+{{- $aclAccountsMap := get . "acl-accounts-map"}}
+{{- $obj := get . "object"}}
+
+{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
+{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
+
+apiVersion: msvc.kloudlite.io/v1
+kind: HelmRedis
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
+  {{- if .Labels }}
+  labels: {{ .Labels | toYAML | nindent 4 }}
+  {{- end}}
+spec:
+  global:
+   storageClass: {{$storageClass}}
+  fullnameOverride: {{.Name}}
+  image:
+    tag: 6.2.7-debian-10-r0
+
+  {{- if .Labels }}
+  commonLabels: {{ .Labels | toYAML | nindent 4 }}
+  {{- end}}
+
+  auth:
+    enabled: true
+    password: {{ index $generatedVars "redis-password" }}
+
+  replica:
+    replicaCount: 0
+
+  architecture: standalone
+
+  commonConfiguration: |+
+    {{- if $aclAccountsMap}}
+    {{- range $k, $v := $aclAccountsMap}}
+    {{ $v }}
+    {{- end }}
+    {{- end }}
+
+  master:
+    resources:
+      requests: &cpu-and-mem
+        cpu: {{ index $inputs "cpu" }}m
+        memory: {{ index $inputs "memory" }}Mi
+      limits: *cpu-and-mem
+
+  persistence:
+    enabled: true
+    size: {{ index $inputs "size" | default "1Gi" }}
+
+  volumePermissions:
+    enabled: true
+
+  metrics:
+    enabled: true

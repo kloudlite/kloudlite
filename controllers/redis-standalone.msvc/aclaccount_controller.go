@@ -211,7 +211,7 @@ func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalon
 	// STEP: 5. reconciler output exists?
 	_, err5 := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprintf("mres-%s", obj.Name)), &corev1.Secret{})
 	if err5 != nil {
-		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, false, conditions.NotFound, err.Error()))
+		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, false, conditions.NotFound, err5.Error()))
 	} else {
 		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, true, conditions.Found))
 	}
