@@ -22,8 +22,7 @@ type Env struct {
 }
 
 type DNSHandler struct {
-	domain      domain.Domain
-	recordCache cache.Repo[[]*domain.Record]
+	domain domain.Domain
 }
 
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -33,30 +32,28 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	for i, q := range r.Question {
 		switch q.Qtype {
 		case dns.TypeA:
+
 			msg.Authoritative = true
 			d := q.Name
 			todo := context.TODO()
 			host := d[:len(d)-1]
-			var records []*domain.Record
-			if matchedRecords, err := h.recordCache.Get(context.TODO(), host); err == nil && matchedRecords != nil {
-				records = matchedRecords
-			} else {
-				records, err = h.domain.GetRecords(todo, host)
-				if err != nil {
-					fmt.Println("ERROR:", err)
-					return
-				}
-				err := h.recordCache.Set(context.TODO(), host, records)
-				if err != nil {
-					fmt.Println("ERROR:", err)
+
+			records, err := h.domain.GetRecords(todo, host)
+
+			if err != nil || len(records) == 0 {
+				msg.Answer[i] = &dns.A{
+					Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
 				}
 			}
+
 			for _, r := range records {
 				if r.Type == "A" {
 					msg.Answer[i] = &dns.A{
 						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
 						A:   net.ParseIP(r.Answer),
 					}
+				} else {
+					fmt.Println("running")
 				}
 			}
 		}
@@ -77,8 +74,7 @@ var Module = fx.Module(
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				s.Handler = &DNSHandler{
-					domain:      d,
-					recordCache: recCache,
+					domain: d,
 				}
 				return nil
 			},

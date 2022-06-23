@@ -3,18 +3,21 @@ package domain
 import (
 	"context"
 	"fmt"
-	nanoid "github.com/matoous/go-nanoid/v2"
-	"go.uber.org/fx"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/repos"
 	"net"
 	"strings"
+
+	nanoid "github.com/matoous/go-nanoid/v2"
+	"go.uber.org/fx"
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/repos"
 )
 
 type domainI struct {
-	recordsRepo repos.DbRepo[*Record]
-	sitesRepo   repos.DbRepo[*Site]
-	verifyRepo  repos.DbRepo[*Verification]
+	recordsRepo  repos.DbRepo[*Record]
+	sitesRepo    repos.DbRepo[*Site]
+	verifyRepo   repos.DbRepo[*Verification]
+	recordsCache cache.Repo[[]*Record]
 }
 
 func (d *domainI) GetVerification(ctx context.Context, accountId repos.ID, siteId repos.ID) (*Verification, error) {
@@ -98,6 +101,7 @@ func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos
 }
 
 func (d *domainI) VerifySite(ctx context.Context, vid repos.ID) error {
+
 	matchedVerificaton, err := d.verifyRepo.FindById(ctx, vid)
 	if err != nil {
 		return err
@@ -135,6 +139,11 @@ func (d *domainI) VerifySite(ctx context.Context, vid repos.ID) error {
 }
 
 func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
+
+	if matchedRecords, err := d.recordsCache.Get(ctx, host); err == nil && matchedRecords != nil {
+		return matchedRecords, nil
+	}
+
 	domainSplits := strings.Split(strings.TrimSpace(host), ".")
 	filters := make([]repos.Filter, 0)
 	for i := range domainSplits {
@@ -175,7 +184,7 @@ func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error
 		})
 	}
 
-	return d.recordsRepo.Find(ctx, repos.Query{
+	rec, err := d.recordsRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"siteId": site.Id,
 			"$or":    recordFilters,
@@ -185,6 +194,16 @@ func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error
 		},
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.recordsCache.Set(ctx, host, rec)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return rec, nil
 }
 
 func (d *domainI) CreateRecord(
@@ -209,6 +228,8 @@ func (d *domainI) CreateRecord(
 
 func (d *domainI) DeleteRecords(ctx context.Context, host string, siteId string) error {
 
+	d.recordsCache.Drop(ctx, host)
+
 	return d.recordsRepo.DeleteMany(ctx, repos.Filter{
 		"host": host,
 	})
@@ -218,6 +239,7 @@ func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []strin
 	var err error
 
 	// fmt.Println(aRecords, host, siteId)
+	d.recordsCache.Drop(ctx, host)
 
 	for _, aRecord := range aRecords {
 		_, err = d.recordsRepo.Create(ctx, &Record{
@@ -237,12 +259,13 @@ func fxDomain(
 	recordsRepo repos.DbRepo[*Record],
 	sitesRepo repos.DbRepo[*Site],
 	verifyRepo repos.DbRepo[*Verification],
-
+	recordsCache cache.Repo[[]*Record],
 ) Domain {
 	return &domainI{
 		recordsRepo,
 		sitesRepo,
 		verifyRepo,
+		recordsCache,
 	}
 }
 
