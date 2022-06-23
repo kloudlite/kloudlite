@@ -217,6 +217,8 @@ func (d *domainI) DeleteRecords(ctx context.Context, host string, siteId string)
 func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string, siteId string) error {
 	var err error
 
+	fmt.Println(aRecords, host, siteId)
+
 	for _, aRecord := range aRecords {
 		_, err = d.recordsRepo.Create(ctx, &Record{
 			SiteId:   repos.ID(siteId),
