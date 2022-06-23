@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"net"
 
 	"github.com/gofiber/fiber/v2"
@@ -64,7 +63,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 					},
 					)
 
-					fmt.Println(msg.Answer)
+					// fmt.Println(msg.Answer)
 
 					// msg.Answer[i] = &dns.A{
 					// 	Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
