@@ -173,70 +173,6 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.S
 	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
 }
 
-func (r *ServiceReconciler) reconcileStatus2(req *rApi.Request[*mysqlStandalone.Service]) rApi.StepResult {
-	svcObj := req.Object
-	ctx := req.Context()
-
-	isReady := true
-	var cs []metav1.Condition
-
-	// helm resource exists, and fetch conditions from it
-	helmConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.HelmMysqlType, "Helm", fn.NN(svcObj.Namespace, svcObj.Name),
-	)
-	if err != nil {
-		isReady = false
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
-		cs = append(cs, conditions.New("HelmResourceExists", false, "NotFound", err.Error()))
-	}
-	cs = append(cs, helmConditions...)
-
-	// helm (owned) statefulset exists
-	stsConditions, err := conditions.FromResource(
-		ctx, r.Client, constants.StatefulsetType, "Sts", fn.NN(svcObj.Namespace, svcObj.Name),
-	)
-	if err != nil {
-		isReady = false
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
-		cs = append(cs, conditions.New("STSExists", false, "NotFound", err.Error()))
-	}
-	cs = append(cs, stsConditions...)
-
-	// reconciler output exists (secret)
-	_, err = rApi.Get(ctx, r.Client, fn.NN(svcObj.Namespace, svcObj.Name), &corev1.Secret{})
-	if err != nil {
-		isReady = false
-		cs = append(cs, conditions.New("ReconcilerOutputExists", false, "NotFound", err.Error()))
-	} else {
-		cs = append(cs, conditions.New("ReconcilerOutputExists", true, "Found"))
-	}
-
-	// generated vars like root password
-	if svcObj.Status.GeneratedVars.Exists(MysqlRootPasswordKey, MysqlPasswordKey) {
-		cs = append(cs, conditions.New("GeneratedVars", true, "Exists"))
-	} else {
-		isReady = false
-		cs = append(cs, conditions.New("GeneratedVars", false, "NotReconciledYet"))
-	}
-
-	nConditions, hasUpdated, err := conditions.Patch(svcObj.Status.Conditions, cs)
-	if err != nil {
-		return req.FailWithStatusError(err)
-	}
-
-	if !hasUpdated && isReady == svcObj.Status.IsReady {
-		return req.Next()
-	}
-
-	svcObj.Status.IsReady = isReady
-	svcObj.Status.Conditions = nConditions
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
-}
-
 func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalone.Service]) rApi.StepResult {
 	ctx := req.Context()
 	svcObj := req.Object
@@ -317,7 +253,6 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalo
 }
 
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlStandalone.Service{})
 
 	builder.Owns(fn.NewUnstructured(constants.HelmMysqlType))

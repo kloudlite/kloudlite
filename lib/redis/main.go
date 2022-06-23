@@ -25,17 +25,18 @@ func NewClient(hosts, username, password string) (*Client, error) {
 	return &Client{cli: rCli}, nil
 }
 
-func (c *Client) ping(ctx context.Context) error {
+func (c *Client) Connect(ctx context.Context) error {
 	if err := c.cli.Ping(ctx).Err(); err != nil {
 		return errors.NewEf(err, "could not ping to redis host")
 	}
 	return nil
 }
 
+func (c *Client) Close() error {
+	return c.cli.Close()
+}
+
 func (c *Client) UpsertUser(ctx context.Context, prefix, username, password string) error {
-	if err := c.ping(ctx); err != nil {
-		return err
-	}
 	if err := c.cli.Do(
 		ctx,
 		"ACL", "SETUSER", username, "on",
@@ -52,9 +53,6 @@ func (c *Client) UserExists(ctx context.Context, username string) (bool, error) 
 }
 
 func (c *Client) userExists(ctx context.Context, username string) (bool, error) {
-	if err := c.ping(ctx); err != nil {
-		return false, err
-	}
 	cmd := c.cli.Do(ctx, "ACL", "GETUSER", username)
 	_, err := cmd.Result()
 	if err != nil {

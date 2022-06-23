@@ -28,20 +28,27 @@ type BucketReconciler struct {
 }
 
 const (
-	MsvcTokenKey = "TOKEN"
-	MsvcUri      = "URI"
-	MsvcOrgName  = "ORG"
-)
-
-const (
 	BucketIdKey = "bucket-id"
 )
 
 const (
-	BucketExists    conditions.Type = "BucketExists"
-	HasBucketId     conditions.Type = "HasBucketId"
-	MsvcOuputExists conditions.Type = "MsvcOutputExists"
+	BucketExists conditions.Type = "BucketExists"
+	HasBucketId  conditions.Type = "HasBucketId"
 )
+
+type MsvcOutputRef struct {
+	Token   string
+	Uri     string
+	OrgName string
+}
+
+func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
+	return &MsvcOutputRef{
+		Token:   string(s.Data["TOKEN"]),
+		Uri:     string(s.Data["URI"]),
+		OrgName: string(s.Data["ORG"]),
+	}
+}
 
 // +kubebuilder:rbac:groups=influxdb.msvc.kloudlite.io,resources=buckets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=influxdb.msvc.kloudlite.io,resources=buckets/status,verbs=get;update;patch
@@ -83,146 +90,152 @@ func (r *BucketReconciler) finalize(req *rApi.Request[*influxDB.Bucket]) rApi.St
 
 func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*influxDB.Bucket]) rApi.StepResult {
 	ctx := req.Context()
-	bucketObj := req.Object
+	obj := req.Object
 
 	isReady := true
 	var cs []metav1.Condition
 
-	// 1 . managed svc ready
+	// STEP: 1. check managed service is ready
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(bucketObj.Namespace, bucketObj.Spec.ManagedSvcName),
+		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ManagedSvcName),
 		&influxDB.Service{},
 	)
 
 	if err != nil {
-		return req.FailWithStatusError(err)
-	}
-
-	if !msvc.Status.IsReady {
-		return req.FailWithStatusError(errors.Newf("msvc is not ready"))
-	}
-
-	// STEP: check managed service output is ready
-	msvcOutput, err2 := rApi.Get(
-		ctx,
-		r.Client,
-		fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-		&corev1.Secret{},
-	)
-	if err2 != nil {
+		isReady = false
+		msvc = nil
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
-		cs = append(cs, conditions.New(MsvcOuputExists, false, conditions.NotFound, err.Error()))
-		isReady = false
+		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
+	} else {
+		cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
+		cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
+		if !msvc.Status.IsReady {
+			isReady = false
+			msvc = nil
+		}
 	}
 
-	if msvcOutput != nil {
-		msvcToken := string(msvcOutput.Data[MsvcTokenKey])
-		msvcUri := string(msvcOutput.Data[MsvcUri])
-		rApi.SetLocal(req, MsvcTokenKey, msvcToken)
-		rApi.SetLocal(req, MsvcUri, msvcUri)
-		rApi.SetLocal(req, MsvcOrgName, string(msvcOutput.Data[MsvcOrgName]))
-
-		// STEP: influxdb bucket exists
-		influxClient := libInflux.NewClient(msvcUri, msvcToken)
-		if err := influxClient.Connect(ctx); err != nil {
-			return req.FailWithStatusError(err)
+	// STEP: 2. retrieve managed svc output (usually secret)
+	if msvc != nil {
+		msvcRef, err2 := func() (*MsvcOutputRef, error) {
+			msvcOutput, err := rApi.Get(
+				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
+				&corev1.Secret{},
+			)
+			if err != nil {
+				isReady = false
+				cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
+				return nil, err
+			}
+			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
+			outputRef := parseMsvcOutput(msvcOutput)
+			rApi.SetLocal(req, "msvc-output-ref", outputRef)
+			return outputRef, nil
+		}()
+		if err2 != nil {
+			return req.FailWithStatusError(err2)
 		}
-		defer influxClient.Close()
 
-		func() {
-			bucketId, ok := bucketObj.Status.DisplayVars.GetString(BucketIdKey)
+		if err2 := func() error {
+			// STEP: 3. check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
+			// TODO: (user) use msvcRef values
+
+			influxClient := libInflux.NewClient(msvcRef.Uri, msvcRef.Token)
+			if err := influxClient.Connect(ctx); err != nil {
+				return err
+			}
+			defer influxClient.Close()
+			bucketId, ok := obj.Status.DisplayVars.GetString(BucketIdKey)
 			if !ok {
 				isReady = false
 				cs = append(cs, conditions.New(HasBucketId, false, conditions.NotFound))
-				return
+				return nil
 			}
 			cs = append(cs, conditions.New(HasBucketId, true, conditions.Found))
 			if err := influxClient.BucketExists(ctx, bucketId); err != nil {
 				cs = append(cs, conditions.New(BucketExists, false, conditions.NotFound, err.Error()))
 				isReady = false
-				return
+				return nil
 			}
-			cs = append(cs, conditions.New(BucketExists, true, conditions.Found))
-		}()
+			return nil
+		}(); err2 != nil {
+			return req.FailWithStatusError(err2)
+		}
 	}
 
-	newConditions, updated, err := conditions.Patch(bucketObj.Status.Conditions, cs)
+	// STEP: 5. patch conditions
+	newConditions, updated, err := conditions.Patch(obj.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
 
-	if !updated && isReady == bucketObj.Status.IsReady {
+	if !updated && isReady == obj.Status.IsReady {
 		return req.Next()
 	}
 
-	bucketObj.Status.IsReady = isReady
-	bucketObj.Status.Conditions = newConditions
-	bucketObj.Status.OpsConditions = []metav1.Condition{}
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, bucketObj))
+	obj.Status.IsReady = isReady
+	obj.Status.Conditions = newConditions
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+
 }
 
 func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucket]) rApi.StepResult {
 	ctx := req.Context()
-	bucketObj := req.Object
+	obj := req.Object
 
-	if !controllerutil.ContainsFinalizer(bucketObj, constants.CommonFinalizer) {
-		controllerutil.AddFinalizer(bucketObj, constants.CommonFinalizer)
-		controllerutil.AddFinalizer(bucketObj, constants.ForegroundFinalizer)
+	// STEP: 1. add finalizers if needed
+	if !controllerutil.ContainsFinalizer(obj, constants.CommonFinalizer) {
+		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
+		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		if err := r.Update(ctx, bucketObj); err != nil {
-			return req.FailWithStatusError(err)
-		}
-		return req.Next()
+		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
 	}
 
-	msvcUri, ok := rApi.GetLocal[string](req, MsvcUri)
+	// STEP: 3. retrieve msvc output, need it in creating reconciler output
+	msvcRef, ok := rApi.GetLocal[*MsvcOutputRef](req, "msvc-output-ref")
 	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%s not present in req.locals", MsvcUri))
-	}
-	msvcToken, ok := rApi.GetLocal[string](req, MsvcTokenKey)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%s not present in req.locals", msvcToken))
-	}
-	msvcOrgName, ok := rApi.GetLocal[string](req, MsvcOrgName)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%s not present in req.locals", MsvcOrgName))
+		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals", "msvc-output-ref"))
 	}
 
-	influxClient := libInflux.NewClient(msvcUri, msvcToken)
-	defer influxClient.Close()
-
-	bucket, err := influxClient.UpsertBucket(ctx, msvcOrgName, bucketObj.Name)
-	if err != nil {
-		return req.FailWithOpError(err)
+	// STEP: 4. create child components like mongo-user, redis-acl etc.
+	bucket, err4 := func() (*libInflux.Bucket, error) {
+		influxClient := libInflux.NewClient(msvcRef.Uri, msvcRef.Token)
+		defer influxClient.Close()
+		return influxClient.UpsertBucket(ctx, msvcRef.OrgName, obj.Name)
+	}()
+	if err4 != nil {
+		// TODO:(user) might need to reconcile with retry with timeout error
+		return req.FailWithOpError(err4)
 	}
 
-	if meta.IsStatusConditionFalse(bucketObj.Status.Conditions, HasBucketId.String()) {
-		if err := bucketObj.Status.DisplayVars.Set(BucketIdKey, bucket.BucketId); err != nil {
+	if meta.IsStatusConditionFalse(obj.Status.Conditions, HasBucketId.String()) {
+		if err := obj.Status.DisplayVars.Set(BucketIdKey, bucket.BucketId); err != nil {
 			return req.FailWithOpError(err)
 		}
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, bucketObj))
+		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
 	}
 
-	if err := func() error {
+	// STEP: 5. create reconciler output (eg. secret)
+	if errt := func() error {
 		b, err := templates.Parse(
 			templates.Secret, &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: bucketObj.Namespace,
-					Name:      fmt.Sprintf("mres-%s", bucketObj.Name),
+					Name:      fmt.Sprintf("mres-%s", obj.Name),
+					Namespace: obj.Namespace,
 					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(bucketObj, true),
+						fn.AsOwner(obj, true),
 					},
 				},
 				StringData: map[string]string{
-					"BUCKET_NAME": bucketObj.Name,
+					"BUCKET_NAME": obj.Name,
 					"BUCKET_ID":   bucket.BucketId,
 					"ORG_ID":      bucket.OrgId,
-					"ORG_NAME":    msvcOrgName,
-					"TOKEN":       msvcToken,
-					"URI":         msvcUri,
+					"ORG_NAME":    msvcRef.OrgName,
+					"TOKEN":       msvcRef.Token,
+					"URI":         msvcRef.Uri,
 				},
 			},
 		)
@@ -234,8 +247,8 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 			return err
 		}
 		return nil
-	}(); err != nil {
-		return req.FailWithOpError(err)
+	}(); errt != nil {
+		return req.FailWithOpError(errt)
 	}
 
 	return req.Done()

@@ -7,7 +7,6 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -38,17 +37,15 @@ const (
 	MysqlUserExists conditions.Type = "MysqlUserExists"
 )
 
-type msvcOutputRef struct {
-	Hosts string
+type MsvcOutputRef struct {
+	Hosts        string
 	RootPassword string
 }
 
-
-func parseMsvcOutput(scrt *corev1.Secret) *msvcOutputRef {
-	data := scrt.Data
-	return &msvcOutputRef{
-		Hosts:        string(data["HOSTS"]),
-		RootPassword: string(data["ROOT_PASSWORD"]),
+func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
+	return &MsvcOutputRef{
+		Hosts:        string(s.Data["HOSTS"]),
+		RootPassword: string(s.Data["ROOT_PASSWORD"]),
 	}
 }
 
@@ -93,7 +90,6 @@ func (r *DatabaseReconciler) finalize(req *rApi.Request[*mysqlStandalone.Databas
 func formatDbName(dbName string) string {
 	return strings.ReplaceAll(dbName, "-", "_")
 }
-
 func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.Database]) rApi.StepResult {
 	ctx := req.Context()
 	obj := req.Object
@@ -101,10 +97,10 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 	isReady := true
 	var cs []metav1.Condition
 
-	// STEP: check managed service is ready
+	// STEP: 1. check managed service is ready
 	msvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ManagedSvcName),
-		&mongodbStandalone.Service{},
+		&mysqlStandalone.Service{},
 	)
 
 	if err != nil {
@@ -117,33 +113,38 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 	} else {
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
 		cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
+		if !msvc.Status.IsReady {
+			isReady = false
+			msvc = nil
+		}
 	}
 
-	// STEP: retrieve managed svc output (usually secret)
+	// STEP: 2. retrieve managed svc output (usually secret)
 	if msvc != nil {
-		msvcOutput, err := rApi.Get(
-			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-			&corev1.Secret{},
-		)
-		if err != nil {
-			isReady = false
-			if !apiErrors.IsNotFound(err) {
-				return req.FailWithStatusError(err)
-			}
-			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
-		} else {
-			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
-			parseMsvcOutput(msvcOutput).
-			rApi.SetLocal(req, MsvcOutputKey, msvcOutput)
-		}
-
-		// STEP: check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
-		if err := func() error {
-			mysqlClient, err := libMysql.NewClient(
-				string(msvcOutput.Data[SvcHostsKey]), "mysql", "root", string(msvcOutput.Data[SvcRootPasswordKey]),
+		msvcRef, err2 := func() (*MsvcOutputRef, error) {
+			msvcOutput, err := rApi.Get(
+				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
+				&corev1.Secret{},
 			)
 			if err != nil {
 				isReady = false
+				cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
+				return nil, err
+			}
+			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
+			outputRef := parseMsvcOutput(msvcOutput)
+			rApi.SetLocal(req, "msvc-output-ref", outputRef)
+			return outputRef, nil
+		}()
+		if err2 != nil {
+			return req.FailWithStatusError(err2)
+		}
+
+		if err2 := func() error {
+			// STEP: 3. check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
+			// TODO: (user) use msvcRef values
+			mysqlClient, err := libMysql.NewClient(msvcRef.Hosts, "mysql", "root", msvcRef.RootPassword)
+			if err != nil {
 				return err
 			}
 			if err := mysqlClient.Connect(ctx); err != nil {
@@ -155,26 +156,29 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 			if err != nil {
 				return err
 			}
+
 			if !userExists {
 				isReady = false
 				cs = append(cs, conditions.New(MysqlUserExists, false, conditions.NotFound))
 				return nil
 			}
+
 			cs = append(cs, conditions.New(MysqlUserExists, true, conditions.Found))
 			return nil
-		}(); err != nil {
-			return req.FailWithStatusError(err)
+		}(); err2 != nil {
+			isReady = false
+			return req.FailWithStatusError(err2)
 		}
 	}
 
-	// STEP: check generated vars
+	// STEP: 4. check generated vars
 	if msvc != nil && !obj.Status.GeneratedVars.Exists(DbPasswordKey) {
 		cs = append(cs, conditions.New(conditions.GeneratedVars, false, conditions.NotReconciledYet))
 	} else {
 		cs = append(cs, conditions.New(conditions.GeneratedVars, true, conditions.Found))
 	}
 
-	// STEP: patch conditions
+	// STEP: 5. patch conditions
 	newConditions, updated, err := conditions.Patch(obj.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
@@ -210,17 +214,19 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 	}
 
 	// STEP: 3. retrieve msvc output, need it in creating reconciler output
-	msvcOutput, ok := rApi.GetLocal[corev1.Secret](req, MsvcOutputKey)
+	msvcRef, ok := rApi.GetLocal[*MsvcOutputRef](req, "msvc-output-ref")
 	if !ok {
-		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals", MsvcOutputKey))
+		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals", "msvc-output-ref"))
 	}
-	hosts, rootPassword := parseMsvcSecret(msvcOutput)
 
-	if errt := func() error {
-		// STEP: 4. create child components like mongo-user, redis-acl etc.
-		mysqlClient, err := libMysql.NewClient(
-			string(msvcOutput.Data[SvcHostsKey]), "mysql", "root", string(msvcOutput.Data[SvcRootPasswordKey]),
-		)
+	dbPasswd, ok := obj.Status.GeneratedVars.GetString(DbPasswordKey)
+	if !ok {
+		return req.FailWithOpError(errors.Newf("key=%s must be present in .Status.GeneratedVars", DbPasswordKey))
+	}
+	dbName := formatDbName(obj.Name)
+	// STEP: 4. create child components like mongo-user, redis-acl etc.
+	err4 := func() error {
+		mysqlClient, err := libMysql.NewClient(msvcRef.Hosts, "mysql", "root", msvcRef.RootPassword)
 		if err != nil {
 			return err
 		}
@@ -229,15 +235,15 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 		}
 		defer mysqlClient.Close()
 
-		dbPassword, ok := obj.Status.GeneratedVars.GetString(DbPasswordKey)
-		if !ok {
-			return errors.Newf("key=%s not found in .Status.GeneratedVars", DbPasswordKey)
-		}
-		if err := mysqlClient.UpsertUser(formatDbName(obj.Name), obj.Name, dbPassword); err != nil {
-			return err
-		}
+		return mysqlClient.UpsertUser(dbName, obj.Name, dbPasswd)
+	}()
+	if err4 != nil {
+		// TODO:(user) might need to reconcile with retry with timeout error
+		return req.FailWithOpError(err4)
+	}
 
-		// STEP: 5. create reconciler output (eg. secret)
+	// STEP: 5. create reconciler output (eg. secret)
+	if errt := func() error {
 		b, err := templates.Parse(
 			templates.Secret, &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
@@ -249,19 +255,11 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 				},
 				StringData: map[string]string{
 					"USERNAME": obj.Name,
-					"PASSWORD": dbPassword,
-					"HOSTS":    string(msvcOutput.Data[SvcHostsKey]),
+					"PASSWORD": dbPasswd,
+					"HOSTS":    msvcRef.Hosts,
 					"DB_NAME":  formatDbName(obj.Name),
-					"DSN": fmt.Sprintf(
-						"%s:%s@tcp(%s)/%s",
-						obj.Name,
-						dbPassword,
-						,
-						formatDbName(databaseObj.Name),
-					), "URI": fmt.Sprintf(
-						"mysqlx://%s:%s@%s/%s", databaseObj.Name, dbPassword, mysqlHost,
-						formatDbName(databaseObj.Name),
-					),
+					"DSN":      fmt.Sprintf("%s:%s@tcp(%s)/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
+					"URI":      fmt.Sprintf("mysqlx://%s:%s@%s/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
 				},
 			},
 		)
@@ -280,79 +278,6 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 	return req.Done()
 }
 
-func (r *DatabaseReconciler) reconcileOperations2(req *rApi.Request[*mysqlStandalone.Database]) rApi.StepResult {
-	ctx := req.Context()
-	databaseObj := req.Object
-
-	if meta.IsStatusConditionFalse(databaseObj.Status.Conditions, "GeneratedVars") {
-		if err := databaseObj.Status.GeneratedVars.Set(DbPasswordKey, fn.CleanerNanoid(40)); err != nil {
-			return req.FailWithOpError(err)
-		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, databaseObj))
-	}
-
-	mysqlClient, ok := rApi.GetLocal[*libMysql.Client](req, MysqlClientKey)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%s must be present in req locals", MysqlClientKey))
-	}
-	if err := mysqlClient.Connect(ctx); err != nil {
-		return req.FailWithOpError(err)
-	}
-	defer mysqlClient.Close()
-
-	dbPassword, ok := databaseObj.Status.GeneratedVars.GetString(DbPasswordKey)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%s must be present in .Status.GeneratedVars", MysqlClientKey))
-	}
-
-	if err := mysqlClient.UpsertUser(databaseObj.Name, databaseObj.Name, dbPassword); err != nil {
-		return req.FailWithOpError(errors.NewEf(err, "creating user=%s", databaseObj.Name))
-	}
-
-	mysqlHost, ok := rApi.GetLocal[string](req, SvcHostsKey)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%ss must be present in req.locals", SvcHostsKey))
-	}
-
-	// create secret for this resource
-
-	b, err := templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("mres-%s", databaseObj.Name),
-				Namespace: databaseObj.Namespace,
-			},
-			// Immutable:  fn.NewBool(true),
-			StringData: map[string]string{
-				"USERNAME": databaseObj.Name,
-				"PASSWORD": dbPassword,
-				"HOSTS":    mysqlHost,
-				"DB_NAME":  formatDbName(databaseObj.Name),
-				"DSN": fmt.Sprintf(
-					"%s:%s@tcp(%s)/%s",
-					databaseObj.Name,
-					dbPassword,
-					mysqlHost,
-					formatDbName(databaseObj.Name),
-				), "URI": fmt.Sprintf(
-					"mysqlx://%s:%s@%s/%s", databaseObj.Name, dbPassword, mysqlHost,
-					formatDbName(databaseObj.Name),
-				),
-			},
-		},
-	)
-	if err != nil {
-		return req.FailWithOpError(errors.NewEf(err, "parsing template=%s", templates.Secret))
-	}
-
-	if _, err := fn.KubectlApplyExec(b); err != nil {
-		return req.FailWithOpError(errors.NewEf(err, "kubectl apply"))
-	}
-
-	return req.Done()
-}
-
-// SetupWithManager sets up the controller with the Manager.
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlStandalone.Database{}).
