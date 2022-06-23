@@ -1,12 +1,10 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: n-mysql
+  name: x-mysql
   namespace: hotspot
 spec:
   apiVersion: mysql-standalone.msvc.kloudlite.io/v1
   inputs:
-    cpu_min: 400
-    cpu_max: 800
-    memory_min: 500
-    memory_max: 500
+    cpu: 600
+    memory: 600

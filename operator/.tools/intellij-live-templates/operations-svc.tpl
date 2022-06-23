@@ -2,11 +2,11 @@ ctx := req.Context()
 $objectVar$ := req.Object
 
 // STEP: 1. add finalizers if needed
-if meta.IsStatusConditionFalse($objectVar$.Status.Conditions, conditions.GeneratedVars.String()) {
-  if err := $objectVar$.Status.GeneratedVars.Set(SvcRootPasswordKey, fn.CleanerNanoid(40)); err != nil {
-    return req.FailWithOpError(err)
-  }
-  return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, $objectVar$))
+if !controllerutil.ContainsFinalizer($objectVar$, constants.CommonFinalizer) {
+  controllerutil.AddFinalizer($objectVar$, constants.CommonFinalizer)
+  controllerutil.AddFinalizer($objectVar$, constants.ForegroundFinalizer)
+
+  return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, $objectVar$))
 }
 
 // STEP: 2. generate vars if needed to
@@ -35,6 +35,8 @@ if errP := func() error {
   }
 
   // STEP: 4. create output
+  // TODO:(user)
+
   b2, err := templates.Parse(
     templates.Secret, &corev1.Secret{
       ObjectMeta: metav1.ObjectMeta{
@@ -56,6 +58,7 @@ if errP := func() error {
   if _, err := fn.KubectlApplyExec(b1, b2); err != nil {
     return err
   }
+  return nil
 }(); errP != nil {
   req.FailWithOpError(errP)
 }
