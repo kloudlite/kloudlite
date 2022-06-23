@@ -11,8 +11,9 @@ tasks:
     env:
       DNS_PORT: 8080
       PORT: 4004
-      MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
-      REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
+      MONGO_URI: mongodb://root:JicRo7ThJEBxv0HfbDaZeo-sr36630ZwnIswf00j@mongo-standalone.hotspot.svc.cluster.local/admin?authSource=admin
+      REDIS_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
+      REDIS_PASSWORD: Wkbz9duoLHwIFM4ivooc6jHAJ9etFHWE7pBwG8Xz
       MONGO_DB_NAME: dns
       ORIGINS: http://localhost:4001,https://studio.apollographql.com
 
