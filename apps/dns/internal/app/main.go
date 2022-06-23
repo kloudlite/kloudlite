@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/miekg/dns"
 	"go.uber.org/fx"
@@ -14,7 +16,6 @@ import (
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
-	"net"
 )
 
 type Env struct {
@@ -28,7 +29,7 @@ type DNSHandler struct {
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg := dns.Msg{}
 	msg.SetReply(r)
-	msg.Answer = make([]dns.RR, len(msg.Question))
+	msg.Answer = []dns.RR{}
 	for i, q := range r.Question {
 		switch q.Qtype {
 		case dns.TypeA:
@@ -48,12 +49,27 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 			for _, r := range records {
 				if r.Type == "A" {
-					msg.Answer[i] = &dns.A{
+
+					// if msg.Answer[i] == nil {
+					// 	msg.Answer[i] = &dns.A{
+					// 		Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
+					// 		A:   net.ParseIP(r.Answer),
+					// 	}
+					// }
+
+					msg.Answer = append(msg.Answer, &dns.A{
 						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
 						A:   net.ParseIP(r.Answer),
-					}
-				} else {
-					fmt.Println("running")
+					},
+					)
+
+					fmt.Println(msg.Answer)
+
+					// msg.Answer[i] = &dns.A{
+					// 	Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
+					// 	A:   net.ParseIP(r.Answer),
+					// }
+
 				}
 			}
 		}
@@ -95,7 +111,7 @@ var Module = fx.Module(
 				Domain   string
 				ARecords []string
 			}
-			err := c.JSONP(&data)
+			err := c.BodyParser(&data)
 			if err != nil {
 				return err
 			}
