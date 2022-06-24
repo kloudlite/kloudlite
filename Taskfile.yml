@@ -47,6 +47,21 @@ tasks:
       IMG: harbor.dev.madhouselabs.io/kloudlite/koperator:latest
       NAMESPACE: koperator
     cmds:
+      - |
+        kubectl apply -f - <<EOF
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: operator-env
+          namespace: koperator
+        stringData:
+          HARBOR_USERNAME: robot_kloudlite-operator
+          HARBOR_PASSWORD: eWNTSlIa0sDucgjFX25s6AXMpiilgmXZ
+          KAFKA_BROKERS: redpanda.hotspot:9092
+          KAFKA_REPLY_TOPIC: 'dev-hotspot-agent-reply'
+          AGENT_KAFKA_TOPIC: 'dev-hotspot-agent'
+          AGENT_KAFKA_GROUP_ID: "consumer-group"
+        EOF
 #      - make dev-docker-build dev-docker-push
       - cd config/manager && kustomize edit set image controller=${IMG} && kustomize edit set namespace ${NAMESPACE}
       - cd config/default && kustomize edit set namespace ${NAMESPACE}

@@ -50,10 +50,11 @@ spec:
         # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         resources:
           limits:
-            cpu: 500m
-            memory: 128Mi
+            cpu: 700m
+            memory: 700Mi
           requests:
-            cpu: 10m
-            memory: 64Mi
-      serviceAccountName: controller-manager
+            cpu: 200m
+            memory: 250Mi
+#       serviceAccountName: controller-manager
+      serviceAccountName: kloudlite-cluster-svc-account
       terminationGracePeriodSeconds: 10
