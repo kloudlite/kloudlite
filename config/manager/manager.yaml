@@ -31,6 +31,9 @@ spec:
         - /manager
         args:
         - --leader-elect
+        envFrom:
+          - secretRef:
+              name: operator-env
         image: controller:latest
         name: manager
         securityContext:
@@ -52,9 +55,10 @@ spec:
         resources:
           limits:
             cpu: 500m
-            memory: 128Mi
+            memory: 600Mi
           requests:
-            cpu: 10m
-            memory: 64Mi
-      serviceAccountName: controller-manager
+            cpu: 100m
+            memory: 250Mi
+#       serviceAccountName: controller-manager
+      serviceAccountName: kloudlite-cluster-svc-account
       terminationGracePeriodSeconds: 10

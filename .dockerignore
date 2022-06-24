@@ -1,10 +1,10 @@
 # More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
 # Ignore build and test binaries.
-bin/
-testbin/
-.tools
-helm
-Taskfile.yml
-Dockerfile
-.dockerignore
-.GOPATH
+**
+!apis
+!agent
+!controllers
+!lib
+!main.go
+!go.mod
+!go.sum
