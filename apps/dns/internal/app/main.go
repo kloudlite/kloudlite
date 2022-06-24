@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 
 	"github.com/gofiber/fiber/v2"
@@ -115,6 +116,7 @@ var Module = fx.Module(
 			if err != nil {
 				return err
 			}
+
 			err = d.AddARecords(c.Context(), data.Domain, data.ARecords, "kloudlite")
 
 			if err != nil {
@@ -126,8 +128,31 @@ var Module = fx.Module(
 
 		})
 
+		server.Get("/get-records/:domain_name", func(c *fiber.Ctx) error {
+
+			domainName := c.Params("domain_name")
+
+			records, err := d.GetRecords(c.Context(), domainName)
+
+			if err != nil {
+				return err
+			}
+
+			r, err := json.Marshal(records)
+
+			if err != nil {
+				return err
+			}
+
+			c.Send([]byte(r))
+
+			return nil
+
+		})
+
 		server.Delete("/delete-domain/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")
+
 			err := d.DeleteRecords(c.Context(), domainName, "kloudlite")
 
 			if err != nil {

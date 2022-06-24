@@ -36,7 +36,10 @@ var RecordIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "host", Value: repos.IndexAsc},
+			{Key: "type", Value: repos.IndexAsc},
+			{Key: "answer", Value: repos.IndexAsc},
 		},
+		Unique: true,
 	},
 }
 
