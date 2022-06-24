@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"operators.kloudlite.io/lib/types"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	v1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -30,7 +30,7 @@ import (
 type ManagedServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	lib.MessageSender
+	types.MessageSender
 	lt metav1.Time
 }
 

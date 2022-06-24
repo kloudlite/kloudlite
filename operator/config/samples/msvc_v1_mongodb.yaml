@@ -1,6 +1,0 @@
-apiVersion: msvc.kloudlite.io/v1
-kind: MongoDB
-metadata:
-  name: mongodb-sample
-spec:
-  # TODO(user): Add fields here
