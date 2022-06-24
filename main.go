@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
+	"operators.kloudlite.io/lib/logger"
+	"operators.kloudlite.io/lib/redpanda"
+	t "operators.kloudlite.io/lib/types"
 	"os"
 
 	"github.com/redhat-cop/operator-utils/pkg/util"
@@ -14,9 +18,6 @@ import (
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/controllers/crds"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,11 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"operators.kloudlite.io/agent"
-	"operators.kloudlite.io/lib"
-	"operators.kloudlite.io/lib/errors"
-
-	"go.uber.org/fx"
-
 	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
@@ -59,7 +55,6 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(crdsv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbStandalone.AddToScheme(scheme))
 	utilruntime.Must(mongodbCluster.AddToScheme(scheme))
@@ -86,8 +81,10 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":9091", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":9092", "The address the probe endpoint binds to.")
+	// flag.StringVar(&metricsAddr, "metrics-bind-address", ":9091", "The address the metric endpoint binds to.")
+	// flag.StringVar(&probeAddr, "health-probe-bind-address", ":9092", "The address the probe endpoint binds to.")
+	flag.StringVar(&metricsAddr, "metrics-bind-address", ":12345", "The address the metric endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":12346", "The address the probe endpoint binds to.")
 	flag.BoolVar(
 		&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -105,44 +102,24 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	var mgr manager.Manager
-	if isDev {
-		mr, err := ctrl.NewManager(
-			&rest.Config{
-				Host: "localhost:8080",
-			},
-			ctrl.Options{
-				Scheme:                     scheme,
-				MetricsBindAddress:         metricsAddr,
-				Port:                       9443,
-				HealthProbeBindAddress:     probeAddr,
-				LeaderElection:             enableLeaderElection,
-				LeaderElectionID:           "bf38d2f9.kloudlite.io",
-				LeaderElectionResourceLock: "configmaps",
-			},
-		)
-		if err != nil {
-			setupLog.Error(err, "unable to start manager")
-			os.Exit(1)
+	mgr, err := func() (manager.Manager, error) {
+		cOpts := ctrl.Options{
+			Scheme:                     scheme,
+			MetricsBindAddress:         metricsAddr,
+			Port:                       9443,
+			HealthProbeBindAddress:     probeAddr,
+			LeaderElection:             enableLeaderElection,
+			LeaderElectionID:           "bf38d2f9.kloudlite.io",
+			LeaderElectionResourceLock: "configmaps",
 		}
-		mgr = mr
-	} else {
-		mr, err := ctrl.NewManager(
-			ctrl.GetConfigOrDie(), ctrl.Options{
-				Scheme:                     scheme,
-				MetricsBindAddress:         metricsAddr,
-				Port:                       9443,
-				HealthProbeBindAddress:     probeAddr,
-				LeaderElection:             enableLeaderElection,
-				LeaderElectionID:           "bf38d2f9.kloudlite.io",
-				LeaderElectionResourceLock: "configmaps",
-			},
-		)
-		if err != nil {
-			setupLog.Error(err, "unable to start manager")
-			os.Exit(1)
+		if isDev {
+			return ctrl.NewManager(&rest.Config{Host: "localhost:8080"}, cOpts)
 		}
-		mgr = mr
+		return ctrl.NewManager(ctrl.GetConfigOrDie(), cOpts)
+	}()
+	if err != nil {
+		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
 	}
 
 	harborUserName := fromEnv("HARBOR_USERNAME")
@@ -154,24 +131,27 @@ func main() {
 	agentKafkaGroupId := fromEnv("AGENT_KAFKA_GROUP_ID")
 	agentKafkaTopic := fromEnv("AGENT_KAFKA_TOPIC")
 
-	kafkaProducer, err := kafka.NewProducer(
-		&kafka.ConfigMap{
-			"bootstrap.servers": kafkaBrokers,
-		},
-	)
-
+	producer, err := redpanda.NewProducer(kafkaBrokers)
 	if err != nil {
-		panic(errors.NewEf(err, "could not create kafka producer"))
+		setupLog.Error(err, "creating redpanda producer")
+		panic(err)
 	}
+	defer producer.Close()
 
-	fmt.Println("kafka producer connected")
+	messageSender := NewMsgSender(producer, kafkaReplyTopic)
 
-	sender := NewMsgSender(kafkaProducer, kafkaReplyTopic)
+	consumer, err := redpanda.NewConsumer(kafkaBrokers, agentKafkaGroupId, agentKafkaTopic)
+	if err != nil {
+		setupLog.Error(err, "creating redpanda consumer")
+		panic(err)
+	}
+	consumer.SetupLogger(logger.New(types.NamespacedName{}))
+	defer consumer.Close()
 
 	if err = (&crds.ProjectReconciler{
 		Client:         mgr.GetClient(),
 		Scheme:         mgr.GetScheme(),
-		MessageSender:  sender,
+		MessageSender:  messageSender,
 		HarborUserName: harborUserName,
 		HarborPassword: harborPassword,
 	}).SetupWithManager(mgr); err != nil {
@@ -182,7 +162,7 @@ func main() {
 	if err = (&crds.AppReconciler{
 		Client:         mgr.GetClient(),
 		Scheme:         mgr.GetScheme(),
-		MessageSender:  sender,
+		MessageSender:  messageSender,
 		HarborUserName: harborUserName,
 		HarborPassword: harborPassword,
 	}).SetupWithManager(mgr); err != nil {
@@ -193,7 +173,7 @@ func main() {
 	if err = (&crds.RouterReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
-		MessageSender: sender,
+		MessageSender: messageSender,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Router")
 		os.Exit(1)
@@ -202,7 +182,7 @@ func main() {
 	if err = (&crds.ManagedServiceReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
-		MessageSender: sender,
+		MessageSender: messageSender,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
 		os.Exit(1)
@@ -211,7 +191,7 @@ func main() {
 	if err = (&crds.ManagedResourceReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
-		MessageSender: sender,
+		MessageSender: messageSender,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
 		os.Exit(1)
@@ -361,94 +341,26 @@ func main() {
 
 	setupLog.Info("starting manager")
 
-	app := fx.New(
-		agent.App(),
-
-		fx.Provide(
-			func() *kafka.Producer {
-				return kafkaProducer
-			},
-		),
-
-		fx.Provide(
-			func() *kafka.Consumer {
-				c, e := kafka.NewConsumer(
-					&kafka.ConfigMap{
-						"bootstrap.servers":  kafkaBrokers,
-						"group.id":           agentKafkaGroupId,
-						"auto.offset.reset":  "earliest",
-						"enable.auto.commit": "false",
-					},
-				)
-				if e != nil {
-					panic(errors.NewEf(err, "could not create kafka consumer"))
-				}
-				return c
-			},
-		),
-		fx.Invoke(
-			func(lf fx.Lifecycle, k *kafka.Consumer) {
-				lf.Append(
-					fx.Hook{
-						OnStart: func(ctx context.Context) error {
-							return k.Subscribe(agentKafkaTopic, nil)
-						},
-					},
-				)
-			},
-		),
-		fx.Invoke(
-			func(lf fx.Lifecycle) {
-				lf.Append(
-					fx.Hook{
-						OnStart: func(context.Context) error {
-							go func() {
-								if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-									setupLog.Error(err, "problem running manager")
-									panic(err)
-								}
-							}()
-							return nil
-						},
-					},
-				)
-			},
-		),
-	)
-
-	app.Run()
+	go agent.Run(consumer)
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		setupLog.Error(err, "problem running manager")
+		panic(err)
+	}
 }
 
 type msgSender struct {
-	kp     *kafka.Producer
-	ktopic *string
+	producer *redpanda.Producer
+	kTopic   string
 }
 
-func (m *msgSender) SendMessage(key string, msg lib.MessageReply) error {
-	return nil
-	msgBody, e := json.Marshal(msg)
-	if e != nil {
-		fmt.Println(e)
-		return e
-	}
-	err := m.kp.Produce(
-		&kafka.Message{
-			TopicPartition: kafka.TopicPartition{
-				Topic: m.ktopic,
-			},
-			Key:   []byte(key),
-			Value: msgBody,
-		}, nil,
-	)
+func (m *msgSender) SendMessage(ctx context.Context, key string, message t.MessageReply) error {
+	b, err := json.Marshal(message)
 	if err != nil {
-		return errors.NewEf(err, "could not send message into kafka")
+		return err
 	}
-	return nil
+	return m.producer.Produce(ctx, m.kTopic, key, b)
 }
 
-func NewMsgSender(kp *kafka.Producer, ktopic string) lib.MessageSender {
-	return &msgSender{
-		kp,
-		&ktopic,
-	}
+func NewMsgSender(producer *redpanda.Producer, kTopic string) *msgSender {
+	return &msgSender{producer: producer, kTopic: kTopic}
 }

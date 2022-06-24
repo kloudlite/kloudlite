@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"operators.kloudlite.io/lib/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -16,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -29,7 +29,7 @@ import (
 type ManagedResourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	lib.MessageSender
+	types.MessageSender
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
@@ -66,13 +66,14 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Req
 	return ctrl.Result{}, nil
 }
 
-func (r *ManagedResourceReconciler) notify(mres *v1.ManagedResource) error {
-	return nil
+func (r *ManagedResourceReconciler) notify(req *rApi.Request[*v1.ManagedResource]) error {
+	obj := req.Object
 	return r.SendMessage(
-		fn.NN(mres.Namespace, mres.Name).String(), lib.MessageReply{
-			Key:        fn.NN(mres.Namespace, mres.Name).String(),
-			Conditions: mres.Status.Conditions,
-			Status:     mres.Status.IsReady,
+		req.Context(),
+		fn.NN(obj.Namespace, obj.Name).String(), types.MessageReply{
+			Key:        fn.NN(obj.Namespace, obj.Name).String(),
+			Conditions: obj.Status.Conditions,
+			IsReady:    obj.Status.IsReady,
 		},
 	)
 }

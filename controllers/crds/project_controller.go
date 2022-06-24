@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"operators.kloudlite.io/lib/types"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -22,15 +23,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"operators.kloudlite.io/lib"
 )
 
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	lib.MessageSender
+	types.MessageSender
 	HarborUserName string
 	HarborPassword string
 }
@@ -253,14 +252,12 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 
 func (r *ProjectReconciler) notify(req *rApi.Request[*crdsv1.Project]) error {
 	project := req.Object
-
-	return nil
-
 	return r.SendMessage(
-		project.LogRef(), lib.MessageReply{
+		req.Context(),
+		project.LogRef(), types.MessageReply{
 			Key:        project.LogRef(),
 			Conditions: project.Status.Conditions,
-			Status:     project.Status.IsReady,
+			IsReady:    project.Status.IsReady,
 		},
 	)
 }

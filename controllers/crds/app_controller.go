@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"operators.kloudlite.io/lib/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -18,7 +19,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 
-	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/templates"
 )
 
@@ -26,7 +26,7 @@ import (
 type AppReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	lib.MessageSender
+	types.MessageSender
 
 	HarborUserName string
 	HarborPassword string
@@ -148,10 +148,10 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi
 func (r *AppReconciler) notify(req *rApi.Request[*crdsv1.App]) error {
 	app := req.Object
 	return r.SendMessage(
-		req.Object.LogRef(), lib.MessageReply{
+		req.Context(), req.Object.LogRef(), types.MessageReply{
 			Key:        app.LogRef(),
 			Conditions: app.Status.Conditions,
-			Status:     app.Status.IsReady,
+			IsReady:    app.Status.IsReady,
 		},
 	)
 }

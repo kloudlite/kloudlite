@@ -22,9 +22,7 @@ tasks:
     cmds:
       - |
         curl -L0 https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.5/kustomize_v4.5.5_linux_amd64.tar.gz > kustomize.tar.gz
-        tar xf kustomize.tar.gz
-        rm -rf kustomize.tar.gz
-
+        tar xf kustomize.tar.gz && rm -rf kustomize.tar.gz
 
   run:
     run: always
