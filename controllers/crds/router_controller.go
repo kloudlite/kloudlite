@@ -5,17 +5,16 @@ import (
 	"fmt"
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/lib"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/lib/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -24,7 +23,7 @@ import (
 type RouterReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	lib.MessageSender
+	types.MessageSender
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
@@ -193,10 +192,10 @@ func (r *RouterReconciler) notify(req *rApi.Request[*crdsv1.Router]) rApi.StepRe
 	router := req.Object
 
 	err := r.SendMessage(
-		router.NameRef(), lib.MessageReply{
+		req.Context(), router.NameRef(), types.MessageReply{
 			Key:        router.NameRef(),
 			Conditions: router.Status.Conditions,
-			Status:     meta.IsStatusConditionTrue(router.Status.Conditions, "Ready"),
+			IsReady:    router.Status.IsReady,
 		},
 	)
 	if err != nil {
