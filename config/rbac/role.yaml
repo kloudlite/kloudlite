@@ -500,6 +500,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - s3.aws.kloudlite.io
+  resources:
+  - buckets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - s3.aws.kloudlite.io
+  resources:
+  - buckets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - s3.aws.kloudlite.io
+  resources:
+  - buckets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - serverless.kloudlite.io
   resources:
   - lambdas

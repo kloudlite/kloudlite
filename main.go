@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
+
 	"k8s.io/apimachinery/pkg/types"
+
 	"operators.kloudlite.io/lib/logger"
 	"operators.kloudlite.io/lib/redpanda"
 	t "operators.kloudlite.io/lib/types"
-	"os"
 
 	"github.com/redhat-cop/operator-utils/pkg/util"
 	"k8s.io/client-go/rest"
@@ -37,6 +39,7 @@ import (
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	elasticsearchmsvccontrollers "operators.kloudlite.io/controllers/elasticsearch.msvc"
 	influxdbmsvccontrollers "operators.kloudlite.io/controllers/influxdb.msvc"
@@ -44,6 +47,7 @@ import (
 	mysqlStandaloneController "operators.kloudlite.io/controllers/mysql-standalone.msvc"
 	opensearchmsvccontrollers "operators.kloudlite.io/controllers/opensearch.msvc"
 	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
+	s3awscontrollers "operators.kloudlite.io/controllers/s3.aws"
 	serverlesscontrollers "operators.kloudlite.io/controllers/serverless"
 	// +kubebuilder:scaffold:imports
 )
@@ -66,6 +70,7 @@ func init() {
 	utilruntime.Must(serverlessv1.AddToScheme(scheme))
 	utilruntime.Must(elasticsearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(opensearchmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(s3awsv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -90,6 +95,8 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.",
 	)
+
+	fmt.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "Enable development mode")
@@ -145,7 +152,7 @@ func main() {
 		setupLog.Error(err, "creating redpanda consumer")
 		panic(err)
 	}
-	consumer.SetupLogger(logger.New(types.NamespacedName{}))
+	consumer.SetupLogger(logger.NewZapLogger(types.NamespacedName{}))
 	defer consumer.Close()
 
 	if err = (&crds.ProjectReconciler{
@@ -321,6 +328,13 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&influxdbmsvccontrollers.BucketReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Bucket")
+		os.Exit(1)
+	}
+	if err = (&s3awscontrollers.BucketReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {

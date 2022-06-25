@@ -99,7 +99,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		ctx:    ctx,
 		client: c,
 		Object: resInstance,
-		Logger: logger.New(nn),
+		Logger: logger.NewZapLogger(nn),
 		locals: map[string]any{},
 	}, nil
 }

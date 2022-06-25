@@ -1,0 +1,6 @@
+apiVersion: s3.aws.kloudlite.io/v1
+kind: Bucket
+metadata:
+  name: bucket-sample
+spec:
+  # TODO(user): Add fields here
