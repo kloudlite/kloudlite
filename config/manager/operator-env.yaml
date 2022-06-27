@@ -10,3 +10,5 @@ data:
   KAFKA_REPLY_TOPIC: 'dev-hotspot-agent-reply'
   AGENT_KAFKA_TOPIC: 'dev-hotspot-agent'
   AGENT_KAFKA_GROUP_ID: "consumer-group"
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
