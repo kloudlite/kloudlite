@@ -10,6 +10,7 @@ import (
 	"net/http"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/conditions"
+	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -122,36 +123,60 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rA
 func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
 	router := req.Object
 
-	lambdaGroups := map[string]map[string]crdsv1.Route{}
-	appRoutes := map[string]crdsv1.Route{}
+	lambdaGroups := map[string]map[string][]crdsv1.Route{}
+	appRoutes := map[string][]crdsv1.Route{}
 
-	for routePath, route := range router.Spec.Routes {
-		if s := route.Lambda; s != "" {
-			if _, ok := lambdaGroups[route.Lambda]; !ok {
-				lambdaGroups[route.Lambda] = map[string]crdsv1.Route{}
+	for routePath, routes := range router.Spec.Routes {
+		for _, route := range routes {
+			if s := route.Lambda; s != "" {
+				if _, ok := lambdaGroups[route.Lambda]; !ok {
+					lambdaGroups[route.Lambda] = map[string][]crdsv1.Route{}
+				}
+
+				lambdaGroups[route.Lambda][routePath] = append(lambdaGroups[route.Lambda][routePath], route)
 			}
 
-			lambdaGroups[route.Lambda][routePath] = route
-		}
-
-		if s := route.App; s != "" {
-			appRoutes[routePath] = route
+			if s := route.App; s != "" {
+				appRoutes[routePath] = append(appRoutes[routePath], route)
+			}
 		}
 	}
 
 	var kubeYamls [][]byte
 
-	for lName, lg := range lambdaGroups {
+	for lName, lMapRoutes := range lambdaGroups {
+		// b, err := templates.Parse(
+		// 	templates.IngressLambda, map[string]any{
+		// 		"router":         router,
+		// 		"ingress-class":  "nginx",
+		// 		"cluster-issuer": "kl-cert-issuer",
+		// 		"lambda-name":    lName,
+		// 		"routes":         lg,
+		// 		"owner-refs": []metav1.OwnerReference{
+		// 			fn.AsOwner(router, true),
+		// 		},
+		// 	},
+		// )
+
 		b, err := templates.Parse(
-			templates.IngressLambda, map[string]any{
-				"router":         router,
-				"ingress-class":  "nginx",
-				"cluster-issuer": "kl-cert-issuer",
-				"lambda-name":    lName,
-				"routes":         lg,
+			templates.CoreV1.Ingress, map[string]any{
+				"ingress-class":  constants.DefaultIngressClass,
+				"cluster-issuer": constants.DefaultClusterIssuer,
 				"owner-refs": []metav1.OwnerReference{
 					fn.AsOwner(router, true),
 				},
+				"labels": map[string]string{
+					"operators.kloudlite.io/router-name": router.Name,
+				},
+
+				// TODO: if not works try fmt.Sprintf("%s.%s", lName, router.Namespace)
+				"virtual-hostname":   lName,
+				"force-ssl-redirect": router.Spec.ForceSSLRedirect,
+				"domains":            router.Spec.Domains,
+				"routes":             lMapRoutes,
+
+				"name":      fmt.Sprintf("r-%s-lambda-%s", router.Name, lName),
+				"namespace": router.Namespace,
 			},
 		)
 
@@ -164,22 +189,43 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 		kubeYamls = append(kubeYamls, b)
 	}
 
-	b, err := templates.Parse(
-		templates.Ingress, map[string]any{
-			"router":         router,
-			"cluster-issuer": "kl-cert-issuer",
-			"ingress-class":  "nginx",
-			"routes":         appRoutes,
-			"owner-refs": []metav1.OwnerReference{
-				fn.AsOwner(router, true),
-			},
-		},
-	)
-	if err != nil {
-		return req.FailWithOpError(errors.NewEf(err, "could not parse (template=%s) into Object", templates.Ingress))
-	}
+	// b, err := templates.Parse(
+	// 	templates.Ingress, map[string]any{
+	// 		"router":         router,
+	// 		"cluster-issuer": "kl-cert-issuer",
+	// 		"ingress-class":  "nginx",
+	// 		"routes":         appRoutes,
+	// 		"owner-refs": []metav1.OwnerReference{
+	// 			fn.AsOwner(router, true),
+	// 		},
+	// 	},
+	// )
+	if len(appRoutes) > 0 {
+		b, err := templates.Parse(
+			templates.CoreV1.Ingress, map[string]any{
+				"ingress-class":  constants.DefaultIngressClass,
+				"cluster-issuer": constants.DefaultClusterIssuer,
+				"owner-refs": []metav1.OwnerReference{
+					fn.AsOwner(router, true),
+				},
 
-	kubeYamls = append(kubeYamls, b)
+				"labels": map[string]string{
+					"operators.kloudlite.io/router-name": router.Name,
+				},
+
+				"force-ssl-redirect": router.Spec.ForceSSLRedirect,
+				"domains":            router.Spec.Domains,
+				"routes":             appRoutes,
+
+				"name":      router.Name,
+				"namespace": router.Namespace,
+			},
+		)
+		if err != nil {
+			return req.FailWithOpError(errors.NewEf(err, "could not parse (template=%s) into Object", templates.Ingress))
+		}
+		kubeYamls = append(kubeYamls, b)
+	}
 
 	if _, err := fn.KubectlApplyExec(kubeYamls...); err != nil {
 		return req.FailWithOpError(errors.NewEf(err, "could not apply ingress ingressObj"))

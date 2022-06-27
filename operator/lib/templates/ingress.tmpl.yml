@@ -15,10 +15,8 @@ metadata:
     cert-manager.io/cluster-issuer: {{$clusterIssuer}}
     ingress.kubernetes.io/ssl-redirect: {{$router.Spec.ForceSSLRedirect | default false | squote}}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-  {{- if $ownerRefs }}
-  ownerReferences:
-    {{- include "TemplateOwnerRefs" $ownerRefs | indent 4}}
-  {{- end }}
+
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
   tls:
     - hosts:
@@ -32,14 +30,16 @@ spec:
       http:
         paths:
           {{- range $routePath, $route := $routes }}
-            {{- if $route.App }}
-              - backend:
-                  service:
-                    name: {{$route.App}}
-                    port:
-                      number: {{$route.Port}}
-                path: {{$routePath}}
-                pathType: Prefix
-            {{- end}}
+          {{- range $route := $routes }}
+          {{- if $route.App }}
+            - backend:
+                service:
+                  name: {{$route.App}}
+                  port:
+                    number: {{$route.Port}}
+              path: {{$routePath}}
+              pathType: Prefix
+          {{- end}}
+          {{- end}}
           {{- end}}
     {{- end }}
