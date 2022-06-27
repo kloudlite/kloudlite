@@ -16,6 +16,8 @@ type s3Obj struct {
 	logger logger.Logger
 }
 
+type PolicyStatement map[string]any
+
 func NewS3Client(region string) (*s3Obj, error) {
 	sess, err := newSession()
 	if err != nil {
@@ -38,9 +40,6 @@ func (s *s3Obj) CreateBucket(bucketName string) error {
 	_, err := s.cli.CreateBucket(
 		&s3.CreateBucketInput{
 			Bucket: aws.String(bucketName),
-			// CreateBucketConfiguration: &cli.CreateBucketConfiguration{
-			// 	LocationConstraint: aws.String(region),
-			// },
 		},
 	)
 
@@ -62,6 +61,37 @@ func (s *s3Obj) CreateBucket(bucketName string) error {
 	)
 }
 
+func (s *s3Obj) AddOwnerPolicy(bucketName string, user *User) ([]PolicyStatement, error) {
+	// [source](https://aws.amazon.com/blogs/security/writing-iam-policies-how-to-grant-access-to-an-amazon-s3-bucket/)
+	if user.ARN == "" {
+		return nil, errors.Newf("user should have a valid ARN")
+	}
+	return []PolicyStatement{
+		{
+			// bucket-level permissions
+			"Effect": "Allow",
+			"Action": []string{"s3:ListBucket"},
+			"Principal": map[string]string{
+				"AWS": user.ARN,
+			},
+			"Resource": fmt.Sprintf("arn:aws:s3:::%s", bucketName),
+		},
+		{
+			// object-level permissions
+			"Effect": "Allow",
+			"Principal": map[string]string{
+				"AWS": user.ARN,
+			},
+			"Action": []string{
+				"s3:PutObject",
+				"s3:GetObject",
+				"s3:DeleteObject",
+			},
+			"Resource": fmt.Sprintf("arn:aws:s3:::%s/*", bucketName),
+		},
+	}, nil
+}
+
 func (s *s3Obj) DeleteBucket(bucketName string) error {
 	_, err := s.cli.DeleteBucket(
 		&s3.DeleteBucketInput{
@@ -75,6 +105,27 @@ func (s *s3Obj) DeleteBucket(bucketName string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *s3Obj) EmptyBucket(bucketName string) error {
+	return s.cli.ListObjectsV2Pages(
+		&s3.ListObjectsV2Input{
+			Bucket: &bucketName,
+		}, func(output *s3.ListObjectsV2Output, b bool) bool {
+			for _, object := range output.Contents {
+				_, err := s.cli.DeleteObject(
+					&s3.DeleteObjectInput{
+						Bucket: &bucketName,
+						Key:    object.Key,
+					},
+				)
+				if err != nil {
+					return false
+				}
+			}
+			return *output.IsTruncated
+		},
+	)
 }
 
 func (s *s3Obj) MakePublicReadable(bucketName string) error {
@@ -114,44 +165,38 @@ func (s *s3Obj) ensureObjectExists(bucketName string, objectKey string) error {
 	)
 }
 
-func (s *s3Obj) MakeObjectsPublic(bucketName string, objectKey string) error {
-	acl := "public-read"
+func (s *s3Obj) ensureDirPath(pathName string) string {
+	if strings.HasSuffix(pathName, "/") {
+		return pathName
+	}
+	return fmt.Sprintf("%s/", pathName)
+}
 
-	key := objectKey
-	if !strings.HasSuffix(key, "/") {
-		key = fmt.Sprintf("%s/", key)
+func (s *s3Obj) MakeObjectsDirsPublic(bucketName string, dirs ...string) ([]PolicyStatement, error) {
+	for _, dir := range dirs {
+		if err := s.ensureObjectExists(bucketName, s.ensureDirPath(dir)); err != nil {
+			return nil, err
+		}
 	}
 
-	if err := s.ensureObjectExists(bucketName, key); err != nil {
-		return err
-	}
-
-	_, err := s.cli.PutObjectAcl(
-		&s3.PutObjectAclInput{
-			ACL:    &acl,
-			Bucket: &bucketName,
-			Key:    &key,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	m := map[string]any{
-		"Version": "2012-10-17",
-		"Statement": []map[string]any{
-			{
+	var stmts []PolicyStatement
+	for _, dir := range dirs {
+		stmts = append(
+			stmts, PolicyStatement{
 				"Effect":    "Allow",
 				"Principal": "*",
 				"Action":    "s3:GetObject",
-				"Resource":  fmt.Sprintf("arn:aws:s3:::%s/public/*", bucketName),
-				// "Condition": map[string]any{
-				// 	"StringEquals": map[string]any{
-				// 		"s3:ExistingObjectTag/public": "yes",
-				// 	},
-				// },
+				"Resource":  fmt.Sprintf("arn:aws:s3:::%s/%s*", bucketName, s.ensureDirPath(dir)),
 			},
-		},
+		)
+	}
+	return stmts, nil
+}
+
+func (s *s3Obj) ApplyPolicies(bucketName string, stmts ...PolicyStatement) error {
+	m := map[string]any{
+		"Version":   "2012-10-17",
+		"Statement": stmts,
 	}
 
 	policyB, err := json.Marshal(m)
@@ -168,6 +213,5 @@ func (s *s3Obj) MakeObjectsPublic(bucketName string, objectKey string) error {
 	); err != nil {
 		return err
 	}
-
 	return nil
 }

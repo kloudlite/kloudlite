@@ -33,6 +33,16 @@ spec:
           metadata:
             type: object
           spec:
+            properties:
+              publicFolders:
+                items:
+                  type: string
+                type: array
+              region:
+                type: string
+            required:
+            - publicFolders
+            - region
             type: object
           status:
             properties:
@@ -251,6 +261,8 @@ spec:
             required:
             - isReady
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true

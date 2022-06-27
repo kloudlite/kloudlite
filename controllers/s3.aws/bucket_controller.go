@@ -3,6 +3,8 @@ package s3aws
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,9 +14,7 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
@@ -29,8 +29,17 @@ type BucketReconciler struct {
 }
 
 const (
-	KeyBucketName string = "KeyBucketName"
+	KeyBucketName   string = "KeyBucketName"
+	KeyAccessSecret string = "KeyAccessSecret"
+
+	KeyAccessKeyId     string = "AWS_ACCESS_KEY_ID"
+	KeySecretAccessKey string = "AWS_SECRET_ACCESS_KEY"
 )
+
+type Credentials struct {
+	AccessKeyId     string
+	SecretAccessKey string
+}
 
 // +kubebuilder:rbac:groups=s3.aws.kloudlite.io,resources=buckets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=s3.aws.kloudlite.io,resources=buckets/status,verbs=get;update;patch
@@ -68,7 +77,7 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 func (r *BucketReconciler) finalize(req *rApi.Request[*s3awsv1.Bucket]) rApi.StepResult {
 	obj := req.Object
 
-	s3Client, err := aws.NewS3Client("ap-south-1")
+	s3Client, err := aws.NewS3Client(obj.Spec.Region)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
@@ -76,6 +85,10 @@ func (r *BucketReconciler) finalize(req *rApi.Request[*s3awsv1.Bucket]) rApi.Ste
 	bucketName, ok := obj.Status.GeneratedVars.GetString(KeyBucketName)
 	if !ok {
 		return req.FailWithOpError(err)
+	}
+
+	if err := s3Client.EmptyBucket(bucketName); err != nil {
+		return nil
 	}
 
 	if err := s3Client.DeleteBucket(bucketName); err != nil {
@@ -110,10 +123,16 @@ func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*s3awsv1.Bucket]) r
 	}
 
 	// STEP: 5. reconciler output exists
-	_, err5 := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprintf("mres-%s", obj.Name)), &corev1.Secret{})
+	reconOutput, err5 := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprintf("mres-%s", obj.Name)), &corev1.Secret{})
 	if err5 != nil {
 		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, false, conditions.NotFound, err5.Error()))
 	} else {
+		rApi.SetLocal(
+			req, KeyAccessSecret, &Credentials{
+				AccessKeyId:     string(reconOutput.Data[KeyAccessKeyId]),
+				SecretAccessKey: string(reconOutput.Data[KeySecretAccessKey]),
+			},
+		)
 		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, true, conditions.Found))
 	}
 
@@ -160,47 +179,71 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 		return req.FailWithOpError(rApi.ErrNotInGeneratedVars.Format(KeyBucketName))
 	}
 
-	accKeyId, secretAccKey, err4 := func() (string, string, error) {
-		s3Client, err := aws.NewS3Client(os.Getenv("AWS_REGION"))
-		if err != nil {
-			return "", "", err
-		}
+	s3Client, err := aws.NewS3Client(obj.Spec.Region)
+	if err != nil {
+		return req.FailWithOpError(err)
+	}
+
+	iamClient, err := aws.NewIAMClient()
+	if err != nil {
+		return req.FailWithOpError(err)
+	}
+
+	accessCreds, err4 := func() (*Credentials, error) {
 		if err := s3Client.CreateBucket(bucketName); err != nil {
-			return "", "", err
+			return nil, err
 		}
-		iamClient, err := aws.NewIAMClient()
-		if err != nil {
-			return "", "", err
-		}
-
-		if err := iamClient.CreateUser(bucketName); err != nil {
-			return "", "", err
+		if _, err := iamClient.CreateUser(bucketName); err != nil {
+			return nil, err
 		}
 
-		if meta.IsStatusConditionFalse(obj.Status.Conditions, conditions.ReconcilerOutputExists.String()) {
-			key, secretKey, err := iamClient.CreateAccessKey(bucketName)
-			if err != nil {
-				return "", "", err
+		if meta.IsStatusConditionTrue(obj.Status.Conditions, conditions.ReconcilerOutputExists.String()) {
+			creds, ok := rApi.GetLocal[*Credentials](req, KeyAccessSecret)
+			if !ok {
+				return nil, err
 			}
-			return key, secretKey, nil
-		}
-		if err := s3Client.MakePublicReadable(bucketName); err != nil {
-			return "", "", err
+			return creds, nil
 		}
 
-		if err := s3Client.MakeObjectsPublic(bucketName, "public"); err != nil {
-			return "", "", err
+		if err := iamClient.DeleteAccessKey(bucketName); err != nil {
+			return nil, err
 		}
-
-		return "", "", nil
+		keyId, secretKey, err := iamClient.CreateAccessKey(bucketName)
+		if err != nil {
+			return nil, err
+		}
+		return &Credentials{
+			AccessKeyId:     keyId,
+			SecretAccessKey: secretKey,
+		}, nil
 	}()
 	if err4 != nil {
 		// TODO:(user) might need to reconcile with retry with timeout error
 		return req.FailWithOpError(err4)
 	}
 
-	// STEP: 5. create reconciler output (eg. secret)
+	if err5 := func() error {
+		user, err := iamClient.GetUser(bucketName)
+		if err != nil {
+			return err
+		}
 
+		policies, err := s3Client.AddOwnerPolicy(bucketName, user)
+		if err != nil {
+			return err
+		}
+
+		publicObjectPolicies, err := s3Client.MakeObjectsDirsPublic(bucketName, obj.Spec.PublicFolders...)
+		if err != nil {
+			return err
+		}
+		policies = append(policies, publicObjectPolicies...)
+		return s3Client.ApplyPolicies(bucketName, policies...)
+	}(); err5 != nil {
+		return req.FailWithOpError(err5)
+	}
+
+	// STEP: 5. create reconciler output (eg. secret)
 	if errt := func() error {
 		b, err := templates.Parse(
 			templates.Secret, &corev1.Secret{
@@ -212,9 +255,9 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 					},
 				},
 				StringData: map[string]string{
-					"AWS_ACCESS_KEY_ID":     accKeyId,
-					"AWS_SECRET_ACCESS_KEY": secretAccKey,
-					"AWS_REGION":            "ap-south-1",
+					"AWS_ACCESS_KEY_ID":     accessCreds.AccessKeyId,
+					"AWS_SECRET_ACCESS_KEY": accessCreds.SecretAccessKey,
+					"AWS_REGION":            obj.Spec.Region,
 				},
 			},
 		)
