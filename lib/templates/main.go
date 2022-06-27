@@ -142,4 +142,14 @@ const (
 	ElasticSearch templateFile = "./msvc/elasticsearch.tpl.yml"
 	OpenSearch    templateFile = "./msvc/opensearch/helm.tpl.yml"
 	InfluxDB      templateFile = "./msvc/influx/helm.tpl.yml"
+
+	// ---
 )
+
+var CoreV1 = struct {
+	ExternalNameSvc templateFile
+	Ingress         templateFile
+}{
+	ExternalNameSvc: "./corev1/external-name-service.tpl.yml",
+	Ingress:         "./corev1/ingress.tpl.yml",
+}
