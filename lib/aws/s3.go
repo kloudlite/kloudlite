@@ -215,3 +215,7 @@ func (s *s3Obj) ApplyPolicies(bucketName string, stmts ...PolicyStatement) error
 	}
 	return nil
 }
+
+func (s *s3Obj) GetBucket(bucketName string) {
+
+}

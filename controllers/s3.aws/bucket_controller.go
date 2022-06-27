@@ -3,6 +3,7 @@ package s3aws
 import (
 	"context"
 	"fmt"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -245,6 +246,8 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 
 	// STEP: 5. create reconciler output (eg. secret)
 	if errt := func() error {
+		svcExternalName := fmt.Sprintf("%s.s3.%s.amazonaws.com", bucketName, obj.Spec.Region)
+
 		b, err := templates.Parse(
 			templates.Secret, &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
@@ -258,6 +261,8 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 					"AWS_ACCESS_KEY_ID":     accessCreds.AccessKeyId,
 					"AWS_SECRET_ACCESS_KEY": accessCreds.SecretAccessKey,
 					"AWS_REGION":            obj.Spec.Region,
+					"INTERNAL_BUCKET_HOST":  fmt.Sprintf("%s.%s.svc.cluster.local", obj.Name, obj.Namespace),
+					"EXTERNAL_BUCKET_HOST":  svcExternalName,
 				},
 			},
 		)
@@ -265,7 +270,56 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 			return err
 		}
 
-		if _, err := fn.KubectlApplyExec(b); err != nil {
+		// create external name service
+
+		b2, err := templates.Parse(
+			templates.CoreV1.ExternalNameSvc, map[string]any{
+				"name":      obj.Name,
+				"namespace": obj.Namespace,
+				"owner-refs": []metav1.OwnerReference{
+					fn.AsOwner(obj, true),
+				},
+				"external-name": svcExternalName,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		b3, err := templates.Parse(
+			templates.CoreV1.Ingress, map[string]any{
+				"ingress-class":  constants.DefaultIngressClass,
+				"cluster-issuer": constants.DefaultClusterIssuer,
+				"owner-refs": []metav1.OwnerReference{
+					fn.AsOwner(obj, true),
+				},
+
+				"virtual-hostname":   bucketName,
+				"force-ssl-redirect": true,
+
+				"domains": []string{
+					fmt.Sprintf("%s.s3.dev.kloudlite.io", obj.Name),
+				},
+
+				"routes": map[string][]crdsv1.Route{
+					"/": {
+						{
+							Path: "/",
+							App:  obj.Name,
+							Port: 443,
+						},
+					},
+				},
+
+				"name":      obj.Name,
+				"namespace": obj.Namespace,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if _, err := fn.KubectlApplyExec(b, b2, b3); err != nil {
 			return err
 		}
 		return nil

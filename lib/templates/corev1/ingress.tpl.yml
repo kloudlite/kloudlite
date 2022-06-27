@@ -1,0 +1,56 @@
+{{- $ingressClass := get . "ingress-class" }}
+{{- $clusterIssuer := get . "cluster-issuer" }}
+{{- $ownerRefs := get . "owner-refs"}}
+
+{{- $labels := get . "labels"}}
+
+{{- $virtualHost := get . "virtual-hostname"}}
+{{- $forceSSLRedirect := get . "force-ssl-redirect" |default false | squote }}
+
+{{/*[]string*/}}
+{{- $domains := get . "domains" }}
+
+{{/*operators.kloudlite.io/apis/crds/v1/router_types.go#Routes*/}}
+{{- $routes := get . "routes" }}
+
+{{- $name := get . "name" }}
+{{- $namespace := get . "namespace" -}}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{$name}}
+  namespace: {{$namespace}}
+  annotations:
+    kubernetes.io/ingress.class: {{$ingressClass}}
+    cert-manager.io/cluster-issuer: {{$clusterIssuer}}
+    ingress.kubernetes.io/ssl-redirect: {{$forceSSLRedirect}}
+    nginx.ingress.kubernetes.io/upstream-vhost: {{$virtualHost}}
+  {{- if $labels }}
+  labels: {{ $labels | toYAML | nindent 4}}
+  {{- end}}
+  ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
+spec:
+  tls:
+    - hosts:
+        {{- range $v := $domains }}
+        - {{$v}}
+        {{- end }}
+      secretName: {{$name}}-tls-secret
+  rules:
+    {{- range $domain := $domains }}
+    - host: {{$domain}}
+      http:
+        paths:
+          {{- range $routePath, $routes := $routes }}
+          {{- range $route := $routes }}
+          - backend:
+              service:
+                name: {{$route.App | default $route.Lambda}}
+                port:
+                  number: {{$route.Port}}
+            path: {{$routePath}}
+            pathType: Prefix
+          {{- end}}
+          {{- end}}
+    {{- end }}

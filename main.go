@@ -96,8 +96,6 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.",
 	)
 
-	fmt.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
-
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "Enable development mode")
 

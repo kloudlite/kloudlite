@@ -90,3 +90,8 @@ var (
 		SuccessReason:    "AllChecksCompleted",
 	}
 )
+
+const (
+	DefaultIngressClass  = "nginx"
+	DefaultClusterIssuer = "kl-cert-issuer"
+)

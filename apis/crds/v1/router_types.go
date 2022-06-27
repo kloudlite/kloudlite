@@ -15,9 +15,9 @@ type Route struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	ForceSSLRedirect bool             `json:"forceSSLRedirect,omitempty"`
-	Domains          []string         `json:"domains"`
-	Routes           map[string]Route `json:"routes"`
+	ForceSSLRedirect bool               `json:"forceSSLRedirect,omitempty"`
+	Domains          []string           `json:"domains"`
+	Routes           map[string][]Route `json:"routes"`
 }
 
 // +kubebuilder:object:root=true

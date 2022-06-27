@@ -43,19 +43,21 @@ spec:
                 type: boolean
               routes:
                 additionalProperties:
-                  properties:
-                    app:
-                      type: string
-                    lambda:
-                      type: string
-                    path:
-                      type: string
-                    port:
-                      type: integer
-                  required:
-                  - path
-                  - port
-                  type: object
+                  items:
+                    properties:
+                      app:
+                        type: string
+                      lambda:
+                        type: string
+                      path:
+                        type: string
+                      port:
+                        type: integer
+                    required:
+                    - path
+                    - port
+                    type: object
+                  type: array
                 type: object
             required:
             - domains

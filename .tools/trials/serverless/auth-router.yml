@@ -7,6 +7,6 @@ spec:
   domains: ['auth-api.dev.kloudlite.io']
   routes:
     /:
-      lambda: auth-api
-      path: /
-      port: 80
+      - lambda: auth-api
+        path: /
+        port: 80
