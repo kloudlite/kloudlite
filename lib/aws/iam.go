@@ -15,6 +15,8 @@ type User struct {
 	ARN  string
 }
 
+// [source](https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-walkthroughs-managing-access-example1.html)
+
 func (i *iamObj) CreateUser(username string) (*User, error) {
 	userRef, err := i.getUser(username)
 	if err != nil {
