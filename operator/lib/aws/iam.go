@@ -10,11 +10,16 @@ type iamObj struct {
 	cli *iam.IAM
 }
 
-func (i *iamObj) CreateUser(username string) error {
-	_, err := i.getUser(username)
+type User struct {
+	Name string
+	ARN  string
+}
+
+func (i *iamObj) CreateUser(username string) (*User, error) {
+	userRef, err := i.getUser(username)
 	if err != nil {
 		if err2, ok := err.(awserr.Error); ok && err2.Code() == iam.ErrCodeNoSuchEntityException {
-			_, err3 := i.cli.CreateUser(
+			nUserRef, err3 := i.cli.CreateUser(
 				&iam.CreateUserInput{
 					Path:                nil,
 					PermissionsBoundary: nil,
@@ -23,11 +28,28 @@ func (i *iamObj) CreateUser(username string) error {
 				},
 			)
 			if err3 != nil {
-				return err3
+				return nil, err3
 			}
+
+			if err := i.cli.WaitUntilUserExists(&iam.GetUserInput{UserName: &username}); err != nil {
+				return nil, err
+			}
+
+			return &User{Name: *nUserRef.User.UserName, ARN: *nUserRef.User.Arn}, nil
 		}
 	}
-	return nil
+	return &User{Name: *userRef.User.UserName, ARN: *userRef.User.Arn}, nil
+}
+
+func (i *iamObj) GetUser(username string) (*User, error) {
+	userRef, err := i.getUser(username)
+	if err != nil {
+		return nil, err
+	}
+	return &User{
+		Name: *userRef.User.UserName,
+		ARN:  *userRef.User.Arn,
+	}, nil
 }
 
 func (i *iamObj) DeleteUser(username string) error {
@@ -89,10 +111,6 @@ func (i *iamObj) deleteAccessKey(username string) error {
 
 func (i *iamObj) getUser(username string) (*iam.GetUserOutput, error) {
 	return i.cli.GetUser(&iam.GetUserInput{UserName: &username})
-}
-
-func (i *iamObj) GetUser(username string) (*iam.GetUserOutput, error) {
-	return i.getUser(username)
 }
 
 func NewIAMClient() (*iamObj, error) {

@@ -3,3 +3,8 @@ kind: Bucket
 metadata:
   name: sample
   namespace: hotspot
+spec:
+  region: ap-south-1
+  publicFolders:
+    - public
+    - sample
