@@ -90,8 +90,8 @@ func (e *Env) GetHttpCors() string {
 	return e.CorsOrigins
 }
 
-func (e *Env) RedisOptions() (hosts, username, password string) {
-	return e.RedisHosts, e.RedisUserName, e.RedisPassword
+func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
+	return e.RedisHosts, e.RedisUserName, e.RedisPassword, basePrefix
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -106,7 +106,8 @@ func (e *Env) GetNotifierUrl() string {
 	return e.NotifierUrl
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[LogServerEnv](),
 	config.EnvFx[IAMGRPCEnv](),
@@ -114,7 +115,7 @@ var Module = fx.Module("framework",
 	config.EnvFx[GrpcAuthConfig](),
 	config.EnvFx[GrpcCIConfig](),
 
-	fx.Provide(logger.NewLogger),
+	logger.FxProvider(),
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),

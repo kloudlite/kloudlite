@@ -36,7 +36,7 @@ func Wrap(e error, msg string) error {
 	return errors.Wrap(e, msg)
 }
 
-func NewEf(err error, msg string, a ...interface{}) error {
+func NewEf(err error, msg string, a ...any) error {
 	return yerrors.Errorf("%s as %+v", fmt.Sprintf(msg, a...), err)
 }
 
@@ -44,9 +44,9 @@ func ErrMarshal(err error) error {
 	return NewEf(err, "could not marshal into []byte")
 }
 
-func Newf(msg string, a ...interface{}) error {
+func Newf(msg string, a ...any) error {
 	if len(a) > 0 {
-		return yerrors.Wrap(yerrors.Errorf(msg, a))
+		return yerrors.Wrap(yerrors.Errorf(msg, a...))
 	}
 	return yerrors.New(msg)
 }

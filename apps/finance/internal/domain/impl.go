@@ -27,11 +27,13 @@ type domainI struct {
 }
 
 func (domain *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error) {
-	membership, err := domain.iamCli.GetMembership(ctx, &iam.InGetMembership{
-		UserId:       string(userId),
-		ResourceType: "account",
-		ResourceId:   string(accountId),
-	})
+	membership, err := domain.iamCli.GetMembership(
+		ctx, &iam.InGetMembership{
+			UserId:       string(userId),
+			ResourceType: "account",
+			ResourceId:   string(accountId),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -43,20 +45,24 @@ func (domain *domainI) GetAccountMembership(ctx context.Context, userId repos.ID
 }
 
 func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
-	rbs, err := domain.iamCli.ListResourceMemberships(ctx, &iam.InResourceMemberships{
-		ResourceId:   string(id),
-		ResourceType: string(common.ResourceAccount),
-	})
+	rbs, err := domain.iamCli.ListResourceMemberships(
+		ctx, &iam.InResourceMemberships{
+			ResourceId:   string(id),
+			ResourceType: string(common.ResourceAccount),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	var memberships []*Membership
 	for _, rb := range rbs.RoleBindings {
-		memberships = append(memberships, &Membership{
-			AccountId: repos.ID(rb.ResourceId),
-			UserId:    repos.ID(rb.UserId),
-			Role:      common.Role(rb.Role),
-		})
+		memberships = append(
+			memberships, &Membership{
+				AccountId: repos.ID(rb.ResourceId),
+				UserId:    repos.ID(rb.UserId),
+				Role:      common.Role(rb.Role),
+			},
+		)
 	}
 
 	if err != nil {
@@ -66,22 +72,26 @@ func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*
 }
 
 func (domain *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
-	rbs, err := domain.iamCli.ListUserMemberships(ctx, &iam.InUserMemberships{
-		UserId:       string(id),
-		ResourceType: string(common.ResourceAccount),
-	})
+	rbs, err := domain.iamCli.ListUserMemberships(
+		ctx, &iam.InUserMemberships{
+			UserId:       string(id),
+			ResourceType: string(common.ResourceAccount),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	var memberships []*Membership
 
 	for _, rb := range rbs.RoleBindings {
-		memberships = append(memberships, &Membership{
-			AccountId: repos.ID(rb.ResourceId),
-			UserId:    repos.ID(rb.UserId),
-			Role:      common.Role(rb.Role),
-			Accepted:  rb.Accepted,
-		})
+		memberships = append(
+			memberships, &Membership{
+				AccountId: repos.ID(rb.ResourceId),
+				UserId:    repos.ID(rb.UserId),
+				Role:      common.Role(rb.Role),
+				Accepted:  rb.Accepted,
+			},
+		)
 	}
 
 	if err != nil {
@@ -91,7 +101,7 @@ func (domain *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) (
 }
 
 func generateReadable(name string) string {
-	compile := regexp.MustCompile(`[^0-9a-zA-Z:,/s]+`)
+	compile := regexp.MustCompile(`[^\da-zA-Z:,/s]+`)
 	allString := compile.ReplaceAllString(strings.ToLower(name), "")
 	m := math.Min(10, float64(len(allString)))
 	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
@@ -112,41 +122,33 @@ func (domain *domainI) CreateAccount(
 		return nil, errors.NewEf(err, "harbor account could not be created")
 	}
 
-	acc, err := domain.accountRepo.Create(ctx, &Account{
-		BaseEntity: repos.BaseEntity{
-			Id: id,
+	acc, err := domain.accountRepo.Create(
+		ctx, &Account{
+			BaseEntity: repos.BaseEntity{
+				Id: id,
+			},
+			Name:         name,
+			ContactEmail: "",
+			Billing:      Billing{StripeSetupIntentId: billing.StripeSetupIntentId, CardholderName: billing.CardholderName, Address: billing.Address},
+			IsActive:     true,
+			IsDeleted:    false,
+			CreatedAt:    time.Time{},
+			ReadableId:   repos.ID(generateReadable(name)),
 		},
-		Name:         name,
-		ContactEmail: "",
-		Billing:      Billing{StripeSetupIntentId: billing.StripeSetupIntentId, CardholderName: billing.CardholderName, Address: billing.Address},
-		IsActive:     true,
-		IsDeleted:    false,
-		CreatedAt:    time.Time{},
-		ReadableId:   repos.ID(generateReadable(name)),
-	})
+	)
 
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("sending message to console1")
-	_, err = domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
-		UserId:       string(userId),
-		ResourceType: string(common.ResourceAccount),
-		ResourceId:   string(acc.Id),
-		Role:         string(common.AccountOwner),
-	})
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println("sending message to console")
-	// TODO
-	_, err = domain.consoleCli.SetupClusterForAccount(ctx, &console.AccountIn{
-		AccountId:   string(acc.Id),
-		AccountName: acc.Name,
-		Provider:    initialProvider,
-		Region:      initialRegion,
-	})
-	fmt.Println("sent message", err)
+	_, err = domain.iamCli.AddMembership(
+		ctx, &iam.InAddMembership{
+			UserId:       string(userId),
+			ResourceType: string(common.ResourceAccount),
+			ResourceId:   string(acc.Id),
+			Role:         string(common.AccountOwner),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -199,12 +201,14 @@ func (domain *domainI) AddAccountMember(
 	if err != nil {
 		return false, err
 	}
-	_, err = domain.iamCli.InviteMembership(ctx, &iam.InAddMembership{
-		UserId:       byEmail.UserId,
-		ResourceType: string(common.ResourceAccount),
-		ResourceId:   string(accountId),
-		Role:         string(role),
-	})
+	_, err = domain.iamCli.InviteMembership(
+		ctx, &iam.InAddMembership{
+			UserId:       byEmail.UserId,
+			ResourceType: string(common.ResourceAccount),
+			ResourceId:   string(accountId),
+			Role:         string(role),
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -216,10 +220,12 @@ func (domain *domainI) RemoveAccountMember(
 	accountId repos.ID,
 	userId repos.ID,
 ) (bool, error) {
-	_, err := domain.iamCli.RemoveMembership(ctx, &iam.InRemoveMembership{
-		UserId:     string(userId),
-		ResourceId: string(accountId),
-	})
+	_, err := domain.iamCli.RemoveMembership(
+		ctx, &iam.InRemoveMembership{
+			UserId:     string(userId),
+			ResourceId: string(accountId),
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -232,12 +238,14 @@ func (domain *domainI) UpdateAccountMember(
 	userId repos.ID,
 	role string,
 ) (bool, error) {
-	_, err := domain.iamCli.AddMembership(ctx, &iam.InAddMembership{
-		UserId:       string(userId),
-		ResourceType: string(common.ResourceAccount),
-		ResourceId:   string(accountId),
-		Role:         role,
-	})
+	_, err := domain.iamCli.AddMembership(
+		ctx, &iam.InAddMembership{
+			UserId:       string(userId),
+			ResourceType: string(common.ResourceAccount),
+			ResourceId:   string(accountId),
+			Role:         role,
+		},
+	)
 	if err != nil {
 		return false, err
 	}

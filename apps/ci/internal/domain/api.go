@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"github.com/xanzy/go-gitlab"
+	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
 
 	"kloudlite.io/pkg/repos"
@@ -23,8 +24,12 @@ type Domain interface {
 	GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error)
 	GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) (any, error)
 	GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) (any, error)
-	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId int, pipelineId string) (*gitlab.ProjectHook, error)
+	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId string) (*gitlab.ProjectHook, error)
 	GitlabPullToken(ctx context.Context, pipelineId repos.ID) (string, error)
+
+	// tekton interceptor
+	TektonInterceptorGithub(ctx context.Context, req *tekton.Request) *tekton.Response
+	TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) *tekton.Response
 }
 
 type Harbor interface {
