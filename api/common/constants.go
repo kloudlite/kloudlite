@@ -25,9 +25,6 @@ const (
 	ProviderGoogle = "google"
 )
 
-type AccountAction struct {
-}
-
 type Action string
 
 const (

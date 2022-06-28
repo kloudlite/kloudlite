@@ -7,7 +7,6 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -23,8 +22,9 @@ func (c CommsGrpcEnv) GetGCPServerURL() string {
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
-	RedisUserName string `env:"REDIS_USERNAME"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
+	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
+	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
+	RedisPrefix   string `env:"REDIS_PREFIX" required:"true"`
 	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
 	Port          uint16 `env:"PORT" required:"true"`
 	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
@@ -39,8 +39,8 @@ func (e *Env) GetHttpCors() string {
 	return e.CorsOrigins
 }
 
-func (e *Env) RedisOptions() (hosts, username, password string) {
-	return e.RedisHosts, e.RedisUserName, e.RedisPassword
+func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
+	return e.RedisHosts, e.RedisUserName, e.RedisPassword, e.RedisPrefix
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -51,10 +51,10 @@ func (e *Env) GetGRPCPort() uint16 {
 	return e.GrpcPort
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[CommsGrpcEnv](),
-	fx.Provide(logger.NewLogger),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),

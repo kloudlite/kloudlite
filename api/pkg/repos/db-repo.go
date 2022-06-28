@@ -42,7 +42,7 @@ type DbRepo[T Entity] interface {
 	DeleteById(ctx context.Context, id ID) error
 	DeleteMany(ctx context.Context, filter Filter) error
 	IndexFields(ctx context.Context, indices []IndexField) error
-	//Delete(ctx context.Context, query Query) ([]ID, error)
+	// Delete(ctx context.Context, query Query) ([]ID, error)
 }
 
 type indexOrder bool

@@ -1,12 +1,15 @@
 ---
+global:
+  hello: world
+---
 query: |
-  mutation Signup($email: String!, $name: String!, $password: String!) {
-    signup(email: $email, name: $name, password: $password) {
+  mutation Auth_signup($name: String!, $email: String!, $password: String!) {
+    auth_signup(name: $name, email: $email, password: $password) {
       id
       userId
       userEmail
-      userVerified
       loginMethod
+      userVerified
     }
   }
 variables:
@@ -17,10 +20,13 @@ variables:
 ---
 label: Login
 query: |
-  mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
+  mutation Auth_login($email: String!, $password: String!) {
+    auth_login(email: $email, password: $password) {
+      id
       userId
       userEmail
+      loginMethod
+      userVerified
     }
   }
 variables:
@@ -33,9 +39,8 @@ query: |
   query Query($provider: String!) {
     oAuth_requestLogin(provider: $provider)
   }
-
 variables:
-  provider: github
+  provider: gitlab
 
 ---
 label: OAuth Login
@@ -45,13 +50,14 @@ query: |
       id
       loginMethod
       userEmail
+      loginMethod
+      userVerified
     }
   }
 variables:
-  code: 56dabae2f1b3dfd5f59e
-  provider: github
-  state: eyJjc3JmIjoiUEhiNVEyTnctdllpdkg3T3AtRkZhVmtCR0NOV3dxd3ciLCJzdGF0ZSI6IiJ9
-
+  code: 6ace2452505ab4400af9efb1024bf5c8de73f9f1d473d1a6e58ff2dbf2079e0a
+  provider: gitlab
+  state: eyJjc3JmIjoiaTVZWmN1ZGY4UUFGSjFieC1HUFRjY2RPQVljNDMtUGgiLCJzdGF0ZSI6IiJ9
 ---
 label: Me
 query: |
@@ -77,19 +83,18 @@ variables:
 ---
 label: List Github Installations
 query: |
-  query Query {
+  query Ci {
     ci_githubInstallations
   }
-
 ---
 
 label: List Github Repos
 query: |
-  query Query($installationId: Int!, $page: Int!, $limit: Int!) {
-    ci_githubRepos(installationId: $installationId, page: $page, limit: $limit)
+  query Query($installationId: Int!) {
+    ci_githubRepos(installationId: $installationId)
   }
 variables:
-  installationId: 22487879
+  installationId: 22636591
   # page: 1
   # limit: 20
 
@@ -101,7 +106,7 @@ query: |
     ci_githubAddWebhook(repoUrl: $repoUrl)
   }
 variables:
-  repoUrl: nxtcoder17/sample
+  repoUrl: https://github.com/nxtcoder17/sample
 
 ---
 
