@@ -1,0 +1,27 @@
+version: "3"
+
+dotenv: [".secrets/env"]
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
+  run:
+    env:
+      CONFIG_FILE: ./conf.yml
+    sources:
+      - ./internal/**/*.go
+      - ./main.go
+    cmds:
+      - go version
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+
+  docker-build:
+    dir: ../..
+    vars:
+      IMAGE: registry.gitlab.com/abdheshnayak/sshd:proxy
+      APP_DIR: ./apps/proxy
+    cmds:
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker push {{.IMAGE}}
