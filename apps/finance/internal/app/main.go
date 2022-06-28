@@ -25,25 +25,22 @@ var Module = fx.Module(
 	IAMClientFx,
 	ConsoleClientFx,
 	AuthClientFx,
-	fx.Invoke(func(
-		server *fiber.App,
-		d domain.Domain,
-		env *Env,
-		cacheClient cache.Client,
-	) {
-		schema := generated.NewExecutableSchema(
-			generated.Config{Resolvers: graph.NewResolver(d)},
-		)
-		httpServer.SetupGQLServer(
-			server,
-			schema,
-			httpServer.NewSessionMiddleware[*common.AuthSession](
-				cacheClient,
-				common.CookieName,
-				env.CookieDomain,
-				common.CacheSessionPrefix,
-			),
-		)
-	}),
+	fx.Invoke(
+		func(server *fiber.App, d domain.Domain, env *Env, cacheClient cache.Client) {
+			schema := generated.NewExecutableSchema(
+				generated.Config{Resolvers: graph.NewResolver(d)},
+			)
+			httpServer.SetupGQLServer(
+				server,
+				schema,
+				httpServer.NewSessionMiddleware[*common.AuthSession](
+					cacheClient,
+					common.CookieName,
+					env.CookieDomain,
+					common.CacheSessionPrefix,
+				),
+			)
+		},
+	),
 	domain.Module,
 )

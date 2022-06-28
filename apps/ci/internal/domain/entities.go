@@ -13,23 +13,67 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
+type ContainerImageBuild struct {
+	BaseImage string `json:"base_image,omitempty" bson:"base_image,omitempty"`
+	Cmd       string `json:"cmd,omitempty" bson:"cmd,omitempty"`
+}
+
+type ContainerImageRun struct {
+	BaseImage string `json:"base_image,omitempty" bson:"base_image,omitempty"`
+	Cmd       string `json:"cmd,omitempty" bson:"cmd,omitempty"`
+}
+
+type ArtifactRef struct {
+	DockerImageName string `json:"docker_image_name,omitempty" bson:"docker_image_name,omitempty"`
+	DockerImageTag  string `json:"docker_image_tag,omitempty" bson:"docker_image_tag,omitempty"`
+}
+
 type Pipeline struct {
-	repos.BaseEntity     `bson:",inline"`
-	Name                 string                 `json:"name,omitempty" bson:"name"`
-	ProjectId            string                 `json:"project_id,omitempty" bson:"project_id"`
-	ImageName            string                 `json:"image_name,omitempty" bson:"image_name"`
-	PipelineEnv          string                 `json:"pipeline_env,omitempty" bson:"pipeline_env"`
-	GitProvider          string                 `json:"git_provider,omitempty" bson:"git_provider"`
-	GitRepoUrl           string                 `json:"git_repo_url,omitempty" bson:"git_repo_url"`
-	GitBranch            string                 `json:"git_branch" bson:"git_branch"`
-	DockerFile           *string                `json:"docker_file,omitempty" bson:"docker_file"`
-	ContextDir           *string                `json:"context_dir,omitempty" bson:"context_dir"`
-	GithubInstallationId *int                   `json:"github_installation_id,omitempty" bson:"github_installation_id"`
-	GitlabTokenId        string                 `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
-	GitlabRepoId         *int                   `json:"gitlab_repo_id,omitempty" bson:"gitlab_repo_id"`
-	BuildArgs            map[string]interface{} `json:"build_args,omitempty" bson:"build_args"`
-	RepoName             string                 `json:"repo_name,omitempty" bson:"repo_name"`
-	Metadata             map[string]interface{} `json:"metadata,omitempty" bson:"metadata"`
+	repos.BaseEntity `bson:",inline"`
+	Name             string `json:"name,omitempty" bson:"name"`
+	ProjectId        string `json:"project_id,omitempty" bson:"project_id"`
+
+	GitProvider string `json:"git_provider,omitempty" bson:"git_provider"`
+	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
+	GitBranch   string `json:"git_branch" bson:"git_branch"`
+
+	GitlabTokenId string `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
+
+	Build ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
+	Run   ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
+
+	ArtifactRef ArtifactRef `json:"artifact_ref,omitempty" bson:"artifact_ref,omitempty"`
+
+	Metadata map[string]interface{} `json:"metadata,omitempty" bson:"metadata"`
+}
+
+type TektonVars struct {
+	GitRepo       string `json:"git-repo"`
+	GitUser       string `json:"git-user"`
+	GitPassword   string `json:"git-password"`
+	GitRef        string `json:"git-ref"`
+	GitCommitHash string `json:"git-commit_hash"`
+
+	BuildBaseImage string `json:"build-base_image"`
+	BuildCmd       string `json:"build-cmd"`
+
+	RunBaseImage string `json:"run-base_image"`
+	RunCmd       string `json:"run-cmd"`
+
+	ArtifactDockerImageName string `json:"artifact_ref-docker_image_name"`
+	ArtifactDockerImageTag  string `json:"artifact_ref-docker_image_tag"`
+}
+
+func (t *TektonVars) ToJson() (map[string]any, error) {
+	marshal, err := json.Marshal(t)
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]any
+	if err := json.Unmarshal(marshal, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 const (
@@ -52,13 +96,18 @@ func (p *Pipeline) TriggerHook() error {
 		if err != nil {
 			return errors.ErrMarshal(err)
 		}
-		req, err = http.NewRequest(http.MethodPost, fmt.Sprintf("%s?pipelineId=%s", githubWebhook, p.Id), bytes.NewBuffer(b))
+		req, err = http.NewRequest(
+			http.MethodPost,
+			fmt.Sprintf("%s?pipelineId=%s", githubWebhook, p.Id),
+			bytes.NewBuffer(b),
+		)
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
 		}
 	}
 
 	if p.GitProvider == common.ProviderGitlab {
+
 		body := t.M{
 			"ref":          fmt.Sprintf("refs/heads/%s", p.GitBranch),
 			"checkout_sha": "",
@@ -70,7 +119,11 @@ func (p *Pipeline) TriggerHook() error {
 		if err != nil {
 			return errors.ErrMarshal(err)
 		}
-		req, err = http.NewRequest(http.MethodPost, fmt.Sprintf("%s?pipelineId=%s", gitlabWebhook, p.Id), bytes.NewBuffer(b))
+		req, err = http.NewRequest(
+			http.MethodPost,
+			fmt.Sprintf("%s?pipelineId=%s", gitlabWebhook, p.Id),
+			bytes.NewBuffer(b),
+		)
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
 		}
@@ -89,7 +142,7 @@ func (p *Pipeline) TriggerHook() error {
 		}
 		return errors.Newf("trigger for repo=%s failed as received StatusCode=%s", p.GitRepoUrl, r.StatusCode)
 	}
-	return errors.Newf("unknown gitprovider=%s, aborting trigger", p.GitProvider)
+	return errors.Newf("unknown gitProvider=%s, aborting trigger", p.GitProvider)
 }
 
 var PipelineIndexes = []repos.IndexField{

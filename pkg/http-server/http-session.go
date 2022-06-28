@@ -22,41 +22,52 @@ func NewSessionMiddleware[T repos.Entity](
 	return func(ctx *fiber.Ctx) error {
 		cookieValue := ctx.Cookies(cookieName)
 		if cookieValue != "" {
-			key := fmt.Sprintf("%v:%v", sessionKeyPrefix, cookieValue)
+			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
 			var get any
 			get, err := repo.Get(ctx.Context(), key)
 			if err != nil {
-				return err
+				if !repo.ErrNoRecord(err) {
+					return err
+				}
 			}
+
 			if get != nil {
 				ctx.SetUserContext(context.WithValue(ctx.UserContext(), "session", get))
 			}
 		}
-		ctx.SetUserContext(context.WithValue(ctx.UserContext(), "set-session", func(session T) {
-			err := repo.Set(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, session.GetId()), session)
-			if err != nil {
-				fmt.Println("[ERROR]", err)
-			}
-			ck := &fiber.Cookie{
-				Name:     cookieName,
-				Value:    string(session.GetId()),
-				Path:     "/",
-				Domain:   fmt.Sprintf("%v", cookieDomain),
-				Expires:  time.Time{},
-				MaxAge:   0,
-				Secure:   true,
-				HTTPOnly: true,
-				// SameSite: http.SameSiteStrictMode,
-				SameSite: fiber.CookieSameSiteNoneMode,
-			}
-			fmt.Println("ck: ", ck)
-			ctx.Cookie(ck)
-		}))
-		ctx.SetUserContext(context.WithValue(ctx.UserContext(), "delete-session", func() {
-			if cookieValue != "" {
-				repo.Drop(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, cookieValue))
-			}
-		}))
+		ctx.SetUserContext(
+			context.WithValue(
+				ctx.UserContext(), "set-session", func(session T) {
+					err := repo.Set(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, session.GetId()), session)
+					if err != nil {
+						fmt.Println("[ERROR]", err)
+					}
+					ck := &fiber.Cookie{
+						Name:     cookieName,
+						Value:    string(session.GetId()),
+						Path:     "/",
+						Domain:   fmt.Sprintf("%v", cookieDomain),
+						Expires:  time.Time{},
+						MaxAge:   0,
+						Secure:   true,
+						HTTPOnly: true,
+						// SameSite: http.SameSiteStrictMode,
+						SameSite: fiber.CookieSameSiteNoneMode,
+					}
+					fmt.Println("ck: ", ck)
+					ctx.Cookie(ck)
+				},
+			),
+		)
+		ctx.SetUserContext(
+			context.WithValue(
+				ctx.UserContext(), "delete-session", func() {
+					if cookieValue != "" {
+						repo.Drop(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, cookieValue))
+					}
+				},
+			),
+		)
 		return ctx.Next()
 	}
 }

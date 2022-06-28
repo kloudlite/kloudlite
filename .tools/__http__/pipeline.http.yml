@@ -1,19 +1,28 @@
 ---
-label: Create Github Pipeline
+label: create github pipeline
 query: |
   mutation Ci_createPipeline($in: GitPipelineIn!) {
     ci_createPipeline(in: $in)
   }
 variables:
-  in:
-    name: sample-pipeline2
-    imageName: abcd-image
+  in: 
+    name: sample-pipeline
+
     gitProvider: github
-    gitBranch: master
-    dockerFile: ./Dockerfile
     gitRepoUrl: https://github.com/nxtcoder17/sample
-    contextDir: ./
-    githubInstallationId: 22487879
+    gitBranch: master
+
+    build:
+      baseImage: docker
+      cmd: |+
+        docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
+    run:
+      baseImage: docker
+      cmd: ""
+
+    artifactRef:
+      dockerImageName: harbor.dev.madhouselabs.io/public/sample
+      dockerImageTag: latest
 
 ---
 
@@ -23,13 +32,22 @@ query: |
     ci_createPipeline(in: $in)
   }
 variables:
-  in:
-    name: example-pipelinen
-    imageName: example-image3
+  in: 
+    name: sample-pipeline
+
     gitProvider: gitlab
-    dockerFile: ./Dockerfile
-    gitRepoUrl: https://gitlab.com/nxtcoder17/sample
+    gitRepoUrl: https://gitlab.com/madhouselabs/sample
     gitBranch: master
-    contextDir: ./
-    gitlabRepoId: 35883531
+
+    build:
+      baseImage: docker
+      cmd: |+
+        docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
+    run:
+      baseImage: docker
+      cmd: ""
+
+    artifactRef:
+      dockerImageName: harbor.dev.madhouselabs.io/public/gitlab/sample
+      dockerImageTag: latest
 

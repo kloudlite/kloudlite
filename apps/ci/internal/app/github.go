@@ -7,8 +7,8 @@ import (
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/pkg/types"
 	"net/http"
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -27,10 +27,9 @@ type githubI struct {
 }
 
 func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
-	sp := strings.Split(repoUrl, "https://github.com/")
-	sp = strings.Split(sp[1], ".git")
-	sp = strings.Split(sp[0], "/")
-	return sp[0], sp[1]
+	re := regexp.MustCompile("https://(.*?)/(.*)/(.git)?")
+	matches := re.FindStringSubmatch(repoUrl)
+	return matches[2], matches[3]
 }
 
 func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
@@ -45,9 +44,11 @@ func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
 
 func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error) {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(ctx, owner, repo, &github.BranchListOptions{
-		ListOptions: gh.buildListOptions(pagination),
-	})
+	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(
+		ctx, owner, repo, &github.BranchListOptions{
+			ListOptions: gh.buildListOptions(pagination),
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list branches")
 	}
@@ -55,9 +56,11 @@ func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToke
 }
 
 func (gh *githubI) SearchRepos(ctx context.Context, accToken *domain.AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error) {
-	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{
-		ListOptions: gh.buildListOptions(pagination),
-	})
+	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(
+		ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{
+			ListOptions: gh.buildListOptions(pagination),
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not search repositories")
 	}
@@ -89,15 +92,17 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, pipelineId)
 	hookName := "kloudlite-pipeline"
 
-	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(ctx, owner, repo, &github.Hook{
-		Config: map[string]interface{}{
-			"url":          hookUrl,
-			"content_type": "json",
+	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(
+		ctx, owner, repo, &github.Hook{
+			Config: map[string]interface{}{
+				"url":          hookUrl,
+				"content_type": "json",
+			},
+			Events: []string{"push"},
+			Active: fn.NewBool(true),
+			Name:   &hookName,
 		},
-		Events: []string{"push"},
-		Active: fn.NewBool(true),
-		Name:   &hookName,
-	})
+	)
 	if err != nil {
 		fmt.Println(res.Status, res.Body)
 		// ASSERT: github returns 422 only if hook already exists on the repository
@@ -130,16 +135,13 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
-func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string, instId int64) (string, error) {
-	installationId := instId
-	if installationId == 0 {
-		owner, repo := gh.getOwnerAndRepo(repoUrl)
-		inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
-		if err != nil {
-			return "", errors.NewEf(err, "could not fetch repository installation")
-		}
-		installationId = *inst.ID
+func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (string, error) {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
+	if err != nil {
+		return "", errors.NewEf(err, "could not fetch repository installation")
 	}
+	installationId := *inst.ID
 	it, _, err := gh.ghCli.Apps.CreateInstallationToken(ctx, installationId, &github.InstallationTokenOptions{})
 	fmt.Println(it)
 	if err != nil {

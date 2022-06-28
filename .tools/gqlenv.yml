@@ -1,9 +1,8 @@
 mode: dev
 dev:
-  url2: http://auth-api.hotspot.svc.cluster.local
-  # url: http://localhost:8085/query
-  # url: http://localhost:3000/query
-  # url: http://ci-api.hotspot.svc.cluster.local/query
+  # url: http://auth-api.dev.kloudlite.io/query
+  # authGraphql: http://localhost:12345/query
+  # url: http://localhost:12345/query
   url: http://localhost:8085/query
   headers:
-    cookie: hotspot-session=ses-jpxd1dcmjebkoc4tkqe-ighzkid3; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None
+    cookie: hotspot-session=ses-wazordx4enb21ou23ku5ft5vrwkg; domain=kl.madhouselabs.io; path=/; HttpOnly; secure; SameSite=None

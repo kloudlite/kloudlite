@@ -26,6 +26,16 @@ type ConsoleGRPCEnv struct {
 	ConsoleServerPort uint16 `env:"CONSOLE_SERVER_PORT"`
 }
 
+func (e *ConsoleGRPCEnv) String() string {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (e *ConsoleGRPCEnv) apply(module *interface{}) {
+	// TODO implement me
+	panic("implement me")
+}
+
 func (e *ConsoleGRPCEnv) GetGCPServerURL() string {
 	return fmt.Sprintf("%v:%v", e.ConsoleServerHost, e.ConsoleServerPort)
 }
@@ -62,8 +72,8 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 	return e.DBUrl, e.DBName
 }
 
-func (e *Env) RedisOptions() (hosts, username, password string) {
-	return e.RedisHosts, e.RedisUsername, e.RedisPassword
+func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
+	return e.RedisHosts, e.RedisUsername, e.RedisPassword, basePrefix
 }
 
 func (e *Env) GetHttpPort() uint16 {
@@ -74,8 +84,9 @@ func (e *Env) GetHttpCors() string {
 	return e.HttpCors
 }
 
-var Module = fx.Module("framework",
-	fx.Provide(logger.NewLogger),
+var Module = fx.Module(
+	"framework",
+	logger.FxProvider(),
 	config.EnvFx[Env](),
 	config.EnvFx[ConsoleGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),

@@ -71,7 +71,7 @@ func (c *consumer[T]) Subscribe(T) error {
 			if e != nil {
 				e = c.handlers[topic](context.Background(), msg.Value)
 				if e != nil {
-					c.logger.Debug("failed to process message after 2 retries")
+					c.logger.Debugf("failed to process message after 2 retries")
 				}
 			}
 			c.kafkaConsumer.CommitMessage(msg)
@@ -93,12 +93,14 @@ func NewKafkaConsumer[T KafkaConsumerConfig](
 	logger logger.Logger,
 ) (messenger Consumer[T], e error) {
 	defer errors.HandleErr(&e)
-	c, e := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  kafkaCli.GetBrokers(),
-		"group.id":           consumerGroupId,
-		"auto.offset.reset":  "earliest",
-		"enable.auto.commit": "false",
-	})
+	c, e := kafka.NewConsumer(
+		&kafka.ConfigMap{
+			"bootstrap.servers":  kafkaCli.GetBrokers(),
+			"group.id":           consumerGroupId,
+			"auto.offset.reset":  "earliest",
+			"enable.auto.commit": "false",
+		},
+	)
 	errors.AssertNoError(e, fmt.Errorf("failed to create kafka producer"))
 	return &consumer[T]{
 		kafkaConsumer: c,
@@ -113,25 +115,32 @@ type KafkaConsumerConfig interface {
 }
 
 func NewFxKafkaConsumer[T KafkaConsumerConfig]() fx.Option {
-	return fx.Module("consumer",
-		fx.Provide(func(c T, kafkaCli KafkaClient, logger logger.Logger) (Consumer[T], error) {
-			fmt.Println("subscription", c.GetSubscriptionTopics())
-			return NewKafkaConsumer[T](
-				kafkaCli,
-				c.GetSubscriptionTopics(),
-				c.GetConsumerGroupId(),
-				logger,
-			)
-		}),
-		fx.Invoke(func(lifecycle fx.Lifecycle, con Consumer[T], c T) {
-			lifecycle.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					return con.Subscribe(c)
-				},
-				OnStop: func(ctx context.Context) error {
-					return con.Unsubscribe(c)
-				},
-			})
-		}),
+	return fx.Module(
+		"consumer",
+		fx.Provide(
+			func(c T, kafkaCli KafkaClient, logger logger.Logger) (Consumer[T], error) {
+				fmt.Println("subscription", c.GetSubscriptionTopics())
+				return NewKafkaConsumer[T](
+					kafkaCli,
+					c.GetSubscriptionTopics(),
+					c.GetConsumerGroupId(),
+					logger,
+				)
+			},
+		),
+		fx.Invoke(
+			func(lifecycle fx.Lifecycle, con Consumer[T], c T) {
+				lifecycle.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return con.Subscribe(c)
+						},
+						OnStop: func(ctx context.Context) error {
+							return con.Unsubscribe(c)
+						},
+					},
+				)
+			},
+		),
 	)
 }
