@@ -1,55 +1,57 @@
 type Query {
-    finance_account(accountId: ID!): Account
+  finance_account(accountId: ID!): Account
 }
 
 type Mutation {
-    finance_createAccount(name: String!, billing: BillingInput!): Account!
-    finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
-    finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
-    finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean!
-    finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean!
-    finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
-    finance_deactivateAccount(accountId: ID!): Boolean!
-    finance_activateAccount(accountId: ID!): Boolean!
-    finance_deleteAccount(accountId: ID!): Boolean!
-}
+  finance_createAccount(name: String!, billing: BillingInput!): Account!
+  finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
+  finance_deleteAccount(accountId: ID!): Boolean!
+  finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
 
+  finance_activateAccount(accountId: ID!): Boolean!
+  finance_deactivateAccount(accountId: ID!): Boolean!
+
+  finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean!
+  finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean!
+  finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
+}
 
 scalar Json
 scalar Date
 
+# noinspection GraphQLMissingType,GraphQLUnresolvedReference
 type Account @key(fields: "id") {
-    id: ID!
-    name: String!
-    billing: Billing!
-    isActive: Boolean!
-    contactEmail: String!
-    readableId: ID!
-    memberships: [AccountMembership!]!
-    created: Date!
+  id: ID!
+  name: String!
+  billing: Billing!
+  isActive: Boolean!
+  contactEmail: String!
+  readableId: ID!
+  memberships: [AccountMembership!]!
+  created: Date!
 }
 
 extend type User @key(fields: "id") {
-    id: ID! @external
-    accountMemberships:[AccountMembership!]!
-    accountMembership(accountId: ID):AccountMembership!
+  id: ID! @external
+  accountMemberships:[AccountMembership!]!
+  accountMembership(accountId: ID):AccountMembership!
 }
 type AccountMembership {
-    user: User!
-    role: String!
-    account: Account!
-    accepted: Boolean!
+  user: User!
+  role: String!
+  account: Account!
+  accepted: Boolean!
 }
 
 type Billing {
-    stripeCustomerId: String!
-    cardholderName: String!
-    address: Json!
+  stripeCustomerId: String!
+  cardholderName: String!
+  address: Json!
 }
 
 input BillingInput {
-    stripeSetupIntentId: String!
-    stripePaymentMethod: String!
-    cardholderName: String!
-    address: Json!
+  stripeSetupIntentId: String!
+  stripePaymentMethod: String!
+  cardholderName: String!
+  address: Json!
 }
