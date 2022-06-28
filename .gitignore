@@ -18,3 +18,5 @@ terraform.tfvars
 node_modules
 .pnpm
 nohup.out
+
+.GOPATH

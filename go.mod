@@ -16,6 +16,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
+	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/tektoncd/triggers v0.20.0
 	github.com/vektah/gqlparser/v2 v2.4.0
 	github.com/xanzy/go-gitlab v0.63.0
