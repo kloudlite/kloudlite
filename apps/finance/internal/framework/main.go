@@ -116,11 +116,11 @@ var Module = fx.Module(
 	cache.FxLifeCycle[app.AuthCacheClient](),
 
 	fx.Provide(
-		func(env *Env) app.CacheClient {
+		func(env *Env) cache.Client {
 			return cache.NewRedisClient(env.RedisOptions())
 		},
 	),
-	cache.FxLifeCycle[app.CacheClient](),
+	cache.FxLifeCycle[cache.Client](),
 	httpServer.NewHttpServerFx[*Env](),
 	app.Module,
 )

@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
@@ -16,14 +17,6 @@ func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*mod
 		return nil, err
 	}
 	return AccountModelFromEntity(accountEntity), nil
-}
-
-func (r *entityResolver) FindComputeInventoryItemByName(ctx context.Context, name string) (*model.ComputeInventoryItem, error) {
-	i, err := r.domain.GetComputeInventoryByName(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	return ComputeInventoryItemFromEntity(i), nil
 }
 
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
