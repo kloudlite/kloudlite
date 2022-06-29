@@ -28,6 +28,8 @@ tasks:
 
       LOG_PORT: 8192
       MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
+      FINANCE_HOST: localhost
+      FINANCE_PORT: 3001
 #      INFRA_HOST: infra-api.hotspot.svc.cluster.local
 #      INFRA_PORT: 3001
       AUTH_HOST: localhost
