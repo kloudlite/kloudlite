@@ -7,11 +7,18 @@ tasks:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
     env:
-      MONGO_URI: mongodb://mongo.hotspot.svc.cluster.local:27017
+      MONGO_URI: mongodb://console-db:BT09cm-3M493Iix1rY1A3eUjMPITqFtdsMuar7Uk@mongo-standalone.hotspot.svc.cluster.local/console-db
       IMAGE_REGISTRY_PREFIX: harbor.dev.madhouselabs.io/ci
-      REDIS_HOSTS: redis-headless.hotspot.svc.cluster.local:6379
-      # REDIS_USERNAME: hotspot-user
-      # REDIS_PASSWORD: ***REMOVED***
+      REDIS_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
+      REDIS_USERNAME: console-redis
+      REDIS_PASSWORD: k-weZYsNEgbofBtoPYyoBSVLASOVnQvkwcL-iom3F
+      REDIS_PREFIX: console-redis
+
+      REDIS_AUTH_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
+      REDIS_AUTH_USERNAME: redis-auth
+      REDIS_AUTH_PASSWORD: ***REMOVED***
+      REDIS_AUTH_PREFIX: redis-auth
+
       LOG_PORT: 8192
       MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
       INFRA_HOST: infra-api.hotspot.svc.cluster.local
@@ -22,11 +29,11 @@ tasks:
       CI_PORT: 3001
       IAM_SERVER_HOST: iam.hotspot.svc.cluster.local
       IAM_SERVER_PORT: 3001
-      MONGO_DB_NAME: console-go
+      MONGO_DB_NAME: console-db
       PORT: 4001
       GRPC_PORT: 8083
       DEV: true
-      KAFKA_BOOTSTRAP_SERVERS: 64.227.166.70:31287
+      KAFKA_BOOTSTRAP_SERVERS: redpanda.hotspot.svc.cluster.local:9092
       KAFKA_INFRA_TOPIC: dev-hotspot-infra
       KAFKA_WORKLOAD_TOPIC: dev-hotspot-agent
       KAFKA_WORKLOAD_RESP_TOPIC: dev-hotspot-agent-reply
