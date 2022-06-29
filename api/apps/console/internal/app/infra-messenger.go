@@ -1,7 +1,6 @@
 package app
 
 import (
-	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/messaging"
@@ -59,11 +58,4 @@ func (i *infraMessengerImpl) SendAction(action any) error {
 
 	}
 	return errors.New("no matching message type")
-}
-
-func fxInfraMessenger(env *InfraConsumerEnv, p messaging.Producer[messaging.Json]) domain.InfraMessenger {
-	return &infraMessengerImpl{
-		topic:    env.Topic,
-		producer: p,
-	}
 }
