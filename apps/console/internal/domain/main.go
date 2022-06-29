@@ -48,13 +48,11 @@ type domain struct {
 	messageProducer      redpanda.Producer
 	messageTopic         string
 	logger               logger.Logger
-	infraMessenger       InfraMessenger
 	managedSvcRepo       repos.DbRepo[*entities.ManagedService]
 	managedResRepo       repos.DbRepo[*entities.ManagedResource]
 	appRepo              repos.DbRepo[*entities.App]
 	managedTemplatesPath string
 	workloadMessenger    WorkloadMessenger
-	infraClient          infra.InfraClient
 	ciClient             ci.CIClient
 	imageRepoUrlPrefix   string
 	notifier             rcn.ResourceChangeNotifier
@@ -1696,7 +1694,6 @@ func fxDomain(
 	env *Env,
 	logger logger.Logger,
 	workloadMessenger WorkloadMessenger,
-	infraClient infra.InfraClient,
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,
 	authClient auth.AuthClient,
@@ -1712,7 +1709,6 @@ func fxDomain(
 		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
 		ciClient:             ciClient,
 		authClient:           authClient,
-		infraClient:          infraClient,
 		iamClient:            iamClient,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,

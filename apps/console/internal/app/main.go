@@ -9,8 +9,8 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -49,6 +49,7 @@ type InfraClientConnection *grpc.ClientConn
 type IAMClientConnection *grpc.ClientConn
 type AuthClientConnection *grpc.ClientConn
 type CIClientConnection *grpc.ClientConn
+type FinanceClientConnection *grpc.ClientConn
 
 type AuthCacheClient cache.Client
 type CacheClient cache.Client
@@ -72,9 +73,6 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
 
 	// Grpc Clients
-	fx.Provide(func(conn InfraClientConnection) infra.InfraClient {
-		return infra.NewInfraClient((*grpc.ClientConn)(conn))
-	}),
 
 	fx.Provide(func(conn CIClientConnection) ci.CIClient {
 		return ci.NewCIClient((*grpc.ClientConn)(conn))
@@ -86,6 +84,10 @@ var Module = fx.Module(
 
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(conn FinanceClientConnection) finance.FinanceClient {
+		return finance.NewFinanceClient((*grpc.ClientConn)(conn))
 	}),
 
 	// Grpc Server

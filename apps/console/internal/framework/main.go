@@ -15,15 +15,6 @@ import (
 	rcn "kloudlite.io/pkg/res-change-notifier"
 )
 
-type GrpcInfraConfig struct {
-	InfraGrpcHost string `env:"INFRA_HOST" required:"true"`
-	InfraGrpcPort string `env:"INFRA_PORT" required:"true"`
-}
-
-func (e *GrpcInfraConfig) GetGCPServerURL() string {
-	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
-}
-
 type GrpcFinanceConfig struct {
 	FinanceGrpcHost string `env:"FINANCE_HOST" required:"true"`
 	FinanceGrpcPort string `env:"FINANCE_PORT" required:"true"`
@@ -127,7 +118,7 @@ var Module = fx.Module(
 	config.EnvFx[Env](),
 	config.EnvFx[LogServerEnv](),
 	config.EnvFx[IAMGRPCEnv](),
-	config.EnvFx[GrpcInfraConfig](),
+
 	config.EnvFx[GrpcAuthConfig](),
 	config.EnvFx[GrpcFinanceConfig](),
 	config.EnvFx[GrpcCIConfig](),
@@ -137,7 +128,7 @@ var Module = fx.Module(
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
-	rpc.NewGrpcClientFx[*GrpcInfraConfig, app.InfraClientConnection](),
+
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),
