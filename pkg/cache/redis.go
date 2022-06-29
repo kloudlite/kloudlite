@@ -35,7 +35,10 @@ func (c *RedisClient) Disconnect(context.Context) error {
 }
 
 func (c *RedisClient) getKey(key string) string {
-	return fmt.Sprintf("%s:%s", c.basePrefix, key)
+	if c.basePrefix != "" {
+		return fmt.Sprintf("%s:%s", c.basePrefix, key)
+	}
+	return key
 }
 
 func (c *RedisClient) Set(ctx context.Context, key string, value []byte) error {
