@@ -18,18 +18,19 @@ type Env struct {
 }
 
 type AuthCacheClient cache.Client
-type CacheClient cache.Client
 
 var Module = fx.Module(
 	"application",
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.Account]("accounts", "acc", domain.AccountIndexes),
+	repos.NewFxMongoRepo[*domain.Billable]("billables", "bill", domain.BillableIndexes),
+	cache.NewFxRepo[*domain.AccountInviteToken](),
 	CiClientFx,
 	IAMClientFx,
 	ConsoleClientFx,
 	AuthClientFx,
 	fx.Invoke(
-		func(server *fiber.App, d domain.Domain, env *Env, cacheClient CacheClient) {
+		func(server *fiber.App, d domain.Domain, env *Env, cacheClient AuthCacheClient) {
 			schema := generated.NewExecutableSchema(
 				generated.Config{Resolvers: graph.NewResolver(d)},
 			)
