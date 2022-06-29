@@ -417,7 +417,6 @@ func (i *infraClient) getOutputTerraformInFolder(clusterId string, key string) (
 }
 
 func (i *infraClient) waitForSshAvailability(ip string) error {
-
 	count := 0
 	for count < 20 {
 		e := exec.Command(
@@ -453,7 +452,7 @@ func (i *infraClient) installPrimaryMaster(masterIp string, clusterId string) ([
 	if e != nil {
 		return nil, e
 	}
-	install := rClient.Run("./install.sh", k3sToken)
+	install := rClient.Run("./install.sh", k3sToken, i.env.MySQLConnectionStr)
 	_, e = install.Output()
 	if e != nil {
 		fmt.Println("error on kube server start:", e)
@@ -497,7 +496,7 @@ func (i *infraClient) installSecondaryMasters(masterIps []string, k3sToken strin
 			i.waitForSshAvailability(ip)
 			nodeName := fmt.Sprintf("master-%v", index)
 			rClient := rexec.NewSshRclient(ip, "root", fmt.Sprintf("%v/access", i.env.SshKeysPath))
-			run := rClient.Run("./join-master.sh", k3sToken, masterIp, nodeName)
+			run := rClient.Run("./join-master.sh", k3sToken, masterIp, nodeName, i.env.MySQLConnectionStr)
 			_, err := run.Output()
 			if err != nil {
 				fmt.Println("unable to attach", err)

@@ -38,6 +38,43 @@ type domainI struct {
 	github          Github
 	gitlab          Gitlab
 	google          Google
+	remoteLoginRepo repos.DbRepo[*RemoteLogin]
+}
+
+func (d *domainI) SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID, authHeader string) error {
+	remoteLogin, err := d.remoteLoginRepo.FindById(ctx, loginId)
+	if err != nil {
+		return errors.NewEf(err, "could not find remote login")
+	}
+	remoteLogin.AuthHeader = authHeader
+	remoteLogin.LoginStatus = LoginStatusSucceeded
+	_, err = d.remoteLoginRepo.UpdateById(ctx, loginId, remoteLogin)
+	if err != nil {
+		return errors.NewEf(err, "could not update remote login")
+	}
+	return nil
+}
+
+func (d *domainI) GetRemoteLogin(ctx context.Context, loginId repos.ID, secret string) (*RemoteLogin, error) {
+	id, err := d.remoteLoginRepo.FindById(ctx, loginId)
+	if err != nil {
+		return nil, errors.NewEf(err, "could not find remote login")
+	}
+	if id.Secret != secret {
+		return nil, errors.New("invalid secret")
+	}
+	return id, err
+}
+
+func (d *domainI) CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error) {
+	create, err := d.remoteLoginRepo.Create(ctx, &RemoteLogin{
+		LoginStatus: LoginStatusPending,
+		Secret:      secret,
+	})
+	if err != nil {
+		return "", err
+	}
+	return create.Id, nil
 }
 
 func (d *domainI) EnsureUserByEmail(ctx context.Context, email string) (*User, error) {
@@ -581,6 +618,7 @@ func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *Us
 func fxDomain(
 	userRepo repos.DbRepo[*User],
 	accessTokenRepo repos.DbRepo[*AccessToken],
+	remoteLoginRepo repos.DbRepo[*RemoteLogin],
 	verifyTokenRepo cache.Repo[*VerifyToken],
 	resetTokenRepo cache.Repo[*ResetPasswordToken],
 	github Github,
@@ -590,6 +628,7 @@ func fxDomain(
 	commsClient comms.CommsClient,
 ) Domain {
 	return &domainI{
+		remoteLoginRepo: remoteLoginRepo,
 		commsClient:     commsClient,
 		userRepo:        userRepo,
 		accessTokenRepo: accessTokenRepo,

@@ -47,29 +47,14 @@ type Container struct {
 	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
 }
 
-type PipelineIn struct {
-	Name                 string
-	ImageName            string
-	GitProvider          string
-	GitRepoUrl           string
-	DockerFile           string
-	ContextDir           string
-	GithubInstallationId int64
-	GitLabRepoId         int64
-	BuildArgs            map[string]interface{}
-	RepoName             string
-	Metadata             map[string]interface{}
-}
-
 type ContainerIn struct {
-	Name              string
-	Image             *string
-	ImagePullSecret   *string
-	Pipeline          *PipelineIn
-	EnvVars           []EnvVar
-	CPULimits         Limit
-	MemoryLimits      Limit
-	AttachedResources []AttachedResource
+	Name                string
+	Image               *string
+	ImagePullSecret     *string
+	EnvVars             []EnvVar
+	ComputePlanName     string
+	ComputePlanQuantity float64
+	AttachedResources   []AttachedResource
 }
 
 type AppStatus string
@@ -92,6 +77,8 @@ type AppIn struct {
 	Containers   []ContainerIn
 	Status       AppStatus
 	Conditions   []metav1.Condition
+	Provider     string
+	Region       string
 }
 
 type App struct {

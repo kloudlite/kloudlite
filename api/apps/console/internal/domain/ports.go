@@ -8,6 +8,9 @@ import (
 )
 
 type Domain interface {
+	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
+	GetComputePlans(ctx context.Context, provider string, region string) ([]*entities.ComputePlan, error)
+
 	CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
 	CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error)
 	UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
@@ -78,14 +81,18 @@ type Domain interface {
 
 	GetApps(ctx context.Context, projectId repos.ID) ([]*entities.App, error)
 	GetApp(ctx context.Context, projectID repos.ID) (*entities.App, error)
-	UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.App) error
+	OnDeleteApp(ctx context.Context, name string, namespace string) error
 	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
-	InstallAppFlow(
+	InstallApp(
 		ctx context.Context,
-		userId repos.ID,
-		id repos.ID,
+		projectId repos.ID,
+		app entities.AppIn,
+	) (bool, error)
+	UpdateApp(
+		ctx context.Context,
+		appId repos.ID,
 		app entities.AppIn,
 	) (bool, error)
 

@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/finance";
+
+service Finance {
+  rpc startBillable(StartBillableIn) returns (StartBillableOut);
+  rpc stopBillable(StopBillableIn) returns (StopBillableOut);
+}
+
+message ComputePlan {
+  string provider = 1;
+  string name =2;
+  string desc = 3;
+  float  memoryUnitSize = 4;
+  float cpuUnitSize = 5;
+}
+
+message StartBillableIn {
+  string accountId = 1;
+  string BillableType = 2;
+  float quantity = 3;
+}
+
+message StopBillableIn {
+  string BillableId = 1;
+}
+
+message StartBillableOut {
+  string billingId = 1;
+}
+
+message StopBillableOut {
+  string billingId = 1;
+}

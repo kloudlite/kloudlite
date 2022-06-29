@@ -7,7 +7,8 @@ import (
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"github.com/gorilla/websocket"
 	"go.uber.org/fx"
-	"log"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -35,6 +36,14 @@ type lokiClient struct {
 	url *url.URL
 }
 
+type logResult struct {
+	Data struct {
+		Result []struct {
+			Values [][]string `json:"values,omitempty"`
+		} `json:"result,omitempty"`
+	} `json:"data"`
+}
+
 func (l *lokiClient) Tail(
 	streamSelectors []StreamSelector,
 	filter *string,
@@ -52,6 +61,7 @@ func (l *lokiClient) Tail(
 		filterStr = *filter
 	}
 	query.Set("query", fmt.Sprintf("%v%v", fmt.Sprintf("{%v}", strings.Join(streamSelectorSplits, ",")), filterStr))
+	query.Set("direction", "BACKWARD")
 	if start != nil {
 		query.Set("start", fmt.Sprintf("%v", start))
 	} else {
@@ -65,25 +75,12 @@ func (l *lokiClient) Tail(
 	} else {
 		query.Set("limit", fmt.Sprintf("%v", 30))
 	}
-	u := url.URL{Scheme: "ws", Host: l.url.Host, Path: "/loki/api/v1/tail", RawQuery: query.Encode()}
-	fmt.Println(u.String())
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		log.Fatal("dial:", err)
-		return err
-	}
-	defer conn.Close()
 	for {
-		msgType, message, err := conn.ReadMessage()
-		fmt.Println(message)
-		connection.WriteMessage(msgType, message)
-		if err != nil {
-			connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseInternalServerErr, ""))
-			return err
-		}
-		if msgType == websocket.CloseMessage {
-			return nil
-		}
+		u := url.URL{Scheme: "https", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
+		get, _ := http.Get(u.String())
+		all, _ := ioutil.ReadAll(get.Body)
+		connection.WriteMessage(websocket.TextMessage, all)
+		time.Sleep(5 * time.Second)
 	}
 }
 

@@ -51,8 +51,16 @@ func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.Acco
 	return AccountModelFromEntity(ae), nil
 }
 
+func (r *mutationResolver) FinanceGetCurrentMonthlyBilling(ctx context.Context, accountID repos.ID) (*model.CurrentMonthBilling, error) {
+	billableEntities, startTime, err := r.domain.GetCurrentMonthBilling(ctx, accountID)
+	if err != nil {
+		return nil, err
+	}
+	currentMonthBilling := currentMonthBillingModelFromBillables(startTime, accountID, billableEntities)
+	return currentMonthBilling, nil
+}
+
 func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput, initProvider string, initRegion string) (*model.Account, error) {
-	fmt.Println("create account")
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not logged in")
@@ -105,6 +113,14 @@ func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accou
 	return r.domain.AddAccountMember(ctx, repos.ID(accountID), email, common.Role(role))
 }
 
+func (r *mutationResolver) FinanceAcceptAccountInvite(ctx context.Context, invitationToken string) (*bool, error) {
+	membership, err := r.domain.ConfirmAccountMembership(ctx, invitationToken)
+	if err != nil {
+		return nil, err
+	}
+	return &membership, nil
+}
+
 func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
@@ -152,6 +168,18 @@ func (r *queryResolver) FinanceAccount(ctx context.Context, accountID repos.ID) 
 	}
 	accountEntity, err := r.domain.GetAccount(ctx, accountID)
 	return AccountModelFromEntity(accountEntity), err
+}
+
+func (r *queryResolver) FinanceGetComputeInventory(ctx context.Context, provider *string) ([]*model.ComputeInventoryItem, error) {
+	inventory, err := r.domain.GetComputeInventory(provider)
+	inventoryModel := make([]*model.ComputeInventoryItem, 0)
+	for _, i := range inventory {
+		entity := ComputeInventoryItemFromEntity(i)
+		inventoryModel = append(inventoryModel, entity)
+		fmt.Println(fmt.Sprintf("%v, %v", entity.PricePerHour, entity.PricePerMonth))
+	}
+
+	return inventoryModel, err
 }
 
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {

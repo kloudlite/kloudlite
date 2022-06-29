@@ -6,12 +6,14 @@ import (
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/yaml.v3"
+	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
@@ -60,16 +62,80 @@ type domain struct {
 	authClient           auth.AuthClient
 	changeNotifier       rcn.ResourceChangeNotifier
 	clusterAccountRepo   repos.DbRepo[*entities.ClusterAccount]
+	financeClient        finance.FinanceClient
+}
+
+func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string) error {
+	one, err := d.appRepo.FindOne(ctx, repos.Filter{
+		"name":      name,
+		"namespace": namespace,
+	})
+	if err != nil {
+		return err
+	}
+	if one == nil {
+		return nil
+	}
+	err = d.appRepo.DeleteById(ctx, one.Id)
+	if err != nil {
+		return err
+	}
+	d.changeNotifier.Notify(one.Id)
+	return nil
+}
+
+func (d *domain) getComputePlan(name string) (*entities.ComputePlan, error) {
+	file, err := ioutil.ReadFile("compute-plans.yaml")
+	if err != nil {
+		return nil, err
+	}
+	plans := make([]entities.ComputePlan, 0)
+	err = yaml.Unmarshal(file, &plans)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, plan := range plans {
+		if plan.Name == name {
+			return &plan, nil
+		}
+	}
+	return nil, errors.New("plan not found")
+}
+
+func (d *domain) GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error) {
+	return d.getComputePlan(name)
+}
+
+func (d *domain) GetComputePlans(ctx context.Context, provider string, region string) ([]*entities.ComputePlan, error) {
+	file, err := ioutil.ReadFile("compute-plans.yaml")
+	if err != nil {
+		return nil, err
+	}
+	plans := make([]*entities.ComputePlan, 0)
+	err = yaml.Unmarshal(file, &plans)
+	if err != nil {
+		return nil, err
+	}
+	filteredPlans := make([]*entities.ComputePlan, 0)
+	for _, plan := range plans {
+		if plan.Provider == provider && plan.Region == region {
+			filteredPlans = append(filteredPlans, plan)
+		}
+	}
+	return filteredPlans, nil
 }
 
 func (d *domain) OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error {
-	fmt.Println("OnSetupClusterAccount", payload)
 	one, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
 		"cluster_id": payload.ClusterId,
 		"account_id": payload.AccountId,
 	})
 	if err != nil {
 		return err
+	}
+	if one == nil {
+		return errors.New("cluster account not found")
 	}
 	if payload.Done {
 		one.Status = entities.ClusterAccountStateLive
@@ -307,7 +373,7 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	return output.Output, err
 }
 
-func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app entities.AppIn) (*entities.App, error) {
+func (d *domain) createApp(ctx context.Context, app entities.AppIn) (*entities.App, error) {
 	a := entities.App{
 		ReadableId:   app.ReadableId,
 		ProjectId:    app.ProjectId,
@@ -316,76 +382,52 @@ func (d *domain) createPipelinesOfApp(ctx context.Context, userId repos.ID, app 
 		Description:  app.Description,
 		Replicas:     app.Replicas,
 		ExposedPorts: app.ExposedPorts,
+		Status:       entities.AppStateSyncing,
 	}
 	for _, c := range app.Containers {
-		// TODO
 		var iName string
 		if c.Image != nil {
 			iName = fmt.Sprintf("%s:latest", *c.Image)
 		}
+		plan, err := d.getComputePlan(c.ComputePlanName)
+
+		if err != nil {
+			return nil, err
+		}
 		container := entities.Container{
-			Name:              c.Name,
-			Image:             &iName,
-			ImagePullSecret:   c.ImagePullSecret,
-			EnvVars:           c.EnvVars,
-			CPULimits:         c.CPULimits,
-			MemoryLimits:      c.MemoryLimits,
+			Name:            c.Name,
+			Image:           &iName,
+			ImagePullSecret: c.ImagePullSecret,
+			EnvVars:         c.EnvVars,
+			CPULimits: entities.Limit{
+				Min: fmt.Sprintf("%v%v", plan.Cpu.Quantity*c.ComputePlanQuantity, plan.Cpu.Unit),
+				Max: fmt.Sprintf("%v%v", plan.Cpu.Quantity, plan.Cpu.Unit),
+			},
+			MemoryLimits: entities.Limit{
+				Min: fmt.Sprintf("%v%v", plan.Memory.Quantity*c.ComputePlanQuantity, plan.Memory.Unit),
+				Max: fmt.Sprintf("%v%v", plan.Memory.Quantity, plan.Memory.Unit),
+			},
 			AttachedResources: c.AttachedResources,
 		}
 
-		if c.Pipeline != nil {
-			b := make(map[string]string, 0)
-			for k, v := range c.Pipeline.BuildArgs {
-				b[k] = v.(string)
-			}
-			m := make(map[string]string, 0)
-			for k, v := range c.Pipeline.Metadata {
-				m[k] = v.(string)
-			}
-			imageName := fmt.Sprintf("%s/%s", d.imageRepoUrlPrefix, c.Pipeline.ImageName)
-			pipeline, err := d.ciClient.CreatePipeline(ctx, &ci.PipelineIn{
-				GitlabRepoId:         c.Pipeline.GitLabRepoId,
-				UserId:               string(userId),
-				ProjectId:            string(app.ProjectId),
-				RepoName:             c.Pipeline.RepoName,
-				Metadata:             m,
-				Name:                 c.Pipeline.Name,
-				ImageName:            imageName,
-				GitProvider:          c.Pipeline.GitProvider,
-				GitRepoUrl:           c.Pipeline.GitRepoUrl,
-				DockerFile:           c.Pipeline.DockerFile,
-				ContextDir:           c.Pipeline.ContextDir,
-				GithubInstallationId: int32(c.Pipeline.GithubInstallationId),
-				BuildArgs:            b,
-			})
-			if err != nil {
-				return nil, err
-			}
-			container.PipelineId = repos.ID(pipeline.PipelineId)
-			container.Image = &imageName
-		}
 		a.Containers = append(a.Containers, container)
 	}
 	return &a, nil
 }
 
-func (d *domain) InstallAppFlow(
-	ctx context.Context,
-	userId repos.ID,
-	projectId repos.ID,
-	appIn entities.AppIn,
-) (bool, error) {
-	prj, err := d.projectRepo.FindById(ctx, projectId)
+func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, appIn entities.AppIn) (bool, error) {
+	prj, err := d.projectRepo.FindById(ctx, appIn.ProjectId)
 	if err != nil {
 		return false, err
 	}
-	app, err := d.createPipelinesOfApp(ctx, userId, appIn)
+	app, err := d.createApp(ctx, appIn)
 	if err != nil {
 		return false, err
 	}
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
-	_, err = d.appRepo.Create(ctx, app)
+	app.Id = appId
+	_, err = d.appRepo.UpdateById(ctx, appId, app)
 	if err != nil {
 		return false, err
 	}
@@ -448,6 +490,88 @@ func (d *domain) InstallAppFlow(
 			Replicas:   1,
 		},
 	})
+
+	return true, nil
+}
+
+func (d *domain) InstallApp(
+	ctx context.Context,
+	projectId repos.ID,
+	appIn entities.AppIn,
+) (bool, error) {
+	prj, err := d.projectRepo.FindById(ctx, projectId)
+	if err != nil {
+		return false, err
+	}
+	app, err := d.createApp(ctx, appIn)
+	if err != nil {
+		return false, err
+	}
+	app.Namespace = prj.Name
+	app.ProjectId = prj.Id
+	_, err = d.appRepo.Create(ctx, app)
+	if err != nil {
+		return false, err
+	}
+	svcs := make([]op_crds.Service, 0)
+	for _, ep := range app.ExposedPorts {
+		svcs = append(svcs, op_crds.Service{
+			Port:       int(ep.Port),
+			TargetPort: int(ep.TargetPort),
+			Type:       string(ep.Type),
+		})
+	}
+	containers := make([]op_crds.Container, 0)
+	for _, c := range app.Containers {
+		env := make([]op_crds.EnvEntry, 0)
+		for _, e := range c.EnvVars {
+			if e.Type == "managed_resource" {
+				ref := fmt.Sprintf("mres-%v", *e.Ref)
+				env = append(env, op_crds.EnvEntry{
+					Value:   e.Value,
+					Key:     e.Key,
+					Type:    "secret",
+					RefName: &ref,
+					RefKey:  e.RefKey,
+				})
+			} else {
+				env = append(env, op_crds.EnvEntry{
+					Value:   e.Value,
+					Key:     e.Key,
+					Type:    e.Type,
+					RefName: e.Ref,
+					RefKey:  e.RefKey,
+				})
+			}
+		}
+		containers = append(containers, op_crds.Container{
+			Name:  c.Name,
+			Image: c.Image,
+			ResourceCpu: op_crds.Limit{
+				Min: c.CPULimits.Min,
+				Max: c.CPULimits.Max,
+			},
+			ResourceMemory: op_crds.Limit{
+				Min: c.MemoryLimits.Min,
+				Max: c.MemoryLimits.Max,
+			},
+			Env: env,
+		})
+	}
+	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+		APIVersion: op_crds.AppAPIVersion,
+		Kind:       op_crds.AppKind,
+		Metadata: op_crds.AppMetadata{
+			Name:      app.ReadableId,
+			Namespace: app.Namespace,
+		},
+		Spec: op_crds.AppSpec{
+			Services:   svcs,
+			Containers: containers,
+			Replicas:   1,
+		},
+	})
+
 	return true, nil
 }
 
@@ -820,13 +944,18 @@ func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.A
 	return apps, nil
 }
 
-func (d *domain) UpdateApp(ctx context.Context, managedResID repos.ID, values map[string]interface{}) (bool, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
-	err := d.appRepo.DeleteById(ctx, appID)
+	app, err := d.appRepo.FindById(ctx, appID)
+	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
+		APIVersion: op_crds.AppAPIVersion,
+		Kind:       op_crds.AppKind,
+		Metadata: op_crds.AppMetadata{
+			Name:      app.Name,
+			Namespace: app.Namespace,
+		},
+	})
+	app.Status = entities.AppStateSyncing
+	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	if err != nil {
 		return false, err
 	}
@@ -1571,10 +1700,11 @@ func fxDomain(
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,
 	authClient auth.AuthClient,
+	financeClient finance.FinanceClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 ) Domain {
-	var x repos.DbRepo[*entities.Cluster]
-	x = mockClusterRepo{}
+	//var x repos.DbRepo[*entities.Cluster]
+	//x = mockClusterRepo{}
 	return &domain{
 		clusterAccountRepo:   clusterAccountRepo,
 		changeNotifier:       changeNotifier,
@@ -1586,7 +1716,7 @@ func fxDomain(
 		iamClient:            iamClient,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,
-		clusterRepo:          x,
+		clusterRepo:          clusterRepo,
 		projectRepo:          projectRepo,
 		routerRepo:           routerRepo,
 		secretRepo:           secretRepo,
@@ -1598,6 +1728,7 @@ func fxDomain(
 		messageTopic:         env.KafkaInfraTopic,
 		managedTemplatesPath: env.ManagedTemplatesPath,
 		logger:               logger,
+		financeClient:        financeClient,
 	}
 }
 
