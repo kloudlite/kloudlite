@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Kloudlite <support@kloudlite.io>
 
 */
 package cmd
@@ -45,6 +45,10 @@ func TriggerSelectApp() string {
 		},
 		fuzzyfinder.WithPromptString("Select Project >"),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return apps[selectedIndex].Id
 }
 
