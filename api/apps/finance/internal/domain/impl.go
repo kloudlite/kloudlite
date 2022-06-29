@@ -460,7 +460,7 @@ func fxDomain(
 	consoleClient console.ConsoleClient,
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
-	commsClient comms.CommsClient,
+	//commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 ) Domain {
 	return &domainI{
@@ -469,7 +469,7 @@ func fxDomain(
 		consoleClient,
 		accountRepo,
 		ciClient,
-		commsClient,
+		nil,
 		billablesRepo,
 		accountInviteTokenRepo,
 	}
