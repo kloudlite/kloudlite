@@ -72,6 +72,74 @@ func (r *AppReconciler) finalize(req *rApi.Request[*crdsv1.App]) rApi.StepResult
 
 func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
 	ctx := req.Context()
+	obj := req.Object
+
+	isReady := true
+	var cs []metav1.Condition
+	var childC []metav1.Condition
+
+	// STEP: 2. sync conditions from deployments/statefulsets
+	deploymentRes, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
+	if err != nil {
+		isReady = false
+		if !apiErrors.IsNotFound(err) {
+			return req.FailWithStatusError(err)
+		}
+		cs = append(cs, conditions.New(conditions.DeploymentExists, false, conditions.NotFound, err.Error()))
+	} else {
+		cs = append(cs, conditions.New(conditions.DeploymentExists, true, conditions.Found))
+
+		rConditions, err := conditions.ParseFromResource(deploymentRes, "Deployment")
+		if err != nil {
+			return req.FailWithStatusError(err)
+		}
+		childC = append(childC, rConditions...)
+		rReady := meta.IsStatusConditionTrue(rConditions, "DeploymentAvailable")
+		if !rReady {
+			isReady = false
+		}
+		cs = append(
+			cs, conditions.New(conditions.DeploymentReady, rReady, conditions.Empty),
+		)
+	}
+
+	// STEP: 3. service exists?
+	_, err = rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.FailWithStatusError(err)
+		}
+		isReady = false
+		cs = append(cs, conditions.New(conditions.ServiceExists, false, conditions.NotFound, err.Error()))
+	} else {
+		cs = append(cs, conditions.New(conditions.ServiceExists, true, conditions.Found))
+	}
+
+	// STEP: 5. patch aggregated conditions
+	nConditionsC, hasUpdatedC, err := conditions.Patch(obj.Status.ChildConditions, childC)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+
+	nConditions, hasSUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+
+	if !hasUpdatedC && !hasSUpdated && isReady == obj.Status.IsReady {
+		return req.Next()
+	}
+
+	obj.Status.IsReady = isReady
+	obj.Status.Conditions = nConditions
+	obj.Status.ChildConditions = nConditionsC
+	obj.Status.OpsConditions = []metav1.Condition{}
+
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+}
+
+func (r *AppReconciler) reconcileStatus2(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
+	ctx := req.Context()
 	app := req.Object
 
 	var cs []metav1.Condition
@@ -122,26 +190,28 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi
 	if !controllerutil.ContainsFinalizer(app, constants.CommonFinalizer) {
 		controllerutil.AddFinalizer(app, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(app, constants.ForegroundFinalizer)
-		if err := r.Status().Update(ctx, app); err != nil {
-			return req.FailWithOpError(err)
-		}
-		return req.Next()
+		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, app))
 	}
 
-	depl, err := templates.Parse(templates.Deployment, app)
+	volumes, vMounts := crdsv1.ParseVolumes(app.Spec.Containers)
+
+	b, err := templates.Parse(
+		templates.CrdsV1.App, map[string]any{
+			"object":        app,
+			"volumes":       volumes,
+			"volume-mounts": vMounts,
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(app, true),
+			},
+		},
+	)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
 
-	svc, err := templates.Parse(templates.Service, app)
-	if err != nil {
+	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return req.FailWithOpError(err)
 	}
-
-	if _, err := fn.KubectlApplyExec(depl, svc); err != nil {
-		return req.FailWithOpError(err)
-	}
-
 	return req.Done()
 }
 
