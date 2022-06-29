@@ -199,7 +199,17 @@ func (r *mutationResolver) ManagedResDelete(ctx context.Context, resID repos.ID)
 }
 
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error) {
-	panic(fmt.Errorf("not implemented"))
+	cluster, err := r.Domain.CreateCluster(ctx, &entities.Cluster{
+		BaseEntity: repos.BaseEntity{},
+		Name:       name,
+		Provider:   provider,
+		Region:     region,
+		NodesCount: nodesCount,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return clusterModelFromEntity(cluster), err
 }
 
 func (r *mutationResolver) InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (bool, error) {
@@ -262,7 +272,7 @@ func (r *mutationResolver) IamUpdateProjectMember(ctx context.Context, projectID
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error) {
+func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID, app model.AppInput) (bool, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return false, errors.New("user not logged in")
@@ -295,40 +305,17 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 		}
 
 		in := entities.ContainerIn{
-			Name:            container.Name,
-			Image:           container.Image,
-			ImagePullSecret: container.PullSecret,
-			EnvVars:         e,
-			CPULimits: entities.Limit{
-				Min: container.CPUMin,
-				Max: container.CPUMax,
-			},
-			MemoryLimits: entities.Limit{
-				Min: container.MemMin,
-				Max: container.MemMax,
-			},
-			AttachedResources: a,
-		}
-		if container.PipelineData != nil {
-			i := *container.PipelineData.GithubInstallationID
-			in.Pipeline = &entities.PipelineIn{
-				Name:                 container.PipelineData.Name,
-				ImageName:            container.PipelineData.ImageName,
-				GitProvider:          container.PipelineData.GitProvider,
-				RepoName:             container.PipelineData.RepoName,
-				GitRepoUrl:           container.PipelineData.GitRepoURL,
-				DockerFile:           container.PipelineData.DockerFile,
-				ContextDir:           container.PipelineData.ContextDir,
-				GithubInstallationId: int64(i),
-				GitLabRepoId:         int64(container.PipelineData.GitlabRepoID),
-				BuildArgs:            container.PipelineData.BuildArgs,
-				Metadata:             container.PipelineData.Metadata,
-			}
+			Name:                container.Name,
+			Image:               container.Image,
+			ImagePullSecret:     container.PullSecret,
+			EnvVars:             e,
+			ComputePlanName:     container.ComputePlan,
+			ComputePlanQuantity: container.ComputeSize,
+			AttachedResources:   a,
 		}
 		containers = append(containers, in)
-
 	}
-	return r.Domain.InstallAppFlow(ctx, session.UserId, projectID, entities.AppIn{
+	return r.Domain.InstallApp(ctx, projectID, entities.AppIn{
 		Name:         app.Name,
 		ProjectId:    projectID,
 		ReadableId:   app.Readable,
@@ -336,11 +323,73 @@ func (r *mutationResolver) CoreCreateAppFlow(ctx context.Context, projectID repo
 		Replicas:     1,
 		ExposedPorts: ports,
 		Containers:   containers,
+		Provider:     app.Provider,
+		Region:       app.Region,
+	})
+}
+
+func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID, appID repos.ID, app model.AppInput) (bool, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user not logged in")
+	}
+	ports := make([]entities.ExposedPort, 0)
+	for _, port := range app.ExposedServices {
+		ports = append(ports, entities.ExposedPort{
+			Port:       int64(port.Exposed),
+			TargetPort: int64(port.Target),
+			Type:       entities.PortType(port.Type),
+		})
+	}
+	containers := make([]entities.ContainerIn, 0)
+	for _, container := range app.Containers {
+		e := make([]entities.EnvVar, 0)
+		for _, env := range container.EnvVars {
+			e = append(e, entities.EnvVar{
+				Key:    env.Key,
+				Type:   env.Value.Type,
+				Value:  env.Value.Value,
+				Ref:    env.Value.Ref,
+				RefKey: env.Value.Key,
+			})
+		}
+		a := make([]entities.AttachedResource, 0)
+		for _, attached := range container.AttachedResources {
+			a = append(a, entities.AttachedResource{
+				ResourceId: attached.ResID,
+			})
+		}
+
+		in := entities.ContainerIn{
+			Name:                container.Name,
+			Image:               container.Image,
+			ImagePullSecret:     container.PullSecret,
+			EnvVars:             e,
+			ComputePlanName:     container.ComputePlan,
+			ComputePlanQuantity: container.ComputeSize,
+			AttachedResources:   a,
+		}
+		containers = append(containers, in)
+	}
+	return r.Domain.UpdateApp(ctx, appID, entities.AppIn{
+		Name:         app.Name,
+		ProjectId:    projectID,
+		ReadableId:   app.Readable,
+		Description:  app.Description,
+		Replicas:     1,
+		ExposedPorts: ports,
+		Containers:   containers,
+		Provider:     app.Provider,
+		Region:       app.Region,
 	})
 }
 
 func (r *mutationResolver) CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	_, err := r.Domain.DeleteApp(ctx, appID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error) {

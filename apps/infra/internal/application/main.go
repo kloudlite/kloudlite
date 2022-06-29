@@ -26,6 +26,7 @@ type InfraEnv struct {
 	DoAPIKey                string `env:"DO_API_KEY", required:"true"`
 	DataPath                string `env:"DATA_PATH", required:"true"`
 	SshKeysPath             string `env:"SSH_KEYS_PATH", required:"true"`
+	MySQLConnectionStr      string `env:"MYSQL_CONNECTION_STRING", required:"true"`
 	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC", required:"true"`
 	KafkaInfraResponseTopic string `env:"KAFKA_INFRA_RESP_TOPIC", required:"true"`
 	KafkaGroupId            string `env:"KAFKA_GROUP_ID", required:"true"`

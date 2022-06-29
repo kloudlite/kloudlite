@@ -26,6 +26,14 @@ type AccountMembership struct {
 	Accepted bool     `json:"accepted"`
 }
 
+type Billable struct {
+	AccountID    repos.ID `json:"accountId"`
+	ResourceType string   `json:"resourceType"`
+	Quantity     float64  `json:"quantity"`
+	StartTime    *string  `json:"StartTime"`
+	EndTime      *string  `json:"EndTime"`
+}
+
 type Billing struct {
 	StripeCustomerID string                 `json:"stripeCustomerId"`
 	CardholderName   string                 `json:"cardholderName"`
@@ -37,6 +45,27 @@ type BillingInput struct {
 	StripePaymentMethod string                 `json:"stripePaymentMethod"`
 	CardholderName      string                 `json:"cardholderName"`
 	Address             map[string]interface{} `json:"address"`
+}
+
+type ComputeInventoryItem struct {
+	Name          string     `json:"name"`
+	Provider      string     `json:"provider"`
+	Desc          string     `json:"desc"`
+	PricePerHour  *ItemPrice `json:"price_perHour"`
+	PricePerMonth *ItemPrice `json:"price_perMonth"`
+}
+
+func (ComputeInventoryItem) IsEntity() {}
+
+type CurrentMonthBilling struct {
+	AccountID repos.ID    `json:"accountId"`
+	Billables []*Billable `json:"billables"`
+	StartDate string      `json:"startDate"`
+}
+
+type ItemPrice struct {
+	Quantity float64 `json:"quantity"`
+	Currency string  `json:"currency"`
 }
 
 type User struct {

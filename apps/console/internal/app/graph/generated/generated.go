@@ -123,6 +123,21 @@ type ComplexityRoot struct {
 		UserDevices func(childComplexity int) int
 	}
 
+	ComputeInventoryData struct {
+		CPU    func(childComplexity int) int
+		Memory func(childComplexity int) int
+	}
+
+	ComputeInventoryItem struct {
+		Data func(childComplexity int) int
+		Name func(childComplexity int) int
+	}
+
+	ComputeInventoryMetricSize struct {
+		Quantity func(childComplexity int) int
+		Unit     func(childComplexity int) int
+	}
+
 	Config struct {
 		Description func(childComplexity int) int
 		Entries     func(childComplexity int) int
@@ -144,10 +159,11 @@ type ComplexityRoot struct {
 	}
 
 	Entity struct {
-		FindAccountByID func(childComplexity int, id repos.ID) int
-		FindClusterByID func(childComplexity int, id repos.ID) int
-		FindDeviceByID  func(childComplexity int, id repos.ID) int
-		FindUserByID    func(childComplexity int, id repos.ID) int
+		FindAccountByID                func(childComplexity int, id repos.ID) int
+		FindClusterByID                func(childComplexity int, id repos.ID) int
+		FindComputeInventoryItemByName func(childComplexity int, name string) int
+		FindDeviceByID                 func(childComplexity int, id repos.ID) int
+		FindUserByID                   func(childComplexity int, id repos.ID) int
 	}
 
 	EnvVal struct {
@@ -194,7 +210,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CoreCreateAppFlow      func(childComplexity int, projectID repos.ID, app model.AppFlowInput) int
+		CoreCreateApp          func(childComplexity int, projectID repos.ID, app model.AppInput) int
 		CoreCreateConfig       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string) int
 		CoreCreateRouter       func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
@@ -205,6 +221,7 @@ type ComplexityRoot struct {
 		CoreDeleteRouter       func(childComplexity int, routerID repos.ID) int
 		CoreDeleteSecret       func(childComplexity int, secretID repos.ID) int
 		CoreRollbackApp        func(childComplexity int, appID repos.ID, version int) int
+		CoreUpdateApp          func(childComplexity int, projectID repos.ID, appID repos.ID, app model.AppInput) int
 		CoreUpdateConfig       func(childComplexity int, configID repos.ID, description *string, data []*model.CSEntryIn) int
 		CoreUpdateProject      func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
 		CoreUpdateRouter       func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
@@ -321,6 +338,7 @@ type DeviceResolver interface {
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error)
+	FindComputeInventoryItemByName(ctx context.Context, name string) (*model.ComputeInventoryItem, error)
 	FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error)
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
@@ -348,7 +366,8 @@ type MutationResolver interface {
 	IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
 	IamRemoveProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID) (bool, error)
 	IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error)
-	CoreCreateAppFlow(ctx context.Context, projectID repos.ID, app model.AppFlowInput) (bool, error)
+	CoreCreateApp(ctx context.Context, projectID repos.ID, app model.AppInput) (bool, error)
+	CoreUpdateApp(ctx context.Context, projectID repos.ID, appID repos.ID, app model.AppInput) (bool, error)
 	CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error)
 	CoreCreateSecret(ctx context.Context, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) (*model.Secret, error)
@@ -696,6 +715,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ClusterSubscription.UserDevices(childComplexity), true
 
+	case "ComputeInventoryData.cpu":
+		if e.complexity.ComputeInventoryData.CPU == nil {
+			break
+		}
+
+		return e.complexity.ComputeInventoryData.CPU(childComplexity), true
+
+	case "ComputeInventoryData.memory":
+		if e.complexity.ComputeInventoryData.Memory == nil {
+			break
+		}
+
+		return e.complexity.ComputeInventoryData.Memory(childComplexity), true
+
+	case "ComputeInventoryItem.data":
+		if e.complexity.ComputeInventoryItem.Data == nil {
+			break
+		}
+
+		return e.complexity.ComputeInventoryItem.Data(childComplexity), true
+
+	case "ComputeInventoryItem.name":
+		if e.complexity.ComputeInventoryItem.Name == nil {
+			break
+		}
+
+		return e.complexity.ComputeInventoryItem.Name(childComplexity), true
+
+	case "ComputeInventoryMetricSize.quantity":
+		if e.complexity.ComputeInventoryMetricSize.Quantity == nil {
+			break
+		}
+
+		return e.complexity.ComputeInventoryMetricSize.Quantity(childComplexity), true
+
+	case "ComputeInventoryMetricSize.unit":
+		if e.complexity.ComputeInventoryMetricSize.Unit == nil {
+			break
+		}
+
+		return e.complexity.ComputeInventoryMetricSize.Unit(childComplexity), true
+
 	case "Config.description":
 		if e.complexity.Config.Description == nil {
 			break
@@ -817,6 +878,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindClusterByID(childComplexity, args["id"].(repos.ID)), true
+
+	case "Entity.findComputeInventoryItemByName":
+		if e.complexity.Entity.FindComputeInventoryItemByName == nil {
+			break
+		}
+
+		args, err := ec.field_Entity_findComputeInventoryItemByName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Entity.FindComputeInventoryItemByName(childComplexity, args["name"].(string)), true
 
 	case "Entity.findDeviceByID":
 		if e.complexity.Entity.FindDeviceByID == nil {
@@ -1017,17 +1090,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedSvc.Values(childComplexity), true
 
-	case "Mutation.core_createAppFlow":
-		if e.complexity.Mutation.CoreCreateAppFlow == nil {
+	case "Mutation.core_createApp":
+		if e.complexity.Mutation.CoreCreateApp == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_core_createAppFlow_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_core_createApp_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateAppFlow(childComplexity, args["projectId"].(repos.ID), args["app"].(model.AppFlowInput)), true
+		return e.complexity.Mutation.CoreCreateApp(childComplexity, args["projectId"].(repos.ID), args["app"].(model.AppInput)), true
 
 	case "Mutation.core_createConfig":
 		if e.complexity.Mutation.CoreCreateConfig == nil {
@@ -1148,6 +1221,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreRollbackApp(childComplexity, args["appId"].(repos.ID), args["version"].(int)), true
+
+	case "Mutation.core_updateApp":
+		if e.complexity.Mutation.CoreUpdateApp == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_updateApp_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreUpdateApp(childComplexity, args["projectId"].(repos.ID), args["appId"].(repos.ID), args["app"].(model.AppInput)), true
 
 	case "Mutation.core_updateConfig":
 		if e.complexity.Mutation.CoreUpdateConfig == nil {
@@ -1936,9 +2021,14 @@ type Mutation {
 
 
   # App
-  core_createAppFlow(
+  core_createApp(
     projectId: ID!,
-    app: AppFlowInput!,
+    app: AppInput!,
+  ): Boolean!
+  core_updateApp(
+    projectId: ID!,
+    appId: ID!,
+    app: AppInput!,
   ): Boolean!
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
@@ -1960,12 +2050,14 @@ type Mutation {
 
 }
 
-input AppFlowInput{
+input AppInput{
   name: String!
   readable: String!
   description: String
   exposed_services: [ExposedServiceInput!]!
   containers:[AppContainerInput!]!
+  provider: String!
+  region: String!
 }
 
 type App {
@@ -2027,31 +2119,30 @@ type AppContainer{
   attached_resources:[AttachedRes!]!
 }
 
-input PipelineDataInput{
-  name: String!
-  imageName: String!
-  repoName: String!
-  gitProvider: String!
-  gitRepoUrl: String!
-  gitlabRepoId: Int!
-  dockerFile: String!
-  contextDir: String!
-  githubInstallationId: Int
-  buildArgs: Json
-  branch: String!
-  metadata: Json
+
+extend type ComputeInventoryItem @key(fields: "name") {
+  name: String! @external
+  data: ComputeInventoryData!
 }
+
+type ComputeInventoryData {
+  memory: ComputeInventoryMetricSize!
+  cpu: ComputeInventoryMetricSize!
+}
+
+type ComputeInventoryMetricSize {
+  quantity: Float!
+  unit: String!
+}
+
 
 input AppContainerInput{
   name: String!
   image: String
-  pipelineData: PipelineDataInput,
   pull_secret: String
   env_vars:[EnvVarInput!]!
-  cpu_min:String!
-  cpu_max:String!
-  mem_min:String!
-  mem_max:String!
+  computePlan: String!
+  compute_size: Float!
   attached_resources:[AttachedResInput!]!
 }
 
@@ -2223,12 +2314,13 @@ directive @extends on OBJECT | INTERFACE
 `, BuiltIn: true},
 	{Name: "federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Account | Cluster | Device | User
+union _Entity = Account | Cluster | ComputeInventoryItem | Device | User
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
 		findAccountByID(id: ID!,): Account!
 	findClusterByID(id: ID!,): Cluster!
+	findComputeInventoryItemByName(name: String!,): ComputeInventoryItem!
 	findDeviceByID(id: ID!,): Device!
 	findUserByID(id: ID!,): User!
 
@@ -2280,6 +2372,21 @@ func (ec *executionContext) field_Entity_findClusterByID_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Entity_findComputeInventoryItemByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Entity_findDeviceByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2310,7 +2417,7 @@ func (ec *executionContext) field_Entity_findUserByID_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_core_createAppFlow_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_core_createApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -2322,10 +2429,10 @@ func (ec *executionContext) field_Mutation_core_createAppFlow_args(ctx context.C
 		}
 	}
 	args["projectId"] = arg0
-	var arg1 model.AppFlowInput
+	var arg1 model.AppInput
 	if tmp, ok := rawArgs["app"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg1, err = ec.unmarshalNAppFlowInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppFlowInput(ctx, tmp)
+		arg1, err = ec.unmarshalNAppInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2607,6 +2714,39 @@ func (ec *executionContext) field_Mutation_core_rollbackApp_args(ctx context.Con
 		}
 	}
 	args["version"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["projectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectId"] = arg0
+	var arg1 repos.ID
+	if tmp, ok := rawArgs["appId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appId"))
+		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["appId"] = arg1
+	var arg2 model.AppInput
+	if tmp, ok := rawArgs["app"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
+		arg2, err = ec.unmarshalNAppInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["app"] = arg2
 	return args, nil
 }
 
@@ -4940,6 +5080,216 @@ func (ec *executionContext) _ClusterSubscription_userDevices(ctx context.Context
 	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ComputeInventoryData_memory(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryData) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputeInventoryData",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Memory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ComputeInventoryMetricSize)
+	fc.Result = res
+	return ec.marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputeInventoryData_cpu(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryData) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputeInventoryData",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CPU, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ComputeInventoryMetricSize)
+	fc.Result = res
+	return ec.marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputeInventoryItem_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryItem) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputeInventoryItem",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputeInventoryItem_data(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryItem) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputeInventoryItem",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ComputeInventoryData)
+	fc.Result = res
+	return ec.marshalNComputeInventoryData2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputeInventoryMetricSize_quantity(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryMetricSize) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputeInventoryMetricSize",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputeInventoryMetricSize_unit(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryMetricSize) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputeInventoryMetricSize",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Unit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Config_id(ctx context.Context, field graphql.CollectedField, obj *model.Config) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5509,6 +5859,48 @@ func (ec *executionContext) _Entity_findClusterByID(ctx context.Context, field g
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entity_findComputeInventoryItemByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entity",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Entity_findComputeInventoryItemByName_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Entity().FindComputeInventoryItemByName(rctx, args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ComputeInventoryItem)
+	fc.Result = res
+	return ec.marshalNComputeInventoryItem2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryItem(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findDeviceByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7169,7 +7561,7 @@ func (ec *executionContext) _Mutation_iam_updateProjectMember(ctx context.Contex
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_core_createAppFlow(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_core_createApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -7186,7 +7578,7 @@ func (ec *executionContext) _Mutation_core_createAppFlow(ctx context.Context, fi
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_core_createAppFlow_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_core_createApp_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7194,7 +7586,49 @@ func (ec *executionContext) _Mutation_core_createAppFlow(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreCreateAppFlow(rctx, args["projectId"].(repos.ID), args["app"].(model.AppFlowInput))
+		return ec.resolvers.Mutation().CoreCreateApp(rctx, args["projectId"].(repos.ID), args["app"].(model.AppInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_updateApp_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreUpdateApp(rctx, args["projectId"].(repos.ID), args["appId"].(repos.ID), args["app"].(model.AppInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10772,14 +11206,6 @@ func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "pipelineData":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pipelineData"))
-			it.PipelineData, err = ec.unmarshalOPipelineDataInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPipelineDataInput(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "pull_secret":
 			var err error
 
@@ -10796,35 +11222,19 @@ func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "cpu_min":
+		case "computePlan":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu_min"))
-			it.CPUMin, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("computePlan"))
+			it.ComputePlan, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "cpu_max":
+		case "compute_size":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu_max"))
-			it.CPUMax, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "mem_min":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mem_min"))
-			it.MemMin, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "mem_max":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mem_max"))
-			it.MemMax, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("compute_size"))
+			it.ComputeSize, err = ec.unmarshalNFloat2float64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10842,8 +11252,8 @@ func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputAppFlowInput(ctx context.Context, obj interface{}) (model.AppFlowInput, error) {
-	var it model.AppFlowInput
+func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj interface{}) (model.AppInput, error) {
+	var it model.AppInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -10888,6 +11298,22 @@ func (ec *executionContext) unmarshalInputAppFlowInput(ctx context.Context, obj 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containers"))
 			it.Containers, err = ec.unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "provider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "region":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			it.Region, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11185,117 +11611,6 @@ func (ec *executionContext) unmarshalInputNewResourcesIN(ctx context.Context, ob
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPipelineDataInput(ctx context.Context, obj interface{}) (model.PipelineDataInput, error) {
-	var it model.PipelineDataInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	for k, v := range asMap {
-		switch k {
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "imageName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageName"))
-			it.ImageName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "repoName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoName"))
-			it.RepoName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "gitProvider":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitProvider"))
-			it.GitProvider, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "gitRepoUrl":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitRepoUrl"))
-			it.GitRepoURL, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "gitlabRepoId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitlabRepoId"))
-			it.GitlabRepoID, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "dockerFile":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerFile"))
-			it.DockerFile, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "contextDir":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contextDir"))
-			it.ContextDir, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "githubInstallationId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("githubInstallationId"))
-			it.GithubInstallationID, err = ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "buildArgs":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildArgs"))
-			it.BuildArgs, err = ec.unmarshalOJson2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "branch":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("branch"))
-			it.Branch, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "metadata":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			it.Metadata, err = ec.unmarshalOJson2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputRouteInput(ctx context.Context, obj interface{}) (model.RouteInput, error) {
 	var it model.RouteInput
 	asMap := map[string]interface{}{}
@@ -11357,6 +11672,13 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._Cluster(ctx, sel, obj)
+	case model.ComputeInventoryItem:
+		return ec._ComputeInventoryItem(ctx, sel, &obj)
+	case *model.ComputeInventoryItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ComputeInventoryItem(ctx, sel, obj)
 	case model.Device:
 		return ec._Device(ctx, sel, &obj)
 	case *model.Device:
@@ -12012,6 +12334,129 @@ func (ec *executionContext) _ClusterSubscription(ctx context.Context, sel ast.Se
 	return out
 }
 
+var computeInventoryDataImplementors = []string{"ComputeInventoryData"}
+
+func (ec *executionContext) _ComputeInventoryData(ctx context.Context, sel ast.SelectionSet, obj *model.ComputeInventoryData) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, computeInventoryDataImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComputeInventoryData")
+		case "memory":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputeInventoryData_memory(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "cpu":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputeInventoryData_cpu(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var computeInventoryItemImplementors = []string{"ComputeInventoryItem", "_Entity"}
+
+func (ec *executionContext) _ComputeInventoryItem(ctx context.Context, sel ast.SelectionSet, obj *model.ComputeInventoryItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, computeInventoryItemImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComputeInventoryItem")
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputeInventoryItem_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "data":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputeInventoryItem_data(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var computeInventoryMetricSizeImplementors = []string{"ComputeInventoryMetricSize"}
+
+func (ec *executionContext) _ComputeInventoryMetricSize(ctx context.Context, sel ast.SelectionSet, obj *model.ComputeInventoryMetricSize) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, computeInventoryMetricSizeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComputeInventoryMetricSize")
+		case "quantity":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputeInventoryMetricSize_quantity(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "unit":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputeInventoryMetricSize_unit(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var configImplementors = []string{"Config"}
 
 func (ec *executionContext) _Config(ctx context.Context, sel ast.SelectionSet, obj *model.Config) graphql.Marshaler {
@@ -12283,6 +12728,29 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 					}
 				}()
 				res = ec._Entity_findClusterByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "findComputeInventoryItemByName":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Entity_findComputeInventoryItemByName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12923,9 +13391,19 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "core_createAppFlow":
+		case "core_createApp":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_core_createAppFlow(ctx, field)
+				return ec._Mutation_core_createApp(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "core_updateApp":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_updateApp(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -14538,8 +15016,8 @@ func (ec *executionContext) unmarshalNAppContainerInput2ᚖkloudliteᚗioᚋapps
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNAppFlowInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppFlowInput(ctx context.Context, v interface{}) (model.AppFlowInput, error) {
-	res, err := ec.unmarshalInputAppFlowInput(ctx, v)
+func (ec *executionContext) unmarshalNAppInput2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppInput(ctx context.Context, v interface{}) (model.AppInput, error) {
+	res, err := ec.unmarshalInputAppInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -14743,6 +15221,40 @@ func (ec *executionContext) marshalNClusterSubscription2ᚖkloudliteᚗioᚋapps
 		return graphql.Null
 	}
 	return ec._ClusterSubscription(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComputeInventoryData2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryData(ctx context.Context, sel ast.SelectionSet, v *model.ComputeInventoryData) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ComputeInventoryData(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComputeInventoryItem2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryItem(ctx context.Context, sel ast.SelectionSet, v model.ComputeInventoryItem) graphql.Marshaler {
+	return ec._ComputeInventoryItem(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNComputeInventoryItem2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryItem(ctx context.Context, sel ast.SelectionSet, v *model.ComputeInventoryItem) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ComputeInventoryItem(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx context.Context, sel ast.SelectionSet, v *model.ComputeInventoryMetricSize) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ComputeInventoryMetricSize(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNConfig2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v model.Config) graphql.Marshaler {
@@ -14966,6 +15478,21 @@ func (ec *executionContext) unmarshalNExposedServiceInput2ᚕᚖkloudliteᚗio�
 func (ec *executionContext) unmarshalNExposedServiceInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInput(ctx context.Context, v interface{}) (*model.ExposedServiceInput, error) {
 	res, err := ec.unmarshalInputExposedServiceInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
@@ -16085,14 +16612,6 @@ func (ec *executionContext) marshalOManagedSvc2ᚖkloudliteᚗioᚋappsᚋconsol
 		return graphql.Null
 	}
 	return ec._ManagedSvc(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOPipelineDataInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPipelineDataInput(ctx context.Context, v interface{}) (*model.PipelineDataInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputPipelineDataInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {

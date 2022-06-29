@@ -3,7 +3,12 @@ package domain
 import (
 	"context"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/functions"
 	"math"
 	"math/rand"
 	"regexp"
@@ -18,12 +23,139 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+func generateId(prefix string) string {
+	id, e := functions.CleanerNanoid(28)
+	if e != nil {
+		panic(fmt.Errorf("could not get cleanerNanoid()"))
+	}
+	return fmt.Sprintf("%s-%s", prefix, strings.ToLower(id))
+}
+
 type domainI struct {
-	authClient  auth.AuthClient
-	iamCli      iam.IAMClient
-	consoleCli  console.ConsoleClient
-	accountRepo repos.DbRepo[*Account]
-	ciClient    ci.CIClient
+	authClient             auth.AuthClient
+	iamCli                 iam.IAMClient
+	consoleCli             console.ConsoleClient
+	accountRepo            repos.DbRepo[*Account]
+	ciClient               ci.CIClient
+	commsClient            comms.CommsClient
+	billablesRepo          repos.DbRepo[*Billable]
+	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
+}
+
+func (domain *domainI) GetComputeInventoryByName(ctx context.Context, name string) (*InventoryItem, error) {
+	file, err := ioutil.ReadFile("./inventory.yaml")
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*InventoryItem, 0)
+	err = yaml.Unmarshal(file, &items)
+	if err != nil {
+		return nil, err
+	}
+	for _, i := range items {
+		if i.Name == name {
+			return i, nil
+		}
+	}
+	return nil, errors.New("inventory item not found")
+}
+
+func (domain *domainI) GetComputeInventory(provider *string) ([]*InventoryItem, error) {
+	file, err := ioutil.ReadFile("./inventory.yaml")
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*InventoryItem, 0)
+	err = yaml.Unmarshal(file, &items)
+	if err != nil {
+		return nil, err
+	}
+	filteredItems := make([]*InventoryItem, 0)
+	for _, i := range items {
+		if i.Provider == *provider && i.Type == "Compute" {
+			filteredItems = append(filteredItems, i)
+		}
+	}
+	return filteredItems, nil
+}
+
+func (domain *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*Billable, time.Time, error) {
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.Location()
+
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+
+	find, err := domain.billablesRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"account_id": accountID,
+			"start_time": repos.Filter{
+				"$gte": firstOfMonth,
+			},
+		},
+	})
+	if err != nil {
+		return nil, firstOfMonth, err
+	}
+	return find, firstOfMonth, nil
+}
+
+func (domain *domainI) ConfirmAccountMembership(ctx context.Context, invitationToken string) (bool, error) {
+	existingToken, err := domain.accountInviteTokenRepo.Get(ctx, invitationToken)
+	if err != nil {
+		return false, err
+	}
+	if existingToken == nil {
+		return false, errors.New("invitation token not found")
+	}
+	err = domain.accountInviteTokenRepo.Drop(ctx, invitationToken)
+	if err != nil {
+		return false, err
+	}
+	_, err = domain.iamCli.ConfirmMembership(ctx, &iam.InConfirmMembership{
+		UserId:     string(existingToken.UserId),
+		ResourceId: string(existingToken.AccountId),
+		Role:       existingToken.Role,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (domain *domainI) StartBillable(
+	ctx context.Context,
+	accountId repos.ID,
+	resourceType string,
+	quantity float32,
+) (*Billable, error) {
+	create, err := domain.billablesRepo.Create(ctx, &Billable{
+		AccountId:    accountId,
+		ResourceType: resourceType,
+		Quantity:     quantity,
+		StartTime:    time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func (domain *domainI) StopBillable(
+	ctx context.Context,
+	billableId repos.ID,
+) error {
+	id, err := domain.billablesRepo.FindById(ctx, billableId)
+	if err != nil {
+		return err
+	}
+	time := time.Now()
+	id.EndTime = &time
+	_, err = domain.billablesRepo.UpdateById(ctx, billableId, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (domain *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error) {
@@ -197,6 +329,11 @@ func (domain *domainI) AddAccountMember(
 	email string,
 	role common.Role,
 ) (bool, error) {
+	account, err := domain.accountRepo.FindById(ctx, accountId)
+	if err != nil {
+		return false, err
+	}
+
 	byEmail, err := domain.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
 	if err != nil {
 		return false, err
@@ -209,6 +346,25 @@ func (domain *domainI) AddAccountMember(
 			Role:         string(role),
 		},
 	)
+	if err != nil {
+		return false, err
+	}
+	token := generateId("acc-invite")
+	err = domain.accountInviteTokenRepo.Set(ctx, token, &AccountInviteToken{
+		Token:     token,
+		UserId:    repos.ID(byEmail.UserId),
+		Role:      string(role),
+		AccountId: accountId,
+	})
+	if err != nil {
+		return false, err
+	}
+	_, err = domain.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
+		AccountName:     account.Name,
+		InvitationToken: token,
+		Email:           email,
+		Name:            "",
+	})
 	if err != nil {
 		return false, err
 	}
@@ -299,10 +455,13 @@ func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, e
 
 func fxDomain(
 	accountRepo repos.DbRepo[*Account],
+	billablesRepo repos.DbRepo[*Billable],
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
+	commsClient comms.CommsClient,
+	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 ) Domain {
 	return &domainI{
 		authClient,
@@ -310,5 +469,8 @@ func fxDomain(
 		consoleClient,
 		accountRepo,
 		ciClient,
+		commsClient,
+		billablesRepo,
+		accountInviteTokenRepo,
 	}
 }

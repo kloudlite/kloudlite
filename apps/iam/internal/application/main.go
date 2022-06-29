@@ -19,8 +19,47 @@ type server struct {
 	rbRepo repos.DbRepo[*entities.RoleBinding]
 }
 
+func (s *server) ConfirmMembership(ctx context.Context, in *iam.InConfirmMembership) (*iam.OutConfirmMembership, error) {
+	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
+		"user_id":     in.UserId,
+		"resource_id": in.ResourceId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if one == nil {
+		return nil, errors.New("role binding not found")
+	}
+	if in.Role != one.Role {
+		return nil, errors.New("The invitation has been updated")
+	}
+	one.Accepted = true
+	_, err = s.rbRepo.UpdateById(ctx, one.Id, one)
+	if err != nil {
+		return nil, err
+	}
+	return &iam.OutConfirmMembership{}, nil
+}
+
 func (s *server) InviteMembership(ctx context.Context, in *iam.InAddMembership) (*iam.OutAddMembership, error) {
-	_, err := s.rbRepo.Create(ctx, &entities.RoleBinding{
+	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
+		"user_id":     in.UserId,
+		"resource_id": in.ResourceId,
+	})
+	if one != nil {
+		if one.Role == in.Role {
+			return nil, errors.New(fmt.Sprintf("user %s already has role %s on resource %s", in.UserId, in.Role, in.ResourceId))
+		}
+		one.Role = in.Role
+		one.Accepted = false
+		_, err := s.rbRepo.UpdateById(ctx, one.Id, one)
+		if err != nil {
+			return nil, err
+		}
+		return &iam.OutAddMembership{Result: true}, nil
+	}
+
+	_, err = s.rbRepo.Create(ctx, &entities.RoleBinding{
 		UserId:       in.UserId,
 		ResourceType: in.ResourceType,
 		ResourceId:   in.ResourceId,
