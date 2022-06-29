@@ -9,25 +9,35 @@ tasks:
     env:
       MONGO_URI: mongodb://console-db:BT09cm-3M493Iix1rY1A3eUjMPITqFtdsMuar7Uk@mongo-standalone.hotspot.svc.cluster.local/console-db
       IMAGE_REGISTRY_PREFIX: harbor.dev.madhouselabs.io/ci
-      REDIS_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
-      REDIS_USERNAME: console-redis
-      REDIS_PASSWORD: k-weZYsNEgbofBtoPYyoBSVLASOVnQvkwcL-iom3F
-      REDIS_PREFIX: console-redis
+      REDIS_HOSTS: localhost:6379
+#      redis-standalone-headless.hotspot.svc.cluster.local:6379
+      REDIS_USERNAME:
+#      console-redis
+      REDIS_PASSWORD:
+#      k-weZYsNEgbofBtoPYyoBSVLASOVnQvkwcL-iom3F
+      REDIS_PREFIX:
+#      console-redis
 
-      REDIS_AUTH_HOSTS: redis-standalone-headless.hotspot.svc.cluster.local:6379
-      REDIS_AUTH_USERNAME: redis-auth
-      REDIS_AUTH_PASSWORD: ***REMOVED***
-      REDIS_AUTH_PREFIX: redis-auth
+      REDIS_AUTH_HOSTS: localhost:6379
+      REDIS_AUTH_USERNAME:
+      #redis-auth
+      REDIS_AUTH_PASSWORD:
+      #***REMOVED***
+      REDIS_AUTH_PREFIX:
+      #redis-auth
 
       LOG_PORT: 8192
       MANAGED_TEMPLATES_PATH: ./managed-svc-templates.yml
-      INFRA_HOST: infra-api.hotspot.svc.cluster.local
-      INFRA_PORT: 3001
-      AUTH_HOST: auth-api.hotspot.svc.cluster.local
-      AUTH_PORT: 3001
+#      INFRA_HOST: infra-api.hotspot.svc.cluster.local
+#      INFRA_PORT: 3001
+      AUTH_HOST: localhost
+#      auth-api.hotspot.svc.cluster.local
+      AUTH_PORT: 3500
+#      3001
       CI_HOST: ci-api.hotspot.svc.cluster.local
       CI_PORT: 3001
-      IAM_SERVER_HOST: iam.hotspot.svc.cluster.local
+      IAM_SERVER_HOST: localhost
+      #iam.hotspot.svc.cluster.local
       IAM_SERVER_PORT: 3001
       MONGO_DB_NAME: console-db
       PORT: 4001

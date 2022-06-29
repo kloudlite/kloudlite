@@ -17,6 +17,9 @@ type Env struct {
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 }
 
+type AuthCacheClient cache.Client
+type CacheClient cache.Client
+
 var Module = fx.Module(
 	"application",
 	config.EnvFx[Env](),
@@ -26,7 +29,7 @@ var Module = fx.Module(
 	ConsoleClientFx,
 	AuthClientFx,
 	fx.Invoke(
-		func(server *fiber.App, d domain.Domain, env *Env, cacheClient cache.Client) {
+		func(server *fiber.App, d domain.Domain, env *Env, cacheClient CacheClient) {
 			schema := generated.NewExecutableSchema(
 				generated.Config{Resolvers: graph.NewResolver(d)},
 			)

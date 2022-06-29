@@ -15,7 +15,7 @@ const (
 )
 
 const (
-	CacheSessionPrefix = "hotspot:auth:sessions"
+	CacheSessionPrefix = "redis-auth"
 	CookieName         = "hotspot-session"
 )
 
