@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Kloudlite <support@kloudlite.io>
 
 */
 package cmd
@@ -32,6 +32,7 @@ to quickly create a Cobra application.`,
 
 func TriggerSelectAccount() {
 	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
+
 	s.Start()
 	accounts, err := server.GetAccounts()
 	s.Stop()
@@ -45,6 +46,10 @@ func TriggerSelectAccount() {
 		},
 		fuzzyfinder.WithPromptString("Select Account >"),
 	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 	lib.SelectAccount(accounts[selectedIndex].Id)
 	fmt.Println("Selected account: " + accounts[selectedIndex].Name)
 }
