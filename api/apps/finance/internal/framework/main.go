@@ -64,8 +64,14 @@ type Env struct {
 	RedisHosts    string `env:"REDIS_HOSTS"`
 	RedisUsername string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
-	HttpPort      uint16 `env:"PORT"`
-	HttpCors      string `env:"ORIGINS"`
+
+	AuthRedisHosts    string `env:"REDIS_AUTH_HOSTS"`
+	AuthRedisUserName string `env:"REDIS_AUTH_USERNAME"`
+	AuthRedisPassword string `env:"REDIS_AUTH_PASSWORD"`
+	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX"`
+
+	HttpPort uint16 `env:"PORT"`
+	HttpCors string `env:"ORIGINS"`
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -97,7 +103,24 @@ var Module = fx.Module(
 	rpc.NewGrpcClientFx[*CiGrpcEnv, app.CIGrpcClientConn](),
 	rpc.NewGrpcClientFx[*AuthGRPCEnv, app.AuthGrpcClientConn](),
 	repos.NewMongoClientFx[*Env](),
-	cache.NewRedisFx[*Env](),
+	fx.Provide(
+		func(env *Env) app.AuthCacheClient {
+			return cache.NewRedisClient(
+				env.AuthRedisHosts,
+				env.AuthRedisUserName,
+				env.AuthRedisPassword,
+				env.AuthRedisPrefix,
+			)
+		},
+	),
+	cache.FxLifeCycle[app.AuthCacheClient](),
+
+	fx.Provide(
+		func(env *Env) app.CacheClient {
+			return cache.NewRedisClient(env.RedisOptions())
+		},
+	),
+	cache.FxLifeCycle[app.CacheClient](),
 	httpServer.NewHttpServerFx[*Env](),
 	app.Module,
 )
