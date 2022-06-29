@@ -3,11 +3,13 @@ package lib
 import (
 	"fmt"
 	"io/ioutil"
-	"kloudlite.io/cmd/internal/lib/server"
-	"kloudlite.io/pkg/errors"
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
+
+	"kloudlite.io/cmd/internal/lib/server"
+	"kloudlite.io/pkg/errors"
 )
 
 func getConfigFolder() (configFolder string, err error) {
@@ -29,7 +31,24 @@ func getConfigFolder() (configFolder string, err error) {
 	return configFolder, nil
 }
 
-const loginUrl = "https://auth.local.kl.madhouselabs.io/cli-login"
+const loginUrl = "https://auth.dev.kloudlite.io/cli-login"
+
+func open(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		cmd = "open"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
+}
 
 func Login() {
 	loginId, err := server.CreateRemoteLogin()
@@ -37,8 +56,9 @@ func Login() {
 		fmt.Println(err)
 		return
 	}
-	command := exec.Command("open", fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId))
-	err = command.Run()
+
+	err = open(fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId))
+
 	if err != nil {
 		fmt.Println(err)
 		return
