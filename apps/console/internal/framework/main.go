@@ -10,7 +10,7 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
 	loki_server "kloudlite.io/pkg/loki-server"
-	"kloudlite.io/pkg/messaging"
+	"kloudlite.io/pkg/redpanda"
 	mongo_db "kloudlite.io/pkg/repos"
 	rcn "kloudlite.io/pkg/res-change-notifier"
 )
@@ -69,13 +69,20 @@ type Env struct {
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
 	RedisUserName string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
-	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
-	KafkaBrokers  string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
-	Port          uint16 `env:"PORT" required:"true"`
-	IsDev         bool   `env:"DEV" default:"false" required:"true"`
-	CorsOrigins   string `env:"ORIGINS" required:"true"`
-	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
-	NotifierUrl   string `env:"NOTIFIER_URL" required:"true"`
+	RedisPrefix   string `env:"REDIS_PREFIX"`
+
+	AuthRedisHosts    string `env:"REDIS_AUTH_HOSTS" required:"true"`
+	AuthRedisUserName string `env:"REDIS_AUTH_USERNAME"`
+	AuthRedisPassword string `env:"REDIS_AUTH_PASSWORD"`
+	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX"`
+
+	MongoDbName  string `env:"MONGO_DB_NAME" required:"true"`
+	KafkaBrokers string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
+	Port         uint16 `env:"PORT" required:"true"`
+	IsDev        bool   `env:"DEV" default:"false" required:"true"`
+	CorsOrigins  string `env:"ORIGINS" required:"true"`
+	GrpcPort     uint16 `env:"GRPC_PORT" required:"true"`
+	NotifierUrl  string `env:"NOTIFIER_URL" required:"true"`
 }
 
 func (e *Env) GetBrokers() string {
@@ -91,7 +98,7 @@ func (e *Env) GetHttpCors() string {
 }
 
 func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
-	return e.RedisHosts, e.RedisUserName, e.RedisPassword, basePrefix
+	return e.RedisHosts, e.RedisUserName, e.RedisPassword, e.RedisPrefix
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -116,6 +123,7 @@ var Module = fx.Module(
 	config.EnvFx[GrpcCIConfig](),
 
 	logger.FxProvider(),
+	redpanda.NewClientFx[*Env](),
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
@@ -123,8 +131,19 @@ var Module = fx.Module(
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
 	mongo_db.NewMongoClientFx[*Env](),
-	messaging.NewKafkaClientFx[*Env](),
-	cache.NewRedisFx[*Env](),
+	fx.Provide(
+		func(env *Env) app.AuthCacheClient {
+			return cache.NewRedisClient(env.AuthRedisHosts, env.AuthRedisUserName, env.AuthRedisPassword, env.AuthRedisPrefix)
+		},
+	),
+	cache.FxLifeCycle[app.AuthCacheClient](),
+
+	fx.Provide(
+		func(env *Env) app.CacheClient {
+			return cache.NewRedisClient(env.RedisOptions())
+		},
+	),
+	cache.FxLifeCycle[app.CacheClient](),
 	httpServer.NewHttpServerFx[*Env](),
 	loki_server.NewLogServerFx[*LogServerEnv](), // will provide log server and loki client
 	app.Module,

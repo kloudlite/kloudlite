@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	fWebsocket "github.com/gofiber/websocket/v2"
@@ -12,36 +11,19 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
-	httpServer "kloudlite.io/pkg/http-server"
-	loki_server "kloudlite.io/pkg/loki-server"
-	"strings"
-
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
+	httpServer "kloudlite.io/pkg/http-server"
+	loki_server "kloudlite.io/pkg/loki-server"
+	"kloudlite.io/pkg/redpanda"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
 )
-
-type InfraConsumerEnv struct {
-	Topic         string `env:"KAFKA_INFRA_TOPIC"`
-	ResponseTopic string `env:"KAFKA_INFRA_RESP_TOPIC"`
-}
-
-func (i *InfraConsumerEnv) GetSubscriptionTopics() []string {
-	return []string{
-		i.ResponseTopic,
-	}
-}
-
-func (i *InfraConsumerEnv) GetConsumerGroupId() string {
-	return "console-infra-consumer"
-}
 
 type WorkloadConsumerEnv struct {
 	Topic         string `env:"KAFKA_WORKLOAD_TOPIC"`
@@ -67,6 +49,9 @@ type InfraClientConnection *grpc.ClientConn
 type IAMClientConnection *grpc.ClientConn
 type AuthClientConnection *grpc.ClientConn
 type CIClientConnection *grpc.ClientConn
+
+type AuthCacheClient cache.Client
+type CacheClient cache.Client
 
 var Module = fx.Module(
 	"app",
@@ -110,135 +95,89 @@ var Module = fx.Module(
 	}),
 
 	// Common Producer
-	messaging.NewFxKafkaProducer[messaging.Json](),
-
-	// Infra Message Producer
-	fx.Provide(fxInfraMessenger),
-
-	// Infra Message Consumer
-	config.EnvFx[InfraConsumerEnv](),
-	messaging.NewFxKafkaConsumer[*InfraConsumerEnv](),
-	fx.Invoke(func(env *InfraConsumerEnv, consumer messaging.Consumer[*InfraConsumerEnv], domain domain.Domain) {
-		consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
-			var d map[string]any
-			err := message.Unmarshal(&d)
-			if err != nil {
-				return err
-			}
-			switch d["type"].(string) {
-			case "create-cluster":
-				var m struct {
-					Type    string
-					Payload entities.SetupClusterResponse
-				}
-				err := message.Unmarshal(&m)
-				fmt.Println(err, m)
-				if err != nil {
-					return err
-				}
-				return domain.OnSetupCluster(context, m.Payload)
-			case "setup-cluster-account":
-				var m struct {
-					Type    string
-					Payload entities.SetupClusterAccountResponse
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				fmt.Println(err, m)
-				return domain.OnSetupClusterAccount(context, m.Payload)
-			case "delete-cluster":
-				var m struct {
-					Type    string
-					Payload entities.DeleteClusterResponse
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return nil
-
-			case "update-cluster":
-				var m struct {
-					Type    string
-					Payload entities.UpdateClusterResponse
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnUpdateCluster(context, m.Payload)
-			case "add-peer":
-				var m struct {
-					Type    string
-					Payload entities.AddPeerResponse
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return domain.OnAddPeer(context, m.Payload)
-			case "delete-peer":
-				var m struct {
-					Type    string
-					Payload entities.DeletePeerResponse
-				}
-				err := message.Unmarshal(&m)
-				if err != nil {
-					return err
-				}
-				return nil
-			}
-			return nil
-		})
-	}),
+	redpanda.NewProducerFx(),
 
 	// Workload Message Producer
 	fx.Provide(fxWorkloadMessenger),
 	// Workload Message Consumer
 	config.EnvFx[WorkloadConsumerEnv](),
-	messaging.NewFxKafkaConsumer[*WorkloadConsumerEnv](),
-	fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], d domain.Domain) {
-		fmt.Println(env.ResponseTopic, "env.ResponseTopic")
-		consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
-			var msg struct {
-				Status     bool   `json:"status"`
-				Key        string `json:"key"`
-				Conditions []struct {
-					Type   string `json:"type"`
-					Status string `json:"status"`
-					Reason string `json:"reason"`
-				} `json:"conditions"`
-			}
-			err := message.Unmarshal(&msg)
-			if err != nil {
-				fmt.Println("Unable to parse messages!!!", err)
-				return err
-			}
-			split := strings.Split(msg.Key, "/")
-			namespace := split[0]
-			resourceType := split[1]
-			resourceName := split[2]
-			var s domain.ResourceStatus
-			if msg.Status {
-				s = domain.ResourceStatusLive
-			} else {
-				if len(msg.Conditions) > 0 {
-					s = domain.ResourceStatusInProgress
-				} else if msg.Status {
-					s = domain.ResourceStatusError
-				}
-			}
-			_, err = d.UpdateResourceStatus(context, resourceType, namespace, resourceName, s)
-			return err
-		})
+	redpanda.NewConsumerFx[*WorkloadConsumerEnv](func(m *redpanda.Message) error {
+		fmt.Println(m.Payload)
+		fmt.Println(m.Action)
+
+		//var msg struct {
+		//	Status     bool   `json:"status"`
+		//	Key        string `json:"key"`
+		//	Conditions []struct {
+		//		Type   string `json:"type"`
+		//		Status string `json:"status"`
+		//		Reason string `json:"reason"`
+		//	} `json:"conditions"`
+		//}
+		//err := message.Unmarshal(&msg)
+		//if err != nil {
+		//	fmt.Println("Unable to parse messages!!!", err)
+		//	return err
+		//}
+		//split := strings.Split(msg.Key, "/")
+		//namespace := split[0]
+		//resourceType := split[1]
+		//resourceName := split[2]
+		//var s domain.ResourceStatus
+		//if msg.Status {
+		//	s = domain.ResourceStatusLive
+		//} else {
+		//	if len(msg.Conditions) > 0 {
+		//		s = domain.ResourceStatusInProgress
+		//	} else if msg.Status {
+		//		s = domain.ResourceStatusError
+		//	}
+		//}
+		//_, err = d.UpdateResourceStatus(context, resourceType, namespace, resourceName, s)
+		//return err
+
+		return nil
 	}),
+	//fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], d domain.Domain) {
+	//	fmt.Println(env.ResponseTopic, "env.ResponseTopic")
+	//	consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
+	//		var msg struct {
+	//			Status     bool   `json:"status"`
+	//			Key        string `json:"key"`
+	//			Conditions []struct {
+	//				Type   string `json:"type"`
+	//				Status string `json:"status"`
+	//				Reason string `json:"reason"`
+	//			} `json:"conditions"`
+	//		}
+	//		err := message.Unmarshal(&msg)
+	//		if err != nil {
+	//			fmt.Println("Unable to parse messages!!!", err)
+	//			return err
+	//		}
+	//		split := strings.Split(msg.Key, "/")
+	//		namespace := split[0]
+	//		resourceType := split[1]
+	//		resourceName := split[2]
+	//		var s domain.ResourceStatus
+	//		if msg.Status {
+	//			s = domain.ResourceStatusLive
+	//		} else {
+	//			if len(msg.Conditions) > 0 {
+	//				s = domain.ResourceStatusInProgress
+	//			} else if msg.Status {
+	//				s = domain.ResourceStatusError
+	//			}
+	//		}
+	//		_, err = d.UpdateResourceStatus(context, resourceType, namespace, resourceName, s)
+	//		return err
+	//	})
+	//}),
 
 	domain.Module,
 
 	// Log Service
-	fx.Invoke(func(logServer loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient cache.Client) {
+	fx.Invoke(func(logServer loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient AuthCacheClient) {
 		var a *fiber.App
 		a = logServer
 		a.Use(httpServer.NewSessionMiddleware[*common.AuthSession](
@@ -263,7 +202,7 @@ var Module = fx.Module(
 	fx.Invoke(func(
 		server *fiber.App,
 		d domain.Domain,
-		cacheClient cache.Client,
+		cacheClient CacheClient,
 		env *Env,
 	) {
 		schema := generated.NewExecutableSchema(

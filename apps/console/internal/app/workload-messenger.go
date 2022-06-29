@@ -1,24 +1,31 @@
 package app
 
 import (
+	"context"
+	"encoding/json"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/pkg/messaging"
+	"kloudlite.io/pkg/redpanda"
 )
 
 type workloadMessengerImpl struct {
 	topic    string
-	producer messaging.Producer[messaging.Json]
+	producer redpanda.Producer
 }
 
 func (i *workloadMessengerImpl) SendAction(action string, resId string, res any) error {
-	err := i.producer.SendMessage(i.topic, resId, messaging.Json{
+	marshal, err := json.Marshal(messaging.Json{
 		"action":  action,
 		"payload": res,
 	})
+	if err != nil {
+		return err
+	}
+	i.producer.Produce(context.TODO(), i.topic, resId, marshal)
 	return err
 }
 
-func fxWorkloadMessenger(env *WorkloadConsumerEnv, p messaging.Producer[messaging.Json]) domain.WorkloadMessenger {
+func fxWorkloadMessenger(env *WorkloadConsumerEnv, p redpanda.Producer) domain.WorkloadMessenger {
 	return &workloadMessengerImpl{
 		topic:    env.Topic,
 		producer: p,

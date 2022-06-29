@@ -1,6 +1,6 @@
 version: '3'
 
-dotenv: [".secrets/oauth.env"]
+dotenv: [".secrets/oauth.env", ".secrets/.env"]
 
 tasks:
   run:

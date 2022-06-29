@@ -15,7 +15,7 @@ type Domain interface {
 		initialProvider string,
 		initialRegion string,
 	) (*Account, error)
-
+	GetAccount(ctx context.Context, id repos.ID) (*Account, error)
 	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
 	DeleteAccount(ctx context.Context, id repos.ID) (bool, error)
 

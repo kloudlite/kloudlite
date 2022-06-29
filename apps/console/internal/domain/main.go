@@ -17,7 +17,7 @@ import (
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
-	"kloudlite.io/pkg/messaging"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	rcn "kloudlite.io/pkg/res-change-notifier"
 	"math"
@@ -43,7 +43,7 @@ type domain struct {
 	configRepo           repos.DbRepo[*entities.Config]
 	routerRepo           repos.DbRepo[*entities.Router]
 	secretRepo           repos.DbRepo[*entities.Secret]
-	messageProducer      messaging.Producer[messaging.Json]
+	messageProducer      redpanda.Producer
 	messageTopic         string
 	logger               logger.Logger
 	infraMessenger       InfraMessenger
@@ -1563,10 +1563,9 @@ func fxDomain(
 	managedSvcRepo repos.DbRepo[*entities.ManagedService],
 	managedResRepo repos.DbRepo[*entities.ManagedResource],
 	clusterAccountRepo repos.DbRepo[*entities.ClusterAccount],
-	msgP messaging.Producer[messaging.Json],
+	msgP redpanda.Producer,
 	env *Env,
 	logger logger.Logger,
-	infraMessenger InfraMessenger,
 	workloadMessenger WorkloadMessenger,
 	infraClient infra.InfraClient,
 	ciClient ci.CIClient,
@@ -1585,7 +1584,6 @@ func fxDomain(
 		authClient:           authClient,
 		infraClient:          infraClient,
 		iamClient:            iamClient,
-		infraMessenger:       infraMessenger,
 		workloadMessenger:    workloadMessenger,
 		deviceRepo:           deviceRepo,
 		clusterRepo:          x,
