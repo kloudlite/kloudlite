@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"operators.kloudlite.io/lib/errors"
 )
 
 type iamObj struct {
@@ -40,6 +41,11 @@ func (i *iamObj) CreateUser(username string) (*User, error) {
 			return &User{Name: *nUserRef.User.UserName, ARN: *nUserRef.User.Arn}, nil
 		}
 	}
+
+	if userRef == nil {
+		return nil, errors.Newf("something wrong with getUser()")
+	}
+
 	return &User{Name: *userRef.User.UserName, ARN: *userRef.User.Arn}, nil
 }
 

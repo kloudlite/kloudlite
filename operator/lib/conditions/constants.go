@@ -3,6 +3,7 @@ package conditions
 const (
 	HelmResourceExists     Type = "HelmResourceExists"
 	DeploymentExists       Type = "DeploymentExists"
+	ServiceExists          Type = "ServiceExists"
 	StsExists              Type = "StsExists"
 	GeneratedVars          Type = "GeneratedVars"
 	ReconcilerOutputExists Type = "ReconcilerOutputExists"

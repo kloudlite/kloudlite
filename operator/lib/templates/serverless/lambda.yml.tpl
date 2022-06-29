@@ -21,10 +21,9 @@ spec:
         autoscaling.knative.dev/max-scale: "100"
     spec:
       serviceAccountName: kloudlite-svc-account
-      containers:
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}
-      {{- include "TemplateContainer" $myDict | indent 6 }}
+      containers: {{- include "TemplateContainer" $myDict | nindent 8 }}
       {{- if $volumes }}
-      volumes: {{- $volumes| toYAML | indent 6 }}
+      volumes: {{- $volumes | toYAML | nindent 8 }}
       {{- end}}
 {{- end }}

@@ -126,7 +126,7 @@ const (
 
 	MongoDBCluster   templateFile = "mongodb-helm-cluster.tmpl.yml"
 	MongoDBWatcher   templateFile = "mongo-msvc-watcher.tmpl.yml"
-	Deployment       templateFile = "deployment.tmpl.yml"
+	Deployment       templateFile = "app.tpl.yml"
 	Service          templateFile = "service.tmpl.yml"
 	Secret           templateFile = "secret.tmpl.yml"
 	AccountWireguard templateFile = "account-deploy.tmpl.yml"
@@ -152,4 +152,10 @@ var CoreV1 = struct {
 }{
 	ExternalNameSvc: "./corev1/external-name-service.tpl.yml",
 	Ingress:         "./corev1/ingress.tpl.yml",
+}
+
+var CrdsV1 = struct {
+	App templateFile
+}{
+	App: "./app.tpl.yml",
 }
