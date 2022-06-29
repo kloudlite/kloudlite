@@ -1,23 +1,23 @@
+{{- $ownerRefs := get . "owner-refs"}}
+{{- $obj := get . "object" }}
+
+{{- with $obj}}
 apiVersion: v1
 kind: Service
 metadata:
   namespace: {{.Namespace}}
   name: {{.Name}}
-  ownerReferences:
-    - apiVersion: {{.APIVersion}}
-      kind: {{.Kind}}
-      name: {{.Name}}
-      uid: {{.UID}}
-      controller: true
-      blockOwnerDeletion: true
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
   selector:
     app: {{.Name}}
   ports:
-    {{- range .Spec.Services }}
-    {{- with . }}
+    {{- range $svc := .Spec.Services }}
+    {{- with $svc }}
     - protocol: {{.Type | upper | default "TCP"}}
       port: {{.Port}}
+      name: {{.Name}}
       targetPort: {{.TargetPort}}
     {{- end }}
     {{- end }}
+{{- end}}

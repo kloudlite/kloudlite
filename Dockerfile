@@ -35,7 +35,7 @@ FROM gcr.io/distroless/static:nonroot
 #FROM golang:1.18
 #RUN apt update && apt install -y kubernetes-client
 COPY --from=builder /workspace/kubectl /usr/local/bin/kubectl
-COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/manager /manager
 COPY --from=builder /tmp/lib /tmp/lib
 #RUN mkdir -p /tmp/lib
 COPY --from=builder --chown=65532:65532 /workspace/lib/templates  /tmp/lib/templates

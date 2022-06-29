@@ -16,8 +16,8 @@ type ContainerEnv struct {
 	Key     string `json:"key"`
 	Value   string `json:"value,omitempty"`
 	Type    string `json:"type,omitempty"`
-	RefName string `json:"ref_name,omitempty"`
-	RefKey  string `json:"ref_key,omitempty"`
+	RefName string `json:"refName,omitempty"`
+	RefKey  string `json:"refKey,omitempty"`
 }
 
 type ContainerVolumeItem struct {
@@ -26,8 +26,10 @@ type ContainerVolumeItem struct {
 }
 
 type EnvFrom struct {
-	Config string `json:"config,omitempty"`
-	Secret string `json:"secret,omitempty"`
+	// must be one of config, secret
+	Type string `json:"type"`
+
+	RefName string `json:"refName"`
 }
 
 type ContainerVolume struct {
@@ -37,23 +39,52 @@ type ContainerVolume struct {
 	Items     []ContainerVolumeItem `json:"items,omitempty"`
 }
 
+type ShellProbe struct {
+	Command []string `json:"command"`
+}
+
+type HttpGetProbe struct {
+	Path        string            `json:"path"`
+	Port        string            `json:"port"`
+	HttpHeaders map[string]string `json:"httpHeaders,omitempty"`
+}
+
+type TcpProbe struct {
+	Port uint16 `json:"port"`
+}
+
+type Probe struct {
+	// should be one of shell, httpGet, tcp
+	Type    string       `json:"type"`
+	Shell   ShellProbe   `json:"shell,omitempty"`
+	HttpGet HttpGetProbe `json:"httpGet,omitempty"`
+	Tcp     TcpProbe     `json:"tcp,omitempty"`
+
+	FailureThreshold uint `json:"failureThreshold,omitempty"`
+	InitialDelay     uint `json:"initialDelay,omitempty"`
+	Interval         uint `json:"interval,omitempty"`
+}
+
 type AppContainer struct {
 	Name            string            `json:"name"`
 	Image           string            `json:"image"`
 	ImagePullPolicy string            `json:"imagePullPolicy,omitempty"`
 	Command         []string          `json:"command,omitempty"`
 	Args            []string          `json:"args,omitempty"`
-	ResourceCpu     ContainerResource `json:"resource_cpu,omitempty"`
-	ResourceMemory  ContainerResource `json:"resource_memory,omitempty"`
+	ResourceCpu     ContainerResource `json:"resourceCpu,omitempty"`
+	ResourceMemory  ContainerResource `json:"resourceMemory,omitempty"`
 	Env             []ContainerEnv    `json:"env,omitempty"`
 	EnvFrom         []EnvFrom         `json:"envFrom,omitempty"`
 	Volumes         []ContainerVolume `json:"volumes,omitempty"`
+	LivenessProbe   *Probe            `json:"livenessProbe,omitempty"`
+	ReadinessProbe  *Probe            `json:"readinessProbe,omitempty"`
 }
 
 type AppSvc struct {
 	Port       uint16 `json:"port"`
-	TargetPort uint16 `json:"target_port,omitempty"`
+	TargetPort uint16 `json:"targetPort,omitempty"`
 	Type       string `json:"type,omitempty"`
+	Name       string `json:"name,omitempty"`
 }
 
 type HPA struct {

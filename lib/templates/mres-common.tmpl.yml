@@ -1,22 +1,20 @@
+{{- $ownerRefs := get . "owner-refs" }}
+{{- $obj := get . "object"}}
+{{- with $obj }}
 apiVersion: {{.Spec.ApiVersion}}
 kind: {{.Spec.Kind}}
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
-{{- if .Labels }}
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
+  {{- if .Labels }}
   labels:
   {{- range $k,$v := .Labels}}
     {{$k}}: {{$v}}
   {{- end}}
     mres.kloudlite.io/ref: {{.Name}}
   {{- end }}
-  ownerReferences:
-    - apiVersion: {{.APIVersion}}
-      kind: {{.Kind}}
-      name: {{.Name}}
-      uid: {{.UID}}
-      controller: true
-      blockOwnerDeletion: true
 spec:
   managedSvcName: {{.Spec.ManagedSvcName}}
   inputs: {{.Spec.Inputs | toJson }}
+{{- end}}

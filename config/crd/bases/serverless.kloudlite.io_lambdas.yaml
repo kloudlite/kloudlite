@@ -51,9 +51,9 @@ spec:
                         properties:
                           key:
                             type: string
-                          ref_key:
+                          refKey:
                             type: string
-                          ref_name:
+                          refName:
                             type: string
                           type:
                             type: string
@@ -66,26 +66,118 @@ spec:
                     envFrom:
                       items:
                         properties:
-                          config:
+                          refName:
                             type: string
-                          secret:
+                          type:
+                            description: must be one of config, secret
                             type: string
+                        required:
+                        - refName
+                        - type
                         type: object
                       type: array
                     image:
                       type: string
                     imagePullPolicy:
                       type: string
+                    livenessProbe:
+                      properties:
+                        failureThreshold:
+                          type: integer
+                        httpGet:
+                          properties:
+                            httpHeaders:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            path:
+                              type: string
+                            port:
+                              type: string
+                          required:
+                          - path
+                          - port
+                          type: object
+                        initialDelay:
+                          type: integer
+                        interval:
+                          type: integer
+                        shell:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - command
+                          type: object
+                        tcp:
+                          properties:
+                            port:
+                              type: integer
+                          required:
+                          - port
+                          type: object
+                        type:
+                          description: should be one of shell, httpGet, tcp
+                          type: string
+                      required:
+                      - type
+                      type: object
                     name:
                       type: string
-                    resource_cpu:
+                    readinessProbe:
+                      properties:
+                        failureThreshold:
+                          type: integer
+                        httpGet:
+                          properties:
+                            httpHeaders:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            path:
+                              type: string
+                            port:
+                              type: string
+                          required:
+                          - path
+                          - port
+                          type: object
+                        initialDelay:
+                          type: integer
+                        interval:
+                          type: integer
+                        shell:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - command
+                          type: object
+                        tcp:
+                          properties:
+                            port:
+                              type: integer
+                          required:
+                          - port
+                          type: object
+                        type:
+                          description: should be one of shell, httpGet, tcp
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    resourceCpu:
                       properties:
                         max:
                           type: string
                         min:
                           type: string
                       type: object
-                    resource_memory:
+                    resourceMemory:
                       properties:
                         max:
                           type: string

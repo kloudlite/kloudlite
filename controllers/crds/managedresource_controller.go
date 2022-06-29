@@ -2,20 +2,10 @@ package crds
 
 import (
 	"context"
-	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"operators.kloudlite.io/lib/types"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	"operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -23,6 +13,13 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/lib/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // ManagedResourceReconciler reconciles a ManagedResource object
@@ -31,6 +28,10 @@ type ManagedResourceReconciler struct {
 	Scheme *runtime.Scheme
 	types.MessageSender
 }
+
+const (
+	RealMresExists conditions.Type = "RealMresExists"
+)
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
@@ -85,8 +86,8 @@ func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*v1.ManagedResour
 func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
 	// STEP: PRE if msvc is ready
 	ctx := req.Context()
-	mres := req.Object
-	msvc, err := rApi.Get(ctx, r.Client, fn.NN(mres.Namespace, mres.Spec.ManagedSvcName), &v1.ManagedService{})
+	obj := req.Object
+	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ManagedSvcName), &v1.ManagedService{})
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
@@ -97,16 +98,16 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 
 	rApi.SetLocal(req, "msvc", msvc)
 
-	isReady := true
+	isReady := false
 	var cs []metav1.Condition
 
 	// STEP: fetch conditions from real managed resource
 	resourceC, err := conditions.FromResource(
 		ctx, r.Client, metav1.TypeMeta{
-			APIVersion: mres.Spec.ApiVersion,
-			Kind:       mres.Spec.Kind,
+			APIVersion: obj.Spec.ApiVersion,
+			Kind:       obj.Spec.Kind,
 		},
-		"", fn.NN(mres.Namespace, mres.Name),
+		"", fn.NN(obj.Namespace, obj.Name),
 	)
 
 	if err != nil {
@@ -114,46 +115,26 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 			return req.FailWithStatusError(err)
 		}
 		isReady = false
-		cs = append(cs, conditions.New("MresResourceExists", false, "NotFound", err.Error()))
+		cs = append(cs, conditions.New(RealMresExists, false, conditions.NotFound, err.Error()))
+		resourceC = nil
+	} else {
+		cs = append(cs, conditions.New(RealMresExists, true, conditions.Found))
 	}
+
 	cs = append(cs, resourceC...)
 
-	// STEP: resource output is ready
-	mresOutput, err := rApi.Get(
-		ctx,
-		r.Client,
-		fn.NN(mres.Namespace, fmt.Sprintf("mres-%s", mres.Name)),
-		&corev1.Secret{},
-	)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
-		isReady = false
-		cs = append(cs, conditions.New("MsvcOutputExists", false, "NotFound", err.Error()))
-		mresOutput = nil
-	}
-
-	if mresOutput != nil {
-		cs = append(cs, conditions.New("MresOutputExists", true, "SecretFound"))
-	}
-
-	newConditions, hasUpdated, err := conditions.Patch(mres.Status.Conditions, cs)
+	newConditions, hasUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(errors.NewEf(err, "while patching conditions"))
 	}
 
-	if !hasUpdated {
+	if !hasUpdated && isReady == obj.Status.IsReady {
 		return req.Next()
 	}
 
-	mres.Status.IsReady = isReady
-	mres.Status.Conditions = newConditions
-	mres.Status.OpsConditions = []metav1.Condition{}
-	if err := r.Status().Update(ctx, mres); err != nil {
-		return req.FailWithStatusError(err)
-	}
-	return req.Done()
+	obj.Status.IsReady = isReady
+	obj.Status.Conditions = newConditions
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
 }
 
 func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
@@ -182,18 +163,18 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, mres))
 	}
 
-	obj, err := templates.ParseObject(templates.CommonMres, req.Object)
+	b, err := templates.Parse(
+		templates.CommonMres, map[string]any{
+			"object": mres,
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(mres, true),
+			},
+		},
+	)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
-
-	obj.SetOwnerReferences(
-		[]metav1.OwnerReference{
-			fn.AsOwner(mres, true),
-		},
-	)
-	err = fn.KubectlApply(req.Context(), r.Client, obj)
-	if err != nil {
+	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return req.FailWithOpError(err)
 	}
 	return req.Done()

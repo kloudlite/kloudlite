@@ -49,7 +49,14 @@ func (c *Client) UpsertUser(ctx context.Context, prefix, username, password stri
 }
 
 func (c *Client) UserExists(ctx context.Context, username string) (bool, error) {
-	return c.userExists(ctx, username)
+	exists, err := c.userExists(ctx, username)
+	if err != nil {
+		if err == redis.Nil {
+			return false, nil
+		}
+		return false, err
+	}
+	return exists, nil
 }
 
 func (c *Client) userExists(ctx context.Context, username string) (bool, error) {
