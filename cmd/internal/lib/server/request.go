@@ -9,7 +9,7 @@ import (
 )
 
 func gql(query string, variables map[string]any, cookie *string) ([]byte, error) {
-	url := "https://gateway-01.kl.madhouselabs.io/"
+	url := "https://gateway-01.dev.kloudlite.io/"
 	method := "POST"
 	marshal, err := json.Marshal(map[string]any{
 		"query":     query,
@@ -26,7 +26,7 @@ func gql(query string, variables map[string]any, cookie *string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("authority", "gateway-01.kl.madhouselabs.io")
+	req.Header.Add("authority", "gateway-01.dev.kloudlite.io")
 	req.Header.Add("accept", "*/*")
 	req.Header.Add("accept-language", "en-US,en;q=0.9")
 	req.Header.Add("content-type", "application/json")
