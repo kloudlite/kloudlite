@@ -22,8 +22,7 @@ func (e *AuthGRPCEnv) GetGCPServerURL() string {
 }
 
 type ConsoleGRPCEnv struct {
-	ConsoleServerHost string `env:"CONSOLE_SERVER_HOST"`
-	ConsoleServerPort uint16 `env:"CONSOLE_SERVER_PORT"`
+	ConsoleGrpcService string `env:"CONSOLE_GRPC_SERVICE"`
 }
 
 func (e *ConsoleGRPCEnv) String() string {
@@ -37,7 +36,7 @@ func (e *ConsoleGRPCEnv) apply(module *interface{}) {
 }
 
 func (e *ConsoleGRPCEnv) GetGCPServerURL() string {
-	return fmt.Sprintf("%v:%v", e.ConsoleServerHost, e.ConsoleServerPort)
+	return e.ConsoleGrpcService
 }
 
 type CiGrpcEnv struct {
