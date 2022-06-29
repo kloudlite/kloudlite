@@ -56,6 +56,7 @@ var Module = fx.Module(
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
+	repos.NewFxMongoRepo[*domain.RemoteLogin]("remote_login", "rlgn", domain.RemoteTokenIndexes),
 	cache.NewFxRepo[*domain.VerifyToken](),
 	cache.NewFxRepo[*domain.ResetPasswordToken](),
 
