@@ -24,6 +24,7 @@ type Env struct {
 	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
 	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
 	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
+	RedisPrefix   string `env:"REDIS_PREFIX" required:"true"`
 	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
 	Port          uint16 `env:"PORT" required:"true"`
 	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
@@ -39,7 +40,7 @@ func (e *Env) GetHttpCors() string {
 }
 
 func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
-	return e.RedisHosts, e.RedisUserName, e.RedisPassword, basePrefix
+	return e.RedisHosts, e.RedisUserName, e.RedisPassword, e.RedisPrefix
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
