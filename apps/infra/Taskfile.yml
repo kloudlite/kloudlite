@@ -15,6 +15,7 @@ tasks:
       KAFKA_INFRA_RESP_TOPIC: dev-hotspot-infra-resp
       KAFKA_GROUP_ID: infra-cli-local
       DO_API_KEY: ***REMOVED***
+      MYSQL_CONNECTION_STRING: "root:root@tcp(mysql:3306)/"
       DO_IMAGE_ID: 107908623
       NODE_DRAIN_TIME: 120
     cmds:

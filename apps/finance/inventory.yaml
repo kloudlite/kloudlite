@@ -1,38 +1,97 @@
-- name: BlockStorage
-  type: Storage
+- type: Storage
+  provider: do
+  name: BlockStorage
   unit: 100GB
-  price_per_hour: 0.0138
-  price_per_month: 10$
+  pricePerHour:
+    quantity: 0.0138
+    currency: $
+  pricePerMonth:
+    quantity: 10
+    currency: $
 
-- name: ObjectStorage
-  type: Storage
-  unit: GB
-  price_per_hour: 0.0138
-  price_per_month: 10$
+
+- type: Storage
+  name: ObjectStorage
+  provider: do
+  desc: 100 GB
+  pricePerHour:
+    quantity: 0.0138
+    currency: $
+  pricePerMonth:
+    quantity: 10
+    currency: $
 
 - type: Compute
-  name: DigitalOceanBasic (Shared)
-  unit: 1 GB 1 VCPU
-  price_per_hour: 0.0108$
-  price_per_month: 8.192$
+  provider: do
+  name: DigitalOceanBasic
+  desc: 1 GB 1 VCPU  (Shared)
+  pricePerHour:
+    quantity: 0.0108
+    currency: $
+  pricePerMonth:
+    quantity: 8.192
+    currency: $
+  data:
+    memory:
+      quantity: 1.0
+      unit: GB
+    cpu:
+      quantity: 1.0
+      unit: VCPU
 
 - type: Compute
+  provider: do
   name: DigitalOceanGeneralPurpose
-  unit: 4 GB 1 VCPU
-  price_per_hour: 0.0534$
-  price_per_month: 38.448$
+  desc: 4 GB 1 VCPU
+  pricePerHour:
+    quantity: 0.0534
+    currency: $
+  pricePerMonth:
+    quantity: 38.448
+    currency: $
+  data:
+    memory:
+      quantity: 4.0
+      unit: GB
+    cpu:
+      quantity: 1.0
+      unit: VCPU
 
 - type: Compute
+  provider: do
   name: DigitalOceanCPUOptimised
-  unit: 2 GB 1 VCPU
-  price_per_hour: 0.036$
-  price_per_month: 24.576$
+  desc: 2 GB 1 VCPU
+  pricePerHour:
+    quantity: 0.036
+    currency: $
+  pricePerMonth:
+    quantity: 24.576
+    currency: $
+  data:
+    memory:
+      quantity: 2.0
+      unit: GB
+    cpu:
+      quantity: 1.0
+      unit: VCPU
 
 - type: Compute
+  provider: do
   name: DigitalOceanMemoryOptimised
-  unit: 8 GB 1 VCPU
-  price_per_hour: 0.0714$
-  price_per_month: 49.152$
+  desc: 8 GB 1 VCPU
+  data:
+    memory:
+      quantity: 8.0
+      unit: GB
+    cpu:
+      quantity: 1.0
+      unit: VCPU
+  pricePerHour:
+    quantity: 0.0714
+    currency: $
+  pricePerMonth:
+    quantity: 49.152
+    currency: $
 
 - type: CiHours
   name: Tekton Hours

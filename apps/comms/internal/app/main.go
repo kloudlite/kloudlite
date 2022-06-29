@@ -8,7 +8,8 @@ import (
 )
 
 type Env struct {
-	SupportEmail string `env:"SUPPORT_EMAIL"`
+	SupportEmail  string `env:"SUPPORT_EMAIL"`
+	EmailsBaseUrl string `env:"EMAIL_LINKS_BASE_URL"`
 }
 
 var Module = fx.Module("app",

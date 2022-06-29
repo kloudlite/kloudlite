@@ -1,0 +1,4 @@
+project: {{ .ProjectId }}
+applicationName: {{ .ApplicationName }}
+environment: {{ .Environment }}
+

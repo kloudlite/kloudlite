@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type CommsClient interface {
 	SendVerificationEmail(ctx context.Context, in *VerificationEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendPasswordResetEmail(ctx context.Context, in *PasswordResetEmailInput, opts ...grpc.CallOption) (*Void, error)
+	SendAccountMemberInviteEmail(ctx context.Context, in *AccountMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error)
 }
 
 type commsClient struct {
@@ -52,12 +53,22 @@ func (c *commsClient) SendPasswordResetEmail(ctx context.Context, in *PasswordRe
 	return out, nil
 }
 
+func (c *commsClient) SendAccountMemberInviteEmail(ctx context.Context, in *AccountMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/Comms/SendAccountMemberInviteEmail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CommsServer is the server API for Comms service.
 // All implementations must embed UnimplementedCommsServer
 // for forward compatibility
 type CommsServer interface {
 	SendVerificationEmail(context.Context, *VerificationEmailInput) (*Void, error)
 	SendPasswordResetEmail(context.Context, *PasswordResetEmailInput) (*Void, error)
+	SendAccountMemberInviteEmail(context.Context, *AccountMemberInviteEmailInput) (*Void, error)
 	mustEmbedUnimplementedCommsServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedCommsServer) SendVerificationEmail(context.Context, *Verifica
 }
 func (UnimplementedCommsServer) SendPasswordResetEmail(context.Context, *PasswordResetEmailInput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendPasswordResetEmail not implemented")
+}
+func (UnimplementedCommsServer) SendAccountMemberInviteEmail(context.Context, *AccountMemberInviteEmailInput) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendAccountMemberInviteEmail not implemented")
 }
 func (UnimplementedCommsServer) mustEmbedUnimplementedCommsServer() {}
 
@@ -120,6 +134,24 @@ func _Comms_SendPasswordResetEmail_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Comms_SendAccountMemberInviteEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AccountMemberInviteEmailInput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommsServer).SendAccountMemberInviteEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Comms/SendAccountMemberInviteEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommsServer).SendAccountMemberInviteEmail(ctx, req.(*AccountMemberInviteEmailInput))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Comms_ServiceDesc is the grpc.ServiceDesc for Comms service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var Comms_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendPasswordResetEmail",
 			Handler:    _Comms_SendPasswordResetEmail_Handler,
+		},
+		{
+			MethodName: "SendAccountMemberInviteEmail",
+			Handler:    _Comms_SendAccountMemberInviteEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

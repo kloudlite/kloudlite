@@ -7,9 +7,6 @@ import (
 	"github.com/codingconcepts/env"
 )
 
-type Samole struct {
-}
-
 func LoadEnv[T any]() func() (*T, error) {
 	return func() (*T, error) {
 		var x T

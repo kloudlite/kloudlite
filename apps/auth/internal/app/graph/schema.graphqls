@@ -8,9 +8,18 @@ type Query {
   auth_me: User # Done
   auth_findByEmail(email: String!): User # Done
   oAuth_requestLogin(provider: String!, state: String): URL!
+  auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin
+}
+
+type RemoteLogin {
+    status: String!
+    authHeader: String
 }
 
 type Mutation {
+  auth_setRemoteAuthHeader(loginId: String!, authHeader:String):Boolean!
+  auth_createRemoteLogin(secret: String):String!
+
   auth_login(email: String!, password: String!): Session # Done
   auth_signup(name: String!, email: String!, password: String!): Session # Done
   auth_logout: Boolean! # Done

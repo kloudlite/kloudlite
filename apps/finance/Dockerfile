@@ -13,6 +13,8 @@ RUN go build -tags musl -o /tmp/bin/finance ./main.go
 RUN chmod +x /tmp/bin/finance
 
 FROM golang:1.18-alpine
+RUN mkdir -p /tmp/app
+RUN chown -R 1001:1001 /tmp
 USER 1001
 WORKDIR /tmp/app
 COPY --from=base --chown=1001 /tmp/bin/finance ./

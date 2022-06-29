@@ -3,7 +3,6 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/ci";
 
 service CI {
-  rpc CreatePipeline(PipelineIn) returns (PipelineOutput);
   rpc CreateHarborProject(HarborProjectIn) returns (HarborProjectOut);
   rpc DeleteHarborProject(HarborProjectIn) returns (HarborProjectOut);
 }

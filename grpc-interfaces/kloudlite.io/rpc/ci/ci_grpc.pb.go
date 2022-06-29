@@ -22,7 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CIClient interface {
-	CreatePipeline(ctx context.Context, in *PipelineIn, opts ...grpc.CallOption) (*PipelineOutput, error)
 	CreateHarborProject(ctx context.Context, in *HarborProjectIn, opts ...grpc.CallOption) (*HarborProjectOut, error)
 	DeleteHarborProject(ctx context.Context, in *HarborProjectIn, opts ...grpc.CallOption) (*HarborProjectOut, error)
 }
@@ -33,15 +32,6 @@ type cIClient struct {
 
 func NewCIClient(cc grpc.ClientConnInterface) CIClient {
 	return &cIClient{cc}
-}
-
-func (c *cIClient) CreatePipeline(ctx context.Context, in *PipelineIn, opts ...grpc.CallOption) (*PipelineOutput, error) {
-	out := new(PipelineOutput)
-	err := c.cc.Invoke(ctx, "/CI/CreatePipeline", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *cIClient) CreateHarborProject(ctx context.Context, in *HarborProjectIn, opts ...grpc.CallOption) (*HarborProjectOut, error) {
@@ -66,7 +56,6 @@ func (c *cIClient) DeleteHarborProject(ctx context.Context, in *HarborProjectIn,
 // All implementations must embed UnimplementedCIServer
 // for forward compatibility
 type CIServer interface {
-	CreatePipeline(context.Context, *PipelineIn) (*PipelineOutput, error)
 	CreateHarborProject(context.Context, *HarborProjectIn) (*HarborProjectOut, error)
 	DeleteHarborProject(context.Context, *HarborProjectIn) (*HarborProjectOut, error)
 	mustEmbedUnimplementedCIServer()
@@ -76,9 +65,6 @@ type CIServer interface {
 type UnimplementedCIServer struct {
 }
 
-func (UnimplementedCIServer) CreatePipeline(context.Context, *PipelineIn) (*PipelineOutput, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePipeline not implemented")
-}
 func (UnimplementedCIServer) CreateHarborProject(context.Context, *HarborProjectIn) (*HarborProjectOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateHarborProject not implemented")
 }
@@ -96,24 +82,6 @@ type UnsafeCIServer interface {
 
 func RegisterCIServer(s grpc.ServiceRegistrar, srv CIServer) {
 	s.RegisterService(&CI_ServiceDesc, srv)
-}
-
-func _CI_CreatePipeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PipelineIn)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CIServer).CreatePipeline(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/CI/CreatePipeline",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CIServer).CreatePipeline(ctx, req.(*PipelineIn))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _CI_CreateHarborProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -159,10 +127,6 @@ var CI_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "CI",
 	HandlerType: (*CIServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreatePipeline",
-			Handler:    _CI_CreatePipeline_Handler,
-		},
 		{
 			MethodName: "CreateHarborProject",
 			Handler:    _CI_CreateHarborProject_Handler,
