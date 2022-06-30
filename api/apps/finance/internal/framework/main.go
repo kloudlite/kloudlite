@@ -51,6 +51,7 @@ type Env struct {
 	RedisHosts    string `env:"REDIS_HOSTS"`
 	RedisUsername string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
+	RedisPrefix   string `env:"REDIS_PREFIX"`
 
 	AuthRedisHosts    string `env:"REDIS_AUTH_HOSTS"`
 	AuthRedisUserName string `env:"REDIS_AUTH_USERNAME"`
@@ -66,7 +67,7 @@ func (e *Env) GetMongoConfig() (url string, dbName string) {
 }
 
 func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
-	return e.RedisHosts, e.RedisUsername, e.RedisPassword, basePrefix
+	return e.RedisHosts, e.RedisUsername, e.RedisPassword, e.RedisPrefix
 }
 
 func (e *Env) GetHttpPort() uint16 {
