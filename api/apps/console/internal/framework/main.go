@@ -75,9 +75,9 @@ type Env struct {
 	KafkaBrokers string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
 	Port         uint16 `env:"PORT" required:"true"`
 	IsDev        bool   `env:"DEV" default:"false" required:"true"`
-	CorsOrigins  string `env:"ORIGINS" required:"true"`
-	GrpcPort     uint16 `env:"GRPC_PORT" required:"true"`
-	NotifierUrl  string `env:"NOTIFIER_URL" required:"true"`
+
+	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
+	NotifierUrl string `env:"NOTIFIER_URL" required:"true"`
 }
 
 func (e *Env) GetBrokers() string {
@@ -89,7 +89,7 @@ func (e *Env) GetHttpPort() uint16 {
 }
 
 func (e *Env) GetHttpCors() string {
-	return e.CorsOrigins
+	return ""
 }
 
 func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
