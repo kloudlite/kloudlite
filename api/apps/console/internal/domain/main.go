@@ -15,7 +15,6 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logger"
@@ -195,20 +194,20 @@ func (d *domain) CreateClusterAccount(ctx context.Context, data *entities.Cluste
 	data.WgIp = fmt.Sprintf("10.12.%d.1", index)
 
 	create, err := d.clusterAccountRepo.Create(ctx, data)
-
-	if err != nil {
-		return nil, err
-	}
-	err = SendAction(
-		d.infraMessenger,
-		entities.SetupClusterAccountAction{
-			ClusterID: create.ClusterID,
-			Region:    cluster.Region,
-			Provider:  cluster.Provider,
-			AccountId: string(create.AccountID),
-			AccountIp: create.WgIp,
-		},
-	)
+	// TODO
+	//if err != nil {
+	//	return nil, err
+	//}
+	//err = SendAction(
+	//	d.infraMessenger,
+	//	entities.SetupClusterAccountAction{
+	//		ClusterID: create.ClusterID,
+	//		Region:    cluster.Region,
+	//		Provider:  cluster.Provider,
+	//		AccountId: string(create.AccountID),
+	//		AccountIp: create.WgIp,
+	//	},
+	//)
 
 	fmt.Println(entities.SetupClusterAccountAction{
 		ClusterID: create.ClusterID,
@@ -353,22 +352,24 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	if err != nil {
 		return nil, err
 	}
-	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+	_, err = d.clusterRepo.FindOne(ctx, repos.Filter{
 		"account_id": project.AccountId,
 	})
 	if err != nil {
 		return nil, err
 	}
-	output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
-		ManagedResName: mres.Name,
-		ClusterId:      string(cluster.Id),
-		Namespace:      mres.Namespace,
-	})
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	return output.Output, err
+	return nil, nil
+	// TODO
+	//output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
+	//	ManagedResName: mres.Name,
+	//	ClusterId:      string(cluster.Id),
+	//	Namespace:      mres.Namespace,
+	//})
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return nil, err
+	//}
+	//return output.Output, err
 }
 
 func (d *domain) createApp(ctx context.Context, app entities.AppIn) (*entities.App, error) {
@@ -1453,15 +1454,16 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 		Provider:   c.Provider,
 		NodesCount: c.NodesCount,
 	})
-	err = SendAction(
-		d.infraMessenger,
-		entities.SetupClusterAction{
-			ClusterID:  c.Id,
-			Region:     c.Region,
-			Provider:   c.Provider,
-			NodesCount: c.NodesCount,
-		},
-	)
+	// TODO
+	//err = SendAction(
+	//	d.infraMessenger,
+	//	entities.SetupClusterAction{
+	//		ClusterID:  c.Id,
+	//		Region:     c.Region,
+	//		Provider:   c.Provider,
+	//		NodesCount: c.NodesCount,
+	//	},
+	//)
 	if err != nil {
 		panic(err)
 		return nil, err
@@ -1489,17 +1491,18 @@ func (d *domain) UpdateCluster(
 		c.NodesCount = *nodeCount
 		c.Status = entities.ClusterStateSyncing
 	}
-	updated, err := d.clusterRepo.UpdateById(ctx, id, c)
+	_, err = d.clusterRepo.UpdateById(ctx, id, c)
 	if err != nil {
 		return false, err
 	}
 	if c.Status == entities.ClusterStateSyncing {
-		err = SendAction(d.infraMessenger, entities.UpdateClusterAction{
-			ClusterID:  id,
-			Region:     updated.Region,
-			Provider:   updated.Provider,
-			NodesCount: updated.NodesCount,
-		})
+		// TODO
+		//err = SendAction(d.infraMessenger, entities.UpdateClusterAction{
+		//	ClusterID:  id,
+		//	Region:     updated.Region,
+		//	Provider:   updated.Provider,
+		//	NodesCount: updated.NodesCount,
+		//})
 		if err != nil {
 			return false, err
 		}
@@ -1517,10 +1520,10 @@ func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	err = SendAction(d.infraMessenger, entities.DeleteClusterAction{
-		ClusterID: clusterId,
-		Provider:  cluster.Provider,
-	})
+	//err = SendAction(d.infraMessenger, entities.DeleteClusterAction{
+	//	ClusterID: clusterId,
+	//	Provider:  cluster.Provider,
+	//})
 	if err != nil {
 		return err
 	}
@@ -1603,12 +1606,12 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 		return nil, fmt.Errorf("unable to persist in db %v", e)
 	}
 
-	e = SendAction(d.infraMessenger, entities.AddPeerAction{
-		ClusterID: clusterId,
-		PublicKey: pbKeyString,
-		PeerIp:    ip,
-		AccountId: string(accountId),
-	})
+	//e = SendAction(d.infraMessenger, entities.AddPeerAction{
+	//	ClusterID: clusterId,
+	//	PublicKey: pbKeyString,
+	//	PeerIp:    ip,
+	//	AccountId: string(accountId),
+	//})
 	if e != nil {
 		return nil, e
 	}
@@ -1626,11 +1629,11 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	err = SendAction(d.infraMessenger, entities.DeletePeerAction{
-		ClusterID: device.ClusterId,
-		DeviceID:  device.Id,
-		PublicKey: *device.PublicKey,
-	})
+	//err = SendAction(d.infraMessenger, entities.DeletePeerAction{
+	//	ClusterID: device.ClusterId,
+	//	DeviceID:  device.Id,
+	//	PublicKey: *device.PublicKey,
+	//})
 	if err != nil {
 		return err
 	}
