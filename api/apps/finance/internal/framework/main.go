@@ -25,36 +25,24 @@ type ConsoleGRPCEnv struct {
 	ConsoleGrpcService string `env:"CONSOLE_GRPC_SERVICE"`
 }
 
-func (e *ConsoleGRPCEnv) String() string {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (e *ConsoleGRPCEnv) apply(module *interface{}) {
-	// TODO implement me
-	panic("implement me")
-}
-
 func (e *ConsoleGRPCEnv) GetGCPServerURL() string {
 	return e.ConsoleGrpcService
 }
 
 type CiGrpcEnv struct {
-	CiServerHost string `env:"CI_SERVER_HOST" required:"true"`
-	CiServerPort uint16 `env:"CI_SERVER_PORT" required:"true"`
+	CiService string `env:"CI_GRPC_SERVICE" required:"true"`
 }
 
 func (e *CiGrpcEnv) GetGCPServerURL() string {
-	return fmt.Sprintf("%v:%v", e.CiServerHost, e.CiServerPort)
+	return e.CiService
 }
 
 type IAMGRPCEnv struct {
-	IAMServerHost string `env:"IAM_SERVER_HOST"`
-	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
+	IAMService string `env:"IAM_GRPC_SERVICE"`
 }
 
 func (e *IAMGRPCEnv) GetGCPServerURL() string {
-	return fmt.Sprintf("%v:%v", e.IAMServerHost, e.IAMServerPort)
+	return e.IAMService
 }
 
 type Env struct {
