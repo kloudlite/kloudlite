@@ -128,11 +128,6 @@ type ComplexityRoot struct {
 		Memory func(childComplexity int) int
 	}
 
-	ComputeInventoryItem struct {
-		Data func(childComplexity int) int
-		Name func(childComplexity int) int
-	}
-
 	ComputeInventoryMetricSize struct {
 		Quantity func(childComplexity int) int
 		Unit     func(childComplexity int) int
@@ -159,11 +154,10 @@ type ComplexityRoot struct {
 	}
 
 	Entity struct {
-		FindAccountByID                func(childComplexity int, id repos.ID) int
-		FindClusterByID                func(childComplexity int, id repos.ID) int
-		FindComputeInventoryItemByName func(childComplexity int, name string) int
-		FindDeviceByID                 func(childComplexity int, id repos.ID) int
-		FindUserByID                   func(childComplexity int, id repos.ID) int
+		FindAccountByID func(childComplexity int, id repos.ID) int
+		FindClusterByID func(childComplexity int, id repos.ID) int
+		FindDeviceByID  func(childComplexity int, id repos.ID) int
+		FindUserByID    func(childComplexity int, id repos.ID) int
 	}
 
 	EnvVal struct {
@@ -338,7 +332,6 @@ type DeviceResolver interface {
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error)
-	FindComputeInventoryItemByName(ctx context.Context, name string) (*model.ComputeInventoryItem, error)
 	FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error)
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
@@ -729,20 +722,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ComputeInventoryData.Memory(childComplexity), true
 
-	case "ComputeInventoryItem.data":
-		if e.complexity.ComputeInventoryItem.Data == nil {
-			break
-		}
-
-		return e.complexity.ComputeInventoryItem.Data(childComplexity), true
-
-	case "ComputeInventoryItem.name":
-		if e.complexity.ComputeInventoryItem.Name == nil {
-			break
-		}
-
-		return e.complexity.ComputeInventoryItem.Name(childComplexity), true
-
 	case "ComputeInventoryMetricSize.quantity":
 		if e.complexity.ComputeInventoryMetricSize.Quantity == nil {
 			break
@@ -878,18 +857,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindClusterByID(childComplexity, args["id"].(repos.ID)), true
-
-	case "Entity.findComputeInventoryItemByName":
-		if e.complexity.Entity.FindComputeInventoryItemByName == nil {
-			break
-		}
-
-		args, err := ec.field_Entity_findComputeInventoryItemByName_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Entity.FindComputeInventoryItemByName(childComplexity, args["name"].(string)), true
 
 	case "Entity.findDeviceByID":
 		if e.complexity.Entity.FindDeviceByID == nil {
@@ -2120,10 +2087,10 @@ type AppContainer{
 }
 
 
-extend type ComputeInventoryItem @key(fields: "name") {
-  name: String! @external
-  data: ComputeInventoryData!
-}
+#extend type ComputeInventoryItem @key(fields: "name") {
+#  name: String! @external
+#  data: ComputeInventoryData!
+#}
 
 type ComputeInventoryData {
   memory: ComputeInventoryMetricSize!
@@ -2314,13 +2281,12 @@ directive @extends on OBJECT | INTERFACE
 `, BuiltIn: true},
 	{Name: "federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Account | Cluster | ComputeInventoryItem | Device | User
+union _Entity = Account | Cluster | Device | User
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
 		findAccountByID(id: ID!,): Account!
 	findClusterByID(id: ID!,): Cluster!
-	findComputeInventoryItemByName(name: String!,): ComputeInventoryItem!
 	findDeviceByID(id: ID!,): Device!
 	findUserByID(id: ID!,): User!
 
@@ -2369,21 +2335,6 @@ func (ec *executionContext) field_Entity_findClusterByID_args(ctx context.Contex
 		}
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Entity_findComputeInventoryItemByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg0
 	return args, nil
 }
 
@@ -5150,76 +5101,6 @@ func (ec *executionContext) _ComputeInventoryData_cpu(ctx context.Context, field
 	return ec.marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _ComputeInventoryItem_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryItem) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ComputeInventoryItem",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ComputeInventoryItem_data(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryItem) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ComputeInventoryItem",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Data, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ComputeInventoryData)
-	fc.Result = res
-	return ec.marshalNComputeInventoryData2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryData(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _ComputeInventoryMetricSize_quantity(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryMetricSize) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5859,48 +5740,6 @@ func (ec *executionContext) _Entity_findClusterByID(ctx context.Context, field g
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Entity_findComputeInventoryItemByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Entity",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Entity_findComputeInventoryItemByName_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Entity().FindComputeInventoryItemByName(rctx, args["name"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ComputeInventoryItem)
-	fc.Result = res
-	return ec.marshalNComputeInventoryItem2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryItem(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findDeviceByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11672,13 +11511,6 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._Cluster(ctx, sel, obj)
-	case model.ComputeInventoryItem:
-		return ec._ComputeInventoryItem(ctx, sel, &obj)
-	case *model.ComputeInventoryItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ComputeInventoryItem(ctx, sel, obj)
 	case model.Device:
 		return ec._Device(ctx, sel, &obj)
 	case *model.Device:
@@ -12375,47 +12207,6 @@ func (ec *executionContext) _ComputeInventoryData(ctx context.Context, sel ast.S
 	return out
 }
 
-var computeInventoryItemImplementors = []string{"ComputeInventoryItem", "_Entity"}
-
-func (ec *executionContext) _ComputeInventoryItem(ctx context.Context, sel ast.SelectionSet, obj *model.ComputeInventoryItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, computeInventoryItemImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ComputeInventoryItem")
-		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ComputeInventoryItem_name(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "data":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ComputeInventoryItem_data(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var computeInventoryMetricSizeImplementors = []string{"ComputeInventoryMetricSize"}
 
 func (ec *executionContext) _ComputeInventoryMetricSize(ctx context.Context, sel ast.SelectionSet, obj *model.ComputeInventoryMetricSize) graphql.Marshaler {
@@ -12728,29 +12519,6 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 					}
 				}()
 				res = ec._Entity_findClusterByID(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "findComputeInventoryItemByName":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Entity_findComputeInventoryItemByName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -15221,30 +14989,6 @@ func (ec *executionContext) marshalNClusterSubscription2ᚖkloudliteᚗioᚋapps
 		return graphql.Null
 	}
 	return ec._ClusterSubscription(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNComputeInventoryData2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryData(ctx context.Context, sel ast.SelectionSet, v *model.ComputeInventoryData) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ComputeInventoryData(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNComputeInventoryItem2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryItem(ctx context.Context, sel ast.SelectionSet, v model.ComputeInventoryItem) graphql.Marshaler {
-	return ec._ComputeInventoryItem(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNComputeInventoryItem2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryItem(ctx context.Context, sel ast.SelectionSet, v *model.ComputeInventoryItem) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ComputeInventoryItem(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx context.Context, sel ast.SelectionSet, v *model.ComputeInventoryMetricSize) graphql.Marshaler {
