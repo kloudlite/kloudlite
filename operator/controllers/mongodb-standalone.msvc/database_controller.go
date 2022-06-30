@@ -249,6 +249,7 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStand
 					"DB_PASSWORD": dbPasswd,
 					"DB_USER":     obj.Name,
 					"DB_HOSTS":    msvcRef.Hosts,
+					"DB_NAME":     obj.Name,
 					"DB_URL": fmt.Sprintf(
 						"mongodb://%s:%s@%s/%s",
 						obj.Name, dbPasswd, msvcRef.Hosts, obj.Name,
