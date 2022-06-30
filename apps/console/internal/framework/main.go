@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/pkg/cache"
@@ -16,39 +15,35 @@ import (
 )
 
 type GrpcFinanceConfig struct {
-	FinanceGrpcHost string `env:"FINANCE_HOST" required:"true"`
-	FinanceGrpcPort string `env:"FINANCE_PORT" required:"true"`
+	FinanceService string `env:"FINANCE_SERVICE" required:"true"`
 }
 
 func (e *GrpcFinanceConfig) GetGCPServerURL() string {
-	return e.FinanceGrpcHost + ":" + e.FinanceGrpcPort
+	return e.FinanceService
 }
 
 type GrpcAuthConfig struct {
-	AuthGrpcHost string `env:"AUTH_HOST" required:"true"`
-	AuthGrpcPort string `env:"AUTH_PORT" required:"true"`
+	AuthService string `env:"AUTH_SERVICE" required:"true"`
 }
 
 func (e *GrpcAuthConfig) GetGCPServerURL() string {
-	return e.AuthGrpcHost + ":" + e.AuthGrpcPort
+	return e.AuthService
 }
 
 type GrpcCIConfig struct {
-	CIGrpcHost string `env:"CI_HOST" required:"true"`
-	CIGrpcPort string `env:"CI_PORT" required:"true"`
+	CIService string `env:"CI_SERVICE" required:"true"`
 }
 
 func (e *GrpcCIConfig) GetGCPServerURL() string {
-	return e.CIGrpcHost + ":" + e.CIGrpcPort
+	return e.CIService
 }
 
 type IAMGRPCEnv struct {
-	IAMServerHost string `env:"IAM_SERVER_HOST"`
-	IAMServerPort uint16 `env:"IAM_SERVER_PORT"`
+	IAMService string `env:"IAM_SERVICE"`
 }
 
 func (e *IAMGRPCEnv) GetGCPServerURL() string {
-	return fmt.Sprintf("%v:%v", e.IAMServerHost, e.IAMServerPort)
+	return e.IAMService
 }
 
 type LogServerEnv struct {
