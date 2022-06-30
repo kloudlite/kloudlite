@@ -46,11 +46,13 @@
       memory: {{ .ResourceMemory.Max }}Mi
   {{- end }}
   {{- end }}
-
+  
+  {{- if $volumeMounts }}
   {{- $vMounts := index $volumeMounts $idx }}
   {{- if $vMounts }}
   volumeMounts: {{- $vMounts | toYAML | nindent 4 }}
   {{- end}}
+  {{- end }}
 
   {{- if .LivenessProbe }}
   {{- with .LivenessProbe}}
