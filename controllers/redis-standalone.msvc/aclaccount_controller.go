@@ -296,6 +296,7 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 					"HOSTS":    msvcRef.Hosts,
 					"PASSWORD": userPassword,
 					"USERNAME": obj.Name,
+					"PREFIX":   prefix,
 					"URI":      fmt.Sprintf("redis://%s:%s@%s?allowUsernameInURI=true", obj.Name, userPassword, msvcRef.Hosts),
 				},
 			},
@@ -319,7 +320,6 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		)
 
 		return fn.KubectlApply(ctx, r.Client, msvcRef.ACLConfig)
-
 	}(); errt != nil {
 		return req.FailWithOpError(errt)
 	}

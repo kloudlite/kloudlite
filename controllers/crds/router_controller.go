@@ -145,19 +145,6 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 	var kubeYamls [][]byte
 
 	for lName, lMapRoutes := range lambdaGroups {
-		// b, err := templates.Parse(
-		// 	templates.IngressLambda, map[string]any{
-		// 		"router":         router,
-		// 		"ingress-class":  "nginx",
-		// 		"cluster-issuer": "kl-cert-issuer",
-		// 		"lambda-name":    lName,
-		// 		"routes":         lg,
-		// 		"owner-refs": []metav1.OwnerReference{
-		// 			fn.AsOwner(router, true),
-		// 		},
-		// 	},
-		// )
-
 		b, err := templates.Parse(
 			templates.CoreV1.Ingress, map[string]any{
 				"ingress-class":  constants.DefaultIngressClass,
@@ -188,18 +175,6 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 
 		kubeYamls = append(kubeYamls, b)
 	}
-
-	// b, err := templates.Parse(
-	// 	templates.Ingress, map[string]any{
-	// 		"router":         router,
-	// 		"cluster-issuer": "kl-cert-issuer",
-	// 		"ingress-class":  "nginx",
-	// 		"routes":         appRoutes,
-	// 		"owner-refs": []metav1.OwnerReference{
-	// 			fn.AsOwner(router, true),
-	// 		},
-	// 	},
-	// )
 	if len(appRoutes) > 0 {
 		b, err := templates.Parse(
 			templates.CoreV1.Ingress, map[string]any{

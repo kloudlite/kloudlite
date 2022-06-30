@@ -24,8 +24,12 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: {{$ingressClass}}
     cert-manager.io/cluster-issuer: {{$clusterIssuer}}
+    {{- if $virtualHost }}
     ingress.kubernetes.io/ssl-redirect: {{$forceSSLRedirect}}
+    {{- end}}
+    {{- if $virtualHost }}
     nginx.ingress.kubernetes.io/upstream-vhost: {{$virtualHost}}
+    {{- end}}
   {{- if $labels }}
   labels: {{ $labels | toYAML | nindent 4}}
   {{- end}}
