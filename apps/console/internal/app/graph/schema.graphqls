@@ -174,10 +174,10 @@ type AppContainer{
 }
 
 
-extend type ComputeInventoryItem @key(fields: "name") {
-  name: String! @external
-  data: ComputeInventoryData!
-}
+#extend type ComputeInventoryItem @key(fields: "name") {
+#  name: String! @external
+#  data: ComputeInventoryData!
+#}
 
 type ComputeInventoryData {
   memory: ComputeInventoryMetricSize!
