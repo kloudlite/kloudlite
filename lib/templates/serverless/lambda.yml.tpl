@@ -1,3 +1,4 @@
+{{- $ownerRefs := get . "owner-refs"}}
 {{- $obj := get . "object" }}
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volumeMounts"}}
@@ -8,6 +9,7 @@ kind: Service
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   template:
     metadata:
@@ -16,7 +18,7 @@ spec:
         autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
         autoscaling.knative.dev/metric: rps
         autoscaling.knative.dev/target: "100"
-        autoscaling.knative.dev/min-scale: "3"
+        autoscaling.knative.dev/min-scale: "1"
         # Limit scaling to 100 pods.
         autoscaling.knative.dev/max-scale: "100"
     spec:

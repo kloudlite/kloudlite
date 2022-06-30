@@ -156,8 +156,7 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 					"operators.kloudlite.io/router-name": router.Name,
 				},
 
-				// TODO: if not works try fmt.Sprintf("%s.%s", lName, router.Namespace)
-				"virtual-hostname":   lName,
+				"virtual-hostname":   fmt.Sprintf("%s.%s", lName, router.Namespace),
 				"force-ssl-redirect": router.Spec.ForceSSLRedirect,
 				"domains":            router.Spec.Domains,
 				"routes":             lMapRoutes,

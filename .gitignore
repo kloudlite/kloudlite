@@ -30,3 +30,5 @@ testbin/*
 helm-charts
 *.auto.env
 
+# intellij workspace files
+*.iml
