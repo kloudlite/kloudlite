@@ -119,13 +119,6 @@ type ComputeInventoryData struct {
 	CPU    *ComputeInventoryMetricSize `json:"cpu"`
 }
 
-type ComputeInventoryItem struct {
-	Name string                `json:"name"`
-	Data *ComputeInventoryData `json:"data"`
-}
-
-func (ComputeInventoryItem) IsEntity() {}
-
 type ComputeInventoryMetricSize struct {
 	Quantity float64 `json:"quantity"`
 	Unit     string  `json:"unit"`
