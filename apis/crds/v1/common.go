@@ -48,6 +48,9 @@ func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMou
 		var mounts []corev1.VolumeMount
 		for _, volume := range container.Volumes {
 			volName := fn.Md5([]byte(volume.MountPath))
+			if len(volName) > 50 {
+				volName = volName[:50]
+			}
 			mounts = append(
 				mounts, corev1.VolumeMount{
 					Name:      volName,
