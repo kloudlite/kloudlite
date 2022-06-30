@@ -8,13 +8,13 @@
     valueFrom:
     {{- if eq .Type "config" }}
       configMapKeyRef:
-      name: {{.RefName}}
-      key: {{.RefKey}}
+        name: {{.RefName}}
+        key: {{.RefKey}}
     {{- end }}
     {{- if eq .Type "secret" }}
       secretKeyRef:
-      name: {{.RefName}}
-      key: {{.RefKey}}
+        name: {{.RefName}}
+        key: {{.RefKey}}
     {{- end }}
   {{- end }}
 {{- end}}

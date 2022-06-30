@@ -52,6 +52,13 @@ tasks:
       - cd config/default && kustomize edit set namespace ${NAMESPACE}
       - make deploy
 
+  deploy:build:
+    env:
+      IMG: harbor.dev.madhouselabs.io/kloudlite/koperator:latest
+      NAMESPACE: koperator
+    cmds:
+      - make dev-docker-build dev-docker-push
+
   pre:
     run: once
     cmds:
