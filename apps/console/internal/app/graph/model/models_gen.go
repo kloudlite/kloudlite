@@ -96,13 +96,10 @@ type CSEntryIn struct {
 }
 
 type Cluster struct {
-	ID         repos.ID `json:"id"`
-	Name       string   `json:"name"`
-	Provider   string   `json:"provider"`
-	Region     string   `json:"region"`
-	IP         *string  `json:"ip"`
-	NodesCount int      `json:"nodesCount"`
-	Status     string   `json:"status"`
+	ID       repos.ID `json:"id"`
+	Name     string   `json:"name"`
+	Provider string   `json:"provider"`
+	Region   string   `json:"region"`
 }
 
 func (Cluster) IsEntity() {}
@@ -123,6 +120,18 @@ type ComputeInventoryMetricSize struct {
 	Quantity float64 `json:"quantity"`
 	Unit     string  `json:"unit"`
 }
+
+type ComputePlan struct {
+	Name                  string `json:"name"`
+	Desc                  string `json:"desc"`
+	SharingEnabled        bool   `json:"sharingEnabled"`
+	DedicatedEnabled      bool   `json:"dedicatedEnabled"`
+	MemoryPerVCPUCpu      int    `json:"memoryPerVCPUCpu"`
+	MaxDedicatedCPUPerPod int    `json:"maxDedicatedCPUPerPod"`
+	MaxSharedCPUPerPod    int    `json:"maxSharedCPUPerPod"`
+}
+
+func (ComputePlan) IsEntity() {}
 
 type Config struct {
 	ID          repos.ID   `json:"id"`
@@ -229,6 +238,7 @@ type Project struct {
 	Account     *Account             `json:"account"`
 	Memberships []*ProjectMembership `json:"memberships"`
 	Status      string               `json:"status"`
+	Cluster     *string              `json:"cluster"`
 }
 
 type ProjectMembership struct {

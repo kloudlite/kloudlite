@@ -107,13 +107,10 @@ type ComplexityRoot struct {
 	}
 
 	Cluster struct {
-		ID         func(childComplexity int) int
-		IP         func(childComplexity int) int
-		Name       func(childComplexity int) int
-		NodesCount func(childComplexity int) int
-		Provider   func(childComplexity int) int
-		Region     func(childComplexity int) int
-		Status     func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Name     func(childComplexity int) int
+		Provider func(childComplexity int) int
+		Region   func(childComplexity int) int
 	}
 
 	ClusterSubscription struct {
@@ -131,6 +128,16 @@ type ComplexityRoot struct {
 	ComputeInventoryMetricSize struct {
 		Quantity func(childComplexity int) int
 		Unit     func(childComplexity int) int
+	}
+
+	ComputePlan struct {
+		DedicatedEnabled      func(childComplexity int) int
+		Desc                  func(childComplexity int) int
+		MaxDedicatedCPUPerPod func(childComplexity int) int
+		MaxSharedCPUPerPod    func(childComplexity int) int
+		MemoryPerVCPUCpu      func(childComplexity int) int
+		Name                  func(childComplexity int) int
+		SharingEnabled        func(childComplexity int) int
 	}
 
 	Config struct {
@@ -154,10 +161,11 @@ type ComplexityRoot struct {
 	}
 
 	Entity struct {
-		FindAccountByID func(childComplexity int, id repos.ID) int
-		FindClusterByID func(childComplexity int, id repos.ID) int
-		FindDeviceByID  func(childComplexity int, id repos.ID) int
-		FindUserByID    func(childComplexity int, id repos.ID) int
+		FindAccountByID       func(childComplexity int, id repos.ID) int
+		FindClusterByID       func(childComplexity int, id repos.ID) int
+		FindComputePlanByName func(childComplexity int, name string) int
+		FindDeviceByID        func(childComplexity int, id repos.ID) int
+		FindUserByID          func(childComplexity int, id repos.ID) int
 	}
 
 	EnvVal struct {
@@ -206,7 +214,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CoreCreateApp          func(childComplexity int, projectID repos.ID, app model.AppInput) int
 		CoreCreateConfig       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
-		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string) int
+		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) int
 		CoreCreateRouter       func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
 		CoreCreateSecret       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreDeleteApp          func(childComplexity int, appID repos.ID) int
@@ -224,7 +232,7 @@ type ComplexityRoot struct {
 		IamRemoveProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID) int
 		IamUpdateProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
 		InfraAddDevice         func(childComplexity int, clusterID repos.ID, accountID repos.ID, name string) int
-		InfraCreateCluster     func(childComplexity int, name string, provider string, region string, nodesCount int) int
+		InfraCreateCluster     func(childComplexity int, name string, provider string, region string, clusterType string) int
 		InfraDeleteCluster     func(childComplexity int, clusterID repos.ID) int
 		InfraRemoveDevice      func(childComplexity int, deviceID repos.ID) int
 		InfraUpdateCluster     func(childComplexity int, name *string, clusterID repos.ID, nodesCount *int) int
@@ -238,6 +246,7 @@ type ComplexityRoot struct {
 
 	Project struct {
 		Account     func(childComplexity int) int
+		Cluster     func(childComplexity int) int
 		Description func(childComplexity int) int
 		DisplayName func(childComplexity int) int
 		ID          func(childComplexity int) int
@@ -259,6 +268,7 @@ type ComplexityRoot struct {
 		CoreApps                    func(childComplexity int, projectID repos.ID, search *string) int
 		CoreConfig                  func(childComplexity int, configID repos.ID) int
 		CoreConfigs                 func(childComplexity int, projectID repos.ID, search *string) int
+		CoreGetComputePlans         func(childComplexity int) int
 		CoreProject                 func(childComplexity int, projectID repos.ID) int
 		CoreProjects                func(childComplexity int, accountID *repos.ID) int
 		CoreRouter                  func(childComplexity int, routerID repos.ID) int
@@ -266,6 +276,7 @@ type ComplexityRoot struct {
 		CoreSecret                  func(childComplexity int, secretID repos.ID) int
 		CoreSecrets                 func(childComplexity int, projectID repos.ID, search *string) int
 		InfraGetCluster             func(childComplexity int, clusterID repos.ID) int
+		InfraGetClusters            func(childComplexity int) int
 		ManagedResGetResource       func(childComplexity int, resID repos.ID, nextVersion *bool) int
 		ManagedResListResources     func(childComplexity int, installationID repos.ID) int
 		ManagedSvcGetInstallation   func(childComplexity int, installationID repos.ID, nextVersion *bool) int
@@ -332,6 +343,7 @@ type DeviceResolver interface {
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error)
+	FindComputePlanByName(ctx context.Context, name string) (*model.ComputePlan, error)
 	FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error)
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
@@ -348,12 +360,12 @@ type MutationResolver interface {
 	ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error)
 	ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error)
 	ManagedResDelete(ctx context.Context, resID repos.ID) (*bool, error)
-	InfraCreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error)
+	InfraCreateCluster(ctx context.Context, name string, provider string, region string, clusterType string) (*model.Cluster, error)
 	InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (bool, error)
 	InfraDeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error)
 	InfraAddDevice(ctx context.Context, clusterID repos.ID, accountID repos.ID, name string) (*model.Device, error)
 	InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
-	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string) (*model.Project, error)
+	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error)
 	CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
 	CoreDeleteProject(ctx context.Context, projectID repos.ID) (bool, error)
 	IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
@@ -393,7 +405,9 @@ type QueryResolver interface {
 	ManagedSvcListInstallations(ctx context.Context, projectID repos.ID) ([]*model.ManagedSvc, error)
 	ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error)
 	ManagedResListResources(ctx context.Context, installationID repos.ID) ([]*model.ManagedRes, error)
+	InfraGetClusters(ctx context.Context) ([]*model.Cluster, error)
 	InfraGetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error)
+	CoreGetComputePlans(ctx context.Context) ([]*model.ComputePlan, error)
 }
 type UserResolver interface {
 	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
@@ -638,26 +652,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cluster.ID(childComplexity), true
 
-	case "Cluster.ip":
-		if e.complexity.Cluster.IP == nil {
-			break
-		}
-
-		return e.complexity.Cluster.IP(childComplexity), true
-
 	case "Cluster.name":
 		if e.complexity.Cluster.Name == nil {
 			break
 		}
 
 		return e.complexity.Cluster.Name(childComplexity), true
-
-	case "Cluster.nodesCount":
-		if e.complexity.Cluster.NodesCount == nil {
-			break
-		}
-
-		return e.complexity.Cluster.NodesCount(childComplexity), true
 
 	case "Cluster.provider":
 		if e.complexity.Cluster.Provider == nil {
@@ -672,13 +672,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Cluster.Region(childComplexity), true
-
-	case "Cluster.status":
-		if e.complexity.Cluster.Status == nil {
-			break
-		}
-
-		return e.complexity.Cluster.Status(childComplexity), true
 
 	case "ClusterSubscription.account":
 		if e.complexity.ClusterSubscription.Account == nil {
@@ -735,6 +728,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ComputeInventoryMetricSize.Unit(childComplexity), true
+
+	case "ComputePlan.dedicatedEnabled":
+		if e.complexity.ComputePlan.DedicatedEnabled == nil {
+			break
+		}
+
+		return e.complexity.ComputePlan.DedicatedEnabled(childComplexity), true
+
+	case "ComputePlan.desc":
+		if e.complexity.ComputePlan.Desc == nil {
+			break
+		}
+
+		return e.complexity.ComputePlan.Desc(childComplexity), true
+
+	case "ComputePlan.maxDedicatedCPUPerPod":
+		if e.complexity.ComputePlan.MaxDedicatedCPUPerPod == nil {
+			break
+		}
+
+		return e.complexity.ComputePlan.MaxDedicatedCPUPerPod(childComplexity), true
+
+	case "ComputePlan.maxSharedCPUPerPod":
+		if e.complexity.ComputePlan.MaxSharedCPUPerPod == nil {
+			break
+		}
+
+		return e.complexity.ComputePlan.MaxSharedCPUPerPod(childComplexity), true
+
+	case "ComputePlan.memoryPerVCPUCpu":
+		if e.complexity.ComputePlan.MemoryPerVCPUCpu == nil {
+			break
+		}
+
+		return e.complexity.ComputePlan.MemoryPerVCPUCpu(childComplexity), true
+
+	case "ComputePlan.name":
+		if e.complexity.ComputePlan.Name == nil {
+			break
+		}
+
+		return e.complexity.ComputePlan.Name(childComplexity), true
+
+	case "ComputePlan.sharingEnabled":
+		if e.complexity.ComputePlan.SharingEnabled == nil {
+			break
+		}
+
+		return e.complexity.ComputePlan.SharingEnabled(childComplexity), true
 
 	case "Config.description":
 		if e.complexity.Config.Description == nil {
@@ -857,6 +899,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindClusterByID(childComplexity, args["id"].(repos.ID)), true
+
+	case "Entity.findComputePlanByName":
+		if e.complexity.Entity.FindComputePlanByName == nil {
+			break
+		}
+
+		args, err := ec.field_Entity_findComputePlanByName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Entity.FindComputePlanByName(childComplexity, args["name"].(string)), true
 
 	case "Entity.findDeviceByID":
 		if e.complexity.Entity.FindDeviceByID == nil {
@@ -1091,7 +1145,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateProject(childComplexity, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string)), true
+		return e.complexity.Mutation.CoreCreateProject(childComplexity, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string), args["cluster"].(*string)), true
 
 	case "Mutation.core_createRouter":
 		if e.complexity.Mutation.CoreCreateRouter == nil {
@@ -1307,7 +1361,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraCreateCluster(childComplexity, args["name"].(string), args["provider"].(string), args["region"].(string), args["nodesCount"].(int)), true
+		return e.complexity.Mutation.InfraCreateCluster(childComplexity, args["name"].(string), args["provider"].(string), args["region"].(string), args["clusterType"].(string)), true
 
 	case "Mutation.infra_deleteCluster":
 		if e.complexity.Mutation.InfraDeleteCluster == nil {
@@ -1423,6 +1477,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Project.Account(childComplexity), true
+
+	case "Project.cluster":
+		if e.complexity.Project.Cluster == nil {
+			break
+		}
+
+		return e.complexity.Project.Cluster(childComplexity), true
 
 	case "Project.description":
 		if e.complexity.Project.Description == nil {
@@ -1549,6 +1610,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreConfigs(childComplexity, args["projectId"].(repos.ID), args["search"].(*string)), true
 
+	case "Query.core_getComputePlans":
+		if e.complexity.Query.CoreGetComputePlans == nil {
+			break
+		}
+
+		return e.complexity.Query.CoreGetComputePlans(childComplexity), true
+
 	case "Query.core_project":
 		if e.complexity.Query.CoreProject == nil {
 			break
@@ -1632,6 +1700,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.InfraGetCluster(childComplexity, args["clusterId"].(repos.ID)), true
+
+	case "Query.infra_getClusters":
+		if e.complexity.Query.InfraGetClusters == nil {
+			break
+		}
+
+		return e.complexity.Query.InfraGetClusters(childComplexity), true
 
 	case "Query.managedRes_getResource":
 		if e.complexity.Query.ManagedResGetResource == nil {
@@ -1937,7 +2012,10 @@ type Query {
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
+  infra_getClusters: [Cluster]
   infra_getCluster(clusterId: ID!): Cluster
+
+  core_getComputePlans: [ComputePlan!]
 }
 
 type ManagedRes {
@@ -1972,14 +2050,27 @@ type Mutation {
   managedRes_update(resId: ID!, values: Json): Boolean!
   managedRes_delete(resId: ID!): Boolean
 
-  infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
+  infra_createCluster(name: String!, provider: String!, region: String!, clusterType: String!): Cluster!
   infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Boolean!
   infra_deleteCluster(clusterId: ID!): Boolean!
   infra_addDevice(clusterId: ID!, accountId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
 
-  core_createProject(accountId: ID!, name: String!, displayName: String!, logo: String, description: String): Project!
-  core_updateProject(projectId: ID!, displayName: String, cluster: String, logo: String, description: String): Boolean!
+  core_createProject(
+    accountId: ID!,
+    name: String!,
+    displayName: String!,
+    logo: String,
+    description: String,
+    cluster: String,
+  ): Project!
+  core_updateProject(
+    projectId: ID!,
+    displayName: String,
+    cluster: String,
+    logo: String,
+    description: String
+  ): Boolean!
   core_deleteProject(projectId: ID!): Boolean!
 
   iam_inviteProjectMember(projectId: ID!, email: String!, role: String!): Boolean!
@@ -2009,12 +2100,20 @@ type Mutation {
   core_updateConfig(configId: ID!, description:String, data: [CSEntryIn!]): Boolean!
   core_deleteConfig(configId: ID!): Boolean!
 
-
-
   core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
+  
+}
 
+type ComputePlan @key(fields: "name"){
+  name: String!
+  desc: String!
+  sharingEnabled: Boolean!
+  dedicatedEnabled: Boolean!
+  memoryPerVCPUCpu: Int!
+  maxDedicatedCPUPerPod: Int!
+  maxSharedCPUPerPod: Int!
 }
 
 input AppInput{
@@ -2176,6 +2275,7 @@ type Project {
   account: Account!
   memberships: [ProjectMembership!]!
   status: String!
+  cluster: String
 }
 
 type ProjectMembership {
@@ -2254,9 +2354,6 @@ type Cluster @key(fields: "id") {
   name: String!
   provider: String!
   region: String!
-  ip: String
-  nodesCount: Int!
-  status: String!
 }
 
 type Device @key(fields: "id") {
@@ -2281,12 +2378,13 @@ directive @extends on OBJECT | INTERFACE
 `, BuiltIn: true},
 	{Name: "federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Account | Cluster | Device | User
+union _Entity = Account | Cluster | ComputePlan | Device | User
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
 		findAccountByID(id: ID!,): Account!
 	findClusterByID(id: ID!,): Cluster!
+	findComputePlanByName(name: String!,): ComputePlan!
 	findDeviceByID(id: ID!,): Device!
 	findUserByID(id: ID!,): User!
 
@@ -2335,6 +2433,21 @@ func (ec *executionContext) field_Entity_findClusterByID_args(ctx context.Contex
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Entity_findComputePlanByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -2482,6 +2595,15 @@ func (ec *executionContext) field_Mutation_core_createProject_args(ctx context.C
 		}
 	}
 	args["description"] = arg4
+	var arg5 *string
+	if tmp, ok := rawArgs["cluster"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cluster"] = arg5
 	return args, nil
 }
 
@@ -3004,15 +3126,15 @@ func (ec *executionContext) field_Mutation_infra_createCluster_args(ctx context.
 		}
 	}
 	args["region"] = arg2
-	var arg3 int
-	if tmp, ok := rawArgs["nodesCount"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodesCount"))
-		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+	var arg3 string
+	if tmp, ok := rawArgs["clusterType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterType"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["nodesCount"] = arg3
+	args["clusterType"] = arg3
 	return args, nil
 }
 
@@ -4795,108 +4917,6 @@ func (ec *executionContext) _Cluster_region(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Cluster_ip(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IP, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cluster_nodesCount(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.NodesCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cluster_status(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _ClusterSubscription_cluster(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSubscription) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5169,6 +5189,251 @@ func (ec *executionContext) _ComputeInventoryMetricSize_unit(ctx context.Context
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputePlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputePlan_desc(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputePlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Desc, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputePlan_sharingEnabled(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputePlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SharingEnabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputePlan_dedicatedEnabled(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputePlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DedicatedEnabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputePlan_memoryPerVCPUCpu(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputePlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MemoryPerVCPUCpu, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputePlan_maxDedicatedCPUPerPod(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputePlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxDedicatedCPUPerPod, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ComputePlan_maxSharedCPUPerPod(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ComputePlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxSharedCPUPerPod, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Config_id(ctx context.Context, field graphql.CollectedField, obj *model.Config) (ret graphql.Marshaler) {
@@ -5740,6 +6005,48 @@ func (ec *executionContext) _Entity_findClusterByID(ctx context.Context, field g
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entity_findComputePlanByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entity",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Entity_findComputePlanByName_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Entity().FindComputePlanByName(rctx, args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ComputePlan)
+	fc.Result = res
+	return ec.marshalNComputePlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findDeviceByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6963,7 +7270,7 @@ func (ec *executionContext) _Mutation_infra_createCluster(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraCreateCluster(rctx, args["name"].(string), args["provider"].(string), args["region"].(string), args["nodesCount"].(int))
+		return ec.resolvers.Mutation().InfraCreateCluster(rctx, args["name"].(string), args["provider"].(string), args["region"].(string), args["clusterType"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7173,7 +7480,7 @@ func (ec *executionContext) _Mutation_core_createProject(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreCreateProject(rctx, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string))
+		return ec.resolvers.Mutation().CoreCreateProject(rctx, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string), args["cluster"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8255,6 +8562,38 @@ func (ec *executionContext) _Project_status(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Project_cluster(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cluster, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ProjectMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -8997,6 +9336,38 @@ func (ec *executionContext) _Query_managedRes_listResources(ctx context.Context,
 	return ec.marshalOManagedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_infra_getClusters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().InfraGetClusters(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Cluster)
+	fc.Result = res
+	return ec.marshalOCluster2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_infra_getCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -9034,6 +9405,38 @@ func (ec *executionContext) _Query_infra_getCluster(ctx context.Context, field g
 	res := resTmp.(*model.Cluster)
 	fc.Result = res
 	return ec.marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_core_getComputePlans(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreGetComputePlans(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ComputePlan)
+	fc.Result = res
+	return ec.marshalOComputePlan2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlanᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11511,6 +11914,13 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._Cluster(ctx, sel, obj)
+	case model.ComputePlan:
+		return ec._ComputePlan(ctx, sel, &obj)
+	case *model.ComputePlan:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ComputePlan(ctx, sel, obj)
 	case model.Device:
 		return ec._Device(ctx, sel, &obj)
 	case *model.Device:
@@ -12043,33 +12453,6 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "ip":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_ip(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		case "nodesCount":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_nodesCount(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "status":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_status(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12230,6 +12613,97 @@ func (ec *executionContext) _ComputeInventoryMetricSize(ctx context.Context, sel
 		case "unit":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._ComputeInventoryMetricSize_unit(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var computePlanImplementors = []string{"ComputePlan", "_Entity"}
+
+func (ec *executionContext) _ComputePlan(ctx context.Context, sel ast.SelectionSet, obj *model.ComputePlan) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, computePlanImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComputePlan")
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputePlan_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "desc":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputePlan_desc(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "sharingEnabled":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputePlan_sharingEnabled(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "dedicatedEnabled":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputePlan_dedicatedEnabled(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "memoryPerVCPUCpu":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputePlan_memoryPerVCPUCpu(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "maxDedicatedCPUPerPod":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputePlan_maxDedicatedCPUPerPod(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "maxSharedCPUPerPod":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ComputePlan_maxSharedCPUPerPod(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -12519,6 +12993,29 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 					}
 				}()
 				res = ec._Entity_findClusterByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "findComputePlanByName":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Entity_findComputePlanByName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -13404,6 +13901,13 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "cluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Project_cluster(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13832,6 +14336,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "infra_getClusters":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getClusters(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "infra_getCluster":
 			field := field
 
@@ -13842,6 +14366,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_infra_getCluster(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_getComputePlans":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getComputePlans(ctx, field)
 				return res
 			}
 
@@ -15001,6 +15545,20 @@ func (ec *executionContext) marshalNComputeInventoryMetricSize2ᚖkloudliteᚗio
 	return ec._ComputeInventoryMetricSize(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNComputePlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx context.Context, sel ast.SelectionSet, v model.ComputePlan) graphql.Marshaler {
+	return ec._ComputePlan(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNComputePlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx context.Context, sel ast.SelectionSet, v *model.ComputePlan) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ComputePlan(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNConfig2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v model.Config) graphql.Marshaler {
 	return ec._Config(ctx, sel, &v)
 }
@@ -16054,11 +16612,99 @@ func (ec *executionContext) unmarshalOCSEntryIn2ᚕᚖkloudliteᚗioᚋappsᚋco
 	return res, nil
 }
 
+func (ec *executionContext) marshalOCluster2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v []*model.Cluster) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v *model.Cluster) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Cluster(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOComputePlan2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ComputePlan) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNComputePlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx context.Context, sel ast.SelectionSet, v []*model.Device) graphql.Marshaler {

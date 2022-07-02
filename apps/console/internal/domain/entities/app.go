@@ -54,6 +54,7 @@ type ContainerIn struct {
 	EnvVars             []EnvVar
 	ComputePlanName     string
 	ComputePlanQuantity float64
+	SharingEnabled      bool
 	AttachedResources   []AttachedResource
 }
 

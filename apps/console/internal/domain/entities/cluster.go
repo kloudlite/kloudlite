@@ -11,15 +11,20 @@ const (
 	ClusterStateDown    = ClusterStatus("down")
 )
 
+type ClusterType string
+
+const (
+	ClusterTypeKubernetes = ClusterType("kubernetes")
+)
+
 type Cluster struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string        `json:"name" bson:"name"`
 	Provider         string        `json:"provider" bson:"provider"`
 	Region           string        `json:"region" bson:"region"`
-	Ip               *string       `json:"ip,omitempty" bson:"ip,omitempty"`
-	PublicKey        *string       `json:"public_key,omitempty" bson:"public_key,omitempty"`
-	NodesCount       int           `json:"nodes_count" bson:"nodes_count"`
 	Status           ClusterStatus `json:"status" bson:"status"`
+	ClusterType      ClusterType   `json:"cluster_type" bson:"cluster_type"`
+	ClusterIps       []string      `json:"cluster_ips" bson:"cluster_ips"`
 }
 
 var ClusterIndexes = []repos.IndexField{

@@ -9,13 +9,14 @@ import (
 
 type Domain interface {
 	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
-	GetComputePlans(ctx context.Context, provider string, region string) ([]*entities.ComputePlan, error)
+	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
 
 	CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
 	CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error)
 	UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
 	DeleteCluster(ctx context.Context, clusterId repos.ID) error
 	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
+	GetClusters(ctx context.Context) ([]*entities.Cluster, error)
 	ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.ClusterAccount, error)
 	OnSetupCluster(cxt context.Context, response entities.SetupClusterResponse) error
 	OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
@@ -29,7 +30,7 @@ type Domain interface {
 	ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error)
 	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
 
-	CreateProject(ctx context.Context, id repos.ID, projectName string, displayName string, logo *string, description *string) (*entities.Project, error)
+	CreateProject(ctx context.Context, id repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error)
 	GetAccountProjects(ctx context.Context, id repos.ID) ([]*entities.Project, error)
 	GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error)
 	OnUpdateProject(ctx context.Context, response *op_crds.Project) error

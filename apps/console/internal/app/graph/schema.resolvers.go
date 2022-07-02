@@ -99,13 +99,10 @@ func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model
 		return nil, err
 	}
 	return &model.Cluster{
-		ID:         clusterEntity.Id,
-		Name:       clusterEntity.Name,
-		Provider:   clusterEntity.Provider,
-		Region:     clusterEntity.Region,
-		IP:         clusterEntity.Ip,
-		NodesCount: clusterEntity.NodesCount,
-		Status:     string(clusterEntity.Status),
+		ID:       clusterEntity.Id,
+		Name:     clusterEntity.Name,
+		Provider: clusterEntity.Provider,
+		Region:   clusterEntity.Region,
 	}, nil
 }
 
@@ -198,13 +195,13 @@ func (r *mutationResolver) ManagedResDelete(ctx context.Context, resID repos.ID)
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) InfraCreateCluster(ctx context.Context, name string, provider string, region string, nodesCount int) (*model.Cluster, error) {
+func (r *mutationResolver) InfraCreateCluster(ctx context.Context, name string, provider string, region string, clusterType string) (*model.Cluster, error) {
 	cluster, err := r.Domain.CreateCluster(ctx, &entities.Cluster{
-		BaseEntity: repos.BaseEntity{},
-		Name:       name,
-		Provider:   provider,
-		Region:     region,
-		NodesCount: nodesCount,
+		BaseEntity:  repos.BaseEntity{},
+		Name:        name,
+		Provider:    provider,
+		Region:      region,
+		ClusterType: entities.ClusterType(clusterType),
 	})
 	if err != nil {
 		return nil, err
@@ -244,8 +241,8 @@ func (r *mutationResolver) InfraRemoveDevice(ctx context.Context, deviceID repos
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string) (*model.Project, error) {
-	projectEntity, err := r.Domain.CreateProject(ctx, accountID, name, displayName, logo, description)
+func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error) {
+	projectEntity, err := r.Domain.CreateProject(ctx, accountID, name, displayName, logo, *cluster, description)
 	if err != nil {
 		return nil, err
 	}
@@ -754,8 +751,40 @@ func (r *queryResolver) ManagedResListResources(ctx context.Context, installatio
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *queryResolver) InfraGetClusters(ctx context.Context) ([]*model.Cluster, error) {
+	clusterEntities, err := r.Domain.GetClusters(ctx)
+	if err != nil {
+		return nil, err
+	}
+	clusters := make([]*model.Cluster, 0)
+	for _, i := range clusterEntities {
+		clusters = append(clusters, clusterModelFromEntity(i))
+	}
+	return clusters, nil
+}
+
 func (r *queryResolver) InfraGetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreGetComputePlans(ctx context.Context) ([]*model.ComputePlan, error) {
+	planEntities, err := r.Domain.GetComputePlans(ctx)
+	if err != nil {
+		return nil, err
+	}
+	plans := make([]*model.ComputePlan, 0)
+	for _, i := range planEntities {
+		plans = append(plans, &model.ComputePlan{
+			Name:                  i.Name,
+			Desc:                  i.Desc,
+			SharingEnabled:        i.SharingEnabled,
+			DedicatedEnabled:      i.DedicatedEnabled,
+			MemoryPerVCPUCpu:      int(i.MemoryPerCPU),
+			MaxSharedCPUPerPod:    int(i.MaxSharedCPUPerPod),
+			MaxDedicatedCPUPerPod: int(i.MaxDedicatedCPUPerPod),
+		})
+	}
+	return plans, nil
 }
 
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {

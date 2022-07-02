@@ -19,6 +19,18 @@ func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*mod
 	return AccountModelFromEntity(accountEntity), nil
 }
 
+func (r *entityResolver) FindComputePlanByName(ctx context.Context, name string) (*model.ComputePlan, error) {
+	byName, err := r.domain.GetComputePlanByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ComputePlan{
+		Name:           byName.Name,
+		SharedPrice:    byName.SharedPrice,
+		DedicatedPrice: byName.DedicatedPrice,
+	}, nil
+}
+
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
 	return &model.User{
 		ID: id,

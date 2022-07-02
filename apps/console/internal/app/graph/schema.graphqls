@@ -24,7 +24,10 @@ type Query {
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
+  infra_getClusters: [Cluster]
   infra_getCluster(clusterId: ID!): Cluster
+
+  core_getComputePlans: [ComputePlan!]
 }
 
 type ManagedRes {
@@ -59,14 +62,27 @@ type Mutation {
   managedRes_update(resId: ID!, values: Json): Boolean!
   managedRes_delete(resId: ID!): Boolean
 
-  infra_createCluster(name: String!, provider: String!, region: String!, nodesCount: Int!): Cluster!
+  infra_createCluster(name: String!, provider: String!, region: String!, clusterType: String!): Cluster!
   infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Boolean!
   infra_deleteCluster(clusterId: ID!): Boolean!
   infra_addDevice(clusterId: ID!, accountId: ID!, name: String!): Device!
   infra_removeDevice(deviceId: ID!): Boolean!
 
-  core_createProject(accountId: ID!, name: String!, displayName: String!, logo: String, description: String): Project!
-  core_updateProject(projectId: ID!, displayName: String, cluster: String, logo: String, description: String): Boolean!
+  core_createProject(
+    accountId: ID!,
+    name: String!,
+    displayName: String!,
+    logo: String,
+    description: String,
+    cluster: String,
+  ): Project!
+  core_updateProject(
+    projectId: ID!,
+    displayName: String,
+    cluster: String,
+    logo: String,
+    description: String
+  ): Boolean!
   core_deleteProject(projectId: ID!): Boolean!
 
   iam_inviteProjectMember(projectId: ID!, email: String!, role: String!): Boolean!
@@ -96,12 +112,20 @@ type Mutation {
   core_updateConfig(configId: ID!, description:String, data: [CSEntryIn!]): Boolean!
   core_deleteConfig(configId: ID!): Boolean!
 
-
-
   core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
 
+}
+
+type ComputePlan @key(fields: "name"){
+  name: String!
+  desc: String!
+  sharingEnabled: Boolean!
+  dedicatedEnabled: Boolean!
+  memoryPerVCPUCpu: Int!
+  maxDedicatedCPUPerPod: Int!
+  maxSharedCPUPerPod: Int!
 }
 
 input AppInput{
@@ -263,6 +287,7 @@ type Project {
   account: Account!
   memberships: [ProjectMembership!]!
   status: String!
+  cluster: String
 }
 
 type ProjectMembership {
@@ -341,9 +366,6 @@ type Cluster @key(fields: "id") {
   name: String!
   provider: String!
   region: String!
-  ip: String
-  nodesCount: Int!
-  status: String!
 }
 
 type Device @key(fields: "id") {

@@ -39,6 +39,14 @@ type BillingInput struct {
 	Address             map[string]interface{} `json:"address"`
 }
 
+type ComputePlan struct {
+	Name           string  `json:"name"`
+	SharedPrice    float64 `json:"sharedPrice"`
+	DedicatedPrice float64 `json:"dedicatedPrice"`
+}
+
+func (ComputePlan) IsEntity() {}
+
 type User struct {
 	ID                 repos.ID             `json:"id"`
 	AccountMemberships []*AccountMembership `json:"accountMemberships"`

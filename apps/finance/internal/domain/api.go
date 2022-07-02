@@ -31,4 +31,5 @@ type Domain interface {
 	GetAccountMemberships(ctx context.Context, userId repos.ID) ([]*Membership, error)
 	GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error)
 	GetUserMemberships(ctx context.Context, resourceId repos.ID) ([]*Membership, error)
+	GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error)
 }
