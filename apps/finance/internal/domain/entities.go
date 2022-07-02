@@ -71,17 +71,8 @@ var BillableIndexes = []repos.IndexField{
 	},
 }
 
-type InventoryItem struct {
-	Type          string                 `yaml:"type"`
-	Name          string                 `yaml:"name"`
-	Provider      string                 `yaml:"provider"`
-	Desc          string                 `yaml:"desc"`
-	Data          map[string]interface{} `yaml:"data"`
-	PricePerHour  *Price                 `yaml:"pricePerHour"`
-	PricePerMonth Price                  `yaml:"pricePerMonth"`
-}
-
-type Price struct {
-	Quantity float64 `yaml:"quantity"`
-	Currency string  `yaml:"currency"`
+type ComputePlan struct {
+	Name           string  `yaml:"name"`
+	SharedPrice    float64 `yaml:"sharedPrice"`
+	DedicatedPrice float64 `yaml:"dedicatedPrice"`
 }

@@ -135,12 +135,9 @@ func deviceModelFromEntity(e *entities.Device) *model.Device {
 
 func clusterModelFromEntity(e *entities.Cluster) *model.Cluster {
 	return &model.Cluster{
-		ID:         e.Id,
-		Name:       e.Name,
-		Provider:   e.Provider,
-		Region:     e.Region,
-		IP:         e.Ip,
-		NodesCount: e.NodesCount,
-		Status:     string(e.Status),
+		ID:       e.Id,
+		Name:     e.Name,
+		Provider: e.Provider,
+		Region:   e.Region,
 	}
 }

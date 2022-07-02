@@ -60,6 +60,7 @@ type domain struct {
 	changeNotifier       rcn.ResourceChangeNotifier
 	clusterAccountRepo   repos.DbRepo[*entities.ClusterAccount]
 	financeClient        finance.FinanceClient
+	computePlansPath     string
 }
 
 func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string) error {
@@ -82,16 +83,15 @@ func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string)
 }
 
 func (d *domain) getComputePlan(name string) (*entities.ComputePlan, error) {
-	file, err := ioutil.ReadFile("compute-plans.yaml")
+	fileData, err := ioutil.ReadFile(d.computePlansPath)
 	if err != nil {
 		return nil, err
 	}
-	plans := make([]entities.ComputePlan, 0)
-	err = yaml.Unmarshal(file, &plans)
+	var plans []entities.ComputePlan
+	err = yaml.Unmarshal(fileData, &plans)
 	if err != nil {
 		return nil, err
 	}
-
 	for _, plan := range plans {
 		if plan.Name == name {
 			return &plan, nil
@@ -100,27 +100,21 @@ func (d *domain) getComputePlan(name string) (*entities.ComputePlan, error) {
 	return nil, errors.New("plan not found")
 }
 
-func (d *domain) GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error) {
+func (d *domain) GetComputePlan(_ context.Context, name string) (*entities.ComputePlan, error) {
 	return d.getComputePlan(name)
 }
 
-func (d *domain) GetComputePlans(ctx context.Context, provider string, region string) ([]*entities.ComputePlan, error) {
-	file, err := ioutil.ReadFile("compute-plans.yaml")
+func (d *domain) GetComputePlans(_ context.Context) ([]entities.ComputePlan, error) {
+	fileData, err := ioutil.ReadFile(d.computePlansPath)
 	if err != nil {
 		return nil, err
 	}
-	plans := make([]*entities.ComputePlan, 0)
-	err = yaml.Unmarshal(file, &plans)
+	var plans []entities.ComputePlan
+	err = yaml.Unmarshal(fileData, &plans)
 	if err != nil {
 		return nil, err
 	}
-	filteredPlans := make([]*entities.ComputePlan, 0)
-	for _, plan := range plans {
-		if plan.Provider == provider && plan.Region == region {
-			filteredPlans = append(filteredPlans, plan)
-		}
-	}
-	return filteredPlans, nil
+	return plans, nil
 }
 
 func (d *domain) OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error {
@@ -399,14 +393,17 @@ func (d *domain) createApp(ctx context.Context, app entities.AppIn) (*entities.A
 			ImagePullSecret: c.ImagePullSecret,
 			EnvVars:         c.EnvVars,
 			CPULimits: entities.Limit{
-				Min: fmt.Sprintf("%v%v", plan.Cpu.Quantity*c.ComputePlanQuantity, plan.Cpu.Unit),
-				Max: fmt.Sprintf("%v%v", plan.Cpu.Quantity, plan.Cpu.Unit),
+				Min: fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000, "m"),
+				Max: fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000, "m"),
 			},
 			MemoryLimits: entities.Limit{
-				Min: fmt.Sprintf("%v%v", plan.Memory.Quantity*c.ComputePlanQuantity, plan.Memory.Unit),
-				Max: fmt.Sprintf("%v%v", plan.Memory.Quantity, plan.Memory.Unit),
+				Min: fmt.Sprintf("%v%v", plan.MemoryPerCPU*c.ComputePlanQuantity, "Gi"),
+				Max: fmt.Sprintf("%v%v", plan.MemoryPerCPU*c.ComputePlanQuantity, "Gi"),
 			},
 			AttachedResources: c.AttachedResources,
+		}
+		if c.SharingEnabled {
+			container.CPULimits.Min = fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000/2, "m")
 		}
 
 		a.Containers = append(a.Containers, container)
@@ -598,7 +595,7 @@ DNS = 10.43.0.10
 PublicKey = %v
 AllowedIPs = 10.42.0.0/16, 10.43.0.0/16, 10.13.13.0/24
 Endpoint = %v:%v
-`, *device.PrivateKey, device.Ip, clusterAccount.WgPubKey, *cluster.Ip, clusterAccount.WgPort), nil
+`, *device.PrivateKey, device.Ip, clusterAccount.WgPubKey, cluster.Name, clusterAccount.WgPort), nil
 }
 
 func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error) {
@@ -1122,22 +1119,23 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 			Port: r.Port,
 		})
 	}
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), op_crds.Router{
-		APIVersion: op_crds.RouterAPIVersion,
-		Kind:       op_crds.RouterKind,
-		Metadata: op_crds.RouterMetadata{
-			Name:      create.Name,
-			Namespace: create.Namespace,
-		},
-		Spec: op_crds.RouterSpec{
-			Domains: create.Domains,
-			Routes:  rs,
-		},
-		Status: op_crds.Status{},
-	})
-	if err != nil {
-		return nil, err
-	}
+
+	//err = d.workloadMessenger.SendAction("apply", string(create.Id), op_crds.Router{
+	//	APIVersion: op_crds.RouterAPIVersion,
+	//	Kind:       op_crds.RouterKind,
+	//	Metadata: op_crds.RouterMetadata{
+	//		Name:      create.Name,
+	//		Namespace: create.Namespace,
+	//	},
+	//	Spec: op_crds.RouterSpec{
+	//		Domains: create.Domains,
+	//		Routes:  rs,
+	//	},
+	//	Status: op_crds.Status{},
+	//})
+	//if err != nil {
+	//	return nil, err
+	//}
 	return create, nil
 }
 
@@ -1319,7 +1317,7 @@ func generateReadable(name string) string {
 	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
 }
 
-func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectName string, displayName string, logo *string, description *string) (*entities.Project, error) {
+func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error) {
 	create, err := d.projectRepo.Create(ctx, &entities.Project{
 		Name:        projectName,
 		AccountId:   accountId,
@@ -1327,6 +1325,7 @@ func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectN
 		DisplayName: displayName,
 		Logo:        logo,
 		Description: description,
+		Cluster:     cluster,
 		Status:      entities.ProjectStateSyncing,
 	})
 	if err != nil {
@@ -1360,12 +1359,6 @@ func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClus
 		byId.Status = entities.ClusterStateError
 	}
 
-	if response.PublicIp != "" {
-		byId.Ip = &response.PublicIp
-	}
-	if response.PublicKey != "" {
-		byId.PublicKey = &response.PublicKey
-	}
 	_, err = d.clusterRepo.UpdateById(ctx, response.ClusterID, byId)
 	if err != nil {
 		panic(err)
@@ -1449,10 +1442,9 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 		return nil, err
 	}
 	fmt.Println(entities.SetupClusterAction{
-		ClusterID:  c.Id,
-		Region:     c.Region,
-		Provider:   c.Provider,
-		NodesCount: c.NodesCount,
+		ClusterID: c.Id,
+		Region:    c.Region,
+		Provider:  c.Provider,
 	})
 	// TODO
 	//err = SendAction(
@@ -1488,7 +1480,6 @@ func (d *domain) UpdateCluster(
 		c.Name = *name
 	}
 	if nodeCount != nil {
-		c.NodesCount = *nodeCount
 		c.Status = entities.ClusterStateSyncing
 	}
 	_, err = d.clusterRepo.UpdateById(ctx, id, c)
@@ -1539,10 +1530,6 @@ func (d *domain) ListClusterSubscriptions(ctx context.Context, accountId repos.I
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
-	cluster, e := d.clusterRepo.FindById(ctx, clusterId)
-	if e != nil {
-		return nil, fmt.Errorf("unable to fetch cluster %v", e)
-	}
 
 	clusterAccount, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
 		"cluster_id": clusterId,
@@ -1552,9 +1539,6 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 		return nil, fmt.Errorf("unable to fetch account on cluster %v", err)
 	}
 
-	if cluster.PublicKey == nil {
-		return nil, fmt.Errorf("cluster is not ready")
-	}
 	pk, e := wgtypes.GeneratePrivateKey()
 	if e != nil {
 		return nil, fmt.Errorf("unable to generate private key because %v", e)
@@ -1671,14 +1655,20 @@ func (d *domain) GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster
 	return d.clusterRepo.FindById(ctx, id)
 }
 
+func (d *domain) GetClusters(ctx context.Context) ([]*entities.Cluster, error) {
+	return d.clusterRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{},
+	})
+}
+
 func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
 	return d.deviceRepo.FindById(ctx, id)
 }
 
 type Env struct {
-	KafkaInfraTopic         string `env:"KAFKA_INFRA_TOPIC" required:"true"`
-	ManagedTemplatesPath    string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
-	ArtifactImageRepoPrefix string `env:"IMAGE_REGISTRY_PREFIX" required:"true"`
+	KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
+	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
+	ComputePlansPath     string `env:"COMPUTE_PLANS_PATH" required:"true"`
 }
 
 func fxDomain(
@@ -1703,13 +1693,10 @@ func fxDomain(
 	financeClient finance.FinanceClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 ) Domain {
-	//var x repos.DbRepo[*entities.Cluster]
-	//x = mockClusterRepo{}
 	return &domain{
 		clusterAccountRepo:   clusterAccountRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,
-		imageRepoUrlPrefix:   env.ArtifactImageRepoPrefix,
 		ciClient:             ciClient,
 		authClient:           authClient,
 		iamClient:            iamClient,
@@ -1728,6 +1715,7 @@ func fxDomain(
 		managedTemplatesPath: env.ManagedTemplatesPath,
 		logger:               logger,
 		financeClient:        financeClient,
+		computePlansPath:     env.ComputePlansPath,
 	}
 }
 

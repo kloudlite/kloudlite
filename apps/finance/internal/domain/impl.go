@@ -40,43 +40,25 @@ type domainI struct {
 	commsClient            comms.CommsClient
 	billablesRepo          repos.DbRepo[*Billable]
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
+	inventoryPath          string
 }
 
-func (domain *domainI) GetComputeInventoryByName(ctx context.Context, name string) (*InventoryItem, error) {
-	file, err := ioutil.ReadFile("./inventory.yaml")
+func (domain *domainI) GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error) {
+	fileData, err := ioutil.ReadFile(fmt.Sprint(domain.inventoryPath, "/compute.yaml"))
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*InventoryItem, 0)
-	err = yaml.Unmarshal(file, &items)
+	var items []ComputePlan
+	err = yaml.Unmarshal(fileData, &items)
 	if err != nil {
 		return nil, err
 	}
 	for _, i := range items {
 		if i.Name == name {
-			return i, nil
+			return &i, nil
 		}
 	}
 	return nil, errors.New("inventory item not found")
-}
-
-func (domain *domainI) GetComputeInventory(provider *string) ([]*InventoryItem, error) {
-	file, err := ioutil.ReadFile("./inventory.yaml")
-	if err != nil {
-		return nil, err
-	}
-	items := make([]*InventoryItem, 0)
-	err = yaml.Unmarshal(file, &items)
-	if err != nil {
-		return nil, err
-	}
-	filteredItems := make([]*InventoryItem, 0)
-	for _, i := range items {
-		if i.Provider == *provider && i.Type == "Compute" {
-			filteredItems = append(filteredItems, i)
-		}
-	}
-	return filteredItems, nil
 }
 
 func (domain *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*Billable, time.Time, error) {
@@ -249,10 +231,10 @@ func (domain *domainI) CreateAccount(
 ) (*Account, error) {
 
 	id := domain.accountRepo.NewId()
-	_, err := domain.ciClient.CreateHarborProject(ctx, &ci.HarborProjectIn{Name: string(id)})
-	if err != nil {
-		return nil, errors.NewEf(err, "harbor account could not be created")
-	}
+	//_, err := domain.ciClient.CreateHarborProject(ctx, &ci.HarborProjectIn{Name: string(id)})
+	//if err != nil {
+	//	return nil, errors.NewEf(err, "harbor account could not be created")
+	//}
 
 	acc, err := domain.accountRepo.Create(
 		ctx, &Account{
@@ -460,6 +442,7 @@ func fxDomain(
 	consoleClient console.ConsoleClient,
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
+	env *Env,
 	//commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 ) Domain {
@@ -472,5 +455,6 @@ func fxDomain(
 		nil,
 		billablesRepo,
 		accountInviteTokenRepo,
+		env.InventoryPath,
 	}
 }

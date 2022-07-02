@@ -1,0 +1,23 @@
+- name: Basic
+  desc: 1CPU, 1GB RAM
+  sharingEnabled: true
+  dedicatedEnabled: true
+  memoryPerCPU: 1.0
+  maxSharedCPUPerPod: 8.0
+  maxDedicatedCPUPerPod: 16.0
+
+- name: General
+  desc: 1CPU, 2GB RAM
+  sharingEnabled: true
+  dedicatedEnabled: true
+  memoryPerCPU: 2.0
+  maxSharedCPUPerPod: 20
+  maxDedicatedCPUPerPod: 8
+
+- name: HighMemory
+  desc: 1CPU, 4GB RAM
+  sharingEnabled: true
+  dedicatedEnabled: true
+  memoryPerCPU: 4.0
+  maxSharedCPUPerPod: 4
+  maxDedicatedCPUPerPod: 8
