@@ -1,6 +1,6 @@
 version: "3"
 
-dotenv: [".secrets/env"]
+dotenv: [".secrets/env", ".secrets/oauth.env"]
 
 tasks:
   gql:
@@ -8,8 +8,6 @@ tasks:
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
-    dotenv:
-      - .secrets/env
     sources:
       - ./internal/**/*.go
       - ./main.go
@@ -18,10 +16,9 @@ tasks:
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
 
   docker-build:
-    dir: ../..
     vars:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/ci:v2
-      APP_DIR: ./apps/ci
+      APP: ci
     cmds:
-      - docker buildx build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
       - docker push {{.IMAGE}}

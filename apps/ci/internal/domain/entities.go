@@ -32,6 +32,7 @@ type Pipeline struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string `json:"name,omitempty" bson:"name"`
 	ProjectId        string `json:"project_id,omitempty" bson:"project_id"`
+	AppId            string `json:"app_id,omitempty" bson:"app_id"`
 
 	GitProvider string `json:"git_provider,omitempty" bson:"git_provider"`
 	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
@@ -43,6 +44,9 @@ type Pipeline struct {
 	Run   ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
 
 	ArtifactRef ArtifactRef `json:"artifact_ref,omitempty" bson:"artifact_ref,omitempty"`
+
+	GithubWebhookId *int64 `json:"github_webhook_id,omitempty" bson:"github_webhook_id,omitempty"`
+	GitlabWebhookId *int   `json:"gitlab_webhook_id,omitempty" bson:"gitlab_webhook_id,omitempty"`
 
 	Metadata map[string]interface{} `json:"metadata,omitempty" bson:"metadata"`
 }

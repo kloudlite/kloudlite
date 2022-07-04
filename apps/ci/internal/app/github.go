@@ -96,7 +96,7 @@ func (gh *githubI) GetLatestCommit(ctx context.Context, repoUrl string, branchNa
 	return *branch.GetCommit().SHA, nil
 }
 
-func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, pipelineId string, repoUrl string) error {
+func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, pipelineId string, repoUrl string) (*int64, error) {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
 	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, pipelineId)
 	hookName := "kloudlite-pipeline"
@@ -117,13 +117,19 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 		// ASSERT: github returns 422 only if hook already exists on the repository
 		if res.StatusCode == 422 {
 			fmt.Printf("Hook: %+v\n", hook)
-			return nil
+			return nil, nil
 		}
-		return errors.NewEf(err, "could not create github webhook")
+		return nil, errors.NewEf(err, "could not create github webhook")
 	}
 	fmt.Printf("Hook: %+v\n", hook)
 
-	return nil
+	return hook.ID, nil
+}
+
+func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string, hookId int64) error {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	_, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, hookId)
+	return err
 }
 
 func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error) {

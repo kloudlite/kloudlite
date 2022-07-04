@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"flag"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -12,7 +11,6 @@ type Logger interface {
 	Infof(msg string, args ...any)
 	Errorf(msg string, args ...any)
 	Warnf(msg string, args ...any)
-	Printf(msg string, args ...any)
 }
 
 type customLogger struct {
@@ -35,15 +33,17 @@ func (c customLogger) Warnf(msg string, args ...any) {
 	c.zapLogger.Warnf(msg, args...)
 }
 
-func (c customLogger) Printf(msg string, args ...any) {
-	c.zapLogger.Infof(msg, args...)
+type Options struct {
+	Name string
+	Dev  bool
 }
 
-func NewLogger() (Logger, error) {
-	isDev := flag.Bool("dev", false, "development mode")
-	flag.Parse()
-
-	if *isDev {
+func NewLogger(options ...Options) (Logger, error) {
+	opts := Options{}
+	if len(options) > 0 {
+		opts = options[0]
+	}
+	if opts.Dev {
 		cfg := zap.NewDevelopmentConfig()
 		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		cfg.EncoderConfig.LineEnding = "\n\n"

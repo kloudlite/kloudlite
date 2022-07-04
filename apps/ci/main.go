@@ -6,6 +6,5 @@ import (
 )
 
 func main() {
-	module := framework.Module
-	fx.New(module).Run()
+	fx.New(framework.Module).Run()
 }

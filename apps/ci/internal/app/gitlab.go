@@ -139,6 +139,15 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, re
 	return hook, nil
 }
 
+func (gl *gitlabI) DeleteWebhook(ctx context.Context, token *domain.AccessToken, repoUrl string, hookId int) error {
+	client, err := gl.getClient(ctx, token)
+	if err != nil {
+		return err
+	}
+	_, err = client.Projects.DeleteProjectHook(gl.getRepoId(repoUrl), hookId)
+	return err
+}
+
 func (gl *gitlabI) GetLatestCommit(ctx context.Context, token *domain.AccessToken, repoUrl string,
 	branchName string) (string, error) {
 	client, err := gl.getClient(ctx, token)
@@ -154,11 +163,6 @@ func (gl *gitlabI) GetLatestCommit(ctx context.Context, token *domain.AccessToke
 		return "", err
 	}
 	return branch.Commit.ShortID, nil
-}
-
-func (gl *gitlabI) RemoveWebhook(ctx context.Context, token *domain.AccessToken) error {
-	// TODO implement me
-	panic("implement me")
 }
 
 func (gl *gitlabI) RepoToken(ctx context.Context, token *domain.AccessToken) (*oauth2.Token, error) {
