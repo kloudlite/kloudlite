@@ -188,7 +188,10 @@ func (s *server) AddMembership(ctx context.Context, in *iam.InAddMembership) (*i
 }
 
 func (s *server) RemoveMembership(ctx context.Context, in *iam.InRemoveMembership) (*iam.OutRemoveMembership, error) {
-	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{})
+	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{
+		"resource_id": in.ResourceId,
+		"user_id":     in.UserId,
+	})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not findone")
 	}
