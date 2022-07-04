@@ -17,6 +17,48 @@ import (
 	"kloudlite.io/pkg/types"
 )
 
+func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, in model.GitPipelineIn) (map[string]interface{}, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("not authorized")
+	}
+	var pipeline, err = r.Domain.CreatePipeline(
+		ctx, session.UserId, domain.Pipeline{
+			Name:        in.Name,
+			ProjectId:   in.ProjectID,
+			AppId:       string(obj.ID),
+			GitProvider: in.GitProvider,
+			GitRepoUrl:  in.GitRepoURL,
+			GitBranch:   in.GitBranch,
+			Build: domain.ContainerImageBuild{
+				BaseImage: in.Build.BaseImage,
+				Cmd:       in.Build.Cmd,
+			},
+			Run: domain.ContainerImageRun{
+				BaseImage: fn.DefaultIfNil(in.Run.BaseImage),
+				Cmd:       in.Run.Cmd,
+			},
+			ArtifactRef: domain.ArtifactRef{
+				DockerImageName: fn.DefaultIfNil(in.ArtifactRef.DockerImageName),
+				DockerImageTag:  fn.DefaultIfNil(in.ArtifactRef.DockerImageTag),
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	marshal, err := json.Marshal(pipeline)
+	if err != nil {
+		return nil, err
+	}
+	x := make(map[string]any)
+	err = json.Unmarshal(marshal, &x)
+	if err != nil {
+		return nil, err
+	}
+	return x, err
+}
+
 func (r *mutationResolver) CiDeletePipeline(ctx context.Context, pipelineID repos.ID) (bool, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if err := r.Domain.DeletePipeline(ctx, session.UserId, pipelineID); err != nil {
@@ -162,11 +204,15 @@ func (r *queryResolver) CiTriggerPipeline(ctx context.Context, pipelineID repos.
 	return fn.New(true), nil
 }
 
+// App returns generated.AppResolver implementation.
+func (r *Resolver) App() generated.AppResolver { return &appResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type appResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

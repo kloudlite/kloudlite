@@ -6,6 +6,13 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type App struct {
+	ID               repos.ID               `json:"id"`
+	CiCreatePipeLine map[string]interface{} `json:"ci_createPipeLine"`
+}
+
+func (App) IsEntity() {}
+
 type GitPipeline struct {
 	ID          repos.ID               `json:"id"`
 	RepoName    string                 `json:"repoName"`

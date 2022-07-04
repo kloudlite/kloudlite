@@ -45,6 +45,10 @@ autobind:
 # your liking
 skip_validation: true
 models:
+  App:
+    fields:
+      ci_createPipeLine:
+        resolver: true
   ID:
     model:
       - kloudlite.io/pkg/repos.ID

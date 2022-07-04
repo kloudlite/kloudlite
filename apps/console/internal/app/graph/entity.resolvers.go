@@ -16,6 +16,10 @@ func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*mod
 	return &model.Account{ID: id}, nil
 }
 
+func (r *entityResolver) FindAppByID(ctx context.Context, id repos.ID) (*model.App, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *entityResolver) FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error) {
 	return r.Query().InfraGetCluster(ctx, id)
 }

@@ -28,6 +28,8 @@ type App struct {
 	Status      string            `json:"status"`
 }
 
+func (App) IsEntity() {}
+
 type AppContainer struct {
 	Name              string         `json:"name"`
 	Image             *string        `json:"image"`

@@ -162,6 +162,7 @@ type ComplexityRoot struct {
 
 	Entity struct {
 		FindAccountByID       func(childComplexity int, id repos.ID) int
+		FindAppByID           func(childComplexity int, id repos.ID) int
 		FindClusterByID       func(childComplexity int, id repos.ID) int
 		FindComputePlanByName func(childComplexity int, name string) int
 		FindDeviceByID        func(childComplexity int, id repos.ID) int
@@ -342,6 +343,7 @@ type DeviceResolver interface {
 }
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
+	FindAppByID(ctx context.Context, id repos.ID) (*model.App, error)
 	FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error)
 	FindComputePlanByName(ctx context.Context, name string) (*model.ComputePlan, error)
 	FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error)
@@ -887,6 +889,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindAccountByID(childComplexity, args["id"].(repos.ID)), true
+
+	case "Entity.findAppByID":
+		if e.complexity.Entity.FindAppByID == nil {
+			break
+		}
+
+		args, err := ec.field_Entity_findAppByID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Entity.FindAppByID(childComplexity, args["id"].(repos.ID)), true
 
 	case "Entity.findClusterByID":
 		if e.complexity.Entity.FindClusterByID == nil {
@@ -2103,7 +2117,7 @@ type Mutation {
   core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
-  
+
 }
 
 type ComputePlan @key(fields: "name"){
@@ -2126,7 +2140,7 @@ input AppInput{
   region: String!
 }
 
-type App {
+type App @key(fields: "id") {
   id: ID!
   name: String!
   namespace: String!
@@ -2378,11 +2392,12 @@ directive @extends on OBJECT | INTERFACE
 `, BuiltIn: true},
 	{Name: "federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Account | Cluster | ComputePlan | Device | User
+union _Entity = Account | App | Cluster | ComputePlan | Device | User
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
 		findAccountByID(id: ID!,): Account!
+	findAppByID(id: ID!,): App!
 	findClusterByID(id: ID!,): Cluster!
 	findComputePlanByName(name: String!,): ComputePlan!
 	findDeviceByID(id: ID!,): Device!
@@ -2407,6 +2422,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // region    ***************************** args.gotpl *****************************
 
 func (ec *executionContext) field_Entity_findAccountByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Entity_findAppByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -5963,6 +5993,48 @@ func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field g
 	res := resTmp.(*model.Account)
 	fc.Result = res
 	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entity_findAppByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entity",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Entity_findAppByID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Entity().FindAppByID(rctx, args["id"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.App)
+	fc.Result = res
+	return ec.marshalNApp2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findClusterByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11907,6 +11979,13 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._Account(ctx, sel, obj)
+	case model.App:
+		return ec._App(ctx, sel, &obj)
+	case *model.App:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._App(ctx, sel, obj)
 	case model.Cluster:
 		return ec._Cluster(ctx, sel, &obj)
 	case *model.Cluster:
@@ -12015,7 +12094,7 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var appImplementors = []string{"App"}
+var appImplementors = []string{"App", "_Entity"}
 
 func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj *model.App) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, appImplementors)
@@ -12970,6 +13049,29 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 					}
 				}()
 				res = ec._Entity_findAccountByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "findAppByID":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Entity_findAppByID(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
