@@ -138,7 +138,7 @@ input AppInput{
   region: String!
 }
 
-type App {
+type App @key(fields: "id") {
   id: ID!
   name: String!
   namespace: String!
