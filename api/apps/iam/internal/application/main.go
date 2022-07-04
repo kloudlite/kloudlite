@@ -42,6 +42,7 @@ func (s *server) ConfirmMembership(ctx context.Context, in *iam.InConfirmMembers
 }
 
 func (s *server) InviteMembership(ctx context.Context, in *iam.InAddMembership) (*iam.OutAddMembership, error) {
+	fmt.Println("InviteMembership", in)
 	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
 		"user_id":     in.UserId,
 		"resource_id": in.ResourceId,
