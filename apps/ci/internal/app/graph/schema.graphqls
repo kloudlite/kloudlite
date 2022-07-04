@@ -100,6 +100,11 @@ type GitPipeline {
   metadata: Json
 }
 
+extend type App @key(fields: "id") {
+  id: ID! @external
+  ci_createPipeLine(in: GitPipelineIn!): Json
+}
+
 type Mutation {
   ci_deletePipeline(pipelineId: ID!): Boolean!
   ci_createPipeline(in: GitPipelineIn!): Json!
