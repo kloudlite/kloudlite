@@ -7,8 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
@@ -19,8 +17,12 @@ import (
 	"kloudlite.io/pkg/types"
 )
 
-func (r *mutationResolver) CiDeleteGitPipeline(ctx context.Context, pipelineID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CiDeletePipeline(ctx context.Context, pipelineID repos.ID) (bool, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if err := r.Domain.DeletePipeline(ctx, session.UserId, pipelineID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPipelineIn) (map[string]interface{}, error) {
@@ -31,7 +33,8 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 	var pipeline, err = r.Domain.CreatePipeline(
 		ctx, session.UserId, domain.Pipeline{
 			Name:        in.Name,
-			ProjectId:   fn.DefaultIfNil(in.ProjectID),
+			ProjectId:   in.ProjectID,
+			AppId:       in.AppID,
 			GitProvider: in.GitProvider,
 			GitRepoUrl:  in.GitRepoURL,
 			GitBranch:   in.GitBranch,
@@ -149,6 +152,14 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		GitRepoURL:  pipelineE.GitRepoUrl,
 		Metadata:    pipelineE.Metadata,
 	}, nil
+}
+
+func (r *queryResolver) CiTriggerPipeline(ctx context.Context, pipelineID repos.ID) (*bool, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if err := r.Domain.TriggerPipeline(ctx, session.UserId, pipelineID); err != nil {
+		return fn.New(false), err
+	}
+	return fn.New(true), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

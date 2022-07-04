@@ -290,12 +290,18 @@ func (d *domainI) GitlabListBranches(ctx context.Context, userId repos.ID, repoI
 	return d.gitlab.ListBranches(ctx, token, repoId, query, pagination)
 }
 
-func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId string) (*gitlab.ProjectHook, error) {
+func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID) error {
 	token, err := d.getAccessToken(ctx, "gitlab", userId)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return d.gitlab.AddWebhook(ctx, token, repoId, pipelineId)
+	webhook, err := d.gitlab.AddWebhook(ctx, token, repoId, string(pipelineId))
+	_, err = d.pipelineRepo.UpdateById(
+		ctx, pipelineId, &Pipeline{
+			GitlabWebhookId: &webhook.ID,
+		},
+	)
+	return err
 }
 
 func (d *domainI) SaveUserAcc(ctx context.Context, acc *HarborAccount) error {
@@ -349,12 +355,22 @@ func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoU
 	return d.github.ListBranches(ctx, token, repoUrl, pagination)
 }
 
-func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId string, repoUrl string) error {
+func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) error {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
 		return err
 	}
-	return d.github.AddWebhook(ctx, token, pipelineId, repoUrl)
+	hookId, err := d.github.AddWebhook(ctx, token, string(pipelineId), repoUrl)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.pipelineRepo.UpdateById(
+		ctx, pipelineId, &Pipeline{
+			GithubWebhookId: hookId,
+		},
+	)
+	return err
 }
 
 func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (any, error) {
@@ -390,11 +406,28 @@ func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, 
 }
 
 func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error) {
-	pipeline.Id = d.pipelineRepo.NewId()
+	exP, err := d.pipelineRepo.FindOne(
+		ctx, repos.Filter{
+			"git_repo_url": pipeline.GitRepoUrl,
+			"git_branch":   pipeline.GitBranch,
+			"git_provider": pipeline.GitProvider,
+			"project_id":   pipeline.ProjectId,
+			"app_id":       pipeline.AppId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if exP == nil {
+		pipeline.Id = exP.Id
+	} else {
+		pipeline.Id = d.pipelineRepo.NewId()
+	}
 
 	latestCommit := ""
 	if pipeline.GitProvider == common.ProviderGithub {
-		err := d.GithubAddWebhook(ctx, userId, string(pipeline.Id), pipeline.GitRepoUrl)
+		err := d.GithubAddWebhook(ctx, userId, pipeline.Id, pipeline.GitRepoUrl)
 		if err != nil {
 			return nil, err
 		}
@@ -412,7 +445,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		}
 		pipeline.GitlabTokenId = string(token.Id)
 		// TODO check webhook id
-		_, err = d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), string(pipeline.Id))
+		err = d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), pipeline.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -424,7 +457,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		latestCommit = commit
 	}
 
-	p, err := d.pipelineRepo.Create(ctx, &pipeline)
+	p, err := d.pipelineRepo.Upsert(ctx, repos.Filter{"id": pipeline.Id}, &pipeline)
 	if err != nil {
 		return nil, err
 	}
@@ -434,7 +467,62 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 	return p, nil
 }
 
-// func (d *domainI) TriggerPipeline() (*Pipeline, error) {}
+func (d *domainI) DeletePipeline(ctx context.Context, userId, pipelineId repos.ID) error {
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+	if err != nil {
+		return err
+	}
+
+	if pipeline.GitProvider == common.ProviderGithub {
+		token, err := d.getAccessToken(ctx, "github", userId)
+		if err != nil {
+			return err
+		}
+		if err := d.github.DeleteWebhook(ctx, token, pipeline.GitRepoUrl, *pipeline.GithubWebhookId); err != nil {
+			return err
+		}
+	}
+
+	if pipeline.GitProvider == common.ProviderGitlab {
+		token, err := d.getAccessToken(ctx, "gitlab", userId)
+		if err != nil {
+			return err
+		}
+		if err := d.gitlab.DeleteWebhook(ctx, token, pipeline.GitRepoUrl, *pipeline.GitlabWebhookId); err != nil {
+			return err
+		}
+	}
+
+	return d.pipelineRepo.DeleteById(ctx, pipelineId)
+}
+
+func (d *domainI) TriggerPipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error {
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+	if err != nil {
+		return err
+	}
+
+	var latestCommit string
+	if pipeline.GitProvider == common.ProviderGithub {
+		latestCommit, err = d.github.GetLatestCommit(ctx, pipeline.GitRepoUrl, pipeline.GitBranch)
+		if err != nil {
+			return errors.NewEf(err, "getting latest commit")
+		}
+	}
+
+	if pipeline.GitProvider == common.ProviderGitlab {
+		token, err := d.getAccessToken(ctx, pipeline.GitProvider, userId)
+		if err != nil {
+			return err
+		}
+		latestCommit, err = d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
+		if err != nil {
+			return errors.NewEf(err, "getting latest commit")
+		}
+	}
+
+	return pipeline.TriggerHook(latestCommit)
+}
 
 func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error) {
 	id, err := d.pipelineRepo.FindById(ctx, pipelineId)
