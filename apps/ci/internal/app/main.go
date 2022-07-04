@@ -169,7 +169,7 @@ var Module = fx.Module(
 							}
 							fmt.Printf("jsonBody: %s\n", jsonBody)
 							return ctx.Send(jsonBody)
-							return ctx.JSON(resp)
+							// return ctx.JSON(resp)
 						}
 					}
 
