@@ -3,13 +3,20 @@ package stripe
 import (
 	"fmt"
 	"github.com/stripe/stripe-go"
+	fn "kloudlite.io/pkg/functions"
 )
 
-type Customer struct {
-	StripeCustomerId string
+type CustomerId string
+
+func (c *CustomerId) Str() string {
+	return string(*c)
 }
 
-func (c *Client) NewCustomer(accountId string, paymentMethodId string) (*Customer, error) {
+func (c *CustomerId) StrP() *string {
+	return fn.New(string(*c))
+}
+
+func (c *Client) NewCustomer(accountId string, paymentMethodId string) (*CustomerId, error) {
 	customer, err := c.stripe.Customers.New(
 		&stripe.CustomerParams{
 			Name:          &accountId,
@@ -20,11 +27,11 @@ func (c *Client) NewCustomer(accountId string, paymentMethodId string) (*Custome
 	if err != nil {
 		return nil, err
 	}
-	return &Customer{StripeCustomerId: customer.ID}, nil
+	return fn.New(CustomerId(customer.ID)), nil
 }
 
-func (c *Client) DeleteCustomer(cus *Customer) error {
-	if _, err := c.stripe.Customers.Del(cus.StripeCustomerId, &stripe.CustomerParams{}); err != nil {
+func (c *Client) DeleteCustomer(cus CustomerId) error {
+	if _, err := c.stripe.Customers.Del(cus.Str(), &stripe.CustomerParams{}); err != nil {
 		return err
 	}
 	return nil

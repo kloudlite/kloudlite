@@ -17,6 +17,7 @@ type Github interface {
 	SearchRepos(ctx context.Context, accToken *AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error)
 	ListBranches(ctx context.Context, accToken *AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error)
 	AddWebhook(ctx context.Context, accToken *AccessToken, pipelineId string, repoUrl string) error
+	GetLatestCommit(ctx context.Context, repoUrl string, branchName string) (string, error)
 }
 
 type Gitlab interface {
@@ -28,4 +29,5 @@ type Gitlab interface {
 	RemoveWebhook(ctx context.Context, token *AccessToken) error
 	RepoToken(ctx context.Context, token *AccessToken) (*oauth2.Token, error)
 	GetRepoId(repoUrl string) string
+	GetLatestCommit(ctx context.Context, token *AccessToken, repoUrl string, branchName string) (string, error)
 }
