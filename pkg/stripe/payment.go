@@ -5,6 +5,8 @@ import (
 	"math"
 )
 
+// Note: [Future Payment save & reuse](https://stripe.com/docs/payments/save-and-reuse?html-or-react=react)
+
 // Note: [Stripe Docs Ref](https://stripe.com/docs/api/charges)
 
 type CardId string

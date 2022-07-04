@@ -392,11 +392,17 @@ func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, 
 func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error) {
 	pipeline.Id = d.pipelineRepo.NewId()
 
+	latestCommit := ""
 	if pipeline.GitProvider == common.ProviderGithub {
 		err := d.GithubAddWebhook(ctx, userId, string(pipeline.Id), pipeline.GitRepoUrl)
 		if err != nil {
 			return nil, err
 		}
+		commit, err := d.github.GetLatestCommit(ctx, pipeline.GitRepoUrl, pipeline.GitBranch)
+		if err != nil {
+			return nil, err
+		}
+		latestCommit = commit
 	}
 
 	if pipeline.GitProvider == common.ProviderGitlab {
@@ -410,17 +416,25 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		if err != nil {
 			return nil, err
 		}
+
+		commit, err := d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
+		if err != nil {
+			return nil, err
+		}
+		latestCommit = commit
 	}
 
 	p, err := d.pipelineRepo.Create(ctx, &pipeline)
 	if err != nil {
 		return nil, err
 	}
-	if err = p.TriggerHook(); err != nil {
+	if err = p.TriggerHook(latestCommit); err != nil {
 		return nil, errors.NewEf(err, "failed to trigger webhook")
 	}
 	return p, nil
 }
+
+func (d *domainI) TriggerPipeline() (*Pipeline, error) {}
 
 func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error) {
 	id, err := d.pipelineRepo.FindById(ctx, pipelineId)
