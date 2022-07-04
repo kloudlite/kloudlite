@@ -27,7 +27,7 @@ type githubI struct {
 }
 
 func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
-	re := regexp.MustCompilePOSIX("https://(.*?)/(.*)/(.*)([.]git)?")
+	re := regexp.MustCompile("https://(.*?)/([\\w|_]*)/([\\w|_]*)(\\.git)?")
 	matches := re.FindStringSubmatch(repoUrl)
 	return matches[2], matches[3]
 }
