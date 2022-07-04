@@ -63,6 +63,17 @@ type domain struct {
 	computePlansPath     string
 }
 
+func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error {
+	_, err := d.iamClient.RemoveMembership(ctx, &iam.InRemoveMembership{
+		UserId:     string(userId),
+		ResourceId: string(projectId),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string) error {
 	one, err := d.appRepo.FindOne(ctx, repos.Filter{
 		"name":      name,

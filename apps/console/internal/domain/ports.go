@@ -103,6 +103,7 @@ type Domain interface {
 	InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
 
 	UpdateResourceStatus(ctx context.Context, resourceType string, resourceNamespace string, resourceName string, status ResourceStatus) (bool, error)
+	RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error
 }
 
 type InfraActionMessage interface {
