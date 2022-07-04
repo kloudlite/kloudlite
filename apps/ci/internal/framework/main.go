@@ -24,7 +24,7 @@ type Env struct {
 	DBName        string `env:"MONGO_DB_NAME" required:"true"`
 	DBUrl         string `env:"MONGO_URI" required:"true"`
 	RedisHost     string `env:"REDIS_HOSTS" required:"true"`
-	RedisUserName string `env:"REDIS_USERNAME" required:"true""`
+	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
 	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
 	RedisPrefix   string `env:"REDIS_PREFIX" required:"true"`
 
