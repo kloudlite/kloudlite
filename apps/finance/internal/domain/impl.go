@@ -312,11 +312,12 @@ func (domain *domainI) AddAccountMember(
 	role common.Role,
 ) (bool, error) {
 	account, err := domain.accountRepo.FindById(ctx, accountId)
+	fmt.Println("sending message to console2")
 	if err != nil {
 		return false, err
 	}
-
 	byEmail, err := domain.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
+	fmt.Println("here")
 	if err != nil {
 		return false, err
 	}
@@ -332,6 +333,7 @@ func (domain *domainI) AddAccountMember(
 		return false, err
 	}
 	token := generateId("acc-invite")
+	fmt.Println("here4")
 	err = domain.accountInviteTokenRepo.Set(ctx, token, &AccountInviteToken{
 		Token:     token,
 		UserId:    repos.ID(byEmail.UserId),
