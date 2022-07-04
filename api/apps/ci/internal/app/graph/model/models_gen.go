@@ -8,6 +8,7 @@ import (
 
 type GitPipeline struct {
 	ID          repos.ID               `json:"id"`
+	RepoName    string                 `json:"repoName"`
 	Name        string                 `json:"name"`
 	GitProvider string                 `json:"gitProvider"`
 	GitRepoURL  string                 `json:"gitRepoUrl"`
@@ -39,9 +40,11 @@ type GitPipelineBuildIn struct {
 
 type GitPipelineIn struct {
 	Name        string                 `json:"name"`
-	ProjectID   *string                `json:"projectId"`
+	ProjectID   string                 `json:"projectId"`
+	AppID       string                 `json:"appId"`
 	GitProvider string                 `json:"gitProvider"`
 	GitRepoURL  string                 `json:"gitRepoUrl"`
+	RepoName    string                 `json:"repoName"`
 	GitBranch   string                 `json:"gitBranch"`
 	Build       *GitPipelineBuildIn    `json:"build"`
 	Run         *GitPipelineRunIn      `json:"run"`
@@ -56,4 +59,19 @@ type GitPipelineRun struct {
 type GitPipelineRunIn struct {
 	BaseImage *string `json:"baseImage"`
 	Cmd       string  `json:"cmd"`
+}
+
+type PipelineDataInput struct {
+	Name                 string                 `json:"name"`
+	ImageName            string                 `json:"imageName"`
+	RepoName             string                 `json:"repoName"`
+	GitProvider          string                 `json:"gitProvider"`
+	GitRepoURL           string                 `json:"gitRepoUrl"`
+	GitlabRepoID         int                    `json:"gitlabRepoId"`
+	DockerFile           string                 `json:"dockerFile"`
+	ContextDir           string                 `json:"contextDir"`
+	GithubInstallationID *int                   `json:"githubInstallationId"`
+	BuildArgs            map[string]interface{} `json:"buildArgs"`
+	Branch               string                 `json:"branch"`
+	Metadata             map[string]interface{} `json:"metadata"`
 }

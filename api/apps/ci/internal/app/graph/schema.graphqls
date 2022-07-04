@@ -15,6 +15,7 @@ type Query {
 
   ci_getPipelines(projectId: ID!): [GitPipeline!]
   ci_getPipeline(pipelineId: ID!): GitPipeline
+  ci_triggerPipeline(pipelineId: ID!): Boolean
 }
 
 input PipelineDataInput{
@@ -40,7 +41,8 @@ input PaginationIn {
 
 input GitPipelineIn {
   name: String!
-  projectId: String
+  projectId: String!
+  appId: String!
 
   gitProvider: String!
   gitRepoUrl: String!
@@ -99,6 +101,6 @@ type GitPipeline {
 }
 
 type Mutation {
-  ci_deleteGitPipeline(pipelineId: ID!): Boolean!
+  ci_deletePipeline(pipelineId: ID!): Boolean!
   ci_createPipeline(in: GitPipelineIn!): Json!
 }
