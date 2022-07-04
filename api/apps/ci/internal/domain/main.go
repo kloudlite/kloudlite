@@ -434,7 +434,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 	return p, nil
 }
 
-func (d *domainI) TriggerPipeline() (*Pipeline, error) {}
+// func (d *domainI) TriggerPipeline() (*Pipeline, error) {}
 
 func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error) {
 	id, err := d.pipelineRepo.FindById(ctx, pipelineId)
