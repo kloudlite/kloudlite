@@ -81,12 +81,12 @@ const (
 	githubWebhook string = "https://webhooks.dev.madhouselabs.io/github"
 )
 
-func (p *Pipeline) TriggerHook() error {
+func (p *Pipeline) TriggerHook(latestCommitSHA string) error {
 	var req *http.Request
 	if p.GitProvider == common.ProviderGithub {
 		body := t.M{
 			"ref":   fmt.Sprintf("refs/heads/%s", p.GitBranch),
-			"after": "",
+			"after": latestCommitSHA,
 			"repository": t.M{
 				"html_url": p.GitRepoUrl,
 			},
@@ -110,7 +110,7 @@ func (p *Pipeline) TriggerHook() error {
 
 		body := t.M{
 			"ref":          fmt.Sprintf("refs/heads/%s", p.GitBranch),
-			"checkout_sha": "",
+			"checkout_sha": latestCommitSHA,
 			"repository": t.M{
 				"git_http_url": p.GitRepoUrl,
 			},
@@ -130,13 +130,11 @@ func (p *Pipeline) TriggerHook() error {
 	}
 
 	if req != nil {
-		fmt.Println("HERE......")
 		r, err := http.DefaultClient.Do(req)
 		fmt.Printf("r: %+v | err: %v\n", r, err)
 		if err != nil {
 			return errors.NewEf(err, "while making request")
 		}
-		fmt.Println("HERE response......")
 		if r.StatusCode == http.StatusAccepted {
 			return nil
 		}

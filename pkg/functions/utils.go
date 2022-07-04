@@ -28,3 +28,7 @@ func DefaultIfNil[T any](v *T, defaultVal ...T) T {
 	}
 	return *v
 }
+
+func New[T any](v T) *T {
+	return &v
+}
