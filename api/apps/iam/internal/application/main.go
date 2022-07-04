@@ -42,6 +42,7 @@ func (s *server) ConfirmMembership(ctx context.Context, in *iam.InConfirmMembers
 }
 
 func (s *server) InviteMembership(ctx context.Context, in *iam.InAddMembership) (*iam.OutAddMembership, error) {
+	fmt.Println("InviteMembership", in)
 	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
 		"user_id":     in.UserId,
 		"resource_id": in.ResourceId,
@@ -188,7 +189,10 @@ func (s *server) AddMembership(ctx context.Context, in *iam.InAddMembership) (*i
 }
 
 func (s *server) RemoveMembership(ctx context.Context, in *iam.InRemoveMembership) (*iam.OutRemoveMembership, error) {
-	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{})
+	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{
+		"resource_id": in.ResourceId,
+		"user_id":     in.UserId,
+	})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not findone")
 	}
