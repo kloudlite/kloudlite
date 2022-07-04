@@ -27,7 +27,7 @@ type githubI struct {
 }
 
 func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
-	re := regexp.MustCompile("https://(.*?)/(.*)/(.git)?")
+	re := regexp.MustCompile("https://(.*?)/(.*)/(.*?)([.]git)?")
 	matches := re.FindStringSubmatch(repoUrl)
 	return matches[2], matches[3]
 }
@@ -85,6 +85,15 @@ func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, 
 		return nil, errors.NewEf(err, "could not list user repositories")
 	}
 	return repos, nil
+}
+
+func (gh *githubI) GetLatestCommit(ctx context.Context, repoUrl string, branchName string) (string, error) {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	branch, _, err := gh.ghCli.Repositories.GetBranch(ctx, owner, repo, branchName, true)
+	if err != nil {
+		return "", err
+	}
+	return *branch.GetCommit().SHA, nil
 }
 
 func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, pipelineId string, repoUrl string) error {
