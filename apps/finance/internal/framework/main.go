@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/finance/internal/app"
 	"kloudlite.io/pkg/cache"
@@ -13,12 +12,11 @@ import (
 )
 
 type AuthGRPCEnv struct {
-	AuthServerHost string `env:"AUTH_SERVER_HOST"`
-	AuthServerPort uint16 `env:"AUTH_SERVER_PORT"`
+	AuthService string `env:"AUTH_GRPC_SERVICE"`
 }
 
 func (e *AuthGRPCEnv) GetGCPServerURL() string {
-	return fmt.Sprintf("%v:%v", e.AuthServerHost, e.AuthServerPort)
+	return e.AuthService
 }
 
 type ConsoleGRPCEnv struct {

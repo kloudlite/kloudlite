@@ -262,7 +262,11 @@ func (r *mutationResolver) IamInviteProjectMember(ctx context.Context, projectID
 }
 
 func (r *mutationResolver) IamRemoveProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	err := r.Domain.RemoveProjectMember(ctx, projectID, userID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error) {
