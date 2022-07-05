@@ -422,20 +422,17 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 // 	return &a, nil
 // }
 
-func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App) (bool, error) {
+func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App) (*entities.App, error) {
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
-		return false, err
-	}
-	if err != nil {
-		return false, err
+		return nil, err
 	}
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
 	app.Id = appId
-	_, err = d.appRepo.UpdateById(ctx, appId, &app)
+	updatedApp, err := d.appRepo.UpdateById(ctx, appId, &app)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	// svcs := make([]op_crds.Service, 0)
@@ -490,7 +487,7 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 	// 	},
 	// })
 
-	return true, nil
+	return updatedApp, nil
 }
 
 func (d *domain) InstallApp(
