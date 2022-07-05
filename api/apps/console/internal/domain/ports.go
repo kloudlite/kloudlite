@@ -90,7 +90,7 @@ type Domain interface {
 		ctx context.Context,
 		projectId repos.ID,
 		app entities.App,
-	) (bool, error)
+	) (*entities.App, error)
 	UpdateApp(
 		ctx context.Context,
 		appId repos.ID,

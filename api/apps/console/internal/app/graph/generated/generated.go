@@ -369,7 +369,7 @@ type MutationResolver interface {
 	IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
 	IamRemoveProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID) (bool, error)
 	IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error)
-	CoreCreateApp(ctx context.Context, projectID repos.ID, app model.AppInput) (bool, error)
+	CoreCreateApp(ctx context.Context, projectID repos.ID, app model.AppInput) (*model.App, error)
 	CoreUpdateApp(ctx context.Context, projectID repos.ID, appID repos.ID, app model.AppInput) (*model.App, error)
 	CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error)
@@ -2085,7 +2085,7 @@ type Mutation {
   core_createApp(
     projectId: ID!,
     app: AppInput!,
-  ): Boolean!
+  ): App!
   core_updateApp(
     projectId: ID!,
     appId: ID!,
@@ -7726,9 +7726,9 @@ func (ec *executionContext) _Mutation_core_createApp(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*model.App)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNApp2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
