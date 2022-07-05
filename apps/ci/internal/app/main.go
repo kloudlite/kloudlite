@@ -11,7 +11,6 @@ import (
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
@@ -73,7 +72,6 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
 	repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
 
-	fx.Provide(fxCiServer),
 	fx.Provide(
 		func(conn AuthClientConnection) auth.AuthClient {
 			return auth.NewAuthClient((*grpc.ClientConn)(conn))
@@ -204,11 +202,11 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Invoke(
-		func(server *grpc.Server, ciServer ci.CIServer) {
-			ci.RegisterCIServer(server, ciServer)
-		},
-	),
+	// fx.Invoke(
+	// 	func(server *grpc.Server, ciServer ci.CIServer) {
+	// 		ci.RegisterCIServer(server, ciServer)
+	// 	},
+	// ),
 	fx.Provide(fxGitlab),
 	fx.Provide(fxGithub),
 	domain.Module,
