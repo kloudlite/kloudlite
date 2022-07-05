@@ -47,6 +47,14 @@ type ComputePlan struct {
 
 func (ComputePlan) IsEntity() {}
 
+type LamdaPlan struct {
+	Name         string  `json:"name"`
+	FreeTier     int     `json:"freeTier"`
+	PricePerGBHr float64 `json:"pricePerGBHr"`
+}
+
+func (LamdaPlan) IsEntity() {}
+
 type User struct {
 	ID                 repos.ID             `json:"id"`
 	AccountMemberships []*AccountMembership `json:"accountMemberships"`

@@ -203,6 +203,12 @@ type KVInput struct {
 	Value string `json:"value"`
 }
 
+type LamdaPlan struct {
+	Name string `json:"name"`
+}
+
+func (LamdaPlan) IsEntity() {}
+
 type ManagedRes struct {
 	ID           repos.ID               `json:"id"`
 	Name         string                 `json:"name"`
