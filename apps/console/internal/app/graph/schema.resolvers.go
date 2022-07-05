@@ -8,9 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
-
-	"golang.org/x/tools/go/analysis/passes/nilfunc"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -392,10 +389,53 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		Description: entity.Description,
 		ReadableID:  repos.ID(entity.ReadableId),
 		Replicas:    &entity.Replicas,
-		Services:    func ()[]*model.ExposedService{
-			
+		Services: func() []*model.ExposedService {
+			services := make([]*model.ExposedService, 0)
+			for _, port := range entity.ExposedPorts {
+				services = append(services, &model.ExposedService{
+					Exposed: int(port.Port),
+					Target:  int(port.TargetPort),
+					Type:    string(port.Type),
+				})
+			}
+			return services
 		}(),
-		Containers:  []*model.AppContainer{},
+		Containers: func() []*model.AppContainer {
+			containers := make([]*model.AppContainer, 0)
+			for _, container := range entity.Containers {
+				c := &model.AppContainer{
+					Name:        container.Name,
+					Image:       container.Image,
+					PullSecret:  container.ImagePullSecret,
+					ComputePlan: container.ComputePlan,
+					Quantity:    container.Quantity,
+					AttachedResources: func() []*model.AttachedRes {
+						attached := make([]*model.AttachedRes, 0)
+						for _, attachedResource := range container.AttachedResources {
+							attached = append(attached, &model.AttachedRes{
+								ResID: attachedResource.ResourceId,
+							})
+						}
+						return attached
+					}(),
+					EnvVars: func() []*model.EnvVar {
+						envVars := make([]*model.EnvVar, 0)
+						for _, envVar := range container.EnvVars {
+							envVars = append(envVars, &model.EnvVar{
+								Key: envVar.Key,
+								Value: &model.EnvVal{
+									Type:  envVar.Type,
+									Value: envVar.Value,
+								},
+							})
+						}
+						return envVars
+					}(),
+				}
+				containers = append(containers, c)
+			}
+			return containers
+		}(),
 	}, nil
 }
 
