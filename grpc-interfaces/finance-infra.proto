@@ -1,32 +1,69 @@
 syntax = "proto3";
 
-option go_package = "kloudlite.io/rpc/console";
+option go_package = "kloudlite.io/rpc/finance";
 
-service ConsoleInfra {
-  rpc UpdateStatus(StatusUpdate) returns (Void);
-
-  rpc ComputeStart() returns (ComputeResponse);
-  rpc ComputeEnd(ComputeRequest) returns (ComputeResponse);
-  rpc LambdaStart(ComputeRequest) returns (ComputeResponse);
-  rpc LambdaEnd(ComputeRequest) returns (ComputeResponse);
-  rpc BlockStorageStart(ComputeRequest) returns (ComputeResponse);
-  rpc BlockStorageEnd(ComputeRequest) returns (ComputeResponse);
-  rpc ObjectStorageStart(ComputeRequest) returns (ComputeResponse);
-  rpc ObjectStorageEnd(ComputeRequest) returns (ComputeResponse);
-  rpc CIStart(ComputeRequest) returns (ComputeResponse);
-  rpc CIEnd(ComputeRequest) returns (ComputeResponse);
+service FinanceInfra {
+  rpc ComputeStart(ComputeStartIn) returns (FinanceInfraVoid);
+  rpc ComputeEnd(ComputeEndIn) returns (FinanceInfraVoid);
+  rpc LambdaStart(LambdaStartIn) returns (FinanceInfraVoid);
+  rpc LambdaEnd(LambdaEndIn) returns (FinanceInfraVoid);
+  rpc BlockStorageStart(BlockStorageStartIn) returns (FinanceInfraVoid);
+  rpc BlockStorageEnd(BlockStorageEndIn) returns (FinanceInfraVoid);
+  rpc ObjectStorageStart(ObjectStorageStartIn) returns (FinanceInfraVoid);
+  rpc ObjectStorageEnd(ObjectStorageEndIn) returns (FinanceInfraVoid);
+  rpc CIStart(CIStartIn) returns (FinanceInfraVoid);
+  rpc CIEnd(CIEndIn) returns (FinanceInfraVoid);
 }
 
-message StatusUpdate {
-  string resourceName = 1;
-  string resourceType = 2;
-  string projectId = 3;
-  string clusterId = 4;
-  string statusData = 5;
-  string status = 6; // "IN_SYNC", "IN_PROGRESS" or "ERROR"
-  string accountId = 7;
-  string resourceId = 8;
+message ComputeStartIn {
+  string resourceId = 1;
+  string accountId = 2;
 }
 
-message Void {}
+message ComputeEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message LambdaStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message LambdaEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message BlockStorageStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message BlockStorageEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message ObjectStorageStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message ObjectStorageEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message CIStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message CIEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message FinanceInfraVoid {}
 
