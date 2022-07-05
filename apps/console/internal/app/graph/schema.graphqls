@@ -95,7 +95,7 @@ type Mutation {
   core_createApp(
     projectId: ID!,
     app: AppInput!,
-  ): Boolean!
+  ): App!
   core_updateApp(
     projectId: ID!,
     appId: ID!,

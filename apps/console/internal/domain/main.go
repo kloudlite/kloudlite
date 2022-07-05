@@ -494,21 +494,21 @@ func (d *domain) InstallApp(
 	ctx context.Context,
 	projectId repos.ID,
 	app entities.App,
-) (bool, error) {
+) (*entities.App, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
-	_, err = d.appRepo.Create(ctx, &app)
+	createdApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	// svcs := make([]op_crds.Service, 0)
 	// for _, ep := range app.ExposedPorts {
@@ -569,7 +569,7 @@ func (d *domain) InstallApp(
 	// 	},
 	// })
 
-	return true, nil
+	return createdApp, nil
 }
 
 func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (string, error) {
