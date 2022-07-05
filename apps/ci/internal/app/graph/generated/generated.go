@@ -50,7 +50,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	App struct {
-		CiCreatePipeLine func(childComplexity int, in model.GitPipelineIn) int
+		CiCreatePipeLine func(childComplexity int, containerName string, in model.GitPipelineIn) int
 		ID               func(childComplexity int) int
 		Pipelines        func(childComplexity int) int
 	}
@@ -114,7 +114,7 @@ type ComplexityRoot struct {
 
 type AppResolver interface {
 	Pipelines(ctx context.Context, obj *model.App) ([]*model.GitPipeline, error)
-	CiCreatePipeLine(ctx context.Context, obj *model.App, in model.GitPipelineIn) (map[string]interface{}, error)
+	CiCreatePipeLine(ctx context.Context, obj *model.App, containerName string, in model.GitPipelineIn) (map[string]interface{}, error)
 }
 type EntityResolver interface {
 	FindAppByID(ctx context.Context, id repos.ID) (*model.App, error)
@@ -162,7 +162,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.App.CiCreatePipeLine(childComplexity, args["in"].(model.GitPipelineIn)), true
+		return e.complexity.App.CiCreatePipeLine(childComplexity, args["containerName"].(string), args["in"].(model.GitPipelineIn)), true
 
 	case "App.id":
 		if e.complexity.App.ID == nil {
@@ -542,7 +542,6 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
-# noinspection GraphQLTypeRedefinition
 scalar Any
 
 type Query {
@@ -646,7 +645,7 @@ type GitPipeline {
 extend type App @key(fields: "id") {
   id: ID! @external
   pipelines: [GitPipeline!]!
-  ci_createPipeLine(in: GitPipelineIn!): Json
+  ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json!
 }
 
 type Mutation {
@@ -693,15 +692,24 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_App_ci_createPipeLine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.GitPipelineIn
-	if tmp, ok := rawArgs["in"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("in"))
-		arg0, err = ec.unmarshalNGitPipelineIn2kloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineIn(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["containerName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["in"] = arg0
+	args["containerName"] = arg0
+	var arg1 model.GitPipelineIn
+	if tmp, ok := rawArgs["in"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("in"))
+		arg1, err = ec.unmarshalNGitPipelineIn2kloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["in"] = arg1
 	return args, nil
 }
 
@@ -1168,18 +1176,21 @@ func (ec *executionContext) _App_ci_createPipeLine(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.App().CiCreatePipeLine(rctx, obj, args["in"].(model.GitPipelineIn))
+		return ec.resolvers.App().CiCreatePipeLine(rctx, obj, args["containerName"].(string), args["in"].(model.GitPipelineIn))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(map[string]interface{})
 	fc.Result = res
-	return ec.marshalOJson2map(ctx, field.Selections, res)
+	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAppByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4035,6 +4046,9 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 					}
 				}()
 				res = ec._App_ci_createPipeLine(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
