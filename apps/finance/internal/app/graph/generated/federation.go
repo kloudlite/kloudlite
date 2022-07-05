@@ -120,6 +120,26 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 				list[idx[i]] = entity
 				return nil
 			}
+		case "LamdaPlan":
+			resolverName, err := entityResolverNameForLamdaPlan(ctx, rep)
+			if err != nil {
+				return fmt.Errorf(`finding resolver for Entity "LamdaPlan": %w`, err)
+			}
+			switch resolverName {
+
+			case "findLamdaPlanByName":
+				id0, err := ec.unmarshalNString2string(ctx, rep["name"])
+				if err != nil {
+					return fmt.Errorf(`unmarshalling param 0 for findLamdaPlanByName(): %w`, err)
+				}
+				entity, err := ec.resolvers.Entity().FindLamdaPlanByName(ctx, id0)
+				if err != nil {
+					return fmt.Errorf(`resolving Entity "LamdaPlan": %w`, err)
+				}
+
+				list[idx[i]] = entity
+				return nil
+			}
 		case "User":
 			resolverName, err := entityResolverNameForUser(ctx, rep)
 			if err != nil {
@@ -241,6 +261,23 @@ func entityResolverNameForComputePlan(ctx context.Context, rep map[string]interf
 		return "findComputePlanByName", nil
 	}
 	return "", fmt.Errorf("%w for ComputePlan", ErrTypeNotFound)
+}
+
+func entityResolverNameForLamdaPlan(ctx context.Context, rep map[string]interface{}) (string, error) {
+	for {
+		var (
+			m   map[string]interface{}
+			val interface{}
+			ok  bool
+		)
+		_ = val
+		m = rep
+		if _, ok = m["name"]; !ok {
+			break
+		}
+		return "findLamdaPlanByName", nil
+	}
+	return "", fmt.Errorf("%w for LamdaPlan", ErrTypeNotFound)
 }
 
 func entityResolverNameForUser(ctx context.Context, rep map[string]interface{}) (string, error) {

@@ -28,6 +28,7 @@ type Query {
   infra_getCluster(clusterId: ID!): Cluster
 
   core_getComputePlans: [ComputePlan!]
+  core_getLamdaPlan: LamdaPlan!
 }
 
 type ManagedRes {
@@ -126,6 +127,10 @@ type ComputePlan @key(fields: "name"){
   memoryPerVCPUCpu: Int!
   maxDedicatedCPUPerPod: Int!
   maxSharedCPUPerPod: Int!
+}
+
+type LamdaPlan @key(fields: "name"){
+  name: String!
 }
 
 input AppInput{

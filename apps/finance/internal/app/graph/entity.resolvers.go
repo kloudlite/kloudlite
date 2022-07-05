@@ -31,6 +31,18 @@ func (r *entityResolver) FindComputePlanByName(ctx context.Context, name string)
 	}, nil
 }
 
+func (r *entityResolver) FindLamdaPlanByName(ctx context.Context, name string) (*model.LamdaPlan, error) {
+	byName, err := r.domain.GetLamdaPlanByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return &model.LamdaPlan{
+		Name:         byName.Name,
+		FreeTier:     byName.FreeTire,
+		PricePerGBHr: byName.PricePerGBHr,
+	}, nil
+}
+
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
 	return &model.User{
 		ID: id,
