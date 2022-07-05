@@ -64,6 +64,7 @@ type ComplexityRoot struct {
 		Containers  func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
+		IsLambda    func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Namespace   func(childComplexity int) int
 		Project     func(childComplexity int) int
@@ -468,6 +469,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.ID(childComplexity), true
+
+	case "App.isLambda":
+		if e.complexity.App.IsLambda == nil {
+			break
+		}
+
+		return e.complexity.App.IsLambda(childComplexity), true
 
 	case "App.name":
 		if e.complexity.App.Name == nil {
@@ -2092,6 +2100,7 @@ type Mutation {
     app: AppInput!,
   ): App!
   core_deleteApp(appId: ID!): Boolean!
+
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
   # Secret n Config
@@ -2125,6 +2134,7 @@ type LamdaPlan @key(fields: "name"){
 
 input AppInput{
   name: String!
+  isLambda: String!
   projectId: String!
   description: String
   readableId: ID!
@@ -2135,6 +2145,7 @@ input AppInput{
 
 type App @key(fields: "id") {
   id: ID!
+  isLambda: String!
   name: String!
   namespace: String!
   description: String
@@ -3886,6 +3897,41 @@ func (ec *executionContext) _App_id(ctx context.Context, field graphql.Collected
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_isLambda(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsLambda, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _App_name(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
@@ -11528,6 +11574,14 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			if err != nil {
 				return it, err
 			}
+		case "isLambda":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLambda"))
+			it.IsLambda, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "projectId":
 			var err error
 
@@ -12059,6 +12113,16 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 		case "id":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._App_id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "isLambda":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._App_isLambda(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
