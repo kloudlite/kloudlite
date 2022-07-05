@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/console";
+
+service ConsoleInfra {
+  rpc UpdateStatus(StatusUpdate) returns (Void);
+
+  rpc ComputeStart() returns (ComputeResponse);
+  rpc ComputeEnd(ComputeRequest) returns (ComputeResponse);
+  rpc LambdaStart(ComputeRequest) returns (ComputeResponse);
+  rpc LambdaEnd(ComputeRequest) returns (ComputeResponse);
+  rpc BlockStorageStart(ComputeRequest) returns (ComputeResponse);
+  rpc BlockStorageEnd(ComputeRequest) returns (ComputeResponse);
+  rpc ObjectStorageStart(ComputeRequest) returns (ComputeResponse);
+  rpc ObjectStorageEnd(ComputeRequest) returns (ComputeResponse);
+  rpc CIStart(ComputeRequest) returns (ComputeResponse);
+  rpc CIEnd(ComputeRequest) returns (ComputeResponse);
+}
+
+message StatusUpdate {
+  string resourceName = 1;
+  string resourceType = 2;
+  string projectId = 3;
+  string clusterId = 4;
+  string statusData = 5;
+  string status = 6; // "IN_SYNC", "IN_PROGRESS" or "ERROR"
+  string accountId = 7;
+  string resourceId = 8;
+}
+
+message Void {}
+
