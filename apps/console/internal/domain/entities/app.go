@@ -105,9 +105,8 @@ var AppIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "name", Value: repos.IndexAsc},
+			{Key: "readable_id", Value: repos.IndexAsc},
 			{Key: "namespace", Value: repos.IndexAsc},
-			{Key: "cluster_id", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
