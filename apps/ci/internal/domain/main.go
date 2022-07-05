@@ -290,18 +290,14 @@ func (d *domainI) GitlabListBranches(ctx context.Context, userId repos.ID, repoI
 	return d.gitlab.ListBranches(ctx, token, repoId, query, pagination)
 }
 
-func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID) error {
+func (d *domainI) GitlabAddWebhook(
+	ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID,
+) (*GitlabWebhookId, error) {
 	token, err := d.getAccessToken(ctx, "gitlab", userId)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	webhook, err := d.gitlab.AddWebhook(ctx, token, repoId, string(pipelineId))
-	_, err = d.pipelineRepo.UpdateById(
-		ctx, pipelineId, &Pipeline{
-			GitlabWebhookId: &webhook.ID,
-		},
-	)
-	return err
+	return d.gitlab.AddWebhook(ctx, token, repoId, string(pipelineId))
 }
 
 func (d *domainI) SaveUserAcc(ctx context.Context, acc *HarborAccount) error {
@@ -408,11 +404,12 @@ func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, 
 func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error) {
 	exP, err := d.pipelineRepo.FindOne(
 		ctx, repos.Filter{
-			"git_repo_url": pipeline.GitRepoUrl,
-			"git_branch":   pipeline.GitBranch,
-			"git_provider": pipeline.GitProvider,
-			"project_id":   pipeline.ProjectId,
-			"app_id":       pipeline.AppId,
+			"git_repo_url":   pipeline.GitRepoUrl,
+			"git_branch":     pipeline.GitBranch,
+			"git_provider":   pipeline.GitProvider,
+			"project_id":     pipeline.ProjectId,
+			"app_id":         pipeline.AppId,
+			"container_name": pipeline.ContainerName,
 		},
 	)
 	if err != nil {
@@ -444,11 +441,11 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 			return nil, err
 		}
 		pipeline.GitlabTokenId = string(token.Id)
-		// TODO check webhook id
-		err = d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), pipeline.Id)
+		hookId, err := d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), pipeline.Id)
 		if err != nil {
 			return nil, err
 		}
+		pipeline.GitlabWebhookId = hookId
 
 		commit, err := d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
 		if err != nil {

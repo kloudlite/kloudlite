@@ -23,19 +23,20 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, in model.GitPipelineIn) (map[string]interface{}, error) {
+func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, containerName string, in model.GitPipelineIn) (map[string]interface{}, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not authorized")
 	}
 	var pipeline, err = r.Domain.CreatePipeline(
 		ctx, session.UserId, domain.Pipeline{
-			Name:        in.Name,
-			ProjectId:   in.ProjectID,
-			AppId:       string(obj.ID),
-			GitProvider: in.GitProvider,
-			GitRepoUrl:  in.GitRepoURL,
-			GitBranch:   in.GitBranch,
+			Name:          in.Name,
+			ProjectId:     in.ProjectID,
+			AppId:         string(obj.ID),
+			ContainerName: containerName,
+			GitProvider:   in.GitProvider,
+			GitRepoUrl:    in.GitRepoURL,
+			GitBranch:     in.GitBranch,
 			Build: domain.ContainerImageBuild{
 				BaseImage: in.Build.BaseImage,
 				Cmd:       in.Build.Cmd,

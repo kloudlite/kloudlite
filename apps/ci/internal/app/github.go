@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -27,9 +28,9 @@ type githubI struct {
 }
 
 func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
-	re := regexp.MustCompile("https://(.*?)/([\\w|_]*)/([\\w|_]*)(\\.git)?")
+	re := regexp.MustCompile("https://(.+)/(.+)/(.+)")
 	matches := re.FindStringSubmatch(repoUrl)
-	return matches[2], matches[3]
+	return matches[2], strings.Split(matches[3], ".git")[0]
 }
 
 func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
@@ -96,7 +97,7 @@ func (gh *githubI) GetLatestCommit(ctx context.Context, repoUrl string, branchNa
 	return *branch.GetCommit().SHA, nil
 }
 
-func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, pipelineId string, repoUrl string) (*int64, error) {
+func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, pipelineId string, repoUrl string) (*domain.GithubWebhookId, error) {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
 	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, pipelineId)
 	hookName := "kloudlite-pipeline"
@@ -123,12 +124,12 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 	}
 	fmt.Printf("Hook: %+v\n", hook)
 
-	return hook.ID, nil
+	return fn.New(domain.GithubWebhookId(*hook.ID)), nil
 }
 
-func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string, hookId int64) error {
+func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string, hookId domain.GithubWebhookId) error {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	_, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, hookId)
+	_, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, int64(hookId))
 	return err
 }
 

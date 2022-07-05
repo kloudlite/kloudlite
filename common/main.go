@@ -16,6 +16,8 @@ type AuthSession struct {
 	LoginMethod      string   `json:"login_method"`
 }
 
+type Json map[string]any
+
 func NewSession(
 	UserId repos.ID,
 	UserEmail string,
