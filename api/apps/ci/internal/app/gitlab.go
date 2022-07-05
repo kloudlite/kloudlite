@@ -114,8 +114,7 @@ func (gl *gitlabI) GetRepoId(repoUrl string) string {
 	return gl.getRepoId(repoUrl)
 }
 
-func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId string,
-	pipelineId string) (*gitlab.ProjectHook, error) {
+func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId string, pipelineId string) (*domain.GitlabWebhookId, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, err
@@ -136,15 +135,15 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, re
 	if err != nil {
 		return nil, errors.NewEf(err, "could not add gitlab webhook")
 	}
-	return hook, nil
+	return fn.New(domain.GitlabWebhookId(hook.ID)), nil
 }
 
-func (gl *gitlabI) DeleteWebhook(ctx context.Context, token *domain.AccessToken, repoUrl string, hookId int) error {
+func (gl *gitlabI) DeleteWebhook(ctx context.Context, token *domain.AccessToken, repoUrl string, hookId domain.GitlabWebhookId) error {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return err
 	}
-	_, err = client.Projects.DeleteProjectHook(gl.getRepoId(repoUrl), hookId)
+	_, err = client.Projects.DeleteProjectHook(gl.getRepoId(repoUrl), int(hookId))
 	return err
 }
 

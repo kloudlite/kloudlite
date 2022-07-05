@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/redpanda"
 )
 
@@ -14,10 +13,12 @@ type workloadMessengerImpl struct {
 }
 
 func (i *workloadMessengerImpl) SendAction(action string, resId string, res any) error {
-	marshal, err := json.Marshal(messaging.Json{
-		"action":  action,
-		"payload": res,
-	})
+	marshal, err := json.Marshal(
+		map[string]any{
+			"action":  action,
+			"payload": res,
+		},
+	)
 	if err != nil {
 		return err
 	}

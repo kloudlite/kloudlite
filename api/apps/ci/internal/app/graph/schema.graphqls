@@ -1,5 +1,4 @@
 scalar Json
-# noinspection GraphQLTypeRedefinition
 scalar Any
 
 type Query {
@@ -103,7 +102,7 @@ type GitPipeline {
 extend type App @key(fields: "id") {
   id: ID! @external
   pipelines: [GitPipeline!]!
-  ci_createPipeLine(in: GitPipelineIn!): Json
+  ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json!
 }
 
 type Mutation {
