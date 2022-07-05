@@ -76,14 +76,13 @@ type ComplexityRoot struct {
 
 	AppContainer struct {
 		AttachedResources func(childComplexity int) int
-		CPUMax            func(childComplexity int) int
-		CPUMin            func(childComplexity int) int
+		ComputePlan       func(childComplexity int) int
 		EnvVars           func(childComplexity int) int
 		Image             func(childComplexity int) int
-		MemMax            func(childComplexity int) int
-		MemMin            func(childComplexity int) int
+		IsShared          func(childComplexity int) int
 		Name              func(childComplexity int) int
 		PullSecret        func(childComplexity int) int
+		Quantity          func(childComplexity int) int
 	}
 
 	AppService struct {
@@ -118,16 +117,6 @@ type ComplexityRoot struct {
 		Cluster     func(childComplexity int) int
 		Devices     func(childComplexity int) int
 		UserDevices func(childComplexity int) int
-	}
-
-	ComputeInventoryData struct {
-		CPU    func(childComplexity int) int
-		Memory func(childComplexity int) int
-	}
-
-	ComputeInventoryMetricSize struct {
-		Quantity func(childComplexity int) int
-		Unit     func(childComplexity int) int
 	}
 
 	ComputePlan struct {
@@ -381,7 +370,7 @@ type MutationResolver interface {
 	IamRemoveProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID) (bool, error)
 	IamUpdateProjectMember(ctx context.Context, projectID repos.ID, userID repos.ID, role string) (bool, error)
 	CoreCreateApp(ctx context.Context, projectID repos.ID, app model.AppInput) (bool, error)
-	CoreUpdateApp(ctx context.Context, projectID repos.ID, appID repos.ID, app model.AppInput) (bool, error)
+	CoreUpdateApp(ctx context.Context, projectID repos.ID, appID repos.ID, app model.AppInput) (*model.App, error)
 	CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	CoreRollbackApp(ctx context.Context, appID repos.ID, version int) (*model.App, error)
 	CoreCreateSecret(ctx context.Context, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) (*model.Secret, error)
@@ -536,28 +525,21 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.Version(childComplexity), true
 
-	case "AppContainer.attached_resources":
+	case "AppContainer.attachedResources":
 		if e.complexity.AppContainer.AttachedResources == nil {
 			break
 		}
 
 		return e.complexity.AppContainer.AttachedResources(childComplexity), true
 
-	case "AppContainer.cpu_max":
-		if e.complexity.AppContainer.CPUMax == nil {
+	case "AppContainer.computePlan":
+		if e.complexity.AppContainer.ComputePlan == nil {
 			break
 		}
 
-		return e.complexity.AppContainer.CPUMax(childComplexity), true
+		return e.complexity.AppContainer.ComputePlan(childComplexity), true
 
-	case "AppContainer.cpu_min":
-		if e.complexity.AppContainer.CPUMin == nil {
-			break
-		}
-
-		return e.complexity.AppContainer.CPUMin(childComplexity), true
-
-	case "AppContainer.env_vars":
+	case "AppContainer.envVars":
 		if e.complexity.AppContainer.EnvVars == nil {
 			break
 		}
@@ -571,19 +553,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AppContainer.Image(childComplexity), true
 
-	case "AppContainer.mem_max":
-		if e.complexity.AppContainer.MemMax == nil {
+	case "AppContainer.isShared":
+		if e.complexity.AppContainer.IsShared == nil {
 			break
 		}
 
-		return e.complexity.AppContainer.MemMax(childComplexity), true
-
-	case "AppContainer.mem_min":
-		if e.complexity.AppContainer.MemMin == nil {
-			break
-		}
-
-		return e.complexity.AppContainer.MemMin(childComplexity), true
+		return e.complexity.AppContainer.IsShared(childComplexity), true
 
 	case "AppContainer.name":
 		if e.complexity.AppContainer.Name == nil {
@@ -592,12 +567,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AppContainer.Name(childComplexity), true
 
-	case "AppContainer.pull_secret":
+	case "AppContainer.pullSecret":
 		if e.complexity.AppContainer.PullSecret == nil {
 			break
 		}
 
 		return e.complexity.AppContainer.PullSecret(childComplexity), true
+
+	case "AppContainer.quantity":
+		if e.complexity.AppContainer.Quantity == nil {
+			break
+		}
+
+		return e.complexity.AppContainer.Quantity(childComplexity), true
 
 	case "AppService.port":
 		if e.complexity.AppService.Port == nil {
@@ -710,34 +692,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ClusterSubscription.UserDevices(childComplexity), true
-
-	case "ComputeInventoryData.cpu":
-		if e.complexity.ComputeInventoryData.CPU == nil {
-			break
-		}
-
-		return e.complexity.ComputeInventoryData.CPU(childComplexity), true
-
-	case "ComputeInventoryData.memory":
-		if e.complexity.ComputeInventoryData.Memory == nil {
-			break
-		}
-
-		return e.complexity.ComputeInventoryData.Memory(childComplexity), true
-
-	case "ComputeInventoryMetricSize.quantity":
-		if e.complexity.ComputeInventoryMetricSize.Quantity == nil {
-			break
-		}
-
-		return e.complexity.ComputeInventoryMetricSize.Quantity(childComplexity), true
-
-	case "ComputeInventoryMetricSize.unit":
-		if e.complexity.ComputeInventoryMetricSize.Unit == nil {
-			break
-		}
-
-		return e.complexity.ComputeInventoryMetricSize.Unit(childComplexity), true
 
 	case "ComputePlan.dedicatedEnabled":
 		if e.complexity.ComputePlan.DedicatedEnabled == nil {
@@ -2136,7 +2090,7 @@ type Mutation {
     projectId: ID!,
     appId: ID!,
     app: AppInput!,
-  ): Boolean!
+  ): App!
   core_deleteApp(appId: ID!): Boolean!
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
@@ -2171,12 +2125,12 @@ type LamdaPlan @key(fields: "name"){
 
 input AppInput{
   name: String!
-  readable: String!
+  projectId: String!
   description: String
-  exposed_services: [ExposedServiceInput!]!
-  containers:[AppContainerInput!]!
-  provider: String!
-  region: String!
+  readableId: ID!
+  replicas: Int
+  services: [ExposedServiceIn]!
+  containers: [AppContainerIn!]!
 }
 
 type App @key(fields: "id") {
@@ -2229,13 +2183,12 @@ input AttachedResInput{
 type AppContainer {
   name: String!
   image: String
-  pull_secret: String
-  env_vars:[EnvVar!]!
-  cpu_min:String!
-  cpu_max:String!
-  mem_min:String!
-  mem_max:String!
-  attached_resources:[AttachedRes!]!
+  pullSecret: String
+  envVars:[EnvVar!]!
+  attachedResources:[AttachedRes!]!
+  computePlan: String!
+  quantity: Float!
+  isShared: Boolean!
 }
 
 
@@ -2244,25 +2197,25 @@ type AppContainer {
 #  data: ComputeInventoryData!
 #}
 
-type ComputeInventoryData {
-  memory: ComputeInventoryMetricSize!
-  cpu: ComputeInventoryMetricSize!
-}
+# type ComputeInventoryData {
+#   memory: ComputeInventoryMetricSize!
+#   cpu: ComputeInventoryMetricSize!
+# }
 
-type ComputeInventoryMetricSize {
-  quantity: Float!
-  unit: String!
-}
+# type ComputeInventoryMetricSize {
+#   quantity: Float!
+#   unit: String!
+# }
 
 
-input AppContainerInput{
+input AppContainerIn{
   name: String!
   image: String
-  pull_secret: String
-  env_vars:[EnvVarInput!]!
+  pullSecret: String
+  envVars:[EnvVarInput!]!
   computePlan: String!
-  compute_size: Float!
-  attached_resources:[AttachedResInput!]!
+  quantity: Float!
+  attachedResources:[AttachedResInput!]!
 }
 
 type ExposedService{
@@ -2271,7 +2224,7 @@ type ExposedService{
   exposed: Int!
 }
 
-input ExposedServiceInput{
+input ExposedServiceIn{
   type :String!
   target: Int!
   exposed: Int!
@@ -4343,7 +4296,7 @@ func (ec *executionContext) _AppContainer_image(ctx context.Context, field graph
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AppContainer_pull_secret(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
+func (ec *executionContext) _AppContainer_pullSecret(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4375,7 +4328,7 @@ func (ec *executionContext) _AppContainer_pull_secret(ctx context.Context, field
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AppContainer_env_vars(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
+func (ec *executionContext) _AppContainer_envVars(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4410,147 +4363,7 @@ func (ec *executionContext) _AppContainer_env_vars(ctx context.Context, field gr
 	return ec.marshalNEnvVar2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVarᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AppContainer_cpu_min(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "AppContainer",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CPUMin, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _AppContainer_cpu_max(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "AppContainer",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CPUMax, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _AppContainer_mem_min(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "AppContainer",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MemMin, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _AppContainer_mem_max(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "AppContainer",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MemMax, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _AppContainer_attached_resources(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
+func (ec *executionContext) _AppContainer_attachedResources(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4583,6 +4396,111 @@ func (ec *executionContext) _AppContainer_attached_resources(ctx context.Context
 	res := resTmp.([]*model.AttachedRes)
 	fc.Result = res
 	return ec.marshalNAttachedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedResᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AppContainer_computePlan(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AppContainer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ComputePlan, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AppContainer_quantity(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AppContainer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AppContainer_isShared(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AppContainer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsShared, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppService_type(ctx context.Context, field graphql.CollectedField, obj *model.AppService) (ret graphql.Marshaler) {
@@ -5134,146 +5052,6 @@ func (ec *executionContext) _ClusterSubscription_userDevices(ctx context.Context
 	res := resTmp.([]*model.Device)
 	fc.Result = res
 	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ComputeInventoryData_memory(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryData) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ComputeInventoryData",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Memory, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ComputeInventoryMetricSize)
-	fc.Result = res
-	return ec.marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ComputeInventoryData_cpu(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryData) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ComputeInventoryData",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CPU, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ComputeInventoryMetricSize)
-	fc.Result = res
-	return ec.marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ComputeInventoryMetricSize_quantity(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryMetricSize) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ComputeInventoryMetricSize",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Quantity, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(float64)
-	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ComputeInventoryMetricSize_unit(ctx context.Context, field graphql.CollectedField, obj *model.ComputeInventoryMetricSize) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ComputeInventoryMetricSize",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Unit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
@@ -7990,9 +7768,9 @@ func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*model.App)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNApp2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_core_deleteApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11662,8 +11440,8 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context, obj interface{}) (model.AppContainerInput, error) {
-	var it model.AppContainerInput
+func (ec *executionContext) unmarshalInputAppContainerIn(ctx context.Context, obj interface{}) (model.AppContainerIn, error) {
+	var it model.AppContainerIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -11687,18 +11465,18 @@ func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "pull_secret":
+		case "pullSecret":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pull_secret"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
 			it.PullSecret, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "env_vars":
+		case "envVars":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env_vars"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envVars"))
 			it.EnvVars, err = ec.unmarshalNEnvVarInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVarInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
@@ -11711,18 +11489,18 @@ func (ec *executionContext) unmarshalInputAppContainerInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "compute_size":
+		case "quantity":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("compute_size"))
-			it.ComputeSize, err = ec.unmarshalNFloat2float64(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
+			it.Quantity, err = ec.unmarshalNFloat2float64(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "attached_resources":
+		case "attachedResources":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attached_resources"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachedResources"))
 			it.AttachedResources, err = ec.unmarshalNAttachedResInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedResInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
@@ -11750,11 +11528,11 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			if err != nil {
 				return it, err
 			}
-		case "readable":
+		case "projectId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readable"))
-			it.Readable, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+			it.ProjectID, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11766,11 +11544,27 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			if err != nil {
 				return it, err
 			}
-		case "exposed_services":
+		case "readableId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exposed_services"))
-			it.ExposedServices, err = ec.unmarshalNExposedServiceInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInputᚄ(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readableId"))
+			it.ReadableID, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "replicas":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("replicas"))
+			it.Replicas, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "services":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("services"))
+			it.Services, err = ec.unmarshalNExposedServiceIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11778,23 +11572,7 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containers"))
-			it.Containers, err = ec.unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInputᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "provider":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			it.Provider, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "region":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-			it.Region, err = ec.unmarshalNString2string(ctx, v)
+			it.Containers, err = ec.unmarshalNAppContainerIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11975,8 +11753,8 @@ func (ec *executionContext) unmarshalInputEnvVarInput(ctx context.Context, obj i
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputExposedServiceInput(ctx context.Context, obj interface{}) (model.ExposedServiceInput, error) {
-	var it model.ExposedServiceInput
+func (ec *executionContext) unmarshalInputExposedServiceIn(ctx context.Context, obj interface{}) (model.ExposedServiceIn, error) {
+	var it model.ExposedServiceIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -12417,26 +12195,16 @@ func (ec *executionContext) _AppContainer(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "pull_secret":
+		case "pullSecret":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AppContainer_pull_secret(ctx, field, obj)
+				return ec._AppContainer_pullSecret(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "env_vars":
+		case "envVars":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AppContainer_env_vars(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "cpu_min":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AppContainer_cpu_min(ctx, field, obj)
+				return ec._AppContainer_envVars(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -12444,9 +12212,9 @@ func (ec *executionContext) _AppContainer(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "cpu_max":
+		case "attachedResources":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AppContainer_cpu_max(ctx, field, obj)
+				return ec._AppContainer_attachedResources(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -12454,9 +12222,9 @@ func (ec *executionContext) _AppContainer(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "mem_min":
+		case "computePlan":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AppContainer_mem_min(ctx, field, obj)
+				return ec._AppContainer_computePlan(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -12464,9 +12232,9 @@ func (ec *executionContext) _AppContainer(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "mem_max":
+		case "quantity":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AppContainer_mem_max(ctx, field, obj)
+				return ec._AppContainer_quantity(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -12474,9 +12242,9 @@ func (ec *executionContext) _AppContainer(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "attached_resources":
+		case "isShared":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AppContainer_attached_resources(ctx, field, obj)
+				return ec._AppContainer_isShared(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -12791,88 +12559,6 @@ func (ec *executionContext) _ClusterSubscription(ctx context.Context, sel ast.Se
 				return innerFunc(ctx)
 
 			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var computeInventoryDataImplementors = []string{"ComputeInventoryData"}
-
-func (ec *executionContext) _ComputeInventoryData(ctx context.Context, sel ast.SelectionSet, obj *model.ComputeInventoryData) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, computeInventoryDataImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ComputeInventoryData")
-		case "memory":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ComputeInventoryData_memory(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "cpu":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ComputeInventoryData_cpu(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var computeInventoryMetricSizeImplementors = []string{"ComputeInventoryMetricSize"}
-
-func (ec *executionContext) _ComputeInventoryMetricSize(ctx context.Context, sel ast.SelectionSet, obj *model.ComputeInventoryMetricSize) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, computeInventoryMetricSizeImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ComputeInventoryMetricSize")
-		case "quantity":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ComputeInventoryMetricSize_quantity(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "unit":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ComputeInventoryMetricSize_unit(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15659,16 +15345,16 @@ func (ec *executionContext) marshalNAppContainer2ᚖkloudliteᚗioᚋappsᚋcons
 	return ec._AppContainer(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInputᚄ(ctx context.Context, v interface{}) ([]*model.AppContainerInput, error) {
+func (ec *executionContext) unmarshalNAppContainerIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInᚄ(ctx context.Context, v interface{}) ([]*model.AppContainerIn, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.AppContainerInput, len(vSlice))
+	res := make([]*model.AppContainerIn, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNAppContainerInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNAppContainerIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerIn(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -15676,8 +15362,8 @@ func (ec *executionContext) unmarshalNAppContainerInput2ᚕᚖkloudliteᚗioᚋa
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNAppContainerInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInput(ctx context.Context, v interface{}) (*model.AppContainerInput, error) {
-	res, err := ec.unmarshalInputAppContainerInput(ctx, v)
+func (ec *executionContext) unmarshalNAppContainerIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerIn(ctx context.Context, v interface{}) (*model.AppContainerIn, error) {
+	res, err := ec.unmarshalInputAppContainerIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -15886,16 +15572,6 @@ func (ec *executionContext) marshalNClusterSubscription2ᚖkloudliteᚗioᚋapps
 		return graphql.Null
 	}
 	return ec._ClusterSubscription(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNComputeInventoryMetricSize2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputeInventoryMetricSize(ctx context.Context, sel ast.SelectionSet, v *model.ComputeInventoryMetricSize) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ComputeInventoryMetricSize(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNComputePlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx context.Context, sel ast.SelectionSet, v model.ComputePlan) graphql.Marshaler {
@@ -16113,26 +15789,21 @@ func (ec *executionContext) marshalNExposedService2ᚕᚖkloudliteᚗioᚋapps�
 	return ret
 }
 
-func (ec *executionContext) unmarshalNExposedServiceInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInputᚄ(ctx context.Context, v interface{}) ([]*model.ExposedServiceInput, error) {
+func (ec *executionContext) unmarshalNExposedServiceIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceIn(ctx context.Context, v interface{}) ([]*model.ExposedServiceIn, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.ExposedServiceInput, len(vSlice))
+	res := make([]*model.ExposedServiceIn, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNExposedServiceInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOExposedServiceIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceIn(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 	return res, nil
-}
-
-func (ec *executionContext) unmarshalNExposedServiceInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceInput(ctx context.Context, v interface{}) (*model.ExposedServiceInput, error) {
-	res, err := ec.unmarshalInputExposedServiceInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
@@ -17174,6 +16845,14 @@ func (ec *executionContext) marshalOExposedService2ᚖkloudliteᚗioᚋappsᚋco
 		return graphql.Null
 	}
 	return ec._ExposedService(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOExposedServiceIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExposedServiceIn(ctx context.Context, v interface{}) (*model.ExposedServiceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputExposedServiceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (*repos.ID, error) {

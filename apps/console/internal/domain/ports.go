@@ -89,13 +89,13 @@ type Domain interface {
 	InstallApp(
 		ctx context.Context,
 		projectId repos.ID,
-		app entities.AppIn,
+		app entities.App,
 	) (bool, error)
 	UpdateApp(
 		ctx context.Context,
 		appId repos.ID,
-		app entities.AppIn,
-	) (bool, error)
+		app entities.App,
+	) (*entities.App, error)
 
 	GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error)
 

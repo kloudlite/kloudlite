@@ -38,7 +38,8 @@ RUN chmod +x /tmp/bin/$APP
 #COPY --from=base --chown=1001 /tmp/bin/console ./
 #ENTRYPOINT ["./console"]
 
-FROM gcr.io/distroless/static-debian11
+# FROM gcr.io/distroless/static-debian11
+FROM alpine
 USER 1001
 WORKDIR /tmp/app
 COPY --from=base --chown=1001 /tmp/bin/console ./console
