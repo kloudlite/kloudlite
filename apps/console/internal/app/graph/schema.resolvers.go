@@ -319,6 +319,7 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 	}
 	entity, err := r.Domain.InstallApp(ctx, projectID, entities.App{
 		Name:         app.Name,
+		IsLambda:     app.IsLambda,
 		ProjectId:    projectID,
 		ReadableId:   string(app.ReadableID),
 		Description:  app.Description,
@@ -332,6 +333,7 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 	return &model.App{
 		Name:        entity.Name,
 		Namespace:   entity.Namespace,
+		IsLambda:    entity.IsLambda,
 		Description: entity.Description,
 		ReadableID:  repos.ID(entity.ReadableId),
 		Replicas:    &entity.Replicas,
@@ -443,6 +445,7 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 
 	return &model.App{
 		Name:        entity.Name,
+		IsLambda:    entity.IsLambda,
 		Namespace:   entity.Namespace,
 		Description: entity.Description,
 		ReadableID:  repos.ID(entity.ReadableId),

@@ -16,6 +16,7 @@ func (Account) IsEntity() {}
 
 type App struct {
 	ID          repos.ID          `json:"id"`
+	IsLambda    string            `json:"isLambda"`
 	Name        string            `json:"name"`
 	Namespace   string            `json:"namespace"`
 	Description *string           `json:"description"`
@@ -53,6 +54,7 @@ type AppContainerIn struct {
 
 type AppInput struct {
 	Name        string              `json:"name"`
+	IsLambda    string              `json:"isLambda"`
 	ProjectID   string              `json:"projectId"`
 	Description *string             `json:"description"`
 	ReadableID  repos.ID            `json:"readableId"`

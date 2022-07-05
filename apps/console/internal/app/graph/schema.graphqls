@@ -102,6 +102,7 @@ type Mutation {
     app: AppInput!,
   ): App!
   core_deleteApp(appId: ID!): Boolean!
+
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
   # Secret n Config
@@ -135,6 +136,7 @@ type LamdaPlan @key(fields: "name"){
 
 input AppInput{
   name: String!
+  isLambda: String!
   projectId: String!
   description: String
   readableId: ID!
@@ -145,6 +147,7 @@ input AppInput{
 
 type App @key(fields: "id") {
   id: ID!
+  isLambda: String!
   name: String!
   namespace: String!
   description: String
