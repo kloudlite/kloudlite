@@ -52,6 +52,7 @@ type ComplexityRoot struct {
 	App struct {
 		CiCreatePipeLine func(childComplexity int, in model.GitPipelineIn) int
 		ID               func(childComplexity int) int
+		Pipelines        func(childComplexity int) int
 	}
 
 	Entity struct {
@@ -112,6 +113,7 @@ type ComplexityRoot struct {
 }
 
 type AppResolver interface {
+	Pipelines(ctx context.Context, obj *model.App) ([]*model.GitPipeline, error)
 	CiCreatePipeLine(ctx context.Context, obj *model.App, in model.GitPipelineIn) (map[string]interface{}, error)
 }
 type EntityResolver interface {
@@ -168,6 +170,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.ID(childComplexity), true
+
+	case "App.pipelines":
+		if e.complexity.App.Pipelines == nil {
+			break
+		}
+
+		return e.complexity.App.Pipelines(childComplexity), true
 
 	case "Entity.findAppByID":
 		if e.complexity.Entity.FindAppByID == nil {
@@ -636,6 +645,7 @@ type GitPipeline {
 
 extend type App @key(fields: "id") {
   id: ID! @external
+  pipelines: [GitPipeline!]!
   ci_createPipeLine(in: GitPipelineIn!): Json
 }
 
@@ -1096,6 +1106,41 @@ func (ec *executionContext) _App_id(ctx context.Context, field graphql.Collected
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_pipelines(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().Pipelines(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GitPipeline)
+	fc.Result = res
+	return ec.marshalNGitPipeline2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _App_ci_createPipeLine(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
@@ -3960,6 +4005,26 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "pipelines":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_pipelines(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "ci_createPipeLine":
 			field := field
 
@@ -5137,6 +5202,50 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNGitPipeline2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GitPipeline) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGitPipeline2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipeline(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNGitPipeline2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipeline(ctx context.Context, sel ast.SelectionSet, v *model.GitPipeline) graphql.Marshaler {

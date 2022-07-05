@@ -102,6 +102,7 @@ type GitPipeline {
 
 extend type App @key(fields: "id") {
   id: ID! @external
+  pipelines: [GitPipeline!]!
   ci_createPipeLine(in: GitPipelineIn!): Json
 }
 
