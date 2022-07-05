@@ -43,6 +43,24 @@ type domainI struct {
 	inventoryPath          string
 }
 
+func (domain *domainI) GetLamdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
+	fileData, err := ioutil.ReadFile(fmt.Sprint(domain.inventoryPath, "/lamda.yaml"))
+	if err != nil {
+		return nil, err
+	}
+	var items []LamdaPlan
+	err = yaml.Unmarshal(fileData, &items)
+	if err != nil {
+		return nil, err
+	}
+	for _, i := range items {
+		if i.Name == name {
+			return &i, nil
+		}
+	}
+	return nil, errors.New("inventory item not found")
+}
+
 func (domain *domainI) GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error) {
 	fileData, err := ioutil.ReadFile(fmt.Sprint(domain.inventoryPath, "/compute.yaml"))
 	if err != nil {

@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
@@ -28,6 +27,18 @@ func (r *entityResolver) FindComputePlanByName(ctx context.Context, name string)
 		Name:           byName.Name,
 		SharedPrice:    byName.SharedPrice,
 		DedicatedPrice: byName.DedicatedPrice,
+	}, nil
+}
+
+func (r *entityResolver) FindLamdaPlanByName(ctx context.Context, name string) (*model.LamdaPlan, error) {
+	byName, err := r.domain.GetLamdaPlanByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return &model.LamdaPlan{
+		Name:         byName.Name,
+		FreeTier:     byName.FreeTire,
+		PricePerGBHr: byName.PricePerGBHr,
 	}, nil
 }
 
