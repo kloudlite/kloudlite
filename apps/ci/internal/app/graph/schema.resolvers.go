@@ -23,6 +23,46 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *appResolver) CiCreateDockerPipeLine(ctx context.Context, obj *model.App, containerName string, in model.GitDockerPipelineIn) (map[string]interface{}, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("not authorized")
+	}
+	var pipeline, err = r.Domain.CreatePipeline(
+		ctx, session.UserId, domain.Pipeline{
+			Name:          in.Name,
+			ProjectId:     in.ProjectID,
+			AppId:         string(obj.ID),
+			ContainerName: containerName,
+			GitProvider:   in.GitProvider,
+			GitRepoUrl:    in.GitRepoURL,
+			GitBranch:     in.GitBranch,
+			DockerBuildInput: &domain.DockerBuildInput{
+				DockerFile: in.DockerFile,
+				ContextDir: in.ContextDir,
+				BuildArgs:  in.BuildArgs,
+			},
+			ArtifactRef: domain.ArtifactRef{
+				DockerImageName: fn.DefaultIfNil(in.ArtifactRef.DockerImageName),
+				DockerImageTag:  fn.DefaultIfNil(in.ArtifactRef.DockerImageTag),
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	marshal, err := json.Marshal(pipeline)
+	if err != nil {
+		return nil, err
+	}
+	x := make(map[string]any)
+	err = json.Unmarshal(marshal, &x)
+	if err != nil {
+		return nil, err
+	}
+	return x, err
+}
+
 func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, containerName string, in model.GitPipelineIn) (map[string]interface{}, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
@@ -37,11 +77,11 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 			GitProvider:   in.GitProvider,
 			GitRepoUrl:    in.GitRepoURL,
 			GitBranch:     in.GitBranch,
-			Build: domain.ContainerImageBuild{
+			Build: &domain.ContainerImageBuild{
 				BaseImage: in.Build.BaseImage,
 				Cmd:       in.Build.Cmd,
 			},
-			Run: domain.ContainerImageRun{
+			Run: &domain.ContainerImageRun{
 				BaseImage: fn.DefaultIfNil(in.Run.BaseImage),
 				Cmd:       in.Run.Cmd,
 			},
@@ -87,11 +127,11 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 			GitProvider: in.GitProvider,
 			GitRepoUrl:  in.GitRepoURL,
 			GitBranch:   in.GitBranch,
-			Build: domain.ContainerImageBuild{
+			Build: &domain.ContainerImageBuild{
 				BaseImage: in.Build.BaseImage,
 				Cmd:       in.Build.Cmd,
 			},
-			Run: domain.ContainerImageRun{
+			Run: &domain.ContainerImageRun{
 				BaseImage: fn.DefaultIfNil(in.Run.BaseImage),
 				Cmd:       in.Run.Cmd,
 			},

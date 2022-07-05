@@ -13,6 +13,12 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
+type DockerBuildInput struct {
+	DockerFile string `json:"docker_file,omitempty" bson:"docker_file,omitempty"`
+	ContextDir string `json:"working_dir,omitempty" bson:"working_dir,omitempty"`
+	BuildArgs  string `json:"build_args,omitempty" bson:"build_args,omitempty"`
+}
+
 type ContainerImageBuild struct {
 	BaseImage string `json:"base_image,omitempty" bson:"base_image,omitempty"`
 	Cmd       string `json:"cmd,omitempty" bson:"cmd,omitempty"`
@@ -44,8 +50,9 @@ type Pipeline struct {
 
 	GitlabTokenId string `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
 
-	Build ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
-	Run   ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
+	Build            *ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
+	Run              *ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
+	DockerBuildInput *DockerBuildInput    `json:"docker_build_input,omitempty" bson:"docker_build_input,omitempty"`
 
 	ArtifactRef ArtifactRef `json:"artifact_ref,omitempty" bson:"artifact_ref,omitempty"`
 

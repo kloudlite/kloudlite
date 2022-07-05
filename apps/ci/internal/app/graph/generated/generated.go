@@ -50,9 +50,10 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	App struct {
-		CiCreatePipeLine func(childComplexity int, containerName string, in model.GitPipelineIn) int
-		ID               func(childComplexity int) int
-		Pipelines        func(childComplexity int) int
+		CiCreateDockerPipeLine func(childComplexity int, containerName string, in model.GitDockerPipelineIn) int
+		CiCreatePipeLine       func(childComplexity int, containerName string, in model.GitPipelineIn) int
+		ID                     func(childComplexity int) int
+		Pipelines              func(childComplexity int) int
 	}
 
 	Entity struct {
@@ -114,6 +115,7 @@ type ComplexityRoot struct {
 
 type AppResolver interface {
 	Pipelines(ctx context.Context, obj *model.App) ([]*model.GitPipeline, error)
+	CiCreateDockerPipeLine(ctx context.Context, obj *model.App, containerName string, in model.GitDockerPipelineIn) (map[string]interface{}, error)
 	CiCreatePipeLine(ctx context.Context, obj *model.App, containerName string, in model.GitPipelineIn) (map[string]interface{}, error)
 }
 type EntityResolver interface {
@@ -151,6 +153,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "App.ci_createDockerPipeLine":
+		if e.complexity.App.CiCreateDockerPipeLine == nil {
+			break
+		}
+
+		args, err := ec.field_App_ci_createDockerPipeLine_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.App.CiCreateDockerPipeLine(childComplexity, args["containerName"].(string), args["in"].(model.GitDockerPipelineIn)), true
 
 	case "App.ci_createPipeLine":
 		if e.complexity.App.CiCreatePipeLine == nil {
@@ -642,9 +656,27 @@ type GitPipeline {
   metadata: Json
 }
 
+input GitDockerPipelineIn {
+  name: String!
+  projectId: String!
+  appId: String!
+
+  gitProvider: String!
+  gitRepoUrl: String!
+  repoName: String!
+  gitBranch: String!
+
+  dockerFile: String!
+  contextDir: String!
+  buildArgs: String!
+
+  artifactRef: GitPipelineArtifactIn
+}
+
 extend type App @key(fields: "id") {
   id: ID! @external
   pipelines: [GitPipeline!]!
+  ci_createDockerPipeLine(containerName: String!, in: GitDockerPipelineIn!): Json!
   ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json!
 }
 
@@ -688,6 +720,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_App_ci_createDockerPipeLine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["containerName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["containerName"] = arg0
+	var arg1 model.GitDockerPipelineIn
+	if tmp, ok := rawArgs["in"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("in"))
+		arg1, err = ec.unmarshalNGitDockerPipelineIn2kloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitDockerPipelineIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["in"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_App_ci_createPipeLine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1149,6 +1205,48 @@ func (ec *executionContext) _App_pipelines(ctx context.Context, field graphql.Co
 	res := resTmp.([]*model.GitPipeline)
 	fc.Result = res
 	return ec.marshalNGitPipeline2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_ci_createDockerPipeLine(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_App_ci_createDockerPipeLine_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().CiCreateDockerPipeLine(rctx, obj, args["containerName"].(string), args["in"].(model.GitDockerPipelineIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _App_ci_createPipeLine(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
@@ -3642,6 +3740,109 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputGitDockerPipelineIn(ctx context.Context, obj interface{}) (model.GitDockerPipelineIn, error) {
+	var it model.GitDockerPipelineIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+			it.ProjectID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "appId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appId"))
+			it.AppID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitProvider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitProvider"))
+			it.GitProvider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitRepoUrl":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitRepoUrl"))
+			it.GitRepoURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "repoName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoName"))
+			it.RepoName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gitBranch":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gitBranch"))
+			it.GitBranch, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dockerFile":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerFile"))
+			it.DockerFile, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "contextDir":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contextDir"))
+			it.ContextDir, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "buildArgs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildArgs"))
+			it.BuildArgs, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "artifactRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("artifactRef"))
+			it.ArtifactRef, err = ec.unmarshalOGitPipelineArtifactIn2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineArtifactIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGitPipelineArtifactIn(ctx context.Context, obj interface{}) (model.GitPipelineArtifactIn, error) {
 	var it model.GitPipelineArtifactIn
 	asMap := map[string]interface{}{}
@@ -4026,6 +4227,26 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 					}
 				}()
 				res = ec._App_pipelines(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "ci_createDockerPipeLine":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_ci_createDockerPipeLine(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5216,6 +5437,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNGitDockerPipelineIn2kloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitDockerPipelineIn(ctx context.Context, v interface{}) (model.GitDockerPipelineIn, error) {
+	res, err := ec.unmarshalInputGitDockerPipelineIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNGitPipeline2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GitPipeline) graphql.Marshaler {
