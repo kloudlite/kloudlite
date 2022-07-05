@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
@@ -16,6 +18,10 @@ import (
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/types"
 )
+
+func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.GitPipeline, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, in model.GitPipelineIn) (map[string]interface{}, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
