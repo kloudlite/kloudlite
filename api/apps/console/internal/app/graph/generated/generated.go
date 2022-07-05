@@ -2187,7 +2187,7 @@ input AttachedResInput{
   res_id: ID!
 }
 
-type AppContainer{
+type AppContainer {
   name: String!
   image: String
   pull_secret: String
