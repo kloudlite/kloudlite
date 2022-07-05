@@ -7,6 +7,7 @@ import (
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/types"
 	"regexp"
+	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
@@ -105,9 +106,10 @@ func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, 
 }
 
 func (gl *gitlabI) getRepoId(repoUrl string) string {
-	re := regexp.MustCompile("https://(.*?)/(.*)(.git)?")
+	re := regexp.MustCompile("https://(.*?)/(.*)")
+	// re := regexp.MustCompile("https://(.*?)/(.*)(.git)?")
 	matches := re.FindStringSubmatch(repoUrl)
-	return matches[2]
+	return strings.Split(matches[2], ".git")[0]
 }
 
 func (gl *gitlabI) GetRepoId(repoUrl string) string {

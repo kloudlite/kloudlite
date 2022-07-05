@@ -94,7 +94,7 @@ type ComplexityRoot struct {
 	Query struct {
 		CiGetPipeline             func(childComplexity int, pipelineID repos.ID) int
 		CiGetPipelines            func(childComplexity int, projectID repos.ID) int
-		CiGithubInstallationToken func(childComplexity int, repoURL *string, instID *int) int
+		CiGithubInstallationToken func(childComplexity int, repoURL string) int
 		CiGithubInstallations     func(childComplexity int, pagination *types.Pagination) int
 		CiGithubRepoBranches      func(childComplexity int, repoURL string, pagination *types.Pagination) int
 		CiGithubRepos             func(childComplexity int, installationID int, pagination *types.Pagination) int
@@ -125,7 +125,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	CiGithubInstallations(ctx context.Context, pagination *types.Pagination) (interface{}, error)
-	CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error)
+	CiGithubInstallationToken(ctx context.Context, repoURL string) (interface{}, error)
 	CiGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (interface{}, error)
 	CiGithubRepoBranches(ctx context.Context, repoURL string, pagination *types.Pagination) (interface{}, error)
 	CiSearchGithubRepos(ctx context.Context, search *string, org string, pagination *types.Pagination) (interface{}, error)
@@ -353,7 +353,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CiGithubInstallationToken(childComplexity, args["repoUrl"].(*string), args["instId"].(*int)), true
+		return e.complexity.Query.CiGithubInstallationToken(childComplexity, args["repoUrl"].(string)), true
 
 	case "Query.ci_githubInstallations":
 		if e.complexity.Query.CiGithubInstallations == nil {
@@ -546,7 +546,7 @@ scalar Any
 
 type Query {
   ci_githubInstallations(pagination: PaginationIn): Any!
-  ci_githubInstallationToken(repoUrl: String, instId: Int): Any!
+  ci_githubInstallationToken(repoUrl: String!): Any!
   ci_githubRepos(installationId: Int!, pagination: PaginationIn): Any!
   ci_githubRepoBranches(repoUrl: String!, pagination: PaginationIn): Any!
   ci_searchGithubRepos(search: String, org: String!, pagination: PaginationIn): Any!
@@ -821,24 +821,15 @@ func (ec *executionContext) field_Query_ci_getPipelines_args(ctx context.Context
 func (ec *executionContext) field_Query_ci_githubInstallationToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["repoUrl"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoUrl"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["repoUrl"] = arg0
-	var arg1 *int
-	if tmp, ok := rawArgs["instId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instId"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["instId"] = arg1
 	return args, nil
 }
 
@@ -1890,7 +1881,7 @@ func (ec *executionContext) _Query_ci_githubInstallationToken(ctx context.Contex
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CiGithubInstallationToken(rctx, args["repoUrl"].(*string), args["instId"].(*int))
+		return ec.resolvers.Query().CiGithubInstallationToken(rctx, args["repoUrl"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

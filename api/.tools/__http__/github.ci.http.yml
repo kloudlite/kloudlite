@@ -56,9 +56,22 @@ variables:
 
 ---
 
+label: Searching github
+query: |
+  query SearchQuery($search: String!, $org: String!) {
+    ci_searchGithubRepos(search: $search, org: $org)
+  }
+variables:
+  search: we
+  org: kloudlite
+  # pagination:
+  #   page: 1
+  #   perPage: 5
+---
+
 label: Get Installation Token By RepoUrl
 query: |
-  query Query($repoUrl: String) {
+  query Query($repoUrl: String!) {
     ci_githubInstallationToken(repoUrl: $repoUrl)
   }
 variables:

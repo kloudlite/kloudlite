@@ -124,11 +124,8 @@ func (r *queryResolver) CiGithubInstallations(ctx context.Context, pagination *t
 	return r.Domain.GithubListInstallations(ctx, session.UserId, pagination)
 }
 
-func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error) {
-	if instID == nil {
-		return r.Domain.GithubInstallationToken(ctx, "")
-	}
-	return r.Domain.GithubInstallationToken(ctx, "")
+func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL string) (interface{}, error) {
+	return r.Domain.GithubInstallationToken(ctx, repoURL)
 }
 
 func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (interface{}, error) {

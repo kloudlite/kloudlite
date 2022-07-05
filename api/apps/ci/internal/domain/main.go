@@ -190,7 +190,11 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 		return tekton.NewResponse(req).Err(err, http.StatusInternalServerError)
 	}
 
-	token, err := d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: pipeline.GitlabTokenId})
+	if pipeline.GitlabTokenId == nil {
+		return tekton.NewResponse(req).Err(errors.Newf("gitlab tokenId field is null, won't be able to pull repo"))
+	}
+
+	token, err := d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: string(*pipeline.GitlabTokenId)})
 	if err != nil {
 		return tekton.NewResponse(req).Err(err)
 	}
@@ -244,12 +248,8 @@ func (d *domainI) gitlabPullToken(ctx context.Context, accTokenReq *auth.GetAcce
 	return repoToken.AccessToken, nil
 }
 
-func (d *domainI) GitlabPullToken(ctx context.Context, pipelineId repos.ID) (string, error) {
-	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
-	if err != nil {
-		return "", err
-	}
-	return d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: pipeline.GitlabTokenId})
+func (d *domainI) GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error) {
+	return d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: string(tokenId)})
 }
 
 func (d *domainI) GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error) {
@@ -335,12 +335,8 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 	}, err
 }
 
-func (d *domainI) GithubInstallationToken(ctx context.Context, pipelineId repos.ID) (string, error) {
-	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
-	if err != nil || pipeline == nil {
-		return "", err
-	}
-	return d.github.GetInstallationToken(ctx, "")
+func (d *domainI) GithubInstallationToken(ctx context.Context, repoUrl string) (string, error) {
+	return d.github.GetInstallationToken(ctx, repoUrl)
 }
 
 func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) (any, error) {
@@ -351,22 +347,12 @@ func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoU
 	return d.github.ListBranches(ctx, token, repoUrl, pagination)
 }
 
-func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) error {
+func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) (*GithubWebhookId, error) {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	hookId, err := d.github.AddWebhook(ctx, token, string(pipelineId), repoUrl)
-	if err != nil {
-		return err
-	}
-
-	_, err = d.pipelineRepo.UpdateById(
-		ctx, pipelineId, &Pipeline{
-			GithubWebhookId: hookId,
-		},
-	)
-	return err
+	return d.github.AddWebhook(ctx, token, string(pipelineId), repoUrl)
 }
 
 func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (any, error) {
@@ -424,10 +410,11 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 
 	latestCommit := ""
 	if pipeline.GitProvider == common.ProviderGithub {
-		err := d.GithubAddWebhook(ctx, userId, pipeline.Id, pipeline.GitRepoUrl)
+		hookId, err := d.GithubAddWebhook(ctx, userId, pipeline.Id, pipeline.GitRepoUrl)
 		if err != nil {
 			return nil, err
 		}
+		pipeline.GithubWebhookId = hookId
 		commit, err := d.github.GetLatestCommit(ctx, pipeline.GitRepoUrl, pipeline.GitBranch)
 		if err != nil {
 			return nil, err
@@ -440,7 +427,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		if err != nil {
 			return nil, err
 		}
-		pipeline.GitlabTokenId = string(token.Id)
+		pipeline.GitlabTokenId = &token.Id
 		hookId, err := d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), pipeline.Id)
 		if err != nil {
 			return nil, err
