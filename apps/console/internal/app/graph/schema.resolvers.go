@@ -791,6 +791,10 @@ func (r *queryResolver) CoreGetComputePlans(ctx context.Context) ([]*model.Compu
 	return plans, nil
 }
 
+func (r *queryResolver) CoreGetLamdaPlan(ctx context.Context) (*model.LamdaPlan, error) {
+	return &model.LamdaPlan{Name: "Default"}, nil
+}
+
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
