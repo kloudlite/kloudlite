@@ -39,6 +39,10 @@ func (r *entityResolver) FindDeviceByID(ctx context.Context, id repos.ID) (*mode
 	}, err
 }
 
+func (r *entityResolver) FindLamdaPlanByName(ctx context.Context, name string) (*model.LamdaPlan, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
 	return &model.User{ID: id}, nil
 }

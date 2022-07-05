@@ -76,3 +76,9 @@ type ComputePlan struct {
 	SharedPrice    float64 `yaml:"sharedPrice"`
 	DedicatedPrice float64 `yaml:"dedicatedPrice"`
 }
+
+type LamdaPlan struct {
+	Name         string  `yaml:"name"`
+	PricePerGBHr float64 `yaml:"pricePerGBHr"`
+	FreeTire     int     `yaml:"freeTire"`
+}

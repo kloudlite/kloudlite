@@ -34,6 +34,12 @@ extend type ComputePlan @key(fields: "name"){
     dedicatedPrice: Float!
 }
 
+extend type LamdaPlan @key(fields: "name"){
+    name: String! @external
+    freeTier: Int!
+    pricePerGBHr: Float!
+}
+
 
 extend type User @key(fields: "id") {
   id: ID! @external
