@@ -2,7 +2,8 @@ package domain
 
 import (
 	"context"
-	"github.com/google/go-github/v43/github"
+	// "github.com/google/go-github/v43/github"
+	"github.com/google/go-github/v45/github"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/types"

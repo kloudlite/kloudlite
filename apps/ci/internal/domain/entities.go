@@ -42,7 +42,7 @@ type Pipeline struct {
 	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
 	GitBranch   string `json:"git_branch" bson:"git_branch"`
 
-	GitlabTokenId string `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
+	GitlabTokenId *repos.ID `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
 
 	Build ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
 	Run   ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
