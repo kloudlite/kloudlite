@@ -106,16 +106,20 @@ var Module = fx.Module(
 				"/access-token/:provider/:pipelineId", func(ctx *fiber.Ctx) error {
 					provider := ctx.Params("provider")
 					pipelineId := ctx.Params("pipelineId")
-					if provider == "gitlab" {
-						token, err := d.GitlabPullToken(ctx.Context(), repos.ID(pipelineId))
+					pipeline, err := d.GetPipeline(ctx.Context(), repos.ID(pipelineId))
+					if err != nil {
+						return err
+					}
+					if provider == common.ProviderGitlab {
+						token, err := d.GitlabPullToken(ctx.Context(), *pipeline.GitlabTokenId)
 						if err != nil {
 							return errors.NewEf(err, "while getting gitlab pull token")
 						}
 						return ctx.JSON(token)
 					}
 
-					if provider == "github" {
-						token, err := d.GithubInstallationToken(ctx.Context(), repos.ID(pipelineId))
+					if provider == common.ProviderGithub {
+						token, err := d.GithubInstallationToken(ctx.Context(), pipeline.GitRepoUrl)
 						if err != nil {
 							return errors.NewEf(err, "while getting gitlab pull token")
 						}

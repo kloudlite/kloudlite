@@ -7,13 +7,15 @@ import (
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/pkg/types"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
-	"github.com/google/go-github/v43/github"
+	// "github.com/google/go-github/v43/github"
+	"github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
 	"kloudlite.io/pkg/errors"
@@ -57,8 +59,10 @@ func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToke
 }
 
 func (gh *githubI) SearchRepos(ctx context.Context, accToken *domain.AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error) {
-	rsr, _, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(
-		ctx, fmt.Sprintf("%s org:%s", q, org), &github.SearchOptions{
+	// TODO: search repos not working at all from the API
+	searchQuery2 := fmt.Sprintf("q=%s+%s", q, url.QueryEscape(fmt.Sprintf("org:%s", org)))
+	rsr, _, err := gh.ghCli.Search.Repositories(
+		context.TODO(), searchQuery2, &github.SearchOptions{
 			ListOptions: gh.buildListOptions(pagination),
 		},
 	)
