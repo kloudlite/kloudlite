@@ -56,22 +56,22 @@ input GitPipelineIn {
 
 input GitPipelineBuildIn {
   baseImage: String!
-  cmd: String!
+  cmd: String
 }
 
 type GitPipelineBuild {
   baseImage: String
-  cmd: String!
+  cmd: String
 }
 
 input GitPipelineRunIn {
   baseImage: String
-  cmd: String!
+  cmd: String
 }
 
 type GitPipelineRun {
   baseImage: String
-  cmd: String!
+  cmd: String
 }
 
 input GitPipelineArtifactIn {
