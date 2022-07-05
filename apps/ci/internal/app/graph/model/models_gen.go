@@ -8,6 +8,7 @@ import (
 
 type App struct {
 	ID               repos.ID               `json:"id"`
+	Pipelines        []*GitPipeline         `json:"pipelines"`
 	CiCreatePipeLine map[string]interface{} `json:"ci_createPipeLine"`
 }
 

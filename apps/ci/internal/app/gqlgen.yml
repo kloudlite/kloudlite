@@ -47,6 +47,8 @@ skip_validation: true
 models:
   App:
     fields:
+      pipelines:
+        resolver: true
       ci_createPipeLine:
         resolver: true
   ID:
