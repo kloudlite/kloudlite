@@ -28,11 +28,15 @@ type ArtifactRef struct {
 	DockerImageTag  string `json:"docker_image_tag,omitempty" bson:"docker_image_tag,omitempty"`
 }
 
+type GitlabWebhookId int
+type GithubWebhookId int64
+
 type Pipeline struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string `json:"name,omitempty" bson:"name"`
 	ProjectId        string `json:"project_id,omitempty" bson:"project_id"`
 	AppId            string `json:"app_id,omitempty" bson:"app_id"`
+	ContainerName    string `json:"container_name" bson:"container_name"`
 
 	GitProvider string `json:"git_provider,omitempty" bson:"git_provider"`
 	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
@@ -45,8 +49,8 @@ type Pipeline struct {
 
 	ArtifactRef ArtifactRef `json:"artifact_ref,omitempty" bson:"artifact_ref,omitempty"`
 
-	GithubWebhookId *int64 `json:"github_webhook_id,omitempty" bson:"github_webhook_id,omitempty"`
-	GitlabWebhookId *int   `json:"gitlab_webhook_id,omitempty" bson:"gitlab_webhook_id,omitempty"`
+	GithubWebhookId *GithubWebhookId `json:"github_webhook_id,omitempty" bson:"github_webhook_id,omitempty"`
+	GitlabWebhookId *GitlabWebhookId `json:"gitlab_webhook_id,omitempty" bson:"gitlab_webhook_id,omitempty"`
 
 	Metadata map[string]interface{} `json:"metadata,omitempty" bson:"metadata"`
 }
