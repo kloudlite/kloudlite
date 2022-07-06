@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/finance";
+
+service FinanceInfra {
+  rpc ComputeStart(ComputeStartIn) returns (FinanceInfraVoid);
+  rpc ComputeEnd(ComputeEndIn) returns (FinanceInfraVoid);
+  rpc LambdaStart(LambdaStartIn) returns (FinanceInfraVoid);
+  rpc LambdaEnd(LambdaEndIn) returns (FinanceInfraVoid);
+  rpc BlockStorageStart(BlockStorageStartIn) returns (FinanceInfraVoid);
+  rpc BlockStorageEnd(BlockStorageEndIn) returns (FinanceInfraVoid);
+  rpc ObjectStorageStart(ObjectStorageStartIn) returns (FinanceInfraVoid);
+  rpc ObjectStorageEnd(ObjectStorageEndIn) returns (FinanceInfraVoid);
+  rpc CIStart(CIStartIn) returns (FinanceInfraVoid);
+  rpc CIEnd(CIEndIn) returns (FinanceInfraVoid);
+}
+
+message ComputeStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message ComputeEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message LambdaStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message LambdaEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message BlockStorageStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message BlockStorageEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message ObjectStorageStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message ObjectStorageEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message CIStartIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message CIEndIn {
+  string resourceId = 1;
+  string accountId = 2;
+}
+
+message FinanceInfraVoid {}
+

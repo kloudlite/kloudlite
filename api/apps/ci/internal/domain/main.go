@@ -200,11 +200,30 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 	}
 
 	tkVars := TektonVars{
-		GitRepo:                 hookPayload.RepoUrl,
-		GitUser:                 "oauth2",
-		GitPassword:             token,
-		GitRef:                  fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
-		GitCommitHash:           hookPayload.CommitHash,
+		GitRepo:       hookPayload.RepoUrl,
+		GitUser:       "oauth2",
+		GitPassword:   token,
+		GitRef:        fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
+		GitCommitHash: hookPayload.CommitHash,
+		IsDockerBuild: pipeline.DockerBuildInput != nil,
+		DockerFile: func() *string {
+			if pipeline.DockerBuildInput != nil {
+				return &pipeline.DockerBuildInput.DockerFile
+			}
+			return nil
+		}(),
+		DockerContextDir: func() *string {
+			if pipeline.DockerBuildInput != nil {
+				return &pipeline.DockerBuildInput.ContextDir
+			}
+			return nil
+		}(),
+		DockerBuildArgs: func() *string {
+			if pipeline.DockerBuildInput != nil {
+				return &pipeline.DockerBuildInput.BuildArgs
+			}
+			return nil
+		}(),
 		BuildBaseImage:          pipeline.Build.BaseImage,
 		BuildCmd:                pipeline.Build.Cmd,
 		RunBaseImage:            pipeline.Run.BaseImage,
@@ -402,7 +421,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		return nil, err
 	}
 
-	if exP == nil {
+	if exP != nil {
 		pipeline.Id = exP.Id
 	} else {
 		pipeline.Id = d.pipelineRepo.NewId()

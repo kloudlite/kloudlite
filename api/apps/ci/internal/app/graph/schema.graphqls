@@ -99,9 +99,27 @@ type GitPipeline {
   metadata: Json
 }
 
+input GitDockerPipelineIn {
+  name: String!
+  projectId: String!
+  appId: String!
+
+  gitProvider: String!
+  gitRepoUrl: String!
+  repoName: String!
+  gitBranch: String!
+
+  dockerFile: String!
+  contextDir: String!
+  buildArgs: String!
+
+  artifactRef: GitPipelineArtifactIn
+}
+
 extend type App @key(fields: "id") {
   id: ID! @external
   pipelines: [GitPipeline!]!
+  ci_createDockerPipeLine(containerName: String!, in: GitDockerPipelineIn!): Json!
   ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json!
 }
 

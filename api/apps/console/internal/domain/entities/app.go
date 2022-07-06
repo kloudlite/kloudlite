@@ -37,26 +37,26 @@ type EnvVar struct {
 }
 
 type Container struct {
-	PipelineId        repos.ID           `json:"pipeline_id" bson:"pipeline_id"`
 	Name              string             `json:"name" bson:"name"`
 	Image             *string            `json:"image" bson:"image"`
 	ImagePullSecret   *string            `json:"pull_secret" bson:"pull_secret"`
 	EnvVars           []EnvVar           `json:"env_vars" bson:"env_cars"`
-	CPULimits         Limit              `json:"cpu_limits" bson:"cpu_limits"`
-	MemoryLimits      Limit              `json:"memory_limits" bson:"memory_limits"`
 	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
+	ComputePlan       string             `json:"compute_plan" bson:"compute_plan"`
+	Quantity          float64            `json:"quantity" bson:"quantity"`
+	IsShared          bool               `json:"is_shared" bson:"is_shared"`
 }
 
-type ContainerIn struct {
-	Name                string
-	Image               *string
-	ImagePullSecret     *string
-	EnvVars             []EnvVar
-	ComputePlanName     string
-	ComputePlanQuantity float64
-	SharingEnabled      bool
-	AttachedResources   []AttachedResource
-}
+// type ContainerIn struct {
+// 	Name                string
+// 	Image               *string
+// 	ImagePullSecret     *string
+// 	EnvVars             []EnvVar
+// 	ComputePlanName     string
+// 	ComputePlanQuantity float64
+// 	SharingEnabled      bool
+// 	AttachedResources   []AttachedResource
+// }
 
 type AppStatus string
 
@@ -67,23 +67,24 @@ const (
 	AppStateDown    = AppStatus("down")
 )
 
-type AppIn struct {
-	ReadableId   string
-	ProjectId    repos.ID
-	Name         string
-	Namespace    string
-	Description  *string
-	Replicas     int
-	ExposedPorts []ExposedPort
-	Containers   []ContainerIn
-	Status       AppStatus
-	Conditions   []metav1.Condition
-	Provider     string
-	Region       string
-}
+// type AppIn struct {
+// 	ReadableId   string
+// 	ProjectId    repos.ID
+// 	Name         string
+// 	Namespace    string
+// 	Description  *string
+// 	Replicas     int
+// 	ExposedPorts []ExposedPort
+// 	Containers   []ContainerIn
+// 	Status       AppStatus
+// 	Conditions   []metav1.Condition
+// 	Provider     string
+// 	Region       string
+// }
 
 type App struct {
 	repos.BaseEntity `bson:",inline"`
+	IsLambda         bool               `json:"is_lambda" bson:"is_lambda"`
 	ReadableId       string             `json:"readable_id" bson:"readable_id"`
 	ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
 	Name             string             `json:"name" bson:"name"`
@@ -105,9 +106,8 @@ var AppIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "name", Value: repos.IndexAsc},
+			{Key: "readable_id", Value: repos.IndexAsc},
 			{Key: "namespace", Value: repos.IndexAsc},
-			{Key: "cluster_id", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
