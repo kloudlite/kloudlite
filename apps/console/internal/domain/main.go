@@ -377,209 +377,199 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	//return output.Output, err
 }
 
-func (d *domain) createApp(ctx context.Context, app entities.AppIn) (*entities.App, error) {
-	a := entities.App{
-		ReadableId:   app.ReadableId,
-		ProjectId:    app.ProjectId,
-		Name:         app.Name,
-		Namespace:    app.Namespace,
-		Description:  app.Description,
-		Replicas:     app.Replicas,
-		ExposedPorts: app.ExposedPorts,
-		Status:       entities.AppStateSyncing,
-	}
-	for _, c := range app.Containers {
-		var iName string
-		if c.Image != nil {
-			iName = fmt.Sprintf("%s:latest", *c.Image)
-		}
-		plan, err := d.getComputePlan(c.ComputePlanName)
+// func (d *domain) createApp(ctx context.Context, app entities.App) (*entities.App, error) {
+// 	a := entities.App{
+// 		ReadableId:   app.ReadableId,
+// 		ProjectId:    app.ProjectId,
+// 		Name:         app.Name,
+// 		Namespace:    app.Namespace,
+// 		Description:  app.Description,
+// 		Replicas:     app.Replicas,
+// 		ExposedPorts: app.ExposedPorts,
+// 		Status:       entities.AppStateSyncing,
+// 	}
+// 	for _, c := range app.Containers {
+// 		var iName string
+// 		if c.Image != nil {
+// 			iName = fmt.Sprintf("%s:latest", *c.Image)
+// 		}
+// 		plan, err := d.getComputePlan(c.ComputePlan)
 
-		if err != nil {
-			return nil, err
-		}
-		container := entities.Container{
-			Name:            c.Name,
-			Image:           &iName,
-			ImagePullSecret: c.ImagePullSecret,
-			EnvVars:         c.EnvVars,
-			CPULimits: entities.Limit{
-				Min: fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000, "m"),
-				Max: fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000, "m"),
-			},
-			MemoryLimits: entities.Limit{
-				Min: fmt.Sprintf("%v%v", plan.MemoryPerCPU*c.ComputePlanQuantity, "Gi"),
-				Max: fmt.Sprintf("%v%v", plan.MemoryPerCPU*c.ComputePlanQuantity, "Gi"),
-			},
-			AttachedResources: c.AttachedResources,
-		}
-		if c.SharingEnabled {
-			container.CPULimits.Min = fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000/2, "m")
-		}
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		container := entities.Container{
+// 			Name:            c.Name,
+// 			Image:           &iName,
+// 			ImagePullSecret: c.ImagePullSecret,
+// 			EnvVars:         c.EnvVars,
+// 			CPULimits: entities.Limit{
+// 				Min: fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000, "m"),
+// 				Max: fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000, "m"),
+// 			},
+// 			MemoryLimits: entities.Limit{
+// 				Min: fmt.Sprintf("%v%v", plan.MemoryPerCPU*c.ComputePlanQuantity, "Gi"),
+// 				Max: fmt.Sprintf("%v%v", plan.MemoryPerCPU*c.ComputePlanQuantity, "Gi"),
+// 			},
+// 			AttachedResources: c.AttachedResources,
+// 		}
+// 		if c.SharingEnabled {
+// 			container.CPULimits.Min = fmt.Sprintf("%v%v", c.ComputePlanQuantity*1000/2, "m")
+// 		}
 
-		a.Containers = append(a.Containers, container)
-	}
-	return &a, nil
-}
+// 		a.Containers = append(a.Containers, container)
+// 	}
+// 	return &a, nil
+// }
 
-func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, appIn entities.AppIn) (bool, error) {
-	prj, err := d.projectRepo.FindById(ctx, appIn.ProjectId)
+func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App) (*entities.App, error) {
+	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
-		return false, err
-	}
-	app, err := d.createApp(ctx, appIn)
-	if err != nil {
-		return false, err
+		return nil, err
 	}
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
 	app.Id = appId
-	_, err = d.appRepo.UpdateById(ctx, appId, app)
+	updatedApp, err := d.appRepo.UpdateById(ctx, appId, &app)
 	if err != nil {
-		return false, err
-	}
-	svcs := make([]op_crds.Service, 0)
-	for _, ep := range app.ExposedPorts {
-		svcs = append(svcs, op_crds.Service{
-			Port:       int(ep.Port),
-			TargetPort: int(ep.TargetPort),
-			Type:       string(ep.Type),
-		})
-	}
-	containers := make([]op_crds.Container, 0)
-	for _, c := range app.Containers {
-		env := make([]op_crds.EnvEntry, 0)
-		for _, e := range c.EnvVars {
-			if e.Type == "managed_resource" {
-				ref := fmt.Sprintf("mres-%v", *e.Ref)
-				env = append(env, op_crds.EnvEntry{
-					Value:   e.Value,
-					Key:     e.Key,
-					Type:    "secret",
-					RefName: &ref,
-					RefKey:  e.RefKey,
-				})
-			} else {
-				env = append(env, op_crds.EnvEntry{
-					Value:   e.Value,
-					Key:     e.Key,
-					Type:    e.Type,
-					RefName: e.Ref,
-					RefKey:  e.RefKey,
-				})
-			}
-		}
-		containers = append(containers, op_crds.Container{
-			Name:  c.Name,
-			Image: c.Image,
-			ResourceCpu: op_crds.Limit{
-				Min: c.CPULimits.Min,
-				Max: c.CPULimits.Max,
-			},
-			ResourceMemory: op_crds.Limit{
-				Min: c.MemoryLimits.Min,
-				Max: c.MemoryLimits.Max,
-			},
-			Env: env,
-		})
+		return nil, err
 	}
 
-	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
-		APIVersion: op_crds.AppAPIVersion,
-		Kind:       op_crds.AppKind,
-		Metadata: op_crds.AppMetadata{
-			Name:      app.ReadableId,
-			Namespace: app.Namespace,
-		},
-		Spec: op_crds.AppSpec{
-			Services:   svcs,
-			Containers: containers,
-			Replicas:   1,
-		},
-	})
+	// svcs := make([]op_crds.Service, 0)
+	// for _, ep := range app.ExposedPorts {
+	// 	svcs = append(svcs, op_crds.Service{
+	// 		Port:       int(ep.Port),
+	// 		TargetPort: int(ep.TargetPort),
+	// 		Type:       string(ep.Type),
+	// 	})
+	// }
+	// containers := make([]op_crds.Container, 0)
+	// for _, c := range app.Containers {
+	// 	env := make([]op_crds.EnvEntry, 0)
+	// 	for _, e := range c.EnvVars {
+	// 		if e.Type == "managed_resource" {
+	// 			ref := fmt.Sprintf("mres-%v", *e.Ref)
+	// 			env = append(env, op_crds.EnvEntry{
+	// 				Value:   e.Value,
+	// 				Key:     e.Key,
+	// 				Type:    "secret",
+	// 				RefName: &ref,
+	// 				RefKey:  e.RefKey,
+	// 			})
+	// 		} else {
+	// 			env = append(env, op_crds.EnvEntry{
+	// 				Value:   e.Value,
+	// 				Key:     e.Key,
+	// 				Type:    e.Type,
+	// 				RefName: e.Ref,
+	// 				RefKey:  e.RefKey,
+	// 			})
+	// 		}
+	// 	}
+	// 	containers = append(containers, op_crds.Container{
+	// 		Name:  c.Name,
+	// 		Image: c.Image,
+	// 		Env:   env,
+	// 	})
+	// }
 
-	return true, nil
+	// d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+	// 	APIVersion: op_crds.AppAPIVersion,
+	// 	Kind:       op_crds.AppKind,
+	// 	Metadata: op_crds.AppMetadata{
+	// 		Name:      app.ReadableId,
+	// 		Namespace: app.Namespace,
+	// 	},
+	// 	Spec: op_crds.AppSpec{
+	// 		Services:   svcs,
+	// 		Containers: containers,
+	// 		Replicas:   1,
+	// 	},
+	// })
+
+	return updatedApp, nil
 }
 
 func (d *domain) InstallApp(
 	ctx context.Context,
 	projectId repos.ID,
-	appIn entities.AppIn,
-) (bool, error) {
+	app entities.App,
+) (*entities.App, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectId)
+
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	app, err := d.createApp(ctx, appIn)
+
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
-	_, err = d.appRepo.Create(ctx, app)
+	createdApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	svcs := make([]op_crds.Service, 0)
-	for _, ep := range app.ExposedPorts {
-		svcs = append(svcs, op_crds.Service{
-			Port:       int(ep.Port),
-			TargetPort: int(ep.TargetPort),
-			Type:       string(ep.Type),
-		})
-	}
-	containers := make([]op_crds.Container, 0)
-	for _, c := range app.Containers {
-		env := make([]op_crds.EnvEntry, 0)
-		for _, e := range c.EnvVars {
-			if e.Type == "managed_resource" {
-				ref := fmt.Sprintf("mres-%v", *e.Ref)
-				env = append(env, op_crds.EnvEntry{
-					Value:   e.Value,
-					Key:     e.Key,
-					Type:    "secret",
-					RefName: &ref,
-					RefKey:  e.RefKey,
-				})
-			} else {
-				env = append(env, op_crds.EnvEntry{
-					Value:   e.Value,
-					Key:     e.Key,
-					Type:    e.Type,
-					RefName: e.Ref,
-					RefKey:  e.RefKey,
-				})
-			}
-		}
-		containers = append(containers, op_crds.Container{
-			Name:  c.Name,
-			Image: c.Image,
-			ResourceCpu: op_crds.Limit{
-				Min: c.CPULimits.Min,
-				Max: c.CPULimits.Max,
-			},
-			ResourceMemory: op_crds.Limit{
-				Min: c.MemoryLimits.Min,
-				Max: c.MemoryLimits.Max,
-			},
-			Env: env,
-		})
-	}
-	d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
-		APIVersion: op_crds.AppAPIVersion,
-		Kind:       op_crds.AppKind,
-		Metadata: op_crds.AppMetadata{
-			Name:      app.ReadableId,
-			Namespace: app.Namespace,
-		},
-		Spec: op_crds.AppSpec{
-			Services:   svcs,
-			Containers: containers,
-			Replicas:   1,
-		},
-	})
+	// svcs := make([]op_crds.Service, 0)
+	// for _, ep := range app.ExposedPorts {
+	// 	svcs = append(svcs, op_crds.Service{
+	// 		Port:       int(ep.Port),
+	// 		TargetPort: int(ep.TargetPort),
+	// 		Type:       string(ep.Type),
+	// 	})
+	// }
+	// containers := make([]op_crds.Container, 0)
+	// for _, c := range app.Containers {
+	// 	env := make([]op_crds.EnvEntry, 0)
+	// 	for _, e := range c.EnvVars {
+	// 		if e.Type == "managed_resource" {
+	// 			ref := fmt.Sprintf("mres-%v", *e.Ref)
+	// 			env = append(env, op_crds.EnvEntry{
+	// 				Value:   e.Value,
+	// 				Key:     e.Key,
+	// 				Type:    "secret",
+	// 				RefName: &ref,
+	// 				RefKey:  e.RefKey,
+	// 			})
+	// 		} else {
+	// 			env = append(env, op_crds.EnvEntry{
+	// 				Value:   e.Value,
+	// 				Key:     e.Key,
+	// 				Type:    e.Type,
+	// 				RefName: e.Ref,
+	// 				RefKey:  e.RefKey,
+	// 			})
+	// 		}
+	// 	}
+	// 	containers = append(containers, op_crds.Container{
+	// 		Name:  c.Name,
+	// 		Image: c.Image,
+	// 		ResourceCpu: op_crds.Limit{
+	// 			Min: c.CPULimits.Min,
+	// 			Max: c.CPULimits.Max,
+	// 		},
+	// 		ResourceMemory: op_crds.Limit{
+	// 			Min: c.MemoryLimits.Min,
+	// 			Max: c.MemoryLimits.Max,
+	// 		},
+	// 		Env: env,
+	// 	})
+	// }
+	// d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+	// 	APIVersion: op_crds.AppAPIVersion,
+	// 	Kind:       op_crds.AppKind,
+	// 	Metadata: op_crds.AppMetadata{
+	// 		Name:      app.ReadableId,
+	// 		Namespace: app.Namespace,
+	// 	},
+	// 	Spec: op_crds.AppSpec{
+	// 		Services:   svcs,
+	// 		Containers: containers,
+	// 		Replicas:   1,
+	// 	},
+	// })
 
-	return true, nil
+	return createdApp, nil
 }
 
 func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (string, error) {

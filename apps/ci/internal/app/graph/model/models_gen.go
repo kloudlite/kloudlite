@@ -7,12 +7,27 @@ import (
 )
 
 type App struct {
-	ID               repos.ID               `json:"id"`
-	Pipelines        []*GitPipeline         `json:"pipelines"`
-	CiCreatePipeLine map[string]interface{} `json:"ci_createPipeLine"`
+	ID                     repos.ID               `json:"id"`
+	Pipelines              []*GitPipeline         `json:"pipelines"`
+	CiCreateDockerPipeLine map[string]interface{} `json:"ci_createDockerPipeLine"`
+	CiCreatePipeLine       map[string]interface{} `json:"ci_createPipeLine"`
 }
 
 func (App) IsEntity() {}
+
+type GitDockerPipelineIn struct {
+	Name        string                 `json:"name"`
+	ProjectID   string                 `json:"projectId"`
+	AppID       string                 `json:"appId"`
+	GitProvider string                 `json:"gitProvider"`
+	GitRepoURL  string                 `json:"gitRepoUrl"`
+	RepoName    string                 `json:"repoName"`
+	GitBranch   string                 `json:"gitBranch"`
+	DockerFile  string                 `json:"dockerFile"`
+	ContextDir  string                 `json:"contextDir"`
+	BuildArgs   string                 `json:"buildArgs"`
+	ArtifactRef *GitPipelineArtifactIn `json:"artifactRef"`
+}
 
 type GitPipeline struct {
 	ID          repos.ID               `json:"id"`
