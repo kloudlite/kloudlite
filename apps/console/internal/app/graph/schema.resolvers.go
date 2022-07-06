@@ -331,6 +331,7 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		return nil, err
 	}
 	return &model.App{
+		ID:          entity.Id,
 		Name:        entity.Name,
 		Namespace:   entity.Namespace,
 		IsLambda:    entity.IsLambda,
