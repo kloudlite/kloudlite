@@ -435,7 +435,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		return nil, err
 	}
 
-	if exP == nil {
+	if exP != nil {
 		pipeline.Id = exP.Id
 	} else {
 		pipeline.Id = d.pipelineRepo.NewId()
