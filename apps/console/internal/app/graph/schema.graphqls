@@ -136,7 +136,7 @@ type LamdaPlan @key(fields: "name"){
 
 input AppInput{
   name: String!
-  isLambda: String!
+  isLambda: Boolean!
   projectId: String!
   description: String
   readableId: ID!
@@ -147,7 +147,7 @@ input AppInput{
 
 type App @key(fields: "id") {
   id: ID!
-  isLambda: String!
+  isLambda: Boolean!
   name: String!
   namespace: String!
   description: String

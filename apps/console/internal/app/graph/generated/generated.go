@@ -2134,7 +2134,7 @@ type LamdaPlan @key(fields: "name"){
 
 input AppInput{
   name: String!
-  isLambda: String!
+  isLambda: Boolean!
   projectId: String!
   description: String
   readableId: ID!
@@ -2145,7 +2145,7 @@ input AppInput{
 
 type App @key(fields: "id") {
   id: ID!
-  isLambda: String!
+  isLambda: Boolean!
   name: String!
   namespace: String!
   description: String
@@ -3929,9 +3929,9 @@ func (ec *executionContext) _App_isLambda(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _App_name(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
@@ -11578,7 +11578,7 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLambda"))
-			it.IsLambda, err = ec.unmarshalNString2string(ctx, v)
+			it.IsLambda, err = ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
