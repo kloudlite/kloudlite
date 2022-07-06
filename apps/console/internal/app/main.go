@@ -43,6 +43,7 @@ func (i *WorkloadConsumerEnv) GetConsumerGroupId() string {
 type Env struct {
 	KafkaConsumerGroupId string `env:"KAFKA_GROUP_ID"`
 	CookieDomain         string `env:"COOKIE_DOMAIN"`
+	AuthRedisPrefix      string `env:"REDIS_AUTH_PREFIX"`
 }
 
 type InfraClientConnection *grpc.ClientConn
@@ -186,7 +187,7 @@ var Module = fx.Module(
 			cacheClient,
 			"hotspot-session",
 			env.CookieDomain,
-			"hotspot:auth:sessions",
+			common.CacheSessionPrefix,
 		))
 		a.Get("/", fWebsocket.New(func(conn *fWebsocket.Conn) {
 			// Crosscheck session
@@ -204,7 +205,7 @@ var Module = fx.Module(
 	fx.Invoke(func(
 		server *fiber.App,
 		d domain.Domain,
-		cacheClient CacheClient,
+		cacheClient AuthCacheClient,
 		env *Env,
 	) {
 		schema := generated.NewExecutableSchema(
@@ -217,7 +218,7 @@ var Module = fx.Module(
 				cacheClient,
 				"hotspot-session",
 				env.CookieDomain,
-				"hotspot:auth:sessions",
+				common.CacheSessionPrefix,
 			),
 		)
 	}),

@@ -16,6 +16,7 @@ func (Account) IsEntity() {}
 
 type App struct {
 	ID          repos.ID          `json:"id"`
+	IsLambda    bool              `json:"isLambda"`
 	Name        string            `json:"name"`
 	Namespace   string            `json:"namespace"`
 	Description *string           `json:"description"`
@@ -33,33 +34,33 @@ func (App) IsEntity() {}
 type AppContainer struct {
 	Name              string         `json:"name"`
 	Image             *string        `json:"image"`
-	PullSecret        *string        `json:"pull_secret"`
-	EnvVars           []*EnvVar      `json:"env_vars"`
-	CPUMin            string         `json:"cpu_min"`
-	CPUMax            string         `json:"cpu_max"`
-	MemMin            string         `json:"mem_min"`
-	MemMax            string         `json:"mem_max"`
-	AttachedResources []*AttachedRes `json:"attached_resources"`
+	PullSecret        *string        `json:"pullSecret"`
+	EnvVars           []*EnvVar      `json:"envVars"`
+	AttachedResources []*AttachedRes `json:"attachedResources"`
+	ComputePlan       string         `json:"computePlan"`
+	Quantity          float64        `json:"quantity"`
+	IsShared          bool           `json:"isShared"`
 }
 
-type AppContainerInput struct {
+type AppContainerIn struct {
 	Name              string              `json:"name"`
 	Image             *string             `json:"image"`
-	PullSecret        *string             `json:"pull_secret"`
-	EnvVars           []*EnvVarInput      `json:"env_vars"`
+	PullSecret        *string             `json:"pullSecret"`
+	EnvVars           []*EnvVarInput      `json:"envVars"`
 	ComputePlan       string              `json:"computePlan"`
-	ComputeSize       float64             `json:"compute_size"`
-	AttachedResources []*AttachedResInput `json:"attached_resources"`
+	Quantity          float64             `json:"quantity"`
+	AttachedResources []*AttachedResInput `json:"attachedResources"`
 }
 
 type AppInput struct {
-	Name            string                 `json:"name"`
-	Readable        string                 `json:"readable"`
-	Description     *string                `json:"description"`
-	ExposedServices []*ExposedServiceInput `json:"exposed_services"`
-	Containers      []*AppContainerInput   `json:"containers"`
-	Provider        string                 `json:"provider"`
-	Region          string                 `json:"region"`
+	Name        string              `json:"name"`
+	IsLambda    bool                `json:"isLambda"`
+	ProjectID   string              `json:"projectId"`
+	Description *string             `json:"description"`
+	ReadableID  repos.ID            `json:"readableId"`
+	Replicas    *int                `json:"replicas"`
+	Services    []*ExposedServiceIn `json:"services"`
+	Containers  []*AppContainerIn   `json:"containers"`
 }
 
 type AppService struct {
@@ -111,16 +112,6 @@ type ClusterSubscription struct {
 	Account     *Account  `json:"account"`
 	Devices     []*Device `json:"devices"`
 	UserDevices []*Device `json:"userDevices"`
-}
-
-type ComputeInventoryData struct {
-	Memory *ComputeInventoryMetricSize `json:"memory"`
-	CPU    *ComputeInventoryMetricSize `json:"cpu"`
-}
-
-type ComputeInventoryMetricSize struct {
-	Quantity float64 `json:"quantity"`
-	Unit     string  `json:"unit"`
 }
 
 type ComputePlan struct {
@@ -187,7 +178,7 @@ type ExposedService struct {
 	Exposed int    `json:"exposed"`
 }
 
-type ExposedServiceInput struct {
+type ExposedServiceIn struct {
 	Type    string `json:"type"`
 	Target  int    `json:"target"`
 	Exposed int    `json:"exposed"`

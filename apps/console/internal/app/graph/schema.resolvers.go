@@ -273,20 +273,21 @@ func (r *mutationResolver) IamUpdateProjectMember(ctx context.Context, projectID
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID, app model.AppInput) (bool, error) {
+func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID, app model.AppInput) (*model.App, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
-		return false, errors.New("user not logged in")
+		return nil, errors.New("user not logged in")
 	}
+
 	ports := make([]entities.ExposedPort, 0)
-	for _, port := range app.ExposedServices {
+	for _, port := range app.Services {
 		ports = append(ports, entities.ExposedPort{
 			Port:       int64(port.Exposed),
 			TargetPort: int64(port.Target),
 			Type:       entities.PortType(port.Type),
 		})
 	}
-	containers := make([]entities.ContainerIn, 0)
+	containers := make([]entities.Container, 0)
 	for _, container := range app.Containers {
 		e := make([]entities.EnvVar, 0)
 		for _, env := range container.EnvVars {
@@ -305,44 +306,101 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 			})
 		}
 
-		in := entities.ContainerIn{
-			Name:                container.Name,
-			Image:               container.Image,
-			ImagePullSecret:     container.PullSecret,
-			EnvVars:             e,
-			ComputePlanName:     container.ComputePlan,
-			ComputePlanQuantity: container.ComputeSize,
-			AttachedResources:   a,
+		in := entities.Container{
+			Name:              container.Name,
+			Image:             container.Image,
+			ImagePullSecret:   container.PullSecret,
+			EnvVars:           e,
+			ComputePlan:       container.ComputePlan,
+			Quantity:          container.Quantity,
+			AttachedResources: a,
 		}
 		containers = append(containers, in)
 	}
-	return r.Domain.InstallApp(ctx, projectID, entities.AppIn{
+	entity, err := r.Domain.InstallApp(ctx, projectID, entities.App{
 		Name:         app.Name,
+		IsLambda:     app.IsLambda,
 		ProjectId:    projectID,
-		ReadableId:   app.Readable,
+		ReadableId:   string(app.ReadableID),
 		Description:  app.Description,
 		Replicas:     1,
 		ExposedPorts: ports,
 		Containers:   containers,
-		Provider:     app.Provider,
-		Region:       app.Region,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &model.App{
+		Name:        entity.Name,
+		Namespace:   entity.Namespace,
+		IsLambda:    entity.IsLambda,
+		Description: entity.Description,
+		ReadableID:  repos.ID(entity.ReadableId),
+		Replicas:    &entity.Replicas,
+		Services: func() []*model.ExposedService {
+			services := make([]*model.ExposedService, 0)
+			for _, port := range entity.ExposedPorts {
+				services = append(services, &model.ExposedService{
+					Exposed: int(port.Port),
+					Target:  int(port.TargetPort),
+					Type:    string(port.Type),
+				})
+			}
+			return services
+		}(),
+		Containers: func() []*model.AppContainer {
+			containers := make([]*model.AppContainer, 0)
+			for _, container := range entity.Containers {
+				c := &model.AppContainer{
+					Name:        container.Name,
+					Image:       container.Image,
+					PullSecret:  container.ImagePullSecret,
+					ComputePlan: container.ComputePlan,
+					Quantity:    container.Quantity,
+					AttachedResources: func() []*model.AttachedRes {
+						attached := make([]*model.AttachedRes, 0)
+						for _, attachedResource := range container.AttachedResources {
+							attached = append(attached, &model.AttachedRes{
+								ResID: attachedResource.ResourceId,
+							})
+						}
+						return attached
+					}(),
+					EnvVars: func() []*model.EnvVar {
+						envVars := make([]*model.EnvVar, 0)
+						for _, envVar := range container.EnvVars {
+							envVars = append(envVars, &model.EnvVar{
+								Key: envVar.Key,
+								Value: &model.EnvVal{
+									Type:  envVar.Type,
+									Value: envVar.Value,
+								},
+							})
+						}
+						return envVars
+					}(),
+				}
+				containers = append(containers, c)
+			}
+			return containers
+		}(),
+	}, nil
 }
 
-func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID, appID repos.ID, app model.AppInput) (bool, error) {
+func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID, appID repos.ID, app model.AppInput) (*model.App, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
-		return false, errors.New("user not logged in")
+		return nil, errors.New("user not logged in")
 	}
 	ports := make([]entities.ExposedPort, 0)
-	for _, port := range app.ExposedServices {
+	for _, port := range app.Services {
 		ports = append(ports, entities.ExposedPort{
 			Port:       int64(port.Exposed),
 			TargetPort: int64(port.Target),
 			Type:       entities.PortType(port.Type),
 		})
 	}
-	containers := make([]entities.ContainerIn, 0)
+	containers := make([]entities.Container, 0)
 	for _, container := range app.Containers {
 		e := make([]entities.EnvVar, 0)
 		for _, env := range container.EnvVars {
@@ -361,28 +419,85 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 			})
 		}
 
-		in := entities.ContainerIn{
-			Name:                container.Name,
-			Image:               container.Image,
-			ImagePullSecret:     container.PullSecret,
-			EnvVars:             e,
-			ComputePlanName:     container.ComputePlan,
-			ComputePlanQuantity: container.ComputeSize,
-			AttachedResources:   a,
+		in := entities.Container{
+			Name:              container.Name,
+			Image:             container.Image,
+			ImagePullSecret:   container.PullSecret,
+			EnvVars:           e,
+			ComputePlan:       container.ComputePlan,
+			Quantity:          container.Quantity,
+			AttachedResources: a,
 		}
 		containers = append(containers, in)
 	}
-	return r.Domain.UpdateApp(ctx, appID, entities.AppIn{
+	entity, err := r.Domain.UpdateApp(ctx, appID, entities.App{
 		Name:         app.Name,
 		ProjectId:    projectID,
-		ReadableId:   app.Readable,
+		ReadableId:   string(app.ReadableID),
 		Description:  app.Description,
 		Replicas:     1,
 		ExposedPorts: ports,
 		Containers:   containers,
-		Provider:     app.Provider,
-		Region:       app.Region,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.App{
+		Name:        entity.Name,
+		IsLambda:    entity.IsLambda,
+		Namespace:   entity.Namespace,
+		Description: entity.Description,
+		ReadableID:  repos.ID(entity.ReadableId),
+		Replicas:    &entity.Replicas,
+		Services: func() []*model.ExposedService {
+			services := make([]*model.ExposedService, 0)
+			for _, port := range entity.ExposedPorts {
+				services = append(services, &model.ExposedService{
+					Exposed: int(port.Port),
+					Target:  int(port.TargetPort),
+					Type:    string(port.Type),
+				})
+			}
+			return services
+		}(),
+		Containers: func() []*model.AppContainer {
+			containers := make([]*model.AppContainer, 0)
+			for _, container := range entity.Containers {
+				c := &model.AppContainer{
+					Name:        container.Name,
+					Image:       container.Image,
+					PullSecret:  container.ImagePullSecret,
+					ComputePlan: container.ComputePlan,
+					Quantity:    container.Quantity,
+					AttachedResources: func() []*model.AttachedRes {
+						attached := make([]*model.AttachedRes, 0)
+						for _, attachedResource := range container.AttachedResources {
+							attached = append(attached, &model.AttachedRes{
+								ResID: attachedResource.ResourceId,
+							})
+						}
+						return attached
+					}(),
+					EnvVars: func() []*model.EnvVar {
+						envVars := make([]*model.EnvVar, 0)
+						for _, envVar := range container.EnvVars {
+							envVars = append(envVars, &model.EnvVar{
+								Key: envVar.Key,
+								Value: &model.EnvVal{
+									Type:  envVar.Type,
+									Value: envVar.Value,
+								},
+							})
+						}
+						return envVars
+					}(),
+				}
+				containers = append(containers, c)
+			}
+			return containers
+		}(),
+	}, nil
 }
 
 func (r *mutationResolver) CoreDeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
@@ -564,11 +679,10 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 				Image:             c.Image,
 				PullSecret:        c.ImagePullSecret,
 				EnvVars:           envVars,
-				CPUMin:            c.CPULimits.Min,
-				CPUMax:            c.CPULimits.Max,
-				MemMin:            c.MemoryLimits.Min,
-				MemMax:            c.MemoryLimits.Max,
 				AttachedResources: res,
+				ComputePlan:       c.ComputePlan,
+				Quantity:          c.Quantity,
+				IsShared:          c.IsShared,
 			})
 		}
 		fmt.Println(a)
@@ -627,11 +741,10 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 			Image:             c.Image,
 			PullSecret:        c.ImagePullSecret,
 			EnvVars:           envVars,
-			CPUMin:            c.CPULimits.Min,
-			CPUMax:            c.CPULimits.Max,
-			MemMin:            c.MemoryLimits.Min,
-			MemMax:            c.MemoryLimits.Max,
 			AttachedResources: res,
+			ComputePlan:       c.ComputePlan,
+			Quantity:          c.Quantity,
+			IsShared:          c.IsShared,
 		})
 	}
 

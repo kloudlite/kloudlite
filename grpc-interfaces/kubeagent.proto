@@ -1,0 +1,22 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+option go_package = "kloudlite.io/rpc/agent";
+
+service KubeAgent {
+  rpc KubeApply(PayloadIn) returns (PayloadOut);
+}
+
+message PayloadIn {
+  string Action = 1;
+  map<string,google.protobuf.Any> payload = 2;
+  string accountId = 3;
+  string resourceId = 4;
+}
+
+message PayloadOut {
+  bool success = 1;
+  string stdout = 2;
+  string stderr = 3;
+  string execErr = 4;
+}

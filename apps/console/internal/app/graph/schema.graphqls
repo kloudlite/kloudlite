@@ -95,13 +95,14 @@ type Mutation {
   core_createApp(
     projectId: ID!,
     app: AppInput!,
-  ): Boolean!
+  ): App!
   core_updateApp(
     projectId: ID!,
     appId: ID!,
     app: AppInput!,
-  ): Boolean!
+  ): App!
   core_deleteApp(appId: ID!): Boolean!
+
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
   # Secret n Config
@@ -135,16 +136,18 @@ type LamdaPlan @key(fields: "name"){
 
 input AppInput{
   name: String!
-  readable: String!
+  isLambda: Boolean!
+  projectId: String!
   description: String
-  exposed_services: [ExposedServiceInput!]!
-  containers:[AppContainerInput!]!
-  provider: String!
-  region: String!
+  readableId: ID!
+  replicas: Int
+  services: [ExposedServiceIn]!
+  containers: [AppContainerIn!]!
 }
 
 type App @key(fields: "id") {
   id: ID!
+  isLambda: Boolean!
   name: String!
   namespace: String!
   description: String
@@ -193,13 +196,12 @@ input AttachedResInput{
 type AppContainer {
   name: String!
   image: String
-  pull_secret: String
-  env_vars:[EnvVar!]!
-  cpu_min:String!
-  cpu_max:String!
-  mem_min:String!
-  mem_max:String!
-  attached_resources:[AttachedRes!]!
+  pullSecret: String
+  envVars:[EnvVar!]!
+  attachedResources:[AttachedRes!]!
+  computePlan: String!
+  quantity: Float!
+  isShared: Boolean!
 }
 
 
@@ -208,25 +210,25 @@ type AppContainer {
 #  data: ComputeInventoryData!
 #}
 
-type ComputeInventoryData {
-  memory: ComputeInventoryMetricSize!
-  cpu: ComputeInventoryMetricSize!
-}
+# type ComputeInventoryData {
+#   memory: ComputeInventoryMetricSize!
+#   cpu: ComputeInventoryMetricSize!
+# }
 
-type ComputeInventoryMetricSize {
-  quantity: Float!
-  unit: String!
-}
+# type ComputeInventoryMetricSize {
+#   quantity: Float!
+#   unit: String!
+# }
 
 
-input AppContainerInput{
+input AppContainerIn{
   name: String!
   image: String
-  pull_secret: String
-  env_vars:[EnvVarInput!]!
+  pullSecret: String
+  envVars:[EnvVarInput!]!
   computePlan: String!
-  compute_size: Float!
-  attached_resources:[AttachedResInput!]!
+  quantity: Float!
+  attachedResources:[AttachedResInput!]!
 }
 
 type ExposedService{
@@ -235,7 +237,7 @@ type ExposedService{
   exposed: Int!
 }
 
-input ExposedServiceInput{
+input ExposedServiceIn{
   type :String!
   target: Int!
   exposed: Int!

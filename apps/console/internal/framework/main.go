@@ -69,7 +69,7 @@ type Env struct {
 	AuthRedisHosts    string `env:"REDIS_AUTH_HOSTS" required:"true"`
 	AuthRedisUserName string `env:"REDIS_AUTH_USERNAME"`
 	AuthRedisPassword string `env:"REDIS_AUTH_PASSWORD"`
-	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX"`
+	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX" required:"true"`
 
 	MongoDbName  string `env:"MONGO_DB_NAME" required:"true"`
 	KafkaBrokers string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
