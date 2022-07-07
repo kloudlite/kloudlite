@@ -74,6 +74,24 @@ func (r *queryResolver) DNSGetSites(ctx context.Context, accountID string) ([]*m
 	return sites, nil
 }
 
+func (r *queryResolver) DNSGetVerifications(ctx context.Context, accountID string) ([]*model.Verification, error) {
+	verifications, err := r.d.GetVerifications(ctx, repos.ID(accountID))
+	if err != nil {
+		return nil, err
+	}
+	vs := make([]*model.Verification, 0)
+	for _, v := range verifications {
+		vs = append(vs, &model.Verification{
+			ID:         v.Id,
+			VerifyText: v.VerifyText,
+			Site: &model.Site{
+				ID: v.SiteId,
+			},
+		})
+	}
+	return vs, nil
+}
+
 func (r *queryResolver) DNSGetSite(ctx context.Context, siteID string) (*model.Site, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -83,7 +101,7 @@ func (r *queryResolver) DNSGetRecords(ctx context.Context, siteID string) ([]*mo
 }
 
 func (r *siteResolver) Verification(ctx context.Context, obj *model.Site, accountID repos.ID) (*model.Verification, error) {
-	verification, err := r.d.GetVerification(ctx, accountID, obj.ID)
+	verification, err := r.d.GetVerification(ctx, obj.AccountID, obj.ID)
 	if err != nil {
 		return nil, err
 	}
