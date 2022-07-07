@@ -84,6 +84,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 }
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+	// TODO: delete correspoding harbor account, and user account
 	return req.Finalize()
 }
 
