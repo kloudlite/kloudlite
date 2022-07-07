@@ -20,6 +20,14 @@ type domainI struct {
 	recordsCache cache.Repo[[]*Record]
 }
 
+func (d *domainI) GetVerifications(ctx context.Context, accountId repos.ID) ([]*Verification, error) {
+	return d.verifyRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"accountId": accountId,
+		},
+	})
+}
+
 func (d *domainI) GetVerification(ctx context.Context, accountId repos.ID, siteId repos.ID) (*Verification, error) {
 	return d.verifyRepo.FindOne(ctx, repos.Filter{
 		"accountId": accountId,
@@ -73,9 +81,8 @@ func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos
 	}
 
 	create, err := d.sitesRepo.Create(ctx, &Site{
-		AccountId: accountId,
-		Domain:    domain,
-		Verified:  false,
+		Domain:   domain,
+		Verified: false,
 	})
 
 	if err != nil {

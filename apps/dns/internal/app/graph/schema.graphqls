@@ -3,6 +3,7 @@ scalar Any
 
 type Query {
   dns_getSites(accountId:String!): [Site]!
+  dns_getVerifications(accountId:String!): [Verification]!
   dns_getSite(siteId:String!): Site!
   dns_getRecords(siteId:String!): [Record!]!
 }
