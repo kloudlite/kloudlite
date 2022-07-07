@@ -551,3 +551,55 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - billingwatchers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - billingwatchers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - billingwatchers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - statuswatchers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - statuswatchers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - statuswatchers/status
+  verbs:
+  - get
+  - patch
+  - update

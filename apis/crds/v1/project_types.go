@@ -14,11 +14,6 @@ type ProjectSpec struct {
 	DisplayName string `json:"displayName,omitempty"`
 }
 
-// ProjectStatus defines the observed state of Project
-type ProjectStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
-}
-
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster

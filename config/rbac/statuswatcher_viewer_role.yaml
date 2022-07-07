@@ -1,0 +1,20 @@
+# permissions for end users to view statuswatchers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: statuswatcher-viewer-role
+rules:
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - statuswatchers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - statuswatchers/status
+  verbs:
+  - get

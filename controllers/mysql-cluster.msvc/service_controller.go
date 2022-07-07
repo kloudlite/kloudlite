@@ -46,7 +46,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		}
 	}
 
-	req.Logger.Info("----------------[Type: mysqlCluster.Service] NEW RECONCILATION ----------------")
+	req.Logger.Infof("----------------[Type: mysqlCluster.Service] NEW RECONCILATION ----------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()

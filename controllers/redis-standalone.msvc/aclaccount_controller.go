@@ -69,7 +69,7 @@ func (r *ACLAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request)
 		}
 	}
 
-	req.Logger.Info("-------------------- NEW RECONCILATION------------------")
+	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()

@@ -37,16 +37,16 @@
   resources:
   {{- if and .ResourceCpu.Min .ResourceMemory.Min }}
     requests:
-      cpu: {{ .ResourceCpu.Min }}m
-      memory: {{ .ResourceMemory.Min }}Mi
+      cpu: {{ printf "%dm" .ResourceCpu.Max }}
+      memory: {{ printf "%dMi" .ResourceMemory.Max }}
   {{- end }}
   {{- if and .ResourceCpu.Max .ResourceMemory.Max }}
     limits:
-      cpu: {{ .ResourceCpu.Max }}m
-      memory: {{ .ResourceMemory.Max }}Mi
+      cpu: {{ printf "%dm" .ResourceCpu.Max }}
+      memory: {{ printf "%dMi" .ResourceMemory.Max }}
   {{- end }}
   {{- end }}
-  
+
   {{- if $volumeMounts }}
   {{- $vMounts := index $volumeMounts $idx }}
   {{- if $vMounts }}

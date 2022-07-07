@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"operators.kloudlite.io/lib/types"
+	"operators.kloudlite.io/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -26,10 +26,8 @@ import (
 type AppReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	types.MessageSender
 
-	HarborUserName string
-	HarborPassword string
+	Env env.Env
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -49,7 +47,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.
 		}
 	}
 
-	req.Logger.Info("-------------------- NEW RECONCILATION------------------")
+	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
@@ -103,6 +101,18 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 		)
 	}
 
+	// STEP: 2.1: check current number of replicas
+	if err := func() error {
+		readyReplicas, ok := obj.Status.DisplayVars.GetInt("readyReplicas")
+		if ok && readyReplicas == int(deploymentRes.Status.ReadyReplicas) {
+			return nil
+		}
+		isReady = false
+		return obj.Status.DisplayVars.Set("readyReplicas", deploymentRes.Status.ReadyReplicas)
+	}(); err != nil {
+		return req.FailWithStatusError(err)
+	}
+
 	// STEP: 3. service exists?
 	_, err = rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
 	if err != nil {
@@ -138,51 +148,6 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
 }
 
-func (r *AppReconciler) reconcileStatus2(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
-	ctx := req.Context()
-	app := req.Object
-
-	var cs []metav1.Condition
-	isReady := true
-
-	dConditions, err := conditions.FromResource(
-		ctx,
-		r.Client,
-		constants.DeploymentType,
-		"Deployment",
-		fn.NN(app.Namespace, app.Name),
-	)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
-		isReady = false
-		cs = append(cs, conditions.New("DeploymentExists", false, "NotFound", err.Error()))
-	}
-	cs = append(cs, dConditions...)
-
-	if !meta.IsStatusConditionTrue(dConditions, "DeploymentAvailable") {
-		isReady = false
-	}
-
-	newConditions, hasUpdated, err := conditions.Patch(app.Status.Conditions, cs)
-	if err != nil {
-		return req.FailWithStatusError(err)
-	}
-
-	if !hasUpdated && isReady == app.Status.IsReady {
-		return req.Next()
-	}
-
-	app.Status.IsReady = isReady
-	app.Status.Conditions = newConditions
-
-	if err := r.Status().Update(ctx, app); err != nil {
-		return req.FailWithStatusError(err)
-	}
-	return req.Done()
-}
-
 func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
 	ctx := req.Context()
 	app := req.Object
@@ -215,18 +180,6 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi
 	return req.Done()
 }
 
-func (r *AppReconciler) notify(req *rApi.Request[*crdsv1.App]) error {
-	app := req.Object
-	return r.SendMessage(
-		req.Context(), req.Object.LogRef(), types.MessageReply{
-			Key:        app.LogRef(),
-			Conditions: app.Status.Conditions,
-			IsReady:    app.Status.IsReady,
-		},
-	)
-}
-
-// SetupWithManager sets up the controller with the Manager.
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.App{}).

@@ -58,7 +58,7 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 		}
 	}
 
-	req.Logger.Info("----------------[Type: s3awsv1.Bucket] NEW RECONCILATION ----------------")
+	req.Logger.Infof("----------------[Type: s3awsv1.Bucket] NEW RECONCILATION ----------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()

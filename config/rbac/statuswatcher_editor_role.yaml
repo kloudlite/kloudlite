@@ -1,0 +1,24 @@
+# permissions for end users to edit statuswatchers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: statuswatcher-editor-role
+rules:
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - statuswatchers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - statuswatchers/status
+  verbs:
+  - get

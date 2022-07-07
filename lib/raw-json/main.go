@@ -107,3 +107,15 @@ func (s *RawJson[K, V]) GetString(key K) (string, bool) {
 	}
 	return s2, true
 }
+
+func (s *RawJson[K, V]) GetInt(key K) (int, bool) {
+	x, ok := s.Get(key)
+	if !ok {
+		return 0, false
+	}
+	s2, ok := any(x).(float64)
+	if !ok {
+		return 0, false
+	}
+	return int(s2), true
+}

@@ -1,4 +1,4 @@
-package logger
+package logging
 
 import (
 	"go.uber.org/zap"
@@ -12,6 +12,7 @@ type Logger interface {
 	Infof(msg string, args ...any)
 	Errorf(err error, msg string, args ...any)
 	Warnf(msg string, args ...any)
+	WithName(name string) Logger
 }
 
 type customLogger struct {
@@ -34,8 +35,21 @@ func (c customLogger) Warnf(msg string, args ...any) {
 	c.zapLogger.Warnf(msg, args...)
 }
 
-func New(isDev ...bool) (Logger, error) {
-	if len(isDev) > 0 && isDev[0] {
+func (c customLogger) WithName(name string) Logger {
+	return &customLogger{zapLogger: c.zapLogger.Named(name)}
+}
+
+type Options struct {
+	Name string
+	Dev  bool
+}
+
+func New(options *Options) (Logger, error) {
+	opts := Options{}
+	if options != nil {
+		opts = *options
+	}
+	if opts.Dev {
 		cfg := zap.NewDevelopmentConfig()
 		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		cfg.EncoderConfig.LineEnding = "\n\n"
@@ -44,13 +58,26 @@ func New(isDev ...bool) (Logger, error) {
 		if err != nil {
 			return nil, err
 		}
+		if opts.Name != "" {
+			return &customLogger{zapLogger: logger.Sugar().Named(opts.Name)}, nil
+		}
 		return &customLogger{zapLogger: logger.Sugar()}, nil
 	}
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
+	if opts.Name != "" {
+		return &customLogger{zapLogger: logger.Sugar().Named(opts.Name)}, nil
+	}
 	return &customLogger{zapLogger: logger.Sugar()}, nil
+}
+
+func Must(l Logger, err error) Logger {
+	if err != nil {
+		panic(err)
+	}
+	return l
 }
 
 func NewZapLogger(nn types.NamespacedName) *zap.SugaredLogger {

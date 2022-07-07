@@ -51,7 +51,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		}
 	}
 
-	req.Logger.Info("--------------------NEW RECONCILATION------------------")
+	req.Logger.Infof("--------------------NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
@@ -65,7 +65,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		return x.Result(), x.Err()
 	}
 
-	req.Logger.Info("--------------------RECONCILATION FINISH------------------")
+	req.Logger.Infof("--------------------RECONCILATION FINISH------------------")
 
 	return ctrl.Result{}, nil
 }

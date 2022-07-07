@@ -226,7 +226,7 @@ func (s *statusConditions) BuildFromPods(pl ...corev1.Pod) error {
 	for idx, pod := range pl {
 		var podC []metav1.Condition
 		fmt.Printf(
-			"pod info: Name: %s LenConditions: %d LenContainerStatus: %d\n",
+			"pod info: Type: %s LenConditions: %d LenContainerStatus: %d\n",
 			pod.Name,
 			len(pod.Status.Conditions),
 			len(pod.Status.ContainerStatuses),
@@ -246,7 +246,7 @@ func (s *statusConditions) BuildFromPods(pl ...corev1.Pod) error {
 		var containerC []metav1.Condition
 		for _, cs := range pod.Status.ContainerStatuses {
 			p := metav1.Condition{
-				Type:   fmt.Sprintf("Name-%s", cs.Name),
+				Type:   fmt.Sprintf("Type-%s", cs.Name),
 				Status: StatusFromBool(cs.Ready),
 			}
 			if cs.State.Waiting != nil {
@@ -589,7 +589,7 @@ func (c *conditions2) BuildFromPods(conditions *[]metav1.Condition, pl ...corev1
 	for idx, pod := range pl {
 		var podC []metav1.Condition
 		fmt.Printf(
-			"pod info: Name: %s LenConditions: %d LenContainerStatus: %d\n",
+			"pod info: Type: %s LenConditions: %d LenContainerStatus: %d\n",
 			pod.Name,
 			len(pod.Status.Conditions),
 			len(pod.Status.ContainerStatuses),
@@ -609,7 +609,7 @@ func (c *conditions2) BuildFromPods(conditions *[]metav1.Condition, pl ...corev1
 		var containerC []metav1.Condition
 		for _, cs := range pod.Status.ContainerStatuses {
 			p := metav1.Condition{
-				Type:   fmt.Sprintf("Name-%s", cs.Name),
+				Type:   fmt.Sprintf("Type-%s", cs.Name),
 				Status: StatusFromBool(cs.Ready),
 			}
 			if cs.State.Waiting != nil {
@@ -634,5 +634,5 @@ var Conditions2 = &conditions2{
 
 func init() {
 	Conditions.sc.lt = metav1.Time{Time: time.UnixMilli(time.Now().Unix())}
-	//Conditions2.lt = metav1.Time{Time: time.Now()}
+	// Conditions2.lt = metav1.Time{Time: time.Now()}
 }

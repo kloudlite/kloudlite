@@ -6,10 +6,17 @@ import (
 )
 
 type MessageReply struct {
+	ClusterId string `json:"clusterId"`
+
+	ProjectId  string `json:"projectId"`
+	ResourceId string `json:"resourceId"`
+
 	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
 	Conditions      []metav1.Condition `json:"conditions,omitempty"`
 	IsReady         bool               `json:"isReady,omitempty"`
 	Key             string             `json:"key"`
+	AccountId       string             `json:"accountId"`
+	Billing         string             `json:"billing,omitempty"`
 }
 
 type MessageSender interface {

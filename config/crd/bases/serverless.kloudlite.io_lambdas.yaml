@@ -173,16 +173,16 @@ spec:
                     resourceCpu:
                       properties:
                         max:
-                          type: string
+                          type: integer
                         min:
-                          type: string
+                          type: integer
                       type: object
                     resourceMemory:
                       properties:
                         max:
-                          type: string
+                          type: integer
                         min:
-                          type: string
+                          type: integer
                       type: object
                     volumes:
                       items:
@@ -431,8 +431,6 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - isReady
             type: object
         type: object
     served: true

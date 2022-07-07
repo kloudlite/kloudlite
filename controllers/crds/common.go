@@ -14,7 +14,7 @@ func GetLogger(nn types.NamespacedName) *zap.SugaredLogger {
 	if err != nil {
 		panic(err)
 	}
-	// logger, _ := zap.NewDevelopment()
+	// logging, _ := zap.NewDevelopment()
 	defer logger.Sync()
 	sugar := logger.Sugar()
 	return sugar.With("REF", nn.String())

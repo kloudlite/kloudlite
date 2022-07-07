@@ -1,0 +1,8 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Project
+metadata:
+  name: sample-y
+  annotations:
+    kloudlite.io/account-ref: sample-y
+spec:
+  displayName: sample y

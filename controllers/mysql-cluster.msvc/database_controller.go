@@ -31,7 +31,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 		}
 	}
 
-	req.Logger.Info("----------------[Type: mysqlCluster.Database] NEW RECONCILATION ----------------")
+	req.Logger.Infof("----------------[Type: mysqlCluster.Database] NEW RECONCILATION ----------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()

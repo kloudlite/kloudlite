@@ -1,20 +1,17 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
+
+	"operators.kloudlite.io/env"
 
 	"k8s.io/apimachinery/pkg/types"
 
-	"operators.kloudlite.io/lib/logger"
-	"operators.kloudlite.io/lib/redpanda"
-	t "operators.kloudlite.io/lib/types"
-
 	"github.com/redhat-cop/operator-utils/pkg/util"
 	"k8s.io/client-go/rest"
+	"operators.kloudlite.io/lib/logging"
+	"operators.kloudlite.io/lib/redpanda"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
@@ -49,6 +46,7 @@ import (
 	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
 	s3awscontrollers "operators.kloudlite.io/controllers/s3.aws"
 	serverlesscontrollers "operators.kloudlite.io/controllers/serverless"
+	watchercontrollers "operators.kloudlite.io/controllers/watcher"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -72,14 +70,6 @@ func init() {
 	utilruntime.Must(opensearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(s3awsv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
-}
-
-func fromEnv(key string) string {
-	value, ok := os.LookupEnv(key)
-	if !ok {
-		panic(fmt.Errorf("ENV '%v' is not provided", key))
-	}
-	return value
 }
 
 func main() {
@@ -107,6 +97,15 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	myLogger := logging.Must(
+		logging.New(
+			&logging.Options{
+				Name: "operator-logger",
+				Dev:  isDev,
+			},
+		),
+	)
+
 	mgr, err := func() (manager.Manager, error) {
 		cOpts := ctrl.Options{
 			Scheme:                     scheme,
@@ -127,76 +126,45 @@ func main() {
 		os.Exit(1)
 	}
 
-	harborUserName := fromEnv("HARBOR_USERNAME")
-	harborPassword := fromEnv("HARBOR_PASSWORD")
-
-	kafkaBrokers := fromEnv("KAFKA_BROKERS")
-	kafkaReplyTopic := fromEnv("KAFKA_REPLY_TOPIC")
-
-	agentKafkaGroupId := fromEnv("AGENT_KAFKA_GROUP_ID")
-	agentKafkaTopic := fromEnv("AGENT_KAFKA_TOPIC")
-
-	producer, err := redpanda.NewProducer(kafkaBrokers)
-	if err != nil {
-		setupLog.Error(err, "creating redpanda producer")
-		panic(err)
-	}
-	defer producer.Close()
-
-	messageSender := NewMsgSender(producer, kafkaReplyTopic)
-
-	consumer, err := redpanda.NewConsumer(kafkaBrokers, agentKafkaGroupId, agentKafkaTopic)
-	if err != nil {
-		setupLog.Error(err, "creating redpanda consumer")
-		panic(err)
-	}
-	consumer.SetupLogger(logger.NewZapLogger(types.NamespacedName{}))
-	defer consumer.Close()
+	envVars := env.Must(env.GetEnv())
 
 	if err = (&crds.ProjectReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		MessageSender:  messageSender,
-		HarborUserName: harborUserName,
-		HarborPassword: harborPassword,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Env:    *envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
 	}
 
 	if err = (&crds.AppReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		MessageSender:  messageSender,
-		HarborUserName: harborUserName,
-		HarborPassword: harborPassword,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Env:    *envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "App")
 		os.Exit(1)
 	}
 
 	if err = (&crds.RouterReconciler{
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		MessageSender: messageSender,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Router")
 		os.Exit(1)
 	}
 
 	if err = (&crds.ManagedServiceReconciler{
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		MessageSender: messageSender,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
 		os.Exit(1)
 	}
 
 	if err = (&crds.ManagedResourceReconciler{
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		MessageSender: messageSender,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
 		os.Exit(1)
@@ -279,7 +247,7 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
 	//	os.Exit(1)
 	// }
-	//
+
 	if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -339,6 +307,35 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Bucket")
 		os.Exit(1)
 	}
+
+	producer, err := redpanda.NewProducer(envVars.KafkaBrokers)
+	if err != nil {
+		setupLog.Error(err, "creating redpanda producer")
+		panic(err)
+	}
+	defer producer.Close()
+
+	notifier := watchercontrollers.NewNotifier(envVars.ClusterId, producer, envVars.KafkaReplyTopic)
+
+	if err = (&watchercontrollers.StatusWatcherReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Env:      *envVars,
+		Notifier: notifier,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "StatusWatcher")
+		os.Exit(1)
+	}
+	if err = (&watchercontrollers.BillingWatcherReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Env:      *envVars,
+		Notifier: notifier,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BillingWatcher")
+		os.Exit(1)
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -351,28 +348,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	consumer, err := redpanda.NewConsumer(envVars.KafkaBrokers, envVars.KafkaConsumerGroupId, envVars.KafkaIncomingTopic)
+	if err != nil {
+		setupLog.Error(err, "creating redpanda consumer")
+		panic(err)
+	}
+	consumer.SetupLogger(logging.NewZapLogger(types.NamespacedName{}))
+	defer consumer.Close()
 
-	go agent.Run(consumer)
+	go agent.Run(consumer, myLogger)
+
+	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		panic(err)
 	}
-}
-
-type msgSender struct {
-	producer *redpanda.Producer
-	kTopic   string
-}
-
-func (m *msgSender) SendMessage(ctx context.Context, key string, message t.MessageReply) error {
-	b, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-	return m.producer.Produce(ctx, m.kTopic, key, b)
-}
-
-func NewMsgSender(producer *redpanda.Producer, kTopic string) *msgSender {
-	return &msgSender{producer: producer, kTopic: kTopic}
 }

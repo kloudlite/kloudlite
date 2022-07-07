@@ -65,7 +65,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 		}
 	}
 
-	req.Logger.Info("----------------database reconciler -- NEW RECONCILATION------------------")
+	req.Logger.Infof("----------------database reconciler -- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()

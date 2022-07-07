@@ -1,0 +1,6 @@
+apiVersion: watcher.kloudlite.io/v1
+kind: StatusWatcher
+metadata:
+  name: statuswatcher-sample
+spec:
+  # TODO(user): Add fields here

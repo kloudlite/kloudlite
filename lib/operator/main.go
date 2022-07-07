@@ -2,7 +2,6 @@ package operator
 
 import (
 	"context"
-	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -13,14 +12,14 @@ import (
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/logger"
+	"operators.kloudlite.io/lib/logging"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 // +kubebuilder:object:generate=true
 
 type Status struct {
-	IsReady         bool                `json:"isReady"`
+	IsReady         bool                `json:"isReady,omitempty"`
 	DisplayVars     rawJson.KubeRawJson `json:"displayVars,omitempty"`
 	GeneratedVars   rawJson.KubeRawJson `json:"generatedVars,omitempty"`
 	Conditions      []metav1.Condition  `json:"conditions,omitempty"`
@@ -39,7 +38,7 @@ type Request[T Resource] struct {
 	ctx    context.Context
 	client client.Client
 	Object T
-	Logger *zap.SugaredLogger
+	Logger logging.Logger
 	locals map[string]any
 }
 
@@ -95,11 +94,20 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 	if err := c.Get(ctx, nn, resInstance); err != nil {
 		return nil, err
 	}
+	logger, err := logging.New(
+		&logging.Options{
+			Name: nn.String(),
+			Dev:  true,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &Request[T]{
 		ctx:    ctx,
 		client: c,
 		Object: resInstance,
-		Logger: logger.NewZapLogger(nn),
+		Logger: logger,
 		locals: map[string]any{},
 	}, nil
 }
@@ -122,9 +130,8 @@ func (r *Request[T]) EnsureLabels() StepResult {
 }
 
 func (r *Request[T]) FailWithStatusError(err error) StepResult {
-	e := ""
-	if err != nil {
-		e = err.Error()
+	if err == nil {
+		return r.Next()
 	}
 	newConditions, _, err2 := conditions.Patch(
 		r.Object.GetStatus().Conditions, []metav1.Condition{
@@ -132,7 +139,7 @@ func (r *Request[T]) FailWithStatusError(err error) StepResult {
 				Type:    "FailedWithErr",
 				Status:  metav1.ConditionFalse,
 				Reason:  "StatusFailedWithErr",
-				Message: e,
+				Message: err.Error(),
 			},
 		},
 	)
@@ -148,6 +155,9 @@ func (r *Request[T]) FailWithStatusError(err error) StepResult {
 }
 
 func (r *Request[T]) FailWithOpError(err error) StepResult {
+	if err == nil {
+		return r.Next()
+	}
 	newConditions, _, err := conditions.Patch(
 		r.Object.GetStatus().OpsConditions, []metav1.Condition{
 			{

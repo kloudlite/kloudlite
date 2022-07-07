@@ -44,7 +44,7 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 		}
 	}
 
-	req.Logger.Info("-------------------- NEW RECONCILATION------------------")
+	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()

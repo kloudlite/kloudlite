@@ -19,4 +19,6 @@ resources:
 - bases/influxdb.msvc.kloudlite.io_services.yaml
 - bases/influxdb.msvc.kloudlite.io_buckets.yaml
 - bases/s3.aws.kloudlite.io_buckets.yaml
+- bases/watcher.kloudlite.io_statuswatchers.yaml
+- bases/watcher.kloudlite.io_billingwatchers.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
