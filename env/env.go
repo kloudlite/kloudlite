@@ -13,10 +13,11 @@ type Env struct {
 	KafkaReplyTopic      string `env:"KAFKA_REPLY_TOPIC" required:"true"`
 	KafkaConsumerGroupId string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
-	HarborAdminUsername     string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
-	HarborAdminPassword     string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
-	HarborImageRegistryHost string `env:"HARBOR_IMAGE_REGISTRY_HOST" required:"true"`
-	HarborApiVersion        string `env:"HARBOR_API_VERSION" required:"false"`
+	HarborAdminUsername      string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
+	HarborAdminPassword      string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
+	HarborImageRegistryHost  string `env:"HARBOR_IMAGE_REGISTRY_HOST" required:"true"`
+	HarborApiVersion         string `env:"HARBOR_API_VERSION" required:"false"`
+	HarborProjectStorageSize int    `env:"HARBOR_PROJECT_STORAGE_SIZE" required:"true"`
 
 	StorageClass       string `env:"STORAGE_CLASS" required:"true"`
 	XFSStorageClass    string `env:"XFS_STORAGE_CLASS" required:"true"`

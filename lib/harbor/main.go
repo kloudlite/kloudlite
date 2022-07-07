@@ -118,7 +118,7 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName string) (*Us
 	if err := json.Unmarshal(rbody, &user); err != nil {
 		return nil, errors.NewEf(err, "could not unmarshal into harborUser")
 	}
-	fmt.Printf("User: %+v\n", user)
+	// fmt.Printf("User: %+v\n", user)
 
 	if resp.StatusCode == http.StatusCreated {
 		return &user, nil
@@ -174,7 +174,7 @@ func (h *Client) CheckIfProjectExists(ctx context.Context, name string) (bool, e
 	return r2.StatusCode == http.StatusOK, nil
 }
 
-func (h *Client) CreateProject(ctx context.Context, name string) error {
+func (h *Client) CreateProject(ctx context.Context, name string, storageSize int) error {
 	ok, err := h.CheckIfProjectExists(ctx, name)
 	if err != nil {
 		return err
@@ -184,8 +184,9 @@ func (h *Client) CreateProject(ctx context.Context, name string) error {
 	}
 
 	body := map[string]any{
-		"project_name": name,
-		"public":       false,
+		"project_name":  name,
+		"public":        false,
+		"storage_limit": int64(storageSize),
 	}
 	bbody, err := json.Marshal(body)
 	if err != nil {
@@ -196,16 +197,37 @@ func (h *Client) CreateProject(ctx context.Context, name string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not build request")
 	}
-	fmt.Println("url:", req.URL)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println(err)
 		return errors.NewEf(err, "while making request")
 	}
-	if resp.StatusCode == http.StatusCreated {
-		return nil
+	if resp.StatusCode != http.StatusCreated {
+		return errors.Newf("could not create Client project as received (statuscode=%d)", resp.StatusCode)
 	}
-	return errors.Newf("could not create Client project as received (statuscode=%d)", resp.StatusCode)
+	return nil
+}
+
+func (h *Client) SetProjectQuota(ctx context.Context, name string, storageSize int) error {
+	body := map[string]any{
+		"storage_limit": int64(storageSize),
+	}
+	b, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	req, err := h.NewAuthzRequest(ctx, http.MethodPut, fmt.Sprintf("projects/%s", name), bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.Newf("bad status-code=%d", resp.StatusCode)
+	}
+	return nil
 }
 
 func (h *Client) DeleteProject(ctx context.Context, name string) error {

@@ -6,3 +6,4 @@ metadata:
     kloudlite.io/account-ref: sample-x
 spec:
   displayName: sample x
+  artifactRegistrySize: 5
