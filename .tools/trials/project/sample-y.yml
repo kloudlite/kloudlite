@@ -1,0 +1,11 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Project
+metadata:
+  name: sample-z
+  annotations:
+    kloudlite.io/account-ref: sample-z
+spec:
+  displayName: sample z
+  artifactRegistry:
+    enabled: true
+    size: 6

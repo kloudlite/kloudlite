@@ -40,14 +40,16 @@ type ProjectReconciler struct {
 }
 
 const (
-	KeyRobotAccId        string = "robotAccId"
-	KeyRobotUserName     string = "robotUserName"
-	KeyRobotUserPassword string = "robotUserPassword"
+	KeyRobotAccId           string = "robotAccId"
+	KeyRobotUserName        string = "robotUserName"
+	KeyRobotUserPassword    string = "robotUserPassword"
+	KeyHarborProjectStorage string = "KeyHarborProjectStorage"
 )
 
 const (
-	HarborProjectExists        conditions.Type = "HarborProjectExists"
-	HarborProjectAccountExists conditions.Type = "HarborProjectAccountExists"
+	HarborProjectExists           conditions.Type = "HarborProjectExists"
+	HarborProjectAccountExists    conditions.Type = "HarborProjectAccountExists"
+	HarborProjectStorageAllocated conditions.Type = "HarborProjectStorageAllocated"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -163,6 +165,17 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		cs = append(cs, conditions.New(HarborProjectAccountExists, false, conditions.NotFound))
 	}
 
+	if project.Spec.ArtifactRegistry.Enabled {
+		hStorage := project.Spec.ArtifactRegistry.Size
+		allocatedStorage, ok := project.Status.DisplayVars.GetInt(KeyHarborProjectStorage)
+		if !ok || hStorage != allocatedStorage {
+			isReady = false
+			cs = append(cs, conditions.New(HarborProjectStorageAllocated, false, conditions.NotReconciledYet))
+		} else {
+			cs = append(cs, conditions.New(HarborProjectStorageAllocated, true, conditions.Found))
+		}
+	}
+
 	newConditions, hasUpdated, err := conditions.Patch(project.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
@@ -212,14 +225,27 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
 	}
 
-	if err2 := func() error {
-		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectExists.String()) {
-			if err := r.harborCli.CreateProject(ctx, accountRef); err != nil {
+	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectExists.String()) {
+		if err2 := func() error {
+			storageSize := 1000 * r.Env.HarborProjectStorageSize
+			if project.Spec.ArtifactRegistry.Enabled && project.Spec.ArtifactRegistry.Size > 0 {
+				storageSize = 1000 * project.Spec.ArtifactRegistry.Size
+			}
+			if err := r.harborCli.CreateProject(ctx, accountRef, storageSize); err != nil {
 				return errors.NewEf(err, "creating harbor project")
 			}
+			if err := project.Status.DisplayVars.Set(KeyHarborProjectStorage, storageSize); err != nil {
+				return err
+			}
+			return nil
+		}(); err2 != nil {
+			return req.FailWithOpError(err2)
 		}
+		return req.FailWithOpError(r.Status().Update(ctx, project))
+	}
 
-		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
+	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
+		if err3 := func() error {
 			userAcc, err := r.harborCli.CreateUserAccount(ctx, accountRef)
 			if err != nil {
 				return errors.NewEf(err, "creating harbor project user-account")
@@ -233,11 +259,21 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 			if err := project.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
 				return errors.NewEf(err, "could not set robotUserPassword")
 			}
-			return r.Status().Update(ctx, project)
+			return nil
+		}(); err3 != nil {
+			return req.FailWithOpError(err3)
 		}
-		return nil
-	}(); err2 != nil {
-		return req.FailWithOpError(err2)
+		return req.FailWithOpError(r.Status().Update(ctx, project))
+	}
+
+	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectStorageAllocated.String()) {
+		if err := r.harborCli.SetProjectQuota(ctx, project.Name, 1000*project.Spec.ArtifactRegistry.Size); err != nil {
+			return req.FailWithOpError(err)
+		}
+		if err := project.Status.DisplayVars.Set(KeyHarborProjectStorage, project.Spec.ArtifactRegistry.Size); err != nil {
+			return nil
+		}
+		return req.FailWithOpError(r.Status().Update(ctx, project))
 	}
 
 	robotUserName, ok := project.Status.GeneratedVars.GetString(KeyRobotUserName)
