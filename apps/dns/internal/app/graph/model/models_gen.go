@@ -33,6 +33,6 @@ type Site struct {
 
 type Verification struct {
 	ID         repos.ID `json:"id"`
-	VerifyText string   `json:"VerifyText"`
-	Site       *Site    `json:"Site"`
+	VerifyText string   `json:"verifyText"`
+	Site       *Site    `json:"site"`
 }
