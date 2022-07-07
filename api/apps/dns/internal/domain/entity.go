@@ -2,11 +2,17 @@ package domain
 
 import "kloudlite.io/pkg/repos"
 
-type Verification struct {
+type AccountDNS struct {
+	repos.BaseEntity `bson:",inline"`
+	AccountId        repos.ID `bson:"accountId",json:"accountId"`
+	Hosts            []string `bson:"hosts",json:"hosts"`
+}
+
+type SiteClaim struct {
 	repos.BaseEntity `bson:",inline"`
 	AccountId        repos.ID `bson:"accountId,omitempty" json:"accountId,omitempty"`
 	SiteId           repos.ID `bson:"siteId,omitempty" json:"siteId,omitempty"`
-	VerifyText       string   `bson:"verifyText,omitempty" json:"verifyText,omitempty"`
+	Attached         bool     `bson:"attached,omitempty" json:"attached,omitempty"`
 }
 
 type Site struct {
@@ -56,7 +62,22 @@ var SiteIndexes = []repos.IndexField{
 	},
 }
 
-var VerificationIndexes = []repos.IndexField{
+var AccountDNSIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountId", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
+
+var SiteClaimIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
