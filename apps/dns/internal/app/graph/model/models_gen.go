@@ -6,6 +6,14 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type Account struct {
+	ID                  repos.ID        `json:"id"`
+	DomainVerifications []*Verification `json:"domainVerifications"`
+	Sites               []*Site         `json:"sites"`
+}
+
+func (Account) IsEntity() {}
+
 type Record struct {
 	ID         repos.ID `json:"id"`
 	SiteID     repos.ID `json:"siteId"`

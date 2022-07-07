@@ -45,6 +45,12 @@ autobind:
 # your liking
 skip_validation: true
 models:
+  Account:
+    fields:
+      domainVerifications:
+        resolver: true
+      sites:
+        resolver: true
   Site:
     fields:
       verification:
