@@ -13,6 +13,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.32.0
 	github.com/gofiber/websocket/v2 v2.0.21
 	github.com/google/go-github/v43 v43.0.0
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/gorilla/websocket v1.4.2
 	github.com/ktr0731/go-fuzzyfinder v0.6.0
 	github.com/matoous/go-nanoid/v2 v2.0.0

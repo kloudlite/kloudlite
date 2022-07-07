@@ -12,22 +12,24 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (r *accountResolver) DomainVerifications(ctx context.Context, obj *model.Account) ([]*model.Verification, error) {
-	verifications, err := r.d.GetVerifications(ctx, obj.ID)
+func (r *accountResolver) DomainClaims(ctx context.Context, obj *model.Account) ([]*model.SiteClaim, error) {
+	claims, err := r.d.GetSiteClaims(ctx, obj.ID)
 	if err != nil {
 		return nil, err
 	}
-	vs := make([]*model.Verification, 0)
-	for _, v := range verifications {
-		vs = append(vs, &model.Verification{
-			ID:         v.Id,
-			VerifyText: v.VerifyText,
+	scs := make([]*model.SiteClaim, 0)
+	for _, e := range claims {
+		scs = append(scs, &model.SiteClaim{
+			ID: e.Id,
+			Account: &model.Account{
+				ID: e.AccountId,
+			},
 			Site: &model.Site{
-				ID: v.SiteId,
+				ID: e.SiteId,
 			},
 		})
 	}
-	return vs, nil
+	return scs, nil
 }
 
 func (r *accountResolver) Sites(ctx context.Context, obj *model.Account) ([]*model.Site, error) {
@@ -46,19 +48,16 @@ func (r *accountResolver) Sites(ctx context.Context, obj *model.Account) ([]*mod
 	return sites, nil
 }
 
-func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, accountID repos.ID) (*model.Verification, error) {
-	vE, err := r.d.CreateSite(ctx, domain, repos.ID(accountID))
-	if err != nil {
-		return nil, err
-	}
-	return &model.Verification{
-		ID:         vE.Id,
-		VerifyText: vE.VerifyText,
-	}, nil
+func (r *accountResolver) NameServers(ctx context.Context, obj *model.Account) ([]string, error) {
+	return r.d.GetNameServers(ctx, obj.ID)
 }
 
-func (r *mutationResolver) DNSDeleteSite(ctx context.Context, siteID repos.ID) (*model.Verification, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, accountID repos.ID) (bool, error) {
+	err := r.d.CreateSite(ctx, domain, repos.ID(accountID))
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) DNSCreateRecord(ctx context.Context, siteID repos.ID, recordType string, host string, answer string, ttl int, priority *int) (*model.Record, error) {
@@ -116,6 +115,18 @@ func (r *siteResolver) Records(ctx context.Context, obj *model.Site, siteID repo
 	return rs, nil
 }
 
+func (r *siteClaimResolver) Site(ctx context.Context, obj *model.SiteClaim) (*model.Site, error) {
+	site, err := r.d.GetSite(ctx, string(obj.Site.ID))
+	if err != nil {
+		return nil, err
+	}
+	return &model.Site{
+		ID:        site.Id,
+		AccountID: site.AccountId,
+		Domain:    site.Domain,
+	}, nil
+}
+
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
@@ -128,7 +139,11 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // Site returns generated.SiteResolver implementation.
 func (r *Resolver) Site() generated.SiteResolver { return &siteResolver{r} }
 
+// SiteClaim returns generated.SiteClaimResolver implementation.
+func (r *Resolver) SiteClaim() generated.SiteClaimResolver { return &siteClaimResolver{r} }
+
 type accountResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type siteResolver struct{ *Resolver }
+type siteClaimResolver struct{ *Resolver }

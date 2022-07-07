@@ -7,9 +7,10 @@ import (
 )
 
 type Account struct {
-	ID                  repos.ID        `json:"id"`
-	DomainVerifications []*Verification `json:"domainVerifications"`
-	Sites               []*Site         `json:"sites"`
+	ID           repos.ID     `json:"id"`
+	DomainClaims []*SiteClaim `json:"domainClaims"`
+	Sites        []*Site      `json:"sites"`
+	NameServers  []string     `json:"nameServers"`
 }
 
 func (Account) IsEntity() {}
@@ -25,16 +26,17 @@ type Record struct {
 }
 
 type Site struct {
-	ID        repos.ID  `json:"id"`
-	AccountID repos.ID  `json:"accountId"`
-	Domain    string    `json:"domain"`
-	Records   []*Record `json:"records"`
+	ID           repos.ID  `json:"id"`
+	AccountID    repos.ID  `json:"accountId"`
+	Domain       string    `json:"domain"`
+	Records      []*Record `json:"records"`
+	CreationDate string    `json:"creationDate"`
 }
 
 func (Site) IsEntity() {}
 
-type Verification struct {
-	ID         repos.ID `json:"id"`
-	VerifyText string   `json:"verifyText"`
-	Site       *Site    `json:"site"`
+type SiteClaim struct {
+	ID      repos.ID `json:"id"`
+	Site    *Site    `json:"site"`
+	Account *Account `json:"account"`
 }

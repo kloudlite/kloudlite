@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sort"
 	"strings"
+	"time"
 
-	nanoid "github.com/matoous/go-nanoid/v2"
+	"github.com/goombaio/namegenerator"
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/errors"
@@ -14,29 +16,46 @@ import (
 )
 
 type domainI struct {
-	recordsRepo  repos.DbRepo[*Record]
-	sitesRepo    repos.DbRepo[*Site]
-	verifyRepo   repos.DbRepo[*Verification]
-	recordsCache cache.Repo[[]*Record]
+	recordsRepo    repos.DbRepo[*Record]
+	sitesRepo      repos.DbRepo[*Site]
+	siteClaimRepo  repos.DbRepo[*SiteClaim]
+	recordsCache   cache.Repo[[]*Record]
+	accountDNSRepo repos.DbRepo[*AccountDNS]
 }
 
-func (d *domainI) GetVerifications(ctx context.Context, accountId repos.ID) ([]*Verification, error) {
-	return d.verifyRepo.Find(ctx, repos.Query{
+func (d *domainI) GetSiteFromDomain(ctx context.Context, domain string) (*Site, error) {
+	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
+		"host": domain,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if one == nil {
+		return nil, errors.New("site not found")
+	}
+	return one, nil
+}
+
+func (d *domainI) GetNameServers(ctx context.Context, accountId repos.ID) ([]string, error) {
+	return d.GetAccountHostNames(ctx, string(accountId))
+}
+
+func (d *domainI) GetSiteClaims(ctx context.Context, accountId repos.ID) ([]*SiteClaim, error) {
+	return d.siteClaimRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"accountId": accountId,
 		},
 	})
 }
 
-func (d *domainI) GetVerification(ctx context.Context, accountId repos.ID, siteId repos.ID) (*Verification, error) {
-	return d.verifyRepo.FindOne(ctx, repos.Filter{
+func (d *domainI) GetSiteClaim(ctx context.Context, accountId repos.ID, siteId repos.ID) (*SiteClaim, error) {
+	return d.siteClaimRepo.FindOne(ctx, repos.Filter{
 		"accountId": accountId,
 		"siteId":    siteId,
 	})
 }
 
 func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, error) {
-	// fmt.Println(accountId)
 	return d.sitesRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"accountId": accountId,
@@ -44,107 +63,123 @@ func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, erro
 	})
 }
 
-func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos.ID) (*Verification, error) {
+func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos.ID) error {
 	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
 		"domain": domain,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if one != nil {
-		if one.AccountId == accountId {
-			return nil, errors.New("DomainAlreadyExists")
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		verifyTxt, err := nanoid.New(32)
-
-		if err != nil {
-			return nil, err
-		}
-
-		vtext := fmt.Sprintf("kloudlite_verify_%v", verifyTxt)
-		verification, err := d.verifyRepo.Create(ctx, &Verification{
-			AccountId:  accountId,
-			SiteId:     one.Id,
-			VerifyText: vtext,
+	if one == nil {
+		one, err = d.sitesRepo.Create(ctx, &Site{
+			Domain: domain,
 		})
-
 		if err != nil {
-			return nil, err
+			return err
 		}
-
-		return verification, nil
 	}
-
-	create, err := d.sitesRepo.Create(ctx, &Site{
-		Domain: domain,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	verifyTxt, err := nanoid.New(32)
-
-	if err != nil {
-		return nil, err
-	}
-
-	vtext := fmt.Sprintf("kloudlite_verify_%v", verifyTxt)
-	verification, err := d.verifyRepo.Create(ctx, &Verification{
-		AccountId:  accountId,
-		SiteId:     create.Id,
-		VerifyText: vtext,
+	_, err = d.siteClaimRepo.Create(ctx, &SiteClaim{
+		AccountId: accountId,
+		SiteId:    one.Id,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return verification, nil
+	return nil
 }
 
-func (d *domainI) VerifySite(ctx context.Context, vid repos.ID) error {
-
-	matchedVerificaton, err := d.verifyRepo.FindById(ctx, vid)
+func (d *domainI) VerifySite(ctx context.Context, claimId repos.ID) error {
+	claim, err := d.siteClaimRepo.FindById(ctx, claimId)
+	if err != nil {
+		return err
+	}
+	if claim == nil {
+		return errors.New("claim not found")
+	}
+	siteId := claim.SiteId
+	accountId := claim.AccountId
+	matchedSite, err := d.sitesRepo.FindById(ctx, siteId)
+	if err != nil {
+		return err
+	}
+	nsEntries, err := net.LookupNS(matchedSite.Domain)
 	if err != nil {
 		return err
 	}
 
-	if matchedVerificaton == nil {
-		return errors.New("NoVerificationFound")
+	nsDomainNames := make([]string, 0)
+	for _, nsEntry := range nsEntries {
+		nsDomainNames = append(nsDomainNames, nsEntry.Host)
 	}
+	sort.Strings(nsDomainNames)
 
-	matchedSite, err := d.sitesRepo.FindById(ctx, matchedVerificaton.SiteId)
+	names, err := d.GetAccountHostNames(ctx, string(accountId))
+
+	verified := true
+	if len(nsDomainNames) != len(names) {
+		return errors.New("DNSDomainNamesMismatch")
+	}
+	for i, x := range nsDomainNames {
+		verified = verified && x == names[i]
+	}
+	if !verified {
+		return errors.New("DNSDomainNamesMismatch")
+	}
+	matchedSite.AccountId = accountId
+	_, err = d.sitesRepo.UpdateById(ctx, matchedSite.Id, matchedSite)
 	if err != nil {
 		return err
 	}
-
-	txts, err := net.LookupTXT(matchedSite.Domain)
+	err = d.siteClaimRepo.UpdateMany(ctx, &repos.Filter{
+		"siteId": siteId,
+	}, map[string]any{
+		"attached": "false",
+	})
 	if err != nil {
 		return err
 	}
-	for _, txt := range txts {
-		if matchedVerificaton.VerifyText == strings.TrimSpace(txt) {
-			matchedSite.AccountId = matchedVerificaton.AccountId
-			_, err := d.sitesRepo.UpdateById(ctx, matchedSite.Id, matchedSite)
-			if err != nil {
-				return err
-			}
-			err = d.verifyRepo.DeleteById(ctx, matchedVerificaton.Id)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
+	claim.Attached = true
+	d.siteClaimRepo.UpdateById(ctx, claimId, claim)
+	_, err = d.siteClaimRepo.UpdateById(ctx, claimId, claim)
+	if err != nil {
+		return err
 	}
-	return errors.New("NoTxtRecordFound")
+	return nil
 }
 
 func (d *domainI) GetSite(ctx context.Context, siteId string) (*Site, error) {
 	return d.sitesRepo.FindById(ctx, repos.ID(siteId))
+}
+
+func (d *domainI) GetAccountHostNames(ctx context.Context, accountId string) ([]string, error) {
+	accountDNS, err := d.accountDNSRepo.FindOne(ctx, repos.Filter{
+		"accountId": accountId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if accountDNS == nil {
+		seed := time.Now().UTC().UnixNano()
+		nameGenerator := namegenerator.NewNameGenerator(seed)
+		name1 := nameGenerator.Generate()
+		name2 := nameGenerator.Generate()
+		create, err := d.accountDNSRepo.Create(ctx, &AccountDNS{
+			AccountId: repos.ID(accountId),
+			Hosts: func() []string {
+				x := []string{
+					fmt.Sprintf("%s.ns.kloudlite.io", name1),
+					fmt.Sprintf("%s.ns.kloudlite.io", name2),
+				}
+				sort.Strings(x)
+				return x
+			}(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return create.Hosts, nil
+	}
+	return accountDNS.Hosts, nil
 }
 
 func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
@@ -267,14 +302,16 @@ func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []strin
 func fxDomain(
 	recordsRepo repos.DbRepo[*Record],
 	sitesRepo repos.DbRepo[*Site],
-	verifyRepo repos.DbRepo[*Verification],
+	siteClaimRepo repos.DbRepo[*SiteClaim],
+	accountDNSRepo repos.DbRepo[*AccountDNS],
 	recordsCache cache.Repo[[]*Record],
 ) Domain {
 	return &domainI{
 		recordsRepo,
 		sitesRepo,
-		verifyRepo,
+		siteClaimRepo,
 		recordsCache,
+		accountDNSRepo,
 	}
 }
 

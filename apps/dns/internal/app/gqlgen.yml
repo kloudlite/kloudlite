@@ -45,9 +45,15 @@ autobind:
 # your liking
 skip_validation: true
 models:
+  SiteClaim:
+    fields:
+      site:
+        resolver: true
   Account:
     fields:
-      domainVerifications:
+      domainClaims:
+        resolver: true
+      nameServers:
         resolver: true
       sites:
         resolver: true
