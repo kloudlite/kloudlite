@@ -127,6 +127,18 @@ func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	return result, e
 }
 
+func (repo dbRepo[T]) UpdateMany(ctx context.Context, filter *Filter, updatedData map[string]any) error {
+	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
+		ctx,
+		filter,
+		bson.M{"$set": updatedData},
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
 	var result T
 	after := options.After

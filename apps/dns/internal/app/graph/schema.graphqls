@@ -8,14 +8,15 @@ type Query {
 
 extend type Account @key(fields: "id") {
   id: ID! @external
-  domainVerifications:[Verification]!
+  domainClaims:[SiteClaim]!
   sites:[Site]!
+  nameServers:[String!]!
 }
 
-type Verification {
+type SiteClaim {
   id: ID!
-  verifyText: String!
   site: Site!
+  account: Account!
 }
 
 type Site @key(fields: "id"){
@@ -23,6 +24,7 @@ type Site @key(fields: "id"){
   accountId: ID!
   domain: String!
   records(siteId:ID!): [Record!]!
+  creationDate: String!
 }
 
 type Record{
@@ -36,8 +38,7 @@ type Record{
 }
 
 type Mutation {
-  dns_createSite(domain:String!, accountId:ID!) :Verification!
-  dns_deleteSite(siteId:ID!) :Verification!
+  dns_createSite(domain:String!, accountId:ID!) :Boolean!
 
   dns_createRecord(siteId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Record!
   dns_deleteRecord(recordId:ID!): Boolean!
