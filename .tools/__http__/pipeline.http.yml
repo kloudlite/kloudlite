@@ -1,4 +1,7 @@
 ---
+global:
+  hello: world
+---
 label: create github pipeline
 query: |
   mutation Ci_createPipeline($in: GitPipelineIn!) {
@@ -7,11 +10,12 @@ query: |
 variables:
   in: 
     name: sample-pipeline
-
+    projectId: random
+    appId: random
     gitProvider: github
     gitRepoUrl: https://github.com/nxtcoder17/sample
+    repoName: sample
     gitBranch: master
-
     build:
       baseImage: docker
       cmd: |+
@@ -19,11 +23,9 @@ variables:
     run:
       baseImage: docker
       cmd: ""
-
     artifactRef:
       dockerImageName: harbor.dev.madhouselabs.io/public/sample
       dockerImageTag: latest
-
 ---
 
 label: Create Gitlab Pipeline

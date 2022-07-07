@@ -151,7 +151,6 @@ func (p *Pipeline) TriggerHook(latestCommitSHA string) error {
 
 	if req != nil {
 		r, err := http.DefaultClient.Do(req)
-		fmt.Printf("r: %+v | err: %v\n", r, err)
 		if err != nil {
 			return errors.NewEf(err, "while making request")
 		}

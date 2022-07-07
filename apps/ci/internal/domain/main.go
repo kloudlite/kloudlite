@@ -366,12 +366,16 @@ func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoU
 	return d.github.ListBranches(ctx, token, repoUrl, pagination)
 }
 
-func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) (*GithubWebhookId, error) {
+func (d *domainI) githubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) (*GithubWebhookId, error) {
 	token, err := d.getAccessToken(ctx, "github", userId)
 	if err != nil {
 		return nil, err
 	}
 	return d.github.AddWebhook(ctx, token, string(pipelineId), repoUrl)
+}
+
+func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) (*GithubWebhookId, error) {
+	return d.githubAddWebhook(ctx, userId, pipelineId, repoUrl)
 }
 
 func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (any, error) {
@@ -429,12 +433,13 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 
 	latestCommit := ""
 	if pipeline.GitProvider == common.ProviderGithub {
+		token, err := d.getAccessToken(ctx, "github", userId)
 		hookId, err := d.GithubAddWebhook(ctx, userId, pipeline.Id, pipeline.GitRepoUrl)
 		if err != nil {
 			return nil, err
 		}
 		pipeline.GithubWebhookId = hookId
-		commit, err := d.github.GetLatestCommit(ctx, pipeline.GitRepoUrl, pipeline.GitBranch)
+		commit, err := d.github.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
 		if err != nil {
 			return nil, err
 		}
@@ -507,7 +512,7 @@ func (d *domainI) TriggerPipeline(ctx context.Context, userId repos.ID, pipeline
 
 	var latestCommit string
 	if pipeline.GitProvider == common.ProviderGithub {
-		latestCommit, err = d.github.GetLatestCommit(ctx, pipeline.GitRepoUrl, pipeline.GitBranch)
+		latestCommit, err = d.github.GetLatestCommit(ctx, nil, pipeline.GitRepoUrl, pipeline.GitBranch)
 		if err != nil {
 			return errors.NewEf(err, "getting latest commit")
 		}
