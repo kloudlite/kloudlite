@@ -17,6 +17,12 @@ tasks:
         exit 0
       - operator-sdk create api --group {{.Group}} --version v1 --resource --controller --kind "{{.Kind}}"
 
+  grpc:
+    dir: ./grpc-protobufs
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
+
+
   setup:
     dir: ./bin
     cmds:

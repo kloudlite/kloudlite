@@ -233,4 +233,22 @@ resources:
   kind: Bucket
   path: operators.kloudlite.io/apis/s3.aws/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: watcher
+  kind: StatusWatcher
+  path: operators.kloudlite.io/apis/watcher/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: watcher
+  kind: BillingWatcher
+  path: operators.kloudlite.io/apis/watcher/v1
+  version: v1
 version: "3"

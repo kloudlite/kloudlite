@@ -5,6 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"operators.kloudlite.io/env"
+	"operators.kloudlite.io/lib/errors"
+	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/templates"
 	"operators.kloudlite.io/lib/types"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -30,12 +35,19 @@ type ProjectReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	types.MessageSender
-	HarborUserName string
-	HarborPassword string
+	Env       env.Env
+	harborCli *harbor.Client
 }
 
-var (
-	ImageRegistry = "harbor.dev.kloudlite.io"
+const (
+	KeyRobotAccId        string = "robotAccId"
+	KeyRobotUserName     string = "robotUserName"
+	KeyRobotUserPassword string = "robotUserPassword"
+)
+
+const (
+	HarborProjectExists        conditions.Type = "HarborProjectExists"
+	HarborProjectAccountExists conditions.Type = "HarborProjectAccountExists"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -43,10 +55,9 @@ var (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
 func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Project{})
-
-	if req == nil {
-		return ctrl.Result{}, nil
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Project{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -55,7 +66,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		}
 	}
 
-	req.Logger.Info("-------------------- NEW RECONCILATION------------------")
+	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabels(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
@@ -97,6 +108,36 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		cs = append(cs, conditions.New("NamespaceExists", true, "Found"))
 	}
 
+	ok, err := r.harborCli.CheckIfProjectExists(ctx, project.Name)
+	if err != nil {
+		return req.FailWithStatusError(err)
+	}
+
+	if !ok {
+		isReady = false
+		cs = append(cs, conditions.New(HarborProjectExists, false, conditions.NotFound))
+	} else {
+		cs = append(cs, conditions.New(HarborProjectExists, true, conditions.Found))
+	}
+
+	if project.Status.GeneratedVars.Exists(KeyRobotAccId) {
+		robotAccId, ok := project.Status.GeneratedVars.GetInt(KeyRobotAccId)
+		if ok {
+			ok2, err := r.harborCli.CheckIfAccountExists(ctx, robotAccId)
+			if err != nil {
+				return req.FailWithStatusError(err)
+			}
+			if !ok2 {
+				cs = append(cs, conditions.New("HarborProjectAccountExists", false, "NotFound"))
+			} else {
+				cs = append(cs, conditions.New("HarborProjectAccountExists", true, "Found"))
+			}
+		}
+	} else {
+		isReady = false
+		cs = append(cs, conditions.New("HarborProjectAccountExists", false, "NotFound"))
+	}
+
 	newConditions, hasUpdated, err := conditions.Patch(project.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
@@ -114,156 +155,113 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 	return req.Done()
 }
 
-func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
-	ctx := req.Context()
-	project := req.Object
+func getDockerConfig(imageRegistry, username, password string) ([]byte, error) {
+	encAuthPass := base64.StdEncoding.EncodeToString(
+		[]byte(fmt.Sprintf("%s:%s", username, password)),
+	)
 
-	if !controllerutil.ContainsFinalizer(project, constants.CommonFinalizer) ||
-		!controllerutil.ContainsFinalizer(project, constants.ForegroundFinalizer) {
-		controllerutil.AddFinalizer(project, constants.CommonFinalizer)
-		controllerutil.AddFinalizer(project, constants.ForegroundFinalizer)
-		if err := r.Update(ctx, project); err != nil {
-			return req.FailWithOpError(err)
-		}
-		return req.Done()
-	}
-
-	if err := fn.KubectlApply(
-		ctx, r.Client, &corev1.Namespace{
-			TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: project.Name,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(project, true),
-				},
-			},
-		},
-	); err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	encAuthPass := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", r.HarborUserName, r.HarborPassword)))
-	dockerConfigJson, err := json.Marshal(
-		map[string]interface{}{
-			"auths": map[string]interface{}{
-				ImageRegistry: map[string]interface{}{
+	return json.Marshal(
+		map[string]any{
+			"auths": map[string]any{
+				imageRegistry: map[string]any{
 					"auth": encAuthPass,
 				},
 			},
 		},
 	)
+}
+
+func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+	ctx := req.Context()
+	project := req.Object
+
+	if !controllerutil.ContainsFinalizer(project, constants.CommonFinalizer) {
+		controllerutil.AddFinalizer(project, constants.CommonFinalizer)
+		controllerutil.AddFinalizer(project, constants.ForegroundFinalizer)
+		return req.FailWithOpError(r.Update(ctx, project))
+	}
+
+	accountRef, ok := project.Annotations[constants.AccountAnnotation]
+	if !ok {
+		return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
+	}
+
+	if err2 := func() error {
+		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectExists.String()) {
+			if err := r.harborCli.CreateProject(ctx, accountRef); err != nil {
+				return errors.NewEf(err, "creating harbor project")
+			}
+		}
+		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
+			userAcc, err := r.harborCli.CreateUserAccount(ctx, accountRef)
+			if err != nil {
+				return errors.NewEf(err, "creating harbor project user-account")
+			}
+			if err := project.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
+				return errors.NewEf(err, "could not set robotAccId")
+			}
+			if err := project.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
+				return errors.NewEf(err, "could not set robotUserName")
+			}
+			if err := project.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
+				return errors.NewEf(err, "could not set robotUserPassword")
+			}
+			return r.Status().Update(ctx, project)
+		}
+		return nil
+	}(); err2 != nil {
+		return req.FailWithOpError(err2)
+	}
+
+	robotUserName, ok := project.Status.GeneratedVars.GetString(KeyRobotUserName)
+	if !ok {
+		return req.FailWithOpError(errors.Newf("key: %s not found in .GeneratedVars", KeyRobotUserName))
+	}
+	robotUserPassword, ok := project.Status.GeneratedVars.GetString(KeyRobotUserPassword)
+	if !ok {
+		return req.FailWithOpError(errors.Newf("key: %s not found in .GeneratedVars", KeyRobotUserPassword))
+	}
+
+	hDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, robotUserName, robotUserPassword)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
 
-	imgPullSecret := corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: project.Name,
-			Name:      ImagePullSecretName,
-			OwnerReferences: []metav1.OwnerReference{
+	b, err := templates.Parse(
+		templates.Project, map[string]any{
+			"name": project.Name,
+			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(project, true),
 			},
-		},
-		Data: map[string][]byte{
-			".dockerconfigjson": dockerConfigJson,
-		},
-		Type: corev1.SecretTypeDockerConfigJson,
-	}
-
-	if err := fn.KubectlApply(ctx, r.Client, fn.ParseSecret(&imgPullSecret)); err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	adminRole := rbacv1.Role{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: project.Name,
-			Name:      NamespaceAdminRole,
-			OwnerReferences: []metav1.OwnerReference{
-				fn.AsOwner(project, true),
-			},
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{"", "extensions", "apps"},
-				Resources: []string{"*"},
-				Verbs:     []string{"*"},
-			},
-			{
-				APIGroups: []string{"batch"},
-				Resources: []string{"jobs", "cronjobs"},
-				Verbs:     []string{"*"},
-			},
-		},
-	}
-
-	if err := fn.KubectlApply(ctx, r.Client, &adminRole); err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	adminRoleBinding := rbacv1.RoleBinding{
-		TypeMeta: TypeRoleBinding,
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: project.Name,
-			Name:      NamespaceAdminRoleBinding,
-			OwnerReferences: []metav1.OwnerReference{
-				fn.AsOwner(project, true),
-			},
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      TypeSvcAccount.Kind,
-				APIGroup:  "",
-				Name:      SvcAccountName,
-				Namespace: project.Name,
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "",
-			Kind:     TypeRole.Kind,
-			Name:     NamespaceAdminRole,
-		},
-	}
-
-	if err := fn.KubectlApply(ctx, r.Client, &adminRoleBinding); err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	svcAccount := corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kloudlite-svc-account",
-			Namespace: project.Name,
-			OwnerReferences: []metav1.OwnerReference{
-				fn.AsOwner(project, true),
-			},
-		},
-		ImagePullSecrets: []corev1.LocalObjectReference{
-			{
-				Name: ImagePullSecretName,
-			},
-		},
-	}
-
-	if err := fn.KubectlApply(ctx, r.Client, &svcAccount); err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	return req.Done()
-}
-
-func (r *ProjectReconciler) notify(req *rApi.Request[*crdsv1.Project]) error {
-	project := req.Object
-	return r.SendMessage(
-		req.Context(),
-		project.LogRef(), types.MessageReply{
-			Key:        project.LogRef(),
-			Conditions: project.Status.Conditions,
-			IsReady:    project.Status.IsReady,
+			"docker-config-json": string(hDockerConfig),
+			"docker-secret-name": "kloudlite-docker-registry",
+			"role-name":          "kloudlite-ns-admin",
+			"svc-account-name":   "kloudlite-svc-account",
 		},
 	)
+	if err != nil {
+		return req.FailWithOpError(err)
+	}
+	if _, err := fn.KubectlApplyExec(b); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Done()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	harborCli, err := harbor.NewClient(
+		harbor.Args{
+			HarborAdminUsername: r.Env.HarborAdminUsername,
+			HarborAdminPassword: r.Env.HarborAdminPassword,
+			HarborRegistryHost:  r.Env.HarborImageRegistryHost,
+		},
+	)
+	if err != nil {
+		return nil
+	}
+	r.harborCli = harborCli
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.Project{}).
 		Owns(&corev1.Namespace{}).

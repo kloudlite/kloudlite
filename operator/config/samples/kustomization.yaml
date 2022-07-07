@@ -36,4 +36,6 @@ resources:
 - influxdb.msvc_v1_service.yaml
 - influxdb.msvc_v1_bucket.yaml
 - s3.aws_v1_bucket.yaml
+- watcher_v1_statuswatcher.yaml
+- watcher_v1_billingwatcher.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
