@@ -41,7 +41,6 @@ func (r *accountResolver) Sites(ctx context.Context, obj *model.Account) ([]*mod
 			ID:        e.Id,
 			AccountID: e.AccountId,
 			Domain:    e.Domain,
-			Verified:  e.Verified,
 		})
 	}
 	return sites, nil
