@@ -25,11 +25,10 @@ type Record struct {
 }
 
 type Site struct {
-	ID           repos.ID      `json:"id"`
-	AccountID    repos.ID      `json:"accountId"`
-	Domain       string        `json:"domain"`
-	Verified     bool          `json:"verified"`
-	Verification *Verification `json:"verification"`
+	ID        repos.ID  `json:"id"`
+	AccountID repos.ID  `json:"accountId"`
+	Domain    string    `json:"domain"`
+	Records   []*Record `json:"records"`
 }
 
 type Verification struct {

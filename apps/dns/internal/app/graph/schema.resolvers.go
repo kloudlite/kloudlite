@@ -96,19 +96,25 @@ func (r *queryResolver) DNSGetSite(ctx context.Context, siteID repos.ID) (*model
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) DNSGetRecords(ctx context.Context, siteID repos.ID) ([]*model.Record, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *siteResolver) Verification(ctx context.Context, obj *model.Site, accountID repos.ID) (*model.Verification, error) {
-	verification, err := r.d.GetVerification(ctx, obj.AccountID, obj.ID)
+func (r *siteResolver) Records(ctx context.Context, obj *model.Site, siteID repos.ID) ([]*model.Record, error) {
+	records, err := r.d.GetRecords(ctx, string(siteID))
 	if err != nil {
 		return nil, err
 	}
-	return &model.Verification{
-		ID:         verification.Id,
-		VerifyText: verification.VerifyText,
-	}, nil
+	rs := make([]*model.Record, 0)
+	for _, e := range records {
+		p := int(e.Priority)
+		rs = append(rs, &model.Record{
+			ID:         e.Id,
+			SiteID:     e.SiteId,
+			RecordType: e.Type,
+			Host:       e.Host,
+			Answer:     e.Answer,
+			TTL:        int(e.TTL),
+			Priority:   &p,
+		})
+	}
+	return rs, nil
 }
 
 // Account returns generated.AccountResolver implementation.

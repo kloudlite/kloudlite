@@ -53,7 +53,7 @@ models:
         resolver: true
   Site:
     fields:
-      verification:
+      records:
         resolver: true
   ID:
     model:

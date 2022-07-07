@@ -69,7 +69,6 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		DNSGetRecords      func(childComplexity int, siteID repos.ID) int
 		DNSGetSite         func(childComplexity int, siteID repos.ID) int
 		__resolve__service func(childComplexity int) int
 		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
@@ -86,11 +85,10 @@ type ComplexityRoot struct {
 	}
 
 	Site struct {
-		AccountID    func(childComplexity int) int
-		Domain       func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Verification func(childComplexity int, accountID repos.ID) int
-		Verified     func(childComplexity int) int
+		AccountID func(childComplexity int) int
+		Domain    func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Records   func(childComplexity int, siteID repos.ID) int
 	}
 
 	Verification struct {
@@ -121,10 +119,9 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	DNSGetSite(ctx context.Context, siteID repos.ID) (*model.Site, error)
-	DNSGetRecords(ctx context.Context, siteID repos.ID) ([]*model.Record, error)
 }
 type SiteResolver interface {
-	Verification(ctx context.Context, obj *model.Site, accountID repos.ID) (*model.Verification, error)
+	Records(ctx context.Context, obj *model.Site, siteID repos.ID) ([]*model.Record, error)
 }
 
 type executableSchema struct {
@@ -247,18 +244,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DNSVerifySite(childComplexity, args["vid"].(repos.ID)), true
 
-	case "Query.dns_getRecords":
-		if e.complexity.Query.DNSGetRecords == nil {
-			break
-		}
-
-		args, err := ec.field_Query_dns_getRecords_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.DNSGetRecords(childComplexity, args["siteId"].(repos.ID)), true
-
 	case "Query.dns_getSite":
 		if e.complexity.Query.DNSGetSite == nil {
 			break
@@ -360,24 +345,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Site.ID(childComplexity), true
 
-	case "Site.verification":
-		if e.complexity.Site.Verification == nil {
+	case "Site.records":
+		if e.complexity.Site.Records == nil {
 			break
 		}
 
-		args, err := ec.field_Site_verification_args(context.TODO(), rawArgs)
+		args, err := ec.field_Site_records_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Site.Verification(childComplexity, args["accountId"].(repos.ID)), true
-
-	case "Site.verified":
-		if e.complexity.Site.Verified == nil {
-			break
-		}
-
-		return e.complexity.Site.Verified(childComplexity), true
+		return e.complexity.Site.Records(childComplexity, args["siteId"].(repos.ID)), true
 
 	case "Verification.id":
 		if e.complexity.Verification.ID == nil {
@@ -476,7 +454,7 @@ scalar Any
 
 type Query {
   dns_getSite(siteId:ID!): Site!
-  dns_getRecords(siteId:ID!): [Record!]!
+
 }
 
 extend type Account @key(fields: "id") {
@@ -495,8 +473,7 @@ type Site{
   id :ID!
   accountId: ID!
   domain: String!
-  verified: Boolean!
-  verification(accountId:ID!): Verification!
+  records(siteId:ID!): [Record!]!
 }
 
 type Record{
@@ -790,21 +767,6 @@ func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_dns_getRecords_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["siteId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["siteId"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_dns_getSite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -820,18 +782,18 @@ func (ec *executionContext) field_Query_dns_getSite_args(ctx context.Context, ra
 	return args, nil
 }
 
-func (ec *executionContext) field_Site_verification_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Site_records_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+	if tmp, ok := rawArgs["siteId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteId"))
 		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["siteId"] = arg0
 	return args, nil
 }
 
@@ -1312,48 +1274,6 @@ func (ec *executionContext) _Query_dns_getSite(ctx context.Context, field graphq
 	res := resTmp.(*model.Site)
 	fc.Result = res
 	return ec.marshalNSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_dns_getRecords(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_dns_getRecords_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DNSGetRecords(rctx, args["siteId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Record)
-	fc.Result = res
-	return ec.marshalNRecord2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecordᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1851,42 +1771,7 @@ func (ec *executionContext) _Site_domain(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Site_verified(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Site",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Verified, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Site_verification(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+func (ec *executionContext) _Site_records(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1903,7 +1788,7 @@ func (ec *executionContext) _Site_verification(ctx context.Context, field graphq
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Site_verification_args(ctx, rawArgs)
+	args, err := ec.field_Site_records_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1911,7 +1796,7 @@ func (ec *executionContext) _Site_verification(ctx context.Context, field graphq
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Site().Verification(rctx, obj, args["accountId"].(repos.ID))
+		return ec.resolvers.Site().Records(rctx, obj, args["siteId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1923,9 +1808,9 @@ func (ec *executionContext) _Site_verification(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Verification)
+	res := resTmp.([]*model.Record)
 	fc.Result = res
-	return ec.marshalNVerification2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐVerification(ctx, field.Selections, res)
+	return ec.marshalNRecord2ᚕᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐRecordᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Verification_id(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
@@ -3531,29 +3416,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "dns_getRecords":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_dns_getRecords(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
 		case "_entities":
 			field := field
 
@@ -3753,17 +3615,7 @@ func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "verified":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Site_verified(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "verification":
+		case "records":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3772,7 +3624,7 @@ func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Site_verification(ctx, field, obj)
+				res = ec._Site_records(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
