@@ -43,6 +43,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Site() SiteResolver
+	Verification() VerificationResolver
 }
 
 type DirectiveRoot struct {
@@ -122,6 +123,9 @@ type QueryResolver interface {
 }
 type SiteResolver interface {
 	Records(ctx context.Context, obj *model.Site, siteID repos.ID) ([]*model.Record, error)
+}
+type VerificationResolver interface {
+	Site(ctx context.Context, obj *model.Verification) (*model.Site, error)
 }
 
 type executableSchema struct {
@@ -364,14 +368,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Verification.ID(childComplexity), true
 
-	case "Verification.Site":
+	case "Verification.site":
 		if e.complexity.Verification.Site == nil {
 			break
 		}
 
 		return e.complexity.Verification.Site(childComplexity), true
 
-	case "Verification.VerifyText":
+	case "Verification.verifyText":
 		if e.complexity.Verification.VerifyText == nil {
 			break
 		}
@@ -465,8 +469,8 @@ extend type Account @key(fields: "id") {
 
 type Verification {
   id: ID!
-  VerifyText: String!
-  Site: Site!
+  verifyText: String!
+  site: Site!
 }
 
 type Site{
@@ -1848,7 +1852,7 @@ func (ec *executionContext) _Verification_id(ctx context.Context, field graphql.
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Verification_VerifyText(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Verification_verifyText(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1883,7 +1887,7 @@ func (ec *executionContext) _Verification_VerifyText(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Verification_Site(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Verification_site(ctx context.Context, field graphql.CollectedField, obj *model.Verification) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1894,14 +1898,14 @@ func (ec *executionContext) _Verification_Site(ctx context.Context, field graphq
 		Object:     "Verification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Site, nil
+		return ec.resolvers.Verification().Site(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3664,28 +3668,38 @@ func (ec *executionContext) _Verification(ctx context.Context, sel ast.Selection
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
-		case "VerifyText":
+		case "verifyText":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Verification_VerifyText(ctx, field, obj)
+				return ec._Verification_verifyText(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
-		case "Site":
+		case "site":
+			field := field
+
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Verification_Site(ctx, field, obj)
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Verification_site(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

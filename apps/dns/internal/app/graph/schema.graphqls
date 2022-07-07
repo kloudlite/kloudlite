@@ -14,8 +14,8 @@ extend type Account @key(fields: "id") {
 
 type Verification {
   id: ID!
-  VerifyText: String!
-  Site: Site!
+  verifyText: String!
+  site: Site!
 }
 
 type Site{

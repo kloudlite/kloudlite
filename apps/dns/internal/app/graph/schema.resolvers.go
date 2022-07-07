@@ -116,6 +116,18 @@ func (r *siteResolver) Records(ctx context.Context, obj *model.Site, siteID repo
 	return rs, nil
 }
 
+func (r *verificationResolver) Site(ctx context.Context, obj *model.Verification) (*model.Site, error) {
+	site, err := r.d.GetSite(ctx, string(obj.Site.ID))
+	if err != nil {
+		return nil, err
+	}
+	return &model.Site{
+		ID:        site.Id,
+		AccountID: site.AccountId,
+		Domain:    site.Domain,
+	}, nil
+}
+
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
@@ -128,7 +140,11 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // Site returns generated.SiteResolver implementation.
 func (r *Resolver) Site() generated.SiteResolver { return &siteResolver{r} }
 
+// Verification returns generated.VerificationResolver implementation.
+func (r *Resolver) Verification() generated.VerificationResolver { return &verificationResolver{r} }
+
 type accountResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type siteResolver struct{ *Resolver }
+type verificationResolver struct{ *Resolver }

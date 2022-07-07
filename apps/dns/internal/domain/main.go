@@ -143,6 +143,10 @@ func (d *domainI) VerifySite(ctx context.Context, vid repos.ID) error {
 	return errors.New("NoTxtRecordFound")
 }
 
+func (d *domainI) GetSite(ctx context.Context, siteId string) (*Site, error) {
+	return d.sitesRepo.FindById(ctx, repos.ID(siteId))
+}
+
 func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
 
 	if matchedRecords, err := d.recordsCache.Get(ctx, host); err == nil && matchedRecords != nil {

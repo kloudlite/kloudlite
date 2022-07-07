@@ -13,6 +13,7 @@ type Domain interface {
 	GetVerification(ctx context.Context, accountId repos.ID, siteId repos.ID) (*Verification, error)
 	GetVerifications(ctx context.Context, accountId repos.ID) ([]*Verification, error)
 	GetSites(ctx context.Context, accountId string) ([]*Site, error)
+	GetSite(ctx context.Context, siteId string) (*Site, error)
 	CreateSite(ctx context.Context, domain string, accountId repos.ID) (*Verification, error)
 	CreateRecord(
 		ctx context.Context,
