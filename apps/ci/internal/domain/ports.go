@@ -19,7 +19,7 @@ type Github interface {
 	ListBranches(ctx context.Context, accToken *AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error)
 	AddWebhook(ctx context.Context, accToken *AccessToken, pipelineId string, repoUrl string) (*GithubWebhookId, error)
 	DeleteWebhook(ctx context.Context, accToken *AccessToken, repoUrl string, hookId GithubWebhookId) error
-	GetLatestCommit(ctx context.Context, repoUrl string, branchName string) (string, error)
+	GetLatestCommit(ctx context.Context, accToken *AccessToken, repoUrl string, branchName string) (string, error)
 }
 
 type Gitlab interface {
