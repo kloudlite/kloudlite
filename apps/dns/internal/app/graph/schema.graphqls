@@ -3,7 +3,7 @@ scalar Any
 
 type Query {
   dns_getSite(siteId:ID!): Site!
-  dns_getRecords(siteId:ID!): [Record!]!
+
 }
 
 extend type Account @key(fields: "id") {
@@ -22,8 +22,7 @@ type Site{
   id :ID!
   accountId: ID!
   domain: String!
-  verified: Boolean!
-  verification(accountId:ID!): Verification!
+  records(siteId:ID!): [Record!]!
 }
 
 type Record{
