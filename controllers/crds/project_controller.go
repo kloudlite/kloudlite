@@ -85,6 +85,30 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
 	// TODO: delete correspoding harbor account, and user account
+	ctx := req.Context()
+	project := req.Object
+
+	accountRef, ok := project.Annotations[constants.AccountAnnotation]
+	if !ok {
+		return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
+	}
+
+	if err := func() error {
+		robotAccId, ok := project.Status.GeneratedVars.GetInt(KeyRobotAccId)
+		if !ok {
+			return errors.Newf("key: %s is not found in .Status.GeneratedVars", KeyRobotAccId)
+		}
+		if err := r.harborCli.DeleteUserAccount(ctx, robotAccId); err != nil {
+			return err
+		}
+		if err := r.harborCli.DeleteProject(ctx, accountRef); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return req.FailWithOpError(err)
+	}
+
 	return req.Finalize()
 }
 
@@ -124,25 +148,26 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 	if project.Status.GeneratedVars.Exists(KeyRobotAccId) {
 		robotAccId, ok := project.Status.GeneratedVars.GetInt(KeyRobotAccId)
 		if ok {
-			ok2, err := r.harborCli.CheckIfAccountExists(ctx, robotAccId)
+			ok2, err := r.harborCli.CheckIfUserAccountExists(ctx, robotAccId)
 			if err != nil {
 				return req.FailWithStatusError(err)
 			}
 			if !ok2 {
-				cs = append(cs, conditions.New("HarborProjectAccountExists", false, "NotFound"))
+				cs = append(cs, conditions.New(HarborProjectAccountExists, false, conditions.NotFound))
 			} else {
-				cs = append(cs, conditions.New("HarborProjectAccountExists", true, "Found"))
+				cs = append(cs, conditions.New(HarborProjectAccountExists, true, conditions.Found))
 			}
 		}
 	} else {
 		isReady = false
-		cs = append(cs, conditions.New("HarborProjectAccountExists", false, "NotFound"))
+		cs = append(cs, conditions.New(HarborProjectAccountExists, false, conditions.NotFound))
 	}
 
 	newConditions, hasUpdated, err := conditions.Patch(project.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
+
 	if !hasUpdated && isReady == project.Status.IsReady {
 		return req.Next()
 	}
@@ -193,6 +218,7 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 				return errors.NewEf(err, "creating harbor project")
 			}
 		}
+
 		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
 			userAcc, err := r.harborCli.CreateUserAccount(ctx, accountRef)
 			if err != nil {

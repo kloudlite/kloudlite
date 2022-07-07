@@ -21,9 +21,14 @@ type Client struct {
 	url  *url.URL
 }
 
-func (h *Client) withAuth(req *http.Request) {
+func (h *Client) NewAuthzRequest(ctx context.Context, method, urlPath string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s/%s", h.url.String(), urlPath), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", "application/json")
 	req.SetBasicAuth(h.args.HarborAdminUsername, h.args.HarborAdminPassword)
+	return req, nil
 }
 
 type User struct {
@@ -96,16 +101,10 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName string) (*Us
 		return nil, err
 	}
 
-	req, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("%s/%s", h.url.String(), "robots"),
-		bytes.NewBuffer(b2),
-	)
+	req, err := h.NewAuthzRequest(ctx, http.MethodPost, "robots", bytes.NewBuffer(b2))
 	if err != nil {
 		return nil, errors.NewEf(err, "building requests for creating robot account")
 	}
-
-	h.withAuth(req)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -114,7 +113,7 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName string) (*Us
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Response: ", string(rbody))
+	// fmt.Println("Response: ", string(rbody))
 	var user User
 	if err := json.Unmarshal(rbody, &user); err != nil {
 		return nil, errors.NewEf(err, "could not unmarshal into harborUser")
@@ -128,29 +127,25 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName string) (*Us
 }
 
 func (h *Client) DeleteUserAccount(ctx context.Context, robotAccId int) error {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		fmt.Sprintf("%s/%s/%d", h.args.HarborRegistryHost, "robots", robotAccId),
-		nil,
-	)
-	if err != nil {
-		return errors.NewEf(err, "could not delete Client robot account")
-	}
-	resp, err := http.DefaultClient.Do(req)
-	// REMOVE:
-	fmt.Printf("resp: %+v\n", resp)
+	req, err := h.NewAuthzRequest(ctx, http.MethodDelete, fmt.Sprintf("robots/%d", robotAccId), nil)
 	if err != nil {
 		return errors.NewEf(err, "making request to delete harbor account")
 	}
-	return nil
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return errors.NewEf(err, "could not delete Client robot account")
+	}
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+	return errors.Newf("bad statusCode=%d", resp.StatusCode)
 }
 
-func (h *Client) CheckIfAccountExists(ctx context.Context, robotAccId int) (bool, error) {
-	req, err := http.NewRequestWithContext(
+func (h *Client) CheckIfUserAccountExists(ctx context.Context, robotAccId int) (bool, error) {
+	req, err := h.NewAuthzRequest(
 		ctx,
-		http.MethodPost,
-		fmt.Sprintf("%s/%s/%d", h.url.String(), "robots", robotAccId),
+		http.MethodGet,
+		fmt.Sprintf("robots/%d", robotAccId),
 		nil,
 	)
 	if err != nil {
@@ -164,20 +159,13 @@ func (h *Client) CheckIfAccountExists(ctx context.Context, robotAccId int) (bool
 }
 
 func (h *Client) CheckIfProjectExists(ctx context.Context, name string) (bool, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodHead,
-		fmt.Sprintf("%s/projects", h.url.String()),
-		nil,
-	)
+	req, err := h.NewAuthzRequest(ctx, http.MethodHead, "projects", nil)
 	if err != nil {
 		return false, errors.NewEf(err, "while building http request")
 	}
 	q := req.URL.Query()
 	q.Add("project_name", name)
 	req.URL.RawQuery = q.Encode()
-	h.withAuth(req)
-	fmt.Println("checkprojects: url=>", req.URL.String())
 	r2, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return false, errors.NewEf(err, "while making request to check if project name already exists")
@@ -203,17 +191,12 @@ func (h *Client) CreateProject(ctx context.Context, name string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not unmarshal req body")
 	}
-	req, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("%s/%s", h.url.String(), "projects"),
-		bytes.NewBuffer(bbody),
-	)
+
+	req, err := h.NewAuthzRequest(ctx, http.MethodPost, "projects", bytes.NewBuffer(bbody))
 	if err != nil {
 		return errors.NewEf(err, "could not build request")
 	}
 	fmt.Println("url:", req.URL)
-	h.withAuth(req)
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println(err)
@@ -226,17 +209,15 @@ func (h *Client) CreateProject(ctx context.Context, name string) error {
 }
 
 func (h *Client) DeleteProject(ctx context.Context, name string) error {
-	_, err := h.CheckIfProjectExists(ctx, name)
+	ok, err := h.CheckIfProjectExists(ctx, name)
 	if err != nil {
 		return err
 	}
-
-	u, err := h.url.Parse(name)
-	if err != nil {
-		return errors.NewEf(err, "could not join url path param")
+	if !ok {
+		return errors.Newf("project=%s does not exist to be deleted", name)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), nil)
+	req, err := h.NewAuthzRequest(ctx, http.MethodDelete, fmt.Sprintf("projects/%s", name), nil)
 	if err != nil {
 		return errors.NewEf(err, "while building http request")
 	}
@@ -244,10 +225,11 @@ func (h *Client) DeleteProject(ctx context.Context, name string) error {
 	if err != nil {
 		return errors.NewEf(err, "while making request")
 	}
-	if resp.StatusCode == http.StatusOK {
-		return nil
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Newf("could not delete project=%s as received (statuscode=%d)", name, resp.StatusCode)
 	}
-	return errors.Newf("could not delete Client project as received (statuscode=%d)", resp.StatusCode)
+	return nil
 }
 
 type Args struct {
