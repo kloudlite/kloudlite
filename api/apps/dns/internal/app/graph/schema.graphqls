@@ -2,10 +2,14 @@ scalar Json
 scalar Any
 
 type Query {
-  dns_getSites(accountId:String!): [Site]!
-  dns_getVerifications(accountId:String!): [Verification]!
-  dns_getSite(siteId:String!): Site!
-  dns_getRecords(siteId:String!): [Record!]!
+  dns_getSite(siteId:ID!): Site!
+  dns_getRecords(siteId:ID!): [Record!]!
+}
+
+extend type Account @key(fields: "id") {
+  id: ID! @external
+  domainVerifications:[Verification]!
+  sites:[Site]!
 }
 
 type Verification {
