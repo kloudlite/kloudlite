@@ -43,7 +43,6 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Site() SiteResolver
-	Verification() VerificationResolver
 }
 
 type DirectiveRoot struct {
@@ -58,6 +57,7 @@ type ComplexityRoot struct {
 
 	Entity struct {
 		FindAccountByID func(childComplexity int, id repos.ID) int
+		FindSiteByID    func(childComplexity int, id repos.ID) int
 	}
 
 	Mutation struct {
@@ -109,6 +109,7 @@ type AccountResolver interface {
 }
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
+	FindSiteByID(ctx context.Context, id repos.ID) (*model.Site, error)
 }
 type MutationResolver interface {
 	DNSCreateSite(ctx context.Context, domain string, accountID repos.ID) (*model.Verification, error)
@@ -123,9 +124,6 @@ type QueryResolver interface {
 }
 type SiteResolver interface {
 	Records(ctx context.Context, obj *model.Site, siteID repos.ID) ([]*model.Record, error)
-}
-type VerificationResolver interface {
-	Site(ctx context.Context, obj *model.Verification) (*model.Site, error)
 }
 
 type executableSchema struct {
@@ -175,6 +173,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindAccountByID(childComplexity, args["id"].(repos.ID)), true
+
+	case "Entity.findSiteByID":
+		if e.complexity.Entity.FindSiteByID == nil {
+			break
+		}
+
+		args, err := ec.field_Entity_findSiteByID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Entity.FindSiteByID(childComplexity, args["id"].(repos.ID)), true
 
 	case "Mutation.dns_createRecord":
 		if e.complexity.Mutation.DNSCreateRecord == nil {
@@ -473,7 +483,7 @@ type Verification {
   site: Site!
 }
 
-type Site{
+type Site @key(fields: "id"){
   id :ID!
   accountId: ID!
   domain: String!
@@ -513,11 +523,12 @@ directive @extends on OBJECT | INTERFACE
 `, BuiltIn: true},
 	{Name: "federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Account
+union _Entity = Account | Site
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
 		findAccountByID(id: ID!,): Account!
+	findSiteByID(id: ID!,): Site!
 
 }
 
@@ -538,6 +549,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // region    ***************************** args.gotpl *****************************
 
 func (ec *executionContext) field_Entity_findAccountByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Entity_findSiteByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -984,6 +1010,48 @@ func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field g
 	res := resTmp.(*model.Account)
 	fc.Result = res
 	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entity_findSiteByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entity",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Entity_findSiteByID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Entity().FindSiteByID(rctx, args["id"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Site)
+	fc.Result = res
+	return ec.marshalNSite2ᚖkloudliteᚗioᚋappsᚋdnsᚋinternalᚋappᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_dns_createSite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1898,14 +1966,14 @@ func (ec *executionContext) _Verification_site(ctx context.Context, field graphq
 		Object:     "Verification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Verification().Site(rctx, obj)
+		return obj.Site, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3155,6 +3223,13 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._Account(ctx, sel, obj)
+	case model.Site:
+		return ec._Site(ctx, sel, &obj)
+	case *model.Site:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Site(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -3264,6 +3339,29 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 					}
 				}()
 				res = ec._Entity_findAccountByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "findSiteByID":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Entity_findSiteByID(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3579,7 +3677,7 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var siteImplementors = []string{"Site"}
+var siteImplementors = []string{"Site", "_Entity"}
 
 func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj *model.Site) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, siteImplementors)
@@ -3668,7 +3766,7 @@ func (ec *executionContext) _Verification(ctx context.Context, sel ast.Selection
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "verifyText":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3678,28 +3776,18 @@ func (ec *executionContext) _Verification(ctx context.Context, sel ast.Selection
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "site":
-			field := field
-
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Verification_site(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+				return ec._Verification_site(ctx, field, obj)
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			out.Values[i] = innerFunc(ctx)
 
-			})
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

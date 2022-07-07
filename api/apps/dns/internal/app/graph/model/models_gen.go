@@ -31,6 +31,8 @@ type Site struct {
 	Records   []*Record `json:"records"`
 }
 
+func (Site) IsEntity() {}
+
 type Verification struct {
 	ID         repos.ID `json:"id"`
 	VerifyText string   `json:"verifyText"`
