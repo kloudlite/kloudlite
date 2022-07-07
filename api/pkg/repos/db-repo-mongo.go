@@ -56,7 +56,7 @@ func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	res := fn.NewTypeFromPointer[T]()
 	err := one.Decode(&res)
 	if err != nil {
-		fmt.Println("ERR: ", err)
+		fmt.Println("(debug/info) ERR: ", err)
 		return res, err
 	}
 	return res, nil

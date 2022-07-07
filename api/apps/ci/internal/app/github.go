@@ -92,9 +92,9 @@ func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, 
 	return repos, nil
 }
 
-func (gh *githubI) GetLatestCommit(ctx context.Context, repoUrl string, branchName string) (string, error) {
+func (gh *githubI) GetLatestCommit(ctx context.Context, accToken *domain.AccessToken, repoUrl string, branchName string) (string, error) {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	branch, _, err := gh.ghCli.Repositories.GetBranch(ctx, owner, repo, branchName, true)
+	branch, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.GetBranch(ctx, owner, repo, branchName, true)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +126,6 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 		}
 		return nil, errors.NewEf(err, "could not create github webhook")
 	}
-	fmt.Printf("Hook: %+v\n", hook)
 
 	return fn.New(domain.GithubWebhookId(*hook.ID)), nil
 }
