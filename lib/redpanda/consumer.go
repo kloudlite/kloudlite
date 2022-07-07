@@ -15,10 +15,9 @@ type Consumer struct {
 }
 
 type Message struct {
-	Action  string                 `json:"action"`
-	Payload map[string]interface{} `json:"payload"`
-
-	record *kgo.Record
+	Action  string         `json:"action"`
+	Payload map[string]any `json:"payload"`
+	record  *kgo.Record
 }
 
 type ReaderFunc func(m *Message) error

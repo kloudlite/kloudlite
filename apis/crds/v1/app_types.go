@@ -8,8 +8,8 @@ import (
 )
 
 type ContainerResource struct {
-	Min string `json:"min,omitempty"`
-	Max string `json:"max,omitempty"`
+	Min int `json:"min,omitempty"`
+	Max int `json:"max,omitempty"`
 }
 
 type ContainerEnv struct {

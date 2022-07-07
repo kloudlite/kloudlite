@@ -7,13 +7,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"operators.kloudlite.io/lib/errors"
-	"operators.kloudlite.io/lib/logger"
+	"operators.kloudlite.io/lib/logging"
 	"strings"
 )
 
 type s3Obj struct {
 	cli    *s3.S3
-	logger logger.Logger
+	logger logging.Logger
 }
 
 type PolicyStatement map[string]any
@@ -29,9 +29,9 @@ func NewS3Client(region string) (*s3Obj, error) {
 		},
 	)
 
-	l, err := logger.New(true)
+	l, err := logging.New(&logging.Options{Name: "aws/s3", Dev: false})
 	if err != nil {
-		return nil, errors.NewEf(err, "initializing logger")
+		return nil, errors.NewEf(err, "initializing logging")
 	}
 	return &s3Obj{cli: svc, logger: l}, nil
 }

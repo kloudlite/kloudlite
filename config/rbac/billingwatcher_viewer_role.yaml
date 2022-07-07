@@ -1,0 +1,20 @@
+# permissions for end users to view billingwatchers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: billingwatcher-viewer-role
+rules:
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - billingwatchers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - watcher.kloudlite.io
+  resources:
+  - billingwatchers/status
+  verbs:
+  - get

@@ -1,0 +1,78 @@
+{{- $ownerRefs := get . "owner-refs"}}
+{{- $name := get . "name"}}
+{{- $namespace := $name }}
+
+{{- $dockerSecretName := get . "docker-secret-name" | default "kloudlite-docker-registry"}}
+{{- $dockerConfig := get . "docker-config-json" }}
+
+{{- $roleName := get . "role-name" | default "kloudlite-ns-admin" }}
+{{- $svcAccountName := get . "svc-account-name" | default "kloudlite-svc-account" }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{$name}}
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{$dockerSecretName}}
+  namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{$dockerConfig | b64enc}}
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{$svcAccountName}}
+  namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+imagePullSecrets:
+  - name: {{$dockerSecretName}}
+
+---
+
+apiVersion: v1
+kind: Role
+metadata:
+  name: {{$roleName}}
+  namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+rules:
+  - apiGroups:
+      - extensions
+      - apps
+    resources:
+      - "*"
+    verbs:
+      - "*"
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - "*"
+---
+apiVersion: v1
+kind:  RoleBinding
+metadata:
+  name: {{$roleName}}-rb
+  namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+subjects:
+  - kind: ServiceAccount
+    apiGroup: ""
+    name: {{$svcAccountName}}
+    namespace: {{$namespace}}
+roleRef:
+  apiGroup: ""
+  kind: "Role"
+  name: {{$roleName}}
+---

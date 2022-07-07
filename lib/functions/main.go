@@ -221,3 +221,7 @@ func Md5(b []byte) string {
 	sum := md5.New().Sum(b)
 	return hex.EncodeToString(sum)
 }
+
+func New[T any](v T) *T {
+	return &v
+}

@@ -144,14 +144,18 @@ const (
 	InfluxDB      templateFile = "./msvc/influx/helm.tpl.yml"
 
 	// ---
+
+	Project templateFile = "./project.tpl.yml"
 )
 
 var CoreV1 = struct {
-	ExternalNameSvc templateFile
-	Ingress         templateFile
+	ExternalNameSvc    templateFile
+	Ingress            templateFile
+	DockerConfigSecret templateFile
 }{
-	ExternalNameSvc: "./corev1/external-name-service.tpl.yml",
-	Ingress:         "./corev1/ingress.tpl.yml",
+	ExternalNameSvc:    "./corev1/external-name-service.tpl.yml",
+	Ingress:            "./corev1/ingress.tpl.yml",
+	DockerConfigSecret: "./corev1/docker-config-secret.tpl.yml",
 }
 
 var CrdsV1 = struct {

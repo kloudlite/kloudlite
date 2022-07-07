@@ -14,6 +14,11 @@ const (
 const (
 	CommonFinalizer     string = "finalizers.kloudlite.io"
 	ForegroundFinalizer string = "foregroundDeletion"
+	BillingFinalizer    string = "finalizers.kloudlite.io/billing"
+)
+
+const (
+	AccountAnnotation string = "kloudlite.io/account-ref"
 )
 
 type StorageClass string
