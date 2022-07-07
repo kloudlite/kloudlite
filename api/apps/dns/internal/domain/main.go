@@ -102,26 +102,33 @@ func (d *domainI) VerifySite(ctx context.Context, claimId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	nsEntries, err := net.LookupNS(matchedSite.Domain)
+	txtRecords, err := net.LookupTXT(fmt.Sprintf("klcheck.%s", matchedSite.Domain))
 	if err != nil {
 		return err
 	}
 
-	nsDomainNames := make([]string, 0)
-	for _, nsEntry := range nsEntries {
-		nsDomainNames = append(nsDomainNames, nsEntry.Host)
-	}
-	sort.Strings(nsDomainNames)
+	//nsDomainNames := make([]string, 0)
+	//for _, txtEntry := range txtRecords {
+	//	if txtEntry ==
+	//	nsDomainNames = append(nsDomainNames, nsEntry.Host)
+	//}
+	//sort.Strings(nsDomainNames)
 
 	names, err := d.GetAccountHostNames(ctx, string(accountId))
-
-	verified := true
-	if len(nsDomainNames) != len(names) {
-		return errors.New("DNSDomainNamesMismatch")
+	verified := false
+	for _, txt := range txtRecords {
+		if txt == strings.Join(names, ",") {
+			verified = true
+			break
+		}
 	}
-	for i, x := range nsDomainNames {
-		verified = verified && x == names[i]
-	}
+	//verified := true
+	//if len(nsDomainNames) != len(names) {
+	//	return errors.New("DNSDomainNamesMismatch")
+	//}
+	//for i, x := range nsDomainNames {
+	//	verified = verified && x == names[i]
+	//}
 	if !verified {
 		return errors.New("DNSDomainNamesMismatch")
 	}
