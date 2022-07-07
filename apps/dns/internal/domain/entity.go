@@ -13,7 +13,6 @@ type Site struct {
 	repos.BaseEntity `bson:",inline"`
 	AccountId        repos.ID `bson:"accountId,omitempty" json:"accountId,omitempty"`
 	Domain           string   `bson:"host,omitempty" json:"host,omitempty"`
-	Verified         bool     `bson:"verified,omitempty" json:"verified,omitempty"`
 }
 
 type Record struct {

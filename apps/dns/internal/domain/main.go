@@ -81,8 +81,7 @@ func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos
 	}
 
 	create, err := d.sitesRepo.Create(ctx, &Site{
-		Domain:   domain,
-		Verified: false,
+		Domain: domain,
 	})
 
 	if err != nil {
@@ -129,7 +128,6 @@ func (d *domainI) VerifySite(ctx context.Context, vid repos.ID) error {
 	}
 	for _, txt := range txts {
 		if matchedVerificaton.VerifyText == strings.TrimSpace(txt) {
-			matchedSite.Verified = true
 			matchedSite.AccountId = matchedVerificaton.AccountId
 			_, err := d.sitesRepo.UpdateById(ctx, matchedSite.Id, matchedSite)
 			if err != nil {
