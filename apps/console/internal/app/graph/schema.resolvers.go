@@ -242,7 +242,11 @@ func (r *mutationResolver) InfraRemoveDevice(ctx context.Context, deviceID repos
 }
 
 func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error) {
-	projectEntity, err := r.Domain.CreateProject(ctx, accountID, name, displayName, logo, *cluster, description)
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("user not logged in")
+	}
+	projectEntity, err := r.Domain.CreateProject(ctx, session.UserId, accountID, name, displayName, logo, *cluster, description)
 	if err != nil {
 		return nil, err
 	}

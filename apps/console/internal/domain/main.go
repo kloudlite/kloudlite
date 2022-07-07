@@ -510,64 +510,168 @@ func (d *domain) InstallApp(
 	if err != nil {
 		return nil, err
 	}
-	// svcs := make([]op_crds.Service, 0)
-	// for _, ep := range app.ExposedPorts {
-	// 	svcs = append(svcs, op_crds.Service{
-	// 		Port:       int(ep.Port),
-	// 		TargetPort: int(ep.TargetPort),
-	// 		Type:       string(ep.Type),
-	// 	})
-	// }
-	// containers := make([]op_crds.Container, 0)
-	// for _, c := range app.Containers {
-	// 	env := make([]op_crds.EnvEntry, 0)
-	// 	for _, e := range c.EnvVars {
-	// 		if e.Type == "managed_resource" {
-	// 			ref := fmt.Sprintf("mres-%v", *e.Ref)
-	// 			env = append(env, op_crds.EnvEntry{
-	// 				Value:   e.Value,
-	// 				Key:     e.Key,
-	// 				Type:    "secret",
-	// 				RefName: &ref,
-	// 				RefKey:  e.RefKey,
-	// 			})
-	// 		} else {
-	// 			env = append(env, op_crds.EnvEntry{
-	// 				Value:   e.Value,
-	// 				Key:     e.Key,
-	// 				Type:    e.Type,
-	// 				RefName: e.Ref,
-	// 				RefKey:  e.RefKey,
-	// 			})
-	// 		}
-	// 	}
-	// 	containers = append(containers, op_crds.Container{
-	// 		Name:  c.Name,
-	// 		Image: c.Image,
-	// 		ResourceCpu: op_crds.Limit{
-	// 			Min: c.CPULimits.Min,
-	// 			Max: c.CPULimits.Max,
-	// 		},
-	// 		ResourceMemory: op_crds.Limit{
-	// 			Min: c.MemoryLimits.Min,
-	// 			Max: c.MemoryLimits.Max,
-	// 		},
-	// 		Env: env,
-	// 	})
-	// }
-	// d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
-	// 	APIVersion: op_crds.AppAPIVersion,
-	// 	Kind:       op_crds.AppKind,
-	// 	Metadata: op_crds.AppMetadata{
-	// 		Name:      app.ReadableId,
-	// 		Namespace: app.Namespace,
-	// 	},
-	// 	Spec: op_crds.AppSpec{
-	// 		Services:   svcs,
-	// 		Containers: containers,
-	// 		Replicas:   1,
-	// 	},
-	// })
+
+	if app.IsLambda {
+		d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.Lambda{
+			APIVersion: op_crds.LambdaAPIVersion,
+			Kind:       op_crds.LambdaKind,
+			Metadata: op_crds.LambdaMetadata{
+				Name:      app.ReadableId,
+				Namespace: app.Namespace,
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":       string(prj.AccountId),
+					"kloudlite.io/project-ref":       string(projectId),
+					"kloudlite.io/resource-ref":      string(createdApp.Id),
+					"kloudlite.io/billing-plan":      "Lambda",
+					"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
+				},
+			},
+			Spec: op_crds.LambdaSpec{
+				Containers: func() []op_crds.Container {
+					cs := make([]op_crds.Container, 0)
+					for _, c := range app.Containers {
+						cs = append(cs, op_crds.Container{
+							Name:  c.Name,
+							Image: c.Image,
+							Env: func() []op_crds.EnvEntry {
+								env := make([]op_crds.EnvEntry, 0)
+								for _, e := range c.EnvVars {
+									if e.Type == "managed_resource" {
+										ref := fmt.Sprintf("mres-%v", *e.Ref)
+										env = append(env, op_crds.EnvEntry{
+											Value:   e.Value,
+											Key:     e.Key,
+											Type:    "secret",
+											RefName: &ref,
+											RefKey:  e.RefKey,
+										})
+									} else {
+										env = append(env, op_crds.EnvEntry{
+											Value:   e.Value,
+											Key:     e.Key,
+											Type:    e.Type,
+											RefName: e.Ref,
+											RefKey:  e.RefKey,
+										})
+									}
+								}
+								return env
+							}(),
+							ResourceCpu: func() *op_crds.Limit {
+								o := op_crds.Limit{
+									Min: int(c.Quantity * 500),
+									Max: int(c.Quantity * 1000),
+								}
+								return &o
+							}(),
+							ResourceMemory: func() *op_crds.Limit {
+								plan, _ := d.getComputePlan("Basic")
+								return &op_crds.Limit{
+									Min: int(c.Quantity * 1000 * (plan.MemoryPerCPU)),
+									Max: int(c.Quantity * 1000 * (plan.MemoryPerCPU)),
+								}
+							}(),
+						})
+					}
+					return cs
+				}(),
+			},
+		})
+	} else {
+		d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+			APIVersion: op_crds.AppAPIVersion,
+			Kind:       op_crds.AppKind,
+			Metadata: op_crds.AppMetadata{
+				Name:      app.ReadableId,
+				Namespace: app.Namespace,
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":       string(prj.AccountId),
+					"kloudlite.io/project-ref":       string(projectId),
+					"kloudlite.io/resource-ref":      string(createdApp.Id),
+					"kloudlite.io/billing-plan":      app.Containers[0].ComputePlan,
+					"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
+					"kloudlite.io/is-shared": func() string {
+						if app.Containers[0].IsShared {
+							return "true"
+						}
+						return "false"
+					}(),
+				},
+			},
+			Spec: op_crds.AppSpec{
+				Services: func() []op_crds.Service {
+					svcs := make([]op_crds.Service, 0)
+					for _, ep := range app.ExposedPorts {
+						svcs = append(svcs, op_crds.Service{
+							Port:       int(ep.Port),
+							TargetPort: int(ep.TargetPort),
+							Type:       string(ep.Type),
+						})
+					}
+					return svcs
+				}(),
+				Containers: func() []op_crds.Container {
+					cs := make([]op_crds.Container, 0)
+					for _, c := range app.Containers {
+						cs = append(cs, op_crds.Container{
+							Name:  c.Name,
+							Image: c.Image,
+							Env: func() []op_crds.EnvEntry {
+								env := make([]op_crds.EnvEntry, 0)
+								for _, e := range c.EnvVars {
+									if e.Type == "managed_resource" {
+										ref := fmt.Sprintf("mres-%v", *e.Ref)
+										env = append(env, op_crds.EnvEntry{
+											Value:   e.Value,
+											Key:     e.Key,
+											Type:    "secret",
+											RefName: &ref,
+											RefKey:  e.RefKey,
+										})
+									} else {
+										env = append(env, op_crds.EnvEntry{
+											Value:   e.Value,
+											Key:     e.Key,
+											Type:    e.Type,
+											RefName: e.Ref,
+											RefKey:  e.RefKey,
+										})
+									}
+								}
+								return env
+							}(),
+							ResourceCpu: func() *op_crds.Limit {
+								o := op_crds.Limit{
+									Min: int(c.Quantity * (func() float64 {
+										if c.IsShared {
+											return 500
+										}
+										return 1000
+									})()),
+									Max: int(c.Quantity * 1000),
+								}
+								fmt.Printf("o: %+v\n", o)
+								return &o
+							}(),
+							ResourceMemory: func() *op_crds.Limit {
+								fmt.Println("plan:", c.ComputePlan)
+								plan, err := d.GetComputePlan(ctx, c.ComputePlan)
+								if err != nil {
+									panic(err)
+								}
+								return &op_crds.Limit{
+									Min: int(c.Quantity * 1000 * plan.MemoryPerCPU),
+									Max: int(c.Quantity * 1000 * plan.MemoryPerCPU),
+								}
+							}(),
+						})
+					}
+					return cs
+				}(),
+				Replicas: 1,
+			},
+		})
+	}
 
 	return createdApp, nil
 }
@@ -953,6 +1057,14 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	})
 	app.Status = entities.AppStateSyncing
 	_, err = d.appRepo.UpdateById(ctx, appID, app)
+	d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
+		APIVersion: op_crds.AppAPIVersion,
+		Kind:       op_crds.AppKind,
+		Metadata: op_crds.AppMetadata{
+			Name:      app.ReadableId,
+			Namespace: app.Namespace,
+		},
+	})
 	if err != nil {
 		return false, err
 	}
@@ -1120,23 +1232,6 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 			Port: r.Port,
 		})
 	}
-
-	//err = d.workloadMessenger.SendAction("apply", string(create.Id), op_crds.Router{
-	//	APIVersion: op_crds.RouterAPIVersion,
-	//	Kind:       op_crds.RouterKind,
-	//	Metadata: op_crds.RouterMetadata{
-	//		Name:      create.Name,
-	//		Namespace: create.Namespace,
-	//	},
-	//	Spec: op_crds.RouterSpec{
-	//		Domains: create.Domains,
-	//		Routes:  rs,
-	//	},
-	//	Status: op_crds.Status{},
-	//})
-	//if err != nil {
-	//	return nil, err
-	//}
 	return create, nil
 }
 
@@ -1318,7 +1413,7 @@ func generateReadable(name string) string {
 	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
 }
 
-func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error) {
+func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error) {
 	create, err := d.projectRepo.Create(ctx, &entities.Project{
 		Name:        projectName,
 		AccountId:   accountId,
@@ -1328,6 +1423,15 @@ func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectN
 		Description: description,
 		Cluster:     cluster,
 		Status:      entities.ProjectStateSyncing,
+	})
+	if err != nil {
+		return nil, err
+	}
+	_, err = d.iamClient.AddMembership(ctx, &iam.InAddMembership{
+		UserId:       string(ownerId),
+		ResourceType: "project",
+		ResourceId:   string(create.Id),
+		Role:         "owner",
 	})
 	if err != nil {
 		return nil, err

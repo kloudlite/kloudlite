@@ -7,8 +7,10 @@ type Route struct {
 }
 
 type RouterSpec struct {
-	Domains []string `json:"domains"`
-	Routes  []Route  `json:"routes"`
+	Domains     []string          `json:"domains"`
+	Routes      []Route           `json:"routes"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 type RouterMetadata struct {

@@ -30,7 +30,7 @@ type Domain interface {
 	ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error)
 	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
 
-	CreateProject(ctx context.Context, id repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error)
+	CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error)
 	GetAccountProjects(ctx context.Context, id repos.ID) ([]*entities.Project, error)
 	GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error)
 	OnUpdateProject(ctx context.Context, response *op_crds.Project) error
