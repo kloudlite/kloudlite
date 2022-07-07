@@ -17,6 +17,18 @@ func (r *entityResolver) FindAccountByID(ctx context.Context, id repos.ID) (*mod
 	}, nil
 }
 
+func (r *entityResolver) FindSiteByID(ctx context.Context, id repos.ID) (*model.Site, error) {
+	site, err := r.d.GetSite(ctx, string(id))
+	if err != nil {
+		return nil, err
+	}
+	return &model.Site{
+		ID:        id,
+		AccountID: site.AccountId,
+		Domain:    site.Domain,
+	}, nil
+}
+
 // Entity returns generated.EntityResolver implementation.
 func (r *Resolver) Entity() generated.EntityResolver { return &entityResolver{r} }
 

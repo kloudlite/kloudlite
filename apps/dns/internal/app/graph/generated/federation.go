@@ -100,6 +100,26 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 				list[idx[i]] = entity
 				return nil
 			}
+		case "Site":
+			resolverName, err := entityResolverNameForSite(ctx, rep)
+			if err != nil {
+				return fmt.Errorf(`finding resolver for Entity "Site": %w`, err)
+			}
+			switch resolverName {
+
+			case "findSiteByID":
+				id0, err := ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, rep["id"])
+				if err != nil {
+					return fmt.Errorf(`unmarshalling param 0 for findSiteByID(): %w`, err)
+				}
+				entity, err := ec.resolvers.Entity().FindSiteByID(ctx, id0)
+				if err != nil {
+					return fmt.Errorf(`resolving Entity "Site": %w`, err)
+				}
+
+				list[idx[i]] = entity
+				return nil
+			}
 
 		}
 		return fmt.Errorf("%w: %s", ErrUnknownType, typeName)
@@ -184,4 +204,21 @@ func entityResolverNameForAccount(ctx context.Context, rep map[string]interface{
 		return "findAccountByID", nil
 	}
 	return "", fmt.Errorf("%w for Account", ErrTypeNotFound)
+}
+
+func entityResolverNameForSite(ctx context.Context, rep map[string]interface{}) (string, error) {
+	for {
+		var (
+			m   map[string]interface{}
+			val interface{}
+			ok  bool
+		)
+		_ = val
+		m = rep
+		if _, ok = m["id"]; !ok {
+			break
+		}
+		return "findSiteByID", nil
+	}
+	return "", fmt.Errorf("%w for Site", ErrTypeNotFound)
 }
