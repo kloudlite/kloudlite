@@ -22,5 +22,5 @@ type Project struct {
 	Kind       string          `json:"kind,omitempty"`
 	Metadata   ProjectMetadata `json:"metadata,omitempty"`
 	Spec       ProjectSpec     `json:"spec,omitempty"`
-	Status     Status          `json:"status,omitempty"`
+	Status     *Status         `json:"status,omitempty"`
 }
