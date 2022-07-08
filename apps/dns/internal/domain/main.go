@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"sort"
 	"strings"
 	"time"
 
@@ -16,11 +15,10 @@ import (
 )
 
 type domainI struct {
-	recordsRepo    repos.DbRepo[*Record]
-	sitesRepo      repos.DbRepo[*Site]
-	siteClaimRepo  repos.DbRepo[*SiteClaim]
-	recordsCache   cache.Repo[[]*Record]
-	accountDNSRepo repos.DbRepo[*AccountDNS]
+	recordsRepo       repos.DbRepo[*Record]
+	sitesRepo         repos.DbRepo[*Site]
+	recordsCache      cache.Repo[[]*Record]
+	accountCNamesRepo repos.DbRepo[*AccountCName]
 }
 
 func (d *domainI) GetSiteFromDomain(ctx context.Context, domain string) (*Site, error) {
@@ -36,25 +34,6 @@ func (d *domainI) GetSiteFromDomain(ctx context.Context, domain string) (*Site, 
 	return one, nil
 }
 
-func (d *domainI) GetNameServers(ctx context.Context, accountId repos.ID) ([]string, error) {
-	return d.GetAccountHostNames(ctx, string(accountId))
-}
-
-func (d *domainI) GetSiteClaims(ctx context.Context, accountId repos.ID) ([]*SiteClaim, error) {
-	return d.siteClaimRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"accountId": accountId,
-		},
-	})
-}
-
-func (d *domainI) GetSiteClaim(ctx context.Context, accountId repos.ID, siteId repos.ID) (*SiteClaim, error) {
-	return d.siteClaimRepo.FindOne(ctx, repos.Filter{
-		"accountId": accountId,
-		"siteId":    siteId,
-	})
-}
-
 func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, error) {
 	return d.sitesRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
@@ -65,128 +44,100 @@ func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, erro
 
 func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos.ID) error {
 	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
-		"domain": domain,
+		"domain":    domain,
+		"accountId": accountId,
 	})
 	if err != nil {
 		return err
 	}
+	if one != nil {
+		return errors.New("site already exists")
+	}
 	if one == nil {
 		one, err = d.sitesRepo.Create(ctx, &Site{
-			Domain: domain,
+			Domain:    domain,
+			AccountId: accountId,
+			Verified:  false,
 		})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = d.siteClaimRepo.Create(ctx, &SiteClaim{
-		AccountId: accountId,
-		SiteId:    one.Id,
-	})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *domainI) VerifySite(ctx context.Context, claimId repos.ID) error {
-	claim, err := d.siteClaimRepo.FindById(ctx, claimId)
+func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
+	site, err := d.sitesRepo.FindById(ctx, siteId)
 	if err != nil {
 		return err
 	}
-	if claim == nil {
-		return errors.New("claim not found")
+	if site == nil {
+		return errors.New("site not found")
 	}
-	siteId := claim.SiteId
-	accountId := claim.AccountId
-	matchedSite, err := d.sitesRepo.FindById(ctx, siteId)
+	if site.Verified {
+		return errors.New("site already verified")
+	}
+	cname, err := net.LookupCNAME(site.Domain)
 	if err != nil {
 		return err
 	}
-	txtRecords, err := net.LookupTXT(fmt.Sprintf("klcheck.%s", matchedSite.Domain))
+	accountCnameIdentity, err := d.getAccountCName(ctx, string(site.AccountId))
 	if err != nil {
 		return err
 	}
-
-	//nsDomainNames := make([]string, 0)
-	//for _, txtEntry := range txtRecords {
-	//	if txtEntry ==
-	//	nsDomainNames = append(nsDomainNames, nsEntry.Host)
-	//}
-	//sort.Strings(nsDomainNames)
-
-	names, err := d.GetAccountHostNames(ctx, string(accountId))
-	verified := false
-	for _, txt := range txtRecords {
-		if txt == strings.Join(names, ",") {
-			verified = true
-			break
-		}
+	if cname != fmt.Sprintf("%s.edgenet.khost.dev", accountCnameIdentity) {
+		return errors.New("cname does not match")
 	}
-	//verified := true
-	//if len(nsDomainNames) != len(names) {
-	//	return errors.New("DNSDomainNamesMismatch")
-	//}
-	//for i, x := range nsDomainNames {
-	//	verified = verified && x == names[i]
-	//}
-	if !verified {
-		return errors.New("DNSDomainNamesMismatch")
-	}
-	matchedSite.AccountId = accountId
-	_, err = d.sitesRepo.UpdateById(ctx, matchedSite.Id, matchedSite)
-	if err != nil {
-		return err
-	}
-	err = d.siteClaimRepo.UpdateMany(ctx, &repos.Filter{
-		"siteId": siteId,
+	err = d.sitesRepo.UpdateMany(ctx, repos.Filter{
+		"host": site.Domain,
 	}, map[string]any{
-		"attached": "false",
+		"verified": false,
 	})
 	if err != nil {
 		return err
 	}
-	claim.Attached = true
-	d.siteClaimRepo.UpdateById(ctx, claimId, claim)
-	_, err = d.siteClaimRepo.UpdateById(ctx, claimId, claim)
-	if err != nil {
-		return err
-	}
-	return nil
+	site.Verified = true
+	_, err = d.sitesRepo.UpdateById(ctx, site.Id, site)
+	return err
 }
 
 func (d *domainI) GetSite(ctx context.Context, siteId string) (*Site, error) {
 	return d.sitesRepo.FindById(ctx, repos.ID(siteId))
 }
 
-func (d *domainI) GetAccountHostNames(ctx context.Context, accountId string) ([]string, error) {
-	accountDNS, err := d.accountDNSRepo.FindOne(ctx, repos.Filter{
+func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string) (string, error) {
+	name, err := d.getAccountCName(ctx, accountId)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s.edgenet.khost.dev", name), nil
+}
+
+func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string, error) {
+	accountDNS, err := d.accountCNamesRepo.FindOne(ctx, repos.Filter{
 		"accountId": accountId,
 	})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if accountDNS == nil {
 		seed := time.Now().UTC().UnixNano()
 		nameGenerator := namegenerator.NewNameGenerator(seed)
 		name1 := nameGenerator.Generate()
 		name2 := nameGenerator.Generate()
-		create, err := d.accountDNSRepo.Create(ctx, &AccountDNS{
+		create, err := d.accountCNamesRepo.Create(ctx, &AccountCName{
 			AccountId: repos.ID(accountId),
-			Hosts: func() []string {
-				x := []string{
-					fmt.Sprintf("%s.ns.kloudlite.io", name1),
-					fmt.Sprintf("%s.ns.kloudlite.io", name2),
-				}
-				sort.Strings(x)
-				return x
-			}(),
+			CName:     fmt.Sprintf("%s-%s", name1, name2),
 		})
 		if err != nil {
-			return nil, err
+			return "", err
 		}
-		return create.Hosts, nil
+		return create.CName, nil
 	}
-	return accountDNS.Hosts, nil
+	return accountDNS.CName, nil
 }
 
 func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
@@ -309,14 +260,12 @@ func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []strin
 func fxDomain(
 	recordsRepo repos.DbRepo[*Record],
 	sitesRepo repos.DbRepo[*Site],
-	siteClaimRepo repos.DbRepo[*SiteClaim],
-	accountDNSRepo repos.DbRepo[*AccountDNS],
+	accountDNSRepo repos.DbRepo[*AccountCName],
 	recordsCache cache.Repo[[]*Record],
 ) Domain {
 	return &domainI{
 		recordsRepo,
 		sitesRepo,
-		siteClaimRepo,
 		recordsCache,
 		accountDNSRepo,
 	}
