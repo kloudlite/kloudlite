@@ -7,7 +7,6 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"net/http"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -78,26 +77,6 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rA
 			return req.FailWithOpError(errors.NewEf(err, "failed to get ingress resource"))
 		}
 		isReady = false
-	}
-
-	for idx, domain := range router.Spec.Domains {
-		httpReq, err := http.NewRequest(http.MethodHead, fmt.Sprintf("https://%s/", domain), nil)
-		if err != nil {
-			return req.FailWithStatusError(errors.NewEf(err, "could not create http request"))
-		}
-		httpResp, err := http.DefaultClient.Do(httpReq)
-		if err != nil || httpReq == nil || httpResp.StatusCode < 200 || httpResp.StatusCode > 300 {
-			isReady = false
-			cs = append(
-				cs,
-				conditions.New(
-					fmt.Sprintf("%d-HasValidSSL", idx),
-					false,
-					"SSLCheckFailed",
-					errors.NewEf(err, "while making http request to (url=%s)", domain).Error(),
-				),
-			)
-		}
 	}
 
 	newConditions, hasUpdated, err := conditions.Patch(router.Status.Conditions, cs)
