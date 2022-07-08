@@ -1441,9 +1441,15 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		Kind:       op_crds.ProjectKind,
 		Metadata: op_crds.ProjectMetadata{
 			Name: create.Name,
+			Annotations: map[string]string{
+				"kloudlite.io/account-ref": string(accountId),
+			},
 		},
 		Spec: op_crds.ProjectSpec{
 			DisplayName: displayName,
+			ArtifactRegistry: op_crds.ArtifactRegistry{
+				Enabled: false,
+			},
 		},
 	})
 	if err != nil {

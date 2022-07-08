@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"kloudlite.io/apps/dns/internal/app/graph/generated"
 	"kloudlite.io/apps/dns/internal/app/graph/model"
@@ -19,9 +20,10 @@ func (r *accountResolver) Sites(ctx context.Context, obj *model.Account) ([]*mod
 	sites := make([]*model.Site, 0)
 	for _, e := range sitesEntities {
 		sites = append(sites, &model.Site{
-			ID:        e.Id,
-			AccountID: e.AccountId,
-			Domain:    e.Domain,
+			ID:         e.Id,
+			AccountID:  e.AccountId,
+			IsVerified: e.Verified,
+			Domain:     e.Domain,
 		})
 	}
 	return sites, nil
@@ -39,8 +41,12 @@ func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, acc
 	return true, nil
 }
 
-func (r *mutationResolver) DNSVerifySite(ctx context.Context, vid repos.ID) (bool, error) {
-	err := r.d.VerifySite(ctx, vid)
+func (r *mutationResolver) DNSDeleteSite(ctx context.Context, siteID repos.ID) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) DNSVerifySite(ctx context.Context, siteID repos.ID) (bool, error) {
+	err := r.d.VerifySite(ctx, siteId)
 	return err == nil, err
 }
 
@@ -57,27 +63,6 @@ func (r *queryResolver) DNSGetSite(ctx context.Context, siteID repos.ID) (*model
 	}, nil
 }
 
-func (r *siteResolver) Records(ctx context.Context, obj *model.Site, siteID repos.ID) ([]*model.Record, error) {
-	records, err := r.d.GetRecords(ctx, string(siteID))
-	if err != nil {
-		return nil, err
-	}
-	rs := make([]*model.Record, 0)
-	for _, e := range records {
-		p := int(e.Priority)
-		rs = append(rs, &model.Record{
-			ID:         e.Id,
-			SiteID:     e.SiteId,
-			RecordType: e.Type,
-			Host:       e.Host,
-			Answer:     e.Answer,
-			TTL:        int(e.TTL),
-			Priority:   &p,
-		})
-	}
-	return rs, nil
-}
-
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
@@ -87,10 +72,6 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-// Site returns generated.SiteResolver implementation.
-func (r *Resolver) Site() generated.SiteResolver { return &siteResolver{r} }
-
 type accountResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type siteResolver struct{ *Resolver }

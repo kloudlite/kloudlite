@@ -81,14 +81,16 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 		return errors.New("site already verified")
 	}
 	cname, err := net.LookupCNAME(site.Domain)
+	fmt.Println(site.Domain)
 	if err != nil {
-		return err
+		return errors.New("Unable to verify CName. Please wait for a while and try again.")
 	}
 	accountCnameIdentity, err := d.getAccountCName(ctx, string(site.AccountId))
 	if err != nil {
 		return err
 	}
-	if cname != fmt.Sprintf("%s.edgenet.khost.dev", accountCnameIdentity) {
+
+	if cname != fmt.Sprintf("%s.edgenet.khost.dev.", accountCnameIdentity) {
 		return errors.New("cname does not match")
 	}
 	err = d.sitesRepo.UpdateMany(ctx, repos.Filter{

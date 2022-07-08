@@ -16,24 +16,12 @@ type Site @key(fields: "id"){
   accountId: ID!
   isVerified: Boolean!
   domain: String!
-  records(siteId:ID!): [Record!]!
   creationDate: String!
 }
 
-type Record{
-  id :ID!
-  siteId: ID!
-  recordType: String!
-  host: String!
-  answer: String!
-  ttl: Int!
-  priority: Int
-}
 
 type Mutation {
   dns_createSite(domain:String!, accountId:ID!) :Boolean!
-  dns_VerifySite(vid:ID!) :Boolean!
-#  dns_createRecord(siteId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Record!
-#  dns_deleteRecord(recordId:ID!): Boolean!
-#  dns_updateRecord(recordId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Boolean!
+  dns_deleteSite(siteId:ID!) :Boolean!
+  dns_VerifySite(siteId:ID!) :Boolean!
 }
