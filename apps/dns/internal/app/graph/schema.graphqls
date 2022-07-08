@@ -3,25 +3,18 @@ scalar Any
 
 type Query {
   dns_getSite(siteId:ID!): Site!
-
 }
 
 extend type Account @key(fields: "id") {
   id: ID! @external
-  domainClaims:[SiteClaim]!
   sites:[Site]!
-  nameServers:[String!]!
-}
-
-type SiteClaim {
-  id: ID!
-  site: Site!
-  account: Account!
+  edgeCname:String!
 }
 
 type Site @key(fields: "id"){
   id :ID!
   accountId: ID!
+  isVerified: Boolean!
   domain: String!
   records(siteId:ID!): [Record!]!
   creationDate: String!
@@ -39,10 +32,8 @@ type Record{
 
 type Mutation {
   dns_createSite(domain:String!, accountId:ID!) :Boolean!
-
-  dns_createRecord(siteId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Record!
-  dns_deleteRecord(recordId:ID!): Boolean!
-  dns_updateRecord(recordId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Boolean!
-
   dns_VerifySite(vid:ID!) :Boolean!
+#  dns_createRecord(siteId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Record!
+#  dns_deleteRecord(recordId:ID!): Boolean!
+#  dns_updateRecord(recordId:ID!, recordType: String!, host:String!, answer: String!,ttl:Int!, priority: Int): Boolean!
 }

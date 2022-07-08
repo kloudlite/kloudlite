@@ -127,7 +127,7 @@ func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	return result, e
 }
 
-func (repo dbRepo[T]) UpdateMany(ctx context.Context, filter *Filter, updatedData map[string]any) error {
+func (repo dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
 	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
 		ctx,
 		filter,

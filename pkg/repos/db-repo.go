@@ -38,7 +38,7 @@ type DbRepo[T Entity] interface {
 	Create(ctx context.Context, data T) (T, error)
 	// upsert
 	Upsert(ctx context.Context, filter Filter, data T) (T, error)
-	UpdateMany(ctx context.Context, filter *Filter, updatedData map[string]any) error
+	UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
 	UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
 	DeleteById(ctx context.Context, id ID) error
 	DeleteMany(ctx context.Context, filter Filter) error

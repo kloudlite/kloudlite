@@ -2,23 +2,17 @@ package domain
 
 import "kloudlite.io/pkg/repos"
 
-type AccountDNS struct {
+type AccountCName struct {
 	repos.BaseEntity `bson:",inline"`
 	AccountId        repos.ID `bson:"accountId",json:"accountId"`
-	Hosts            []string `bson:"hosts",json:"hosts"`
-}
-
-type SiteClaim struct {
-	repos.BaseEntity `bson:",inline"`
-	AccountId        repos.ID `bson:"accountId,omitempty" json:"accountId,omitempty"`
-	SiteId           repos.ID `bson:"siteId,omitempty" json:"siteId,omitempty"`
-	Attached         bool     `bson:"attached,omitempty" json:"attached,omitempty"`
+	CName            string   `bson:"cName",json:"cName"`
 }
 
 type Site struct {
 	repos.BaseEntity `bson:",inline"`
 	AccountId        repos.ID `bson:"accountId,omitempty" json:"accountId,omitempty"`
 	Domain           string   `bson:"host,omitempty" json:"host,omitempty"`
+	Verified         bool     `bson:"verified,omitempty" json:"verified,omitempty"`
 }
 
 type Record struct {
@@ -62,7 +56,7 @@ var SiteIndexes = []repos.IndexField{
 	},
 }
 
-var AccountDNSIndexes = []repos.IndexField{
+var AccountCNameIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
@@ -75,19 +69,9 @@ var AccountDNSIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
-}
-
-var SiteClaimIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountId", Value: repos.IndexAsc},
-			{Key: "siteId", Value: repos.IndexAsc},
+			{Key: "cname", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

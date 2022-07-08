@@ -30,6 +30,7 @@ type DNSHandler struct {
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg := dns.Msg{}
 	msg.SetReply(r)
+
 	msg.Answer = []dns.RR{}
 	fmt.Println(r.MsgHdr.String())
 	for _, q := range r.Question {
@@ -47,7 +48,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			//	fmt.Println(err)
 			//	continue
 			//}
-			//names, err := h.domain.GetAccountHostNames(context.Background(), string(site.AccountId))
+			//names, err := h.domain.getAccountCName(context.Background(), string(site.AccountId))
 			//fmt.Println(names)
 			//if err != nil {
 			//	msg.Answer = append(msg.Answer, &dns.A{
@@ -130,8 +131,7 @@ var Module = fx.Module(
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.Record]("records", "rec", domain.RecordIndexes),
 	repos.NewFxMongoRepo[*domain.Site]("sites", "site", domain.SiteIndexes),
-	repos.NewFxMongoRepo[*domain.SiteClaim]("site_claims", "claim", domain.SiteClaimIndexes),
-	repos.NewFxMongoRepo[*domain.AccountDNS]("account_dns", "dns", domain.AccountDNSIndexes),
+	repos.NewFxMongoRepo[*domain.AccountCName]("account_cnames", "dns", domain.AccountCNameIndexes),
 	cache.NewFxRepo[[]*domain.Record](),
 	domain.Module,
 	fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server, d domain.Domain, recCache cache.Repo[[]*domain.Record]) {
