@@ -220,7 +220,16 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 			Name:        pipelineE.Name,
 			GitProvider: pipelineE.GitProvider,
 			GitRepoURL:  pipelineE.GitRepoUrl,
-			Metadata:    pipelineE.Metadata,
+			GitBranch:   pipelineE.GitBranch,
+			Build: &model.GitPipelineBuild{
+				BaseImage: &pipelineE.Build.BaseImage,
+				Cmd:       pipelineE.Build.Cmd,
+			},
+			Run: &model.GitPipelineRun{
+				BaseImage: &pipelineE.Run.BaseImage,
+				Cmd:       pipelineE.Run.Cmd,
+			},
+			Metadata: pipelineE.Metadata,
 		}
 	}
 	return pipelines, nil
@@ -236,7 +245,15 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		Name:        pipelineE.Name,
 		GitProvider: pipelineE.GitProvider,
 		GitRepoURL:  pipelineE.GitRepoUrl,
-		Metadata:    pipelineE.Metadata,
+		Build: &model.GitPipelineBuild{
+			BaseImage: &pipelineE.Build.BaseImage,
+			Cmd:       pipelineE.Build.Cmd,
+		},
+		Run: &model.GitPipelineRun{
+			BaseImage: &pipelineE.Run.BaseImage,
+			Cmd:       pipelineE.Run.Cmd,
+		},
+		Metadata: pipelineE.Metadata,
 	}, nil
 }
 

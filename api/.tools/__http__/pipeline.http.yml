@@ -10,7 +10,7 @@ query: |
 variables:
   in: 
     name: sample-pipeline
-    projectId: random
+    projectId: random2
     appId: random
     gitProvider: github
     gitRepoUrl: https://github.com/nxtcoder17/sample
@@ -26,6 +26,56 @@ variables:
     artifactRef:
       dockerImageName: harbor.dev.madhouselabs.io/public/sample
       dockerImageTag: latest
+
+---
+label: list pipelines
+query: |
+  query Ci_getPipelines($projectId: ID!) {
+    ci_getPipelines(projectId: $projectId) {
+      id
+      repoName
+      name
+      gitProvider
+      gitRepoUrl
+      gitBranch
+      build {
+        baseImage
+        cmd
+      }
+      run {
+        baseImage
+        cmd
+      }
+      metadata
+    }
+  }
+variables:
+  projectId: random2
+---
+
+label: get pipeline
+query: |
+  query Ci_getPipelines($pipelineId: ID!) {
+    ci_getPipeline(pipelineId: $pipelineId) {
+      id
+      repoName
+      name
+      gitProvider
+      gitRepoUrl
+      build {
+        baseImage
+        cmd
+      }
+      gitBranch
+      run {
+        baseImage
+        cmd
+      }
+      metadata
+    }
+  }
+variables:
+  pipelineId: pip-wauszr0oyju-drbhze-6pj2sxrnz
 ---
 
 label: Create Gitlab Pipeline
@@ -53,3 +103,11 @@ variables:
       dockerImageName: harbor.dev.madhouselabs.io/public/gitlab/sample
       dockerImageTag: latest
 
+---
+label: Delete pipeline
+query: |
+  mutation Ci_deletePipeline($pipelineId: ID!) {
+    ci_deletePipeline(pipelineId: $pipelineId)
+  }
+variables:
+  pipelineId: pip-xlf2psoeq4ft215kuyhija7vlezj
