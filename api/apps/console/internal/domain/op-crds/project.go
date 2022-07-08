@@ -2,8 +2,13 @@ package op_crds
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+type ArtifactRegistry struct {
+	Enabled bool `json:"enabled"`
+}
+
 type ProjectSpec struct {
-	DisplayName string `json:"displayName,omitempty"`
+	DisplayName      string           `json:"displayName,omitempty"`
+	ArtifactRegistry ArtifactRegistry `json:"artifactRegistry,omitempty"`
 }
 
 type Status struct {
@@ -11,7 +16,9 @@ type Status struct {
 }
 
 type ProjectMetadata struct {
-	Name string `json:"name,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 const APIVersion = "crds.kloudlite.io/v1"
