@@ -135,11 +135,22 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		cs = append(cs, conditions.New("NamespaceExists", true, "Found"))
 	}
 
-	ok, err := r.harborCli.CheckIfProjectExists(ctx, project.Name)
+	accountRef, ok := project.Annotations[constants.AccountAnnotation]
+	if !ok {
+		// TODO: we need to have account labels on all the projects
+		return rApi.NewStepResult(&ctrl.Result{}, nil)
+		// return req.FailWithStatusError(
+		// 	errors.Newf(
+		// 		"Account Annotation (%s) not found in resource",
+		// 		constants.AccountAnnotation,
+		// 	),
+		// )
+	}
+
+	ok, err = r.harborCli.CheckIfProjectExists(ctx, accountRef)
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
-
 	if !ok {
 		isReady = false
 		cs = append(cs, conditions.New(HarborProjectExists, false, conditions.NotFound))
@@ -162,7 +173,7 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		}
 	} else {
 		isReady = false
-		cs = append(cs, conditions.New(HarborProjectAccountExists, false, conditions.NotFound))
+		fmt.Printf("hello, cs: %+v\n", cs)
 	}
 
 	if project.Spec.ArtifactRegistry.Enabled {
@@ -229,19 +240,19 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		if err2 := func() error {
 			storageSize := 1000 * r.Env.HarborProjectStorageSize
 			if project.Spec.ArtifactRegistry.Enabled && project.Spec.ArtifactRegistry.Size > 0 {
-				storageSize = 1000 * project.Spec.ArtifactRegistry.Size
+				storageSize = project.Spec.ArtifactRegistry.Size
 			}
 			if err := r.harborCli.CreateProject(ctx, accountRef, storageSize); err != nil {
 				return errors.NewEf(err, "creating harbor project")
 			}
-			if err := project.Status.DisplayVars.Set(KeyHarborProjectStorage, storageSize); err != nil {
-				return err
-			}
-			return nil
+			return project.Status.DisplayVars.Set(KeyHarborProjectStorage, storageSize)
 		}(); err2 != nil {
 			return req.FailWithOpError(err2)
 		}
-		return req.FailWithOpError(r.Status().Update(ctx, project))
+		if err := r.Status().Update(ctx, project); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done(&ctrl.Result{RequeueAfter: 0})
 	}
 
 	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
@@ -267,7 +278,7 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 	}
 
 	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectStorageAllocated.String()) {
-		if err := r.harborCli.SetProjectQuota(ctx, project.Name, 1000*project.Spec.ArtifactRegistry.Size); err != nil {
+		if err := r.harborCli.SetProjectQuota(ctx, project.Name, project.Spec.ArtifactRegistry.Size); err != nil {
 			return req.FailWithOpError(err)
 		}
 		if err := project.Status.DisplayVars.Set(KeyHarborProjectStorage, project.Spec.ArtifactRegistry.Size); err != nil {
