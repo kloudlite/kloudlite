@@ -14,23 +14,12 @@ type Account struct {
 
 func (Account) IsEntity() {}
 
-type Record struct {
-	ID         repos.ID `json:"id"`
-	SiteID     repos.ID `json:"siteId"`
-	RecordType string   `json:"recordType"`
-	Host       string   `json:"host"`
-	Answer     string   `json:"answer"`
-	TTL        int      `json:"ttl"`
-	Priority   *int     `json:"priority"`
-}
-
 type Site struct {
-	ID           repos.ID  `json:"id"`
-	AccountID    repos.ID  `json:"accountId"`
-	IsVerified   bool      `json:"isVerified"`
-	Domain       string    `json:"domain"`
-	Records      []*Record `json:"records"`
-	CreationDate string    `json:"creationDate"`
+	ID           repos.ID `json:"id"`
+	AccountID    repos.ID `json:"accountId"`
+	IsVerified   bool     `json:"isVerified"`
+	Domain       string   `json:"domain"`
+	CreationDate string   `json:"creationDate"`
 }
 
 func (Site) IsEntity() {}
