@@ -46,7 +46,7 @@ func (r *mutationResolver) DNSDeleteSite(ctx context.Context, siteID repos.ID) (
 }
 
 func (r *mutationResolver) DNSVerifySite(ctx context.Context, siteID repos.ID) (bool, error) {
-	err := r.d.VerifySite(ctx, siteId)
+	err := r.d.VerifySite(ctx, siteID)
 	return err == nil, err
 }
 
