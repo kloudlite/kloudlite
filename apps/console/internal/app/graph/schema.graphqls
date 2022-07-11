@@ -229,6 +229,7 @@ input AppContainerIn{
   computePlan: String!
   quantity: Float!
   attachedResources:[AttachedResInput!]!
+  isShared: Boolean!
 }
 
 type ExposedService{

@@ -313,6 +313,7 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		in := entities.Container{
 			Name:              container.Name,
 			Image:             container.Image,
+			IsShared:          container.IsShared,
 			ImagePullSecret:   container.PullSecret,
 			EnvVars:           e,
 			ComputePlan:       container.ComputePlan,
@@ -427,6 +428,7 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		in := entities.Container{
 			Name:              container.Name,
 			Image:             container.Image,
+			IsShared:          container.IsShared,
 			ImagePullSecret:   container.PullSecret,
 			EnvVars:           e,
 			ComputePlan:       container.ComputePlan,
