@@ -49,10 +49,11 @@ var AccountIndexes = []repos.IndexField{
 }
 
 type Billable struct {
-	ResourceType string `json:"resource_type" bson:"resource_type"`
-	Plan         string `json:"plan" bson:"plan"`
-	Quantity     string `json:"quantity" bson:"quantity"`
-	Count        int    `json:"count" bson:"count"`
+	ResourceType string  `json:"resource_type" bson:"resource_type"`
+	Plan         string  `json:"plan" bson:"plan"`
+	IsShared     bool    `json:"is_shared" bson:"is_shared"`
+	Quantity     float64 `json:"quantity" bson:"quantity"`
+	Count        int     `json:"count" bson:"count"`
 }
 
 type AccountBilling struct {
@@ -63,6 +64,7 @@ type AccountBilling struct {
 	Billables        []Billable `json:"billables" bson:"billables"`
 	StartTime        time.Time  `json:"start_time" bson:"start_time"`
 	EndTime          *time.Time `json:"end_time" bson:"end_time"`
+	BillAmount       float64    `json:"bill_amount" bson:"bill_amount"`
 }
 
 var BillableIndexes = []repos.IndexField{
@@ -97,15 +99,16 @@ type LamdaPlan struct {
 }
 
 type BillingEvent struct {
-	Key         string `json:"key"`
-	Termination bool   `json:"to_be_deleted"`
-	Billing     struct {
+	Key     string `json:"key"`
+	Stage   string `json:"stage"`
+	Billing struct {
 		Name  string `json:"name"`
 		Items []struct {
-			Type  string `json:"type"`
-			Count int    `json:"count"`
-			Plan  string `json:"plan"`
-			PlanQ string `json:"planQ"`
+			Type     string `json:"type"`
+			Count    int    `json:"count"`
+			Plan     string `json:"plan"`
+			PlanQ    string `json:"planQ"`
+			IsShared string `json:"isShared"`
 		} `json:"items"`
 	} `json:"billing"`
 	Metadata struct {

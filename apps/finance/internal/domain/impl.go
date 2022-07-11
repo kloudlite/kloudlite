@@ -56,6 +56,27 @@ func JSONBytesEqual(a, b []byte) (bool, error) {
 	return reflect.DeepEqual(j2, j), nil
 }
 
+func (d *domainI) calculateBill(ctx context.Context, billables []Billable, startTime time.Time, endTime time.Time) (float64, error) {
+	var billableTotal float64
+	for _, billable := range billables {
+		if billable.ResourceType == "Pod" {
+			plan, err := d.GetComputePlanByName(ctx, billable.Plan)
+			if err != nil {
+				return 0, err
+			}
+			billableTotal = billableTotal + func() float64 {
+				if billable.IsShared {
+					return float64(billable.Count) * billable.Quantity * (plan.SharedPrice / (28 * 24 * 60 * 60)) * endTime.Sub(startTime).Seconds()
+				} else {
+					return float64(billable.Count) * billable.Quantity * (plan.DedicatedPrice / (28 * 24 * 60 * 60)) * endTime.Sub(startTime).Seconds()
+				}
+			}()
+		}
+	}
+	return billableTotal, nil
+
+}
+
 func (domain *domainI) TriggerBillingEvent(
 	ctx context.Context,
 	accountId repos.ID,
@@ -70,6 +91,7 @@ func (domain *domainI) TriggerBillingEvent(
 		"resource_id": resourceId,
 		"end_time":    nil,
 	})
+	fmt.Println(":::::", one)
 
 	if err != nil {
 		return err
@@ -88,6 +110,11 @@ func (domain *domainI) TriggerBillingEvent(
 
 	if eventType == "end" {
 		one.EndTime = &timeStamp
+		bill, err := domain.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
+		if err != nil {
+			return err
+		}
+		one.BillAmount = bill
 		_, err = domain.billablesRepo.UpdateById(ctx, one.Id, one)
 		return err
 	}
@@ -111,6 +138,11 @@ func (domain *domainI) TriggerBillingEvent(
 	}
 
 	one.EndTime = &timeStamp
+	bill, err := domain.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
+	if err != nil {
+		return err
+	}
+	one.BillAmount = bill
 	_, err = domain.billablesRepo.UpdateById(ctx, one.Id, one)
 
 	if err != nil {
@@ -436,7 +468,6 @@ func (domain *domainI) AddAccountMember(
 		return false, err
 	}
 	token := generateId("acc-invite")
-	fmt.Println("here4")
 	err = domain.accountInviteTokenRepo.Set(ctx, token, &AccountInviteToken{
 		Token:     token,
 		UserId:    repos.ID(byEmail.UserId),
@@ -536,7 +567,6 @@ func (domain *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (b
 }
 
 func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {
-	fmt.Println("GetAccount", id)
 	return domain.accountRepo.FindById(ctx, id)
 }
 
