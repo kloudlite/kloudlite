@@ -8,6 +8,7 @@ import (
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -56,8 +57,14 @@ type Env struct {
 	AuthRedisPassword string `env:"REDIS_AUTH_PASSWORD"`
 	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX"`
 
+	WorkLoadKafkaBrokers string `env:"WORKLOAD_KAFKA_BROKERS"`
+
 	HttpPort uint16 `env:"PORT"`
 	HttpCors string `env:"ORIGINS"`
+}
+
+func (e *Env) GetBrokers() string {
+	return e.WorkLoadKafkaBrokers
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -108,5 +115,6 @@ var Module = fx.Module(
 	),
 	cache.FxLifeCycle[cache.Client](),
 	httpServer.NewHttpServerFx[*Env](),
+	redpanda.NewClientFx[*Env](),
 	app.Module,
 )

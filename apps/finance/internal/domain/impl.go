@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"kloudlite.io/pkg/functions"
 	"math"
 	"math/rand"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -43,13 +45,44 @@ type domainI struct {
 	inventoryPath          string
 }
 
-func (domain *domainI) TriggerBillingEvent(ctx context.Context, resourceId repos.ID, eventType string, billables []*AccountBilling) error {
-	domain.billablesRepo.FindOne(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": resourceId,
-			resourceId: : resourceId,
-		},
+func JSONBytesEqual(a, b []byte) (bool, error) {
+	var j, j2 interface{}
+	if err := json.Unmarshal(a, &j); err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal(b, &j2); err != nil {
+		return false, err
+	}
+	return reflect.DeepEqual(j2, j), nil
+}
+
+func (domain *domainI) TriggerBillingEvent(
+	ctx context.Context,
+	accountId repos.ID,
+	resourceId repos.ID,
+	projectId repos.ID,
+	eventType string,
+	billables []Billable,
+	timeStamp time.Time,
+) error {
+	one, err := domain.billablesRepo.FindOne(ctx, repos.Filter{
+		"account_id":  accountId,
+		"resource_id": resourceId,
+		"end_time":    nil,
 	})
+	if err != nil {
+		return err
+	}
+	if one == nil {
+		create, err := domain.billablesRepo.Create(ctx, &AccountBilling{
+			AccountId:  accountId,
+			ResourceId: resourceId,
+			ProjectId:  projectId,
+			Billables:  billables,
+			StartTime:  timeStamp,
+		})
+	}
+	return nil
 }
 
 func (domain *domainI) GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
@@ -139,10 +172,10 @@ func (domain *domainI) StartBillable(
 	quantity float32,
 ) (*AccountBilling, error) {
 	create, err := domain.billablesRepo.Create(ctx, &AccountBilling{
-		AccountId:    accountId,
-		ResourceType: resourceType,
-		Quantity:     quantity,
-		StartTime:    time.Now(),
+		AccountId: accountId,
+		//ResourceType: resourceType,
+		//Quantity:     quantity,
+		StartTime: time.Now(),
 	})
 	if err != nil {
 		return nil, err

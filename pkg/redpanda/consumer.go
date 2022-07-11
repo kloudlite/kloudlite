@@ -2,12 +2,12 @@ package redpanda
 
 import (
 	"context"
-	"fmt"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"kloudlite.io/pkg/errors"
 	"strings"
+	"time"
 )
 
 type Consumer interface {
@@ -27,7 +27,7 @@ type ConsumerImpl struct {
 //	record  *kgo.Record
 //}
 
-type ReaderFunc func(msg []byte) error
+type ReaderFunc func(msg []byte, timeStamp time.Time) error
 
 func (c *ConsumerImpl) SetupLogger(logger *zap.SugaredLogger) {
 	c.logger = logger
@@ -55,8 +55,7 @@ func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
 
 			fetches.EachRecord(
 				func(record *kgo.Record) {
-					fmt.Println(record.Timestamp)
-					if err := onMessage(record.Value); err != nil {
+					if err := onMessage(record.Value, record.Timestamp); err != nil {
 						if c.logger != nil {
 							c.logger.Error("error in onMessage(): %+v\n", err)
 						}
