@@ -13,6 +13,7 @@ import (
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -22,13 +23,27 @@ type Env struct {
 	StripeSecretKey string `env:"STRIPE_SECRET_KEY" required:"true"`
 }
 
+type WorkloadFinanceConsumerEnv struct {
+	Topic string `env:"KAFKA_WORKLOAD_FINANCE_TOPIC"`
+}
+
+func (e *WorkloadFinanceConsumerEnv) GetSubscriptionTopics() []string {
+	return []string{
+		e.Topic,
+	}
+}
+
+func (*WorkloadFinanceConsumerEnv) GetConsumerGroupId() string {
+	return "console-workload-finance-consumer-2"
+}
+
 type AuthCacheClient cache.Client
 
 var Module = fx.Module(
 	"application",
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.Account]("accounts", "acc", domain.AccountIndexes),
-	repos.NewFxMongoRepo[*domain.Billable]("billables", "bill", domain.BillableIndexes),
+	repos.NewFxMongoRepo[*domain.AccountBilling]("billables", "bill", domain.BillableIndexes),
 	cache.NewFxRepo[*domain.AccountInviteToken](),
 	CiClientFx,
 	IAMClientFx,
@@ -51,6 +66,15 @@ var Module = fx.Module(
 			)
 		},
 	),
+
+	redpanda.NewConsumerFx[*WorkloadFinanceConsumerEnv](),
+	fx.Invoke(func(domain domain.Domain, consumer redpanda.Consumer) {
+		consumer.StartConsuming(func(msg []byte) error {
+			fmt.Println(string(msg))
+			//domain.TriggerBillingEvent(msg)
+			return nil
+		})
+	}),
 
 	fx.Provide(NewStripeClient),
 	fx.Invoke(

@@ -145,8 +145,8 @@ func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSv
 	return res, nil
 }
 
-func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
-	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, serviceType, name, values)
+func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
+	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, category, serviceType, name, values)
 	if err != nil {
 		return nil, err
 	}

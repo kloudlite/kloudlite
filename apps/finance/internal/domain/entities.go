@@ -49,10 +49,15 @@ var AccountIndexes = []repos.IndexField{
 }
 
 type Billable struct {
+	ResourceType string
+	Quantity     string
+}
+
+type AccountBilling struct {
 	repos.BaseEntity `bson:",inline"`
 	AccountId        repos.ID   `json:"account_id" bson:"account_id"`
-	ResourceType     string     `json:"resource_type" bson:"resource_type"`
-	Quantity         float32    `json:"quantity" bson:"quantity"`
+	ResourceId       repos.ID   `json:"resource_id" bson:"resource_id"`
+	Billable         []Billable `json:"billables" bson:"billables"`
 	StartTime        time.Time  `json:"start_time" bson:"start_time"`
 	EndTime          *time.Time `json:"end_time" bson:"end_time"`
 }
@@ -67,6 +72,11 @@ var BillableIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "account_id", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "resource_id", Value: repos.IndexAsc},
 		},
 	},
 }

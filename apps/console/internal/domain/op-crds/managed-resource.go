@@ -1,9 +1,10 @@
 package op_crds
 
 type ManagedResourceSpec struct {
-	Type           string            `json:"type"`
-	ManagedService string            `json:"managedSvc"`
-	Inputs         map[string]string `json:"inputs,omitempty"`
+	Kind               string            `json:"kind,omitempty"`
+	ApiVersion         string            `json:"apiVersion"`
+	ManagedServiceName string            `json:"managedSvcName"`
+	Inputs             map[string]string `json:"inputs,omitempty"`
 }
 
 type ManagedResourceMetadata struct {

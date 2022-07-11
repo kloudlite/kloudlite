@@ -38,12 +38,21 @@ type domainI struct {
 	accountRepo            repos.DbRepo[*Account]
 	ciClient               ci.CIClient
 	commsClient            comms.CommsClient
-	billablesRepo          repos.DbRepo[*Billable]
+	billablesRepo          repos.DbRepo[*AccountBilling]
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
 	inventoryPath          string
 }
 
-func (domain *domainI) GetLamdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
+func (domain *domainI) TriggerBillingEvent(ctx context.Context, resourceId repos.ID, eventType string, billables []*AccountBilling) error {
+	domain.billablesRepo.FindOne(ctx, repos.Query{
+		Filter: repos.Filter{
+			"account_id": resourceId,
+			resourceId: : resourceId,
+		},
+	})
+}
+
+func (domain *domainI) GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
 	fileData, err := ioutil.ReadFile(fmt.Sprint(domain.inventoryPath, "/lamda.yaml"))
 	if err != nil {
 		return nil, err
@@ -79,7 +88,7 @@ func (domain *domainI) GetComputePlanByName(ctx context.Context, name string) (*
 	return nil, errors.New("inventory item not found")
 }
 
-func (domain *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*Billable, time.Time, error) {
+func (domain *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*AccountBilling, time.Time, error) {
 	now := time.Now()
 	currentYear, currentMonth, _ := now.Date()
 	currentLocation := now.Location()
@@ -128,8 +137,8 @@ func (domain *domainI) StartBillable(
 	accountId repos.ID,
 	resourceType string,
 	quantity float32,
-) (*Billable, error) {
-	create, err := domain.billablesRepo.Create(ctx, &Billable{
+) (*AccountBilling, error) {
+	create, err := domain.billablesRepo.Create(ctx, &AccountBilling{
 		AccountId:    accountId,
 		ResourceType: resourceType,
 		Quantity:     quantity,
@@ -457,7 +466,7 @@ func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, e
 
 func fxDomain(
 	accountRepo repos.DbRepo[*Account],
-	billablesRepo repos.DbRepo[*Billable],
+	billablesRepo repos.DbRepo[*AccountBilling],
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
 	ciClient ci.CIClient,
