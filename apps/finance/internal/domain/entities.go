@@ -49,15 +49,17 @@ var AccountIndexes = []repos.IndexField{
 }
 
 type Billable struct {
-	ResourceType string
-	Quantity     string
+	ResourceType string `json:"resource_type" bson:"resource_type"`
+	Plan         string `json:"plan" bson:"plan"`
+	Quantity     string `json:"quantity" bson:"quantity"`
 }
 
 type AccountBilling struct {
 	repos.BaseEntity `bson:",inline"`
 	AccountId        repos.ID   `json:"account_id" bson:"account_id"`
+	ProjectId        repos.ID   `json:"project_id" bson:"project_id"`
 	ResourceId       repos.ID   `json:"resource_id" bson:"resource_id"`
-	Billable         []Billable `json:"billables" bson:"billables"`
+	Billables        []Billable `json:"billables" bson:"billables"`
 	StartTime        time.Time  `json:"start_time" bson:"start_time"`
 	EndTime          *time.Time `json:"end_time" bson:"end_time"`
 }
@@ -91,4 +93,29 @@ type LamdaPlan struct {
 	Name         string  `yaml:"name"`
 	PricePerGBHr float64 `yaml:"pricePerGBHr"`
 	FreeTire     int     `yaml:"freeTire"`
+}
+
+type BillingEvent struct {
+	Key         string `json:"key"`
+	Termination bool   `json:"to_be_deleted"`
+	Billing     struct {
+		Name  string `json:"name"`
+		Items []struct {
+			Type  string `json:"type"`
+			Count int    `json:"count"`
+			Plan  string `json:"plan"`
+			PlanQ string `json:"planQ"`
+		} `json:"items"`
+	} `json:"billing"`
+	Metadata struct {
+		ClusterId        string `json:"clusterId"`
+		AccountId        string `json:"accountId"`
+		ProjectId        string `json:"projectId"`
+		ResourceId       string `json:"resourceId"`
+		GroupVersionKind struct {
+			Group   string `json:"Group"`
+			Version string `json:"Version"`
+			Kind    string `json:"Kind"`
+		} `json:"groupVersionKind"`
+	} `json:"metadata"`
 }
