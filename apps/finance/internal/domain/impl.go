@@ -83,7 +83,12 @@ func (domain *domainI) TriggerBillingEvent(
 			Billables:  billables,
 			StartTime:  timeStamp,
 		})
+		return err
+	}
 
+	if eventType == "end" {
+		one.EndTime = &timeStamp
+		_, err = domain.billablesRepo.UpdateById(ctx, one.Id, one)
 		return err
 	}
 
@@ -97,7 +102,6 @@ func (domain *domainI) TriggerBillingEvent(
 	}
 
 	isEqual, err := JSONBytesEqual(billablesBytes, oneBytes)
-
 	if err != nil {
 		return err
 	}

@@ -45,7 +45,7 @@ var Module = fx.Module(
 	"application",
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.Account]("accounts", "acc", domain.AccountIndexes),
-	repos.NewFxMongoRepo[*domain.AccountBilling]("billables", "bill", domain.BillableIndexes),
+	repos.NewFxMongoRepo[*domain.AccountBilling]("account_billings", "accbill", domain.BillableIndexes),
 	cache.NewFxRepo[*domain.AccountInviteToken](),
 	CiClientFx,
 	IAMClientFx,
@@ -78,7 +78,7 @@ var Module = fx.Module(
 			if err != nil {
 				return err
 			}
-			d.TriggerBillingEvent(
+			err = d.TriggerBillingEvent(
 				context.TODO(),
 				repos.ID(e.Metadata.AccountId),
 				repos.ID(e.Metadata.ResourceId),
@@ -91,11 +91,21 @@ var Module = fx.Module(
 					}
 				})(),
 				func() []domain.Billable {
-					return nil
+					billables := make([]domain.Billable, 0)
+					for _, i := range e.Billing.Items {
+						billables = append(billables, domain.Billable{
+							ResourceType: i.Type,
+							Plan:         i.Plan,
+							Quantity:     i.PlanQ,
+							Count:        i.Count,
+						})
+					}
+					return billables
 				}(),
 				timeStamp,
 			)
-			return nil
+			fmt.Println(err)
+			return err
 		})
 	}),
 
