@@ -70,19 +70,58 @@ func (domain *domainI) TriggerBillingEvent(
 		"resource_id": resourceId,
 		"end_time":    nil,
 	})
+
 	if err != nil {
 		return err
 	}
+
 	if one == nil {
-		create, err := domain.billablesRepo.Create(ctx, &AccountBilling{
+		_, err := domain.billablesRepo.Create(ctx, &AccountBilling{
 			AccountId:  accountId,
 			ResourceId: resourceId,
 			ProjectId:  projectId,
 			Billables:  billables,
 			StartTime:  timeStamp,
 		})
+
+		return err
 	}
-	return nil
+
+	billablesBytes, err := json.Marshal(billables)
+	if err != nil {
+		return err
+	}
+	oneBytes, err := json.Marshal(one.Billables)
+	if err != nil {
+		return err
+	}
+
+	isEqual, err := JSONBytesEqual(billablesBytes, oneBytes)
+
+	if err != nil {
+		return err
+	}
+
+	if isEqual {
+		return nil
+	}
+
+	one.EndTime = &timeStamp
+	_, err = domain.billablesRepo.UpdateById(ctx, one.Id, one)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = domain.billablesRepo.Create(ctx, &AccountBilling{
+		AccountId:  accountId,
+		ResourceId: resourceId,
+		ProjectId:  projectId,
+		Billables:  billables,
+		StartTime:  timeStamp,
+	})
+
+	return err
 }
 
 func (domain *domainI) GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
