@@ -52,6 +52,7 @@ type Billable struct {
 	ResourceType string `json:"resource_type" bson:"resource_type"`
 	Plan         string `json:"plan" bson:"plan"`
 	Quantity     string `json:"quantity" bson:"quantity"`
+	Count        int    `json:"count" bson:"count"`
 }
 
 type AccountBilling struct {
