@@ -16,6 +16,7 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
+	"strconv"
 	"time"
 )
 
@@ -76,6 +77,7 @@ var Module = fx.Module(
 			var e domain.BillingEvent
 			err := json.Unmarshal(msg, &e)
 			if err != nil {
+				fmt.Println(err)
 				return err
 			}
 			err = d.TriggerBillingEvent(
@@ -84,21 +86,25 @@ var Module = fx.Module(
 				repos.ID(e.Metadata.ResourceId),
 				repos.ID(e.Metadata.ProjectId),
 				(func() string {
-					if e.Termination {
-						return "terminating"
+					fmt.Println(e.Stage)
+					if e.Stage == "EXISTS" {
+						return "exists"
 					} else {
-						return "update"
+						return "end"
 					}
 				})(),
 				func() []domain.Billable {
 					billables := make([]domain.Billable, 0)
 					for _, i := range e.Billing.Items {
-						billables = append(billables, domain.Billable{
-							ResourceType: i.Type,
-							Plan:         i.Plan,
-							Quantity:     i.PlanQ,
-							Count:        i.Count,
-						})
+						if q, err := strconv.ParseFloat(i.PlanQ, 32); err == nil {
+							billables = append(billables, domain.Billable{
+								ResourceType: i.Type,
+								Plan:         i.Plan,
+								Quantity:     q,
+								Count:        i.Count,
+								IsShared:     i.IsShared == "true",
+							})
+						}
 					}
 					return billables
 				}(),
