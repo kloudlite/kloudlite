@@ -2227,6 +2227,7 @@ input AppContainerIn{
   computePlan: String!
   quantity: Float!
   attachedResources:[AttachedResInput!]!
+  isShared: Boolean!
 }
 
 type ExposedService{
@@ -11557,6 +11558,14 @@ func (ec *executionContext) unmarshalInputAppContainerIn(ctx context.Context, ob
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachedResources"))
 			it.AttachedResources, err = ec.unmarshalNAttachedResInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAttachedResInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isShared":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isShared"))
+			it.IsShared, err = ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
