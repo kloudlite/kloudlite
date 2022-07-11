@@ -4,6 +4,7 @@ import (
 	"context"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
+	"time"
 )
 
 type Domain interface {
@@ -33,5 +34,13 @@ type Domain interface {
 	GetUserMemberships(ctx context.Context, resourceId repos.ID) ([]*Membership, error)
 	GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error)
 	GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error)
-	TriggerBillingEvent(ctx context.Context, accountId repos.ID, resourceId repos.ID, eventType string, billables []*AccountBilling) error
+	TriggerBillingEvent(
+		ctx context.Context,
+		accountId repos.ID,
+		resourceId repos.ID,
+		projectId repos.ID,
+		eventType string,
+		billables []Billable,
+		timeStamp time.Time,
+	) error
 }

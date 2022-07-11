@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -15,6 +16,7 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
+	"time"
 )
 
 type Env struct {
@@ -67,11 +69,32 @@ var Module = fx.Module(
 		},
 	),
 
+	config.EnvFx[WorkloadFinanceConsumerEnv](),
 	redpanda.NewConsumerFx[*WorkloadFinanceConsumerEnv](),
-	fx.Invoke(func(domain domain.Domain, consumer redpanda.Consumer) {
-		consumer.StartConsuming(func(msg []byte) error {
-			fmt.Println(string(msg))
-			//domain.TriggerBillingEvent(msg)
+	fx.Invoke(func(d domain.Domain, consumer redpanda.Consumer) {
+		consumer.StartConsuming(func(msg []byte, timeStamp time.Time) error {
+			var e domain.BillingEvent
+			err := json.Unmarshal(msg, &e)
+			if err != nil {
+				return err
+			}
+			d.TriggerBillingEvent(
+				context.TODO(),
+				repos.ID(e.Metadata.AccountId),
+				repos.ID(e.Metadata.ResourceId),
+				repos.ID(e.Metadata.ProjectId),
+				(func() string {
+					if e.Termination {
+						return "terminating"
+					} else {
+						return "update"
+					}
+				})(),
+				func() []domain.Billable {
+					return nil
+				}(),
+				timeStamp,
+			)
 			return nil
 		})
 	}),
