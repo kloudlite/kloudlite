@@ -1,12 +1,12 @@
 package main
 
-import (
-	"fmt"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-)
+import "fmt"
+
+type A struct {
+	name  string
+	value string
+}
 
 func main() {
-	key, _ := wgtypes.GenerateKey()
-	fmt.Println(key.String())
-	fmt.Println(key.PublicKey().String())
+	fmt.Println(A{name: "name", value: "value"} == A{name: "name", value: "value"})
 }

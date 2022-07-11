@@ -32,7 +32,7 @@ func (r *entityResolver) FindComputePlanByName(ctx context.Context, name string)
 }
 
 func (r *entityResolver) FindLamdaPlanByName(ctx context.Context, name string) (*model.LamdaPlan, error) {
-	byName, err := r.domain.GetLamdaPlanByName(ctx, name)
+	byName, err := r.domain.GetLambdaPlanByName(ctx, name)
 	if err != nil {
 		return nil, err
 	}

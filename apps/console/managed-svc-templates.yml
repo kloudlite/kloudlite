@@ -5,7 +5,7 @@
       logoUrl: https://img.icons8.com/color/344/mongodb.png
       displayName: MongoDB cluster
       description: MongoDB cluster
-      active: true
+      active: false
       operations:
         apply: mongo-apply-image:tag
         delete: mongo-delete-image:tag
@@ -46,9 +46,6 @@
         - name: db
           displayName: Database
           description: MongoDB
-          operations:
-            apply: mongo-apply-image:tag
-            delete: mongo-delete-image:tag
           fields:
             - name: name
               label: Database Name
@@ -65,6 +62,7 @@
       logoUrl: https://img.icons8.com/color/344/mongodb.png
       displayName: MongoDB Standalone
       description: MongoDB Standalone
+      apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
       active: true
       fields:
         - name: root_password
@@ -89,6 +87,8 @@
           description: Configuration JSON
       resources:
         - name: db
+          apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
+          kind: Database
           displayName: Database
           description: MongoDB
           operations:
@@ -106,17 +106,99 @@
               label: Password
             - name: DB_URL
               label: Connection String
-
     - name: mysql_standalone
       logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
+      apiVersion: mysql-standalone.msvc.kloudlite.io/v1
       displayName: MySQL Standalone
       description: MySQL Standalone
-      active: false
+      fields:
+        - name: size
+          label: Capacity in GB
+          inputType: Number
+          defaultValue: 5
+          min: 1
+          required: true
+          unit: Gi
+      outputs:
+        - name: DSN
+          label: Mysql DSN
+
+        - name: HOSTS
+          label: Mysql Hosts
+
+        - name: ROOT_PASSWORD
+          label: Mysql Root Password
+
+        - name: URI
+          label: Mysql Root URI
+
+      resources:
+        - name: db
+          apiVersion: mysql-standalone.msvc.kloudlite.io/v1
+          kind: Database
+          displayName: Database
+          description: MysqlDB
+          fields:
+            - name: name
+              label: Db Name
+              inputType: String
+              required: true
+          outputs:
+            - name: DB_NAME
+              label: Db Name
+
+            - name: DSN
+              label: Mysql DSN
+
+            - name: HOSTS
+              label: DB Hosts
+
+            - name: URI
+              label: DB Uri
+
+            - name: PASSWORD
+              label: Db password
+
+            - name: USERNAME
+              label: DB Username
+
+      active: true
     - name: mysql_cluster
       logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
       displayName: MySQL Cluster
       description: MySQL Cluster
       active: false
+    - name: object_storage
+      displayName: Object Storage
+      apiVersion: s3.aws.kloudlite.io/v1
+      kind: Bucket
+      description: S3 compatible object storage
+      logoUrl: https://k21academy.com/wp-content/uploads/2021/07/Google-Cloud-Storage.png
+      fields:
+        - name: name
+          label: Bucket Name
+          inputType: String
+          required: true
+        - name: region
+          label: Bucket Region
+          inputType: String
+          default: ap-south-1
+          required: true
+        - name: publicFolders
+          label: Bucket Public Folders
+          inputType: String
+          required: false
+      output:
+        - name: AWS_ACCESS_KEY_ID
+          label: AWS Access Key ID
+        - name: AWS_SECRET_ACCESS_KEY
+          label: AWS Secret Access Key
+        - name: AWS_REGION
+          label: AWS Region
+        - name: EXTERNAL_BUCKET_HOST
+          label: External Bucket Host
+        - name: INTERNAL_BUCKET_HOST
+          label: Internal Bucket Host
 
 - category: cache
   displayName: Caches
@@ -129,9 +211,57 @@
       active: false
     - name: redis_standalone
       logoUrl: https://img.icons8.com/color/344/redis.png
+      apiVersion: redis-standalone.msvc.kloudlite.io/v1
       displayName: Redis Standalone
       description: Redis Standalone
-      active: false
+      fields:
+        - name: name
+          label: Redis Instance Name
+          inputType: String
+          required: true
+        - name: size
+          label: Capacity in GB
+          inputType: Number
+          required: true
+          default: 5
+          min: 1
+          unit: Gi
+      outputs:
+        - name: HOSTS
+          label: Redis Hosts
+
+        - name: ROOT_PASSWORD
+          label: Redis Root Password
+
+        - name: URI
+          label: Redis ROOT Uri
+      resources:
+        - name: ACLAccount
+          apiVersion: redis-standalone.msvc.kloudlite.io/v1
+          kind: ACLAccount
+          fields:
+            - name: name
+              label: ACL Account Name
+
+            - name: prefix
+              label: Redis Key Prefix
+          outputs:
+            - name: HOSTS
+              label: Redis Hosts
+
+            - name: PREFIX
+              label: Redis Prefix
+
+            - name: URI
+              label: Redis Connection URI
+
+            - name: USERNAME
+              label: Redis User
+
+            - name: PASSWORD
+              label: Redis User Password
+
+      active: true
     - name: memcached_cluster
       logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
       displayName: Memcached Cluster
@@ -156,4 +286,3 @@
       displayName: RabbitMQ Cluster
       description: RabbitMQ Cluster
       active: false
-

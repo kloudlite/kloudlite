@@ -235,7 +235,7 @@ type ComplexityRoot struct {
 		ManagedResCreate       func(childComplexity int, installationID repos.ID, name string, resourceType string, values map[string]interface{}) int
 		ManagedResDelete       func(childComplexity int, resID repos.ID) int
 		ManagedResUpdate       func(childComplexity int, resID repos.ID, values map[string]interface{}) int
-		MangedSvcInstall       func(childComplexity int, projectID repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
+		MangedSvcInstall       func(childComplexity int, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
 		MangedSvcUninstall     func(childComplexity int, installationID repos.ID) int
 		MangedSvcUpdate        func(childComplexity int, installationID repos.ID, values map[string]interface{}) int
 	}
@@ -353,7 +353,7 @@ type ManagedSvcResolver interface {
 	Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error)
 }
 type MutationResolver interface {
-	MangedSvcInstall(ctx context.Context, projectID repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error)
+	MangedSvcInstall(ctx context.Context, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error)
 	MangedSvcUninstall(ctx context.Context, installationID repos.ID) (bool, error)
 	MangedSvcUpdate(ctx context.Context, installationID repos.ID, values map[string]interface{}) (bool, error)
 	ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error)
@@ -1448,7 +1448,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.MangedSvcInstall(childComplexity, args["projectId"].(repos.ID), args["serviceType"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{})), true
+		return e.complexity.Mutation.MangedSvcInstall(childComplexity, args["projectId"].(repos.ID), args["category"].(repos.ID), args["serviceType"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{})), true
 
 	case "Mutation.mangedSvc_uninstall":
 		if e.complexity.Mutation.MangedSvcUninstall == nil {
@@ -2053,7 +2053,7 @@ type ManagedSvc {
 
 
 type Mutation {
-  mangedSvc_install(projectId: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
+  mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
   mangedSvc_uninstall(installationId: ID!): Boolean!
   mangedSvc_update(installationId: ID!, values: Json!): Boolean!
 
@@ -3344,32 +3344,41 @@ func (ec *executionContext) field_Mutation_mangedSvc_install_args(ctx context.Co
 	}
 	args["projectId"] = arg0
 	var arg1 repos.ID
-	if tmp, ok := rawArgs["serviceType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceType"))
+	if tmp, ok := rawArgs["category"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
 		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["serviceType"] = arg1
-	var arg2 string
+	args["category"] = arg1
+	var arg2 repos.ID
+	if tmp, ok := rawArgs["serviceType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceType"))
+		arg2, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["serviceType"] = arg2
+	var arg3 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
-	var arg3 map[string]interface{}
+	args["name"] = arg3
+	var arg4 map[string]interface{}
 	if tmp, ok := rawArgs["values"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-		arg3, err = ec.unmarshalNJson2map(ctx, tmp)
+		arg4, err = ec.unmarshalNJson2map(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["values"] = arg3
+	args["values"] = arg4
 	return args, nil
 }
 
@@ -7052,7 +7061,7 @@ func (ec *executionContext) _Mutation_mangedSvc_install(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().MangedSvcInstall(rctx, args["projectId"].(repos.ID), args["serviceType"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{}))
+		return ec.resolvers.Mutation().MangedSvcInstall(rctx, args["projectId"].(repos.ID), args["category"].(repos.ID), args["serviceType"].(repos.ID), args["name"].(string), args["values"].(map[string]interface{}))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

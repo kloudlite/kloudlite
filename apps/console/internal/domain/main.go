@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	b64 "encoding/base64"
 	"fmt"
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -506,6 +507,7 @@ func (d *domain) InstallApp(
 	}
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
+	app.Status = entities.AppStateSyncing
 	createdApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
 		return nil, err
@@ -713,8 +715,27 @@ func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.Ma
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(templates)
 	return templates, nil
+}
+
+func (d *domain) GetManagedServiceTemplate(_ context.Context, name string) (*entities.ManagedServiceTemplate, error) {
+	templates := make([]*entities.ManagedServiceCategory, 0)
+	data, err := os.ReadFile(d.managedTemplatesPath)
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal(data, &templates)
+	if err != nil {
+		return nil, err
+	}
+	for _, t := range templates {
+		for _, s := range t.List {
+			if s.Name == name {
+				return s, nil
+			}
+		}
+	}
+	return nil, errors.New("not found")
 }
 
 func isReady(c []metav1.Condition) bool {
@@ -819,21 +840,25 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Manag
 	return err
 }
 
-func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.App) error {
-	one, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
-	})
+func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate) error {
+	one, err := d.appRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
 	if err != nil {
 		return err
 	}
-	if isReady(response.Status.Conditions) {
+	if response.IsReady {
 		one.Status = entities.AppStateLive
 	} else {
 		one.Status = entities.AppStateSyncing
 	}
-	one.Conditions = response.Status.Conditions
+	one.Conditions = response.ChildConditions
 	_, err = d.appRepo.UpdateById(ctx, one.Id, one)
+	if err != nil {
+		return err
+	}
+	err = d.notifier.Notify(one.Id)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
@@ -992,7 +1017,16 @@ func (d *domain) InstallManagedRes(
 		return nil, err
 	}
 
-	d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedResource{
+	template, err := d.GetManagedServiceTemplate(ctx, string(svc.ServiceType))
+	var resTmpl entities.ManagedResourceTemplate
+	for _, rt := range template.Resources {
+		if rt.Name == resourceType {
+			resTmpl = rt
+			break
+		}
+	}
+
+	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedResource{
 		APIVersion: op_crds.ManagedResourceAPIVersion,
 		Kind:       op_crds.ManagedResourceKind,
 		Metadata: op_crds.ManagedResourceMetadata{
@@ -1000,12 +1034,16 @@ func (d *domain) InstallManagedRes(
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.ManagedResourceSpec{
-			ManagedService: svc.Name,
-			Type:           resourceType,
-			Inputs:         create.Values,
+			ManagedServiceName: svc.Name,
+			ApiVersion:         resTmpl.ApiVersion,
+			Kind:               resTmpl.Kind,
+			Inputs:             create.Values,
 		},
 		Status: op_crds.Status{},
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return create, nil
 }
@@ -1071,7 +1109,14 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	return true, err
 }
 
-func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error) {
+func (d *domain) InstallManagedSvc(
+	ctx context.Context,
+	projectID repos.ID,
+	category repos.ID,
+	templateID repos.ID,
+	name string,
+	values map[string]interface{},
+) (*entities.ManagedService, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -1092,11 +1137,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
-	vs := make(map[string]string, 0)
-
-	for k, v := range create.Values {
-		vs[k] = v.(string)
-	}
+	template, err := d.GetManagedServiceTemplate(ctx, string(templateID))
 
 	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
@@ -1106,8 +1147,14 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.ManagedServiceSpec{
-			Type:   "MongoDBStandalone",
-			Inputs: vs,
+			ApiVersion: template.ApiVersion,
+			Inputs: func() map[string]string {
+				vs := make(map[string]string, 0)
+				for k, v := range create.Values {
+					vs[k] = v.(string)
+				}
+				return vs
+			}(),
 		},
 	})
 	if err != nil {
@@ -1175,7 +1222,19 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 		},
 		Spec: op_crds.RouterSpec{
 			Domains: router.Domains,
-			Routes:  rs,
+			Routes: func() map[string][]op_crds.Route {
+				routes := make(map[string][]op_crds.Route, 0)
+				for _, r := range router.Routes {
+					routes[r.Path] = []op_crds.Route{
+						{
+							Path: r.Path,
+							App:  r.AppName,
+							Port: r.Port,
+						},
+					}
+				}
+				return routes
+			}(),
 		},
 		Status: op_crds.Status{},
 	})
@@ -1253,6 +1312,18 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 	if err != nil {
 		return nil, err
 	}
+	err = d.workloadMessenger.SendAction("apply", string(create.Id), op_crds.Secret{
+		APIVersion: op_crds.SecretAPIVersion,
+		Kind:       op_crds.SecretKind,
+		Metadata: op_crds.SecretMetadata{
+			Name:      secretName,
+			Namespace: prj.Name,
+		},
+		Data: nil,
+	})
+	if err != nil {
+		return nil, err
+	}
 	return create, nil
 }
 
@@ -1269,6 +1340,25 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 	}
 	cfg.Data = secretData
 	_, err = d.secretRepo.UpdateById(ctx, secretId, cfg)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("apply", string(cfg.Id), op_crds.Secret{
+		APIVersion: op_crds.SecretAPIVersion,
+		Kind:       op_crds.SecretKind,
+		Metadata: op_crds.SecretMetadata{
+			Name:      cfg.Name,
+			Namespace: cfg.Namespace,
+		},
+		Data: (func() map[string]any {
+			data := make(map[string]any, 0)
+			for _, d := range cfg.Data {
+				encoded := b64.StdEncoding.EncodeToString([]byte(d.Value))
+				data[d.Key] = encoded
+			}
+			return data
+		})(),
+	})
 	if err != nil {
 		return false, err
 	}
@@ -1332,10 +1422,6 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 	if err != nil {
 		return false, err
 	}
-	m := make(map[string]any, 0)
-	for _, i := range cfg.Data {
-		m[i.Key] = i.Value
-	}
 	err = d.workloadMessenger.SendAction("apply", string(cfg.Id), op_crds.Config{
 		APIVersion: op_crds.ConfigAPIVersion,
 		Kind:       op_crds.ConfigKind,
@@ -1343,7 +1429,13 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 			Name:      cfg.Name,
 			Namespace: cfg.Namespace,
 		},
-		Data: m,
+		Data: func() map[string]any {
+			m := make(map[string]any, 0)
+			for _, i := range cfg.Data {
+				m[i.Key] = i.Value
+			}
+			return m
+		}(),
 	})
 	if err != nil {
 		return false, err
@@ -1378,7 +1470,6 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 		},
 		Data: nil,
 	})
-	fmt.Println("scheduled")
 	time.AfterFunc(3*time.Second, func() {
 		fmt.Println("send apply config")
 		d.notifier.Notify(create.Id)
@@ -1448,7 +1539,7 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		Spec: op_crds.ProjectSpec{
 			DisplayName: displayName,
 			ArtifactRegistry: op_crds.ArtifactRegistry{
-				Enabled: false,
+				Enabled: true,
 			},
 		},
 	})

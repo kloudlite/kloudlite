@@ -34,7 +34,7 @@ func (r *accountResolver) EdgeCname(ctx context.Context, obj *model.Account) (st
 }
 
 func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, accountID repos.ID) (bool, error) {
-	err := r.d.CreateSite(ctx, domain, repos.ID(accountID))
+	err := r.d.CreateSite(ctx, domain, accountID)
 	if err != nil {
 		return false, err
 	}

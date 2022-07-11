@@ -60,7 +60,7 @@ type Domain interface {
 
 	GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error)
 	GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error)
-	InstallManagedSvc(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error)
+	InstallManagedSvc(ctx context.Context, projectID repos.ID, category repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error)
 	UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error)
 	UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error)
 	OnUpdateManagedSvc(ctx context.Context, r *op_crds.ManagedService) error
@@ -83,7 +83,7 @@ type Domain interface {
 	GetApps(ctx context.Context, projectId repos.ID) ([]*entities.App, error)
 	GetApp(ctx context.Context, projectID repos.ID) (*entities.App, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
-	OnUpdateApp(ctx context.Context, r *op_crds.App) error
+	OnUpdateApp(ctx context.Context, r *op_crds.StatusUpdate) error
 	OnDeleteApp(ctx context.Context, name string, namespace string) error
 	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
 	InstallApp(

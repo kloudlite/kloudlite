@@ -55,7 +55,7 @@ type ManagedSvc {
 
 
 type Mutation {
-  mangedSvc_install(projectId: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
+  mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
   mangedSvc_uninstall(installationId: ID!): Boolean!
   mangedSvc_update(installationId: ID!, values: Json!): Boolean!
 
