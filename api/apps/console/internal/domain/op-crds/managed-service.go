@@ -1,8 +1,8 @@
 package op_crds
 
 type ManagedServiceSpec struct {
-	Type   string            `json:"type"`
-	Inputs map[string]string `json:"inputs,omitempty"`
+	ApiVersion string            `json:"apiVersion"`
+	Inputs     map[string]string `json:"inputs,omitempty"`
 }
 
 type ManagedServiceMetadata struct {

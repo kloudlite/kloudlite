@@ -1,10 +1,13 @@
 package app
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"google.golang.org/grpc"
+	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
@@ -24,6 +27,20 @@ import (
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
+
+type WorkloadStatusConsumerEnv struct {
+	Topic string `env:"KAFKA_WORKLOAD_STATUS_TOPIC"`
+}
+
+func (i *WorkloadStatusConsumerEnv) GetSubscriptionTopics() []string {
+	return []string{
+		i.Topic,
+	}
+}
+
+func (i *WorkloadStatusConsumerEnv) GetConsumerGroupId() string {
+	return "console-workload-consumer-2"
+}
 
 type WorkloadConsumerEnv struct {
 	Topic         string `env:"KAFKA_WORKLOAD_TOPIC"`
@@ -104,43 +121,31 @@ var Module = fx.Module(
 	fx.Provide(fxWorkloadMessenger),
 	// Workload Message Consumer
 	config.EnvFx[WorkloadConsumerEnv](),
-	redpanda.NewConsumerFx[*WorkloadConsumerEnv](func(m *redpanda.Message) error {
-		fmt.Println(m.Payload)
-		fmt.Println(m.Action)
-
-		//var msg struct {
-		//	Status     bool   `json:"status"`
-		//	Key        string `json:"key"`
-		//	Conditions []struct {
-		//		Type   string `json:"type"`
-		//		Status string `json:"status"`
-		//		Reason string `json:"reason"`
-		//	} `json:"conditions"`
-		//}
-		//err := message.Unmarshal(&msg)
-		//if err != nil {
-		//	fmt.Println("Unable to parse messages!!!", err)
-		//	return err
-		//}
-		//split := strings.Split(msg.Key, "/")
-		//namespace := split[0]
-		//resourceType := split[1]
-		//resourceName := split[2]
-		//var s domain.ResourceStatus
-		//if msg.Status {
-		//	s = domain.ResourceStatusLive
-		//} else {
-		//	if len(msg.Conditions) > 0 {
-		//		s = domain.ResourceStatusInProgress
-		//	} else if msg.Status {
-		//		s = domain.ResourceStatusError
-		//	}
-		//}
-		//_, err = d.UpdateResourceStatus(context, resourceType, namespace, resourceName, s)
-		//return err
-
-		return nil
+	config.EnvFx[WorkloadStatusConsumerEnv](),
+	redpanda.NewConsumerFx[*WorkloadStatusConsumerEnv](),
+	fx.Invoke(func(domain domain.Domain, consumer redpanda.Consumer) {
+		consumer.StartConsuming(func(msg []byte) error {
+			var update op_crds.StatusUpdate
+			fmt.Println(string(msg))
+			if err := json.Unmarshal(msg, &update); err != nil {
+				fmt.Println(err)
+				return err
+			}
+			fmt.Println("Kind:", update.Metadata.GroupVersionKind.Kind)
+			switch update.Metadata.GroupVersionKind.Kind {
+			case "App":
+				fmt.Println("Updating Kind:", update.Metadata.GroupVersionKind.Kind)
+				domain.OnUpdateApp(context.TODO(), &update)
+			default:
+				fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
+			}
+			return nil
+		})
 	}),
+	//func(data []byte) error {
+	//		fmt.Println(string(data))
+	//		return nil
+	//	}
 	//fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], d domain.Domain) {
 	//	fmt.Println(env.ResponseTopic, "env.ResponseTopic")
 	//	consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
