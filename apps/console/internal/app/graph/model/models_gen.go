@@ -280,7 +280,7 @@ type Secret struct {
 
 type StoragePlan struct {
 	Name        string `json:"name"`
-	Description string `json:"description"`
+	Description string `json:"desc"`
 }
 
 func (StoragePlan) IsEntity() {}
