@@ -7,7 +7,7 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -15,7 +15,7 @@ type AuthGRPCEnv struct {
 	AuthService string `env:"AUTH_GRPC_SERVICE"`
 }
 
-func (e *AuthGRPCEnv) GetGCPServerURL() string {
+func (e *AuthGRPCEnv) GetGRPCServerURL() string {
 	return e.AuthService
 }
 
@@ -23,7 +23,7 @@ type ConsoleGRPCEnv struct {
 	ConsoleGrpcService string `env:"CONSOLE_GRPC_SERVICE"`
 }
 
-func (e *ConsoleGRPCEnv) GetGCPServerURL() string {
+func (e *ConsoleGRPCEnv) GetGRPCServerURL() string {
 	return e.ConsoleGrpcService
 }
 
@@ -31,7 +31,7 @@ type CiGrpcEnv struct {
 	CiService string `env:"CI_GRPC_SERVICE" required:"true"`
 }
 
-func (e *CiGrpcEnv) GetGCPServerURL() string {
+func (e *CiGrpcEnv) GetGRPCServerURL() string {
 	return e.CiService
 }
 
@@ -39,7 +39,7 @@ type IAMGRPCEnv struct {
 	IAMService string `env:"IAM_GRPC_SERVICE"`
 }
 
-func (e *IAMGRPCEnv) GetGCPServerURL() string {
+func (e *IAMGRPCEnv) GetGRPCServerURL() string {
 	return e.IAMService
 }
 
@@ -78,7 +78,7 @@ func (e *Env) GetHttpCors() string {
 
 var Module = fx.Module(
 	"framework",
-	logger.FxProvider(),
+	logging.FxProvider(),
 	config.EnvFx[Env](),
 	config.EnvFx[ConsoleGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),

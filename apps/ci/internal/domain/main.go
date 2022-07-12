@@ -97,22 +97,17 @@ func (d *domainI) parseGitlabHook(req *tekton.Request) (*GitWebhookPayload, erro
 	return nil, errors.Newf("unknown eventType=", eventType)
 }
 
-func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Request) *tekton.Response {
+func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error) {
 	reqUrl, err := url.Parse(req.Context.EventURL)
 	if err != nil {
-		return tekton.NewResponse(req).Err(err, http.StatusBadRequest)
+		return nil, nil, tekton.NewError(http.StatusBadRequest, err)
 	}
 
 	if !reqUrl.Query().Has("pipelineId") {
-		return tekton.NewResponse(req).Err(
-			errors.NewEf(err, "url does not have query params 'pipelineId'"),
+		return nil, nil, tekton.NewError(
 			http.StatusBadRequest,
+			errors.NewEf(err, "url does not have query params 'pipelineId'"),
 		)
-	}
-
-	pipeline, err := d.pipelineRepo.FindById(ctx, repos.ID(reqUrl.Query().Get("pipelineId")))
-	if err != nil {
-		return tekton.NewResponse(req).Err(err, http.StatusInternalServerError)
 	}
 
 	eventType := ""
@@ -122,28 +117,30 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 	}
 
 	if eventType == "" {
-		return tekton.NewResponse(req).Err(errors.Newf("could not recognize github event type, aborting ..."))
+		return nil, nil, tekton.NewError(
+			http.StatusBadRequest, errors.NewEf(
+				err, "could not recognize github event type, aborting ...",
+			),
+		)
 	}
 
 	hookPayload, err := d.parseGithubHook(eventType, []byte(req.Body))
 	if err != nil {
-		err := errors.NewEf(err, "github (event=%s) is not a push/ping event", eventType)
-		fmt.Printf("ERR occurred: %+v\n", err)
-		return tekton.NewResponse(req).Err(err)
+		return nil, nil, tekton.NewError(
+			http.StatusBadRequest,
+			errors.NewEf(err, "github (event=%s) is not a push/ping event", eventType),
+		)
+	}
+
+	pipeline, err := d.pipelineRepo.FindById(ctx, repos.ID(reqUrl.Query().Get("pipelineId")))
+	if err != nil {
+		return nil, nil, tekton.NewError(http.StatusInternalServerError, err)
 	}
 
 	token, err := d.github.GetInstallationToken(ctx, hookPayload.RepoUrl)
 	if err != nil {
-		return tekton.NewResponse(req).Err(err)
+		return nil, nil, tekton.NewError(http.StatusInternalServerError, err)
 	}
-
-	// if hookPayload.GitRef != pipeline.GitBranch {
-	// 	return tekton.NewResponse(req).Err(
-	// 		errors.Newf(
-	// 			"pipeline is not configured to run on this (ref=%s)", hookPayload.GitRef,
-	// 		),
-	// 	)
-	// }
 
 	tkVars := TektonVars{
 		GitRepo:                 hookPayload.RepoUrl,
@@ -157,46 +154,50 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 		RunCmd:                  pipeline.Run.Cmd,
 		ArtifactDockerImageName: pipeline.ArtifactRef.DockerImageName,
 		ArtifactDockerImageTag:  pipeline.ArtifactRef.DockerImageTag,
+		TaskNamespace:           pipeline.ProjectId,
 	}
-
-	j, err := tkVars.ToJson()
-	if err != nil {
-		return tekton.NewResponse(req).Err(err)
-	}
-
-	return tekton.NewResponse(req).Extend(j).Ok()
+	return &tkVars, pipeline, nil
 }
 
-func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) *tekton.Response {
+func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error) {
 	reqUrl, err := url.Parse(req.Context.EventURL)
 	if err != nil {
-		return tekton.NewResponse(req).Err(err, http.StatusBadRequest)
+		return nil, nil, tekton.NewError(http.StatusBadRequest, err)
 	}
 
 	if !reqUrl.Query().Has("pipelineId") {
-		return tekton.NewResponse(req).Err(
-			errors.NewEf(err, "url does not have query params 'pipelineId'"),
+		return nil, nil, tekton.NewError(
 			http.StatusBadRequest,
+			errors.NewEf(err, "url does not have query params 'pipelineId'"),
 		)
 	}
 
 	hookPayload, err := d.parseGitlabHook(req)
 	if err != nil {
-		return tekton.NewResponse(req).Err(err)
+		return nil, nil, err
+		// return tekton.NewResponse(req).errT(err), nil
 	}
 
-	pipeline, err := d.pipelineRepo.FindById(ctx, repos.ID(reqUrl.Query().Get("pipelineId")))
+	pipelineId := repos.ID(reqUrl.Query().Get("pipelineId"))
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
 	if err != nil {
-		return tekton.NewResponse(req).Err(err, http.StatusInternalServerError)
+		return nil, nil, tekton.NewError(
+			http.StatusNotFound, errors.NewEf(err, "could not find pipeline defined by pipelineId=%s", pipelineId),
+		)
 	}
 
 	if pipeline.GitlabTokenId == nil {
-		return tekton.NewResponse(req).Err(errors.Newf("gitlab tokenId field is null, won't be able to pull repo"))
+		return nil, nil, tekton.NewError(
+			http.StatusInternalServerError,
+			errors.NewEf(err, "gitlab tokenId field is null, won't be able to pull repo"),
+		)
 	}
 
 	token, err := d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: string(*pipeline.GitlabTokenId)})
 	if err != nil {
-		return tekton.NewResponse(req).Err(err)
+		return nil, nil, tekton.NewError(
+			http.StatusInternalServerError, errors.NewEf(err, "could not retrieve gitlab pull token"),
+		)
 	}
 
 	tkVars := TektonVars{
@@ -232,12 +233,7 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 		ArtifactDockerImageTag:  pipeline.ArtifactRef.DockerImageTag,
 	}
 
-	m, err := tkVars.ToJson()
-	if err != nil {
-		return tekton.NewResponse(req).Err(err)
-	}
-
-	return tekton.NewResponse(req).Extend(m).Ok()
+	return &tkVars, pipeline, nil
 }
 
 func (d *domainI) gitlabPullToken(ctx context.Context, accTokenReq *auth.GetAccessTokenRequest) (string, error) {
@@ -540,7 +536,13 @@ func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeli
 	return id, nil
 }
 
-func fxDomain(pipelineRepo repos.DbRepo[*Pipeline], harborAccRepo repos.DbRepo[*HarborAccount], authClient auth.AuthClient, gitlab Gitlab, github Github) (Domain, Harbor) {
+func fxDomain(
+	pipelineRepo repos.DbRepo[*Pipeline],
+	harborAccRepo repos.DbRepo[*HarborAccount],
+	authClient auth.AuthClient,
+	gitlab Gitlab,
+	github Github,
+) (Domain, Harbor) {
 	d := domainI{
 		authClient:    authClient,
 		pipelineRepo:  pipelineRepo,

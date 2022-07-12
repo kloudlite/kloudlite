@@ -29,8 +29,8 @@ type Domain interface {
 	GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error)
 
 	// tekton interceptor
-	TektonInterceptorGithub(ctx context.Context, req *tekton.Request) *tekton.Response
-	TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) *tekton.Response
+	TektonInterceptorGithub(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
+	TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
 }
 
 type Harbor interface {

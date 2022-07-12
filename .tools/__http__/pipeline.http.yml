@@ -1,6 +1,6 @@
----
-global:
-  hello: world
+# ---
+# global:
+#   hello: world
 ---
 label: create github pipeline
 query: |
@@ -10,8 +10,8 @@ query: |
 variables:
   in: 
     name: sample-pipeline
-    projectId: random2
-    appId: random
+    projectId: proj-s1ok37ubokp62aszwu0jdoq4uorr
+    appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
     gitProvider: github
     gitRepoUrl: https://github.com/nxtcoder17/sample
     repoName: sample
@@ -75,7 +75,7 @@ query: |
     }
   }
 variables:
-  pipelineId: pip-wauszr0oyju-drbhze-6pj2sxrnz
+  pipelineId: pip-xlf2psoeq4ft215kuyhija7vlezj
 ---
 
 label: Create Gitlab Pipeline
@@ -110,4 +110,4 @@ query: |
     ci_deletePipeline(pipelineId: $pipelineId)
   }
 variables:
-  pipelineId: pip-xlf2psoeq4ft215kuyhija7vlezj
+  pipelineId: pip-h4jeejoxoecix-zmy-arzg3xlx
