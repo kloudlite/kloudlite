@@ -2,6 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
@@ -29,6 +30,11 @@ func (s *Service) GetStatus() *rApi.Status {
 
 func (s *Service) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
+}
+func (m *Service) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Service").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

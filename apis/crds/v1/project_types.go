@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"operators.kloudlite.io/lib/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -45,6 +46,12 @@ func (p *Project) GetStatus() *rApi.Status {
 func (p *Project) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		fmt.Sprintf("%s/ref", GroupVersion.Group): p.Name,
+	}
+}
+
+func (p *Project) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Project").String(),
 	}
 }
 

@@ -7,9 +7,8 @@ metadata:
     kloudlite.io/account-ref: "sample-account"
     kloudlite.io/project-ref: "hotspot.id"
     kloudlite.io/resource-ref: "resour.id"
-    kloudlite.io/billing-plan: "shared_1x1"
+    kloudlite.io/billing-plan: "resour.id"
 spec:
-  replicas: 2
   services:
     - port: 80
       targetPort: 80
@@ -20,8 +19,8 @@ spec:
       image: nginx
       imagePullPolicy: Always
       resourceCpu:
-        min: "50"
-        max: "100"
+        min: 50
+        max: 100
       resourceMemory:
-        min: "50"
-        max: "100"
+        min: 50
+        max: 100

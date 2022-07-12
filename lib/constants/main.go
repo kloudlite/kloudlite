@@ -12,14 +12,29 @@ const (
 )
 
 const (
-	CommonFinalizer     string = "finalizers.kloudlite.io"
-	ForegroundFinalizer string = "foregroundDeletion"
-	BillingFinalizer    string = "finalizers.kloudlite.io/billing"
+	CommonFinalizer        string = "finalizers.kloudlite.io"
+	ForegroundFinalizer    string = "foregroundDeletion"
+	BillingFinalizer       string = "finalizers.kloudlite.io/billing"
+	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
 )
 
-const (
-	AccountAnnotation string = "kloudlite.io/account-ref"
-)
+var AnnotationKeys = struct {
+	Account          string
+	Project          string
+	Resource         string
+	BillingPlan      string
+	BillableQuantity string
+	GroupVersionKind string
+	IsShared         string
+}{
+	Account:          "kloudlite.io/account-ref",
+	Project:          "kloudlite.io/project-ref",
+	Resource:         "kloudlite.io/resource-ref",
+	BillingPlan:      "kloudlite.io/billing-plan",
+	BillableQuantity: "kloudlite.io/billable-quantity",
+	GroupVersionKind: "kloudlite.io/group-version-kind",
+	IsShared:         "kloudlite.io/is-shared",
+}
 
 type StorageClass string
 

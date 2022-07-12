@@ -8,10 +8,11 @@ type Env struct {
 	ClusterId       string `env:"CLUSTER_ID" required:"true"`
 	ResourceIdLabel string `env:"RESOURCE_ID_LABEL" required:"true"`
 
-	KafkaBrokers         string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaIncomingTopic   string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
-	KafkaReplyTopic      string `env:"KAFKA_REPLY_TOPIC" required:"true"`
-	KafkaConsumerGroupId string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
+	KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaIncomingTopic     string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
+	KafkaStatusReplyTopic  string `env:"KAFKA_STATUS_REPLY_TOPIC" required:"true"`
+	KafkaBillingReplyTopic string `env:"KAFKA_BILLING_REPLY_TOPIC" required:"true"`
+	KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
 	HarborAdminUsername      string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
 	HarborAdminPassword      string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`

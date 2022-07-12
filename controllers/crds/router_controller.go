@@ -45,7 +45,7 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
-	if x := req.EnsureLabels(); !x.ShouldProceed() {
+	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
 	}
 
@@ -184,22 +184,6 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 		return req.FailWithOpError(errors.NewEf(err, "could not apply ingress ingressObj"))
 	}
 
-	return req.Done()
-}
-
-func (r *RouterReconciler) notify(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
-	router := req.Object
-
-	err := r.SendMessage(
-		req.Context(), router.NameRef(), types.MessageReply{
-			Key:        router.NameRef(),
-			Conditions: router.Status.Conditions,
-			IsReady:    router.Status.IsReady,
-		},
-	)
-	if err != nil {
-		return req.FailWithOpError(errors.NewEf(err, "could not send message into kafka"))
-	}
 	return req.Done()
 }
 
