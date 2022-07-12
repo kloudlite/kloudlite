@@ -14,9 +14,18 @@ type Route struct {
 	Port   uint16 `json:"port"`
 }
 
+type RateLimit struct {
+	Enabled     bool `json:"enabled,omitempty"`
+	Rps         int  `json:"rps,omitempty"`
+	Rpm         int  `json:"rpm,omitempty"`
+	Connections int  `json:"connections,omitempty"`
+}
+
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
 	ForceSSLRedirect bool               `json:"forceSSLRedirect,omitempty"`
+	RateLimit        RateLimit          `json:"rateLimit,omitempty"`
+	MaxBodySize      int                `json:"maxBodySize,omitempty"`
 	Domains          []string           `json:"domains"`
 	Routes           map[string][]Route `json:"routes"`
 }
