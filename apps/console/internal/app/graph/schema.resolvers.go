@@ -911,6 +911,21 @@ func (r *queryResolver) CoreGetComputePlans(ctx context.Context) ([]*model.Compu
 	return plans, nil
 }
 
+func (r *queryResolver) CoreGetStoragePlans(ctx context.Context) ([]*model.StoragePlan, error) {
+	plans, err := r.Domain.GetStoragePlans(ctx)
+	if err != nil {
+		return nil, err
+	}
+	storagePlans := make([]*model.StoragePlan, 0)
+	for _, i := range plans {
+		storagePlans = append(storagePlans, &model.StoragePlan{
+			Name:        i.Name,
+			Description: i.Desc,
+		})
+	}
+	return storagePlans, nil
+}
+
 func (r *queryResolver) CoreGetLamdaPlan(ctx context.Context) (*model.LamdaPlan, error) {
 	return &model.LamdaPlan{Name: "Default"}, nil
 }

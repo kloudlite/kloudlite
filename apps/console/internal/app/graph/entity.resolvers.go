@@ -43,6 +43,10 @@ func (r *entityResolver) FindLamdaPlanByName(ctx context.Context, name string) (
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *entityResolver) FindStoragePlanByName(ctx context.Context, name string) (*model.StoragePlan, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
 	return &model.User{ID: id}, nil
 }

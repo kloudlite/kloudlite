@@ -159,8 +159,26 @@ func (domain *domainI) TriggerBillingEvent(
 	return err
 }
 
-func (domain *domainI) GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
-	fileData, err := ioutil.ReadFile(fmt.Sprint(domain.inventoryPath, "/lamda.yaml"))
+func (d *domainI) GetStoragePlanByName(ctx context.Context, name string) (*StoragePlan, error) {
+	fileData, err := ioutil.ReadFile(fmt.Sprint(d.inventoryPath, "/storage.yaml"))
+	if err != nil {
+		return nil, err
+	}
+	var items []StoragePlan
+	err = yaml.Unmarshal(fileData, &items)
+	if err != nil {
+		return nil, err
+	}
+	for _, i := range items {
+		if i.Name == name {
+			return &i, nil
+		}
+	}
+	return nil, errors.New("inventory item not found")
+}
+
+func (d *domainI) GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
+	fileData, err := ioutil.ReadFile(fmt.Sprint(d.inventoryPath, "/lamda.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -177,8 +195,8 @@ func (domain *domainI) GetLambdaPlanByName(ctx context.Context, name string) (*L
 	return nil, errors.New("inventory item not found")
 }
 
-func (domain *domainI) GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error) {
-	fileData, err := ioutil.ReadFile(fmt.Sprint(domain.inventoryPath, "/compute.yaml"))
+func (d *domainI) GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error) {
+	fileData, err := ioutil.ReadFile(fmt.Sprint(d.inventoryPath, "/compute.yaml"))
 	if err != nil {
 		return nil, err
 	}
