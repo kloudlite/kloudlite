@@ -91,7 +91,6 @@ func (domain *domainI) TriggerBillingEvent(
 		"resource_id": resourceId,
 		"end_time":    nil,
 	})
-	fmt.Println(":::::", one)
 
 	if err != nil {
 		return err
