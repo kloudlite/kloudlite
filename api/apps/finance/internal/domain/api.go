@@ -43,4 +43,5 @@ type Domain interface {
 		billables []Billable,
 		timeStamp time.Time,
 	) error
+	GetStoragePlanByName(ctx context.Context, name string) (*StoragePlan, error)
 }

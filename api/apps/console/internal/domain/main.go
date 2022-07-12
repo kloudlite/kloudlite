@@ -61,7 +61,7 @@ type domain struct {
 	changeNotifier       rcn.ResourceChangeNotifier
 	clusterAccountRepo   repos.DbRepo[*entities.ClusterAccount]
 	financeClient        finance.FinanceClient
-	computePlansPath     string
+	inventoryPath        string
 }
 
 func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error {
@@ -94,8 +94,39 @@ func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string)
 	return nil
 }
 
+func (d *domain) GetStoragePlans(ctx context.Context) ([]entities.StoragePlan, error) {
+	fileData, err := ioutil.ReadFile(fmt.Sprintf("%s/storage-plans.yaml", d.inventoryPath))
+	if err != nil {
+		return nil, err
+	}
+	var plans []entities.StoragePlan
+	err = yaml.Unmarshal(fileData, &plans)
+	if err != nil {
+		return nil, err
+	}
+	return plans, nil
+}
+
+func (d *domain) getStoragePlan(name string) (*entities.StoragePlan, error) {
+	fileData, err := ioutil.ReadFile(fmt.Sprintf("%s/storage-plans.yaml", d.inventoryPath))
+	if err != nil {
+		return nil, err
+	}
+	var plans []entities.StoragePlan
+	err = yaml.Unmarshal(fileData, &plans)
+	if err != nil {
+		return nil, err
+	}
+	for _, plan := range plans {
+		if plan.Name == name {
+			return &plan, nil
+		}
+	}
+	return nil, errors.New("plan not found")
+}
+
 func (d *domain) getComputePlan(name string) (*entities.ComputePlan, error) {
-	fileData, err := ioutil.ReadFile(d.computePlansPath)
+	fileData, err := ioutil.ReadFile(fmt.Sprintf("%s/compute-plans.yaml", d.inventoryPath))
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +148,7 @@ func (d *domain) GetComputePlan(_ context.Context, name string) (*entities.Compu
 }
 
 func (d *domain) GetComputePlans(_ context.Context) ([]entities.ComputePlan, error) {
-	fileData, err := ioutil.ReadFile(d.computePlansPath)
+	fileData, err := ioutil.ReadFile(fmt.Sprintf("%s/compute-plans.yaml", d.inventoryPath))
 	if err != nil {
 		return nil, err
 	}
@@ -747,24 +778,29 @@ func isReady(c []metav1.Condition) bool {
 	return false
 }
 
-func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.Project) error {
+func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"name": response.Metadata.Name,
+		"id": response.Metadata.ResourceId,
 		//"cluster_id": response.ClusterId,
 	})
 	if err != nil {
 		return err
 	}
-	if isReady(response.Status.Conditions) {
+	if one == nil {
+		// Ignore unknown project
+		return nil
+	}
+	if response.IsReady {
 		one.Status = entities.ProjectStateLive
 	} else {
 		one.Status = entities.ProjectStateSyncing
 	}
-	one.Conditions = response.Status.Conditions
+	one.Conditions = response.ChildConditions
 	_, err = d.projectRepo.UpdateById(ctx, one.Id, one)
 	return err
 }
 
+// Deprecated
 func (d *domain) OnUpdateConfig(ctx context.Context, configId repos.ID) error {
 	one, err := d.configRepo.FindById(ctx, configId)
 	if err != nil {
@@ -776,6 +812,7 @@ func (d *domain) OnUpdateConfig(ctx context.Context, configId repos.ID) error {
 	return err
 }
 
+// Deprecated
 func (d *domain) OnUpdateSecret(ctx context.Context, secretId repos.ID) error {
 	one, err := d.secretRepo.FindById(ctx, secretId)
 	if err != nil {
@@ -786,57 +823,66 @@ func (d *domain) OnUpdateSecret(ctx context.Context, secretId repos.ID) error {
 	return err
 }
 
-func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.Router) error {
+func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.routerRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
+		"id": response.Metadata.ResourceId,
 	})
 	if err != nil {
 		return err
 	}
-	if isReady(response.Status.Conditions) {
+	if response.IsReady {
 		one.Status = entities.RouteStateLive
 	} else {
 		one.Status = entities.RouteStateSyncing
 	}
-	one.Conditions = response.Status.Conditions
+	one.Conditions = response.ChildConditions
 	_, err = d.routerRepo.UpdateById(ctx, one.Id, one)
+	err = d.notifier.Notify(one.Id)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
-func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.ManagedService) error {
+func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
+		"id": response.Metadata.ResourceId,
 	})
 	if err != nil {
 		return err
 	}
-	if isReady(response.Status.Conditions) {
+	if response.IsReady {
 		one.Status = entities.ManagedServiceStateLive
 	} else {
 		one.Status = entities.ManagedServiceStateSyncing
 	}
-	one.Conditions = response.Status.Conditions
+	one.Conditions = response.ChildConditions
 	_, err = d.managedSvcRepo.UpdateById(ctx, one.Id, one)
+	err = d.notifier.Notify(one.Id)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
-func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.ManagedResource) error {
+func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
+		"id": response.Metadata.ResourceId,
 	})
 	if err != nil {
 		return err
 	}
-	if isReady(response.Status.Conditions) {
+	if response.IsReady {
 		one.Status = entities.ManagedResourceStateLive
 	} else {
 		one.Status = entities.ManagedResourceStateSyncing
 	}
-	one.Conditions = response.Status.Conditions
+	one.Conditions = response.ChildConditions
 	_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
+	err = d.notifier.Notify(one.Id)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
@@ -845,6 +891,7 @@ func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate
 	if err != nil {
 		return err
 	}
+	fmt.Println(response.IsReady)
 	if response.IsReady {
 		one.Status = entities.AppStateLive
 	} else {
@@ -1870,7 +1917,7 @@ func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, 
 type Env struct {
 	KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
 	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
-	ComputePlansPath     string `env:"COMPUTE_PLANS_PATH" required:"true"`
+	InventoryPath        string `env:"INVENTORY_PATH" required:"true"`
 }
 
 func fxDomain(
@@ -1917,7 +1964,7 @@ func fxDomain(
 		managedTemplatesPath: env.ManagedTemplatesPath,
 		logger:               logger,
 		financeClient:        financeClient,
-		computePlansPath:     env.ComputePlansPath,
+		inventoryPath:        env.InventoryPath,
 	}
 }
 

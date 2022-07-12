@@ -10,6 +10,7 @@ import (
 type Domain interface {
 	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
 	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
+	GetStoragePlans(ctx context.Context) ([]entities.StoragePlan, error)
 
 	CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
 	CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error)
@@ -33,7 +34,7 @@ type Domain interface {
 	CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error)
 	GetAccountProjects(ctx context.Context, id repos.ID) ([]*entities.Project, error)
 	GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error)
-	OnUpdateProject(ctx context.Context, response *op_crds.Project) error
+	OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error
 
 	CreateConfig(ctx context.Context, id repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error)
 	UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error)
@@ -56,14 +57,14 @@ type Domain interface {
 	DeleteRouter(ctx context.Context, routerID repos.ID) (bool, error)
 	CreateRouter(ctx context.Context, id repos.ID, routerName string, domains []string, routes []*entities.Route) (*entities.Router, error)
 	UpdateRouter(ctx context.Context, id repos.ID, domains []string, entries []*entities.Route) (bool, error)
-	OnUpdateRouter(ctx context.Context, r *op_crds.Router) error
+	OnUpdateRouter(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error)
 	GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error)
 	InstallManagedSvc(ctx context.Context, projectID repos.ID, category repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error)
 	UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error)
 	UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error)
-	OnUpdateManagedSvc(ctx context.Context, r *op_crds.ManagedService) error
+	OnUpdateManagedSvc(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error)
 	GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error)
@@ -78,7 +79,7 @@ type Domain interface {
 	) (*entities.ManagedResource, error)
 	UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error)
 	UnInstallManagedRes(ctx context.Context, managedResID repos.ID) (bool, error)
-	OnUpdateManagedRes(ctx context.Context, r *op_crds.ManagedResource) error
+	OnUpdateManagedRes(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetApps(ctx context.Context, projectId repos.ID) ([]*entities.App, error)
 	GetApp(ctx context.Context, projectID repos.ID) (*entities.App, error)

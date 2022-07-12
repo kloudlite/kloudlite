@@ -98,6 +98,11 @@ type LamdaPlan struct {
 	FreeTire     int     `yaml:"freeTire"`
 }
 
+type StoragePlan struct {
+	Name       string  `yaml:"name"`
+	PricePerGB float64 `yaml:"pricePerGB"`
+}
+
 type BillingEvent struct {
 	Key     string `json:"key"`
 	Stage   string `json:"stage"`
