@@ -39,7 +39,6 @@ type Config struct {
 
 type ResolverRoot interface {
 	Account() AccountResolver
-	ClusterSubscription() ClusterSubscriptionResolver
 	Device() DeviceResolver
 	Entity() EntityResolver
 	ManagedRes() ManagedResResolver
@@ -55,9 +54,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Account struct {
-		ClusterSubscriptions func(childComplexity int) int
-		ID                   func(childComplexity int) int
-		Projects             func(childComplexity int) int
+		Devices  func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Projects func(childComplexity int) int
 	}
 
 	App struct {
@@ -106,20 +105,6 @@ type ComplexityRoot struct {
 		Value func(childComplexity int) int
 	}
 
-	Cluster struct {
-		ID       func(childComplexity int) int
-		Name     func(childComplexity int) int
-		Provider func(childComplexity int) int
-		Region   func(childComplexity int) int
-	}
-
-	ClusterSubscription struct {
-		Account     func(childComplexity int) int
-		Cluster     func(childComplexity int) int
-		Devices     func(childComplexity int) int
-		UserDevices func(childComplexity int) int
-	}
-
 	ComputePlan struct {
 		DedicatedEnabled      func(childComplexity int) int
 		Desc                  func(childComplexity int) int
@@ -142,7 +127,6 @@ type ComplexityRoot struct {
 
 	Device struct {
 		Account       func(childComplexity int) int
-		Cluster       func(childComplexity int) int
 		Configuration func(childComplexity int) int
 		ID            func(childComplexity int) int
 		IP            func(childComplexity int) int
@@ -153,7 +137,6 @@ type ComplexityRoot struct {
 	Entity struct {
 		FindAccountByID       func(childComplexity int, id repos.ID) int
 		FindAppByID           func(childComplexity int, id repos.ID) int
-		FindClusterByID       func(childComplexity int, id repos.ID) int
 		FindComputePlanByName func(childComplexity int, name string) int
 		FindDeviceByID        func(childComplexity int, id repos.ID) int
 		FindLamdaPlanByName   func(childComplexity int, name string) int
@@ -209,6 +192,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		CoreAddDevice          func(childComplexity int, accountID repos.ID, name string) int
 		CoreCreateApp          func(childComplexity int, projectID repos.ID, app model.AppInput) int
 		CoreCreateConfig       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) int
@@ -219,6 +203,7 @@ type ComplexityRoot struct {
 		CoreDeleteProject      func(childComplexity int, projectID repos.ID) int
 		CoreDeleteRouter       func(childComplexity int, routerID repos.ID) int
 		CoreDeleteSecret       func(childComplexity int, secretID repos.ID) int
+		CoreRemoveDevice       func(childComplexity int, deviceID repos.ID) int
 		CoreRollbackApp        func(childComplexity int, appID repos.ID, version int) int
 		CoreUpdateApp          func(childComplexity int, projectID repos.ID, appID repos.ID, app model.AppInput) int
 		CoreUpdateConfig       func(childComplexity int, configID repos.ID, description *string, data []*model.CSEntryIn) int
@@ -228,11 +213,6 @@ type ComplexityRoot struct {
 		IamInviteProjectMember func(childComplexity int, projectID repos.ID, email string, role string) int
 		IamRemoveProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID) int
 		IamUpdateProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
-		InfraAddDevice         func(childComplexity int, clusterID repos.ID, accountID repos.ID, name string) int
-		InfraCreateCluster     func(childComplexity int, name string, provider string, region string, clusterType string) int
-		InfraDeleteCluster     func(childComplexity int, clusterID repos.ID) int
-		InfraRemoveDevice      func(childComplexity int, deviceID repos.ID) int
-		InfraUpdateCluster     func(childComplexity int, name *string, clusterID repos.ID, nodesCount *int) int
 		ManagedResCreate       func(childComplexity int, installationID repos.ID, name string, resourceType string, values map[string]interface{}) int
 		ManagedResDelete       func(childComplexity int, resID repos.ID) int
 		ManagedResUpdate       func(childComplexity int, resID repos.ID, values map[string]interface{}) int
@@ -274,8 +254,6 @@ type ComplexityRoot struct {
 		CoreRouters                 func(childComplexity int, projectID repos.ID, search *string) int
 		CoreSecret                  func(childComplexity int, secretID repos.ID) int
 		CoreSecrets                 func(childComplexity int, projectID repos.ID, search *string) int
-		InfraGetCluster             func(childComplexity int, clusterID repos.ID) int
-		InfraGetClusters            func(childComplexity int) int
 		ManagedResGetResource       func(childComplexity int, resID repos.ID, nextVersion *bool) int
 		ManagedResListResources     func(childComplexity int, installationID repos.ID) int
 		ManagedSvcGetInstallation   func(childComplexity int, installationID repos.ID, nextVersion *bool) int
@@ -328,18 +306,11 @@ type ComplexityRoot struct {
 
 type AccountResolver interface {
 	Projects(ctx context.Context, obj *model.Account) ([]*model.Project, error)
-	ClusterSubscriptions(ctx context.Context, obj *model.Account) ([]*model.ClusterSubscription, error)
-}
-type ClusterSubscriptionResolver interface {
-	Cluster(ctx context.Context, obj *model.ClusterSubscription) (*model.Cluster, error)
-
-	Devices(ctx context.Context, obj *model.ClusterSubscription) ([]*model.Device, error)
-	UserDevices(ctx context.Context, obj *model.ClusterSubscription) ([]*model.Device, error)
+	Devices(ctx context.Context, obj *model.Account) ([]*model.Device, error)
 }
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
 
-	Cluster(ctx context.Context, obj *model.Device) (*model.Cluster, error)
 	Configuration(ctx context.Context, obj *model.Device) (string, error)
 
 	Account(ctx context.Context, obj *model.Device) (*model.Account, error)
@@ -347,7 +318,6 @@ type DeviceResolver interface {
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindAppByID(ctx context.Context, id repos.ID) (*model.App, error)
-	FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error)
 	FindComputePlanByName(ctx context.Context, name string) (*model.ComputePlan, error)
 	FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error)
 	FindLamdaPlanByName(ctx context.Context, name string) (*model.LamdaPlan, error)
@@ -367,11 +337,8 @@ type MutationResolver interface {
 	ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error)
 	ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error)
 	ManagedResDelete(ctx context.Context, resID repos.ID) (*bool, error)
-	InfraCreateCluster(ctx context.Context, name string, provider string, region string, clusterType string) (*model.Cluster, error)
-	InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (bool, error)
-	InfraDeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error)
-	InfraAddDevice(ctx context.Context, clusterID repos.ID, accountID repos.ID, name string) (*model.Device, error)
-	InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
+	CoreAddDevice(ctx context.Context, accountID repos.ID, name string) (*model.Device, error)
+	CoreRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
 	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error)
 	CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
 	CoreDeleteProject(ctx context.Context, projectID repos.ID) (bool, error)
@@ -412,8 +379,6 @@ type QueryResolver interface {
 	ManagedSvcListInstallations(ctx context.Context, projectID repos.ID) ([]*model.ManagedSvc, error)
 	ManagedResGetResource(ctx context.Context, resID repos.ID, nextVersion *bool) (*model.ManagedRes, error)
 	ManagedResListResources(ctx context.Context, installationID repos.ID) ([]*model.ManagedRes, error)
-	InfraGetClusters(ctx context.Context) ([]*model.Cluster, error)
-	InfraGetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error)
 	CoreGetComputePlans(ctx context.Context) ([]*model.ComputePlan, error)
 	CoreGetStoragePlans(ctx context.Context) ([]*model.StoragePlan, error)
 	CoreGetLamdaPlan(ctx context.Context) (*model.LamdaPlan, error)
@@ -437,12 +402,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Account.clusterSubscriptions":
-		if e.complexity.Account.ClusterSubscriptions == nil {
+	case "Account.devices":
+		if e.complexity.Account.Devices == nil {
 			break
 		}
 
-		return e.complexity.Account.ClusterSubscriptions(childComplexity), true
+		return e.complexity.Account.Devices(childComplexity), true
 
 	case "Account.id":
 		if e.complexity.Account.ID == nil {
@@ -654,62 +619,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CSEntry.Value(childComplexity), true
 
-	case "Cluster.id":
-		if e.complexity.Cluster.ID == nil {
-			break
-		}
-
-		return e.complexity.Cluster.ID(childComplexity), true
-
-	case "Cluster.name":
-		if e.complexity.Cluster.Name == nil {
-			break
-		}
-
-		return e.complexity.Cluster.Name(childComplexity), true
-
-	case "Cluster.provider":
-		if e.complexity.Cluster.Provider == nil {
-			break
-		}
-
-		return e.complexity.Cluster.Provider(childComplexity), true
-
-	case "Cluster.region":
-		if e.complexity.Cluster.Region == nil {
-			break
-		}
-
-		return e.complexity.Cluster.Region(childComplexity), true
-
-	case "ClusterSubscription.account":
-		if e.complexity.ClusterSubscription.Account == nil {
-			break
-		}
-
-		return e.complexity.ClusterSubscription.Account(childComplexity), true
-
-	case "ClusterSubscription.cluster":
-		if e.complexity.ClusterSubscription.Cluster == nil {
-			break
-		}
-
-		return e.complexity.ClusterSubscription.Cluster(childComplexity), true
-
-	case "ClusterSubscription.devices":
-		if e.complexity.ClusterSubscription.Devices == nil {
-			break
-		}
-
-		return e.complexity.ClusterSubscription.Devices(childComplexity), true
-
-	case "ClusterSubscription.userDevices":
-		if e.complexity.ClusterSubscription.UserDevices == nil {
-			break
-		}
-
-		return e.complexity.ClusterSubscription.UserDevices(childComplexity), true
-
 	case "ComputePlan.dedicatedEnabled":
 		if e.complexity.ComputePlan.DedicatedEnabled == nil {
 			break
@@ -815,13 +724,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Device.Account(childComplexity), true
 
-	case "Device.cluster":
-		if e.complexity.Device.Cluster == nil {
-			break
-		}
-
-		return e.complexity.Device.Cluster(childComplexity), true
-
 	case "Device.configuration":
 		if e.complexity.Device.Configuration == nil {
 			break
@@ -880,18 +782,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindAppByID(childComplexity, args["id"].(repos.ID)), true
-
-	case "Entity.findClusterByID":
-		if e.complexity.Entity.FindClusterByID == nil {
-			break
-		}
-
-		args, err := ec.field_Entity_findClusterByID_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Entity.FindClusterByID(childComplexity, args["id"].(repos.ID)), true
 
 	case "Entity.findComputePlanByName":
 		if e.complexity.Entity.FindComputePlanByName == nil {
@@ -1135,6 +1025,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedSvc.Values(childComplexity), true
 
+	case "Mutation.core_addDevice":
+		if e.complexity.Mutation.CoreAddDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_addDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreAddDevice(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
+
 	case "Mutation.core_createApp":
 		if e.complexity.Mutation.CoreCreateApp == nil {
 			break
@@ -1255,6 +1157,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreDeleteSecret(childComplexity, args["secretId"].(repos.ID)), true
 
+	case "Mutation.core_removeDevice":
+		if e.complexity.Mutation.CoreRemoveDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_removeDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreRemoveDevice(childComplexity, args["deviceId"].(repos.ID)), true
+
 	case "Mutation.core_rollbackApp":
 		if e.complexity.Mutation.CoreRollbackApp == nil {
 			break
@@ -1362,66 +1276,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.IamUpdateProjectMember(childComplexity, args["projectId"].(repos.ID), args["userId"].(repos.ID), args["role"].(string)), true
-
-	case "Mutation.infra_addDevice":
-		if e.complexity.Mutation.InfraAddDevice == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_addDevice_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraAddDevice(childComplexity, args["clusterId"].(repos.ID), args["accountId"].(repos.ID), args["name"].(string)), true
-
-	case "Mutation.infra_createCluster":
-		if e.complexity.Mutation.InfraCreateCluster == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_createCluster_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraCreateCluster(childComplexity, args["name"].(string), args["provider"].(string), args["region"].(string), args["clusterType"].(string)), true
-
-	case "Mutation.infra_deleteCluster":
-		if e.complexity.Mutation.InfraDeleteCluster == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_deleteCluster_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraDeleteCluster(childComplexity, args["clusterId"].(repos.ID)), true
-
-	case "Mutation.infra_removeDevice":
-		if e.complexity.Mutation.InfraRemoveDevice == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_removeDevice_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraRemoveDevice(childComplexity, args["deviceId"].(repos.ID)), true
-
-	case "Mutation.infra_updateCluster":
-		if e.complexity.Mutation.InfraUpdateCluster == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_updateCluster_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraUpdateCluster(childComplexity, args["name"].(*string), args["clusterId"].(repos.ID), args["nodesCount"].(*int)), true
 
 	case "Mutation.managedRes_create":
 		if e.complexity.Mutation.ManagedResCreate == nil {
@@ -1726,25 +1580,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CoreSecrets(childComplexity, args["projectId"].(repos.ID), args["search"].(*string)), true
-
-	case "Query.infra_getCluster":
-		if e.complexity.Query.InfraGetCluster == nil {
-			break
-		}
-
-		args, err := ec.field_Query_infra_getCluster_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.InfraGetCluster(childComplexity, args["clusterId"].(repos.ID)), true
-
-	case "Query.infra_getClusters":
-		if e.complexity.Query.InfraGetClusters == nil {
-			break
-		}
-
-		return e.complexity.Query.InfraGetClusters(childComplexity), true
 
 	case "Query.managedRes_getResource":
 		if e.complexity.Query.ManagedResGetResource == nil {
@@ -2064,9 +1899,6 @@ type Query {
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
-  infra_getClusters: [Cluster]
-  infra_getCluster(clusterId: ID!): Cluster
-
   core_getComputePlans: [ComputePlan!]
   core_getStoragePlans: [StoragePlan!]
   core_getLamdaPlan: LamdaPlan!
@@ -2104,11 +1936,8 @@ type Mutation {
   managedRes_update(resId: ID!, values: Json): Boolean!
   managedRes_delete(resId: ID!): Boolean
 
-  infra_createCluster(name: String!, provider: String!, region: String!, clusterType: String!): Cluster!
-  infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Boolean!
-  infra_deleteCluster(clusterId: ID!): Boolean!
-  infra_addDevice(clusterId: ID!, accountId: ID!, name: String!): Device!
-  infra_removeDevice(deviceId: ID!): Boolean!
+  core_addDevice(accountId: ID!, name: String!): Device!
+  core_removeDevice(deviceId: ID!): Boolean!
 
   core_createProject(
     accountId: ID!,
@@ -2305,17 +2134,11 @@ type Route {
   port: Int!
 }
 
-type ClusterSubscription {
-  cluster: Cluster!
-  account: Account!
-  devices: [Device!]
-  userDevices: [Device!]
-}
 
 extend type Account @key(fields: "id") {
   id: ID! @external
   projects: [Project!]!
-  clusterSubscriptions:[ClusterSubscription!]!
+  devices: [Device!]!
 }
 
 
@@ -2415,18 +2238,11 @@ extend type User @key(fields: "id") {
   devices: [Device]
 }
 
-type Cluster @key(fields: "id") {
-  id: ID!
-  name: String!
-  provider: String!
-  region: String!
-}
 
 type Device @key(fields: "id") {
   id: ID!
   user: User!
   name: String!
-  cluster: Cluster!
   configuration: String!
   ip: String!
   account: Account!
@@ -2444,13 +2260,12 @@ directive @extends on OBJECT | INTERFACE
 `, BuiltIn: true},
 	{Name: "federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Account | App | Cluster | ComputePlan | Device | LamdaPlan | StoragePlan | User
+union _Entity = Account | App | ComputePlan | Device | LamdaPlan | StoragePlan | User
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
 		findAccountByID(id: ID!,): Account!
 	findAppByID(id: ID!,): App!
-	findClusterByID(id: ID!,): Cluster!
 	findComputePlanByName(name: String!,): ComputePlan!
 	findDeviceByID(id: ID!,): Device!
 	findLamdaPlanByName(name: String!,): LamdaPlan!
@@ -2491,21 +2306,6 @@ func (ec *executionContext) field_Entity_findAccountByID_args(ctx context.Contex
 }
 
 func (ec *executionContext) field_Entity_findAppByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Entity_findClusterByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -2592,6 +2392,30 @@ func (ec *executionContext) field_Entity_findUserByID_args(ctx context.Context, 
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_addDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -2877,6 +2701,21 @@ func (ec *executionContext) field_Mutation_core_deleteSecret_args(ctx context.Co
 		}
 	}
 	args["secretId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_removeDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["deviceId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceId"] = arg0
 	return args, nil
 }
 
@@ -3174,144 +3013,6 @@ func (ec *executionContext) field_Mutation_iam_updateProjectMember_args(ctx cont
 		}
 	}
 	args["role"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_infra_addDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["clusterId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterId"] = arg0
-	var arg1 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_infra_createCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["provider"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["provider"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["region"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["region"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["clusterType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterType"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterType"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_infra_deleteCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["clusterId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_infra_removeDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["deviceId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_infra_updateCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg0
-	var arg1 repos.ID
-	if tmp, ok := rawArgs["clusterId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
-		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterId"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["nodesCount"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodesCount"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["nodesCount"] = arg2
 	return args, nil
 }
 
@@ -3702,21 +3403,6 @@ func (ec *executionContext) field_Query_core_secrets_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_infra_getCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["clusterId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterId"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_managedRes_getResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3903,7 +3589,7 @@ func (ec *executionContext) _Account_projects(ctx context.Context, field graphql
 	return ec.marshalNProject2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProjectᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Account_clusterSubscriptions(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_devices(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3921,7 +3607,7 @@ func (ec *executionContext) _Account_clusterSubscriptions(ctx context.Context, f
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Account().ClusterSubscriptions(rctx, obj)
+		return ec.resolvers.Account().Devices(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3933,9 +3619,9 @@ func (ec *executionContext) _Account_clusterSubscriptions(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.ClusterSubscription)
+	res := resTmp.([]*model.Device)
 	fc.Result = res
-	return ec.marshalNClusterSubscription2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterSubscriptionᚄ(ctx, field.Selections, res)
+	return ec.marshalNDevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _App_id(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
@@ -4900,280 +4586,6 @@ func (ec *executionContext) _CSEntry_value(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Cluster_id(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(repos.ID)
-	fc.Result = res
-	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cluster_name(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cluster_provider(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Provider, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cluster_region(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Region, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ClusterSubscription_cluster(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSubscription) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ClusterSubscription",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ClusterSubscription().Cluster(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Cluster)
-	fc.Result = res
-	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ClusterSubscription_account(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSubscription) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ClusterSubscription",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Account, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Account)
-	fc.Result = res
-	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ClusterSubscription_devices(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSubscription) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ClusterSubscription",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ClusterSubscription().Devices(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Device)
-	fc.Result = res
-	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ClusterSubscription_userDevices(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSubscription) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "ClusterSubscription",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ClusterSubscription().UserDevices(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Device)
-	fc.Result = res
-	return ec.marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5766,41 +5178,6 @@ func (ec *executionContext) _Device_name(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Device_cluster(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Device",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Device().Cluster(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Cluster)
-	fc.Result = res
-	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Device_configuration(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5988,48 +5365,6 @@ func (ec *executionContext) _Entity_findAppByID(ctx context.Context, field graph
 	res := resTmp.(*model.App)
 	fc.Result = res
 	return ec.marshalNApp2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Entity_findClusterByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Entity",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Entity_findClusterByID_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Entity().FindClusterByID(rctx, args["id"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Cluster)
-	fc.Result = res
-	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findComputePlanByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7389,7 +6724,7 @@ func (ec *executionContext) _Mutation_managedRes_delete(ctx context.Context, fie
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_infra_createCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_core_addDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -7406,7 +6741,7 @@ func (ec *executionContext) _Mutation_infra_createCluster(ctx context.Context, f
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_infra_createCluster_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_core_addDevice_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7414,133 +6749,7 @@ func (ec *executionContext) _Mutation_infra_createCluster(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraCreateCluster(rctx, args["name"].(string), args["provider"].(string), args["region"].(string), args["clusterType"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Cluster)
-	fc.Result = res
-	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_infra_updateCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_infra_updateCluster_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraUpdateCluster(rctx, args["name"].(*string), args["clusterId"].(repos.ID), args["nodesCount"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_infra_deleteCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_infra_deleteCluster_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraDeleteCluster(rctx, args["clusterId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_infra_addDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_infra_addDevice_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraAddDevice(rctx, args["clusterId"].(repos.ID), args["accountId"].(repos.ID), args["name"].(string))
+		return ec.resolvers.Mutation().CoreAddDevice(rctx, args["accountId"].(repos.ID), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7557,7 +6766,7 @@ func (ec *executionContext) _Mutation_infra_addDevice(ctx context.Context, field
 	return ec.marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_infra_removeDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_core_removeDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -7574,7 +6783,7 @@ func (ec *executionContext) _Mutation_infra_removeDevice(ctx context.Context, fi
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_infra_removeDevice_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_core_removeDevice_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7582,7 +6791,7 @@ func (ec *executionContext) _Mutation_infra_removeDevice(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraRemoveDevice(rctx, args["deviceId"].(repos.ID))
+		return ec.resolvers.Mutation().CoreRemoveDevice(rctx, args["deviceId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9478,77 +8687,6 @@ func (ec *executionContext) _Query_managedRes_listResources(ctx context.Context,
 	res := resTmp.([]*model.ManagedRes)
 	fc.Result = res
 	return ec.marshalOManagedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_infra_getClusters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetClusters(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Cluster)
-	fc.Result = res
-	return ec.marshalOCluster2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_infra_getCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_infra_getCluster_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetCluster(rctx, args["clusterId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Cluster)
-	fc.Result = res
-	return ec.marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_core_getComputePlans(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12211,13 +11349,6 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._App(ctx, sel, obj)
-	case model.Cluster:
-		return ec._Cluster(ctx, sel, &obj)
-	case *model.Cluster:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Cluster(ctx, sel, obj)
 	case model.ComputePlan:
 		return ec._ComputePlan(ctx, sel, &obj)
 	case *model.ComputePlan:
@@ -12302,7 +11433,7 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
-		case "clusterSubscriptions":
+		case "devices":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12311,7 +11442,7 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Account_clusterSubscriptions(ctx, field, obj)
+				res = ec._Account_devices(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12721,152 +11852,6 @@ func (ec *executionContext) _CSEntry(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var clusterImplementors = []string{"Cluster", "_Entity"}
-
-func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, obj *model.Cluster) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clusterImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Cluster")
-		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_id(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_name(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "provider":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_provider(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "region":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Cluster_region(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var clusterSubscriptionImplementors = []string{"ClusterSubscription"}
-
-func (ec *executionContext) _ClusterSubscription(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterSubscription) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clusterSubscriptionImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ClusterSubscription")
-		case "cluster":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ClusterSubscription_cluster(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "account":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ClusterSubscription_account(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "devices":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ClusterSubscription_devices(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "userDevices":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ClusterSubscription_userDevices(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var computePlanImplementors = []string{"ComputePlan", "_Entity"}
 
 func (ec *executionContext) _ComputePlan(ctx context.Context, sel ast.SelectionSet, obj *model.ComputePlan) graphql.Marshaler {
@@ -13096,26 +12081,6 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "cluster":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Device_cluster(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "configuration":
 			field := field
 
@@ -13229,29 +12194,6 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 					}
 				}()
 				res = ec._Entity_findAppByID(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "findClusterByID":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Entity_findClusterByID(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -13882,9 +12824,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
-		case "infra_createCluster":
+		case "core_addDevice":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_createCluster(ctx, field)
+				return ec._Mutation_core_addDevice(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -13892,39 +12834,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "infra_updateCluster":
+		case "core_removeDevice":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_updateCluster(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "infra_deleteCluster":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_deleteCluster(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "infra_addDevice":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_addDevice(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "infra_removeDevice":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_removeDevice(ctx, field)
+				return ec._Mutation_core_removeDevice(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -14662,46 +13574,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_managedRes_listResources(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "infra_getClusters":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_infra_getClusters(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "infra_getCluster":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_infra_getCluster(ctx, field)
 				return res
 			}
 
@@ -15887,74 +14759,6 @@ func (ec *executionContext) unmarshalNCSEntryIn2ᚖkloudliteᚗioᚋappsᚋconso
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCluster2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v model.Cluster) graphql.Marshaler {
-	return ec._Cluster(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v *model.Cluster) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Cluster(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNClusterSubscription2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterSubscriptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClusterSubscription) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNClusterSubscription2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterSubscription(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNClusterSubscription2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterSubscription(ctx context.Context, sel ast.SelectionSet, v *model.ClusterSubscription) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ClusterSubscription(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNComputePlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx context.Context, sel ast.SelectionSet, v model.ComputePlan) graphql.Marshaler {
 	return ec._ComputePlan(ctx, sel, &v)
 }
@@ -16029,6 +14833,50 @@ func (ec *executionContext) marshalNConfig2ᚖkloudliteᚗioᚋappsᚋconsoleᚋ
 
 func (ec *executionContext) marshalNDevice2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx context.Context, sel ast.SelectionSet, v model.Device) graphql.Marshaler {
 	return ec._Device(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Device) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx context.Context, sel ast.SelectionSet, v *model.Device) graphql.Marshaler {
@@ -17045,54 +15893,6 @@ func (ec *executionContext) unmarshalOCSEntryIn2ᚕᚖkloudliteᚗioᚋappsᚋco
 	return res, nil
 }
 
-func (ec *executionContext) marshalOCluster2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v []*model.Cluster) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOCluster2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v *model.Cluster) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Cluster(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOComputePlan2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ComputePlan) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -17177,53 +15977,6 @@ func (ec *executionContext) marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsole
 
 	}
 	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalODevice2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Device) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
 
 	return ret
 }

@@ -7,9 +7,9 @@ import (
 )
 
 type Account struct {
-	ID                   repos.ID               `json:"id"`
-	Projects             []*Project             `json:"projects"`
-	ClusterSubscriptions []*ClusterSubscription `json:"clusterSubscriptions"`
+	ID       repos.ID   `json:"id"`
+	Projects []*Project `json:"projects"`
+	Devices  []*Device  `json:"devices"`
 }
 
 func (Account) IsEntity() {}
@@ -99,22 +99,6 @@ type CSEntryIn struct {
 	Value string `json:"value"`
 }
 
-type Cluster struct {
-	ID       repos.ID `json:"id"`
-	Name     string   `json:"name"`
-	Provider string   `json:"provider"`
-	Region   string   `json:"region"`
-}
-
-func (Cluster) IsEntity() {}
-
-type ClusterSubscription struct {
-	Cluster     *Cluster  `json:"cluster"`
-	Account     *Account  `json:"account"`
-	Devices     []*Device `json:"devices"`
-	UserDevices []*Device `json:"userDevices"`
-}
-
 type ComputePlan struct {
 	Name                  string `json:"name"`
 	Desc                  string `json:"desc"`
@@ -141,7 +125,6 @@ type Device struct {
 	ID            repos.ID `json:"id"`
 	User          *User    `json:"user"`
 	Name          string   `json:"name"`
-	Cluster       *Cluster `json:"cluster"`
 	Configuration string   `json:"configuration"`
 	IP            string   `json:"ip"`
 	Account       *Account `json:"account"`
@@ -280,7 +263,7 @@ type Secret struct {
 
 type StoragePlan struct {
 	Name        string `json:"name"`
-	Description string `json:"desc" yaml:"desc"`
+	Description string `json:"description"`
 }
 
 func (StoragePlan) IsEntity() {}

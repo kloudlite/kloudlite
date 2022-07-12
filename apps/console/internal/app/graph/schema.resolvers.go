@@ -30,52 +30,20 @@ func (r *accountResolver) Projects(ctx context.Context, obj *model.Account) ([]*
 	return projectModels, err
 }
 
-func (r *accountResolver) ClusterSubscriptions(ctx context.Context, obj *model.Account) ([]*model.ClusterSubscription, error) {
-	subscriptionEntities, err := r.Domain.ListClusterSubscriptions(ctx, obj.ID)
-	if err != nil {
-		return nil, err
+func (r *accountResolver) Devices(ctx context.Context, obj *model.Account) ([]*model.Device, error) {
+	deviceEntities, e := r.Domain.ListAccountDevices(ctx, obj.ID)
+	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of account %s", obj.ID))
+	devices := make([]*model.Device, 0)
+	for _, device := range deviceEntities {
+		devices = append(devices, &model.Device{
+			ID:      device.Id,
+			User:    &model.User{ID: device.UserId},
+			Account: &model.Account{ID: device.AccountId},
+			Name:    device.Name,
+			IP:      device.Ip,
+		})
 	}
-	subscriptionModels := make([]*model.ClusterSubscription, 0)
-	for _, se := range subscriptionEntities {
-		subscriptionModels = append(subscriptionModels, subscriptionModelFromEntity(se))
-	}
-	return subscriptionModels, err
-}
-
-func (r *clusterSubscriptionResolver) Cluster(ctx context.Context, obj *model.ClusterSubscription) (*model.Cluster, error) {
-	clusterE, err := r.Domain.GetCluster(ctx, obj.Cluster.ID)
-	if err != nil {
-		return nil, err
-	}
-	return clusterModelFromEntity(clusterE), nil
-}
-
-func (r *clusterSubscriptionResolver) Devices(ctx context.Context, obj *model.ClusterSubscription) ([]*model.Device, error) {
-	deviceEntities, err := r.Domain.ListClusterDevices(ctx, &obj.Cluster.ID, &obj.Account.ID)
-	if err != nil {
-		return nil, err
-	}
-	deviceModels := make([]*model.Device, 0)
-	for _, de := range deviceEntities {
-		deviceModels = append(deviceModels, deviceModelFromEntity(de))
-	}
-	return deviceModels, err
-}
-
-func (r *clusterSubscriptionResolver) UserDevices(ctx context.Context, obj *model.ClusterSubscription) ([]*model.Device, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("user not logged in")
-	}
-	deviceEntities, err := r.Domain.ListUserDevices(ctx, session.UserId, &obj.Cluster.ID, &obj.Account.ID)
-	if err != nil {
-		return nil, err
-	}
-	deviceModels := make([]*model.Device, 0)
-	for _, de := range deviceEntities {
-		deviceModels = append(deviceModels, deviceModelFromEntity(de))
-	}
-	return deviceModels, err
+	return devices, e
 }
 
 func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.User, error) {
@@ -87,23 +55,6 @@ func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.Us
 	return &model.User{
 		ID: deviceEntity.UserId,
 	}, e
-}
-
-func (r *deviceResolver) Cluster(ctx context.Context, obj *model.Device) (*model.Cluster, error) {
-	deviceEntity, err := r.Domain.GetDevice(ctx, obj.ID)
-	if err != nil {
-		return nil, err
-	}
-	clusterEntity, err := r.Domain.GetCluster(ctx, deviceEntity.ClusterId)
-	if err != nil {
-		return nil, err
-	}
-	return &model.Cluster{
-		ID:       clusterEntity.Id,
-		Name:     clusterEntity.Name,
-		Provider: clusterEntity.Provider,
-		Region:   clusterEntity.Region,
-	}, nil
 }
 
 func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
@@ -195,50 +146,37 @@ func (r *mutationResolver) ManagedResDelete(ctx context.Context, resID repos.ID)
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) InfraCreateCluster(ctx context.Context, name string, provider string, region string, clusterType string) (*model.Cluster, error) {
-	cluster, err := r.Domain.CreateCluster(ctx, &entities.Cluster{
-		BaseEntity:  repos.BaseEntity{},
-		Name:        name,
-		Provider:    provider,
-		Region:      region,
-		ClusterType: entities.ClusterType(clusterType),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return clusterModelFromEntity(cluster), err
-}
-
-func (r *mutationResolver) InfraUpdateCluster(ctx context.Context, name *string, clusterID repos.ID, nodesCount *int) (bool, error) {
-	return r.Domain.UpdateCluster(ctx, clusterID, name, nodesCount)
-}
-
-func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, clusterID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) InfraAddDevice(ctx context.Context, clusterID repos.ID, accountID repos.ID, name string) (*model.Device, error) {
+func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID, name string) (*model.Device, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
-	device, err := r.Domain.AddDevice(ctx, name, clusterID, accountID, session.UserId)
+	device, err := r.Domain.AddDevice(ctx, name, accountID, session.UserId)
 	if err != nil {
 		return nil, err
 	}
 	return &model.Device{
-		ID:   device.Id,
-		User: &model.User{ID: session.UserId},
-		Name: device.Name,
-		Cluster: &model.Cluster{
-			ID: clusterID,
+		ID: device.Id,
+		User: &model.User{
+			ID: session.UserId,
 		},
-		IP: device.Ip,
+		Name: device.Name,
+		Account: &model.Account{
+			ID: device.AccountId,
+		},
 	}, nil
 }
 
-func (r *mutationResolver) InfraRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CoreRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("user not logged in")
+	}
+	err := r.Domain.RemoveDevice(ctx, deviceID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error) {
@@ -875,22 +813,6 @@ func (r *queryResolver) ManagedResListResources(ctx context.Context, installatio
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) InfraGetClusters(ctx context.Context) ([]*model.Cluster, error) {
-	clusterEntities, err := r.Domain.GetClusters(ctx)
-	if err != nil {
-		return nil, err
-	}
-	clusters := make([]*model.Cluster, 0)
-	for _, i := range clusterEntities {
-		clusters = append(clusters, clusterModelFromEntity(i))
-	}
-	return clusters, nil
-}
-
-func (r *queryResolver) InfraGetCluster(ctx context.Context, clusterID repos.ID) (*model.Cluster, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *queryResolver) CoreGetComputePlans(ctx context.Context) ([]*model.ComputePlan, error) {
 	planEntities, err := r.Domain.GetComputePlans(ctx)
 	if err != nil {
@@ -934,15 +856,15 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 	var e error
 	defer wErrors.HandleErr(&e)
 	user := obj
-	deviceEntities, e := r.Domain.ListUserDevices(ctx, user.ID, nil, nil)
+	deviceEntities, e := r.Domain.ListUserDevices(ctx, user.ID)
 	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
 		devices = append(devices, &model.Device{
 			ID:      device.Id,
-			User:    &model.User{ID: user.ID},
+			User:    &model.User{ID: device.UserId},
+			Account: &model.Account{ID: device.AccountId},
 			Name:    device.Name,
-			Cluster: &model.Cluster{ID: device.ClusterId},
 			IP:      device.Ip,
 		})
 	}
@@ -951,11 +873,6 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
-
-// ClusterSubscription returns generated.ClusterSubscriptionResolver implementation.
-func (r *Resolver) ClusterSubscription() generated.ClusterSubscriptionResolver {
-	return &clusterSubscriptionResolver{r}
-}
 
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
@@ -979,7 +896,6 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
 type accountResolver struct{ *Resolver }
-type clusterSubscriptionResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
 type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }

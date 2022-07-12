@@ -7,10 +7,7 @@
 package console
 
 import (
-	context "context"
 	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,7 +19,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsoleClient interface {
-	SetupClusterForAccount(ctx context.Context, in *AccountIn, opts ...grpc.CallOption) (*SetupClusterVoid, error)
 }
 
 type consoleClient struct {
@@ -33,20 +29,10 @@ func NewConsoleClient(cc grpc.ClientConnInterface) ConsoleClient {
 	return &consoleClient{cc}
 }
 
-func (c *consoleClient) SetupClusterForAccount(ctx context.Context, in *AccountIn, opts ...grpc.CallOption) (*SetupClusterVoid, error) {
-	out := new(SetupClusterVoid)
-	err := c.cc.Invoke(ctx, "/Console/SetupClusterForAccount", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ConsoleServer is the server API for Console service.
 // All implementations must embed UnimplementedConsoleServer
 // for forward compatibility
 type ConsoleServer interface {
-	SetupClusterForAccount(context.Context, *AccountIn) (*SetupClusterVoid, error)
 	mustEmbedUnimplementedConsoleServer()
 }
 
@@ -54,9 +40,6 @@ type ConsoleServer interface {
 type UnimplementedConsoleServer struct {
 }
 
-func (UnimplementedConsoleServer) SetupClusterForAccount(context.Context, *AccountIn) (*SetupClusterVoid, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetupClusterForAccount not implemented")
-}
 func (UnimplementedConsoleServer) mustEmbedUnimplementedConsoleServer() {}
 
 // UnsafeConsoleServer may be embedded to opt out of forward compatibility for this service.
@@ -70,36 +53,13 @@ func RegisterConsoleServer(s grpc.ServiceRegistrar, srv ConsoleServer) {
 	s.RegisterService(&Console_ServiceDesc, srv)
 }
 
-func _Console_SetupClusterForAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AccountIn)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsoleServer).SetupClusterForAccount(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Console/SetupClusterForAccount",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).SetupClusterForAccount(ctx, req.(*AccountIn))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Console_ServiceDesc is the grpc.ServiceDesc for Console service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Console_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "Console",
 	HandlerType: (*ConsoleServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SetupClusterForAccount",
-			Handler:    _Console_SetupClusterForAccount_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "console.proto",
+	Methods:     []grpc.MethodDesc{},
+	Streams:     []grpc.StreamDesc{},
+	Metadata:    "console.proto",
 }
