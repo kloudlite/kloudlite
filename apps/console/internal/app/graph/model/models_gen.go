@@ -278,6 +278,13 @@ type Secret struct {
 	Status      string     `json:"status"`
 }
 
+type StoragePlan struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func (StoragePlan) IsEntity() {}
+
 type User struct {
 	ID      repos.ID  `json:"id"`
 	Devices []*Device `json:"devices"`

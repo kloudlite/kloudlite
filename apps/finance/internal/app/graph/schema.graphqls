@@ -28,6 +28,11 @@ type Account @key(fields: "id") {
   created: Date!
 }
 
+extend type StoragePlan @key(fields: "name"){
+    name: String! @external
+    pricePerGB: Float!
+}
+
 extend type ComputePlan @key(fields: "name"){
     name: String! @external
     sharedPrice: Float!

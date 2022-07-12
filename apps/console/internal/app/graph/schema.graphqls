@@ -28,6 +28,7 @@ type Query {
   infra_getCluster(clusterId: ID!): Cluster
 
   core_getComputePlans: [ComputePlan!]
+  core_getStoragePlans: [StoragePlan!]
   core_getLamdaPlan: LamdaPlan!
 }
 
@@ -118,6 +119,11 @@ type Mutation {
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
 
+}
+
+type StoragePlan @key(fields: "name"){
+  name: String!
+  description: String!
 }
 
 type ComputePlan @key(fields: "name"){

@@ -19,6 +19,7 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	loki_server "kloudlite.io/pkg/loki-server"
 	"kloudlite.io/pkg/redpanda"
+	"time"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
@@ -124,18 +125,27 @@ var Module = fx.Module(
 	config.EnvFx[WorkloadStatusConsumerEnv](),
 	redpanda.NewConsumerFx[*WorkloadStatusConsumerEnv](),
 	fx.Invoke(func(domain domain.Domain, consumer redpanda.Consumer) {
-		consumer.StartConsuming(func(msg []byte) error {
+		consumer.StartConsuming(func(msg []byte, timestamp time.Time) error {
 			var update op_crds.StatusUpdate
 			fmt.Println(string(msg))
 			if err := json.Unmarshal(msg, &update); err != nil {
 				fmt.Println(err)
 				return err
 			}
-			fmt.Println("Kind:", update.Metadata.GroupVersionKind.Kind)
+			fmt.Println(update.Metadata.GroupVersionKind.Kind)
 			switch update.Metadata.GroupVersionKind.Kind {
 			case "App":
-				fmt.Println("Updating Kind:", update.Metadata.GroupVersionKind.Kind)
 				domain.OnUpdateApp(context.TODO(), &update)
+
+			case "Lambda":
+				domain.OnUpdateApp(context.TODO(), &update)
+
+			case "Router":
+				domain.OnUpdateRouter(context.TODO(), &update)
+
+			case "Project":
+				domain.OnUpdateProject(context.TODO(), &update)
+
 			default:
 				fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
 			}

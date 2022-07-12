@@ -9,3 +9,8 @@ type ComputePlan struct {
 	MaxSharedCPUPerPod    float64 `yaml:"maxSharedCPUPerPod"`
 	MaxDedicatedCPUPerPod float64 `yaml:"maxDedicatedCPUPerPod"`
 }
+
+type StoragePlan struct {
+	Name string `yaml:"name"`
+	Desc string `yaml:"desc"`
+}
