@@ -24,8 +24,10 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: {{$ingressClass}}
     cert-manager.io/cluster-issuer: {{$clusterIssuer}}
-    {{- if $virtualHost }}
+    {{- if $forceSSLRedirect }}
     ingress.kubernetes.io/ssl-redirect: {{$forceSSLRedirect}}
+    {{- else}}
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
     {{- end}}
     {{- if $virtualHost }}
     nginx.ingress.kubernetes.io/upstream-vhost: {{$virtualHost}}
@@ -36,11 +38,11 @@ metadata:
   ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
 spec:
   tls:
+    {{- range $v := $domains }}
     - hosts:
-        {{- range $v := $domains }}
         - {{$v}}
-        {{- end }}
-      secretName: {{$name}}-tls-secret
+      secretName: {{$v}}-tls-secret
+    {{- end }}
   rules:
     {{- range $domain := $domains }}
     - host: {{$domain}}

@@ -130,6 +130,7 @@ func (r *StatusWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&source.Kind{Type: object},
 			handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
+
 					wName, err := WrappedName{Name: obj.GetName(), Group: obj.GetAnnotations()[constants.AnnotationKeys.GroupVersionKind]}.
 						String()
 					if err != nil {
