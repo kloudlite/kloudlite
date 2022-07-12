@@ -161,6 +161,7 @@ func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID
 			ID: session.UserId,
 		},
 		Name: device.Name,
+		IP:   device.Ip,
 		Account: &model.Account{
 			ID: device.AccountId,
 		},
