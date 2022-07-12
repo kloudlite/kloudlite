@@ -10,7 +10,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -20,159 +19,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type AccountIn struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	AccountId   string `protobuf:"bytes,1,opt,name=accountId,proto3" json:"accountId,omitempty"`
-	AccountName string `protobuf:"bytes,2,opt,name=accountName,proto3" json:"accountName,omitempty"`
-	Provider    string `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
-	Region      string `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
-}
-
-func (x *AccountIn) Reset() {
-	*x = AccountIn{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_console_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AccountIn) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AccountIn) ProtoMessage() {}
-
-func (x *AccountIn) ProtoReflect() protoreflect.Message {
-	mi := &file_console_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AccountIn.ProtoReflect.Descriptor instead.
-func (*AccountIn) Descriptor() ([]byte, []int) {
-	return file_console_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *AccountIn) GetAccountId() string {
-	if x != nil {
-		return x.AccountId
-	}
-	return ""
-}
-
-func (x *AccountIn) GetAccountName() string {
-	if x != nil {
-		return x.AccountName
-	}
-	return ""
-}
-
-func (x *AccountIn) GetProvider() string {
-	if x != nil {
-		return x.Provider
-	}
-	return ""
-}
-
-func (x *AccountIn) GetRegion() string {
-	if x != nil {
-		return x.Region
-	}
-	return ""
-}
-
-type SetupClusterVoid struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *SetupClusterVoid) Reset() {
-	*x = SetupClusterVoid{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_console_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *SetupClusterVoid) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetupClusterVoid) ProtoMessage() {}
-
-func (x *SetupClusterVoid) ProtoReflect() protoreflect.Message {
-	mi := &file_console_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetupClusterVoid.ProtoReflect.Descriptor instead.
-func (*SetupClusterVoid) Descriptor() ([]byte, []int) {
-	return file_console_proto_rawDescGZIP(), []int{1}
-}
-
 var File_console_proto protoreflect.FileDescriptor
 
 var file_console_proto_rawDesc = []byte{
-	0x0a, 0x0d, 0x63, 0x6f, 0x6e, 0x73, 0x6f, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
-	0x7f, 0x0a, 0x09, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x12, 0x1c, 0x0a, 0x09,
-	0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x09, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x61, 0x63,
-	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0b, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08,
-	0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
-	0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69,
-	0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e,
-	0x22, 0x12, 0x0a, 0x10, 0x53, 0x65, 0x74, 0x75, 0x70, 0x43, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72,
-	0x56, 0x6f, 0x69, 0x64, 0x32, 0x42, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x73, 0x6f, 0x6c, 0x65, 0x12,
-	0x37, 0x0a, 0x16, 0x53, 0x65, 0x74, 0x75, 0x70, 0x43, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x46,
-	0x6f, 0x72, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x0a, 0x2e, 0x41, 0x63, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x49, 0x6e, 0x1a, 0x11, 0x2e, 0x53, 0x65, 0x74, 0x75, 0x70, 0x43, 0x6c, 0x75,
-	0x73, 0x74, 0x65, 0x72, 0x56, 0x6f, 0x69, 0x64, 0x42, 0x1a, 0x5a, 0x18, 0x6b, 0x6c, 0x6f, 0x75,
-	0x64, 0x6c, 0x69, 0x74, 0x65, 0x2e, 0x69, 0x6f, 0x2f, 0x72, 0x70, 0x63, 0x2f, 0x63, 0x6f, 0x6e,
-	0x73, 0x6f, 0x6c, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x0a, 0x0d, 0x63, 0x6f, 0x6e, 0x73, 0x6f, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32,
+	0x09, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x73, 0x6f, 0x6c, 0x65, 0x42, 0x1a, 0x5a, 0x18, 0x6b, 0x6c,
+	0x6f, 0x75, 0x64, 0x6c, 0x69, 0x74, 0x65, 0x2e, 0x69, 0x6f, 0x2f, 0x72, 0x70, 0x63, 0x2f, 0x63,
+	0x6f, 0x6e, 0x73, 0x6f, 0x6c, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var (
-	file_console_proto_rawDescOnce sync.Once
-	file_console_proto_rawDescData = file_console_proto_rawDesc
-)
-
-func file_console_proto_rawDescGZIP() []byte {
-	file_console_proto_rawDescOnce.Do(func() {
-		file_console_proto_rawDescData = protoimpl.X.CompressGZIP(file_console_proto_rawDescData)
-	})
-	return file_console_proto_rawDescData
-}
-
-var file_console_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_console_proto_goTypes = []interface{}{
-	(*AccountIn)(nil),        // 0: AccountIn
-	(*SetupClusterVoid)(nil), // 1: SetupClusterVoid
-}
+var file_console_proto_goTypes = []interface{}{}
 var file_console_proto_depIdxs = []int32{
-	0, // 0: Console.SetupClusterForAccount:input_type -> AccountIn
-	1, // 1: Console.SetupClusterForAccount:output_type -> SetupClusterVoid
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -183,45 +42,18 @@ func file_console_proto_init() {
 	if File_console_proto != nil {
 		return
 	}
-	if !protoimpl.UnsafeEnabled {
-		file_console_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AccountIn); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_console_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetupClusterVoid); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_console_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_console_proto_goTypes,
 		DependencyIndexes: file_console_proto_depIdxs,
-		MessageInfos:      file_console_proto_msgTypes,
 	}.Build()
 	File_console_proto = out.File
 	file_console_proto_rawDesc = nil

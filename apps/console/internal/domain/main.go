@@ -4,11 +4,11 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"fmt"
+	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"go.uber.org/fx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
@@ -59,7 +59,7 @@ type domain struct {
 	iamClient            iam.IAMClient
 	authClient           auth.AuthClient
 	changeNotifier       rcn.ResourceChangeNotifier
-	clusterAccountRepo   repos.DbRepo[*entities.ClusterAccount]
+	wgAccountRepo        repos.DbRepo[*entities.WGAccount]
 	financeClient        finance.FinanceClient
 	inventoryPath        string
 }
@@ -158,103 +158,6 @@ func (d *domain) GetComputePlans(_ context.Context) ([]entities.ComputePlan, err
 		return nil, err
 	}
 	return plans, nil
-}
-
-func (d *domain) OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error {
-	one, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
-		"cluster_id": payload.ClusterId,
-		"account_id": payload.AccountId,
-	})
-	if err != nil {
-		return err
-	}
-	if one == nil {
-		return errors.New("cluster account not found")
-	}
-	if payload.Done {
-		one.Status = entities.ClusterAccountStateLive
-		one.WgPubKey = payload.WgPublicKey
-		one.WgPort = payload.WgPort
-	} else {
-		one.Status = entities.ClusterAccountStateError
-	}
-	_, err = d.clusterAccountRepo.UpdateById(ctx, one.Id, one)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *domain) CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error) {
-	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
-		"region":   region,
-		"provider": provider,
-	})
-	if err != nil {
-		return nil, errors.New("No clusters available in the region")
-	}
-	data.ClusterID = cluster.Id
-	data.Status = entities.ClusterAccountStateSyncing
-	fmt.Println(repos.Filter{
-		"cluster_id": cluster.Id,
-		"account_id": data.AccountID,
-	})
-	existingAccounts, err := d.clusterAccountRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"cluster_id": cluster.Id,
-		},
-		Sort: map[string]interface{}{
-			"index": 1,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println(existingAccounts, err)
-
-	index := -1
-	count := 1
-	for i, d := range existingAccounts {
-		fmt.Println(i, d, count)
-		count++
-		if d.Index != i+1 {
-			index = i + 1
-			break
-		}
-	}
-	if index == -1 {
-		index = count
-	}
-
-	data.Index = index
-	data.WgIp = fmt.Sprintf("10.12.%d.1", index)
-
-	create, err := d.clusterAccountRepo.Create(ctx, data)
-	// TODO
-	//if err != nil {
-	//	return nil, err
-	//}
-	//err = SendAction(
-	//	d.infraMessenger,
-	//	entities.SetupClusterAccountAction{
-	//		ClusterID: create.ClusterID,
-	//		Region:    cluster.Region,
-	//		Provider:  cluster.Provider,
-	//		AccountId: string(create.AccountID),
-	//		AccountIp: create.WgIp,
-	//	},
-	//)
-
-	fmt.Println(entities.SetupClusterAccountAction{
-		ClusterID: create.ClusterID,
-		Region:    cluster.Region,
-		Provider:  cluster.Provider,
-		AccountId: string(create.AccountID),
-		AccountIp: create.WgIp,
-	})
-
-	return create, nil
 }
 
 func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, resourceNamespace string, resourceName string, status ResourceStatus) (bool, error) {
@@ -714,9 +617,7 @@ func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (string
 	if err != nil {
 		return "", err
 	}
-	cluster, err := d.clusterRepo.FindById(ctx, device.ClusterId)
-	clusterAccount, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
-		"cluster_id": device.ClusterId,
+	wgAccount, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
 		"account_id": device.AccountId,
 	})
 	if err != nil {
@@ -733,7 +634,7 @@ DNS = 10.43.0.10
 PublicKey = %v
 AllowedIPs = 10.42.0.0/16, 10.43.0.0/16, 10.13.13.0/24
 Endpoint = %v:%v
-`, *device.PrivateKey, device.Ip, clusterAccount.WgPubKey, cluster.Name, clusterAccount.WgPort), nil
+`, *device.PrivateKey, device.Ip, wgAccount.WgPubKey, wgAccount.AccessDomain, wgAccount.WgPort), nil
 }
 
 func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error) {
@@ -767,15 +668,6 @@ func (d *domain) GetManagedServiceTemplate(_ context.Context, name string) (*ent
 		}
 	}
 	return nil, errors.New("not found")
-}
-
-func isReady(c []metav1.Condition) bool {
-	for _, _c := range c {
-		if _c.Type == "Ready" && _c.Status == "True" {
-			return true
-		}
-	}
-	return false
 }
 
 func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error {
@@ -1596,26 +1488,6 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 	return create, err
 }
 
-func (d *domain) OnSetupCluster(ctx context.Context, response entities.SetupClusterResponse) error {
-	fmt.Println("OnSetupClusterDone")
-	byId, err := d.clusterRepo.FindById(ctx, response.ClusterID)
-	if err != nil {
-		return err
-	}
-	if response.Done {
-		byId.Status = entities.ClusterStateLive
-	} else {
-		byId.Status = entities.ClusterStateError
-	}
-
-	_, err = d.clusterRepo.UpdateById(ctx, response.ClusterID, byId)
-	if err != nil {
-		panic(err)
-		return err
-	}
-	return nil
-}
-
 func (d *domain) OnDeleteCluster(cxt context.Context, response entities.DeleteClusterResponse) error {
 	byId, err := d.clusterRepo.FindById(cxt, response.ClusterID)
 	if err != nil {
@@ -1623,23 +1495,6 @@ func (d *domain) OnDeleteCluster(cxt context.Context, response entities.DeleteCl
 	}
 	if response.Done {
 		byId.Status = entities.ClusterStateDown
-	} else {
-		byId.Status = entities.ClusterStateError
-	}
-	_, err = d.clusterRepo.UpdateById(cxt, response.ClusterID, byId)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *domain) OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error {
-	byId, err := d.clusterRepo.FindById(cxt, response.ClusterID)
-	if err != nil {
-		return err
-	}
-	if response.Done {
-		byId.Status = entities.ClusterStateLive
 	} else {
 		byId.Status = entities.ClusterStateError
 	}
@@ -1684,120 +1539,57 @@ func (d *domain) OnDeletePeer(cxt context.Context, response entities.DeletePeerR
 	return nil
 }
 
-func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (cluster *entities.Cluster, e error) {
-	data.Status = entities.ClusterStateSyncing
-	c, err := d.clusterRepo.Create(ctx, data)
-	if err != nil {
-		return nil, err
+func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
+	deviceRange := ipaddr.NewIPAddressString("10.13.0.0/16")
+
+	if address, addressError := deviceRange.ToAddress(); addressError == nil {
+		increment := address.Increment(deviceOffset + 2)
+		return ipaddr.NewIPAddressString(increment.GetNetIP().String()), nil
+	} else {
+		return nil, addressError
 	}
-	fmt.Println(entities.SetupClusterAction{
-		ClusterID: c.Id,
-		Region:    c.Region,
-		Provider:  c.Provider,
+}
+
+func (d *domain) ensureWgAccount(ctx context.Context, accountId repos.ID) error {
+	one, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
+		"account_id": accountId,
 	})
-	// TODO
-	//err = SendAction(
-	//	d.infraMessenger,
-	//	entities.SetupClusterAction{
-	//		ClusterID:  c.Id,
-	//		Region:     c.Region,
-	//		Provider:   c.Provider,
-	//		NodesCount: c.NodesCount,
-	//	},
-	//)
 	if err != nil {
-		panic(err)
-		return nil, err
+		return err
 	}
-	return c, e
-}
-
-func (d *domain) UpdateCluster(
-	ctx context.Context,
-	id repos.ID,
-	name *string,
-	nodeCount *int,
-) (bool, error) {
-	c, err := d.clusterRepo.FindById(ctx, id)
-	if c.Status == entities.ClusterStateSyncing {
-		return false, errors.New("Cluster is still syncing")
-	}
-	if err != nil {
-		return false, err
-	}
-	if name != nil {
-		c.Name = *name
-	}
-	if nodeCount != nil {
-		c.Status = entities.ClusterStateSyncing
-	}
-	_, err = d.clusterRepo.UpdateById(ctx, id, c)
-	if err != nil {
-		return false, err
-	}
-	if c.Status == entities.ClusterStateSyncing {
-		// TODO
-		//err = SendAction(d.infraMessenger, entities.UpdateClusterAction{
-		//	ClusterID:  id,
-		//	Region:     updated.Region,
-		//	Provider:   updated.Provider,
-		//	NodesCount: updated.NodesCount,
-		//})
-		if err != nil {
-			return false, err
+	if one == nil {
+		pk, e := wgtypes.GeneratePrivateKey()
+		if e != nil {
+			return e
 		}
-	}
-	return true, nil
-}
-
-func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
-	cluster, err := d.clusterRepo.FindById(ctx, clusterId)
-	if err != nil {
-		return err
-	}
-	cluster.Status = entities.ClusterStateSyncing
-	_, err = d.clusterRepo.UpdateById(ctx, clusterId, cluster)
-	if err != nil {
-		return err
-	}
-	//err = SendAction(d.infraMessenger, entities.DeleteClusterAction{
-	//	ClusterID: clusterId,
-	//	Provider:  cluster.Provider,
-	//})
-	if err != nil {
-		return err
+		pkString := pk.String()
+		pbKeyString := pk.PublicKey().String()
+		_, err = d.wgAccountRepo.Create(ctx, &entities.WGAccount{
+			AccountID:    accountId,
+			WgPubKey:     pbKeyString,
+			WgPrivateKey: pkString,
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (d *domain) ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.ClusterAccount, error) {
-	return d.clusterAccountRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": accountId,
-		},
-	})
-}
-
-func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
-
-	clusterAccount, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
-		"cluster_id": clusterId,
-		"account_id": accountId,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch account on cluster %v", err)
-	}
-
+func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
 	pk, e := wgtypes.GeneratePrivateKey()
 	if e != nil {
 		return nil, fmt.Errorf("unable to generate private key because %v", e)
 	}
-	pkString := pk.String()
-	pbKeyString := pk.PublicKey().String()
+
+	e = d.ensureWgAccount(ctx, accountId)
+	if e != nil {
+		return nil, fmt.Errorf("unable to ensure wg account because %v", e)
+	}
 
 	devices, err := d.deviceRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
-			"cluster_id": clusterId,
+			"account_id": accountId,
 		},
 		Sort: map[string]any{
 			"index": 1,
@@ -1820,12 +1612,13 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 	if index == -1 {
 		index = count
 	}
-	ipSplits := strings.Split(clusterAccount.WgIp, ".")
-	ip := fmt.Sprintf("10.12.%v.%v", ipSplits[2], index+2)
-	fmt.Println(ip)
+
+	deviceIp, e := getRemoteDeviceIp(int64(index + 2))
+	ip := deviceIp.String()
+	pkString := pk.String()
+	pbKeyString := pk.PublicKey().String()
 	newDevice, e := d.deviceRepo.Create(ctx, &entities.Device{
 		Name:       deviceName,
-		ClusterId:  clusterId,
 		AccountId:  accountId,
 		UserId:     userId,
 		PrivateKey: &pkString,
@@ -1839,12 +1632,6 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 		return nil, fmt.Errorf("unable to persist in db %v", e)
 	}
 
-	//e = SendAction(d.infraMessenger, entities.AddPeerAction{
-	//	ClusterID: clusterId,
-	//	PublicKey: pbKeyString,
-	//	PeerIp:    ip,
-	//	AccountId: string(accountId),
-	//})
 	if e != nil {
 		return nil, e
 	}
@@ -1873,40 +1660,19 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	return err
 }
 
-func (d *domain) ListClusterDevices(ctx context.Context, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error) {
+func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error) {
 	q := make(repos.Filter)
-	if clusterId == nil {
-		q["cluster_id"] = *clusterId
-	}
-	if accountId != nil {
-		q["account_id"] = *accountId
-	}
+	q["account_id"] = accountId
 	return d.deviceRepo.Find(ctx, repos.Query{
 		Filter: q,
 	})
 }
 
-func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error) {
+func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error) {
 	q := make(repos.Filter)
-	if clusterId != nil {
-		q["cluster_id"] = *clusterId
-	}
-	if accountId != nil {
-		q["account_id"] = *accountId
-	}
 	q["user_id"] = userId
 	return d.deviceRepo.Find(ctx, repos.Query{
 		Filter: q,
-	})
-}
-
-func (d *domain) GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error) {
-	return d.clusterRepo.FindById(ctx, id)
-}
-
-func (d *domain) GetClusters(ctx context.Context) ([]*entities.Cluster, error) {
-	return d.clusterRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{},
 	})
 }
 
@@ -1931,7 +1697,7 @@ func fxDomain(
 	appRepo repos.DbRepo[*entities.App],
 	managedSvcRepo repos.DbRepo[*entities.ManagedService],
 	managedResRepo repos.DbRepo[*entities.ManagedResource],
-	clusterAccountRepo repos.DbRepo[*entities.ClusterAccount],
+	wgAccountRepo repos.DbRepo[*entities.WGAccount],
 	msgP redpanda.Producer,
 	env *Env,
 	logger logger.Logger,
@@ -1943,7 +1709,7 @@ func fxDomain(
 	changeNotifier rcn.ResourceChangeNotifier,
 ) Domain {
 	return &domain{
-		clusterAccountRepo:   clusterAccountRepo,
+		wgAccountRepo:        wgAccountRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,
 		ciClient:             ciClient,

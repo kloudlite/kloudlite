@@ -12,23 +12,25 @@ type Domain interface {
 	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
 	GetStoragePlans(ctx context.Context) ([]entities.StoragePlan, error)
 
-	CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
-	CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error)
-	UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
-	DeleteCluster(ctx context.Context, clusterId repos.ID) error
-	GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
-	GetClusters(ctx context.Context) ([]*entities.Cluster, error)
-	ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.ClusterAccount, error)
-	OnSetupCluster(cxt context.Context, response entities.SetupClusterResponse) error
-	OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
-	OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error
+	//CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
+	//CreateClusterAccount(ctx context.Context, data *entities.WGAccount, region string, provider string) (*entities.WGAccount, error)
+	//UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
+	//DeleteCluster(ctx context.Context, clusterId repos.ID) error
+	//GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
+	//GetClusters(ctx context.Context) ([]*entities.Cluster, error)
+	//ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.WGAccount, error)
+	//OnSetupCluster(cxt context.Context, response entities.SetupClusterResponse) error
+	//OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
+	//OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error
 
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
 	GetDeviceConfig(ctx context.Context, id repos.ID) (string, error)
-	AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, accountId repos.ID, userId repos.ID) (dev *entities.Device, e error)
+	AddDevice(
+		ctx context.Context,
+		deviceName string, accountId repos.ID, userId repos.ID) (dev *entities.Device, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
-	ListClusterDevices(ctx context.Context, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error)
-	ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error)
+	ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error)
+	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
 	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
 
 	CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error)

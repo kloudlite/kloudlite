@@ -24,9 +24,6 @@ type Query {
   managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
   managedRes_listResources(installationId: ID!): [ManagedRes!]
 
-  infra_getClusters: [Cluster]
-  infra_getCluster(clusterId: ID!): Cluster
-
   core_getComputePlans: [ComputePlan!]
   core_getStoragePlans: [StoragePlan!]
   core_getLamdaPlan: LamdaPlan!
@@ -64,11 +61,8 @@ type Mutation {
   managedRes_update(resId: ID!, values: Json): Boolean!
   managedRes_delete(resId: ID!): Boolean
 
-  infra_createCluster(name: String!, provider: String!, region: String!, clusterType: String!): Cluster!
-  infra_updateCluster(name: String, clusterId: ID!, nodesCount: Int): Boolean!
-  infra_deleteCluster(clusterId: ID!): Boolean!
-  infra_addDevice(clusterId: ID!, accountId: ID!, name: String!): Device!
-  infra_removeDevice(deviceId: ID!): Boolean!
+  core_addDevice(accountId: ID!, name: String!): Device!
+  core_removeDevice(deviceId: ID!): Boolean!
 
   core_createProject(
     accountId: ID!,
@@ -265,17 +259,11 @@ type Route {
   port: Int!
 }
 
-type ClusterSubscription {
-  cluster: Cluster!
-  account: Account!
-  devices: [Device!]
-  userDevices: [Device!]
-}
 
 extend type Account @key(fields: "id") {
   id: ID! @external
   projects: [Project!]!
-  clusterSubscriptions:[ClusterSubscription!]!
+  devices: [Device!]!
 }
 
 
@@ -375,18 +363,11 @@ extend type User @key(fields: "id") {
   devices: [Device]
 }
 
-type Cluster @key(fields: "id") {
-  id: ID!
-  name: String!
-  provider: String!
-  region: String!
-}
 
 type Device @key(fields: "id") {
   id: ID!
   user: User!
   name: String!
-  cluster: Cluster!
   configuration: String!
   ip: String!
   account: Account!

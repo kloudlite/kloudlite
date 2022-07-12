@@ -20,10 +20,6 @@ func (r *entityResolver) FindAppByID(ctx context.Context, id repos.ID) (*model.A
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *entityResolver) FindClusterByID(ctx context.Context, id repos.ID) (*model.Cluster, error) {
-	return r.Query().InfraGetCluster(ctx, id)
-}
-
 func (r *entityResolver) FindComputePlanByName(ctx context.Context, name string) (*model.ComputePlan, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -31,11 +27,10 @@ func (r *entityResolver) FindComputePlanByName(ctx context.Context, name string)
 func (r *entityResolver) FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error) {
 	device, err := r.Domain.GetDevice(ctx, id)
 	return &model.Device{
-		ID:      device.Id,
-		User:    &model.User{ID: device.UserId},
-		Name:    device.Name,
-		Cluster: &model.Cluster{ID: device.ClusterId},
-		IP:      device.Ip,
+		ID:   device.Id,
+		User: &model.User{ID: device.UserId},
+		Name: device.Name,
+		IP:   device.Ip,
 	}, err
 }
 

@@ -120,26 +120,6 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 				list[idx[i]] = entity
 				return nil
 			}
-		case "Cluster":
-			resolverName, err := entityResolverNameForCluster(ctx, rep)
-			if err != nil {
-				return fmt.Errorf(`finding resolver for Entity "Cluster": %w`, err)
-			}
-			switch resolverName {
-
-			case "findClusterByID":
-				id0, err := ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, rep["id"])
-				if err != nil {
-					return fmt.Errorf(`unmarshalling param 0 for findClusterByID(): %w`, err)
-				}
-				entity, err := ec.resolvers.Entity().FindClusterByID(ctx, id0)
-				if err != nil {
-					return fmt.Errorf(`resolving Entity "Cluster": %w`, err)
-				}
-
-				list[idx[i]] = entity
-				return nil
-			}
 		case "ComputePlan":
 			resolverName, err := entityResolverNameForComputePlan(ctx, rep)
 			if err != nil {
@@ -341,23 +321,6 @@ func entityResolverNameForApp(ctx context.Context, rep map[string]interface{}) (
 		return "findAppByID", nil
 	}
 	return "", fmt.Errorf("%w for App", ErrTypeNotFound)
-}
-
-func entityResolverNameForCluster(ctx context.Context, rep map[string]interface{}) (string, error) {
-	for {
-		var (
-			m   map[string]interface{}
-			val interface{}
-			ok  bool
-		)
-		_ = val
-		m = rep
-		if _, ok = m["id"]; !ok {
-			break
-		}
-		return "findClusterByID", nil
-	}
-	return "", fmt.Errorf("%w for Cluster", ErrTypeNotFound)
 }
 
 func entityResolverNameForComputePlan(ctx context.Context, rep map[string]interface{}) (string, error) {

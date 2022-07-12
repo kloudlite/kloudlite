@@ -15,7 +15,6 @@ type Device struct {
 	repos.BaseEntity `bson:",inline"`
 	Index            int          `json:"index" bson:"index"`
 	Name             string       `json:"name" bson:"name"`
-	ClusterId        repos.ID     `json:"cluster_id" bson:"cluster_id"`
 	AccountId        repos.ID     `json:"account_id" bson:"account_id"`
 	UserId           repos.ID     `json:"user_id" bson:"user_id"`
 	PrivateKey       *string      `json:"private_key" bson:"private_key"`

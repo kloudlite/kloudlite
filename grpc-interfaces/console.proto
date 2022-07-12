@@ -3,15 +3,8 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/console";
 
 service Console {
-  rpc SetupClusterForAccount(AccountIn) returns (SetupClusterVoid);
+
 }
 
-message AccountIn {
-  string accountId = 1;
-  string accountName = 2;
-  string provider = 3;
-  string region = 4;
-}
 
-message SetupClusterVoid {}
 
