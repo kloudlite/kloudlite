@@ -70,7 +70,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
-	if x := req.EnsureLabels(); !x.ShouldProceed() {
+	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
 	}
 
@@ -86,11 +86,10 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 }
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
-	// TODO: delete correspoding harbor account, and user account
 	ctx := req.Context()
 	project := req.Object
 
-	accountRef, ok := project.Annotations[constants.AccountAnnotation]
+	accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
 	if !ok {
 		return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
 	}
@@ -135,14 +134,14 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		cs = append(cs, conditions.New("NamespaceExists", true, "Found"))
 	}
 
-	accountRef, ok := project.Annotations[constants.AccountAnnotation]
+	accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
 	if !ok {
 		// TODO: we need to have account labels on all the projects
 		return rApi.NewStepResult(&ctrl.Result{}, nil)
 		// return req.FailWithStatusError(
 		// 	errors.Newf(
 		// 		"Account Annotation (%s) not found in resource",
-		// 		constants.AccountAnnotation,
+		// 		constants.AnnotationAccount,
 		// 	),
 		// )
 	}
@@ -231,7 +230,7 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		return req.FailWithOpError(r.Update(ctx, project))
 	}
 
-	accountRef, ok := project.Annotations[constants.AccountAnnotation]
+	accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
 	if !ok {
 		return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
 	}

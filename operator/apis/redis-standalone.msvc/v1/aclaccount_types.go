@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
@@ -13,8 +14,8 @@ type ACLAccountSpec struct {
 	ManagedSvcName string              `json:"managedSvcName"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // ACLAccount is the Schema for the aclaccounts API
 type ACLAccount struct {
@@ -34,8 +35,13 @@ func (ac *ACLAccount) GetEnsuredLabels() map[string]string {
 		fmt.Sprintf("%s/ref", GroupVersion.Group): ac.Name,
 	}
 }
+func (m *ACLAccount) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ACLAccount").String(),
+	}
+}
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // ACLAccountList contains a list of ACLAccount
 type ACLAccountList struct {

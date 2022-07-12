@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
@@ -24,10 +25,6 @@ type Service struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
-func (s *Service) NameRef() string {
-	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
-}
-
 func (s *Service) GetStatus() *rApi.Status {
 	return &s.Status
 }
@@ -35,6 +32,11 @@ func (s *Service) GetStatus() *rApi.Status {
 func (s *Service) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		fmt.Sprintf("%s/ref", GroupVersion.Group): s.Name,
+	}
+}
+func (m *Service) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Service").String(),
 	}
 }
 

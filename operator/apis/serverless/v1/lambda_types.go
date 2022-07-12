@@ -4,6 +4,7 @@ import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "operators.kloudlite.io/apis/crds/v1"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -33,6 +34,14 @@ func (lm *Lambda) GetEnsuredLabels() map[string]string {
 		fmt.Sprintf("%s/ref", GroupVersion.Group): lm.Name,
 	}
 }
+
+func (m *Lambda) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Lambda").String(),
+	}
+}
+
+var LambdaGroupVersionKind = GroupVersion.WithKind("Lambda")
 
 // +kubebuilder:object:root=true
 

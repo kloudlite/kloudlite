@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -32,10 +33,7 @@ type Router struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
-func (r *Router) NameRef() string {
-	return ""
-	// return fmt.Sprintf("%s")
-}
+var RouterGroupVersionKind = GroupVersion.WithKind("Router")
 
 func (r *Router) GetStatus() *rApi.Status {
 	return &r.Status
@@ -44,6 +42,11 @@ func (r *Router) GetStatus() *rApi.Status {
 func (r *Router) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		fmt.Sprintf("%s/ref", GroupVersion.Group): r.Name,
+	}
+}
+func (m *Router) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Router").String(),
 	}
 }
 

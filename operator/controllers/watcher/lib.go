@@ -6,23 +6,31 @@ import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/redpanda"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+type stageTT string
+
+var Stages = struct {
+	Exists  stageTT
+	Deleted stageTT
+}{
+	Exists:  "EXISTS",
+	Deleted: "DELETED",
+}
+
 type MessageReply struct {
-	ClusterId string `json:"clusterId"`
-
-	ProjectId  string `json:"projectId"`
-	ResourceId string `json:"resourceId"`
-
 	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
 	Conditions      []metav1.Condition `json:"conditions,omitempty"`
 	IsReady         bool               `json:"isReady,omitempty"`
+	ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
 	Key             string             `json:"key"`
-	AccountId       string             `json:"accountId"`
 	Billing         ResourceBilling    `json:"billing,omitempty"`
+	Metadata        KlMetadata         `json:"metadata,omitempty"`
+	Stage           stageTT            `json:"stage"`
 }
 
 type Notifier struct {
@@ -31,16 +39,15 @@ type Notifier struct {
 	topic     string
 }
 
-func (n *Notifier) notify(ctx context.Context, key string, metadata *KlMetadata, status rApi.Status) error {
+func (n *Notifier) notify(ctx context.Context, key string, metadata KlMetadata, status rApi.Status, stage stageTT) error {
+	metadata.ClusterId = n.clusterId
 	msg := MessageReply{
-		ClusterId:       n.clusterId,
-		AccountId:       metadata.AccountId,
-		ProjectId:       metadata.ProjectId,
-		ResourceId:      metadata.ResourceId,
+		Metadata:        metadata,
 		ChildConditions: status.ChildConditions,
 		Conditions:      status.Conditions,
 		IsReady:         status.IsReady,
 		Key:             key,
+		Stage:           stage,
 	}
 
 	b, err := json.Marshal(msg)
@@ -51,14 +58,13 @@ func (n *Notifier) notify(ctx context.Context, key string, metadata *KlMetadata,
 	return n.producer.Produce(ctx, n.topic, key, b)
 }
 
-func (n *Notifier) notifyBilling(ctx context.Context, key string, metadata *KlMetadata, billing *ResourceBilling) error {
+func (n *Notifier) notifyBilling(ctx context.Context, key string, metadata KlMetadata, billing *ResourceBilling, stage stageTT) error {
+	metadata.ClusterId = n.clusterId
 	msg := MessageReply{
-		ClusterId:  n.clusterId,
-		AccountId:  metadata.AccountId,
-		ProjectId:  metadata.ProjectId,
-		ResourceId: metadata.ResourceId,
-		Billing:    *billing,
-		Key:        key,
+		Metadata: metadata,
+		Billing:  *billing,
+		Key:      key,
+		Stage:    stage,
 	}
 	b, err := json.Marshal(msg)
 	if err != nil {
@@ -74,19 +80,6 @@ func NewNotifier(clusterId string, producer *redpanda.Producer, topic string) *N
 
 type Plan string
 
-const (
-	Shared_1x1    Plan = "shared_1x1"
-	Dedicated_1x1 Plan = "dedicated_1x1"
-
-	Shared_1x2    Plan = "shared_1x2"
-	Dedicated_1x2 Plan = "dedicated_1x2"
-
-	Shared_1x4    Plan = "shared_1x4"
-	Dedicated_1x4 Plan = "dedicated_1x4"
-
-	Storage Plan = "storage"
-)
-
 type k8sResource string
 
 const (
@@ -95,43 +88,44 @@ const (
 )
 
 type k8sItem struct {
-	Type  k8sResource
-	Count int
-	Plan  Plan
-	PlanQ float64
+	Type     k8sResource `json:"type"`
+	Count    int         `json:"count,omitempty"`
+	Plan     Plan        `json:"plan,omitempty"`
+	PlanQ    string      `json:"planQ,omitempty"`
+	IsShared string      `json:"isShared,omitempty"`
 }
 
 type ResourceBilling struct {
-	Name        string    `json:"name"`
-	ToBeDeleted bool      `json:"toBeDeleted,omitempty"`
-	Items       []k8sItem `json:"items"`
+	Name  string    `json:"name,omitempty"`
+	Items []k8sItem `json:"items,omitempty"`
 }
 
 type KlMetadata struct {
-	AccountId  string `json:"accountId"`
-	ProjectId  string
-	ResourceId string
-	Plan       string
+	ClusterId        string                  `json:"clusterId"`
+	AccountId        string                  `json:"accountId"`
+	ProjectId        string                  `json:"projectId"`
+	ResourceId       string                  `json:"resourceId"`
+	GroupVersionKind schema.GroupVersionKind `json:"groupVersionKind"`
 }
 
-func ExtractMetadata(obj client.Object) *KlMetadata {
+func ExtractMetadata(obj client.Object) KlMetadata {
 	items := obj.GetAnnotations()
-	return &KlMetadata{
-		AccountId:  items["kloudlite.io/account-ref"],
-		ProjectId:  items["kloudlite.io/project-ref"],
-		ResourceId: items["kloudlite.io/ResourceBilling-ref"],
-		Plan:       items["kloudkite.io/billing-plan"],
+	return KlMetadata{
+		AccountId:        items[constants.AnnotationKeys.Account],
+		ProjectId:        items[constants.AnnotationKeys.Project],
+		ResourceId:       items[constants.AnnotationKeys.Resource],
+		GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
 	}
 }
 
 type WrappedName struct {
-	Name  string                  `json:"name"`
-	Group schema.GroupVersionKind `json:"group"`
+	Name  string `json:"name"`
+	Group string `json:"group"`
 }
 
 func getMsgKey(c client.Object) string {
 	kind := c.GetObjectKind().GroupVersionKind().Kind
-	return fmt.Sprintf("Kind=%s/Namespace=%s/Type=%s", kind, c.GetNamespace(), c.GetName())
+	return fmt.Sprintf("Kind=%s/Namespace=%s/Name=%s", kind, c.GetNamespace(), c.GetName())
 }
 
 func (w WrappedName) String() (string, error) {
