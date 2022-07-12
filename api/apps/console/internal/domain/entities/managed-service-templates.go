@@ -23,6 +23,7 @@ type ManagedServiceTemplate struct {
 	Resources   []ManagedResourceTemplate `yaml:"resources" json:"resources"`
 	Active      bool                      `yaml:"active" json:"active"`
 	Description string                    `yaml:"description" json:"description"`
+	Validator   string                    `yaml:"validator" json:"validator"`
 }
 
 type TemplateOutput struct {
