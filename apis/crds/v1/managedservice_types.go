@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"operators.kloudlite.io/lib/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -28,6 +29,8 @@ type ManagedService struct {
 	Status libOperator.Status `json:"status,omitempty"`
 }
 
+var ManagedServiceGroupVersionKind = GroupVersion.WithKind("ManagedService")
+
 func (m *ManagedService) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
 }
@@ -38,6 +41,12 @@ func (m *ManagedService) GetStatus() *libOperator.Status {
 
 func (m *ManagedService) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
+}
+
+func (m *ManagedService) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ManagedService").String(),
+	}
 }
 
 func (m *ManagedService) GetWatchLabels() map[string]string {

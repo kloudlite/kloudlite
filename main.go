@@ -315,13 +315,14 @@ func main() {
 	}
 	defer producer.Close()
 
-	notifier := watchercontrollers.NewNotifier(envVars.ClusterId, producer, envVars.KafkaReplyTopic)
+	statusNotifier := watchercontrollers.NewNotifier(envVars.ClusterId, producer, envVars.KafkaStatusReplyTopic)
+	billingNotifier := watchercontrollers.NewNotifier(envVars.ClusterId, producer, envVars.KafkaBillingReplyTopic)
 
 	if err = (&watchercontrollers.StatusWatcherReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Env:      *envVars,
-		Notifier: notifier,
+		Notifier: statusNotifier,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StatusWatcher")
 		os.Exit(1)
@@ -330,7 +331,7 @@ func main() {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Env:      *envVars,
-		Notifier: notifier,
+		Notifier: billingNotifier,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "BillingWatcher")
 		os.Exit(1)

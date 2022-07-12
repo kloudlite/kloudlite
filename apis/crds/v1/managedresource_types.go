@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"operators.kloudlite.io/lib/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -29,6 +30,8 @@ type ManagedResource struct {
 	Status            libOperator.Status  `json:"status,omitempty"`
 }
 
+var ManagedResourceGroupVersionKind = GroupVersion.WithKind("ManagedResource")
+
 func (m *ManagedResource) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }
@@ -41,6 +44,12 @@ func (m *ManagedResource) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		"msvc.kloudlite.io/ref":                   m.Spec.ManagedSvcName,
 		fmt.Sprintf("%s/ref", GroupVersion.Group): m.Name,
+	}
+}
+
+func (m *ManagedResource) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ManagedResource").String(),
 	}
 }
 

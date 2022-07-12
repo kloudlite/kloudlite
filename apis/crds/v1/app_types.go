@@ -4,6 +4,7 @@ import (
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -120,8 +121,12 @@ func (app *App) GetStatus() *rApi.Status {
 }
 
 func (app *App) GetEnsuredLabels() map[string]string {
+	return map[string]string{}
+}
+
+func (app *App) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		fmt.Sprintf("%s/ref", GroupVersion.Group): app.Name,
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("App").String(),
 	}
 }
 

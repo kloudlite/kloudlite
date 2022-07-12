@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"operators.kloudlite.io/lib/constants"
 
 	libOperator "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
@@ -26,10 +27,6 @@ type Service struct {
 	Status libOperator.Status `json:"status,omitempty"`
 }
 
-func (s *Service) NameRef() string {
-	return fmt.Sprintf("%s/%s/%s", s.GroupVersionKind().Group, s.Namespace, s.Name)
-}
-
 func (s *Service) GetStatus() *libOperator.Status {
 	return &s.Status
 }
@@ -37,6 +34,12 @@ func (s *Service) GetStatus() *libOperator.Status {
 func (s *Service) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		fmt.Sprintf("%s/ref", GroupVersion.Group): s.Name,
+	}
+}
+
+func (m *Service) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Service").String(),
 	}
 }
 

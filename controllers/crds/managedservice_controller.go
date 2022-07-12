@@ -52,21 +52,15 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
-	if x := req.EnsureLabels(); !x.ShouldProceed() {
+	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
 		return x.Result(), x.Err()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		if err := r.notify(req); err != nil {
-			return ctrl.Result{}, err
-		}
 		return x.Result(), x.Err()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		if err := r.notify(req); err != nil {
-			return ctrl.Result{}, err
-		}
 		return x.Result(), x.Err()
 	}
 
@@ -158,17 +152,6 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 		return req.FailWithOpError(err)
 	}
 	return req.Done()
-}
-
-func (r *ManagedServiceReconciler) notify(req *rApi.Request[*v1.ManagedService]) error {
-	return nil
-	// return r.SendMessage(
-	// 	req.msvc.NameRef(), lib.MessageReply{
-	// 		Key:        req.msvc.NameRef(),
-	// 		Conditions: req.condBuilder.GetAll(),
-	// 		Status:     req.condBuilder.IsTrue(constants.ConditionReady.Type),
-	// 	},
-	// )
 }
 
 func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
