@@ -80,6 +80,8 @@ type TektonVars struct {
 	RunBaseImage string `json:"run-base_image"`
 	RunCmd       string `json:"run-cmd"`
 
+	TaskNamespace string `json:"task-namespace"`
+
 	ArtifactDockerImageName string `json:"artifact_ref-docker_image_name"`
 	ArtifactDockerImageTag  string `json:"artifact_ref-docker_image_tag"`
 }

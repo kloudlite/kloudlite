@@ -11,6 +11,19 @@ type Request struct {
 	triggers.InterceptorRequest
 }
 
+type errT struct {
+	Code int
+	error
+}
+
+func (err errT) Error() string {
+	return err.error.Error()
+}
+
+func NewError(code int, err error) error {
+	return errT{code, err}
+}
+
 type Response struct {
 	triggers.InterceptorResponse
 }
@@ -25,16 +38,18 @@ func NewResponse(req *Request) *Response {
 	}
 }
 
-func (r *Response) Err(err error, statusCode ...codes.Code) *Response {
+func (r *Response) Err(err error) *Response {
+	e := func() errT {
+		if tkErr, ok := err.(errT); ok {
+			return tkErr
+		}
+		return errT{Code: http.StatusInternalServerError, error: err}
+	}()
+
 	r.InterceptorResponse.Continue = false
 
-	sc := codes.Code(http.StatusInternalServerError)
-	if len(statusCode) > 0 {
-		sc = statusCode[0]
-	}
-
 	r.InterceptorResponse.Status = triggers.Status{
-		Code:    sc,
+		Code:    codes.Code(e.Code),
 		Message: err.Error(),
 	}
 
@@ -51,7 +66,7 @@ func (r *Response) Extend(m map[string]any) *Response {
 	return r
 }
 
-func (r *Response) Ok(message ...string) *Response {
+func (r *Response) Ok() *Response {
 	r.InterceptorResponse.Continue = true
 	// r.InterceptorResponse.Status = triggers.Status{
 	// 	Code:    http.StatusOK,

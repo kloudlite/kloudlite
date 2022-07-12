@@ -132,7 +132,10 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 
 func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string, hookId domain.GithubWebhookId) error {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	_, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, int64(hookId))
+	resp, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, int64(hookId))
+	if err != nil && resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
 	return err
 }
 

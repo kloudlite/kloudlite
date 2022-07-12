@@ -5,7 +5,7 @@ import (
 	"kloudlite.io/apps/infra/internal/application"
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/messaging"
 )
 
@@ -21,7 +21,7 @@ func (env *Env) GetGRPCPort() uint16 {
 var Module = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
-	logger.FxProvider(),
+	logging.FxProvider(),
 	rpc.NewGrpcServerFx[*Env](),
 	fx.Provide(
 		func(env *Env) messaging.KafkaClient {

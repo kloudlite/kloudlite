@@ -9,7 +9,7 @@ import (
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/dns"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -45,9 +45,10 @@ func (e *Env) GetHttpCors() string {
 	return e.CorsOrigins
 }
 
-var Module = fx.Module("framework",
+var Module = fx.Module(
+	"framework",
 	config.EnvFx[Env](),
-	fx.Provide(logger.NewLogger),
+	fx.Provide(logging.NewLogger),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),

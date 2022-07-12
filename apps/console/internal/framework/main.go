@@ -7,7 +7,7 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	loki_server "kloudlite.io/pkg/loki-server"
 	"kloudlite.io/pkg/redpanda"
 	mongo_db "kloudlite.io/pkg/repos"
@@ -18,7 +18,7 @@ type GrpcFinanceConfig struct {
 	FinanceService string `env:"FINANCE_SERVICE" required:"true"`
 }
 
-func (e *GrpcFinanceConfig) GetGCPServerURL() string {
+func (e *GrpcFinanceConfig) GetGRPCServerURL() string {
 	return e.FinanceService
 }
 
@@ -26,7 +26,7 @@ type GrpcAuthConfig struct {
 	AuthService string `env:"AUTH_SERVICE" required:"true"`
 }
 
-func (e *GrpcAuthConfig) GetGCPServerURL() string {
+func (e *GrpcAuthConfig) GetGRPCServerURL() string {
 	return e.AuthService
 }
 
@@ -34,7 +34,7 @@ type GrpcCIConfig struct {
 	CIService string `env:"CI_SERVICE" required:"true"`
 }
 
-func (e *GrpcCIConfig) GetGCPServerURL() string {
+func (e *GrpcCIConfig) GetGRPCServerURL() string {
 	return e.CIService
 }
 
@@ -42,7 +42,7 @@ type IAMGRPCEnv struct {
 	IAMService string `env:"IAM_SERVICE"`
 }
 
-func (e *IAMGRPCEnv) GetGCPServerURL() string {
+func (e *IAMGRPCEnv) GetGRPCServerURL() string {
 	return e.IAMService
 }
 
@@ -118,7 +118,7 @@ var Module = fx.Module(
 	config.EnvFx[GrpcFinanceConfig](),
 	config.EnvFx[GrpcCIConfig](),
 
-	logger.FxProvider(),
+	logging.FxProvider(),
 	redpanda.NewClientFx[*Env](),
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
