@@ -1,14 +1,6 @@
 version: '3'
 
 includes:
-  console: 
-    taskfile: ./apps/console/Taskfile.yml
-    dir: ./apps/console
-
   grpc:
     taskfile: ./grpc-interfaces/Taskfile.yml
     dir: ./grpc-interfaces
-
-  iam:
-    taskfile: ./apps/iam/Taskfile.yml
-    dir: ./apps/console

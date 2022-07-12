@@ -9,7 +9,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 )
 
 type Message []byte
@@ -25,7 +25,7 @@ type consumer[T KafkaConsumerConfig] struct {
 	topics        []string
 	handlers      map[string]func(context context.Context, message Message) error
 	stopChan      chan bool
-	logger        logger.Logger
+	logger        logging.Logger
 }
 
 func (c *consumer[T]) On(topic string, callback func(context context.Context, message Message) error) {
@@ -90,7 +90,7 @@ func NewKafkaConsumer[T KafkaConsumerConfig](
 	kafkaCli KafkaClient,
 	topics []string,
 	consumerGroupId string,
-	logger logger.Logger,
+	logger logging.Logger,
 ) (messenger Consumer[T], e error) {
 	defer errors.HandleErr(&e)
 	c, e := kafka.NewConsumer(
@@ -118,7 +118,7 @@ func NewFxKafkaConsumer[T KafkaConsumerConfig]() fx.Option {
 	return fx.Module(
 		"consumer",
 		fx.Provide(
-			func(c T, kafkaCli KafkaClient, logger logger.Logger) (Consumer[T], error) {
+			func(c T, kafkaCli KafkaClient, logger logging.Logger) (Consumer[T], error) {
 				fmt.Println("subscription", c.GetSubscriptionTopics())
 				return NewKafkaConsumer[T](
 					kafkaCli,

@@ -17,7 +17,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	rcn "kloudlite.io/pkg/res-change-notifier"
@@ -46,7 +46,7 @@ type domain struct {
 	secretRepo           repos.DbRepo[*entities.Secret]
 	messageProducer      redpanda.Producer
 	messageTopic         string
-	logger               logger.Logger
+	logger               logging.Logger
 	managedSvcRepo       repos.DbRepo[*entities.ManagedService]
 	managedResRepo       repos.DbRepo[*entities.ManagedResource]
 	appRepo              repos.DbRepo[*entities.App]
@@ -64,10 +64,12 @@ type domain struct {
 }
 
 func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error {
-	_, err := d.iamClient.RemoveMembership(ctx, &iam.InRemoveMembership{
-		UserId:     string(userId),
-		ResourceId: string(projectId),
-	})
+	_, err := d.iamClient.RemoveMembership(
+		ctx, &iam.InRemoveMembership{
+			UserId:     string(userId),
+			ResourceId: string(projectId),
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -75,10 +77,12 @@ func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, us
 }
 
 func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string) error {
-	one, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"name":      name,
-		"namespace": namespace,
-	})
+	one, err := d.appRepo.FindOne(
+		ctx, repos.Filter{
+			"name":      name,
+			"namespace": namespace,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -129,10 +133,12 @@ func (d *domain) GetComputePlans(_ context.Context) ([]entities.ComputePlan, err
 }
 
 func (d *domain) OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error {
-	one, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
-		"cluster_id": payload.ClusterId,
-		"account_id": payload.AccountId,
-	})
+	one, err := d.clusterAccountRepo.FindOne(
+		ctx, repos.Filter{
+			"cluster_id": payload.ClusterId,
+			"account_id": payload.AccountId,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -154,27 +160,33 @@ func (d *domain) OnSetupClusterAccount(ctx context.Context, payload entities.Set
 }
 
 func (d *domain) CreateClusterAccount(ctx context.Context, data *entities.ClusterAccount, region string, provider string) (*entities.ClusterAccount, error) {
-	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
-		"region":   region,
-		"provider": provider,
-	})
+	cluster, err := d.clusterRepo.FindOne(
+		ctx, repos.Filter{
+			"region":   region,
+			"provider": provider,
+		},
+	)
 	if err != nil {
 		return nil, errors.New("No clusters available in the region")
 	}
 	data.ClusterID = cluster.Id
 	data.Status = entities.ClusterAccountStateSyncing
-	fmt.Println(repos.Filter{
-		"cluster_id": cluster.Id,
-		"account_id": data.AccountID,
-	})
-	existingAccounts, err := d.clusterAccountRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
+	fmt.Println(
+		repos.Filter{
 			"cluster_id": cluster.Id,
+			"account_id": data.AccountID,
 		},
-		Sort: map[string]interface{}{
-			"index": 1,
+	)
+	existingAccounts, err := d.clusterAccountRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"cluster_id": cluster.Id,
+			},
+			Sort: map[string]interface{}{
+				"index": 1,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -200,10 +212,10 @@ func (d *domain) CreateClusterAccount(ctx context.Context, data *entities.Cluste
 
 	create, err := d.clusterAccountRepo.Create(ctx, data)
 	// TODO
-	//if err != nil {
+	// if err != nil {
 	//	return nil, err
-	//}
-	//err = SendAction(
+	// }
+	// err = SendAction(
 	//	d.infraMessenger,
 	//	entities.SetupClusterAccountAction{
 	//		ClusterID: create.ClusterID,
@@ -212,15 +224,17 @@ func (d *domain) CreateClusterAccount(ctx context.Context, data *entities.Cluste
 	//		AccountId: string(create.AccountID),
 	//		AccountIp: create.WgIp,
 	//	},
-	//)
+	// )
 
-	fmt.Println(entities.SetupClusterAccountAction{
-		ClusterID: create.ClusterID,
-		Region:    cluster.Region,
-		Provider:  cluster.Provider,
-		AccountId: string(create.AccountID),
-		AccountIp: create.WgIp,
-	})
+	fmt.Println(
+		entities.SetupClusterAccountAction{
+			ClusterID: create.ClusterID,
+			Region:    cluster.Region,
+			Provider:  cluster.Provider,
+			AccountId: string(create.AccountID),
+			AccountIp: create.WgIp,
+		},
+	)
 
 	return create, nil
 }
@@ -228,10 +242,12 @@ func (d *domain) CreateClusterAccount(ctx context.Context, data *entities.Cluste
 func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, resourceNamespace string, resourceName string, status ResourceStatus) (bool, error) {
 	switch resourceType {
 	case "ManagedResource":
-		one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
-			"name":      resourceName,
-			"namespace": resourceNamespace,
-		})
+		one, err := d.managedResRepo.FindOne(
+			ctx, repos.Filter{
+				"name":      resourceName,
+				"namespace": resourceNamespace,
+			},
+		)
 		if err != nil || one == nil {
 			return false, err
 		}
@@ -246,10 +262,12 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		}
 		return true, nil
 	case "ManagedService":
-		one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
-			"name":      resourceName,
-			"namespace": resourceNamespace,
-		})
+		one, err := d.managedSvcRepo.FindOne(
+			ctx, repos.Filter{
+				"name":      resourceName,
+				"namespace": resourceNamespace,
+			},
+		)
 		if err != nil || one == nil {
 			return false, err
 		}
@@ -264,10 +282,12 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		}
 		return true, nil
 	case "App":
-		one, err := d.appRepo.FindOne(ctx, repos.Filter{
-			"readable_id": resourceName,
-			"namespace":   resourceNamespace,
-		})
+		one, err := d.appRepo.FindOne(
+			ctx, repos.Filter{
+				"readable_id": resourceName,
+				"namespace":   resourceNamespace,
+			},
+		)
 		if err != nil || one == nil {
 			fmt.Println(err)
 			return false, err
@@ -283,10 +303,12 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 		}
 		return true, nil
 	case "Router":
-		one, err := d.routerRepo.FindOne(ctx, repos.Filter{
-			"name":      resourceName,
-			"namespace": resourceNamespace,
-		})
+		one, err := d.routerRepo.FindOne(
+			ctx, repos.Filter{
+				"name":      resourceName,
+				"namespace": resourceNamespace,
+			},
+		)
 		if err != nil || one == nil {
 			return false, err
 		}
@@ -306,20 +328,24 @@ func (d *domain) UpdateResourceStatus(ctx context.Context, resourceType string, 
 }
 
 func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error) {
-	rbs, err := d.iamClient.ListResourceMemberships(ctx, &iam.InResourceMemberships{
-		ResourceId:   string(projectID),
-		ResourceType: string(common.ResourceProject),
-	})
+	rbs, err := d.iamClient.ListResourceMemberships(
+		ctx, &iam.InResourceMemberships{
+			ResourceId:   string(projectID),
+			ResourceType: string(common.ResourceProject),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	var memberships []*entities.ProjectMembership
 	for _, rb := range rbs.RoleBindings {
-		memberships = append(memberships, &entities.ProjectMembership{
-			ProjectId: repos.ID(rb.ResourceId),
-			UserId:    repos.ID(rb.UserId),
-			Role:      common.Role(rb.Role),
-		})
+		memberships = append(
+			memberships, &entities.ProjectMembership{
+				ProjectId: repos.ID(rb.ResourceId),
+				UserId:    repos.ID(rb.UserId),
+				Role:      common.Role(rb.Role),
+			},
+		)
 	}
 
 	if err != nil {
@@ -336,12 +362,14 @@ func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, em
 	if byEmail == nil {
 		return false, errors.New("user not found")
 	}
-	_, err = d.iamClient.InviteMembership(ctx, &iam.InAddMembership{
-		UserId:       byEmail.UserId,
-		ResourceType: "project",
-		ResourceId:   string(projectID),
-		Role:         role,
-	})
+	_, err = d.iamClient.InviteMembership(
+		ctx, &iam.InAddMembership{
+			UserId:       byEmail.UserId,
+			ResourceType: "project",
+			ResourceId:   string(projectID),
+			Role:         role,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -357,24 +385,26 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 	if err != nil {
 		return nil, err
 	}
-	_, err = d.clusterRepo.FindOne(ctx, repos.Filter{
-		"account_id": project.AccountId,
-	})
+	_, err = d.clusterRepo.FindOne(
+		ctx, repos.Filter{
+			"account_id": project.AccountId,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	return nil, nil
 	// TODO
-	//output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
+	// output, err := d.infraClient.GetResourceOutput(ctx, &infra.GetInput{
 	//	ManagedResName: mres.Name,
 	//	ClusterId:      string(cluster.Id),
 	//	Namespace:      mres.Namespace,
-	//})
-	//if err != nil {
+	// })
+	// if err != nil {
 	//	fmt.Println(err)
 	//	return nil, err
-	//}
-	//return output.Output, err
+	// }
+	// return output.Output, err
 }
 
 // func (d *domain) createApp(ctx context.Context, app entities.App) (*entities.App, error) {
@@ -578,15 +608,18 @@ func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (string
 		return "", err
 	}
 	cluster, err := d.clusterRepo.FindById(ctx, device.ClusterId)
-	clusterAccount, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
-		"cluster_id": device.ClusterId,
-		"account_id": device.AccountId,
-	})
+	clusterAccount, err := d.clusterAccountRepo.FindOne(
+		ctx, repos.Filter{
+			"cluster_id": device.ClusterId,
+			"account_id": device.AccountId,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf(`
+	return fmt.Sprintf(
+		`
 [Interface]
 PrivateKey = %v
 Address = %v/32
@@ -596,7 +629,8 @@ DNS = 10.43.0.10
 PublicKey = %v
 AllowedIPs = 10.42.0.0/16, 10.43.0.0/16, 10.13.13.0/24
 Endpoint = %v:%v
-`, *device.PrivateKey, device.Ip, clusterAccount.WgPubKey, cluster.Name, clusterAccount.WgPort), nil
+`, *device.PrivateKey, device.Ip, clusterAccount.WgPubKey, cluster.Name, clusterAccount.WgPort,
+	), nil
 }
 
 func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error) {
@@ -623,10 +657,12 @@ func isReady(c []metav1.Condition) bool {
 }
 
 func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.Project) error {
-	one, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"name": response.Metadata.Name,
-		//"cluster_id": response.ClusterId,
-	})
+	one, err := d.projectRepo.FindOne(
+		ctx, repos.Filter{
+			"name": response.Metadata.Name,
+			// "cluster_id": response.ClusterId,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -662,10 +698,12 @@ func (d *domain) OnUpdateSecret(ctx context.Context, secretId repos.ID) error {
 }
 
 func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.Router) error {
-	one, err := d.routerRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
-	})
+	one, err := d.routerRepo.FindOne(
+		ctx, repos.Filter{
+			"name":      response.Metadata.Name,
+			"namespace": response.Metadata.Namespace,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -680,10 +718,12 @@ func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.Router) e
 }
 
 func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.ManagedService) error {
-	one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
-	})
+	one, err := d.managedSvcRepo.FindOne(
+		ctx, repos.Filter{
+			"name":      response.Metadata.Name,
+			"namespace": response.Metadata.Namespace,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -698,10 +738,12 @@ func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.Manag
 }
 
 func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.ManagedResource) error {
-	one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
-	})
+	one, err := d.managedResRepo.FindOne(
+		ctx, repos.Filter{
+			"name":      response.Metadata.Name,
+			"namespace": response.Metadata.Namespace,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -716,10 +758,12 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Manag
 }
 
 func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.App) error {
-	one, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"name":      response.Metadata.Name,
-		"namespace": response.Metadata.Namespace,
-	})
+	one, err := d.appRepo.FindOne(
+		ctx, repos.Filter{
+			"name":      response.Metadata.Name,
+			"namespace": response.Metadata.Namespace,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -828,9 +872,11 @@ func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*ent
 }
 
 func (d *domain) GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error) {
-	return d.managedSvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"project_id": projectID,
-	}})
+	return d.managedSvcRepo.Find(
+		ctx, repos.Query{Filter: repos.Filter{
+			"project_id": projectID,
+		}},
+	)
 }
 
 func (d *domain) GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error) {
@@ -838,9 +884,11 @@ func (d *domain) GetManagedRes(ctx context.Context, managedResID repos.ID) (*ent
 }
 
 func (d *domain) GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error) {
-	return d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"project_id": projectID,
-	}})
+	return d.managedResRepo.Find(
+		ctx, repos.Query{Filter: repos.Filter{
+			"project_id": projectID,
+		}},
+	)
 }
 
 func (d *domain) GetManagedResourcesOfService(
@@ -848,9 +896,11 @@ func (d *domain) GetManagedResourcesOfService(
 	installationId repos.ID,
 ) ([]*entities.ManagedResource, error) {
 	fmt.Println("GetManagedResourcesOfService", installationId)
-	return d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"service_id": installationId,
-	}})
+	return d.managedResRepo.Find(
+		ctx, repos.Query{Filter: repos.Filter{
+			"service_id": installationId,
+		}},
+	)
 }
 
 func (d *domain) InstallManagedRes(
@@ -876,32 +926,36 @@ func (d *domain) InstallManagedRes(
 		return nil, fmt.Errorf("project not found")
 	}
 
-	create, err := d.managedResRepo.Create(ctx, &entities.ManagedResource{
-		ProjectId:    prj.Id,
-		Namespace:    prj.Name,
-		ServiceId:    svc.Id,
-		ResourceType: entities.ManagedResourceType(resourceType),
-		Name:         name,
-		Values:       values,
-	})
+	create, err := d.managedResRepo.Create(
+		ctx, &entities.ManagedResource{
+			ProjectId:    prj.Id,
+			Namespace:    prj.Name,
+			ServiceId:    svc.Id,
+			ResourceType: entities.ManagedResourceType(resourceType),
+			Name:         name,
+			Values:       values,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedResource{
-		APIVersion: op_crds.ManagedResourceAPIVersion,
-		Kind:       op_crds.ManagedResourceKind,
-		Metadata: op_crds.ManagedResourceMetadata{
-			Name:      create.Name,
-			Namespace: create.Namespace,
+	d.workloadMessenger.SendAction(
+		"apply", string(create.Id), &op_crds.ManagedResource{
+			APIVersion: op_crds.ManagedResourceAPIVersion,
+			Kind:       op_crds.ManagedResourceKind,
+			Metadata: op_crds.ManagedResourceMetadata{
+				Name:      create.Name,
+				Namespace: create.Namespace,
+			},
+			Spec: op_crds.ManagedResourceSpec{
+				ManagedService: svc.Name,
+				Type:           resourceType,
+				Inputs:         create.Values,
+			},
+			Status: op_crds.Status{},
 		},
-		Spec: op_crds.ManagedResourceSpec{
-			ManagedService: svc.Name,
-			Type:           resourceType,
-			Inputs:         create.Values,
-		},
-		Status: op_crds.Status{},
-	})
+	)
 
 	return create, nil
 }
@@ -932,9 +986,11 @@ func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, err
 }
 
 func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.App, error) {
-	apps, err := d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"project_id": projectID,
-	}})
+	apps, err := d.appRepo.Find(
+		ctx, repos.Query{Filter: repos.Filter{
+			"project_id": projectID,
+		}},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -943,14 +999,16 @@ func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.A
 
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	app, err := d.appRepo.FindById(ctx, appID)
-	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
-		APIVersion: op_crds.AppAPIVersion,
-		Kind:       op_crds.AppKind,
-		Metadata: op_crds.AppMetadata{
-			Name:      app.Name,
-			Namespace: app.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"delete", string(appID), &op_crds.App{
+			APIVersion: op_crds.AppAPIVersion,
+			Kind:       op_crds.AppKind,
+			Metadata: op_crds.AppMetadata{
+				Name:      app.Name,
+				Namespace: app.Namespace,
+			},
 		},
-	})
+	)
 	app.Status = entities.AppStateSyncing
 	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	if err != nil {
@@ -968,14 +1026,16 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, fmt.Errorf("project not found")
 	}
 
-	create, err := d.managedSvcRepo.Create(ctx, &entities.ManagedService{
-		Name:        name,
-		Namespace:   prj.Name,
-		ProjectId:   prj.Id,
-		ServiceType: entities.ManagedServiceType(templateID),
-		Values:      values,
-		Status:      entities.ManagedServiceStateSyncing,
-	})
+	create, err := d.managedSvcRepo.Create(
+		ctx, &entities.ManagedService{
+			Name:        name,
+			Namespace:   prj.Name,
+			ProjectId:   prj.Id,
+			ServiceType: entities.ManagedServiceType(templateID),
+			Values:      values,
+			Status:      entities.ManagedServiceStateSyncing,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -986,18 +1046,20 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		vs[k] = v.(string)
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
-		APIVersion: op_crds.ManagedServiceAPIVersion,
-		Kind:       op_crds.ManagedServiceKind,
-		Metadata: op_crds.ManagedServiceMetadata{
-			Name:      create.Name,
-			Namespace: create.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"apply", string(create.Id), &op_crds.ManagedService{
+			APIVersion: op_crds.ManagedServiceAPIVersion,
+			Kind:       op_crds.ManagedServiceKind,
+			Metadata: op_crds.ManagedServiceMetadata{
+				Name:      create.Name,
+				Namespace: create.Namespace,
+			},
+			Spec: op_crds.ManagedServiceSpec{
+				Type:   "MongoDBStandalone",
+				Inputs: vs,
+			},
 		},
-		Spec: op_crds.ManagedServiceSpec{
-			Type:   "MongoDBStandalone",
-			Inputs: vs,
-		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1048,25 +1110,29 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 	}
 	rs := make([]op_crds.Route, 0)
 	for _, r := range router.Routes {
-		rs = append(rs, op_crds.Route{
-			Path: r.Path,
-			App:  r.AppName,
-			Port: r.Port,
-		})
+		rs = append(
+			rs, op_crds.Route{
+				Path: r.Path,
+				App:  r.AppName,
+				Port: r.Port,
+			},
+		)
 	}
-	err = d.workloadMessenger.SendAction("apply", string(router.Id), op_crds.Router{
-		APIVersion: op_crds.RouterAPIVersion,
-		Kind:       op_crds.RouterKind,
-		Metadata: op_crds.RouterMetadata{
-			Name:      router.Name,
-			Namespace: router.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"apply", string(router.Id), op_crds.Router{
+			APIVersion: op_crds.RouterAPIVersion,
+			Kind:       op_crds.RouterKind,
+			Metadata: op_crds.RouterMetadata{
+				Name:      router.Name,
+				Namespace: router.Namespace,
+			},
+			Spec: op_crds.RouterSpec{
+				Domains: router.Domains,
+				Routes:  rs,
+			},
+			Status: op_crds.Status{},
 		},
-		Spec: op_crds.RouterSpec{
-			Domains: router.Domains,
-			Routes:  rs,
-		},
-		Status: op_crds.Status{},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -1082,11 +1148,13 @@ func (d *domain) GetRouter(ctx context.Context, routerID repos.ID) (*entities.Ro
 }
 
 func (d *domain) GetRouters(ctx context.Context, projectID repos.ID) ([]*entities.Router, error) {
-	routers, err := d.routerRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"project_id": projectID,
+	routers, err := d.routerRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"project_id": projectID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,27 +1169,31 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
-	create, err := d.routerRepo.Create(ctx, &entities.Router{
-		ProjectId: projectId,
-		Name:      routerName,
-		Namespace: prj.Name,
-		Domains:   domains,
-		Routes:    routes,
-	})
+	create, err := d.routerRepo.Create(
+		ctx, &entities.Router{
+			ProjectId: projectId,
+			Name:      routerName,
+			Namespace: prj.Name,
+			Domains:   domains,
+			Routes:    routes,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	rs := make([]op_crds.Route, 0)
 	for _, r := range routes {
-		rs = append(rs, op_crds.Route{
-			Path: r.Path,
-			App:  r.AppName,
-			Port: r.Port,
-		})
+		rs = append(
+			rs, op_crds.Route{
+				Path: r.Path,
+				App:  r.AppName,
+				Port: r.Port,
+			},
+		)
 	}
 
-	//err = d.workloadMessenger.SendAction("apply", string(create.Id), op_crds.Router{
+	// err = d.workloadMessenger.SendAction("apply", string(create.Id), op_crds.Router{
 	//	APIVersion: op_crds.RouterAPIVersion,
 	//	Kind:       op_crds.RouterKind,
 	//	Metadata: op_crds.RouterMetadata{
@@ -1133,10 +1205,10 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 	//		Routes:  rs,
 	//	},
 	//	Status: op_crds.Status{},
-	//})
-	//if err != nil {
+	// })
+	// if err != nil {
 	//	return nil, err
-	//}
+	// }
 	return create, nil
 }
 
@@ -1148,13 +1220,15 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
-	create, err := d.secretRepo.Create(ctx, &entities.Secret{
-		Name:        strings.ToLower(secretName),
-		ProjectId:   projectId,
-		Namespace:   prj.Name,
-		Data:        secretData,
-		Description: desc,
-	})
+	create, err := d.secretRepo.Create(
+		ctx, &entities.Secret{
+			Name:        strings.ToLower(secretName),
+			ProjectId:   projectId,
+			Namespace:   prj.Name,
+			Data:        secretData,
+			Description: desc,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1181,11 +1255,13 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 }
 
 func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error) {
-	secrets, err := d.secretRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"project_id": projectId,
+	secrets, err := d.secretRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"project_id": projectId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1209,11 +1285,13 @@ func (d *domain) GetConfig(ctx context.Context, configId repos.ID) (*entities.Co
 }
 
 func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error) {
-	configs, err := d.configRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"project_id": projectId,
+	configs, err := d.configRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"project_id": projectId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1241,15 +1319,17 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 	for _, i := range cfg.Data {
 		m[i.Key] = i.Value
 	}
-	err = d.workloadMessenger.SendAction("apply", string(cfg.Id), op_crds.Config{
-		APIVersion: op_crds.ConfigAPIVersion,
-		Kind:       op_crds.ConfigKind,
-		Metadata: op_crds.ConfigMetadata{
-			Name:      cfg.Name,
-			Namespace: cfg.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"apply", string(cfg.Id), op_crds.Config{
+			APIVersion: op_crds.ConfigAPIVersion,
+			Kind:       op_crds.ConfigKind,
+			Metadata: op_crds.ConfigMetadata{
+				Name:      cfg.Name,
+				Namespace: cfg.Namespace,
+			},
+			Data: m,
 		},
-		Data: m,
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -1264,30 +1344,36 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
-	create, err := d.configRepo.Create(ctx, &entities.Config{
-		Name:        strings.ToLower(configName),
-		ProjectId:   projectId,
-		Namespace:   prj.Name,
-		Data:        configData,
-		Description: desc,
-	})
+	create, err := d.configRepo.Create(
+		ctx, &entities.Config{
+			Name:        strings.ToLower(configName),
+			ProjectId:   projectId,
+			Namespace:   prj.Name,
+			Data:        configData,
+			Description: desc,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), op_crds.Config{
-		APIVersion: op_crds.ConfigAPIVersion,
-		Kind:       op_crds.ConfigKind,
-		Metadata: op_crds.ConfigMetadata{
-			Name:      configName,
-			Namespace: prj.Name,
+	err = d.workloadMessenger.SendAction(
+		"apply", string(create.Id), op_crds.Config{
+			APIVersion: op_crds.ConfigAPIVersion,
+			Kind:       op_crds.ConfigKind,
+			Metadata: op_crds.ConfigMetadata{
+				Name:      configName,
+				Namespace: prj.Name,
+			},
+			Data: nil,
 		},
-		Data: nil,
-	})
+	)
 	fmt.Println("scheduled")
-	time.AfterFunc(3*time.Second, func() {
-		fmt.Println("send apply config")
-		d.notifier.Notify(create.Id)
-	})
+	time.AfterFunc(
+		3*time.Second, func() {
+			fmt.Println("send apply config")
+			d.notifier.Notify(create.Id)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1300,11 +1386,13 @@ func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*ent
 }
 
 func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
-	res, err := d.projectRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": acountId,
+	res, err := d.projectRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"account_id": acountId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1319,29 +1407,33 @@ func generateReadable(name string) string {
 }
 
 func (d *domain) CreateProject(ctx context.Context, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error) {
-	create, err := d.projectRepo.Create(ctx, &entities.Project{
-		Name:        projectName,
-		AccountId:   accountId,
-		ReadableId:  repos.ID(generateReadable(projectName)),
-		DisplayName: displayName,
-		Logo:        logo,
-		Description: description,
-		Cluster:     cluster,
-		Status:      entities.ProjectStateSyncing,
-	})
+	create, err := d.projectRepo.Create(
+		ctx, &entities.Project{
+			Name:        projectName,
+			AccountId:   accountId,
+			ReadableId:  repos.ID(generateReadable(projectName)),
+			DisplayName: displayName,
+			Logo:        logo,
+			Description: description,
+			Cluster:     cluster,
+			Status:      entities.ProjectStateSyncing,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.Project{
-		APIVersion: op_crds.APIVersion,
-		Kind:       op_crds.ProjectKind,
-		Metadata: op_crds.ProjectMetadata{
-			Name: create.Name,
+	err = d.workloadMessenger.SendAction(
+		"apply", string(create.Id), &op_crds.Project{
+			APIVersion: op_crds.APIVersion,
+			Kind:       op_crds.ProjectKind,
+			Metadata: op_crds.ProjectMetadata{
+				Name: create.Name,
+			},
+			Spec: op_crds.ProjectSpec{
+				DisplayName: displayName,
+			},
 		},
-		Spec: op_crds.ProjectSpec{
-			DisplayName: displayName,
-		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1442,13 +1534,15 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(entities.SetupClusterAction{
-		ClusterID: c.Id,
-		Region:    c.Region,
-		Provider:  c.Provider,
-	})
+	fmt.Println(
+		entities.SetupClusterAction{
+			ClusterID: c.Id,
+			Region:    c.Region,
+			Provider:  c.Provider,
+		},
+	)
 	// TODO
-	//err = SendAction(
+	// err = SendAction(
 	//	d.infraMessenger,
 	//	entities.SetupClusterAction{
 	//		ClusterID:  c.Id,
@@ -1456,7 +1550,7 @@ func (d *domain) CreateCluster(ctx context.Context, data *entities.Cluster) (clu
 	//		Provider:   c.Provider,
 	//		NodesCount: c.NodesCount,
 	//	},
-	//)
+	// )
 	if err != nil {
 		panic(err)
 		return nil, err
@@ -1489,12 +1583,12 @@ func (d *domain) UpdateCluster(
 	}
 	if c.Status == entities.ClusterStateSyncing {
 		// TODO
-		//err = SendAction(d.infraMessenger, entities.UpdateClusterAction{
+		// err = SendAction(d.infraMessenger, entities.UpdateClusterAction{
 		//	ClusterID:  id,
 		//	Region:     updated.Region,
 		//	Provider:   updated.Provider,
 		//	NodesCount: updated.NodesCount,
-		//})
+		// })
 		if err != nil {
 			return false, err
 		}
@@ -1512,10 +1606,10 @@ func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	//err = SendAction(d.infraMessenger, entities.DeleteClusterAction{
+	// err = SendAction(d.infraMessenger, entities.DeleteClusterAction{
 	//	ClusterID: clusterId,
 	//	Provider:  cluster.Provider,
-	//})
+	// })
 	if err != nil {
 		return err
 	}
@@ -1523,19 +1617,23 @@ func (d *domain) DeleteCluster(ctx context.Context, clusterId repos.ID) error {
 }
 
 func (d *domain) ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.ClusterAccount, error) {
-	return d.clusterAccountRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": accountId,
+	return d.clusterAccountRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"account_id": accountId,
+			},
 		},
-	})
+	)
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId repos.ID, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
 
-	clusterAccount, err := d.clusterAccountRepo.FindOne(ctx, repos.Filter{
-		"cluster_id": clusterId,
-		"account_id": accountId,
-	})
+	clusterAccount, err := d.clusterAccountRepo.FindOne(
+		ctx, repos.Filter{
+			"cluster_id": clusterId,
+			"account_id": accountId,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch account on cluster %v", err)
 	}
@@ -1547,14 +1645,16 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 	pkString := pk.String()
 	pbKeyString := pk.PublicKey().String()
 
-	devices, err := d.deviceRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"cluster_id": clusterId,
+	devices, err := d.deviceRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"cluster_id": clusterId,
+			},
+			Sort: map[string]any{
+				"index": 1,
+			},
 		},
-		Sort: map[string]any{
-			"index": 1,
-		},
-	})
+	)
 
 	if err != nil {
 		return nil, err
@@ -1575,28 +1675,30 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, clusterId rep
 	ipSplits := strings.Split(clusterAccount.WgIp, ".")
 	ip := fmt.Sprintf("10.12.%v.%v", ipSplits[2], index+2)
 	fmt.Println(ip)
-	newDevice, e := d.deviceRepo.Create(ctx, &entities.Device{
-		Name:       deviceName,
-		ClusterId:  clusterId,
-		AccountId:  accountId,
-		UserId:     userId,
-		PrivateKey: &pkString,
-		PublicKey:  &pbKeyString,
-		Ip:         ip,
-		Status:     entities.DeviceStateSyncing,
-		Index:      index,
-	})
+	newDevice, e := d.deviceRepo.Create(
+		ctx, &entities.Device{
+			Name:       deviceName,
+			ClusterId:  clusterId,
+			AccountId:  accountId,
+			UserId:     userId,
+			PrivateKey: &pkString,
+			PublicKey:  &pbKeyString,
+			Ip:         ip,
+			Status:     entities.DeviceStateSyncing,
+			Index:      index,
+		},
+	)
 
 	if e != nil {
 		return nil, fmt.Errorf("unable to persist in db %v", e)
 	}
 
-	//e = SendAction(d.infraMessenger, entities.AddPeerAction{
+	// e = SendAction(d.infraMessenger, entities.AddPeerAction{
 	//	ClusterID: clusterId,
 	//	PublicKey: pbKeyString,
 	//	PeerIp:    ip,
 	//	AccountId: string(accountId),
-	//})
+	// })
 	if e != nil {
 		return nil, e
 	}
@@ -1614,11 +1716,11 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	//err = SendAction(d.infraMessenger, entities.DeletePeerAction{
+	// err = SendAction(d.infraMessenger, entities.DeletePeerAction{
 	//	ClusterID: device.ClusterId,
 	//	DeviceID:  device.Id,
 	//	PublicKey: *device.PublicKey,
-	//})
+	// })
 	if err != nil {
 		return err
 	}
@@ -1633,9 +1735,11 @@ func (d *domain) ListClusterDevices(ctx context.Context, clusterId *repos.ID, ac
 	if accountId != nil {
 		q["account_id"] = *accountId
 	}
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
+	return d.deviceRepo.Find(
+		ctx, repos.Query{
+			Filter: q,
+		},
+	)
 }
 
 func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID, clusterId *repos.ID, accountId *repos.ID) ([]*entities.Device, error) {
@@ -1647,9 +1751,11 @@ func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID, clusterId
 		q["account_id"] = *accountId
 	}
 	q["user_id"] = userId
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
+	return d.deviceRepo.Find(
+		ctx, repos.Query{
+			Filter: q,
+		},
+	)
 }
 
 func (d *domain) GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error) {
@@ -1657,9 +1763,11 @@ func (d *domain) GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster
 }
 
 func (d *domain) GetClusters(ctx context.Context) ([]*entities.Cluster, error) {
-	return d.clusterRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{},
-	})
+	return d.clusterRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{},
+		},
+	)
 }
 
 func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
@@ -1686,7 +1794,7 @@ func fxDomain(
 	clusterAccountRepo repos.DbRepo[*entities.ClusterAccount],
 	msgP redpanda.Producer,
 	env *Env,
-	logger logger.Logger,
+	logger logging.Logger,
 	workloadMessenger WorkloadMessenger,
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,

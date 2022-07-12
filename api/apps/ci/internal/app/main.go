@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -11,11 +10,13 @@ import (
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/harbor"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/tekton"
 )
@@ -63,7 +64,8 @@ func (env *Env) GetHarborConfig() (username, password, registryUrl string) {
 type AuthCacheClient cache.Client
 type CacheClient cache.Client
 
-type AuthClientConnection *grpc.ClientConn
+type AuthGRPCClient *grpc.ClientConn
+type ConsoleGRPCClient *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
@@ -73,8 +75,14 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
 
 	fx.Provide(
-		func(conn AuthClientConnection) auth.AuthClient {
+		func(conn AuthGRPCClient) auth.AuthClient {
 			return auth.NewAuthClient((*grpc.ClientConn)(conn))
+		},
+	),
+
+	fx.Provide(
+		func(conn ConsoleGRPCClient) console.ConsoleClient {
+			return console.NewConsoleClient((*grpc.ClientConn)(conn))
 		},
 	),
 
@@ -133,16 +141,9 @@ var Module = fx.Module(
 
 	// Tekton Interceptor
 	fx.Invoke(
-		func(app *fiber.App, d domain.Domain) error {
-			app.Get(
-				"/tekton/interceptor", func(ctx *fiber.Ctx) error {
-					return ctx.JSON(map[string]string{"hello": "world"})
-				},
-			)
+		func(app *fiber.App, d domain.Domain, logger logging.Logger, consoleCli console.ConsoleClient) error {
 			app.Post(
 				"/tekton/interceptor/:gitProvider", func(ctx *fiber.Ctx) error {
-					fmt.Println("HERE, req received ....")
-
 					gitProvider := ctx.Params("gitProvider")
 
 					var req tekton.Request
@@ -154,24 +155,63 @@ var Module = fx.Module(
 					switch gitProvider {
 					case common.ProviderGithub:
 						{
-							resp := d.TektonInterceptorGithub(ctx.Context(), &req)
-							jsonBody, err := resp.ToJson()
+							tkVars, pipeline, err := d.TektonInterceptorGithub(ctx.Context(), &req)
+							if err != nil {
+								response := tekton.NewResponse(&req).Err(err)
+								jsonBody, err := response.ToJson()
+								if err != nil {
+									return ctx.JSON(err)
+								}
+								return ctx.Send(jsonBody)
+							}
+
+							projectOut, err := consoleCli.GetProjectName(
+								ctx.Context(), &console.ProjectIn{ProjectId: pipeline.ProjectId},
+							)
 							if err != nil {
 								return ctx.JSON(err)
 							}
-							fmt.Printf("jsonBody: %s\n", jsonBody)
-							return ctx.Send(jsonBody)
+							tkVars.TaskNamespace = projectOut.Name
+							tkVarsJson, err := tkVars.ToJson()
+							if err != nil {
+								return ctx.JSON(err)
+							}
+							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
+							if err != nil {
+								return ctx.JSON(err)
+							}
+							logger.Infof("responseBody: %s\n", responseBody)
+							return ctx.Send(responseBody)
 						}
 					case common.ProviderGitlab:
 						{
-							resp := d.TektonInterceptorGitlab(ctx.Context(), &req)
-							jsonBody, err := resp.ToJson()
+							tkVars, pipeline, err := d.TektonInterceptorGitlab(ctx.Context(), &req)
+							if err != nil {
+								response := tekton.NewResponse(&req).Err(err)
+								jsonBody, err := response.ToJson()
+								if err != nil {
+									return ctx.JSON(err)
+								}
+								return ctx.Send(jsonBody)
+							}
+
+							projectOut, err := consoleCli.GetProjectName(
+								ctx.Context(), &console.ProjectIn{ProjectId: pipeline.ProjectId},
+							)
 							if err != nil {
 								return ctx.JSON(err)
 							}
-							fmt.Printf("jsonBody: %s\n", jsonBody)
-							return ctx.Send(jsonBody)
-							// return ctx.JSON(resp)
+							tkVars.TaskNamespace = projectOut.Name
+							tkVarsJson, err := tkVars.ToJson()
+							if err != nil {
+								return ctx.JSON(err)
+							}
+							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
+							if err != nil {
+								return ctx.JSON(err)
+							}
+							logger.Infof("responseBody: %s\n", responseBody)
+							return ctx.Send(responseBody)
 						}
 					}
 

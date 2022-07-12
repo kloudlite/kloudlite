@@ -10,13 +10,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"net/http"
 	"strings"
 	"time"
 )
 
-func Start(ctx context.Context, port uint16, app *fiber.App, logger logger.Logger) error {
+func Start(ctx context.Context, port uint16, app *fiber.App, logger logging.Logger) error {
 	errChannel := make(chan error, 1)
 	go func() {
 		errChannel <- app.Listen(fmt.Sprintf(":%d", port))
@@ -61,7 +61,7 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 			},
 		),
 		fx.Invoke(
-			func(lf fx.Lifecycle, env T, logger logger.Logger, app *fiber.App) {
+			func(lf fx.Lifecycle, env T, logger logging.Logger, app *fiber.App) {
 				if env.GetHttpCors() != "" {
 					app.Use(
 						cors.New(
