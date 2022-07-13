@@ -20,3 +20,18 @@
 {{- end}}
 {{- end }}
 {{- end }}
+
+{{- define "KAnnotation" }}
+{{- $items := . }}
+
+{{- if eq (len $items) 3 }}
+{{- if (index $items 0) }}
+{{index $items 1}}: {{index $items 2 | squote}}
+{{- end}}
+{{- end}}
+
+{{- if eq (len $items) 2 }}
+{{index $items 1}}: {{index $items 2 | squote}}
+{{- end}}
+
+{{- end}}

@@ -39,28 +39,45 @@ spec:
                 items:
                   type: string
                 type: array
-              forceSSLRedirect:
-                type: boolean
+              https:
+                properties:
+                  enabled:
+                    default: true
+                    type: boolean
+                  forceRedirect:
+                    type: boolean
+                required:
+                - enabled
+                type: object
+              maxBodySize:
+                type: integer
+              rateLimit:
+                properties:
+                  connections:
+                    type: integer
+                  enabled:
+                    type: boolean
+                  rpm:
+                    type: integer
+                  rps:
+                    type: integer
+                type: object
               routes:
                 additionalProperties:
-                  items:
-                    properties:
-                      app:
-                        type: string
-                      lambda:
-                        type: string
-                      path:
-                        type: string
-                      port:
-                        type: integer
-                    required:
-                    - path
-                    - port
-                    type: object
-                  type: array
+                  properties:
+                    app:
+                      type: string
+                    lambda:
+                      type: string
+                    port:
+                      type: integer
+                  required:
+                  - port
+                  type: object
                 type: object
             required:
             - domains
+            - https
             - routes
             type: object
           status:

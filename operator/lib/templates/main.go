@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"text/template"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -12,7 +13,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/sprig/v3"
-
 	"operators.kloudlite.io/lib/errors"
 )
 
@@ -45,6 +45,18 @@ func useTemplate(file templateFile) (*kt, error) {
 		}
 		return string(ys), nil
 	}
+
+	klFuncs["ENDL"] = func() string {
+		return "\n"
+	}
+
+	klFuncs["K8sAnnotation"] = func(cond any, key string, value any) string {
+		if cond == reflect.Zero(reflect.TypeOf(cond)).Interface() {
+			return ""
+		}
+		return fmt.Sprintf("%s: \"%v\"", key, value)
+	}
+	klFuncs["K8sLabel"] = klFuncs["K8sAnnotation"]
 
 	_, err := t.Funcs(funcMap).Funcs(klFuncs).ParseFiles(tFiles...)
 	if err != nil {
@@ -154,7 +166,7 @@ var CoreV1 = struct {
 	DockerConfigSecret templateFile
 }{
 	ExternalNameSvc:    "./corev1/external-name-service.tpl.yml",
-	Ingress:            "./corev1/ingress.tpl.yml",
+	Ingress:            "./ingress.tpl.yml",
 	DockerConfigSecret: "./corev1/docker-config-secret.tpl.yml",
 }
 
