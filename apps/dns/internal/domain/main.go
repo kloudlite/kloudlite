@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/goombaio/namegenerator"
@@ -143,71 +142,15 @@ func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string
 }
 
 func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
-
-	if matchedRecords, err := d.recordsCache.Get(ctx, host); err == nil && matchedRecords != nil {
-		return matchedRecords, nil
-	}
-
-	domainSplits := strings.Split(strings.TrimSpace(host), ".")
-	filters := make([]repos.Filter, 0)
-	for i := range domainSplits {
-		filters = append(filters, repos.Filter{
-			"host": strings.Join(domainSplits[i:], "."),
-		})
-	}
-	matchedSites, err := d.sitesRepo.Find(ctx, repos.Query{
+	find, err := d.recordsRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
-			"verified": true,
-			"$or":      filters,
+			"host": host,
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
-	if len(matchedSites) == 0 {
-		return nil, errors.New("NoSitesFound")
-	}
-	var site *Site
-	for _, s := range matchedSites {
-		if site != nil {
-			if len(s.Domain) > len(site.Domain) {
-				site = s
-			}
-		} else {
-			site = s
-		}
-	}
-
-	recordFilters := make([]repos.Filter, 0)
-
-	for i := range domainSplits {
-		recordFilters = append(recordFilters, repos.Filter{
-			"host": fmt.Sprintf("*.%v", strings.Join(domainSplits[i:], ".")),
-		}, repos.Filter{
-			"host": strings.Join(domainSplits[i:], "."),
-		})
-	}
-
-	rec, err := d.recordsRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"siteId": site.Id,
-			"$or":    recordFilters,
-		},
-		Sort: map[string]interface{}{
-			"priority": 1,
-		},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.recordsCache.Set(ctx, host, rec)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return rec, nil
+	return find, nil
 }
 
 func (d *domainI) CreateRecord(
@@ -239,15 +182,11 @@ func (d *domainI) DeleteRecords(ctx context.Context, host string, siteId string)
 	})
 }
 
-func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string, siteId string) error {
+func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string) error {
 	var err error
-
-	// fmt.Println(aRecords, host, siteId)
 	d.recordsCache.Drop(ctx, host)
-
 	for _, aRecord := range aRecords {
 		_, err = d.recordsRepo.Create(ctx, &Record{
-			SiteId:   repos.ID(siteId),
 			Type:     "A",
 			Host:     host,
 			Answer:   aRecord,
