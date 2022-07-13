@@ -131,7 +131,7 @@ func main() {
 	if err = (&crds.ProjectReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Env:    *envVars,
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
@@ -140,7 +140,7 @@ func main() {
 	if err = (&crds.AppReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		Env:    *envVars,
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "App")
 		os.Exit(1)
@@ -149,6 +149,7 @@ func main() {
 	if err = (&crds.RouterReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Router")
 		os.Exit(1)
@@ -303,6 +304,7 @@ func main() {
 	if err = (&s3awscontrollers.BucketReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Bucket")
 		os.Exit(1)

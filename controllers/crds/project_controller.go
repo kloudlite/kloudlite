@@ -35,7 +35,7 @@ type ProjectReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	types.MessageSender
-	Env       env.Env
+	Env       *env.Env
 	harborCli *harbor.Client
 }
 

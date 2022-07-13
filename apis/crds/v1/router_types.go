@@ -1,14 +1,12 @@
 package v1
 
 import (
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
 type Route struct {
-	Path   string `json:"path"`
 	App    string `json:"app,omitempty"`
 	Lambda string `json:"lambda,omitempty"`
 	Port   uint16 `json:"port"`
@@ -21,13 +19,19 @@ type RateLimit struct {
 	Connections int  `json:"connections,omitempty"`
 }
 
+type Https struct {
+	// +kubebuilder:default=true
+	Enabled       bool `json:"enabled"`
+	ForceRedirect bool `json:"forceRedirect,omitempty"`
+}
+
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	ForceSSLRedirect bool               `json:"forceSSLRedirect,omitempty"`
-	RateLimit        RateLimit          `json:"rateLimit,omitempty"`
-	MaxBodySize      int                `json:"maxBodySize,omitempty"`
-	Domains          []string           `json:"domains"`
-	Routes           map[string][]Route `json:"routes"`
+	Https       Https            `json:"https"`
+	RateLimit   RateLimit        `json:"rateLimit,omitempty"`
+	MaxBodySize int              `json:"maxBodySize,omitempty"`
+	Domains     []string         `json:"domains"`
+	Routes      map[string]Route `json:"routes"`
 }
 
 // +kubebuilder:object:root=true
@@ -42,17 +46,14 @@ type Router struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
-var RouterGroupVersionKind = GroupVersion.WithKind("Router")
-
 func (r *Router) GetStatus() *rApi.Status {
 	return &r.Status
 }
 
 func (r *Router) GetEnsuredLabels() map[string]string {
-	return map[string]string{
-		fmt.Sprintf("%s/ref", GroupVersion.Group): r.Name,
-	}
+	return map[string]string{}
 }
+
 func (m *Router) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Router").String(),

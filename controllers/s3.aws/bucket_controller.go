@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	"operators.kloudlite.io/env"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,7 @@ import (
 type BucketReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Env    *env.Env
 }
 
 const (
@@ -294,25 +296,37 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 					fn.AsOwner(obj, true),
 				},
 
-				"virtual-hostname":   bucketName,
-				"force-ssl-redirect": true,
-
-				"domains": []string{
-					fmt.Sprintf("%s.s3.dev.kloudlite.io", obj.Name),
-				},
-
-				"routes": map[string][]crdsv1.Route{
-					"/": {
-						{
-							Path: "/",
-							App:  obj.Name,
-							Port: 443,
-						},
-					},
-				},
+				"virtual-hostname": bucketName,
 
 				"name":      obj.Name,
 				"namespace": obj.Namespace,
+				"router-ref": crdsv1.Router{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					},
+					Spec: crdsv1.RouterSpec{
+						Https: crdsv1.Https{
+							Enabled:       true,
+							ForceRedirect: true,
+						},
+						Domains: []string{
+							fmt.Sprintf("%s.s3.dev.kloudlite.io", obj.Name),
+						},
+					},
+				},
+				"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
+				"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
+
+				"routes": map[string]crdsv1.Route{
+					"/": {
+						App:  obj.Name,
+						Port: 443,
+					},
+				},
+				"annotations": map[string]string{
+					"nginx.ingress.kubernetes.io/backend-protocol": "https",
+				},
 			},
 		)
 		if err != nil {

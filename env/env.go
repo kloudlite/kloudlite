@@ -22,12 +22,16 @@ type Env struct {
 
 	StorageClass       string `env:"STORAGE_CLASS" required:"true"`
 	XFSStorageClass    string `env:"XFS_STORAGE_CLASS" required:"true"`
-	ClusterCertIssuer  string `env:"CLUSTER_CERT_ISSUER" required:"true"`
 	ReconcilePeriod    string `env:"RECONCILE_PERIOD" required:"true"`
 	ServiceAccountName string `env:"SERVICE_ACCOUNT_NAME" required:"true"`
 
 	AwsAccessKeyId     string `env:"AWS_ACCESS_KEY_ID" required:"true"`
 	AwsSecretAccessKey string `env:"AWS_SECRET_ACCESS_KEY" required:"true"`
+
+	ClusterCertIssuer         string `env:"CLUSTER_CERT_ISSUER" required:"true"`
+	DefaultIngressClass       string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
+	WildcardDomainSuffix      string `env:"WILDCARD_DOMAIN_SUFFIX" required:"true"`
+	WildcardDomainCertificate string `env:"WILDCARD_DOMAIN_CERTIFICATE" required:"true"`
 }
 
 func GetEnv() (*Env, error) {

@@ -27,7 +27,7 @@ type AppReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	Env env.Env
+	Env *env.Env
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete

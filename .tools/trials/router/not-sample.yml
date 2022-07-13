@@ -1,0 +1,13 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Router
+metadata:
+  name: example2-web
+  namespace: hotspot
+spec:
+  domains: ['exampley.dev.kloudlite.io']
+  https:
+    enabled: true
+  routes:
+    /:
+      app: example
+      port: 80
