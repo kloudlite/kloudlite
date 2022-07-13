@@ -164,7 +164,7 @@ var Module = fx.Module(
 				return err
 			}
 
-			err = d.AddARecords(c.Context(), data.Domain, data.ARecords, "kloudlite")
+			err = d.AddARecords(c.Context(), data.Domain, data.ARecords)
 
 			if err != nil {
 				return err
@@ -176,11 +176,8 @@ var Module = fx.Module(
 		})
 
 		server.Get("/get-records/:domain_name", func(c *fiber.Ctx) error {
-
 			domainName := c.Params("domain_name")
-
 			records, err := d.GetRecords(c.Context(), domainName)
-
 			if err != nil {
 				return err
 			}
