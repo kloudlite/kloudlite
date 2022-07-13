@@ -155,7 +155,6 @@ func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error
 
 func (d *domainI) CreateRecord(
 	ctx context.Context,
-	siteId repos.ID,
 	recordType string,
 	host string,
 	answer string,
@@ -163,7 +162,6 @@ func (d *domainI) CreateRecord(
 	priority int64,
 ) (*Record, error) {
 	create, err := d.recordsRepo.Create(ctx, &Record{
-		SiteId:   siteId,
 		Type:     recordType,
 		Host:     host,
 		Answer:   answer,
