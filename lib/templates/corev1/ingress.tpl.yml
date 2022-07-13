@@ -1,55 +1,68 @@
+{{- $name := get . "name" }}
+{{- $namespace := get . "namespace" }}
+
+{{- $router := get . "router-ref"}}
+{{- $routes := get . "routes" }}
+{{- $ownerRefs := get . "owner-refs"}}
+{{- $labels := get . "labels"}}
+{{- $annotations := get . "annotations"}}
+{{- $virtualHost := get . "virtual-hostname"}}
+
 {{- $ingressClass := get . "ingress-class" }}
 {{- $clusterIssuer := get . "cluster-issuer" }}
-{{- $ownerRefs := get . "owner-refs"}}
+{{- $wildcardDomainSuffix := get . "wildcard-domain-suffix"}}
+{{- $wildcardDomainCert := get . "wildcard-domain-certificate" }}
 
-{{- $labels := get . "labels"}}
-
-{{- $virtualHost := get . "virtual-hostname"}}
-{{- $forceSSLRedirect := get . "force-ssl-redirect" |default false | squote }}
-
-{{/*[]string*/}}
-{{- $domains := get . "domains" }}
-
-{{/*operators.kloudlite.io/apis/crds/v1/router_types.go#Routes*/}}
-{{- $routes := get . "routes" }}
-
-{{- $name := get . "name" }}
-{{- $namespace := get . "namespace" -}}
-
+{{- with $router}}
+{{- /*gotype: operators.kloudlite.io/apis/crds/v1.Router */ -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{$name}}
   namespace: {{$namespace}}
   annotations:
-    kubernetes.io/ingress.class: {{$ingressClass}}
-    cert-manager.io/cluster-issuer: {{$clusterIssuer}}
-    {{- if $forceSSLRedirect }}
-    ingress.kubernetes.io/ssl-redirect: {{$forceSSLRedirect}}
-    {{- else}}
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
+    {{ K8sAnnotation true "kubernetes.io/ingress.class" $ingressClass }}
+
+    {{- $bodySize := printf "%dm" .Spec.MaxBodySize}}
+    {{K8sAnnotation .Spec.MaxBodySize "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
+
+    {{- with .Spec.RateLimit}}
+    {{- if .Enabled}}
+    {{K8sAnnotation .Rps "nginx.ingress.kubernetes.io/limit-rps" .Rps }}
+    {{K8sAnnotation .Rpm "nginx.ingress.kubernetes.io/limit-rpm" .Rpm }}
+    {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}
     {{- end}}
-    {{- if $virtualHost }}
-    nginx.ingress.kubernetes.io/upstream-vhost: {{$virtualHost}}
     {{- end}}
-  {{- if $labels }}
-  labels: {{ $labels | toYAML | nindent 4}}
-  {{- end}}
+
+    {{K8sAnnotation $virtualHost "nginx.ingress.kubernetes.io/upstream-vhost" $virtualHost}}
+
+    {{- if $annotations}}
+    {{ $annotations | toYAML | nindent 4}}
+    {{- end}}
+  labels:
+    {{K8sLabel true "operators.kloudlite.io/router-name" .Name }}
+    {{- if $labels }}
+    {{ $labels | toYAML | nindent 4}}
+    {{- end}}
   ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
 spec:
   tls:
-    {{- range $v := $domains }}
+    {{- range $v := .Spec.Domains }}
     - hosts:
         - {{$v}}
-      secretName: {{$v}}-tls-secret
+      secretName: {{$v}}-tls
     {{- end }}
+    - hosts:
+        - {{.Name}}.{{$wildcardDomainSuffix}}
+      secretName: {{$wildcardDomainCert}}
   rules:
-    {{- range $domain := $domains }}
-    - host: {{$domain}}
-      http:
+    - host: {{.Name}}.{{$wildcardDomainSuffix}}
+      http: &httpPath
         paths:
-          {{- range $routePath, $routes := $routes }}
-          {{- range $route := $routes }}
+          {{- range $routePath, $route := $routes }}
           - backend:
               service:
                 name: {{$route.App | default $route.Lambda}}
@@ -58,5 +71,8 @@ spec:
             path: {{$routePath}}
             pathType: Prefix
           {{- end}}
-          {{- end}}
+    {{- range $domain := .Spec.Domains }}
+    - host: {{$domain}}
+      http: *httpPath
     {{- end }}
+  {{- end}}
