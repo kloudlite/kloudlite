@@ -171,10 +171,8 @@ func (d *domainI) CreateRecord(
 	return create, err
 }
 
-func (d *domainI) DeleteRecords(ctx context.Context, host string, siteId string) error {
-
+func (d *domainI) DeleteRecords(ctx context.Context, host string) error {
 	d.recordsCache.Drop(ctx, host)
-
 	return d.recordsRepo.DeleteMany(ctx, repos.Filter{
 		"host": host,
 	})
