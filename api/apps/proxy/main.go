@@ -47,8 +47,6 @@ func main() {
 
 			for {
 				conn, err := listener.Accept()
-				fmt.Println("Accepted connection from: R", conn.RemoteAddr())
-				fmt.Println("Accepted connection from: L", conn.LocalAddr())
 				if err != nil {
 					fmt.Println("Error accepting connection: ", err)
 					continue
@@ -56,6 +54,7 @@ func main() {
 				upconn, err := net.Dial("tcp", fmt.Sprint(service.Name, ":", service.Target))
 				if err != nil {
 					fmt.Println("Error dialing target: ", err)
+					conn.Close()
 					continue
 				}
 				go func() {
