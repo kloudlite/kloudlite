@@ -197,7 +197,7 @@ var Module = fx.Module(
 		server.Delete("/delete-domain/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")
 
-			err := d.DeleteRecords(c.Context(), domainName, "kloudlite")
+			err := d.DeleteRecords(c.Context(), domainName)
 
 			if err != nil {
 				return err
