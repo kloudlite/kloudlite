@@ -176,6 +176,7 @@ func (d *domainI) DeleteRecords(ctx context.Context, host string) error {
 	return d.recordsRepo.DeleteMany(ctx, repos.Filter{
 		"host": host,
 	})
+
 }
 
 func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string) error {
