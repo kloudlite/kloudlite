@@ -17,12 +17,11 @@ type Site struct {
 
 type Record struct {
 	repos.BaseEntity `bson:",inline"`
-	SiteId           repos.ID `bson:"siteId,omitempty" json:"siteId,omitempty"`
-	Type             string   `bson:"type,omitempty" json:"type,omitempty"`
-	Host             string   `bson:"host,omitempty" json:"host,omitempty"`
-	Answer           string   `bson:"answer,omitempty" json:"answer,omitempty"`
-	TTL              uint32   `bson:"ttl,omitempty" json:"ttl,omitempty"`
-	Priority         int64    `bson:"priority,omitempty" json:"priority,omitempty"`
+	Type             string `bson:"type,omitempty" json:"type,omitempty"`
+	Host             string `bson:"host,omitempty" json:"host,omitempty"`
+	Answer           string `bson:"answer,omitempty" json:"answer,omitempty"`
+	TTL              uint32 `bson:"ttl,omitempty" json:"ttl,omitempty"`
+	Priority         int64  `bson:"priority,omitempty" json:"priority,omitempty"`
 }
 
 var RecordIndexes = []repos.IndexField{
