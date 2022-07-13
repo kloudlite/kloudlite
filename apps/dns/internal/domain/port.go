@@ -17,7 +17,6 @@ type Domain interface {
 	CreateSite(ctx context.Context, domain string, accountId repos.ID) error
 	CreateRecord(
 		ctx context.Context,
-		siteId repos.ID,
 		recordType string,
 		host string,
 		answer string,
