@@ -51,10 +51,12 @@ func main() {
 				fmt.Println("Accepted connection from: L", conn.LocalAddr())
 				if err != nil {
 					fmt.Println("Error accepting connection: ", err)
+					continue
 				}
 				upconn, err := net.Dial("tcp", fmt.Sprint(service.Name, ":", service.Target))
 				if err != nil {
 					fmt.Println("Error dialing target: ", err)
+					continue
 				}
 				go func() {
 					io.Copy(conn, upconn)
