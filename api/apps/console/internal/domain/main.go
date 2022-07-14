@@ -18,7 +18,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	rcn "kloudlite.io/pkg/res-change-notifier"
@@ -47,7 +47,7 @@ type domain struct {
 	secretRepo           repos.DbRepo[*entities.Secret]
 	messageProducer      redpanda.Producer
 	messageTopic         string
-	logger               logger.Logger
+	logger               logging.Logger
 	managedSvcRepo       repos.DbRepo[*entities.ManagedService]
 	managedResRepo       repos.DbRepo[*entities.ManagedResource]
 	appRepo              repos.DbRepo[*entities.App]
@@ -1700,7 +1700,7 @@ func fxDomain(
 	wgAccountRepo repos.DbRepo[*entities.WGAccount],
 	msgP redpanda.Producer,
 	env *Env,
-	logger logger.Logger,
+	logger logging.Logger,
 	workloadMessenger WorkloadMessenger,
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,
