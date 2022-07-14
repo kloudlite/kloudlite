@@ -85,7 +85,6 @@ type GitPipelineArtifact {
 
 type GitPipeline {
   id: ID!
-  repoName: String!
   name: String!
 
   gitProvider: String!
