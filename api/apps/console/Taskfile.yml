@@ -21,4 +21,4 @@ tasks:
       APP: console
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
-      - docker push {{.IMAGE}}
+#      - docker push {{.IMAGE}}
