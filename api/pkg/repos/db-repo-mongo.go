@@ -56,7 +56,7 @@ func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	res := fn.NewTypeFromPointer[T]()
 	err := one.Decode(&res)
 	if err != nil {
-		fmt.Println("ERR: ", err)
+		fmt.Println("(debug/info) ERR: ", err)
 		return res, err
 	}
 	return res, nil
@@ -162,10 +162,15 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 
 // Upsert upsert
 func (repo dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, error) {
-	id := repo.NewId()
-	if t, err := repo.findOne(ctx, filter); err == nil {
-		id = t.GetId()
-	}
+	id := func() ID {
+		if data.GetId() != "" {
+			return data.GetId()
+		}
+		if t, err := repo.findOne(ctx, filter); err == nil {
+			return t.GetId()
+		}
+		return repo.NewId()
+	}()
 
 	data.SetId(id)
 	return repo.UpdateById(

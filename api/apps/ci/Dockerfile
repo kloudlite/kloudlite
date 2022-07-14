@@ -17,7 +17,8 @@ RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/ci ./main.go
 RUN chmod +x /tmp/bin/ci
 
 #FROM golang:1.18-alpine
-FROM gcr.io/distroless/static-debian11
+#FROM gcr.io/distroless/static-debian11
+FROM alpine
 USER 1001
 WORKDIR /tmp/app
 COPY --from=base --chown=1001 /tmp/bin/ci ./ci
