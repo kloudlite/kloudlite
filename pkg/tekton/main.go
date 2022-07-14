@@ -2,7 +2,7 @@ package tekton
 
 import (
 	"encoding/json"
-	triggers "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	triggers "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	"google.golang.org/grpc/codes"
 	"net/http"
 )
