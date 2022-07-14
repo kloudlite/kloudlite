@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
@@ -22,7 +23,7 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 	if err != nil {
 		return nil, err
 	}
-	var res = make([]*model.GitPipeline, len(pipelines))
+	var res []*model.GitPipeline
 	for _, pipeline := range pipelines {
 		res = append(res, &model.GitPipeline{
 			ID:          pipeline.Id,

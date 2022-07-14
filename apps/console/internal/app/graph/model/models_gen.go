@@ -25,8 +25,8 @@ type App struct {
 	Services    []*ExposedService `json:"services"`
 	Containers  []*AppContainer   `json:"containers"`
 	Project     *Project          `json:"project"`
-	Version     *int              `json:"version"`
 	Status      string            `json:"status"`
+	AutoScale   *AutoScale        `json:"autoScale"`
 }
 
 func (App) IsEntity() {}
@@ -82,6 +82,12 @@ type AttachedRes struct {
 
 type AttachedResInput struct {
 	ResID repos.ID `json:"res_id"`
+}
+
+type AutoScale struct {
+	MinReplicas     int `json:"minReplicas"`
+	MaxReplicas     int `json:"maxReplicas"`
+	UsagePercentage int `json:"usage_percentage"`
 }
 
 type CCMData struct {

@@ -82,6 +82,12 @@ const (
 // 	Region       string
 // }
 
+type AutoScale struct {
+	MinReplicas     int64 `json:"min_replicas" bson:"min_replicas"`
+	MaxReplicas     int64 `json:"min_replicas" bson:"min_replicas"`
+	UsagePercentage int64 `json:"usage_percentage" bson:"usage_percentage"`
+}
+
 type App struct {
 	repos.BaseEntity `bson:",inline"`
 	IsLambda         bool               `json:"is_lambda" bson:"is_lambda"`
@@ -91,6 +97,7 @@ type App struct {
 	Namespace        string             `json:"namespace" bson:"namespace"`
 	Description      *string            `json:"description" bson:"description"`
 	Replicas         int                `json:"replicas" bson:"replicas"`
+	AutoScale        *AutoScale         `json:"auto_scale" bson:"auto_scale"`
 	ExposedPorts     []ExposedPort      `json:"exposed_ports" bson:"exposed_ports"`
 	Containers       []Container        `json:"containers" bson:"containers"`
 	Status           AppStatus          `json:"status" bson:"status"`

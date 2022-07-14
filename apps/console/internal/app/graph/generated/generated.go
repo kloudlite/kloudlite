@@ -60,6 +60,7 @@ type ComplexityRoot struct {
 	}
 
 	App struct {
+		AutoScale   func(childComplexity int) int
 		Containers  func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
@@ -71,7 +72,6 @@ type ComplexityRoot struct {
 		Replicas    func(childComplexity int) int
 		Services    func(childComplexity int) int
 		Status      func(childComplexity int) int
-		Version     func(childComplexity int) int
 	}
 
 	AppContainer struct {
@@ -93,6 +93,12 @@ type ComplexityRoot struct {
 
 	AttachedRes struct {
 		ResID func(childComplexity int) int
+	}
+
+	AutoScale struct {
+		MaxReplicas     func(childComplexity int) int
+		MinReplicas     func(childComplexity int) int
+		UsagePercentage func(childComplexity int) int
 	}
 
 	CCMData struct {
@@ -423,6 +429,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Account.Projects(childComplexity), true
 
+	case "App.autoScale":
+		if e.complexity.App.AutoScale == nil {
+			break
+		}
+
+		return e.complexity.App.AutoScale(childComplexity), true
+
 	case "App.containers":
 		if e.complexity.App.Containers == nil {
 			break
@@ -499,13 +512,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Status(childComplexity), true
-
-	case "App.version":
-		if e.complexity.App.Version == nil {
-			break
-		}
-
-		return e.complexity.App.Version(childComplexity), true
 
 	case "AppContainer.attachedResources":
 		if e.complexity.AppContainer.AttachedResources == nil {
@@ -590,6 +596,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AttachedRes.ResID(childComplexity), true
+
+	case "AutoScale.maxReplicas":
+		if e.complexity.AutoScale.MaxReplicas == nil {
+			break
+		}
+
+		return e.complexity.AutoScale.MaxReplicas(childComplexity), true
+
+	case "AutoScale.minReplicas":
+		if e.complexity.AutoScale.MinReplicas == nil {
+			break
+		}
+
+		return e.complexity.AutoScale.MinReplicas(childComplexity), true
+
+	case "AutoScale.usage_percentage":
+		if e.complexity.AutoScale.UsagePercentage == nil {
+			break
+		}
+
+		return e.complexity.AutoScale.UsagePercentage(childComplexity), true
 
 	case "CCMData.key":
 		if e.complexity.CCMData.Key == nil {
@@ -2020,6 +2047,12 @@ input AppInput{
   containers: [AppContainerIn!]!
 }
 
+type AutoScale {
+  minReplicas: Int!
+  maxReplicas: Int!
+  usage_percentage: Int!
+}
+
 type App @key(fields: "id") {
   id: ID!
   isLambda: Boolean!
@@ -2031,8 +2064,8 @@ type App @key(fields: "id") {
   services: [ExposedService]!
   containers: [AppContainer!]!
   project: Project!
-  version: Int
   status: String!
+  autoScale: AutoScale
 }
 
 
@@ -3968,38 +4001,6 @@ func (ec *executionContext) _App_project(ctx context.Context, field graphql.Coll
 	return ec.marshalNProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _App_version(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "App",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Version, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _App_status(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4033,6 +4034,38 @@ func (ec *executionContext) _App_status(ctx context.Context, field graphql.Colle
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_autoScale(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AutoScale, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AutoScale)
+	fc.Result = res
+	return ec.marshalOAutoScale2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAutoScale(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppContainer_name(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
@@ -4444,6 +4477,111 @@ func (ec *executionContext) _AttachedRes_res_id(ctx context.Context, field graph
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AutoScale_minReplicas(ctx context.Context, field graphql.CollectedField, obj *model.AutoScale) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AutoScale",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MinReplicas, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AutoScale_maxReplicas(ctx context.Context, field graphql.CollectedField, obj *model.AutoScale) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AutoScale",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxReplicas, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AutoScale_usage_percentage(ctx context.Context, field graphql.CollectedField, obj *model.AutoScale) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AutoScale",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UsagePercentage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CCMData_key(ctx context.Context, field graphql.CollectedField, obj *model.CCMData) (ret graphql.Marshaler) {
@@ -11568,13 +11706,6 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "version":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._App_version(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
 		case "status":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._App_status(ctx, field, obj)
@@ -11585,6 +11716,13 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "autoScale":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._App_autoScale(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11752,6 +11890,57 @@ func (ec *executionContext) _AttachedRes(ctx context.Context, sel ast.SelectionS
 		case "res_id":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._AttachedRes_res_id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var autoScaleImplementors = []string{"AutoScale"}
+
+func (ec *executionContext) _AutoScale(ctx context.Context, sel ast.SelectionSet, obj *model.AutoScale) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, autoScaleImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AutoScale")
+		case "minReplicas":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._AutoScale_minReplicas(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "maxReplicas":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._AutoScale_maxReplicas(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "usage_percentage":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._AutoScale_usage_percentage(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -15838,6 +16027,13 @@ func (ec *executionContext) marshalOApp2ᚖkloudliteᚗioᚋappsᚋconsoleᚋint
 		return graphql.Null
 	}
 	return ec._App(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAutoScale2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAutoScale(ctx context.Context, sel ast.SelectionSet, v *model.AutoScale) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AutoScale(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

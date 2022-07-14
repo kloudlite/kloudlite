@@ -31,7 +31,6 @@ type GitDockerPipelineIn struct {
 
 type GitPipeline struct {
 	ID          repos.ID               `json:"id"`
-	RepoName    string                 `json:"repoName"`
 	Name        string                 `json:"name"`
 	GitProvider string                 `json:"gitProvider"`
 	GitRepoURL  string                 `json:"gitRepoUrl"`
