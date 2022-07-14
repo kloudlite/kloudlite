@@ -17,7 +17,7 @@ func NewInsecureClient(grpcUrl string) (*grpc.ClientConn, error) {
 }
 
 type ClientOptions interface {
-	GetGCPServerURL() string
+	GetGRPCServerURL() string
 }
 
 type GrpcClient interface {
@@ -27,19 +27,25 @@ type GrpcClient interface {
 func NewGrpcClientFx[T ClientOptions, M GrpcClient]() fx.Option {
 	return fx.Module(
 		"grpc-client",
-		fx.Provide(func(env T) (M, error) {
-			fmt.Println(env.GetGCPServerURL())
-			return NewInsecureClient(env.GetGCPServerURL())
-		}),
-		fx.Invoke(func(grpcClient M, lifecycle fx.Lifecycle) {
-			lifecycle.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					return nil
-				},
-				OnStop: func(ctx context.Context) error {
-					return nil
-				},
-			})
-		}),
+		fx.Provide(
+			func(env T) (M, error) {
+				fmt.Println(env.GetGRPCServerURL())
+				return NewInsecureClient(env.GetGRPCServerURL())
+			},
+		),
+		fx.Invoke(
+			func(grpcClient M, lifecycle fx.Lifecycle) {
+				lifecycle.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return nil
+						},
+						OnStop: func(ctx context.Context) error {
+							return nil
+						},
+					},
+				)
+			},
+		),
 	)
 }

@@ -7,17 +7,23 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logger"
 	"kloudlite.io/pkg/repos"
 )
 
 type GrpcAuthConfig struct {
-	InfraGrpcHost string `env:"AUTH_HOST" required:"true"`
-	InfraGrpcPort string `env:"AUTH_PORT" required:"true"`
+	Addr string `env:"AUTH_ADDR" required:"true"`
 }
 
-func (e *GrpcAuthConfig) GetGCPServerURL() string {
-	return e.InfraGrpcHost + ":" + e.InfraGrpcPort
+func (e *GrpcAuthConfig) GetGRPCServerURL() string {
+	return e.Addr
+}
+
+type GrpcConsoleConfig struct {
+	Addr string `env:"CONSOLE_ADDR" required:"true"`
+}
+
+func (e *GrpcConsoleConfig) GetGRPCServerURL() string {
+	return e.Addr
 }
 
 type Env struct {
@@ -65,10 +71,9 @@ func (e *Env) GetHttpCors() string {
 
 var Module = fx.Module(
 	"framework",
-	logger.FxProvider(),
 	config.EnvFx[Env](),
 	config.EnvFx[GrpcAuthConfig](),
-
+	config.EnvFx[GrpcConsoleConfig](),
 	fx.Provide(
 		func(env *Env) app.AuthCacheClient {
 			return cache.NewRedisClient(env.AuthRedisHost, env.AuthRedisUsername, env.AuthRedisPassword, env.AuthRedisPrefix)
@@ -86,6 +91,7 @@ var Module = fx.Module(
 	httpServer.NewHttpServerFx[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
-	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
+	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthGRPCClient](),
+	rpc.NewGrpcClientFx[*GrpcConsoleConfig, app.ConsoleGRPCClient](),
 	app.Module,
 )

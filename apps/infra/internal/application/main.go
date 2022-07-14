@@ -7,7 +7,7 @@ import (
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/messaging"
 	// "kloudlite.io/pkg/messaging"
 )
@@ -47,7 +47,7 @@ var Module = fx.Module("application",
 	messaging.NewFxKafkaProducer[messaging.Json](),
 	fx.Provide(fxJobResponder),
 	messaging.NewFxKafkaConsumer[*InfraEnv](),
-	fx.Invoke(func(env *InfraEnv, logger logger.Logger, d domain.Domain, consumer messaging.Consumer[*InfraEnv]) {
+	fx.Invoke(func(env *InfraEnv, logger logging.Logger, d domain.Domain, consumer messaging.Consumer[*InfraEnv]) {
 		consumer.On(env.KafkaInfraTopic, func(context context.Context, action messaging.Message) error {
 			var _d struct {
 				Type string

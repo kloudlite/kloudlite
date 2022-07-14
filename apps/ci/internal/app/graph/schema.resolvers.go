@@ -164,11 +164,8 @@ func (r *queryResolver) CiGithubInstallations(ctx context.Context, pagination *t
 	return r.Domain.GithubListInstallations(ctx, session.UserId, pagination)
 }
 
-func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL *string, instID *int) (interface{}, error) {
-	if instID == nil {
-		return r.Domain.GithubInstallationToken(ctx, "")
-	}
-	return r.Domain.GithubInstallationToken(ctx, "")
+func (r *queryResolver) CiGithubInstallationToken(ctx context.Context, repoURL string) (interface{}, error) {
+	return r.Domain.GithubInstallationToken(ctx, repoURL)
 }
 
 func (r *queryResolver) CiGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (interface{}, error) {
@@ -223,7 +220,16 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 			Name:        pipelineE.Name,
 			GitProvider: pipelineE.GitProvider,
 			GitRepoURL:  pipelineE.GitRepoUrl,
-			Metadata:    pipelineE.Metadata,
+			GitBranch:   pipelineE.GitBranch,
+			Build: &model.GitPipelineBuild{
+				BaseImage: &pipelineE.Build.BaseImage,
+				Cmd:       pipelineE.Build.Cmd,
+			},
+			Run: &model.GitPipelineRun{
+				BaseImage: &pipelineE.Run.BaseImage,
+				Cmd:       pipelineE.Run.Cmd,
+			},
+			Metadata: pipelineE.Metadata,
 		}
 	}
 	return pipelines, nil
@@ -239,7 +245,15 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		Name:        pipelineE.Name,
 		GitProvider: pipelineE.GitProvider,
 		GitRepoURL:  pipelineE.GitRepoUrl,
-		Metadata:    pipelineE.Metadata,
+		Build: &model.GitPipelineBuild{
+			BaseImage: &pipelineE.Build.BaseImage,
+			Cmd:       pipelineE.Build.Cmd,
+		},
+		Run: &model.GitPipelineRun{
+			BaseImage: &pipelineE.Run.BaseImage,
+			Cmd:       pipelineE.Run.Cmd,
+		},
+		Metadata: pipelineE.Metadata,
 	}, nil
 }
 

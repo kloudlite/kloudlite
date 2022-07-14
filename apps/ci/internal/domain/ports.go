@@ -2,7 +2,8 @@ package domain
 
 import (
 	"context"
-	"github.com/google/go-github/v43/github"
+	// "github.com/google/go-github/v43/github"
+	"github.com/google/go-github/v45/github"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/types"
@@ -18,7 +19,7 @@ type Github interface {
 	ListBranches(ctx context.Context, accToken *AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error)
 	AddWebhook(ctx context.Context, accToken *AccessToken, pipelineId string, repoUrl string) (*GithubWebhookId, error)
 	DeleteWebhook(ctx context.Context, accToken *AccessToken, repoUrl string, hookId GithubWebhookId) error
-	GetLatestCommit(ctx context.Context, repoUrl string, branchName string) (string, error)
+	GetLatestCommit(ctx context.Context, accToken *AccessToken, repoUrl string, branchName string) (string, error)
 }
 
 type Gitlab interface {

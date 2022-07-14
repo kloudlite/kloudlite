@@ -15,22 +15,22 @@ type Domain interface {
 	DeletePipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error
 	TriggerPipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error
 
-	GithubInstallationToken(ctx context.Context, pipelineId repos.ID) (string, error)
+	GithubInstallationToken(ctx context.Context, repoUrl string) (string, error)
 	GithubListInstallations(ctx context.Context, userId repos.ID, pagination *types.Pagination) (any, error)
 	GithubListRepos(ctx context.Context, userId repos.ID, installationId int64, pagination *types.Pagination) (any, error)
 	GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (any, error)
 	GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) (any, error)
-	GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) error
+	GithubAddWebhook(ctx context.Context, userId repos.ID, pipelineId repos.ID, repoUrl string) (*GithubWebhookId, error)
 
 	GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error)
 	GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) (any, error)
 	GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) (any, error)
 	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID) (*GitlabWebhookId, error)
-	GitlabPullToken(ctx context.Context, pipelineId repos.ID) (string, error)
+	GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error)
 
 	// tekton interceptor
-	TektonInterceptorGithub(ctx context.Context, req *tekton.Request) *tekton.Response
-	TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) *tekton.Response
+	TektonInterceptorGithub(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
+	TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
 }
 
 type Harbor interface {

@@ -3,7 +3,7 @@ scalar Any
 
 type Query {
   ci_githubInstallations(pagination: PaginationIn): Any!
-  ci_githubInstallationToken(repoUrl: String, instId: Int): Any!
+  ci_githubInstallationToken(repoUrl: String!): Any!
   ci_githubRepos(installationId: Int!, pagination: PaginationIn): Any!
   ci_githubRepoBranches(repoUrl: String!, pagination: PaginationIn): Any!
   ci_searchGithubRepos(search: String, org: String!, pagination: PaginationIn): Any!

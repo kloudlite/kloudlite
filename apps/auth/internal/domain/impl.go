@@ -16,7 +16,7 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logger"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -33,9 +33,9 @@ type domainI struct {
 	accessTokenRepo repos.DbRepo[*AccessToken]
 	commsClient     comms.CommsClient
 	verifyTokenRepo cache.Repo[*VerifyToken]
-	resetTokenRepo  cache.Repo[*ResetPasswordToken]
-	logger          logger.Logger
-	github          Github
+	resetTokenRepo cache.Repo[*ResetPasswordToken]
+	logger         logging.Logger
+	github         Github
 	gitlab          Gitlab
 	google          Google
 	remoteLoginRepo repos.DbRepo[*RemoteLogin]
@@ -482,7 +482,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 	case common.ProviderGoogle:
 		{
 			u, t, err := d.google.Callback(ctx, code, state)
-			// d.logger.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
+			// d.logging.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
 				return nil, errors.NewEf(err, "could not login to google")
 			}
@@ -624,7 +624,7 @@ func fxDomain(
 	github Github,
 	gitlab Gitlab,
 	google Google,
-	logger logger.Logger,
+	logger logging.Logger,
 	commsClient comms.CommsClient,
 ) Domain {
 	return &domainI{

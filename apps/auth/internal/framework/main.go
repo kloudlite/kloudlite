@@ -15,7 +15,7 @@ type CommsGrpcEnv struct {
 	CommsPort string `env:"COMMS_PORT" required:"true"`
 }
 
-func (c CommsGrpcEnv) GetGCPServerURL() string {
+func (c CommsGrpcEnv) GetGRPCServerURL() string {
 	return c.CommsHost + ":" + c.CommsPort
 }
 

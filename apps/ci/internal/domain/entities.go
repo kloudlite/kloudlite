@@ -48,7 +48,7 @@ type Pipeline struct {
 	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
 	GitBranch   string `json:"git_branch" bson:"git_branch"`
 
-	GitlabTokenId string `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
+	GitlabTokenId *repos.ID `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
 
 	Build            *ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
 	Run              *ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
@@ -79,6 +79,8 @@ type TektonVars struct {
 
 	RunBaseImage string `json:"run-base_image"`
 	RunCmd       string `json:"run-cmd"`
+
+	TaskNamespace string `json:"task-namespace"`
 
 	ArtifactDockerImageName string `json:"artifact_ref-docker_image_name"`
 	ArtifactDockerImageTag  string `json:"artifact_ref-docker_image_tag"`
@@ -151,7 +153,6 @@ func (p *Pipeline) TriggerHook(latestCommitSHA string) error {
 
 	if req != nil {
 		r, err := http.DefaultClient.Do(req)
-		fmt.Printf("r: %+v | err: %v\n", r, err)
 		if err != nil {
 			return errors.NewEf(err, "while making request")
 		}
