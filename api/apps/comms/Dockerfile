@@ -1,5 +1,5 @@
 # context-dir: <project-root>
-FROM golang:1.18-alpine AS base
+FROM golang:1.18.3-alpine3.16 AS base
 RUN apk add make gcc libc-dev
 USER 1001
 ENV GOPATH=/tmp/go
@@ -12,7 +12,7 @@ WORKDIR $APP_DIR
 RUN go build -tags musl -o /tmp/bin/comms ./main.go
 RUN chmod +x /tmp/bin/comms
 
-FROM golang:1.18-alpine
+FROM golang:1.18.3-alpine3.16
 USER 1001
 WORKDIR /tmp/app
 ARG APP_DIR
