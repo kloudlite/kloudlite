@@ -92,6 +92,12 @@ var Module = fx.Module(
 		},
 	),
 
+	fx.Invoke(
+		func(app *fiber.App, logger logging.Logger) {
+			NewWebhook(app, "/webhook", logger)
+		},
+	),
+
 	// FiberApp
 	fx.Invoke(
 		func(app *fiber.App, d domain.Domain, gitlab domain.Gitlab) {
