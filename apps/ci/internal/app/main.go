@@ -155,29 +155,35 @@ var Module = fx.Module(
 					switch gitProvider {
 					case common.ProviderGithub:
 						{
-							tkVars, pipeline, err := d.TektonInterceptorGithub(ctx.Context(), &req)
+							// tkVars, pipeline, err := d.TektonInterceptorGithub(ctx.Context(), &req)
+							tkVars, _, err := d.TektonInterceptorGithub(ctx.Context(), &req)
 							if err != nil {
+								logger.Errorf("ERR: %+v", err)
 								response := tekton.NewResponse(&req).Err(err)
 								jsonBody, err := response.ToJson()
 								if err != nil {
 									return ctx.JSON(err)
 								}
+								logger.Infof("ERR Response: %+v", jsonBody)
 								return ctx.Send(jsonBody)
 							}
 
-							projectOut, err := consoleCli.GetProjectName(
-								ctx.Context(), &console.ProjectIn{ProjectId: pipeline.ProjectId},
-							)
-							if err != nil {
-								return ctx.JSON(err)
-							}
-							tkVars.TaskNamespace = projectOut.Name
+							// projectOut, err := consoleCli.GetProjectName(
+							// 	ctx.Context(), &console.ProjectIn{ProjectId: pipeline.ProjectId},
+							// )
+							// if err != nil {
+							// 	return ctx.JSON(err)
+							// }
+							// tkVars.TaskNamespace = projectOut.Name
+							tkVars.TaskNamespace = "sample-proje-39803"
 							tkVarsJson, err := tkVars.ToJson()
 							if err != nil {
+								logger.Infof("ERR 181: %+v", err)
 								return ctx.JSON(err)
 							}
 							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
 							if err != nil {
+								logger.Infof("ERR 186: %+v", err)
 								return ctx.JSON(err)
 							}
 							logger.Infof("responseBody: %s\n", responseBody)
