@@ -20,5 +20,5 @@ tasks:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/ci:v2
       APP: ci
     cmds:
-      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}

@@ -23,5 +23,5 @@ tasks:
       IMAGE: registry.gitlab.com/abdheshnayak/sshd:proxy
       APP_DIR: ./apps/proxy
     cmds:
-      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --build-arg APP_DIR={{.APP_DIR}}
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
       - docker push {{.IMAGE}}
