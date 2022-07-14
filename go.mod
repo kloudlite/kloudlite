@@ -13,6 +13,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.32.0
 	github.com/gofiber/websocket/v2 v2.0.21
 	github.com/google/go-github/v43 v43.0.0
+	github.com/google/go-github/v45 v45.2.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/gorilla/websocket v1.4.2
 	github.com/ktr0731/go-fuzzyfinder v0.6.0
@@ -51,7 +52,6 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/agnivade/levenshtein v1.1.0 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
@@ -78,8 +78,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
-	github.com/google/cel-go v0.11.3 // indirect
-	github.com/google/go-cmp v0.5.7 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/go-containerregistry v0.8.1-0.20220414143355-892d7a808387 // indirect
 	github.com/google/go-github/v41 v41.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -121,7 +120,6 @@ require (
 	github.com/seancfoley/bintree v1.1.0 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/tektoncd/pipeline v0.35.0 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.1.0 // indirect
 	github.com/urfave/cli/v2 v2.3.0 // indirect
