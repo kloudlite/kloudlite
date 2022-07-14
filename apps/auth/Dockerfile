@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM golang:1.18-alpine AS base
+FROM golang:1.18.3-alpine3.16 AS base
 RUN apk add make gcc libc-dev
 USER 1001
 ENV GOPATH=/tmp/go
@@ -20,7 +20,7 @@ RUN GOOS=linux GOARCH=amd64 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
 #FROM gcr.io/distroless/static:nonroot
-FROM golang:1.18-alpine
+FROM golang:1.18.3-alpine3.16
 USER 1001:1001
 ARG APP
 COPY --from=base /tmp/bin/$APP /auth

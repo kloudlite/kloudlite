@@ -1,5 +1,5 @@
 # context-dir: <project-root>
-FROM golang:1.18-alpine AS base
+FROM golang:1.18.3-alpine3.16 AS base
 USER 1001
 ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
@@ -11,7 +11,7 @@ WORKDIR $APP_DIR
 RUN go build -tags musl -o /tmp/bin/iam ./main.go
 RUN chmod +x /tmp/bin/iam
 
-FROM golang:1.18-alpine
+FROM golang:1.18.3-alpine3.16
 USER 1001
 WORKDIR /tmp/app
 COPY --from=base --chown=1001 /tmp/bin/iam ./
