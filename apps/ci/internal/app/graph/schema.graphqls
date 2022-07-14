@@ -20,7 +20,6 @@ type Query {
 input PipelineDataInput{
   name: String!
   imageName: String!
-  repoName: String!
   gitProvider: String!
   gitRepoUrl: String!
   gitlabRepoId: Int!

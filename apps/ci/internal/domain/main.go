@@ -27,6 +27,20 @@ type domainI struct {
 	harborAccRepo repos.DbRepo[*HarborAccount]
 }
 
+func (d *domainI) GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error) {
+	find, err := d.pipelineRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"app_id": appId,
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return find, nil
+}
+
 type GitWebhookPayload struct {
 	GitProvider string `json:"git_provider,omitempty"`
 	RepoUrl     string `json:"repo_url,omitempty"`

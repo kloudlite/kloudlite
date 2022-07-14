@@ -7,8 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
@@ -20,7 +18,34 @@ import (
 )
 
 func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.GitPipeline, error) {
-	panic(fmt.Errorf("not implemented"))
+	pipelines, err := r.Domain.GetAppPipelines(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	var res = make([]*model.GitPipeline, len(pipelines))
+	for _, pipeline := range pipelines {
+		res = append(res, &model.GitPipeline{
+			ID:          pipeline.Id,
+			Name:        pipeline.Name,
+			GitProvider: pipeline.GitProvider,
+			GitRepoURL:  pipeline.GitRepoUrl,
+			GitBranch:   pipeline.GitBranch,
+			Build: func() *model.GitPipelineBuild {
+				return &model.GitPipelineBuild{
+					BaseImage: &pipeline.Build.BaseImage,
+					Cmd:       pipeline.Build.Cmd,
+				}
+			}(),
+			Run: func() *model.GitPipelineRun {
+				return &model.GitPipelineRun{
+					BaseImage: &pipeline.Build.BaseImage,
+					Cmd:       pipeline.Build.Cmd,
+				}
+			}(),
+			Metadata: pipeline.Metadata,
+		})
+	}
+	return res, nil
 }
 
 func (r *appResolver) CiCreateDockerPipeLine(ctx context.Context, obj *model.App, containerName string, in model.GitDockerPipelineIn) (map[string]interface{}, error) {

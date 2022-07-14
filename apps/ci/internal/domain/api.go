@@ -11,6 +11,7 @@ import (
 type Domain interface {
 	GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error)
 	GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error)
+	GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error)
 	CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error)
 	DeletePipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error
 	TriggerPipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error
