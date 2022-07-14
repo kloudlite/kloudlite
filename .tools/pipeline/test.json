@@ -1,9 +1,9 @@
 {
-  "zen": "Half measures are as bad as nothing at all.",
-  "hook_id": 367978881,
+  "zen": "Favor focus over features.",
+  "hook_id": 368082572,
   "hook": {
     "type": "Repository",
-    "id": 367978881,
+    "id": 368082572,
     "name": "web",
     "active": true,
     "events": [
@@ -11,15 +11,15 @@
     ],
     "config": {
       "content_type": "json",
-      "url": "https://tk.webhooks.dev.kloudlite.io/github?pipelineId=pip-lidjuq9-z0ddg9pzsawlk-s6s4ei",
+      "url": "https://tk.webhooks.dev.kloudlite.io/github?pipelineId=pip-9cnxjhxkqat9abb0wc2enxyf6bzj",
       "insecure_ssl": "0"
     },
-    "updated_at": "2022-07-11T03:37:32Z",
-    "created_at": "2022-07-11T03:37:32Z",
-    "url": "https://api.github.com/repos/nxtcoder17/sample/hooks/367978881",
-    "test_url": "https://api.github.com/repos/nxtcoder17/sample/hooks/367978881/test",
-    "ping_url": "https://api.github.com/repos/nxtcoder17/sample/hooks/367978881/pings",
-    "deliveries_url": "https://api.github.com/repos/nxtcoder17/sample/hooks/367978881/deliveries",
+    "updated_at": "2022-07-11T16:40:28Z",
+    "created_at": "2022-07-11T16:40:28Z",
+    "url": "https://api.github.com/repos/nxtcoder17/sample/hooks/368082572",
+    "test_url": "https://api.github.com/repos/nxtcoder17/sample/hooks/368082572/test",
+    "ping_url": "https://api.github.com/repos/nxtcoder17/sample/hooks/368082572/pings",
+    "deliveries_url": "https://api.github.com/repos/nxtcoder17/sample/hooks/368082572/deliveries",
     "last_response": {
       "code": null,
       "status": "unused",
