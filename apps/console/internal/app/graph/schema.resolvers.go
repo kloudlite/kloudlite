@@ -282,6 +282,16 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		Description: entity.Description,
 		ReadableID:  repos.ID(entity.ReadableId),
 		Replicas:    &entity.Replicas,
+		AutoScale: func() *model.AutoScale {
+			if entity.AutoScale != nil {
+				return &model.AutoScale{
+					MinReplicas:     int(entity.AutoScale.MinReplicas),
+					MaxReplicas:     int(entity.AutoScale.MinReplicas),
+					UsagePercentage: int(entity.AutoScale.UsagePercentage),
+				}
+			}
+			return nil
+		}(),
 		Services: func() []*model.ExposedService {
 			services := make([]*model.ExposedService, 0)
 			for _, port := range entity.ExposedPorts {

@@ -145,6 +145,12 @@ input AppInput{
   containers: [AppContainerIn!]!
 }
 
+type AutoScale {
+  minReplicas: Int!
+  maxReplicas: Int!
+  usage_percentage: Int!
+}
+
 type App @key(fields: "id") {
   id: ID!
   isLambda: Boolean!
@@ -156,8 +162,8 @@ type App @key(fields: "id") {
   services: [ExposedService]!
   containers: [AppContainer!]!
   project: Project!
-  version: Int
   status: String!
+  autoScale: AutoScale
 }
 
 
