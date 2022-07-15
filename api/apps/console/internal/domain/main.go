@@ -969,7 +969,7 @@ func (d *domain) InstallManagedRes(
 		APIVersion: op_crds.ManagedResourceAPIVersion,
 		Kind:       op_crds.ManagedResourceKind,
 		Metadata: op_crds.ManagedResourceMetadata{
-			Name:      create.Name,
+			Name:      string(create.Id),
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.ManagedResourceSpec{
