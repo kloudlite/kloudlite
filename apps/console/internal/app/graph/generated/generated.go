@@ -2036,23 +2036,6 @@ type LamdaPlan @key(fields: "name"){
   name: String!
 }
 
-input AppInput{
-  name: String!
-  isLambda: Boolean!
-  projectId: String!
-  description: String
-  readableId: ID!
-  replicas: Int
-  services: [ExposedServiceIn]!
-  containers: [AppContainerIn!]!
-}
-
-type AutoScale {
-  minReplicas: Int!
-  maxReplicas: Int!
-  usage_percentage: Int!
-}
-
 type App @key(fields: "id") {
   id: ID!
   isLambda: Boolean!
@@ -2068,6 +2051,30 @@ type App @key(fields: "id") {
   autoScale: AutoScale
 }
 
+input AutoScaleIn {
+  minReplicas: Int!
+  maxReplicas: Int!
+  usage_percentage: Int!
+}
+
+
+input AppInput{
+  name: String!
+  isLambda: Boolean!
+  projectId: String!
+  description: String
+  autoScale: AutoScaleIn
+  readableId: ID!
+  replicas: Int
+  services: [ExposedServiceIn]!
+  containers: [AppContainerIn!]!
+}
+
+type AutoScale {
+  minReplicas: Int!
+  maxReplicas: Int!
+  usage_percentage: Int!
+}
 
 type EnvVal {
   type: String!
@@ -11100,6 +11107,14 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			if err != nil {
 				return it, err
 			}
+		case "autoScale":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoScale"))
+			it.AutoScale, err = ec.unmarshalOAutoScaleIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAutoScaleIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "readableId":
 			var err error
 
@@ -11191,6 +11206,45 @@ func (ec *executionContext) unmarshalInputAttachedResInput(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("res_id"))
 			it.ResID, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAutoScaleIn(ctx context.Context, obj interface{}) (model.AutoScaleIn, error) {
+	var it model.AutoScaleIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "minReplicas":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minReplicas"))
+			it.MinReplicas, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "maxReplicas":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxReplicas"))
+			it.MaxReplicas, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "usage_percentage":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usage_percentage"))
+			it.UsagePercentage, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16034,6 +16088,14 @@ func (ec *executionContext) marshalOAutoScale2ᚖkloudliteᚗioᚋappsᚋconsole
 		return graphql.Null
 	}
 	return ec._AutoScale(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAutoScaleIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAutoScaleIn(ctx context.Context, v interface{}) (*model.AutoScaleIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAutoScaleIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

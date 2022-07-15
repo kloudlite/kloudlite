@@ -58,6 +58,7 @@ type AppInput struct {
 	IsLambda    bool                `json:"isLambda"`
 	ProjectID   string              `json:"projectId"`
 	Description *string             `json:"description"`
+	AutoScale   *AutoScaleIn        `json:"autoScale"`
 	ReadableID  repos.ID            `json:"readableId"`
 	Replicas    *int                `json:"replicas"`
 	Services    []*ExposedServiceIn `json:"services"`
@@ -85,6 +86,12 @@ type AttachedResInput struct {
 }
 
 type AutoScale struct {
+	MinReplicas     int `json:"minReplicas"`
+	MaxReplicas     int `json:"maxReplicas"`
+	UsagePercentage int `json:"usage_percentage"`
+}
+
+type AutoScaleIn struct {
 	MinReplicas     int `json:"minReplicas"`
 	MaxReplicas     int `json:"maxReplicas"`
 	UsagePercentage int `json:"usage_percentage"`

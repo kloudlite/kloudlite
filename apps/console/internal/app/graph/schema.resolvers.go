@@ -262,9 +262,19 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		containers = append(containers, in)
 	}
 	entity, err := r.Domain.InstallApp(ctx, projectID, entities.App{
-		Name:         app.Name,
-		IsLambda:     app.IsLambda,
-		ProjectId:    projectID,
+		Name:      app.Name,
+		IsLambda:  app.IsLambda,
+		ProjectId: projectID,
+		AutoScale: func() *entities.AutoScale {
+			if app.AutoScale != nil {
+				return &entities.AutoScale{
+					MinReplicas:     int64(app.AutoScale.MinReplicas),
+					MaxReplicas:     int64(app.AutoScale.MaxReplicas),
+					UsagePercentage: int64(app.AutoScale.UsagePercentage),
+				}
+			}
+			return nil
+		}(),
 		ReadableId:   string(app.ReadableID),
 		Description:  app.Description,
 		Replicas:     1,
