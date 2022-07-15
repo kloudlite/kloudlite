@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
@@ -57,9 +58,9 @@ func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string
 	}
 
 	account, err := r.domain.CreateAccount(ctx, session.UserId, name, domain.Billing{
-		StripeSetupIntentId: billing.StripeSetupIntentID,
-		CardholderName:      billing.CardholderName,
-		Address:             billing.Address,
+		PaymentMethodId: billing.StripePaymentMethodID,
+		CardholderName:  billing.CardholderName,
+		Address:         billing.Address,
 	}, initProvider, initRegion)
 	if err != nil {
 		return nil, err
@@ -85,9 +86,9 @@ func (r *mutationResolver) FinanceUpdateAccountBilling(ctx context.Context, acco
 		return nil, errors.New("not logged in")
 	}
 	account, err := r.domain.UpdateAccountBilling(ctx, accountID, &domain.Billing{
-		StripeSetupIntentId: billing.StripeSetupIntentID,
-		CardholderName:      billing.CardholderName,
-		Address:             billing.Address,
+		PaymentMethodId: billing.StripePaymentMethodID,
+		CardholderName:  billing.CardholderName,
+		Address:         billing.Address,
 	})
 	if err != nil {
 		return nil, err
@@ -150,6 +151,10 @@ func (r *queryResolver) FinanceAccount(ctx context.Context, accountID repos.ID) 
 	}
 	accountEntity, err := r.domain.GetAccount(ctx, accountID)
 	return AccountModelFromEntity(accountEntity), err
+}
+
+func (r *queryResolver) FinanceStripeSetupIntent(ctx context.Context) (*string, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
