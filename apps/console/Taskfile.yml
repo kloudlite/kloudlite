@@ -20,5 +20,5 @@ tasks:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/console:v2
       APP: console
     cmds:
-      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
+      - docker buildx build --platform linux/amd64 -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
 #      - docker push {{.IMAGE}}

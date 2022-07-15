@@ -406,6 +406,16 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		Description: entity.Description,
 		ReadableID:  repos.ID(entity.ReadableId),
 		Replicas:    &entity.Replicas,
+		AutoScale: func() *model.AutoScale {
+			if entity.AutoScale != nil {
+				return &model.AutoScale{
+					MinReplicas:     int(entity.AutoScale.MinReplicas),
+					MaxReplicas:     int(entity.AutoScale.MinReplicas),
+					UsagePercentage: int(entity.AutoScale.UsagePercentage),
+				}
+			}
+			return nil
+		}(),
 		Services: func() []*model.ExposedService {
 			services := make([]*model.ExposedService, 0)
 			for _, port := range entity.ExposedPorts {
@@ -610,49 +620,60 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 			})
 		}
 
-		containers := make([]*model.AppContainer, 0)
-		for _, c := range a.Containers {
-			envVars := make([]*model.EnvVar, 0)
-			for _, e := range c.EnvVars {
-				envVars = append(envVars, &model.EnvVar{
-					Key: e.Key,
-					Value: &model.EnvVal{
-						Type:  e.Type,
-						Value: e.Value,
-						Ref:   e.Ref,
-						Key:   e.RefKey,
-					},
-				})
-			}
-			res := make([]*model.AttachedRes, 0)
-			for _, r := range c.AttachedResources {
-				res = append(res, &model.AttachedRes{
-					ResID: r.ResourceId,
-				})
-			}
-			containers = append(containers, &model.AppContainer{
-				Name:              c.Name,
-				Image:             c.Image,
-				PullSecret:        c.ImagePullSecret,
-				EnvVars:           envVars,
-				AttachedResources: res,
-				ComputePlan:       c.ComputePlan,
-				Quantity:          c.Quantity,
-				IsShared:          c.IsShared,
-			})
-		}
-		fmt.Println(a)
 		apps = append(apps, &model.App{
 			ID:          a.Id,
 			Name:        a.Name,
 			Namespace:   a.Namespace,
 			Description: a.Description,
 			ReadableID:  repos.ID(a.ReadableId),
-			Replicas:    &a.Replicas,
-			Services:    services,
-			Containers:  containers,
-			Project:     &model.Project{ID: projectID},
-			Status:      string(a.Status),
+			AutoScale: func() *model.AutoScale {
+				if a.AutoScale != nil {
+					return &model.AutoScale{
+						MinReplicas:     int(a.AutoScale.MinReplicas),
+						MaxReplicas:     int(a.AutoScale.MinReplicas),
+						UsagePercentage: int(a.AutoScale.UsagePercentage),
+					}
+				}
+				return nil
+			}(),
+			Replicas: &a.Replicas,
+			Services: services,
+			Containers: func() []*model.AppContainer {
+				containers := make([]*model.AppContainer, 0)
+				for _, c := range a.Containers {
+					envVars := make([]*model.EnvVar, 0)
+					for _, e := range c.EnvVars {
+						envVars = append(envVars, &model.EnvVar{
+							Key: e.Key,
+							Value: &model.EnvVal{
+								Type:  e.Type,
+								Value: e.Value,
+								Ref:   e.Ref,
+								Key:   e.RefKey,
+							},
+						})
+					}
+					res := make([]*model.AttachedRes, 0)
+					for _, r := range c.AttachedResources {
+						res = append(res, &model.AttachedRes{
+							ResID: r.ResourceId,
+						})
+					}
+					containers = append(containers, &model.AppContainer{
+						Name:              c.Name,
+						Image:             c.Image,
+						PullSecret:        c.ImagePullSecret,
+						EnvVars:           envVars,
+						AttachedResources: res,
+						ComputePlan:       c.ComputePlan,
+						Quantity:          c.Quantity,
+						IsShared:          c.IsShared,
+					})
+				}
+				return containers
+			}(),
+			Project: &model.Project{ID: projectID},
+			Status:  string(a.Status),
 		})
 	}
 	return apps, nil
@@ -672,38 +693,6 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 		})
 	}
 
-	containers := make([]*model.AppContainer, 0)
-	for _, c := range a.Containers {
-		envVars := make([]*model.EnvVar, 0)
-		for _, e := range c.EnvVars {
-			envVars = append(envVars, &model.EnvVar{
-				Key: e.Key,
-				Value: &model.EnvVal{
-					Type:  e.Type,
-					Value: e.Value,
-					Ref:   e.Ref,
-					Key:   e.RefKey,
-				},
-			})
-		}
-		res := make([]*model.AttachedRes, 0)
-		for _, r := range c.AttachedResources {
-			res = append(res, &model.AttachedRes{
-				ResID: r.ResourceId,
-			})
-		}
-		containers = append(containers, &model.AppContainer{
-			Name:              c.Name,
-			Image:             c.Image,
-			PullSecret:        c.ImagePullSecret,
-			EnvVars:           envVars,
-			AttachedResources: res,
-			ComputePlan:       c.ComputePlan,
-			Quantity:          c.Quantity,
-			IsShared:          c.IsShared,
-		})
-	}
-
 	return &model.App{
 		ID:          a.Id,
 		Name:        a.Name,
@@ -711,10 +700,53 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 		Description: a.Description,
 		ReadableID:  repos.ID(a.ReadableId),
 		Replicas:    &a.Replicas,
-		Services:    services,
-		Containers:  containers,
-		Project:     &model.Project{ID: a.ProjectId},
-		Status:      string(a.Status),
+		AutoScale: func() *model.AutoScale {
+			if a.AutoScale != nil {
+				return &model.AutoScale{
+					MinReplicas:     int(a.AutoScale.MinReplicas),
+					MaxReplicas:     int(a.AutoScale.MinReplicas),
+					UsagePercentage: int(a.AutoScale.UsagePercentage),
+				}
+			}
+			return nil
+		}(),
+		Services: services,
+		Containers: func() []*model.AppContainer {
+			containers := make([]*model.AppContainer, 0)
+			for _, c := range a.Containers {
+				envVars := make([]*model.EnvVar, 0)
+				for _, e := range c.EnvVars {
+					envVars = append(envVars, &model.EnvVar{
+						Key: e.Key,
+						Value: &model.EnvVal{
+							Type:  e.Type,
+							Value: e.Value,
+							Ref:   e.Ref,
+							Key:   e.RefKey,
+						},
+					})
+				}
+				res := make([]*model.AttachedRes, 0)
+				for _, r := range c.AttachedResources {
+					res = append(res, &model.AttachedRes{
+						ResID: r.ResourceId,
+					})
+				}
+				containers = append(containers, &model.AppContainer{
+					Name:              c.Name,
+					Image:             c.Image,
+					PullSecret:        c.ImagePullSecret,
+					EnvVars:           envVars,
+					AttachedResources: res,
+					ComputePlan:       c.ComputePlan,
+					Quantity:          c.Quantity,
+					IsShared:          c.IsShared,
+				})
+			}
+			return containers
+		}(),
+		Project: &model.Project{ID: a.ProjectId},
+		Status:  string(a.Status),
 	}, nil
 }
 
