@@ -31,7 +31,6 @@ type Domain interface {
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
 	ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error)
 	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
-	OnAddPeer(cxt context.Context, response entities.AddPeerResponse) error
 
 	CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error)
 	GetAccountProjects(ctx context.Context, id repos.ID) ([]*entities.Project, error)
@@ -40,7 +39,7 @@ type Domain interface {
 
 	CreateConfig(ctx context.Context, id repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error)
 	UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error)
-	PatchConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error)
+
 	GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error)
 	GetConfig(ctx context.Context, configId repos.ID) (*entities.Config, error)
 	DeleteConfig(ctx context.Context, configId repos.ID) (bool, error)
@@ -48,7 +47,7 @@ type Domain interface {
 
 	CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error)
 	UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error)
-	PatchSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error)
+
 	DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error)
 	GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error)
 	GetSecret(ctx context.Context, secretId repos.ID) (*entities.Secret, error)
@@ -104,8 +103,6 @@ type Domain interface {
 
 	GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error)
 	InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
-
-	UpdateResourceStatus(ctx context.Context, resourceType string, resourceNamespace string, resourceName string, status ResourceStatus) (bool, error)
 	RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error
 }
 
