@@ -27,10 +27,18 @@ type Container struct {
 	Env            []EnvEntry `json:"env,omitempty"`
 }
 
+type HPA struct {
+	MinReplicas     int `json:"minReplicas,omitempty"`
+	MaxReplicas     int `json:"maxReplicas,omitempty"`
+	ThresholdCpu    int `json:"thresholdCpu,omitempty"`
+	ThresholdMemory int `json:"thresholdMemory,omitempty"`
+}
+
 type AppSpec struct {
 	Services   []Service   `json:"services,omitempty"`
 	Containers []Container `json:"containers,omitempty"`
 	Replicas   int         `json:"replicas,omitempty"`
+	Hpa        *HPA        `json:"hpa,omitempty"`
 }
 
 type AppMetadata struct {
