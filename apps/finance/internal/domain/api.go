@@ -44,4 +44,5 @@ type Domain interface {
 		timeStamp time.Time,
 	) error
 	GetStoragePlanByName(ctx context.Context, name string) (*StoragePlan, error)
+	GetSetupIntent(ctx context.Context) (string, error)
 }
