@@ -380,16 +380,13 @@ func (d *domainI) CreateAccount(
 	userId repos.ID,
 	name string,
 	billing Billing,
-	initialProvider string,
-	initialRegion string,
 ) (*Account, error) {
-
 	id := d.accountRepo.NewId()
-	//_, err := d.ciClient.CreateHarborProject(ctx, &ci.HarborProjectIn{Name: string(id)})
-	//if err != nil {
-	//	return nil, errors.NewEf(err, "harbor account could not be created")
-	//}
-
+	customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
+	if err != nil {
+		return nil, err
+	}
+	billing.StripeCustomerId = customer.Str()
 	acc, err := d.accountRepo.Create(
 		ctx, &Account{
 			BaseEntity: repos.BaseEntity{
@@ -397,18 +394,16 @@ func (d *domainI) CreateAccount(
 			},
 			Name:         name,
 			ContactEmail: "",
-			Billing:      Billing{PaymentMethodId: billing.PaymentMethodId, CardholderName: billing.CardholderName, Address: billing.Address},
+			Billing:      billing,
 			IsActive:     true,
 			IsDeleted:    false,
-			CreatedAt:    time.Time{},
+			CreatedAt:    time.Now(),
 			ReadableId:   repos.ID(generateReadable(name)),
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("sending message to console1")
 	_, err = d.iamCli.AddMembership(
 		ctx, &iam.InAddMembership{
 			UserId:       string(userId),
@@ -466,12 +461,10 @@ func (d *domainI) AddAccountMember(
 	role common.Role,
 ) (bool, error) {
 	account, err := d.accountRepo.FindById(ctx, accountId)
-	fmt.Println("sending message to console2")
 	if err != nil {
 		return false, err
 	}
 	byEmail, err := d.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
-	fmt.Println("here")
 	if err != nil {
 		return false, err
 	}
