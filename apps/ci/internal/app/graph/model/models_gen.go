@@ -17,6 +17,7 @@ func (App) IsEntity() {}
 
 type GitDockerPipelineIn struct {
 	Name        string                 `json:"name"`
+	ProjectName string                 `json:"projectName"`
 	ProjectID   string                 `json:"projectId"`
 	AppID       string                 `json:"appId"`
 	GitProvider string                 `json:"gitProvider"`
@@ -62,6 +63,7 @@ type GitPipelineBuildIn struct {
 
 type GitPipelineIn struct {
 	Name        string                 `json:"name"`
+	ProjectName string                 `json:"projectName"`
 	ProjectID   string                 `json:"projectId"`
 	AppID       string                 `json:"appId"`
 	GitProvider string                 `json:"gitProvider"`
@@ -81,18 +83,4 @@ type GitPipelineRun struct {
 type GitPipelineRunIn struct {
 	BaseImage *string `json:"baseImage"`
 	Cmd       string  `json:"cmd"`
-}
-
-type PipelineDataInput struct {
-	Name                 string                 `json:"name"`
-	ImageName            string                 `json:"imageName"`
-	GitProvider          string                 `json:"gitProvider"`
-	GitRepoURL           string                 `json:"gitRepoUrl"`
-	GitlabRepoID         int                    `json:"gitlabRepoId"`
-	DockerFile           string                 `json:"dockerFile"`
-	ContextDir           string                 `json:"contextDir"`
-	GithubInstallationID *int                   `json:"githubInstallationId"`
-	BuildArgs            map[string]interface{} `json:"buildArgs"`
-	Branch               string                 `json:"branch"`
-	Metadata             map[string]interface{} `json:"metadata"`
 }

@@ -168,7 +168,7 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 		RunCmd:                  pipeline.Run.Cmd,
 		ArtifactDockerImageName: pipeline.ArtifactRef.DockerImageName,
 		ArtifactDockerImageTag:  pipeline.ArtifactRef.DockerImageTag,
-		TaskNamespace:           pipeline.ProjectId,
+		TaskNamespace:           pipeline.ProjectName,
 	}
 	return &tkVars, pipeline, nil
 }
@@ -245,6 +245,8 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 		RunCmd:                  pipeline.Run.Cmd,
 		ArtifactDockerImageName: pipeline.ArtifactRef.DockerImageName,
 		ArtifactDockerImageTag:  pipeline.ArtifactRef.DockerImageTag,
+
+		TaskNamespace: pipeline.ProjectName,
 	}
 
 	return &tkVars, pipeline, nil

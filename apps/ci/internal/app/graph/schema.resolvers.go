@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
@@ -153,6 +154,7 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 	var pipeline, err = r.Domain.CreatePipeline(
 		ctx, session.UserId, domain.Pipeline{
 			Name:        in.Name,
+			ProjectName: in.ProjectName,
 			ProjectId:   in.ProjectID,
 			AppId:       in.AppID,
 			GitProvider: in.GitProvider,
@@ -245,47 +247,70 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 		return nil, err
 	}
 	pipelines := make([]*model.GitPipeline, len(pipelineEntities))
-	for i, pipelineE := range pipelineEntities {
+	for i, pItem := range pipelineEntities {
 		pipelines[i] = &model.GitPipeline{
-			ID:          pipelineE.Id,
-			Name:        pipelineE.Name,
-			GitProvider: pipelineE.GitProvider,
-			GitRepoURL:  pipelineE.GitRepoUrl,
-			GitBranch:   pipelineE.GitBranch,
-			Build: &model.GitPipelineBuild{
-				BaseImage: &pipelineE.Build.BaseImage,
-				Cmd:       pipelineE.Build.Cmd,
-			},
-			Run: &model.GitPipelineRun{
-				BaseImage: &pipelineE.Run.BaseImage,
-				Cmd:       pipelineE.Run.Cmd,
-			},
-			Metadata: pipelineE.Metadata,
+			ID:          pItem.Id,
+			Name:        pItem.Name,
+			GitProvider: pItem.GitProvider,
+			GitRepoURL:  pItem.GitRepoUrl,
+			GitBranch:   pItem.GitBranch,
+			Metadata:    pItem.Metadata,
+		}
+
+		if pItem.Build != nil {
+			pipelines[i].Build = &model.GitPipelineBuild{
+				BaseImage: &pItem.Build.BaseImage,
+				Cmd:       pItem.Build.Cmd,
+			}
+		}
+
+		if pItem.Run != nil {
+			pipelines[i].Run = &model.GitPipelineRun{
+				BaseImage: &pItem.Run.BaseImage,
+				Cmd:       pItem.Run.Cmd,
+			}
 		}
 	}
 	return pipelines, nil
 }
 
 func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error) {
-	pipelineE, err := r.Domain.GetPipeline(ctx, pipelineID)
+	pipeline, err := r.Domain.GetPipeline(ctx, pipelineID)
 	if err != nil {
 		return nil, err
 	}
-	return &model.GitPipeline{
-		ID:          pipelineE.Id,
-		Name:        pipelineE.Name,
-		GitProvider: pipelineE.GitProvider,
-		GitRepoURL:  pipelineE.GitRepoUrl,
+
+	pRecord := model.GitPipeline{
+		ID:          pipeline.Id,
+		Name:        pipeline.Name,
+		GitProvider: pipeline.GitProvider,
+		GitRepoURL:  pipeline.GitRepoUrl,
 		Build: &model.GitPipelineBuild{
-			BaseImage: &pipelineE.Build.BaseImage,
-			Cmd:       pipelineE.Build.Cmd,
+			BaseImage: &pipeline.Build.BaseImage,
+			Cmd:       pipeline.Build.Cmd,
 		},
 		Run: &model.GitPipelineRun{
-			BaseImage: &pipelineE.Run.BaseImage,
-			Cmd:       pipelineE.Run.Cmd,
+			BaseImage: &pipeline.Run.BaseImage,
+			Cmd:       pipeline.Run.Cmd,
 		},
-		Metadata: pipelineE.Metadata,
-	}, nil
+		Metadata: pipeline.Metadata,
+	}
+
+	if pipeline.Build != nil {
+		pRecord.Build = &model.GitPipelineBuild{
+			BaseImage: &pipeline.Build.BaseImage,
+			Cmd:       pRecord.Build.Cmd,
+		}
+	}
+
+	if pipeline.Run != nil {
+		pRecord.Run = &model.GitPipelineRun{
+			BaseImage: &pipeline.Run.BaseImage,
+			Cmd:       pipeline.Run.Cmd,
+		}
+	}
+
+	return &pRecord, nil
 }
 
 func (r *queryResolver) CiTriggerPipeline(ctx context.Context, pipelineID repos.ID) (*bool, error) {
