@@ -1,10 +1,11 @@
 type Query {
   finance_account(accountId: ID!): Account
   finance_stripeSetupIntent: String
+  finance_testStripe(accountId: ID!): Boolean!
 }
 
 type Mutation {
-    finance_createAccount(name: String!, billing: BillingInput!, initProvider: String!, initRegion: String!): Account!
+    finance_createAccount(name: String!, billing: BillingInput!): Account!
     finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
     finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
     finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean!

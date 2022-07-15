@@ -13,8 +13,6 @@ type Domain interface {
 		userId repos.ID,
 		name string,
 		billing Billing,
-		initialProvider string,
-		initialRegion string,
 	) (*Account, error)
 	GetAccount(ctx context.Context, id repos.ID) (*Account, error)
 	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
@@ -45,4 +43,5 @@ type Domain interface {
 	) error
 	GetStoragePlanByName(ctx context.Context, name string) (*StoragePlan, error)
 	GetSetupIntent(ctx context.Context) (string, error)
+	Test(ctx context.Context, accountId repos.ID) error
 }
