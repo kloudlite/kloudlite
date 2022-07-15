@@ -22,6 +22,7 @@ type DockerBuildInput struct {
 type ContainerImageBuild struct {
 	BaseImage string `json:"base_image,omitempty" bson:"base_image,omitempty"`
 	Cmd       string `json:"cmd,omitempty" bson:"cmd,omitempty"`
+	OutputDir string `json:"output_dir,omitempty" bson:"output_dir,omitempty"`
 }
 
 type ContainerImageRun struct {
@@ -40,6 +41,7 @@ type GithubWebhookId int64
 type Pipeline struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string `json:"name,omitempty" bson:"name"`
+	ProjectName      string `json:"project_name" bson:"project_name"`
 	ProjectId        string `json:"project_id,omitempty" bson:"project_id"`
 	AppId            string `json:"app_id,omitempty" bson:"app_id"`
 	ContainerName    string `json:"container_name" bson:"container_name"`
@@ -59,13 +61,14 @@ type Pipeline struct {
 	GithubWebhookId *GithubWebhookId `json:"github_webhook_id,omitempty" bson:"github_webhook_id,omitempty"`
 	GitlabWebhookId *GitlabWebhookId `json:"gitlab_webhook_id,omitempty" bson:"gitlab_webhook_id,omitempty"`
 
-	Metadata map[string]interface{} `json:"metadata,omitempty" bson:"metadata"`
+	Metadata map[string]any `json:"metadata,omitempty" bson:"metadata"`
 }
 
 type TektonVars struct {
-	GitRepo       string `json:"git-repo"`
-	GitUser       string `json:"git-user"`
-	GitPassword   string `json:"git-password"`
+	GitRepo     string `json:"git-repo"`
+	GitUser     string `json:"git-user"`
+	GitPassword string `json:"git-password"`
+
 	GitRef        string `json:"git-ref"`
 	GitCommitHash string `json:"git-commit_hash"`
 
@@ -76,6 +79,7 @@ type TektonVars struct {
 
 	BuildBaseImage string `json:"build-base_image"`
 	BuildCmd       string `json:"build-cmd"`
+	BuildOutputDir string `json:"build-output-dir"`
 
 	RunBaseImage string `json:"run-base_image"`
 	RunCmd       string `json:"run-cmd"`

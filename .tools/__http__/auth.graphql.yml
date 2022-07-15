@@ -40,7 +40,7 @@ query: |
     oAuth_requestLogin(provider: $provider)
   }
 variables:
-  provider: github
+  provider: gitlab
 
 ---
 label: OAuth Login
@@ -55,8 +55,8 @@ query: |
     }
   }
 variables:
-  code: 3c74647490b98fb68907
-  provider: github
+  code: 10234776f83828ed6e0338fb6e13c9b6ef9e2d22acaadf037b186fdf5f485412
+  provider: gitlab
   state: eyJjc3JmIjoiaTVZWmN1ZGY4UUFGSjFieC1HUFRjY2RPQVljNDMtUGgiLCJzdGF0ZSI6IiJ9
 ---
 label: Me
