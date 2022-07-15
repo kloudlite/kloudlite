@@ -27,16 +27,14 @@ type AccountMembership struct {
 }
 
 type Billing struct {
-	StripeCustomerID string                 `json:"stripeCustomerId"`
-	CardholderName   string                 `json:"cardholderName"`
-	Address          map[string]interface{} `json:"address"`
+	CardholderName string                 `json:"cardholderName"`
+	Address        map[string]interface{} `json:"address"`
 }
 
 type BillingInput struct {
-	StripeSetupIntentID string                 `json:"stripeSetupIntentId"`
-	StripePaymentMethod string                 `json:"stripePaymentMethod"`
-	CardholderName      string                 `json:"cardholderName"`
-	Address             map[string]interface{} `json:"address"`
+	StripePaymentMethodID string                 `json:"stripePaymentMethodId"`
+	CardholderName        string                 `json:"cardholderName"`
+	Address               map[string]interface{} `json:"address"`
 }
 
 type ComputePlan struct {

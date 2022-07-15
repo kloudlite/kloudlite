@@ -69,9 +69,8 @@ type ComplexityRoot struct {
 	}
 
 	Billing struct {
-		Address          func(childComplexity int) int
-		CardholderName   func(childComplexity int) int
-		StripeCustomerID func(childComplexity int) int
+		Address        func(childComplexity int) int
+		CardholderName func(childComplexity int) int
 	}
 
 	ComputePlan struct {
@@ -107,9 +106,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		FinanceAccount     func(childComplexity int, accountID repos.ID) int
-		__resolve__service func(childComplexity int) int
-		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
+		FinanceAccount           func(childComplexity int, accountID repos.ID) int
+		FinanceStripeSetupIntent func(childComplexity int) int
+		__resolve__service       func(childComplexity int) int
+		__resolve_entities       func(childComplexity int, representations []map[string]interface{}) int
 	}
 
 	StoragePlan struct {
@@ -156,6 +156,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	FinanceAccount(ctx context.Context, accountID repos.ID) (*model.Account, error)
+	FinanceStripeSetupIntent(ctx context.Context) (*string, error)
 }
 type UserResolver interface {
 	AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error)
@@ -274,13 +275,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Billing.CardholderName(childComplexity), true
-
-	case "Billing.stripeCustomerId":
-		if e.complexity.Billing.StripeCustomerID == nil {
-			break
-		}
-
-		return e.complexity.Billing.StripeCustomerID(childComplexity), true
 
 	case "ComputePlan.dedicatedPrice":
 		if e.complexity.ComputePlan.DedicatedPrice == nil {
@@ -504,6 +498,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.FinanceAccount(childComplexity, args["accountId"].(repos.ID)), true
 
+	case "Query.finance_stripeSetupIntent":
+		if e.complexity.Query.FinanceStripeSetupIntent == nil {
+			break
+		}
+
+		return e.complexity.Query.FinanceStripeSetupIntent(childComplexity), true
+
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
 			break
@@ -636,6 +637,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type Query {
   finance_account(accountId: ID!): Account
+  finance_stripeSetupIntent: String
 }
 
 type Mutation {
@@ -696,14 +698,12 @@ type AccountMembership {
 }
 
 type Billing {
-  stripeCustomerId: String!
   cardholderName: String!
   address: Json!
 }
 
 input BillingInput {
-  stripeSetupIntentId: String!
-  stripePaymentMethod: String!
+  stripePaymentMethodId: String!
   cardholderName: String!
   address: Json!
 }
@@ -1582,41 +1582,6 @@ func (ec *executionContext) _AccountMembership_accepted(ctx context.Context, fie
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Billing_stripeCustomerId(ctx context.Context, field graphql.CollectedField, obj *model.Billing) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Billing",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StripeCustomerID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Billing_cardholderName(ctx context.Context, field graphql.CollectedField, obj *model.Billing) (ret graphql.Marshaler) {
@@ -2524,6 +2489,38 @@ func (ec *executionContext) _Query_finance_account(ctx context.Context, field gr
 	res := resTmp.(*model.Account)
 	fc.Result = res
 	return ec.marshalOAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_finance_stripeSetupIntent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FinanceStripeSetupIntent(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4083,19 +4080,11 @@ func (ec *executionContext) unmarshalInputBillingInput(ctx context.Context, obj 
 
 	for k, v := range asMap {
 		switch k {
-		case "stripeSetupIntentId":
+		case "stripePaymentMethodId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stripeSetupIntentId"))
-			it.StripeSetupIntentID, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "stripePaymentMethod":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stripePaymentMethod"))
-			it.StripePaymentMethod, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stripePaymentMethodId"))
+			it.StripePaymentMethodID, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4375,16 +4364,6 @@ func (ec *executionContext) _Billing(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Billing")
-		case "stripeCustomerId":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Billing_stripeCustomerId(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "cardholderName":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Billing_cardholderName(ctx, field, obj)
@@ -4812,6 +4791,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_finance_account(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "finance_stripeSetupIntent":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_finance_stripeSetupIntent(ctx, field)
 				return res
 			}
 
