@@ -6,8 +6,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
-
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/apps/finance/internal/domain"
@@ -154,7 +152,11 @@ func (r *queryResolver) FinanceAccount(ctx context.Context, accountID repos.ID) 
 }
 
 func (r *queryResolver) FinanceStripeSetupIntent(ctx context.Context) (*string, error) {
-	panic(fmt.Errorf("not implemented"))
+	intent, err := r.domain.GetSetupIntent(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &intent, nil
 }
 
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
