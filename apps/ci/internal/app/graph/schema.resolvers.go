@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
@@ -32,15 +31,21 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 			GitRepoURL:  pipeline.GitRepoUrl,
 			GitBranch:   pipeline.GitBranch,
 			Build: func() *model.GitPipelineBuild {
+				if pipeline.Build == nil {
+					return nil
+				}
 				return &model.GitPipelineBuild{
 					BaseImage: &pipeline.Build.BaseImage,
 					Cmd:       pipeline.Build.Cmd,
 				}
 			}(),
 			Run: func() *model.GitPipelineRun {
+				if pipeline.Run == nil {
+					return nil
+				}
 				return &model.GitPipelineRun{
-					BaseImage: &pipeline.Build.BaseImage,
-					Cmd:       pipeline.Build.Cmd,
+					BaseImage: &pipeline.Run.BaseImage,
+					Cmd:       pipeline.Run.Cmd,
 				}
 			}(),
 			Metadata: pipeline.Metadata,
