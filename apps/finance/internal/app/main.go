@@ -12,10 +12,10 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/stripe"
 	"strconv"
 	"time"
 )
@@ -115,52 +115,50 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Provide(NewStripeClient),
+	fx.Provide(func(env Env) *stripe.Client {
+		return stripe.NewClient(env.StripeSecretKey)
+	}),
 	fx.Invoke(
 		func(server *fiber.App, ds domain.Stripe) {
-			server.Get(
-				"/stripe/get-setup-intent", func(ctx *fiber.Ctx) error {
-					intentClientSecret, err := ds.GetSetupIntent()
-					if err != nil {
-						return err
-					}
-					return ctx.JSON(
-						map[string]any{
-							"client-secret": intentClientSecret,
-						},
-					)
-				},
-			)
+			//server.Get(
+			//	"/stripe/get-setup-intent", func(ctx *fiber.Ctx) error {
+			//		intentClientSecret, err := ds.GetSetupIntent()
+			//		if err != nil {
+			//			return err
+			//		}
+			//		return ctx.JSON(
+			//			map[string]any{
+			//				"client-secret": intentClientSecret,
+			//			},
+			//		)
+			//	},
+			//)
 
-			server.Post(
-				"/stripe/create-customer", func(ctx *fiber.Ctx) error {
-					var j struct {
-						AccountId       string `json:"accountId"`
-						PaymentMethodId string `json:"paymentMethodId"`
-					}
-					if err := json.Unmarshal(ctx.Body(), &j); err != nil {
-						return err
-					}
-					customer, err := ds.CreateCustomer(j.AccountId, j.PaymentMethodId)
-					if err != nil {
-						return errors.NewEf(err, "creating customer")
-					}
-
-					payment, err := ds.MakePayment(*customer, j.PaymentMethodId, 20000)
-					if err != nil {
-						return errors.NewEf(err, "making initial payment")
-					}
-
-					fmt.Printf("Payment: %+v\n", payment)
-
-					return ctx.JSON(
-						map[string]any{
-							"customerId":   *customer,
-							"init-payment": payment,
-						},
-					)
-				},
-			)
+			//server.Post(
+			//	"/stripe/create-customer", func(ctx *fiber.Ctx) error {
+			//		var j struct {
+			//			AccountId       string `json:"accountId"`
+			//			PaymentMethodId string `json:"paymentMethodId"`
+			//		}
+			//		if err := json.Unmarshal(ctx.Body(), &j); err != nil {
+			//			return err
+			//		}
+			//		customer, err := ds.CreateCustomer(j.AccountId, j.PaymentMethodId)
+			//		if err != nil {
+			//			return errors.NewEf(err, "creating customer")
+			//		}
+			//		//payment, err := ds.MakePayment(*customer, j.PaymentMethodId, 20000)
+			//		//if err != nil {
+			//		//	return errors.NewEf(err, "making initial payment")
+			//		//}
+			//		return ctx.JSON(
+			//			map[string]any{
+			//				"customerId":   *customer,
+			//				"init-payment": payment,
+			//			},
+			//		)
+			//	},
+			//)
 		},
 	),
 

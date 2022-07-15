@@ -1,5 +1,6 @@
 type Query {
   finance_account(accountId: ID!): Account
+  finance_stripeSetupIntent: String
 }
 
 type Mutation {
@@ -60,14 +61,12 @@ type AccountMembership {
 }
 
 type Billing {
-  stripeCustomerId: String!
   cardholderName: String!
   address: Json!
 }
 
 input BillingInput {
-  stripeSetupIntentId: String!
-  stripePaymentMethod: String!
+  stripePaymentMethodId: String!
   cardholderName: String!
   address: Json!
 }

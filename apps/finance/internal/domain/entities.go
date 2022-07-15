@@ -15,10 +15,10 @@ type AccountInviteToken struct {
 }
 
 type Billing struct {
-	StripeCustomerId    string
-	StripeSetupIntentId string
-	CardholderName      string
-	Address             map[string]any
+	StripeCustomerId string
+	PaymentMethodId  string
+	CardholderName   string
+	Address          map[string]any
 }
 
 type Account struct {

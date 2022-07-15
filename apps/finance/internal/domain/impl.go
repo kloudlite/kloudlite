@@ -10,6 +10,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/stripe"
 	"math"
 	"math/rand"
 	"reflect"
@@ -43,6 +44,7 @@ type domainI struct {
 	billablesRepo          repos.DbRepo[*AccountBilling]
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
 	inventoryPath          string
+	stripeCli              *stripe.Client
 }
 
 func JSONBytesEqual(a, b []byte) (bool, error) {
@@ -77,7 +79,7 @@ func (d *domainI) calculateBill(ctx context.Context, billables []Billable, start
 
 }
 
-func (domain *domainI) TriggerBillingEvent(
+func (d *domainI) TriggerBillingEvent(
 	ctx context.Context,
 	accountId repos.ID,
 	resourceId repos.ID,
@@ -86,7 +88,7 @@ func (domain *domainI) TriggerBillingEvent(
 	billables []Billable,
 	timeStamp time.Time,
 ) error {
-	one, err := domain.billablesRepo.FindOne(ctx, repos.Filter{
+	one, err := d.billablesRepo.FindOne(ctx, repos.Filter{
 		"account_id":  accountId,
 		"resource_id": resourceId,
 		"end_time":    nil,
@@ -97,7 +99,7 @@ func (domain *domainI) TriggerBillingEvent(
 	}
 
 	if one == nil {
-		_, err := domain.billablesRepo.Create(ctx, &AccountBilling{
+		_, err := d.billablesRepo.Create(ctx, &AccountBilling{
 			AccountId:  accountId,
 			ResourceId: resourceId,
 			ProjectId:  projectId,
@@ -109,12 +111,12 @@ func (domain *domainI) TriggerBillingEvent(
 
 	if eventType == "end" {
 		one.EndTime = &timeStamp
-		bill, err := domain.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
+		bill, err := d.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
 		if err != nil {
 			return err
 		}
 		one.BillAmount = bill
-		_, err = domain.billablesRepo.UpdateById(ctx, one.Id, one)
+		_, err = d.billablesRepo.UpdateById(ctx, one.Id, one)
 		return err
 	}
 
@@ -137,18 +139,18 @@ func (domain *domainI) TriggerBillingEvent(
 	}
 
 	one.EndTime = &timeStamp
-	bill, err := domain.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
+	bill, err := d.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
 	if err != nil {
 		return err
 	}
 	one.BillAmount = bill
-	_, err = domain.billablesRepo.UpdateById(ctx, one.Id, one)
+	_, err = d.billablesRepo.UpdateById(ctx, one.Id, one)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = domain.billablesRepo.Create(ctx, &AccountBilling{
+	_, err = d.billablesRepo.Create(ctx, &AccountBilling{
 		AccountId:  accountId,
 		ResourceId: resourceId,
 		ProjectId:  projectId,
@@ -213,14 +215,14 @@ func (d *domainI) GetComputePlanByName(ctx context.Context, name string) (*Compu
 	return nil, errors.New("inventory item not found")
 }
 
-func (domain *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*AccountBilling, time.Time, error) {
+func (d *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*AccountBilling, time.Time, error) {
 	now := time.Now()
 	currentYear, currentMonth, _ := now.Date()
 	currentLocation := now.Location()
 
 	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
 
-	find, err := domain.billablesRepo.Find(ctx, repos.Query{
+	find, err := d.billablesRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"account_id": accountID,
 			"start_time": repos.Filter{
@@ -234,19 +236,19 @@ func (domain *domainI) GetCurrentMonthBilling(ctx context.Context, accountID rep
 	return find, firstOfMonth, nil
 }
 
-func (domain *domainI) ConfirmAccountMembership(ctx context.Context, invitationToken string) (bool, error) {
-	existingToken, err := domain.accountInviteTokenRepo.Get(ctx, invitationToken)
+func (d *domainI) ConfirmAccountMembership(ctx context.Context, invitationToken string) (bool, error) {
+	existingToken, err := d.accountInviteTokenRepo.Get(ctx, invitationToken)
 	if err != nil {
 		return false, err
 	}
 	if existingToken == nil {
 		return false, errors.New("invitation token not found")
 	}
-	err = domain.accountInviteTokenRepo.Drop(ctx, invitationToken)
+	err = d.accountInviteTokenRepo.Drop(ctx, invitationToken)
 	if err != nil {
 		return false, err
 	}
-	_, err = domain.iamCli.ConfirmMembership(ctx, &iam.InConfirmMembership{
+	_, err = d.iamCli.ConfirmMembership(ctx, &iam.InConfirmMembership{
 		UserId:     string(existingToken.UserId),
 		ResourceId: string(existingToken.AccountId),
 		Role:       existingToken.Role,
@@ -257,13 +259,13 @@ func (domain *domainI) ConfirmAccountMembership(ctx context.Context, invitationT
 	return true, nil
 }
 
-func (domain *domainI) StartBillable(
+func (d *domainI) StartBillable(
 	ctx context.Context,
 	accountId repos.ID,
 	resourceType string,
 	quantity float32,
 ) (*AccountBilling, error) {
-	create, err := domain.billablesRepo.Create(ctx, &AccountBilling{
+	create, err := d.billablesRepo.Create(ctx, &AccountBilling{
 		AccountId: accountId,
 		//ResourceType: resourceType,
 		//Quantity:     quantity,
@@ -275,25 +277,25 @@ func (domain *domainI) StartBillable(
 	return create, nil
 }
 
-func (domain *domainI) StopBillable(
+func (d *domainI) StopBillable(
 	ctx context.Context,
 	billableId repos.ID,
 ) error {
-	id, err := domain.billablesRepo.FindById(ctx, billableId)
+	id, err := d.billablesRepo.FindById(ctx, billableId)
 	if err != nil {
 		return err
 	}
 	time := time.Now()
 	id.EndTime = &time
-	_, err = domain.billablesRepo.UpdateById(ctx, billableId, id)
+	_, err = d.billablesRepo.UpdateById(ctx, billableId, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (domain *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error) {
-	membership, err := domain.iamCli.GetMembership(
+func (d *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error) {
+	membership, err := d.iamCli.GetMembership(
 		ctx, &iam.InGetMembership{
 			UserId:       string(userId),
 			ResourceType: "account",
@@ -310,8 +312,8 @@ func (domain *domainI) GetAccountMembership(ctx context.Context, userId repos.ID
 	}, nil
 }
 
-func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
-	rbs, err := domain.iamCli.ListResourceMemberships(
+func (d *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
+	rbs, err := d.iamCli.ListResourceMemberships(
 		ctx, &iam.InResourceMemberships{
 			ResourceId:   string(id),
 			ResourceType: string(common.ResourceAccount),
@@ -337,8 +339,8 @@ func (domain *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*
 	return memberships, nil
 }
 
-func (domain *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
-	rbs, err := domain.iamCli.ListUserMemberships(
+func (d *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
+	rbs, err := d.iamCli.ListUserMemberships(
 		ctx, &iam.InUserMemberships{
 			UserId:       string(id),
 			ResourceType: string(common.ResourceAccount),
@@ -373,7 +375,7 @@ func generateReadable(name string) string {
 	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
 }
 
-func (domain *domainI) CreateAccount(
+func (d *domainI) CreateAccount(
 	ctx context.Context,
 	userId repos.ID,
 	name string,
@@ -382,20 +384,20 @@ func (domain *domainI) CreateAccount(
 	initialRegion string,
 ) (*Account, error) {
 
-	id := domain.accountRepo.NewId()
-	//_, err := domain.ciClient.CreateHarborProject(ctx, &ci.HarborProjectIn{Name: string(id)})
+	id := d.accountRepo.NewId()
+	//_, err := d.ciClient.CreateHarborProject(ctx, &ci.HarborProjectIn{Name: string(id)})
 	//if err != nil {
 	//	return nil, errors.NewEf(err, "harbor account could not be created")
 	//}
 
-	acc, err := domain.accountRepo.Create(
+	acc, err := d.accountRepo.Create(
 		ctx, &Account{
 			BaseEntity: repos.BaseEntity{
 				Id: id,
 			},
 			Name:         name,
 			ContactEmail: "",
-			Billing:      Billing{StripeSetupIntentId: billing.StripeSetupIntentId, CardholderName: billing.CardholderName, Address: billing.Address},
+			Billing:      Billing{PaymentMethodId: billing.PaymentMethodId, CardholderName: billing.CardholderName, Address: billing.Address},
 			IsActive:     true,
 			IsDeleted:    false,
 			CreatedAt:    time.Time{},
@@ -407,7 +409,7 @@ func (domain *domainI) CreateAccount(
 		return nil, err
 	}
 	fmt.Println("sending message to console1")
-	_, err = domain.iamCli.AddMembership(
+	_, err = d.iamCli.AddMembership(
 		ctx, &iam.InAddMembership{
 			UserId:       string(userId),
 			ResourceType: string(common.ResourceAccount),
@@ -422,8 +424,8 @@ func (domain *domainI) CreateAccount(
 	return acc, err
 }
 
-func (domain *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error) {
-	acc, err := domain.accountRepo.FindById(ctx, id)
+func (d *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error) {
+	acc, err := d.accountRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -433,47 +435,47 @@ func (domain *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *str
 	if email != nil {
 		acc.ContactEmail = *email
 	}
-	updated, err := domain.accountRepo.UpdateById(ctx, id, acc)
+	updated, err := d.accountRepo.UpdateById(ctx, id, acc)
 	if err != nil {
 		return nil, err
 	}
 	return updated, nil
 }
 
-func (domain *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error) {
-	acc, err := domain.accountRepo.FindById(ctx, id)
+func (d *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, b *Billing) (*Account, error) {
+	acc, err := d.accountRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	acc.Billing = Billing{
-		StripeSetupIntentId: d.StripeSetupIntentId,
-		CardholderName:      d.CardholderName,
-		Address:             d.Address,
+		PaymentMethodId: b.PaymentMethodId,
+		CardholderName:  b.CardholderName,
+		Address:         b.Address,
 	}
-	updated, err := domain.accountRepo.UpdateById(ctx, id, acc)
+	updated, err := d.accountRepo.UpdateById(ctx, id, acc)
 	if err != nil {
 		return nil, err
 	}
 	return updated, nil
 }
 
-func (domain *domainI) AddAccountMember(
+func (d *domainI) AddAccountMember(
 	ctx context.Context,
 	accountId repos.ID,
 	email string,
 	role common.Role,
 ) (bool, error) {
-	account, err := domain.accountRepo.FindById(ctx, accountId)
+	account, err := d.accountRepo.FindById(ctx, accountId)
 	fmt.Println("sending message to console2")
 	if err != nil {
 		return false, err
 	}
-	byEmail, err := domain.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
+	byEmail, err := d.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
 	fmt.Println("here")
 	if err != nil {
 		return false, err
 	}
-	_, err = domain.iamCli.InviteMembership(
+	_, err = d.iamCli.InviteMembership(
 		ctx, &iam.InAddMembership{
 			UserId:       byEmail.UserId,
 			ResourceType: string(common.ResourceAccount),
@@ -485,7 +487,7 @@ func (domain *domainI) AddAccountMember(
 		return false, err
 	}
 	token := generateId("acc-invite")
-	err = domain.accountInviteTokenRepo.Set(ctx, token, &AccountInviteToken{
+	err = d.accountInviteTokenRepo.Set(ctx, token, &AccountInviteToken{
 		Token:     token,
 		UserId:    repos.ID(byEmail.UserId),
 		Role:      string(role),
@@ -494,7 +496,7 @@ func (domain *domainI) AddAccountMember(
 	if err != nil {
 		return false, err
 	}
-	_, err = domain.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
+	_, err = d.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
 		AccountName:     account.Name,
 		InvitationToken: token,
 		Email:           email,
@@ -506,12 +508,12 @@ func (domain *domainI) AddAccountMember(
 	return true, nil
 }
 
-func (domain *domainI) RemoveAccountMember(
+func (d *domainI) RemoveAccountMember(
 	ctx context.Context,
 	accountId repos.ID,
 	userId repos.ID,
 ) (bool, error) {
-	_, err := domain.iamCli.RemoveMembership(
+	_, err := d.iamCli.RemoveMembership(
 		ctx, &iam.InRemoveMembership{
 			UserId:     string(userId),
 			ResourceId: string(accountId),
@@ -523,13 +525,13 @@ func (domain *domainI) RemoveAccountMember(
 	return true, nil
 }
 
-func (domain *domainI) UpdateAccountMember(
+func (d *domainI) UpdateAccountMember(
 	ctx context.Context,
 	accountId repos.ID,
 	userId repos.ID,
 	role string,
 ) (bool, error) {
-	_, err := domain.iamCli.AddMembership(
+	_, err := d.iamCli.AddMembership(
 		ctx, &iam.InAddMembership{
 			UserId:       string(userId),
 			ResourceType: string(common.ResourceAccount),
@@ -543,48 +545,48 @@ func (domain *domainI) UpdateAccountMember(
 	return true, nil
 }
 
-func (domain *domainI) DeactivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
-	matched, err := domain.accountRepo.FindById(ctx, accountId)
+func (d *domainI) DeactivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+	matched, err := d.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
 	}
 	matched.IsActive = false
-	_, err = domain.accountRepo.UpdateById(ctx, accountId, matched)
+	_, err = d.accountRepo.UpdateById(ctx, accountId, matched)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (domain *domainI) ActivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
-	matched, err := domain.accountRepo.FindById(ctx, accountId)
+func (d *domainI) ActivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+	matched, err := d.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
 	}
 	matched.IsActive = true
-	_, err = domain.accountRepo.UpdateById(ctx, accountId, matched)
+	_, err = d.accountRepo.UpdateById(ctx, accountId, matched)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (domain *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+func (d *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (bool, error) {
 	// TODO: delete harbor project
-	matched, err := domain.accountRepo.FindById(ctx, accountId)
+	matched, err := d.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
 	}
 	matched.IsDeleted = true
-	_, err = domain.accountRepo.UpdateById(ctx, accountId, matched)
+	_, err = d.accountRepo.UpdateById(ctx, accountId, matched)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (domain *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {
-	return domain.accountRepo.FindById(ctx, id)
+func (d *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {
+	return d.accountRepo.FindById(ctx, id)
 }
 
 func fxDomain(
@@ -597,6 +599,7 @@ func fxDomain(
 	env *Env,
 	//commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
+	stripeCli *stripe.Client,
 ) Domain {
 	return &domainI{
 		authClient,
@@ -608,5 +611,6 @@ func fxDomain(
 		billablesRepo,
 		accountInviteTokenRepo,
 		env.InventoryPath,
+		stripeCli,
 	}
 }
