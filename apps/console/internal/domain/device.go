@@ -3,46 +3,53 @@ package domain
 import (
 	"context"
 	"fmt"
+	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
 
-func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
-	deviceRange := ipaddr.NewIPAddressString("10.13.0.0/16")
-
-	if address, addressError := deviceRange.ToAddress(); addressError == nil {
-		increment := address.Increment(deviceOffset + 2)
-		return ipaddr.NewIPAddressString(increment.GetNetIP().String()), nil
-	} else {
-		return nil, addressError
-	}
+func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
+	return d.deviceRepo.FindById(ctx, id)
+}
+func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error) {
+	q := make(repos.Filter)
+	q["account_id"] = accountId
+	return d.deviceRepo.Find(ctx, repos.Query{
+		Filter: q,
+	})
+}
+func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error) {
+	q := make(repos.Filter)
+	q["user_id"] = userId
+	return d.deviceRepo.Find(ctx, repos.Query{
+		Filter: q,
+	})
 }
 
-func (d *domain) ensureWgAccount(ctx context.Context, accountId repos.ID) error {
-	one, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
-		"account_id": accountId,
+func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (string, error) {
+	device, err := d.deviceRepo.FindById(ctx, deviceId)
+	if err != nil {
+		return "", err
+	}
+	wgAccount, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
+		"account_id": device.AccountId,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
-	if one == nil {
-		pk, e := wgtypes.GeneratePrivateKey()
-		if e != nil {
-			return e
-		}
-		pkString := pk.String()
-		pbKeyString := pk.PublicKey().String()
-		_, err = d.wgAccountRepo.Create(ctx, &entities.WGAccount{
-			AccountID:    accountId,
-			WgPubKey:     pbKeyString,
-			WgPrivateKey: pkString,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+
+	return fmt.Sprintf(`
+[Interface]
+PrivateKey = %v
+Address = %v/32
+DNS = 10.43.0.10
+
+[Peer]
+PublicKey = %v
+AllowedIPs = 10.42.0.0/16, 10.43.0.0/16, 10.13.13.0/24
+Endpoint = %v:%v
+`, *device.PrivateKey, device.Ip, wgAccount.WgPubKey, wgAccount.AccessDomain, wgAccount.WgPort), nil
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
@@ -107,7 +114,6 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 
 	return newDevice, e
 }
-
 func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	device, err := d.deviceRepo.FindById(ctx, deviceId)
 	if err != nil {
@@ -118,33 +124,41 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	//err = SendAction(d.infraMessenger, entities.DeletePeerAction{
-	//	ClusterID: device.ClusterId,
-	//	DeviceID:  device.Id,
-	//	PublicKey: *device.PublicKey,
-	//})
-	if err != nil {
-		return err
-	}
 	return err
 }
 
-func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error) {
-	q := make(repos.Filter)
-	q["account_id"] = accountId
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
-}
+func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
+	deviceRange := ipaddr.NewIPAddressString("10.13.0.0/16")
 
-func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error) {
-	q := make(repos.Filter)
-	q["user_id"] = userId
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
+	if address, addressError := deviceRange.ToAddress(); addressError == nil {
+		increment := address.Increment(deviceOffset + 2)
+		return ipaddr.NewIPAddressString(increment.GetNetIP().String()), nil
+	} else {
+		return nil, addressError
+	}
 }
-
-func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
-	return d.deviceRepo.FindById(ctx, id)
+func (d *domain) ensureWgAccount(ctx context.Context, accountId repos.ID) error {
+	one, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
+		"account_id": accountId,
+	})
+	if err != nil {
+		return err
+	}
+	if one == nil {
+		pk, e := wgtypes.GeneratePrivateKey()
+		if e != nil {
+			return e
+		}
+		pkString := pk.String()
+		pbKeyString := pk.PublicKey().String()
+		_, err = d.wgAccountRepo.Create(ctx, &entities.WGAccount{
+			AccountID:    accountId,
+			WgPubKey:     pbKeyString,
+			WgPrivateKey: pkString,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
