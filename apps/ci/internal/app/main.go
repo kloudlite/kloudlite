@@ -177,9 +177,9 @@ var Module = fx.Module(
 							// projectOut, err := consoleCli.GetProjectName(
 							// 	ctx.Context(), &console.ProjectIn{ProjectId: pipeline.ProjectId},
 							// )
-							// if err != nil {
-							// 	return ctx.JSON(err)
-							// }
+							if err != nil {
+								return ctx.JSON(err)
+							}
 							// tkVars.TaskNamespace = projectOut.Name
 							tkVars.TaskNamespace = "sample-proje-39803"
 							tkVarsJson, err := tkVars.ToJson()
@@ -197,7 +197,7 @@ var Module = fx.Module(
 						}
 					case common.ProviderGitlab:
 						{
-							tkVars, pipeline, err := d.TektonInterceptorGitlab(ctx.Context(), &req)
+							tkVars, _, err := d.TektonInterceptorGitlab(ctx.Context(), &req)
 							if err != nil {
 								response := tekton.NewResponse(&req).Err(err)
 								jsonBody, err := response.ToJson()
@@ -206,14 +206,6 @@ var Module = fx.Module(
 								}
 								return ctx.Send(jsonBody)
 							}
-
-							projectOut, err := consoleCli.GetProjectName(
-								ctx.Context(), &console.ProjectIn{ProjectId: pipeline.ProjectId},
-							)
-							if err != nil {
-								return ctx.JSON(err)
-							}
-							tkVars.TaskNamespace = projectOut.Name
 							tkVarsJson, err := tkVars.ToJson()
 							if err != nil {
 								return ctx.JSON(err)

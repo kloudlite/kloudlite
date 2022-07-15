@@ -17,22 +17,6 @@ type Query {
   ci_triggerPipeline(pipelineId: ID!): Boolean
 }
 
-input PipelineDataInput{
-  name: String!
-  imageName: String!
-  repoName: String!
-  gitProvider: String!
-  gitRepoUrl: String!
-  gitlabRepoId: Int!
-  dockerFile: String!
-  contextDir: String!
-  githubInstallationId: Int
-  buildArgs: Json
-  branch: String!
-  metadata: Json
-}
-
-
 input PaginationIn {
   page: Int!
   perPage: Int!
@@ -40,6 +24,7 @@ input PaginationIn {
 
 input GitPipelineIn {
   name: String!
+  projectName: String!
   projectId: String!
   appId: String!
 
@@ -101,6 +86,7 @@ type GitPipeline {
 
 input GitDockerPipelineIn {
   name: String!
+  projectName: String!
   projectId: String!
   appId: String!
 
