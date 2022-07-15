@@ -4,9 +4,7 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"fmt"
-	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"go.uber.org/fx"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -382,11 +380,6 @@ func (d *domain) InstallApp(
 	app entities.App,
 ) (*entities.App, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectId)
-
-	if err != nil {
-		return nil, err
-	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -1515,147 +1508,6 @@ func (d *domain) OnDeletePeer(cxt context.Context, response entities.DeletePeerR
 		return err
 	}
 	return nil
-}
-
-func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
-	deviceRange := ipaddr.NewIPAddressString("10.13.0.0/16")
-
-	if address, addressError := deviceRange.ToAddress(); addressError == nil {
-		increment := address.Increment(deviceOffset + 2)
-		return ipaddr.NewIPAddressString(increment.GetNetIP().String()), nil
-	} else {
-		return nil, addressError
-	}
-}
-
-func (d *domain) ensureWgAccount(ctx context.Context, accountId repos.ID) error {
-	one, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
-		"account_id": accountId,
-	})
-	if err != nil {
-		return err
-	}
-	if one == nil {
-		pk, e := wgtypes.GeneratePrivateKey()
-		if e != nil {
-			return e
-		}
-		pkString := pk.String()
-		pbKeyString := pk.PublicKey().String()
-		_, err = d.wgAccountRepo.Create(ctx, &entities.WGAccount{
-			AccountID:    accountId,
-			WgPubKey:     pbKeyString,
-			WgPrivateKey: pkString,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
-	pk, e := wgtypes.GeneratePrivateKey()
-	if e != nil {
-		return nil, fmt.Errorf("unable to generate private key because %v", e)
-	}
-
-	e = d.ensureWgAccount(ctx, accountId)
-	if e != nil {
-		return nil, fmt.Errorf("unable to ensure wg account because %v", e)
-	}
-
-	devices, err := d.deviceRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": accountId,
-		},
-		Sort: map[string]any{
-			"index": 1,
-		},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	index := -1
-	count := 0
-	for i, d := range devices {
-		count++
-		if d.Index != i {
-			index = i
-			break
-		}
-	}
-	if index == -1 {
-		index = count
-	}
-
-	deviceIp, e := getRemoteDeviceIp(int64(index + 2))
-	ip := deviceIp.String()
-	pkString := pk.String()
-	pbKeyString := pk.PublicKey().String()
-	newDevice, e := d.deviceRepo.Create(ctx, &entities.Device{
-		Name:       deviceName,
-		AccountId:  accountId,
-		UserId:     userId,
-		PrivateKey: &pkString,
-		PublicKey:  &pbKeyString,
-		Ip:         ip,
-		Status:     entities.DeviceStateSyncing,
-		Index:      index,
-	})
-
-	if e != nil {
-		return nil, fmt.Errorf("unable to persist in db %v", e)
-	}
-
-	if e != nil {
-		return nil, e
-	}
-
-	return newDevice, e
-}
-
-func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
-	device, err := d.deviceRepo.FindById(ctx, deviceId)
-	if err != nil {
-		return err
-	}
-	device.Status = entities.DeviceStateSyncing
-	_, err = d.deviceRepo.UpdateById(ctx, deviceId, device)
-	if err != nil {
-		return err
-	}
-	//err = SendAction(d.infraMessenger, entities.DeletePeerAction{
-	//	ClusterID: device.ClusterId,
-	//	DeviceID:  device.Id,
-	//	PublicKey: *device.PublicKey,
-	//})
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error) {
-	q := make(repos.Filter)
-	q["account_id"] = accountId
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
-}
-
-func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error) {
-	q := make(repos.Filter)
-	q["user_id"] = userId
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
-}
-
-func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
-	return d.deviceRepo.FindById(ctx, id)
 }
 
 type Env struct {
