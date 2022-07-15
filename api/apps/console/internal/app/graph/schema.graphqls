@@ -134,23 +134,6 @@ type LamdaPlan @key(fields: "name"){
   name: String!
 }
 
-input AppInput{
-  name: String!
-  isLambda: Boolean!
-  projectId: String!
-  description: String
-  readableId: ID!
-  replicas: Int
-  services: [ExposedServiceIn]!
-  containers: [AppContainerIn!]!
-}
-
-type AutoScale {
-  minReplicas: Int!
-  maxReplicas: Int!
-  usage_percentage: Int!
-}
-
 type App @key(fields: "id") {
   id: ID!
   isLambda: Boolean!
@@ -166,6 +149,30 @@ type App @key(fields: "id") {
   autoScale: AutoScale
 }
 
+input AutoScaleIn {
+  minReplicas: Int!
+  maxReplicas: Int!
+  usage_percentage: Int!
+}
+
+
+input AppInput{
+  name: String!
+  isLambda: Boolean!
+  projectId: String!
+  description: String
+  autoScale: AutoScaleIn
+  readableId: ID!
+  replicas: Int
+  services: [ExposedServiceIn]!
+  containers: [AppContainerIn!]!
+}
+
+type AutoScale {
+  minReplicas: Int!
+  maxReplicas: Int!
+  usage_percentage: Int!
+}
 
 type EnvVal {
   type: String!

@@ -369,59 +369,10 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 	if err != nil {
 		return nil, err
 	}
-
-	// svcs := make([]op_crds.Service, 0)
-	// for _, ep := range app.ExposedPorts {
-	// 	svcs = append(svcs, op_crds.Service{
-	// 		Port:       int(ep.Port),
-	// 		TargetPort: int(ep.TargetPort),
-	// 		Type:       string(ep.Type),
-	// 	})
-	// }
-	// containers := make([]op_crds.Container, 0)
-	// for _, c := range app.Containers {
-	// 	env := make([]op_crds.EnvEntry, 0)
-	// 	for _, e := range c.EnvVars {
-	// 		if e.Type == "managed_resource" {
-	// 			ref := fmt.Sprintf("mres-%v", *e.Ref)
-	// 			env = append(env, op_crds.EnvEntry{
-	// 				Value:   e.Value,
-	// 				Key:     e.Key,
-	// 				Type:    "secret",
-	// 				RefName: &ref,
-	// 				RefKey:  e.RefKey,
-	// 			})
-	// 		} else {
-	// 			env = append(env, op_crds.EnvEntry{
-	// 				Value:   e.Value,
-	// 				Key:     e.Key,
-	// 				Type:    e.Type,
-	// 				RefName: e.Ref,
-	// 				RefKey:  e.RefKey,
-	// 			})
-	// 		}
-	// 	}
-	// 	containers = append(containers, op_crds.Container{
-	// 		Name:  c.Name,
-	// 		Image: c.Image,
-	// 		Env:   env,
-	// 	})
-	// }
-
-	// d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
-	// 	APIVersion: op_crds.AppAPIVersion,
-	// 	Kind:       op_crds.AppKind,
-	// 	Metadata: op_crds.AppMetadata{
-	// 		Name:      app.ReadableId,
-	// 		Namespace: app.Namespace,
-	// 	},
-	// 	Spec: op_crds.AppSpec{
-	// 		Services:   svcs,
-	// 		Containers: containers,
-	// 		Replicas:   1,
-	// 	},
-	// })
-
+	err = d.sendAppApply(ctx, prj, updatedApp)
+	if err != nil {
+		return nil, err
+	}
 	return updatedApp, nil
 }
 
@@ -447,8 +398,16 @@ func (d *domain) InstallApp(
 		return nil, err
 	}
 
+	err = d.sendAppApply(ctx, prj, createdApp)
+	if err != nil {
+		return nil, err
+	}
+	return createdApp, nil
+}
+
+func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *entities.App) error {
 	if app.IsLambda {
-		d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.Lambda{
+		err := d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.Lambda{
 			APIVersion: op_crds.LambdaAPIVersion,
 			Kind:       op_crds.LambdaKind,
 			Metadata: op_crds.LambdaMetadata{
@@ -456,8 +415,8 @@ func (d *domain) InstallApp(
 				Namespace: app.Namespace,
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":       string(prj.AccountId),
-					"kloudlite.io/project-ref":       string(projectId),
-					"kloudlite.io/resource-ref":      string(createdApp.Id),
+					"kloudlite.io/project-ref":       string(prj.Id),
+					"kloudlite.io/resource-ref":      string(app.Id),
 					"kloudlite.io/billing-plan":      "Lambda",
 					"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
 				},
@@ -513,8 +472,9 @@ func (d *domain) InstallApp(
 				}(),
 			},
 		})
+		return err
 	} else {
-		d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
+		err := d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.App{
 			APIVersion: op_crds.AppAPIVersion,
 			Kind:       op_crds.AppKind,
 			Metadata: op_crds.AppMetadata{
@@ -522,8 +482,8 @@ func (d *domain) InstallApp(
 				Namespace: app.Namespace,
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":       string(prj.AccountId),
-					"kloudlite.io/project-ref":       string(projectId),
-					"kloudlite.io/resource-ref":      string(createdApp.Id),
+					"kloudlite.io/project-ref":       string(prj.Id),
+					"kloudlite.io/resource-ref":      string(app.Id),
 					"kloudlite.io/billing-plan":      app.Containers[0].ComputePlan,
 					"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
 					"kloudlite.io/is-shared": func() string {
@@ -545,6 +505,27 @@ func (d *domain) InstallApp(
 						})
 					}
 					return svcs
+				}(),
+				Hpa: func() *op_crds.HPA {
+					if app.AutoScale == nil {
+						return nil
+					}
+					return &op_crds.HPA{
+						MinReplicas: int(app.AutoScale.MinReplicas),
+						MaxReplicas: int(app.AutoScale.MaxReplicas),
+						ThresholdCpu: func() int {
+							c := app.Containers[0]
+							return int(c.Quantity * float64(app.AutoScale.UsagePercentage) / float64(100) * 1000.0)
+						}(),
+						ThresholdMemory: func() int {
+							c := app.Containers[0]
+							plan, err := d.GetComputePlan(ctx, c.ComputePlan)
+							if err != nil {
+								panic(err)
+							}
+							return int(c.Quantity * 1000 * plan.MemoryPerCPU * float64(app.AutoScale.UsagePercentage))
+						}(),
+					}
 				}(),
 				Containers: func() []op_crds.Container {
 					cs := make([]op_crds.Container, 0)
@@ -586,11 +567,9 @@ func (d *domain) InstallApp(
 									})()),
 									Max: int(c.Quantity * 1000),
 								}
-								fmt.Printf("o: %+v\n", o)
 								return &o
 							}(),
 							ResourceMemory: func() *op_crds.Limit {
-								fmt.Println("plan:", c.ComputePlan)
 								plan, err := d.GetComputePlan(ctx, c.ComputePlan)
 								if err != nil {
 									panic(err)
@@ -607,9 +586,8 @@ func (d *domain) InstallApp(
 				Replicas: 1,
 			},
 		})
+		return err
 	}
-
-	return createdApp, nil
 }
 
 func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (string, error) {
