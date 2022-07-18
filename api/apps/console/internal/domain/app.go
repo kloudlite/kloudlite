@@ -174,16 +174,16 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 							}(),
 							ResourceCpu: func() *op_crds.Limit {
 								o := op_crds.Limit{
-									Min: int(c.Quantity * 500),
-									Max: int(c.Quantity * 1000),
+									Min: fmt.Sprintf("%vm", int(c.Quantity*500)),
+									Max: fmt.Sprintf("%vm", int(c.Quantity*1000)),
 								}
 								return &o
 							}(),
 							ResourceMemory: func() *op_crds.Limit {
 								plan, _ := d.getComputePlan("Basic")
 								return &op_crds.Limit{
-									Min: int(c.Quantity * 1000 * (plan.MemoryPerCPU)),
-									Max: int(c.Quantity * 1000 * (plan.MemoryPerCPU)),
+									Min: fmt.Sprintf("%vMi", int(c.Quantity*1000*(plan.MemoryPerCPU))),
+									Max: fmt.Sprintf("%vMi", int(c.Quantity*1000*(plan.MemoryPerCPU))),
 								}
 							}(),
 						})
@@ -279,13 +279,13 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 							}(),
 							ResourceCpu: func() *op_crds.Limit {
 								o := op_crds.Limit{
-									Min: int(c.Quantity * (func() float64 {
+									Min: fmt.Sprintf("%vm", int(c.Quantity*(func() float64 {
 										if c.IsShared {
 											return 500
 										}
 										return 1000
-									})()),
-									Max: int(c.Quantity * 1000),
+									})())),
+									Max: fmt.Sprintf("%vm", int(c.Quantity*1000)),
 								}
 								return &o
 							}(),
@@ -295,8 +295,8 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 									panic(err)
 								}
 								return &op_crds.Limit{
-									Min: int(c.Quantity * 1000 * plan.MemoryPerCPU),
-									Max: int(c.Quantity * 1000 * plan.MemoryPerCPU),
+									Min: fmt.Sprintf("%vMi", int(c.Quantity*1000*plan.MemoryPerCPU)),
+									Max: fmt.Sprintf("%vMi", int(c.Quantity*1000*plan.MemoryPerCPU)),
 								}
 							}(),
 						})
