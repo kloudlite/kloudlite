@@ -47,6 +47,31 @@ type domainI struct {
 	stripeCli              *stripe.Client
 }
 
+func (d *domainI) GetOutstandingAmount(ctx context.Context, accountId repos.ID) (float64, error) {
+	accountBillings, err := d.billablesRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"account_id": accountId,
+			"month":      nil,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	var billableTotal float64
+	for _, ab := range accountBillings {
+		if ab.EndTime == nil {
+			bill, err := d.calculateBill(ctx, ab.Billables, ab.StartTime, time.Now())
+			if err != nil {
+				return 0, err
+			}
+			billableTotal = billableTotal + bill
+		} else {
+			billableTotal = billableTotal + ab.BillAmount
+		}
+	}
+	return billableTotal, nil
+}
+
 func JSONBytesEqual(a, b []byte) (bool, error) {
 	var j, j2 interface{}
 	if err := json.Unmarshal(a, &j); err != nil {
