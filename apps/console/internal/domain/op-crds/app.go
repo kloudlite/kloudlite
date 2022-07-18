@@ -7,8 +7,8 @@ type Service struct {
 }
 
 type Limit struct {
-	Min int `json:"min,omitempty"`
-	Max int `json:"max,omitempty"`
+	Min string `json:"min,omitempty"`
+	Max string `json:"max,omitempty"`
 }
 
 type EnvEntry struct {

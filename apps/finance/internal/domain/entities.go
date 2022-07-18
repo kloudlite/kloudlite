@@ -65,6 +65,7 @@ type AccountBilling struct {
 	StartTime        time.Time  `json:"start_time" bson:"start_time"`
 	EndTime          *time.Time `json:"end_time" bson:"end_time"`
 	BillAmount       float64    `json:"bill_amount" bson:"bill_amount"`
+	Month            *string    `json:"month" bson:"month"`
 }
 
 var BillableIndexes = []repos.IndexField{

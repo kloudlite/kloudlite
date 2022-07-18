@@ -27,6 +27,8 @@ type Domain interface {
 	RemoveAccountMember(ctx context.Context, accountId repos.ID, userId repos.ID) (bool, error)
 	UpdateAccountMember(ctx context.Context, id repos.ID, id2 repos.ID, role string) (bool, error)
 
+	GetOutstandingAmount(ctx context.Context, accountId repos.ID) (float64, error)
+
 	GetAccountMemberships(ctx context.Context, userId repos.ID) ([]*Membership, error)
 	GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error)
 	GetUserMemberships(ctx context.Context, resourceId repos.ID) ([]*Membership, error)
