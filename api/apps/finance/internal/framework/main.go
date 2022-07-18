@@ -8,6 +8,7 @@ import (
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -46,6 +47,7 @@ func (e *IAMGRPCEnv) GetGRPCServerURL() string {
 type Env struct {
 	DBName        string `env:"MONGO_DB_NAME"`
 	DBUrl         string `env:"MONGO_URI"`
+	KafkaBrokers  string `env:"WORKLOAD_KAFKA_BROKERS" required:"true"`
 	RedisHosts    string `env:"REDIS_HOSTS"`
 	RedisUsername string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
@@ -58,6 +60,10 @@ type Env struct {
 
 	HttpPort uint16 `env:"PORT"`
 	HttpCors string `env:"ORIGINS"`
+}
+
+func (e *Env) GetBrokers() string {
+	return e.KafkaBrokers
 }
 
 func (e *Env) GetMongoConfig() (url string, dbName string) {
@@ -89,6 +95,7 @@ var Module = fx.Module(
 	rpc.NewGrpcClientFx[*CiGrpcEnv, app.CIGrpcClientConn](),
 	rpc.NewGrpcClientFx[*AuthGRPCEnv, app.AuthGrpcClientConn](),
 	repos.NewMongoClientFx[*Env](),
+	redpanda.NewClientFx[*Env](),
 	fx.Provide(
 		func(env *Env) app.AuthCacheClient {
 			return cache.NewRedisClient(
