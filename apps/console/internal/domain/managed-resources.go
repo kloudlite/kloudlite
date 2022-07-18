@@ -110,7 +110,7 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 			ApiVersion:         resTmpl.ApiVersion,
 			Kind:               resTmpl.Kind,
 			Inputs:             create.Values,
-		}
+		},
 	})
 	if err != nil {
 		return nil, err
