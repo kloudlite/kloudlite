@@ -14,7 +14,6 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/harbor"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
@@ -40,9 +39,7 @@ type Env struct {
 	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET" required:"true"`
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
 
-	HarborUsername string `env:"HARBOR_USERNAME" required:"true"`
-	HarborPassword string `env:"HARBOR_PASSWORD" required:"true"`
-	HarborUrl      string `env:"HARBOR_URL" required:"true"`
+	HarborHost string `env:"HARBOR_HOST" required:"true"`
 }
 
 func (env *Env) GoogleConfig() (clientId string, clientSecret string, callbackUrl string) {
@@ -57,10 +54,6 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
-func (env *Env) GetHarborConfig() (username, password, registryUrl string) {
-	return env.HarborUsername, env.HarborPassword, env.HarborUrl
-}
-
 type AuthCacheClient cache.Client
 type CacheClient cache.Client
 
@@ -72,7 +65,7 @@ var Module = fx.Module(
 	fx.Provide(config.LoadEnv[Env]()),
 	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
-	repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
+	// repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
 
 	fx.Provide(
 		func(conn AuthGRPCClient) auth.AuthClient {
@@ -83,18 +76,6 @@ var Module = fx.Module(
 	fx.Provide(
 		func(conn ConsoleGRPCClient) console.ConsoleClient {
 			return console.NewConsoleClient((*grpc.ClientConn)(conn))
-		},
-	),
-
-	fx.Provide(
-		func(env *Env) (harbor.Harbor, error) {
-			return harbor.NewClient(env)
-		},
-	),
-
-	fx.Invoke(
-		func(app *fiber.App, logger logging.Logger) {
-			NewWebhook(app, "/webhook", logger)
 		},
 	),
 
@@ -257,5 +238,10 @@ var Module = fx.Module(
 	// ),
 	fx.Provide(fxGitlab),
 	fx.Provide(fxGithub),
+	fx.Provide(
+		func(env *Env) domain.HarborHost {
+			return domain.HarborHost(env.HarborHost)
+		},
+	),
 	domain.Module,
 )

@@ -41,9 +41,10 @@ type GithubWebhookId int64
 type Pipeline struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string `json:"name,omitempty" bson:"name"`
+	ProjectId        string `json:"project_id" bson:"project_id"`
+	AccountId        string `json:"account_id" bson:"account_id"`
+	AppId            string `json:"app_id" bson:"app_id"`
 	ProjectName      string `json:"project_name" bson:"project_name"`
-	ProjectId        string `json:"project_id,omitempty" bson:"project_id"`
-	AppId            string `json:"app_id,omitempty" bson:"app_id"`
 	ContainerName    string `json:"container_name" bson:"container_name"`
 
 	GitProvider string `json:"git_provider,omitempty" bson:"git_provider"`

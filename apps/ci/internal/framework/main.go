@@ -69,7 +69,7 @@ func (e *Env) GetHttpCors() string {
 	return e.HttpCors
 }
 
-var Module = fx.Module(
+var Module fx.Option = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[GrpcAuthConfig](),
