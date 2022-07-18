@@ -66,10 +66,10 @@
       active: true
       validator: |-
         function(inputs, plans){
-          var computePrice = plans.compute["General"].dedicatedPrice * inputs.cpu;
+          var computePrice = plans.compute["Basic"].sharedPrice * inputs.cpu;
           var storagePrice = plans.storage["BlockStorage"].pricePerGB * inputs.size;
           var totalPrice = computePrice + storagePrice;
-          var numberOfSupportedConnections = inputs.cpu * 0.5 * 20;
+          var numberOfSupportedConnections = inputs.cpu * 40;
           return {
             totalPrice: totalPrice,
             error: null,
@@ -77,10 +77,7 @@
                 {
                   name: "capacity",
                   items:[
-                    {
-                        label: "Number of supported connections",
-                        value: numberOfSupportedConnections
-                    }
+                      "Supports around "  + numberOfSupportedConnections + " connections",
                   ] 
                 }
             ]
@@ -94,7 +91,7 @@
         - name: cpu
           label: CPU Allocation
           inputType: Number
-          defaultValue: 10
+          defaultValue: 0.5
           min: 0.500
           max: 2
           required: true
@@ -104,6 +101,7 @@
           inputType: Number
           defaultValue: 10
           min: 1
+          max: 1000
           required: true
           unit: Gi
       outputs:
