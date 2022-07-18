@@ -58,7 +58,7 @@ func (c *consumer[T]) Subscribe(T) error {
 			}
 			msg, e := c.kafkaConsumer.ReadMessage(-1)
 			if e != nil {
-				c.logger.Errorf(err, "could not read kafka message")
+				c.logger.Errorf(e, "could not read kafka message")
 				continue
 			}
 			topic := *msg.TopicPartition.Topic
