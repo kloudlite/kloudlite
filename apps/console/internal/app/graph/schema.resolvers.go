@@ -97,7 +97,7 @@ func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSv
 }
 
 func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {
-	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, category, serviceType, name, values)
+	svcEntity, err := r.Domain.InstallManagedSvc(ctx, projectID, serviceType, name, values)
 	if err != nil {
 		return nil, err
 	}
@@ -410,6 +410,7 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 	}
 
 	return &model.App{
+		ID:          entity.Id,
 		Name:        entity.Name,
 		IsLambda:    entity.IsLambda,
 		Namespace:   entity.Namespace,
