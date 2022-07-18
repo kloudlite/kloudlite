@@ -106,7 +106,7 @@ func (d *domainI) parseGitlabHook(req *tekton.Request) (*GitWebhookPayload, erro
 				GitProvider: common.ProviderGitlab,
 				RepoUrl:     t.Repository.GitHTTPURL,
 				GitRef:      t.Ref,
-				CommitHash:  t.CheckoutSHA,
+				CommitHash:  t.CheckoutSHA[:10],
 			}
 			return payload, nil
 		}
@@ -160,19 +160,24 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 	}
 
 	tkVars := TektonVars{
-		GitRepo:                 hookPayload.RepoUrl,
-		GitUser:                 "x-access-token",
-		GitPassword:             token,
-		GitRef:                  fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
-		GitCommitHash:           hookPayload.CommitHash,
-		BuildBaseImage:          pipeline.Build.BaseImage,
-		BuildCmd:                pipeline.Build.Cmd,
-		BuildOutputDir:          pipeline.Build.OutputDir,
-		RunBaseImage:            pipeline.Run.BaseImage,
-		RunCmd:                  pipeline.Run.Cmd,
-		ArtifactDockerImageName: pipeline.ArtifactRef.DockerImageName,
-		ArtifactDockerImageTag:  pipeline.ArtifactRef.DockerImageTag,
-		TaskNamespace:           pipeline.ProjectName,
+		GitRepo:        hookPayload.RepoUrl,
+		GitUser:        "x-access-token",
+		GitPassword:    token,
+		GitRef:         fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
+		GitCommitHash:  hookPayload.CommitHash,
+		BuildBaseImage: pipeline.Build.BaseImage,
+		BuildCmd:       pipeline.Build.Cmd,
+		BuildOutputDir: pipeline.Build.OutputDir,
+		RunBaseImage:   pipeline.Run.BaseImage,
+		RunCmd:         pipeline.Run.Cmd,
+		ArtifactDockerImageName: fmt.Sprintf(
+			"%s/%s/%s",
+			d.harborHost,
+			pipeline.AccountId,
+			pipeline.ArtifactRef.DockerImageName,
+		),
+		ArtifactDockerImageTag: pipeline.ArtifactRef.DockerImageTag,
+		TaskNamespace:          pipeline.ProjectName,
 	}
 	return &tkVars, pipeline, nil
 }
