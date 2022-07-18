@@ -145,7 +145,7 @@ var Module = fx.Module(
 							// tkVars, pipeline, err := d.TektonInterceptorGithub(ctx.Context(), &req)
 							tkVars, _, err := d.TektonInterceptorGithub(ctx.Context(), &req)
 							if err != nil {
-								logger.Errorf("ERR: %+v", err)
+								logger.Errorf(err, "tekton interceptor github")
 								response := tekton.NewResponse(&req).Err(err)
 								jsonBody, err := response.ToJson()
 								if err != nil {
