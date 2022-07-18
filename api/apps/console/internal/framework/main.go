@@ -7,7 +7,6 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
 	loki_server "kloudlite.io/pkg/loki-server"
 	"kloudlite.io/pkg/redpanda"
 	mongo_db "kloudlite.io/pkg/repos"
@@ -108,7 +107,7 @@ func (e *Env) GetNotifierUrl() string {
 	return e.NotifierUrl
 }
 
-var Module = fx.Module(
+var Module fx.Option = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[LogServerEnv](),
@@ -118,7 +117,6 @@ var Module = fx.Module(
 	config.EnvFx[GrpcFinanceConfig](),
 	config.EnvFx[GrpcCIConfig](),
 
-	logging.FxProvider(),
 	redpanda.NewClientFx[*Env](),
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),

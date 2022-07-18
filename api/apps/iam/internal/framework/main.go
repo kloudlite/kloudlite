@@ -31,7 +31,7 @@ func (env *Env) GetGRPCPort() uint16 {
 	return env.Port
 }
 
-var Module = fx.Module(
+var Module fx.Option = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
 	repos.NewMongoClientFx[*Env](),

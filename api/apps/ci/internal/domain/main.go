@@ -440,9 +440,6 @@ func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, 
 func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error) {
 	exP, err := d.pipelineRepo.FindOne(
 		ctx, repos.Filter{
-			"git_repo_url":   pipeline.GitRepoUrl,
-			"git_branch":     pipeline.GitBranch,
-			"git_provider":   pipeline.GitProvider,
 			"project_id":     pipeline.ProjectId,
 			"app_id":         pipeline.AppId,
 			"container_name": pipeline.ContainerName,
