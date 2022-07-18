@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"fmt"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -48,13 +49,33 @@ func NewLogger(options ...Options) (Logger, error) {
 		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		cfg.EncoderConfig.LineEnding = "\n\n"
 		cfg.EncoderConfig.TimeKey = ""
+		// cfg.EncoderConfig.CallerKey = "random"
+		cfg.EncoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
+			// pwd, err := os.Getwd()
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// rel, err := filepath.Rel(pwd, caller.FullPath())
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// fmt.Println("value: ", filepath.Base(caller.FullPath()), caller.FullPath(), rel)
+			// enc.AppendString(filepath.Base(caller.FullPath()))
+			// fmt.Println("calleR: ", caller, caller.Defined, caller.TrimmedPath(), caller.Function)
+			enc.AppendString(fmt.Sprintf("(%s) %s", caller.Function, caller.TrimmedPath()))
+			// enc.AppendString(rel)
+		}
 		logger, err := cfg.Build(zap.AddCallerSkip(1))
 		if err != nil {
 			return nil, err
 		}
 		return &customLogger{zapLogger: logger.Sugar()}, nil
 	}
-	logger, err := zap.NewProduction()
+	cfg := zap.NewProductionConfig()
+	// cfg.EncoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
+	// 	enc.AppendString(filepath.Base(caller.FullPath()))
+	// }
+	logger, err := cfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
 	}
