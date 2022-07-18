@@ -107,7 +107,7 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.ManagedResourceSpec{
-			ManagedServiceName: svc.Name,
+			ManagedServiceName: string(svc.Id),
 			ApiVersion:         resTmpl.ApiVersion,
 			Kind:               resTmpl.Kind,
 			Inputs:             create.Values,
