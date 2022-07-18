@@ -43,7 +43,7 @@ type Domain interface {
 	GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error)
 	GetConfig(ctx context.Context, configId repos.ID) (*entities.Config, error)
 	DeleteConfig(ctx context.Context, configId repos.ID) (bool, error)
-	OnUpdateConfig(ctx context.Context, configId repos.ID) error
+	//OnUpdateConfig(ctx context.Context, configId repos.ID) error
 
 	CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error)
 	UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error)
@@ -51,7 +51,7 @@ type Domain interface {
 	DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error)
 	GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error)
 	GetSecret(ctx context.Context, secretId repos.ID) (*entities.Secret, error)
-	OnUpdateSecret(ctx context.Context, secretId repos.ID) error
+	//OnUpdateSecret(ctx context.Context, secretId repos.ID) error
 
 	GetRouters(ctx context.Context, projectID repos.ID) ([]*entities.Router, error)
 	GetRouter(ctx context.Context, routerID repos.ID) (*entities.Router, error)
@@ -62,7 +62,7 @@ type Domain interface {
 
 	GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error)
 	GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error)
-	InstallManagedSvc(ctx context.Context, projectID repos.ID, category repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error)
+	InstallManagedSvc(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error)
 	UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error)
 	UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error)
 	OnUpdateManagedSvc(ctx context.Context, r *op_crds.StatusUpdate) error
