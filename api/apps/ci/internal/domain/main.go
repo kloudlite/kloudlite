@@ -19,12 +19,15 @@ import (
 	"time"
 )
 
+type HarborHost string
+
 type domainI struct {
 	pipelineRepo  repos.DbRepo[*Pipeline]
 	authClient    auth.AuthClient
 	github        Github
 	gitlab        Gitlab
 	harborAccRepo repos.DbRepo[*HarborAccount]
+	harborHost    HarborHost
 }
 
 func (d *domainI) GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error) {
@@ -164,6 +167,7 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 		GitCommitHash:           hookPayload.CommitHash,
 		BuildBaseImage:          pipeline.Build.BaseImage,
 		BuildCmd:                pipeline.Build.Cmd,
+		BuildOutputDir:          pipeline.Build.OutputDir,
 		RunBaseImage:            pipeline.Run.BaseImage,
 		RunCmd:                  pipeline.Run.Cmd,
 		ArtifactDockerImageName: pipeline.ArtifactRef.DockerImageName,
@@ -239,12 +243,18 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 			}
 			return nil
 		}(),
-		BuildBaseImage:          pipeline.Build.BaseImage,
-		BuildCmd:                pipeline.Build.Cmd,
-		RunBaseImage:            pipeline.Run.BaseImage,
-		RunCmd:                  pipeline.Run.Cmd,
-		ArtifactDockerImageName: pipeline.ArtifactRef.DockerImageName,
-		ArtifactDockerImageTag:  pipeline.ArtifactRef.DockerImageTag,
+		BuildBaseImage: pipeline.Build.BaseImage,
+		BuildCmd:       pipeline.Build.Cmd,
+		BuildOutputDir: pipeline.Build.OutputDir,
+		RunBaseImage:   pipeline.Run.BaseImage,
+		RunCmd:         pipeline.Run.Cmd,
+		ArtifactDockerImageName: fmt.Sprintf(
+			"%s/%s/%s",
+			d.harborHost,
+			pipeline.AccountId,
+			pipeline.ArtifactRef.DockerImageName,
+		),
+		ArtifactDockerImageTag: pipeline.ArtifactRef.DockerImageTag,
 
 		TaskNamespace: pipeline.ProjectName,
 	}
@@ -552,24 +562,23 @@ func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeli
 	return id, nil
 }
 
-func fxDomain(
-	pipelineRepo repos.DbRepo[*Pipeline],
-	harborAccRepo repos.DbRepo[*HarborAccount],
-	authClient auth.AuthClient,
-	gitlab Gitlab,
-	github Github,
-) (Domain, Harbor) {
-	d := domainI{
-		authClient:    authClient,
-		pipelineRepo:  pipelineRepo,
-		gitlab:        gitlab,
-		github:        github,
-		harborAccRepo: harborAccRepo,
-	}
-	return &d, &d
-}
-
 var Module = fx.Module(
 	"domain",
-	fx.Provide(fxDomain),
+	fx.Provide(
+		func(
+			pipelineRepo repos.DbRepo[*Pipeline],
+			authClient auth.AuthClient,
+			gitlab Gitlab,
+			github Github,
+			harborHost HarborHost,
+		) Domain {
+			return &domainI{
+				authClient:   authClient,
+				pipelineRepo: pipelineRepo,
+				gitlab:       gitlab,
+				github:       github,
+				harborHost:   harborHost,
+			}
+		},
+	),
 )
