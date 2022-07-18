@@ -115,11 +115,11 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Provide(func(env Env) *stripe.Client {
+	fx.Provide(func(env *Env) *stripe.Client {
 		return stripe.NewClient(env.StripeSecretKey)
 	}),
 	fx.Invoke(
-		func(server *fiber.App, ds domain.Stripe) {
+		func(server *fiber.App) {
 			//server.Get(
 			//	"/stripe/get-setup-intent", func(ctx *fiber.Ctx) error {
 			//		intentClientSecret, err := ds.GetSetupIntent()
