@@ -67,8 +67,9 @@ type Probe struct {
 }
 
 type AppContainer struct {
-	Name            string            `json:"name"`
-	Image           string            `json:"image"`
+	Name  string `json:"name"`
+	Image string `json:"image"`
+	// +kubebuilder:default=IfNotPresent
 	ImagePullPolicy string            `json:"imagePullPolicy,omitempty"`
 	Command         []string          `json:"command,omitempty"`
 	Args            []string          `json:"args,omitempty"`

@@ -54,6 +54,7 @@ func (r *StatusWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 					}
 					return r.RemoveWatcherFinalizer(ctx, project)
 				}
+				return ctrl.Result{}, nil
 			}
 			if !controllerutil.ContainsFinalizer(project, constants.StatusWatcherFinalizer) {
 				return r.AddWatcherFinalizer(ctx, project)

@@ -50,6 +50,7 @@ const (
 	HarborProjectExists           conditions.Type = "HarborProjectExists"
 	HarborProjectAccountExists    conditions.Type = "HarborProjectAccountExists"
 	HarborProjectStorageAllocated conditions.Type = "HarborProjectStorageAllocated"
+	NamespaceExists               conditions.Type = "NamespaceExists"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -89,10 +90,11 @@ func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.St
 	ctx := req.Context()
 	project := req.Object
 
-	accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
-	if !ok {
-		return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
-	}
+	// accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
+	// if !ok {
+	// 	return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
+	// }
+	//
 
 	if err := func() error {
 		robotAccId, ok := project.Status.GeneratedVars.GetInt(KeyRobotAccId)
@@ -102,9 +104,9 @@ func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.St
 		if err := r.harborCli.DeleteUserAccount(ctx, robotAccId); err != nil {
 			return err
 		}
-		if err := r.harborCli.DeleteProject(ctx, accountRef); err != nil {
-			return err
-		}
+		// if err := r.harborCli.DeleteProject(ctx, accountRef); err != nil {
+		// 	return err
+		// }
 		return nil
 	}(); err != nil {
 		return req.FailWithOpError(err)
@@ -126,12 +128,12 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 			return req.FailWithStatusError(err)
 		}
 		isReady = false
-		cs = append(cs, conditions.New("NamespaceExists", false, "NotFound", err.Error()))
+		cs = append(cs, conditions.New(NamespaceExists, false, conditions.NotFound, err.Error()))
 		ns = nil
 	}
 
 	if ns != nil {
-		cs = append(cs, conditions.New("NamespaceExists", true, "Found"))
+		cs = append(cs, conditions.New(NamespaceExists, true, conditions.Found))
 	}
 
 	accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
@@ -172,19 +174,19 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		}
 	} else {
 		isReady = false
-		fmt.Printf("hello, cs: %+v\n", cs)
+		cs = append(cs, conditions.New(HarborProjectAccountExists, false, conditions.NotFound))
 	}
 
-	if project.Spec.ArtifactRegistry.Enabled {
-		hStorage := project.Spec.ArtifactRegistry.Size
-		allocatedStorage, ok := project.Status.DisplayVars.GetInt(KeyHarborProjectStorage)
-		if !ok || hStorage != allocatedStorage {
-			isReady = false
-			cs = append(cs, conditions.New(HarborProjectStorageAllocated, false, conditions.NotReconciledYet))
-		} else {
-			cs = append(cs, conditions.New(HarborProjectStorageAllocated, true, conditions.Found))
-		}
-	}
+	// if project.Spec.ArtifactRegistry.Enabled {
+	// 	hStorage := project.Spec.ArtifactRegistry.Size
+	// 	allocatedStorage, ok := project.Status.DisplayVars.GetInt(KeyHarborProjectStorage)
+	// 	if !ok || hStorage != allocatedStorage {
+	// 		isReady = false
+	// 		cs = append(cs, conditions.New(HarborProjectStorageAllocated, false, conditions.NotReconciledYet))
+	// 	} else {
+	// 		cs = append(cs, conditions.New(HarborProjectStorageAllocated, true, conditions.Found))
+	// 	}
+	// }
 
 	newConditions, hasUpdated, err := conditions.Patch(project.Status.Conditions, cs)
 	if err != nil {
@@ -230,74 +232,81 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 		return req.FailWithOpError(r.Update(ctx, project))
 	}
 
-	accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
-	if !ok {
-		return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
-	}
+	var dockerConfigJson []byte
 
-	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectExists.String()) {
-		if err2 := func() error {
-			storageSize := 1000 * r.Env.HarborProjectStorageSize
-			if project.Spec.ArtifactRegistry.Enabled && project.Spec.ArtifactRegistry.Size > 0 {
-				storageSize = project.Spec.ArtifactRegistry.Size
+	if accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]; ok {
+		// TODO: harbor project creation should be moved out to Account Creation
+		// if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectExists.String()) {
+		// 	if err2 := func() error {
+		// 		storageSize := 1000 * r.Env.HarborProjectStorageSize
+		// 		// if project.Spec.ArtifactRegistry.Enabled && project.Spec.ArtifactRegistry.Size > 0 {
+		// 		// 	storageSize = project.Spec.ArtifactRegistry.Size
+		// 		// }
+		// 		if err := r.harborCli.CreateProject(ctx, accountRef, storageSize); err != nil {
+		// 			return errors.NewEf(err, "creating harbor project")
+		// 		}
+		// 		return project.Status.DisplayVars.Set(KeyHarborProjectStorage, storageSize)
+		// 	}(); err2 != nil {
+		// 		return req.FailWithOpError(err2)
+		// 	}
+		// 	if err := r.Status().Update(ctx, project); err != nil {
+		// 		return req.FailWithOpError(err)
+		// 	}
+		// 	return req.Done(&ctrl.Result{RequeueAfter: 0})
+		// }
+
+		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
+			if err3 := func() error {
+				userAcc, err := r.harborCli.CreateUserAccount(ctx, accountRef)
+				if err != nil {
+					return errors.NewEf(err, "creating harbor project user-account")
+				}
+				if err := project.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
+					return errors.NewEf(err, "could not set robotAccId")
+				}
+				if err := project.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
+					return errors.NewEf(err, "could not set robotUserName")
+				}
+				if err := project.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
+					return errors.NewEf(err, "could not set robotUserPassword")
+				}
+				return nil
+			}(); err3 != nil {
+				return req.FailWithOpError(err3)
 			}
-			if err := r.harborCli.CreateProject(ctx, accountRef, storageSize); err != nil {
-				return errors.NewEf(err, "creating harbor project")
-			}
-			return project.Status.DisplayVars.Set(KeyHarborProjectStorage, storageSize)
-		}(); err2 != nil {
-			return req.FailWithOpError(err2)
+			return req.FailWithOpError(r.Status().Update(ctx, project))
 		}
-		if err := r.Status().Update(ctx, project); err != nil {
+
+		// TODO: harbor project storage size allocation should be moved out to Account Creation
+		// if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectStorageAllocated.String()) {
+		// 	if err := r.harborCli.SetProjectQuota(ctx, project.Name, project.Spec.ArtifactRegistry.Size); err != nil {
+		// 		return req.FailWithOpError(err)
+		// 	}
+		// 	if err := project.Status.DisplayVars.Set(
+		// 		KeyHarborProjectStorage,
+		// 		project.Spec.ArtifactRegistry.Size,
+		// 	); err != nil {
+		// 		return nil
+		// 	}
+		// 	return req.FailWithOpError(r.Status().Update(ctx, project))
+		// }
+
+		robotUserName, ok := project.Status.GeneratedVars.GetString(KeyRobotUserName)
+		if !ok {
+			return req.FailWithOpError(errors.Newf("key: %s not found in .GeneratedVars", KeyRobotUserName))
+		}
+
+		robotUserPassword, ok := project.Status.GeneratedVars.GetString(KeyRobotUserPassword)
+		if !ok {
+			return req.FailWithOpError(errors.Newf("key: %s not found in .GeneratedVars", KeyRobotUserPassword))
+		}
+
+		// hDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, robotUserName, robotUserPassword)
+		harborDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, robotUserName, robotUserPassword)
+		if err != nil {
 			return req.FailWithOpError(err)
 		}
-		return req.Done(&ctrl.Result{RequeueAfter: 0})
-	}
-
-	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
-		if err3 := func() error {
-			userAcc, err := r.harborCli.CreateUserAccount(ctx, accountRef)
-			if err != nil {
-				return errors.NewEf(err, "creating harbor project user-account")
-			}
-			if err := project.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
-				return errors.NewEf(err, "could not set robotAccId")
-			}
-			if err := project.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
-				return errors.NewEf(err, "could not set robotUserName")
-			}
-			if err := project.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
-				return errors.NewEf(err, "could not set robotUserPassword")
-			}
-			return nil
-		}(); err3 != nil {
-			return req.FailWithOpError(err3)
-		}
-		return req.FailWithOpError(r.Status().Update(ctx, project))
-	}
-
-	if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectStorageAllocated.String()) {
-		if err := r.harborCli.SetProjectQuota(ctx, project.Name, project.Spec.ArtifactRegistry.Size); err != nil {
-			return req.FailWithOpError(err)
-		}
-		if err := project.Status.DisplayVars.Set(KeyHarborProjectStorage, project.Spec.ArtifactRegistry.Size); err != nil {
-			return nil
-		}
-		return req.FailWithOpError(r.Status().Update(ctx, project))
-	}
-
-	robotUserName, ok := project.Status.GeneratedVars.GetString(KeyRobotUserName)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key: %s not found in .GeneratedVars", KeyRobotUserName))
-	}
-	robotUserPassword, ok := project.Status.GeneratedVars.GetString(KeyRobotUserPassword)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key: %s not found in .GeneratedVars", KeyRobotUserPassword))
-	}
-
-	hDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, robotUserName, robotUserPassword)
-	if err != nil {
-		return req.FailWithOpError(err)
+		dockerConfigJson = harborDockerConfig
 	}
 
 	b, err := templates.Parse(
@@ -306,15 +315,17 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(project, true),
 			},
-			"docker-config-json": string(hDockerConfig),
-			"docker-secret-name": "kloudlite-docker-registry",
-			"role-name":          "kloudlite-ns-admin",
-			"svc-account-name":   "kloudlite-svc-account",
+			"docker-config-json": string(dockerConfigJson),
+			"docker-secret-name": r.Env.DockerSecretName,
+			"role-name":          r.Env.NamespaceAdminRoleName,
+			"svc-account-name":   r.Env.NamespaceSvcAccountName,
 		},
 	)
+
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
+
 	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return req.FailWithOpError(err)
 	}

@@ -21,7 +21,7 @@ spec:
     storageClassName: {{$storageClass}}
     resources:
       requests:
-        storage: {{index $inputs "size" | default "5Gi" }}
+        storage: {{index $inputs "size" | default "5" }}Gi
 
   resources:
     requests:

@@ -32,6 +32,10 @@ type Env struct {
 	DefaultIngressClass       string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
 	WildcardDomainSuffix      string `env:"WILDCARD_DOMAIN_SUFFIX" required:"true"`
 	WildcardDomainCertificate string `env:"WILDCARD_DOMAIN_CERTIFICATE" required:"true"`
+
+	DockerSecretName        string `env:"DOCKER_SECRET_NAME" required:"true"`
+	NamespaceAdminRoleName  string `env:"NAMESPACE_ADMIN_ROLE_NAME" required:"true"`
+	NamespaceSvcAccountName string `env:"NAMESPACE_SVC_ACCOUNT_NAME" required:"true"`
 }
 
 func GetEnv() (*Env, error) {

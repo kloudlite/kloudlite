@@ -31,7 +31,7 @@ spec:
     rootPassword: {{ index $generatedVars "root-password" }}
   persistence:
     enabled: true
-    size: {{ index $inputs "size" | default "1Gi" }}
+    size: {{ index $inputs "size" | default 1 }}Gi
   volumePermissions:
     enabled: true
   metrics:
