@@ -157,6 +157,7 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 		ctx, session.UserId, domain.Pipeline{
 			Name:        in.Name,
 			ProjectName: in.ProjectName,
+			AccountId:   in.AccountID,
 			ProjectId:   in.ProjectID,
 			AppId:       in.AppID,
 			GitProvider: in.GitProvider,

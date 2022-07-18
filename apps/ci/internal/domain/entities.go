@@ -71,18 +71,18 @@ type TektonVars struct {
 	GitPassword string `json:"git-password"`
 
 	GitRef        string `json:"git-ref"`
-	GitCommitHash string `json:"git-commit_hash"`
+	GitCommitHash string `json:"git-commit-hash"`
 
 	IsDockerBuild    bool    `json:"is-docker-build"`
 	DockerFile       *string `json:"docker-file"`
 	DockerContextDir *string `json:"docker-context-dir"`
 	DockerBuildArgs  *string `json:"docker-build-args"`
 
-	BuildBaseImage string `json:"build-base_image"`
+	BuildBaseImage string `json:"build-base-image"`
 	BuildCmd       string `json:"build-cmd"`
 	BuildOutputDir string `json:"build-output-dir"`
 
-	RunBaseImage string `json:"run-base_image"`
+	RunBaseImage string `json:"run-base-image"`
 	RunCmd       string `json:"run-cmd"`
 
 	TaskNamespace string `json:"task-namespace"`

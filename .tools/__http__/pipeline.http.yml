@@ -10,6 +10,7 @@ query: |
 variables:
   in:
     name: sample-pipeline
+    accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
     projectId: proj-s1ok37ubokp62aszwu0jdoq4uorr
     appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
     gitProvider: github
@@ -37,6 +38,7 @@ variables:
   in:
     name: sample-pipeline
     projectName: sample-proje-36891
+    accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
     projectId: proj-ll5s-miviimb0icwvznki9jqzkyi
     appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
     gitProvider: gitlab
@@ -62,7 +64,9 @@ query: |
 variables:
   in:
     name: sample-pipeline
-    projectName: sample-proje-36891
+    projectName: sample-x
+    containerName: main
+    accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
     projectId: proj-ll5s-miviimb0icwvznki9jqzkyi
     appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
     gitProvider: gitlab
@@ -72,12 +76,12 @@ variables:
     build:
       baseImage: node:alpine
       cmd: npm i
-      outputDir: app package.json
+      outputDir: app,package.json
     run:
       baseImage: node:alpine
       cmd: npm start
     artifactRef:
-      dockerImageName: harbor.dev.madhouselabs.io/public/sample
+      dockerImageName: sample
       dockerImageTag: latest
 ---
 label: list pipelines
@@ -134,4 +138,4 @@ query: |
     ci_deletePipeline(pipelineId: $pipelineId)
   }
 variables:
-  pipelineId: pip-avybyc4bjsacwkk997eq2jpioz4c
+  pipelineId: pip-sdmpguqbhbcdsbbsbzklc9ogfsff
