@@ -96,7 +96,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		APIVersion: op_crds.ManagedServiceAPIVersion,
 		Kind:       op_crds.ManagedServiceKind,
 		Metadata: op_crds.ManagedServiceMetadata{
-			Name:      create.Name,
+			Name:      string(create.Id),
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.ManagedServiceSpec{
