@@ -149,17 +149,13 @@ func (gl *gitlabI) DeleteWebhook(ctx context.Context, token *domain.AccessToken,
 	return err
 }
 
-func (gl *gitlabI) GetLatestCommit(ctx context.Context, token *domain.AccessToken, repoUrl string,
-	branchName string) (string, error) {
+func (gl *gitlabI) GetLatestCommit(ctx context.Context, token *domain.AccessToken, repoUrl string, branchName string) (string, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return "", err
 	}
 	repoId := gl.getRepoId(repoUrl)
 	branch, _, err := client.Branches.GetBranch(repoId, branchName)
-	if err != nil {
-		return "", err
-	}
 	if err != nil {
 		return "", err
 	}
