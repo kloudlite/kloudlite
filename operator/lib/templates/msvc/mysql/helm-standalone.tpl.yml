@@ -31,7 +31,7 @@ spec:
   primary:
     persistence:
       enabled: true
-      size: {{ index $inputs "size" | default "1Gi" }}
+      size: {{ index $inputs "size" | default 1 }}Gi
   resources:
     requests: &cpu-and-mem
       cpu: {{ index $inputs "cpu" }}m
