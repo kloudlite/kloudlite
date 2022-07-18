@@ -10,6 +10,7 @@ import (
 )
 
 type ArtifactRegistry struct {
+	// +kubebuilder:default=true
 	Enabled bool `json:"enabled"`
 	// specifiy size in GBs
 	Size int `json:"size,omitempty"`

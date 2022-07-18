@@ -37,7 +37,7 @@ spec:
     accessModes:
       - ReadWriteOnce
     enabled: true
-    size: {{ index $inputs "size" }}
+    size: {{ index $inputs "size" }}Gi
     storageClass: {{$storageClass}}
 
   influxdb:
