@@ -121,7 +121,7 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 		fmt.Println(res.Status, res.Body)
 		// ASSERT: github returns 422 only if hook already exists on the repository
 		if res.StatusCode == 422 {
-			fmt.Printf("Hook: %+v\n", hook)
+			// fmt.Printf("Hook: %+v\n", hook)
 			return nil, nil
 		}
 		return nil, errors.NewEf(err, "could not create github webhook")

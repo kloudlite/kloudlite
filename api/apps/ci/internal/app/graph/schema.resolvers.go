@@ -25,32 +25,34 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 	}
 	var res []*model.GitPipeline
 	for _, pipeline := range pipelines {
-		res = append(res, &model.GitPipeline{
-			ID:          pipeline.Id,
-			Name:        pipeline.Name,
-			GitProvider: pipeline.GitProvider,
-			GitRepoURL:  pipeline.GitRepoUrl,
-			GitBranch:   pipeline.GitBranch,
-			Build: func() *model.GitPipelineBuild {
-				if pipeline.Build == nil {
-					return nil
-				}
-				return &model.GitPipelineBuild{
-					BaseImage: &pipeline.Build.BaseImage,
-					Cmd:       pipeline.Build.Cmd,
-				}
-			}(),
-			Run: func() *model.GitPipelineRun {
-				if pipeline.Run == nil {
-					return nil
-				}
-				return &model.GitPipelineRun{
-					BaseImage: &pipeline.Run.BaseImage,
-					Cmd:       pipeline.Run.Cmd,
-				}
-			}(),
-			Metadata: pipeline.Metadata,
-		})
+		res = append(
+			res, &model.GitPipeline{
+				ID:          pipeline.Id,
+				Name:        pipeline.Name,
+				GitProvider: pipeline.GitProvider,
+				GitRepoURL:  pipeline.GitRepoUrl,
+				GitBranch:   pipeline.GitBranch,
+				Build: func() *model.GitPipelineBuild {
+					if pipeline.Build == nil {
+						return nil
+					}
+					return &model.GitPipelineBuild{
+						BaseImage: &pipeline.Build.BaseImage,
+						Cmd:       pipeline.Build.Cmd,
+					}
+				}(),
+				Run: func() *model.GitPipelineRun {
+					if pipeline.Run == nil {
+						return nil
+					}
+					return &model.GitPipelineRun{
+						BaseImage: &pipeline.Run.BaseImage,
+						Cmd:       pipeline.Run.Cmd,
+					}
+				}(),
+				Metadata: pipeline.Metadata,
+			},
+		)
 	}
 	return res, nil
 }
@@ -155,6 +157,7 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 		ctx, session.UserId, domain.Pipeline{
 			Name:        in.Name,
 			ProjectName: in.ProjectName,
+			AccountId:   in.AccountID,
 			ProjectId:   in.ProjectID,
 			AppId:       in.AppID,
 			GitProvider: in.GitProvider,
@@ -163,6 +166,7 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 			Build: &domain.ContainerImageBuild{
 				BaseImage: in.Build.BaseImage,
 				Cmd:       in.Build.Cmd,
+				OutputDir: fn.DefaultIfNil(in.Build.OutputDir),
 			},
 			Run: &domain.ContainerImageRun{
 				BaseImage: fn.DefaultIfNil(in.Run.BaseImage),

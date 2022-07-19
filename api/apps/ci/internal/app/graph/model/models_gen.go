@@ -16,18 +16,20 @@ type App struct {
 func (App) IsEntity() {}
 
 type GitDockerPipelineIn struct {
-	Name        string                 `json:"name"`
-	ProjectName string                 `json:"projectName"`
-	ProjectID   string                 `json:"projectId"`
-	AppID       string                 `json:"appId"`
-	GitProvider string                 `json:"gitProvider"`
-	GitRepoURL  string                 `json:"gitRepoUrl"`
-	RepoName    string                 `json:"repoName"`
-	GitBranch   string                 `json:"gitBranch"`
-	DockerFile  string                 `json:"dockerFile"`
-	ContextDir  string                 `json:"contextDir"`
-	BuildArgs   string                 `json:"buildArgs"`
-	ArtifactRef *GitPipelineArtifactIn `json:"artifactRef"`
+	Name          string                 `json:"name"`
+	AccountID     string                 `json:"accountId"`
+	ProjectID     string                 `json:"projectId"`
+	AppID         string                 `json:"appId"`
+	ProjectName   string                 `json:"projectName"`
+	ContainerName string                 `json:"containerName"`
+	GitProvider   string                 `json:"gitProvider"`
+	GitRepoURL    string                 `json:"gitRepoUrl"`
+	RepoName      string                 `json:"repoName"`
+	GitBranch     string                 `json:"gitBranch"`
+	DockerFile    string                 `json:"dockerFile"`
+	ContextDir    string                 `json:"contextDir"`
+	BuildArgs     string                 `json:"buildArgs"`
+	ArtifactRef   *GitPipelineArtifactIn `json:"artifactRef"`
 }
 
 type GitPipeline struct {
@@ -54,25 +56,29 @@ type GitPipelineArtifactIn struct {
 type GitPipelineBuild struct {
 	BaseImage *string `json:"baseImage"`
 	Cmd       string  `json:"cmd"`
+	OutputDir *string `json:"outputDir"`
 }
 
 type GitPipelineBuildIn struct {
-	BaseImage string `json:"baseImage"`
-	Cmd       string `json:"cmd"`
+	BaseImage string  `json:"baseImage"`
+	Cmd       string  `json:"cmd"`
+	OutputDir *string `json:"outputDir"`
 }
 
 type GitPipelineIn struct {
-	Name        string                 `json:"name"`
-	ProjectName string                 `json:"projectName"`
-	ProjectID   string                 `json:"projectId"`
-	AppID       string                 `json:"appId"`
-	GitProvider string                 `json:"gitProvider"`
-	GitRepoURL  string                 `json:"gitRepoUrl"`
-	RepoName    string                 `json:"repoName"`
-	GitBranch   string                 `json:"gitBranch"`
-	Build       *GitPipelineBuildIn    `json:"build"`
-	Run         *GitPipelineRunIn      `json:"run"`
-	ArtifactRef *GitPipelineArtifactIn `json:"artifactRef"`
+	Name          string                 `json:"name"`
+	AccountID     string                 `json:"accountId"`
+	ProjectID     string                 `json:"projectId"`
+	AppID         string                 `json:"appId"`
+	ProjectName   string                 `json:"projectName"`
+	ContainerName string                 `json:"containerName"`
+	GitProvider   string                 `json:"gitProvider"`
+	GitRepoURL    string                 `json:"gitRepoUrl"`
+	RepoName      string                 `json:"repoName"`
+	GitBranch     string                 `json:"gitBranch"`
+	Build         *GitPipelineBuildIn    `json:"build"`
+	Run           *GitPipelineRunIn      `json:"run"`
+	ArtifactRef   *GitPipelineArtifactIn `json:"artifactRef"`
 }
 
 type GitPipelineRun struct {
