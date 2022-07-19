@@ -12,9 +12,9 @@ service JSEval {
 message EvalIn {
   string init = 1;
   string funName = 4;
-  map<string,google.protobuf.Any> inputs = 3;
+  google.protobuf.Any inputs = 3;
 }
 
 message EvalOut {
-  map<string,google.protobuf.Any> output = 3;
+  google.protobuf.Any output = 3;
 }
