@@ -28,6 +28,7 @@ type Account @key(fields: "id") {
   readableId: ID!
   memberships: [AccountMembership!]!
   created: Date!
+  outstandingAmount: Float!
 }
 
 extend type StoragePlan @key(fields: "name"){

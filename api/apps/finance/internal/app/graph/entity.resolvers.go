@@ -31,12 +31,12 @@ func (r *entityResolver) FindComputePlanByName(ctx context.Context, name string)
 	}, nil
 }
 
-func (r *entityResolver) FindLamdaPlanByName(ctx context.Context, name string) (*model.LamdaPlan, error) {
+func (r *entityResolver) FindLambdaPlanByName(ctx context.Context, name string) (*model.LambdaPlan, error) {
 	byName, err := r.domain.GetLambdaPlanByName(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return &model.LamdaPlan{
+	return &model.LambdaPlan{
 		Name:         byName.Name,
 		FreeTier:     byName.FreeTire,
 		PricePerGBHr: byName.PricePerGBHr,
