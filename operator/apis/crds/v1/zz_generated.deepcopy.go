@@ -798,10 +798,8 @@ func (in *RouterSpec) DeepCopyInto(out *RouterSpec) {
 	}
 	if in.Routes != nil {
 		in, out := &in.Routes, &out.Routes
-		*out = make(map[string]Route, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
+		*out = make([]Route, len(*in))
+		copy(*out, *in)
 	}
 }
 
