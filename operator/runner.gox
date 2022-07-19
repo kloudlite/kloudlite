@@ -91,7 +91,7 @@ func main() {
 			Port:                       9443,
 			HealthProbeBindAddress:     probeAddr,
 			LeaderElection:             enableLeaderElection,
-			LeaderElectionID:           "bf38d2f9.kloudlite.io",
+			LeaderElectionID:           "bf38d2fx.kloudlite.io",
 			LeaderElectionResourceLock: "configmaps",
 		}
 		if isDev {
@@ -117,6 +117,7 @@ func main() {
 	if err = (&artifactscontrollers.HarborUserAccountReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HarborUserAccount")
 		os.Exit(1)
