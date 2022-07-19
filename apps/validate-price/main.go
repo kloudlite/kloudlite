@@ -41,7 +41,7 @@ func main() {
 	if port == "" {
 		port = "3000"
 	}
-	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	listen, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		panic(err)
 	} else {
