@@ -79,6 +79,7 @@ spec:
                     image:
                       type: string
                     imagePullPolicy:
+                      default: IfNotPresent
                       type: string
                     livenessProbe:
                       properties:
@@ -173,16 +174,16 @@ spec:
                     resourceCpu:
                       properties:
                         max:
-                          type: integer
+                          type: string
                         min:
-                          type: integer
+                          type: string
                       type: object
                     resourceMemory:
                       properties:
                         max:
-                          type: integer
+                          type: string
                         min:
-                          type: integer
+                          type: string
                       type: object
                     volumes:
                       items:

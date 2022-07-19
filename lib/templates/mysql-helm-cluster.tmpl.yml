@@ -19,9 +19,9 @@ spec:
   primary:
     persistence:
       enabled: true
-      size: {{index .Spec.Inputs "size" | default "1Gi" }}
+      size: {{index .Spec.Inputs "size" }}
   secondary:
     persistence:
       enabled: true
-      size: {{index .Spec.Inputs "size" | default "1Gi" }}
+      size: {{index .Spec.Inputs "size" }}
     replicaCount: {{index .Spec.Inputs "replica_count" | default 1 }}

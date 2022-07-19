@@ -38,4 +38,6 @@ resources:
 - s3.aws_v1_bucket.yaml
 - watcher_v1_statuswatcher.yaml
 - watcher_v1_billingwatcher.yaml
+- artifacts_v1_harborproject.yaml
+- artifacts_v1_harboruseraccount.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

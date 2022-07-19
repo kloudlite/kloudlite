@@ -10,9 +10,10 @@ import (
 
 	"github.com/redhat-cop/operator-utils/pkg/util"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
 	"operators.kloudlite.io/lib/logging"
 	"operators.kloudlite.io/lib/redpanda"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/controllers/crds"
@@ -27,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"operators.kloudlite.io/agent"
+	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
@@ -38,6 +40,7 @@ import (
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
+	artifactscontrollers "operators.kloudlite.io/controllers/artifacts"
 	elasticsearchmsvccontrollers "operators.kloudlite.io/controllers/elasticsearch.msvc"
 	influxdbmsvccontrollers "operators.kloudlite.io/controllers/influxdb.msvc"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
@@ -69,6 +72,7 @@ func init() {
 	utilruntime.Must(elasticsearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(opensearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(s3awsv1.AddToScheme(scheme))
+	utilruntime.Must(artifactsv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -339,6 +343,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&artifactscontrollers.HarborProjectReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "HarborProject")
+		os.Exit(1)
+	}
+	if err = (&artifactscontrollers.HarborUserAccountReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "HarborUserAccount")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
