@@ -13,7 +13,6 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -76,8 +75,6 @@ var Module = fx.Module(
 			auth.RegisterAuthServer(server, authServer)
 		},
 	),
-
-	logging.FxProvider(),
 
 	fx.Invoke(
 		func(

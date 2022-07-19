@@ -79,6 +79,7 @@ type ComplexityRoot struct {
 	GitPipelineBuild struct {
 		BaseImage func(childComplexity int) int
 		Cmd       func(childComplexity int) int
+		OutputDir func(childComplexity int) int
 	}
 
 	GitPipelineRun struct {
@@ -286,6 +287,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GitPipelineBuild.Cmd(childComplexity), true
+
+	case "GitPipelineBuild.outputDir":
+		if e.complexity.GitPipelineBuild.OutputDir == nil {
+			break
+		}
+
+		return e.complexity.GitPipelineBuild.OutputDir(childComplexity), true
 
 	case "GitPipelineRun.baseImage":
 		if e.complexity.GitPipelineRun.BaseImage == nil {
@@ -573,9 +581,13 @@ input PaginationIn {
 
 input GitPipelineIn {
   name: String!
-  projectName: String!
+
+  accountId: String!
   projectId: String!
   appId: String!
+
+  projectName: String!
+  containerName: String!
 
   gitProvider: String!
   gitRepoUrl: String!
@@ -591,11 +603,13 @@ input GitPipelineIn {
 input GitPipelineBuildIn {
   baseImage: String!
   cmd: String!
+  outputDir: String
 }
 
 type GitPipelineBuild {
   baseImage: String
   cmd: String!
+  outputDir: String
 }
 
 input GitPipelineRunIn {
@@ -634,9 +648,13 @@ type GitPipeline {
 
 input GitDockerPipelineIn {
   name: String!
-  projectName: String!
+
+  accountId: String!
   projectId: String!
   appId: String!
+
+  projectName: String!
+  containerName: String!
 
   gitProvider: String!
   gitRepoUrl: String!
@@ -1701,6 +1719,38 @@ func (ec *executionContext) _GitPipelineBuild_cmd(ctx context.Context, field gra
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipelineBuild_outputDir(ctx context.Context, field graphql.CollectedField, obj *model.GitPipelineBuild) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipelineBuild",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OutputDir, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _GitPipelineRun_baseImage(ctx context.Context, field graphql.CollectedField, obj *model.GitPipelineRun) (ret graphql.Marshaler) {
@@ -3690,11 +3740,11 @@ func (ec *executionContext) unmarshalInputGitDockerPipelineIn(ctx context.Contex
 			if err != nil {
 				return it, err
 			}
-		case "projectName":
+		case "accountId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+			it.AccountID, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3711,6 +3761,22 @@ func (ec *executionContext) unmarshalInputGitDockerPipelineIn(ctx context.Contex
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appId"))
 			it.AppID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "containerName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerName"))
+			it.ContainerName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3840,6 +3906,14 @@ func (ec *executionContext) unmarshalInputGitPipelineBuildIn(ctx context.Context
 			if err != nil {
 				return it, err
 			}
+		case "outputDir":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("outputDir"))
+			it.OutputDir, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -3863,11 +3937,11 @@ func (ec *executionContext) unmarshalInputGitPipelineIn(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
-		case "projectName":
+		case "accountId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+			it.AccountID, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3884,6 +3958,22 @@ func (ec *executionContext) unmarshalInputGitPipelineIn(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appId"))
 			it.AppID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "containerName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerName"))
+			it.ContainerName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4333,6 +4423,13 @@ func (ec *executionContext) _GitPipelineBuild(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "outputDir":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._GitPipelineBuild_outputDir(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

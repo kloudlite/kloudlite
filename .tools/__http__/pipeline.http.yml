@@ -8,8 +8,9 @@ query: |
     ci_createPipeline(in: $in)
   }
 variables:
-  in: 
+  in:
     name: sample-pipeline
+    accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
     projectId: proj-s1ok37ubokp62aszwu0jdoq4uorr
     appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
     gitProvider: github
@@ -24,7 +25,7 @@ variables:
       baseImage: docker
       cmd: ""
     artifactRef:
-      dockerImageName: harbor.dev.madhouselabs.io/public/sample
+      dockerImageName: sample
       dockerImageTag: latest
 
 ---
@@ -34,9 +35,10 @@ query: |
     ci_createPipeline(in: $in)
   }
 variables:
-  in: 
+  in:
     name: sample-pipeline
     projectName: sample-proje-36891
+    accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
     projectId: proj-ll5s-miviimb0icwvznki9jqzkyi
     appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
     gitProvider: gitlab
@@ -53,15 +55,40 @@ variables:
     artifactRef:
       dockerImageName: harbor.dev.madhouselabs.io/public/sample
       dockerImageTag: latest
-
-
+---
+label: Create Gitlab Pipeline with buildCmd
+query: |
+  mutation Ci_createPipeline($in: GitPipelineIn!) {
+    ci_createPipeline(in: $in)
+  }
+variables:
+  in:
+    name: sample-pipeline
+    projectName: sample-x
+    containerName: main
+    accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
+    projectId: proj-ll5s-miviimb0icwvznki9jqzkyi
+    appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
+    gitProvider: gitlab
+    gitRepoUrl: https://gitlab.com/nxtcoder17/sample
+    repoName: sample
+    gitBranch: master
+    build:
+      baseImage: node:alpine
+      cmd: npm i
+      outputDir: app,package.json
+    run:
+      baseImage: node:alpine
+      cmd: npm start
+    artifactRef:
+      dockerImageName: sample
+      dockerImageTag: latest
 ---
 label: list pipelines
 query: |
   query Ci_getPipelines($projectId: ID!) {
     ci_getPipelines(projectId: $projectId) {
       id
-      repoName
       name
       gitProvider
       gitRepoUrl
@@ -78,7 +105,7 @@ query: |
     }
   }
 variables:
-  projectId: proj-s1ok37ubokp62aszwu0jdoq4uorr
+  projectId: proj-ll5s-miviimb0icwvznki9jqzkyi
 ---
 
 label: get pipeline
@@ -111,4 +138,4 @@ query: |
     ci_deletePipeline(pipelineId: $pipelineId)
   }
 variables:
-  pipelineId: pip-6amxhtxx9nxi5u8dviadnybxymvi
+  pipelineId: pip-sdmpguqbhbcdsbbsbzklc9ogfsff

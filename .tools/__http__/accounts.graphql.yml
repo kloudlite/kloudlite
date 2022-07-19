@@ -1,0 +1,31 @@
+---
+global:
+  accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
+---
+label: Create Account
+query: |
+  mutation Finance_createAccount($name: String!, $billing: BillingInput!) {
+    finance_createAccount(name: $name, billing: $billing) {
+      id
+      name
+    }
+  }
+variables:
+  name: "sample"
+  billing:
+    stripePaymentMethodId: sample
+    cardholderName: sample
+    address:
+      line1: apna gaaon
+
+---
+label: get account
+query: |
+  query Query($accountId: ID!) {
+    finance_account(accountId: $accountId) {
+      id
+      name
+    }
+  }
+variables:
+  accountId: {{accountId}}

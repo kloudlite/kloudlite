@@ -41,7 +41,7 @@ extend type ComputePlan @key(fields: "name"){
     dedicatedPrice: Float!
 }
 
-extend type LamdaPlan @key(fields: "name"){
+extend type LambdaPlan @key(fields: "name"){
     name: String! @external
     freeTier: Int!
     pricePerGBHr: Float!
