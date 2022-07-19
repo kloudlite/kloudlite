@@ -8,6 +8,6 @@ spec:
   https:
     enabled: true
   routes:
-    /:
-      app: example
+    - app: example
+      path: /
       port: 80

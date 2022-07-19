@@ -32,10 +32,16 @@ type RouterReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/finalizers,verbs=update
 
 func (r *RouterReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Router{})
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Router{})
 
-	if req == nil {
-		return ctrl.Result{}, nil
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// STEP: cleaning up last run, clearing opsConditions
+	if len(req.Object.Status.OpsConditions) > 0 {
+		req.Object.Status.OpsConditions = []metav1.Condition{}
+		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -103,20 +109,20 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rA
 func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
 	router := req.Object
 
-	lambdaGroups := map[string]map[string]crdsv1.Route{}
-	appRoutes := map[string]crdsv1.Route{}
+	lambdaGroups := map[string][]crdsv1.Route{}
+	var appRoutes []crdsv1.Route
 
-	for routePath, route := range router.Spec.Routes {
+	for _, route := range router.Spec.Routes {
 		if s := route.Lambda; s != "" {
 			if _, ok := lambdaGroups[route.Lambda]; !ok {
-				lambdaGroups[route.Lambda] = map[string]crdsv1.Route{}
+				lambdaGroups[route.Lambda] = []crdsv1.Route{}
 			}
 
-			lambdaGroups[route.Lambda][routePath] = route
+			lambdaGroups[route.Lambda] = append(lambdaGroups[route.Lambda], route)
 		}
 
 		if s := route.App; s != "" {
-			appRoutes[routePath] = route
+			appRoutes = append(appRoutes, route)
 		}
 	}
 
@@ -147,6 +153,7 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 		}
 		kubeYamls = append(kubeYamls, b)
 	}
+
 	if len(appRoutes) > 0 {
 		args := map[string]any{
 			"name":      router.Name,
