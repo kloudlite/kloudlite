@@ -13,6 +13,7 @@ type Logger interface {
 	Errorf(err error, msg string, args ...any)
 	Warnf(msg string, args ...any)
 	WithName(name string) Logger
+	GetZap() *zap.SugaredLogger
 }
 
 type customLogger struct {
@@ -33,6 +34,10 @@ func (c customLogger) Errorf(err error, msg string, args ...any) {
 
 func (c customLogger) Warnf(msg string, args ...any) {
 	c.zapLogger.Warnf(msg, args...)
+}
+
+func (c customLogger) GetZap() *zap.SugaredLogger {
+	return c.zapLogger
 }
 
 func (c customLogger) WithName(name string) Logger {
@@ -73,11 +78,12 @@ func New(options *Options) (Logger, error) {
 	return &customLogger{zapLogger: logger.Sugar()}, nil
 }
 
-func Must(l Logger, err error) Logger {
+func NewOrDie(options *Options) Logger {
+	logger, err := New(options)
 	if err != nil {
 		panic(err)
 	}
-	return l
+	return logger
 }
 
 func NewZapLogger(nn types.NamespacedName) *zap.SugaredLogger {

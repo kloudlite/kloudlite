@@ -25,7 +25,7 @@ import (
 type BillingWatcherReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Env    env.Env
+	Env    *env.Env
 	*Notifier
 	logger logging.Logger
 }
