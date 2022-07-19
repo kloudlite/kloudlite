@@ -9,6 +9,7 @@ import (
 type Route struct {
 	App    string `json:"app,omitempty"`
 	Lambda string `json:"lambda,omitempty"`
+	Path   string `json:"path"`
 	Port   uint16 `json:"port"`
 }
 
@@ -27,11 +28,11 @@ type Https struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Https       Https            `json:"https"`
-	RateLimit   RateLimit        `json:"rateLimit,omitempty"`
-	MaxBodySize int              `json:"maxBodySize,omitempty"`
-	Domains     []string         `json:"domains"`
-	Routes      map[string]Route `json:"routes"`
+	Https           Https     `json:"https"`
+	RateLimit       RateLimit `json:"rateLimit,omitempty"`
+	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`
+	Domains         []string  `json:"domains"`
+	Routes          []Route   `json:"routes,omitempty"`
 }
 
 // +kubebuilder:object:root=true

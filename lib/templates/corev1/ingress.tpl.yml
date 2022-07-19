@@ -24,8 +24,8 @@ metadata:
     {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
     {{ K8sAnnotation true "kubernetes.io/ingress.class" $ingressClass }}
 
-    {{- $bodySize := printf "%dm" .Spec.MaxBodySize}}
-    {{K8sAnnotation .Spec.MaxBodySize "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
+    {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
+    {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
     {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
     {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
 
@@ -62,13 +62,13 @@ spec:
     - host: {{.Name}}.{{$wildcardDomainSuffix}}
       http: &httpPath
         paths:
-          {{- range $routePath, $route := $routes }}
+          {{- range $route := $routes }}
           - backend:
               service:
                 name: {{$route.App | default $route.Lambda}}
                 port:
                   number: {{$route.Port}}
-            path: {{$routePath}}
+            path: {{$route.Path}}
             pathType: Prefix
           {{- end}}
     {{- range $domain := .Spec.Domains }}
