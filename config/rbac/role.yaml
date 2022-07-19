@@ -6,6 +6,58 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harborprojects
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harborprojects/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harborprojects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harboruseraccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harboruseraccounts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harboruseraccounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - crds.kloudlite.io
   resources:
   - accounts

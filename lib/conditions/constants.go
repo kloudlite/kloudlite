@@ -23,6 +23,7 @@ const (
 const (
 	Found             Reason = "Found"
 	NotFound          Reason = "NotFound"
+	NotReady          Reason = "NotReady"
 	NotReconciledYet  Reason = "NotReconciledYet"
 	ErrWhileReconcile Reason = "ErrWhileReconcilation"
 	Empty             Reason = ""

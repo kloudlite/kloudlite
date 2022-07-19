@@ -1,0 +1,7 @@
+apiVersion: artifacts.kloudlite.io/v1
+kind: HarborUserAccount
+metadata:
+  name: userx
+spec:
+  disable: false
+  projectRef: nxtcoder17

@@ -2,32 +2,36 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	rApi "operators.kloudlite.io/lib/operator"
 )
 
 type HarborProjectSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of HarborProject. Edit harborproject_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
-}
-
-// HarborProjectStatus defines the observed state of HarborProject
-type HarborProjectStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	SizeInGB int `json:"sizeInGB"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 
 // HarborProject is the Schema for the harborprojects API
 type HarborProject struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   HarborProjectSpec   `json:"spec,omitempty"`
-	Status HarborProjectStatus `json:"status,omitempty"`
+	Spec   HarborProjectSpec `json:"spec,omitempty"`
+	Status rApi.Status       `json:"status,omitempty"`
+}
+
+func (hp *HarborProject) GetStatus() *rApi.Status {
+	return &hp.Status
+}
+
+func (hp *HarborProject) GetEnsuredLabels() map[string]string {
+	return map[string]string{}
+}
+
+func (in *HarborProject) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true
