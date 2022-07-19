@@ -75,7 +75,7 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.RouterSpec{
-			Http: struct {
+			Https: struct {
 				Enabled       bool `json:"enabled"`
 				ForceRedirect bool `json:"forceRedirect"`
 			}(struct {
@@ -124,7 +124,7 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 			Namespace: router.Namespace,
 		},
 		Spec: op_crds.RouterSpec{
-			Http: struct {
+			Https: struct {
 				Enabled       bool `json:"enabled"`
 				ForceRedirect bool `json:"forceRedirect"`
 			}(struct {
