@@ -8,13 +8,13 @@ WORKDIR /tmp/app
 COPY --chown=1001 ./ ./
 ARG APP_DIR
 WORKDIR $APP_DIR
-RUN go build -tags musl -o /tmp/bin/validate-price ./main.go
-RUN chmod +x /tmp/bin/validate-price
+RUN go build -tags musl -o /tmp/bin/js-eval ./main.go
+RUN chmod +x /tmp/bin/js-eval
 
 FROM golang:buster
 RUN mkdir /tmp/app
 RUN chown -R 1001 /tmp/app
 USER 1001
 WORKDIR /tmp/app
-COPY --from=base --chown=1001 /tmp/bin/validate-price ./
-ENTRYPOINT ["./validate-price"]
+COPY --from=base --chown=1001 /tmp/bin/js-eval ./
+ENTRYPOINT ["./js-eval"]
