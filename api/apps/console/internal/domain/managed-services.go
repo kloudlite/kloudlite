@@ -2,10 +2,13 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"google.golang.org/protobuf/types/known/anypb"
 	"gopkg.in/yaml.v3"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 	"os"
@@ -92,18 +95,35 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 	template, err := d.GetManagedServiceTemplate(ctx, string(templateID))
+	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
+		Init:    template.Validator,
+		FunName: "inputMiddleware",
+		Inputs: func() map[string]*anypb.Any {
+			m := make(map[string]*anypb.Any)
+			marshal, _ := json.Marshal(values)
+			json.Unmarshal(marshal, &m)
+			return m
+		}(),
+	})
+	marshal, err := json.Marshal(eval.Output)
+	if err != nil {
+		return nil, err
+	}
+	transformedInputs := map[string]any{}
+	err = json.Unmarshal(marshal, &transformedInputs)
 	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
 		Kind:       op_crds.ManagedServiceKind,
 		Metadata: op_crds.ManagedServiceMetadata{
-			Name:      string(create.Id),
-			Namespace: create.Namespace,
+			Name:        string(create.Id),
+			Namespace:   create.Namespace,
+			Annotations: transformedInputs["annotations"].(map[string]string),
 		},
 		Spec: op_crds.ManagedServiceSpec{
 			ApiVersion: template.ApiVersion,
 			Inputs: func() map[string]string {
 				vs := make(map[string]string, 0)
-				for k, v := range create.Values {
+				for k, v := range transformedInputs["inputs"].(map[string]interface{}) {
 					vs[k] = v.(string)
 				}
 				return vs
