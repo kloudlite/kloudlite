@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
+
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/apps/finance/internal/domain"
