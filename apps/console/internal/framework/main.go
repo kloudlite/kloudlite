@@ -121,6 +121,7 @@ var Module = fx.Module(
 	config.EnvFx[Env](),
 	config.EnvFx[LogServerEnv](),
 	config.EnvFx[IAMGRPCEnv](),
+	config.EnvFx[JSEvalEnv](),
 
 	config.EnvFx[GrpcAuthConfig](),
 	config.EnvFx[GrpcFinanceConfig](),
