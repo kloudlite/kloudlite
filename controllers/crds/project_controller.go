@@ -254,27 +254,27 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 			return req.Done(&ctrl.Result{RequeueAfter: 0})
 		}
 
-		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
-			if err3 := func() error {
-				userAcc, err := r.harborCli.CreateUserAccount(ctx, accountRef)
-				if err != nil {
-					return errors.NewEf(err, "creating harbor project user-account")
-				}
-				if err := project.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
-					return errors.NewEf(err, "could not set robotAccId")
-				}
-				if err := project.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
-					return errors.NewEf(err, "could not set robotUserName")
-				}
-				if err := project.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
-					return errors.NewEf(err, "could not set robotUserPassword")
-				}
-				return nil
-			}(); err3 != nil {
-				return req.FailWithOpError(err3)
-			}
-			return req.FailWithOpError(r.Status().Update(ctx, project))
-		}
+		// if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
+		// 	if err3 := func() error {
+		// 		userAcc, err := r.harborCli.CreateUserAccount(ctx, "", accountRef)
+		// 		if err != nil {
+		// 			return errors.NewEf(err, "creating harbor project user-account")
+		// 		}
+		// 		if err := project.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
+		// 			return errors.NewEf(err, "could not set robotAccId")
+		// 		}
+		// 		if err := project.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
+		// 			return errors.NewEf(err, "could not set robotUserName")
+		// 		}
+		// 		if err := project.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
+		// 			return errors.NewEf(err, "could not set robotUserPassword")
+		// 		}
+		// 		return nil
+		// 	}(); err3 != nil {
+		// 		return req.FailWithOpError(err3)
+		// 	}
+		// 	return req.FailWithOpError(r.Status().Update(ctx, project))
+		// }
 
 		// TODO: harbor project storage size allocation should be moved out to Account Creation
 		// if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectStorageAllocated.String()) {

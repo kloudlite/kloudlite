@@ -146,7 +146,6 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			)
 		}
 		kubeYamls = append(kubeYamls, b)
-		return nil
 	}
 	if len(appRoutes) > 0 {
 		args := map[string]any{
@@ -171,7 +170,6 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 		}
 
 		kubeYamls = append(kubeYamls, b)
-		return nil
 	}
 
 	if _, err := fn.KubectlApplyExec(kubeYamls...); err != nil {

@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: managedresources.crds.kloudlite.io
+  name: harborprojects.artifacts.kloudlite.io
 spec:
-  group: crds.kloudlite.io
+  group: artifacts.kloudlite.io
   names:
-    kind: ManagedResource
-    listKind: ManagedResourceList
-    plural: managedresources
-    singular: managedresource
-  scope: Namespaced
+    kind: HarborProject
+    listKind: HarborProjectList
+    plural: harborprojects
+    singular: harborproject
+  scope: Cluster
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: ManagedResource is the Schema for the managedresources API
+        description: HarborProject is the Schema for the harborprojects API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,21 +33,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
-              apiVersion:
-                type: string
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              kind:
-                type: string
-              managedSvcName:
-                type: string
+              sizeInGB:
+                type: integer
             required:
-            - apiVersion
-            - kind
-            - managedSvcName
+            - sizeInGB
             type: object
           status:
             properties:
