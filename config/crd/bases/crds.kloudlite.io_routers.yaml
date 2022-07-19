@@ -49,7 +49,7 @@ spec:
                 required:
                 - enabled
                 type: object
-              maxBodySize:
+              maxBodySizeInMB:
                 type: integer
               rateLimit:
                 properties:
@@ -63,22 +63,24 @@ spec:
                     type: integer
                 type: object
               routes:
-                additionalProperties:
+                items:
                   properties:
                     app:
                       type: string
                     lambda:
                       type: string
+                    path:
+                      type: string
                     port:
                       type: integer
                   required:
+                  - path
                   - port
                   type: object
-                type: object
+                type: array
             required:
             - domains
             - https
-            - routes
             type: object
           status:
             properties:

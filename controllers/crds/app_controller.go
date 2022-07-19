@@ -35,10 +35,15 @@ type AppReconciler struct {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.App{})
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.App{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-	if req == nil {
-		return ctrl.Result{}, nil
+	// STEP: cleaning up last run, clearing opsConditions
+	if len(req.Object.Status.OpsConditions) > 0 {
+		req.Object.Status.OpsConditions = []metav1.Condition{}
+		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
