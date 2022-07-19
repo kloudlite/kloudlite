@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -18,22 +17,18 @@ type JsServer struct {
 }
 
 func (s *JsServer) Eval(c context.Context, in *jseval.EvalIn) (*jseval.EvalOut, error) {
-	marshal, err := json.Marshal(in.Inputs)
-	if err != nil {
-		return nil, err
-	}
-	f := `
-` + in.Init + `
-` + in.FunName + `(` + string(marshal) + `)`
+	f := in.FunName + `(` + string(in.Inputs.Value) + `)`
 	ctx := v8.NewContext()
+	ctx.RunScript(in.Init, "eval.js")
 	val, err := ctx.RunScript(f, "eval.js")
 	if err != nil {
 		return nil, err
 	}
-	m := make(map[string]*anypb.Any)
 	marshalJSON, err := val.MarshalJSON()
-	json.Unmarshal(marshalJSON, &m)
-	return &jseval.EvalOut{Output: m}, nil
+	return &jseval.EvalOut{Output: &anypb.Any{
+		TypeUrl: "",
+		Value:   marshalJSON,
+	}}, nil
 }
 
 func main() {
