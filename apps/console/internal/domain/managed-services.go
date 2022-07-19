@@ -101,26 +101,30 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
 		Init:    template.InputMiddleware,
 		FunName: "inputMiddleware",
-		Inputs: func() map[string]*anypb.Any {
-			m := make(map[string]*anypb.Any)
+		Inputs: func() *anypb.Any {
 			marshal, _ := json.Marshal(values)
-			json.Unmarshal(marshal, &m)
-			return m
+			return &anypb.Any{
+				TypeUrl: "",
+				Value:   marshal,
+			}
 		}(),
 	})
-	marshal, err := json.Marshal(eval.Output)
-	if err != nil {
-		return nil, err
-	}
 	transformedInputs := map[string]any{}
-	err = json.Unmarshal(marshal, &transformedInputs)
+	err = json.Unmarshal(eval.Output.Value, &transformedInputs)
+	fmt.Println(transformedInputs, err)
 	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
 		Kind:       op_crds.ManagedServiceKind,
 		Metadata: op_crds.ManagedServiceMetadata{
-			Name:        string(create.Id),
-			Namespace:   create.Namespace,
-			Annotations: transformedInputs["annotations"].(map[string]string),
+			Name:      string(create.Id),
+			Namespace: create.Namespace,
+			Annotations: func() map[string]string {
+				if transformedInputs["annotations"] == nil {
+					return nil
+				}
+				a := transformedInputs["annotations"].(map[string]string)
+				return a
+			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
 			ApiVersion: template.ApiVersion,
@@ -158,27 +162,29 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
 		Init:    template.InputMiddleware,
 		FunName: "inputMiddleware",
-		Inputs: func() map[string]*anypb.Any {
-			m := make(map[string]*anypb.Any)
+		Inputs: func() *anypb.Any {
 			marshal, _ := json.Marshal(values)
-			json.Unmarshal(marshal, &m)
-			return m
+			return &anypb.Any{
+				TypeUrl: "",
+				Value:   marshal,
+			}
 		}(),
 	})
-
-	marshal, err := json.Marshal(eval.Output)
-	if err != nil {
-		return false, err
-	}
 	transformedInputs := map[string]any{}
-	err = json.Unmarshal(marshal, &transformedInputs)
+	err = json.Unmarshal(eval.Output.Value, &transformedInputs)
 	err = d.workloadMessenger.SendAction("apply", string(managedSvc.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
 		Kind:       op_crds.ManagedServiceKind,
 		Metadata: op_crds.ManagedServiceMetadata{
-			Name:        string(managedSvc.Id),
-			Namespace:   managedSvc.Namespace,
-			Annotations: transformedInputs["annotations"].(map[string]string),
+			Name:      string(managedSvc.Id),
+			Namespace: managedSvc.Namespace,
+			Annotations: func() map[string]string {
+				if transformedInputs["annotations"] == nil {
+					return nil
+				}
+				a := transformedInputs["annotations"].(map[string]string)
+				return a
+			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
 			ApiVersion: template.ApiVersion,
