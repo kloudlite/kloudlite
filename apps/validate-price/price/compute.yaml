@@ -1,0 +1,11 @@
+- name: Basic
+  sharedPrice: 7.5
+  dedicatedPrice: 14
+
+- name: General
+  sharedPrice: 11.5
+  dedicatedPrice: 21
+
+- name: HighMemory
+  sharedPrice: 15.5
+  dedicatedPrice: 28
