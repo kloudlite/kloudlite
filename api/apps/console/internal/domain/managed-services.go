@@ -17,11 +17,13 @@ import (
 func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error) {
 	return d.managedSvcRepo.FindById(ctx, managedSvcID)
 }
+
 func (d *domain) GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error) {
 	return d.managedSvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"project_id": projectID,
 	}})
 }
+
 func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error) {
 	templates := make([]*entities.ManagedServiceCategory, 0)
 	data, err := os.ReadFile(d.managedTemplatesPath)
@@ -34,6 +36,7 @@ func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.Ma
 	}
 	return templates, nil
 }
+
 func (d *domain) GetManagedServiceTemplate(_ context.Context, name string) (*entities.ManagedServiceTemplate, error) {
 	templates := make([]*entities.ManagedServiceCategory, 0)
 	data, err := os.ReadFile(d.managedTemplatesPath)
@@ -96,7 +99,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	}
 	template, err := d.GetManagedServiceTemplate(ctx, string(templateID))
 	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
-		Init:    template.Validator,
+		Init:    template.InputMiddleware,
 		FunName: "inputMiddleware",
 		Inputs: func() map[string]*anypb.Any {
 			m := make(map[string]*anypb.Any)
@@ -135,6 +138,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	}
 	return create, err
 }
+
 func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error) {
 	managedSvc, err := d.managedSvcRepo.FindById(ctx, managedServiceId)
 	if err != nil {
@@ -151,6 +155,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 	}
 	return true, nil
 }
+
 func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error) {
 	err := d.managedSvcRepo.DeleteById(ctx, managedServiceId)
 	if err != nil {
