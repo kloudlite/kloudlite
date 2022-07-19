@@ -21,15 +21,15 @@ spec:
     storageClassName: {{$storageClass}}
     resources:
       requests:
-        storage: {{index $inputs "size" | default "5" }}Gi
+        storage: {{index $inputs "size"}}
 
   resources:
     requests:
-      cpu: {{ index $inputs "cpu" }}m
-      memory: {{ index $inputs "memory" }}Mi
+      cpu: {{ index $inputs "cpu" }}
+      memory: {{ index $inputs "memory" }}
     limits:
-      cpu: {{ index $inputs "cpu" }}m
-      memory: {{ index $inputs "memory" }}Mi
+      cpu: {{ index $inputs "cpu" }}
+      memory: {{ index $inputs "memory" }}
 
   secret:
     enabled: true

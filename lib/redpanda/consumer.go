@@ -59,7 +59,10 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 
 				if err := onMessage(&j); err != nil {
 					if c.logger != nil {
-						c.logger.Error("error in onMessage(): %+v\n", err)
+						c.logger.Errorf("error in onMessage(): %+v\n", err)
+					}
+					if err := c.client.CommitRecords(context.TODO(), record); err != nil {
+						return
 					}
 					return
 				}

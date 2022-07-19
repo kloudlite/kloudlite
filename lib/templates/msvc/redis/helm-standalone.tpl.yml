@@ -45,13 +45,13 @@ spec:
   master:
     resources:
       requests: &cpu-and-mem
-        cpu: {{ index $inputs "cpu" }}m
-        memory: {{ index $inputs "memory" }}Mi
+        cpu: {{ index $inputs "cpu" }}
+        memory: {{ index $inputs "memory" }}
       limits: *cpu-and-mem
 
   persistence:
     enabled: true
-    size: {{ index $inputs "size" | default "1Gi" }}
+    size: {{ index $inputs "size" }}
 
   volumePermissions:
     enabled: true

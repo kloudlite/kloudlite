@@ -94,7 +94,6 @@ func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.St
 	// if !ok {
 	// 	return req.FailWithOpError(errors.Newf("could not read kloudlite acocunt annotation from project resource"))
 	// }
-	//
 
 	if err := func() error {
 		robotAccId, ok := project.Status.GeneratedVars.GetInt(KeyRobotAccId)
@@ -236,24 +235,24 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 
 	if accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]; ok {
 		// TODO: harbor project creation should be moved out to Account Creation
-		// if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectExists.String()) {
-		// 	if err2 := func() error {
-		// 		storageSize := 1000 * r.Env.HarborProjectStorageSize
-		// 		// if project.Spec.ArtifactRegistry.Enabled && project.Spec.ArtifactRegistry.Size > 0 {
-		// 		// 	storageSize = project.Spec.ArtifactRegistry.Size
-		// 		// }
-		// 		if err := r.harborCli.CreateProject(ctx, accountRef, storageSize); err != nil {
-		// 			return errors.NewEf(err, "creating harbor project")
-		// 		}
-		// 		return project.Status.DisplayVars.Set(KeyHarborProjectStorage, storageSize)
-		// 	}(); err2 != nil {
-		// 		return req.FailWithOpError(err2)
-		// 	}
-		// 	if err := r.Status().Update(ctx, project); err != nil {
-		// 		return req.FailWithOpError(err)
-		// 	}
-		// 	return req.Done(&ctrl.Result{RequeueAfter: 0})
-		// }
+		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectExists.String()) {
+			if err2 := func() error {
+				storageSize := 1000 * 2000 * r.Env.HarborProjectStorageSize
+				// if project.Spec.ArtifactRegistry.Enabled && project.Spec.ArtifactRegistry.Size > 0 {
+				// 	storageSize = project.Spec.ArtifactRegistry.Size
+				// }
+				if err := r.harborCli.CreateProject(ctx, accountRef, storageSize); err != nil {
+					return errors.NewEf(err, "creating harbor project")
+				}
+				return project.Status.DisplayVars.Set(KeyHarborProjectStorage, storageSize)
+			}(); err2 != nil {
+				return req.FailWithOpError(err2)
+			}
+			if err := r.Status().Update(ctx, project); err != nil {
+				return req.FailWithOpError(err)
+			}
+			return req.Done(&ctrl.Result{RequeueAfter: 0})
+		}
 
 		if meta.IsStatusConditionFalse(project.Status.Conditions, HarborProjectAccountExists.String()) {
 			if err3 := func() error {

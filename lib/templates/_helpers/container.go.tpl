@@ -37,13 +37,13 @@
   resources:
   {{- if and .ResourceCpu.Min .ResourceMemory.Min }}
     requests:
-      cpu: {{ printf "%dm" .ResourceCpu.Max }}
-      memory: {{ printf "%dMi" .ResourceMemory.Max }}
+      cpu: {{ .ResourceCpu.Max }}
+      memory: {{ .ResourceMemory.Max }}
   {{- end }}
   {{- if and .ResourceCpu.Max .ResourceMemory.Max }}
     limits:
-      cpu: {{ printf "%dm" .ResourceCpu.Max }}
-      memory: {{ printf "%dMi" .ResourceMemory.Max }}
+      cpu: {{ .ResourceCpu.Max }}
+      memory: {{ .ResourceMemory.Max }}
   {{- end }}
   {{- end }}
 

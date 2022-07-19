@@ -37,13 +37,13 @@ spec:
     accessModes:
       - ReadWriteOnce
     enabled: true
-    size: {{ index $inputs "size" }}Gi
+    size: {{ index $inputs "size" }}
     storageClass: {{$storageClass}}
 
   influxdb:
     resources:
       requests: &resources
-        cpu: {{ index $inputs "cpu"}}m
-        memory: {{index $inputs "memory"}}Mi
+        cpu: {{ index $inputs "cpu"}}
+        memory: {{index $inputs "memory"}}
       limits: *resources
 {{- end }}
