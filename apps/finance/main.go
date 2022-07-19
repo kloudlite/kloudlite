@@ -10,7 +10,6 @@ import (
 func main() {
 	isDev := flag.Bool("dev", false, "--dev")
 	flag.Parse()
-
 	fx.New(
 		framework.Module,
 		fx.Provide(
