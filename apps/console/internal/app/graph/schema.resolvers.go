@@ -925,7 +925,7 @@ func (r *queryResolver) CoreGetStoragePlans(ctx context.Context) ([]*model.Stora
 }
 
 func (r *queryResolver) CoreGetLamdaPlan(ctx context.Context) (*model.LambdaPlan, error) {
-	return &model.LamdaPlan{Name: "Default"}, nil
+	return &model.LambdaPlan{Name: "Default"}, nil
 }
 
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
