@@ -9,21 +9,22 @@ type ManagedServiceCategory struct {
 	Category    repos.ID                  `yaml:"category"json:"category"`
 	LogoUrl     string                    `yaml:"logoUrl" json:"logo_url"`
 	DisplayName string                    `yaml:"displayName"json:"display_name"`
-	List        []*ManagedServiceTemplate `yaml:"list"json:"list"`
+	List        []*ManagedServiceTemplate `yaml:"list" json:"list"`
 	Description string                    `yaml:"description"json:"description"`
 }
 
 type ManagedServiceTemplate struct {
-	Name        string                    `yaml:"name" json:"name"`
-	ApiVersion  string                    `yaml:"apiVersion" json:"api_version"`
-	LogoUrl     string                    `yaml:"logoUrl" json:"logo_url"`
-	DisplayName string                    `yaml:"displayName" json:"display_name"`
-	Fields      []TemplateField           `yaml:"fields" json:"fields"`
-	Outputs     []TemplateOutput          `yaml:"outputs" json:"outputs"`
-	Resources   []ManagedResourceTemplate `yaml:"resources" json:"resources"`
-	Active      bool                      `yaml:"active" json:"active"`
-	Description string                    `yaml:"description" json:"description"`
-	Validator   string                    `yaml:"validator" json:"validator"`
+	Name            string                    `yaml:"name" json:"name"`
+	ApiVersion      string                    `yaml:"apiVersion" json:"api_version"`
+	LogoUrl         string                    `yaml:"logoUrl" json:"logo_url"`
+	DisplayName     string                    `yaml:"displayName" json:"display_name"`
+	Fields          []TemplateField           `yaml:"fields" json:"fields"`
+	Outputs         []TemplateOutput          `yaml:"outputs" json:"outputs"`
+	Resources       []ManagedResourceTemplate `yaml:"resources" json:"resources"`
+	Active          bool                      `yaml:"active" json:"active"`
+	Description     string                    `yaml:"description" json:"description"`
+	InputMiddleware string                    `yaml:"inputMiddleware" json:"inputMiddleware"`
+	Estimator       string                    `yaml:"estimator" json:"estimator"`
 }
 
 type TemplateOutput struct {
