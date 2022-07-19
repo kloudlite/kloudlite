@@ -153,13 +153,63 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 	if err != nil {
 		return false, err
 	}
+
+	template, err := d.GetManagedServiceTemplate(ctx, string(managedSvc.ServiceType))
+	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
+		Init:    template.InputMiddleware,
+		FunName: "inputMiddleware",
+		Inputs: func() map[string]*anypb.Any {
+			m := make(map[string]*anypb.Any)
+			marshal, _ := json.Marshal(values)
+			json.Unmarshal(marshal, &m)
+			return m
+		}(),
+	})
+
+	marshal, err := json.Marshal(eval.Output)
+	if err != nil {
+		return false, err
+	}
+	transformedInputs := map[string]any{}
+	err = json.Unmarshal(marshal, &transformedInputs)
+	err = d.workloadMessenger.SendAction("apply", string(managedSvc.Id), &op_crds.ManagedService{
+		APIVersion: op_crds.ManagedServiceAPIVersion,
+		Kind:       op_crds.ManagedServiceKind,
+		Metadata: op_crds.ManagedServiceMetadata{
+			Name:        string(managedSvc.Id),
+			Namespace:   managedSvc.Namespace,
+			Annotations: transformedInputs["annotations"].(map[string]string),
+		},
+		Spec: op_crds.ManagedServiceSpec{
+			ApiVersion: template.ApiVersion,
+			Inputs: func() map[string]string {
+				vs := make(map[string]string, 0)
+				for k, v := range transformedInputs["inputs"].(map[string]interface{}) {
+					vs[k] = v.(string)
+				}
+				return vs
+			}(),
+		},
+	})
 	return true, nil
 }
 
 func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error) {
-	err := d.managedSvcRepo.DeleteById(ctx, managedServiceId)
+	managedSvc, err := d.managedSvcRepo.FindById(ctx, managedServiceId)
 	if err != nil {
 		return false, err
 	}
+	err = d.managedSvcRepo.DeleteById(ctx, managedServiceId)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("delete", string(managedServiceId), &op_crds.ManagedService{
+		APIVersion: op_crds.ManagedServiceAPIVersion,
+		Kind:       op_crds.ManagedServiceKind,
+		Metadata: op_crds.ManagedServiceMetadata{
+			Name:      string(managedServiceId),
+			Namespace: managedSvc.Namespace,
+		},
+	})
 	return true, nil
 }
