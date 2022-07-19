@@ -26,7 +26,7 @@ type Query {
 
   core_getComputePlans: [ComputePlan!]
   core_getStoragePlans: [StoragePlan!]
-  core_getLamdaPlan: LamdaPlan!
+  core_getLamdaPlan: LambdaPlan!
 }
 
 type ManagedRes {
@@ -130,7 +130,7 @@ type ComputePlan @key(fields: "name"){
   maxSharedCPUPerPod: Int!
 }
 
-type LamdaPlan @key(fields: "name"){
+type LambdaPlan @key(fields: "name"){
   name: String!
 }
 

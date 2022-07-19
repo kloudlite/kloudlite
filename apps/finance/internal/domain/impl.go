@@ -113,24 +113,28 @@ func (d *domainI) TriggerBillingEvent(
 	billables []Billable,
 	timeStamp time.Time,
 ) error {
-	one, err := d.billablesRepo.FindOne(ctx, repos.Filter{
-		"account_id":  accountId,
-		"resource_id": resourceId,
-		"end_time":    nil,
-	})
+	one, err := d.billablesRepo.FindOne(
+		ctx, repos.Filter{
+			"account_id":  accountId,
+			"resource_id": resourceId,
+			"end_time":    nil,
+		},
+	)
 
 	if err != nil {
 		return err
 	}
 
 	if one == nil {
-		_, err := d.billablesRepo.Create(ctx, &AccountBilling{
-			AccountId:  accountId,
-			ResourceId: resourceId,
-			ProjectId:  projectId,
-			Billables:  billables,
-			StartTime:  timeStamp,
-		})
+		_, err := d.billablesRepo.Create(
+			ctx, &AccountBilling{
+				AccountId:  accountId,
+				ResourceId: resourceId,
+				ProjectId:  projectId,
+				Billables:  billables,
+				StartTime:  timeStamp,
+			},
+		)
 		return err
 	}
 
@@ -175,13 +179,15 @@ func (d *domainI) TriggerBillingEvent(
 		return err
 	}
 
-	_, err = d.billablesRepo.Create(ctx, &AccountBilling{
-		AccountId:  accountId,
-		ResourceId: resourceId,
-		ProjectId:  projectId,
-		Billables:  billables,
-		StartTime:  timeStamp,
-	})
+	_, err = d.billablesRepo.Create(
+		ctx, &AccountBilling{
+			AccountId:  accountId,
+			ResourceId: resourceId,
+			ProjectId:  projectId,
+			Billables:  billables,
+			StartTime:  timeStamp,
+		},
+	)
 
 	return err
 }
@@ -247,14 +253,16 @@ func (d *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID
 
 	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
 
-	find, err := d.billablesRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": accountID,
-			"start_time": repos.Filter{
-				"$gte": firstOfMonth,
+	find, err := d.billablesRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"account_id": accountID,
+				"start_time": repos.Filter{
+					"$gte": firstOfMonth,
+				},
 			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, firstOfMonth, err
 	}
@@ -273,11 +281,13 @@ func (d *domainI) ConfirmAccountMembership(ctx context.Context, invitationToken 
 	if err != nil {
 		return false, err
 	}
-	_, err = d.iamCli.ConfirmMembership(ctx, &iam.InConfirmMembership{
-		UserId:     string(existingToken.UserId),
-		ResourceId: string(existingToken.AccountId),
-		Role:       existingToken.Role,
-	})
+	_, err = d.iamCli.ConfirmMembership(
+		ctx, &iam.InConfirmMembership{
+			UserId:     string(existingToken.UserId),
+			ResourceId: string(existingToken.AccountId),
+			Role:       existingToken.Role,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -290,12 +300,14 @@ func (d *domainI) StartBillable(
 	resourceType string,
 	quantity float32,
 ) (*AccountBilling, error) {
-	create, err := d.billablesRepo.Create(ctx, &AccountBilling{
-		AccountId: accountId,
-		//ResourceType: resourceType,
-		//Quantity:     quantity,
-		StartTime: time.Now(),
-	})
+	create, err := d.billablesRepo.Create(
+		ctx, &AccountBilling{
+			AccountId: accountId,
+			// ResourceType: resourceType,
+			// Quantity:     quantity,
+			StartTime: time.Now(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -407,11 +419,12 @@ func (d *domainI) CreateAccount(
 	billing Billing,
 ) (*Account, error) {
 	id := d.accountRepo.NewId()
-	customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
-	if err != nil {
-		return nil, err
-	}
-	billing.StripeCustomerId = customer.Str()
+	// customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// billing.StripeCustomerId = customer.Str()
+	billing.StripeCustomerId = "sample"
 	acc, err := d.accountRepo.Create(
 		ctx, &Account{
 			BaseEntity: repos.BaseEntity{
@@ -505,21 +518,25 @@ func (d *domainI) AddAccountMember(
 		return false, err
 	}
 	token := generateId("acc-invite")
-	err = d.accountInviteTokenRepo.Set(ctx, token, &AccountInviteToken{
-		Token:     token,
-		UserId:    repos.ID(byEmail.UserId),
-		Role:      string(role),
-		AccountId: accountId,
-	})
+	err = d.accountInviteTokenRepo.Set(
+		ctx, token, &AccountInviteToken{
+			Token:     token,
+			UserId:    repos.ID(byEmail.UserId),
+			Role:      string(role),
+			AccountId: accountId,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
-	_, err = d.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
-		AccountName:     account.Name,
-		InvitationToken: token,
-		Email:           email,
-		Name:            "",
-	})
+	_, err = d.commsClient.SendAccountMemberInviteEmail(
+		ctx, &comms.AccountMemberInviteEmailInput{
+			AccountName:     account.Name,
+			InvitationToken: token,
+			Email:           email,
+			Name:            "",
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -615,7 +632,7 @@ func fxDomain(
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
 	env *Env,
-	//commsClient comms.CommsClient,
+	// commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	stripeCli *stripe.Client,
 ) Domain {

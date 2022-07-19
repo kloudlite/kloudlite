@@ -7,7 +7,6 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
@@ -82,9 +81,8 @@ func (e *Env) GetHttpCors() string {
 	return e.HttpCors
 }
 
-var Module = fx.Module(
+var Module fx.Option = fx.Module(
 	"framework",
-	logging.FxProvider(),
 	config.EnvFx[Env](),
 	config.EnvFx[ConsoleGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),
