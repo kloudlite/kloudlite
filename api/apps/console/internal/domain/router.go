@@ -68,8 +68,8 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 	}
 
 	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.Router{
-		APIVersion: op_crds.ManagedResourceAPIVersion,
-		Kind:       op_crds.ManagedResourceKind,
+		APIVersion: op_crds.RouterAPIVersion,
+		Kind:       op_crds.RouterKind,
 		Metadata: op_crds.RouterMetadata{
 			Name:      string(create.Id),
 			Namespace: create.Namespace,
@@ -110,8 +110,8 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 		return false, err
 	}
 	err = d.workloadMessenger.SendAction("apply", string(router.Id), &op_crds.Router{
-		APIVersion: op_crds.ManagedResourceAPIVersion,
-		Kind:       op_crds.ManagedResourceKind,
+		APIVersion: op_crds.RouterAPIVersion,
+		Kind:       op_crds.RouterKind,
 		Metadata: op_crds.RouterMetadata{
 			Name:      string(router.Id),
 			Namespace: router.Namespace,
@@ -149,8 +149,8 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 		return false, err
 	}
 	err = d.workloadMessenger.SendAction("apply", string(r.Id), &op_crds.Router{
-		APIVersion: op_crds.ManagedResourceAPIVersion,
-		Kind:       op_crds.ManagedResourceKind,
+		APIVersion: op_crds.RouterAPIVersion,
+		Kind:       op_crds.RouterKind,
 		Metadata: op_crds.RouterMetadata{
 			Name:      string(r.Id),
 			Namespace: r.Namespace,
