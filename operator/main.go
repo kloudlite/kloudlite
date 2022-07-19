@@ -101,13 +101,11 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	myLogger := logging.Must(
-		logging.New(
-			&logging.Options{
-				Name: "operator-logger",
-				Dev:  isDev,
-			},
-		),
+	myLogger := logging.NewOrDie(
+		&logging.Options{
+			Name: "operator-logger",
+			Dev:  isDev,
+		},
 	)
 
 	mgr, err := func() (manager.Manager, error) {
@@ -327,7 +325,7 @@ func main() {
 	if err = (&watchercontrollers.StatusWatcherReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Env:      *envVars,
+		Env:      envVars,
 		Notifier: statusNotifier,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StatusWatcher")
@@ -336,7 +334,7 @@ func main() {
 	if err = (&watchercontrollers.BillingWatcherReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Env:      *envVars,
+		Env:      envVars,
 		Notifier: billingNotifier,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "BillingWatcher")
@@ -346,6 +344,7 @@ func main() {
 	if err = (&artifactscontrollers.HarborProjectReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HarborProject")
 		os.Exit(1)
@@ -353,6 +352,7 @@ func main() {
 	if err = (&artifactscontrollers.HarborUserAccountReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HarborUserAccount")
 		os.Exit(1)
