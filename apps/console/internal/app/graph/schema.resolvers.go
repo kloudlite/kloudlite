@@ -147,11 +147,25 @@ func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID 
 }
 
 func (r *mutationResolver) ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	res, err := r.Domain.UpdateManagedRes(ctx, resID, func() map[string]string {
+		val := make(map[string]string, 0)
+		for k, v := range values {
+			values[k] = v.(string)
+		}
+		return val
+	}())
+	if err != nil {
+		return false, err
+	}
+	return res, nil
 }
 
 func (r *mutationResolver) ManagedResDelete(ctx context.Context, resID repos.ID) (*bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	res, err := r.Domain.UnInstallManagedRes(ctx, resID)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
 }
 
 func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID, name string) (*model.Device, error) {
