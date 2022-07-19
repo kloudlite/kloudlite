@@ -20,6 +20,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.41
 	github.com/pkg/errors v0.9.1
+	github.com/robertkrimen/otto v0.0.0-20211024170158-b87d35c0b86f
 	github.com/seancfoley/ipaddress-go v1.2.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
@@ -152,6 +153,7 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	k8s.io/api v0.23.5 // indirect
 	k8s.io/apiextensions-apiserver v0.23.4 // indirect
 	k8s.io/klog/v2 v2.60.1-0.20220317184644-43cc75f9ae89 // indirect

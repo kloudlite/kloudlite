@@ -46,6 +46,14 @@ func (e *IAMGRPCEnv) GetGRPCServerURL() string {
 	return e.IAMService
 }
 
+type JSEvalEnv struct {
+	JSEvalService string `env:"JSEVAL_SERVICE"`
+}
+
+func (e *JSEvalEnv) GetGRPCServerURL() string {
+	return e.JSEvalService
+}
+
 type LogServerEnv struct {
 	LokiServerUrl string `env:"LOKI_URL" required:"true"`
 	LogServerPort uint64 `env:"LOG_SERVER_PORT" required:"true"`
@@ -123,7 +131,7 @@ var Module = fx.Module(
 	rcn.NewFxResourceChangeNotifier[*Env](),
 	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
-
+	rpc.NewGrpcClientFx[*JSEvalEnv, app.JSEvalClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),

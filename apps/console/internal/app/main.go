@@ -14,6 +14,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -66,6 +67,7 @@ type Env struct {
 
 type InfraClientConnection *grpc.ClientConn
 type IAMClientConnection *grpc.ClientConn
+type JSEvalClientConnection *grpc.ClientConn
 type AuthClientConnection *grpc.ClientConn
 type CIClientConnection *grpc.ClientConn
 type FinanceClientConnection *grpc.ClientConn
@@ -92,6 +94,10 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
 
 	// Grpc Clients
+
+	fx.Provide(func(conn JSEvalClientConnection) jseval.JSEvalClient {
+		return jseval.NewJSEvalClient((*grpc.ClientConn)(conn))
+	}),
 
 	fx.Provide(func(conn CIClientConnection) ci.CIClient {
 		return ci.NewCIClient((*grpc.ClientConn)(conn))

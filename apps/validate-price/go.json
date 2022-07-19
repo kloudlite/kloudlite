@@ -1,0 +1,4 @@
+{
+  "inputstring":"{\"cpu\": 1, \"size\": 1}",
+  "functionstring":"function (inputs) {\n  const defaultPlan = \"Basic\"\n  return {\n    annotation: {\n      \"kloudlite.io/billing-plan\": defaultPlan,\n      \"kloudlite.io/billable-quantity\": inputs.cpu,\n      \"kloudlite.io/is-shared\": true,\n    },\n    inputs: {\n      ...inputs,\n      cpu: `${inputs.cpu * 1000}m`,\n      size: `${inputs.size}Gi`,\n    },\n  };\n}"
+}

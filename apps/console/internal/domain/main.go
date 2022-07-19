@@ -8,6 +8,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -43,6 +44,7 @@ type domain struct {
 	wgAccountRepo        repos.DbRepo[*entities.WGAccount]
 	financeClient        finance.FinanceClient
 	inventoryPath        string
+	jsEvalClient         jseval.JSEvalClient
 }
 
 func generateReadable(name string) string {
@@ -79,6 +81,7 @@ func fxDomain(
 	authClient auth.AuthClient,
 	financeClient finance.FinanceClient,
 	changeNotifier rcn.ResourceChangeNotifier,
+	jsEvalClient jseval.JSEvalClient,
 ) Domain {
 	return &domain{
 		wgAccountRepo:        wgAccountRepo,
@@ -103,6 +106,7 @@ func fxDomain(
 		logger:               logger,
 		financeClient:        financeClient,
 		inventoryPath:        env.InventoryPath,
+		jsEvalClient:         jsEvalClient,
 	}
 }
 

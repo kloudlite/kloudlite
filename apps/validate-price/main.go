@@ -1,66 +1,61 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/anypb"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
+	"net"
 	"os"
-
-	"github.com/gofiber/fiber/v2"
 	v8 "rogchap.com/v8go"
+	"sync"
 )
 
-func ValidatePrice(functionString, inputString string) (string, error) {
+type JsServer struct {
+	jseval.UnimplementedJSEvalServer
+}
 
-	f := `(` + functionString + `)(` + inputString + `)`
-
-	ctx := v8.NewContext()                  // creates a new V8 context with a new Isolate aka VM
-	val, err := ctx.RunScript(f, "math.js") // executes a script on the global context
-
+func (s *JsServer) Eval(c context.Context, in *jseval.EvalIn) (*jseval.EvalOut, error) {
+	marshal, err := json.Marshal(in.Inputs)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	o, err := json.Marshal(val)
-
+	f := `
+` + in.Init + `
+` + in.FunName + `(` + string(marshal) + `)`
+	ctx := v8.NewContext()
+	val, err := ctx.RunScript(f, "eval.js")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return string(o), nil
+	m := make(map[string]*anypb.Any)
+	marshalJSON, err := val.MarshalJSON()
+	json.Unmarshal(marshalJSON, &m)
+	return &jseval.EvalOut{Output: m}, nil
 }
 
 func main() {
-
-	app := fiber.New()
-	runPort := os.Getenv("PORT")
-
-	app.Get("/validate-price", func(c *fiber.Ctx) error {
-
-		var data struct {
-			FunctionString string
-			InputString    string
-		}
-
-		err := c.BodyParser(&data)
-
-		if err != nil {
-			fmt.Println(err)
-			return errors.New("You must provide: {functionstring,inputstring}")
-		}
-
-		out, err := ValidatePrice(data.FunctionString, data.InputString)
-
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-
-		return c.SendString(out)
-	})
-
-	if runPort == "" {
-		runPort = "3000"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
 	}
-	fmt.Println(app.Listen(":" + runPort))
+	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		panic(err)
+	} else {
+		server := grpc.NewServer()
+		jseval.RegisterJSEvalServer(server, &JsServer{})
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			err := server.Serve(listen)
+			wg.Done()
+			if err != nil {
+				panic(err)
+			}
+		}()
+		wg.Wait()
+	}
 }
