@@ -35,7 +35,6 @@ spec:
           spec:
             properties:
               sizeInGB:
-                default: 2
                 type: integer
             required:
             - sizeInGB
@@ -184,6 +183,8 @@ spec:
               generatedVars:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              generation:
+                type: integer
               isReady:
                 type: boolean
               opsConditions:
