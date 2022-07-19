@@ -19,6 +19,7 @@ type Env struct {
 	HarborImageRegistryHost  string `env:"HARBOR_IMAGE_REGISTRY_HOST" required:"true"`
 	HarborApiVersion         string `env:"HARBOR_API_VERSION" required:"false"`
 	HarborProjectStorageSize int    `env:"HARBOR_PROJECT_STORAGE_SIZE" required:"true"`
+	HarborQuoteEnabled       bool   `env:"HARBOR_QUOTA_ENABLED" required:"true"`
 
 	StorageClass       string `env:"STORAGE_CLASS" required:"true"`
 	XFSStorageClass    string `env:"XFS_STORAGE_CLASS" required:"true"`
