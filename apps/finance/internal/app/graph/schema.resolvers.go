@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 	"errors"
-
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
 	"kloudlite.io/apps/finance/internal/domain"
@@ -31,6 +30,11 @@ func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) (
 		}
 	}
 	return accountMemberships, err
+}
+
+func (r *accountResolver) OutstandingAmount(ctx context.Context, obj *model.Account) (float64, error) {
+	amount, err := r.domain.GetOutstandingAmount(ctx, obj.ID)
+	return amount, err
 }
 
 func (r *accountMembershipResolver) User(ctx context.Context, obj *model.AccountMembership) (*model.User, error) {

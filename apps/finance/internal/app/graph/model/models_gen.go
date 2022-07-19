@@ -7,14 +7,15 @@ import (
 )
 
 type Account struct {
-	ID           repos.ID             `json:"id"`
-	Name         string               `json:"name"`
-	Billing      *Billing             `json:"billing"`
-	IsActive     bool                 `json:"isActive"`
-	ContactEmail string               `json:"contactEmail"`
-	ReadableID   repos.ID             `json:"readableId"`
-	Memberships  []*AccountMembership `json:"memberships"`
-	Created      string               `json:"created"`
+	ID                repos.ID             `json:"id"`
+	Name              string               `json:"name"`
+	Billing           *Billing             `json:"billing"`
+	IsActive          bool                 `json:"isActive"`
+	ContactEmail      string               `json:"contactEmail"`
+	ReadableID        repos.ID             `json:"readableId"`
+	Memberships       []*AccountMembership `json:"memberships"`
+	Created           string               `json:"created"`
+	OutstandingAmount float64              `json:"outstandingAmount"`
 }
 
 func (Account) IsEntity() {}
@@ -45,13 +46,13 @@ type ComputePlan struct {
 
 func (ComputePlan) IsEntity() {}
 
-type LamdaPlan struct {
+type LambdaPlan struct {
 	Name         string  `json:"name"`
 	FreeTier     int     `json:"freeTier"`
 	PricePerGBHr float64 `json:"pricePerGBHr"`
 }
 
-func (LamdaPlan) IsEntity() {}
+func (LambdaPlan) IsEntity() {}
 
 type StoragePlan struct {
 	Name       string  `json:"name"`

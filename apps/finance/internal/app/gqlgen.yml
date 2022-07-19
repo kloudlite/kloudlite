@@ -59,6 +59,8 @@ models:
       # accountMemberships:
       memberships:
         resolver: true
+      outstandingAmount:
+        resolver: true
   AccountMembership:
     fields:
       user:
