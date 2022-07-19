@@ -55,10 +55,9 @@ func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
 // +kubebuilder:rbac:groups=influxdb.msvc.kloudlite.io,resources=buckets/finalizers,verbs=update
 
 func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, _ := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &influxDB.Bucket{})
-
-	if req == nil {
-		return ctrl.Result{}, nil
+	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &influxDB.Bucket{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
