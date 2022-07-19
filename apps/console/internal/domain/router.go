@@ -75,6 +75,13 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.RouterSpec{
+			Http: struct {
+				Enabled       bool `json:"enabled"`
+				ForceRedirect bool `json:"forceRedirect"`
+			}(struct {
+				Enabled       bool
+				ForceRedirect bool
+			}{Enabled: true, ForceRedirect: true}),
 			Domains: create.Domains,
 			Routes: func() []op_crds.Route {
 				i := make([]op_crds.Route, 0)
@@ -117,6 +124,13 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 			Namespace: router.Namespace,
 		},
 		Spec: op_crds.RouterSpec{
+			Http: struct {
+				Enabled       bool `json:"enabled"`
+				ForceRedirect bool `json:"forceRedirect"`
+			}(struct {
+				Enabled       bool
+				ForceRedirect bool
+			}{Enabled: true, ForceRedirect: true}),
 			Domains: router.Domains,
 			Routes: func() []op_crds.Route {
 				i := make([]op_crds.Route, 0)
@@ -148,7 +162,7 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(r.Id), &op_crds.Router{
+	err = d.workloadMessenger.SendAction("delete", string(r.Id), &op_crds.Router{
 		APIVersion: op_crds.RouterAPIVersion,
 		Kind:       op_crds.RouterKind,
 		Metadata: op_crds.RouterMetadata{

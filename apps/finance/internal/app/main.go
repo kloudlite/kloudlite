@@ -47,6 +47,7 @@ var Module = fx.Module(
 	config.EnvFx[Env](),
 	repos.NewFxMongoRepo[*domain.Account]("accounts", "acc", domain.AccountIndexes),
 	repos.NewFxMongoRepo[*domain.AccountBilling]("account_billings", "accbill", domain.BillableIndexes),
+	repos.NewFxMongoRepo[*domain.BillingInvoice]("account_invoices", "inv", domain.BillingInvoiceIndexes),
 	cache.NewFxRepo[*domain.AccountInviteToken](),
 	CiClientFx,
 	IAMClientFx,

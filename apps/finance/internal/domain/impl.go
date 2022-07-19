@@ -35,6 +35,7 @@ func generateId(prefix string) string {
 }
 
 type domainI struct {
+	invoiceRepo            repos.DbRepo[*BillingInvoice]
 	authClient             auth.AuthClient
 	iamCli                 iam.IAMClient
 	consoleCli             console.ConsoleClient
@@ -101,7 +102,6 @@ func (d *domainI) calculateBill(ctx context.Context, billables []Billable, start
 		}
 	}
 	return billableTotal, nil
-
 }
 
 func (d *domainI) TriggerBillingEvent(
@@ -627,6 +627,7 @@ func (d *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error)
 func fxDomain(
 	accountRepo repos.DbRepo[*Account],
 	billablesRepo repos.DbRepo[*AccountBilling],
+	invoiceRepo repos.DbRepo[*BillingInvoice],
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
 	ciClient ci.CIClient,
@@ -635,8 +636,10 @@ func fxDomain(
 	// commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	stripeCli *stripe.Client,
+
 ) Domain {
 	return &domainI{
+		invoiceRepo,
 		authClient,
 		iamCli,
 		consoleClient,

@@ -8,7 +8,11 @@ type Route struct {
 
 type RouterSpec struct {
 	Domains []string `json:"domains"`
-	Routes  []Route  `json:"routes"`
+	Http    struct {
+		Enabled       bool `json:"enabled"`
+		ForceRedirect bool `json:"forceRedirect"`
+	} `json:"http"`
+	Routes []Route `json:"routes"`
 }
 
 type RouterMetadata struct {
