@@ -98,7 +98,6 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 			break
 		}
 	}
-
 	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedResource{
 		APIVersion: op_crds.ManagedResourceAPIVersion,
 		Kind:       op_crds.ManagedResourceKind,
@@ -112,7 +111,6 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 			Kind:               resTmpl.Kind,
 			Inputs:             create.Values,
 		},
-		Status: op_crds.Status{},
 	})
 	if err != nil {
 		return nil, err
@@ -121,19 +119,51 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 	return create, nil
 }
 func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error) {
-	id, err := d.managedResRepo.FindById(ctx, managedResID)
+	mres, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err != nil {
 		return false, err
 	}
-	id.Values = values
-	_, err = d.managedResRepo.UpdateById(ctx, managedResID, id)
+	mres.Values = values
+	_, err = d.managedResRepo.UpdateById(ctx, managedResID, mres)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("apply", string(mres.Id), &op_crds.ManagedResource{
+		APIVersion: op_crds.ManagedResourceAPIVersion,
+		Kind:       op_crds.ManagedResourceKind,
+		Metadata: op_crds.ManagedResourceMetadata{
+			Name:      string(mres.Id),
+			Namespace: mres.Namespace,
+		},
+		Spec: op_crds.ManagedResourceSpec{
+			ManagedServiceName: string(mres.ServiceId),
+			ApiVersion:         op_crds.ManagedResourceAPIVersion,
+			Kind:               op_crds.ManagedResourceKind,
+			Inputs:             mres.Values,
+		},
+	})
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool, error) {
-	err := d.managedResRepo.DeleteById(ctx, appID)
+	id, err := d.managedResRepo.FindById(ctx, appID)
+	if err != nil {
+		return false, err
+	}
+	err = d.managedResRepo.DeleteById(ctx, appID)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("apply", string(appID), &op_crds.ManagedResource{
+		APIVersion: op_crds.ManagedResourceAPIVersion,
+		Kind:       op_crds.ManagedResourceKind,
+		Metadata: op_crds.ManagedResourceMetadata{
+			Name:      string(appID),
+			Namespace: id.Namespace,
+		},
+	})
 	if err != nil {
 		return false, err
 	}
