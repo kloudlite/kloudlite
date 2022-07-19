@@ -34,6 +34,7 @@ type Domain interface {
 	GetUserMemberships(ctx context.Context, resourceId repos.ID) ([]*Membership, error)
 	GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error)
 	GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error)
+	GenerateBillingInvoice(ctx context.Context, accountId repos.ID) (*BillingInvoice, error)
 	TriggerBillingEvent(
 		ctx context.Context,
 		accountId repos.ID,
