@@ -51,7 +51,7 @@ func (e *Env) GetGRPCPort() uint16 {
 	return e.GrpcPort
 }
 
-var Module = fx.Module(
+var Module fx.Option = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[CommsGrpcEnv](),
