@@ -67,13 +67,30 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 		return nil, err
 	}
 
-	rs := make([]op_crds.Route, 0)
-	for _, r := range routes {
-		rs = append(rs, op_crds.Route{
-			Path: r.Path,
-			App:  r.AppName,
-			Port: r.Port,
-		})
+	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.Router{
+		APIVersion: op_crds.ManagedResourceAPIVersion,
+		Kind:       op_crds.ManagedResourceKind,
+		Metadata: op_crds.RouterMetadata{
+			Name:      string(create.Id),
+			Namespace: create.Namespace,
+		},
+		Spec: op_crds.RouterSpec{
+			Domains: create.Domains,
+			Routes: func() []op_crds.Route {
+				i := make([]op_crds.Route, 0)
+				for _, r := range create.Routes {
+					i = append(i, op_crds.Route{
+						Path: r.Path,
+						App:  r.AppName,
+						Port: r.Port,
+					})
+				}
+				return i
+			}(),
+		},
+	})
+	if err != nil {
+		return nil, err
 	}
 	return create, nil
 }
@@ -92,48 +109,52 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 	if err != nil {
 		return false, err
 	}
-	rs := make([]op_crds.Route, 0)
-	for _, r := range router.Routes {
-		rs = append(rs, op_crds.Route{
-			Path: r.Path,
-			App:  r.AppName,
-			Port: r.Port,
-		})
-	}
-	err = d.workloadMessenger.SendAction("apply", string(router.Id), op_crds.Router{
-		APIVersion: op_crds.RouterAPIVersion,
-		Kind:       op_crds.RouterKind,
+	err = d.workloadMessenger.SendAction("apply", string(router.Id), &op_crds.Router{
+		APIVersion: op_crds.ManagedResourceAPIVersion,
+		Kind:       op_crds.ManagedResourceKind,
 		Metadata: op_crds.RouterMetadata{
-			Name:      router.Name,
+			Name:      string(router.Id),
 			Namespace: router.Namespace,
 		},
 		Spec: op_crds.RouterSpec{
 			Domains: router.Domains,
-			Routes: func() map[string][]op_crds.Route {
-				routes := make(map[string][]op_crds.Route, 0)
+			Routes: func() []op_crds.Route {
+				i := make([]op_crds.Route, 0)
 				for _, r := range router.Routes {
-					routes[r.Path] = []op_crds.Route{
-						{
-							Path: r.Path,
-							App:  r.AppName,
-							Port: r.Port,
-						},
-					}
+					i = append(i, op_crds.Route{
+						Path: r.Path,
+						App:  r.AppName,
+						Port: r.Port,
+					})
 				}
-				return routes
+				return i
 			}(),
 		},
-		Status: op_crds.Status{},
 	})
+	if err != nil {
+		return false, err
+	}
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, error) {
-	err := d.secretRepo.DeleteById(ctx, routerID)
+	r, err := d.routerRepo.FindById(ctx, routerID)
 	if err != nil {
 		return false, err
 	}
+	err = d.routerRepo.DeleteById(ctx, routerID)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("apply", string(r.Id), &op_crds.Router{
+		APIVersion: op_crds.ManagedResourceAPIVersion,
+		Kind:       op_crds.ManagedResourceKind,
+		Metadata: op_crds.RouterMetadata{
+			Name:      string(r.Id),
+			Namespace: r.Namespace,
+		},
+	})
 	return true, nil
 }
