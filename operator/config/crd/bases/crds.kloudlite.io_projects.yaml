@@ -38,6 +38,7 @@ spec:
               artifactRegistry:
                 properties:
                   enabled:
+                    default: true
                     type: boolean
                   size:
                     description: specifiy size in GBs

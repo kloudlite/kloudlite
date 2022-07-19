@@ -1,0 +1,24 @@
+# permissions for end users to edit harboruseraccounts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: harboruseraccount-editor-role
+rules:
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harboruseraccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harboruseraccounts/status
+  verbs:
+  - get

@@ -251,4 +251,22 @@ resources:
   kind: BillingWatcher
   path: operators.kloudlite.io/apis/watcher/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: artifacts
+  kind: HarborProject
+  path: operators.kloudlite.io/apis/artifacts/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: artifacts
+  kind: HarborUserAccount
+  path: operators.kloudlite.io/apis/artifacts/v1
+  version: v1
 version: "3"
