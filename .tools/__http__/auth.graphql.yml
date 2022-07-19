@@ -56,7 +56,7 @@ query: |
   }
 variables:
   code: 10234776f83828ed6e0338fb6e13c9b6ef9e2d22acaadf037b186fdf5f485412
-  provider: gitlab
+  provider: github
   state: eyJjc3JmIjoiaTVZWmN1ZGY4UUFGSjFieC1HUFRjY2RPQVljNDMtUGgiLCJzdGF0ZSI6IiJ9
 ---
 label: Me

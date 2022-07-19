@@ -33,9 +33,9 @@ type domainI struct {
 	accessTokenRepo repos.DbRepo[*AccessToken]
 	commsClient     comms.CommsClient
 	verifyTokenRepo cache.Repo[*VerifyToken]
-	resetTokenRepo cache.Repo[*ResetPasswordToken]
-	logger         logging.Logger
-	github         Github
+	resetTokenRepo  cache.Repo[*ResetPasswordToken]
+	logger          logging.Logger
+	github          Github
 	gitlab          Gitlab
 	google          Google
 	remoteLoginRepo repos.DbRepo[*RemoteLogin]
@@ -67,10 +67,12 @@ func (d *domainI) GetRemoteLogin(ctx context.Context, loginId repos.ID, secret s
 }
 
 func (d *domainI) CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error) {
-	create, err := d.remoteLoginRepo.Create(ctx, &RemoteLogin{
-		LoginStatus: LoginStatusPending,
-		Secret:      secret,
-	})
+	create, err := d.remoteLoginRepo.Create(
+		ctx, &RemoteLogin{
+			LoginStatus: LoginStatusPending,
+			Secret:      secret,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -278,7 +280,6 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	sum := md5.Sum([]byte(password + salt))
 	user.Password = hex.EncodeToString(sum[:])
 	user.PasswordSalt = salt
-	fmt.Println(user)
 	_, err = d.userRepo.UpdateById(ctx, repos.ID(get.UserId), user)
 	if err != nil {
 		return false, err
@@ -288,6 +289,7 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	if err != nil {
 		// TODO silent fail
 		fmt.Printf("[ERROR] could not delete resetpassword roken as %+v", err)
+		d.logger.Errorf(err, "could not delete resetPassword token")
 		return false, nil
 	}
 	return true, nil

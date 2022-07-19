@@ -58,12 +58,12 @@ func (c *consumer[T]) Subscribe(T) error {
 			}
 			msg, e := c.kafkaConsumer.ReadMessage(-1)
 			if e != nil {
-				c.logger.Errorf("could not read kafka message because %v", e)
+				c.logger.Errorf(e, "could not read kafka message")
 				continue
 			}
 			topic := *msg.TopicPartition.Topic
 			if c.handlers[topic] == nil {
-				c.logger.Errorf("no handler for topic %s", topic)
+				c.logger.Warnf("no handler for topic %s", topic)
 				c.kafkaConsumer.CommitMessage(msg)
 				continue
 			}
