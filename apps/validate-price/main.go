@@ -171,7 +171,7 @@ func main() {
 
 		if err != nil {
 			fmt.Println(err)
-			return err
+			return errors.New("You must provide: {functionstring,inputstring}")
 		}
 
 		out, err := ValidatePrice(data.FunctionString, data.InputString, priceDetails)
