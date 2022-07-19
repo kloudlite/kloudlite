@@ -1,0 +1,22 @@
+version: "3"
+
+dotenv: [".secrets/env"]
+
+tasks:
+  run:
+    env:
+      PRICING_PATH: ./price/
+    sources:
+      - ./main.go
+    cmds:
+      - go version
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+
+  docker-build:
+    dir: ../..
+    vars:
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/validate-price:v2
+      APP_DIR: ./apps/validate-price
+    cmds:
+      - docker buildx build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
+      - docker push {{.IMAGE}}
