@@ -18,6 +18,12 @@ const (
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
 )
 
+var LabelKeys = struct {
+	HarborProjectRef string
+}{
+	HarborProjectRef: "artifacts.kloudlite.io/harbor-project-ref",
+}
+
 var AnnotationKeys = struct {
 	Account          string
 	Project          string

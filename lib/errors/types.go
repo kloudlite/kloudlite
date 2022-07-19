@@ -12,7 +12,7 @@ func NewEf(err error, msg string, a ...interface{}) error {
 
 func Newf(msg string, a ...interface{}) error {
 	if len(a) > 0 {
-		return yerrors.Wrap(yerrors.Errorf(msg, a))
+		return yerrors.Wrap(yerrors.Errorf(msg, a...))
 	}
 	return yerrors.New(msg)
 }

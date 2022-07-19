@@ -184,6 +184,8 @@ spec:
               generatedVars:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              generation:
+                type: integer
               isReady:
                 type: boolean
               opsConditions:

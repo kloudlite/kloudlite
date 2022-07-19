@@ -101,13 +101,11 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	myLogger := logging.Must(
-		logging.New(
-			&logging.Options{
-				Name: "operator-logger",
-				Dev:  isDev,
-			},
-		),
+	myLogger := logging.NewOrDie(
+		&logging.Options{
+			Name: "operator-logger",
+			Dev:  isDev,
+		},
 	)
 
 	mgr, err := func() (manager.Manager, error) {
@@ -354,6 +352,7 @@ func main() {
 	if err = (&artifactscontrollers.HarborUserAccountReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Env:    envVars,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HarborUserAccount")
 		os.Exit(1)

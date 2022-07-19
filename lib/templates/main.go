@@ -140,7 +140,7 @@ const (
 	MongoDBWatcher   templateFile = "mongo-msvc-watcher.tmpl.yml"
 	Deployment       templateFile = "app.tpl.yml"
 	Service          templateFile = "service.tmpl.yml"
-	Secret           templateFile = "secret.tmpl.yml"
+	Secret           templateFile = "secret.tpl.yml"
 	AccountWireguard templateFile = "account-deploy.tmpl.yml"
 	CommonMsvc       templateFile = "msvc-common-service.tmpl.yml"
 	CommonMres       templateFile = "mres-common.tmpl.yml"
@@ -164,10 +164,12 @@ var CoreV1 = struct {
 	ExternalNameSvc    templateFile
 	Ingress            templateFile
 	DockerConfigSecret templateFile
+	Secret             templateFile
 }{
 	ExternalNameSvc:    "./corev1/external-name-service.tpl.yml",
-	Ingress:            "./ingress.tpl.yml",
+	Ingress:            "./corev1/ingress.tpl.yml",
 	DockerConfigSecret: "./corev1/docker-config-secret.tpl.yml",
+	Secret:             "./corev1/secret.tpl.yml",
 }
 
 var CrdsV1 = struct {

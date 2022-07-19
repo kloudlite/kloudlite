@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"time"
 )
 
 type Config interface {
@@ -37,59 +38,30 @@ type User struct {
 	Secret string
 }
 
-func (h *Client) CreateUserAccount(ctx context.Context, projectName string) (*User, error) {
+var dockerRepoMinACLs = []map[string]any{
+	{
+		"action":   "push",
+		"resource": "repository",
+	},
+	{
+		"action":   "pull",
+		"resource": "repository",
+	},
+}
+
+func (h *Client) CreateUserAccount(ctx context.Context, projectName string, userName string) (*User, error) {
 	// create account
 	s := fn.CleanerNanoid(48)
+
 	body := map[string]any{
 		"secret":      s,
-		"name":        projectName,
-		"level":       "system",
+		"name":        userName,
+		"level":       "project",
 		"duration":    0,
-		"description": "created by kloudlite/ci",
+		"description": "created by kloudlite operator",
 		"permissions": []map[string]any{
 			{
-				"access": []map[string]any{
-					{
-						"action":   "push",
-						"resource": "repository",
-					},
-					{
-						"action":   "pull",
-						"resource": "repository",
-					},
-					{
-						"action":   "delete",
-						"resource": "artifact",
-					},
-					{
-						"action":   "create",
-						"resource": "helm-chart-version",
-					},
-					{
-						"action":   "delete",
-						"resource": "helm-chart-version",
-					},
-					{
-						"action":   "create",
-						"resource": "tag",
-					},
-					{
-						"action":   "delete",
-						"resource": "tag",
-					},
-					{
-						"action":   "create",
-						"resource": "artifact-label",
-					},
-					{
-						"action":   "list",
-						"resource": "artifact",
-					},
-					{
-						"action":   "list",
-						"resource": "repository",
-					},
-				},
+				"access":    dockerRepoMinACLs,
 				"kind":      "project",
 				"namespace": projectName,
 			},
@@ -123,7 +95,77 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName string) (*Us
 	if resp.StatusCode == http.StatusCreated {
 		return &user, nil
 	}
-	return nil, errors.Newf("could not create user account as received statuscode=%d", resp.StatusCode)
+	return nil, errors.Newf("could not create user account as received statuscode=%d because %s", resp.StatusCode, rbody)
+}
+
+type harborRobotUserTT struct {
+	Description string `json:"description"`
+	Disable     bool   `json:"disable"`
+	Duration    int    `json:"duration"`
+	ExpiresAt   int    `json:"expires_at"`
+	Id          int    `json:"id"`
+	Level       string `json:"level"`
+	Name        string `json:"name"`
+	Permissions []struct {
+		Access []struct {
+			Action   string `json:"action"`
+			Resource string `json:"resource"`
+		} `json:"access"`
+		Kind      string `json:"kind"`
+		Namespace string `json:"namespace"`
+	} `json:"permissions"`
+	UpdateTime time.Time `json:"update_time"`
+}
+
+func (h *Client) UpdateUserAccount(ctx context.Context, userId int, disable bool) error {
+	// ASSERT: harbor update is super super bad, they required an entire object, instead of only diffs
+	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("robots/%d", userId), nil)
+	if err != nil {
+		return errors.NewEf(err, "building requests for updating robot account")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	var r harborRobotUserTT
+	if err := json.Unmarshal(respBody, &r); err != nil {
+		return err
+	}
+
+	r.Disable = disable
+
+	b, err := json.Marshal(r)
+	if err != nil {
+		return err
+	}
+
+	req, err = h.NewAuthzRequest(ctx, http.MethodPut, fmt.Sprintf("robots/%d", userId), bytes.NewBuffer(b))
+	if err != nil {
+		return errors.NewEf(err, "building requests for updating robot account")
+	}
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	respBody, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	return errors.Newf("could not update user account as received statuscode=%d because %s", resp.StatusCode, respBody)
 }
 
 func (h *Client) DeleteUserAccount(ctx context.Context, robotAccId int) error {
@@ -136,6 +178,10 @@ func (h *Client) DeleteUserAccount(ctx context.Context, robotAccId int) error {
 		return errors.NewEf(err, "could not delete Client robot account")
 	}
 	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		// ASSERT: silent exit, as harbor user account is already deleted
 		return nil
 	}
 	return errors.Newf("bad statusCode=%d", resp.StatusCode)
@@ -236,7 +282,8 @@ func (h *Client) DeleteProject(ctx context.Context, name string) error {
 		return err
 	}
 	if !ok {
-		return errors.Newf("project=%s does not exist to be deleted", name)
+		// ASSERt: project does not exist to be deleted
+		return nil
 	}
 
 	req, err := h.NewAuthzRequest(ctx, http.MethodDelete, fmt.Sprintf("projects/%s", name), nil)
@@ -248,10 +295,15 @@ func (h *Client) DeleteProject(ctx context.Context, name string) error {
 		return errors.NewEf(err, "while making request")
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return errors.Newf("could not delete project=%s as received (statuscode=%d)", name, resp.StatusCode)
+	if resp.StatusCode == http.StatusOK {
+		return nil
 	}
-	return nil
+	if resp.StatusCode == http.StatusNotFound {
+		// ASSERt: silent exit, as harbor project already does not exist
+		return nil
+	}
+
+	return errors.Newf("could not delete project=%s as received (statuscode=%d)", name, resp.StatusCode)
 }
 
 type Args struct {

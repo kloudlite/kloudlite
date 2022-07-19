@@ -25,6 +25,7 @@ type Status struct {
 	Conditions      []metav1.Condition  `json:"conditions,omitempty"`
 	ChildConditions []metav1.Condition  `json:"childConditions,omitempty"`
 	OpsConditions   []metav1.Condition  `json:"opsConditions,omitempty"`
+	Generation      int                 `json:"generation,omitempty"`
 }
 
 type Resource interface {
@@ -116,7 +117,11 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
 	labels := r.Object.GetEnsuredLabels()
 	annotations := r.Object.GetEnsuredAnnotations()
-	if !fn.MapContains(r.Object.GetLabels(), labels) || !fn.MapContains(r.Object.GetAnnotations(), annotations) {
+
+	hasAllLabels := fn.MapContains(r.Object.GetLabels(), labels)
+	hasAllAnnotations := fn.MapContains(r.Object.GetAnnotations(), annotations)
+
+	if !hasAllLabels || !hasAllAnnotations {
 		x := r.Object.GetLabels()
 		if x == nil {
 			x = map[string]string{}
@@ -124,6 +129,7 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
 		for k, v := range labels {
 			x[k] = v
 		}
+		r.Object.SetLabels(x)
 
 		y := r.Object.GetAnnotations()
 		if y == nil {
@@ -132,8 +138,12 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
 		for k, v := range annotations {
 			y[k] = v
 		}
+		r.Object.SetAnnotations(y)
 
-		return NewStepResult(&ctrl.Result{}, r.client.Update(r.ctx, r.Object))
+		if err := r.client.Update(r.ctx, r.Object); err != nil {
+			return NewStepResult(&ctrl.Result{}, err)
+		}
+		return NewStepResult(&ctrl.Result{}, nil)
 	}
 
 	return NewStepResult(nil, nil)

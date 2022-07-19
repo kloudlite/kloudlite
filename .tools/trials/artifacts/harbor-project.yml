@@ -3,4 +3,4 @@ kind: HarborProject
 metadata:
   name: nxtcoder17
 spec:
-  sizeInGB: 5
+  sizeInGB: 6
