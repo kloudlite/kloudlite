@@ -11,10 +11,9 @@ import (
 	v8 "rogchap.com/v8go"
 )
 
-func ExecuteJs(FunctionString, InputString string) (string, error) {
+func getCompute() (string, error) {
 
 	configPath := os.Getenv("PRICING_PATH")
-	// configPath := "./price/"
 	if configPath == "" {
 		return "", errors.New("CAN'T FIND CONFIG")
 	}
@@ -117,14 +116,21 @@ func ExecuteJs(FunctionString, InputString string) (string, error) {
 		return "", err
 	}
 
-	f := `(` + FunctionString + `)
-      (` + InputString + `,
-      {
+	return `{
         compute: ` + string(compute) + `,
         storage: ` + string(storage) + `,
         lambda: ` + string(lambda) + `,
         ci: ` + string(ci) + `,
-      })`
+      }`, nil
+
+}
+
+func ValidatePrice(functionString, inputString, priceDetails string) (string, error) {
+
+	f := `(` + functionString + `)
+      (` + inputString + `,
+      ` + priceDetails + `
+      )`
 
 	ctx := v8.NewContext()                  // creates a new V8 context with a new Isolate aka VM
 	val, err := ctx.RunScript(f, "math.js") // executes a script on the global context
@@ -147,7 +153,12 @@ func main() {
 	app := fiber.New()
 	runPort := os.Getenv("PORT")
 
+	priceDetails, configParseError := getCompute()
+
 	app.Get("/validate-price", func(c *fiber.Ctx) error {
+		if configParseError != nil {
+			return configParseError
+		}
 		var data struct {
 			FunctionString string
 			InputString    string
@@ -160,7 +171,7 @@ func main() {
 			return err
 		}
 
-		out, err := ExecuteJs(data.FunctionString, data.InputString)
+		out, err := ValidatePrice(data.FunctionString, data.InputString, priceDetails)
 
 		if err != nil {
 			fmt.Println(err)
