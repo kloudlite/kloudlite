@@ -24,9 +24,13 @@ input PaginationIn {
 
 input GitPipelineIn {
   name: String!
-  projectName: String!
+
+  accountId: String!
   projectId: String!
   appId: String!
+
+  projectName: String!
+  containerName: String!
 
   gitProvider: String!
   gitRepoUrl: String!
@@ -42,11 +46,13 @@ input GitPipelineIn {
 input GitPipelineBuildIn {
   baseImage: String!
   cmd: String!
+  outputDir: String
 }
 
 type GitPipelineBuild {
   baseImage: String
   cmd: String!
+  outputDir: String
 }
 
 input GitPipelineRunIn {
@@ -85,9 +91,13 @@ type GitPipeline {
 
 input GitDockerPipelineIn {
   name: String!
-  projectName: String!
+
+  accountId: String!
   projectId: String!
   appId: String!
+
+  projectName: String!
+  containerName: String!
 
   gitProvider: String!
   gitRepoUrl: String!
