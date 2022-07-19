@@ -59,6 +59,12 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	// STEP: cleaning up last run, clearing opsConditions
+	if len(req.Object.Status.OpsConditions) > 0 {
+		req.Object.Status.OpsConditions = []metav1.Condition{}
+		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.Result(), x.Err()
