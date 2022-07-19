@@ -58,6 +58,12 @@ func (r *LambdaReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// STEP: cleaning up last run, clearing opsConditions
+	if len(req.Object.Status.OpsConditions) > 0 {
+		req.Object.Status.OpsConditions = []metav1.Condition{}
+		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.Result(), x.Err()

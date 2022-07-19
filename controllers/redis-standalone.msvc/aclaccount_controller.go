@@ -58,9 +58,14 @@ func parseMsvcOutput(s *corev1.Secret, aclCfg *corev1.ConfigMap) *MsvcOutputRef 
 
 func (r *ACLAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &redisStandalone.ACLAccount{})
-
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// STEP: cleaning up last run, clearing opsConditions
+	if len(req.Object.Status.OpsConditions) > 0 {
+		req.Object.Status.OpsConditions = []metav1.Condition{}
+		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
