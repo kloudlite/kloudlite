@@ -1,17 +1,18 @@
 package op_crds
 
 type Route struct {
-	Path string `json:"path"`
-	App  string `json:"app"`
-	Port uint16 `json:"port"`
+	Path   string `json:"path"`
+	App    string `json:"app,omitempty"`
+	Lambda string `json:"lambda,omitempty"`
+	Port   uint16 `json:"port"`
 }
 
 type RouterSpec struct {
 	Domains []string `json:"domains"`
-	Http    struct {
+	Https   struct {
 		Enabled       bool `json:"enabled"`
 		ForceRedirect bool `json:"forceRedirect"`
-	} `json:"http"`
+	} `json:"https"`
 	Routes []Route `json:"routes"`
 }
 
