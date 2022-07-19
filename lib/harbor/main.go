@@ -168,7 +168,7 @@ func (h *Client) CheckIfProjectExists(ctx context.Context, name string) (bool, e
 	req.URL.RawQuery = q.Encode()
 	r2, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, errors.NewEf(err, "while making request to check if project name already exists")
+		return false, errors.NewEf(err, "making request to check if project-name (%s) already exists", name)
 	}
 
 	return r2.StatusCode == http.StatusOK, nil
