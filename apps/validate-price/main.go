@@ -154,6 +154,9 @@ func main() {
 	runPort := os.Getenv("PORT")
 
 	priceDetails, configParseError := getCompute()
+	if configParseError != nil {
+		panic(configParseError)
+	}
 
 	app.Get("/validate-price", func(c *fiber.Ctx) error {
 		if configParseError != nil {
