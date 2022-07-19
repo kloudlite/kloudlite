@@ -111,11 +111,19 @@ func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos
 }
 
 func (r *mutationResolver) MangedSvcUninstall(ctx context.Context, installationID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	uninstall, err := r.Domain.UnInstallManagedSvc(ctx, installationID)
+	if err != nil {
+		return false, err
+	}
+	return uninstall, nil
 }
 
 func (r *mutationResolver) MangedSvcUpdate(ctx context.Context, installationID repos.ID, values map[string]interface{}) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	svc, err := r.Domain.UpdateManagedSvc(ctx, installationID, values)
+	if err != nil {
+		return false, err
+	}
+	return svc, nil
 }
 
 func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID repos.ID, name string, resourceType string, values map[string]interface{}) (*model.ManagedRes, error) {
