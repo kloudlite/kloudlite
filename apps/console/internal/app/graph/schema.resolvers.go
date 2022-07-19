@@ -924,7 +924,7 @@ func (r *queryResolver) CoreGetStoragePlans(ctx context.Context) ([]*model.Stora
 	return storagePlans, nil
 }
 
-func (r *queryResolver) CoreGetLamdaPlan(ctx context.Context) (*model.LamdaPlan, error) {
+func (r *queryResolver) CoreGetLamdaPlan(ctx context.Context) (*model.LambdaPlan, error) {
 	return &model.LamdaPlan{Name: "Default"}, nil
 }
 

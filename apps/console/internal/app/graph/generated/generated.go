@@ -145,7 +145,7 @@ type ComplexityRoot struct {
 		FindAppByID           func(childComplexity int, id repos.ID) int
 		FindComputePlanByName func(childComplexity int, name string) int
 		FindDeviceByID        func(childComplexity int, id repos.ID) int
-		FindLamdaPlanByName   func(childComplexity int, name string) int
+		FindLambdaPlanByName  func(childComplexity int, name string) int
 		FindStoragePlanByName func(childComplexity int, name string) int
 		FindUserByID          func(childComplexity int, id repos.ID) int
 	}
@@ -173,7 +173,7 @@ type ComplexityRoot struct {
 		Value func(childComplexity int) int
 	}
 
-	LamdaPlan struct {
+	LambdaPlan struct {
 		Name func(childComplexity int) int
 	}
 
@@ -326,7 +326,7 @@ type EntityResolver interface {
 	FindAppByID(ctx context.Context, id repos.ID) (*model.App, error)
 	FindComputePlanByName(ctx context.Context, name string) (*model.ComputePlan, error)
 	FindDeviceByID(ctx context.Context, id repos.ID) (*model.Device, error)
-	FindLamdaPlanByName(ctx context.Context, name string) (*model.LamdaPlan, error)
+	FindLambdaPlanByName(ctx context.Context, name string) (*model.LambdaPlan, error)
 	FindStoragePlanByName(ctx context.Context, name string) (*model.StoragePlan, error)
 	FindUserByID(ctx context.Context, id repos.ID) (*model.User, error)
 }
@@ -387,7 +387,7 @@ type QueryResolver interface {
 	ManagedResListResources(ctx context.Context, installationID repos.ID) ([]*model.ManagedRes, error)
 	CoreGetComputePlans(ctx context.Context) ([]*model.ComputePlan, error)
 	CoreGetStoragePlans(ctx context.Context) ([]*model.StoragePlan, error)
-	CoreGetLamdaPlan(ctx context.Context) (*model.LamdaPlan, error)
+	CoreGetLamdaPlan(ctx context.Context) (*model.LambdaPlan, error)
 }
 type UserResolver interface {
 	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
@@ -834,17 +834,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Entity.FindDeviceByID(childComplexity, args["id"].(repos.ID)), true
 
-	case "Entity.findLamdaPlanByName":
-		if e.complexity.Entity.FindLamdaPlanByName == nil {
+	case "Entity.findLambdaPlanByName":
+		if e.complexity.Entity.FindLambdaPlanByName == nil {
 			break
 		}
 
-		args, err := ec.field_Entity_findLamdaPlanByName_args(context.TODO(), rawArgs)
+		args, err := ec.field_Entity_findLambdaPlanByName_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Entity.FindLamdaPlanByName(childComplexity, args["name"].(string)), true
+		return e.complexity.Entity.FindLambdaPlanByName(childComplexity, args["name"].(string)), true
 
 	case "Entity.findStoragePlanByName":
 		if e.complexity.Entity.FindStoragePlanByName == nil {
@@ -947,12 +947,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.KV.Value(childComplexity), true
 
-	case "LamdaPlan.name":
-		if e.complexity.LamdaPlan.Name == nil {
+	case "LambdaPlan.name":
+		if e.complexity.LambdaPlan.Name == nil {
 			break
 		}
 
-		return e.complexity.LamdaPlan.Name(childComplexity), true
+		return e.complexity.LambdaPlan.Name(childComplexity), true
 
 	case "ManagedRes.id":
 		if e.complexity.ManagedRes.ID == nil {
@@ -1928,7 +1928,7 @@ type Query {
 
   core_getComputePlans: [ComputePlan!]
   core_getStoragePlans: [StoragePlan!]
-  core_getLamdaPlan: LamdaPlan!
+  core_getLamdaPlan: LambdaPlan!
 }
 
 type ManagedRes {
@@ -2032,7 +2032,7 @@ type ComputePlan @key(fields: "name"){
   maxSharedCPUPerPod: Int!
 }
 
-type LamdaPlan @key(fields: "name"){
+type LambdaPlan @key(fields: "name"){
   name: String!
 }
 
@@ -2300,7 +2300,7 @@ directive @extends on OBJECT | INTERFACE
 `, BuiltIn: true},
 	{Name: "federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Account | App | ComputePlan | Device | LamdaPlan | StoragePlan | User
+union _Entity = Account | App | ComputePlan | Device | LambdaPlan | StoragePlan | User
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
@@ -2308,7 +2308,7 @@ type Entity {
 	findAppByID(id: ID!,): App!
 	findComputePlanByName(name: String!,): ComputePlan!
 	findDeviceByID(id: ID!,): Device!
-	findLamdaPlanByName(name: String!,): LamdaPlan!
+	findLambdaPlanByName(name: String!,): LambdaPlan!
 	findStoragePlanByName(name: String!,): StoragePlan!
 	findUserByID(id: ID!,): User!
 
@@ -2390,7 +2390,7 @@ func (ec *executionContext) field_Entity_findDeviceByID_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Entity_findLamdaPlanByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Entity_findLambdaPlanByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -5596,7 +5596,7 @@ func (ec *executionContext) _Entity_findDeviceByID(ctx context.Context, field gr
 	return ec.marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Entity_findLamdaPlanByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Entity_findLambdaPlanByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -5613,7 +5613,7 @@ func (ec *executionContext) _Entity_findLamdaPlanByName(ctx context.Context, fie
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Entity_findLamdaPlanByName_args(ctx, rawArgs)
+	args, err := ec.field_Entity_findLambdaPlanByName_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -5621,7 +5621,7 @@ func (ec *executionContext) _Entity_findLamdaPlanByName(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Entity().FindLamdaPlanByName(rctx, args["name"].(string))
+		return ec.resolvers.Entity().FindLambdaPlanByName(rctx, args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5633,9 +5633,9 @@ func (ec *executionContext) _Entity_findLamdaPlanByName(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.LamdaPlan)
+	res := resTmp.(*model.LambdaPlan)
 	fc.Result = res
-	return ec.marshalNLamdaPlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLamdaPlan(ctx, field.Selections, res)
+	return ec.marshalNLambdaPlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLambdaPlan(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findStoragePlanByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6098,7 +6098,7 @@ func (ec *executionContext) _KV_value(ctx context.Context, field graphql.Collect
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _LamdaPlan_name(ctx context.Context, field graphql.CollectedField, obj *model.LamdaPlan) (ret graphql.Marshaler) {
+func (ec *executionContext) _LambdaPlan_name(ctx context.Context, field graphql.CollectedField, obj *model.LambdaPlan) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6106,7 +6106,7 @@ func (ec *executionContext) _LamdaPlan_name(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "LamdaPlan",
+		Object:     "LambdaPlan",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -8928,9 +8928,9 @@ func (ec *executionContext) _Query_core_getLamdaPlan(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.LamdaPlan)
+	res := resTmp.(*model.LambdaPlan)
 	fc.Result = res
-	return ec.marshalNLamdaPlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLamdaPlan(ctx, field.Selections, res)
+	return ec.marshalNLambdaPlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLambdaPlan(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11555,13 +11555,13 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._Device(ctx, sel, obj)
-	case model.LamdaPlan:
-		return ec._LamdaPlan(ctx, sel, &obj)
-	case *model.LamdaPlan:
+	case model.LambdaPlan:
+		return ec._LambdaPlan(ctx, sel, &obj)
+	case *model.LambdaPlan:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._LamdaPlan(ctx, sel, obj)
+		return ec._LambdaPlan(ctx, sel, obj)
 	case model.StoragePlan:
 		return ec._StoragePlan(ctx, sel, &obj)
 	case *model.StoragePlan:
@@ -12496,7 +12496,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "findLamdaPlanByName":
+		case "findLambdaPlanByName":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12505,7 +12505,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Entity_findLamdaPlanByName(ctx, field)
+				res = ec._Entity_findLambdaPlanByName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12761,19 +12761,19 @@ func (ec *executionContext) _KV(ctx context.Context, sel ast.SelectionSet, obj *
 	return out
 }
 
-var lamdaPlanImplementors = []string{"LamdaPlan", "_Entity"}
+var lambdaPlanImplementors = []string{"LambdaPlan", "_Entity"}
 
-func (ec *executionContext) _LamdaPlan(ctx context.Context, sel ast.SelectionSet, obj *model.LamdaPlan) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, lamdaPlanImplementors)
+func (ec *executionContext) _LambdaPlan(ctx context.Context, sel ast.SelectionSet, obj *model.LambdaPlan) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, lambdaPlanImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("LamdaPlan")
+			out.Values[i] = graphql.MarshalString("LambdaPlan")
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._LamdaPlan_name(ctx, field, obj)
+				return ec._LambdaPlan_name(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -15345,18 +15345,18 @@ func (ec *executionContext) marshalNJson2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) marshalNLamdaPlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLamdaPlan(ctx context.Context, sel ast.SelectionSet, v model.LamdaPlan) graphql.Marshaler {
-	return ec._LamdaPlan(ctx, sel, &v)
+func (ec *executionContext) marshalNLambdaPlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLambdaPlan(ctx context.Context, sel ast.SelectionSet, v model.LambdaPlan) graphql.Marshaler {
+	return ec._LambdaPlan(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLamdaPlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLamdaPlan(ctx context.Context, sel ast.SelectionSet, v *model.LamdaPlan) graphql.Marshaler {
+func (ec *executionContext) marshalNLambdaPlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLambdaPlan(ctx context.Context, sel ast.SelectionSet, v *model.LambdaPlan) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
 		}
 		return graphql.Null
 	}
-	return ec._LamdaPlan(ctx, sel, v)
+	return ec._LambdaPlan(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNManagedRes2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedRes(ctx context.Context, sel ast.SelectionSet, v model.ManagedRes) graphql.Marshaler {

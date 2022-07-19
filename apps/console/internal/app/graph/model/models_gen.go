@@ -191,11 +191,11 @@ type KVInput struct {
 	Value string `json:"value"`
 }
 
-type LamdaPlan struct {
+type LambdaPlan struct {
 	Name string `json:"name"`
 }
 
-func (LamdaPlan) IsEntity() {}
+func (LambdaPlan) IsEntity() {}
 
 type ManagedRes struct {
 	ID           repos.ID               `json:"id"`

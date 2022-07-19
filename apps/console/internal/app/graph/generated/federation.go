@@ -160,21 +160,21 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 				list[idx[i]] = entity
 				return nil
 			}
-		case "LamdaPlan":
-			resolverName, err := entityResolverNameForLamdaPlan(ctx, rep)
+		case "LambdaPlan":
+			resolverName, err := entityResolverNameForLambdaPlan(ctx, rep)
 			if err != nil {
-				return fmt.Errorf(`finding resolver for Entity "LamdaPlan": %w`, err)
+				return fmt.Errorf(`finding resolver for Entity "LambdaPlan": %w`, err)
 			}
 			switch resolverName {
 
-			case "findLamdaPlanByName":
+			case "findLambdaPlanByName":
 				id0, err := ec.unmarshalNString2string(ctx, rep["name"])
 				if err != nil {
-					return fmt.Errorf(`unmarshalling param 0 for findLamdaPlanByName(): %w`, err)
+					return fmt.Errorf(`unmarshalling param 0 for findLambdaPlanByName(): %w`, err)
 				}
-				entity, err := ec.resolvers.Entity().FindLamdaPlanByName(ctx, id0)
+				entity, err := ec.resolvers.Entity().FindLambdaPlanByName(ctx, id0)
 				if err != nil {
-					return fmt.Errorf(`resolving Entity "LamdaPlan": %w`, err)
+					return fmt.Errorf(`resolving Entity "LambdaPlan": %w`, err)
 				}
 
 				list[idx[i]] = entity
@@ -357,7 +357,7 @@ func entityResolverNameForDevice(ctx context.Context, rep map[string]interface{}
 	return "", fmt.Errorf("%w for Device", ErrTypeNotFound)
 }
 
-func entityResolverNameForLamdaPlan(ctx context.Context, rep map[string]interface{}) (string, error) {
+func entityResolverNameForLambdaPlan(ctx context.Context, rep map[string]interface{}) (string, error) {
 	for {
 		var (
 			m   map[string]interface{}
@@ -369,9 +369,9 @@ func entityResolverNameForLamdaPlan(ctx context.Context, rep map[string]interfac
 		if _, ok = m["name"]; !ok {
 			break
 		}
-		return "findLamdaPlanByName", nil
+		return "findLambdaPlanByName", nil
 	}
-	return "", fmt.Errorf("%w for LamdaPlan", ErrTypeNotFound)
+	return "", fmt.Errorf("%w for LambdaPlan", ErrTypeNotFound)
 }
 
 func entityResolverNameForStoragePlan(ctx context.Context, rep map[string]interface{}) (string, error) {
