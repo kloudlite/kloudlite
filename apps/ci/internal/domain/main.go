@@ -359,7 +359,7 @@ func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
 			fmt.Sprintf("%s?pipelineId=%s", d.gitlab.GetTriggerWebhookUrl(), p.Id),
 			bytes.NewBuffer(b),
 		)
-		req.Header.Set("X-Gitlab-Event", "push")
+		req.Header.Set("X-Gitlab-Event", "Push Hook")
 		req.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
