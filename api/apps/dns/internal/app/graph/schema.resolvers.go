@@ -5,8 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
-
 	"kloudlite.io/apps/dns/internal/app/graph/generated"
 	"kloudlite.io/apps/dns/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
@@ -42,7 +40,11 @@ func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, acc
 }
 
 func (r *mutationResolver) DNSDeleteSite(ctx context.Context, siteID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	err := r.d.DeleteSite(ctx, siteID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) DNSVerifySite(ctx context.Context, siteID repos.ID) (bool, error) {
