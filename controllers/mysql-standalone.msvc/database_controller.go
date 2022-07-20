@@ -29,6 +29,10 @@ type DatabaseReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *DatabaseReconciler) GetName() string {
+	return "mysql-standalone-database"
+}
+
 const (
 	DbPasswordKey = "db-password"
 )

@@ -17,12 +17,6 @@ tasks:
         exit 0
       - operator-sdk create api --group {{.Group}} --version v1 --resource --controller --kind "{{.Kind}}"
 
-  grpc:
-    dir: ./grpc-protobufs
-    cmds:
-      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
-
-
   setup:
     dir: ./bin
     cmds:
@@ -36,7 +30,7 @@ tasks:
       - task: kill-port
 #      - go run -tags dynamic main.go -dev |& pp -rel-path
       - go build -i -tags dynamic -o ./bin/operator
-      - ./bin/operator |& pp -rel-path
+      - ./bin/operator --dev {{.CLI_ARGS}} |& pp -rel-path
 #      - go run -tags dynamic main.go |& pp -rel-path
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
 #      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
@@ -84,10 +78,7 @@ tasks:
     cmds:
       - |
         PID=$(lsof -t -i:8089)
-        echo "$PID"
         if [ "$PID" != "" ]; then
           kill -9 $PID
         fi
     silent: true
-
-

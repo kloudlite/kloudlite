@@ -27,6 +27,10 @@ type RouterReconciler struct {
 	Env *env.Env
 }
 
+func (r *RouterReconciler) GetName() string {
+	return "Router"
+}
+
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/finalizers,verbs=update
