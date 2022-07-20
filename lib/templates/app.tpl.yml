@@ -21,6 +21,9 @@ spec:
         app: {{.Name}}
     spec:
       serviceAccount: kloudlite-svc-account
+      {{- if .Spec.NodeSelector }}
+      nodeSelector: {{ .Spec.NodeSelector | toYAML | nindent 8 }}
+      {{- end}}
       {{- if .Spec.Containers }}
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}
       containers: {{- include "TemplateContainer" $myDict | nindent 8 }}
@@ -48,39 +51,33 @@ spec:
     {{- end }}
     {{- end }}
 
-{{- if .Spec.Hpa }}
+{{- if .Spec.Hpa.Enabled }}
 ---
-#apiVersion: autoscaling/v2
-#kind: HorizontalPodAutoscaler
-#metadata:
-#  name: {{.Name}}
-#  namespace: {{.Namespace}}
-#  ownerReferences:
-#    - apiVersion: {{.APIVersion}}
-#      kind: {{.Kind}}
-#      name: {{.Name}}
-#      uid: {{.UID}}
-#      controller: true
-#      blockOwnerDeletion: true
-#spec:
-#  scaleTargetRef:
-#    apiVersion: apps/v1
-#    kind: Deployment
-#    name: {{.Name}}
-#  minReplicas: {{ .Spec.Hpa.MinReplicas | default 1 }}
-#  maxReplicas: {{ .Spec.Hpa.MaxReplicas | default 5 }}
-#  metrics:
-#    - type: Resource
-#      resource:
-#        name: cpu
-#        target:
-#          type: Utilization
-#          averageUtilization: {{.Spec.Hpa.ThresholdCpu | default 90}}
-#    - type: Resource
-#      resource:
-#        name: memory
-#        target:
-#          type: Utilization
-#          averageUtilization: {{.Spec.Hpa.ThresholdMemory | default 75}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{.Name}}
+  minReplicas: {{ .Spec.Hpa.MinReplicas }}
+  maxReplicas: {{ .Spec.Hpa.MaxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{.Spec.Hpa.ThresholdCpu}}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{.Spec.Hpa.ThresholdMemory}}
 {{- end }}
 {{- end }}
