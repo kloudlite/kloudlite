@@ -356,7 +356,7 @@ func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
 		}
 		req, err = http.NewRequest(
 			http.MethodPost,
-			fmt.Sprintf("%s?pipelineId=%s", d.github.GetTriggerWebhookUrl(), p.Id),
+			fmt.Sprintf("%s?pipelineId=%s", d.gitlab.GetTriggerWebhookUrl(), p.Id),
 			bytes.NewBuffer(b),
 		)
 		req.Header.Set("X-Gitlab-Event", "push")
