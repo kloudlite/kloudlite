@@ -594,7 +594,11 @@ func (r *mutationResolver) CoreUpdateConfig(ctx context.Context, configID repos.
 }
 
 func (r *mutationResolver) CoreDeleteConfig(ctx context.Context, configID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	config, err := r.Domain.DeleteConfig(ctx, configID)
+	if err != nil {
+		return false, err
+	}
+	return config, nil
 }
 
 func (r *mutationResolver) CoreCreateRouter(ctx context.Context, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) (*model.Router, error) {
