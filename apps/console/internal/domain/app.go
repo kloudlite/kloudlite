@@ -26,7 +26,6 @@ func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate
 	if err != nil {
 		return err
 	}
-	fmt.Println(response.IsReady)
 	if response.IsReady {
 		one.Status = entities.AppStateLive
 	} else {

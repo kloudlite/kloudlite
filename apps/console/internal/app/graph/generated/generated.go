@@ -61,6 +61,7 @@ type ComplexityRoot struct {
 
 	App struct {
 		AutoScale   func(childComplexity int) int
+		Conditions  func(childComplexity int) int
 		Containers  func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
@@ -188,13 +189,22 @@ type ComplexityRoot struct {
 	}
 
 	ManagedSvc struct {
-		ID        func(childComplexity int) int
-		Name      func(childComplexity int) int
-		Project   func(childComplexity int) int
-		Resources func(childComplexity int) int
-		Source    func(childComplexity int) int
-		Status    func(childComplexity int) int
-		Values    func(childComplexity int) int
+		Conditions func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Project    func(childComplexity int) int
+		Resources  func(childComplexity int) int
+		Source     func(childComplexity int) int
+		Status     func(childComplexity int) int
+		Values     func(childComplexity int) int
+	}
+
+	MetaCondition struct {
+		ConditionType func(childComplexity int) int
+		LastTimeStamp func(childComplexity int) int
+		Message       func(childComplexity int) int
+		Reason        func(childComplexity int) int
+		Status        func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -435,6 +445,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.AutoScale(childComplexity), true
+
+	case "App.conditions":
+		if e.complexity.App.Conditions == nil {
+			break
+		}
+
+		return e.complexity.App.Conditions(childComplexity), true
 
 	case "App.containers":
 		if e.complexity.App.Containers == nil {
@@ -1003,6 +1020,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedRes.Values(childComplexity), true
 
+	case "ManagedSvc.conditions":
+		if e.complexity.ManagedSvc.Conditions == nil {
+			break
+		}
+
+		return e.complexity.ManagedSvc.Conditions(childComplexity), true
+
 	case "ManagedSvc.id":
 		if e.complexity.ManagedSvc.ID == nil {
 			break
@@ -1051,6 +1075,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ManagedSvc.Values(childComplexity), true
+
+	case "MetaCondition.conditionType":
+		if e.complexity.MetaCondition.ConditionType == nil {
+			break
+		}
+
+		return e.complexity.MetaCondition.ConditionType(childComplexity), true
+
+	case "MetaCondition.lastTimeStamp":
+		if e.complexity.MetaCondition.LastTimeStamp == nil {
+			break
+		}
+
+		return e.complexity.MetaCondition.LastTimeStamp(childComplexity), true
+
+	case "MetaCondition.message":
+		if e.complexity.MetaCondition.Message == nil {
+			break
+		}
+
+		return e.complexity.MetaCondition.Message(childComplexity), true
+
+	case "MetaCondition.reason":
+		if e.complexity.MetaCondition.Reason == nil {
+			break
+		}
+
+		return e.complexity.MetaCondition.Reason(childComplexity), true
+
+	case "MetaCondition.status":
+		if e.complexity.MetaCondition.Status == nil {
+			break
+		}
+
+		return e.complexity.MetaCondition.Status(childComplexity), true
 
 	case "Mutation.core_addDevice":
 		if e.complexity.Mutation.CoreAddDevice == nil {
@@ -1949,6 +2008,7 @@ type ManagedSvc {
   values: Json!
   resources: [ManagedRes!]!
   status: String!
+  conditions: [MetaCondition!]!
 }
 
 
@@ -2036,6 +2096,14 @@ type LambdaPlan @key(fields: "name"){
   name: String!
 }
 
+type MetaCondition {
+  status: String!
+  conditionType:String!
+  lastTimeStamp:String!
+  reason:String!
+  message:String!
+}
+
 type App @key(fields: "id") {
   id: ID!
   isLambda: Boolean!
@@ -2049,6 +2117,7 @@ type App @key(fields: "id") {
   project: Project!
   status: String!
   autoScale: AutoScale
+  conditions: [MetaCondition!]!
 }
 
 input AutoScaleIn {
@@ -4073,6 +4142,41 @@ func (ec *executionContext) _App_autoScale(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.AutoScale)
 	fc.Result = res
 	return ec.marshalOAutoScale2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAutoScale(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_conditions(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Conditions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MetaCondition)
+	fc.Result = res
+	return ec.marshalNMetaCondition2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMetaConditionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppContainer_name(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
@@ -6607,6 +6711,216 @@ func (ec *executionContext) _ManagedSvc_status(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ManagedSvc_conditions(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedSvc",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Conditions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MetaCondition)
+	fc.Result = res
+	return ec.marshalNMetaCondition2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMetaConditionᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MetaCondition_status(ctx context.Context, field graphql.CollectedField, obj *model.MetaCondition) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "MetaCondition",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MetaCondition_conditionType(ctx context.Context, field graphql.CollectedField, obj *model.MetaCondition) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "MetaCondition",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConditionType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MetaCondition_lastTimeStamp(ctx context.Context, field graphql.CollectedField, obj *model.MetaCondition) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "MetaCondition",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastTimeStamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MetaCondition_reason(ctx context.Context, field graphql.CollectedField, obj *model.MetaCondition) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "MetaCondition",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reason, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MetaCondition_message(ctx context.Context, field graphql.CollectedField, obj *model.MetaCondition) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "MetaCondition",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11777,6 +12091,16 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 
 			out.Values[i] = innerFunc(ctx)
 
+		case "conditions":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._App_conditions(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12982,6 +13306,87 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
+			}
+		case "conditions":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ManagedSvc_conditions(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var metaConditionImplementors = []string{"MetaCondition"}
+
+func (ec *executionContext) _MetaCondition(ctx context.Context, sel ast.SelectionSet, obj *model.MetaCondition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, metaConditionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MetaCondition")
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._MetaCondition_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "conditionType":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._MetaCondition_conditionType(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "lastTimeStamp":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._MetaCondition_lastTimeStamp(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "reason":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._MetaCondition_reason(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "message":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._MetaCondition_message(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -15425,6 +15830,60 @@ func (ec *executionContext) marshalNManagedSvc2ᚖkloudliteᚗioᚋappsᚋconsol
 		return graphql.Null
 	}
 	return ec._ManagedSvc(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMetaCondition2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMetaConditionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MetaCondition) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMetaCondition2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMetaCondition(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMetaCondition2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMetaCondition(ctx context.Context, sel ast.SelectionSet, v *model.MetaCondition) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._MetaCondition(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProject2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {

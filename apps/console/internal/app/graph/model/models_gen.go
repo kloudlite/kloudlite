@@ -27,6 +27,7 @@ type App struct {
 	Project     *Project          `json:"project"`
 	Status      string            `json:"status"`
 	AutoScale   *AutoScale        `json:"autoScale"`
+	Conditions  []*MetaCondition  `json:"conditions"`
 }
 
 func (App) IsEntity() {}
@@ -208,13 +209,22 @@ type ManagedRes struct {
 }
 
 type ManagedSvc struct {
-	ID        repos.ID               `json:"id"`
-	Name      string                 `json:"name"`
-	Project   *Project               `json:"project"`
-	Source    string                 `json:"source"`
-	Values    map[string]interface{} `json:"values"`
-	Resources []*ManagedRes          `json:"resources"`
-	Status    string                 `json:"status"`
+	ID         repos.ID               `json:"id"`
+	Name       string                 `json:"name"`
+	Project    *Project               `json:"project"`
+	Source     string                 `json:"source"`
+	Values     map[string]interface{} `json:"values"`
+	Resources  []*ManagedRes          `json:"resources"`
+	Status     string                 `json:"status"`
+	Conditions []*MetaCondition       `json:"conditions"`
+}
+
+type MetaCondition struct {
+	Status        string `json:"status"`
+	ConditionType string `json:"conditionType"`
+	LastTimeStamp string `json:"lastTimeStamp"`
+	Reason        string `json:"reason"`
+	Message       string `json:"message"`
 }
 
 type NewResourcesIn struct {

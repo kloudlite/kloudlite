@@ -1,9 +1,28 @@
 syntax = "proto3";
+import "google/protobuf/any.proto";
 
 option go_package = "kloudlite.io/rpc/console";
 
 service Console {
   rpc GetProjectName(ProjectIn) returns (ProjectOut);
+  rpc GetApp(AppIn) returns (AppOut);
+  rpc GetManagedSvc(MSvcIn) returns (MSvcOut);
+}
+
+message AppIn {
+  string app_id = 1;
+}
+
+message AppOut {
+  google.protobuf.Any data = 3;
+}
+
+message MSvcIn {
+  string msvc_id = 1;
+}
+
+message MSvcOut {
+  google.protobuf.Any data = 3;
 }
 
 message ProjectIn {
