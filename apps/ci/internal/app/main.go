@@ -161,16 +161,14 @@ var Module = fx.Module(
 							if err != nil {
 								return ctx.JSON(err)
 							}
-							// tkVars.TaskNamespace = projectOut.Name
-							tkVars.TaskNamespace = "sample-proje-39803"
 							tkVarsJson, err := tkVars.ToJson()
 							if err != nil {
-								logger.Infof("ERR 181: %+v", err)
+								logger.Infof("ERR %+v", err)
 								return ctx.JSON(err)
 							}
 							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
 							if err != nil {
-								logger.Infof("ERR 186: %+v", err)
+								logger.Infof("ERR %+v", err)
 								return ctx.JSON(err)
 							}
 							logger.Infof("responseBody: %s\n", responseBody)
