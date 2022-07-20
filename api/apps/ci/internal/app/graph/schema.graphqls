@@ -41,6 +41,7 @@ input GitPipelineIn {
   run: GitPipelineRunIn
 
   artifactRef: GitPipelineArtifactIn
+  metadata: Json
 }
 
 input GitPipelineBuildIn {
@@ -109,6 +110,7 @@ input GitDockerPipelineIn {
   buildArgs: String!
 
   artifactRef: GitPipelineArtifactIn
+  metadata: Json
 }
 
 extend type App @key(fields: "id") {
