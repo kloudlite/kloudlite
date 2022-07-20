@@ -103,12 +103,7 @@ func (t *TektonVars) ToJson() (map[string]any, error) {
 	return m, nil
 }
 
-const (
-	gitlabWebhook string = "https://webhooks.dev.madhouselabs.io/gitlab"
-	githubWebhook string = "https://webhooks.dev.madhouselabs.io/github"
-)
-
-func (p *Pipeline) TriggerHook(latestCommitSHA string) error {
+func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
 	var req *http.Request
 	if p.GitProvider == common.ProviderGithub {
 		body := t.M{
@@ -125,7 +120,7 @@ func (p *Pipeline) TriggerHook(latestCommitSHA string) error {
 		}
 		req, err = http.NewRequest(
 			http.MethodPost,
-			fmt.Sprintf("%s?pipelineId=%s", githubWebhook, p.Id),
+			fmt.Sprintf("%s?pipelineId=%s", d.github.GetTriggerWebhookUrl(), p.Id),
 			bytes.NewBuffer(b),
 		)
 		if err != nil {
@@ -148,7 +143,7 @@ func (p *Pipeline) TriggerHook(latestCommitSHA string) error {
 		}
 		req, err = http.NewRequest(
 			http.MethodPost,
-			fmt.Sprintf("%s?pipelineId=%s", gitlabWebhook, p.Id),
+			fmt.Sprintf("%s?pipelineId=%s", d.github.GetTriggerWebhookUrl(), p.Id),
 			bytes.NewBuffer(b),
 		)
 		if err != nil {

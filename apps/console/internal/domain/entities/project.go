@@ -24,7 +24,7 @@ type Project struct {
 	Logo             *string            `json:"logo" bson:"logo"`
 	ReadableId       repos.ID           `json:"readable_id" bson:"readable_id"`
 	Status           ProjectStatus      `json:"status" bson:"status"`
-	Cluster          string             `json:"cluster" bson:"cluster"`
+	Region           string             `json:"region" bson:"region"`
 	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
 }
 

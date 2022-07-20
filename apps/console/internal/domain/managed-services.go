@@ -127,6 +127,9 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
+			NodeSelector: map[string]string{
+				"kloudlite.io/region": prj.Region,
+			},
 			ApiVersion: template.ApiVersion,
 			Inputs: func() map[string]string {
 				vs := make(map[string]string, 0)
@@ -148,6 +151,10 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 	if err != nil {
 		return false, err
 	}
+	proj, err := d.projectRepo.FindById(ctx, managedSvc.ProjectId)
+	if err != nil {
+		return false, err
+	}
 	if managedSvc == nil {
 		return false, fmt.Errorf("project not found")
 	}
@@ -157,7 +164,6 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 	if err != nil {
 		return false, err
 	}
-
 	template, err := d.GetManagedServiceTemplate(ctx, string(managedSvc.ServiceType))
 	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
 		Init:    template.InputMiddleware,
@@ -187,6 +193,9 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
+			NodeSelector: map[string]string{
+				"kloudlite.io/region": proj.Region,
+			},
 			ApiVersion: template.ApiVersion,
 			Inputs: func() map[string]string {
 				vs := make(map[string]string, 0)
