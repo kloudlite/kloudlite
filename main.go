@@ -133,11 +133,12 @@ func main() {
 			Port:                   9443,
 			HealthProbeBindAddress: probeAddr,
 			LeaderElection:         enableLeaderElection,
-			// LeaderElectionID:           "bf38d2f9.kloudlite.io",
-			LeaderElectionID:           "bf38d2f9sdddddasdfsdaf.kloudlite.io",
+			LeaderElectionID:       "bf38d2f9.kloudlite.io",
+			// LeaderElectionID:           "sadfasdf.kloudlite.io",
 			LeaderElectionResourceLock: "configmaps",
 		}
 		if isDev {
+			cOpts.LeaderElectionID = "nxtcoder17.dev.kloudlite.io"
 			return ctrl.NewManager(&rest.Config{Host: devServerHost}, cOpts)
 		}
 		return ctrl.NewManager(ctrl.GetConfigOrDie(), cOpts)
@@ -173,7 +174,7 @@ func main() {
 		&influxDbControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 		&influxDbControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-		&s3awsControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&s3awsControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 
 		&artifactsControllers.HarborProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 		&artifactsControllers.HarborUserAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},

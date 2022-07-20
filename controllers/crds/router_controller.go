@@ -2,6 +2,7 @@ package crds
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,6 +16,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
 	"operators.kloudlite.io/lib/types"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -28,8 +30,16 @@ type RouterReconciler struct {
 }
 
 func (r *RouterReconciler) GetName() string {
-	return "Router"
+	return "router"
 }
+
+const (
+	KeyIngressResourcesList string = "ingress-resources"
+)
+
+const (
+	IngressExistsCondition string = "ingress.exists/%v"
+)
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/status,verbs=get;update;patch
@@ -75,6 +85,22 @@ func (r *RouterReconciler) finalize(req *rApi.Request[*crdsv1.Router]) rApi.Step
 	return req.Finalize()
 }
 
+func getIngressResources(router *crdsv1.Router) []string {
+	items, ok := router.Status.DisplayVars.Get(KeyIngressResourcesList)
+	if !ok {
+		return []string{}
+	}
+	b, err := json.Marshal(items)
+	if err != nil {
+		return []string{}
+	}
+	var x []string
+	if err := json.Unmarshal(b, &x); err != nil {
+		return []string{}
+	}
+	return x
+}
+
 func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
 	ctx := req.Context()
 	router := req.Object
@@ -82,15 +108,30 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rA
 	isReady := false
 	var cs []metav1.Condition
 
-	_, err := rApi.Get(ctx, r.Client, fn.NN(router.Namespace, router.Name), &networkingv1.Ingress{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithOpError(errors.NewEf(err, "failed to get ingress resource"))
+	for _, ingressRes := range getIngressResources(router) {
+		_, err := rApi.Get(ctx, r.Client, fn.NN(router.Namespace, ingressRes), &networkingv1.Ingress{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return req.FailWithOpError(errors.NewEf(err, "failed to get ingress resource"))
+			}
+			isReady = false
+			cs = append(
+				cs,
+				conditions.New(fmt.Sprintf(IngressExistsCondition, ingressRes), false, conditions.NotFound, err.Error()),
+			)
+		} else {
+			cs = append(
+				cs, conditions.New(
+					fmt.Sprintf(IngressExistsCondition, ingressRes),
+					true,
+					conditions.Found,
+					fmt.Sprintf("Ingress: %v exists", ingressRes),
+				),
+			)
 		}
-		isReady = false
 	}
 
-	newConditions, hasUpdated, err := conditions.Patch(router.Status.Conditions, cs)
+	nConditions, hasUpdated, err := conditions.Patch(router.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithOpError(errors.NewEf(err, "could not patch conditions"))
 	}
@@ -100,8 +141,7 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rA
 	}
 
 	router.Status.IsReady = isReady
-	router.Status.Conditions = newConditions
-	router.Status.OpsConditions = []metav1.Condition{}
+	router.Status.Conditions = nConditions
 
 	if err := r.Status().Update(ctx, router); err != nil {
 		return req.FailWithStatusError(err)
@@ -115,6 +155,8 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 
 	lambdaGroups := map[string][]crdsv1.Route{}
 	var appRoutes []crdsv1.Route
+
+	var ingressList []string
 
 	for _, route := range router.Spec.Routes {
 		if s := route.Lambda; s != "" {
@@ -133,8 +175,9 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 	var kubeYamls [][]byte
 
 	for lName, lMapRoutes := range lambdaGroups {
+		ingName := fmt.Sprintf("r-%s-lambda-%s", router.Name, lName)
 		args := map[string]any{
-			"name":       fmt.Sprintf("r-%s-lambda-%s", router.Name, lName),
+			"name":       ingName,
 			"namespace":  router.Namespace,
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(router, true)},
 
@@ -148,6 +191,8 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
 			"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
 		}
+
+		ingressList = append(ingressList, ingName)
 
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)
 		if err != nil {
@@ -175,6 +220,7 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
 			"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
 		}
+		ingressList = append(ingressList, router.Name)
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)
 		if err != nil {
 			return req.FailWithOpError(errors.NewEf(err, "could not parse (template=%s)", templates.Ingress))
@@ -185,6 +231,15 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 
 	if _, err := fn.KubectlApplyExec(kubeYamls...); err != nil {
 		return req.FailWithOpError(errors.NewEf(err, "could not apply ingress ingressObj"))
+	}
+
+	if !reflect.DeepEqual(getIngressResources(router), ingressList) {
+		if err := router.Status.DisplayVars.Set(KeyIngressResourcesList, ingressList); err != nil {
+			return req.FailWithOpError(err)
+		}
+		if err := r.Status().Update(req.Context(), router); err != nil {
+			return req.FailWithOpError(err)
+		}
 	}
 
 	return req.Done()
