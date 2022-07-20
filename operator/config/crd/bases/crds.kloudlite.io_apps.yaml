@@ -219,6 +219,8 @@ spec:
                 type: array
               hpa:
                 properties:
+                  enabled:
+                    type: boolean
                   maxReplicas:
                     default: 5
                     type: integer
