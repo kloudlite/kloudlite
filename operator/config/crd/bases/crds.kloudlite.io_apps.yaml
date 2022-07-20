@@ -1937,8 +1937,6 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - isReady
             type: object
         type: object
     served: true
