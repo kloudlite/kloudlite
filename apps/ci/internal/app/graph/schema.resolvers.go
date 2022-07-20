@@ -108,6 +108,8 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 	}
 	var pipeline, err = r.Domain.CreatePipeline(
 		ctx, session.UserId, domain.Pipeline{
+			AccountId:     in.AccountID,
+			ProjectName:   in.ProjectName,
 			Name:          in.Name,
 			ProjectId:     in.ProjectID,
 			AppId:         string(obj.ID),
