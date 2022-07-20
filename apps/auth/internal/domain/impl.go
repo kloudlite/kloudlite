@@ -288,7 +288,6 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	err = d.resetTokenRepo.Drop(ctx, token)
 	if err != nil {
 		// TODO silent fail
-		fmt.Printf("[ERROR] could not delete resetpassword roken as %+v", err)
 		d.logger.Errorf(err, "could not delete resetPassword token")
 		return false, nil
 	}
