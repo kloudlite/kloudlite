@@ -20,6 +20,7 @@ type Github interface {
 	AddWebhook(ctx context.Context, accToken *AccessToken, pipelineId string, repoUrl string) (*GithubWebhookId, error)
 	DeleteWebhook(ctx context.Context, accToken *AccessToken, repoUrl string, hookId GithubWebhookId) error
 	GetLatestCommit(ctx context.Context, accToken *AccessToken, repoUrl string, branchName string) (string, error)
+	GetTriggerWebhookUrl() string
 }
 
 type Gitlab interface {
@@ -32,4 +33,5 @@ type Gitlab interface {
 	RepoToken(ctx context.Context, token *AccessToken) (*oauth2.Token, error)
 	GetRepoId(repoUrl string) string
 	GetLatestCommit(ctx context.Context, token *AccessToken, repoUrl string, branchName string) (string, error)
+	GetTriggerWebhookUrl() string
 }

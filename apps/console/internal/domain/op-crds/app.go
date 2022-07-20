@@ -35,10 +35,11 @@ type HPA struct {
 }
 
 type AppSpec struct {
-	Services   []Service   `json:"services,omitempty"`
-	Containers []Container `json:"containers,omitempty"`
-	Replicas   int         `json:"replicas,omitempty"`
-	Hpa        *HPA        `json:"hpa,omitempty"`
+	Services     []Service         `json:"services,omitempty"`
+	Containers   []Container       `json:"containers,omitempty"`
+	Replicas     int               `json:"replicas,omitempty"`
+	Hpa          *HPA              `json:"hpa,omitempty"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 type AppMetadata struct {

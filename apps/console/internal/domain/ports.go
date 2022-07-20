@@ -12,12 +12,12 @@ type Domain interface {
 	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
 	GetStoragePlans(ctx context.Context) ([]entities.StoragePlan, error)
 
-	//CreateCluster(ctx context.Context, data *entities.Cluster) (*entities.Cluster, error)
+	//CreateCluster(ctx context.Context, data *entities.Region) (*entities.Region, error)
 	//CreateClusterAccount(ctx context.Context, data *entities.WGAccount, region string, provider string) (*entities.WGAccount, error)
 	//UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
 	//DeleteCluster(ctx context.Context, clusterId repos.ID) error
-	//GetCluster(ctx context.Context, id repos.ID) (*entities.Cluster, error)
-	//GetClusters(ctx context.Context) ([]*entities.Cluster, error)
+	//GetCluster(ctx context.Context, id repos.ID) (*entities.Region, error)
+	//GetClusters(ctx context.Context) ([]*entities.Region, error)
 	//ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.WGAccount, error)
 	//OnSetupCluster(cxt context.Context, response entities.SetupClusterResponse) error
 	//OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error

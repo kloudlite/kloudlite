@@ -494,7 +494,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 	if err != nil {
 		return nil, err
 	}
-	if err = p.TriggerHook(latestCommit); err != nil {
+	if err = d.TriggerHook(p, latestCommit); err != nil {
 		return nil, errors.NewEf(err, "failed to trigger webhook")
 	}
 	return p, nil
@@ -554,7 +554,7 @@ func (d *domainI) TriggerPipeline(ctx context.Context, userId repos.ID, pipeline
 		}
 	}
 
-	return pipeline.TriggerHook(latestCommit)
+	return d.TriggerHook(pipeline, latestCommit)
 }
 
 func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error) {

@@ -108,7 +108,7 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		DisplayName: displayName,
 		Logo:        logo,
 		Description: description,
-		Cluster:     cluster,
+		Region:      cluster,
 		Status:      entities.ProjectStateSyncing,
 	})
 	if err != nil {
