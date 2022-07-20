@@ -307,6 +307,19 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		return nil, err
 	}
 	return &model.App{
+		Conditions: func() []*model.MetaCondition {
+			conditions := make([]*model.MetaCondition, 0)
+			for _, condition := range entity.Conditions {
+				conditions = append(conditions, &model.MetaCondition{
+					Status:        string(condition.Status),
+					ConditionType: condition.Type,
+					LastTimeStamp: condition.LastTransitionTime.String(),
+					Reason:        condition.Reason,
+					Message:       condition.Message,
+				})
+			}
+			return conditions
+		}(),
 		ID:          entity.Id,
 		Name:        entity.Name,
 		Namespace:   entity.Namespace,
@@ -432,6 +445,19 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 	}
 
 	return &model.App{
+		Conditions: func() []*model.MetaCondition {
+			conditions := make([]*model.MetaCondition, 0)
+			for _, condition := range entity.Conditions {
+				conditions = append(conditions, &model.MetaCondition{
+					Status:        string(condition.Status),
+					ConditionType: condition.Type,
+					LastTimeStamp: condition.LastTransitionTime.String(),
+					Reason:        condition.Reason,
+					Message:       condition.Message,
+				})
+			}
+			return conditions
+		}(),
 		ID:          entity.Id,
 		Name:        entity.Name,
 		IsLambda:    entity.IsLambda,
@@ -654,6 +680,19 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 		}
 
 		apps = append(apps, &model.App{
+			Conditions: func() []*model.MetaCondition {
+				conditions := make([]*model.MetaCondition, 0)
+				for _, condition := range a.Conditions {
+					conditions = append(conditions, &model.MetaCondition{
+						Status:        string(condition.Status),
+						ConditionType: condition.Type,
+						LastTimeStamp: condition.LastTransitionTime.String(),
+						Reason:        condition.Reason,
+						Message:       condition.Message,
+					})
+				}
+				return conditions
+			}(),
 			ID:          a.Id,
 			Name:        a.Name,
 			Namespace:   a.Namespace,
@@ -727,6 +766,19 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	}
 
 	return &model.App{
+		Conditions: func() []*model.MetaCondition {
+			conditions := make([]*model.MetaCondition, 0)
+			for _, condition := range a.Conditions {
+				conditions = append(conditions, &model.MetaCondition{
+					Status:        string(condition.Status),
+					ConditionType: condition.Type,
+					LastTimeStamp: condition.LastTransitionTime.String(),
+					Reason:        condition.Reason,
+					Message:       condition.Message,
+				})
+			}
+			return conditions
+		}(),
 		ID:          a.Id,
 		Name:        a.Name,
 		Namespace:   a.Namespace,
