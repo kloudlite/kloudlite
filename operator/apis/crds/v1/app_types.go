@@ -90,19 +90,25 @@ type AppSvc struct {
 }
 
 type HPA struct {
-	MinReplicas     int `json:"minReplicas,omitempty"`
-	MaxReplicas     int `json:"maxReplicas,omitempty"`
-	ThresholdCpu    int `json:"thresholdCpu,omitempty"`
+	Enabled bool `json:"enabled,omitempty"`
+	// +kubebuilder:default=1
+	MinReplicas int `json:"minReplicas,omitempty"`
+	// +kubebuilder:default=5
+	MaxReplicas int `json:"maxReplicas,omitempty"`
+	// +kubebuilder:default=90
+	ThresholdCpu int `json:"thresholdCpu,omitempty"`
+	// +kubebuilder:default=75
 	ThresholdMemory int `json:"thresholdMemory,omitempty"`
 }
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
-	Replicas   int             `json:"replicas,omitempty"`
-	Services   []AppSvc        `json:"services,omitempty"`
-	Containers []AppContainer  `json:"containers"`
-	Volumes    []corev1.Volume `json:"volumes,omitempty"`
-	Hpa        HPA             `json:"hpa,omitempty"`
+	Replicas     int               `json:"replicas,omitempty"`
+	Services     []AppSvc          `json:"services,omitempty"`
+	Containers   []AppContainer    `json:"containers"`
+	Volumes      []corev1.Volume   `json:"volumes,omitempty"`
+	Hpa          HPA               `json:"hpa,omitempty"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // +kubebuilder:object:root=true
