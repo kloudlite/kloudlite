@@ -15,6 +15,7 @@ type Domain interface {
 	GetSiteFromDomain(ctx context.Context, domain string) (*Site, error)
 	GetAccountEdgeCName(ctx context.Context, accountId string) (string, error)
 	CreateSite(ctx context.Context, domain string, accountId repos.ID) error
+	DeleteSite(ctx context.Context, siteId repos.ID) error
 	CreateRecord(
 		ctx context.Context,
 		recordType string,

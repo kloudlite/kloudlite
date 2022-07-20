@@ -20,6 +20,10 @@ type domainI struct {
 	accountCNamesRepo repos.DbRepo[*AccountCName]
 }
 
+func (d *domainI) DeleteSite(ctx context.Context, siteId repos.ID) error {
+	return d.sitesRepo.DeleteById(ctx, siteId)
+}
+
 func (d *domainI) GetSiteFromDomain(ctx context.Context, domain string) (*Site, error) {
 	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
 		"host": domain,

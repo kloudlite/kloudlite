@@ -197,10 +197,23 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 	}
 	return true, nil
 }
+
 func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, error) {
-	err := d.configRepo.DeleteById(ctx, configId)
+	cfg, err := d.configRepo.FindById(ctx, configId)
 	if err != nil {
 		return false, err
 	}
+	err = d.configRepo.DeleteById(ctx, configId)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("delete", string(configId), opcrds.Config{
+		APIVersion: opcrds.ConfigAPIVersion,
+		Kind:       opcrds.ConfigKind,
+		Metadata: opcrds.ConfigMetadata{
+			Name:      cfg.Name,
+			Namespace: cfg.Namespace,
+		},
+	})
 	return true, nil
 }
