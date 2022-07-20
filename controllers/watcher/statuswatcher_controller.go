@@ -28,6 +28,10 @@ type StatusWatcherReconciler struct {
 	logger logging.Logger
 }
 
+func (r *StatusWatcherReconciler) GetName() string {
+	return "status-watcher"
+}
+
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/finalizers,verbs=update

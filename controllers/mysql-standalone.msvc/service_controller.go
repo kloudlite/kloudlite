@@ -29,6 +29,10 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *ServiceReconciler) GetName() string {
+	return "mysql-standalone-service"
+}
+
 const (
 	MysqlPasswordKey     = "mysql-password"
 	MysqlRootPasswordKey = "mysql-root-password"

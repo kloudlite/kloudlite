@@ -31,6 +31,10 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *ServiceReconciler) GetName() string {
+	return "mongo-standalone-service"
+}
+
 const (
 	SvcRootPasswordKey = "root-password"
 )

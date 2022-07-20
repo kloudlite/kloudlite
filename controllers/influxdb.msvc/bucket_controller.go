@@ -27,6 +27,10 @@ type BucketReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *BucketReconciler) GetName() string {
+	return "influxdb-bucket"
+}
+
 const (
 	BucketIdKey = "bucket-id"
 )

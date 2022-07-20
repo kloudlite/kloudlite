@@ -26,6 +26,10 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *ServiceReconciler) GetName() string {
+	return "influxdb-service"
+}
+
 const (
 	SvcAdminPasswordKey = "admin-password"
 	SvcAdminTokenKey    = "admin-token"

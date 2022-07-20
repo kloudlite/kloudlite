@@ -27,6 +27,10 @@ type ACLAccountReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *ACLAccountReconciler) GetName() string {
+	return "redis-standalone-acl-account"
+}
+
 type Key string
 
 const (
