@@ -1,16 +1,9 @@
 package domain
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"net/http"
-
 	"golang.org/x/oauth2"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
 type DockerBuildInput struct {
@@ -101,67 +94,6 @@ func (t *TektonVars) ToJson() (map[string]any, error) {
 		return nil, err
 	}
 	return m, nil
-}
-
-func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
-	var req *http.Request
-	if p.GitProvider == common.ProviderGithub {
-		body := t.M{
-			"ref":   fmt.Sprintf("refs/heads/%s", p.GitBranch),
-			"after": latestCommitSHA,
-			"repository": t.M{
-				"html_url": p.GitRepoUrl,
-			},
-		}
-
-		b, err := json.Marshal(body)
-		if err != nil {
-			return errors.ErrMarshal(err)
-		}
-		req, err = http.NewRequest(
-			http.MethodPost,
-			fmt.Sprintf("%s?pipelineId=%s", d.github.GetTriggerWebhookUrl(), p.Id),
-			bytes.NewBuffer(b),
-		)
-		if err != nil {
-			return errors.NewEf(err, "could not build http request")
-		}
-	}
-
-	if p.GitProvider == common.ProviderGitlab {
-
-		body := t.M{
-			"ref":          fmt.Sprintf("refs/heads/%s", p.GitBranch),
-			"checkout_sha": latestCommitSHA,
-			"repository": t.M{
-				"git_http_url": p.GitRepoUrl,
-			},
-		}
-		b, err := json.Marshal(body)
-		if err != nil {
-			return errors.ErrMarshal(err)
-		}
-		req, err = http.NewRequest(
-			http.MethodPost,
-			fmt.Sprintf("%s?pipelineId=%s", d.github.GetTriggerWebhookUrl(), p.Id),
-			bytes.NewBuffer(b),
-		)
-		if err != nil {
-			return errors.NewEf(err, "could not build http request")
-		}
-	}
-
-	if req != nil {
-		r, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return errors.NewEf(err, "while making request")
-		}
-		if r.StatusCode == http.StatusAccepted {
-			return nil
-		}
-		return errors.Newf("trigger for repo=%s failed as received StatusCode=%s", p.GitRepoUrl, r.StatusCode)
-	}
-	return errors.Newf("unknown gitProvider=%s, aborting trigger", p.GitProvider)
 }
 
 var PipelineIndexes = []repos.IndexField{

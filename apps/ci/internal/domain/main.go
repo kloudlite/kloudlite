@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
+	t "kloudlite.io/pkg/types"
 	"net/http"
 	"net/url"
 	"time"
@@ -271,8 +273,6 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 
 func (d *domainI) gitlabPullToken(ctx context.Context, accTokenReq *auth.GetAccessTokenRequest) (string, error) {
 	accessToken, err := d.authClient.GetAccessToken(ctx, accTokenReq)
-	fmt.Println("accessToken: ", accessToken, "err:", err)
-
 	if err != nil || accessToken == nil {
 		return "", errors.NewEf(err, "could not get gitlab access token")
 	}
@@ -312,6 +312,71 @@ func (d *domainI) GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipe
 		return nil, err
 	}
 	return find, nil
+}
+
+func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
+	var req *http.Request
+	if p.GitProvider == common.ProviderGithub {
+		body := t.M{
+			"ref":   fmt.Sprintf("refs/heads/%s", p.GitBranch),
+			"after": latestCommitSHA,
+			"repository": t.M{
+				"html_url": p.GitRepoUrl,
+			},
+		}
+
+		b, err := json.Marshal(body)
+		if err != nil {
+			return errors.ErrMarshal(err)
+		}
+		req, err = http.NewRequest(
+			http.MethodPost,
+			fmt.Sprintf("%s?pipelineId=%s", d.github.GetTriggerWebhookUrl(), p.Id),
+			bytes.NewBuffer(b),
+		)
+		req.Header.Set("X-Github-Event", "push")
+		req.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			return errors.NewEf(err, "could not build http request")
+		}
+	}
+
+	if p.GitProvider == common.ProviderGitlab {
+
+		body := t.M{
+			"ref":          fmt.Sprintf("refs/heads/%s", p.GitBranch),
+			"checkout_sha": latestCommitSHA,
+			"repository": t.M{
+				"git_http_url": p.GitRepoUrl,
+			},
+		}
+		b, err := json.Marshal(body)
+		if err != nil {
+			return errors.ErrMarshal(err)
+		}
+		req, err = http.NewRequest(
+			http.MethodPost,
+			fmt.Sprintf("%s?pipelineId=%s", d.github.GetTriggerWebhookUrl(), p.Id),
+			bytes.NewBuffer(b),
+		)
+		req.Header.Set("X-Gitlab-Event", "push")
+		req.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			return errors.NewEf(err, "could not build http request")
+		}
+	}
+
+	if req != nil {
+		r, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return errors.NewEf(err, "while making request")
+		}
+		if r.StatusCode == http.StatusAccepted {
+			return nil
+		}
+		return errors.Newf("trigger for repo=%s failed as received StatusCode=%s", p.GitRepoUrl, r.StatusCode)
+	}
+	return errors.Newf("unknown gitProvider=%s, aborting trigger", p.GitProvider)
 }
 
 func (d *domainI) GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error) {
@@ -534,7 +599,6 @@ func (d *domainI) TriggerPipeline(ctx context.Context, userId repos.ID, pipeline
 	if err != nil {
 		return err
 	}
-
 	var latestCommit string
 	if pipeline.GitProvider == common.ProviderGithub {
 		latestCommit, err = d.github.GetLatestCommit(ctx, nil, pipeline.GitRepoUrl, pipeline.GitBranch)
@@ -542,7 +606,6 @@ func (d *domainI) TriggerPipeline(ctx context.Context, userId repos.ID, pipeline
 			return errors.NewEf(err, "getting latest commit")
 		}
 	}
-
 	if pipeline.GitProvider == common.ProviderGitlab {
 		token, err := d.getAccessToken(ctx, pipeline.GitProvider, userId)
 		if err != nil {
@@ -553,7 +616,6 @@ func (d *domainI) TriggerPipeline(ctx context.Context, userId repos.ID, pipeline
 			return errors.NewEf(err, "getting latest commit")
 		}
 	}
-
 	return d.TriggerHook(pipeline, latestCommit)
 }
 
