@@ -564,7 +564,11 @@ func (r *mutationResolver) CoreUpdateSecret(ctx context.Context, secretID repos.
 }
 
 func (r *mutationResolver) CoreDeleteSecret(ctx context.Context, secretID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	secret, err := r.Domain.DeleteSecret(ctx, secretID)
+	if err != nil {
+		return false, err
+	}
+	return secret, nil
 }
 
 func (r *mutationResolver) CoreCreateConfig(ctx context.Context, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) (*model.Config, error) {
@@ -634,7 +638,11 @@ func (r *mutationResolver) CoreUpdateRouter(ctx context.Context, routerID repos.
 }
 
 func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, routerID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	router, err := r.Domain.DeleteRouter(ctx, routerID)
+	if err != nil {
+		return false, err
+	}
+	return router, nil
 }
 
 func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
@@ -655,7 +663,15 @@ func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) (
 }
 
 func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) ([]*model.Project, error) {
-	panic(fmt.Errorf("not implemented"))
+	projectEntities, err := r.Domain.GetAccountProjects(ctx, *accountID)
+	if err != nil {
+		return nil, err
+	}
+	projects := make([]*model.Project, 0)
+	for _, projectEntity := range projectEntities {
+		projects = append(projects, projectModelFromEntity(projectEntity))
+	}
+	return projects, nil
 }
 
 func (r *queryResolver) CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error) {
