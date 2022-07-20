@@ -220,13 +220,21 @@ spec:
               hpa:
                 properties:
                   maxReplicas:
+                    default: 5
                     type: integer
                   minReplicas:
+                    default: 1
                     type: integer
                   thresholdCpu:
+                    default: 90
                     type: integer
                   thresholdMemory:
+                    default: 75
                     type: integer
+                type: object
+              nodeSelector:
+                additionalProperties:
+                  type: string
                 type: object
               replicas:
                 type: integer
