@@ -30,6 +30,10 @@ type BillingWatcherReconciler struct {
 	logger logging.Logger
 }
 
+func (r *BillingWatcherReconciler) GetName() string {
+	return "billing-watcher"
+}
+
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers/finalizers,verbs=update

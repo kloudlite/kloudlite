@@ -8,6 +8,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -19,13 +20,19 @@ import (
 // +kubebuilder:object:generate=true
 
 type Status struct {
-	IsReady         bool                `json:"isReady,omitempty"`
+	IsReady         bool                `json:"isReady"`
 	DisplayVars     rawJson.KubeRawJson `json:"displayVars,omitempty"`
 	GeneratedVars   rawJson.KubeRawJson `json:"generatedVars,omitempty"`
 	Conditions      []metav1.Condition  `json:"conditions,omitempty"`
 	ChildConditions []metav1.Condition  `json:"childConditions,omitempty"`
 	OpsConditions   []metav1.Condition  `json:"opsConditions,omitempty"`
 	Generation      int                 `json:"generation,omitempty"`
+}
+
+type Reconciler interface {
+	reconcile.Reconciler
+	SetupWithManager(manager ctrl.Manager) error
+	GetName() string
 }
 
 type Resource interface {

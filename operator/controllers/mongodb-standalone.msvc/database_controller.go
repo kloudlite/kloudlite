@@ -29,6 +29,10 @@ type DatabaseReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *DatabaseReconciler) GetName() string {
+	return "mongo-standalone-database"
+}
+
 const (
 	MongoUserExists conditions.Type = "MongoUserExists"
 )
