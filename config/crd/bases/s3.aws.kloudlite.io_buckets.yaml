@@ -260,6 +260,8 @@ spec:
                   - type
                   type: object
                 type: array
+            required:
+            - isReady
             type: object
         required:
         - spec

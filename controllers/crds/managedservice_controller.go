@@ -34,6 +34,10 @@ type ManagedServiceReconciler struct {
 	lt metav1.Time
 }
 
+func (r *ManagedServiceReconciler) GetName() string {
+	return "ManagedSvc"
+}
+
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/finalizers,verbs=update

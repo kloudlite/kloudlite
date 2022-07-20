@@ -29,6 +29,10 @@ type ManagedResourceReconciler struct {
 	types.MessageSender
 }
 
+func (r *ManagedResourceReconciler) GetName() string {
+	return "managed-resource"
+}
+
 const (
 	RealMresExists conditions.Type = "RealMresExists"
 )

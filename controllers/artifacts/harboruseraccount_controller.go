@@ -33,6 +33,10 @@ type HarborUserAccountReconciler struct {
 	harborCli *harbor.Client
 }
 
+func (r *HarborUserAccountReconciler) GetName() string {
+	return "artifact-harbor-user-account"
+}
+
 const (
 	KeyRobotAccId        string = "robotAccId"
 	KeyRobotUserName     string = "robotUserName"

@@ -336,6 +336,10 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 	return req.Done()
 }
 
+func (r *ProjectReconciler) GetName() string {
+	return "project"
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	harborCli, err := harbor.NewClient(
