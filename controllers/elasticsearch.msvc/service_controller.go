@@ -27,6 +27,10 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *ServiceReconciler) GetName() string {
+	return "elasticsearch-service"
+}
+
 const (
 	SvcRootPasswordKey = "root-password"
 )

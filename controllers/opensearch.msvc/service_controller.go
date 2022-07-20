@@ -16,6 +16,10 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *ServiceReconciler) GetName() string {
+	return "opensearch-service"
+}
+
 // +kubebuilder:rbac:groups=opensearch.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=opensearch.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=opensearch.msvc.kloudlite.io,resources=services/finalizers,verbs=update

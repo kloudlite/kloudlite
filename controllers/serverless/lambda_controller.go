@@ -27,6 +27,10 @@ type LambdaReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *LambdaReconciler) GetName() string {
+	return "lambda"
+}
+
 const (
 	KnativeServingExists conditions.Type = "KnativeServingExists"
 	KnativeServingReady  conditions.Type = "KnativeServingReady"

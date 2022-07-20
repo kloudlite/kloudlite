@@ -26,6 +26,10 @@ type HarborProjectReconciler struct {
 	harborCli *harbor.Client
 }
 
+func (r *HarborProjectReconciler) GetName() string {
+	return "artifact-harbor-project"
+}
+
 const (
 	HarborProjectExists           conditions.Type = "HarborProjectExists"
 	HarborProjectStorageAllocated conditions.Type = "HarborProjectStorageAllocated"

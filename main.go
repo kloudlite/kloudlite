@@ -2,6 +2,17 @@ package main
 
 import (
 	"flag"
+	artifactsControllers "operators.kloudlite.io/controllers/artifacts"
+	elasticsearchControllers "operators.kloudlite.io/controllers/elasticsearch.msvc"
+	influxDbControllers "operators.kloudlite.io/controllers/influxdb.msvc"
+	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
+	mysqlStandaloneControllers "operators.kloudlite.io/controllers/mysql-standalone.msvc"
+	opensearchControllers "operators.kloudlite.io/controllers/opensearch.msvc"
+	redisStandaloneControllers "operators.kloudlite.io/controllers/redis-standalone.msvc"
+	s3awsControllers "operators.kloudlite.io/controllers/s3.aws"
+	serverlessControllers "operators.kloudlite.io/controllers/serverless"
+	watchercontrollers "operators.kloudlite.io/controllers/watcher"
+	rApi "operators.kloudlite.io/lib/operator"
 	"os"
 
 	"operators.kloudlite.io/env"
@@ -39,16 +50,6 @@ import (
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	artifactscontrollers "operators.kloudlite.io/controllers/artifacts"
-	elasticsearchmsvccontrollers "operators.kloudlite.io/controllers/elasticsearch.msvc"
-	influxdbmsvccontrollers "operators.kloudlite.io/controllers/influxdb.msvc"
-	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
-	mysqlStandaloneController "operators.kloudlite.io/controllers/mysql-standalone.msvc"
-	opensearchmsvccontrollers "operators.kloudlite.io/controllers/opensearch.msvc"
-	redisstandalonemsvccontrollers "operators.kloudlite.io/controllers/redis-standalone.msvc"
-	s3awscontrollers "operators.kloudlite.io/controllers/s3.aws"
-	serverlesscontrollers "operators.kloudlite.io/controllers/serverless"
-	watchercontrollers "operators.kloudlite.io/controllers/watcher"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -90,6 +91,10 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var isDev bool
+	var devServerHost string
+	var enableForArgs arrayFlags
+	var isAllEnabled bool
 
 	// flag.StringVar(&metricsAddr, "metrics-bind-address", ":9091", "The address the metric endpoint binds to.")
 	// flag.StringVar(&probeAddr, "health-probe-bind-address", ":9092", "The address the probe endpoint binds to.")
@@ -101,15 +106,15 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.",
 	)
 
-	isDev := *flag.Bool("dev", false, "--dev")
+	flag.BoolVar(&isDev, "dev", false, "--dev")
 	opts := zap.Options{
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
 
-	serverHost := *flag.String("serverHost", "localhost:8080", "--serverHost <host:port>")
-	var enabledListArgs arrayFlags
-	flag.Var(&enabledListArgs, "set", "--set item1 --set item2")
+	flag.StringVar(&devServerHost, "serverHost", "localhost:8080", "--serverHost <host:port>")
+	flag.Var(&enableForArgs, "for", "--for item1 --for item2")
+	flag.BoolVar(&isAllEnabled, "all", false, "--for")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
@@ -123,16 +128,17 @@ func main() {
 
 	mgr, err := func() (manager.Manager, error) {
 		cOpts := ctrl.Options{
-			Scheme:                     scheme,
-			MetricsBindAddress:         metricsAddr,
-			Port:                       9443,
-			HealthProbeBindAddress:     probeAddr,
-			LeaderElection:             enableLeaderElection,
-			LeaderElectionID:           "bf38d2f9.kloudlite.io",
+			Scheme:                 scheme,
+			MetricsBindAddress:     metricsAddr,
+			Port:                   9443,
+			HealthProbeBindAddress: probeAddr,
+			LeaderElection:         enableLeaderElection,
+			// LeaderElectionID:           "bf38d2f9.kloudlite.io",
+			LeaderElectionID:           "bf38d2f9sdddddasdfsdaf.kloudlite.io",
 			LeaderElectionResourceLock: "configmaps",
 		}
 		if isDev {
-			return ctrl.NewManager(&rest.Config{Host: serverHost}, cOpts)
+			return ctrl.NewManager(&rest.Config{Host: devServerHost}, cOpts)
 		}
 		return ctrl.NewManager(ctrl.GetConfigOrDie(), cOpts)
 	}()
@@ -143,172 +149,34 @@ func main() {
 
 	envVars := env.Must(env.GetEnv())
 
-	if err = (&crds.ProjectReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Env:    envVars,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Project")
-		os.Exit(1)
-	}
+	controllers := []rApi.Reconciler{
+		&crds.ProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
+		&crds.AppReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
+		&crds.RouterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
+		&crds.ManagedServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&crds.ManagedResourceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	if err = (&crds.AppReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Env:    envVars,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "App")
-		os.Exit(1)
-	}
+		&mongodbStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&mongodbStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	if err = (&crds.RouterReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Env:    envVars,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Router")
-		os.Exit(1)
-	}
+		&mysqlStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&mysqlStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	if err = (&crds.ManagedServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ManagedService")
-		os.Exit(1)
-	}
+		&redisStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&redisStandaloneControllers.ACLAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	if err = (&crds.ManagedResourceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ManagedResource")
-		os.Exit(1)
-	}
+		&serverlessControllers.LambdaReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	if err = (&mongodbStandaloneControllers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
+		&elasticsearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&opensearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	if err = (&mongodbStandaloneControllers.DatabaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Database")
-		os.Exit(1)
-	}
+		&influxDbControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&influxDbControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	// if err = (&mongodbClusterControllers.DatabaseReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
-	//	os.Exit(1)
-	// }
+		&s3awsControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-	// if err = (&mongodbClusterControllers.ServiceReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
-	//	os.Exit(1)
-	// }
-
-	if err = (&mysqlStandaloneController.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-
-	if err = (&mysqlStandaloneController.DatabaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Database")
-		os.Exit(1)
-	}
-
-	// if err = (&mysqlclustermsvccontrollers.ServiceReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Service")
-	//	os.Exit(1)
-	// }
-	//
-	// if err = (&mysqlclustermsvccontrollers.DatabaseReconciler{
-	//	Client: mgr.GetClient(),
-	//	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
-	//	os.Exit(1)
-	// }
-
-	if err = (&redisstandalonemsvccontrollers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-
-	if err = (&redisstandalonemsvccontrollers.ACLAccountReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ACLAccount")
-		os.Exit(1)
-	}
-
-	if err = (&serverlesscontrollers.LambdaReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Lambda")
-		os.Exit(1)
-	}
-
-	if err = (&elasticsearchmsvccontrollers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-	if err = (&opensearchmsvccontrollers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-	if err = (&influxdbmsvccontrollers.ServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
-		os.Exit(1)
-	}
-	if err = (&influxdbmsvccontrollers.BucketReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Bucket")
-		os.Exit(1)
-	}
-	if err = (&s3awscontrollers.BucketReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Env:    envVars,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Bucket")
-		os.Exit(1)
+		&artifactsControllers.HarborProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
+		&artifactsControllers.HarborUserAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 	}
 
 	producer, err := redpanda.NewProducer(envVars.KafkaBrokers)
@@ -321,41 +189,30 @@ func main() {
 	statusNotifier := watchercontrollers.NewNotifier(envVars.ClusterId, producer, envVars.KafkaStatusReplyTopic)
 	billingNotifier := watchercontrollers.NewNotifier(envVars.ClusterId, producer, envVars.KafkaBillingReplyTopic)
 
-	if err = (&watchercontrollers.StatusWatcherReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Env:      envVars,
-		Notifier: statusNotifier,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "StatusWatcher")
-		os.Exit(1)
-	}
-	if err = (&watchercontrollers.BillingWatcherReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Env:      envVars,
-		Notifier: billingNotifier,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "BillingWatcher")
-		os.Exit(1)
+	controllers = append(
+		controllers,
+		&watchercontrollers.StatusWatcherReconciler{
+			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: statusNotifier,
+		},
+		&watchercontrollers.BillingWatcherReconciler{
+			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: billingNotifier,
+		},
+	)
+
+	enabledForControllers := map[string]bool{}
+	for _, arg := range enableForArgs {
+		enabledForControllers[arg] = true
 	}
 
-	if err = (&artifactscontrollers.HarborProjectReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Env:    envVars,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "HarborProject")
-		os.Exit(1)
+	for _, rc := range controllers {
+		if isAllEnabled || enabledForControllers[rc.GetName()] {
+			if err := rc.SetupWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create controller", "controller", rc.GetName())
+				os.Exit(1)
+			}
+		}
 	}
-	if err = (&artifactscontrollers.HarborUserAccountReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Env:    envVars,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "HarborUserAccount")
-		os.Exit(1)
-	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
