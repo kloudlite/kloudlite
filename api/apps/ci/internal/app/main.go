@@ -63,6 +63,7 @@ type ConsoleGRPCClient *grpc.ClientConn
 var Module = fx.Module(
 	"app",
 	fx.Provide(config.LoadEnv[Env]()),
+
 	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
 	// repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
@@ -151,7 +152,7 @@ var Module = fx.Module(
 								if err != nil {
 									return ctx.JSON(err)
 								}
-								logger.Infof("ERR Response: %+v", jsonBody)
+								logger.Infof("ERR Response: %s", jsonBody)
 								return ctx.Send(jsonBody)
 							}
 
@@ -163,12 +164,12 @@ var Module = fx.Module(
 							}
 							tkVarsJson, err := tkVars.ToJson()
 							if err != nil {
-								logger.Infof("ERR %+v", err)
+								logger.Infof("ERR %s", err)
 								return ctx.JSON(err)
 							}
 							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
 							if err != nil {
-								logger.Infof("ERR %+v", err)
+								logger.Infof("ERR %s", err)
 								return ctx.JSON(err)
 							}
 							logger.Infof("responseBody: %s\n", responseBody)
