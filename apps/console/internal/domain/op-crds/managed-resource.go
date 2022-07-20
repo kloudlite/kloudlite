@@ -22,5 +22,4 @@ type ManagedResource struct {
 	Kind       string                  `json:"kind,omitempty"`
 	Metadata   ManagedResourceMetadata `json:"metadata"`
 	Spec       ManagedResourceSpec     `json:"spec,omitempty"`
-	Status     Status                  `json:"status,omitempty"`
 }

@@ -20,5 +20,4 @@ type Lambda struct {
 
 	Metadata LambdaMetadata `json:"metadata"`
 	Spec     LambdaSpec     `json:"spec,omitempty"`
-	Status   *Status        `json:"status,omitempty"`
 }

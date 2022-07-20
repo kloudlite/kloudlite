@@ -58,5 +58,4 @@ type App struct {
 
 	Metadata AppMetadata `json:"metadata"`
 	Spec     AppSpec     `json:"spec,omitempty"`
-	Status   *Status     `json:"status,omitempty"`
 }

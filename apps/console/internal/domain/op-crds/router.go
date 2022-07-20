@@ -29,5 +29,4 @@ type Router struct {
 	Kind       string         `json:"kind,omitempty"`
 	Metadata   RouterMetadata `json:"metadata"`
 	Spec       RouterSpec     `json:"spec,omitempty"`
-	Status     Status         `json:"status,omitempty"`
 }
