@@ -11,7 +11,6 @@ import (
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/templates"
 	"operators.kloudlite.io/lib/types"
-
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
