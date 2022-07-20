@@ -40,7 +40,7 @@ func (h *harbor) CreateUserAccount(ctx context.Context, projectName string) (*Us
 	if err != nil {
 		return nil, err
 	}
-	if !b { //i.e. project does not exist
+	if !b { // i.e. project does not exist
 		return nil, errors.Newf("project %s does not exist", projectName)
 	}
 
@@ -110,7 +110,11 @@ func (h *harbor) CreateUserAccount(ctx context.Context, projectName string) (*Us
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", h.registryUrl.String(), "robots"), bytes.NewBuffer(b2))
+	req, err := http.NewRequest(
+		http.MethodPost,
+		fmt.Sprintf("%s/%s", h.registryUrl.String(), "robots"),
+		bytes.NewBuffer(b2),
+	)
 	h.withAuth(req)
 
 	resp, err := http.DefaultClient.Do(req)
@@ -121,12 +125,10 @@ func (h *harbor) CreateUserAccount(ctx context.Context, projectName string) (*Us
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Response: ", string(rbody))
 	var user User
 	if err := json.Unmarshal(rbody, &user); err != nil {
 		return nil, errors.NewEf(err, "could not unmarshal into harborUser")
 	}
-	fmt.Printf("User: %+v\n", user)
 
 	if resp.StatusCode == http.StatusCreated {
 		return &user, nil
@@ -135,7 +137,12 @@ func (h *harbor) CreateUserAccount(ctx context.Context, projectName string) (*Us
 }
 
 func (h *harbor) DeleteUserAccount(ctx context.Context, robotAccId int) error {
-	if _, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/%s/%d", h.registryUrl.String(), "robots", robotAccId), nil); err != nil {
+	if _, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%s/%s/%d", h.registryUrl.String(), "robots", robotAccId),
+		nil,
+	); err != nil {
 		return errors.NewEf(err, "could not delete harbor robot account")
 	}
 	return nil
@@ -169,7 +176,7 @@ func (h *harbor) CreateProject(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
-	if b { //ie. project exists
+	if b { // ie. project exists
 		return nil
 	}
 
@@ -181,7 +188,11 @@ func (h *harbor) CreateProject(ctx context.Context, name string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not unmarshal req body")
 	}
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", h.registryUrl.String(), "projects"), bytes.NewBuffer(bbody))
+	req, err := http.NewRequest(
+		http.MethodPost,
+		fmt.Sprintf("%s/%s", h.registryUrl.String(), "projects"),
+		bytes.NewBuffer(bbody),
+	)
 	if err != nil {
 		return errors.NewEf(err, "could not build request")
 	}
