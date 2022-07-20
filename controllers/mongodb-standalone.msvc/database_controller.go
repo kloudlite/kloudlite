@@ -64,6 +64,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 	}
 
 	// STEP: cleaning up last run, clearing opsConditions
+	req.Logger.Infof("condition: %+v %v", req.Object.Status.OpsConditions, len(req.Object.Status.OpsConditions) > 0)
 	if len(req.Object.Status.OpsConditions) > 0 {
 		req.Object.Status.OpsConditions = []metav1.Condition{}
 		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
