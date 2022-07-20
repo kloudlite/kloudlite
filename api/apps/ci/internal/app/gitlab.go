@@ -20,6 +20,10 @@ type gitlabI struct {
 	webhookUrl string
 }
 
+func (gl *gitlabI) GetTriggerWebhookUrl() string {
+	return gl.webhookUrl
+}
+
 func (gl *gitlabI) getToken(_ context.Context, token *domain.AccessToken) (*oauth2.Token, error) {
 	if token == nil {
 		return nil, errors.New("token is nil")

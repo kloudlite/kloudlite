@@ -29,6 +29,10 @@ type githubI struct {
 	webhookUrl   string
 }
 
+func (gh *githubI) GetTriggerWebhookUrl() string {
+	return gh.webhookUrl
+}
+
 func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
 	re := regexp.MustCompile("https://(.+)/(.+)/(.+)")
 	matches := re.FindStringSubmatch(repoUrl)
