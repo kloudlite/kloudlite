@@ -29,6 +29,7 @@ spec:
       containers:
       - command:
         - /manager
+        - --all
         args:
         - --leader-elect
         envFrom:

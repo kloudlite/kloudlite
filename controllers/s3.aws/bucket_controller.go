@@ -328,10 +328,11 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 				"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
 				"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
 
-				"routes": map[string]crdsv1.Route{
-					"/": {
+				"routes": []crdsv1.Route{
+					{
 						App:  obj.Name,
 						Port: 443,
+						Path: "/",
 					},
 				},
 				"annotations": map[string]string{

@@ -140,7 +140,7 @@ const (
 	MongoDBWatcher   templateFile = "mongo-msvc-watcher.tmpl.yml"
 	Deployment       templateFile = "app.tpl.yml"
 	Service          templateFile = "service.tmpl.yml"
-	Secret           templateFile = "secret.tpl.yml"
+	Secret           templateFile = "./corev1/secret.tpl.yml"
 	AccountWireguard templateFile = "account-deploy.tmpl.yml"
 	CommonMsvc       templateFile = "msvc-common-service.tmpl.yml"
 	CommonMres       templateFile = "mres-common.tmpl.yml"
