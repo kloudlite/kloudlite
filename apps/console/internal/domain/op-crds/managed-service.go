@@ -21,5 +21,4 @@ type ManagedService struct {
 	Kind       string                 `json:"kind,omitempty"`
 	Metadata   ManagedServiceMetadata `json:"metadata"`
 	Spec       ManagedServiceSpec     `json:"spec,omitempty"`
-	Status     Status                 `json:"status,omitempty"`
 }
