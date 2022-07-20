@@ -119,7 +119,7 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 				BaseImage: in.Build.BaseImage,
 				Cmd:       in.Build.Cmd,
 				OutputDir: func() string {
-					if in.Build.OutputDir == nil {
+					if in.Build.OutputDir != nil {
 						return *in.Build.OutputDir
 					}
 					return ""
