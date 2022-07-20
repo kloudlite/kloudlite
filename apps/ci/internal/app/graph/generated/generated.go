@@ -598,6 +598,7 @@ input GitPipelineIn {
   run: GitPipelineRunIn
 
   artifactRef: GitPipelineArtifactIn
+  metadata: Json
 }
 
 input GitPipelineBuildIn {
@@ -666,6 +667,7 @@ input GitDockerPipelineIn {
   buildArgs: String!
 
   artifactRef: GitPipelineArtifactIn
+  metadata: Json
 }
 
 extend type App @key(fields: "id") {
@@ -3844,6 +3846,14 @@ func (ec *executionContext) unmarshalInputGitDockerPipelineIn(ctx context.Contex
 			if err != nil {
 				return it, err
 			}
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			it.Metadata, err = ec.unmarshalOJson2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -4030,6 +4040,14 @@ func (ec *executionContext) unmarshalInputGitPipelineIn(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("artifactRef"))
 			it.ArtifactRef, err = ec.unmarshalOGitPipelineArtifactIn2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitPipelineArtifactIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			it.Metadata, err = ec.unmarshalOJson2map(ctx, v)
 			if err != nil {
 				return it, err
 			}

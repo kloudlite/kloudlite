@@ -80,6 +80,7 @@ func (r *appResolver) CiCreateDockerPipeLine(ctx context.Context, obj *model.App
 				DockerImageName: fn.DefaultIfNil(in.ArtifactRef.DockerImageName),
 				DockerImageTag:  fn.DefaultIfNil(in.ArtifactRef.DockerImageTag),
 			},
+			Metadata: in.Metadata,
 		},
 	)
 	if err != nil {
@@ -123,6 +124,7 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 				DockerImageName: fn.DefaultIfNil(in.ArtifactRef.DockerImageName),
 				DockerImageTag:  fn.DefaultIfNil(in.ArtifactRef.DockerImageTag),
 			},
+			Metadata: in.Metadata,
 		},
 	)
 	if err != nil {
