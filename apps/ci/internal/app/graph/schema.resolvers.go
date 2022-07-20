@@ -118,6 +118,7 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 			Build: &domain.ContainerImageBuild{
 				BaseImage: in.Build.BaseImage,
 				Cmd:       in.Build.Cmd,
+				OutputDir: *in.Build.OutputDir,
 			},
 			Run: &domain.ContainerImageRun{
 				BaseImage: fn.DefaultIfNil(in.Run.BaseImage),
