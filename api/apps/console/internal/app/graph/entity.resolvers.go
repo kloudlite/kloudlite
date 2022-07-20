@@ -5,8 +5,8 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"kloudlite.io/pkg/errors"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"

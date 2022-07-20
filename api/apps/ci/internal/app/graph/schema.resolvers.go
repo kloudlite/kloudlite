@@ -39,6 +39,7 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 					return &model.GitPipelineBuild{
 						BaseImage: &pipeline.Build.BaseImage,
 						Cmd:       pipeline.Build.Cmd,
+						OutputDir: &pipeline.Build.OutputDir,
 					}
 				}(),
 				Run: func() *model.GitPipelineRun {
@@ -269,6 +270,7 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 			pipelines[i].Build = &model.GitPipelineBuild{
 				BaseImage: &pItem.Build.BaseImage,
 				Cmd:       pItem.Build.Cmd,
+				OutputDir: &pItem.Build.OutputDir,
 			}
 		}
 
@@ -296,6 +298,7 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		Build: &model.GitPipelineBuild{
 			BaseImage: &pipeline.Build.BaseImage,
 			Cmd:       pipeline.Build.Cmd,
+			OutputDir: &pipeline.Build.OutputDir,
 		},
 		Run: &model.GitPipelineRun{
 			BaseImage: &pipeline.Run.BaseImage,
@@ -308,6 +311,7 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		pRecord.Build = &model.GitPipelineBuild{
 			BaseImage: &pipeline.Build.BaseImage,
 			Cmd:       pRecord.Build.Cmd,
+			OutputDir: &pipeline.Build.OutputDir,
 		}
 	}
 

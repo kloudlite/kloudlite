@@ -47,6 +47,7 @@ type ManagedSvc {
   values: Json!
   resources: [ManagedRes!]!
   status: String!
+  conditions: [MetaCondition!]!
 }
 
 
@@ -134,6 +135,14 @@ type LambdaPlan @key(fields: "name"){
   name: String!
 }
 
+type MetaCondition {
+  status: String!
+  conditionType:String!
+  lastTimeStamp:String!
+  reason:String!
+  message:String!
+}
+
 type App @key(fields: "id") {
   id: ID!
   isLambda: Boolean!
@@ -147,6 +156,7 @@ type App @key(fields: "id") {
   project: Project!
   status: String!
   autoScale: AutoScale
+  conditions: [MetaCondition!]!
 }
 
 input AutoScaleIn {

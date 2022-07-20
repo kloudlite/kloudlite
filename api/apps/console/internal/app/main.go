@@ -133,12 +133,10 @@ var Module = fx.Module(
 	fx.Invoke(func(domain domain.Domain, consumer redpanda.Consumer) {
 		consumer.StartConsuming(func(msg []byte, timestamp time.Time) error {
 			var update op_crds.StatusUpdate
-			fmt.Println(string(msg))
 			if err := json.Unmarshal(msg, &update); err != nil {
 				fmt.Println(err)
 				return err
 			}
-			fmt.Println(update.Metadata.GroupVersionKind.Kind)
 			switch update.Metadata.GroupVersionKind.Kind {
 			case "App":
 				domain.OnUpdateApp(context.TODO(), &update)
