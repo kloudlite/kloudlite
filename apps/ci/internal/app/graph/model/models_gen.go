@@ -30,6 +30,7 @@ type GitDockerPipelineIn struct {
 	ContextDir    string                 `json:"contextDir"`
 	BuildArgs     string                 `json:"buildArgs"`
 	ArtifactRef   *GitPipelineArtifactIn `json:"artifactRef"`
+	Metadata      map[string]interface{} `json:"metadata"`
 }
 
 type GitPipeline struct {
@@ -79,6 +80,7 @@ type GitPipelineIn struct {
 	Build         *GitPipelineBuildIn    `json:"build"`
 	Run           *GitPipelineRunIn      `json:"run"`
 	ArtifactRef   *GitPipelineArtifactIn `json:"artifactRef"`
+	Metadata      map[string]interface{} `json:"metadata"`
 }
 
 type GitPipelineRun struct {
