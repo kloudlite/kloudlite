@@ -8,7 +8,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/redhat-cop/operator-utils/pkg/util"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -76,10 +75,22 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return "<nothing>"
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+
 	// flag.StringVar(&metricsAddr, "metrics-bind-address", ":9091", "The address the metric endpoint binds to.")
 	// flag.StringVar(&probeAddr, "health-probe-bind-address", ":9092", "The address the probe endpoint binds to.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":12345", "The address the metric endpoint binds to.")
@@ -90,13 +101,15 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.",
 	)
 
-	var isDev bool
-	flag.BoolVar(&isDev, "dev", false, "Enable development mode")
-
+	isDev := *flag.Bool("dev", false, "--dev")
 	opts := zap.Options{
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
+
+	serverHost := *flag.String("serverHost", "localhost:8080", "--serverHost <host:port>")
+	var enabledListArgs arrayFlags
+	flag.Var(&enabledListArgs, "set", "--set item1 --set item2")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
@@ -119,7 +132,7 @@ func main() {
 			LeaderElectionResourceLock: "configmaps",
 		}
 		if isDev {
-			return ctrl.NewManager(&rest.Config{Host: "localhost:8080"}, cOpts)
+			return ctrl.NewManager(&rest.Config{Host: serverHost}, cOpts)
 		}
 		return ctrl.NewManager(ctrl.GetConfigOrDie(), cOpts)
 	}()
@@ -173,20 +186,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&crds.AccountReconciler{
-		ReconcilerBase: util.NewReconcilerBase(
-			mgr.GetClient(),
-			mgr.GetScheme(),
-			mgr.GetConfig(),
-			mgr.GetEventRecorderFor("Account_controller"),
-			mgr.GetAPIReader(),
-		),
-		Log: ctrl.Log.WithName("controllers").WithName("Account"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Account")
-		os.Exit(1)
-	}
-	//
 	if err = (&mongodbStandaloneControllers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -210,7 +209,7 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Database")
 	//	os.Exit(1)
 	// }
-	//
+
 	// if err = (&mongodbClusterControllers.ServiceReconciler{
 	//	Client: mgr.GetClient(),
 	//	Scheme: mgr.GetScheme(),
