@@ -11,6 +11,7 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
@@ -28,6 +29,7 @@ type domainI struct {
 	gitlab        Gitlab
 	harborAccRepo repos.DbRepo[*HarborAccount]
 	harborHost    HarborHost
+	logger        logging.Logger
 }
 
 func (d *domainI) GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error) {
@@ -433,7 +435,6 @@ func (d *domainI) GithubListInstallations(ctx context.Context, userId repos.ID, 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("item: %+v\n", i[0])
 	return i, nil
 }
 
@@ -573,6 +574,7 @@ var Module = fx.Module(
 			gitlab Gitlab,
 			github Github,
 			harborHost HarborHost,
+			logger logging.Logger,
 		) Domain {
 			return &domainI{
 				authClient:   authClient,
@@ -580,6 +582,7 @@ var Module = fx.Module(
 				gitlab:       gitlab,
 				github:       github,
 				harborHost:   harborHost,
+				logger:       logger.WithName("[ci]:domain/main.go"),
 			}
 		},
 	),

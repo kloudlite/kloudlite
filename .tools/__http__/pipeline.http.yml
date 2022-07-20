@@ -63,7 +63,7 @@ query: |
   }
 variables:
   in:
-    name: sample-pipeline
+    name: sample-pipeliney
     projectName: sample-x
     containerName: main
     accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
@@ -83,6 +83,30 @@ variables:
     artifactRef:
       dockerImageName: sample
       dockerImageTag: latest
+---
+label: Create Gitlab Pipeline with buildCmd (error)
+query: |
+  mutation Ci_createDockerPipeLine($in: GitDockerPipelineIn!) {
+    ci_createDockerPipeLine(in: $in)
+  }
+variables:
+  in:
+    repoName: backend_np-cart
+    projectId: proj-0f1hjg-c0q0ndi9-damtr5f78vrq
+    accountId: acc-gqjm9v7geosp9mnkdt-kdiewwjc4
+    projectName: sample-proje-24785
+    containerName: main
+    gitBranch: main
+    name: pipeline_sample-app-27390-main
+    gitRepoUrl: https://github.com/abdheshnayak/backend_np-cart.git
+    gitProvider: github
+    artifactRef:
+      dockerImageName: 9fb-4d0b-bb67-e9dc16834193
+      dockerImageTag: latest
+    appId: sample-app-27390
+    dockerFile: Dockerfile
+    contextDir: ./
+    buildArgs: ''
 ---
 label: list pipelines
 query: |
