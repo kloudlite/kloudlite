@@ -31,6 +31,10 @@ type BucketReconciler struct {
 	Env    *env.Env
 }
 
+func (r *BucketReconciler) GetName() string {
+	return "s3aws-bucket"
+}
+
 const (
 	KeyBucketName   string = "KeyBucketName"
 	KeyAccessSecret string = "KeyAccessSecret"

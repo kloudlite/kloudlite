@@ -30,6 +30,10 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+func (r *ServiceReconciler) GetName() string {
+	return "redis-standalone-service"
+}
+
 const (
 	RedisPasswordKey  string = "redis-password"
 	KeyAclAccountsMap string = "acl-accounts-map"
