@@ -12,6 +12,7 @@ type Logger interface {
 	Infof(msg string, args ...any)
 	Errorf(err error, msg string, args ...any)
 	Warnf(msg string, args ...any)
+	WithName(name string) Logger
 }
 
 type customLogger struct {
@@ -32,6 +33,10 @@ func (c customLogger) Errorf(err error, msg string, args ...any) {
 
 func (c customLogger) Warnf(msg string, args ...any) {
 	c.zapLogger.Warnf(msg, args...)
+}
+
+func (c customLogger) WithName(name string) Logger {
+	return &customLogger{zapLogger: c.zapLogger.Named(name)}
 }
 
 type Options struct {

@@ -65,7 +65,9 @@ func (r *appResolver) CiCreateDockerPipeLine(ctx context.Context, obj *model.App
 	var pipeline, err = r.Domain.CreatePipeline(
 		ctx, session.UserId, domain.Pipeline{
 			Name:          in.Name,
+			ProjectName:   in.ProjectName,
 			ProjectId:     in.ProjectID,
+			AccountId:     in.AccountID,
 			AppId:         string(obj.ID),
 			ContainerName: containerName,
 			GitProvider:   in.GitProvider,
