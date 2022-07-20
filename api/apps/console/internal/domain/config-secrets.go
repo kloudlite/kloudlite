@@ -99,10 +99,22 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 	return true, nil
 }
 func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error) {
-	err := d.secretRepo.DeleteById(ctx, secretId)
+	secret, err := d.secretRepo.FindById(ctx, secretId)
 	if err != nil {
 		return false, err
 	}
+	err = d.secretRepo.DeleteById(ctx, secretId)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("delete", string(secretId), opcrds.Config{
+		APIVersion: opcrds.ConfigAPIVersion,
+		Kind:       opcrds.ConfigKind,
+		Metadata: opcrds.ConfigMetadata{
+			Name:      secret.Name,
+			Namespace: secret.Namespace,
+		},
+	})
 	return true, nil
 }
 
