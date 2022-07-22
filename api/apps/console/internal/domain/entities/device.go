@@ -21,6 +21,8 @@ type Device struct {
 	PublicKey        *string      `json:"public_key" bson:"public_key"`
 	Ip               string       `json:"ip" bson:"ip"`
 	Status           DeviceStatus `json:"status" bson:"status"`
+	ActiveRegion     string       `json:"region" bson:"region"`
+	ExposedPorts     []int32      `json:"exposed_ports" bson:"exposed_ports"`
 }
 
 var DeviceIndexes = []repos.IndexField{

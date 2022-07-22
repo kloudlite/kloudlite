@@ -6,6 +6,7 @@ import (
 	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	internal_crds "kloudlite.io/apps/console/internal/domain/op-crds/internal-crds"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -57,12 +58,10 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 	if e != nil {
 		return nil, fmt.Errorf("unable to generate private key because %v", e)
 	}
-
 	e = d.ensureWgAccount(ctx, accountId)
 	if e != nil {
 		return nil, fmt.Errorf("unable to ensure wg account because %v", e)
 	}
-
 	devices, err := d.deviceRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"account_id": accountId,
@@ -71,11 +70,9 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 			"index": 1,
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}
-
 	index := -1
 	count := 0
 	for i, d := range devices {
@@ -88,12 +85,11 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 	if index == -1 {
 		index = count
 	}
-
 	deviceIp, e := getRemoteDeviceIp(int64(index + 2))
 	ip := deviceIp.String()
 	pkString := pk.String()
 	pbKeyString := pk.PublicKey().String()
-	newDevice, e := d.deviceRepo.Create(ctx, &entities.Device{
+	device, e := d.deviceRepo.Create(ctx, &entities.Device{
 		Name:       deviceName,
 		AccountId:  accountId,
 		UserId:     userId,
@@ -103,16 +99,30 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 		Status:     entities.DeviceStateSyncing,
 		Index:      index,
 	})
-
 	if e != nil {
 		return nil, fmt.Errorf("unable to persist in db %v", e)
 	}
-
-	if e != nil {
-		return nil, e
+	err = d.workloadMessenger.SendAction("apply", string(device.Id), &internal_crds.Device{
+		APIVersion: internal_crds.DeviceAPIVersion,
+		Kind:       internal_crds.DeviceKind,
+		Metadata: internal_crds.DeviceMetadata{
+			Name: string(device.Id),
+			Annotations: map[string]string{
+				"kloudlite.io/account-ref": string(device.Id),
+			},
+		},
+		Spec: internal_crds.DeviceSpec{
+			Account:      string(device.AccountId),
+			ActiveRegion: device.ActiveRegion,
+			Offset:       device.Index,
+			DeviceId:     string(device.Id),
+			Ports:        device.ExposedPorts,
+		},
+	})
+	if err != nil {
+		return device, err
 	}
-
-	return newDevice, e
+	return device, e
 }
 func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	device, err := d.deviceRepo.FindById(ctx, deviceId)
@@ -124,7 +134,41 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	if err != nil {
 		return err
 	}
+	err = d.workloadMessenger.SendAction("delete", string(device.Id), &internal_crds.Device{
+		APIVersion: internal_crds.DeviceAPIVersion,
+		Kind:       internal_crds.DeviceKind,
+		Metadata: internal_crds.DeviceMetadata{
+			Name: string(device.Id),
+		},
+	})
 	return err
+}
+func (d *domain) UpdateDevice(ctx context.Context, device *entities.Device) (done bool, e error) {
+	_, err := d.deviceRepo.UpdateById(ctx, device.Id, device)
+	if err != nil {
+		return false, e
+	}
+	err = d.workloadMessenger.SendAction("apply", string(device.Id), &internal_crds.Device{
+		APIVersion: internal_crds.DeviceAPIVersion,
+		Kind:       internal_crds.DeviceKind,
+		Metadata: internal_crds.DeviceMetadata{
+			Name: string(device.Id),
+			Annotations: map[string]string{
+				"kloudlite.io/account-ref": string(device.Id),
+			},
+		},
+		Spec: internal_crds.DeviceSpec{
+			Account:      string(device.AccountId),
+			ActiveRegion: device.ActiveRegion,
+			Offset:       device.Index,
+			DeviceId:     string(device.Id),
+			Ports:        device.ExposedPorts,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
@@ -137,6 +181,7 @@ func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
 		return nil, addressError
 	}
 }
+
 func (d *domain) ensureWgAccount(ctx context.Context, accountId repos.ID) error {
 	one, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
 		"account_id": accountId,
