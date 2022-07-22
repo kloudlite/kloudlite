@@ -146,6 +146,13 @@ type Device struct {
 
 func (Device) IsEntity() {}
 
+type DeviceIn struct {
+	ID     repos.ID `json:"id"`
+	Name   string   `json:"name"`
+	Region string   `json:"region"`
+	Ports  []int    `json:"ports"`
+}
+
 type EnvVal struct {
 	Type  string  `json:"type"`
 	Value *string `json:"value"`
