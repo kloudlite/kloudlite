@@ -219,7 +219,7 @@ var Module = fx.Module(
 	domain.Module,
 
 	// Log Service
-	fx.Invoke(func(logServer loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient AuthCacheClient) {
+	fx.Invoke(func(logServer loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient AuthCacheClient, d domain.Domain) {
 		var a *fiber.App
 		a = logServer
 		a.Use(httpServer.NewSessionMiddleware[*common.AuthSession](
@@ -228,13 +228,25 @@ var Module = fx.Module(
 			env.CookieDomain,
 			common.CacheSessionPrefix,
 		))
-		a.Get("/", fWebsocket.New(func(conn *fWebsocket.Conn) {
+		a.Get("/app-logs", fWebsocket.New(func(conn *fWebsocket.Conn) {
+			appId := conn.Query("app_id", "app_id")
+			app, err := d.GetApp(context.TODO(), repos.ID(appId))
+			if err != nil {
+				fmt.Println(err)
+				conn.Close()
+				return
+			}
 			// Crosscheck session
 			client.Tail([]loki_server.StreamSelector{
 				{
 					Key:       "namespace",
 					Operation: "=",
-					Value:     "hotspot",
+					Value:     app.Namespace,
+				},
+				{
+					Key:       "app",
+					Operation: "=",
+					Value:     app.ReadableId,
 				},
 			}, nil, nil, nil, nil, conn)
 		}))
