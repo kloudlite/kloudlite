@@ -11,8 +11,8 @@ type AccountMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 }
 
-const AccountAPIVersion = "crds.kloudlite.io/v1"
-const AccountKind = "App"
+const AccountAPIVersion = "management.kloudlite.io/v1"
+const AccountKind = "Account"
 
 type Account struct {
 	APIVersion string `json:"apiVersion,omitempty"`
