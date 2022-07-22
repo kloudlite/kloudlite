@@ -41,6 +41,7 @@ func (r *accountResolver) Devices(ctx context.Context, obj *model.Account) ([]*m
 			Account: &model.Account{ID: device.AccountId},
 			Name:    device.Name,
 			IP:      device.Ip,
+			Region:  device.ActiveRegion,
 			Ports: func() []int {
 				var ports []int
 				for _, port := range device.ExposedPorts {
@@ -189,8 +190,9 @@ func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID
 		User: &model.User{
 			ID: session.UserId,
 		},
-		Name: device.Name,
-		IP:   device.Ip,
+		Region: device.ActiveRegion,
+		Name:   device.Name,
+		IP:     device.Ip,
 		Account: &model.Account{
 			ID: device.AccountId,
 		},
@@ -1038,6 +1040,7 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 	for _, device := range deviceEntities {
 		devices = append(devices, &model.Device{
 			ID:      device.Id,
+			Region:  device.ActiveRegion,
 			User:    &model.User{ID: device.UserId},
 			Account: &model.Account{ID: device.AccountId},
 			Name:    device.Name,

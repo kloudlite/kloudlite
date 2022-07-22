@@ -112,11 +112,16 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 			},
 		},
 		Spec: internal_crds.DeviceSpec{
-			Account:      string(device.AccountId),
-			ActiveRegion: device.ActiveRegion,
-			Offset:       device.Index,
-			DeviceId:     string(device.Id),
-			Ports:        device.ExposedPorts,
+			Account: string(device.AccountId),
+			ActiveRegion: func() string {
+				if device.ActiveRegion != nil {
+					return *device.ActiveRegion
+				}
+				return ""
+			}(),
+			Offset:   device.Index,
+			DeviceId: string(device.Id),
+			Ports:    device.ExposedPorts,
 		},
 	})
 	if err != nil {
@@ -146,7 +151,7 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, region *string, ports []int32) (done bool, e error) {
 	device, e := d.deviceRepo.FindById(ctx, deviceId)
 	if region != nil {
-		device.ActiveRegion = *region
+		device.ActiveRegion = region
 	}
 	device.ExposedPorts = ports
 	_, err := d.deviceRepo.UpdateById(ctx, deviceId, device)
@@ -163,11 +168,16 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, region *st
 			},
 		},
 		Spec: internal_crds.DeviceSpec{
-			Account:      string(device.AccountId),
-			ActiveRegion: device.ActiveRegion,
-			Offset:       device.Index,
-			DeviceId:     string(device.Id),
-			Ports:        device.ExposedPorts,
+			Account: string(device.AccountId),
+			ActiveRegion: func() string {
+				if device.ActiveRegion != nil {
+					return *device.ActiveRegion
+				}
+				return ""
+			}(),
+			Offset:   device.Index,
+			DeviceId: string(device.Id),
+			Ports:    device.ExposedPorts,
 		},
 	})
 	if err != nil {

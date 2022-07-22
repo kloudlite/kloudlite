@@ -144,3 +144,7 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 	}
 	return create, err
 }
+
+func (d *domain) OnDeleteProject(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.projectRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}

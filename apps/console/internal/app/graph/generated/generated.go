@@ -139,6 +139,7 @@ type ComplexityRoot struct {
 		IP            func(childComplexity int) int
 		Name          func(childComplexity int) int
 		Ports         func(childComplexity int) int
+		Region        func(childComplexity int) int
 		User          func(childComplexity int) int
 	}
 
@@ -805,6 +806,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Device.Ports(childComplexity), true
+
+	case "Device.region":
+		if e.complexity.Device.Region == nil {
+			break
+		}
+
+		return e.complexity.Device.Region(childComplexity), true
 
 	case "Device.user":
 		if e.complexity.Device.User == nil {
@@ -2386,6 +2394,7 @@ type Device @key(fields: "id") {
   ip: String!
   account: Account!
   ports: [Int!]!
+  region: String
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -5629,6 +5638,38 @@ func (ec *executionContext) _Device_ports(ctx context.Context, field graphql.Col
 	res := resTmp.([]int)
 	fc.Result = res
 	return ec.marshalNInt2ᚕintᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_region(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Region, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12896,6 +12937,13 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "region":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Device_region(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
