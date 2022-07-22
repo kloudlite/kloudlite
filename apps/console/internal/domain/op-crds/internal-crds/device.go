@@ -3,7 +3,7 @@ package internal_crds
 type DeviceSpec struct {
 	Account      string  `json:"account,omitempty"`
 	ActiveRegion string  `json:"activeRegion,omitempty"`
-	Offset       int     `json:"offset,omitempty"`
+	Offset       int     `json:"offset"`
 	DeviceId     string  `json:"deviceId,omitempty"`
 	Ports        []int32 `json:"ports,omitempty"`
 }
