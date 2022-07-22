@@ -419,12 +419,11 @@ func (d *domainI) CreateAccount(
 	billing Billing,
 ) (*Account, error) {
 	id := d.accountRepo.NewId()
-	// customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// billing.StripeCustomerId = customer.Str()
-	billing.StripeCustomerId = "sample"
+	customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
+	if err != nil {
+		return nil, err
+	}
+	billing.StripeCustomerId = customer.Str()
 	acc, err := d.accountRepo.Create(
 		ctx, &Account{
 			BaseEntity: repos.BaseEntity{
@@ -450,6 +449,11 @@ func (d *domainI) CreateAccount(
 			Role:         string(common.AccountOwner),
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = d.consoleCli.SetupAccount(ctx, &console.AccountSetupIn{AccountId: string(acc.Id)})
 	if err != nil {
 		return nil, err
 	}

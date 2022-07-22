@@ -429,9 +429,6 @@ func (d *domainI) getAccessToken(ctx context.Context, provider string, userId re
 		},
 	)
 	if err != nil {
-		return nil, err
-	}
-	if err != nil {
 		return nil, errors.NewEf(err, "finding accessToken")
 	}
 	return &AccessToken{

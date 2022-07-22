@@ -7,6 +7,15 @@ service Console {
   rpc GetProjectName(ProjectIn) returns (ProjectOut);
   rpc GetApp(AppIn) returns (AppOut);
   rpc GetManagedSvc(MSvcIn) returns (MSvcOut);
+  rpc   SetupAccount(AccountSetupIn) returns (AccountSetupVoid);
+}
+
+message AccountSetupIn{
+  string accountId = 1;
+}
+
+message AccountSetupVoid{
+
 }
 
 message AppIn {
