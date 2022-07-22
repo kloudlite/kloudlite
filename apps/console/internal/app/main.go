@@ -137,22 +137,42 @@ var Module = fx.Module(
 				fmt.Println(err)
 				return err
 			}
-			switch update.Metadata.GroupVersionKind.Kind {
-			case "App":
-				domain.OnUpdateApp(context.TODO(), &update)
+			if !update.TobeDeleted {
+				switch update.Metadata.GroupVersionKind.Kind {
+				case "App":
+					domain.OnUpdateApp(context.TODO(), &update)
 
-			case "Lambda":
-				domain.OnUpdateApp(context.TODO(), &update)
+				case "Lambda":
+					domain.OnUpdateApp(context.TODO(), &update)
 
-			case "Router":
-				domain.OnUpdateRouter(context.TODO(), &update)
+				case "Router":
+					domain.OnUpdateRouter(context.TODO(), &update)
 
-			case "Project":
-				domain.OnUpdateProject(context.TODO(), &update)
+				case "Project":
+					domain.OnUpdateProject(context.TODO(), &update)
 
-			default:
-				fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
+				default:
+					fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
+				}
+			} else {
+				switch update.Metadata.GroupVersionKind.Kind {
+				case "App":
+					domain.OnDeleteApp(context.TODO(), &update)
+
+				case "Lambda":
+					domain.OnDeleteApp(context.TODO(), &update)
+
+				case "Router":
+					domain.OnDeleteRouter(context.TODO(), &update)
+
+				case "Project":
+					domain.OnDeleteProject(context.TODO(), &update)
+
+				default:
+					fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
+				}
 			}
+
 			return nil
 		})
 	}),

@@ -13,4 +13,6 @@ type StatusUpdate struct {
 	Metadata        StatusMetadata     `json:"metadata,omitempty"`
 	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
 	IsReady         bool               `json:"isReady,omitempty"`
+	TobeDeleted     bool               `json:"tobeDeleted,omitempty"`
+	Stage           string             `json:"stage,omitempty"`
 }
