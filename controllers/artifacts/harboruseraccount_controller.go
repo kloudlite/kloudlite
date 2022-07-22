@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,6 +48,11 @@ const (
 	HarborUserAccountExists conditions.Type = "HarborUserAccountExists"
 	HarborProjectReady      conditions.Type = "HarborProjectReady"
 )
+
+func getUsername(hAcc *artifactsv1.HarborUserAccount) string {
+	return fmt.Sprintf("%s-%s", hAcc.Namespace, hAcc.Name)
+	// return fmt.Sprintf("%s-%s", strings.ToLower(fn.CleanerNanoid(60)), hAcc.Name)
+}
 
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harboruseraccounts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harboruseraccounts/status,verbs=get;update;patch
@@ -196,26 +202,38 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 		return req.Done()
 	}
 
-	if !obj.Status.GeneratedVars.Exists(KeyRobotAccId) {
-		if err2 := func() error {
-			userAcc, err := r.harborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, obj.Name)
-			if err != nil {
-				return errors.NewEf(err, "creating harbor project user-account")
+	if meta.IsStatusConditionFalse(obj.Status.Conditions, HarborUserAccountExists.String()) {
+
+		if err := func() error {
+			if !obj.Status.GeneratedVars.Exists(KeyRobotAccId) {
+				userAcc, err := r.harborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, getUsername(obj))
+				if err != nil {
+					return errors.NewEf(err, "creating harbor project user-account")
+				}
+				if userAcc == nil {
+					return nil
+				}
+				if err := obj.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
+					return errors.NewEf(err, "could not set robotAccId")
+				}
+				if err := obj.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
+					return errors.NewEf(err, "could not set robotUserName")
+				}
+				if err := obj.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
+					return errors.NewEf(err, "could not set robotUserPassword")
+				}
+				return nil
 			}
-			if err := obj.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
-				return errors.NewEf(err, "could not set robotAccId")
-			}
-			if err := obj.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
-				return errors.NewEf(err, "could not set robotUserName")
-			}
-			if err := obj.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
-				return errors.NewEf(err, "could not set robotUserPassword")
-			}
-			return nil
-		}(); err2 != nil {
-			return req.FailWithOpError(err2)
+			robotAccId, _ := obj.Status.GeneratedVars.GetInt(KeyRobotAccId)
+			return r.harborCli.UpdateUserAccount(ctx, robotAccId, obj.Spec.Disable)
+		}(); err != nil {
+			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, obj))
+
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return rApi.NewStepResult(&ctrl.Result{RequeueAfter: 0}, nil)
 	}
 
 	robotAccId, ok := obj.Status.GeneratedVars.GetInt(KeyRobotAccId)

@@ -3,10 +3,6 @@ kind: Project
 metadata:
   name: sample-x
   annotations:
-    kloudlite.io/account-ref: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
-    kloudlite.io/dummy: asdsdfx
+    kloudlite.io/account-ref: sample-x
 spec:
   displayName: sample x
-  artifactRegistry:
-    enabled: true
-    size: 2000

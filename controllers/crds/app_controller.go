@@ -108,6 +108,9 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 		cs = append(
 			cs, conditions.New(conditions.DeploymentReady, rReady, conditions.Empty),
 		)
+
+		// conditions from pod
+		// conditions.FromPod(ctx, r.Client, constants.DeploymentType)
 	}
 
 	// STEP: 2.1: check current number of replicas

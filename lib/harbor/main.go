@@ -95,6 +95,10 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName string, user
 	if resp.StatusCode == http.StatusCreated {
 		return &user, nil
 	}
+	if resp.StatusCode == http.StatusConflict {
+		// ASSERT: silent exit, seems like user already exists
+		return nil, nil
+	}
 	return nil, errors.Newf("could not create user account as received statuscode=%d because %s", resp.StatusCode, rbody)
 }
 
@@ -195,11 +199,11 @@ func (h *Client) CheckIfUserAccountExists(ctx context.Context, robotAccId int) (
 		nil,
 	)
 	if err != nil {
-		return false, errors.NewEf(err, "creating request to delete robotAccount")
+		return false, errors.NewEf(err, "creating get robotAccount")
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, errors.NewEf(err, "making request to delete robotAccount")
+		return false, errors.NewEf(err, "requesting get robotAccount")
 	}
 	return resp.StatusCode == http.StatusOK, nil
 }

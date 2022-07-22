@@ -4,15 +4,19 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"operators.kloudlite.io/lib/logging"
 	"os/exec"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"operators.kloudlite.io/lib/errors"
+)
+
+var logger = logging.NewOrDie(
+	&logging.Options{Name: "kubectl", Dev: true},
 )
 
 func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
@@ -24,7 +28,7 @@ func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
 	if err := c.Run(); err != nil {
 		return outStream, errors.NewEf(err, errStream.String())
 	}
-	fmt.Printf("stdout: %s\n", outStream.Bytes())
+	logger.Debugf("(stdout) %s\n", outStream.Bytes())
 	return outStream, nil
 }
 

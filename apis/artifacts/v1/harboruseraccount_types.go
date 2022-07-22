@@ -8,7 +8,7 @@ import (
 
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
 type HarborUserAccountSpec struct {
-	Disable    bool   `json:"disable"`
+	Disable    bool   `json:"disable,omitempty"`
 	ProjectRef string `json:"projectRef"`
 }
 

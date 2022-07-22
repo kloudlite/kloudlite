@@ -35,7 +35,7 @@ type ManagedServiceReconciler struct {
 }
 
 func (r *ManagedServiceReconciler) GetName() string {
-	return "ManagedSvc"
+	return "managed-svc"
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices,verbs=get;list;watch;create;update;patch;delete

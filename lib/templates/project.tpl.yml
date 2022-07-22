@@ -3,10 +3,12 @@
 {{- $namespace := $name }}
 
 {{- $dockerSecretName := get . "docker-secret-name" | default "kloudlite-docker-registry"}}
-{{- $dockerConfig := get . "docker-config-json" }}
+{{/*{{- $dockerConfig := get . "docker-config-json" }}*/}}
 
 {{- $roleName := get . "role-name" | default "kloudlite-ns-admin" }}
 {{- $svcAccountName := get . "svc-account-name" | default "kloudlite-svc-account" }}
+
+{{- $accRef := get . "account-ref" }}
 ---
 apiVersion: v1
 kind: Namespace
@@ -14,17 +16,24 @@ metadata:
   name: {{$name}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
 
+{{- if $accRef }}
 ---
-apiVersion: v1
-kind: Secret
+apiVersion: artifacts.kloudlite.io/v1
+kind: HarborProject
+metadata:
+  name: {{$accRef}}
+spec:
+  sizeInGB: 6
+---
+apiVersion: artifacts.kloudlite.io/v1
+kind: HarborUserAccount
 metadata:
   name: {{$dockerSecretName}}
   namespace: {{$namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: {{$dockerConfig | b64enc}}
-
+spec:
+  projectRef: {{$accRef}}
+{{- end}}
 ---
 
 apiVersion: v1
