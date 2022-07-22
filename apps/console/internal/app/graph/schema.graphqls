@@ -64,6 +64,7 @@ type Mutation {
 
   core_addDevice(accountId: ID!, name: String!): Device!
   core_removeDevice(deviceId: ID!): Boolean!
+  core_updateDevice(deviceId: ID!, region: String, ports: [Int]): Boolean!
 
   core_createProject(
     accountId: ID!,
@@ -386,6 +387,13 @@ extend type User @key(fields: "id") {
   devices: [Device]
 }
 
+
+input DeviceIn {
+  id: ID!
+  name: String!
+  region: String!
+  ports: [Int!]!
+}
 
 type Device @key(fields: "id") {
   id: ID!

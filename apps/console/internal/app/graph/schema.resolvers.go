@@ -202,6 +202,20 @@ func (r *mutationResolver) CoreRemoveDevice(ctx context.Context, deviceID repos.
 	return true, nil
 }
 
+func (r *mutationResolver) CoreUpdateDevice(ctx context.Context, deviceID repos.ID, region *string, ports []*int) (bool, error) {
+	_, err := r.Domain.UpdateDevice(ctx, deviceID, region, func() []int32 {
+		makePorts := make([]int32, 0)
+		for _, p := range ports {
+			makePorts = append(makePorts, int32(*p))
+		}
+		return makePorts
+	}())
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
