@@ -36,6 +36,8 @@ spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
               apiVersion:
+                description: Provider     string              `json:"provider"` NodeSelector
+                  map[string]string   `json:"nodeSelector"`
                 type: string
               inputs:
                 type: object

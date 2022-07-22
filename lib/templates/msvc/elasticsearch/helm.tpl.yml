@@ -16,6 +16,9 @@ spec:
   replicas: {{index $inputs "replicaCount"}}
   minimumMasterNodes: {{index $inputs "replicaCount"}}
 
+  nodeSelector:
+    kloudlite.io/region: lon1
+
   volumeClaimTemplate:
     accessModes: [ "ReadWriteOnce" ]
     storageClassName: {{$storageClass}}

@@ -7,6 +7,6 @@ spec:
   apiVersion: elasticsearch.msvc.kloudlite.io/v1
   inputs:
     replicaCount: 1
-    cpu: 500
-    memory: 700
+    cpu: 500m
+    memory: 700Mi
     size: 2Gi

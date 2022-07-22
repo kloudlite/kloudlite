@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"operators.kloudlite.io/lib/types"
-
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,8 +28,7 @@ import (
 type ManagedServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	types.MessageSender
-	lt metav1.Time
+	lt     metav1.Time
 }
 
 func (r *ManagedServiceReconciler) GetName() string {
@@ -150,15 +147,20 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 		return req.Next()
 	}
 
-	obj, err := templates.ParseObject(templates.CommonMsvc, req.Object)
+	b, err := templates.Parse(
+		templates.CommonMsvc, map[string]any{
+			"obj":    msvc,
+			"labels": msvc.GetWatchLabels(),
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(msvc, true),
+			},
+		},
+	)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
-	obj.SetLabels(
-		fn.MapMerge(obj.GetLabels(), msvc.GetWatchLabels()),
-	)
-	err = fn.KubectlApply(req.Context(), r.Client, obj)
-	if err != nil {
+
+	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return req.FailWithOpError(err)
 	}
 	return req.Done()

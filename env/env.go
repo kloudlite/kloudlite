@@ -21,8 +21,9 @@ type Env struct {
 	HarborProjectStorageSize int    `env:"HARBOR_PROJECT_STORAGE_SIZE" required:"true"`
 	HarborQuoteEnabled       bool   `env:"HARBOR_QUOTA_ENABLED" required:"true"`
 
-	StorageClass       string `env:"STORAGE_CLASS" required:"true"`
-	XFSStorageClass    string `env:"XFS_STORAGE_CLASS" required:"true"`
+	DoBlockStorageExt4 string `env:"DO_BLOCK_STORAGE_EXT4" required:"true"`
+	DoBlockStorageXFS  string `env:"DO_BLOCK_STORAGE_XFS" required:"true"`
+
 	ReconcilePeriod    string `env:"RECONCILE_PERIOD" required:"true"`
 	ServiceAccountName string `env:"SERVICE_ACCOUNT_NAME" required:"true"`
 

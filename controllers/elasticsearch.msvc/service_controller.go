@@ -8,6 +8,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -25,6 +26,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Env    *env.Env
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -152,7 +154,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch
 		templates.ElasticSearch, map[string]any{
 			"object": svcObj,
 			// TODO: switch to dynamic storage class name
-			"storage-class": "do-block-storage",
+			"storage-class": r.Env.DoBlockStorageExt4,
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(svcObj, true),
 			},
