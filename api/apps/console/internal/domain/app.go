@@ -42,23 +42,9 @@ func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate
 	}
 	return err
 }
-func (d *domain) OnDeleteApp(ctx context.Context, name string, namespace string) error {
-	one, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"name":      name,
-		"namespace": namespace,
-	})
-	if err != nil {
-		return err
-	}
-	if one == nil {
-		return nil
-	}
-	err = d.appRepo.DeleteById(ctx, one.Id)
-	if err != nil {
-		return err
-	}
-	d.changeNotifier.Notify(one.Id)
-	return nil
+
+func (d *domain) OnDeleteApp(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.appRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
 }
 
 func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entities.App) (*entities.App, error) {

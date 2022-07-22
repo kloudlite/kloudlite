@@ -37,6 +37,7 @@ type Domain interface {
 	GetAccountProjects(ctx context.Context, id repos.ID) ([]*entities.Project, error)
 	GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error)
 	OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error
+	OnDeleteProject(ctx context.Context, response *op_crds.StatusUpdate) error
 
 	CreateConfig(ctx context.Context, id repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error)
 	UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error)
@@ -60,6 +61,7 @@ type Domain interface {
 	CreateRouter(ctx context.Context, id repos.ID, routerName string, domains []string, routes []*entities.Route) (*entities.Router, error)
 	UpdateRouter(ctx context.Context, id repos.ID, domains []string, entries []*entities.Route) (bool, error)
 	OnUpdateRouter(ctx context.Context, r *op_crds.StatusUpdate) error
+	OnDeleteRouter(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error)
 	GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error)
@@ -87,7 +89,7 @@ type Domain interface {
 	GetApp(ctx context.Context, projectID repos.ID) (*entities.App, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.StatusUpdate) error
-	OnDeleteApp(ctx context.Context, name string, namespace string) error
+	OnDeleteApp(ctx context.Context, r *op_crds.StatusUpdate) error
 	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
 	InstallApp(
 		ctx context.Context,

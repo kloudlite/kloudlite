@@ -48,6 +48,10 @@ func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.StatusUpd
 	return err
 }
 
+func (d *domain) OnDeleteRouter(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.routerRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}
+
 func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerName string, domains []string, routes []*entities.Route) (*entities.Router, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {

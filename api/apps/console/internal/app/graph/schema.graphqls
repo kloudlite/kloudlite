@@ -403,4 +403,5 @@ type Device @key(fields: "id") {
   ip: String!
   account: Account!
   ports: [Int!]!
+  region: String
 }
