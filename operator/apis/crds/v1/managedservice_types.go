@@ -12,6 +12,8 @@ import (
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
+	// Provider     string              `json:"provider"`
+	// NodeSelector map[string]string   `json:"nodeSelector"`
 	ApiVersion string              `json:"apiVersion"`
 	Inputs     rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
