@@ -160,6 +160,12 @@ const (
 	Project templateFile = "./project.tpl.yml"
 )
 
+var Msvc = struct {
+	ElasticSearch templateFile
+}{
+	ElasticSearch: "./msvc/elasticsearch/helm.tpl.yml",
+}
+
 var CoreV1 = struct {
 	ExternalNameSvc    templateFile
 	Ingress            templateFile

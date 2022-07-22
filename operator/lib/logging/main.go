@@ -29,6 +29,7 @@ func (c customLogger) Infof(msg string, args ...any) {
 }
 
 func (c customLogger) Errorf(err error, msg string, args ...any) {
+	// c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
 	c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
 }
 

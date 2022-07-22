@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -74,54 +72,92 @@ func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Conditi
 	return res, updated, nil
 }
 
-func FromPod(
-	ctx context.Context,
-	client client.Client,
-	groupVersionKind metav1.GroupVersionKind,
-	typePrefix string,
-	nn types.NamespacedName) ([]metav1.Condition, error) {
-	type statusStruct struct {
-		Conditions        []metav1.Condition       `json:"conditions,omitempty"`
-		ContainerStatuses []corev1.ContainerStatus `json:"containerStatuses,omitempty"`
-	}
-	obj := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": strings.Split(groupVersionKind.String(), ", ")[0],
-			"kind":       groupVersionKind.Kind,
-			"status": statusStruct{
-				Conditions: []metav1.Condition{},
-			},
-		},
-	}
-
-	err := client.Get(ctx, nn, &obj)
+func FromPod(ctx context.Context, client client.Client, nn types.NamespacedName) ([]metav1.Condition, error) {
+	var podRes corev1.Pod
+	err := client.Get(ctx, nn, &podRes)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]metav1.Condition, len(obj.Object["status"].(statusStruct).Conditions))
 
-	for i, condition := range obj.Object["status"].(statusStruct).Conditions {
-		condition.Type = fmt.Sprintf("%s-%s", typePrefix, condition.Type)
-		res[i] = condition
+	res := make([]metav1.Condition, len(podRes.Status.Conditions))
+	for i, pc := range podRes.Status.Conditions {
+		res[i] = metav1.Condition{
+			Type:               fmt.Sprintf("pod.%s/%s", pc.Type, podRes.Name),
+			Status:             metav1.ConditionStatus(pc.Status),
+			LastTransitionTime: pc.LastTransitionTime,
+			Reason:             pc.Reason,
+			Message:            pc.Message,
+		}
 	}
 
-	for _, cs := range obj.Object["status"].(statusStruct).ContainerStatuses {
-		p := metav1.Condition{
-			Type:   fmt.Sprintf("%s-container-%s", typePrefix, cs.Name),
-			Status: fn.IfThenElse(cs.Ready, metav1.ConditionTrue, metav1.ConditionFalse),
-		}
-		if cs.State.Waiting != nil {
-			p.Reason = cs.State.Waiting.Reason
-			p.Message = cs.State.Waiting.Message
-		}
-		if cs.State.Running != nil {
-			p.Reason = "Running"
-			p.Message = fmt.Sprintf("Container running since %s", cs.State.Running.StartedAt.String())
-		}
-		res = append(res, p)
-	}
+	// for i, pcs := range podRes.Status.ContainerStatuses {
+	// 	res[i] = metav1.Condition{
+	// 		Type:    fmt.Sprintf("container"),
+	// 		Status:  "",
+	// 		Reason:  "",
+	// 		Message: "",
+	// 	}
+	// }
+
 	return res, nil
 }
+
+// func FromPod2(
+// 	ctx context.Context,
+// 	client client.Client,
+// 	typeMeta metav1.TypeMeta,
+// 	typePrefix string,
+// 	nn types.NamespacedName,
+// ) ([]metav1.Condition, error) {
+// obj := fn.NewUnstructured(typeMeta)
+// err := client.Get(ctx, nn, obj)
+// if err != nil {
+// 	return nil, err
+// }
+//
+// b, err := json.Marshal(obj.Object)
+// if err != nil {
+// 	return nil, err
+// }
+//
+// var j struct {
+// 	Conditions        []metav1.Condition       `json:"conditions,omitempty"`
+// 	ContainerStatuses []corev1.ContainerStatus `json:"containerStatuses,omitempty"`
+// }
+// err = json.Unmarshal(b, &j)
+// if err != nil {
+// 	return nil, err
+// }
+//
+// res := make([]metav1.Condition, len(j.Conditions)+len(j.ContainerStatuses))
+//
+// for i, condition := range j.Conditions {
+// 	res[i] = condition
+// 	res[i].Type = ""
+// }
+//
+// for i, condition := range obj.Object["status"].(statusStruct).Conditions {
+// 	condition.Type = fmt.Sprintf("%s-%s", typePrefix, condition.Type)
+// 	res[i] = condition
+// }
+//
+// for _, cs := range obj.Object["status"].(statusStruct).ContainerStatuses {
+// 	p := metav1.Condition{
+// 		Type:   fmt.Sprintf("%s-container-%s", typePrefix, cs.Name),
+// 		Status: fn.IfThenElse(cs.Ready, metav1.ConditionTrue, metav1.ConditionFalse),
+// 	}
+// 	if cs.State.Waiting != nil {
+// 		p.Reason = cs.State.Waiting.Reason
+// 		p.Message = cs.State.Waiting.Message
+// 	}
+// 	if cs.State.Running != nil {
+// 		p.Reason = "Running"
+// 		p.Message = fmt.Sprintf("Container running since %s", cs.State.Running.StartedAt.String())
+// 	}
+// 	res = append(res, p)
+// }
+// return res, nil
+// }
 
 func FromResource(ctx context.Context, client client.Client, typeMeta metav1.TypeMeta, typePrefix string, nn types.NamespacedName) ([]metav1.Condition, error) {
 	obj := fn.NewUnstructured(typeMeta)

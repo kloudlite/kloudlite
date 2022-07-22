@@ -35,17 +35,6 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
-              artifactRegistry:
-                properties:
-                  enabled:
-                    default: true
-                    type: boolean
-                  size:
-                    description: specifiy size in GBs
-                    type: integer
-                required:
-                - enabled
-                type: object
               displayName:
                 description: DisplayName of Project
                 type: string

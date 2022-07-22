@@ -9,18 +9,10 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
-type ArtifactRegistry struct {
-	// +kubebuilder:default=true
-	Enabled bool `json:"enabled"`
-	// specifiy size in GBs
-	Size int `json:"size,omitempty"`
-}
-
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
 	// DisplayName of Project
-	DisplayName      string           `json:"displayName,omitempty"`
-	ArtifactRegistry ArtifactRegistry `json:"artifactRegistry,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
 }
 
 // +kubebuilder:object:root=true
