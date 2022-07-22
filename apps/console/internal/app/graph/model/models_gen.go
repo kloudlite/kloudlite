@@ -142,6 +142,7 @@ type Device struct {
 	Configuration string   `json:"configuration"`
 	IP            string   `json:"ip"`
 	Account       *Account `json:"account"`
+	Ports         []int    `json:"ports"`
 }
 
 func (Device) IsEntity() {}

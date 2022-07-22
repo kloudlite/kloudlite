@@ -138,6 +138,7 @@ type ComplexityRoot struct {
 		ID            func(childComplexity int) int
 		IP            func(childComplexity int) int
 		Name          func(childComplexity int) int
+		Ports         func(childComplexity int) int
 		User          func(childComplexity int) int
 	}
 
@@ -797,6 +798,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Device.Name(childComplexity), true
+
+	case "Device.ports":
+		if e.complexity.Device.Ports == nil {
+			break
+		}
+
+		return e.complexity.Device.Ports(childComplexity), true
 
 	case "Device.user":
 		if e.complexity.Device.User == nil {
@@ -2377,6 +2385,7 @@ type Device @key(fields: "id") {
   configuration: String!
   ip: String!
   account: Account!
+  ports: [Int!]!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -5585,6 +5594,41 @@ func (ec *executionContext) _Device_account(ctx context.Context, field graphql.C
 	res := resTmp.(*model.Account)
 	fc.Result = res
 	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_ports(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ports, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]int)
+	fc.Result = res
+	return ec.marshalNInt2ᚕintᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12842,6 +12886,16 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 				return innerFunc(ctx)
 
 			})
+		case "ports":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Device_ports(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
