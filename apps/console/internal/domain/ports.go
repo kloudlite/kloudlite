@@ -28,7 +28,7 @@ type Domain interface {
 	AddDevice(
 		ctx context.Context,
 		deviceName string, accountId repos.ID, userId repos.ID) (dev *entities.Device, e error)
-	UpdateDevice(ctx context.Context, device *entities.Device) (done bool, e error)
+	UpdateDevice(ctx context.Context, deviceId repos.ID, region *string, ports []int32) (done bool, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
 	ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error)
 	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
