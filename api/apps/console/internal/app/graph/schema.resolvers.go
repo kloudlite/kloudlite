@@ -41,6 +41,13 @@ func (r *accountResolver) Devices(ctx context.Context, obj *model.Account) ([]*m
 			Account: &model.Account{ID: device.AccountId},
 			Name:    device.Name,
 			IP:      device.Ip,
+			Ports: func() []int {
+				var ports []int
+				for _, port := range device.ExposedPorts {
+					ports = append(ports, int(port))
+				}
+				return ports
+			}(),
 		})
 	}
 	return devices, e
@@ -187,6 +194,13 @@ func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID
 		Account: &model.Account{
 			ID: device.AccountId,
 		},
+		Ports: func() []int {
+			var ports []int
+			for _, port := range device.ExposedPorts {
+				ports = append(ports, int(port))
+			}
+			return ports
+		}(),
 	}, nil
 }
 
@@ -1028,6 +1042,13 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 			Account: &model.Account{ID: device.AccountId},
 			Name:    device.Name,
 			IP:      device.Ip,
+			Ports: func() []int {
+				var ports []int
+				for _, port := range device.ExposedPorts {
+					ports = append(ports, int(port))
+				}
+				return ports
+			}(),
 		})
 	}
 	return devices, e
