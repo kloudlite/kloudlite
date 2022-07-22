@@ -6,7 +6,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	fn "operators.kloudlite.io/lib/functions"
 	libOperator "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
@@ -28,8 +27,6 @@ type ManagedService struct {
 	Spec   ManagedServiceSpec `json:"spec,omitempty"`
 	Status libOperator.Status `json:"status,omitempty"`
 }
-
-var ManagedServiceGroupVersionKind = GroupVersion.WithKind("ManagedService")
 
 func (m *ManagedService) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
@@ -53,15 +50,6 @@ func (m *ManagedService) GetWatchLabels() map[string]string {
 	return map[string]string{
 		"msvc.kloudlite.io/ref": m.Name,
 	}
-}
-
-func (s *ManagedService) Hash() (string, error) {
-	m := make(map[string]interface{}, 3)
-	m["name"] = s.Name
-	m["namespace"] = s.Namespace
-	m["spec"] = s.Spec
-	hash, err := fn.Json.Hash(m)
-	return hash, err
 }
 
 // +kubebuilder:object:root=true

@@ -40,7 +40,6 @@ spec:
               projectRef:
                 type: string
             required:
-            - disable
             - projectRef
             type: object
           status:
