@@ -402,4 +402,5 @@ type Device @key(fields: "id") {
   configuration: String!
   ip: String!
   account: Account!
+  ports: [Int!]!
 }
