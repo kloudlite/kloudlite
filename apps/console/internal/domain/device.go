@@ -108,7 +108,11 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 		Metadata: internal_crds.DeviceMetadata{
 			Name: string(device.Id),
 			Annotations: map[string]string{
-				"kloudlite.io/account-ref": string(device.Id),
+				"kloudlite.io/account-id": string(device.AccountId),
+			},
+			Labels: map[string]string{
+				"kloudlite.io/account-id": string(device.AccountId),
+				"kloudlite.io/device-id":  string(device.Id),
 			},
 		},
 		Spec: internal_crds.DeviceSpec{
@@ -164,7 +168,11 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, region *st
 		Metadata: internal_crds.DeviceMetadata{
 			Name: string(device.Id),
 			Annotations: map[string]string{
-				"kloudlite.io/account-ref": string(device.Id),
+				"kloudlite.io/account-id": string(device.AccountId),
+			},
+			Labels: map[string]string{
+				"kloudlite.io/account-id": string(device.AccountId),
+				"kloudlite.io/device-id":  string(device.Id),
 			},
 		},
 		Spec: internal_crds.DeviceSpec{
@@ -184,6 +192,7 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, region *st
 		return false, err
 	}
 	return true, nil
+
 }
 
 func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
