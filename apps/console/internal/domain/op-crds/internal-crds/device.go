@@ -15,7 +15,7 @@ type DeviceMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 }
 
-const DeviceAPIVersion = "crds.kloudlite.io/v1"
+const DeviceAPIVersion = "management.kloudlite.io/v1"
 const DeviceKind = "Device"
 
 type Device struct {
