@@ -28,6 +28,7 @@ type Domain interface {
 	AddDevice(
 		ctx context.Context,
 		deviceName string, accountId repos.ID, userId repos.ID) (dev *entities.Device, e error)
+	UpdateDevice(ctx context.Context, device *entities.Device) (done bool, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
 	ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error)
 	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
@@ -104,6 +105,8 @@ type Domain interface {
 	GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error)
 	InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
 	RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error
+
+	SetupAccount(ctx context.Context, accountId repos.ID) (bool, error)
 }
 
 type InfraActionMessage interface {
