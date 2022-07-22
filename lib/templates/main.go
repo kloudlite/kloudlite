@@ -136,13 +136,13 @@ const (
 
 	// ---
 
-	MongoDBCluster   templateFile = "mongodb-helm-cluster.tmpl.yml"
+	MongoDBCluster   templateFile = "mongodb-helm-cluster.tpl.yml"
 	MongoDBWatcher   templateFile = "mongo-msvc-watcher.tmpl.yml"
 	Deployment       templateFile = "app.tpl.yml"
 	Service          templateFile = "service.tmpl.yml"
 	Secret           templateFile = "./corev1/secret.tpl.yml"
 	AccountWireguard templateFile = "account-deploy.tmpl.yml"
-	CommonMsvc       templateFile = "msvc-common-service.tmpl.yml"
+	CommonMsvc       templateFile = "msvc-common-service.tpl.yml"
 	CommonMres       templateFile = "mres-common.tmpl.yml"
 	ConfigMap        templateFile = "configmap.tmpl.yml"
 	Ingress          templateFile = "./ingress.tmpl.yml"
@@ -151,7 +151,7 @@ const (
 
 	ServerlessLambda templateFile = "./serverless/lambda.yml.tpl"
 
-	ElasticSearch templateFile = "./msvc/elasticsearch.tpl.yml"
+	ElasticSearch templateFile = "./msvc/elasticsearch/helm.tpl.yml"
 	OpenSearch    templateFile = "./msvc/opensearch/helm.tpl.yml"
 	InfluxDB      templateFile = "./msvc/influx/helm.tpl.yml"
 
@@ -159,12 +159,6 @@ const (
 
 	Project templateFile = "./project.tpl.yml"
 )
-
-var Msvc = struct {
-	ElasticSearch templateFile
-}{
-	ElasticSearch: "./msvc/elasticsearch/helm.tpl.yml",
-}
 
 var CoreV1 = struct {
 	ExternalNameSvc    templateFile
