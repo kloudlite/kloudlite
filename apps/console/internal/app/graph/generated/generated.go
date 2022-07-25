@@ -2216,7 +2216,7 @@ type AppContainer {
   attachedResources:[AttachedRes!]!
   computePlan: String!
   quantity: Float!
-  isShared: Boolean!
+  isShared: Boolean
 }
 
 
@@ -4516,14 +4516,11 @@ func (ec *executionContext) _AppContainer_isShared(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppService_type(ctx context.Context, field graphql.CollectedField, obj *model.AppService) (ret graphql.Marshaler) {
@@ -12422,9 +12419,6 @@ func (ec *executionContext) _AppContainer(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
