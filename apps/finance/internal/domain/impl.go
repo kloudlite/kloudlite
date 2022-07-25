@@ -211,7 +211,7 @@ func (d *domainI) GetStoragePlanByName(ctx context.Context, name string) (*Stora
 }
 
 func (d *domainI) GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error) {
-	fileData, err := ioutil.ReadFile(fmt.Sprint(d.inventoryPath, "/lamda.yaml"))
+	fileData, err := ioutil.ReadFile(fmt.Sprint(d.inventoryPath, "/lambda.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -637,7 +637,7 @@ func fxDomain(
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
 	env *Env,
-	// commsClient comms.CommsClient,
+// commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	stripeCli *stripe.Client,
 
