@@ -462,11 +462,26 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		containers = append(containers, in)
 	}
 	entity, err := r.Domain.UpdateApp(ctx, appID, entities.App{
-		Name:         app.Name,
-		ProjectId:    projectID,
-		ReadableId:   string(app.ReadableID),
-		Description:  app.Description,
-		Replicas:     1,
+		Name:        app.Name,
+		ProjectId:   projectID,
+		ReadableId:  string(app.ReadableID),
+		Description: app.Description,
+		Replicas: func() int {
+			if app.Replicas != nil {
+				return *app.Replicas
+			}
+			return 1
+		}(),
+		AutoScale: func() *entities.AutoScale {
+			if app.AutoScale != nil {
+				return &entities.AutoScale{
+					MinReplicas:     int64(app.AutoScale.MinReplicas),
+					MaxReplicas:     int64(app.AutoScale.MaxReplicas),
+					UsagePercentage: int64(app.AutoScale.UsagePercentage),
+				}
+			}
+			return nil
+		}(),
 		ExposedPorts: ports,
 		Containers:   containers,
 	})
