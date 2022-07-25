@@ -26,8 +26,9 @@ jobs:
 
           context: .
           push: true
-          image: kloudlite/console:v2
+          image: kloudlite/console
+          tags: v2,latest
           registry: harbor.dev.madhouselabs.io
           build-args: APP=console
-          file: ./apps/console/Dockerfile
+          dockerfile: ./apps/console/Dockerfile
           build-contexts: project-root=../..
