@@ -40,7 +40,7 @@ type AppContainer struct {
 	AttachedResources []*AttachedRes `json:"attachedResources"`
 	ComputePlan       string         `json:"computePlan"`
 	Quantity          float64        `json:"quantity"`
-	IsShared          bool          `json:"isShared"`
+	IsShared          *bool          `json:"isShared"`
 }
 
 type AppContainerIn struct {
@@ -51,7 +51,7 @@ type AppContainerIn struct {
 	ComputePlan       string              `json:"computePlan"`
 	Quantity          float64             `json:"quantity"`
 	AttachedResources []*AttachedResInput `json:"attachedResources"`
-	IsShared          bool                `json:"isShared"`
+	IsShared          *bool               `json:"isShared"`
 }
 
 type AppInput struct {
