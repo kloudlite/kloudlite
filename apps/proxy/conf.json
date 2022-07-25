@@ -1,0 +1,1 @@
+{"services":[{"name":"localhost","servicePort":3000,"proxyPort":3001},{"name":"localhost","servicePort":3002,"proxyPort":3003},{"name":"localhost","servicePort":3009,"proxyPort":3007}]}
