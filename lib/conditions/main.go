@@ -244,6 +244,4 @@ func (t Type) String() string {
 	return string(t)
 }
 
-const ()
-
 type Reason string

@@ -22,10 +22,9 @@ type ManagedServiceSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	// +kubebuilder:validation:Optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-	MsvcRef      msvcRefTT         `json:"msvcRef"`
-	// ApiVersion    string              `json:"apiVersion"`
-	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	MsvcRef      msvcRefTT           `json:"msvcRef"`
+	Inputs       rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true

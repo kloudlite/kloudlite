@@ -99,6 +99,7 @@ func (r *DatabaseReconciler) finalize(req *rApi.Request[*mysqlStandalone.Databas
 func formatDbName(dbName string) string {
 	return strings.ReplaceAll(dbName, "-", "_")
 }
+
 func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.Database]) rApi.StepResult {
 	ctx := req.Context()
 	obj := req.Object

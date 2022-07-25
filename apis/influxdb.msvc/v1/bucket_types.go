@@ -4,12 +4,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
-	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 type BucketSpec struct {
-	ManagedSvcName string              `json:"managedSvcName"`
-	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
+	ManagedSvcName string `json:"managedSvcName"`
 }
 
 // +kubebuilder:object:root=true

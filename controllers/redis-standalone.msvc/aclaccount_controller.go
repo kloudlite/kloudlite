@@ -266,10 +266,6 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals", "msvc-output-ref"))
 	}
 
-	prefix, ok := obj.Spec.Inputs.GetString("prefix")
-	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%s not present in .Spec.Inputs", "prefix"))
-	}
 	userPassword, ok := obj.Status.GeneratedVars.GetString(KeyUserPassword)
 	if !ok {
 		return req.FailWithOpError(errors.Newf("key=%s not present in .Status.GeneratedVars", KeyUserPassword))
@@ -283,7 +279,7 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		}
 		defer redisCli.Close()
 
-		return redisCli.UpsertUser(ctx, prefix, obj.Name, userPassword)
+		return redisCli.UpsertUser(ctx, obj.Spec.KeyPrefix, obj.Name, userPassword)
 	}()
 	if err4 != nil {
 		// TODO:(user) might need to reconcile with retry with timeout error
@@ -305,7 +301,7 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 					"HOSTS":    msvcRef.Hosts,
 					"PASSWORD": userPassword,
 					"USERNAME": obj.Name,
-					"PREFIX":   prefix,
+					"PREFIX":   obj.Spec.KeyPrefix,
 					"URI":      fmt.Sprintf("redis://%s:%s@%s?allowUsernameInURI=true", obj.Name, userPassword, msvcRef.Hosts),
 				},
 			},
@@ -324,7 +320,7 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		msvcRef.ACLConfig.Data[obj.Name] = fmt.Sprintf(
 			"user %s on ~%s:* +@all -@dangerous +info resetpass >%s",
 			obj.Name,
-			prefix,
+			obj.Spec.KeyPrefix,
 			userPassword,
 		)
 

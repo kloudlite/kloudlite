@@ -41,8 +41,6 @@ func (m *Lambda) GetEnsuredAnnotations() map[string]string {
 	}
 }
 
-var LambdaGroupVersionKind = GroupVersion.WithKind("Lambda")
-
 // +kubebuilder:object:root=true
 
 // LambdaList contains a list of Lambda
