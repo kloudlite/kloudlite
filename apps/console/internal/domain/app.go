@@ -59,7 +59,6 @@ func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entitie
 	if err != nil {
 		return nil, err
 	}
-
 	err = d.sendAppApply(ctx, prj, createdApp)
 	if err != nil {
 		return nil, err

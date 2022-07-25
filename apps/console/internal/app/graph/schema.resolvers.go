@@ -474,6 +474,7 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 	entity, err := r.Domain.UpdateApp(ctx, appID, entities.App{
 		Name:        app.Name,
 		ProjectId:   projectID,
+		IsLambda:    app.IsLambda,
 		ReadableId:  string(app.ReadableID),
 		Description: app.Description,
 		Replicas: func() int {
