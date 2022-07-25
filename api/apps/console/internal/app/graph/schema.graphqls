@@ -225,7 +225,7 @@ type AppContainer {
   attachedResources:[AttachedRes!]!
   computePlan: String!
   quantity: Float!
-  isShared: Boolean!
+  isShared: Boolean
 }
 
 
