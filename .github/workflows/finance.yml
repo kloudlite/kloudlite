@@ -1,4 +1,4 @@
-name: console
+name: finance
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
         env:
           TAG: v2
           REGISTRY: harbor.dev.madhouselabs.io
-          APP: console
+          APP: finance
  
         run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
 
