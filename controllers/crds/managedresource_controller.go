@@ -84,7 +84,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 	// STEP: PRE if msvc is ready
 	ctx := req.Context()
 	obj := req.Object
-	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ManagedSvcName), &v1.ManagedService{})
+	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &v1.ManagedService{})
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
@@ -95,14 +95,14 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 
 	rApi.SetLocal(req, "msvc", msvc)
 
-	isReady := false
+	isReady := true
 	var cs []metav1.Condition
 
 	// STEP: fetch conditions from real managed resource
 	resourceC, err := conditions.FromResource(
 		ctx, r.Client, metav1.TypeMeta{
-			APIVersion: obj.Spec.ApiVersion,
-			Kind:       obj.Spec.Kind,
+			APIVersion: obj.Spec.MsvcRef.APIVersion,
+			Kind:       obj.Spec.ResRef.Kind,
 		},
 		"", fn.NN(obj.Namespace, obj.Name),
 	)
@@ -200,7 +200,9 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					context.TODO(), &mresList, &client.ListOptions{
 						LabelSelector: labels.SelectorFromValidatedSet(
 							map[string]string{
-								"msvc.kloudlite.io/ref": obj.GetName(),
+								"msvc.kloudlite.io/ref.name":    obj.GetName(),
+								"msvc.kloudlite.io/ref.group":   obj.GetObjectKind().GroupVersionKind().Group,
+								"msvc.kloudlite.io/ref.version": obj.GetObjectKind().GroupVersionKind().Version,
 							},
 						),
 						Namespace: obj.GetNamespace(),

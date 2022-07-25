@@ -39,7 +39,6 @@ spec:
                 description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
                 type: string
               inputs:
-                description: ApiVersion    string              `json:"apiVersion"`
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               msvcRef:

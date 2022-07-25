@@ -5,13 +5,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
-	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 // ACLAccountSpec defines the desired state of ACLAccount
 type ACLAccountSpec struct {
-	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
-	ManagedSvcName string              `json:"managedSvcName"`
+	KeyPrefix      string `json:"keyPrefix"`
+	ManagedSvcName string `json:"managedSvcName"`
 }
 
 // +kubebuilder:object:root=true

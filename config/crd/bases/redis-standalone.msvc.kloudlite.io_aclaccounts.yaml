@@ -35,12 +35,12 @@ spec:
           spec:
             description: ACLAccountSpec defines the desired state of ACLAccount
             properties:
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
+              keyPrefix:
+                type: string
               managedSvcName:
                 type: string
             required:
+            - keyPrefix
             - managedSvcName
             type: object
           status:

@@ -34,9 +34,6 @@ spec:
             type: object
           spec:
             properties:
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
               managedSvcName:
                 type: string
             required:
