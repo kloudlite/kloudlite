@@ -35,19 +35,35 @@ spec:
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
-              apiVersion:
-                type: string
               inputs:
+                description: ApiVersion     string              `json:"apiVersion"`
+                  Kind           string              `json:"kind"` ManagedSvcName
+                  string              `json:"managedSvcName"`
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
-              kind:
-                type: string
-              managedSvcName:
-                type: string
+              msvcRef:
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    default: Service
+                    type: string
+                  name:
+                    type: string
+                required:
+                - apiVersion
+                - name
+                type: object
+              resRef:
+                properties:
+                  kind:
+                    type: string
+                required:
+                - kind
+                type: object
             required:
-            - apiVersion
-            - kind
-            - managedSvcName
+            - msvcRef
+            - resRef
             type: object
           status:
             properties:
