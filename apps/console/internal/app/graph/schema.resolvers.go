@@ -302,9 +302,14 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		}
 
 		in := entities.Container{
-			Name:              container.Name,
-			Image:             container.Image,
-			IsShared:          *container.IsShared,
+			Name:  container.Name,
+			Image: container.Image,
+			IsShared: func() bool {
+				if container.IsShared != nil {
+					return *container.IsShared
+				}
+				return false
+			}(),
 			ImagePullSecret:   container.PullSecret,
 			EnvVars:           e,
 			ComputePlan:       container.ComputePlan,
@@ -450,9 +455,14 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		}
 
 		in := entities.Container{
-			Name:              container.Name,
-			Image:             container.Image,
-			IsShared:          *container.IsShared,
+			Name:  container.Name,
+			Image: container.Image,
+			IsShared: func() bool {
+				if container.IsShared != nil {
+					return *container.IsShared
+				}
+				return false
+			}(),
 			ImagePullSecret:   container.PullSecret,
 			EnvVars:           e,
 			ComputePlan:       container.ComputePlan,
