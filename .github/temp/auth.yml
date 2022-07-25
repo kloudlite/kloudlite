@@ -1,4 +1,4 @@
-name: all
+name: auth
 
 on:
   push:
@@ -26,53 +26,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and Push console
-        env:
-          TAG: v2
-          REGISTRY: harbor.dev.madhouselabs.io
-          APP: console
- 
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
-
-      - name: Build and Push auth
+      - name: Build and Push
         env:
           TAG: v2
           REGISTRY: harbor.dev.madhouselabs.io
           APP: auth
  
         run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
-
-      - name: Build and Push finance
-        env:
-          TAG: v2
-          REGISTRY: harbor.dev.madhouselabs.io
-          APP: finance
- 
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
-
-
-      - name: Build and Push ci
-        env:
-          TAG: v2
-          REGISTRY: harbor.dev.madhouselabs.io
-          APP: ci
- 
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
-
-      - name: Build and Push comms
-        env:
-          TAG: v2
-          REGISTRY: harbor.dev.madhouselabs.io
-          APP: comms
- 
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
-
-      - name: Build and Push dns
-        env:
-          TAG: v2
-          REGISTRY: harbor.dev.madhouselabs.io
-          APP: dns
- 
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
-
 
