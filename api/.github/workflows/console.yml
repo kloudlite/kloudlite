@@ -36,7 +36,6 @@ jobs:
           APP: console
           CONTEXT: ./apps/console
  
-        working-dir
         run: "docker buildx build -f ${DOCKERFILE} -t ${REGISTRY}/${IMAGE}:${TAG} ${CONTEXT} --build-arg APP=${APP} --build-context project-root=../.."
 
 
