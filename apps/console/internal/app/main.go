@@ -137,7 +137,7 @@ var Module = fx.Module(
 				fmt.Println(err)
 				return err
 			}
-			if !update.TobeDeleted {
+			if update.Stage == "EXISTS" {
 				switch update.Metadata.GroupVersionKind.Kind {
 				case "App":
 					domain.OnUpdateApp(context.TODO(), &update)
@@ -154,7 +154,8 @@ var Module = fx.Module(
 				default:
 					fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
 				}
-			} else {
+			}
+			if update.Stage == "DELETED" {
 				switch update.Metadata.GroupVersionKind.Kind {
 				case "App":
 					domain.OnDeleteApp(context.TODO(), &update)
