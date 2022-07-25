@@ -4,13 +4,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
-	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	ManagedSvcName string              `json:"managedSvcName,omitempty"`
-	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
+	ManagedSvcName string `json:"managedSvcName,omitempty"`
 }
 
 // +kubebuilder:object:root=true
