@@ -342,7 +342,6 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		return nil, err
 	}
 	return &model.App{
-		IsLambda: entity.IsLambda,
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range entity.Conditions {
