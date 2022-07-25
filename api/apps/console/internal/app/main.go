@@ -159,7 +159,6 @@ var Module = fx.Module(
 				switch update.Metadata.GroupVersionKind.Kind {
 				case "App":
 					domain.OnDeleteApp(context.TODO(), &update)
-
 				case "Lambda":
 					domain.OnDeleteApp(context.TODO(), &update)
 
