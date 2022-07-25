@@ -216,6 +216,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 						return nil
 					}
 					return &op_crds.HPA{
+						Enabled:     true,
 						MinReplicas: int(app.AutoScale.MinReplicas),
 						MaxReplicas: int(app.AutoScale.MaxReplicas),
 						ThresholdCpu: func() int {

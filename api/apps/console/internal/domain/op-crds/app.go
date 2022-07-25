@@ -28,10 +28,11 @@ type Container struct {
 }
 
 type HPA struct {
-	MinReplicas     int `json:"minReplicas,omitempty"`
-	MaxReplicas     int `json:"maxReplicas,omitempty"`
-	ThresholdCpu    int `json:"thresholdCpu,omitempty"`
-	ThresholdMemory int `json:"thresholdMemory,omitempty"`
+	Enabled         bool `json:"enabled,omitempty"`
+	MinReplicas     int  `json:"minReplicas,omitempty"`
+	MaxReplicas     int  `json:"maxReplicas,omitempty"`
+	ThresholdCpu    int  `json:"thresholdCpu,omitempty"`
+	ThresholdMemory int  `json:"thresholdMemory,omitempty"`
 }
 
 type AppSpec struct {
