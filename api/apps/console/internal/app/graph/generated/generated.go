@@ -2244,7 +2244,7 @@ input AppContainerIn{
   computePlan: String!
   quantity: Float!
   attachedResources:[AttachedResInput!]!
-  isShared: Boolean!
+  isShared: Boolean
 }
 
 type ExposedService{
@@ -11549,7 +11549,7 @@ func (ec *executionContext) unmarshalInputAppContainerIn(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isShared"))
-			it.IsShared, err = ec.unmarshalNBoolean2bool(ctx, v)
+			it.IsShared, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}

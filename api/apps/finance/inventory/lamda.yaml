@@ -1,3 +1,3 @@
 - name: Default
-  pricePerGBHr: 0.005
+  pricePerGBHr: 0.05
   freeTire: 1000
