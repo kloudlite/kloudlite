@@ -2,14 +2,31 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
-	rawJson "operators.kloudlite.io/lib/raw-json"
 )
+
+type adminTT struct {
+	// +kubebuilder:default=admin
+	// +kubebuidler:validation:Optional
+	Username string `json:"username"`
+	// +kubebuidler:validation:Optional
+	// +kubebuilder:default=primary
+	Bucket string `json:"bucket"`
+	// +kubebuilder:default=primary
+	// +kubebuidler:validation:Optional
+	Org string `json:"org"`
+}
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
+	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"nodeSelector"`
+	Admin        adminTT           `json:"admin"`
+	Storage      ct.Storage        `json:"storage"`
+	Resources    ct.Resources      `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
@@ -31,6 +48,7 @@ func (s *Service) GetStatus() *rApi.Status {
 func (s *Service) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
 }
+
 func (m *Service) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Service").String(),

@@ -2,10 +2,10 @@
 {{- $storageClass := get . "storage-class"}}
 {{- $obj := get . "object"}}
 
-{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
 {{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
 
 {{- with $obj }}
+{{- /*gotype: operators.kloudlite.io/apis/mysql-standalone.msvc/v1.Service*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMySqlDB
 metadata:
@@ -23,6 +23,10 @@ spec:
   commonLabels: {{.Labels | toYAML | nindent 4}}
   {{- end }}
 
+  {{- if .Spec.NodeSelector}}
+  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
+  {{- end }}
+
   architecture: standalone
   auth:
     enabled: true
@@ -31,10 +35,11 @@ spec:
   primary:
     persistence:
       enabled: true
-      size: {{ index $inputs "size" }}
+      size: {{.Spec.Storage.Size}}
   resources:
-    requests: &cpu-and-mem
-      cpu: {{ index $inputs "cpu" }}
-      memory: {{ index $inputs "memory" }}
-    limits: *cpu-and-mem
+    limits:
+      cpu: {{.Spec.Resources.Cpu}}
+      memory: {{.Spec.Resources.Memory}}
+    requests:
+      memory: {{.Spec.Resources.Memory}}
 {{- end}}
