@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'working01'
+      - 'develop'
 
 jobs:
   docker:
