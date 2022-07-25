@@ -34,8 +34,9 @@ jobs:
           BUILD-ARGS: APP=console
           DOCKERFILE: ./apps/console/Dockerfile
           APP: console
+          CONTEXT: ./apps/console
  
-        run: "docker buildx build --platform linux/amd64 -f ${DOCKERFILE} -t ${REGISTRY}/${IMAGE}:${TAG} . --build-arg APP=${APP} --build-context project-root=./"
+        run: "docker buildx build -context ${CONTEXT} -f ${DOCKERFILE} -t ${REGISTRY}/${IMAGE}:${TAG} . --build-arg APP=${APP} --build-context project-root=../.."
 
 
       # - name: Build and push
