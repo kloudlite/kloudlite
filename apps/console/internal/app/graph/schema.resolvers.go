@@ -514,7 +514,7 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 			if entity.AutoScale != nil {
 				return &model.AutoScale{
 					MinReplicas:     int(entity.AutoScale.MinReplicas),
-					MaxReplicas:     int(entity.AutoScale.MinReplicas),
+					MaxReplicas:     int(entity.AutoScale.MaxReplicas),
 					UsagePercentage: int(entity.AutoScale.UsagePercentage),
 				}
 			}
