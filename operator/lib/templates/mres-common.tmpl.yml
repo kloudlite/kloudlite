@@ -17,5 +17,7 @@ metadata:
   {{- end }}
 spec:
   managedSvcName: {{.Spec.MsvcRef.Name}}
-  inputs: {{.Spec.Inputs | toJson }}
+  {{- if .Spec.Inputs }}
+  {{.Spec.Inputs | toYAML | nindent 2 }}
+  {{- end}}
 {{- end}}
