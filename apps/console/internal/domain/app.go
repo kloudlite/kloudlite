@@ -288,7 +288,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					}
 					return cs
 				}(),
-				Replicas: 1,
+				Replicas: app.Replicas,
 			},
 		})
 		return err
