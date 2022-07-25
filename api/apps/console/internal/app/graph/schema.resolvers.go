@@ -342,6 +342,7 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		return nil, err
 	}
 	return &model.App{
+		IsLambda: entity.IsLambda,
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range entity.Conditions {
@@ -755,6 +756,7 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 		}
 
 		apps = append(apps, &model.App{
+			IsLambda: a.IsLambda,
 			Conditions: func() []*model.MetaCondition {
 				conditions := make([]*model.MetaCondition, 0)
 				for _, condition := range a.Conditions {
@@ -841,6 +843,7 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	}
 
 	return &model.App{
+		IsLambda: a.IsLambda,
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range a.Conditions {
