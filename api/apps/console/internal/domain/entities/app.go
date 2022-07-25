@@ -84,7 +84,7 @@ const (
 
 type AutoScale struct {
 	MinReplicas     int64 `json:"min_replicas" bson:"min_replicas"`
-	MaxReplicas     int64 `json:"min_replicas" bson:"min_replicas"`
+	MaxReplicas     int64 `json:"max_replicas" bson:"max_replicas"`
 	UsagePercentage int64 `json:"usage_percentage" bson:"usage_percentage"`
 }
 
