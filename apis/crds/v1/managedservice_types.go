@@ -1,21 +1,31 @@
 package v1
 
 import (
-	"fmt"
+	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
+	rApi "operators.kloudlite.io/lib/operator"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	libOperator "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
+type msvcRefTT struct {
+	APIVersion string `json:"apiVersion"`
+	// +kubebuilder:default=Service
+	// +kubebuilder:validation:Optional
+	Kind string `json:"Kind"`
+}
+
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	// Provider     string              `json:"provider"`
-	// NodeSelector map[string]string   `json:"nodeSelector"`
-	ApiVersion string              `json:"apiVersion"`
-	Inputs     rawJson.KubeRawJson `json:"inputs,omitempty"`
+	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	MsvcRef      msvcRefTT         `json:"msvcRef"`
+	// ApiVersion    string              `json:"apiVersion"`
+	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -27,14 +37,10 @@ type ManagedService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   ManagedServiceSpec `json:"spec,omitempty"`
-	Status libOperator.Status `json:"status,omitempty"`
+	Status rApi.Status        `json:"status,omitempty"`
 }
 
-func (m *ManagedService) NameRef() string {
-	return fmt.Sprintf("%s/%s/%s", m.Namespace, m.Kind, m.Name)
-}
-
-func (m *ManagedService) GetStatus() *libOperator.Status {
+func (m *ManagedService) GetStatus() *rApi.Status {
 	return &m.Status
 }
 

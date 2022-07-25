@@ -2,10 +2,10 @@
 {{- $storageClass := get . "storage-class" }}
 {{- $obj := get . "object"}}
 
-{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
 {{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
 
 {{- with $obj}}
+{{- /* gotype: operators.kloudlite.io/apis/elasticsearch.msvc/v1.Service */ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmElasticSearch
 metadata:
@@ -13,26 +13,22 @@ metadata:
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
-  replicas: {{index $inputs "replicaCount"}}
-  minimumMasterNodes: {{index $inputs "replicaCount"}}
-
-  nodeSelector:
-    kloudlite.io/region: lon1
+  replicas: {{.Spec.ReplicaCount}}
+  minimumMasterNodes: {{.Spec.ReplicaCount}}
 
   volumeClaimTemplate:
     accessModes: [ "ReadWriteOnce" ]
     storageClassName: {{$storageClass}}
     resources:
       requests:
-        storage: {{index $inputs "size"}}
+        storage: {{.Spec.Storage.Size}}
 
   resources:
-    requests:
-      cpu: {{ index $inputs "cpu" }}
-      memory: {{ index $inputs "memory" }}
     limits:
-      cpu: {{ index $inputs "cpu" }}
-      memory: {{ index $inputs "memory" }}
+      cpu: {{.Spec.Resources.Cpu}}
+      memory: {{.Spec.Resources.Memory}}
+    requests:
+      memory: {{.Spec.Resources.Cpu}}
 
   secret:
     enabled: true

@@ -9,7 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ct "operators.kloudlite.io/apis/common-types"
 	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -27,6 +29,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Env    *env.Env
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -208,11 +211,14 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalo
 
 	// STEP: 3. apply CRs of helm/custom controller
 	if errP := func() error {
+		storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+		if err != nil {
+			return err
+		}
 		b1, err := templates.Parse(
 			templates.MySqlStandalone, map[string]any{
-				"object": svcObj,
-				// TODO: storage-class
-				"storage-class": constants.DoBlockStorage,
+				"object":        svcObj,
+				"storage-class": storageClass,
 				"owner-refs": []metav1.OwnerReference{
 					fn.AsOwner(svcObj, true),
 				},

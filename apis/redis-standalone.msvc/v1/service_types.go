@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,8 +13,14 @@ import (
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
+	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
 	Inputs      rawJson.KubeRawJson `json:"inputs,omitempty"`
 	ACLAccounts map[string]string   `json:"aclAccounts,omitempty"`
+	Storage     ct.Storage          `json:"storage"`
+	Resources   ct.Resources        `json:"resources"`
 }
 
 // +kubebuilder:object:root=true

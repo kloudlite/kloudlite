@@ -15,8 +15,8 @@ import (
 type stageTT string
 
 var Stages = struct {
-	Exists  stageTT
-	Deleted stageTT
+	Exists  stageTT `json:"exists"`
+	Deleted stageTT `json:"deleted"`
 }{
 	Exists:  "EXISTS",
 	Deleted: "DELETED",
@@ -26,11 +26,11 @@ type MessageReply struct {
 	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
 	Conditions      []metav1.Condition `json:"conditions,omitempty"`
 	IsReady         bool               `json:"isReady,omitempty"`
-	ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
-	Key             string             `json:"key"`
-	Billing         ResourceBilling    `json:"billing,omitempty"`
-	Metadata        KlMetadata         `json:"metadata,omitempty"`
-	Stage           stageTT            `json:"stage"`
+	// ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
+	Key      string          `json:"key"`
+	Billing  ResourceBilling `json:"billing,omitempty"`
+	Metadata KlMetadata      `json:"metadata,omitempty"`
+	Stage    stageTT         `json:"stage"`
 }
 
 type Notifier struct {

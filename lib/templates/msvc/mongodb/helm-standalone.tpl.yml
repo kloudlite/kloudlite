@@ -3,9 +3,9 @@
 {{- $obj :=  get . "object" }}
 
 {{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson)}}
-{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
 
 {{- with $obj }}
+{{- /* gotype: operators.kloudlite.io/apis/mongodb-standalone.msvc/v1.Service */ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMongoDB
 metadata:
@@ -17,7 +17,7 @@ metadata:
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
 spec:
   global:
-    storageClass: {{ $storageClass }}
+    storageClass: {{$storageClass}}
   fullnameOverride: {{.Name}}
   image:
     tag: 5.0.8-debian-10-r20
@@ -26,19 +26,24 @@ spec:
   commonLabels: {{.Labels | toYAML | nindent 4}}
   {{- end}}
 
+  {{- if .Spec.NodeSelector}}
+  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
+  {{- end }}
+
   auth:
     enabled: true
     rootPassword: {{ index $generatedVars "root-password" }}
   persistence:
     enabled: true
-    size: {{ index $inputs "size" }}
+    size: {{.Spec.Storage.Size}}
   volumePermissions:
     enabled: true
   metrics:
     enabled: false
   resources:
-    requests: &cpu-and-mem
-      cpu: {{ index $inputs "cpu" }}
-      memory: {{ index $inputs "memory" }}
-    limits: *cpu-and-mem
+    requests:
+      memory: {{ .Spec.Resources.Memory }}
+    limits:
+      cpu: {{ .Spec.Resources.Cpu}}
+      memory: {{ .Spec.Resources.Memory}}
 {{- end }}

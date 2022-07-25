@@ -76,18 +76,6 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Req
 	return ctrl.Result{}, nil
 }
 
-func (r *ManagedResourceReconciler) notify(req *rApi.Request[*v1.ManagedResource]) error {
-	obj := req.Object
-	return r.SendMessage(
-		req.Context(),
-		fn.NN(obj.Namespace, obj.Name).String(), types.MessageReply{
-			Key:        fn.NN(obj.Namespace, obj.Name).String(),
-			Conditions: obj.Status.Conditions,
-			IsReady:    obj.Status.IsReady,
-		},
-	)
-}
-
 func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
 	return req.Finalize()
 }

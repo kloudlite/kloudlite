@@ -3,6 +3,8 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
+	ct "operators.kloudlite.io/apis/common-types"
+	"operators.kloudlite.io/env"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -29,6 +31,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Env    *env.Env
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -185,7 +188,6 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	svcObj.Status.IsReady = isReady
 	svcObj.Status.Conditions = newConditions
 	svcObj.Status.ChildConditions = newChildConditions
-	svcObj.Status.OpsConditions = []metav1.Condition{}
 
 	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
 }
@@ -202,11 +204,15 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 	}
 
 	if errP := func() error {
+		storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Xfs)
+		if err != nil {
+			return err
+		}
 		b1, err := templates.Parse(
 			templates.MongoDBStandalone, map[string]any{
 				"object": svcObj,
 				// TODO: storage-class
-				"storage-class": constants.DoBlockStorageXFS,
+				"storage-class": storageClass,
 				"owner-refs": []metav1.OwnerReference{
 					fn.AsOwner(svcObj, true),
 				},
