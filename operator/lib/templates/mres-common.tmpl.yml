@@ -1,8 +1,9 @@
 {{- $ownerRefs := get . "owner-refs" }}
 {{- $obj := get . "object"}}
 {{- with $obj }}
-apiVersion: {{.Spec.ApiVersion}}
-kind: {{.Spec.Kind}}
+{{- /* gotype: operators.kloudlite.io/apis/crds/v1.ManagedResource */ -}}
+apiVersion: {{.Spec.MsvcRef.APIVersion}}
+kind: {{.Spec.ResRef.Kind}}
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
@@ -15,6 +16,6 @@ metadata:
     mres.kloudlite.io/ref: {{.Name}}
   {{- end }}
 spec:
-  managedSvcName: {{.Spec.ManagedSvcName}}
+  managedSvcName: {{.Spec.MsvcRef.Name}}
   inputs: {{.Spec.Inputs | toJson }}
 {{- end}}
