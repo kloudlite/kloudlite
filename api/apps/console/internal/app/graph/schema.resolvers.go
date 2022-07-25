@@ -361,7 +361,7 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 			if entity.AutoScale != nil {
 				return &model.AutoScale{
 					MinReplicas:     int(entity.AutoScale.MinReplicas),
-					MaxReplicas:     int(entity.AutoScale.MinReplicas),
+					MaxReplicas:     int(entity.AutoScale.MaxReplicas),
 					UsagePercentage: int(entity.AutoScale.UsagePercentage),
 				}
 			}
@@ -767,7 +767,7 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 				if a.AutoScale != nil {
 					return &model.AutoScale{
 						MinReplicas:     int(a.AutoScale.MinReplicas),
-						MaxReplicas:     int(a.AutoScale.MinReplicas),
+						MaxReplicas:     int(a.AutoScale.MaxReplicas),
 						UsagePercentage: int(a.AutoScale.UsagePercentage),
 					}
 				}
@@ -854,7 +854,7 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 			if a.AutoScale != nil {
 				return &model.AutoScale{
 					MinReplicas:     int(a.AutoScale.MinReplicas),
-					MaxReplicas:     int(a.AutoScale.MinReplicas),
+					MaxReplicas:     int(a.AutoScale.MaxReplicas),
 					UsagePercentage: int(a.AutoScale.UsagePercentage),
 				}
 			}
