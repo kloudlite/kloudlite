@@ -4,9 +4,14 @@ metadata:
   name: elastic
   namespace: hotspot
 spec:
-  apiVersion: elasticsearch.msvc.kloudlite.io/v1
+  msvcRef:
+    apiVersion: elasticsearch.msvc.kloudlite.io/v1
+  cloudProvider: k3s
+  nodeSelector: {}
   inputs:
     replicaCount: 1
     cpu: 500m
     memory: 700Mi
-    size: 2Gi
+    storage:
+      size: 2Gi
+      storageClass: local-path

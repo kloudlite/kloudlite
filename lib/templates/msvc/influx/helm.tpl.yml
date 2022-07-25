@@ -2,14 +2,10 @@
 {{- $ownerRefs := get .  "owner-refs" }}
 {{- $storageClass := get . "storage-class"}}
 
-{{- $adminBucket := get . "admin-bucket" |default "primary" }}
-{{- $adminOrg := get . "admin-org" | default "primary"}}
-{{- $adminUsername := get . "admin-username" | default "admin" }}
-
-{{- $inputs := mustFromJson ($obj.Spec.Inputs |toJson) }}
 {{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars |toJson) }}
 
 {{- with $obj}}
+{{- /* gotype: operators.kloudlite.io/apis/influxdb.msvc/v1.Service*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmInfluxDB
 metadata:
@@ -21,11 +17,19 @@ spec:
   auth:
     enabled: true
     admin:
-      bucket: {{ $adminBucket }}
-      org: {{ $adminOrg }}
+      bucket: {{ .Spec.Admin.Bucket }}
+      org: {{ .Spec.Admin.Org }}
       password: {{ index $generatedVars "admin-password" }}
       token: {{index $generatedVars "admin-token" }}
-      username: {{ $adminUsername }}
+      username: {{ .Spec.Admin.Username }}
+
+  {{- if .Labels }}
+  commonLabels: {{.Labels | toYAML | nindent 4}}
+  {{- end}}
+
+  {{- if .Spec.NodeSelector}}
+  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
+  {{- end }}
 
   metrics:
     enabled: true
@@ -37,13 +41,14 @@ spec:
     accessModes:
       - ReadWriteOnce
     enabled: true
-    size: {{ index $inputs "size" }}
+    size: {{.Spec.Storage.Size}}
     storageClass: {{$storageClass}}
 
   influxdb:
     resources:
-      requests: &resources
-        cpu: {{ index $inputs "cpu"}}
-        memory: {{index $inputs "memory"}}
-      limits: *resources
+      requests:
+        memory: {{.Spec.Resources.Memory}}
+      limits:
+        cpu: {{.Spec.Resources.Cpu}}
+        memory: {{.Spec.Resources.Memory}}
 {{- end }}

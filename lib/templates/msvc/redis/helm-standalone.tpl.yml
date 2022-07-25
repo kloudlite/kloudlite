@@ -6,6 +6,7 @@
 {{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
 {{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
 
+{{- with $obj }}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmRedis
 metadata:
@@ -26,6 +27,10 @@ spec:
   commonLabels: {{ .Labels | toYAML | nindent 4 }}
   {{- end}}
 
+  {{- if .Spec.NodeSelector}}
+  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
+  {{- end}}
+
   auth:
     enabled: true
     password: {{ index $generatedVars "redis-password" }}
@@ -44,17 +49,20 @@ spec:
 
   master:
     resources:
-      requests: &cpu-and-mem
-        cpu: {{ index $inputs "cpu" }}
-        memory: {{ index $inputs "memory" }}
-      limits: *cpu-and-mem
+      requests:
+{{/*        cpu: {{ .Spec.Resources.Cpu}}*/}}
+        memory: {{.Spec.Resources.Memory}}
+      limits:
+        cpu: {{ .Spec.Resources.Cpu}}
+        memory: {{.Spec.Resources.Memory}}
 
   persistence:
     enabled: true
-    size: {{ index $inputs "size" }}
+    size: {{.Spec.Storage.Size}}
 
   volumePermissions:
     enabled: true
 
   metrics:
     enabled: true
+{{- end}}

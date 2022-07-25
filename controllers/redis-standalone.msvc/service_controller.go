@@ -9,7 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ct "operators.kloudlite.io/apis/common-types"
 	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
@@ -28,6 +30,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Env    *env.Env
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -233,11 +236,14 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 	}
 
 	if errP := func() error {
+		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+		if err != nil {
+			return err
+		}
 		b1, err := templates.Parse(
 			templates.RedisStandalone, map[string]any{
-				"object": obj,
-				// TODO: storage-class
-				"storage-class":    constants.DoBlockStorage,
+				"object":           obj,
+				"storage-class":    storageClass,
 				"acl-accounts-map": aclAccountsMap,
 				"owner-refs": []metav1.OwnerReference{
 					fn.AsOwner(obj, true),
