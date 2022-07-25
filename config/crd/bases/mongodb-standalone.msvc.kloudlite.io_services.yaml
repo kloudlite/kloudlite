@@ -35,9 +35,39 @@ spec:
           spec:
             description: ServiceSpec defines the desired state of Service
             properties:
-              inputs:
+              cloudProvider:
+                description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
+                type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
                 type: object
-                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                properties:
+                  cpu:
+                    pattern: '[\d]+m$'
+                    type: string
+                  memory:
+                    pattern: '[\d]+Mi$'
+                    type: string
+                required:
+                - cpu
+                - memory
+                type: object
+              storage:
+                description: Inputs    rawJson.KubeRawJson `json:"inputs,omitempty"`
+                properties:
+                  size:
+                    default: 5Gi
+                    pattern: '[\d]+Gi$'
+                    type: string
+                  storageClass:
+                    type: string
+                type: object
+            required:
+            - cloudProvider
+            - resources
+            - storage
             type: object
           status:
             properties:

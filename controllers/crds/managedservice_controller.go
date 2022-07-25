@@ -83,7 +83,7 @@ func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.Managed
 
 	svcObj, err := rApi.Get(
 		ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), fn.NewUnstructured(
-			metav1.TypeMeta{Kind: "Service", APIVersion: msvc.Spec.ApiVersion},
+			metav1.TypeMeta{Kind: msvc.Spec.MsvcRef.Kind, APIVersion: msvc.Spec.MsvcRef.APIVersion},
 		),
 	)
 

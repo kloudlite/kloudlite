@@ -157,13 +157,13 @@ func main() {
 		&crds.ManagedServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 		&crds.ManagedResourceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-		&mongodbStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&mongodbStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 		&mongodbStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-		&mysqlStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&mysqlStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 		&mysqlStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-		&redisStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&redisStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 		&redisStandaloneControllers.ACLAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
 		&serverlessControllers.LambdaReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
@@ -171,7 +171,7 @@ func main() {
 		&elasticsearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 		&opensearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
-		&influxDbControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&influxDbControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
 		&influxDbControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
 
 		&s3awsControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},

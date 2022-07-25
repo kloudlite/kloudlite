@@ -35,15 +35,30 @@ spec:
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
-              apiVersion:
-                description: Provider     string              `json:"provider"` NodeSelector
-                  map[string]string   `json:"nodeSelector"`
+              cloudProvider:
+                description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
                 type: string
               inputs:
+                description: ApiVersion    string              `json:"apiVersion"`
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              msvcRef:
+                properties:
+                  Kind:
+                    default: Service
+                    type: string
+                  apiVersion:
+                    type: string
+                required:
+                - apiVersion
+                type: object
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
             required:
-            - apiVersion
+            - cloudProvider
+            - msvcRef
             type: object
           status:
             properties:

@@ -7,6 +7,8 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -24,6 +26,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Env    *env.Env
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -33,11 +36,6 @@ func (r *ServiceReconciler) GetName() string {
 const (
 	SvcAdminPasswordKey = "admin-password"
 	SvcAdminTokenKey    = "admin-token"
-)
-const (
-	InfluxAdminBucket   = "primary"
-	InfluxAdminOrg      = "primary"
-	InfluxAdminUsername = "admin"
 )
 
 const (
@@ -163,14 +161,14 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*influxdbmsvcv
 		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
 	}
 
+	storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+	if err != nil {
+		return req.FailWithOpError(err)
+	}
 	b, err := templates.Parse(
 		templates.InfluxDB, map[string]any{
-			"object": svcObj,
-			// TODO: switch to dynamic storage class name
-			"storage-class":  constants.DoBlockStorage,
-			"admin-bucket":   InfluxAdminBucket,
-			"admin-org":      InfluxAdminOrg,
-			"admin-username": InfluxAdminUsername,
+			"object":        svcObj,
+			"storage-class": storageClass,
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(svcObj, true),
 			},
@@ -215,10 +213,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*influxdbmsvcv
 				},
 			},
 			StringData: map[string]string{
-				"USERNAME": InfluxAdminUsername,
+				"USERNAME": svcObj.Spec.Admin.Username,
 				"PASSWORD": adminPassword,
-				"BUCKET":   InfluxAdminBucket,
-				"ORG":      InfluxAdminOrg,
+				"BUCKET":   svcObj.Spec.Admin.Bucket,
+				"ORG":      svcObj.Spec.Admin.Org,
 				"HOSTS":    host,
 				"TOKEN":    adminToken,
 				"URI":      fmt.Sprintf("http://%s", host),

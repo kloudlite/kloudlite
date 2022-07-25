@@ -3,8 +3,8 @@
 {{- $obj := get . "obj" }}
 {{- with $obj}}
 {{- /*gotype:  operators.kloudlite.io/apis/crds/v1.ManagedService */ -}}
-apiVersion: {{.Spec.ApiVersion}}
-kind: Service
+apiVersion: {{.Spec.MsvcRef.APIVersion}}
+kind: {{.Spec.MsvcRef.Kind}}
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
@@ -17,5 +17,7 @@ metadata:
     {{- end}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
-  inputs: {{.Spec.Inputs | toYAML |  nindent 4}}
+  cloudProvider: {{.Spec.CloudProvider}}
+  nodeSelector: {{- .Spec.NodeSelector | toYAML |nindent 4 }}
+  {{ .Spec.Inputs | toYAML | nindent 2 }}
 {{- end}}

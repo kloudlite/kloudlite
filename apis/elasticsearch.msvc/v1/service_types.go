@@ -2,13 +2,23 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
-	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 type ServiceSpec struct {
-	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
+	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+
+	// +kubebuilder:validation:optional
+	NodeSelector map[string]string `json:"nodeSelector"`
+
+	// +kubebuidler:default=1
+	// +kubebuilder:validation:Optional
+	ReplicaCount int `json:"replicaCount"`
+
+	Storage   ct.Storage   `json:"storage"`
+	Resources ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
