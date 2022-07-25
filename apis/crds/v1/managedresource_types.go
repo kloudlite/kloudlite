@@ -3,20 +3,34 @@ package v1
 import (
 	"fmt"
 	"operators.kloudlite.io/lib/constants"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	fn "operators.kloudlite.io/lib/functions"
 	libOperator "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
+type msvcNamedRefTT struct {
+	APIVersion string `json:"apiVersion"`
+	// +kubebuilder:default=Service
+	// +kubebuilder:validation:Optional
+	Kind string `json:"kind"`
+	Name string `json:"name"`
+}
+
+type resRefTT struct {
+	Kind string `json:"kind"`
+}
+
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	ApiVersion     string              `json:"apiVersion"`
-	Kind           string              `json:"kind"`
-	ManagedSvcName string              `json:"managedSvcName"`
-	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
+	MsvcRef msvcNamedRefTT `json:"msvcRef"`
+	ResRef  resRefTT       `json:"resRef"`
+	// ApiVersion     string              `json:"apiVersion"`
+	// Kind           string              `json:"kind"`
+	// ManagedSvcName string              `json:"managedSvcName"`
+	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -30,8 +44,6 @@ type ManagedResource struct {
 	Status            libOperator.Status  `json:"status,omitempty"`
 }
 
-var ManagedResourceGroupVersionKind = GroupVersion.WithKind("ManagedResource")
-
 func (m *ManagedResource) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }
@@ -41,9 +53,11 @@ func (m *ManagedResource) GetStatus() *libOperator.Status {
 }
 
 func (m *ManagedResource) GetEnsuredLabels() map[string]string {
+	splits := strings.Split(m.Spec.MsvcRef.APIVersion, "/")
 	return map[string]string{
-		"msvc.kloudlite.io/ref":                   m.Spec.ManagedSvcName,
-		fmt.Sprintf("%s/ref", GroupVersion.Group): m.Name,
+		"msvc.kloudlite.io/ref.group":   splits[0],
+		"msvc.kloudlite.io/ref.version": splits[1],
+		"msvc.kloudlite.io/ref.name":    m.Name,
 	}
 }
 
@@ -51,15 +65,6 @@ func (m *ManagedResource) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ManagedResource").String(),
 	}
-}
-
-func (m *ManagedResource) Hash() string {
-	x := make(map[string]interface{}, 3)
-	x["name"] = m.Name
-	x["namespace"] = m.Namespace
-	x["spec"] = m.Spec
-	hash, _ := fn.Json.Hash(x)
-	return hash
 }
 
 func (m *ManagedResource) OwnedByMsvc(svc *ManagedService) bool {
