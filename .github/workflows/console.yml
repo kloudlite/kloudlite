@@ -32,3 +32,5 @@ jobs:
           build-args: APP=console
           dockerfile: ./apps/console/Dockerfile
           build-contexts: project-root=../..
+          addLatest: false
+          addTimestamp: false
