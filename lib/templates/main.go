@@ -35,11 +35,21 @@ func useTemplate(file templateFile) (*kt, error) {
 	}
 
 	klFuncs["toYAML"] = func(txt any) (string, error) {
+		if txt == nil {
+			return "", nil
+		}
+
 		a, ok := funcMap["toPrettyJson"].(func(any) string)
 		if !ok {
 			panic("could not convert sprig.TxtFuncMap[toPrettyJson] into func(any) string")
 		}
-		ys, err := yaml.JSONToYAML([]byte(a(txt)))
+
+		x := a(txt)
+		if x == "null" {
+			return "", nil
+		}
+
+		ys, err := yaml.JSONToYAML([]byte(x))
 		if err != nil {
 			return "", err
 		}

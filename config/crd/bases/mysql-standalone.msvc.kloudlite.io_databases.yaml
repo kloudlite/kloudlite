@@ -35,9 +35,6 @@ spec:
           spec:
             description: DatabaseSpec defines the desired state of Database
             properties:
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
               managedSvcName:
                 type: string
             type: object

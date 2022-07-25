@@ -30,6 +30,7 @@ type ManagedResourceSpec struct {
 	// ApiVersion     string              `json:"apiVersion"`
 	// Kind           string              `json:"kind"`
 	// ManagedSvcName string              `json:"managedSvcName"`
+	// +kubebuilder:default=
 	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
