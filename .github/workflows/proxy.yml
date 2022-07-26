@@ -4,21 +4,29 @@ on:
   push:
     branches:
       - 'working01'
-    paths:
-      - './apps/proxy/**.*'
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
+
       - name: Checkout
         uses: actions/checkout@v3
 
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            proxyChanges:
+              - './apps/proxy/**'
+
       - name: Set up QEMU
+        if : steps.changes.proxyChanges == 'true'
         uses: docker/setup-qemu-action@v2
 
 
       - name: Login to GitHub Container Registry
+        if : steps.changes.proxyChanges == 'true'
         uses: docker/login-action@v2
         with:
           registry: harbor.dev.madhouselabs.io
@@ -26,9 +34,11 @@ jobs:
           password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Set up Docker Buildx
+        if : steps.changes.proxyChanges == 'true'
         uses: docker/setup-buildx-action@v2
 
       - name: Build and Push
+        if : steps.changes.proxyChanges == 'true'
         env:
           APP_DIR: ./apps/proxy
           IMAGE: registry.gitlab.com/abdheshnayak/sshd:proxy
