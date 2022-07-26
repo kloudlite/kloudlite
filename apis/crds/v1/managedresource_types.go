@@ -3,11 +3,11 @@ package v1
 import (
 	"fmt"
 	"operators.kloudlite.io/lib/constants"
+	rApi "operators.kloudlite.io/lib/operator"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	libOperator "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
@@ -30,7 +30,7 @@ type ManagedResourceSpec struct {
 	// ApiVersion     string              `json:"apiVersion"`
 	// Kind           string              `json:"kind"`
 	// ManagedSvcName string              `json:"managedSvcName"`
-	// +kubebuilder:default=
+	// +kubebuilder:default={}
 	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
@@ -42,14 +42,14 @@ type ManagedResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              ManagedResourceSpec `json:"spec,omitempty"`
-	Status            libOperator.Status  `json:"status,omitempty"`
+	Status            rApi.Status         `json:"status,omitempty"`
 }
 
 func (m *ManagedResource) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }
 
-func (m *ManagedResource) GetStatus() *libOperator.Status {
+func (m *ManagedResource) GetStatus() *rApi.Status {
 	return &m.Status
 }
 
