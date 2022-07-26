@@ -149,6 +149,8 @@ type App @key(fields: "id") {
   isLambda: Boolean!
   name: String!
   namespace: String!
+  createdAt: String!
+  updatedAt: String
   description: String
   readableId: ID!
   replicas: Int

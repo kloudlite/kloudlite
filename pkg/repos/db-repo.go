@@ -2,11 +2,16 @@ package repos
 
 import (
 	"context"
+	"time"
 )
 
 type Entity interface {
 	GetId() ID
 	SetId(id ID)
+	GetCreationTime() time.Time
+	GetUpdateTime() time.Time
+	SetCreationTime(time.Time)
+	SetUpdateTime(time.Time)
 	IsZero() bool
 }
 
