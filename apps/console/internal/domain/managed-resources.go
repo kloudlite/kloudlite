@@ -106,10 +106,15 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 			Namespace: create.Namespace,
 		},
 		Spec: op_crds.ManagedResourceSpec{
-			ManagedServiceName: string(svc.Id),
-			ApiVersion:         resTmpl.ApiVersion,
-			Kind:               resTmpl.Kind,
-			Inputs:             create.Values,
+			MsvcRef: op_crds.MsvcRef{
+				APIVersion: resTmpl.ApiVersion,
+				Kind:       "Service",
+				Name:       string(svc.Id),
+			},
+			ResRef: op_crds.ResType{
+				Kind: resTmpl.Kind,
+			},
+			Inputs: create.Values,
 		},
 	})
 	if err != nil {
@@ -136,10 +141,15 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 			Namespace: mres.Namespace,
 		},
 		Spec: op_crds.ManagedResourceSpec{
-			ManagedServiceName: string(mres.ServiceId),
-			ApiVersion:         op_crds.ManagedResourceAPIVersion,
-			Kind:               op_crds.ManagedResourceKind,
-			Inputs:             mres.Values,
+			MsvcRef: op_crds.MsvcRef{
+				APIVersion: op_crds.ManagedResourceAPIVersion,
+				Kind:       "Service",
+				Name:       string(mres.ServiceId),
+			},
+			ResRef: op_crds.ResType{
+				Kind: string(mres.ResourceType),
+			},
+			Inputs: mres.Values,
 		},
 	})
 	if err != nil {
