@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"net"
@@ -11,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/gofiber/fiber/v2"
 )
 
 func WaitForFileChange(pathAddr string) {
@@ -44,7 +46,8 @@ func WaitForFileChange(pathAddr string) {
 
 	err = watcher.Add(pathAddr)
 	if err != nil {
-		log.Fatal("Add failed:", err)
+		fmt.Println("Add failed:", err)
+		// log.Fatal("Add failed:", err)
 	}
 	<-done
 }
@@ -58,15 +61,14 @@ func remove(s []net.Listener, i int) []net.Listener {
 	return s[:len(s)-1]
 }
 
-func main() {
+type Service struct {
+	Name   string `json:"name"`
+	Port   int    `json:"proxyPort"`
+	Target int    `json:"servicePort"`
+}
 
+func startProxy() {
 	confFile := os.Getenv("CONFIG_FILE")
-
-	type Service struct {
-		Name   string `json:"name"`
-		Port   int    `json:"proxyPort"`
-		Target int    `json:"servicePort"`
-	}
 
 	var data struct {
 		Services []Service `json:"services"`
@@ -154,8 +156,42 @@ func main() {
 		// time.Sleep(time.Second)
 
 	}
+}
 
-	fmt.Println("running")
+func startApi() {
+
+	confFile := os.Getenv("CONFIG_FILE")
+
+	app := fiber.New()
+	app.Post("/update", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
+
+	app.Post("/post", func(c *fiber.Ctx) error {
+		fmt.Println(string(c.Body()))
+
+		os.WriteFile(confFile, c.Body(), fs.ModeAppend)
+
+		// err := c.BodyParser(&data)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// if err != nil {
+		// 	return err
+		// }
+
+		c.Send([]byte("done"))
+		return nil
+
+	})
+
+	app.Listen(":2999")
+}
+
+func main() {
+	go startApi()
+	go startProxy()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
