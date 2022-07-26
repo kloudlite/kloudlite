@@ -42,5 +42,5 @@ jobs:
         env:
           APP_DIR: ./apps/proxy
           IMAGE: harbor.dev.madhouselabs.io/kloudlite/proxy:v2
-        run: "docker build -f ./${APP_DIR}/Dockerfile -t ${IMAGE} --build-arg APP_DIR=${APP_DIR} ${APP_DIR}"
+        run: "docker build -f ./${APP_DIR}/Dockerfile -t ${IMAGE} ${APP_DIR} --build-arg APP_DIR=${APP_DIR}"
 
