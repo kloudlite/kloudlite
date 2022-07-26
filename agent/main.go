@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/logging"
@@ -27,6 +29,12 @@ type KafkaMessage struct {
 	Payload []byte `json:"payload"`
 }
 
+type ErrMessage struct {
+	ResourceRef string `json:"resourceRef"`
+	Action      string `json:"action"`
+	Error       string `json:"error"`
+}
+
 func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, logger logging.Logger) {
 	c.StartConsuming(
 		func(b []byte) error {
@@ -38,13 +46,16 @@ func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, 
 			switch msg.Action {
 			case "apply", "delete":
 				{
+
+					obj := unstructured.Unstructured{}
+					if err := json.Unmarshal(msg.Payload, &obj); err != nil {
+						return err
+					}
+
 					if errX := func() error {
 						c := exec.Command("kubectl", msg.Action, "-f", "-")
-						jb, err := json.Marshal(msg.Payload)
-						if err != nil {
-							return errors.NewEf(err, "could not unmarshal into []byte")
-						}
-						yb, err := yaml.JSONToYAML(jb)
+
+						yb, err := yaml.JSONToYAML(msg.Payload)
 						if err != nil {
 							return errors.NewEf(err, "could not convert JSON to YAML")
 						}
@@ -58,7 +69,18 @@ func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, 
 						}
 						return nil
 					}(); errX != nil {
-						if err := errProducer.Produce(context.TODO(), errTopic, msg.Action, []byte(errX.Error())); err != nil {
+						errMsg := ErrMessage{
+							ResourceRef: fmt.Sprintf(
+								"Kind=%s/Namespace=%s/Name=%s",
+								obj.GetObjectKind().GroupVersionKind().Kind,
+								obj.GetNamespace(),
+								obj.GetName(),
+							),
+							Action: msg.Action,
+							Error:  errX.Error(),
+						}
+						b, errX := json.Marshal(errMsg)
+						if err := errProducer.Produce(context.TODO(), errTopic, msg.Action, b); err != nil {
 							return err
 						}
 						return errX
@@ -66,12 +88,8 @@ func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, 
 				}
 			case "restart":
 				{
-					b, err := json.Marshal(msg.Payload)
-					if err != nil {
-						return err
-					}
 					var restartMsg RestartMsg
-					if err := json.Unmarshal(b, &restartMsg); err != nil {
+					if err := json.Unmarshal(msg.Payload, &restartMsg); err != nil {
 						return err
 					}
 
