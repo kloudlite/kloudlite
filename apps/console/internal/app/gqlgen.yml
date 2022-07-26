@@ -45,6 +45,14 @@ autobind:
 # your liking
 skip_validation: true
 models:
+  App:
+    fields:
+      restart:
+        resolver: true
+      freeze:
+        resolver: true
+      unfreeze:
+        resolver: true
   User:
     fields:
       devices:
