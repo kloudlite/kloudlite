@@ -25,6 +25,9 @@ spec:
         autoscaling.knative.dev/min-scale: "{{.Spec.MinScale}}"
         autoscaling.knative.dev/max-scale: "{{.Spec.MaxScale}}"
     spec:
+      {{- if .Spec.NodeSelector }}
+      nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 8}}
+      {{- end }}
       serviceAccountName: kloudlite-svc-account
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}
       containers: {{- include "TemplateContainer" $myDict | nindent 8 }}
