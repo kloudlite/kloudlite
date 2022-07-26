@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - 'working01'
-    paths:
-      - "apps/proxy/**"
 
 
 jobs:
