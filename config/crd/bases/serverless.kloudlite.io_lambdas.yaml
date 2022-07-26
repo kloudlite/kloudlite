@@ -230,8 +230,6 @@ spec:
               targetRps:
                 default: 100
                 type: integer
-            required:
-            - nodeSelector
             type: object
           status:
             properties:

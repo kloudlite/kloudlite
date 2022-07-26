@@ -103,11 +103,15 @@ type HPA struct {
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
-	Replicas     int               `json:"replicas,omitempty"`
-	Services     []AppSvc          `json:"services,omitempty"`
-	Containers   []AppContainer    `json:"containers"`
-	Volumes      []corev1.Volume   `json:"volumes,omitempty"`
-	Hpa          HPA               `json:"hpa,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=kloudlite-svc-account
+	ServiceAccount string          `json:"serviceAccount,omitempty"`
+	Replicas       int             `json:"replicas,omitempty"`
+	Services       []AppSvc        `json:"services,omitempty"`
+	Containers     []AppContainer  `json:"containers"`
+	Volumes        []corev1.Volume `json:"volumes,omitempty"`
+	Hpa            HPA             `json:"hpa,omitempty"`
+	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
