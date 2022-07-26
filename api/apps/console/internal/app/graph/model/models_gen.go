@@ -30,6 +30,9 @@ type App struct {
 	Status      string            `json:"status"`
 	AutoScale   *AutoScale        `json:"autoScale"`
 	Conditions  []*MetaCondition  `json:"conditions"`
+	Restart     bool              `json:"restart"`
+	Freeze      bool              `json:"freeze"`
+	Unfreeze    bool              `json:"unfreeze"`
 }
 
 func (App) IsEntity() {}

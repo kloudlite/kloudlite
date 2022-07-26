@@ -86,6 +86,9 @@ type Domain interface {
 	OnUpdateManagedRes(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetApps(ctx context.Context, projectId repos.ID) ([]*entities.App, error)
+	FreezeApp(ctx context.Context, appId repos.ID) error
+	UnFreezeApp(ctx context.Context, appId repos.ID) error
+	RestartApp(ctx context.Context, appId repos.ID) error
 	GetApp(ctx context.Context, projectID repos.ID) (*entities.App, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.StatusUpdate) error
