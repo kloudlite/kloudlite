@@ -1,10 +1,11 @@
-name: finance
+name: proxy
 
 on:
   push:
     branches:
       - 'working01'
-
+    paths:
+      - './apps/proxy'
 
 jobs:
   docker:
