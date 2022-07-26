@@ -226,7 +226,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	consumer, err := redpanda.NewConsumer(envVars.KafkaBrokers, envVars.KafkaConsumerGroupId, envVars.KafkaIncomingTopic)
+	consumer, err := redpanda.NewConsumer(
+		envVars.KafkaBrokers, envVars.KafkaConsumerGroupId,
+		envVars.KafkaIncomingTopic, &redpanda.ConsumerOptions{
+			ErrProducer: producer,
+		},
+	)
 	if err != nil {
 		setupLog.Error(err, "creating redpanda consumer")
 		panic(err)
@@ -234,7 +239,7 @@ func main() {
 	consumer.SetupLogger(logging.NewZapLogger(types.NamespacedName{}))
 	defer consumer.Close()
 
-	go agent.Run(consumer, myLogger)
+	go agent.Run(consumer, producer, envVars.AgentErrorTopic, myLogger)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

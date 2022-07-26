@@ -21,7 +21,8 @@ type LambdaSpec struct {
 	// +kubebuilder:validation:Optional
 	TargetRps int `json:"targetRps"`
 
-	NodeSelector map[string]string `json:"nodeSelector"`
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
 	Containers []v1.AppContainer `json:"containers,omitempty"`
 }

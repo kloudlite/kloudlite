@@ -2,7 +2,6 @@ package redpanda
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/zap"
 	"operators.kloudlite.io/lib/errors"
@@ -10,17 +9,12 @@ import (
 )
 
 type Consumer struct {
-	client *kgo.Client
-	logger *zap.SugaredLogger
+	client  *kgo.Client
+	logger  *zap.SugaredLogger
+	options *ConsumerOptions
 }
 
-type Message struct {
-	Action  string         `json:"action"`
-	Payload map[string]any `json:"payload"`
-	record  *kgo.Record
-}
-
-type ReaderFunc func(m *Message) error
+type ReaderFunc func([]byte) error
 
 func (c *Consumer) SetupLogger(logger *zap.SugaredLogger) {
 	c.logger = logger
@@ -28,6 +22,16 @@ func (c *Consumer) SetupLogger(logger *zap.SugaredLogger) {
 
 func (c *Consumer) Close() {
 	c.client.Close()
+}
+
+type ConsumerOptions struct {
+	ErrProducer *Producer
+	ErrTopic    string
+}
+
+type ConsumerError interface {
+	GetKey() string
+	error
 }
 
 func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
@@ -47,20 +51,11 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 
 		fetches.EachRecord(
 			func(record *kgo.Record) {
-				var j Message
-				if err := json.Unmarshal(record.Value, &j); err != nil {
+				if err := onMessage(record.Value); err != nil {
 					if c.logger != nil {
-						c.logger.Error("could not unmarshal message []byte into type Message")
+						c.logger.Errorf("error from onMessage(): %v\n", err)
 					}
-					return
-				}
 
-				j.record = record
-
-				if err := onMessage(&j); err != nil {
-					if c.logger != nil {
-						c.logger.Errorf("error in onMessage(): %+v\n", err)
-					}
 					if err := c.client.CommitRecords(context.TODO(), record); err != nil {
 						return
 					}
@@ -77,7 +72,8 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 	}
 }
 
-func NewConsumer(brokerHosts string, consumerGroup string, topicName string) (*Consumer, error) {
+func NewConsumer(brokerHosts string, consumerGroup string, topicName string, options *ConsumerOptions) (*Consumer,
+	error) {
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
 		kgo.ConsumerGroup(consumerGroup),
@@ -89,5 +85,5 @@ func NewConsumer(brokerHosts string, consumerGroup string, topicName string) (*C
 	if err != nil {
 		return nil, errors.NewEf(err, "unable to create client")
 	}
-	return &Consumer{client: client}, nil
+	return &Consumer{client: client, options: options}, nil
 }

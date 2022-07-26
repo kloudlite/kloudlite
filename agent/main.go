@@ -2,8 +2,11 @@ package agent
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/logging"
@@ -21,36 +24,72 @@ type RestartMsg struct {
 	} `json:"metadata"`
 }
 
-func Run(c *redpanda.Consumer, logger logging.Logger) {
+type KafkaMessage struct {
+	Action  string `json:"action"`
+	Payload []byte `json:"payload"`
+}
+
+type ErrMessage struct {
+	ResourceRef string `json:"resourceRef"`
+	Action      string `json:"action"`
+	Error       string `json:"error"`
+}
+
+func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, logger logging.Logger) {
 	c.StartConsuming(
-		func(m *redpanda.Message) error {
-			logger.Infof("action=%s, payload=%s\n", m.Action, m.Payload)
-			switch m.Action {
+		func(b []byte) error {
+			var msg KafkaMessage
+			if err := json.Unmarshal(b, &msg); err != nil {
+				return err
+			}
+			logger.Infof("action=%s, payload=%s\n", msg.Action, msg.Payload)
+			switch msg.Action {
 			case "apply", "delete":
 				{
-					c := exec.Command("kubectl", m.Action, "-f", "-")
-					jb, err := json.Marshal(m.Payload)
-					if err != nil {
-						return errors.NewEf(err, "could not unmarshal into []byte")
-					}
-					yb, err := yaml.JSONToYAML(jb)
-					if err != nil {
-						return errors.NewEf(err, "could not convert JSON to YAML")
+
+					obj := unstructured.Unstructured{}
+					if err := json.Unmarshal(msg.Payload, &obj); err != nil {
+						return err
 					}
 
-					c.Stdin = bytes.NewBuffer(yb)
-					c.Stdout = os.Stdout
-					c.Stderr = os.Stderr
-					return c.Run()
+					if errX := func() error {
+						c := exec.Command("kubectl", msg.Action, "-f", "-")
+
+						yb, err := yaml.JSONToYAML(msg.Payload)
+						if err != nil {
+							return errors.NewEf(err, "could not convert JSON to YAML")
+						}
+
+						c.Stdin = bytes.NewBuffer(yb)
+						c.Stdout = os.Stdout
+						errStream := bytes.NewBuffer([]byte{})
+						c.Stderr = errStream
+						if err := c.Run(); err != nil {
+							return errors.NewEf(err, errStream.String())
+						}
+						return nil
+					}(); errX != nil {
+						errMsg := ErrMessage{
+							ResourceRef: fmt.Sprintf(
+								"Kind=%s/Namespace=%s/Name=%s",
+								obj.GetObjectKind().GroupVersionKind().Kind,
+								obj.GetNamespace(),
+								obj.GetName(),
+							),
+							Action: msg.Action,
+							Error:  errX.Error(),
+						}
+						b, errX := json.Marshal(errMsg)
+						if err := errProducer.Produce(context.TODO(), errTopic, msg.Action, b); err != nil {
+							return err
+						}
+						return errX
+					}
 				}
 			case "restart":
 				{
-					b, err := json.Marshal(m.Payload)
-					if err != nil {
-						return err
-					}
 					var restartMsg RestartMsg
-					if err := json.Unmarshal(b, &restartMsg); err != nil {
+					if err := json.Unmarshal(msg.Payload, &restartMsg); err != nil {
 						return err
 					}
 
