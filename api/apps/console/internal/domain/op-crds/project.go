@@ -1,12 +1,7 @@
 package op_crds
 
-type ArtifactRegistry struct {
-	Enabled bool `json:"enabled"`
-}
-
 type ProjectSpec struct {
-	DisplayName      string           `json:"displayName,omitempty"`
-	ArtifactRegistry ArtifactRegistry `json:"artifactRegistry,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
 }
 
 type ProjectMetadata struct {

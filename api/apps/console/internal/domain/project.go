@@ -134,9 +134,6 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		},
 		Spec: op_crds.ProjectSpec{
 			DisplayName: displayName,
-			ArtifactRegistry: op_crds.ArtifactRegistry{
-				Enabled: true,
-			},
 		},
 	})
 	if err != nil {
