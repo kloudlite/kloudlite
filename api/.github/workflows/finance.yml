@@ -9,7 +9,7 @@ on:
       - "./pkg/**"
       - "./grpc-interfaces/**"
       - "./common/**"
- 
+
 
 jobs:
   docker:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
-      
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -37,6 +37,8 @@ jobs:
           TAG: v2
           REGISTRY: harbor.dev.madhouselabs.io
           APP: finance
- 
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
+
+        run: | 
+         docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=.
+         docker push ${REGISTRY}/kloudlite/${APP}:${TAG}
 
