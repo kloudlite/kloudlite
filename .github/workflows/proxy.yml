@@ -5,7 +5,7 @@ on:
     branches:
       - 'working01'
     paths:
-      - './apps/proxy/**'
+      - './apps/proxy/**.*'
 
 jobs:
   docker:
