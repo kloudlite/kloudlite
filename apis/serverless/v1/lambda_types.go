@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/constants"
@@ -10,6 +9,12 @@ import (
 
 // LambdaSpec defines the desired state of Lambda
 type LambdaSpec struct {
+	// +kubebuilder:default=1
+	MinScale int `json:"minScale"`
+	// +kubebuilder:default=5
+	MaxScale int `json:"maxScale"`
+	// +kubebuilder:default=100
+	TargetRps  int               `json:"targetRps"`
 	Containers []v1.AppContainer `json:"containers,omitempty"`
 }
 
@@ -31,7 +36,7 @@ func (lm *Lambda) GetStatus() *rApi.Status {
 
 func (lm *Lambda) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		fmt.Sprintf("%s/ref", GroupVersion.Group): lm.Name,
+		"kloudlite.io/lambda.name": lm.Name,
 	}
 }
 

@@ -128,7 +128,9 @@ func (app *App) GetStatus() *rApi.Status {
 }
 
 func (app *App) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		"kloudlite.io/app.name": app.Name,
+	}
 }
 
 func (app *App) GetEnsuredAnnotations() map[string]string {

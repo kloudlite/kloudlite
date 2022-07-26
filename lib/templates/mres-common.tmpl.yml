@@ -3,7 +3,7 @@
 {{- with $obj }}
 {{- /* gotype: operators.kloudlite.io/apis/crds/v1.ManagedResource */ -}}
 apiVersion: {{.Spec.MsvcRef.APIVersion}}
-kind: {{.Spec.ResRef.Kind}}
+kind: {{.Spec.MresKind.Kind}}
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}

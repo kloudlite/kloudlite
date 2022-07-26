@@ -5,8 +5,9 @@ metadata:
   namespace: hotspot
 spec:
   cloudProvider: do
-  msvcRef:
+  msvcKind:
     apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
+    kind: Service
   inputs:
     resources:
       cpu: 800m

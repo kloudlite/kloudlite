@@ -102,7 +102,7 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 	resourceC, err := conditions.FromResource(
 		ctx, r.Client, metav1.TypeMeta{
 			APIVersion: obj.Spec.MsvcRef.APIVersion,
-			Kind:       obj.Spec.ResRef.Kind,
+			Kind:       obj.Spec.MresKind.Kind,
 		},
 		"", fn.NN(obj.Namespace, obj.Name),
 	)

@@ -4,12 +4,16 @@
 {{- $vMounts := get . "volumeMounts"}}
 
 {{- with $obj }}
+{{- /* gotype: operators.kloudlite.io/apis/serverless/v1.Lambda*/ -}}
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+  {{- if .Labels}}
+  labels: {{.Labels | toYAML | nindent 4}}
+  {{- end }}
 spec:
   template:
     metadata:
@@ -17,10 +21,9 @@ spec:
       annotations:
         autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
         autoscaling.knative.dev/metric: rps
-        autoscaling.knative.dev/target: "100"
-        autoscaling.knative.dev/min-scale: "1"
-        # Limit scaling to 100 pods.
-        autoscaling.knative.dev/max-scale: "100"
+        autoscaling.knative.dev/target: "{{.Spec.TargetRps}}"
+        autoscaling.knative.dev/min-scale: "{{.Spec.MinScale}}"
+        autoscaling.knative.dev/max-scale: "{{.Spec.MaxScale}}"
     spec:
       serviceAccountName: kloudlite-svc-account
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}

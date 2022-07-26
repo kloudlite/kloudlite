@@ -19,14 +19,14 @@ type msvcNamedRefTT struct {
 	Name string `json:"name"`
 }
 
-type resRefTT struct {
+type mresKind struct {
 	Kind string `json:"kind"`
 }
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	MsvcRef msvcNamedRefTT `json:"msvcRef"`
-	ResRef  resRefTT       `json:"resRef"`
+	MsvcRef  msvcNamedRefTT `json:"msvcRef"`
+	MresKind mresKind       `json:"mresKind"`
 	// ApiVersion     string              `json:"apiVersion"`
 	// Kind           string              `json:"kind"`
 	// ManagedSvcName string              `json:"managedSvcName"`

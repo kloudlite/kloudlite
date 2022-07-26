@@ -41,6 +41,13 @@ spec:
                   string              `json:"managedSvcName"`
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              mresKind:
+                properties:
+                  kind:
+                    type: string
+                required:
+                - kind
+                type: object
               msvcRef:
                 properties:
                   apiVersion:
@@ -54,16 +61,9 @@ spec:
                 - apiVersion
                 - name
                 type: object
-              resRef:
-                properties:
-                  kind:
-                    type: string
-                required:
-                - kind
-                type: object
             required:
+            - mresKind
             - msvcRef
-            - resRef
             type: object
           status:
             properties:

@@ -2,9 +2,9 @@
 name: "✨ New Feature"
 about: Suggest an idea
 title: "✨ "
-labels: 'Type: Feature'
+labels: enhancement
 assignees: "nxtcoder17"
-project: kloudlite
+projects: kloudlite
 
 ---
 ### Pain
