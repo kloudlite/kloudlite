@@ -41,7 +41,6 @@ jobs:
         if : steps.changes.outputs.proxyChanges == 'true'
         env:
           APP_DIR: ./apps/proxy
-          IMAGE: registry.gitlab.com/abdheshnayak/sshd:proxy
-
+          IMAGE: harbor.dev.madhouselabs.io/kloudlite/proxy:v2
         run: "docker build -f ./${APP_DIR}/Dockerfile -t ${IMAGE} --build-arg APP_DIR=${APP_DIR} ${APP_DIR}"
 
