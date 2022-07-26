@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
@@ -21,31 +22,51 @@ type RestartMsg struct {
 	} `json:"metadata"`
 }
 
-func Run(c *redpanda.Consumer, logger logging.Logger) {
+type KafkaMessage struct {
+	Action  string `json:"action"`
+	Payload []byte `json:"payload"`
+}
+
+func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, logger logging.Logger) {
 	c.StartConsuming(
-		func(m *redpanda.Message) error {
-			logger.Infof("action=%s, payload=%s\n", m.Action, m.Payload)
-			switch m.Action {
+		func(b []byte) error {
+			var msg KafkaMessage
+			if err := json.Unmarshal(b, &msg); err != nil {
+				return err
+			}
+			logger.Infof("action=%s, payload=%s\n", msg.Action, msg.Payload)
+			switch msg.Action {
 			case "apply", "delete":
 				{
-					c := exec.Command("kubectl", m.Action, "-f", "-")
-					jb, err := json.Marshal(m.Payload)
-					if err != nil {
-						return errors.NewEf(err, "could not unmarshal into []byte")
-					}
-					yb, err := yaml.JSONToYAML(jb)
-					if err != nil {
-						return errors.NewEf(err, "could not convert JSON to YAML")
-					}
+					if errX := func() error {
+						c := exec.Command("kubectl", msg.Action, "-f", "-")
+						jb, err := json.Marshal(msg.Payload)
+						if err != nil {
+							return errors.NewEf(err, "could not unmarshal into []byte")
+						}
+						yb, err := yaml.JSONToYAML(jb)
+						if err != nil {
+							return errors.NewEf(err, "could not convert JSON to YAML")
+						}
 
-					c.Stdin = bytes.NewBuffer(yb)
-					c.Stdout = os.Stdout
-					c.Stderr = os.Stderr
-					return c.Run()
+						c.Stdin = bytes.NewBuffer(yb)
+						c.Stdout = os.Stdout
+						errStream := bytes.NewBuffer([]byte{})
+						c.Stderr = errStream
+						if err := c.Run(); err != nil {
+							return errors.NewEf(err, errStream.String())
+						}
+						return nil
+					}(); errX != nil {
+						if err := errProducer.Produce(context.TODO(), errTopic, msg.Action, []byte(errX.Error())); err != nil {
+							return err
+						}
+						return errX
+					}
 				}
 			case "restart":
 				{
-					b, err := json.Marshal(m.Payload)
+					b, err := json.Marshal(msg.Payload)
 					if err != nil {
 						return err
 					}

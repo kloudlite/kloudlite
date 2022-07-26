@@ -13,6 +13,7 @@ type Env struct {
 	KafkaStatusReplyTopic  string `env:"KAFKA_STATUS_REPLY_TOPIC" required:"true"`
 	KafkaBillingReplyTopic string `env:"KAFKA_BILLING_REPLY_TOPIC" required:"true"`
 	KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
+	AgentErrorTopic        string `env:"AGENT_ERROR_TOPIC" required:"true"`
 
 	HarborAdminUsername      string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
 	HarborAdminPassword      string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
