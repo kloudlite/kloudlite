@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/fx"
@@ -114,9 +115,21 @@ func (repo dbRepo[T]) withId(data T) {
 	data.SetId(repo.NewId())
 }
 
+func (repo dbRepo[T]) withCreationTime(data T) {
+	if !data.GetCreationTime().IsZero() {
+		return
+	}
+	data.SetCreationTime(time.Now())
+}
+
+func (repo dbRepo[T]) withUpdateTime(data T) {
+	data.SetUpdateTime(time.Now())
+}
+
 func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	var result T
 	repo.withId(data)
+	repo.withCreationTime(data)
 	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, data)
 	if e != nil {
 		var x T
@@ -128,6 +141,7 @@ func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 }
 
 func (repo dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
+	updatedData["updateTime"] = time.Now()
 	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
 		ctx,
 		filter,
@@ -149,7 +163,7 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
 		updateOpts.Upsert = &opt.Upsert
 	}
-
+	repo.withUpdateTime(updatedData)
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
 		ctx,
 		&Filter{"id": id},
@@ -171,8 +185,9 @@ func (repo dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, err
 		}
 		return repo.NewId()
 	}()
-
 	data.SetId(id)
+	repo.withCreationTime(data)
+	repo.withUpdateTime(data)
 	return repo.UpdateById(
 		ctx, id, data, UpdateOpts{
 			Upsert: true,

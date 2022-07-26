@@ -19,6 +19,8 @@ type App struct {
 	IsLambda    bool              `json:"isLambda"`
 	Name        string            `json:"name"`
 	Namespace   string            `json:"namespace"`
+	CreatedAt   string            `json:"createdAt"`
+	UpdatedAt   *string           `json:"updatedAt"`
 	Description *string           `json:"description"`
 	ReadableID  repos.ID          `json:"readableId"`
 	Replicas    *int              `json:"replicas"`

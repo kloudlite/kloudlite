@@ -63,6 +63,7 @@ type ComplexityRoot struct {
 		AutoScale   func(childComplexity int) int
 		Conditions  func(childComplexity int) int
 		Containers  func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		IsLambda    func(childComplexity int) int
@@ -73,6 +74,7 @@ type ComplexityRoot struct {
 		Replicas    func(childComplexity int) int
 		Services    func(childComplexity int) int
 		Status      func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
 	}
 
 	AppContainer struct {
@@ -464,6 +466,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.Containers(childComplexity), true
 
+	case "App.createdAt":
+		if e.complexity.App.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.App.CreatedAt(childComplexity), true
+
 	case "App.description":
 		if e.complexity.App.Description == nil {
 			break
@@ -533,6 +542,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Status(childComplexity), true
+
+	case "App.updatedAt":
+		if e.complexity.App.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.App.UpdatedAt(childComplexity), true
 
 	case "AppContainer.attachedResources":
 		if e.complexity.AppContainer.AttachedResources == nil {
@@ -2140,6 +2156,8 @@ type App @key(fields: "id") {
   isLambda: Boolean!
   name: String!
   namespace: String!
+  createdAt: String!
+  updatedAt: String
   description: String
   readableId: ID!
   replicas: Int
@@ -3944,6 +3962,73 @@ func (ec *executionContext) _App_namespace(ctx context.Context, field graphql.Co
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _App_description(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
@@ -12246,6 +12331,23 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createdAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._App_createdAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updatedAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._App_updatedAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		case "description":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._App_description(ctx, field, obj)
