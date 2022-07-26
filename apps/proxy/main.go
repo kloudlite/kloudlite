@@ -84,7 +84,6 @@ func stopService(service *Service) error {
 	}
 	return nil
 }
-
 func startService(service *Service) error {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", service.Port))
 	if err != nil {
@@ -95,7 +94,6 @@ func startService(service *Service) error {
 	go runLoop(service)
 	return nil
 }
-
 func runLoop(service *Service) error {
 	fmt.Println("+ starting :: ", getKey(service))
 	for {

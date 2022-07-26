@@ -109,9 +109,18 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			}
 		}(),
 	})
-	transformedInputs := map[string]any{}
+	if err != nil {
+		return nil, err
+	}
+	var transformedInputs struct {
+		Annotation map[string]string `json:"annotation,omitempty"`
+		Inputs     map[string]any    `json:"inputs"`
+		Error      error             `json:"error,omitempty"`
+	}
 	err = json.Unmarshal(eval.Output.Value, &transformedInputs)
-	fmt.Println(transformedInputs, err)
+	if err != nil {
+		return nil, err
+	}
 	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
 		Kind:       op_crds.ManagedServiceKind,
@@ -119,10 +128,10 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			Name:      string(create.Id),
 			Namespace: create.Namespace,
 			Annotations: func() map[string]string {
-				if transformedInputs["annotations"] == nil {
+				if transformedInputs.Annotation == nil {
 					return nil
 				}
-				a := transformedInputs["annotations"].(map[string]string)
+				a := transformedInputs.Annotation
 				return a
 			}(),
 		},
@@ -130,13 +139,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": prj.Region,
 			},
-			Inputs: func() map[string]string {
-				vs := make(map[string]string, 0)
-				for k, v := range transformedInputs["inputs"].(map[string]interface{}) {
-					vs[k] = v.(string)
-				}
-				return vs
-			}(),
+			Inputs: transformedInputs.Inputs,
 		},
 	})
 	if err != nil {
@@ -175,7 +178,10 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			}
 		}(),
 	})
-	transformedInputs := map[string]any{}
+	var transformedInputs struct {
+		Inputs     map[string]any    `json:"inputs"`
+		Annotation map[string]string `json:"annotation,omitempty"`
+	}
 	err = json.Unmarshal(eval.Output.Value, &transformedInputs)
 	err = d.workloadMessenger.SendAction("apply", string(managedSvc.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
@@ -184,10 +190,10 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			Name:      string(managedSvc.Id),
 			Namespace: managedSvc.Namespace,
 			Annotations: func() map[string]string {
-				if transformedInputs["annotations"] == nil {
+				if transformedInputs.Annotation == nil {
 					return nil
 				}
-				a := transformedInputs["annotations"].(map[string]string)
+				a := transformedInputs.Annotation
 				return a
 			}(),
 		},
@@ -200,13 +206,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": proj.Region,
 			},
-			Inputs: func() map[string]string {
-				vs := make(map[string]string, 0)
-				for k, v := range transformedInputs["inputs"].(map[string]interface{}) {
-					vs[k] = v.(string)
-				}
-				return vs
-			}(),
+			Inputs: transformedInputs.Inputs,
 		},
 	})
 	return true, nil
@@ -217,7 +217,8 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 	if err != nil {
 		return false, err
 	}
-	err = d.managedSvcRepo.DeleteById(ctx, managedServiceId)
+	managedSvc.Status = entities.ManagedServiceStateDeleting
+	_, err = d.managedSvcRepo.UpdateById(ctx, managedServiceId, managedSvc)
 	if err != nil {
 		return false, err
 	}

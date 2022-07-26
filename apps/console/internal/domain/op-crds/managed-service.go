@@ -6,9 +6,9 @@ type MsvcType struct {
 }
 
 type ManagedServiceSpec struct {
-	CloudProvider string            `json:"cloudProvider"`
-	MsvcType      MsvcType          `json:"msvcType"`
-	Inputs        map[string]string `json:"inputs,omitempty"`
+	CloudProvider string            `json:"cloudProvider,omitempty"`
+	MsvcType      MsvcType          `json:"msvcType,omitempty"`
+	Inputs        map[string]any    `json:"inputs,omitempty"`
 	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
 }
 

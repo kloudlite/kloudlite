@@ -8,10 +8,11 @@ import (
 type ManagedServiceStatus string
 
 const (
-	ManagedServiceStateSyncing = ManagedServiceStatus("sync-in-progress")
-	ManagedServiceStateLive    = ManagedServiceStatus("live")
-	ManagedServiceStateError   = ManagedServiceStatus("error")
-	ManagedServiceStateDown    = ManagedServiceStatus("down")
+	ManagedServiceStateSyncing  = ManagedServiceStatus("sync-in-progress")
+	ManagedServiceStateDeleting = ManagedServiceStatus("deleting")
+	ManagedServiceStateLive     = ManagedServiceStatus("live")
+	ManagedServiceStateError    = ManagedServiceStatus("error")
+	ManagedServiceStateDown     = ManagedServiceStatus("down")
 )
 
 type ManagedService struct {
