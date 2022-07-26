@@ -1,9 +1,10 @@
 ---
 name: "✨ New Feature"
 about: Suggest an idea
-title: "✨"
+title: "✨ "
 labels: 'Type: Feature'
-assignees: ''
+assignees: "nxtcoder17"
+project: kloudlite
 
 ---
 ### Pain
@@ -20,5 +21,6 @@ assignees: ''
 ...
 
 ### References, if any
+...
 
 Thanks!

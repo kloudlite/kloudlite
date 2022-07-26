@@ -1,9 +1,10 @@
 ---
 name: "🐛 Bug Report"
-about: Create a report to help us improve as per https://www.ssw.com.au/rules/the-right-way-to-report-bugs-and-give-feedback-suggestions
+about: Create a bug report to help us improve
 title: "🐛 "
 labels: 'Type: Bug'
-assignees: ''
+assignees: nxtcoder17
+projects: kloudlite
 
 ---
 
@@ -19,13 +20,13 @@ Steps to reproduce the behavior:
 ...
 
 ### Tasks
-- [ ] Investigate
-- [ ] Fix
+- [ ] ...
+- [ ] ...
 
 ### More Information
 ...
 
 ### References, if any ?
-
+...
 
 Thanks!
