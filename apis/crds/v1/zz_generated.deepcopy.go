@@ -390,7 +390,7 @@ func (in *ManagedResourceList) DeepCopyObject() runtime.Object {
 func (in *ManagedResourceSpec) DeepCopyInto(out *ManagedResourceSpec) {
 	*out = *in
 	out.MsvcRef = in.MsvcRef
-	out.ResRef = in.ResRef
+	out.MresKind = in.MresKind
 	in.Inputs.DeepCopyInto(&out.Inputs)
 }
 
@@ -473,7 +473,7 @@ func (in *ManagedServiceSpec) DeepCopyInto(out *ManagedServiceSpec) {
 			(*out)[key] = val
 		}
 	}
-	out.MsvcRef = in.MsvcRef
+	out.MsvcKind = in.MsvcKind
 	in.Inputs.DeepCopyInto(&out.Inputs)
 }
 

@@ -2,14 +2,19 @@
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volume-mounts"}}
 {{- $ownerRefs := get . "owner-refs"}}
+{{- $labels := get . "labels" }}
 
 {{- with $obj }}
+{{- /* gotype: operators.kloudlite.io/apis/crds/v1.App */ -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
+  {{- if .Labels }}
+  labels: {{.Labels | toYAML | nindent 4}}
+  {{- end}}
 spec:
   replicas: {{.Spec.Replicas | default 1}}
   selector:

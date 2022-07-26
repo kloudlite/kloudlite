@@ -41,12 +41,12 @@ spec:
               inputs:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
-              msvcRef:
+              msvcKind:
                 properties:
-                  Kind:
-                    default: Service
-                    type: string
                   apiVersion:
+                    type: string
+                  kind:
+                    default: Service
                     type: string
                 required:
                 - apiVersion
@@ -57,7 +57,7 @@ spec:
                 type: object
             required:
             - cloudProvider
-            - msvcRef
+            - msvcKind
             type: object
           status:
             properties:

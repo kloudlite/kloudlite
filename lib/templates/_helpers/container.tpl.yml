@@ -37,8 +37,8 @@
   resources:
   {{- if and .ResourceCpu.Min .ResourceMemory.Min }}
     requests:
-      cpu: {{ .ResourceCpu.Max }}
-      memory: {{ .ResourceMemory.Max }}
+      cpu: {{ .ResourceCpu.Min }}
+      memory: {{ .ResourceMemory.Min }}
   {{- end }}
   {{- if and .ResourceCpu.Max .ResourceMemory.Max }}
     limits:

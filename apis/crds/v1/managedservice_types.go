@@ -10,11 +10,11 @@ import (
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
-type msvcRefTT struct {
+type msvcKind struct {
 	APIVersion string `json:"apiVersion"`
 	// +kubebuilder:default=Service
 	// +kubebuilder:validation:Optional
-	Kind string `json:"Kind"`
+	Kind string `json:"kind"`
 }
 
 // ManagedServiceSpec defines the desired state of ManagedService
@@ -23,7 +23,7 @@ type ManagedServiceSpec struct {
 
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	MsvcRef      msvcRefTT           `json:"msvcRef"`
+	MsvcKind     msvcKind            `json:"msvcKind"`
 	Inputs       rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
@@ -44,7 +44,9 @@ func (m *ManagedService) GetStatus() *rApi.Status {
 }
 
 func (m *ManagedService) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		"kloudlite.io/msvc.name": m.Name,
+	}
 }
 
 func (m *ManagedService) GetEnsuredAnnotations() map[string]string {

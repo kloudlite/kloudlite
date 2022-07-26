@@ -159,7 +159,7 @@ const (
 
 	IngressLambda templateFile = "./ingress-lambda.tmpl.yml"
 
-	ServerlessLambda templateFile = "./serverless/lambda.yml.tpl"
+	ServerlessLambda templateFile = "./serverless/lambda.tpl.yml"
 
 	ElasticSearch templateFile = "./msvc/elasticsearch/helm.tpl.yml"
 	OpenSearch    templateFile = "./msvc/opensearch/helm.tpl.yml"
