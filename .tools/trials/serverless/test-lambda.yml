@@ -4,13 +4,9 @@ metadata:
   name: example
   namespace: hotspot
 spec:
+  nodeSelector:
+    kubernetes.io/hostname: blr1-shared-public
   containers:
-    # - image: docker.io/kennethreitz/httpbin
-    #   imagePullPolicy: IfNotPresent
-    #   name: main
-    #   command: ["gunicorn"]
-    #   args: ["-b", "0.0.0.0:8080", "httpbin:app"]
     - image: harbor.dev.madhouselabs.io/public/serverless/node:latest
-      imagePullPolicy: Always
       name: main
 

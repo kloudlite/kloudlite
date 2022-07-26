@@ -10,11 +10,19 @@ import (
 // LambdaSpec defines the desired state of Lambda
 type LambdaSpec struct {
 	// +kubebuilder:default=1
+	// +kubebuilder:validation:Optional
 	MinScale int `json:"minScale"`
+
 	// +kubebuilder:default=5
+	// +kubebuilder:validation:Optional
 	MaxScale int `json:"maxScale"`
+
 	// +kubebuilder:default=100
-	TargetRps  int               `json:"targetRps"`
+	// +kubebuilder:validation:Optional
+	TargetRps int `json:"targetRps"`
+
+	NodeSelector map[string]string `json:"nodeSelector"`
+
 	Containers []v1.AppContainer `json:"containers,omitempty"`
 }
 
