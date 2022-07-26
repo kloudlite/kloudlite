@@ -93,7 +93,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 			Namespace: app.Namespace,
 		},
 	})
-	app.Status = entities.AppStateSyncing
+	app.Status = entities.AppStateDeleting
 	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
 		APIVersion: op_crds.AppAPIVersion,
