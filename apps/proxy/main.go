@@ -4,197 +4,139 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"sync"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/gofiber/fiber/v2"
 )
 
-func WaitForFileChange(pathAddr string) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal("NewWatcher failed: ", err)
-	}
-	defer watcher.Close()
-
-	done := make(chan bool)
-	go func() {
-		defer close(done)
-
-		for {
-			select {
-			case _, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				// log.Printf("%s %s\n", event.Name, event.Op)
-				return
-			case _, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("error:", err)
-			}
-		}
-
-	}()
-
-	err = watcher.Add(pathAddr)
-	if err != nil {
-		fmt.Println("Add failed:", err)
-		// log.Fatal("Add failed:", err)
-	}
-	<-done
-}
-
-func remove(s []net.Listener, i int) []net.Listener {
-	if len(s)-1 < i {
-		return s
-	}
-	// fmt.Println(len(s))
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
 type Service struct {
-	Name   string `json:"name"`
-	Port   int    `json:"proxyPort"`
-	Target int    `json:"servicePort"`
+	Name     string `json:"name"`
+	Target   int    `json:"servicePort"`
+	Port     int    `json:"proxyPort"`
+	Listener net.Listener
+	Closed   bool
 }
 
-func startProxy() {
-	confFile := os.Getenv("CONFIG_FILE")
+var ServiceMap map[string]*Service
 
+func reloadConfig(configData []byte) error {
 	var data struct {
 		Services []Service `json:"services"`
 	}
-
-	listeners := []net.Listener{}
-
-	for {
-
+	if configData == nil {
+		confFile := os.Getenv("CONFIG_FILE")
 		configData, err := ioutil.ReadFile(confFile)
 		if err != nil {
-			fmt.Println("Error reading config file:", confFile, err)
+			return err
 		}
-
 		err = json.Unmarshal(configData, &data)
+	} else {
+		err := json.Unmarshal(configData, &data)
 		if err != nil {
-			fmt.Println("Error unmarshalling config file:", err)
+			return err
 		}
-
-		for len(listeners) > 0 {
-			i := len(listeners) - 1
-			listener := listeners[i]
-			fmt.Println("closing: ", listener.Addr().String())
-			listener.Close()
-			listeners = remove(listeners, i)
+	}
+	oldServiceMap := make(map[string]*Service)
+	for _, service := range ServiceMap {
+		oldServiceMap[getKey(service)] = service
+	}
+	ServiceMap = make(map[string]*Service)
+	for key, _ := range data.Services {
+		s := data.Services[key]
+		if _, ok := oldServiceMap[getKey(&s)]; !ok {
+			ServiceMap[getKey(&s)] = &s
+		} else {
+			ServiceMap[getKey(&s)] = oldServiceMap[getKey(&s)]
 		}
-
-		// for i, listener := range listeners {
-		// }
-
-		// for _, conn := range connections {
-		// 	if conn != nil {
-		// 		fmt.Println("closing: ", conn.RemoteAddr().String())
-		// 		conn.Close()
-
-		// 	}
-		// }
-
-		// listeners = []net.Listener{}
-		// connections = []net.Conn{}
-
-		for _, service := range data.Services {
-			go func(service Service) {
-
-				fmt.Println(fmt.Sprint(service.Name, ":", service.Target, "->", service.Port))
-
-				listener, err := net.Listen("tcp", fmt.Sprintf(":%d", service.Port))
-				if err != nil {
-					fmt.Println("Error listening:", err)
-					return
-				}
-
-				defer listener.Close()
-
-				listeners = append(listeners, listener)
-
-				for {
-					conn, err := listener.Accept()
-					if err != nil {
-						listener.Close()
-						// fmt.Println("Error accepting connection: ", err)
-						break
-					}
-					upconn, err := net.Dial("tcp", fmt.Sprint(service.Name, ":", service.Target))
-					if err != nil {
-						fmt.Println("Error dialing target: ", err)
-						conn.Close()
-						continue
-					}
-					go func() {
-						io.Copy(conn, upconn)
-						conn.Close()
-						upconn.Close()
-					}()
-					go func() {
-						io.Copy(upconn, conn)
-						upconn.Close()
-						conn.Close()
-					}()
-				}
-			}(service)
+	}
+	for key, _ := range oldServiceMap {
+		s := oldServiceMap[key]
+		if _, ok := ServiceMap[key]; !ok {
+			err := stopService(s)
+			if err != nil {
+				return err
+			}
 		}
+	}
+	for key, _ := range ServiceMap {
+		s := ServiceMap[key]
+		if _, ok := oldServiceMap[getKey(s)]; !ok {
+			err := startService(s)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+func getKey(service *Service) string {
+	return fmt.Sprint(service.Name, ":", service.Port, ":", service.Target)
+}
+func stopService(service *Service) error {
+	if service.Listener != nil {
+		err := service.Listener.Close()
+		service.Closed = true
+		fmt.Println("- stopping :: ", getKey(service))
+		return err
+	}
+	return nil
+}
 
-		WaitForFileChange(confFile)
-		// time.Sleep(time.Second)
+func startService(service *Service) error {
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", service.Port))
+	if err != nil {
+		return err
+	}
+	service.Listener = listener
+	service.Closed = false
+	go runLoop(service)
+	return nil
+}
 
+func runLoop(service *Service) error {
+	fmt.Println("+ starting :: ", getKey(service))
+	for {
+		if service.Closed || service.Listener == nil {
+			return nil
+		}
+		conn, err := service.Listener.Accept()
+		if err != nil {
+			return err
+		}
+		go func() {
+			upconn, err := net.Dial("tcp", fmt.Sprint(service.Name, ":", service.Target))
+			if err != nil {
+				return
+			}
+			defer upconn.Close()
+			defer conn.Close()
+			go io.Copy(upconn, conn)
+			io.Copy(conn, upconn)
+		}()
 	}
 }
-
 func startApi() {
-
-	confFile := os.Getenv("CONFIG_FILE")
-
 	app := fiber.New()
-	app.Post("/update", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
-
 	app.Post("/post", func(c *fiber.Ctx) error {
-		fmt.Println(string(c.Body()))
-
-		os.WriteFile(confFile, c.Body(), fs.ModeAppend)
-
-		// err := c.BodyParser(&data)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// if err != nil {
-		// 	return err
-		// }
-
+		err := reloadConfig(c.Body())
+		if err != nil {
+			return err
+		}
 		c.Send([]byte("done"))
 		return nil
-
 	})
-
 	app.Listen(":2999")
 }
-
 func main() {
 	go startApi()
-	go startProxy()
-
+	err := reloadConfig(nil)
+	if err != nil {
+		panic(err)
+	}
 	var wg sync.WaitGroup
 	wg.Add(1)
 	wg.Wait()
-
 }
