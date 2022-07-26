@@ -17,12 +17,14 @@
           min: 1
           required: true
           unit: Gi
+
         - name: primary_count
           label: Mongo Primary Count
           inputType: Number
           defaultValue: 1
           min: 1
           unit: Node
+
         - name: secondary_count
           label: Mongo Secondary Count
           inputType: Number
@@ -59,6 +61,7 @@
       displayName: MongoDB Standalone
       description: MongoDB Standalone
       apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
+      kind: Service
       active: true
       fields:
         - name: cpu
@@ -82,13 +85,18 @@
           return {
             annotation: {
               "kloudlite.io/billing-plan": "Basic",
-              "kloudlite.io/billable-quantity": inputs.cpu,
-              "kloudlite.io/is-shared": true,
+              "kloudlite.io/billable-quantity": `${inputs.cpu}`,
+              "kloudlite.io/is-shared": "false",
             },
             inputs: {
               ...inputs,
-              cpu: `${inputs.cpu * 1000}m`,
-              size: `${inputs.size * 1000}Gi`,
+              resources: {
+                cpu: `${inputs.cpu * 1000}m`,
+                memory: `${inputs.cpu * 1000}Mi`,
+              },
+              storage: {
+                size: `${inputs.size}Gi`,
+              }
             },
             error: null,
           };
@@ -97,12 +105,10 @@
 
       estimator: |-
         function (inputs, plans) {
-          var computePrice = plans.compute["Basic"].sharedPrice * inputs.cpu;
+          var computePrice = plans.compute["Basic"].dedicatedPrice * inputs.cpu;
           var storagePrice = plans.storage["BlockStorage"].pricePerGB * inputs.size;
           var totalPrice = computePrice + storagePrice;
-          var numberOfSupportedConnections = inputs.cpu * 40;
-
-          inputs.size = inputs.size * 1000
+          var numberOfSupportedConnections = inputs.cpu * 40 * 2;
 
           return {
             totalPrice: totalPrice,
@@ -133,14 +139,11 @@
           kind: Database
           displayName: Database
           description: MongoDB
-          operations:
-            apply: mongo-apply-image:tag
-            delete: mongo-delete-image:tag
-          fields:
-            - name: name
-              label: Database Name
-              inputType: String
-              required: true
+          # fields:
+          #   - name: name
+          #     label: Database Name
+          #     inputType: String
+          #     required: true
           outputs:
             - name: DB_USER
               label: Username
@@ -173,17 +176,22 @@
 
       inputMiddleware: |-
         const inputMiddleware = (inputs) =>{
-          const defaultPlan = "Basic"
+          const plan = "Basic"
           return {
             annotation: {
-              "kloudlite.io/billing-plan": defaultPlan,
+              "kloudlite.io/billing-plan": plan,
               "kloudlite.io/billable-quantity": inputs.cpu,
               "kloudlite.io/is-shared": true,
             },
             inputs: {
               ...inputs,
-              cpu: `${inputs.cpu * 1000}m`,
-              size: `${inputs.size}Gi`,
+              resources: {
+                cpu: `${inputs.cpu * 1000}m`,
+                memory: `${inputs.cpu * 1000}Mi`,
+              },
+              storage: {
+                size: `${inputs.size}Gi`,
+              },
             },
             error: null,
           };
@@ -228,11 +236,11 @@
           kind: Database
           displayName: Database
           description: MysqlDB
-          fields:
-            - name: name
-              label: Db Name
-              inputType: String
-              required: true
+          # fields:
+          #   - name: name
+          #     label: Db Name
+          #     inputType: String
+          #     required: true
           outputs:
             - name: DB_NAME
               label: Db Name
@@ -265,10 +273,10 @@
       description: S3 compatible object storage
       logoUrl: https://k21academy.com/wp-content/uploads/2021/07/Google-Cloud-Storage.png
       fields:
-        - name: name
-          label: Bucket Name
-          inputType: String
-          required: true
+        # - name: name
+        #   label: Bucket Name
+        #   inputType: String
+        #   required: true
         - name: region
           label: Bucket Region
           inputType: String
@@ -278,6 +286,7 @@
           label: Bucket Public Folders
           inputType: String
           required: false
+
       inputMiddleware: |+
         const inputMiddleware =  (inputs) => {
           return {
@@ -324,10 +333,10 @@
       displayName: Redis Standalone
       description: Redis Standalone
       fields:
-        - name: name
-          label: Redis Instance Name
-          inputType: String
-          required: true
+        # - name: name
+        #   label: Redis Instance Name
+        #   inputType: String
+        #   required: true
 
         - name: cpu
           inputType: Number
@@ -356,8 +365,13 @@
             },
             inputs: {
               ...inputs,
-              cpu: `${inputs.cpu * 1000}m`,
-              size: `${inputs.size}Gi`,
+              resources: {
+                cpu: `${inputs.cpu * 1000}m`,
+                memory: `${inputs.cpu * 2 * 1000}Mi`,
+              },
+              storage:{
+                size: `${inputs.size}Gi`,
+              },
             },
             error: null,
           };
@@ -398,8 +412,8 @@
           apiVersion: redis-standalone.msvc.kloudlite.io/v1
           kind: ACLAccount
           fields:
-            - name: name
-              label: ACL Account Name
+            # - name: name
+            #   label: ACL Account Name
 
             - name: prefix
               label: Redis Key Prefix

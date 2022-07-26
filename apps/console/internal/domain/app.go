@@ -267,6 +267,16 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 			Metadata: op_crds.AppMetadata{
 				Name:      app.ReadableId,
 				Namespace: app.Namespace,
+				Labels: func() map[string]string {
+					labels := map[string]string{}
+					if shouldRestart {
+						labels["kloudlite.io/do-restart"] = "true"
+					}
+					if app.Frozen {
+						labels["kloudlite.io/freeze"] = "true"
+					}
+					return labels
+				}(),
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":       string(prj.AccountId),
 					"kloudlite.io/project-ref":       string(prj.Id),
