@@ -130,7 +130,6 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": prj.Region,
 			},
-			ApiVersion: template.ApiVersion,
 			Inputs: func() map[string]string {
 				vs := make(map[string]string, 0)
 				for k, v := range transformedInputs["inputs"].(map[string]interface{}) {
@@ -193,10 +192,14 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
+			CloudProvider: "do", // TODO:
+			MsvcType: op_crds.MsvcType{
+				APIVersion: template.ApiVersion,
+				Kind:       "Service",
+			},
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": proj.Region,
 			},
-			ApiVersion: template.ApiVersion,
 			Inputs: func() map[string]string {
 				vs := make(map[string]string, 0)
 				for k, v := range transformedInputs["inputs"].(map[string]interface{}) {
