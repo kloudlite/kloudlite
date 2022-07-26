@@ -61,10 +61,11 @@ type Container struct {
 type AppStatus string
 
 const (
-	AppStateSyncing = AppStatus("sync-in-progress")
-	AppStateLive    = AppStatus("live")
-	AppStateError   = AppStatus("error")
-	AppStateDown    = AppStatus("down")
+	AppStateSyncing  = AppStatus("sync-in-progress")
+	AppStateDeleting = AppStatus("deleting")
+	AppStateLive     = AppStatus("live")
+	AppStateError    = AppStatus("error")
+	AppStateDown     = AppStatus("down")
 )
 
 // type AppIn struct {
