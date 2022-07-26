@@ -223,13 +223,15 @@ spec:
               minScale:
                 default: 1
                 type: integer
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
               targetRps:
                 default: 100
                 type: integer
             required:
-            - maxScale
-            - minScale
-            - targetRps
+            - nodeSelector
             type: object
           status:
             properties:
