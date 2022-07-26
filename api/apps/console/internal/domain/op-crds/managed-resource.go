@@ -1,10 +1,19 @@
 package op_crds
 
+type MsvcRef struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+}
+
+type ResType struct {
+	Kind string `json:"kind"`
+}
+
 type ManagedResourceSpec struct {
-	Kind               string            `json:"kind,omitempty"`
-	ApiVersion         string            `json:"apiVersion"`
-	ManagedServiceName string            `json:"managedSvcName"`
-	Inputs             map[string]string `json:"inputs,omitempty"`
+	MsvcRef MsvcRef           `json:"msvcType"`
+	ResRef  ResType           `json:"resType"`
+	Inputs  map[string]string `json:"inputs,omitempty"`
 }
 
 type ManagedResourceMetadata struct {

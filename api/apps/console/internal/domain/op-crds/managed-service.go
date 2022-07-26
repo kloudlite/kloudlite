@@ -1,9 +1,15 @@
 package op_crds
 
+type MsvcType struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+}
+
 type ManagedServiceSpec struct {
-	ApiVersion   string            `json:"apiVersion"`
-	Inputs       map[string]string `json:"inputs,omitempty"`
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	CloudProvider string            `json:"cloudProvider"`
+	MsvcType      MsvcType          `json:"msvcType"`
+	Inputs        map[string]string `json:"inputs,omitempty"`
+	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
 }
 
 type ManagedServiceMetadata struct {
