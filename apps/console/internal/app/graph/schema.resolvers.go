@@ -342,6 +342,14 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		return nil, err
 	}
 	return &model.App{
+		CreatedAt: entity.CreationTime.String(),
+		UpdatedAt: func() *string {
+			if !entity.UpdateTime.IsZero() {
+				s := entity.UpdateTime.String()
+				return &s
+			}
+			return nil
+		}(),
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range entity.Conditions {
@@ -501,6 +509,14 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 	}
 
 	return &model.App{
+		CreatedAt: entity.CreationTime.String(),
+		UpdatedAt: func() *string {
+			if !entity.UpdateTime.IsZero() {
+				s := entity.UpdateTime.String()
+				return &s
+			}
+			return nil
+		}(),
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range entity.Conditions {
@@ -756,6 +772,14 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 		}
 
 		apps = append(apps, &model.App{
+			CreatedAt: a.CreationTime.String(),
+			UpdatedAt: func() *string {
+				if !a.UpdateTime.IsZero() {
+					s := a.UpdateTime.String()
+					return &s
+				}
+				return nil
+			}(),
 			IsLambda: a.IsLambda,
 			Conditions: func() []*model.MetaCondition {
 				conditions := make([]*model.MetaCondition, 0)
@@ -843,6 +867,14 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	}
 
 	return &model.App{
+		CreatedAt: a.CreationTime.String(),
+		UpdatedAt: func() *string {
+			if !a.UpdateTime.IsZero() {
+				s := a.UpdateTime.String()
+				return &s
+			}
+			return nil
+		}(),
 		IsLambda: a.IsLambda,
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
