@@ -5,11 +5,8 @@ on:
     branches:
       - 'working01'
     paths:
-      - "./apps/finance/**"
-      - "./pkg/**"
-      - "./grpc-interfaces/**"
-      - "./common/**"
- 
+      - "./apps/proxy/**"
+
 
 jobs:
   docker:
@@ -21,7 +18,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
-      
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -34,9 +31,8 @@ jobs:
 
       - name: Build and Push
         env:
-          TAG: v2
-          REGISTRY: harbor.dev.madhouselabs.io
-          APP: finance
- 
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
+          APP_DIR: ./apps/proxy
+          IMAGE: registry.gitlab.com/abdheshnayak/sshd:proxy
+
+        run: "docker build -f ./${APP_DIR}/Dockerfile -t ${IMAGE} --build-arg APP_DIR=${APP_DIR} ${APP_DIR}"
 
