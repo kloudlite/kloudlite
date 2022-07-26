@@ -27,9 +27,12 @@ func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate
 		return err
 	}
 	if response.IsReady {
-		one.Status = entities.AppStateLive
-	} else {
-		one.Status = entities.AppStateSyncing
+		if one.Status == entities.AppStateSyncing {
+			one.Status = entities.AppStateLive
+		}
+		if one.Status == entities.AppStateRestarting {
+			one.Status = entities.AppStateLive
+		}
 	}
 	one.Conditions = response.ChildConditions
 	_, err = d.appRepo.UpdateById(ctx, one.Id, one)
@@ -59,7 +62,7 @@ func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entitie
 	if err != nil {
 		return nil, err
 	}
-	err = d.sendAppApply(ctx, prj, createdApp)
+	err = d.sendAppApply(ctx, prj, createdApp, false)
 	if err != nil {
 		return nil, err
 	}
@@ -77,11 +80,66 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 	if err != nil {
 		return nil, err
 	}
-	err = d.sendAppApply(ctx, prj, updatedApp)
+	err = d.sendAppApply(ctx, prj, updatedApp, false)
 	if err != nil {
 		return nil, err
 	}
 	return updatedApp, nil
+}
+
+func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
+	app, err := d.appRepo.FindById(ctx, appId)
+	if err != nil {
+		return err
+	}
+	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
+	if err != nil {
+		return err
+	}
+	app.Frozen = true
+	_, err = d.appRepo.UpdateById(ctx, appId, app)
+	if err != nil {
+		return err
+	}
+	d.sendAppApply(ctx, prj, app, false)
+	return nil
+}
+func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
+	app, err := d.appRepo.FindById(ctx, appId)
+	if err != nil {
+		return err
+	}
+	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
+	if err != nil {
+		return err
+	}
+	app.Frozen = false
+	_, err = d.appRepo.UpdateById(ctx, appId, app)
+	if err != nil {
+		return err
+	}
+	d.sendAppApply(ctx, prj, app, false)
+	return nil
+}
+func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
+	app, err := d.appRepo.FindById(ctx, appId)
+	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
+	if err != nil {
+		return err
+	}
+	app.Namespace = prj.Name
+	app.ProjectId = prj.Id
+	app.Id = appId
+	app.Status = entities.AppStateRestarting
+	updatedApp, err := d.appRepo.UpdateById(ctx, appId, app)
+	if err != nil {
+		return err
+	}
+	err = d.sendAppApply(ctx, prj, updatedApp, true)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	app, err := d.appRepo.FindById(ctx, appID)
@@ -121,7 +179,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	return true, err
 }
 
-func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *entities.App) error {
+func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *entities.App, shouldRestart bool) error {
 	if app.IsLambda {
 		err := d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.Lambda{
 			APIVersion: op_crds.LambdaAPIVersion,
@@ -129,6 +187,16 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 			Metadata: op_crds.LambdaMetadata{
 				Name:      app.ReadableId,
 				Namespace: app.Namespace,
+				Labels: func() map[string]string {
+					labels := map[string]string{}
+					if shouldRestart {
+						labels["kloudlite.io/do-restart"] = "true"
+					}
+					if app.Frozen {
+						labels["kloudlite.io/freeze"] = "true"
+					}
+					return labels
+				}(),
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":       string(prj.AccountId),
 					"kloudlite.io/project-ref":       string(prj.Id),

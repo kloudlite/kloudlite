@@ -54,6 +54,30 @@ func (r *accountResolver) Devices(ctx context.Context, obj *model.Account) ([]*m
 	return devices, e
 }
 
+func (r *appResolver) Restart(ctx context.Context, obj *model.App) (bool, error) {
+	err := r.Domain.RestartApp(ctx, obj.ID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *appResolver) Freeze(ctx context.Context, obj *model.App) (bool, error) {
+	err := r.Domain.FreezeApp(ctx, obj.ID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *appResolver) Unfreeze(ctx context.Context, obj *model.App) (bool, error) {
+	err := r.Domain.UnFreezeApp(ctx, obj.ID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.User, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
@@ -1120,6 +1144,9 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
+// App returns generated.AppResolver implementation.
+func (r *Resolver) App() generated.AppResolver { return &appResolver{r} }
+
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
 
@@ -1142,6 +1169,7 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
 type accountResolver struct{ *Resolver }
+type appResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
 type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }

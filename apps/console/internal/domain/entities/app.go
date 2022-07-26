@@ -61,11 +61,13 @@ type Container struct {
 type AppStatus string
 
 const (
-	AppStateSyncing  = AppStatus("sync-in-progress")
-	AppStateDeleting = AppStatus("deleting")
-	AppStateLive     = AppStatus("live")
-	AppStateError    = AppStatus("error")
-	AppStateDown     = AppStatus("down")
+	AppStateSyncing    = AppStatus("sync-in-progress")
+	AppStateRestarting = AppStatus("restarting")
+	AppStateFrozen     = AppStatus("frozen")
+	AppStateDeleting   = AppStatus("deleting")
+	AppStateLive       = AppStatus("live")
+	AppStateError      = AppStatus("error")
+	AppStateDown       = AppStatus("down")
 )
 
 // type AppIn struct {
@@ -96,6 +98,7 @@ type App struct {
 	ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
 	Name             string             `json:"name" bson:"name"`
 	Namespace        string             `json:"namespace" bson:"namespace"`
+	Frozen           bool               `json:"frozen" bson:"frozen"`
 	Description      *string            `json:"description" bson:"description"`
 	Replicas         int                `json:"replicas" bson:"replicas"`
 	AutoScale        *AutoScale         `json:"auto_scale" bson:"auto_scale"`
