@@ -56,6 +56,10 @@ type stepResult struct {
 	err    error
 }
 
+func (s stepResult) Raw() (ctrl.Result, error) {
+	return s.Result(), s.Err()
+}
+
 func GetLocal[T any, V Resource](r *Request[V], key string) (T, bool) {
 	x := r.locals[key]
 	t, ok := x.(T)
@@ -73,6 +77,7 @@ type StepResult interface {
 	Err() error
 	Result() ctrl.Result
 	ShouldProceed() bool
+	Raw() (ctrl.Result, error)
 }
 
 func NewStepResult(result *ctrl.Result, err error) StepResult {

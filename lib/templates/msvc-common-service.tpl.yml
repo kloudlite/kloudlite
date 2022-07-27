@@ -1,20 +1,15 @@
-{{- $ownerRefs := get . "owner-refs" }}
-{{- $labels := get . "labels"}}
-{{- $obj := get . "obj" }}
-{{- with $obj}}
+{{- $ownerRefs := get . "owner-refs" -}}
+{{- $obj := get . "obj" -}}
+{{- $labels := get . "labels" | default dict -}}
+{{- $annotations := get . "annotations" | default dict -}}
+{{- with $obj }}
 {{- /*gotype:  operators.kloudlite.io/apis/crds/v1.ManagedService */ -}}
 apiVersion: {{.Spec.MsvcKind.APIVersion}}
 kind: {{.Spec.MsvcKind.Kind}}
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
-  labels:
-    {{- if .Labels }}
-    {{ .Labels | toYAML | indent 4 }}
-    {{- end }}
-    {{- if $labels}}
-    {{ $labels | toYAML | indent 4}}
-    {{- end}}
+  labels: {{ $labels | toYAML | nindent 4 }}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
   cloudProvider: {{.Spec.CloudProvider}}
