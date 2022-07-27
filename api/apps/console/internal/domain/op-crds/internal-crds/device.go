@@ -5,6 +5,7 @@ type DeviceSpec struct {
 	ActiveRegion string  `json:"activeRegion,omitempty"`
 	Offset       int     `json:"offset"`
 	DeviceId     string  `json:"deviceId,omitempty"`
+	DeviceName   string  `json:"deviceName,omitempty"`
 	Ports        []int32 `json:"ports,omitempty"`
 }
 

@@ -108,9 +108,10 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 				}
 				return ""
 			}(),
-			Offset:   device.Index,
-			DeviceId: string(device.Id),
-			Ports:    device.ExposedPorts,
+			DeviceName: deviceName,
+			Offset:     device.Index,
+			DeviceId:   string(device.Id),
+			Ports:      device.ExposedPorts,
 		},
 	})
 	if err != nil {
