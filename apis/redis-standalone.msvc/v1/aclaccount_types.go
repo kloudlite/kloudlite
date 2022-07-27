@@ -31,6 +31,7 @@ func (ac *ACLAccount) GetStatus() *rApi.Status {
 
 func (ac *ACLAccount) GetEnsuredLabels() map[string]string {
 	return map[string]string{
+		"kloudlite.io/msvc.name":                  ac.Spec.ManagedSvcName,
 		fmt.Sprintf("%s/ref", GroupVersion.Group): ac.Name,
 	}
 }

@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"operators.kloudlite.io/env"
+	"operators.kloudlite.io/lib/kubectl"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -50,6 +51,10 @@ func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.
 		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
+	if x := r.handleRestart(req); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.Result(), x.Err()
@@ -71,6 +76,28 @@ func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *AppReconciler) handleRestart(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
+	obj := req.Object
+	ctx := req.Context()
+
+	req.Logger.Infof("resource came for restarting")
+
+	annotations := obj.GetAnnotations()
+	if _, ok := req.Object.GetAnnotations()[constants.AnnotationKeys.Restart]; ok {
+		err := kubectl.Restart(kubectl.Deployments, req.Object.GetNamespace(), req.Object.GetEnsuredLabels())
+		if err != nil {
+			// failed to restart
+		}
+		patch := client.MergeFrom(req.Object.DeepCopy())
+		delete(annotations, constants.AnnotationKeys.Restart)
+		obj.SetAnnotations(annotations)
+		if err := r.Patch(ctx, obj, patch); err != nil {
+			return req.FailWithOpError(err)
+		}
+	}
+	return req.Next()
 }
 
 func (r *AppReconciler) finalize(req *rApi.Request[*crdsv1.App]) rApi.StepResult {

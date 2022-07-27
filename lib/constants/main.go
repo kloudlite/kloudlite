@@ -5,13 +5,6 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 const MsvcApiVersion = "msvc.kloudlite.io/v1"
 
 const (
-	HelmMongoDBKind string = "HelmMongoDB"
-
-	HelmMySqlDBKind string = "HelmMySqlDB"
-	HelmRedisKind   string = "HelmRedis"
-)
-
-const (
 	CommonFinalizer        string = "finalizers.kloudlite.io"
 	ForegroundFinalizer    string = "foregroundDeletion"
 	BillingFinalizer       string = "finalizers.kloudlite.io/billing"
@@ -32,6 +25,9 @@ var AnnotationKeys = struct {
 	BillableQuantity string
 	GroupVersionKind string
 	IsShared         string
+
+	Restart string
+	Freeze  string
 }{
 	Account:          "kloudlite.io/account-ref",
 	Project:          "kloudlite.io/project-ref",
@@ -40,14 +36,10 @@ var AnnotationKeys = struct {
 	BillableQuantity: "kloudlite.io/billable-quantity",
 	GroupVersionKind: "kloudlite.io/group-version-kind",
 	IsShared:         "kloudlite.io/is-shared",
+
+	Restart: "kloudlite.io/do-restart",
+	Freeze:  "kloudlite.io/freeze",
 }
-
-type StorageClass string
-
-const (
-	DoBlockStorage    StorageClass = "do-block-storage"
-	DoBlockStorageXFS StorageClass = "do-block-storage-xfs"
-)
 
 var (
 	PodGroup = metav1.TypeMeta{
@@ -102,18 +94,6 @@ var (
 	KnativeServiceType = metav1.TypeMeta{
 		Kind:       "Service",
 		APIVersion: "serving.knative.dev/v1",
-	}
-)
-
-var (
-	ConditionReady = struct {
-		Type, InitReason, InProgressReason, ErrorReason, SuccessReason string
-	}{
-		Type:             "Ready",
-		InitReason:       "Initialized",
-		InProgressReason: "ReconcilationInProgress",
-		ErrorReason:      "SomeChecksFailed",
-		SuccessReason:    "AllChecksCompleted",
 	}
 )
 
