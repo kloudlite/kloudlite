@@ -22,6 +22,9 @@ spec:
   image:
     tag: 5.0.8-debian-10-r20
 
+  architecture: standalone
+  useStatefulSet: true
+
   {{- if .Labels }}
   commonLabels: {{.Labels | toYAML | nindent 4}}
   {{- end}}
@@ -39,11 +42,12 @@ spec:
   volumePermissions:
     enabled: true
   metrics:
-    enabled: false
+    enabled: true
   resources:
     requests:
+      cpu: {{.Spec.Resources.Cpu.Min}}
       memory: {{ .Spec.Resources.Memory }}
     limits:
-      cpu: {{ .Spec.Resources.Cpu}}
-      memory: {{ .Spec.Resources.Memory}}
+      cpu: {{.Spec.Resources.Cpu.Max}}
+      memory: {{.Spec.Resources.Memory}}
 {{- end }}

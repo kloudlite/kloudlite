@@ -99,10 +99,10 @@ func (r *LambdaReconciler) handleRestart(req *rApi.Request[*serverlessv1.Lambda]
 	obj := req.Object
 	ctx := req.Context()
 
-	req.Logger.Infof("resource came for restarting")
-
 	annotations := obj.GetAnnotations()
 	if _, ok := req.Object.GetAnnotations()[constants.AnnotationKeys.Restart]; ok {
+		req.Logger.Infof("resource came for restarting")
+
 		exitCode, err := kubectl.Restart(kubectl.Deployments, req.Object.GetNamespace(), req.Object.GetEnsuredLabels())
 		if exitCode != 0 {
 			req.Logger.Error(err)

@@ -3,6 +3,8 @@ package common_types
 import (
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/errors"
+	"strconv"
+	"strings"
 )
 
 type Storage struct {
@@ -15,9 +17,21 @@ type Storage struct {
 	StorageClass string `json:"storageClass,omitempty"`
 }
 
-type Resources struct {
+func (s Storage) ToInt() int {
+	sp := strings.Split(s.Size, "Gi")
+	sGb, _ := strconv.ParseInt(sp[0], 0, 32)
+	return int(sGb)
+}
+
+type cpuTT struct {
 	// +kubebuilder:validation:Pattern=[\d]+m$
-	Cpu string `json:"cpu"`
+	Min string `json:"min"`
+	// +kubebuilder:validation:Pattern=[\d]+m$
+	Max string `json:"max"`
+}
+
+type Resources struct {
+	Cpu cpuTT `json:"cpu"`
 	// +kubebuilder:validation:Pattern=[\d]+Mi$
 	Memory string `json:"memory"`
 }

@@ -22,8 +22,12 @@ type ManagedServiceSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	// +kubebuilder:validation:Optional
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	MsvcKind     msvcKind            `json:"msvcKind"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	MsvcKind     msvcKind          `json:"msvcKind"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=1
+	ReplicaCount int                 `json:"replicaCount,omitempty"`
 	Inputs       rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 

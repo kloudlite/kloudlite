@@ -2,11 +2,19 @@ package watcher
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	types2 "k8s.io/apimachinery/pkg/types"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
+	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
+	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -34,6 +42,27 @@ func (r *BillingWatcherReconciler) GetName() string {
 	return "billing-watcher"
 }
 
+func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj client.Object, billing ResourceBilling) (ctrl.Result, error) {
+	klMetadata := ExtractMetadata(obj)
+	if obj.GetDeletionTimestamp() != nil {
+		if controllerutil.ContainsFinalizer(obj, constants.BillingFinalizer) {
+			if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, &billing, Stages.Deleted); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return r.RemoveBillingFinalizer(ctx, obj)
+	}
+
+	if !controllerutil.ContainsFinalizer(obj, constants.BillingFinalizer) {
+		return r.AddBillingFinalizer(ctx, obj)
+	}
+
+	if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, &billing, Stages.Exists); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
+}
+
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers/finalizers,verbs=update
@@ -44,52 +73,126 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 	if err := json.Unmarshal([]byte(oReq.Name), &wName); err != nil {
 		return ctrl.Result{}, nil
 	}
-	if wName.Group == "" {
+
+	gvk, err := parseGroup(wName.Group)
+	if err != nil {
+		r.logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
 		return ctrl.Result{}, nil
 	}
-	switch wName.Group {
-	case crdsv1.GroupVersion.WithKind("App").String():
+
+	if gvk == nil {
+		return ctrl.Result{}, nil
+	}
+
+	switch *gvk {
+	case crdsv1.GroupVersion.WithKind("App"):
 		{
 			app, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.App{})
 			if err != nil {
 				return ctrl.Result{}, client.IgnoreNotFound(err)
 			}
-			klMetadata := ExtractMetadata(app)
 
 			replicaCount, ok := app.Status.DisplayVars.GetInt("readyReplicas")
 			if !ok {
 				return ctrl.Result{}, errors.Newf("no readyReplicas key found in .DisplayVars")
 			}
-			annotations := app.GetAnnotations()
 			billing := ResourceBilling{
-				Name: fmt.Sprintf("%s/%s", app.Namespace, app.Name),
-				Items: []k8sItem{
-					{
-						Type:     Pod,
-						Count:    replicaCount,
-						Plan:     Plan(annotations[constants.AnnotationKeys.BillingPlan]),
-						PlanQ:    annotations[constants.AnnotationKeys.BillableQuantity],
-						IsShared: annotations[constants.AnnotationKeys.IsShared],
-					},
-				},
+				Name:  fmt.Sprintf("%s/%s", app.Namespace, app.Name),
+				Items: []k8sItem{newK8sItem(app, Pod, replicaCount)},
 			}
-			if app.GetDeletionTimestamp() != nil {
-				if controllerutil.ContainsFinalizer(app, constants.BillingFinalizer) {
-					if err := r.notifyBilling(ctx, getMsgKey(app), klMetadata, &billing, Stages.Deleted); err != nil {
-						return ctrl.Result{}, err
+			return r.SendBillingEvent(ctx, app, billing)
+		}
+
+	case crdsv1.GroupVersion.WithKind("ManagedService"):
+		{
+			msvc, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.ManagedService{})
+			if err != nil {
+				return ctrl.Result{}, client.IgnoreNotFound(err)
+			}
+
+			realMsvcType := metav1.TypeMeta{APIVersion: msvc.Spec.MsvcKind.APIVersion, Kind: msvc.Spec.MsvcKind.Kind}
+
+			switch realMsvcType.GetObjectKind().GroupVersionKind() {
+			case mongodbStandalone.GroupVersion.WithKind("Service"):
+				{
+					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					if err != nil {
+						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
+
+					billing := ResourceBilling{
+						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
+						Items: []k8sItem{
+							newK8sItem(msvc, Pod, realMsvc.Spec.ReplicaCount),
+							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
+						},
+					}
+					return r.SendBillingEvent(ctx, realMsvc, billing)
 				}
-				return r.RemoveBillingFinalizer(ctx, app)
-			}
+			case redisStandalone.GroupVersion.WithKind("Service"):
+				{
+					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					if err != nil {
+						return ctrl.Result{}, client.IgnoreNotFound(err)
+					}
 
-			if !controllerutil.ContainsFinalizer(app, constants.BillingFinalizer) {
-				return r.AddBillingFinalizer(ctx, app)
-			}
+					billing := ResourceBilling{
+						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
+						Items: []k8sItem{
+							newK8sItem(msvc, Pod, realMsvc.Spec.ReplicaCount),
+							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
+						},
+					}
+					return r.SendBillingEvent(ctx, realMsvc, billing)
+				}
 
-			if err := r.notifyBilling(ctx, getMsgKey(app), klMetadata, &billing, Stages.Exists); err != nil {
-				return ctrl.Result{}, err
+			case mysqlStandalone.GroupVersion.WithKind("Service"):
+				{
+					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					if err != nil {
+						return ctrl.Result{}, client.IgnoreNotFound(err)
+					}
+
+					billing := ResourceBilling{
+						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
+						Items: []k8sItem{
+							newK8sItem(msvc, Pod, realMsvc.Spec.ReplicaCount),
+							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
+						},
+					}
+					return r.SendBillingEvent(ctx, realMsvc, billing)
+				}
 			}
 		}
+
+	case serverlessv1.GroupVersion.WithKind("Lambda"):
+		{
+			lambda, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &serverlessv1.Lambda{})
+			if err != nil {
+				return ctrl.Result{}, client.IgnoreNotFound(err)
+			}
+
+			var podsList corev1.PodList
+			if err := r.List(
+				ctx, &podsList, &client.ListOptions{
+					LabelSelector: labels.SelectorFromValidatedSet(
+						map[string]string{"kloudlite.io/lambda.name": lambda.Name},
+					),
+					Namespace: lambda.Namespace,
+				},
+			); err != nil {
+				return ctrl.Result{}, client.IgnoreNotFound(err)
+			}
+
+			billing := ResourceBilling{
+				Name: fmt.Sprintf("%s/%s", lambda.Namespace, lambda.Name),
+				Items: []k8sItem{
+					newK8sItem(lambda, Pod, len(podsList.Items)),
+				},
+			}
+			return r.SendBillingEvent(ctx, lambda, billing)
+		}
+
 	}
 	return ctrl.Result{}, nil
 }
@@ -107,18 +210,12 @@ func (r *BillingWatcherReconciler) RemoveBillingFinalizer(ctx context.Context, o
 // SetupWithManager sets up the controller with the Manager.
 
 func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	logger, err := logging.New(
+	r.logger = logging.NewOrDie(
 		&logging.Options{
 			Name: "billing-watcher",
 			Dev:  true,
 		},
 	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	r.logger = logger
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.App{})
@@ -126,8 +223,8 @@ func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	watchList := []client.Object{
 		// &crdsv1.Project{},
 		&crdsv1.App{},
-		// &serverlessv1.Lambda{},
-		// &crdsv1.ManagedService{},
+		&serverlessv1.Lambda{},
+		&crdsv1.ManagedService{},
 		// &crdsv1.ManagedResource{},
 		// &crdsv1.Router{},
 	}
@@ -137,8 +234,15 @@ func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&source.Kind{Type: object},
 			handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
-					gpv := obj.GetAnnotations()[constants.AnnotationKeys.GroupVersionKind]
-					wName, err := WrappedName{Name: obj.GetName(), Group: gpv}.String()
+					b64Group := base64.StdEncoding.EncodeToString(
+						[]byte(obj.GetAnnotations()[constants.AnnotationKeys.GroupVersionKind]),
+					)
+
+					if len(b64Group) == 0 {
+						return nil
+					}
+
+					wName, err := WrappedName{Name: obj.GetName(), Group: b64Group}.String()
 					if err != nil {
 						return nil
 					}
