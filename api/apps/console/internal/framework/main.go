@@ -7,6 +7,7 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/kubeapi"
 	loki_server "kloudlite.io/pkg/loki-server"
 	"kloudlite.io/pkg/redpanda"
 	mongo_db "kloudlite.io/pkg/repos"
@@ -85,6 +86,8 @@ type Env struct {
 
 	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
 	NotifierUrl string `env:"NOTIFIER_URL" required:"true"`
+
+	KubeAPIAddress string `env:"KUBE_API_ADDRESS"`
 }
 
 func (e *Env) GetBrokers() string {
@@ -134,6 +137,9 @@ var Module fx.Option = fx.Module(
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),
+	fx.Provide(func(env Env) *kubeapi.Client {
+		return kubeapi.NewClient(env.KubeAPIAddress)
+	}),
 	mongo_db.NewMongoClientFx[*Env](),
 	fx.Provide(
 		func(env *Env) app.AuthCacheClient {

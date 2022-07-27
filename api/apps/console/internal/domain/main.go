@@ -10,6 +10,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/config"
+	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
@@ -21,6 +22,7 @@ import (
 )
 
 type domain struct {
+	kubeCli              *kubeapi.Client
 	deviceRepo           repos.DbRepo[*entities.Device]
 	clusterRepo          repos.DbRepo[*entities.Cluster]
 	projectRepo          repos.DbRepo[*entities.Project]
@@ -82,8 +84,10 @@ func fxDomain(
 	financeClient finance.FinanceClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 	jsEvalClient jseval.JSEvalClient,
+	kubecli *kubeapi.Client,
 ) Domain {
 	return &domain{
+		kubeCli:              kubecli,
 		wgAccountRepo:        wgAccountRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,

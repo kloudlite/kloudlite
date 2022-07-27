@@ -141,14 +141,14 @@ type Config struct {
 }
 
 type Device struct {
-	ID            repos.ID `json:"id"`
-	User          *User    `json:"user"`
-	Name          string   `json:"name"`
-	Configuration string   `json:"configuration"`
-	IP            string   `json:"ip"`
-	Account       *Account `json:"account"`
-	Ports         []int    `json:"ports"`
-	Region        *string  `json:"region"`
+	ID            repos.ID               `json:"id"`
+	User          *User                  `json:"user"`
+	Name          string                 `json:"name"`
+	Configuration map[string]interface{} `json:"configuration"`
+	IP            string                 `json:"ip"`
+	Account       *Account               `json:"account"`
+	Ports         []int                  `json:"ports"`
+	Region        *string                `json:"region"`
 }
 
 func (Device) IsEntity() {}
