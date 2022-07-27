@@ -87,7 +87,7 @@ type Env struct {
 	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
 	NotifierUrl string `env:"NOTIFIER_URL" required:"true"`
 
-	KubeAPIAddress string `env:"KUBE_API_ADDRESS"`
+	KubeAPIAddress string `env:"KUBE_API_ADDRESS" required:"true"`
 }
 
 func (e *Env) GetBrokers() string {
@@ -137,7 +137,7 @@ var Module fx.Option = fx.Module(
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),
-	fx.Provide(func(env Env) *kubeapi.Client {
+	fx.Provide(func(env *Env) *kubeapi.Client {
 		return kubeapi.NewClient(env.KubeAPIAddress)
 	}),
 	mongo_db.NewMongoClientFx[*Env](),

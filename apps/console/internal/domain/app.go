@@ -189,21 +189,24 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Namespace: app.Namespace,
 				Labels: func() map[string]string {
 					labels := map[string]string{}
-					if shouldRestart {
-						labels["kloudlite.io/do-restart"] = "true"
-					}
 					if app.Frozen {
 						labels["kloudlite.io/freeze"] = "true"
 					}
 					return labels
 				}(),
-				Annotations: map[string]string{
-					"kloudlite.io/account-ref":       string(prj.AccountId),
-					"kloudlite.io/project-ref":       string(prj.Id),
-					"kloudlite.io/resource-ref":      string(app.Id),
-					"kloudlite.io/billing-plan":      "Lambda",
-					"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
-				},
+				Annotations: func() map[string]string {
+					data := map[string]string{
+						"kloudlite.io/account-ref":       string(prj.AccountId),
+						"kloudlite.io/project-ref":       string(prj.Id),
+						"kloudlite.io/resource-ref":      string(app.Id),
+						"kloudlite.io/billing-plan":      "Lambda",
+						"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
+					}
+					if shouldRestart {
+						data["kloudlite.io/do-restart"] = "true"
+					}
+					return data
+				}(),
 			},
 			Spec: op_crds.LambdaSpec{
 				NodeSelector: map[string]string{
@@ -269,27 +272,30 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Namespace: app.Namespace,
 				Labels: func() map[string]string {
 					labels := map[string]string{}
-					if shouldRestart {
-						labels["kloudlite.io/do-restart"] = "true"
-					}
 					if app.Frozen {
 						labels["kloudlite.io/freeze"] = "true"
 					}
 					return labels
 				}(),
-				Annotations: map[string]string{
-					"kloudlite.io/account-ref":       string(prj.AccountId),
-					"kloudlite.io/project-ref":       string(prj.Id),
-					"kloudlite.io/resource-ref":      string(app.Id),
-					"kloudlite.io/billing-plan":      app.Containers[0].ComputePlan,
-					"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
-					"kloudlite.io/is-shared": func() string {
-						if app.Containers[0].IsShared {
-							return "true"
-						}
-						return "false"
-					}(),
-				},
+				Annotations: func() map[string]string {
+					data := map[string]string{
+						"kloudlite.io/account-ref":       string(prj.AccountId),
+						"kloudlite.io/project-ref":       string(prj.Id),
+						"kloudlite.io/resource-ref":      string(app.Id),
+						"kloudlite.io/billing-plan":      app.Containers[0].ComputePlan,
+						"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
+						"kloudlite.io/is-shared": func() string {
+							if app.Containers[0].IsShared {
+								return "true"
+							}
+							return "false"
+						}(),
+					}
+					if shouldRestart {
+						data["kloudlite.io/do-restart"] = "true"
+					}
+					return data
+				}(),
 			},
 			Spec: op_crds.AppSpec{
 				NodeSelector: map[string]string{

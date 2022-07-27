@@ -232,3 +232,19 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 	})
 	return true, nil
 }
+
+func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID) (map[string]any, error) {
+	msvc, err := d.managedSvcRepo.FindById(ctx, managedSvcID)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := d.kubeCli.GetSecret(ctx, msvc.Namespace, fmt.Sprint("msvc-", msvc.Id))
+	if err != nil {
+		return nil, err
+	}
+	parsedSec := make(map[string]any)
+	for k, v := range secret.Data {
+		parsedSec[k] = string(v)
+	}
+	return parsedSec, nil
+}
