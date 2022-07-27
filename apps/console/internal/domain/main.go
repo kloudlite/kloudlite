@@ -43,7 +43,6 @@ type domain struct {
 	iamClient            iam.IAMClient
 	authClient           auth.AuthClient
 	changeNotifier       rcn.ResourceChangeNotifier
-	wgAccountRepo        repos.DbRepo[*entities.WGAccount]
 	financeClient        finance.FinanceClient
 	inventoryPath        string
 	jsEvalClient         jseval.JSEvalClient
@@ -73,7 +72,6 @@ func fxDomain(
 	appRepo repos.DbRepo[*entities.App],
 	managedSvcRepo repos.DbRepo[*entities.ManagedService],
 	managedResRepo repos.DbRepo[*entities.ManagedResource],
-	wgAccountRepo repos.DbRepo[*entities.WGAccount],
 	msgP redpanda.Producer,
 	env *Env,
 	logger logging.Logger,
@@ -88,7 +86,6 @@ func fxDomain(
 ) Domain {
 	return &domain{
 		kubeCli:              kubecli,
-		wgAccountRepo:        wgAccountRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,
 		ciClient:             ciClient,

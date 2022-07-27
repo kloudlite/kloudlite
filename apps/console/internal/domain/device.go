@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/seancfoley/ipaddress-go/ipaddr"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	internal_crds "kloudlite.io/apps/console/internal/domain/op-crds/internal-crds"
 	"kloudlite.io/pkg/repos"
@@ -45,14 +44,6 @@ func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (map[st
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
-	pk, e := wgtypes.GeneratePrivateKey()
-	if e != nil {
-		return nil, fmt.Errorf("unable to generate private key because %v", e)
-	}
-	e = d.ensureWgAccount(ctx, accountId)
-	if e != nil {
-		return nil, fmt.Errorf("unable to ensure wg account because %v", e)
-	}
 	devices, err := d.deviceRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"account_id": accountId,
@@ -76,19 +67,12 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 	if index == -1 {
 		index = count
 	}
-	deviceIp, e := getRemoteDeviceIp(int64(index + 2))
-	ip := deviceIp.String()
-	pkString := pk.String()
-	pbKeyString := pk.PublicKey().String()
 	device, e := d.deviceRepo.Create(ctx, &entities.Device{
-		Name:       deviceName,
-		AccountId:  accountId,
-		UserId:     userId,
-		PrivateKey: &pkString,
-		PublicKey:  &pbKeyString,
-		Ip:         ip,
-		Status:     entities.DeviceStateSyncing,
-		Index:      index,
+		Name:      deviceName,
+		AccountId: accountId,
+		UserId:    userId,
+		Status:    entities.DeviceStateSyncing,
+		Index:     index,
 	})
 	if e != nil {
 		return nil, fmt.Errorf("unable to persist in db %v", e)
@@ -195,30 +179,4 @@ func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
 	} else {
 		return nil, addressError
 	}
-}
-
-func (d *domain) ensureWgAccount(ctx context.Context, accountId repos.ID) error {
-	one, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
-		"account_id": accountId,
-	})
-	if err != nil {
-		return err
-	}
-	if one == nil {
-		pk, e := wgtypes.GeneratePrivateKey()
-		if e != nil {
-			return e
-		}
-		pkString := pk.String()
-		pbKeyString := pk.PublicKey().String()
-		_, err = d.wgAccountRepo.Create(ctx, &entities.WGAccount{
-			AccountID:    accountId,
-			WgPubKey:     pbKeyString,
-			WgPrivateKey: pkString,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

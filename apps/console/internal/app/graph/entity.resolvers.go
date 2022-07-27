@@ -31,7 +31,6 @@ func (r *entityResolver) FindDeviceByID(ctx context.Context, id repos.ID) (*mode
 		ID:   device.Id,
 		User: &model.User{ID: device.UserId},
 		Name: device.Name,
-		IP:   device.Ip,
 	}, err
 }
 
