@@ -14,6 +14,9 @@ type ServiceSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=1
+	ReplicaCount int `json:"replicaCount,omitempty"`
 	// Inputs    rawJson.KubeRawJson `json:"inputs,omitempty"`
 	Storage   ct.Storage   `json:"storage"`
 	Resources ct.Resources `json:"resources"`

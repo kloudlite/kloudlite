@@ -42,11 +42,23 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              replicaCount:
+                default: 1
+                type: integer
               resources:
                 properties:
                   cpu:
-                    pattern: '[\d]+m$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+m$'
+                        type: string
+                      min:
+                        pattern: '[\d]+m$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   memory:
                     pattern: '[\d]+Mi$'
                     type: string
