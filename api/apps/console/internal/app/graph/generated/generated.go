@@ -200,6 +200,7 @@ type ComplexityRoot struct {
 		Conditions func(childComplexity int) int
 		ID         func(childComplexity int) int
 		Name       func(childComplexity int) int
+		Outputs    func(childComplexity int) int
 		Project    func(childComplexity int) int
 		Resources  func(childComplexity int) int
 		Source     func(childComplexity int) int
@@ -359,6 +360,8 @@ type ManagedResResolver interface {
 }
 type ManagedSvcResolver interface {
 	Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error)
+
+	Outputs(ctx context.Context, obj *model.ManagedSvc) (map[string]interface{}, error)
 }
 type MutationResolver interface {
 	MangedSvcInstall(ctx context.Context, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error)
@@ -1104,6 +1107,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ManagedSvc.Name(childComplexity), true
+
+	case "ManagedSvc.outputs":
+		if e.complexity.ManagedSvc.Outputs == nil {
+			break
+		}
+
+		return e.complexity.ManagedSvc.Outputs(childComplexity), true
 
 	case "ManagedSvc.project":
 		if e.complexity.ManagedSvc.Project == nil {
@@ -2085,6 +2095,7 @@ type ManagedSvc {
   resources: [ManagedRes!]!
   status: String!
   conditions: [MetaCondition!]!
+  outputs: Json!
 }
 
 
@@ -7120,6 +7131,41 @@ func (ec *executionContext) _ManagedSvc_conditions(ctx context.Context, field gr
 	res := resTmp.([]*model.MetaCondition)
 	fc.Result = res
 	return ec.marshalNMetaCondition2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMetaConditionᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ManagedSvc_outputs(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedSvc",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ManagedSvc().Outputs(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MetaCondition_status(ctx context.Context, field graphql.CollectedField, obj *model.MetaCondition) (ret graphql.Marshaler) {
@@ -13857,6 +13903,26 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "outputs":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ManagedSvc_outputs(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
