@@ -55,12 +55,6 @@ func (m *ManagedService) GetEnsuredAnnotations() map[string]string {
 	}
 }
 
-func (m *ManagedService) GetWatchLabels() map[string]string {
-	return map[string]string{
-		"msvc.kloudlite.io/ref": m.Name,
-	}
-}
-
 // +kubebuilder:object:root=true
 
 // ManagedServiceList contains a list of ManagedService

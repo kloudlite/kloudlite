@@ -10,6 +10,7 @@ import (
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/kubectl"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -67,6 +68,10 @@ func (r *LambdaReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
+	if x := r.handleRestart(req); !x.ShouldProceed() {
+		return x.Result(), x.Err()
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.Result(), x.Err()
@@ -88,6 +93,29 @@ func (r *LambdaReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *LambdaReconciler) handleRestart(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
+	obj := req.Object
+	ctx := req.Context()
+
+	req.Logger.Infof("resource came for restarting")
+
+	annotations := obj.GetAnnotations()
+	if _, ok := req.Object.GetAnnotations()[constants.AnnotationKeys.Restart]; ok {
+		exitCode, err := kubectl.Restart(kubectl.Deployments, req.Object.GetNamespace(), req.Object.GetEnsuredLabels())
+		if exitCode != 0 {
+			req.Logger.Error(err)
+			// failed to restart, with non-zero exit code
+		}
+		patch := client.MergeFrom(req.Object.DeepCopy())
+		delete(annotations, constants.AnnotationKeys.Restart)
+		obj.SetAnnotations(annotations)
+		if err := r.Patch(ctx, obj, patch); err != nil {
+			return req.FailWithOpError(err)
+		}
+	}
+	return req.Next()
 }
 
 func (r *LambdaReconciler) finalize(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {

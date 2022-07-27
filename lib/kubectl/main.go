@@ -14,7 +14,7 @@ const (
 	Statefulsets restartable = "statefulsets"
 )
 
-func Restart(kind restartable, namespace string, labels map[string]string) error {
+func Restart(kind restartable, namespace string, labels map[string]string) (int, error) {
 	cmdArgs := []string{
 		"rollout", "restart", string(kind),
 		"-n", namespace,
@@ -29,7 +29,9 @@ func Restart(kind restartable, namespace string, labels map[string]string) error
 	c.Stdout = nil
 	c.Stderr = errStream
 	if err := c.Run(); err != nil {
-		return errors.NewEf(err, "could not restart deployment, because %s", errStream.String())
+		if exitError, ok := err.(*exec.ExitError); ok {
+			return exitError.ExitCode(), errors.NewEf(err, "could not restart deployment, because %s", errStream.String())
+		}
 	}
-	return nil
+	return 0, nil
 }

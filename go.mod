@@ -17,6 +17,7 @@ require (
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54
 	go.mongodb.org/mongo-driver v1.9.1
 	go.uber.org/zap v1.19.1
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	google.golang.org/grpc v1.40.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
@@ -51,7 +52,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/google/go-cmp v0.5.5 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect

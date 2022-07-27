@@ -86,9 +86,10 @@ func (r *AppReconciler) handleRestart(req *rApi.Request[*crdsv1.App]) rApi.StepR
 
 	annotations := obj.GetAnnotations()
 	if _, ok := req.Object.GetAnnotations()[constants.AnnotationKeys.Restart]; ok {
-		err := kubectl.Restart(kubectl.Deployments, req.Object.GetNamespace(), req.Object.GetEnsuredLabels())
-		if err != nil {
-			// failed to restart
+		exitCode, err := kubectl.Restart(kubectl.Deployments, req.Object.GetNamespace(), req.Object.GetEnsuredLabels())
+		if exitCode != 0 {
+			req.Logger.Error(err)
+			// failed to restart, with non-zero exit code
 		}
 		patch := client.MergeFrom(req.Object.DeepCopy())
 		delete(annotations, constants.AnnotationKeys.Restart)
