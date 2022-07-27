@@ -49,9 +49,10 @@ func GetEnv() (*Env, error) {
 	return &env, nil
 }
 
-func Must(env *Env, err error) *Env {
-	if err != nil {
+func GetEnvOrDie() *Env {
+	var env Env
+	if err := libEnv.Set(&env); err != nil {
 		panic(err)
 	}
-	return env
+	return &env
 }

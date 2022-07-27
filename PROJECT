@@ -1,6 +1,6 @@
 domain: kloudlite.io
 layout:
-- go.kubebuilder.io/v3
+  - go.kubebuilder.io/v3
 multigroup: true
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
