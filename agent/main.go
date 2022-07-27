@@ -49,6 +49,7 @@ func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, 
 
 					obj := unstructured.Unstructured{}
 					if err := json.Unmarshal(msg.Payload, &obj); err != nil {
+						logger.Errorf(err, "error when processing: %s", msg.Payload)
 						return err
 					}
 
