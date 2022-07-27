@@ -406,7 +406,6 @@ type Device @key(fields: "id") {
   user: User!
   name: String!
   configuration: Json!
-  ip: String!
   account: Account!
   ports: [Int!]!
   region: String
