@@ -188,7 +188,9 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Name:      app.ReadableId,
 				Namespace: app.Namespace,
 				Labels: func() map[string]string {
-					labels := map[string]string{}
+					labels := map[string]string{
+						"kloudlite.io/account-ref": string(prj.AccountId),
+					}
 					if app.Frozen {
 						labels["kloudlite.io/freeze"] = "true"
 					}
