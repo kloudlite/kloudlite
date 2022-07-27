@@ -148,7 +148,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	envVars := env.Must(env.GetEnv())
+	envVars := env.GetEnvOrDie()
 
 	controllers := []rApi.Reconciler{
 		&crds.ProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
