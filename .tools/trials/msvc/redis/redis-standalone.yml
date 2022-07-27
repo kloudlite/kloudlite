@@ -1,0 +1,15 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: redis-standalone
+  namespace: hotspot
+spec:
+  msvcKind:
+    apiVersion: redis-standalone.msvc.kloudlite.io/v1
+    kind: Service
+  inputs:
+    resources:
+      cpu: 300m
+      memory: 300Mi
+    storage:
+      size: 2Gi
