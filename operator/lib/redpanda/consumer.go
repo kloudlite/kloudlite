@@ -14,7 +14,7 @@ type Consumer struct {
 	options *ConsumerOptions
 }
 
-type ReaderFunc func([]byte) error
+type ReaderFunc func(msg []byte, key []byte) error
 
 func (c *Consumer) SetupLogger(logger *zap.SugaredLogger) {
 	c.logger = logger
@@ -51,7 +51,7 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 
 		fetches.EachRecord(
 			func(record *kgo.Record) {
-				if err := onMessage(record.Value); err != nil {
+				if err := onMessage(record.Value, record.Key); err != nil {
 					if c.logger != nil {
 						c.logger.Errorf("error from onMessage(): %v\n", err)
 					}

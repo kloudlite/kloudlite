@@ -11,6 +11,7 @@ type Logger interface {
 	Debugf(msg string, args ...any)
 	Infof(msg string, args ...any)
 	Errorf(err error, msg string, args ...any)
+	Error(err error)
 	Warnf(msg string, args ...any)
 	WithName(name string) Logger
 	GetZap() *zap.SugaredLogger
@@ -31,6 +32,10 @@ func (c customLogger) Infof(msg string, args ...any) {
 func (c customLogger) Errorf(err error, msg string, args ...any) {
 	// c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
 	c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
+}
+
+func (c customLogger) Error(err error) {
+	c.zapLogger.Errorf(err.Error())
 }
 
 func (c customLogger) Warnf(msg string, args ...any) {
