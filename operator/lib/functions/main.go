@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
+	"golang.org/x/exp/constraints"
 	corev1 "k8s.io/api/core/v1"
 	"regexp"
 	"strings"
@@ -224,4 +225,13 @@ func Md5(b []byte) string {
 
 func New[T any](v T) *T {
 	return &v
+}
+
+func Contains[T constraints.Ordered](arr []T, item T) bool {
+	for _, v := range arr {
+		if v == item {
+			return true
+		}
+	}
+	return false
 }

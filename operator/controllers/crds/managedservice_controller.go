@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"operators.kloudlite.io/lib/kubectl"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -51,6 +52,10 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
+	if step := r.handleRestart(req); !step.ShouldProceed() {
+		return step.Raw()
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.Result(), x.Err()
@@ -59,19 +64,47 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
-	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
+		return step.Raw()
 	}
 
-	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+	if step := r.reconcileStatus(req); !step.ShouldProceed() {
+		return step.Raw()
 	}
 
-	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+	if step := r.reconcileOperations(req); !step.ShouldProceed() {
+		return step.Raw()
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *ManagedServiceReconciler) handleRestart(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
+	obj := req.Object
+	ctx := req.Context()
+
+	req.Logger.Infof("resource came for restarting")
+
+	annotations := obj.GetAnnotations()
+	if _, ok := req.Object.GetAnnotations()[constants.AnnotationKeys.Restart]; ok {
+		exitCode, err := kubectl.Restart(kubectl.Deployments, req.Object.GetNamespace(), req.Object.GetEnsuredLabels())
+		if exitCode != 0 {
+			req.Logger.Error(err)
+			// failed to restart deployments, with non-zero exit code
+		}
+		exitCode, err = kubectl.Restart(kubectl.Statefulsets, req.Object.GetNamespace(), req.Object.GetEnsuredLabels())
+		if exitCode != 0 {
+			req.Logger.Error(err)
+			// failed to restart statefultset, with non-zero exit code
+		}
+		patch := client.MergeFrom(req.Object.DeepCopy())
+		delete(annotations, constants.AnnotationKeys.Restart)
+		obj.SetAnnotations(annotations)
+		if err := r.Patch(ctx, obj, patch); err != nil {
+			return req.FailWithOpError(err)
+		}
+	}
+	return req.Next()
 }
 
 func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
@@ -150,7 +183,7 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 	b, err := templates.Parse(
 		templates.CommonMsvc, map[string]any{
 			"obj":    msvc,
-			"labels": msvc.GetWatchLabels(),
+			"labels": msvc.GetEnsuredLabels(),
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(msvc, true),
 			},
