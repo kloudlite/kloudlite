@@ -1,6 +1,8 @@
 scalar Json
 
 type Query {
+  core_checkDeviceExist(accountId: ID!, name: String!): Boolean!
+
   core_projects(accountId: ID): [Project!]!
   core_project(projectId: ID!): Project
 
@@ -64,6 +66,7 @@ type Mutation {
   managedRes_delete(resId: ID!): Boolean
 
   core_addDevice(accountId: ID!, name: String!): Device!
+
   core_removeDevice(deviceId: ID!): Boolean!
   core_updateDevice(deviceId: ID!, region: String, ports: [Int]): Boolean!
 

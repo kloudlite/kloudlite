@@ -268,6 +268,7 @@ type ComplexityRoot struct {
 	Query struct {
 		CoreApp                     func(childComplexity int, appID repos.ID) int
 		CoreApps                    func(childComplexity int, projectID repos.ID, search *string) int
+		CoreCheckDeviceExist        func(childComplexity int, accountID repos.ID, name string) int
 		CoreConfig                  func(childComplexity int, configID repos.ID) int
 		CoreConfigs                 func(childComplexity int, projectID repos.ID, search *string) int
 		CoreGetComputePlans         func(childComplexity int) int
@@ -395,6 +396,7 @@ type ProjectResolver interface {
 	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
 }
 type QueryResolver interface {
+	CoreCheckDeviceExist(ctx context.Context, accountID repos.ID, name string) (bool, error)
 	CoreProjects(ctx context.Context, accountID *repos.ID) ([]*model.Project, error)
 	CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error)
 	CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error)
@@ -1627,6 +1629,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreApps(childComplexity, args["projectId"].(repos.ID), args["search"].(*string)), true
 
+	case "Query.core_checkDeviceExist":
+		if e.complexity.Query.CoreCheckDeviceExist == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_checkDeviceExist_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreCheckDeviceExist(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
+
 	case "Query.core_config":
 		if e.complexity.Query.CoreConfig == nil {
 			break
@@ -2039,6 +2053,8 @@ var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
 
 type Query {
+  core_checkDeviceExist(accountId: ID!, name: String!): Boolean!
+  
   core_projects(accountId: ID): [Project!]!
   core_project(projectId: ID!): Project
 
@@ -2102,6 +2118,7 @@ type Mutation {
   managedRes_delete(resId: ID!): Boolean
 
   core_addDevice(accountId: ID!, name: String!): Device!
+
   core_removeDevice(deviceId: ID!): Boolean!
   core_updateDevice(deviceId: ID!, region: String, ports: [Int]): Boolean!
 
@@ -3487,6 +3504,30 @@ func (ec *executionContext) field_Query_core_apps_args(ctx context.Context, rawA
 		}
 	}
 	args["search"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_checkDeviceExist_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -8912,6 +8953,48 @@ func (ec *executionContext) _ProjectMembership_project(ctx context.Context, fiel
 	res := resTmp.(*model.Project)
 	fc.Result = res
 	return ec.marshalNProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_core_checkDeviceExist(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_core_checkDeviceExist_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreCheckDeviceExist(rctx, args["accountId"].(repos.ID), args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_core_projects(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -14446,6 +14529,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "core_checkDeviceExist":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_checkDeviceExist(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "core_projects":
 			field := field
 

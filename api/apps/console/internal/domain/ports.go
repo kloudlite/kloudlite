@@ -112,6 +112,8 @@ type Domain interface {
 	RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error
 
 	SetupAccount(ctx context.Context, accountId repos.ID) (bool, error)
+
+	DeviceByNameExists(ctx context.Context, accountId repos.ID, name string) (bool, error)
 }
 
 type InfraActionMessage interface {
