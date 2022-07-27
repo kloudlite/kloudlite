@@ -89,7 +89,7 @@ func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.Us
 	}, e
 }
 
-func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (string, error) {
+func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (map[string]any, error) {
 	return r.Domain.GetDeviceConfig(ctx, obj.ID)
 }
 

@@ -28,29 +28,20 @@ func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entit
 	})
 }
 
-func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (string, error) {
-	device, err := d.deviceRepo.FindById(ctx, deviceId)
+func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (map[string]any, error) {
+	dev, err := d.deviceRepo.FindById(ctx, deviceId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	wgAccount, err := d.wgAccountRepo.FindOne(ctx, repos.Filter{
-		"account_id": device.AccountId,
-	})
+	secret, err := d.kubeCli.GetSecret(ctx, fmt.Sprint("wg-", dev.AccountId), fmt.Sprint("wg-device-config-", dev.Id))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return fmt.Sprintf(`
-[Interface]
-PrivateKey = %v
-Address = %v/32
-DNS = 10.43.0.10
-
-[Peer]
-PublicKey = %v
-AllowedIPs = 10.42.0.0/16, 10.43.0.0/16, 10.13.13.0/24
-Endpoint = %v:%v
-`, *device.PrivateKey, device.Ip, wgAccount.WgPubKey, wgAccount.AccessDomain, wgAccount.WgPort), nil
+	parsedSec := make(map[string]any)
+	for k, v := range secret.Data {
+		parsedSec[k] = string(v)
+	}
+	return parsedSec, nil
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId repos.ID, userId repos.ID) (*entities.Device, error) {

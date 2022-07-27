@@ -24,7 +24,7 @@ type Domain interface {
 	//OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error
 
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
-	GetDeviceConfig(ctx context.Context, id repos.ID) (string, error)
+	GetDeviceConfig(ctx context.Context, id repos.ID) (map[string]any, error)
 	AddDevice(
 		ctx context.Context,
 		deviceName string, accountId repos.ID, userId repos.ID) (dev *entities.Device, e error)

@@ -404,7 +404,7 @@ type Device @key(fields: "id") {
   id: ID!
   user: User!
   name: String!
-  configuration: String!
+  configuration: Json!
   ip: String!
   account: Account!
   ports: [Int!]!
