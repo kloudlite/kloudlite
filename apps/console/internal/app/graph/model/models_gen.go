@@ -145,7 +145,6 @@ type Device struct {
 	User          *User                  `json:"user"`
 	Name          string                 `json:"name"`
 	Configuration map[string]interface{} `json:"configuration"`
-	IP            string                 `json:"ip"`
 	Account       *Account               `json:"account"`
 	Ports         []int                  `json:"ports"`
 	Region        *string                `json:"region"`
