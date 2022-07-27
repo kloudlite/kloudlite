@@ -95,6 +95,16 @@ type k8sItem struct {
 	IsShared string      `json:"isShared,omitempty"`
 }
 
+func newK8sItem(obj client.Object, resType k8sResource, value int) k8sItem {
+	return k8sItem{
+		Type:     resType,
+		Count:    value,
+		Plan:     Plan(obj.GetAnnotations()[constants.AnnotationKeys.BillingPlan]),
+		PlanQ:    obj.GetAnnotations()[constants.AnnotationKeys.BillableQuantity],
+		IsShared: obj.GetAnnotations()[constants.AnnotationKeys.IsShared],
+	}
+}
+
 type ResourceBilling struct {
 	Name  string    `json:"name,omitempty"`
 	Items []k8sItem `json:"items,omitempty"`

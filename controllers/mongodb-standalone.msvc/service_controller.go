@@ -123,28 +123,29 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 		)
 	}
 
-	// 2. deployment/sts
-	deploymentRes, err := rApi.Get(ctx, r.Client, fn.NN(svcObj.Namespace, svcObj.Name), &appsv1.Deployment{})
+	// STEP 2. read conditions from actual statefulset/deployment
+
+	stsRes, err := rApi.Get(ctx, r.Client, fn.NN(svcObj.Namespace, svcObj.Name), &appsv1.StatefulSet{})
 	if err != nil {
 		isReady = false
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
 		}
-		cs = append(cs, conditions.New(conditions.DeploymentExists, false, conditions.NotFound, err.Error()))
+		cs = append(cs, conditions.New(conditions.StsExists, false, conditions.NotFound, err.Error()))
 	} else {
-		cs = append(cs, conditions.New(conditions.DeploymentExists, true, conditions.Found))
-		rConditions, err := conditions.ParseFromResource(deploymentRes, "Deployment")
+		cs = append(cs, conditions.New(conditions.StsExists, true, conditions.Found))
+		rConditions, err := conditions.ParseFromResource(stsRes, "Sts")
 		if err != nil {
 			return req.FailWithStatusError(err)
 		}
 		childC = append(childC, rConditions...)
-		rReady := meta.IsStatusConditionTrue(rConditions, "DeploymentAvailable")
-		if !rReady {
+
+		if stsRes.Status.Replicas != stsRes.Status.ReadyReplicas {
 			isReady = false
+			cs = append(cs, conditions.New(conditions.StsReady, false, conditions.Empty))
+		} else {
+			cs = append(cs, conditions.New(conditions.StsReady, true, conditions.Empty))
 		}
-		cs = append(
-			cs, conditions.New(conditions.DeploymentReady, rReady, conditions.Empty),
-		)
 	}
 
 	// STEP: if vars generated ?
@@ -268,7 +269,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	builder.Owns(&corev1.Secret{})
 
 	refWatchList := []client.Object{
-		&appsv1.Deployment{},
+		&appsv1.StatefulSet{},
 		&corev1.Pod{},
 	}
 
