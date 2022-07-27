@@ -341,7 +341,7 @@ type AppResolver interface {
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
 
-	Configuration(ctx context.Context, obj *model.Device) (string, error)
+	Configuration(ctx context.Context, obj *model.Device) (map[string]interface{}, error)
 
 	Account(ctx context.Context, obj *model.Device) (*model.Account, error)
 }
@@ -2441,7 +2441,7 @@ type Device @key(fields: "id") {
   id: ID!
   user: User!
   name: String!
-  configuration: String!
+  configuration: Json!
   ip: String!
   account: Account!
   ports: [Int!]!
@@ -5750,9 +5750,9 @@ func (ec *executionContext) _Device_configuration(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(map[string]interface{})
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Device_ip(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
