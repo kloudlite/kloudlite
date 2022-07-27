@@ -20,7 +20,6 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.41
 	github.com/pkg/errors v0.9.1
-	github.com/seancfoley/ipaddress-go v1.2.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
 	github.com/spf13/cobra v1.3.0
@@ -119,7 +118,6 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
-	github.com/seancfoley/bintree v1.1.0 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tektoncd/pipeline v0.35.0 // indirect
