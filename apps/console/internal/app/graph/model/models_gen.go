@@ -231,6 +231,7 @@ type ManagedSvc struct {
 	Resources  []*ManagedRes          `json:"resources"`
 	Status     string                 `json:"status"`
 	Conditions []*MetaCondition       `json:"conditions"`
+	Outputs    map[string]interface{} `json:"outputs"`
 }
 
 type MetaCondition struct {

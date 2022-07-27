@@ -179,3 +179,19 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 	}
 	return true, err
 }
+
+func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error) {
+	mres, err := d.managedResRepo.FindById(ctx, managedResID)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := d.kubeCli.GetSecret(ctx, mres.Namespace, fmt.Sprint("msvc-", mres.Id))
+	if err != nil {
+		return nil, err
+	}
+	parsedSec := make(map[string]any)
+	for k, v := range secret.Data {
+		parsedSec[k] = string(v)
+	}
+	return parsedSec, nil
+}

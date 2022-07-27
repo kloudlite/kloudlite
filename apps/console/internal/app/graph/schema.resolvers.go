@@ -89,7 +89,7 @@ func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.Us
 	}, e
 }
 
-func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (map[string]any, error) {
+func (r *deviceResolver) Configuration(ctx context.Context, obj *model.Device) (map[string]interface{}, error) {
 	return r.Domain.GetDeviceConfig(ctx, obj.ID)
 }
 
@@ -105,15 +105,11 @@ func (r *deviceResolver) Account(ctx context.Context, obj *model.Device) (*model
 }
 
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
-	outputs, err := r.Domain.GetResourceOutputs(ctx, obj.ID)
+	outputs, err := r.Domain.GetManagedResOutput(ctx, obj.ID)
 	if err != nil {
 		return nil, err
 	}
-	res := map[string]interface{}{}
-	for k, v := range outputs {
-		res[k] = v
-	}
-	return res, nil
+	return outputs, nil
 }
 
 func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSvc) ([]*model.ManagedRes, error) {
@@ -126,6 +122,14 @@ func (r *managedSvcResolver) Resources(ctx context.Context, obj *model.ManagedSv
 		res = append(res, managedResourceModelFromEntity(r))
 	}
 	return res, nil
+}
+
+func (r *managedSvcResolver) Outputs(ctx context.Context, obj *model.ManagedSvc) (map[string]interface{}, error) {
+	output, err := r.Domain.GetManagedSvcOutput(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	return output, nil
 }
 
 func (r *mutationResolver) MangedSvcInstall(ctx context.Context, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) (*model.ManagedSvc, error) {

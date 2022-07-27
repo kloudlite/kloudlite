@@ -85,6 +85,8 @@ models:
         resolver: true
   ManagedSvc:
     fields:
+      outputs:
+        resolver: true
       resources:
         resolver: true
   ManagedRes:

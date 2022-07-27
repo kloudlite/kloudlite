@@ -64,6 +64,7 @@ type Domain interface {
 	OnDeleteRouter(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error)
+	GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID) (map[string]any, error)
 	GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error)
 	InstallManagedSvc(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error)
 	UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error)
@@ -71,6 +72,7 @@ type Domain interface {
 	OnUpdateManagedSvc(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error)
+	GetManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error)
 	GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error)
 	GetManagedResourcesOfService(ctx context.Context, installationId repos.ID) ([]*entities.ManagedResource, error)
 
@@ -104,8 +106,6 @@ type Domain interface {
 		appId repos.ID,
 		app entities.App,
 	) (*entities.App, error)
-
-	GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error)
 
 	GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error)
 	InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
