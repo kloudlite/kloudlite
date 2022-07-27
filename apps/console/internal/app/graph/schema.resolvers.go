@@ -760,6 +760,14 @@ func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) (
 	return accountMemberships, err
 }
 
+func (r *queryResolver) CoreCheckDeviceExist(ctx context.Context, accountID repos.ID, name string) (bool, error) {
+	exists, err := r.Domain.DeviceByNameExists(ctx, accountID, name)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
 func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) ([]*model.Project, error) {
 	projectEntities, err := r.Domain.GetAccountProjects(ctx, *accountID)
 	if err != nil {

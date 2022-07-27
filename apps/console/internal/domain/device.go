@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	internal_crds "kloudlite.io/apps/console/internal/domain/op-crds/internal-crds"
 	"kloudlite.io/pkg/repos"
@@ -41,6 +40,17 @@ func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (map[st
 		parsedSec[k] = string(v)
 	}
 	return parsedSec, nil
+}
+
+func (d *domain) DeviceByNameExists(ctx context.Context, accountId repos.ID, name string) (bool, error) {
+	one, err := d.deviceRepo.FindOne(ctx, repos.Filter{
+		"account_id": accountId,
+		"name":       name,
+	})
+	if err != nil {
+		return false, err
+	}
+	return one != nil, nil
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
@@ -168,15 +178,4 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, region *st
 	}
 	return true, nil
 
-}
-
-func getRemoteDeviceIp(deviceOffset int64) (*ipaddr.IPAddressString, error) {
-	deviceRange := ipaddr.NewIPAddressString("10.13.0.0/16")
-
-	if address, addressError := deviceRange.ToAddress(); addressError == nil {
-		increment := address.Increment(deviceOffset + 2)
-		return ipaddr.NewIPAddressString(increment.GetNetIP().String()), nil
-	} else {
-		return nil, addressError
-	}
 }
