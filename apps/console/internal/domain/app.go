@@ -154,10 +154,10 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	app.Status = entities.AppStateDeleting
 	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	if app.IsLambda {
-		d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
-			APIVersion: op_crds.AppAPIVersion,
-			Kind:       "Lambda",
-			Metadata: op_crds.AppMetadata{
+		d.workloadMessenger.SendAction("delete", string(appID), &op_crds.Lambda{
+			APIVersion: op_crds.LambdaAPIVersion,
+			Kind:       op_crds.LambdaKind,
+			Metadata: op_crds.LambdaMetadata{
 				Name:      app.ReadableId,
 				Namespace: app.Namespace,
 			},
