@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"strconv"
 )
 
 // BillingWatcherReconciler reconciles a BillingWatcher object
@@ -96,9 +97,25 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			if !ok {
 				return ctrl.Result{}, errors.Newf("no readyReplicas key found in .DisplayVars")
 			}
+
+			s, ok := app.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
+			if !ok {
+				r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+				return ctrl.Result{}, nil
+			}
+			billableQ, err := strconv.ParseFloat(s, 32)
+			if err != nil {
+				r.logger.Errorf(
+					err,
+					"could not convert annotation %s value into float64",
+					constants.AnnotationKeys.BillableQuantity,
+				)
+				return ctrl.Result{}, nil
+			}
+
 			billing := ResourceBilling{
 				Name:  fmt.Sprintf("%s/%s", app.Namespace, app.Name),
-				Items: []k8sItem{newK8sItem(app, Pod, replicaCount)},
+				Items: []k8sItem{newK8sItem(app, Compute, float32(billableQ), replicaCount)},
 			}
 			return r.SendBillingEvent(ctx, app, billing)
 		}
@@ -120,11 +137,26 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
 
+					s, ok := msvc.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
+					if !ok {
+						r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+						return ctrl.Result{}, nil
+					}
+					billableQ, err := strconv.ParseFloat(s, 32)
+					if err != nil {
+						r.logger.Errorf(
+							err,
+							"could not convert annotation %s value into float64",
+							constants.AnnotationKeys.BillableQuantity,
+						)
+						return ctrl.Result{}, nil
+					}
+
 					billing := ResourceBilling{
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []k8sItem{
-							newK8sItem(msvc, Pod, realMsvc.Spec.ReplicaCount),
-							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
+							newK8sItem(msvc, Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
+							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, billing)
@@ -136,11 +168,26 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
 
+					s, ok := realMsvc.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
+					if !ok {
+						r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+						return ctrl.Result{}, nil
+					}
+					billableQ, err := strconv.ParseFloat(s, 32)
+					if err != nil {
+						r.logger.Errorf(
+							err,
+							"could not convert annotation %s value into float64",
+							constants.AnnotationKeys.BillableQuantity,
+						)
+						return ctrl.Result{}, nil
+					}
+
 					billing := ResourceBilling{
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []k8sItem{
-							newK8sItem(msvc, Pod, realMsvc.Spec.ReplicaCount),
-							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
+							newK8sItem(msvc, Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
+							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, billing)
@@ -153,11 +200,26 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
 
+					s, ok := realMsvc.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
+					if !ok {
+						r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+						return ctrl.Result{}, nil
+					}
+					billableQ, err := strconv.ParseFloat(s, 32)
+					if err != nil {
+						r.logger.Errorf(
+							err,
+							"could not convert annotation %s value into float64",
+							constants.AnnotationKeys.BillableQuantity,
+						)
+						return ctrl.Result{}, nil
+					}
+
 					billing := ResourceBilling{
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []k8sItem{
-							newK8sItem(msvc, Pod, realMsvc.Spec.ReplicaCount),
-							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
+							newK8sItem(msvc, Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
+							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, billing)
@@ -170,6 +232,21 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			lambda, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &serverlessv1.Lambda{})
 			if err != nil {
 				return ctrl.Result{}, client.IgnoreNotFound(err)
+			}
+
+			s, ok := lambda.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
+			if !ok {
+				r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+				return ctrl.Result{}, nil
+			}
+			billableQ, err := strconv.ParseFloat(s, 32)
+			if err != nil {
+				r.logger.Errorf(
+					err,
+					"could not convert annotation %s value into float64",
+					constants.AnnotationKeys.BillableQuantity,
+				)
+				return ctrl.Result{}, nil
 			}
 
 			var podsList corev1.PodList
@@ -187,7 +264,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			billing := ResourceBilling{
 				Name: fmt.Sprintf("%s/%s", lambda.Namespace, lambda.Name),
 				Items: []k8sItem{
-					newK8sItem(lambda, Pod, len(podsList.Items)),
+					newK8sItem(lambda, Lambda, float32(billableQ), len(podsList.Items)),
 				},
 			}
 			return r.SendBillingEvent(ctx, lambda, billing)
