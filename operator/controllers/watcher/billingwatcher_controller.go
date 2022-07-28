@@ -127,7 +127,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
 						},
 					}
-					return r.SendBillingEvent(ctx, realMsvc, billing)
+					return r.SendBillingEvent(ctx, msvc, billing)
 				}
 			case redisStandalone.GroupVersion.WithKind("Service"):
 				{
@@ -143,7 +143,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
 						},
 					}
-					return r.SendBillingEvent(ctx, realMsvc, billing)
+					return r.SendBillingEvent(ctx, msvc, billing)
 				}
 
 			case mysqlStandalone.GroupVersion.WithKind("Service"):
@@ -160,7 +160,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 							newK8sItem(msvc, Pvc, realMsvc.Spec.Storage.ToInt()),
 						},
 					}
-					return r.SendBillingEvent(ctx, realMsvc, billing)
+					return r.SendBillingEvent(ctx, msvc, billing)
 				}
 			}
 		}
