@@ -1,13 +1,13 @@
 package op_crds
 
-type MsvcType struct {
+type MsvcKind struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 }
 
 type ManagedServiceSpec struct {
 	CloudProvider string            `json:"cloudProvider,omitempty"`
-	MsvcType      MsvcType          `json:"msvcType,omitempty"`
+	MsvcKind      MsvcKind          `json:"msvcKind,omitempty"`
 	Inputs        map[string]any    `json:"inputs,omitempty"`
 	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
 }

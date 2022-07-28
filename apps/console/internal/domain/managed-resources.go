@@ -111,7 +111,7 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 				Kind:       "Service",
 				Name:       string(svc.Id),
 			},
-			ResRef: op_crds.ResType{
+			MresKind: op_crds.MresKind{
 				Kind: resTmpl.Kind,
 			},
 			Inputs: create.Values,
@@ -146,7 +146,7 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 				Kind:       "Service",
 				Name:       string(mres.ServiceId),
 			},
-			ResRef: op_crds.ResType{
+			MresKind: op_crds.MresKind{
 				Kind: string(mres.ResourceType),
 			},
 			Inputs: mres.Values,
