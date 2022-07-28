@@ -186,17 +186,20 @@ type ComplexityRoot struct {
 	}
 
 	ManagedRes struct {
+		CreatedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Installation func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Outputs      func(childComplexity int) int
 		ResourceType func(childComplexity int) int
 		Status       func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
 		Values       func(childComplexity int) int
 	}
 
 	ManagedSvc struct {
 		Conditions func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
 		ID         func(childComplexity int) int
 		Name       func(childComplexity int) int
 		Outputs    func(childComplexity int) int
@@ -204,6 +207,7 @@ type ComplexityRoot struct {
 		Resources  func(childComplexity int) int
 		Source     func(childComplexity int) int
 		Status     func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
 		Values     func(childComplexity int) int
 	}
 
@@ -1031,6 +1035,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.LambdaPlan.Name(childComplexity), true
 
+	case "ManagedRes.createdAt":
+		if e.complexity.ManagedRes.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ManagedRes.CreatedAt(childComplexity), true
+
 	case "ManagedRes.id":
 		if e.complexity.ManagedRes.ID == nil {
 			break
@@ -1073,6 +1084,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedRes.Status(childComplexity), true
 
+	case "ManagedRes.updatedAt":
+		if e.complexity.ManagedRes.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ManagedRes.UpdatedAt(childComplexity), true
+
 	case "ManagedRes.values":
 		if e.complexity.ManagedRes.Values == nil {
 			break
@@ -1086,6 +1104,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ManagedSvc.Conditions(childComplexity), true
+
+	case "ManagedSvc.createdAt":
+		if e.complexity.ManagedSvc.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ManagedSvc.CreatedAt(childComplexity), true
 
 	case "ManagedSvc.id":
 		if e.complexity.ManagedSvc.ID == nil {
@@ -1135,6 +1160,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ManagedSvc.Status(childComplexity), true
+
+	case "ManagedSvc.updatedAt":
+		if e.complexity.ManagedSvc.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ManagedSvc.UpdatedAt(childComplexity), true
 
 	case "ManagedSvc.values":
 		if e.complexity.ManagedSvc.Values == nil {
@@ -2054,7 +2086,7 @@ var sources = []*ast.Source{
 
 type Query {
   core_checkDeviceExist(accountId: ID!, name: String!): Boolean!
-  
+
   core_projects(accountId: ID): [Project!]!
   core_project(projectId: ID!): Project
 
@@ -2091,6 +2123,8 @@ type ManagedRes {
   values: Json!
   outputs: Json!
   status: String!
+  createdAt: String!
+  updatedAt: String
 }
 
 type ManagedSvc {
@@ -2103,6 +2137,8 @@ type ManagedSvc {
   status: String!
   conditions: [MetaCondition!]!
   outputs: Json!
+  createdAt: String!
+  updatedAt: String
 }
 
 
@@ -6849,6 +6885,73 @@ func (ec *executionContext) _ManagedRes_status(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ManagedRes_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedRes",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ManagedRes_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedRes",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ManagedSvc_id(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7162,6 +7265,73 @@ func (ec *executionContext) _ManagedSvc_outputs(ctx context.Context, field graph
 	res := resTmp.(map[string]interface{})
 	fc.Result = res
 	return ec.marshalNJson2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ManagedSvc_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedSvc",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ManagedSvc_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.ManagedSvc) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ManagedSvc",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MetaCondition_status(ctx context.Context, field graphql.CollectedField, obj *model.MetaCondition) (ret graphql.Marshaler) {
@@ -13820,6 +13990,23 @@ func (ec *executionContext) _ManagedRes(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ManagedRes_createdAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "updatedAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ManagedRes_updatedAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13951,6 +14138,23 @@ func (ec *executionContext) _ManagedSvc(ctx context.Context, sel ast.SelectionSe
 				return innerFunc(ctx)
 
 			})
+		case "createdAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ManagedSvc_createdAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "updatedAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ManagedSvc_updatedAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

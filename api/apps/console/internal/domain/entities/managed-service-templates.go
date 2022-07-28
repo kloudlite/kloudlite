@@ -34,17 +34,18 @@ type TemplateOutput struct {
 }
 
 type TemplateField struct {
-	Name         string `yaml:"name" json:"name"`
-	Label        string `yaml:"label" json:"label"`
-	DisplayName  string `yaml:"displayName" json:"display_name"`
-	Description  string `yaml:"description" json:"description"`
-	Min          int    `yaml:"min" json:"min"`
-	Max          int    `yaml:"max" json:"max"`
-	DefaultValue string `yaml:"defaultValue" json:"default_value"`
-	Hidden       bool   `yaml:"hidden" json:"hidden"`
-	InputType    string `yaml:"inputType" json:"input_type"`
-	Unit         string `yaml:"unit" json:"unit"`
-	Required     bool   `yaml:"required" json:"required"`
+	Name         string  `yaml:"name" json:"name"`
+	Label        string  `yaml:"label" json:"label"`
+	DisplayName  string  `yaml:"displayName" json:"display_name"`
+	Description  string  `yaml:"description" json:"description"`
+	Min          float32 `yaml:"min" json:"min"`
+	Max          float32 `yaml:"max" json:"max"`
+	DefaultValue string  `yaml:"defaultValue" json:"default_value"`
+	Hidden       bool    `yaml:"hidden" json:"hidden"`
+	InputType    string  `yaml:"inputType" json:"input_type"`
+	Unit         string  `yaml:"unit" json:"unit"`
+	Required     bool    `yaml:"required" json:"required"`
+	Step         float32 `yaml:"step" json:"step"`
 }
 
 type ManagedResourceTemplate struct {

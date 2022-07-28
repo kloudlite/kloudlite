@@ -39,6 +39,8 @@ type ManagedRes {
   values: Json!
   outputs: Json!
   status: String!
+  createdAt: String!
+  updatedAt: String
 }
 
 type ManagedSvc {
@@ -51,6 +53,8 @@ type ManagedSvc {
   status: String!
   conditions: [MetaCondition!]!
   outputs: Json!
+  createdAt: String!
+  updatedAt: String
 }
 
 

@@ -27,7 +27,7 @@ type ConsumerImpl struct {
 //	record  *kgo.Record
 //}
 
-type ReaderFunc func(msg []byte, timeStamp time.Time) error
+type ReaderFunc func(msg []byte, timeStamp time.Time, offset int64) error
 
 func (c *ConsumerImpl) SetupLogger(logger *zap.SugaredLogger) {
 	c.logger = logger
@@ -55,7 +55,7 @@ func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
 
 			fetches.EachRecord(
 				func(record *kgo.Record) {
-					if err := onMessage(record.Value, record.Timestamp); err != nil {
+					if err := onMessage(record.Value, record.Timestamp, record.Offset); err != nil {
 						if c.logger != nil {
 							c.logger.Error("error in onMessage(): %+v\n", err)
 						}
