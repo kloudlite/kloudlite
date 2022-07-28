@@ -21,7 +21,7 @@ tasks:
   docker-build:
     dir: ../..
     vars:
-      IMAGE: registry.gitlab.com/abdheshnayak/sshd:proxy
+      IMAGE: harbor.dev.madhouselabs.io/public/kloudlite/proxy:v2
       APP_DIR: ./apps/proxy
     cmds:
       - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
