@@ -90,7 +90,8 @@ func (d *domainI) calculateBill(ctx context.Context, billables []Billable, start
 		if billable.ResourceType == "Pod" {
 			plan, err := d.GetComputePlanByName(ctx, billable.Plan)
 			if err != nil {
-				return 0, err
+				fmt.Println(err)
+				//return 0, err
 			}
 			billableTotal = billableTotal + func() float64 {
 				if billable.IsShared {
@@ -193,7 +194,7 @@ func (d *domainI) TriggerBillingEvent(
 }
 
 func (d *domainI) GetStoragePlanByName(ctx context.Context, name string) (*StoragePlan, error) {
-	fileData, err := ioutil.ReadFile(fmt.Sprint(d.inventoryPath, "/storage.yaml"))
+	fileData, err := ioutil.ReadFile(fmt.Sprint(d.inventoryPath, "/block-storage.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -637,7 +638,7 @@ func fxDomain(
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
 	env *Env,
-// commsClient comms.CommsClient,
+	// commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	stripeCli *stripe.Client,
 
