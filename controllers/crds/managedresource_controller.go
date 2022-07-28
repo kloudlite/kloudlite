@@ -13,7 +13,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
-	"operators.kloudlite.io/lib/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -26,7 +25,6 @@ import (
 type ManagedResourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	types.MessageSender
 }
 
 func (r *ManagedResourceReconciler) GetName() string {
@@ -36,6 +34,20 @@ func (r *ManagedResourceReconciler) GetName() string {
 const (
 	RealMresExists conditions.Type = "RealMresExists"
 )
+
+func (r *ManagedResourceReconciler) UpdateConditionsAndExit(
+	req *rApi.Request[*v1.ManagedResource], cs ...metav1.Condition,
+) rApi.StepResult {
+	newConditions, hasUpdated, err := conditions.Patch(req.Object.Status.Conditions, cs)
+	if err != nil {
+		return req.FailWithStatusError(errors.NewEf(err, "while patching conditions"))
+	}
+	if !hasUpdated {
+		return rApi.NewStepResult(nil, nil)
+	}
+	req.Object.Status.Conditions = newConditions
+	return rApi.NewStepResult(nil, r.Status().Update(req.Context(), req.Object))
+}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
@@ -47,30 +59,28 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
@@ -84,19 +94,22 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 	// STEP: PRE if msvc is ready
 	ctx := req.Context()
 	obj := req.Object
-	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &v1.ManagedService{})
-	if err != nil {
-		return req.FailWithStatusError(err)
-	}
-
-	if !msvc.Status.IsReady {
-		return req.FailWithStatusError(errors.Newf("msvc %s is not ready yet", msvc.Name))
-	}
-
-	rApi.SetLocal(req, "msvc", msvc)
 
 	isReady := true
 	var cs []metav1.Condition
+
+	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &v1.ManagedService{})
+	if err != nil {
+		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
+		return req.FailWithStatusError(err, cs...).NoErr()
+	}
+
+	if !msvc.Status.IsReady {
+		cs = append(cs, conditions.New(conditions.ManagedSvcReady, false, conditions.NotReady))
+		return req.FailWithStatusError(err, cs...).NoErr()
+	}
+
+	rApi.SetLocal(req, "msvc", msvc)
 
 	// STEP: fetch conditions from real managed resource
 	resourceC, err := conditions.FromResource(
@@ -183,8 +196,16 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	resources := []metav1.TypeMeta{
 		{Kind: "ACLAccount", APIVersion: "redis-standalone.msvc.kloudlite.io/v1"},
+		{Kind: "Service", APIVersion: "redis-standalone.msvc.kloudlite.io/v1"},
+
 		{Kind: "Database", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
 		{Kind: "Service", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
+
+		{Kind: "Database", APIVersion: "mysql-standalone.msvc.kloudlite.io/v1"},
+		{Kind: "Service", APIVersion: "mysql-standalone.msvc.kloudlite.io/v1"},
+
+		{Kind: "Bucket", APIVersion: "influxdb.msvc.kloudlite.io/v1"},
+		{Kind: "Service", APIVersion: "influxdb.msvc.kloudlite.io/v1"},
 	}
 
 	for _, resource := range resources {
@@ -200,9 +221,9 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					context.TODO(), &mresList, &client.ListOptions{
 						LabelSelector: labels.SelectorFromValidatedSet(
 							map[string]string{
-								"msvc.kloudlite.io/ref.name":    obj.GetName(),
-								"msvc.kloudlite.io/ref.group":   obj.GetObjectKind().GroupVersionKind().Group,
-								"msvc.kloudlite.io/ref.version": obj.GetObjectKind().GroupVersionKind().Version,
+								"kloudlite.io/msvc.name":    obj.GetName(),
+								"kloudlite.io/msvc.group":   obj.GetObjectKind().GroupVersionKind().Group,
+								"kloudlite.io/msvc.version": obj.GetObjectKind().GroupVersionKind().Version,
 							},
 						),
 						Namespace: obj.GetNamespace(),
