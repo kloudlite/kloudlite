@@ -3,9 +3,8 @@ package operator
 import ctrl "sigs.k8s.io/controller-runtime"
 
 type StepResult interface {
-	Err() error
-	Result() ctrl.Result
 	ShouldProceed() bool
+	NoErr() StepResult
 	ReconcilerResponse() (ctrl.Result, error)
 }
 
@@ -22,21 +21,18 @@ type stepResult struct {
 	err    error
 }
 
-func (s stepResult) Err() error {
-	return s.err
-}
-
-func (s stepResult) Result() ctrl.Result {
-	if s.result == nil {
-		return ctrl.Result{}
-	}
-	return *s.result
-}
-
 func (s stepResult) ShouldProceed() bool {
 	return s.result == nil && s.err == nil
 }
 
+func (s stepResult) NoErr() StepResult {
+	s.err = nil
+	return s
+}
+
 func (s stepResult) ReconcilerResponse() (ctrl.Result, error) {
-	return s.Result(), s.Err()
+	if s.result == nil {
+		return ctrl.Result{}, s.err
+	}
+	return *s.result, s.err
 }

@@ -17,7 +17,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 	"operators.kloudlite.io/lib/templates"
-	t "operators.kloudlite.io/lib/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -46,9 +45,9 @@ const (
 	ACLConfigMapExists conditions.Type = "ACLConfigMapExists"
 )
 
-const (
-	ACLConfigMapName t.Fstring = "msvc-%s-acl-accounts"
-)
+func getACLConfigmapName(name string) string {
+	return fmt.Sprintf("msvc-%s-acl-accounts", name)
+}
 
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
@@ -62,22 +61,22 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
@@ -174,7 +173,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 
 	// acl config exists ?
 	aclCfg, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, ACLConfigMapName.Format(obj.Name)), &corev1.ConfigMap{},
+		ctx, r.Client, fn.NN(obj.Namespace, getACLConfigmapName(obj.Name)), &corev1.ConfigMap{},
 	)
 	if err != nil {
 		isReady = false
