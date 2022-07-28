@@ -120,6 +120,7 @@ func (repo dbRepo[T]) withCreationTime(data T) {
 		return
 	}
 	data.SetCreationTime(time.Now())
+	data.SetUpdateTime(time.Now())
 }
 
 func (repo dbRepo[T]) withUpdateTime(data T) {
