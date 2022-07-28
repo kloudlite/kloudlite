@@ -39,6 +39,8 @@ spec:
                 description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
                 type: string
               inputs:
+                description: // +kubebuilder:validation:Optional // +kubebuilder:default=1
+                  ReplicaCount int                 `json:"replicaCount,omitempty"`
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               msvcKind:
@@ -55,9 +57,6 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              replicaCount:
-                default: 1
-                type: integer
             required:
             - cloudProvider
             - msvcKind

@@ -25,10 +25,10 @@ type ManagedServiceSpec struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 	MsvcKind     msvcKind          `json:"msvcKind"`
 
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default=1
-	ReplicaCount int                 `json:"replicaCount,omitempty"`
-	Inputs       rawJson.KubeRawJson `json:"inputs,omitempty"`
+	// // +kubebuilder:validation:Optional
+	// // +kubebuilder:default=1
+	// ReplicaCount int                 `json:"replicaCount,omitempty"`
+	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true

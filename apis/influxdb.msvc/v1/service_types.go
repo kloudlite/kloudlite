@@ -25,8 +25,13 @@ type ServiceSpec struct {
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector"`
 	Admin        adminTT           `json:"admin"`
-	Storage      ct.Storage        `json:"storage"`
-	Resources    ct.Resources      `json:"resources"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=1
+	ReplicaCount int `json:"replicaCount,omitempty"`
+
+	Storage   ct.Storage   `json:"storage"`
+	Resources ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
