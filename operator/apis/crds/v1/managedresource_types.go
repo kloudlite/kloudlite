@@ -25,13 +25,9 @@ type mresKind struct {
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	MsvcRef  msvcNamedRefTT `json:"msvcRef"`
-	MresKind mresKind       `json:"mresKind"`
-	// ApiVersion     string              `json:"apiVersion"`
-	// Kind           string              `json:"kind"`
-	// ManagedSvcName string              `json:"managedSvcName"`
-	// +kubebuilder:default={}
-	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
+	MsvcRef  msvcNamedRefTT      `json:"msvcRef"`
+	MresKind mresKind            `json:"mresKind"`
+	Inputs   rawJson.KubeRawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
