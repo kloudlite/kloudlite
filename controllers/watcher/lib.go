@@ -25,7 +25,7 @@ var Stages = struct {
 type MessageReply struct {
 	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
 	Conditions      []metav1.Condition `json:"conditions,omitempty"`
-	IsReady         bool               `json:"isReady,omitempty"`
+	IsReady         bool               `json:"isReady"`
 	// ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
 	Key      string          `json:"key"`
 	Billing  ResourceBilling `json:"billing,omitempty"`

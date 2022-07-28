@@ -3,24 +3,21 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
-	"operators.kloudlite.io/lib/constants"
-	"operators.kloudlite.io/lib/templates"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/lib/conditions"
+	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	libMongo "operators.kloudlite.io/lib/mongo"
 	rApi "operators.kloudlite.io/lib/operator"
+	"operators.kloudlite.io/lib/templates"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -63,11 +60,8 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// STEP: cleaning up last run, clearing opsConditions
-	req.Logger.Infof("condition: %+v %v", req.Object.Status.OpsConditions, len(req.Object.Status.OpsConditions) > 0)
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -76,7 +70,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 		}
 	}
 
-	req.Logger.Infof("----------------database reconciler -- NEW RECONCILATION------------------")
+	req.Logger.Infof("---------------- database reconciler -- NEW RECONCILATION -----------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
 		return x.ReconcilerResponse()
@@ -112,18 +106,13 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalon
 
 	if err != nil {
 		isReady = false
-		msvc = nil
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
-	} else {
-		cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
-		cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
-		if !msvc.Status.IsReady {
-			isReady = false
-			msvc = nil
-		}
+		return req.FailWithStatusError(err, cs...).NoErr()
+	}
+	cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
+	cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
+	if !msvc.Status.IsReady {
+		return req.FailWithStatusError(errors.Newf("msvc %s is not ready", msvc.Name), cs...).NoErr()
 	}
 
 	// STEP: 2. retrieve managed svc output (usually secret)

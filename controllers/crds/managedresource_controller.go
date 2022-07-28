@@ -196,8 +196,16 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	resources := []metav1.TypeMeta{
 		{Kind: "ACLAccount", APIVersion: "redis-standalone.msvc.kloudlite.io/v1"},
+		{Kind: "Service", APIVersion: "redis-standalone.msvc.kloudlite.io/v1"},
+
 		{Kind: "Database", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
 		{Kind: "Service", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
+
+		{Kind: "Database", APIVersion: "mysql-standalone.msvc.kloudlite.io/v1"},
+		{Kind: "Service", APIVersion: "mysql-standalone.msvc.kloudlite.io/v1"},
+
+		{Kind: "Bucket", APIVersion: "influxdb.msvc.kloudlite.io/v1"},
+		{Kind: "Service", APIVersion: "influxdb.msvc.kloudlite.io/v1"},
 	}
 
 	for _, resource := range resources {
@@ -213,9 +221,9 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					context.TODO(), &mresList, &client.ListOptions{
 						LabelSelector: labels.SelectorFromValidatedSet(
 							map[string]string{
-								"msvc.kloudlite.io/ref.name":    obj.GetName(),
-								"msvc.kloudlite.io/ref.group":   obj.GetObjectKind().GroupVersionKind().Group,
-								"msvc.kloudlite.io/ref.version": obj.GetObjectKind().GroupVersionKind().Version,
+								"kloudlite.io/msvc.name":    obj.GetName(),
+								"kloudlite.io/msvc.group":   obj.GetObjectKind().GroupVersionKind().Group,
+								"kloudlite.io/msvc.version": obj.GetObjectKind().GroupVersionKind().Version,
 							},
 						),
 						Namespace: obj.GetNamespace(),
