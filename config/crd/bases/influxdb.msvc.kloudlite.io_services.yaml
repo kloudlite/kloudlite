@@ -58,6 +58,9 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              replicaCount:
+                default: 1
+                type: integer
               resources:
                 properties:
                   cpu:
