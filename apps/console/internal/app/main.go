@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"google.golang.org/grpc"
-	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	opcrds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
@@ -18,7 +18,7 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
-	loki_server "kloudlite.io/pkg/loki-server"
+	lokiserver "kloudlite.io/pkg/loki-server"
 	"kloudlite.io/pkg/redpanda"
 	"time"
 
@@ -131,7 +131,7 @@ var Module = fx.Module(
 	redpanda.NewConsumerFx[*WorkloadStatusConsumerEnv](),
 	fx.Invoke(func(domain domain.Domain, consumer redpanda.Consumer) {
 		consumer.StartConsuming(func(msg []byte, timestamp time.Time) error {
-			var update op_crds.StatusUpdate
+			var update opcrds.StatusUpdate
 			if err := json.Unmarshal(msg, &update); err != nil {
 				fmt.Println(err)
 				return err
@@ -172,54 +172,14 @@ var Module = fx.Module(
 					fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
 				}
 			}
-
 			return nil
 		})
 	}),
-	//func(data []byte) error {
-	//		fmt.Println(string(data))
-	//		return nil
-	//	}
-	//fx.Invoke(func(env *WorkloadConsumerEnv, consumer messaging.Consumer[*WorkloadConsumerEnv], d domain.Domain) {
-	//	fmt.Println(env.ResponseTopic, "env.ResponseTopic")
-	//	consumer.On(env.ResponseTopic, func(context context.Context, message messaging.Message) error {
-	//		var msg struct {
-	//			Status     bool   `json:"status"`
-	//			Key        string `json:"key"`
-	//			Conditions []struct {
-	//				Type   string `json:"type"`
-	//				Status string `json:"status"`
-	//				Reason string `json:"reason"`
-	//			} `json:"conditions"`
-	//		}
-	//		err := message.Unmarshal(&msg)
-	//		if err != nil {
-	//			fmt.Println("Unable to parse messages!!!", err)
-	//			return err
-	//		}
-	//		split := strings.Split(msg.Key, "/")
-	//		namespace := split[0]
-	//		resourceType := split[1]
-	//		resourceName := split[2]
-	//		var s domain.ResourceStatus
-	//		if msg.Status {
-	//			s = domain.ResourceStatusLive
-	//		} else {
-	//			if len(msg.Conditions) > 0 {
-	//				s = domain.ResourceStatusInProgress
-	//			} else if msg.Status {
-	//				s = domain.ResourceStatusError
-	//			}
-	//		}
-	//		_, err = d.UpdateResourceStatus(context, resourceType, namespace, resourceName, s)
-	//		return err
-	//	})
-	//}),
 
 	domain.Module,
 
 	// Log Service
-	fx.Invoke(func(logServer loki_server.LogServer, client loki_server.LokiClient, env *Env, cacheClient AuthCacheClient, d domain.Domain) {
+	fx.Invoke(func(logServer lokiserver.LogServer, client lokiserver.LokiClient, env *Env, cacheClient AuthCacheClient, d domain.Domain) {
 		var a *fiber.App
 		a = logServer
 		a.Use(httpServer.NewSessionMiddleware[*common.AuthSession](
@@ -237,7 +197,7 @@ var Module = fx.Module(
 				return
 			}
 			// Crosscheck session
-			client.Tail([]loki_server.StreamSelector{
+			client.Tail([]lokiserver.StreamSelector{
 				{
 					Key:       "namespace",
 					Operation: "=",
