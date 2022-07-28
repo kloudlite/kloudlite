@@ -20,7 +20,8 @@ import (
 // +kubebuilder:object:generate=true
 
 type Status struct {
-	IsReady         bool                `json:"isReady,omitempty"`
+	// +kubebuilder:validation:Optional
+	IsReady         bool                `json:"isReady"`
 	DisplayVars     rawJson.KubeRawJson `json:"displayVars,omitempty"`
 	GeneratedVars   rawJson.KubeRawJson `json:"generatedVars,omitempty"`
 	Conditions      []metav1.Condition  `json:"conditions,omitempty"`
@@ -51,15 +52,6 @@ type Request[T Resource] struct {
 	locals map[string]any
 }
 
-type stepResult struct {
-	result *ctrl.Result
-	err    error
-}
-
-func (s stepResult) Raw() (ctrl.Result, error) {
-	return s.Result(), s.Err()
-}
-
 func GetLocal[T any, V Resource](r *Request[V], key string) (T, bool) {
 	x := r.locals[key]
 	t, ok := x.(T)
@@ -73,38 +65,7 @@ func SetLocal[T any, V Resource](r *Request[V], key string, value T) {
 	r.locals[key] = value
 }
 
-type StepResult interface {
-	Err() error
-	Result() ctrl.Result
-	ShouldProceed() bool
-	Raw() (ctrl.Result, error)
-}
-
-func NewStepResult(result *ctrl.Result, err error) StepResult {
-	return newStepResult(result, err)
-}
-
-func newStepResult(result *ctrl.Result, err error) StepResult {
-	return &stepResult{result: result, err: err}
-}
-
-func (s stepResult) Err() error {
-	return s.err
-}
-
-func (s stepResult) Result() ctrl.Result {
-	if s.result == nil {
-		return ctrl.Result{}
-	}
-	return *s.result
-}
-
-func (s stepResult) ShouldProceed() bool {
-	return s.result == nil && s.err == nil
-}
-
-func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName,
-	resInstance T) (*Request[T], error) {
+func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName, resInstance T) (*Request[T], error) {
 	if err := c.Get(ctx, nn, resInstance); err != nil {
 		return nil, err
 	}
@@ -124,6 +85,15 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		Logger: logger,
 		locals: map[string]any{},
 	}, nil
+}
+
+func (r *Request[T]) CleanupLastRun() StepResult {
+	status := r.Object.GetStatus()
+	if len(status.OpsConditions) > 0 {
+		status.OpsConditions = []metav1.Condition{}
+		return newStepResult(&ctrl.Result{RequeueAfter: 0}, r.client.Status().Update(r.ctx, r.Object))
+	}
+	return r.Next()
 }
 
 func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {

@@ -64,6 +64,10 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.Result(), x.Err()

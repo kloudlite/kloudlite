@@ -53,7 +53,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 	}
 
 	if step := r.handleRestart(req); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -65,15 +65,15 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	if step := r.reconcileStatus(req); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	if step := r.reconcileOperations(req); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil

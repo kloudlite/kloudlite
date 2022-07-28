@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types2 "k8s.io/apimachinery/pkg/types"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
@@ -148,6 +149,7 @@ func (r *StatusWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	watchList := []client.Object{
 		&crdsv1.Project{},
 		&crdsv1.App{},
+		&serverlessv1.Lambda{},
 		&crdsv1.ManagedService{},
 		&crdsv1.ManagedResource{},
 		&crdsv1.Router{},
