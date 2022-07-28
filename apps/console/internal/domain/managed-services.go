@@ -259,3 +259,7 @@ func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID)
 	}
 	return parsedSec, nil
 }
+
+func (d *domain) OnDeleteManagedService(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.managedSvcRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}

@@ -195,3 +195,7 @@ func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID)
 	}
 	return parsedSec, nil
 }
+
+func (d *domain) OnDeleteManagedResource(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.managedResRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}

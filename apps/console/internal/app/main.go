@@ -160,13 +160,14 @@ var Module = fx.Module(
 					domain.OnDeleteApp(context.TODO(), &update)
 				case "Lambda":
 					domain.OnDeleteApp(context.TODO(), &update)
-
 				case "Router":
 					domain.OnDeleteRouter(context.TODO(), &update)
-
 				case "Project":
 					domain.OnDeleteProject(context.TODO(), &update)
-
+				case "ManagedService":
+					domain.OnDeleteManagedService(context.TODO(), &update)
+				case "ManagedResource":
+					domain.OnDeleteManagedResource(context.TODO(), &update)
 				default:
 					fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
 				}
