@@ -53,27 +53,27 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 	}
 
 	if step := r.handleRestart(req); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	if step := r.reconcileStatus(req); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	if step := r.reconcileOperations(req); !step.ShouldProceed() {
-		return step.Raw()
+		return step.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
@@ -151,7 +151,7 @@ func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.Managed
 		return req.FailWithStatusError(errors.NewEf(err, "while patching conditions"))
 	}
 
-	if !hasUpdated {
+	if !hasUpdated && isReady == j.Status.IsReady {
 		return req.Next()
 	}
 
@@ -181,8 +181,7 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 
 	b, err := templates.Parse(
 		templates.CommonMsvc, map[string]any{
-			"obj":    msvc,
-			"labels": msvc.GetEnsuredLabels(),
+			"obj": msvc,
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(msvc, true),
 			},
@@ -224,8 +223,7 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				},
 			}, handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
-					labels := obj.GetLabels()
-					s, ok := labels["msvc.kloudlite.io/ref"]
+					s, ok := obj.GetLabels()["kloudlite.io/msvc.name"]
 					if !ok {
 						return nil
 					}
