@@ -91,6 +91,7 @@ func (d *domainI) calculateBill(ctx context.Context, billables []Billable, start
 			plan, err := d.GetComputePlanByName(ctx, billable.Plan)
 			if err != nil {
 				fmt.Println(err)
+				continue
 				//return 0, err
 			}
 			billableTotal = billableTotal + func() float64 {
