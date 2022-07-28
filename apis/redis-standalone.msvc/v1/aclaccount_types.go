@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -31,8 +30,8 @@ func (ac *ACLAccount) GetStatus() *rApi.Status {
 
 func (ac *ACLAccount) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		"kloudlite.io/msvc.name":                  ac.Spec.ManagedSvcName,
-		fmt.Sprintf("%s/ref", GroupVersion.Group): ac.Name,
+		"kloudlite.io/msvc.name": ac.Spec.ManagedSvcName,
+		"kloudlite.io/mres.name": ac.Name,
 	}
 }
 func (m *ACLAccount) GetEnsuredAnnotations() map[string]string {

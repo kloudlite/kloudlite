@@ -6,7 +6,6 @@ import (
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/templates"
-	"operators.kloudlite.io/lib/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
@@ -28,18 +27,10 @@ import (
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	types.MessageSender
+	Scheme    *runtime.Scheme
 	Env       *env.Env
 	harborCli *harbor.Client
 }
-
-const (
-	KeyRobotAccId           string = "robotAccId"
-	KeyRobotUserName        string = "robotUserName"
-	KeyRobotUserPassword    string = "robotUserPassword"
-	KeyHarborProjectStorage string = "KeyHarborProjectStorage"
-)
 
 const (
 	HarborProjectExists           conditions.Type = "HarborProjectExists"
@@ -64,24 +55,28 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil

@@ -40,6 +40,10 @@ func (s *Service) GetEnsuredLabels() map[string]string {
 	}
 }
 
+func (s *Service) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{}
+}
+
 // +kubebuilder:object:root=true
 
 // ServiceList contains a list of Service

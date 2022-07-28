@@ -66,30 +66,28 @@ func (r *ACLAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
@@ -102,7 +100,7 @@ func (r *ACLAccountReconciler) finalize(req *rApi.Request[*redisStandalone.ACLAc
 
 	// remove ACL Entry for user
 	aclCfg, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.GetNamespace(), ACLConfigMapName.Format(obj.Name)),
+		ctx, r.Client, fn.NN(obj.GetNamespace(), getACLConfigmapName(obj.Name)),
 		&corev1.ConfigMap{},
 	)
 	if err != nil {
@@ -136,78 +134,72 @@ func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalon
 
 	if err != nil {
 		isReady = false
-		msvc = nil
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
-	} else {
-		cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
-		cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
-		if !msvc.Status.IsReady {
-			isReady = false
-			msvc = nil
-		}
+		return req.FailWithStatusError(err, cs...).NoErr()
+	}
+	cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
+	cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
+	if !msvc.Status.IsReady {
+		isReady = false
+		return req.FailWithStatusError(err, cs...).NoErr()
 	}
 
 	// STEP: 2. retrieve managed svc output (usually secret)
-	if msvc != nil {
-		msvcRef, err2 := func() (*MsvcOutputRef, error) {
-			msvcOutput, err := rApi.Get(
-				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-				&corev1.Secret{},
-			)
-			if err != nil {
-				isReady = false
-				cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
-				return nil, err
-			}
-			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
-
-			// acl-config
-			aclCfg, err := rApi.Get(
-				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s-acl-accounts", msvc.Name)),
-				&corev1.ConfigMap{},
-			)
-			if err != nil {
-				isReady = false
-				cs = append(cs, conditions.New(ACLConfigExists, false, conditions.NotFound, err.Error()))
-				return nil, err
-			}
-			cs = append(cs, conditions.New(ACLConfigExists, true, conditions.Found))
-
-			outputRef := parseMsvcOutput(msvcOutput, aclCfg)
-			rApi.SetLocal(req, "msvc-output-ref", outputRef)
-			return outputRef, nil
-		}()
-		if err2 != nil {
-			return req.FailWithStatusError(err2)
-		}
-
-		if err2 := func() error {
-			// STEP: 3. check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
-			// TODO: (user) use msvcRef values
-			redisCli, err := libRedis.NewClient(msvcRef.Hosts, "", msvcRef.RootPassword)
-			if err != nil {
-				return errors.NewEf(err, "could not create redis client")
-			}
-			defer redisCli.Close()
-
-			exists, err := redisCli.UserExists(ctx, obj.Name)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				isReady = false
-				cs = append(cs, conditions.New(ACLUserExists, false, conditions.NotFound))
-				return nil
-			}
-			cs = append(cs, conditions.New(ACLUserExists, true, conditions.Found))
-			return nil
-		}(); err2 != nil {
+	msvcRef, err2 := func() (*MsvcOutputRef, error) {
+		msvcOutput, err := rApi.Get(
+			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
+			&corev1.Secret{},
+		)
+		if err != nil {
 			isReady = false
-			return req.FailWithStatusError(err2)
+			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
+			return nil, err
 		}
+		cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
+
+		// acl-config
+		aclCfg, err := rApi.Get(
+			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s-acl-accounts", msvc.Name)),
+			&corev1.ConfigMap{},
+		)
+		if err != nil {
+			isReady = false
+			cs = append(cs, conditions.New(ACLConfigExists, false, conditions.NotFound, err.Error()))
+			return nil, err
+		}
+		cs = append(cs, conditions.New(ACLConfigExists, true, conditions.Found))
+
+		outputRef := parseMsvcOutput(msvcOutput, aclCfg)
+		rApi.SetLocal(req, "msvc-output-ref", outputRef)
+		return outputRef, nil
+	}()
+	if err2 != nil {
+		return req.FailWithStatusError(err2)
+	}
+
+	if err2 := func() error {
+		// STEP: 3. check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
+		// TODO: (user) use msvcRef values
+		redisCli, err := libRedis.NewClient(msvcRef.Hosts, "", msvcRef.RootPassword)
+		if err != nil {
+			return errors.NewEf(err, "could not create redis client")
+		}
+		defer redisCli.Close()
+
+		exists, err := redisCli.UserExists(ctx, obj.Name)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			isReady = false
+			cs = append(cs, conditions.New(ACLUserExists, false, conditions.NotFound))
+			return nil
+		}
+		cs = append(cs, conditions.New(ACLUserExists, true, conditions.Found))
+		return nil
+	}(); err2 != nil {
+		isReady = false
+		return req.FailWithStatusError(err2)
 	}
 
 	// STEP: 4. check generated vars

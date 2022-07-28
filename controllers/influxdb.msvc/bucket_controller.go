@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -64,24 +63,28 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
@@ -106,66 +109,60 @@ func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*influxDB.Bucket]) 
 
 	if err != nil {
 		isReady = false
-		msvc = nil
-		if !apiErrors.IsNotFound(err) {
-			return req.FailWithStatusError(err)
-		}
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
-	} else {
-		cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
-		cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
-		if !msvc.Status.IsReady {
-			isReady = false
-			msvc = nil
-		}
+		return req.FailWithStatusError(err, cs...).NoErr()
+	}
+	cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
+	cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
+	if !msvc.Status.IsReady {
+		isReady = false
+		return req.FailWithStatusError(err, cs...).NoErr()
 	}
 
 	// STEP: 2. retrieve managed svc output (usually secret)
-	if msvc != nil {
-		msvcRef, err2 := func() (*MsvcOutputRef, error) {
-			msvcOutput, err := rApi.Get(
-				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-				&corev1.Secret{},
-			)
-			if err != nil {
-				isReady = false
-				cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
-				return nil, err
-			}
-			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
-			outputRef := parseMsvcOutput(msvcOutput)
-			rApi.SetLocal(req, "msvc-output-ref", outputRef)
-			return outputRef, nil
-		}()
-		if err2 != nil {
-			return req.FailWithStatusError(err2)
+	msvcRef, err2 := func() (*MsvcOutputRef, error) {
+		msvcOutput, err := rApi.Get(
+			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
+			&corev1.Secret{},
+		)
+		if err != nil {
+			isReady = false
+			cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
+			return nil, err
 		}
+		cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, true, conditions.Found))
+		outputRef := parseMsvcOutput(msvcOutput)
+		rApi.SetLocal(req, "msvc-output-ref", outputRef)
+		return outputRef, nil
+	}()
+	if err2 != nil {
+		return req.FailWithStatusError(err2)
+	}
 
-		if err2 := func() error {
-			// STEP: 3. check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
-			// TODO: (user) use msvcRef values
+	if err2 := func() error {
+		// STEP: 3. check reconciler (child components e.g. mongo account, s3 bucket, redis ACL user) exists
+		// TODO: (user) use msvcRef values
 
-			influxClient := libInflux.NewClient(msvcRef.Uri, msvcRef.Token)
-			if err := influxClient.Connect(ctx); err != nil {
-				return err
-			}
-			defer influxClient.Close()
-			bucketId, ok := obj.Status.DisplayVars.GetString(BucketIdKey)
-			if !ok {
-				isReady = false
-				cs = append(cs, conditions.New(HasBucketId, false, conditions.NotFound))
-				return nil
-			}
-			cs = append(cs, conditions.New(HasBucketId, true, conditions.Found))
-			if err := influxClient.BucketExists(ctx, bucketId); err != nil {
-				cs = append(cs, conditions.New(BucketExists, false, conditions.NotFound, err.Error()))
-				isReady = false
-				return nil
-			}
+		influxClient := libInflux.NewClient(msvcRef.Uri, msvcRef.Token)
+		if err := influxClient.Connect(ctx); err != nil {
+			return err
+		}
+		defer influxClient.Close()
+		bucketId, ok := obj.Status.DisplayVars.GetString(BucketIdKey)
+		if !ok {
+			isReady = false
+			cs = append(cs, conditions.New(HasBucketId, false, conditions.NotFound))
 			return nil
-		}(); err2 != nil {
-			return req.FailWithStatusError(err2)
 		}
+		cs = append(cs, conditions.New(HasBucketId, true, conditions.Found))
+		if err := influxClient.BucketExists(ctx, bucketId); err != nil {
+			cs = append(cs, conditions.New(BucketExists, false, conditions.NotFound, err.Error()))
+			isReady = false
+			return nil
+		}
+		return nil
+	}(); err2 != nil {
+		return req.FailWithStatusError(err2)
 	}
 
 	// STEP: 5. patch conditions

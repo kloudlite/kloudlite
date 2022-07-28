@@ -52,30 +52,28 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("--------------------NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	req.Logger.Infof("--------------------RECONCILATION FINISH------------------")
