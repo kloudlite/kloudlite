@@ -34,6 +34,9 @@ func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.StatusUpd
 	if err != nil {
 		return err
 	}
+	if one == nil {
+		return fmt.Errorf("router not found")
+	}
 	if response.IsReady {
 		one.Status = entities.RouteStateLive
 	} else {
