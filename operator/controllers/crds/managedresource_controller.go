@@ -35,20 +35,6 @@ const (
 	RealMresExists conditions.Type = "RealMresExists"
 )
 
-func (r *ManagedResourceReconciler) UpdateConditionsAndExit(
-	req *rApi.Request[*v1.ManagedResource], cs ...metav1.Condition,
-) rApi.StepResult {
-	newConditions, hasUpdated, err := conditions.Patch(req.Object.Status.Conditions, cs)
-	if err != nil {
-		return req.FailWithStatusError(errors.NewEf(err, "while patching conditions"))
-	}
-	if !hasUpdated {
-		return rApi.NewStepResult(nil, nil)
-	}
-	req.Object.Status.Conditions = newConditions
-	return rApi.NewStepResult(nil, r.Status().Update(req.Context(), req.Object))
-}
-
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
@@ -71,16 +57,16 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Req
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
-	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
-	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+	if step := r.reconcileStatus(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
-	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+	if step := r.reconcileOperations(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
@@ -110,7 +96,6 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 	}
 
 	rApi.SetLocal(req, "msvc", msvc)
-
 	// STEP: fetch conditions from real managed resource
 	resourceC, err := conditions.FromResource(
 		ctx, r.Client, metav1.TypeMeta{

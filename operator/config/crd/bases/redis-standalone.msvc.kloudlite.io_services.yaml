@@ -42,13 +42,13 @@ spec:
               cloudProvider:
                 description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
                 type: string
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
               nodeSelector:
                 additionalProperties:
                   type: string
                 type: object
+              replicaCount:
+                default: 1
+                type: integer
               resources:
                 properties:
                   cpu:

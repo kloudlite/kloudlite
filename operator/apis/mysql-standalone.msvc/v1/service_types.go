@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
@@ -14,8 +13,11 @@ type ServiceSpec struct {
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector"`
 
-	Storage   ct.Storage   `json:"storage"`
-	Resources ct.Resources `json:"resources"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=1
+	ReplicaCount int          `json:"replicaCount,omitempty"`
+	Storage      ct.Storage   `json:"storage"`
+	Resources    ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
@@ -36,7 +38,7 @@ func (s *Service) GetStatus() *rApi.Status {
 
 func (s *Service) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		fmt.Sprintf("%s/ref", GroupVersion.Group): s.Name,
+		"kloudlite.io/msvc.name": s.Name,
 	}
 }
 func (m *Service) GetEnsuredAnnotations() map[string]string {
