@@ -12,6 +12,7 @@ import (
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 	"os"
+	"time"
 )
 
 func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error) {
@@ -135,6 +136,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 				a["kloudlite.io/account-ref"] = string(prj.AccountId)
 				a["kloudlite.io/project-ref"] = string(prj.Id)
 				a["kloudlite.io/resource-ref"] = string(create.Id)
+				a["kloudlite.io/updated-at"] = time.Now().String()
 				return a
 			}(),
 		},
@@ -205,6 +207,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 				a["kloudlite.io/account-ref"] = string(proj.AccountId)
 				a["kloudlite.io/project-ref"] = string(proj.Id)
 				a["kloudlite.io/resource-ref"] = string(managedSvc.Id)
+				a["kloudlite.io/updated-at"] = time.Now().String()
 				return a
 			}(),
 		},

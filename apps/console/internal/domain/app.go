@@ -6,6 +6,7 @@ import (
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
+	"time"
 )
 
 func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, error) {
@@ -204,6 +205,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 						"kloudlite.io/project-ref":       string(prj.Id),
 						"kloudlite.io/resource-ref":      string(app.Id),
 						"kloudlite.io/billing-plan":      "Lambda",
+						"kloudlite.io/updated-at":        time.Now().String(),
 						"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
 					}
 					if shouldRestart {
@@ -287,6 +289,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 						"kloudlite.io/project-ref":       string(prj.Id),
 						"kloudlite.io/resource-ref":      string(app.Id),
 						"kloudlite.io/billing-plan":      app.Containers[0].ComputePlan,
+						"kloudlite.io/updated-at":        time.Now().String(),
 						"kloudlite.io/billable-quantity": fmt.Sprintf("%v", app.Containers[0].Quantity),
 						"kloudlite.io/is-shared": func() string {
 							if app.Containers[0].IsShared {
