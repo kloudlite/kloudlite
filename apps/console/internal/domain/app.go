@@ -77,6 +77,7 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
 	app.Id = appId
+	app.Status = entities.AppStateSyncing
 	updatedApp, err := d.appRepo.UpdateById(ctx, appId, &app)
 	if err != nil {
 		return nil, err
