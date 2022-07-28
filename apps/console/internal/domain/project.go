@@ -128,11 +128,13 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		Kind:       op_crds.ProjectKind,
 		Metadata: op_crds.ProjectMetadata{
 			Name: create.Name,
-			Annotations: map[string]string{
-				"kloudlite.io/account-ref": string(accountId),
-			},
 			Labels: map[string]string{
-				"kloudlite.io/account-ref": string(accountId),
+				"kloudlite.io/account-ref":  string(create.AccountId),
+				"kloudlite.io/resource-ref": string(create.Id),
+			},
+			Annotations: map[string]string{
+				"kloudlite.io/account-ref":  string(create.AccountId),
+				"kloudlite.io/resource-ref": string(create.Id),
 			},
 		},
 		Spec: op_crds.ProjectSpec{
@@ -143,6 +145,29 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		return nil, err
 	}
 	return create, err
+}
+
+func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
+	proj, err := d.projectRepo.FindById(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	proj.IsDeleting = true
+	_, err = d.projectRepo.UpdateById(ctx, id, proj)
+	if err != nil {
+		return false, err
+	}
+	err = d.workloadMessenger.SendAction("delete", string(id), &op_crds.Project{
+		APIVersion: op_crds.APIVersion,
+		Kind:       op_crds.ProjectKind,
+		Metadata: op_crds.ProjectMetadata{
+			Name: proj.Name,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (d *domain) OnDeleteProject(ctx context.Context, response *op_crds.StatusUpdate) error {

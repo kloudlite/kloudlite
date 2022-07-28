@@ -114,6 +114,7 @@ type Domain interface {
 	SetupAccount(ctx context.Context, accountId repos.ID) (bool, error)
 
 	DeviceByNameExists(ctx context.Context, accountId repos.ID, name string) (bool, error)
+	DeleteProject(ctx context.Context, id repos.ID) (bool, error)
 }
 
 type InfraActionMessage interface {

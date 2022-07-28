@@ -16,6 +16,7 @@ type ManagedServiceCategory struct {
 type ManagedServiceTemplate struct {
 	Name            string                    `yaml:"name" json:"name"`
 	ApiVersion      string                    `yaml:"apiVersion" json:"api_version"`
+	Kind            string                    `yaml:"kind" json:"kind"`
 	LogoUrl         string                    `yaml:"logoUrl" json:"logo_url"`
 	DisplayName     string                    `yaml:"displayName" json:"display_name"`
 	Fields          []TemplateField           `yaml:"fields" json:"fields"`
