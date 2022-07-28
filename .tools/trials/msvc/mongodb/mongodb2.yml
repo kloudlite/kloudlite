@@ -3,7 +3,7 @@ kind: ManagedService
 metadata:
   name: mongo2
   namespace: hotspot
-spec:
+spec
   cloudProvider: do
   msvcKind:
     apiVersion: mongodb-standalone.msvc.kloudlite.io/v1

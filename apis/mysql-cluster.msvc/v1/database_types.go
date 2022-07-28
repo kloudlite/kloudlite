@@ -33,6 +33,10 @@ func (d *Database) GetEnsuredLabels() map[string]string {
 	}
 }
 
+func (d *Database) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{}
+}
+
 // +kubebuilder:object:root=true
 
 // DatabaseList contains a list of Database

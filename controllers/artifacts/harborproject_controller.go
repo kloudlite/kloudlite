@@ -55,7 +55,7 @@ func (r *HarborProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
@@ -68,15 +68,15 @@ func (r *HarborProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 	req.Logger.Infof("----------------[Type: artifactsv1.HarborProject] NEW RECONCILATION ----------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
