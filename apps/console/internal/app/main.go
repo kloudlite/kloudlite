@@ -136,6 +136,7 @@ var Module = fx.Module(
 				fmt.Println(err)
 				return err
 			}
+			fmt.Println(string(msg))
 			if update.Stage == "EXISTS" {
 				switch update.Metadata.GroupVersionKind.Kind {
 				case "App":
