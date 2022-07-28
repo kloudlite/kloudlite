@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	rApi "operators.kloudlite.io/lib/operator"
-	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 // ServiceSpec defines the desired state of Service
@@ -17,10 +16,14 @@ type ServiceSpec struct {
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
-	Inputs      rawJson.KubeRawJson `json:"inputs,omitempty"`
-	ACLAccounts map[string]string   `json:"aclAccounts,omitempty"`
-	Storage     ct.Storage          `json:"storage"`
-	Resources   ct.Resources        `json:"resources"`
+	ACLAccounts map[string]string `json:"aclAccounts,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=1
+	ReplicaCount int `json:"replicaCount,omitempty"`
+
+	Storage   ct.Storage   `json:"storage"`
+	Resources ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true

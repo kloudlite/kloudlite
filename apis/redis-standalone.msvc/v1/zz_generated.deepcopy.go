@@ -152,7 +152,6 @@ func (in *ServiceSpec) DeepCopyInto(out *ServiceSpec) {
 			(*out)[key] = val
 		}
 	}
-	in.Inputs.DeepCopyInto(&out.Inputs)
 	if in.ACLAccounts != nil {
 		in, out := &in.ACLAccounts, &out.ACLAccounts
 		*out = make(map[string]string, len(*in))
