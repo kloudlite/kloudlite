@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types2 "k8s.io/apimachinery/pkg/types"
-	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
@@ -54,6 +53,41 @@ func parseGroup(b64GroupName string) (*schema.GroupVersionKind, error) {
 	return &gvk, nil
 }
 
+func (r *StatusWatcherReconciler) SendStatusEvents(ctx context.Context, obj client.Object) (ctrl.Result, error) {
+	b, err := json.Marshal(obj)
+	if err != nil {
+		return ctrl.Result{}, nil
+	}
+
+	var j struct {
+		Status rApi.Status `json:"status"`
+	}
+
+	if err := json.Unmarshal(b, &j); err != nil {
+		return ctrl.Result{}, nil
+	}
+
+	klMetadata := ExtractMetadata(obj)
+
+	if obj.GetDeletionTimestamp() != nil {
+		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
+			if err := r.notify(ctx, getMsgKey(obj), klMetadata, j.Status, Stages.Deleted); err != nil {
+				return ctrl.Result{}, err
+			}
+			return r.RemoveWatcherFinalizer(ctx, obj)
+		}
+		return ctrl.Result{}, nil
+	}
+
+	if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
+		return r.AddWatcherFinalizer(ctx, obj)
+	}
+	if err := r.notify(ctx, getMsgKey(obj), klMetadata, j.Status, Stages.Exists); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
+}
+
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/finalizers,verbs=update
@@ -75,76 +109,12 @@ func (r *StatusWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
-	switch *gvk {
-	case
-		schema.GroupVersion{Group: "management.kloudlite.io", Version: "v1"}.WithKind("Device"),
-		schema.GroupVersion{Group: "management.kloudlite.io", Version: "v1"}.WithKind("Account"),
-		artifactsv1.GroupVersion.WithKind("HarborProject"),
-		artifactsv1.GroupVersion.WithKind("HarborUserAccount"),
-		crdsv1.GroupVersion.WithKind("Project"):
-		{
-			tm := metav1.TypeMeta{APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version), Kind: gvk.Kind}
-			obj, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), fn.NewUnstructured(tm))
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-			klMetadata := ExtractMetadata(obj)
-
-			b, err := json.Marshal(obj)
-			if err != nil {
-				return ctrl.Result{}, nil
-			}
-
-			var j struct {
-				Status rApi.Status `json:"status"`
-			}
-			if err := json.Unmarshal(b, &j); err != nil {
-				return ctrl.Result{}, nil
-			}
-
-			if obj.GetDeletionTimestamp() != nil {
-				if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-					if err := r.notify(ctx, getMsgKey(obj), klMetadata, j.Status, Stages.Deleted); err != nil {
-						return ctrl.Result{}, err
-					}
-					return r.RemoveWatcherFinalizer(ctx, obj)
-				}
-				return ctrl.Result{}, nil
-			}
-
-			if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-				return r.AddWatcherFinalizer(ctx, obj)
-			}
-			if err := r.notify(ctx, getMsgKey(obj), klMetadata, j.Status, Stages.Exists); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-	case crdsv1.GroupVersion.WithKind("App"):
-		{
-			app, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.App{})
-			if err != nil {
-				return ctrl.Result{}, client.IgnoreNotFound(err)
-			}
-			klMetadata := ExtractMetadata(app)
-			if app.GetDeletionTimestamp() != nil {
-				if controllerutil.ContainsFinalizer(app, constants.StatusWatcherFinalizer) {
-					if err := r.notify(ctx, getMsgKey(app), klMetadata, app.Status, Stages.Deleted); err != nil {
-						return ctrl.Result{}, err
-					}
-				}
-				return r.RemoveWatcherFinalizer(ctx, app)
-			}
-			if !controllerutil.ContainsFinalizer(app, constants.StatusWatcherFinalizer) {
-				return r.AddWatcherFinalizer(ctx, app)
-			}
-			if err := r.notify(ctx, getMsgKey(app), klMetadata, app.Status, Stages.Exists); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
+	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
+	obj, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), fn.NewUnstructured(tm))
+	if err != nil {
+		return ctrl.Result{}, err
 	}
-
-	return ctrl.Result{}, nil
+	return r.SendStatusEvents(ctx, obj)
 }
 
 func (r *StatusWatcherReconciler) AddWatcherFinalizer(ctx context.Context, obj client.Object) (ctrl.Result, error) {
