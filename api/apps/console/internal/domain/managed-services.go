@@ -199,7 +199,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		},
 		Spec: op_crds.ManagedServiceSpec{
 			CloudProvider: "do", // TODO:
-			MsvcType: op_crds.MsvcType{
+			MsvcKind: op_crds.MsvcKind{
 				APIVersion: template.ApiVersion,
 				Kind:       "Service",
 			},

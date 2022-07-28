@@ -6,14 +6,14 @@ type MsvcRef struct {
 	Name       string `json:"name"`
 }
 
-type ResType struct {
+type MresKind struct {
 	Kind string `json:"kind"`
 }
 
 type ManagedResourceSpec struct {
-	MsvcRef MsvcRef           `json:"msvcType"`
-	ResRef  ResType           `json:"resType"`
-	Inputs  map[string]string `json:"inputs,omitempty"`
+	MsvcRef  MsvcRef           `json:"msvcRef"`
+	MresKind MresKind          `json:"mresKind"`
+	Inputs   map[string]string `json:"inputs,omitempty"`
 }
 
 type ManagedResourceMetadata struct {
