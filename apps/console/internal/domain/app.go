@@ -41,6 +41,7 @@ func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate
 	}
 	err = d.notifier.Notify(one.Id)
 	if err != nil {
+		fmt.Println("ERR", err)
 		return err
 	}
 	return err
