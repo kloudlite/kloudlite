@@ -79,6 +79,11 @@ func secretModelFromEntity(secretEntity *entities.Secret) *model.Secret {
 
 func managedSvcModelFromEntity(svcEntity *entities.ManagedService) *model.ManagedSvc {
 	return &model.ManagedSvc{
+		CreatedAt: svcEntity.CreationTime.String(),
+		UpdatedAt: func() *string {
+			s := svcEntity.UpdateTime.String()
+			return &s
+		}(),
 		ID:      svcEntity.Id,
 		Name:    svcEntity.Name,
 		Project: &model.Project{ID: svcEntity.ProjectId},
@@ -100,7 +105,12 @@ func managedResourceModelFromEntity(resEntity *entities.ManagedResource) *model.
 		Installation: &model.ManagedSvc{
 			ID: resEntity.ServiceId,
 		},
-		Values: kvs,
-		Status: string(resEntity.Status),
+		Values:    kvs,
+		Status:    string(resEntity.Status),
+		CreatedAt: resEntity.CreationTime.String(),
+		UpdatedAt: func() *string {
+			s := resEntity.UpdateTime.String()
+			return &s
+		}(),
 	}
 }

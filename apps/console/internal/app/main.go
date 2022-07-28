@@ -130,13 +130,13 @@ var Module = fx.Module(
 	config.EnvFx[WorkloadStatusConsumerEnv](),
 	redpanda.NewConsumerFx[*WorkloadStatusConsumerEnv](),
 	fx.Invoke(func(domain domain.Domain, consumer redpanda.Consumer) {
-		consumer.StartConsuming(func(msg []byte, timestamp time.Time) error {
+		consumer.StartConsuming(func(msg []byte, timestamp time.Time, offset int64) error {
 			var update opcrds.StatusUpdate
 			if err := json.Unmarshal(msg, &update); err != nil {
 				fmt.Println(err)
 				return err
 			}
-			fmt.Println(string(msg))
+			fmt.Println("processing", offset, string(msg), timestamp)
 			if update.Stage == "EXISTS" {
 				switch update.Metadata.GroupVersionKind.Kind {
 				case "App":
@@ -150,6 +150,11 @@ var Module = fx.Module(
 
 				case "Project":
 					domain.OnUpdateProject(context.TODO(), &update)
+
+				case "ManagedResource":
+					domain.OnUpdateManagedRes(context.TODO(), &update)
+				case "ManagedService":
+					domain.OnUpdateManagedSvc(context.TODO(), &update)
 
 				default:
 					fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
