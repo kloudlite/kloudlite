@@ -70,11 +70,13 @@ type Domain interface {
 	UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error)
 	UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error)
 	OnUpdateManagedSvc(ctx context.Context, r *op_crds.StatusUpdate) error
+	OnDeleteManagedService(todo context.Context, o *op_crds.StatusUpdate) error
 
 	GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error)
 	GetManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error)
 	GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error)
 	GetManagedResourcesOfService(ctx context.Context, installationId repos.ID) ([]*entities.ManagedResource, error)
+	OnDeleteManagedResource(todo context.Context, o *op_crds.StatusUpdate) error
 
 	InstallManagedRes(
 		ctx context.Context,
