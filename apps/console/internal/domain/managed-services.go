@@ -65,6 +65,9 @@ func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.Statu
 	if err != nil {
 		return err
 	}
+	if one == nil {
+		return errors.New("not found")
+	}
 	if response.IsReady {
 		one.Status = entities.ManagedServiceStateLive
 	} else {

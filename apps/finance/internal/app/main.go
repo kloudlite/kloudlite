@@ -74,7 +74,7 @@ var Module = fx.Module(
 	config.EnvFx[WorkloadFinanceConsumerEnv](),
 	redpanda.NewConsumerFx[*WorkloadFinanceConsumerEnv](),
 	fx.Invoke(func(d domain.Domain, consumer redpanda.Consumer) {
-		consumer.StartConsuming(func(msg []byte, timeStamp time.Time) error {
+		consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 			var e domain.BillingEvent
 			err := json.Unmarshal(msg, &e)
 			if err != nil {

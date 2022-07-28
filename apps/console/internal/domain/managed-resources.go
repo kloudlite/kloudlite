@@ -48,6 +48,9 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Statu
 	if err != nil {
 		return err
 	}
+	if one == nil {
+		return fmt.Errorf("managed resource not found")
+	}
 	if response.IsReady {
 		one.Status = entities.ManagedResourceStateLive
 	} else {

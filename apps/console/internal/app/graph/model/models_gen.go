@@ -219,6 +219,8 @@ type ManagedRes struct {
 	Values       map[string]interface{} `json:"values"`
 	Outputs      map[string]interface{} `json:"outputs"`
 	Status       string                 `json:"status"`
+	CreatedAt    string                 `json:"createdAt"`
+	UpdatedAt    *string                `json:"updatedAt"`
 }
 
 type ManagedSvc struct {
@@ -231,6 +233,8 @@ type ManagedSvc struct {
 	Status     string                 `json:"status"`
 	Conditions []*MetaCondition       `json:"conditions"`
 	Outputs    map[string]interface{} `json:"outputs"`
+	CreatedAt  string                 `json:"createdAt"`
+	UpdatedAt  *string                `json:"updatedAt"`
 }
 
 type MetaCondition struct {
