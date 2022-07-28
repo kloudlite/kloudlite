@@ -80,29 +80,57 @@ func NewNotifier(clusterId string, producer *redpanda.Producer, topic string) *N
 
 type Plan string
 
+const (
+	ComputeBasic      Plan = "Plan"
+	ComputeGeneral    Plan = "General"
+	ComputeHighMemory Plan = "HighMemory"
+
+	BlockStorageDefault Plan = "Default"
+	LambdaDefault       Plan = "Default"
+)
+
 type k8sResource string
 
 const (
-	Pod k8sResource = "Pod"
-	Pvc k8sResource = "Pvc"
+	Compute       k8sResource = "Compute"
+	BlockStorage  k8sResource = "BlockStorage"
+	ObjectStorage k8sResource = "ObjectStorage"
+	Lambda        k8sResource = "Lambda"
+	Ci            k8sResource = "Ci"
 )
 
 type k8sItem struct {
 	Type     k8sResource `json:"type"`
 	Count    int         `json:"count,omitempty"`
 	Plan     Plan        `json:"plan,omitempty"`
-	PlanQ    string      `json:"planQ,omitempty"`
+	PlanQ    float32     `json:"planQ,omitempty"`
 	IsShared string      `json:"isShared,omitempty"`
 }
 
-func newK8sItem(obj client.Object, resType k8sResource, value int) k8sItem {
-	return k8sItem{
-		Type:     resType,
-		Count:    value,
-		Plan:     Plan(obj.GetAnnotations()[constants.AnnotationKeys.BillingPlan]),
-		PlanQ:    obj.GetAnnotations()[constants.AnnotationKeys.BillableQuantity],
-		IsShared: obj.GetAnnotations()[constants.AnnotationKeys.IsShared],
+func newK8sItem(obj client.Object, resType k8sResource, planQuantity float32, count int) k8sItem {
+	kItem := k8sItem{
+		Type:  resType,
+		Count: count,
+		PlanQ: planQuantity,
 	}
+
+	switch resType {
+	case Compute:
+		{
+			kItem.Plan = Plan(obj.GetAnnotations()[constants.AnnotationKeys.BillingPlan])
+			kItem.IsShared = obj.GetAnnotations()[constants.AnnotationKeys.IsShared]
+		}
+	case BlockStorage:
+		{
+			kItem.Plan = BlockStorageDefault
+		}
+	case Lambda:
+		{
+			kItem.Plan = LambdaDefault
+		}
+	}
+
+	return kItem
 }
 
 type ResourceBilling struct {
