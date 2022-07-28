@@ -132,12 +132,20 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 					return nil
 				}
 				a := transformedInputs.Annotation
+				a["kloudlite.io/account-ref"] = string(prj.AccountId)
+				a["kloudlite.io/project-ref"] = string(prj.Id)
+				a["kloudlite.io/resource-ref"] = string(create.Id)
 				return a
 			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
+			CloudProvider: "do",
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": prj.Region,
+			},
+			MsvcKind: op_crds.MsvcKind{
+				APIVersion: template.ApiVersion,
+				Kind:       template.Kind,
 			},
 			Inputs: transformedInputs.Inputs,
 		},
@@ -194,6 +202,9 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 					return nil
 				}
 				a := transformedInputs.Annotation
+				a["kloudlite.io/account-ref"] = string(proj.AccountId)
+				a["kloudlite.io/project-ref"] = string(proj.Id)
+				a["kloudlite.io/resource-ref"] = string(managedSvc.Id)
 				return a
 			}(),
 		},
@@ -201,7 +212,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			CloudProvider: "do", // TODO:
 			MsvcKind: op_crds.MsvcKind{
 				APIVersion: template.ApiVersion,
-				Kind:       "Service",
+				Kind:       template.Kind,
 			},
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": proj.Region,

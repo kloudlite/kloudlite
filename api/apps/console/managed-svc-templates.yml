@@ -1,3 +1,4 @@
+
 - category: db
   displayName: Databases
   list:
@@ -6,9 +7,6 @@
       displayName: MongoDB cluster
       description: MongoDB cluster
       active: false
-      operations:
-        apply: mongo-apply-image:tag
-        delete: mongo-delete-image:tag
       fields:
         - name: capacity
           label: Capacity in GB
@@ -89,9 +87,11 @@
               "kloudlite.io/is-shared": "false",
             },
             inputs: {
-              ...inputs,
               resources: {
-                cpu: `${inputs.cpu * 1000}m`,
+                cpu: {
+                  min: `${inputs.cpu * 1000}m`,
+                  max: `${inputs.cpu * 1000}m`,
+                },
                 memory: `${inputs.cpu * 1000}Mi`,
               },
               storage: {
@@ -154,6 +154,7 @@
     - name: mysql_standalone
       logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
       apiVersion: mysql-standalone.msvc.kloudlite.io/v1
+      kind: Service
       displayName: MySQL Standalone
       description: MySQL Standalone
       fields:
@@ -184,9 +185,11 @@
               "kloudlite.io/is-shared": true,
             },
             inputs: {
-              ...inputs,
               resources: {
-                cpu: `${inputs.cpu * 1000}m`,
+                cpu: {
+                  min: `${inputs.cpu * 1000/2}m`,
+                  max: `${inputs.cpu * 1000}m`,
+                },
                 memory: `${inputs.cpu * 1000}Mi`,
               },
               storage: {
@@ -330,6 +333,7 @@
     - name: redis_standalone
       logoUrl: https://img.icons8.com/color/344/redis.png
       apiVersion: redis-standalone.msvc.kloudlite.io/v1
+      kind: Service
       displayName: Redis Standalone
       description: Redis Standalone
       fields:
@@ -364,9 +368,11 @@
               "kloudlite.io/is-shared": true,
             },
             inputs: {
-              ...inputs,
               resources: {
-                cpu: `${inputs.cpu * 1000}m`,
+                cpu: {
+                  min: `${inputs.cpu * 1000/2}m`,
+                  max: `${inputs.cpu * 1000}m`,
+                },
                 memory: `${inputs.cpu * 2 * 1000}Mi`,
               },
               storage:{
@@ -458,3 +464,4 @@
       displayName: RabbitMQ Cluster
       description: RabbitMQ Cluster
       active: false
+

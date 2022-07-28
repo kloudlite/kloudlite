@@ -275,7 +275,7 @@ func (r *mutationResolver) CoreUpdateProject(ctx context.Context, projectID repo
 }
 
 func (r *mutationResolver) CoreDeleteProject(ctx context.Context, projectID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Domain.DeleteProject(ctx, projectID)
 }
 
 func (r *mutationResolver) IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error) {

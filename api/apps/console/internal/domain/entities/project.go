@@ -17,6 +17,7 @@ const (
 
 type Project struct {
 	repos.BaseEntity `bson:",inline"`
+	IsDeleting       bool               `json:"is_deleting",bson:"is_deleting"`
 	AccountId        repos.ID           `json:"account_id" bson:"account_id"`
 	Name             string             `json:"name" bson:"name"`
 	DisplayName      string             `json:"display_name" bson:"display_name"`
