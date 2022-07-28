@@ -74,22 +74,22 @@ func (r *ACLAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request)
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.Result(), x.Err()
+			return x.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.Result(), x.Err()
+		return x.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil
@@ -102,7 +102,7 @@ func (r *ACLAccountReconciler) finalize(req *rApi.Request[*redisStandalone.ACLAc
 
 	// remove ACL Entry for user
 	aclCfg, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.GetNamespace(), ACLConfigMapName.Format(obj.Name)),
+		ctx, r.Client, fn.NN(obj.GetNamespace(), getACLConfigmapName(obj.Name)),
 		&corev1.ConfigMap{},
 	)
 	if err != nil {
