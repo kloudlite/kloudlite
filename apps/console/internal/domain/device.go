@@ -138,11 +138,12 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	})
 	return err
 }
-func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, region *string, ports []int32) (done bool, e error) {
+func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName string, region *string, ports []int32) (done bool, e error) {
 	device, e := d.deviceRepo.FindById(ctx, deviceId)
 	if region != nil {
 		device.ActiveRegion = region
 	}
+	device.Name = deviceName
 	device.ExposedPorts = ports
 	_, err := d.deviceRepo.UpdateById(ctx, deviceId, device)
 	if err != nil {
