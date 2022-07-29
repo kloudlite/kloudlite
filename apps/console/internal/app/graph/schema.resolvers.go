@@ -244,8 +244,8 @@ func (r *mutationResolver) CoreRemoveDevice(ctx context.Context, deviceID repos.
 	return true, nil
 }
 
-func (r *mutationResolver) CoreUpdateDevice(ctx context.Context, deviceID repos.ID, region *string, ports []*int) (bool, error) {
-	_, err := r.Domain.UpdateDevice(ctx, deviceID, region, func() []int32 {
+func (r *mutationResolver) CoreUpdateDevice(ctx context.Context, deviceID repos.ID, name string, region string, ports []int) (bool, error) {
+	_, err := r.Domain.UpdateDevice(ctx, deviceID, name, region, func() []int32 {
 		makePorts := make([]int32, 0)
 		for _, p := range ports {
 			makePorts = append(makePorts, int32(*p))

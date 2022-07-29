@@ -29,4 +29,11 @@ var DeviceIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "account_id", Value: repos.IndexAsc},
+			{Key: "name", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }
