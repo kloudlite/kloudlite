@@ -235,7 +235,7 @@ type ComplexityRoot struct {
 		CoreRollbackApp        func(childComplexity int, appID repos.ID, version int) int
 		CoreUpdateApp          func(childComplexity int, projectID repos.ID, appID repos.ID, app model.AppInput) int
 		CoreUpdateConfig       func(childComplexity int, configID repos.ID, description *string, data []*model.CSEntryIn) int
-		CoreUpdateDevice       func(childComplexity int, deviceID repos.ID, region *string, ports []*int) int
+		CoreUpdateDevice       func(childComplexity int, deviceID repos.ID, name string, region string, ports []int) int
 		CoreUpdateProject      func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
 		CoreUpdateRouter       func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
 		CoreUpdateSecret       func(childComplexity int, secretID repos.ID, description *string, data []*model.CSEntryIn) int
@@ -375,7 +375,7 @@ type MutationResolver interface {
 	ManagedResDelete(ctx context.Context, resID repos.ID) (*bool, error)
 	CoreAddDevice(ctx context.Context, accountID repos.ID, name string) (*model.Device, error)
 	CoreRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
-	CoreUpdateDevice(ctx context.Context, deviceID repos.ID, region *string, ports []*int) (bool, error)
+	CoreUpdateDevice(ctx context.Context, deviceID repos.ID, name string, region string, ports []int) (bool, error)
 	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error)
 	CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
 	CoreDeleteProject(ctx context.Context, projectID repos.ID) (bool, error)
@@ -1400,7 +1400,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateDevice(childComplexity, args["deviceId"].(repos.ID), args["region"].(*string), args["ports"].([]*int)), true
+		return e.complexity.Mutation.CoreUpdateDevice(childComplexity, args["deviceId"].(repos.ID), args["name"].(string), args["region"].(string), args["ports"].([]int)), true
 
 	case "Mutation.core_updateProject":
 		if e.complexity.Mutation.CoreUpdateProject == nil {
@@ -2156,7 +2156,7 @@ type Mutation {
   core_addDevice(accountId: ID!, name: String!): Device!
 
   core_removeDevice(deviceId: ID!): Boolean!
-  core_updateDevice(deviceId: ID!, region: String, ports: [Int]): Boolean!
+  core_updateDevice(deviceId: ID!,name:String!, region: String!, ports: [Int!]!): Boolean!
 
   core_createProject(
     accountId: ID!,
@@ -3075,24 +3075,33 @@ func (ec *executionContext) field_Mutation_core_updateDevice_args(ctx context.Co
 		}
 	}
 	args["deviceId"] = arg0
-	var arg1 *string
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	var arg2 string
 	if tmp, ok := rawArgs["region"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["region"] = arg1
-	var arg2 []*int
+	args["region"] = arg2
+	var arg3 []int
 	if tmp, ok := rawArgs["ports"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ports"))
-		arg2, err = ec.unmarshalOInt2ᚕᚖint(ctx, tmp)
+		arg3, err = ec.unmarshalNInt2ᚕintᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["ports"] = arg2
+	args["ports"] = arg3
 	return args, nil
 }
 
@@ -7864,7 +7873,7 @@ func (ec *executionContext) _Mutation_core_updateDevice(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreUpdateDevice(rctx, args["deviceId"].(repos.ID), args["region"].(*string), args["ports"].([]*int))
+		return ec.resolvers.Mutation().CoreUpdateDevice(rctx, args["deviceId"].(repos.ID), args["name"].(string), args["region"].(string), args["ports"].([]int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17638,38 +17647,6 @@ func (ec *executionContext) marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx 
 	}
 	res := graphql.MarshalString(string(*v))
 	return res
-}
-
-func (ec *executionContext) unmarshalOInt2ᚕᚖint(ctx context.Context, v interface{}) ([]*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*int, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOInt2ᚖint(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOInt2ᚕᚖint(ctx context.Context, sel ast.SelectionSet, v []*int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalOInt2ᚖint(ctx, sel, v[i])
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
