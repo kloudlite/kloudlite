@@ -24,15 +24,14 @@ type dbRepo[T Entity] struct {
 
 var re = regexp.MustCompile(`(\W|_)+/g`)
 
-func (repo dbRepo[T]) NewId() ID {
+func (repo *dbRepo[T]) NewId() ID {
 	id, e := fn.CleanerNanoid(28)
 	if e != nil {
 		panic(fmt.Errorf("could not get cleanerNanoid()"))
 	}
 	return ID(fmt.Sprintf("%s-%s", repo.shortName, strings.ToLower(id)))
 }
-
-func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
+func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	var results []T
 	curr, err := repo.db.Collection(repo.collectionName).Find(
 		ctx, query.Filter, &options.FindOptions{
@@ -51,8 +50,7 @@ func (repo dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	}
 	return results, err
 }
-
-func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
+func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	res := fn.NewTypeFromPointer[T]()
 	err := one.Decode(&res)
@@ -62,8 +60,7 @@ func (repo dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	}
 	return res, nil
 }
-
-func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
+func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	t := make([]T, 1)
 	// res := fn.NewTypeFromPointer[T]()
@@ -76,8 +73,7 @@ func (repo dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	}
 	return t[0], nil
 }
-
-func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
+func (repo *dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
 	results := make([]T, 0)
 	var offset int64 = (page - 1) * size
 	curr, e := repo.db.Collection(repo.collectionName).Find(
@@ -96,8 +92,7 @@ func (repo dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64
 		TotalCount: total,
 	}, e
 }
-
-func (repo dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
+func (repo *dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOne(ctx, &Filter{"id": id})
 
@@ -107,27 +102,23 @@ func (repo dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
 	}
 	return result, err
 }
-
-func (repo dbRepo[T]) withId(data T) {
+func (repo *dbRepo[T]) withId(data T) {
 	if data.GetId() != "" {
 		return
 	}
 	data.SetId(repo.NewId())
 }
-
-func (repo dbRepo[T]) withCreationTime(data T) {
+func (repo *dbRepo[T]) withCreationTime(data T) {
 	if !data.GetCreationTime().IsZero() {
 		return
 	}
 	data.SetCreationTime(time.Now())
 	data.SetUpdateTime(time.Now())
 }
-
-func (repo dbRepo[T]) withUpdateTime(data T) {
+func (repo *dbRepo[T]) withUpdateTime(data T) {
 	data.SetUpdateTime(time.Now())
 }
-
-func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
+func (repo *dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	var result T
 	repo.withId(data)
 	repo.withCreationTime(data)
@@ -140,8 +131,7 @@ func (repo dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	e = r2.Decode(&result)
 	return result, e
 }
-
-func (repo dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
+func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
 	updatedData["updateTime"] = time.Now()
 	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
 		ctx,
@@ -153,8 +143,7 @@ func (repo dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedData
 	}
 	return nil
 }
-
-func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
+func (repo *dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
 	var result T
 	after := options.After
 	updateOpts := &options.FindOneAndUpdateOptions{
@@ -174,9 +163,7 @@ func (repo dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts
 	e := r.Decode(&result)
 	return result, e
 }
-
-// Upsert upsert
-func (repo dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, error) {
+func (repo *dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, error) {
 	id := func() ID {
 		if data.GetId() != "" {
 			return data.GetId()
@@ -195,23 +182,20 @@ func (repo dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, err
 		},
 	)
 }
-
-func (repo dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
+func (repo *dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOneAndDelete(ctx, &Filter{"id": id})
 	e := r.Decode(&result)
 	return e
 }
-
-func (repo dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
+func (repo *dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 	_, err := repo.db.Collection(repo.collectionName).DeleteMany(ctx, filter)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-
-func (repo dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) error {
+func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) error {
 	if len(indices) == 0 {
 		return nil
 	}
@@ -239,22 +223,55 @@ func (repo dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) err
 	return err
 }
 
-// func (repo dbRepo[T]) Delete(ctx context.Context, query Query) error {
-//	curr, err := repo.db.Collection(repo.collectionName).Find(ctx, query.filter, &options.FindOptions{
-//		Sort: query.sort,
-//	})
-//	var res []T
-//	curr.All(ctx, res)
-//	for _, v := range res {
-//		err = repo.DeleteById(ctx, v.GetId())
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	dr, e := repo.db.Collection(repo.collectionName).DeleteMany(ctx, query.filter)
-//
-//	return e
-// }
+func (repo *dbRepo[T]) SilentUpsert(ctx context.Context, filter Filter, data T) (T, error) {
+	id := func() ID {
+		if data.GetId() != "" {
+			return data.GetId()
+		}
+		if t, err := repo.findOne(ctx, filter); err == nil {
+			return t.GetId()
+		}
+		return repo.NewId()
+	}()
+	data.SetId(id)
+	if data.GetCreationTime().IsZero() {
+		repo.withCreationTime(data)
+	}
+	return repo.UpdateById(
+		ctx, id, data, UpdateOpts{
+			Upsert: true,
+		},
+	)
+}
+func (repo *dbRepo[T]) SilentUpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
+	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
+		ctx,
+		filter,
+		bson.M{"$set": updatedData},
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (repo *dbRepo[T]) SilentUpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
+	var result T
+	after := options.After
+	updateOpts := &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
+		updateOpts.Upsert = &opt.Upsert
+	}
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
+		ctx,
+		&Filter{"id": id},
+		bson.M{"$set": updatedData},
+		updateOpts,
+	)
+	e := r.Decode(&result)
+	return result, e
+}
 
 type MongoRepoOptions struct {
 	IndexFields []string
