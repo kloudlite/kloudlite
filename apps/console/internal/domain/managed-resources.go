@@ -51,16 +51,18 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Statu
 	if one == nil {
 		return fmt.Errorf("managed resource not found")
 	}
+	newStatus := one.Status
 	if response.IsReady {
-		one.Status = entities.ManagedResourceStateLive
-	} else {
-		one.Status = entities.ManagedResourceStateSyncing
+		newStatus = entities.ManagedResourceStateLive
 	}
+	shouldUpdate := newStatus != one.Status
 	one.Conditions = response.ChildConditions
 	_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
-	err = d.notifier.Notify(one.Id)
-	if err != nil {
-		return err
+	if shouldUpdate {
+		err = d.notifier.Notify(one.Id)
+		if err != nil {
+			return err
+		}
 	}
 	return err
 }

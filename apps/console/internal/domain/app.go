@@ -24,26 +24,32 @@ func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.A
 
 func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.appRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+
 	if err != nil {
 		return err
 	}
+	newStatus := one.Status
 	if response.IsReady {
 		if one.Status == entities.AppStateSyncing {
-			one.Status = entities.AppStateLive
+			newStatus = entities.AppStateLive
 		}
 		if one.Status == entities.AppStateRestarting {
-			one.Status = entities.AppStateLive
+			newStatus = entities.AppStateLive
 		}
 	}
+	shouldNotify := one.Status != newStatus
+	one.Status = newStatus
 	one.Conditions = response.ChildConditions
-	_, err = d.appRepo.UpdateById(ctx, one.Id, one)
+	_, err = d.appRepo.SilentUpdateById(ctx, one.Id, one)
 	if err != nil {
 		return err
 	}
-	err = d.notifier.Notify(one.Id)
-	if err != nil {
-		fmt.Println("ERR", err)
-		return err
+	if shouldNotify {
+		err = d.notifier.Notify(one.Id)
+		if err != nil {
+			fmt.Println("ERR", err)
+			return err
+		}
 	}
 	return err
 }

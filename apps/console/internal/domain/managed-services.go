@@ -68,16 +68,18 @@ func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.Statu
 	if one == nil {
 		return errors.New("not found")
 	}
+	newStatus := one.Status
 	if response.IsReady {
-		one.Status = entities.ManagedServiceStateLive
-	} else {
-		one.Status = entities.ManagedServiceStateSyncing
+		newStatus = entities.ManagedServiceStateLive
 	}
+	shouldUpdate := newStatus != one.Status
 	one.Conditions = response.ChildConditions
 	_, err = d.managedSvcRepo.UpdateById(ctx, one.Id, one)
-	err = d.notifier.Notify(one.Id)
-	if err != nil {
-		return err
+	if shouldUpdate {
+		err = d.notifier.Notify(one.Id)
+		if err != nil {
+			return err
+		}
 	}
 	return err
 }

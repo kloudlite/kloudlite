@@ -37,16 +37,18 @@ func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.StatusUpd
 	if one == nil {
 		return fmt.Errorf("router not found")
 	}
+	newStatus := one.Status
 	if response.IsReady {
 		one.Status = entities.RouteStateLive
-	} else {
-		one.Status = entities.RouteStateSyncing
 	}
+	shouldUpdate := newStatus != one.Status
 	one.Conditions = response.ChildConditions
 	_, err = d.routerRepo.UpdateById(ctx, one.Id, one)
-	err = d.notifier.Notify(one.Id)
-	if err != nil {
-		return err
+	if shouldUpdate {
+		err = d.notifier.Notify(one.Id)
+		if err != nil {
+			return err
+		}
 	}
 	return err
 }

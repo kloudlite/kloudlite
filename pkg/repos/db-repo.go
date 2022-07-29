@@ -45,6 +45,9 @@ type DbRepo[T Entity] interface {
 	Upsert(ctx context.Context, filter Filter, data T) (T, error)
 	UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
 	UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
+	SilentUpsert(ctx context.Context, filter Filter, data T) (T, error)
+	SilentUpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
+	SilentUpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
 	DeleteById(ctx context.Context, id ID) error
 	DeleteMany(ctx context.Context, filter Filter) error
 	IndexFields(ctx context.Context, indices []IndexField) error
