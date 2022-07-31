@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/lib/constants"
@@ -105,12 +106,14 @@ type HPA struct {
 type AppSpec struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=kloudlite-svc-account
-	ServiceAccount string          `json:"serviceAccount,omitempty"`
-	Replicas       int             `json:"replicas,omitempty"`
-	Services       []AppSvc        `json:"services,omitempty"`
-	Containers     []AppContainer  `json:"containers"`
-	Volumes        []corev1.Volume `json:"volumes,omitempty"`
-	Hpa            HPA             `json:"hpa,omitempty"`
+	ServiceAccount string `json:"serviceAccount,omitempty"`
+	// +kubebuilder:default=1
+	// +kubebuilder:validation:Optional
+	Replicas   int             `json:"replicas"`
+	Services   []AppSvc        `json:"services,omitempty"`
+	Containers []AppContainer  `json:"containers"`
+	Volumes    []corev1.Volume `json:"volumes,omitempty"`
+	Hpa        HPA             `json:"hpa,omitempty"`
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }

@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"operators.kloudlite.io/lib/conditions"
@@ -26,10 +27,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		return nil, err
 	}
 	logger := logging.NewOrDie(
-		&logging.Options{
-			Name: nn.String(),
-			Dev:  true,
-		},
+		&logging.Options{Name: nn.String(), Dev: true},
 	)
 
 	return &Request[T]{
@@ -116,16 +114,19 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	if err == nil {
 		return r.Next()
 	}
+
+	opsConditions := make([]metav1.Condition, 0, len(r.Object.GetStatus().OpsConditions)+len(moreConditions)+1)
+	opsConditions = append(opsConditions, r.Object.GetStatus().OpsConditions...)
+	opsConditions = append(opsConditions, moreConditions...)
+
 	newConditions, _, err := conditions.Patch(
 		r.Object.GetStatus().OpsConditions, append(
-			[]metav1.Condition{
-				{
-					Type:    "FailedWithErr",
-					Status:  metav1.ConditionFalse,
-					Reason:  "OpsFailedWithErr",
-					Message: err.Error(),
-				},
-			}, moreConditions...,
+			opsConditions, metav1.Condition{
+				Type:    "FailedWithErr",
+				Status:  metav1.ConditionFalse,
+				Reason:  "OpsFailedWithErr",
+				Message: err.Error(),
+			},
 		),
 	)
 	if err != nil {

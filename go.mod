@@ -6,12 +6,14 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/aws/aws-sdk-go v1.44.41
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
+	github.com/fatih/color v1.7.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/influxdata/influxdb-client-go/v2 v2.9.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
+	github.com/pkg/profile v1.6.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/twmb/franz-go v1.6.0
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54
@@ -62,6 +64,8 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.4 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect

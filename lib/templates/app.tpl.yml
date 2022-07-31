@@ -3,6 +3,7 @@
 {{- $vMounts := get . "volume-mounts"}}
 {{- $ownerRefs := get . "owner-refs"}}
 {{- $labels := get . "labels" }}
+{{- $freeze := get . "freeze" | default false }}
 
 {{- with $obj }}
 {{- /* gotype: operators.kloudlite.io/apis/crds/v1.App */ -}}
@@ -12,11 +13,11 @@ metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-  {{- if .Labels }}
   labels: {{.Labels | toYAML | nindent 4}}
-  {{- end}}
 spec:
-  replicas: {{.Spec.Replicas | default 1}}
+  {{- if not .Spec.Hpa.Enabled }}
+  replicas: {{ if $freeze}}0{{ else }}{{.Spec.Replicas}}{{ end}}
+  {{- end}}
   selector:
     matchLabels:
       app: {{.Name}}
