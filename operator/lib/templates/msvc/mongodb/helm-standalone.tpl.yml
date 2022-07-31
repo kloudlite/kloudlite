@@ -1,6 +1,7 @@
 {{- $ownerRefs := get . "owner-refs"}}
 {{- $storageClass := get . "storage-class"}}
 {{- $obj :=  get . "object" }}
+{{- $freeze := get . "freeze" | default false}}
 
 {{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson)}}
 
@@ -24,6 +25,8 @@ spec:
 
   architecture: standalone
   useStatefulSet: true
+
+  replicaCount: {{ if $freeze}}0{{else}}{{.Spec.ReplicaCount}}{{end}}
 
   {{- if .Labels }}
   commonLabels: {{.Labels | toYAML | nindent 4}}

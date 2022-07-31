@@ -2,6 +2,10 @@ package main
 
 import (
 	"flag"
+	"os"
+	"time"
+
+	"github.com/pkg/profile"
 	artifactsControllers "operators.kloudlite.io/controllers/artifacts"
 	elasticsearchControllers "operators.kloudlite.io/controllers/elasticsearch.msvc"
 	influxDbControllers "operators.kloudlite.io/controllers/influxdb.msvc"
@@ -13,11 +17,8 @@ import (
 	serverlessControllers "operators.kloudlite.io/controllers/serverless"
 	watchercontrollers "operators.kloudlite.io/controllers/watcher"
 	rApi "operators.kloudlite.io/lib/operator"
-	"os"
 
 	"operators.kloudlite.io/env"
-
-	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -88,6 +89,14 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 func main() {
+	time.AfterFunc(
+		time.Second*10, func() {
+			// MemProfileAllocs changes which type of memory to profile
+			// allocations.
+			defer profile.Start(profile.MemProfile).Stop()
+		},
+	)
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -236,7 +245,7 @@ func main() {
 		setupLog.Error(err, "creating redpanda consumer")
 		panic(err)
 	}
-	consumer.SetupLogger(logging.NewZapLogger(types.NamespacedName{}))
+	consumer.SetupLogger(myLogger)
 	defer consumer.Close()
 
 	go agent.Run(consumer, producer, envVars.AgentErrorTopic, myLogger)
