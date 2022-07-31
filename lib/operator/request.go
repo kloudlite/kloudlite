@@ -119,7 +119,7 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	opsConditions = append(opsConditions, r.Object.GetStatus().OpsConditions...)
 	opsConditions = append(opsConditions, moreConditions...)
 
-	newConditions, _, err := conditions.Patch(
+	newConditions, _, err2 := conditions.Patch(
 		r.Object.GetStatus().OpsConditions, append(
 			opsConditions, metav1.Condition{
 				Type:    "FailedWithErr",
@@ -129,15 +129,16 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 			},
 		),
 	)
-	if err != nil {
-		return newStepResult(&ctrl.Result{}, err)
+	if err2 != nil {
+		return newStepResult(&ctrl.Result{}, err2)
 	}
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().OpsConditions = newConditions
 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
 		return newStepResult(&ctrl.Result{}, err2)
 	}
-	return newStepResult(&ctrl.Result{}, err)
+	return newStepResult(&ctrl.Result{}, nil)
+	// return newStepResult(&ctrl.Result{}, err)
 }
 
 func (r *Request[T]) Context() context.Context {
