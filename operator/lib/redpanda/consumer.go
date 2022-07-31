@@ -3,20 +3,20 @@ package redpanda
 import (
 	"context"
 	"github.com/twmb/franz-go/pkg/kgo"
-	"go.uber.org/zap"
 	"operators.kloudlite.io/lib/errors"
+	"operators.kloudlite.io/lib/logging"
 	"strings"
 )
 
 type Consumer struct {
 	client  *kgo.Client
-	logger  *zap.SugaredLogger
+	logger  logging.Logger
 	options *ConsumerOptions
 }
 
 type ReaderFunc func(msg []byte, key []byte) error
 
-func (c *Consumer) SetupLogger(logger *zap.SugaredLogger) {
+func (c *Consumer) SetupLogger(logger logging.Logger) {
 	c.logger = logger
 }
 
@@ -53,7 +53,7 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 			func(record *kgo.Record) {
 				if err := onMessage(record.Value, record.Key); err != nil {
 					if c.logger != nil {
-						c.logger.Errorf("error from onMessage(): %v\n", err)
+						c.logger.Errorf(err, "in onMessage()")
 					}
 
 					if err := c.client.CommitRecords(context.TODO(), record); err != nil {
@@ -63,7 +63,7 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 				}
 				if err := c.client.CommitRecords(context.TODO(), record); err != nil {
 					if c.logger != nil {
-						c.logger.Error("error while commiting records: %+v\n", err)
+						c.logger.Errorf(err, "commiting records")
 					}
 					return
 				}

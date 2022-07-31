@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -27,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"strconv"
 )
 
 // BillingWatcherReconciler reconciles a BillingWatcher object
@@ -46,19 +47,43 @@ func (r *BillingWatcherReconciler) GetName() string {
 func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj client.Object, billing ResourceBilling) (ctrl.Result, error) {
 	klMetadata := ExtractMetadata(obj)
 	if obj.GetDeletionTimestamp() != nil {
-		if controllerutil.ContainsFinalizer(obj, constants.BillingFinalizer) {
-			if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, &billing, Stages.Deleted); err != nil {
+		if controllerutil.ContainsFinalizer(
+			obj,
+			constants.BillingFinalizer,
+		) {
+			if err := r.notifyBilling(
+				ctx,
+				getMsgKey(obj),
+				klMetadata,
+				&billing,
+				Stages.Deleted,
+			); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
-		return r.RemoveBillingFinalizer(ctx, obj)
+		return r.RemoveBillingFinalizer(
+			ctx,
+			obj,
+		)
 	}
 
-	if !controllerutil.ContainsFinalizer(obj, constants.BillingFinalizer) {
-		return r.AddBillingFinalizer(ctx, obj)
+	if !controllerutil.ContainsFinalizer(
+		obj,
+		constants.BillingFinalizer,
+	) {
+		return r.AddBillingFinalizer(
+			ctx,
+			obj,
+		)
 	}
 
-	if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, &billing, Stages.Exists); err != nil {
+	if err := r.notifyBilling(
+		ctx,
+		getMsgKey(obj),
+		klMetadata,
+		&billing,
+		Stages.Exists,
+	); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
@@ -69,15 +94,22 @@ func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj cli
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers/finalizers,verbs=update
 
 func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	r.logger.Infof("request received ...")
+
 	var wName WrappedName
-	if err := json.Unmarshal([]byte(oReq.Name), &wName); err != nil {
+	if err := json.Unmarshal(
+		[]byte(oReq.Name),
+		&wName,
+	); err != nil {
 		return ctrl.Result{}, nil
 	}
 
 	gvk, err := parseGroup(wName.Group)
 	if err != nil {
-		r.logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
+		r.logger.Errorf(
+			err,
+			"badly formatted group-version-kind (%s) received, aborting ...",
+			wName.Group,
+		)
 		return ctrl.Result{}, nil
 	}
 
@@ -85,10 +117,30 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 		return ctrl.Result{}, nil
 	}
 
+	logger := r.logger.WithName(
+		fmt.Sprintf(
+			"%s %s",
+			fn.NN(
+				oReq.Namespace,
+				wName.Name,
+			),
+			gvk.String(),
+		),
+	)
+	logger.Infof("request received ...")
+
 	switch *gvk {
 	case crdsv1.GroupVersion.WithKind("App"):
 		{
-			app, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.App{})
+			app, err := rApi.Get(
+				ctx,
+				r.Client,
+				fn.NN(
+					oReq.Namespace,
+					wName.Name,
+				),
+				&crdsv1.App{},
+			)
 			if err != nil {
 				return ctrl.Result{}, client.IgnoreNotFound(err)
 			}
@@ -100,12 +152,18 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 
 			s, ok := app.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
 			if !ok {
-				r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+				logger.Infof(
+					"missing annotation key billable quantity: %v",
+					constants.AnnotationKeys.BillableQuantity,
+				)
 				return ctrl.Result{}, nil
 			}
-			billableQ, err := strconv.ParseFloat(s, 32)
+			billableQ, err := strconv.ParseFloat(
+				s,
+				32,
+			)
 			if err != nil {
-				r.logger.Errorf(
+				logger.Errorf(
 					err,
 					"could not convert annotation %s value into float64",
 					constants.AnnotationKeys.BillableQuantity,
@@ -114,15 +172,36 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			}
 
 			billing := ResourceBilling{
-				Name:  fmt.Sprintf("%s/%s", app.Namespace, app.Name),
-				Items: []k8sItem{newK8sItem(app, Compute, float32(billableQ), replicaCount)},
+				Name: fmt.Sprintf(
+					"%s/%s",
+					app.Namespace,
+					app.Name,
+				),
+				Items: []k8sItem{newK8sItem(
+					app,
+					Compute,
+					float32(billableQ),
+					replicaCount,
+				)},
 			}
-			return r.SendBillingEvent(ctx, app, billing)
+			return r.SendBillingEvent(
+				ctx,
+				app,
+				billing,
+			)
 		}
 
 	case crdsv1.GroupVersion.WithKind("ManagedService"):
 		{
-			msvc, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.ManagedService{})
+			msvc, err := rApi.Get(
+				ctx,
+				r.Client,
+				fn.NN(
+					oReq.Namespace,
+					wName.Name,
+				),
+				&crdsv1.ManagedService{},
+			)
 			if err != nil {
 				return ctrl.Result{}, client.IgnoreNotFound(err)
 			}
@@ -132,19 +211,33 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			switch realMsvcType.GetObjectKind().GroupVersionKind() {
 			case mongodbStandalone.GroupVersion.WithKind("Service"):
 				{
-					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					realMsvc, err := rApi.Get(
+						ctx,
+						r.Client,
+						fn.NN(
+							msvc.Namespace,
+							msvc.Name,
+						),
+						&mongodbStandalone.Service{},
+					)
 					if err != nil {
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
 
 					s, ok := msvc.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
 					if !ok {
-						r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+						logger.Infof(
+							"missing annotation key billable quantity: %v",
+							constants.AnnotationKeys.BillableQuantity,
+						)
 						return ctrl.Result{}, nil
 					}
-					billableQ, err := strconv.ParseFloat(s, 32)
+					billableQ, err := strconv.ParseFloat(
+						s,
+						32,
+					)
 					if err != nil {
-						r.logger.Errorf(
+						logger.Errorf(
 							err,
 							"could not convert annotation %s value into float64",
 							constants.AnnotationKeys.BillableQuantity,
@@ -153,29 +246,61 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 					}
 
 					billing := ResourceBilling{
-						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
+						Name: fmt.Sprintf(
+							"%s/%s",
+							msvc.Namespace,
+							msvc.Name,
+						),
 						Items: []k8sItem{
-							newK8sItem(msvc, Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							newK8sItem(
+								msvc,
+								Compute,
+								float32(billableQ),
+								realMsvc.Spec.ReplicaCount,
+							),
+							newK8sItem(
+								msvc,
+								BlockStorage,
+								float32(realMsvc.Spec.Storage.ToInt()),
+								realMsvc.Spec.ReplicaCount,
+							),
 						},
 					}
-					return r.SendBillingEvent(ctx, msvc, billing)
+					return r.SendBillingEvent(
+						ctx,
+						msvc,
+						billing,
+					)
 				}
 			case redisStandalone.GroupVersion.WithKind("Service"):
 				{
-					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					realMsvc, err := rApi.Get(
+						ctx,
+						r.Client,
+						fn.NN(
+							msvc.Namespace,
+							msvc.Name,
+						),
+						&mongodbStandalone.Service{},
+					)
 					if err != nil {
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
 
 					s, ok := realMsvc.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
 					if !ok {
-						r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+						logger.Infof(
+							"missing annotation key billable quantity: %v",
+							constants.AnnotationKeys.BillableQuantity,
+						)
 						return ctrl.Result{}, nil
 					}
-					billableQ, err := strconv.ParseFloat(s, 32)
+					billableQ, err := strconv.ParseFloat(
+						s,
+						32,
+					)
 					if err != nil {
-						r.logger.Errorf(
+						logger.Errorf(
 							err,
 							"could not convert annotation %s value into float64",
 							constants.AnnotationKeys.BillableQuantity,
@@ -184,30 +309,62 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 					}
 
 					billing := ResourceBilling{
-						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
+						Name: fmt.Sprintf(
+							"%s/%s",
+							msvc.Namespace,
+							msvc.Name,
+						),
 						Items: []k8sItem{
-							newK8sItem(msvc, Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							newK8sItem(
+								msvc,
+								Compute,
+								float32(billableQ),
+								realMsvc.Spec.ReplicaCount,
+							),
+							newK8sItem(
+								msvc,
+								BlockStorage,
+								float32(realMsvc.Spec.Storage.ToInt()),
+								realMsvc.Spec.ReplicaCount,
+							),
 						},
 					}
-					return r.SendBillingEvent(ctx, msvc, billing)
+					return r.SendBillingEvent(
+						ctx,
+						msvc,
+						billing,
+					)
 				}
 
 			case mysqlStandalone.GroupVersion.WithKind("Service"):
 				{
-					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					realMsvc, err := rApi.Get(
+						ctx,
+						r.Client,
+						fn.NN(
+							msvc.Namespace,
+							msvc.Name,
+						),
+						&mongodbStandalone.Service{},
+					)
 					if err != nil {
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
 
 					s, ok := realMsvc.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
 					if !ok {
-						r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+						r.logger.Infof(
+							"missing annotation key billable quantity: %v",
+							constants.AnnotationKeys.BillableQuantity,
+						)
 						return ctrl.Result{}, nil
 					}
-					billableQ, err := strconv.ParseFloat(s, 32)
+					billableQ, err := strconv.ParseFloat(
+						s,
+						32,
+					)
 					if err != nil {
-						r.logger.Errorf(
+						logger.Errorf(
 							err,
 							"could not convert annotation %s value into float64",
 							constants.AnnotationKeys.BillableQuantity,
@@ -216,32 +373,64 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 					}
 
 					billing := ResourceBilling{
-						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
+						Name: fmt.Sprintf(
+							"%s/%s",
+							msvc.Namespace,
+							msvc.Name,
+						),
 						Items: []k8sItem{
-							newK8sItem(msvc, Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							newK8sItem(
+								msvc,
+								Compute,
+								float32(billableQ),
+								realMsvc.Spec.ReplicaCount,
+							),
+							newK8sItem(
+								msvc,
+								BlockStorage,
+								float32(realMsvc.Spec.Storage.ToInt()),
+								realMsvc.Spec.ReplicaCount,
+							),
 						},
 					}
-					return r.SendBillingEvent(ctx, msvc, billing)
+					return r.SendBillingEvent(
+						ctx,
+						msvc,
+						billing,
+					)
 				}
 			}
 		}
 
 	case serverlessv1.GroupVersion.WithKind("Lambda"):
 		{
-			lambda, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &serverlessv1.Lambda{})
+			lambda, err := rApi.Get(
+				ctx,
+				r.Client,
+				fn.NN(
+					oReq.Namespace,
+					wName.Name,
+				),
+				&serverlessv1.Lambda{},
+			)
 			if err != nil {
 				return ctrl.Result{}, client.IgnoreNotFound(err)
 			}
 
 			s, ok := lambda.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
 			if !ok {
-				r.logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
+				logger.Infof(
+					"missing annotation key billable quantity: %v",
+					constants.AnnotationKeys.BillableQuantity,
+				)
 				return ctrl.Result{}, nil
 			}
-			billableQ, err := strconv.ParseFloat(s, 32)
+			billableQ, err := strconv.ParseFloat(
+				s,
+				32,
+			)
 			if err != nil {
-				r.logger.Errorf(
+				logger.Errorf(
 					err,
 					"could not convert annotation %s value into float64",
 					constants.AnnotationKeys.BillableQuantity,
@@ -251,7 +440,9 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 
 			var podsList corev1.PodList
 			if err := r.List(
-				ctx, &podsList, &client.ListOptions{
+				ctx,
+				&podsList,
+				&client.ListOptions{
 					LabelSelector: labels.SelectorFromValidatedSet(
 						map[string]string{"kloudlite.io/lambda.name": lambda.Name},
 					),
@@ -262,12 +453,25 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			}
 
 			billing := ResourceBilling{
-				Name: fmt.Sprintf("%s/%s", lambda.Namespace, lambda.Name),
+				Name: fmt.Sprintf(
+					"%s/%s",
+					lambda.Namespace,
+					lambda.Name,
+				),
 				Items: []k8sItem{
-					newK8sItem(lambda, Lambda, float32(billableQ), len(podsList.Items)),
+					newK8sItem(
+						lambda,
+						Lambda,
+						float32(billableQ),
+						len(podsList.Items),
+					),
 				},
 			}
-			return r.SendBillingEvent(ctx, lambda, billing)
+			return r.SendBillingEvent(
+				ctx,
+				lambda,
+				billing,
+			)
 		}
 
 	}
@@ -275,13 +479,25 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 }
 
 func (r *BillingWatcherReconciler) AddBillingFinalizer(ctx context.Context, obj client.Object) (ctrl.Result, error) {
-	controllerutil.AddFinalizer(obj, constants.BillingFinalizer)
-	return ctrl.Result{}, r.Update(ctx, obj)
+	controllerutil.AddFinalizer(
+		obj,
+		constants.BillingFinalizer,
+	)
+	return ctrl.Result{}, r.Update(
+		ctx,
+		obj,
+	)
 }
 
 func (r *BillingWatcherReconciler) RemoveBillingFinalizer(ctx context.Context, obj client.Object) (ctrl.Result, error) {
-	controllerutil.RemoveFinalizer(obj, constants.BillingFinalizer)
-	return ctrl.Result{}, r.Update(ctx, obj)
+	controllerutil.RemoveFinalizer(
+		obj,
+		constants.BillingFinalizer,
+	)
+	return ctrl.Result{}, r.Update(
+		ctx,
+		obj,
+	)
 }
 
 // SetupWithManager sets up the controller with the Manager.

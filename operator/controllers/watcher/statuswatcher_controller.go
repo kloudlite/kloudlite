@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"strings"
 )
 
 // StatusWatcherReconciler reconciles a StatusWatcher object
@@ -94,7 +95,6 @@ func (r *StatusWatcherReconciler) SendStatusEvents(ctx context.Context, obj clie
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/finalizers,verbs=update
 
 func (r *StatusWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	r.logger.Infof("request received ...")
 	var wName WrappedName
 	if err := json.Unmarshal([]byte(oReq.Name), &wName); err != nil {
 		return ctrl.Result{}, nil
@@ -109,6 +109,9 @@ func (r *StatusWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 	if gvk == nil {
 		return ctrl.Result{}, nil
 	}
+
+	logger := r.logger.WithName(fmt.Sprintf("%s %s", fn.NN(oReq.Namespace, wName.Name), gvk.String()))
+	logger.Infof("request received ...")
 
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
 	obj, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), fn.NewUnstructured(tm))
