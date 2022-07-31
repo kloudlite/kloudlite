@@ -20,7 +20,7 @@ type Logger interface {
 }
 
 type customLogger struct {
-	opts *Options
+	opts   *Options
 	logger *zap.SugaredLogger
 }
 
@@ -87,7 +87,7 @@ func New(options *Options) (Logger, error) {
 	}
 	customLogger := &customLogger{logger: logger.Sugar(), opts: &opts}
 	if opts.Name != "" {
-		customLogger.logger =  customLogger.logger.Named(opts.Name)
+		customLogger.logger = customLogger.logger.Named(opts.Name)
 	}
 	return customLogger, nil
 }
