@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -207,10 +208,19 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 		if err != nil {
 			return err
 		}
+
+		if freezeVal, ok := svcObj.GetLabels()[constants.LabelKeys.Freeze]; ok && freezeVal == strconv.FormatBool(true) {
+			// kubectl.Scale(
+			// 	kubectl.Deployments, svcObj.Namespace, map[string]string{
+			// 		// "kloudlite.io/msvc.name": svcObj.Spec.
+			// 	}
+			// )
+		}
+
 		b1, err := templates.Parse(
 			templates.MongoDBStandalone, map[string]any{
-				"object": svcObj,
-				// TODO: storage-class
+				"object":        svcObj,
+				"freeze":        svcObj.GetLabels()[constants.LabelKeys.Freeze] == "true",
 				"storage-class": storageClass,
 				"owner-refs": []metav1.OwnerReference{
 					fn.AsOwner(svcObj, true),

@@ -243,6 +243,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 			templates.RedisStandalone, map[string]any{
 				"object":           obj,
 				"storage-class":    storageClass,
+				"freeze":           obj.GetLabels()[constants.LabelKeys.Freeze],
 				"acl-accounts-map": aclAccountsMap,
 				"owner-refs": []metav1.OwnerReference{
 					fn.AsOwner(obj, true),

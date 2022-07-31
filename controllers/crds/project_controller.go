@@ -2,6 +2,7 @@ package crds
 
 import (
 	"context"
+
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/harbor"
@@ -47,12 +48,6 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Project{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if step := req.CleanupLastRun(); !step.ShouldProceed() {

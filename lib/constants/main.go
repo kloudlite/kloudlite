@@ -13,8 +13,11 @@ const (
 
 var LabelKeys = struct {
 	HarborProjectRef string
+
+	Freeze string
 }{
 	HarborProjectRef: "artifacts.kloudlite.io/harbor-project-ref",
+	Freeze:           "kloudlite.io/freeze",
 }
 
 var AnnotationKeys = struct {
@@ -27,7 +30,6 @@ var AnnotationKeys = struct {
 	IsShared         string
 
 	Restart string
-	Freeze  string
 }{
 	Account:          "kloudlite.io/account-ref",
 	Project:          "kloudlite.io/project-ref",
@@ -38,7 +40,6 @@ var AnnotationKeys = struct {
 	IsShared:         "kloudlite.io/is-shared",
 
 	Restart: "kloudlite.io/do-restart",
-	Freeze:  "kloudlite.io/freeze",
 }
 
 var (
