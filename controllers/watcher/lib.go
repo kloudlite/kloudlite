@@ -100,18 +100,18 @@ const (
 )
 
 type k8sItem struct {
-	Type     k8sResource `json:"type"`
-	Count    int         `json:"count,omitempty"`
-	Plan     Plan        `json:"plan,omitempty"`
-	PlanQ    float32     `json:"planQ,omitempty"`
-	IsShared string      `json:"isShared,omitempty"`
+	Type         k8sResource `json:"type"`
+	Count        int         `json:"count,omitempty"`
+	Plan         Plan        `json:"plan,omitempty"`
+	IsShared     string      `json:"isShared,omitempty"`
+	PlanQuantity float32     `json:"planQuantity,omitempty"`
 }
 
 func newK8sItem(obj client.Object, resType k8sResource, planQuantity float32, count int) k8sItem {
 	kItem := k8sItem{
-		Type:  resType,
-		Count: count,
-		PlanQ: planQuantity,
+		Type:         resType,
+		Count:        count,
+		PlanQuantity: planQuantity,
 	}
 
 	switch resType {
