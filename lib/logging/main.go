@@ -1,9 +1,11 @@
 package logging
 
 import (
+	"fmt"
+
+	"github.com/fatih/color"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"k8s.io/apimachinery/pkg/types"
 	"operators.kloudlite.io/lib/errors"
 )
 
@@ -13,41 +15,45 @@ type Logger interface {
 	Errorf(err error, msg string, args ...any)
 	Error(err error)
 	Warnf(msg string, args ...any)
+	WithKV(key string, value any) Logger
 	WithName(name string) Logger
-	GetZap() *zap.SugaredLogger
 }
 
 type customLogger struct {
-	zapLogger *zap.SugaredLogger
+	opts *Options
+	logger *zap.SugaredLogger
 }
 
 func (c customLogger) Debugf(msg string, args ...any) {
-	c.zapLogger.Debugf(msg, args...)
+	c.logger.Debugf(msg, args...)
 }
 
 func (c customLogger) Infof(msg string, args ...any) {
-	c.zapLogger.Infof(msg, args...)
+	c.logger.Infof(msg, args...)
 }
 
 func (c customLogger) Errorf(err error, msg string, args ...any) {
-	// c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
-	c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
+	// c.logger.Errorf(errors.NewEf(err, msg, args...).Error())
+	c.logger.Errorf(errors.NewEf(err, msg, args...).Error())
 }
 
 func (c customLogger) Error(err error) {
-	c.zapLogger.Errorf(err.Error())
+	c.logger.Errorf(err.Error())
 }
 
 func (c customLogger) Warnf(msg string, args ...any) {
-	c.zapLogger.Warnf(msg, args...)
+	c.logger.Warnf(msg, args...)
 }
 
-func (c customLogger) GetZap() *zap.SugaredLogger {
-	return c.zapLogger
+func (c customLogger) WithKV(key string, value any) Logger {
+	c.logger = c.logger.With(key, value)
+	return c
 }
+
+var magenta = color.New(color.FgCyan).SprintFunc()
 
 func (c customLogger) WithName(name string) Logger {
-	return &customLogger{zapLogger: c.zapLogger.Named(name)}
+	return &customLogger{logger: c.logger.Named(magenta(name))}
 }
 
 type Options struct {
@@ -60,28 +66,30 @@ func New(options *Options) (Logger, error) {
 	if options != nil {
 		opts = *options
 	}
-	if opts.Dev {
-		cfg := zap.NewDevelopmentConfig()
-		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		cfg.EncoderConfig.LineEnding = "\n\n"
-		cfg.EncoderConfig.TimeKey = ""
-		logger, err := cfg.Build(zap.AddCallerSkip(1))
-		if err != nil {
-			return nil, err
+
+	cfg := func() zap.Config {
+		if opts.Dev {
+			cfg := zap.NewDevelopmentConfig()
+			cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			cfg.EncoderConfig.LineEnding = "\n"
+			cfg.EncoderConfig.TimeKey = ""
+
+			yellow := color.New(color.Faint, color.FgYellow)
+			opts.Name = fmt.Sprintf("(%s)", yellow.SprintFunc()(opts.Name))
+			return cfg
 		}
-		if opts.Name != "" {
-			return &customLogger{zapLogger: logger.Sugar().Named(opts.Name)}, nil
-		}
-		return &customLogger{zapLogger: logger.Sugar()}, nil
-	}
-	logger, err := zap.NewProduction()
+		return zap.NewProductionConfig()
+	}()
+
+	logger, err := cfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
 	}
+	customLogger := &customLogger{logger: logger.Sugar(), opts: &opts}
 	if opts.Name != "" {
-		return &customLogger{zapLogger: logger.Sugar().Named(opts.Name)}, nil
+		customLogger.logger =  customLogger.logger.Named(opts.Name)
 	}
-	return &customLogger{zapLogger: logger.Sugar()}, nil
+	return customLogger, nil
 }
 
 func NewOrDie(options *Options) Logger {
@@ -90,17 +98,4 @@ func NewOrDie(options *Options) Logger {
 		panic(err)
 	}
 	return logger
-}
-
-func NewZapLogger(nn types.NamespacedName) *zap.SugaredLogger {
-	cfg := zap.NewDevelopmentConfig()
-	cfg.EncoderConfig.LineEnding = "\n\n"
-	cfg.EncoderConfig.TimeKey = ""
-	logger, err := cfg.Build()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
-	sugar := logger.Sugar()
-	return sugar.With("REF", nn.String())
 }

@@ -1,4 +1,4 @@
-{{- $obj := get . "object" }}
+  {{- $obj := get . "object" }}
 {{- $ownerRefs := get .  "owner-refs" }}
 {{- $storageClass := get . "storage-class"}}
 

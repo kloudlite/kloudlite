@@ -2,6 +2,7 @@ package crds
 
 import (
 	"context"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/kubectl"
+	"operators.kloudlite.io/lib/logging"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -27,8 +29,8 @@ import (
 type AppReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-
-	Env *env.Env
+	logger logging.Logger
+	Env    *env.Env
 }
 
 func (r *AppReconciler) GetName() string {
@@ -41,18 +43,17 @@ func (r *AppReconciler) GetName() string {
 
 func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.App{})
+	req.Logger = r.logger.WithName(oReq.NamespacedName.String())
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
+	if step := req.CleanupLastRun(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
-	if x := r.handleRestart(req); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+	if step := r.handleRestart(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -137,7 +138,7 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 			cs, conditions.New(conditions.DeploymentReady, rReady, conditions.Empty),
 		)
 
-		// conditions from pod
+		// TODO: conditions from pod
 		// conditions.FromPod(ctx, r.Client, constants.DeploymentType)
 	}
 
@@ -205,22 +206,24 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi
 			"object":        app,
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
+			"freeze":        app.GetLabels()[constants.LabelKeys.Freeze] == "true",
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(app, true),
 			},
 		},
 	)
 	if err != nil {
-		return req.FailWithOpError(err)
+		return req.FailWithOpError(err).NoErr()
 	}
 
 	if _, err := fn.KubectlApplyExec(b); err != nil {
-		return req.FailWithOpError(err)
+		return req.FailWithOpError(err).NoErr()
 	}
 	return req.Done()
 }
 
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.logger = logging.NewOrDie(&logging.Options{Name: "app", Dev: true})
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.App{}).
 		Owns(&appsv1.Deployment{}).
