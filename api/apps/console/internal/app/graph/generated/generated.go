@@ -66,8 +66,10 @@ type ComplexityRoot struct {
 		Containers  func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
-		Freeze      func(childComplexity int) int
+		DoFreeze    func(childComplexity int) int
+		DoUnfreeze  func(childComplexity int) int
 		ID          func(childComplexity int) int
+		IsFrozen    func(childComplexity int) int
 		IsLambda    func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Namespace   func(childComplexity int) int
@@ -77,7 +79,6 @@ type ComplexityRoot struct {
 		Restart     func(childComplexity int) int
 		Services    func(childComplexity int) int
 		Status      func(childComplexity int) int
-		Unfreeze    func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
 
@@ -340,8 +341,8 @@ type AccountResolver interface {
 }
 type AppResolver interface {
 	Restart(ctx context.Context, obj *model.App) (bool, error)
-	Freeze(ctx context.Context, obj *model.App) (bool, error)
-	Unfreeze(ctx context.Context, obj *model.App) (bool, error)
+	DoFreeze(ctx context.Context, obj *model.App) (bool, error)
+	DoUnfreeze(ctx context.Context, obj *model.App) (bool, error)
 }
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
@@ -496,12 +497,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.Description(childComplexity), true
 
-	case "App.freeze":
-		if e.complexity.App.Freeze == nil {
+	case "App.doFreeze":
+		if e.complexity.App.DoFreeze == nil {
 			break
 		}
 
-		return e.complexity.App.Freeze(childComplexity), true
+		return e.complexity.App.DoFreeze(childComplexity), true
+
+	case "App.doUnfreeze":
+		if e.complexity.App.DoUnfreeze == nil {
+			break
+		}
+
+		return e.complexity.App.DoUnfreeze(childComplexity), true
 
 	case "App.id":
 		if e.complexity.App.ID == nil {
@@ -509,6 +517,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.ID(childComplexity), true
+
+	case "App.isFrozen":
+		if e.complexity.App.IsFrozen == nil {
+			break
+		}
+
+		return e.complexity.App.IsFrozen(childComplexity), true
 
 	case "App.isLambda":
 		if e.complexity.App.IsLambda == nil {
@@ -572,13 +587,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Status(childComplexity), true
-
-	case "App.unfreeze":
-		if e.complexity.App.Unfreeze == nil {
-			break
-		}
-
-		return e.complexity.App.Unfreeze(childComplexity), true
 
 	case "App.updatedAt":
 		if e.complexity.App.UpdatedAt == nil {
@@ -2253,8 +2261,9 @@ type App @key(fields: "id") {
   autoScale: AutoScale
   conditions: [MetaCondition!]!
   restart: Boolean!
-  freeze: Boolean!
-  unfreeze: Boolean!
+  doFreeze: Boolean!
+  doUnfreeze: Boolean!
+  isFrozen: Boolean!
 }
 
 input AutoScaleIn {
@@ -4492,7 +4501,7 @@ func (ec *executionContext) _App_restart(ctx context.Context, field graphql.Coll
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _App_freeze(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+func (ec *executionContext) _App_doFreeze(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4510,7 +4519,7 @@ func (ec *executionContext) _App_freeze(ctx context.Context, field graphql.Colle
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.App().Freeze(rctx, obj)
+		return ec.resolvers.App().DoFreeze(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4527,7 +4536,7 @@ func (ec *executionContext) _App_freeze(ctx context.Context, field graphql.Colle
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _App_unfreeze(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+func (ec *executionContext) _App_doUnfreeze(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4545,7 +4554,42 @@ func (ec *executionContext) _App_unfreeze(ctx context.Context, field graphql.Col
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.App().Unfreeze(rctx, obj)
+		return ec.resolvers.App().DoUnfreeze(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_isFrozen(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsFrozen, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12850,7 +12894,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 				return innerFunc(ctx)
 
 			})
-		case "freeze":
+		case "doFreeze":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12859,7 +12903,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._App_freeze(ctx, field, obj)
+				res = ec._App_doFreeze(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12870,7 +12914,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 				return innerFunc(ctx)
 
 			})
-		case "unfreeze":
+		case "doUnfreeze":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -12879,7 +12923,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._App_unfreeze(ctx, field, obj)
+				res = ec._App_doUnfreeze(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12890,6 +12934,16 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 				return innerFunc(ctx)
 
 			})
+		case "isFrozen":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._App_isFrozen(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
