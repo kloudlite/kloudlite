@@ -49,9 +49,9 @@ models:
     fields:
       restart:
         resolver: true
-      freeze:
+      doFreeze:
         resolver: true
-      unfreeze:
+      doUnfreeze:
         resolver: true
   User:
     fields:

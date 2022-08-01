@@ -31,8 +31,9 @@ type App struct {
 	AutoScale   *AutoScale        `json:"autoScale"`
 	Conditions  []*MetaCondition  `json:"conditions"`
 	Restart     bool              `json:"restart"`
-	Freeze      bool              `json:"freeze"`
-	Unfreeze    bool              `json:"unfreeze"`
+	DoFreeze    bool              `json:"doFreeze"`
+	DoUnfreeze  bool              `json:"doUnfreeze"`
+	IsFrozen    bool              `json:"isFrozen"`
 }
 
 func (App) IsEntity() {}

@@ -169,8 +169,9 @@ type App @key(fields: "id") {
   autoScale: AutoScale
   conditions: [MetaCondition!]!
   restart: Boolean!
-  freeze: Boolean!
-  unfreeze: Boolean!
+  doFreeze: Boolean!
+  doUnfreeze: Boolean!
+  isFrozen: Boolean!
 }
 
 input AutoScaleIn {
