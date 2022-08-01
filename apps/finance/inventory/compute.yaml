@@ -4,7 +4,7 @@
 
 - name: General
   sharedPrice: 12.6
-  dedicatedPrice: 28.2
+  dedicatedPrice: 28.2x
 
 - name: HighMemory
   sharedPrice: 17.4
