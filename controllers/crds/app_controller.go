@@ -48,10 +48,6 @@ func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if step := req.CleanupLastRun(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.handleRestart(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}

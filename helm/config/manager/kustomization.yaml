@@ -12,6 +12,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: harbor.dev.madhouselabs.io/kloudlite/koperator-helm
+  newName: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-helm-operator
   newTag: latest
-namespace: koperator
+namespace: kl-core

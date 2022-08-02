@@ -12,15 +12,51 @@ tasks:
     cmds:
       - operator-sdk create api --plugins helm --group {{.Group}} --version v1 --kind {{.Kind}} --helm-chart-repo {{.Repo}} --helm-chart {{.Chart}}
 
-  deploy:
+  deploy:prod:
+    vars:
+      Name: kloudlite-helm-operator
     env:
-      IMG: harbor.dev.madhouselabs.io/kloudlite/koperator-helm:latest
+      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.Name}}:latest
       NAMESPACE: koperator
     cmds:
       - make docker-build docker-push
-      - cd config/manager && kustomize edit set image controller=${IMG} && kustomize edit set namespace ${NAMESPACE}
-      - cd config/default && kustomize edit set namespace ${NAMESPACE}
-      - make deploy
+      - |
+        cd config/manager
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |
+        cd config/default
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |
+        filename=/tmp/kl-operator-$RANDOM.yml
+        kustomize build config/default > $filename
+        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
+        cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
+      - echo "Deployed {{.Name}}"
+
+  deploy:staging:
+    vars:
+      Name: kloudlite-helm-operator
+    env:
+      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
+      NAMESPACE: kl-core
+    cmds:
+      - make docker-build docker-push
+      - |
+        cd config/manager
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |
+        cd config/default
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |
+        filename=/tmp/operator-build-$RANDOM.yml
+        kustomize build config/default > $filename
+        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
+        cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
+      - echo "Deployed {{.Name}}"
 
   run:
     cmds:
