@@ -26,6 +26,7 @@ func (s stepResult) ShouldProceed() bool {
 }
 
 func (s stepResult) NoErr() StepResult {
+	s.result = &ctrl.Result{}
 	s.err = nil
 	return s
 }
