@@ -94,7 +94,6 @@ func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj cli
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=billingwatchers/finalizers,verbs=update
 
 func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-
 	var wName WrappedName
 	if err := json.Unmarshal(
 		[]byte(oReq.Name),

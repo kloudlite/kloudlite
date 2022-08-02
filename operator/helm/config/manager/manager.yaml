@@ -53,8 +53,8 @@ spec:
             cpu: 700m
             memory: 700Mi
           requests:
-            cpu: 200m
-            memory: 250Mi
+            cpu: 80m
+            memory: 200Mi
 #       serviceAccountName: controller-manager
       serviceAccountName: kloudlite-cluster-svc-account
       terminationGracePeriodSeconds: 10
