@@ -11,7 +11,7 @@ tasks:
   new-kind:
     silent: true
     cmds:
-      - |
+      - |+
         [ -z "{{.Group}}" ] && echo env-var 'Group' not provided && exit 1
         [ -z "{{.Kind}}" ] && echo env-var 'Kind' not provided && exit 1
         exit 0
@@ -20,22 +20,17 @@ tasks:
   setup:
     dir: ./bin
     cmds:
-      - |
-        curl -L0 https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.5/kustomize_v4.5.5_linux_amd64.tar.gz > kustomize.tar.gz
-        tar xf kustomize.tar.gz && rm -rf kustomize.tar.gz
+      - curl -L0 https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.5/kustomize_v4.5.5_linux_amd64.tar.gz > kustomize.tar.gz
+      - tar xf kustomize.tar.gz && rm -rf kustomize.tar.gz
 
   run:
     run: always
     cmds:
       - task: kill-port
-#      - go run -tags dynamic main.go -dev |& pp -rel-path
       - go build -i -tags dynamic -o ./bin/operator
       - ./bin/operator --dev {{.CLI_ARGS}} |& pp -rel-path
-#      - go run -tags dynamic main.go |& pp -rel-path
-#      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
-#      - nodemon -w '**/*.go' -q -e go --signal SIGKILL --exec 'go run -tags dynamic main.go'
     sources:
-      - ./**/*.go
+      - "./**/*.go"
     method: timestamp
 
   build:
@@ -51,6 +46,53 @@ tasks:
       - cd config/manager && kustomize edit set image controller=${IMG} && kustomize edit set namespace ${NAMESPACE}
       - cd config/default && kustomize edit set namespace ${NAMESPACE}
       - make deploy
+
+  deploy:prod:
+    vars:
+      Name: kloudlite-operator
+    env:
+      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.Name}}:latest
+      NAMESPACE: koperator
+    cmds:
+      - make dev-docker-build dev-docker-push
+      - |+
+        cd config/manager
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |+
+        cd config/default
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |+
+        filename=/tmp/kl-operator-$RANDOM.yml
+        kustomize build config/default > $filename
+        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
+        cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
+      - echo "Deployed {{.Name}}"
+
+  deploy:staging:
+    vars:
+      Name: kloudlite-operator
+    env:
+      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/operator-core:latest
+      NAMESPACE: kl-core
+    cmds:
+      - make dev-docker-build dev-docker-push
+      - |
+        cd config/manager
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |
+        cd config/default
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |+
+        filename=/tmp/kl-operator-$RANDOM.yml
+        kustomize build config/default > $filename
+        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
+        cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
+      - echo "Deployed {{.Name}}"
+
 
   deploy:build:
     env:

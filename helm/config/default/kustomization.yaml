@@ -1,12 +1,12 @@
 # Adds namespace to all resources.
-namespace: koperator
+namespace: kl-core
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: helm-
+# namePrefix: helm-
 
 # Labels to add to all resources and selectors.
 #commonLabels:
@@ -26,3 +26,7 @@ resources:
 - ../crd
 - ../rbac
 - ../manager
+images:
+- name: controller
+  newName: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-helm-operator
+  newTag: latest
