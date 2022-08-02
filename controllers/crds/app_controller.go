@@ -69,7 +69,8 @@ func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.
 	}
 
 	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+		// // return x.ReconcilerResponse()
+		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -215,7 +216,9 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi
 	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return req.FailWithOpError(err).NoErr()
 	}
-	return req.Done()
+
+	app.Status.OpsConditions = []metav1.Condition{}
+	return rApi.NewStepResult(nil, r.Status().Update(ctx, app))
 }
 
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
