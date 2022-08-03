@@ -3,6 +3,7 @@ package elasticsearchmsvc
 import (
 	"context"
 	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -45,12 +46,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &elasticSearch.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -204,7 +199,8 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch
 		return req.FailWithOpError(err)
 	}
 
-	return req.Done()
+	svcObj.Status.OpsConditions = []metav1.Condition{}
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
 }
 
 // SetupWithManager sets up the controller with the Manager.
