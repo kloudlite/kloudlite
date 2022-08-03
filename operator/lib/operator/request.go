@@ -159,5 +159,5 @@ func (r *Request[T]) Next() StepResult {
 func (r *Request[T]) Finalize() StepResult {
 	controllerutil.RemoveFinalizer(r.Object, constants.CommonFinalizer)
 	controllerutil.RemoveFinalizer(r.Object, constants.ForegroundFinalizer)
-	return newStepResult(&ctrl.Result{} , r.client.Update(r.ctx, r.Object))
+	return newStepResult(&ctrl.Result{}, r.client.Update(r.ctx, r.Object))
 }
