@@ -47,10 +47,6 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if step := req.CleanupLastRun(); step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.handleRestart(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -193,7 +189,9 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 	if _, err := fn.KubectlApplyExec(b); err != nil {
 		return req.FailWithOpError(err)
 	}
-	return req.Done()
+
+	msvc.Status.OpsConditions = []metav1.Condition{}
+	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, msvc))
 }
 
 func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
