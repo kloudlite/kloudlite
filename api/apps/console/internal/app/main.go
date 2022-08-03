@@ -194,6 +194,35 @@ var Module = fx.Module(
 			env.CookieDomain,
 			common.CacheSessionPrefix,
 		))
+		a.Get("/build-logs", fWebsocket.New(func(conn *fWebsocket.Conn) {
+			appId := conn.Query("app_id", "app_id")
+			app, err := d.GetApp(context.TODO(), repos.ID(appId))
+			pipelineId, ok := app.Metadata["pipeline_id"]
+			if err != nil {
+				fmt.Println(err)
+				conn.Close()
+				return
+			}
+			if !ok {
+				fmt.Println("no pipeline_id found")
+				conn.Close()
+				return
+			}
+
+			// Crosscheck session
+			client.Tail([]lokiserver.StreamSelector{
+				{
+					Key:       "namespace",
+					Operation: "=",
+					Value:     app.Namespace,
+				},
+				{
+					Key:       "app",
+					Operation: "=",
+					Value:     pipelineId.(string),
+				},
+			}, nil, nil, nil, nil, conn)
+		}))
 		a.Get("/app-logs", fWebsocket.New(func(conn *fWebsocket.Conn) {
 			appId := conn.Query("app_id", "app_id")
 			app, err := d.GetApp(context.TODO(), repos.ID(appId))

@@ -203,6 +203,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					if app.Frozen {
 						labels["kloudlite.io/freeze"] = "true"
 					}
+					labels["app.kubernetes.io/name"] = app.ReadableId
 					return labels
 				}(),
 				Annotations: func() map[string]string {
@@ -287,6 +288,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					if app.Frozen {
 						labels["kloudlite.io/freeze"] = "true"
 					}
+					labels["app.kubernetes.io/name"] = app.ReadableId
 					return labels
 				}(),
 				Annotations: func() map[string]string {

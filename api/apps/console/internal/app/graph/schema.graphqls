@@ -191,6 +191,7 @@ input AppInput{
   replicas: Int
   services: [ExposedServiceIn]!
   containers: [AppContainerIn!]!
+  metadata: Json
 }
 
 type AutoScale {

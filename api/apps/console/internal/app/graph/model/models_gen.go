@@ -61,15 +61,16 @@ type AppContainerIn struct {
 }
 
 type AppInput struct {
-	Name        string              `json:"name"`
-	IsLambda    bool                `json:"isLambda"`
-	ProjectID   string              `json:"projectId"`
-	Description *string             `json:"description"`
-	AutoScale   *AutoScaleIn        `json:"autoScale"`
-	ReadableID  repos.ID            `json:"readableId"`
-	Replicas    *int                `json:"replicas"`
-	Services    []*ExposedServiceIn `json:"services"`
-	Containers  []*AppContainerIn   `json:"containers"`
+	Name        string                 `json:"name"`
+	IsLambda    bool                   `json:"isLambda"`
+	ProjectID   string                 `json:"projectId"`
+	Description *string                `json:"description"`
+	AutoScale   *AutoScaleIn           `json:"autoScale"`
+	ReadableID  repos.ID               `json:"readableId"`
+	Replicas    *int                   `json:"replicas"`
+	Services    []*ExposedServiceIn    `json:"services"`
+	Containers  []*AppContainerIn      `json:"containers"`
+	Metadata    map[string]interface{} `json:"metadata"`
 }
 
 type AppService struct {
