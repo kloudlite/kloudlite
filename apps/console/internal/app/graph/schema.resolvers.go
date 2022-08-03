@@ -363,6 +363,9 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		Replicas:     1,
 		ExposedPorts: ports,
 		Containers:   containers,
+		Metadata: func() map[string]any {
+			return app.Metadata
+		}(),
 	})
 	if err != nil {
 		return nil, err
@@ -530,6 +533,9 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		}(),
 		ExposedPorts: ports,
 		Containers:   containers,
+		Metadata: func() map[string]any {
+			return app.Metadata
+		}(),
 	})
 	if err != nil {
 		return nil, err
