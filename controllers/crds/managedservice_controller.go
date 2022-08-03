@@ -105,7 +105,6 @@ func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService
 	return req.Finalize()
 }
 
-
 func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
 	ctx := req.Context()
 	msvc := req.Object
