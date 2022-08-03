@@ -2283,6 +2283,7 @@ input AppInput{
   replicas: Int
   services: [ExposedServiceIn]!
   containers: [AppContainerIn!]!
+  metadata: Json
 }
 
 type AutoScale {
@@ -12167,6 +12168,14 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containers"))
 			it.Containers, err = ec.unmarshalNAppContainerIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppContainerInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			it.Metadata, err = ec.unmarshalOJson2map(ctx, v)
 			if err != nil {
 				return it, err
 			}

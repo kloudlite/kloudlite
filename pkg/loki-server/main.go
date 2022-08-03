@@ -76,8 +76,11 @@ func (l *lokiClient) Tail(
 		query.Set("limit", fmt.Sprintf("%v", 30))
 	}
 	for {
-		u := url.URL{Scheme: "https", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
-		get, _ := http.Get(u.String())
+		u := url.URL{Scheme: "http", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
+		get, err := http.Get(u.String())
+		if err != nil {
+			return err
+		}
 		all, _ := ioutil.ReadAll(get.Body)
 		connection.WriteMessage(websocket.TextMessage, all)
 		time.Sleep(5 * time.Second)
