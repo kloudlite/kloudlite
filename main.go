@@ -3,9 +3,7 @@ package main
 import (
 	"flag"
 	"os"
-	"time"
 
-	"github.com/pkg/profile"
 	artifactsControllers "operators.kloudlite.io/controllers/artifacts"
 	elasticsearchControllers "operators.kloudlite.io/controllers/elasticsearch.msvc"
 	influxDbControllers "operators.kloudlite.io/controllers/influxdb.msvc"
@@ -89,13 +87,13 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 func main() {
-	time.AfterFunc(
-		time.Second*10, func() {
-			// MemProfileAllocs changes which type of memory to profile
-			// allocations.
-			defer profile.Start(profile.MemProfile).Stop()
-		},
-	)
+	// time.AfterFunc(
+	// 	time.Second*10, func() {
+	// 		// MemProfileAllocs changes which type of memory to profile
+	// 		// allocations.
+	// 		defer profile.Start(profile.MemProfile).Stop()
+	// 	},
+	// )
 
 	var metricsAddr string
 	var enableLeaderElection bool
