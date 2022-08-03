@@ -21,6 +21,7 @@ type stepResult struct {
 	err    error
 }
 
+
 func (s stepResult) ShouldProceed() bool {
 	return s.result == nil && s.err == nil
 }

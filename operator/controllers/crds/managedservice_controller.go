@@ -101,6 +101,11 @@ func (r *ManagedServiceReconciler) handleRestart(req *rApi.Request[*v1.ManagedSe
 	return req.Next()
 }
 
+func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
+	return req.Finalize()
+}
+
+
 func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
 	ctx := req.Context()
 	msvc := req.Object
@@ -192,10 +197,6 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 
 	msvc.Status.OpsConditions = []metav1.Condition{}
 	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, msvc))
-}
-
-func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
-	return req.Finalize()
 }
 
 // SetupWithManager sets up the controller with the Manager.
