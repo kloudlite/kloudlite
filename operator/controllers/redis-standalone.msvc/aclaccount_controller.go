@@ -3,6 +3,7 @@ package redisstandalonemsvc
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -103,6 +104,7 @@ func (r *ACLAccountReconciler) finalize(req *rApi.Request[*redisStandalone.ACLAc
 		ctx, r.Client, fn.NN(obj.GetNamespace(), getACLConfigmapName(obj.Name)),
 		&corev1.ConfigMap{},
 	)
+
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return req.Finalize()
@@ -110,9 +112,9 @@ func (r *ACLAccountReconciler) finalize(req *rApi.Request[*redisStandalone.ACLAc
 		return req.FailWithOpError(err)
 	}
 
+	patch := client.MergeFrom(aclCfg)
 	delete(aclCfg.Data, obj.Name)
-
-	if err := fn.KubectlApply(ctx, r.Client, fn.ParseConfigMap(aclCfg)); err != nil {
+	if err := r.Patch(ctx, obj, patch); err != nil {
 		return req.FailWithOpError(err)
 	}
 
@@ -279,49 +281,47 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 	}
 
 	// STEP: 5. create reconciler output (eg. secret)
-	if errt := func() error {
-		b, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("mres-%s", obj.Name),
-					Namespace: obj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(obj, true),
-					},
-				},
-				StringData: map[string]string{
-					"HOSTS":    msvcRef.Hosts,
-					"PASSWORD": userPassword,
-					"USERNAME": obj.Name,
-					"PREFIX":   obj.Spec.KeyPrefix,
-					"URI":      fmt.Sprintf("redis://%s:%s@%s?allowUsernameInURI=true", obj.Name, userPassword, msvcRef.Hosts),
+
+	b, err := templates.Parse(
+		templates.Secret, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("mres-%s", obj.Name),
+				Namespace: obj.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					fn.AsOwner(obj, true),
 				},
 			},
-		)
-		if err != nil {
-			return err
-		}
-
-		if _, err := fn.KubectlApplyExec(b); err != nil {
-			return err
-		}
-
-		if msvcRef.ACLConfig.Data == nil {
-			msvcRef.ACLConfig.Data = map[string]string{}
-		}
-		msvcRef.ACLConfig.Data[obj.Name] = fmt.Sprintf(
-			"user %s on ~%s:* +@all -@dangerous +info resetpass >%s",
-			obj.Name,
-			obj.Spec.KeyPrefix,
-			userPassword,
-		)
-
-		return fn.KubectlApply(ctx, r.Client, msvcRef.ACLConfig)
-	}(); errt != nil {
-		return req.FailWithOpError(errt)
+			StringData: map[string]string{
+				"HOSTS":    msvcRef.Hosts,
+				"PASSWORD": userPassword,
+				"USERNAME": obj.Name,
+				"PREFIX":   obj.Spec.KeyPrefix,
+				"URI":      fmt.Sprintf("redis://%s:%s@%s?allowUsernameInURI=true", obj.Name, userPassword, msvcRef.Hosts),
+			},
+		},
+	)
+	if err != nil {
+		return req.FailWithOpError(err).NoErr()
 	}
 
-	return req.Done()
+	if _, err := fn.KubectlApplyExec(b); err != nil {
+		return req.FailWithOpError(err).NoErr()
+	}
+
+	patch := client.MergeFrom(msvcRef.ACLConfig)
+	if msvcRef.ACLConfig.Data == nil {
+		msvcRef.ACLConfig.Data = map[string]string{}
+	}
+	msvcRef.ACLConfig.Data[obj.Name] = fmt.Sprintf(
+		"user %s on ~%s:* +@all -@dangerous +info resetpass >%s", obj.Name, obj.Spec.KeyPrefix, userPassword,
+	)
+
+	if err := r.Client.Patch(ctx, msvcRef.ACLConfig, patch); err != nil {
+		return req.FailWithOpError(err).NoErr()
+	}
+
+	obj.Status.OpsConditions = []metav1.Condition{}
+	return rApi.NewStepResult(nil, r.Status().Update(ctx, obj))
 }
 
 // SetupWithManager sets up the controller with the Manager.

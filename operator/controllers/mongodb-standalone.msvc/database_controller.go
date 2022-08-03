@@ -3,6 +3,7 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,31 +58,27 @@ func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Database{})
 	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	if step := req.CleanupLastRun(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
-		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.ReconcilerResponse()
+		if step := r.finalize(req); !step.ShouldProceed() {
+			return step.ReconcilerResponse()
 		}
 	}
 
 	req.Logger.Infof("---------------- database reconciler -- NEW RECONCILATION -----------------")
 
-	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
-	if x := r.reconcileStatus(req); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+	if step := r.reconcileStatus(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
-	if x := r.reconcileOperations(req); !x.ShouldProceed() {
-		return x.ReconcilerResponse()
+	if step := r.reconcileOperations(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	return ctrl.Result{}, nil

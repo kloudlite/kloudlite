@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os/exec"
+
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"operators.kloudlite.io/lib/logging"
-	"os/exec"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"operators.kloudlite.io/lib/errors"
@@ -80,15 +81,13 @@ func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) err
 			annotations[k] = v
 		}
 
-		if m2, ok := m["labels"].(map[string]string); ok {
+		if m2, ok := m["annotations"].(map[string]string); ok {
 			for k, v := range m2 {
 				annotations[k] = v
 			}
 		}
 		t.SetAnnotations(annotations)
-	}
 
-	if m, ok := j["metadata"].(map[string]any); ok {
 		labels := map[string]string{}
 
 		for k, v := range t.GetLabels() {
