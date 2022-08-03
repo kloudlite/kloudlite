@@ -3,12 +3,14 @@ package mongodbstandalonemsvc
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
+
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/env"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -232,7 +234,11 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 			return err
 		}
 
-		hostUrl := fmt.Sprintf("%s.%s.svc.cluster.local", svcObj.Name, svcObj.Namespace)
+		hosts := make([]string, 0, svcObj.Spec.ReplicaCount)
+		for idx := 0; idx < svcObj.Spec.ReplicaCount; idx += 1 {
+			hosts = append(hosts, fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local", svcObj.Name, idx, svcObj.Name, svcObj.Namespace))
+		}
+
 		authPasswd, ok := svcObj.Status.GeneratedVars.GetString(SvcRootPasswordKey)
 		if !ok {
 			return errors.Newf("%s key not found in generated vars", SvcRootPasswordKey)
@@ -249,8 +255,8 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 				},
 				StringData: map[string]string{
 					"ROOT_PASSWORD": authPasswd,
-					"DB_HOSTS":      hostUrl,
-					"DB_URL":        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", authPasswd, hostUrl),
+					"DB_HOSTS":      strings.Join(hosts, ","),
+					"DB_URL":        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", authPasswd, strings.Join(hosts, ",")),
 				},
 			},
 		)
