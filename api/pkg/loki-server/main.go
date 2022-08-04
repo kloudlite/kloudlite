@@ -65,7 +65,7 @@ func (l *lokiClient) Tail(
 	if start != nil {
 		query.Set("start", fmt.Sprintf("%v", start))
 	} else {
-		query.Set("start", fmt.Sprintf("%v", time.Now().Add(-time.Hour).UnixNano()))
+		query.Set("start", fmt.Sprintf("%v", time.Now().Add(-time.Hour*24).UnixNano()))
 	}
 	if end != nil {
 		query.Set("env", fmt.Sprintf("%v", end))
