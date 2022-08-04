@@ -36,7 +36,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		switch q.Qtype {
 		case dns.TypeNS:
 			for _, name := range []string{
-				"ns1.kloudlite.io.",
+				"ns1.internal.kloudlite.io.",
 			} {
 				rr := &dns.NS{
 					Hdr: dns.RR_Header{
