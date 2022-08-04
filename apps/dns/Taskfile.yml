@@ -18,10 +18,10 @@ tasks:
       - go run -tags dynamic main.go --dev
 
   docker-build:
-    dir: ../..
+    # dir: ../..
     vars:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/dns:v2
-      APP_DIR: ./apps/dns
+      APP: dns
     cmds:
-      - docker buildx build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
+      - docker buildx build --platform linux/amd64 -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
       - docker push {{.IMAGE}}
