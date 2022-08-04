@@ -6,9 +6,11 @@ import (
 )
 
 type Domain interface {
+	GetNodeIps(ctx context.Context, region *string) ([]string, error)
 	GetRecords(ctx context.Context, host string) ([]*Record, error)
 	DeleteRecords(ctx context.Context, host string) error
 	AddARecords(ctx context.Context, host string, aRecords []string) error
+	UpsertARecords(ctx context.Context, host string, records []string) error
 	VerifySite(ctx context.Context, claimId repos.ID) error
 	GetSites(ctx context.Context, accountId string) ([]*Site, error)
 	GetSite(ctx context.Context, siteId string) (*Site, error)
@@ -24,4 +26,5 @@ type Domain interface {
 		ttl uint32,
 		priority int64,
 	) (*Record, error)
+	UpdateNodeIPs(ctx context.Context, ips map[string][]string) bool
 }

@@ -18,6 +18,53 @@ type domainI struct {
 	sitesRepo         repos.DbRepo[*Site]
 	recordsCache      cache.Repo[[]*Record]
 	accountCNamesRepo repos.DbRepo[*AccountCName]
+	nodeIpsRepo       repos.DbRepo[*NodeIps]
+}
+
+func (d *domainI) UpsertARecords(ctx context.Context, host string, records []string) error {
+	err := d.deleteRecords(ctx, host)
+	if err != nil {
+		return err
+	}
+	return d.AddARecords(ctx, host, records)
+}
+
+func (d *domainI) UpdateNodeIPs(ctx context.Context, ips map[string][]string) bool {
+	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{})
+	if err != nil {
+		return false
+	}
+	if one == nil {
+		one, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
+			Ips: ips,
+		})
+		if err != nil {
+			return false
+		}
+	}
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (d *domainI) GetNodeIps(ctx context.Context, region *string) ([]string, error) {
+	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{})
+	if err != nil {
+		return nil, err
+	}
+	if one == nil {
+		if region == nil {
+			out := make([]string, 0)
+			for _, ips := range one.Ips {
+				out = append(out, ips...)
+			}
+			return out, nil
+		} else {
+			return one.Ips[*region], nil
+		}
+	}
+	return nil, errors.New("node ips not found")
 }
 
 func (d *domainI) DeleteSite(ctx context.Context, siteId repos.ID) error {
@@ -175,15 +222,18 @@ func (d *domainI) CreateRecord(
 	return create, err
 }
 
-func (d *domainI) DeleteRecords(ctx context.Context, host string) error {
+func (d *domainI) deleteRecords(ctx context.Context, host string) error {
 	d.recordsCache.Drop(ctx, host)
 	return d.recordsRepo.DeleteMany(ctx, repos.Filter{
 		"host": host,
 	})
-
 }
 
-func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string) error {
+func (d *domainI) DeleteRecords(ctx context.Context, host string) error {
+	return d.deleteRecords(ctx, host)
+}
+
+func (d *domainI) addARecords(ctx context.Context, host string, aRecords []string) error {
 	var err error
 	d.recordsCache.Drop(ctx, host)
 	for _, aRecord := range aRecords {
@@ -194,14 +244,18 @@ func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []strin
 			TTL:      30,
 			Priority: 0,
 		})
-
 	}
 	return err
+}
+
+func (d *domainI) AddARecords(ctx context.Context, host string, aRecords []string) error {
+	return d.addARecords(ctx, host, aRecords)
 }
 
 func fxDomain(
 	recordsRepo repos.DbRepo[*Record],
 	sitesRepo repos.DbRepo[*Site],
+	nodeIpsRepo repos.DbRepo[*NodeIps],
 	accountDNSRepo repos.DbRepo[*AccountCName],
 	recordsCache cache.Repo[[]*Record],
 ) Domain {
@@ -210,6 +264,7 @@ func fxDomain(
 		sitesRepo,
 		recordsCache,
 		accountDNSRepo,
+		nodeIpsRepo,
 	}
 }
 

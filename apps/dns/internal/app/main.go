@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/miekg/dns"
@@ -30,89 +31,42 @@ type DNSHandler struct {
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg := dns.Msg{}
 	msg.SetReply(r)
-
 	msg.Answer = []dns.RR{}
-	fmt.Println(r.MsgHdr.String())
 	for _, q := range r.Question {
 		switch q.Qtype {
-		case dns.TypeNS:
-			fmt.Println("HERE", r.Ns)
-			//d := q.Name
-			//host := d[:len(d)-1]
-			//site, err := h.domain.GetSiteFromDomain(context.Background(), host)
-			//fmt.Println(host)
-			//if err != nil {
-			//	msg.Answer = append(msg.Answer, &dns.A{
-			//		Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeNS, Class: dns.ClassINET},
-			//	})
-			//	fmt.Println(err)
-			//	continue
-			//}
-			//names, err := h.domain.getAccountCName(context.Background(), string(site.AccountId))
-			//fmt.Println(names)
-			//if err != nil {
-			//	msg.Answer = append(msg.Answer, &dns.A{
-			//		Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeNS, Class: dns.ClassINET},
-			//	})
-			//}
-
-			for _, name := range []string{
-				"restless-sky.ns.kloudlite.io.", "bold-surf.ns.kloudlite.io.",
-			} {
-				rr := &dns.NS{
-					Hdr: dns.RR_Header{
-						Name:   q.Name,
-						Rrtype: dns.TypeNS,
-						Class:  q.Qclass,
-						Ttl:    60,
-					},
-					Ns: name,
-				}
-				msg.Answer = append(msg.Answer, rr)
-			}
-			fmt.Println("HERE2", msg.Answer)
-
-			//d := q.Name
-			//msg.Answer = append(msg.Answer, &dns.NS{
-			//	Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeNS, Class: dns.ClassINET},
-			//})
 		case dns.TypeA:
-
 			msg.Authoritative = true
 			d := q.Name
 			todo := context.TODO()
 			host := d[:len(d)-1]
-
+			if strings.HasSuffix(host, ".edgenet.khost.dev") {
+				ips, err := h.domain.GetNodeIps(todo, nil)
+				if err != nil || len(ips) == 0 {
+					msg.Answer = append(msg.Answer, &dns.A{
+						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
+					})
+				}
+				for _, ip := range ips {
+					msg.Answer = append(msg.Answer, &dns.A{
+						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 300},
+						A:   net.ParseIP(ip),
+					},
+					)
+				}
+			}
 			records, err := h.domain.GetRecords(todo, host)
-
 			if err != nil || len(records) == 0 {
 				msg.Answer = append(msg.Answer, &dns.A{
 					Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
 				})
 			}
-
 			for _, r := range records {
 				if r.Type == "A" {
-
-					// if msg.Answer[i] == nil {
-					// 	msg.Answer[i] = &dns.A{
-					// 		Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
-					// 		A:   net.ParseIP(r.Answer),
-					// 	}
-					// }
-
 					msg.Answer = append(msg.Answer, &dns.A{
 						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
 						A:   net.ParseIP(r.Answer),
 					},
 					)
-
-					// fmt.Println(msg.Answer)
-
-					// msg.Answer[i] = &dns.A{
-					// 	Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
-					// 	A:   net.ParseIP(r.Answer),
-					// }
 
 				}
 			}
@@ -132,6 +86,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.Record]("records", "rec", domain.RecordIndexes),
 	repos.NewFxMongoRepo[*domain.Site]("sites", "site", domain.SiteIndexes),
 	repos.NewFxMongoRepo[*domain.AccountCName]("account_cnames", "dns", domain.AccountCNameIndexes),
+	repos.NewFxMongoRepo[*domain.NodeIps]("node_ips", "nips", domain.NodeIpIndexes),
 	cache.NewFxRepo[[]*domain.Record](),
 	domain.Module,
 	fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server, d domain.Domain, recCache cache.Repo[[]*domain.Record]) {
@@ -163,18 +118,27 @@ var Module = fx.Module(
 			if err != nil {
 				return err
 			}
-
-			err = d.AddARecords(c.Context(), data.Domain, data.ARecords)
-
+			err = d.UpsertARecords(c.Context(), data.Domain, data.ARecords)
 			if err != nil {
 				return err
 			}
-
 			c.Send([]byte("done"))
 			return nil
 
 		})
-
+		server.Post("/upsert-node-ips", func(c *fiber.Ctx) error {
+			var ips map[string][]string
+			err := c.JSON(&ips)
+			if err != nil {
+				return err
+			}
+			done := d.UpdateNodeIPs(c.Context(), ips)
+			if !done {
+				return fmt.Errorf("failed to update node ips")
+			}
+			c.Send([]byte("done"))
+			return nil
+		})
 		server.Get("/get-records/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")
 			records, err := d.GetRecords(c.Context(), domainName)
@@ -193,7 +157,6 @@ var Module = fx.Module(
 			return nil
 
 		})
-
 		server.Delete("/delete-domain/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")
 
