@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -16,7 +17,9 @@ import (
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +35,7 @@ type HarborUserAccountReconciler struct {
 	Scheme    *runtime.Scheme
 	Env       *env.Env
 	harborCli *harbor.Client
+	Logger    logging.Logger
 }
 
 func (r *HarborUserAccountReconciler) GetName() string {
@@ -59,15 +63,9 @@ func getUsername(hAcc *artifactsv1.HarborUserAccount) string {
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harboruseraccounts/finalizers,verbs=update
 
 func (r *HarborUserAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &artifactsv1.HarborUserAccount{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &artifactsv1.HarborUserAccount{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -93,7 +91,7 @@ func (r *HarborUserAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.R
 	return ctrl.Result{}, nil
 }
 
-func (r *HarborUserAccountReconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount]) rApi.StepResult {
+func (r *HarborUserAccountReconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
 	robotAccId, ok := req.Object.Status.GeneratedVars.GetInt(KeyRobotAccId)
 	if !ok {
 		return req.FailWithOpError(errors.Newf("Key=%s not found in GeneratedVars", KeyRobotAccId))
@@ -104,7 +102,7 @@ func (r *HarborUserAccountReconciler) finalize(req *rApi.Request[*artifactsv1.Ha
 	return req.Finalize()
 }
 
-func (r *HarborUserAccountReconciler) reconcileStatus(req *rApi.Request[*artifactsv1.HarborUserAccount]) rApi.StepResult {
+func (r *HarborUserAccountReconciler) reconcileStatus(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -114,28 +112,12 @@ func (r *HarborUserAccountReconciler) reconcileStatus(req *rApi.Request[*artifac
 	hProj, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ProjectRef), &artifactsv1.HarborProject{})
 	if err != nil {
 		cs = append(cs, conditions.New(HarborProjectExists, false, conditions.NotFound, err.Error()))
-		nConditions, hasUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
-		if err != nil {
-			return req.FailWithStatusError(err)
-		}
-		if !hasUpdated {
-			return rApi.NewStepResult(&reconcile.Result{}, nil)
-		}
-		obj.Status.Conditions = nConditions
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 
 	if !hProj.Status.IsReady {
 		cs = append(cs, conditions.New(HarborProjectReady, false, conditions.NotReady))
-		nConditions, hasUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
-		if err != nil {
-			return req.FailWithStatusError(err)
-		}
-		if !hasUpdated {
-			return rApi.NewStepResult(&reconcile.Result{}, nil)
-		}
-		obj.Status.Conditions = nConditions
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 
 	// check if user account exists
@@ -166,6 +148,7 @@ func (r *HarborUserAccountReconciler) reconcileStatus(req *rApi.Request[*artifac
 
 	obj.Status.Conditions = nConditions
 	obj.Status.IsReady = isReady
+
 	if err := r.Status().Update(ctx, obj); err != nil {
 		return req.FailWithStatusError(err)
 	}
@@ -189,7 +172,7 @@ func getDockerConfig(imageRegistry, username, password string) ([]byte, error) {
 	)
 }
 
-func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*artifactsv1.HarborUserAccount]) rApi.StepResult {
+func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -203,7 +186,6 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 	}
 
 	if meta.IsStatusConditionFalse(obj.Status.Conditions, HarborUserAccountExists.String()) {
-
 		if err := func() error {
 			if !obj.Status.GeneratedVars.Exists(KeyRobotAccId) {
 				userAcc, err := r.harborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, getUsername(obj))
@@ -233,7 +215,7 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 		if err := r.Status().Update(ctx, obj); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{RequeueAfter: 0}, nil)
+		return req.Done(ctrl.Result{RequeueAfter: 0})
 	}
 
 	robotAccId, ok := obj.Status.GeneratedVars.GetInt(KeyRobotAccId)
@@ -268,18 +250,24 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 		return req.FailWithOpError(err)
 	}
 
-	if _, err := fn.KubectlApplyExec(b); err != nil {
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
 		return req.FailWithOpError(err)
 	}
 
 	if err := r.harborCli.UpdateUserAccount(ctx, robotAccId, obj.Spec.Disable); err != nil {
 		return req.FailWithOpError(err)
 	}
-	return req.Done()
+
+	obj.Status.OpsConditions = []metav1.Condition{}
+	if err := r.Update(ctx, obj); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("harbor-user-account")
 	harborCli, err := harbor.NewClient(
 		harbor.Args{
 			HarborAdminUsername: r.Env.HarborAdminUsername,

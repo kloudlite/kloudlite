@@ -9,6 +9,7 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/logging"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -26,10 +27,10 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 	if err := c.Get(ctx, nn, resInstance); err != nil {
 		return nil, err
 	}
-	logger := logging.NewOrDie(
-		&logging.Options{Name: nn.String(), Dev: true},
-	)
-
+	logger, ok := ctx.Value("logger").(logging.Logger)
+	if !ok{
+		panic("no logger passed into NewRequest")
+	}
 	return &Request[T]{
 		ctx:    ctx,
 		client: c,
@@ -39,16 +40,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 	}, nil
 }
 
-func (r *Request[T]) CleanupLastRun() StepResult {
-	status := r.Object.GetStatus()
-	if len(status.OpsConditions) > 0 {
-		status.OpsConditions = []metav1.Condition{}
-		return newStepResult(&ctrl.Result{RequeueAfter: 0}, r.client.Status().Update(r.ctx, r.Object))
-	}
-	return newStepResult(nil, nil)
-}
-
-func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
+func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 	labels := r.Object.GetEnsuredLabels()
 	annotations := r.Object.GetEnsuredAnnotations()
 
@@ -58,7 +50,7 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
 	if !hasAllLabels || !hasAllAnnotations {
 		x := r.Object.GetLabels()
 		if x == nil {
-			x = map[string]string{}
+			x = make(map[string]string, len(labels))
 		}
 		for k, v := range labels {
 			x[k] = v
@@ -67,52 +59,50 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
 
 		y := r.Object.GetAnnotations()
 		if y == nil {
-			y = map[string]string{}
+			y = make(map[string]string, len(annotations))
 		}
 		for k, v := range annotations {
 			y[k] = v
 		}
 		r.Object.SetAnnotations(y)
-
-		return newStepResult(nil, r.client.Update(r.ctx, r.Object))
+		return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
 	}
 
-	return newStepResult(nil, nil)
+	return stepResult.New().Continue(true)
 }
 
-func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Condition) StepResult {
+func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Condition) stepResult.Result {
 	if err == nil {
-		return r.Next()
+		return stepResult.New().Continue(true)
 	}
+
+	statusC := make([]metav1.Condition, 0, len(r.Object.GetStatus().Conditions)+len(moreConditions)+1)
+	statusC = append(statusC, r.Object.GetStatus().Conditions...)
+	statusC = append(statusC, moreConditions...)
 
 	newConditions, _, err2 := conditions.Patch(
 		r.Object.GetStatus().Conditions, append(
-			[]metav1.Condition{
-				{
-					Type:    "FailedWithErr",
-					Status:  metav1.ConditionFalse,
-					Reason:  "StatusFailedWithErr",
-					Message: err.Error(),
-				},
-			}, moreConditions...,
+			statusC, metav1.Condition{
+				Type:    "FailedWithErr",
+				Status:  metav1.ConditionFalse,
+				Reason:  "StatusFailedWithErr",
+				Message: err.Error(),
+			},
 		),
 	)
 
 	if err2 != nil {
-		return newStepResult(&ctrl.Result{}, err2)
+		return stepResult.New().Err(err2)
 	}
 
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().Conditions = newConditions
-	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
-		return newStepResult(&ctrl.Result{}, err2)
-	}
-	return newStepResult(&ctrl.Result{}, err)
+	return stepResult.New().Err(r.client.Status().Update(r.ctx, r.Object))
 }
 
-func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Condition) StepResult {
+func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Condition) stepResult.Result {
 	if err == nil {
-		return r.Next()
+		return stepResult.New().Continue(true)
 	}
 
 	opsConditions := make([]metav1.Condition, 0, len(r.Object.GetStatus().OpsConditions)+len(moreConditions)+1)
@@ -130,34 +120,31 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 		),
 	)
 	if err2 != nil {
-		return newStepResult(&ctrl.Result{}, err2)
+		return stepResult.New().Err(err2)
 	}
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().OpsConditions = newConditions
-	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
-		return newStepResult(&ctrl.Result{}, err2)
-	}
-	return newStepResult(&ctrl.Result{}, nil)
-	// return newStepResult(&ctrl.Result{}, err)
+
+	return stepResult.New().Err(r.client.Status().Update(r.ctx, r.Object))
 }
 
 func (r *Request[T]) Context() context.Context {
 	return r.ctx
 }
 
-func (r *Request[T]) Done(result ...*ctrl.Result) StepResult {
+func (r *Request[T]) Done(result ...ctrl.Result) stepResult.Result {
 	if len(result) > 0 {
-		return newStepResult(result[0], nil)
+		return stepResult.New().Requeue(result[0])
 	}
-	return newStepResult(nil, nil)
+	return stepResult.New()
 }
 
-func (r *Request[T]) Next() StepResult {
-	return newStepResult(nil, nil)
+func (r *Request[T]) Next() stepResult.Result {
+	return stepResult.New().Continue(true)
 }
 
-func (r *Request[T]) Finalize() StepResult {
+func (r *Request[T]) Finalize() stepResult.Result {
 	controllerutil.RemoveFinalizer(r.Object, constants.CommonFinalizer)
 	controllerutil.RemoveFinalizer(r.Object, constants.ForegroundFinalizer)
-	return newStepResult(&ctrl.Result{}, r.client.Update(r.ctx, r.Object))
+	return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
 }

@@ -12,6 +12,7 @@ import (
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -29,8 +30,8 @@ import (
 type AppReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	logger logging.Logger
 	Env    *env.Env
+	Logger logging.Logger
 }
 
 func (r *AppReconciler) GetName() string {
@@ -42,8 +43,7 @@ func (r *AppReconciler) GetName() string {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.App{})
-	req.Logger = r.logger.WithName(oReq.NamespacedName.String())
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &crdsv1.App{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -56,6 +56,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -76,7 +77,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *AppReconciler) handleRestart(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
+func (r *AppReconciler) handleRestart(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	obj := req.Object
 	ctx := req.Context()
 
@@ -99,11 +100,11 @@ func (r *AppReconciler) handleRestart(req *rApi.Request[*crdsv1.App]) rApi.StepR
 	return req.Next()
 }
 
-func (r *AppReconciler) finalize(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
+func (r *AppReconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
+func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -181,19 +182,23 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) rApi.Ste
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = nConditions
 	obj.Status.ChildConditions = nConditionsC
-	obj.Status.OpsConditions = []metav1.Condition{}
-
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi.StepResult {
+func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx := req.Context()
 	app := req.Object
 
-	if !controllerutil.ContainsFinalizer(app, constants.CommonFinalizer) {
+	if !fn.ContainsFinalizers(app, constants.CommonFinalizer, constants.ForegroundFinalizer) {
 		controllerutil.AddFinalizer(app, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(app, constants.ForegroundFinalizer)
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, app))
+		if err := r.Update(ctx, app); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	volumes, vMounts := crdsv1.ParseVolumes(app.Spec.Containers)
@@ -209,20 +214,25 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) rApi
 			},
 		},
 	)
+
 	if err != nil {
-		return req.FailWithOpError(err).NoErr()
+		// this error won't be fixed in runtime
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	if _, err := fn.KubectlApplyExec(b); err != nil {
-		return req.FailWithOpError(err).NoErr()
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		return req.FailWithOpError(err).Err(nil)
 	}
 
 	app.Status.OpsConditions = []metav1.Condition{}
-	return rApi.NewStepResult(nil, r.Status().Update(ctx, app))
+	if err := r.Status().Update(ctx, app); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Next()
 }
 
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.logger = logging.NewOrDie(&logging.Options{Name: "app", Dev: true})
+	r.Logger = r.Logger.WithName("app")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.App{}).
 		Owns(&appsv1.Deployment{}).

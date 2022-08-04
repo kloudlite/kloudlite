@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"operators.kloudlite.io/lib/kubectl"
+	"operators.kloudlite.io/lib/logging"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -31,6 +33,7 @@ type ManagedServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	lt     metav1.Time
+	Logger logging.Logger
 }
 
 func (r *ManagedServiceReconciler) GetName() string {
@@ -42,7 +45,7 @@ func (r *ManagedServiceReconciler) GetName() string {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/finalizers,verbs=update
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedService{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &v1.ManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -55,6 +58,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -74,7 +78,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 	return ctrl.Result{}, nil
 }
 
-func (r *ManagedServiceReconciler) handleRestart(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
+func (r *ManagedServiceReconciler) handleRestart(req *rApi.Request[*v1.ManagedService]) stepResult.Result {
 	obj := req.Object
 	ctx := req.Context()
 
@@ -101,11 +105,11 @@ func (r *ManagedServiceReconciler) handleRestart(req *rApi.Request[*v1.ManagedSe
 	return req.Next()
 }
 
-func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
+func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*v1.ManagedService]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
+func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedService]) stepResult.Result {
 	ctx := req.Context()
 	msvc := req.Object
 
@@ -164,7 +168,7 @@ func (r *ManagedServiceReconciler) reconcileStatus(req *rApi.Request[*v1.Managed
 	return req.Done()
 }
 
-func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.ManagedService]) rApi.StepResult {
+func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.ManagedService]) stepResult.Result {
 	ctx := req.Context()
 	msvc := req.Object
 
@@ -187,19 +191,24 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 		},
 	)
 	if err != nil {
-		return req.FailWithOpError(err)
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	if _, err := fn.KubectlApplyExec(b); err != nil {
-		return req.FailWithOpError(err)
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		return req.FailWithOpError(err).Err(nil)
 	}
 
 	msvc.Status.OpsConditions = []metav1.Condition{}
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, msvc))
+	if err := r.Status().Update(ctx, msvc); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Done()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("managed-service")
+
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ManagedService{})
 
 	allMsvcs := []string{

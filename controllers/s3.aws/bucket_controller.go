@@ -3,8 +3,12 @@ package s3aws
 import (
 	"context"
 	"fmt"
+
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/env"
+	"operators.kloudlite.io/lib/logging"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
+
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -29,6 +33,7 @@ type BucketReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Env    *env.Env
+	Logger logging.Logger
 }
 
 func (r *BucketReconciler) GetName() string {
@@ -53,7 +58,7 @@ type Credentials struct {
 // +kubebuilder:rbac:groups=s3.aws.kloudlite.io,resources=buckets/finalizers,verbs=update
 
 func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &s3awsv1.Bucket{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &s3awsv1.Bucket{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -87,7 +92,7 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *BucketReconciler) finalize(req *rApi.Request[*s3awsv1.Bucket]) rApi.StepResult {
+func (r *BucketReconciler) finalize(req *rApi.Request[*s3awsv1.Bucket]) stepResult.Result {
 	obj := req.Object
 
 	s3Client, err := aws.NewS3Client(obj.Spec.Region)
@@ -120,7 +125,7 @@ func (r *BucketReconciler) finalize(req *rApi.Request[*s3awsv1.Bucket]) rApi.Ste
 	return req.Finalize()
 }
 
-func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*s3awsv1.Bucket]) rApi.StepResult {
+func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*s3awsv1.Bucket]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -161,10 +166,13 @@ func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*s3awsv1.Bucket]) r
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = newConditions
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket]) rApi.StepResult {
+func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -173,17 +181,20 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	if meta.IsStatusConditionFalse(obj.Status.Conditions, conditions.GeneratedVars.String()) {
-		if err := obj.Status.GeneratedVars.Set(
-			KeyBucketName,
-			fmt.Sprintf("%s-%s", obj.Name, strings.ToLower(fn.CleanerNanoid(40))),
-		); err != nil {
-			return nil
+		if err := obj.Status.GeneratedVars.Set(KeyBucketName, fmt.Sprintf("%s-%s", obj.Name, strings.ToLower(fn.CleanerNanoid(40)))); err != nil {
+			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 4. create child components like mongo-user, redis-acl etc.
@@ -257,104 +268,103 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 	}
 
 	// STEP: 5. create reconciler output (eg. secret)
-	if errt := func() error {
-		svcExternalName := fmt.Sprintf("%s.s3.%s.amazonaws.com", bucketName, obj.Spec.Region)
+	svcExternalName := fmt.Sprintf("%s.s3.%s.amazonaws.com", bucketName, obj.Spec.Region)
 
-		b, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("mres-%s", obj.Name),
-					Namespace: obj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(obj, true),
-					},
-				},
-				StringData: map[string]string{
-					"AWS_ACCESS_KEY_ID":     accessCreds.AccessKeyId,
-					"AWS_SECRET_ACCESS_KEY": accessCreds.SecretAccessKey,
-					"AWS_REGION":            obj.Spec.Region,
-					"INTERNAL_BUCKET_HOST":  fmt.Sprintf("%s.%s.svc.cluster.local", obj.Name, obj.Namespace),
-					"EXTERNAL_BUCKET_HOST":  svcExternalName,
-				},
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		// create external name service
-
-		b2, err := templates.Parse(
-			templates.CoreV1.ExternalNameSvc, map[string]any{
-				"name":      obj.Name,
-				"namespace": obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{
+	b, err := templates.Parse(
+		templates.Secret, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("mres-%s", obj.Name),
+				Namespace: obj.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
 					fn.AsOwner(obj, true),
 				},
-				"external-name": svcExternalName,
 			},
-		)
-		if err != nil {
-			return err
-		}
-
-		b3, err := templates.Parse(
-			templates.CoreV1.Ingress, map[string]any{
-				"ingress-class":  constants.DefaultIngressClass,
-				"cluster-issuer": constants.DefaultClusterIssuer,
-				"owner-refs": []metav1.OwnerReference{
-					fn.AsOwner(obj, true),
-				},
-
-				"virtual-hostname": bucketName,
-
-				"name":      obj.Name,
-				"namespace": obj.Namespace,
-				"router-ref": crdsv1.Router{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      obj.Name,
-						Namespace: obj.Namespace,
-					},
-					Spec: crdsv1.RouterSpec{
-						Https: crdsv1.Https{
-							Enabled:       true,
-							ForceRedirect: true,
-						},
-						Domains: []string{
-							fmt.Sprintf("%s.s3.dev.kloudlite.io", obj.Name),
-						},
-					},
-				},
-				"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
-				"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
-
-				"routes": []crdsv1.Route{
-					{
-						App:  obj.Name,
-						Port: 443,
-						Path: "/",
-					},
-				},
-				"annotations": map[string]string{
-					"nginx.ingress.kubernetes.io/backend-protocol": "https",
-				},
+			StringData: map[string]string{
+				"AWS_ACCESS_KEY_ID":     accessCreds.AccessKeyId,
+				"AWS_SECRET_ACCESS_KEY": accessCreds.SecretAccessKey,
+				"AWS_REGION":            obj.Spec.Region,
+				"INTERNAL_BUCKET_HOST":  fmt.Sprintf("%s.%s.svc.cluster.local", obj.Name, obj.Namespace),
+				"EXTERNAL_BUCKET_HOST":  svcExternalName,
 			},
-		)
-		if err != nil {
-			return err
-		}
-
-		if _, err := fn.KubectlApplyExec(b, b2, b3); err != nil {
-			return err
-		}
-		return nil
-	}(); errt != nil {
-		return req.FailWithOpError(errt)
+		},
+	)
+	if err != nil {
+		req.Logger.Errorf(err, "failed to parse template %s", templates.Secret)
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	return req.Done()
+	// create external name service
+
+	b2, err := templates.Parse(
+		templates.CoreV1.ExternalNameSvc, map[string]any{
+			"name":      obj.Name,
+			"namespace": obj.Namespace,
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(obj, true),
+			},
+			"external-name": svcExternalName,
+		},
+	)
+	if err != nil {
+		req.Logger.Errorf(err, "failed parsing template %s", templates.CoreV1.ExternalNameSvc)
+		return req.FailWithOpError(err).Err(nil)
+	}
+
+	b3, err := templates.Parse(
+		templates.CoreV1.Ingress, map[string]any{
+			"ingress-class":  constants.DefaultIngressClass,
+			"cluster-issuer": constants.DefaultClusterIssuer,
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(obj, true),
+			},
+
+			"virtual-hostname": bucketName,
+
+			"name":      obj.Name,
+			"namespace": obj.Namespace,
+			"router-ref": crdsv1.Router{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      obj.Name,
+					Namespace: obj.Namespace,
+				},
+				Spec: crdsv1.RouterSpec{
+					Https: crdsv1.Https{
+						Enabled:       true,
+						ForceRedirect: true,
+					},
+					Domains: []string{
+						fmt.Sprintf("%s.s3.dev.kloudlite.io", obj.Name),
+					},
+				},
+			},
+			"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
+			"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
+
+			"routes": []crdsv1.Route{
+				{
+					App:  obj.Name,
+					Port: 443,
+					Path: "/",
+				},
+			},
+			"annotations": map[string]string{
+				"nginx.ingress.kubernetes.io/backend-protocol": "https",
+			},
+		},
+	)
+	if err != nil {
+		req.Logger.Errorf(err, "failed parsing template %s", templates.CoreV1.Ingress)
+		return req.FailWithOpError(err).Err(nil)
+	}
+
+	if err := fn.KubectlApplyExec(ctx, b, b2, b3); err != nil {
+		req.Logger.Errorf(err, "failed kubectl apply for (%s, %s, %s)", templates.Secret, templates.CoreV1.ExternalNameSvc, templates.CoreV1.ExternalNameSvc)
+		return req.FailWithOpError(err).Err(nil)
+	}
+	return req.Next()
 }
 
 func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("s3-aws-bucket")
 	return ctrl.NewControllerManagedBy(mgr).For(&s3awsv1.Bucket{}).Complete(r)
 }

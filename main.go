@@ -14,9 +14,8 @@ import (
 	s3awsControllers "operators.kloudlite.io/controllers/s3.aws"
 	serverlessControllers "operators.kloudlite.io/controllers/serverless"
 	watchercontrollers "operators.kloudlite.io/controllers/watcher"
-	rApi "operators.kloudlite.io/lib/operator"
-
 	"operators.kloudlite.io/env"
+	rApi "operators.kloudlite.io/lib/operator"
 
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -126,12 +125,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	myLogger := logging.NewOrDie(
-		&logging.Options{
-			Name: "operator-logger",
-			Dev:  isDev,
-		},
-	)
+	logger := logging.NewOrDie(&logging.Options{Dev: isDev})
 
 	mgr, err := func() (manager.Manager, error) {
 		cOpts := ctrl.Options{
@@ -158,33 +152,33 @@ func main() {
 	envVars := env.GetEnvOrDie()
 
 	controllers := []rApi.Reconciler{
-		&crds.ProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&crds.AppReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&crds.RouterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&crds.ManagedServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
-		&crds.ManagedResourceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&crds.ProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&crds.AppReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&crds.RouterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&crds.ManagedServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&crds.ManagedResourceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
 
-		&mongodbStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&mongodbStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&mongodbStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&mongodbStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
 
-		&mysqlStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&mysqlStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&mysqlStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&mysqlStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
 
-		&redisStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&redisStandaloneControllers.ACLAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&redisStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&redisStandaloneControllers.ACLAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
 
-		&serverlessControllers.LambdaReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&serverlessControllers.LambdaReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
 
-		&elasticsearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&opensearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&elasticsearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&opensearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
 
-		&influxDbControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&influxDbControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+		&influxDbControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&influxDbControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
 
-		&s3awsControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
+		&s3awsControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
 
-		&artifactsControllers.HarborProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
-		&artifactsControllers.HarborUserAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars},
+		&artifactsControllers.HarborProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&artifactsControllers.HarborUserAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
 	}
 
 	producer, err := redpanda.NewProducer(envVars.KafkaBrokers)
@@ -200,10 +194,10 @@ func main() {
 	controllers = append(
 		controllers,
 		&watchercontrollers.StatusWatcherReconciler{
-			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: statusNotifier,
+			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: statusNotifier, Logger: logger,
 		},
 		&watchercontrollers.BillingWatcherReconciler{
-			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: billingNotifier,
+			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: billingNotifier, Logger: logger,
 		},
 	)
 
@@ -243,10 +237,10 @@ func main() {
 		setupLog.Error(err, "creating redpanda consumer")
 		panic(err)
 	}
-	consumer.SetupLogger(myLogger)
+	consumer.SetupLogger(logger)
 	defer consumer.Close()
 
-	go agent.Run(consumer, producer, envVars.AgentErrorTopic, myLogger)
+	go agent.Run(consumer, producer, envVars.AgentErrorTopic, logger)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

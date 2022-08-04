@@ -14,7 +14,9 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	libRedis "operators.kloudlite.io/lib/redis"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -26,6 +28,7 @@ import (
 type ACLAccountReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Logger logging.Logger
 }
 
 func (r *ACLAccountReconciler) GetName() string {
@@ -62,19 +65,16 @@ func parseMsvcOutput(s *corev1.Secret, aclCfg *corev1.ConfigMap) *MsvcOutputRef 
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=aclaccounts/finalizers,verbs=update
 
 func (r *ACLAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &redisStandalone.ACLAccount{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &redisStandalone.ACLAccount{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if step := req.CleanupLastRun(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -94,7 +94,7 @@ func (r *ACLAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
-func (r *ACLAccountReconciler) finalize(req *rApi.Request[*redisStandalone.ACLAccount]) rApi.StepResult {
+func (r *ACLAccountReconciler) finalize(req *rApi.Request[*redisStandalone.ACLAccount]) stepResult.Result {
 	// TODO: ACL finalizer not deleting entry from ACL configmap
 	ctx := req.Context()
 	obj := req.Object
@@ -121,7 +121,7 @@ func (r *ACLAccountReconciler) finalize(req *rApi.Request[*redisStandalone.ACLAc
 	return req.Finalize()
 }
 
-func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.ACLAccount]) rApi.StepResult {
+func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.ACLAccount]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -137,13 +137,13 @@ func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalon
 	if err != nil {
 		isReady = false
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
-		return req.FailWithStatusError(err, cs...).NoErr()
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 	cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
 	cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
 	if !msvc.Status.IsReady {
 		isReady = false
-		return req.FailWithStatusError(err, cs...).NoErr()
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 
 	// STEP: 2. retrieve managed svc output (usually secret)
@@ -231,10 +231,13 @@ func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalon
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = newConditions
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStandalone.ACLAccount]) rApi.StepResult {
+func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStandalone.ACLAccount]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -243,7 +246,10 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 2. generate vars if needed to
@@ -251,18 +257,21 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		if err := obj.Status.GeneratedVars.Set(KeyUserPassword, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 3. retrieve msvc output, need it in creating reconciler output
 	msvcRef, ok := rApi.GetLocal[*MsvcOutputRef](req, "msvc-output-ref")
 	if !ok {
-		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals", "msvc-output-ref"))
+		return req.FailWithOpError(errors.Newf("err=%s key not found in req locals", "msvc-output-ref")).Err(nil)
 	}
 
 	userPassword, ok := obj.Status.GeneratedVars.GetString(KeyUserPassword)
 	if !ok {
-		return req.FailWithOpError(errors.Newf("key=%s not present in .Status.GeneratedVars", KeyUserPassword))
+		return req.FailWithOpError(errors.Newf("key=%s not present in .Status.GeneratedVars", KeyUserPassword)).Err(nil)
 	}
 
 	// STEP: 4. create child components like mongo-user, redis-acl etc.
@@ -301,11 +310,11 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		},
 	)
 	if err != nil {
-		return req.FailWithOpError(err).NoErr()
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	if _, err := fn.KubectlApplyExec(b); err != nil {
-		return req.FailWithOpError(err).NoErr()
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		return req.FailWithOpError(err).Err(nil)
 	}
 
 	patch := client.MergeFrom(msvcRef.ACLConfig)
@@ -317,15 +326,19 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 	)
 
 	if err := r.Client.Patch(ctx, msvcRef.ACLConfig, patch); err != nil {
-		return req.FailWithOpError(err).NoErr()
+		return req.FailWithOpError(err)
 	}
 
 	obj.Status.OpsConditions = []metav1.Condition{}
-	return rApi.NewStepResult(nil, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ACLAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("redis-standalone-aclaccount")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redisStandalone.ACLAccount{}).
 		Owns(&corev1.Secret{}).

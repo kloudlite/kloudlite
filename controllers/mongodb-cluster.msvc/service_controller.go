@@ -3,11 +3,13 @@ package mongodbclustermsvc
 import (
 	"context"
 	"fmt"
+
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -71,15 +73,15 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*mongoCluster.Service]) rApi.StepResult {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*mongoCluster.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongoCluster.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongoCluster.Service]) stepResult.Result {
 	return req.Done()
 }
 
-func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongoCluster.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongoCluster.Service]) stepResult.Result {
 	return req.Done()
 }
 
