@@ -8,6 +8,11 @@ type AccountCName struct {
 	CName            string   `bson:"cName",json:"cName"`
 }
 
+type NodeIps struct {
+	repos.BaseEntity `bson:",inline"`
+	Ips              map[string][]string `bson:"ips"`
+}
+
 type Site struct {
 	repos.BaseEntity `bson:",inline"`
 	AccountId        repos.ID `bson:"accountId,omitempty" json:"accountId,omitempty"`
@@ -52,6 +57,15 @@ var SiteIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "domain", Value: repos.IndexAsc},
 		},
+	},
+}
+
+var NodeIpIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
 	},
 }
 
