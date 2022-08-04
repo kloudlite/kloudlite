@@ -2,7 +2,10 @@ package opensearchmsvc
 
 import (
 	"context"
+
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
@@ -14,6 +17,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -53,15 +57,15 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*opensearchmsvcv1.Service]) rApi.StepResult {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*opensearchmsvcv1.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*opensearchmsvcv1.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*opensearchmsvcv1.Service]) stepResult.Result {
 	return req.Done()
 }
 
-func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*opensearchmsvcv1.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*opensearchmsvcv1.Service]) stepResult.Result {
 	return req.Done()
 }
 

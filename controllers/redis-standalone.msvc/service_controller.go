@@ -3,6 +3,7 @@ package redisstandalonemsvc
 import (
 	"context"
 	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,8 +15,11 @@ import (
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,6 +34,7 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Env    *env.Env
+	Logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -54,7 +59,7 @@ func getACLConfigmapName(name string) string {
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &redisStandalone.Service{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &redisStandalone.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -63,6 +68,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -82,11 +88,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*redisStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*redisStandalone.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.Service]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -202,12 +208,13 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*redisStandalone.S
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = nConditions
 	obj.Status.ChildConditions = nConditionsC
-	obj.Status.OpsConditions = []metav1.Condition{}
-
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalone.Service]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -216,7 +223,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 2. generate vars if needed to
@@ -224,7 +234,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		if err := obj.Status.GeneratedVars.Set(RedisPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 3. apply CRs of helm/custom controller
@@ -234,86 +247,85 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		return req.FailWithOpError(rApi.ErrNotInReqLocals.Format(KeyAclAccountsMap))
 	}
 
-	if errP := func() error {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
-		if err != nil {
-			return err
-		}
-		b1, err := templates.Parse(
-			templates.RedisStandalone, map[string]any{
-				"object":           obj,
-				"storage-class":    storageClass,
-				"freeze":           obj.GetLabels()[constants.LabelKeys.Freeze],
-				"acl-accounts-map": aclAccountsMap,
-				"owner-refs": []metav1.OwnerReference{
+	storageClass, err := obj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+	if err != nil {
+		return req.FailWithOpError(err)
+	}
+	b1, err := templates.Parse(
+		templates.RedisStandalone, map[string]any{
+			"object":           obj,
+			"storage-class":    storageClass,
+			"freeze":           obj.GetLabels()[constants.LabelKeys.Freeze],
+			"acl-accounts-map": aclAccountsMap,
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(obj, true),
+			},
+		},
+	)
+
+	if err != nil {
+		req.Logger.Errorf(err, "failed processing template %s", templates.RedisStandalone)
+		return req.FailWithOpError(err).Err(nil)
+	}
+
+	// STEP: 4. create output
+
+	redisPasswd, ok := obj.Status.GeneratedVars.GetString(RedisPasswordKey)
+	if !ok {
+		return req.FailWithOpError(errors.NewEf(err,"key=%s not in GeneratedVars", RedisPasswordKey))
+	}
+
+	hostUrl := fmt.Sprintf("%s-headless.%s.svc.cluster.local:6379", obj.Name, obj.Namespace)
+	b2, err := templates.Parse(
+		templates.Secret, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("msvc-%s", obj.Name),
+				Namespace: obj.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
 					fn.AsOwner(obj, true),
 				},
 			},
-		)
+			StringData: map[string]string{
+				"ROOT_PASSWORD": redisPasswd,
+				"HOSTS":         hostUrl,
+				"URI":           fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", redisPasswd, hostUrl),
+			},
+		},
+	)
+	if err != nil {
+		req.Logger.Errorf(err, "failed parsing tempalte %s", templates.Secret)
+		return req.FailWithOpError(err).Err(nil)
+	}
 
-		if err != nil {
-			return err
-		}
+	if err := fn.KubectlApplyExec(ctx, b1, b2); err != nil {
+		req.Logger.Errorf(err, "failed kubectl apply for template %s", templates.Secret)
+		return req.FailWithOpError(err).Err(nil)
+	}
 
-		// STEP: 4. create output
-
-		redisPasswd, ok := obj.Status.GeneratedVars.GetString(RedisPasswordKey)
-		if !ok {
-			return rApi.ErrNotInGeneratedVars.Format(RedisPasswordKey)
-		}
-		hostUrl := fmt.Sprintf("%s-headless.%s.svc.cluster.local:6379", obj.Name, obj.Namespace)
-
-		b2, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
+	// create acl configmap
+	if meta.IsStatusConditionFalse(obj.Status.Conditions, ACLConfigMapExists.String()) {
+		if err := r.Create(
+			ctx, &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("msvc-%s", obj.Name),
+					Name:      fmt.Sprintf("msvc-%s-acl-accounts", obj.Name),
 					Namespace: obj.Namespace,
 					OwnerReferences: []metav1.OwnerReference{
 						fn.AsOwner(obj, true),
 					},
 				},
-				StringData: map[string]string{
-					"ROOT_PASSWORD": redisPasswd,
-					"HOSTS":         hostUrl,
-					"URI":           fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", redisPasswd, hostUrl),
-				},
 			},
-		)
-		if err != nil {
-			return err
+		); err != nil {
+			return req.FailWithOpError(err)
 		}
-
-		if _, err := fn.KubectlApplyExec(b1, b2); err != nil {
-			return err
-		}
-
-		// create acl configmap
-		if meta.IsStatusConditionFalse(obj.Status.Conditions, ACLConfigMapExists.String()) {
-			if err := r.Create(
-				ctx, &corev1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("msvc-%s-acl-accounts", obj.Name),
-						Namespace: obj.Namespace,
-						OwnerReferences: []metav1.OwnerReference{
-							fn.AsOwner(obj, true),
-						},
-					},
-				},
-			); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}(); errP != nil {
-		req.FailWithOpError(errP)
 	}
 
-	return req.Done()
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("redis-standalone-service")
+
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisStandalone.Service{})
 
 	builder.Owns(fn.NewUnstructured(constants.HelmRedisType))

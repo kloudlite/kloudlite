@@ -13,8 +13,10 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	libMongo "operators.kloudlite.io/lib/mongo"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,6 +27,7 @@ import (
 type DatabaseReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Logger logging.Logger
 }
 
 func (r *DatabaseReconciler) GetName() string {
@@ -56,7 +59,7 @@ func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Database{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &mongodbStandalone.Database{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -65,6 +68,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 		if step := r.finalize(req); !step.ShouldProceed() {
 			return step.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("---------------- database reconciler -- NEW RECONCILATION -----------------")
@@ -84,11 +88,11 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-func (r *DatabaseReconciler) finalize(req *rApi.Request[*mongodbStandalone.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) finalize(req *rApi.Request[*mongodbStandalone.Database]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone.Database]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -104,21 +108,18 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalon
 	if err != nil {
 		isReady = false
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
-		return req.FailWithStatusError(err, cs...).NoErr()
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 	cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
 	cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
 	if !msvc.Status.IsReady {
-		return req.FailWithStatusError(errors.Newf("msvc %s is not ready", msvc.Name), cs...).NoErr()
+		return req.FailWithStatusError(errors.Newf("msvc %s is not ready", msvc.Name), cs...).Err(nil)
 	}
 
 	// STEP: 2. retrieve managed svc output (usually secret)
 	if msvc != nil {
 		msvcRef, err2 := func() (*MsvcOutputRef, error) {
-			msvcOutput, err := rApi.Get(
-				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-				&corev1.Secret{},
-			)
+			msvcOutput, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)), &corev1.Secret{})
 			if err != nil {
 				isReady = false
 				cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
@@ -156,8 +157,7 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalon
 			cs = append(cs, conditions.New(MongoUserExists, true, conditions.Found))
 			return nil
 		}(); err2 != nil {
-			// TODO: (user) might need to reconcile with retry in case of connection errors
-			return req.FailWithStatusError(err2)
+			return req.FailWithStatusError(err2, cs...)
 		}
 	}
 
@@ -180,19 +180,26 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalon
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = newConditions
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStandalone.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStandalone.Database]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
 	// STEP: 1. add finalizers if needed
-	if !controllerutil.ContainsFinalizer(obj, constants.CommonFinalizer) {
+	if !fn.ContainsFinalizers(obj, constants.CommonFinalizer, constants.ForegroundFinalizer) {
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+
+		return req.Done()
 	}
 
 	// STEP: 2. generate vars if needed to
@@ -200,7 +207,10 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStand
 		if err := obj.Status.GeneratedVars.Set(DbPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 3. retrieve msvc output, need it in creating reconciler output
@@ -255,21 +265,24 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStand
 			},
 		)
 		if err != nil {
-			return err
+			req.Logger.Errorf(err, "failed parsing template %s", templates.Secret)
+			return nil
 		}
 
-		if _, err := fn.KubectlApplyExec(b); err != nil {
-			return err
+		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+			req.Logger.Errorf(err, "kubectl apply failed for template %s", templates.Secret)
+			return nil
 		}
 		return nil
 	}(); errt != nil {
 		return req.FailWithOpError(errt)
 	}
 
-	return req.Done()
+	return req.Next()
 }
 
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("mongo-standalone-database")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongodbStandalone.Database{}).
 		Owns(&corev1.Secret{}).

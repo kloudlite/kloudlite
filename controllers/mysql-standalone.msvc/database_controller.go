@@ -3,6 +3,8 @@ package mysqlstandalonemsvc
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -11,11 +13,12 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	libMysql "operators.kloudlite.io/lib/mysql"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
@@ -27,6 +30,7 @@ import (
 type DatabaseReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Logger logging.Logger
 }
 
 func (r *DatabaseReconciler) GetName() string {
@@ -58,21 +62,16 @@ func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mysqlStandalone.Database{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &mysqlStandalone.Database{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -92,7 +91,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-func (r *DatabaseReconciler) finalize(req *rApi.Request[*mysqlStandalone.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) finalize(req *rApi.Request[*mysqlStandalone.Database]) stepResult.Result {
 	return req.Finalize()
 }
 
@@ -100,7 +99,7 @@ func formatDbName(dbName string) string {
 	return strings.ReplaceAll(dbName, "-", "_")
 }
 
-func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.Database]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -200,10 +199,14 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = newConditions
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalone.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalone.Database]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -212,7 +215,10 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 2. generate vars if needed to
@@ -220,7 +226,10 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 		if err := obj.Status.GeneratedVars.Set(DbPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 3. retrieve msvc output, need it in creating reconciler output
@@ -253,42 +262,40 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 	}
 
 	// STEP: 5. create reconciler output (eg. secret)
-	if errt := func() error {
-		b, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("mres-%s", obj.Name),
-					Namespace: obj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(obj, true),
-					},
-				},
-				StringData: map[string]string{
-					"USERNAME": obj.Name,
-					"PASSWORD": dbPasswd,
-					"HOSTS":    msvcRef.Hosts,
-					"DB_NAME":  formatDbName(obj.Name),
-					"DSN":      fmt.Sprintf("%s:%s@tcp(%s)/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
-					"URI":      fmt.Sprintf("mysqlx://%s:%s@%s/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
+	b, err := templates.Parse(
+		templates.Secret, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("mres-%s", obj.Name),
+				Namespace: obj.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					fn.AsOwner(obj, true),
 				},
 			},
-		)
-		if err != nil {
-			return err
-		}
-
-		if _, err := fn.KubectlApplyExec(b); err != nil {
-			return err
-		}
-		return nil
-	}(); errt != nil {
-		return req.FailWithOpError(errt)
+			StringData: map[string]string{
+				"USERNAME": obj.Name,
+				"PASSWORD": dbPasswd,
+				"HOSTS":    msvcRef.Hosts,
+				"DB_NAME":  formatDbName(obj.Name),
+				"DSN":      fmt.Sprintf("%s:%s@tcp(%s)/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
+				"URI":      fmt.Sprintf("mysqlx://%s:%s@%s/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
+			},
+		},
+	)
+	if err != nil {
+		req.Logger.Errorf(err, "failed parsing template %s", templates.Secret)
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	return req.Done()
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		req.Logger.Errorf(err, "failed kubectl apply for template %s", templates.Secret)
+		return req.FailWithOpError(err).Err(nil)
+	}
+
+	return req.Next()
 }
 
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("mysql-standalone-database")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlStandalone.Database{}).
 		Owns(&corev1.Secret{}).

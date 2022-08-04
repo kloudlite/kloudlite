@@ -14,7 +14,9 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +30,7 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Env    *env.Env
+	Logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -43,7 +46,7 @@ const (
 // +kubebuilder:rbac:groups=elasticsearch.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &elasticSearch.Service{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &elasticSearch.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -71,11 +74,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*elasticSearch.Service]) rApi.StepResult {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*elasticSearch.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*elasticSearch.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*elasticSearch.Service]) stepResult.Result {
 	ctx := req.Context()
 	svcObj := req.Object
 
@@ -131,10 +134,13 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*elasticSearch.Ser
 	svcObj.Status.Conditions = newConditions
 	svcObj.Status.OpsConditions = []metav1.Condition{}
 
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+	if err := r.Status().Update(ctx, svcObj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch.Service]) stepResult.Result {
 	ctx := req.Context()
 	svcObj := req.Object
 
@@ -142,7 +148,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch
 		if err := svcObj.Status.GeneratedVars.Set(SvcRootPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+		if err := r.Status().Update(ctx, svcObj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	b, err := templates.Parse(
@@ -159,7 +168,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch
 		return req.FailWithOpError(err)
 	}
 
-	if _, err := fn.KubectlApplyExec(b); err != nil {
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
 		return req.FailWithOpError(err)
 	}
 
@@ -195,16 +204,20 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch
 		return req.FailWithOpError(err)
 	}
 
-	if _, err := fn.KubectlApplyExec(b); err != nil {
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
 		return req.FailWithOpError(err)
 	}
 
 	svcObj.Status.OpsConditions = []metav1.Condition{}
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+	if err := r.Status().Update(ctx, svcObj); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("elastic-search-service")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&elasticSearch.Service{}).
 		Owns(fn.NewUnstructured(constants.HelmElasticType)).

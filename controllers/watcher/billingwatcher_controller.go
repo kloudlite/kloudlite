@@ -38,6 +38,7 @@ type BillingWatcherReconciler struct {
 	Env    *env.Env
 	*Notifier
 	logger logging.Logger
+	Logger logging.Logger
 }
 
 func (r *BillingWatcherReconciler) GetName() string {
@@ -87,16 +88,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 		return ctrl.Result{}, nil
 	}
 
-	logger := r.logger.WithName(
-		fmt.Sprintf(
-			"%s %s",
-			fn.NN(
-				oReq.Namespace,
-				wName.Name,
-			),
-			gvk.String(),
-		),
-	)
+	logger := r.Logger.WithName(fn.NN(oReq.Namespace, wName.Name).String()).WithKV("RefKind", gvk.String())
 	logger.Infof("request received ...")
 
 	switch *gvk {
@@ -296,7 +288,7 @@ func (r *BillingWatcherReconciler) RemoveBillingFinalizer(ctx context.Context, o
 // SetupWithManager sets up the controller with the Manager.
 
 func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.logger = logging.NewOrDie(&logging.Options{Name: "billing-watcher", Dev: true})
+	r.logger = r.Logger.WithName("billing-watcher")
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.App{})

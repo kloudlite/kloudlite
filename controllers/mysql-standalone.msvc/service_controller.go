@@ -3,6 +3,7 @@ package mysqlstandalonemsvc
 import (
 	"context"
 	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,7 +17,9 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,6 +33,7 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Env    *env.Env
+	Logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -42,21 +46,16 @@ const (
 )
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mysqlStandalone.Service{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &mysqlStandalone.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -76,11 +75,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlStandalone.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.Service]) stepResult.Result {
 	ctx := req.Context()
 	svcObj := req.Object
 
@@ -181,12 +180,13 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.S
 	svcObj.Status.IsReady = isReady
 	svcObj.Status.Conditions = nConditions
 	svcObj.Status.ChildConditions = nConditionsC
-	svcObj.Status.OpsConditions = []metav1.Condition{}
-
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+	if err := r.Status().Update(ctx, svcObj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalone.Service]) stepResult.Result {
 	ctx := req.Context()
 	svcObj := req.Object
 
@@ -195,7 +195,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalo
 		controllerutil.AddFinalizer(svcObj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(svcObj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, svcObj))
+		if err := r.Update(ctx, svcObj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 2. generate vars if needed to
@@ -206,69 +209,71 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalo
 		if err := svcObj.Status.GeneratedVars.Set(MysqlPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+		if err := r.Status().Update(ctx, svcObj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 3. apply CRs of helm/custom controller
-	if errP := func() error {
-		storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
-		if err != nil {
-			return err
-		}
-		b1, err := templates.Parse(
-			templates.MySqlStandalone, map[string]any{
-				"object":        svcObj,
-				"storage-class": storageClass,
-				"owner-refs": []metav1.OwnerReference{
+	storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+	if err != nil {
+		req.Logger.Errorf(err, "failed to get storage class for fsType: %s", ct.Ext4)
+		return req.FailWithOpError(err).Err(nil)
+	}
+	b1, err := templates.Parse(
+		templates.MySqlStandalone, map[string]any{
+			"object":        svcObj,
+			"storage-class": storageClass,
+			"owner-refs": []metav1.OwnerReference{
+				fn.AsOwner(svcObj, true),
+			},
+		},
+	)
+
+	if err != nil {
+		req.Logger.Errorf(err, "failed parsing template %s", templates.MySqlStandalone)
+		return req.FailWithOpError(err).Err(nil)
+	}
+
+	// STEP: 4. create output
+	rootPassword, ok := svcObj.Status.GeneratedVars.GetString(MysqlRootPasswordKey)
+	if !ok {
+		return req.FailWithOpError(errors.Newf("key=%s is not present in .Status.GeneratedVars", MysqlRootPasswordKey))
+	}
+
+	mysqlHost := fmt.Sprintf("%s.%s.%s:%d", svcObj.Name, svcObj.Namespace, "svc.cluster.local", 3306)
+	b2, err := templates.Parse(
+		templates.Secret, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
+				Namespace: svcObj.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
 					fn.AsOwner(svcObj, true),
 				},
 			},
-		)
-
-		if err != nil {
-			return err
-		}
-
-		// STEP: 4. create output
-		rootPassword, ok := svcObj.Status.GeneratedVars.GetString(MysqlRootPasswordKey)
-		if !ok {
-			return errors.Newf("key=%s is not present in .Status.GeneratedVars", MysqlRootPasswordKey)
-		}
-
-		mysqlHost := fmt.Sprintf("%s.%s.%s:%d", svcObj.Name, svcObj.Namespace, "svc.cluster.local", 3306)
-		b2, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
-					Namespace: svcObj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(svcObj, true),
-					},
-				},
-				StringData: map[string]string{
-					"ROOT_PASSWORD": rootPassword,
-					"HOSTS":         mysqlHost,
-					"DSN":           fmt.Sprintf("%s:%s@tcp(%s)/%s", "root", rootPassword, mysqlHost, "mysql"),
-					"URI":           fmt.Sprintf("mysqlx://%s:%s@%s/%s", "root", rootPassword, mysqlHost, "mysql"),
-				},
+			StringData: map[string]string{
+				"ROOT_PASSWORD": rootPassword,
+				"HOSTS":         mysqlHost,
+				"DSN":           fmt.Sprintf("%s:%s@tcp(%s)/%s", "root", rootPassword, mysqlHost, "mysql"),
+				"URI":           fmt.Sprintf("mysqlx://%s:%s@%s/%s", "root", rootPassword, mysqlHost, "mysql"),
 			},
-		)
-		if err != nil {
-			return err
-		}
-
-		if _, err := fn.KubectlApplyExec(b1, b2); err != nil {
-			return err
-		}
-		return nil
-	}(); errP != nil {
-		req.FailWithOpError(errP)
+		},
+	)
+	if err != nil {
+		req.Logger.Errorf(err, "failed parsing template %s", templates.Secret)
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	return req.Done()
+	if err := fn.KubectlApplyExec(ctx, b1, b2); err != nil {
+		req.Logger.Errorf(err, "failed kubectl apply for template %s", templates.Secret)
+		return nil
+	}
+	return req.Next()
 }
 
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("mysql-standalone-service")
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlStandalone.Service{})
 
 	builder.Owns(fn.NewUnstructured(constants.HelmMysqlType))

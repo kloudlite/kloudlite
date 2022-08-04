@@ -3,6 +3,7 @@ package serverless
 import (
 	"context"
 	"encoding/json"
+
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,7 +12,9 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/kubectl"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -25,6 +28,7 @@ import (
 type LambdaReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Logger logging.Logger
 }
 
 func (r *LambdaReconciler) GetName() string {
@@ -57,7 +61,7 @@ func parseServingConditions(obj *unstructured.Unstructured) ([]metav1.Condition,
 // +kubebuilder:rbac:groups=serverless.kloudlite.io,resources=lambdas/finalizers,verbs=update
 
 func (r *LambdaReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &serverlessv1.Lambda{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &serverlessv1.Lambda{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -95,7 +99,7 @@ func (r *LambdaReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *LambdaReconciler) handleRestart(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
+func (r *LambdaReconciler) handleRestart(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
 	obj := req.Object
 	ctx := req.Context()
 
@@ -118,11 +122,11 @@ func (r *LambdaReconciler) handleRestart(req *rApi.Request[*serverlessv1.Lambda]
 	return req.Next()
 }
 
-func (r *LambdaReconciler) finalize(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
+func (r *LambdaReconciler) finalize(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
+func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -176,11 +180,13 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = nConditions
 	obj.Status.ChildConditions = nConditionsC
-	obj.Status.OpsConditions = []metav1.Condition{}
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 }
 
-func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.Lambda]) rApi.StepResult {
+func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -189,7 +195,10 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 3. apply CRs of helm/custom controller
@@ -204,11 +213,13 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 		)
 
 		if err != nil {
-			return err
+			req.Logger.Errorf(err, "failed processing template %s", templates.ServerlessLambda)
+			return nil
 		}
 
-		if _, err := fn.KubectlApplyExec(b); err != nil {
-			return err
+		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+			req.Logger.Errorf(err, "failed kubectl apply for template %s", templates.ServerlessLambda)
+			return nil
 		}
 		return nil
 	}(); errP != nil {
@@ -220,6 +231,7 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *LambdaReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("serverless-lambda")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&serverlessv1.Lambda{}).
 		Owns(fn.NewUnstructured(constants.KnativeServiceType)).

@@ -32,7 +32,7 @@ type StatusWatcherReconciler struct {
 	Scheme *runtime.Scheme
 	Env    *env.Env
 	*Notifier
-	logger logging.Logger
+	Logger logging.Logger
 }
 
 func (r *StatusWatcherReconciler) GetName() string {
@@ -102,7 +102,7 @@ func (r *StatusWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 
 	gvk, err := parseGroup(wName.Group)
 	if err != nil {
-		r.logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
+		r.Logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
 		return ctrl.Result{}, nil
 	}
 
@@ -110,7 +110,7 @@ func (r *StatusWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
-	logger := r.logger.WithName(fmt.Sprintf("%s %s", fn.NN(oReq.Namespace, wName.Name), gvk.String()))
+	logger := r.Logger.WithName(fn.NN(oReq.Namespace, wName.Name).String()).WithKV("RefKind", gvk.String())
 	logger.Infof("request received ...")
 
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
@@ -133,18 +133,7 @@ func (r *StatusWatcherReconciler) RemoveWatcherFinalizer(ctx context.Context, ob
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *StatusWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	logger, err := logging.New(
-		&logging.Options{
-			Name: "status-watcher",
-			Dev:  true,
-		},
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	r.logger = logger
+	r.Logger = r.Logger.WithName("status-watcher")
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})

@@ -10,7 +10,9 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +27,7 @@ type HarborProjectReconciler struct {
 	Scheme    *runtime.Scheme
 	Env       *env.Env
 	harborCli *harbor.Client
+	Logger logging.Logger
 }
 
 func (r *HarborProjectReconciler) GetName() string {
@@ -49,7 +52,7 @@ func convertGBToBytes(gb int) int {
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harborprojects/finalizers,verbs=update
 
 func (r *HarborProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &artifactsv1.HarborProject{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &artifactsv1.HarborProject{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -58,12 +61,6 @@ func (r *HarborProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
-	}
-
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	req.Logger.Infof("----------------[Type: artifactsv1.HarborProject] NEW RECONCILATION ----------------")
@@ -83,14 +80,14 @@ func (r *HarborProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 	return ctrl.Result{}, nil
 }
 
-func (r *HarborProjectReconciler) finalize(req *rApi.Request[*artifactsv1.HarborProject]) rApi.StepResult {
+func (r *HarborProjectReconciler) finalize(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
 	if err := r.harborCli.DeleteProject(req.Context(), req.Object.Name); err != nil {
 		return req.FailWithOpError(err)
 	}
 	return req.Finalize()
 }
 
-func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1.HarborProject]) rApi.StepResult {
+func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -125,7 +122,7 @@ func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1
 	}
 
 	if !hasUpdated && isReady == obj.Status.IsReady {
-		return req.Next()
+		return stepResult.New().Continue(true)
 	}
 
 	obj.Status.Conditions = nConditions
@@ -138,7 +135,7 @@ func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1
 	return req.Done()
 }
 
-func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifactsv1.HarborProject]) rApi.StepResult {
+func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -170,7 +167,7 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 		}(); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{RequeueAfter: 0}, nil)
+		return stepResult.New().Requeue(ctrl.Result{RequeueAfter: 0})
 	}
 
 	// TODO: it should not be called until harbor quota issue gets fixed
@@ -186,14 +183,18 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 		}(); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{RequeueAfter: 0}, nil)
+		return stepResult.New().Requeue(ctrl.Result{RequeueAfter: 0})
 	}
 
-	return req.Done()
+	obj.Status.OpsConditions = []metav1.Condition{}
+
+	err := r.Status().Update(ctx, obj)
+	return stepResult.New().Continue(true).Err(err)
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *HarborProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("harbor-project")
 	harborCli, err := harbor.NewClient(
 		harbor.Args{
 			HarborAdminUsername: r.Env.HarborAdminUsername,
@@ -201,6 +202,7 @@ func (r *HarborProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			HarborRegistryHost:  r.Env.HarborImageRegistryHost,
 		},
 	)
+
 	if err != nil {
 		return nil
 	}

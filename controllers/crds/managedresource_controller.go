@@ -2,6 +2,7 @@ package crds
 
 import (
 	"context"
+
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -11,7 +12,9 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,6 +28,7 @@ import (
 type ManagedResourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Logger logging.Logger
 }
 
 func (r *ManagedResourceReconciler) GetName() string {
@@ -40,19 +44,16 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedresources/finalizers,verbs=update
 
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &v1.ManagedResource{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &v1.ManagedResource{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if step := req.CleanupLastRun(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -72,11 +73,11 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, oReq ctrl.Req
 	return ctrl.Result{}, nil
 }
 
-func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
+func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*v1.ManagedResource]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
+func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.ManagedResource]) stepResult.Result {
 	// STEP: PRE if msvc is ready
 	ctx := req.Context()
 	obj := req.Object
@@ -87,12 +88,12 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &v1.ManagedService{})
 	if err != nil {
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
-		return req.FailWithStatusError(err, cs...).NoErr()
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 
 	if !msvc.Status.IsReady {
 		cs = append(cs, conditions.New(conditions.ManagedSvcReady, false, conditions.NotReady))
-		return req.FailWithStatusError(err, cs...).NoErr()
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 
 	rApi.SetLocal(req, "msvc", msvc)
@@ -129,10 +130,13 @@ func (r *ManagedResourceReconciler) reconcileStatus(req *rApi.Request[*v1.Manage
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = newConditions
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Done()
 }
 
-func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.ManagedResource]) rApi.StepResult {
+func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.ManagedResource]) stepResult.Result {
 	ctx := req.Context()
 	mres := req.Object
 
@@ -148,14 +152,19 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 			},
 		)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, mres))
+		if err := r.Update(ctx, mres); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
-	if !controllerutil.ContainsFinalizer(mres, constants.CommonFinalizer) {
+	if !fn.ContainsFinalizers(mres, constants.CommonFinalizer, constants.ForegroundFinalizer) {
 		controllerutil.AddFinalizer(mres, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(mres, constants.ForegroundFinalizer)
-
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, mres))
+		if err := r.Update(ctx, mres); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	b, err := templates.Parse(
@@ -167,16 +176,17 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 		},
 	)
 	if err != nil {
-		return req.FailWithOpError(err)
+		return req.FailWithOpError(err).Err(nil)
 	}
-	if _, err := fn.KubectlApplyExec(b); err != nil {
-		return req.FailWithOpError(err)
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		return req.FailWithOpError(err).Err(nil)
 	}
 	return req.Done()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("managed-resource")
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ManagedResource{})
 
 	resources := []metav1.TypeMeta{

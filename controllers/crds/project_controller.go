@@ -6,6 +6,8 @@ import (
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/logging"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -31,6 +33,7 @@ type ProjectReconciler struct {
 	Scheme    *runtime.Scheme
 	Env       *env.Env
 	harborCli *harbor.Client
+	Logger    logging.Logger
 }
 
 const (
@@ -45,19 +48,16 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
 func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Project{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &crdsv1.Project{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if step := req.CleanupLastRun(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -77,11 +77,11 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx := req.Context()
 	project := req.Object
 
@@ -116,18 +116,20 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 	if err := r.Status().Update(ctx, project); err != nil {
 		return req.FailWithOpError(err)
 	}
-
 	return req.Done()
 }
 
-func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Project]) rApi.StepResult {
+func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx := req.Context()
 	project := req.Object
 
-	if !controllerutil.ContainsFinalizer(project, constants.CommonFinalizer) {
+	if !fn.ContainsFinalizers(project, constants.CommonFinalizer, constants.ForegroundFinalizer) {
 		controllerutil.AddFinalizer(project, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(project, constants.ForegroundFinalizer)
-		return req.FailWithOpError(r.Update(ctx, project))
+		if err := r.Update(ctx, project); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	var dockerConfigJson []byte
@@ -151,13 +153,13 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 	)
 
 	if err != nil {
-		return req.FailWithOpError(err)
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	if _, err := fn.KubectlApplyExec(b); err != nil {
-		return req.FailWithOpError(err)
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		return req.FailWithOpError(err).Err(nil)
 	}
-	return req.Done()
+	return req.Next()
 }
 
 func (r *ProjectReconciler) GetName() string {
@@ -166,6 +168,8 @@ func (r *ProjectReconciler) GetName() string {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("project")
+
 	harborCli, err := harbor.NewClient(
 		harbor.Args{
 			HarborAdminUsername: r.Env.HarborAdminUsername,

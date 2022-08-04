@@ -3,6 +3,7 @@ package influxdbmsvc
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +14,9 @@ import (
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	libInflux "operators.kloudlite.io/lib/influx"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,6 +27,7 @@ import (
 type BucketReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Logger logging.Logger
 }
 
 func (r *BucketReconciler) GetName() string {
@@ -58,19 +62,16 @@ func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
 // +kubebuilder:rbac:groups=influxdb.msvc.kloudlite.io,resources=buckets/finalizers,verbs=update
 
 func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &influxDB.Bucket{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &influxDB.Bucket{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if step := req.CleanupLastRun(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -90,11 +91,11 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *BucketReconciler) finalize(req *rApi.Request[*influxDB.Bucket]) rApi.StepResult {
+func (r *BucketReconciler) finalize(req *rApi.Request[*influxDB.Bucket]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*influxDB.Bucket]) rApi.StepResult {
+func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*influxDB.Bucket]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -110,13 +111,13 @@ func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*influxDB.Bucket]) 
 	if err != nil {
 		isReady = false
 		cs = append(cs, conditions.New(conditions.ManagedSvcExists, false, conditions.NotFound, err.Error()))
-		return req.FailWithStatusError(err, cs...).NoErr()
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 	cs = append(cs, conditions.New(conditions.ManagedSvcExists, true, conditions.Found))
 	cs = append(cs, conditions.New(conditions.ManagedSvcReady, msvc.Status.IsReady, conditions.Empty))
 	if !msvc.Status.IsReady {
 		isReady = false
-		return req.FailWithStatusError(err, cs...).NoErr()
+		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 
 	// STEP: 2. retrieve managed svc output (usually secret)
@@ -177,11 +178,14 @@ func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*influxDB.Bucket]) 
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = newConditions
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+	return req.Done()
 
 }
 
-func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucket]) rApi.StepResult {
+func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucket]) stepResult.Result {
 	ctx := req.Context()
 	obj := req.Object
 
@@ -190,7 +194,10 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Update(ctx, obj))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 3. retrieve msvc output, need it in creating reconciler output
@@ -200,14 +207,12 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 	}
 
 	// STEP: 4. create child components like mongo-user, redis-acl etc.
-	bucket, err4 := func() (*libInflux.Bucket, error) {
-		influxClient := libInflux.NewClient(msvcRef.Uri, msvcRef.Token)
-		defer influxClient.Close()
-		return influxClient.UpsertBucket(ctx, msvcRef.OrgName, obj.Name)
-	}()
-	if err4 != nil {
-		// TODO:(user) might need to reconcile with retry with timeout error
-		return req.FailWithOpError(err4)
+
+	influxClient := libInflux.NewClient(msvcRef.Uri, msvcRef.Token)
+	defer influxClient.Close()
+	bucket, err := influxClient.UpsertBucket(ctx, msvcRef.OrgName, obj.Name)
+	if err != nil {
+		return req.FailWithOpError(err)
 	}
 
 	if meta.IsStatusConditionFalse(obj.Status.Conditions, HasBucketId.String()) {
@@ -215,7 +220,10 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 			return req.FailWithOpError(err)
 		}
 
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, obj))
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	// STEP: 5. create reconciler output (eg. secret)
@@ -240,22 +248,24 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 			},
 		)
 		if err != nil {
-			return err
+			req.Logger.Errorf(err, "failed parsing template %s", templates.Secret)
+			return nil
 		}
-
-		if _, err := fn.KubectlApplyExec(b); err != nil {
-			return err
+		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+			req.Logger.Errorf(err, "failed kubectl apply template %s", templates.Secret)
+			return nil
 		}
 		return nil
 	}(); errt != nil {
 		return req.FailWithOpError(errt)
 	}
 
-	return req.Done()
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("influx-standalone-bucket")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&influxDB.Bucket{}).
 		Owns(&corev1.Secret{}).

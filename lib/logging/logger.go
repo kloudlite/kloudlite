@@ -20,7 +20,7 @@ type Logger interface {
 }
 
 type customLogger struct {
-	opts   *Options
+	opts   Options
 	logger *zap.SugaredLogger
 }
 
@@ -33,7 +33,6 @@ func (c customLogger) Infof(msg string, args ...any) {
 }
 
 func (c customLogger) Errorf(err error, msg string, args ...any) {
-	// c.logger.Errorf(errors.NewEf(err, msg, args...).Error())
 	c.logger.Errorf(errors.NewEf(err, msg, args...).Error())
 }
 
@@ -50,15 +49,21 @@ func (c customLogger) WithKV(key string, value any) Logger {
 	return c
 }
 
-var magenta = color.New(color.FgCyan).SprintFunc()
-
 func (c customLogger) WithName(name string) Logger {
-	return &customLogger{logger: c.logger.Named(magenta(name))}
+	if c.opts.Dev {
+		return &customLogger{logger: c.logger.Named(decorateName(name)), opts: c.opts}
+	}
+	return &customLogger{logger: c.logger.Named(decorateName(name)), opts: c.opts}
 }
 
 type Options struct {
 	Name string
 	Dev  bool
+}
+
+var magenta = color.New(color.FgCyan).SprintFunc()
+func decorateName(name string) string {
+	return fmt.Sprintf("(%s)", magenta(name))
 }
 
 func New(options *Options) (Logger, error) {
@@ -74,8 +79,9 @@ func New(options *Options) (Logger, error) {
 			cfg.EncoderConfig.LineEnding = "\n"
 			cfg.EncoderConfig.TimeKey = ""
 
-			yellow := color.New(color.Faint, color.FgYellow)
-			opts.Name = fmt.Sprintf("(%s)", yellow.SprintFunc()(opts.Name))
+			if len(opts.Name) > 0 {
+				opts.Name = decorateName(opts.Name)
+			}
 			return cfg
 		}
 		return zap.NewProductionConfig()
@@ -85,11 +91,11 @@ func New(options *Options) (Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	customLogger := &customLogger{logger: logger.Sugar(), opts: &opts}
+	cLogger := &customLogger{logger: logger.Sugar(), opts: opts}
 	if opts.Name != "" {
-		customLogger.logger = customLogger.logger.Named(opts.Name)
+		cLogger.logger = cLogger.logger.Named(opts.Name)
 	}
-	return customLogger, nil
+	return cLogger, nil
 }
 
 func NewOrDie(options *Options) Logger {
@@ -99,3 +105,4 @@ func NewOrDie(options *Options) Logger {
 	}
 	return logger
 }
+

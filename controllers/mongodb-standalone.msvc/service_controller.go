@@ -8,6 +8,8 @@ import (
 
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/env"
+	"operators.kloudlite.io/lib/logging"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -35,6 +37,7 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Env    *env.Env
+	Logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -50,19 +53,16 @@ const (
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &mongodbStandalone.Service{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &mongodbStandalone.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if step := req.CleanupLastRun(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("--------------------NEW RECONCILATION------------------")
@@ -84,11 +84,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*mongodbStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*mongodbStandalone.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone.Service]) stepResult.Result {
 	ctx := req.Context()
 	svcObj := req.Object
 
@@ -96,7 +96,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	var cs []metav1.Condition
 	var childC []metav1.Condition
 
-	// STEP:  helm resource
+	// STEP: helm resource
 	helmResource, err := rApi.Get(
 		ctx, r.Client, fn.NN(svcObj.Namespace, svcObj.Name), fn.NewUnstructured(constants.HelmMongoDBType),
 	)
@@ -109,7 +109,6 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 		cs = append(cs, conditions.New(conditions.HelmResourceExists, false, conditions.NotFound, err.Error()))
 	} else {
 		cs = append(cs, conditions.New(conditions.HelmResourceExists, true, conditions.Found))
-
 		rConditions, err := conditions.ParseFromResource(helmResource, "Helm")
 		if err != nil {
 			return req.FailWithStatusError(err)
@@ -140,7 +139,6 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 			return req.FailWithStatusError(err)
 		}
 		childC = append(childC, rConditions...)
-
 		if stsRes.Status.Replicas != stsRes.Status.ReadyReplicas {
 			isReady = false
 			cs = append(cs, conditions.New(conditions.StsReady, false, conditions.Empty))
@@ -191,10 +189,14 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mongodbStandalone
 	svcObj.Status.Conditions = newConditions
 	svcObj.Status.ChildConditions = newChildConditions
 
-	return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+	if err := r.Status().Update(ctx, svcObj); err != nil {
+		return req.FailWithStatusError(err)
+	}
+
+	return req.Done()
 }
 
-func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStandalone.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStandalone.Service]) stepResult.Result {
 	ctx := req.Context()
 	svcObj := req.Object
 
@@ -202,7 +204,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 		if err := svcObj.Status.GeneratedVars.Set(SvcRootPasswordKey, fn.CleanerNanoid(40)); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return rApi.NewStepResult(&ctrl.Result{}, r.Status().Update(ctx, svcObj))
+		if err := r.Status().Update(ctx, svcObj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done()
 	}
 
 	if errP := func() error {
@@ -261,22 +266,25 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 			},
 		)
 		if err != nil {
-			return err
+			req.Logger.Errorf(err, "failed parsing template %s", templates.Secret)
+			return nil
 		}
 
-		if _, err := fn.KubectlApplyExec(b1, b2); err != nil {
-			return err
+		if err := fn.KubectlApplyExec(ctx, b1, b2); err != nil {
+			req.Logger.Errorf(err, "failed kubect apply")
+			return nil
 		}
 		return nil
 	}(); errP != nil {
 		return req.FailWithOpError(errP)
 	}
 
-	return req.Done()
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("mongo-standalone-service")
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Service{})
 
 	builder.Owns(fn.NewUnstructured(constants.HelmMongoDBType))

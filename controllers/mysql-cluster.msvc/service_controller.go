@@ -63,15 +63,15 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlCluster.Service]) rApi.StepResult {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlCluster.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mysqlCluster.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*mysqlCluster.Service]) stepResult.Result {
 	return req.Done()
 }
 
-func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlCluster.Service]) rApi.StepResult {
+func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlCluster.Service]) stepResult.Result {
 	return req.Done()
 }
 

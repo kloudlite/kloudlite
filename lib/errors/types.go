@@ -7,7 +7,7 @@ import (
 )
 
 func NewEf(err error, msg string, a ...interface{}) error {
-	return yerrors.WrapFrame(yerrors.Errorf("%s while %w", fmt.Sprintf(msg, a...), err), 1)
+	return yerrors.WrapFrame(yerrors.Errorf("%s while %s", fmt.Sprintf(msg, a...), err.Error()), 1)
 }
 
 func Newf(msg string, a ...interface{}) error {
@@ -23,12 +23,4 @@ func NewE(err error) error {
 
 func New(msg string) error {
 	return yerrors.Wrap(yerrors.New(msg))
-}
-
-func StatusUpdate(err error) error {
-	return NewEf(err, "resource status update failed")
-}
-
-func ConditionUpdate(err error) error {
-	return Newf("job condition update failed as %v", err)
 }

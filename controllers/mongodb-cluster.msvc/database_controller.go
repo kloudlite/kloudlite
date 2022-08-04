@@ -49,15 +49,15 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-func (r *DatabaseReconciler) finalize(req *rApi.Request[*mongodbclustermsvcv1.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) finalize(req *rApi.Request[*mongodbclustermsvcv1.Database]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbclustermsvcv1.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mongodbclustermsvcv1.Database]) stepResult.Result {
 	return req.Done()
 }
 
-func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbclustermsvcv1.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbclustermsvcv1.Database]) stepResult.Result {
 	return req.Done()
 }
 
