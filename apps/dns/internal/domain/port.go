@@ -26,5 +26,5 @@ type Domain interface {
 		ttl uint32,
 		priority int64,
 	) (*Record, error)
-	UpdateNodeIPs(ctx context.Context, ips map[string][]string) bool
+	UpdateNodeIPs(ctx context.Context, ips []string) bool
 }
