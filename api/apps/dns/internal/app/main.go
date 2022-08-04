@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net"
 	"strings"
 
@@ -75,6 +76,9 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 					Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
 				})
 			}
+			rand.Shuffle(len(records), func(i, j int) {
+				records[i], records[j] = records[j], records[i]
+			})
 			for _, r := range records {
 				if r.Type == "A" {
 					msg.Answer = append(msg.Answer, &dns.A{
@@ -82,7 +86,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 						A:   net.ParseIP(r.Answer),
 					},
 					)
-
+					break
 				}
 			}
 		}
