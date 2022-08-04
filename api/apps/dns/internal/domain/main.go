@@ -29,7 +29,7 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 	return d.AddARecords(ctx, host, records)
 }
 
-func (d *domainI) UpdateNodeIPs(ctx context.Context, ips map[string][]string) bool {
+func (d *domainI) UpdateNodeIPs(ctx context.Context, ips []string) bool {
 	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{})
 	if err != nil {
 		return false
@@ -49,22 +49,18 @@ func (d *domainI) UpdateNodeIPs(ctx context.Context, ips map[string][]string) bo
 }
 
 func (d *domainI) GetNodeIps(ctx context.Context, region *string) ([]string, error) {
-	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{})
-	if err != nil {
-		return nil, err
+	filter := repos.Filter{}
+	if region != nil {
+		filter["region"] = *region
 	}
-	if one == nil {
-		if region == nil {
-			out := make([]string, 0)
-			for _, ips := range one.Ips {
-				out = append(out, ips...)
-			}
-			return out, nil
-		} else {
-			return one.Ips[*region], nil
-		}
+	all, err := d.nodeIpsRepo.Find(ctx, repos.Query{
+		Filter: filter,
+	})
+	out := make([]string, 0)
+	for _, nodeIps := range all {
+		out = append(out, nodeIps.Ips...)
 	}
-	return nil, errors.New("node ips not found")
+	return out, err
 }
 
 func (d *domainI) DeleteSite(ctx context.Context, siteId repos.ID) error {

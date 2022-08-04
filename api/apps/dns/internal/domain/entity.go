@@ -10,7 +10,8 @@ type AccountCName struct {
 
 type NodeIps struct {
 	repos.BaseEntity `bson:",inline"`
-	Ips              map[string][]string `bson:"ips"`
+	region           string   `bson:"region",json:"region"`
+	Ips              []string `bson:"ips"`
 }
 
 type Site struct {
