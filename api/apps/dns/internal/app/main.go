@@ -87,7 +87,6 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 						A:   net.ParseIP(r.Answer),
 					},
 					)
-					break
 				}
 			}
 		}
