@@ -131,7 +131,7 @@ var Module = fx.Module(
 				Region string   `json:"region"`
 				Ips    []string `json:"ips"`
 			}
-			err := c.JSON(&regionIps)
+			err := c.BodyParser(&regionIps)
 			if err != nil {
 				return err
 			}
