@@ -69,24 +69,25 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 					},
 					)
 				}
-				return
-			}
-			records, err := h.domain.GetRecords(todo, host)
-			if err != nil || len(records) == 0 {
-				msg.Answer = append(msg.Answer, &dns.A{
-					Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
-				})
-			}
-			rand.Shuffle(len(records), func(i, j int) {
-				records[i], records[j] = records[j], records[i]
-			})
-			for _, r := range records {
-				if r.Type == "A" {
+				break
+			} else {
+				records, err := h.domain.GetRecords(todo, host)
+				if err != nil || len(records) == 0 {
 					msg.Answer = append(msg.Answer, &dns.A{
-						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
-						A:   net.ParseIP(r.Answer),
-					},
-					)
+						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
+					})
+				}
+				rand.Shuffle(len(records), func(i, j int) {
+					records[i], records[j] = records[j], records[i]
+				})
+				for _, r := range records {
+					if r.Type == "A" {
+						msg.Answer = append(msg.Answer, &dns.A{
+							Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
+							A:   net.ParseIP(r.Answer),
+						},
+						)
+					}
 				}
 			}
 		}
