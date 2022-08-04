@@ -34,6 +34,21 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg.Answer = []dns.RR{}
 	for _, q := range r.Question {
 		switch q.Qtype {
+		case dns.TypeNS:
+			for _, name := range []string{
+				"ns1.kloudlite.io.",
+			} {
+				rr := &dns.NS{
+					Hdr: dns.RR_Header{
+						Name:   q.Name,
+						Rrtype: dns.TypeNS,
+						Class:  q.Qclass,
+						Ttl:    60,
+					},
+					Ns: name,
+				}
+				msg.Answer = append(msg.Answer, rr)
+			}
 		case dns.TypeA:
 			msg.Authoritative = true
 			d := q.Name
