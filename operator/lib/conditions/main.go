@@ -26,7 +26,7 @@ func reasondiff(r1, r2 string) bool {
 }
 
 func Patch(dest []metav1.Condition, source []metav1.Condition) ([]metav1.Condition, bool, error) {
-	res := make([]metav1.Condition, 0)
+	res := make([]metav1.Condition, 0, len(source))
 	x := metav1.Time{Time: time.UnixMilli(time.Now().UnixMilli())}
 	// x := metav1.Now()
 	updated := false

@@ -16,21 +16,30 @@ import (
 	"operators.kloudlite.io/lib/errors"
 )
 
-var logger = logging.NewOrDie(
-	&logging.Options{Name: "kubectl", Dev: true},
-)
-
-func KubectlApplyExec(stdin ...[]byte) (stdout *bytes.Buffer, err error) {
+func KubectlApplyExec(ctx context.Context, stdin ...[]byte) (err error) {
 	c := exec.Command("kubectl", "apply", "-f", "-")
 	outStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
-	c.Stdin = bytes.NewBuffer(bytes.Join(stdin, []byte("\n---\n")))
+	inputYAML := bytes.Join(stdin, []byte("\n---\n"))
+	c.Stdin = bytes.NewBuffer(inputYAML)
 	c.Stdout = outStream
 	c.Stderr = errStream
-	if err := c.Run(); err != nil {
-		return outStream, errors.NewEf(err, errStream.String())
+
+	logger, hasLogger := ctx.Value("logger").(logging.Logger)
+	if hasLogger {
+		logger = logger.WithName("kubectl")
 	}
-	logger.Debugf("(stdout) %s\n", outStream.Bytes())
-	return outStream, nil
+
+	if err := c.Run(); err != nil {
+		if hasLogger {
+			logger.Debugf("input YAML: \n#---START---\n%s\n#---END---", inputYAML)
+			logger.Errorf(err, errStream.String())
+		}
+		return errors.NewEf(err, errStream.String())
+	}
+	if hasLogger {
+		logger.Infof(outStream.String())
+	}
+	return nil
 }
 
 func toUnstructured(obj client.Object) (*unstructured.Unstructured, error) {

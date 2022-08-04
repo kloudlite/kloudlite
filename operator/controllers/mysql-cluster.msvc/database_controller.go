@@ -48,15 +48,15 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-func (r *DatabaseReconciler) finalize(req *rApi.Request[*mysqlCluster.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) finalize(req *rApi.Request[*mysqlCluster.Database]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlCluster.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlCluster.Database]) stepResult.Result {
 	return req.Done()
 }
 
-func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlCluster.Database]) rApi.StepResult {
+func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlCluster.Database]) stepResult.Result {
 	return req.Done()
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
+
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,9 +15,10 @@ import (
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -25,6 +28,7 @@ type RouterReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Env    *env.Env
+	Logger logging.Logger
 }
 
 func (r *RouterReconciler) GetName() string {
@@ -44,22 +48,16 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/finalizers,verbs=update
 
 func (r *RouterReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &crdsv1.Router{})
-
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &crdsv1.Router{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// STEP: cleaning up last run, clearing opsConditions
-	if len(req.Object.Status.OpsConditions) > 0 {
-		req.Object.Status.OpsConditions = []metav1.Condition{}
-		return ctrl.Result{RequeueAfter: 0}, r.Status().Update(ctx, req.Object)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
 	}
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
@@ -79,7 +77,7 @@ func (r *RouterReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *RouterReconciler) finalize(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
+func (r *RouterReconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	return req.Finalize()
 }
 
@@ -99,7 +97,7 @@ func getIngressResources(router *crdsv1.Router) []string {
 	return x
 }
 
-func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
+func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	ctx := req.Context()
 	router := req.Object
 
@@ -144,11 +142,10 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) rA
 	if err := r.Status().Update(ctx, router); err != nil {
 		return req.FailWithStatusError(err)
 	}
-
 	return req.Done()
 }
 
-func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]) rApi.StepResult {
+func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	router := req.Object
 
 	lambdaGroups := map[string][]crdsv1.Route{}
@@ -196,7 +193,7 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 		if err != nil {
 			return req.FailWithOpError(
 				errors.NewEf(err, "could not parse (template=%s)", templates.Ingress),
-			)
+			).Err(nil)
 		}
 		kubeYamls = append(kubeYamls, b)
 	}
@@ -221,14 +218,14 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 		ingressList = append(ingressList, router.Name)
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)
 		if err != nil {
-			return req.FailWithOpError(errors.NewEf(err, "could not parse (template=%s)", templates.Ingress))
+			return req.FailWithOpError(errors.NewEf(err, "could not parse (template=%s)", templates.Ingress)).Err(nil)
 		}
 
 		kubeYamls = append(kubeYamls, b)
 	}
 
-	if _, err := fn.KubectlApplyExec(kubeYamls...); err != nil {
-		return req.FailWithOpError(errors.NewEf(err, "could not apply ingress ingressObj"))
+	if err := fn.KubectlApplyExec(req.Context(), kubeYamls...); err != nil {
+		return req.FailWithOpError(errors.NewEf(err, "could not apply ingress ingressObj")).Err(nil)
 	}
 
 	if !reflect.DeepEqual(getIngressResources(router), ingressList) {
@@ -240,11 +237,12 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 		}
 	}
 
-	return req.Done()
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *RouterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Logger = r.Logger.WithName("router")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.Router{}).
 		Owns(&networkingv1.Ingress{}).
