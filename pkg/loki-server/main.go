@@ -73,7 +73,7 @@ func (l *lokiClient) Tail(
 	if limit != nil {
 		query.Set("limit", fmt.Sprintf("%v", limit))
 	} else {
-		query.Set("limit", fmt.Sprintf("%v", 30))
+		query.Set("limit", fmt.Sprintf("%v", 500))
 	}
 	for {
 		u := url.URL{Scheme: "http", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
