@@ -127,12 +127,15 @@ var Module = fx.Module(
 
 		})
 		server.Post("/upsert-node-ips", func(c *fiber.Ctx) error {
-			var ips map[string][]string
-			err := c.JSON(&ips)
+			var regionIps struct {
+				Region string   `json:"region"`
+				Ips    []string `json:"ips"`
+			}
+			err := c.JSON(&regionIps)
 			if err != nil {
 				return err
 			}
-			done := d.UpdateNodeIPs(c.Context(), ips)
+			done := d.UpdateNodeIPs(c.Context(), regionIps.Region, regionIps.Ips)
 			if !done {
 				return fmt.Errorf("failed to update node ips")
 			}

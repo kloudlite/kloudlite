@@ -29,7 +29,7 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 	return d.AddARecords(ctx, host, records)
 }
 
-func (d *domainI) UpdateNodeIPs(ctx context.Context, ips []string) bool {
+func (d *domainI) UpdateNodeIPs(ctx context.Context, region string, ips []string) bool {
 	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{})
 	if err != nil {
 		return false
