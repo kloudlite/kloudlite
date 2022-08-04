@@ -30,20 +30,26 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 }
 
 func (d *domainI) UpdateNodeIPs(ctx context.Context, region string, ips []string) bool {
-	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{})
+	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{
+		"region": region,
+	})
 	if err != nil {
 		return false
 	}
 	if one == nil {
 		one, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
-			Ips: ips,
+			Region: region,
+			Ips:    ips,
 		})
 		if err != nil {
 			return false
 		}
-	}
-	if err != nil {
-		return false
+	} else {
+		one.Ips = ips
+		_, err = d.nodeIpsRepo.UpdateById(ctx, one.Id, one)
+		if err != nil {
+			return false
+		}
 	}
 	return true
 }
