@@ -69,6 +69,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 					},
 					)
 				}
+				return
 			}
 			records, err := h.domain.GetRecords(todo, host)
 			if err != nil || len(records) == 0 {
