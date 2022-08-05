@@ -2,6 +2,7 @@ package loki_server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	fWebsocket "github.com/gofiber/websocket/v2"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -62,13 +64,15 @@ func (l *lokiClient) Tail(
 	}
 	query.Set("query", fmt.Sprintf("%v%v", fmt.Sprintf("{%v}", strings.Join(streamSelectorSplits, ",")), filterStr))
 	query.Set("direction", "BACKWARD")
+	startTime := ""
 	if start != nil {
-		query.Set("start", fmt.Sprintf("%v", start))
+		startTime = fmt.Sprintf("%v", start)
 	} else {
-		query.Set("start", fmt.Sprintf("%v", time.Now().Add(-time.Hour*24).UnixNano()))
+		startTime = fmt.Sprintf("%v", time.Now().Add(-time.Hour*24).UnixNano())
 	}
+	query.Set("start", startTime)
 	if end != nil {
-		query.Set("env", fmt.Sprintf("%v", end))
+		query.Set("end", fmt.Sprintf("%v", end))
 	}
 	if limit != nil {
 		query.Set("limit", fmt.Sprintf("%v", limit))
@@ -82,6 +86,32 @@ func (l *lokiClient) Tail(
 			return err
 		}
 		all, _ := ioutil.ReadAll(get.Body)
+		var data struct {
+			Data struct {
+				Result []struct {
+					Values [][]string `json:"values,omitempty"`
+				}
+			}
+		}
+		err = json.Unmarshal(all, &data)
+		if err != nil {
+			return err
+		}
+		lastTimeStamp := query.Get("start")
+		for _, result := range data.Data.Result {
+			for _, values := range result.Values {
+				if values[0] > lastTimeStamp {
+					val, err := strconv.ParseUint(values[0], 10, 64)
+					if err != nil {
+						return err
+					}
+					lastTimeStamp = fmt.Sprintf("%v", val+1)
+				}
+			}
+		}
+		query.Set("start", lastTimeStamp)
+		query.Del("limit")
+		query.Del("end")
 		connection.WriteMessage(websocket.TextMessage, all)
 		time.Sleep(5 * time.Second)
 	}
