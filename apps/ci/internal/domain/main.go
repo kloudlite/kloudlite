@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
+	"net/http"
+	"net/url"
+	"time"
+
 	"github.com/google/go-github/v43/github"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
@@ -17,9 +22,6 @@ import (
 	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
 	t "kloudlite.io/pkg/types"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 type HarborHost string
@@ -110,7 +112,7 @@ func (d *domainI) parseGitlabHook(req *tekton.Request) (*GitWebhookPayload, erro
 				GitProvider: common.ProviderGitlab,
 				RepoUrl:     t.Repository.GitHTTPURL,
 				GitRef:      t.Ref,
-				CommitHash:  t.CheckoutSHA[:10],
+				CommitHash:  t.CheckoutSHA[:int(math.Min(10, float64(len(t.CheckoutSHA))))],
 			}
 			return payload, nil
 		}
@@ -139,9 +141,7 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 
 	if eventType == "" {
 		return nil, nil, tekton.NewError(
-			http.StatusBadRequest, errors.NewEf(
-				err, "could not recognize github event type, aborting ...",
-			),
+			http.StatusBadRequest, errors.Newf("could not recognize github event type, aborting ..."),
 		)
 	}
 
