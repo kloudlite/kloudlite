@@ -17,8 +17,8 @@ type Result interface {
 
 type options struct {
 	toContinue bool
-	requeue ctrl.Result
-	err error
+	requeue    ctrl.Result
+	err        error
 }
 
 func (opt options) ShouldProceed() bool {

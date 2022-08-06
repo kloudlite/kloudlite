@@ -216,7 +216,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalo
 	}
 
 	// STEP: 3. apply CRs of helm/custom controller
-	storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+	storageClass, err := svcObj.Spec.NodeProvider.GetStorageClass(ct.Ext4)
 	if err != nil {
 		req.Logger.Errorf(err, "failed to get storage class for fsType: %s", ct.Ext4)
 		return req.FailWithOpError(err).Err(nil)

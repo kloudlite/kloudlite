@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"operators.kloudlite.io/lib/constants"
@@ -163,7 +164,7 @@ type WrappedName struct {
 
 func getMsgKey(c client.Object) string {
 	kind := c.GetObjectKind().GroupVersionKind().Kind
-	return fmt.Sprintf("Kind=%s/Namespace=%s/Name=%s", kind, c.GetNamespace(), c.GetName())
+	return fmt.Sprintf("Kind=%s/Namespace=%s/Cloud=%s", kind, c.GetNamespace(), c.GetName())
 }
 
 func (w WrappedName) String() (string, error) {

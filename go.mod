@@ -13,7 +13,6 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
-	github.com/pkg/profile v1.6.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/twmb/franz-go v1.6.0
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54

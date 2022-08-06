@@ -62,6 +62,7 @@ type Options struct {
 }
 
 var magenta = color.New(color.FgCyan).SprintFunc()
+
 func decorateName(name string) string {
 	return fmt.Sprintf("(%s)", magenta(name))
 }
@@ -105,4 +106,3 @@ func NewOrDie(options *Options) Logger {
 	}
 	return logger
 }
-

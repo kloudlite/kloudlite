@@ -143,7 +143,7 @@ func FromPod(ctx context.Context, client client.Client, nn types.NamespacedName)
 //
 // for _, cs := range obj.Object["status"].(statusStruct).ContainerStatuses {
 // 	p := metav1.Condition{
-// 		Type:   fmt.Sprintf("%s-container-%s", typePrefix, cs.Name),
+// 		Type:   fmt.Sprintf("%s-container-%s", typePrefix, cs.Cloud),
 // 		Status: fn.IfThenElse(cs.Ready, metav1.ConditionTrue, metav1.ConditionFalse),
 // 	}
 // 	if cs.State.Waiting != nil {

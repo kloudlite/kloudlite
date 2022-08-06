@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+
 	ct "operators.kloudlite.io/apis/common-types"
 	rApi "operators.kloudlite.io/lib/operator"
 
@@ -10,7 +11,7 @@ import (
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	CloudProvider ct.CloudProvider  `json:"cloudProvider"`
+	CloudProvider ct.NodeProvider   `json:"cloudProvider"`
 	NodeSelector  map[string]string `json:"nodeSelector"`
 	// // +kubebuilder:validation:Schemaless
 	// // +kubebuilder:pruning:PreserveUnknownFields

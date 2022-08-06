@@ -55,7 +55,7 @@ const (
 
 func getUsername(hAcc *artifactsv1.HarborUserAccount) string {
 	return fmt.Sprintf("%s-%s", hAcc.Namespace, hAcc.Name)
-	// return fmt.Sprintf("%s-%s", strings.ToLower(fn.CleanerNanoid(60)), hAcc.Name)
+	// return fmt.Sprintf("%s-%s", strings.ToLower(fn.CleanerNanoid(60)), hAcc.Cloud)
 }
 
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harboruseraccounts,verbs=get;list;watch;create;update;patch;delete

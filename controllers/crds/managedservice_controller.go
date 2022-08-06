@@ -179,7 +179,7 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 		if err := r.Update(ctx, msvc); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		return req.Next()
+		return req.Done()
 	}
 
 	b, err := templates.Parse(

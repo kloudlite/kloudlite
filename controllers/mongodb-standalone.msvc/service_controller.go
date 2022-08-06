@@ -211,7 +211,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 	}
 
 	if errP := func() error {
-		storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Xfs)
+		storageClass, err := svcObj.Spec.NodeProvider.GetStorageClass(ct.Xfs)
 		if err != nil {
 			return err
 		}

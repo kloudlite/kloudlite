@@ -35,9 +35,24 @@ spec:
           spec:
             description: ServiceSpec defines the desired state of Service
             properties:
-              cloudProvider:
-                description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
-                type: string
+              nodeProvider:
+                properties:
+                  account:
+                    type: string
+                  cloud:
+                    enum:
+                    - do
+                    - aws
+                    - gcp
+                    - azure
+                    - k3s-local
+                    type: string
+                  region:
+                    type: string
+                required:
+                - cloud
+                - region
+                type: object
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -76,7 +91,7 @@ spec:
                     type: string
                 type: object
             required:
-            - cloudProvider
+            - nodeProvider
             - resources
             - storage
             type: object

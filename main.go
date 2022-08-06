@@ -134,12 +134,12 @@ func main() {
 			Port:                   9443,
 			HealthProbeBindAddress: probeAddr,
 			LeaderElection:         enableLeaderElection,
-			LeaderElectionID:       "bf38d2f9.kloudlite.io",
+			LeaderElectionID:       "operator.kloudlite.io",
 			// LeaderElectionID:           "sadfasdf.kloudlite.io",
 			LeaderElectionResourceLock: "configmaps",
 		}
 		if isDev {
-			cOpts.LeaderElectionID = "nxtcoder17.dev.kloudlite.io"
+			// cOpts.LeaderElectionID = "nxtcoder17.dev.kloudlite.io"
 			return ctrl.NewManager(&rest.Config{Host: devServerHost}, cOpts)
 		}
 		return ctrl.NewManager(ctrl.GetConfigOrDie(), cOpts)

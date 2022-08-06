@@ -27,7 +27,7 @@ type HarborProjectReconciler struct {
 	Scheme    *runtime.Scheme
 	Env       *env.Env
 	harborCli *harbor.Client
-	Logger logging.Logger
+	Logger    logging.Logger
 }
 
 func (r *HarborProjectReconciler) GetName() string {

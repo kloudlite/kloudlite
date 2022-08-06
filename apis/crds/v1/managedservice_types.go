@@ -19,7 +19,7 @@ type msvcKind struct {
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	NodeProvider ct.NodeProvider `json:"nodeProvider"`
 
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`

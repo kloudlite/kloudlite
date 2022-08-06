@@ -9,6 +9,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -154,11 +155,15 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch
 		return req.Done()
 	}
 
+	storageClass, err := svcObj.Spec.NodeProvider.GetStorageClass(ct.Ext4)
+	if err != nil {
+		return req.FailWithOpError(errors.NewEf(err, "could not storage class for fstype=%s", ct.Ext4)).Err(nil)
+	}
+
 	b, err := templates.Parse(
 		templates.ElasticSearch, map[string]any{
-			"object": svcObj,
-			// TODO: switch to dynamic storage class name
-			"storage-class": r.Env.DoBlockStorageExt4,
+			"object":        svcObj,
+			"storage-class": storageClass,
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(svcObj, true),
 			},

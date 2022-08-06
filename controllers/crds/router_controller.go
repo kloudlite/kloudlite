@@ -182,9 +182,6 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 
 			"ingress-class":  r.Env.DefaultIngressClass,
 			"cluster-issuer": r.Env.ClusterCertIssuer,
-
-			"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
-			"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
 		}
 
 		ingressList = append(ingressList, ingName)
@@ -212,8 +209,7 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"ingress-class":  r.Env.DefaultIngressClass,
 			"cluster-issuer": r.Env.ClusterCertIssuer,
 
-			"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
-			"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
+			"wildcard-domain-suffix": r.Env.WildcardDomainSuffix,
 		}
 		ingressList = append(ingressList, router.Name)
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)

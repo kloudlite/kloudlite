@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
 
@@ -12,7 +13,7 @@ import (
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	NodeProvider ct.NodeProvider `json:"nodeProvider"`
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 

@@ -1,10 +1,11 @@
 package common_types
 
 import (
-	"operators.kloudlite.io/env"
-	"operators.kloudlite.io/lib/errors"
+	"fmt"
 	"strconv"
 	"strings"
+
+	"operators.kloudlite.io/lib/errors"
 )
 
 type Storage struct {
@@ -36,17 +37,6 @@ type Resources struct {
 	Memory string `json:"memory"`
 }
 
-// CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
-type CloudProvider string
-
-const (
-	Digitalocean CloudProvider = "do"
-	Aws          CloudProvider = "aws"
-	Gcp          CloudProvider = "gcp"
-	Azure        CloudProvider = "azure"
-	K3sLocal     CloudProvider = "k3s-local"
-)
-
 type FsType string
 
 const (
@@ -54,19 +44,52 @@ const (
 	Xfs  FsType = "xfs"
 )
 
-func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType) (string, error) {
-	switch c {
-	case Digitalocean:
-		{
-			switch fsType {
-			case Ext4:
-				return env.DoBlockStorageExt4, nil
-			case Xfs:
-				return env.DoBlockStorageXFS, nil
-			}
-		}
-	default:
-		return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
-	}
-	return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
+// const (
+// 	Digitalocean NodeProvider = "do"
+// 	Aws          NodeProvider = "aws"
+// 	Gcp          NodeProvider = "gcp"
+// 	Azure        NodeProvider = "azure"
+// 	K3sLocal     NodeProvider = "k3s-local"
+// )
+
+type NodeProvider struct {
+	// +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
+	Cloud  string `json:"cloud"`
+	Region string `json:"region"`
+	// +kubebuilder:validation:Optional
+	Account string `json:"account,omitempty"`
 }
+
+func (c NodeProvider) GetStorageClass(fsType FsType) (string, error) {
+	switch c.Cloud {
+	case "do":
+		{
+			return fmt.Sprintf("do-block-storage-%s", fsType), nil
+		}
+	case "azure":
+		{
+			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
+		}
+	}
+	return "", errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType)
+}
+
+// func (c NodeProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) {
+// 	switch c {
+// 	case Digitalocean:
+// 		{
+// 			switch fsType {
+// 			case Ext4:
+// 				return env.DoBlockStorageExt4, nil
+// 			case Xfs:
+// 				return env.DoBlockStorageXFS, nil
+// 			}
+// 		}
+// 	case Azure: {
+// 		return fmt.Sprintf("kl-%s-block-%s-%s", c, fsType, region), nil
+// 	}
+// 	default:
+// 		return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
+// 	}
+// 	return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
+// }

@@ -337,8 +337,7 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 					},
 				},
 			},
-			"wildcard-domain-suffix":      r.Env.WildcardDomainSuffix,
-			"wildcard-domain-certificate": r.Env.WildcardDomainCertificate,
+			"wildcard-domain-suffix": r.Env.WildcardDomainSuffix,
 
 			"routes": []crdsv1.Route{
 				{
