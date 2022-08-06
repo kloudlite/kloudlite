@@ -3,9 +3,8 @@
 {{- $aclAccountsMap := get . "acl-accounts-map"}}
 {{- $obj := get . "object"}}
 
-{{- $freeze := get . "freeze" | default false}}
+{{/*{{- $freeze := get . "freeze" | default false}}*/}}
 
-{{- $inputs := mustFromJson ($obj.Spec.Inputs | toJson) }}
 {{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
 
 {{- with $obj }}
@@ -38,9 +37,6 @@ spec:
     enabled: true
     password: {{ index $generatedVars "redis-password" }}
 
-  master:
-    count: {{if $freeze}}0{{else}}{{.Spec.ReplicaCount}}{{end}}
-
   replica:
     replicaCount: 0
 
@@ -54,6 +50,7 @@ spec:
     {{- end }}
 
   master:
+    count: {{.Spec.ReplicaCount}}
     resources:
       requests:
         cpu: {{ .Spec.Resources.Cpu.Min}}
@@ -61,10 +58,9 @@ spec:
       limits:
         cpu: {{ .Spec.Resources.Cpu.Max}}
         memory: {{.Spec.Resources.Memory}}
-
-  persistence:
-    enabled: true
-    size: {{.Spec.Storage.Size}}
+    persistence:
+      enabled: true
+      size: {{.Spec.Storage.Size}}
 
   volumePermissions:
     enabled: true

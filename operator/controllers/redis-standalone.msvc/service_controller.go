@@ -247,7 +247,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		return req.FailWithOpError(rApi.ErrNotInReqLocals.Format(KeyAclAccountsMap))
 	}
 
-	storageClass, err := obj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+	storageClass, err := obj.Spec.NodeProvider.GetStorageClass(ct.Ext4)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
@@ -272,7 +272,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 
 	redisPasswd, ok := obj.Status.GeneratedVars.GetString(RedisPasswordKey)
 	if !ok {
-		return req.FailWithOpError(errors.NewEf(err,"key=%s not in GeneratedVars", RedisPasswordKey))
+		return req.FailWithOpError(errors.NewEf(err, "key=%s not in GeneratedVars", RedisPasswordKey))
 	}
 
 	hostUrl := fmt.Sprintf("%s-headless.%s.svc.cluster.local:6379", obj.Name, obj.Namespace)

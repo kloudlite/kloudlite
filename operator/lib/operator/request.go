@@ -28,7 +28,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		return nil, err
 	}
 	logger, ok := ctx.Value("logger").(logging.Logger)
-	if !ok{
+	if !ok {
 		panic("no logger passed into NewRequest")
 	}
 	return &Request[T]{

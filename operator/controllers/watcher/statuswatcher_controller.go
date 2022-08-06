@@ -116,7 +116,7 @@ func (r *StatusWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Reque
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
 	obj, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), fn.NewUnstructured(tm))
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	return r.SendStatusEvents(ctx, obj)
 }

@@ -51,9 +51,24 @@ spec:
                 - org
                 - username
                 type: object
-              cloudProvider:
-                description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
-                type: string
+              nodeProvider:
+                properties:
+                  account:
+                    type: string
+                  cloud:
+                    enum:
+                    - do
+                    - aws
+                    - gcp
+                    - azure
+                    - k3s-local
+                    type: string
+                  region:
+                    type: string
+                required:
+                - cloud
+                - region
+                type: object
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -93,7 +108,7 @@ spec:
                 type: object
             required:
             - admin
-            - cloudProvider
+            - nodeProvider
             - resources
             - storage
             type: object
