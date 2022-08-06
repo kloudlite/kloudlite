@@ -21,7 +21,7 @@ type adminTT struct {
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	NodeProvider ct.NodeProvider `json:"nodeProvider"`
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector"`
 	Admin        adminTT           `json:"admin"`

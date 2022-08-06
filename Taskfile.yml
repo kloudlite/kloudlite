@@ -66,7 +66,7 @@ tasks:
       - |+
         filename=/tmp/kl-operator-$RANDOM.yml
         kustomize build config/default > $filename
-        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
+        cat $filename | yq 'select((.kind != "Deployment") and (.kind != "Namespace") )' -y
         cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
       - echo "Deployed {{.Name}}"
 
@@ -74,7 +74,7 @@ tasks:
     vars:
       Name: kloudlite-operator
     env:
-      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/operator-core:latest
+      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
       NAMESPACE: kl-core
     cmds:
       - make dev-docker-build dev-docker-push
@@ -86,13 +86,82 @@ tasks:
         cd config/default
         kustomize edit set image controller=${IMG}
         kustomize edit set namespace ${NAMESPACE}
+#       - |+
+#         filename=/tmp/kl-operator-$RANDOM.yml
+#         kustomize build config/default > $filename
+#         cat $filename | yq 'select((.kind != "Deployment") and (.kind != "Namespace") )' -y
+#         cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
+#         i
+
       - |+
-        filename=/tmp/kl-operator-$RANDOM.yml
-        kustomize build config/default > $filename
-        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
-        cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
+        yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap", "CustomResourceDefinition"] | length > 0 | not)' -y)
+
+        echo "$yamls" | yq 'select(.kind == "CustomResourceDefinition")' -y
+
+        echo "---"
+        echo "$yamls" | yq '
+          select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
+          .metadata.name = "{{.Name}}-manager-config"
+        ' -y
+
+        echo "---"
+        echo "$yamls" | yq '
+          select(.kind == "Service") |
+            .metadata.labels."control-plane" = "{{.Name}}" |
+            .spec.selector."control-plane" = "{{.Name}}" |
+            .metadata.name = "{{.Name}}"
+        ' -y
+        echo "---"
+        echo "$yamls" | yq '
+          select(.kind == "Deployment") |
+            .metadata.name = "{{.Name}}" |
+            .metadata.labels."control-plane" = "{{.Name}}" |
+            .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+            .spec.template.metadata.labels."control-plane" = "{{.Name}}"
+        ' -y
       - echo "Deployed {{.Name}}"
 
+  deploy:gen-yamls:
+    vars:
+      Name: kloudlite-operator
+    env:
+      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
+      NAMESPACE: kl-core
+    cmds:
+      - |+
+        cd config/manager
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |+
+        cd config/default
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |+
+         yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap", "CustomResourceDefinition"] | length > 0 | not)' -y)
+
+         echo "$yamls" | yq 'select(.kind == "CustomResourceDefinition")' -y
+
+         echo "---"
+         echo "$yamls" | yq '
+           select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
+           .metadata.name = "{{.Name}}-manager-config"
+         ' -y
+
+         echo "---"
+         echo "$yamls" | yq '
+           select(.kind == "Service") |
+             .metadata.labels."control-plane" = "{{.Name}}" |
+             .spec.selector."control-plane" = "{{.Name}}" |
+             .metadata.name = "{{.Name}}"
+         ' -y
+         echo "---"
+         echo "$yamls" | yq '
+           select(.kind == "Deployment") |
+             .metadata.name = "{{.Name}}" |
+             .metadata.labels."control-plane" = "{{.Name}}" |
+             .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+             .spec.template.metadata.labels."control-plane" = "{{.Name}}"
+         ' -y
 
   deploy:build:
     env:

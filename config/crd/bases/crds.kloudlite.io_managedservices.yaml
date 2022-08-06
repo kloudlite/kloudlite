@@ -35,9 +35,6 @@ spec:
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
-              cloudProvider:
-                description: CloudProvider +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
-                type: string
               inputs:
                 description: // +kubebuilder:validation:Optional // +kubebuilder:default=1
                   ReplicaCount int                 `json:"replicaCount,omitempty"`
@@ -53,13 +50,31 @@ spec:
                 required:
                 - apiVersion
                 type: object
+              nodeProvider:
+                properties:
+                  account:
+                    type: string
+                  cloud:
+                    enum:
+                    - do
+                    - aws
+                    - gcp
+                    - azure
+                    - k3s-local
+                    type: string
+                  region:
+                    type: string
+                required:
+                - cloud
+                - region
+                type: object
               nodeSelector:
                 additionalProperties:
                   type: string
                 type: object
             required:
-            - cloudProvider
             - msvcKind
+            - nodeProvider
             type: object
           status:
             properties:

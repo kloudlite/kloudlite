@@ -170,7 +170,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*influxdbmsvcv
 		return req.Done()
 	}
 
-	storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(r.Env, ct.Ext4)
+	storageClass, err := svcObj.Spec.NodeProvider.GetStorageClass(ct.Ext4)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}

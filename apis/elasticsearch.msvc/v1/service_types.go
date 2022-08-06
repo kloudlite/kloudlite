@@ -8,7 +8,7 @@ import (
 )
 
 type ServiceSpec struct {
-	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	NodeProvider ct.NodeProvider `json:"nodeProvider"`
 
 	// +kubebuilder:validation:optional
 	NodeSelector map[string]string `json:"nodeSelector"`
