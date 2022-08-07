@@ -58,6 +58,47 @@ tasks:
         cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
       - echo "Deployed {{.Name}}"
 
+  deploy:gen-yamls:
+    vars:
+      Name: kloudlite-helm-operator
+    env:
+      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
+      NAMESPACE: kl-core
+    cmds:
+      - |+
+        cd config/manager
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |+
+        cd config/default
+        kustomize edit set image controller=${IMG}
+        kustomize edit set namespace ${NAMESPACE}
+      - |+
+        cat config/crd/bases/*.yaml | yq -y
+
+        yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
+        echo "---"
+        echo "$yamls" | yq '
+          select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
+          .metadata.name = "{{.Name}}-manager-config"
+        ' -y
+
+        echo "---"
+        echo "$yamls" | yq '
+          select(.kind == "Service") |
+            .metadata.labels."control-plane" = "{{.Name}}" |
+            .spec.selector."control-plane" = "{{.Name}}" |
+            .metadata.name = "{{.Name}}"
+        ' -y
+        echo "---"
+        echo "$yamls" | yq '
+          select(.kind == "Deployment") |
+            .metadata.name = "{{.Name}}" |
+            .metadata.labels."control-plane" = "{{.Name}}" |
+            .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+            .spec.template.metadata.labels."control-plane" = "{{.Name}}"
+        ' -y
+
   run:
     cmds:
       - make install
