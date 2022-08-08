@@ -11,12 +11,11 @@ import (
 )
 
 type CommsGrpcEnv struct {
-	CommsHost string `env:"COMMS_HOST" required:"true"`
-	CommsPort string `env:"COMMS_PORT" required:"true"`
+	CommsService string `env:"COMMS_SERVICE" required:"true"`
 }
 
 func (c CommsGrpcEnv) GetGRPCServerURL() string {
-	return c.CommsHost + ":" + c.CommsPort
+	return c.CommsService
 }
 
 type Env struct {
