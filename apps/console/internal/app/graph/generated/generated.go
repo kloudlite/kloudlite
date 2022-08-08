@@ -2387,7 +2387,7 @@ type Router {
 type Route {
   path: String!
   appName: String!
-  port: Int!
+  port: Int
 }
 
 
@@ -10200,14 +10200,11 @@ func (ec *executionContext) _Route_port(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Router_id(ctx context.Context, field graphql.CollectedField, obj *model.Router) (ret graphql.Marshaler) {
@@ -15346,9 +15343,6 @@ func (ec *executionContext) _Route(ctx context.Context, sel ast.SelectionSet, ob
 
 			out.Values[i] = innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
