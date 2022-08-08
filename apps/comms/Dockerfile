@@ -9,6 +9,7 @@ COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
 COPY --chown=1001 --from=project-root common ./common
 COPY --chown=1001 --from=project-root grpc-interfaces ./grpc-interfaces
 COPY --chown=1001 --from=project-root pkg ./pkg
+COPY --chown=1001 email-templates ./email-templates
 RUN go mod download -x
 ARG APP
 RUN mkdir -p ./apps/$APP
@@ -23,5 +24,6 @@ RUN chmod +x /tmp/bin/$APP
 FROM golang:1.18.3-alpine3.16
 USER 1001:1001
 ARG APP
+COPY --from=base /tmp/app/email-templates /comms
 COPY --from=base /tmp/bin/$APP /comms
 CMD ["/comms"]
