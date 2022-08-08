@@ -146,7 +146,8 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 	}
 
 	if matched == nil {
-		return nil, errors.Newf("no such user(email=%s) exists", email)
+		d.logger.Warnf("user not found for email=%s", email)
+		return nil, errors.Newf("not valid credentials")
 	}
 
 	bytes := md5.Sum([]byte(password + matched.PasswordSalt))
