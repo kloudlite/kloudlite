@@ -43,7 +43,10 @@ func routerModelFromEntity(routerEntity *entities.Router) *model.Router {
 		entries = append(entries, &model.Route{
 			Path:    e.Path,
 			AppName: e.AppName,
-			Port:    int(e.Port),
+			Port: func() *int {
+				i := int(e.Port)
+				return &i
+			}(),
 		})
 	}
 	d := routerEntity.Domains

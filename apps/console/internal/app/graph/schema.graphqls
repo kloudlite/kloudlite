@@ -387,7 +387,7 @@ type CCMData {
 input RouteInput {
   path: String!
   appName: String!
-  port: Int!
+  port: Int
 }
 
 input NewResourcesIN {

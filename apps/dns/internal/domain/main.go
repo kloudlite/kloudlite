@@ -96,7 +96,7 @@ func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, erro
 
 func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos.ID) error {
 	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
-		"domain":    domain,
+		"host":      domain,
 		"accountId": accountId,
 	})
 	if err != nil {

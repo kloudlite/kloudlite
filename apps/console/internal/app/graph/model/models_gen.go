@@ -282,7 +282,7 @@ type Route struct {
 type RouteInput struct {
 	Path    string `json:"path"`
 	AppName string `json:"appName"`
-	Port    int    `json:"port"`
+	Port    *int   `json:"port"`
 }
 
 type Router struct {

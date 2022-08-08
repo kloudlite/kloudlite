@@ -2479,7 +2479,7 @@ type CCMData {
 input RouteInput {
   path: String!
   appName: String!
-  port: Int!
+  port: Int
 }
 
 input NewResourcesIN {
@@ -12585,7 +12585,7 @@ func (ec *executionContext) unmarshalInputRouteInput(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
-			it.Port, err = ec.unmarshalNInt2int(ctx, v)
+			it.Port, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
