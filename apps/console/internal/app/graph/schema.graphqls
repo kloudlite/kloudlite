@@ -295,7 +295,7 @@ type Router {
 type Route {
   path: String!
   appName: String!
-  port: Int!
+  port: Int
 }
 
 

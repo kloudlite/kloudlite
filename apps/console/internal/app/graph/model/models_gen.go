@@ -276,7 +276,7 @@ type ProjectMembership struct {
 type Route struct {
 	Path    string `json:"path"`
 	AppName string `json:"appName"`
-	Port    int    `json:"port"`
+	Port    *int   `json:"port"`
 }
 
 type RouteInput struct {
