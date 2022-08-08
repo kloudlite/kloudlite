@@ -11,10 +11,9 @@ tasks:
     cmds:
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   docker-build:
-    dir: ../..
     vars:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/comms:v2
-      APP_DIR: ./apps/comms
+      APP: comms
     cmds:
-      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
+      - docker buildx build --platform linux/amd64 -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
       - docker push {{.IMAGE}}
