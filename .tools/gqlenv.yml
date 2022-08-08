@@ -5,9 +5,9 @@ dev:
   # url: http://localhost:12345/query
   # url: http://localhost:8085/query
   # url: http://auth-api/query
-  url: http://localhost:3000/query
+  # url: http://localhost:3000/query
   # url: http://localhost:3002/query
-  # url: http://ci-api.hotspot/query
+  url: http://ci-api.hotspot/query
   # url: http://ci-api.hotspot/query
   headers:
     cookie: hotspot-session=ses-k-pua07tn0w4zkdmdiodzcn5ic8cp; domain=.dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None

@@ -143,7 +143,6 @@ var Module = fx.Module(
 					switch gitProvider {
 					case common.ProviderGithub:
 						{
-							// tkVars, pipeline, err := d.TektonInterceptorGithub(ctx.Context(), &req)
 							tkVars, _, err := d.TektonInterceptorGithub(ctx.Context(), &req)
 							if err != nil {
 								logger.Errorf(err, "tekton interceptor github")
@@ -152,27 +151,24 @@ var Module = fx.Module(
 								if err != nil {
 									return ctx.JSON(err)
 								}
-								logger.Infof("ERR Response: %s", jsonBody)
+								logger.Debugf("ERR Response: %s", jsonBody)
 								return ctx.Send(jsonBody)
 							}
 
-							// projectOut, err := consoleCli.GetProjectName(
-							// 	ctx.Context(), &console.ProjectIn{ProjectId: pipeline.ProjectId},
-							// )
 							if err != nil {
 								return ctx.JSON(err)
 							}
 							tkVarsJson, err := tkVars.ToJson()
 							if err != nil {
-								logger.Infof("ERR %s", err)
+								logger.Debugf("ERR %s", err)
 								return ctx.JSON(err)
 							}
 							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
 							if err != nil {
-								logger.Infof("ERR %s", err)
+								logger.Debugf("ERR %s", err)
 								return ctx.JSON(err)
 							}
-							logger.Infof("responseBody: %s\n", responseBody)
+							logger.Debugf("responseBody: %s\n", responseBody)
 							return ctx.Send(responseBody)
 						}
 					case common.ProviderGitlab:
@@ -182,19 +178,24 @@ var Module = fx.Module(
 								response := tekton.NewResponse(&req).Err(err)
 								jsonBody, err := response.ToJson()
 								if err != nil {
+									logger.Infof("ERR Response: %v", err)
 									return ctx.JSON(err)
 								}
+
+								logger.Infof("ERR Response: %s", jsonBody)
 								return ctx.Send(jsonBody)
 							}
 							tkVarsJson, err := tkVars.ToJson()
 							if err != nil {
+								logger.Debugf("Err Response: %v", err)
 								return ctx.JSON(err)
 							}
 							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
 							if err != nil {
+								logger.Debugf("Err Response: %v", err)
 								return ctx.JSON(err)
 							}
-							logger.Infof("responseBody: %s\n", responseBody)
+							logger.Debugf("responseBody: %s\n", responseBody)
 							return ctx.Send(responseBody)
 						}
 					}
