@@ -22,11 +22,13 @@ import (
 )
 
 type Env struct {
-	CookieDomain string `env:"COOKIE_DOMAIN"`
+	CookieDomain   string `env:"COOKIE_DOMAIN"`
+	DNSDomainNames string `env:"DNS_DOMAIN_NAMES"`
 }
 
 type DNSHandler struct {
-	domain domain.Domain
+	domain         domain.Domain
+	dnsDomainNames []string
 }
 
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -36,9 +38,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	for _, q := range r.Question {
 		switch q.Qtype {
 		case dns.TypeNS:
-			for _, name := range []string{
-				"ns1.internal.kloudlite.io.",
-			} {
+			for _, name := range h.dnsDomainNames {
 				rr := &dns.NS{
 					Hdr: dns.RR_Header{
 						Name:   q.Name,
@@ -109,11 +109,12 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.NodeIps]("node_ips", "nips", domain.NodeIpIndexes),
 	cache.NewFxRepo[[]*domain.Record](),
 	domain.Module,
-	fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server, d domain.Domain, recCache cache.Repo[[]*domain.Record]) {
+	fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server, d domain.Domain, recCache cache.Repo[[]*domain.Record], env *Env) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				s.Handler = &DNSHandler{
-					domain: d,
+					domain:         d,
+					dnsDomainNames: strings.Split(env.DNSDomainNames, ","),
 				}
 				return nil
 			},
