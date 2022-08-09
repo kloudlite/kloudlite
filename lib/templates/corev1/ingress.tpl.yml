@@ -36,6 +36,8 @@ metadata:
     {{- end}}
     {{- end}}
 
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/rewrite-target" "/$1" }}
+
     {{K8sAnnotation $virtualHost "nginx.ingress.kubernetes.io/upstream-vhost" $virtualHost}}
 
     {{- if $annotations}}
@@ -66,7 +68,13 @@ spec:
                 name: {{$route.App | default $route.Lambda}}
                 port:
                   number: {{$route.Port}}
-            path: {{$route.Path}}
+
+            {{- if $route.Rewrite }}
+            path: {{$route.Path}}?(.*)
+            {{- else}}
+            {{ $x := len $route.Path }}
+            path: /?{{substr 1 $x $route.Path}}
+            {{- end}}
             pathType: Prefix
           {{- end}}
     {{- range $domain := .Spec.Domains }}
