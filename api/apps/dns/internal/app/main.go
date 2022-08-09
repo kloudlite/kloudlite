@@ -23,7 +23,7 @@ import (
 
 type Env struct {
 	CookieDomain   string `env:"COOKIE_DOMAIN"`
-	DNSDomainNames string `env:"DNS_DOMAIN_NAMES"`
+	DNSDomainNames string `env:"DNS_DOMAIN_NAMES" required:"true"`
 }
 
 type DNSHandler struct {
