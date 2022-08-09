@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -154,6 +155,9 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 	var ingressList []string
 
 	for _, route := range router.Spec.Routes {
+		if !strings.HasSuffix(route.Path, "/") {
+			route.Path = route.Path + "/"
+		}
 		if s := route.Lambda; s != "" {
 			if _, ok := lambdaGroups[route.Lambda]; !ok {
 				lambdaGroups[route.Lambda] = []crdsv1.Route{}

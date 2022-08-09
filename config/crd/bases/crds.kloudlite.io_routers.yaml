@@ -73,6 +73,8 @@ spec:
                       type: string
                     port:
                       type: integer
+                    rewrite:
+                      type: boolean
                   required:
                   - path
                   - port
