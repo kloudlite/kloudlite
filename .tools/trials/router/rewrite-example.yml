@@ -1,0 +1,14 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Router
+metadata:
+  name: rewriter
+  namespace: kl-core
+spec:
+  domains:
+    - "testing.devx.khost.dev"
+  https:
+    enabled: true
+  routes:
+    - app: example
+      path: /
+      port: 80
