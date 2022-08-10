@@ -23,11 +23,8 @@ type Site struct {
 
 type Record struct {
 	repos.BaseEntity `bson:",inline"`
-	Type             string `bson:"type,omitempty" json:"type,omitempty"`
-	Host             string `bson:"host,omitempty" json:"host,omitempty"`
-	Answer           string `bson:"answer,omitempty" json:"answer,omitempty"`
-	TTL              uint32 `bson:"ttl,omitempty" json:"ttl,omitempty"`
-	Priority         int64  `bson:"priority,omitempty" json:"priority,omitempty"`
+	Host             string   `bson:"host,omitempty" json:"host,omitempty"`
+	Answers          []string `bson:"answers,omitempty" json:"answers,omitempty"`
 }
 
 var RecordIndexes = []repos.IndexField{
@@ -46,7 +43,6 @@ var RecordIndexes = []repos.IndexField{
 		Unique: true,
 	},
 }
-
 var SiteIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
@@ -60,7 +56,6 @@ var SiteIndexes = []repos.IndexField{
 		},
 	},
 }
-
 var NodeIpIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
@@ -69,7 +64,6 @@ var NodeIpIndexes = []repos.IndexField{
 		Unique: true,
 	},
 }
-
 var AccountCNameIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{

@@ -26,7 +26,7 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 	if err != nil {
 		return err
 	}
-	return d.AddARecords(ctx, host, records)
+	return d.addARecords(ctx, host, records)
 }
 
 func (d *domainI) UpdateNodeIPs(ctx context.Context, region string, ips []string) bool {
@@ -194,34 +194,14 @@ func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string
 	return accountDNS.CName, nil
 }
 
-func (d *domainI) GetRecords(ctx context.Context, host string) ([]*Record, error) {
-	find, err := d.recordsRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"host": host,
-		},
+func (d *domainI) GetRecord(ctx context.Context, host string) (*Record, error) {
+	one, err := d.recordsRepo.FindOne(ctx, repos.Filter{
+		"host": host,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return find, nil
-}
-
-func (d *domainI) CreateRecord(
-	ctx context.Context,
-	recordType string,
-	host string,
-	answer string,
-	ttl uint32,
-	priority int64,
-) (*Record, error) {
-	create, err := d.recordsRepo.Create(ctx, &Record{
-		Type:     recordType,
-		Host:     host,
-		Answer:   answer,
-		TTL:      ttl,
-		Priority: priority,
-	})
-	return create, err
+	return one, nil
 }
 
 func (d *domainI) deleteRecords(ctx context.Context, host string) error {
@@ -238,15 +218,10 @@ func (d *domainI) DeleteRecords(ctx context.Context, host string) error {
 func (d *domainI) addARecords(ctx context.Context, host string, aRecords []string) error {
 	var err error
 	d.recordsCache.Drop(ctx, host)
-	for _, aRecord := range aRecords {
-		_, err = d.recordsRepo.Create(ctx, &Record{
-			Type:     "A",
-			Host:     host,
-			Answer:   aRecord,
-			TTL:      30,
-			Priority: 0,
-		})
-	}
+	_, err = d.recordsRepo.Create(ctx, &Record{
+		Host:    host,
+		Answers: aRecords,
+	})
 	return err
 }
 

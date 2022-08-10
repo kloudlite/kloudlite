@@ -71,23 +71,21 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				}
 				break
 			} else {
-				records, err := h.domain.GetRecords(todo, host)
-				if err != nil || len(records) == 0 {
+				record, err := h.domain.GetRecord(todo, host)
+				if err != nil || record == nil {
 					msg.Answer = append(msg.Answer, &dns.A{
 						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
 					})
 				}
-				rand.Shuffle(len(records), func(i, j int) {
-					records[i], records[j] = records[j], records[i]
+				rand.Shuffle(len(record.Answers), func(i, j int) {
+					record.Answers[i], record.Answers[j] = record.Answers[j], record.Answers[i]
 				})
-				for _, r := range records {
-					if r.Type == "A" {
-						msg.Answer = append(msg.Answer, &dns.A{
-							Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: r.TTL},
-							A:   net.ParseIP(r.Answer),
-						},
-						)
-					}
+				for _, a := range record.Answers {
+					msg.Answer = append(msg.Answer, &dns.A{
+						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(30)},
+						A:   net.ParseIP(a),
+					},
+					)
 				}
 			}
 		}
@@ -165,21 +163,16 @@ var Module = fx.Module(
 		})
 		server.Get("/get-records/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")
-			records, err := d.GetRecords(c.Context(), domainName)
+			record, err := d.GetRecord(c.Context(), domainName)
 			if err != nil {
 				return err
 			}
-
-			r, err := json.Marshal(records)
-
+			r, err := json.Marshal(record)
 			if err != nil {
 				return err
 			}
-
-			c.Send([]byte(r))
-
+			c.Send(r)
 			return nil
-
 		})
 		server.Delete("/delete-domain/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")

@@ -29,6 +29,7 @@ type domain struct {
 	configRepo           repos.DbRepo[*entities.Config]
 	routerRepo           repos.DbRepo[*entities.Router]
 	secretRepo           repos.DbRepo[*entities.Secret]
+	regionRepo           repos.DbRepo[*entities.EdgeRegion]
 	messageProducer      redpanda.Producer
 	messageTopic         string
 	logger               logging.Logger
@@ -46,6 +47,7 @@ type domain struct {
 	financeClient        finance.FinanceClient
 	inventoryPath        string
 	jsEvalClient         jseval.JSEvalClient
+	providerRepo         repos.DbRepo[*entities.CloudProvider]
 }
 
 func generateReadable(name string) string {
@@ -69,6 +71,8 @@ func fxDomain(
 	configRepo repos.DbRepo[*entities.Config],
 	secretRepo repos.DbRepo[*entities.Secret],
 	routerRepo repos.DbRepo[*entities.Router],
+	regionRepo repos.DbRepo[*entities.EdgeRegion],
+	providerRepo repos.DbRepo[*entities.CloudProvider],
 	appRepo repos.DbRepo[*entities.App],
 	managedSvcRepo repos.DbRepo[*entities.ManagedService],
 	managedResRepo repos.DbRepo[*entities.ManagedResource],
@@ -86,6 +90,7 @@ func fxDomain(
 ) Domain {
 	return &domain{
 		kubeCli:              kubecli,
+		providerRepo:         providerRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,
 		ciClient:             ciClient,
@@ -108,6 +113,7 @@ func fxDomain(
 		financeClient:        financeClient,
 		inventoryPath:        env.InventoryPath,
 		jsEvalClient:         jsEvalClient,
+		regionRepo:           regionRepo,
 	}
 }
 

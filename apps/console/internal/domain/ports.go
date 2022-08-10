@@ -8,6 +8,12 @@ import (
 )
 
 type Domain interface {
+	GetRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error)
+	CreateRegion(ctx context.Context, region *entities.EdgeRegion) error
+
+	GetCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error)
+	CreateCloudProvider(ctx context.Context, accountId *repos.ID, region *entities.CloudProvider) error
+
 	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
 	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
 	GetStoragePlans(ctx context.Context) ([]entities.StoragePlan, error)
