@@ -77,6 +77,22 @@ func (r *appResolver) DoUnfreeze(ctx context.Context, obj *model.App) (bool, err
 	return true, nil
 }
 
+func (r *cloudProviderResolver) Regions(ctx context.Context, obj *model.CloudProvider) ([]*model.EdgeRegion, error) {
+	regions, err := r.Domain.GetRegions(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*model.EdgeRegion, 0)
+	for _, r := range regions {
+		res = append(res, &model.EdgeRegion{
+			ID:     r.Id,
+			Name:   r.Name,
+			Region: r.Region,
+		})
+	}
+	return res, nil
+}
+
 func (r *deviceResolver) User(ctx context.Context, obj *model.Device) (*model.User, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
@@ -761,6 +777,31 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, routerID repos.
 	return router, nil
 }
 
+func (r *mutationResolver) CoreCreateEdgeRegion(ctx context.Context, edgeRegion model.EdgeRegionIn) (bool, error) {
+	err := r.Domain.CreateRegion(ctx, &entities.EdgeRegion{
+		BaseEntity: repos.BaseEntity{},
+		Name:       edgeRegion.Name,
+		ProviderId: edgeRegion.Provider,
+		Region:     edgeRegion.Region,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *mutationResolver) CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error) {
+	err := r.Domain.CreateCloudProvider(ctx, accountID, &entities.CloudProvider{
+		Name:      cloudProvider.Name,
+		Provider:  cloudProvider.Provider,
+		AccountId: accountID,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
 	entities, err := r.Domain.GetProjectMemberships(ctx, obj.ID)
 	accountMemberships := make([]*model.ProjectMembership, len(entities))
@@ -1144,6 +1185,22 @@ func (r *queryResolver) CoreGetLamdaPlan(ctx context.Context) (*model.LambdaPlan
 	return &model.LambdaPlan{Name: "Default"}, nil
 }
 
+func (r *queryResolver) CoreGetCloudProviders(ctx context.Context, accountID repos.ID) ([]*model.CloudProvider, error) {
+	providers, err := r.Domain.GetCloudProviders(ctx, accountID)
+	if err != nil {
+		return nil, err
+	}
+	cloudProviders := make([]*model.CloudProvider, 0)
+	for _, i := range providers {
+		cloudProviders = append(cloudProviders, &model.CloudProvider{
+			ID:       i.Id,
+			Name:     i.Name,
+			Provider: i.Provider,
+		})
+	}
+	return cloudProviders, nil
+}
+
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
@@ -1176,6 +1233,9 @@ func (r *Resolver) Account() generated.AccountResolver { return &accountResolver
 // App returns generated.AppResolver implementation.
 func (r *Resolver) App() generated.AppResolver { return &appResolver{r} }
 
+// CloudProvider returns generated.CloudProviderResolver implementation.
+func (r *Resolver) CloudProvider() generated.CloudProviderResolver { return &cloudProviderResolver{r} }
+
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
 
@@ -1199,6 +1259,7 @@ func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
 type accountResolver struct{ *Resolver }
 type appResolver struct{ *Resolver }
+type cloudProviderResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
 type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }
@@ -1206,24 +1267,3 @@ type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *appResolver) Freeze(ctx context.Context, obj *model.App) (bool, error) {
-	err := r.Domain.FreezeApp(ctx, obj.ID)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-func (r *appResolver) Unfreeze(ctx context.Context, obj *model.App) (bool, error) {
-	err := r.Domain.UnFreezeApp(ctx, obj.ID)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}

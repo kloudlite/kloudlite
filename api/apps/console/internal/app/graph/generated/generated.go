@@ -40,6 +40,7 @@ type Config struct {
 type ResolverRoot interface {
 	Account() AccountResolver
 	App() AppResolver
+	CloudProvider() CloudProviderResolver
 	Device() DeviceResolver
 	Entity() EntityResolver
 	ManagedRes() ManagedResResolver
@@ -119,6 +120,13 @@ type ComplexityRoot struct {
 		Value func(childComplexity int) int
 	}
 
+	CloudProvider struct {
+		ID       func(childComplexity int) int
+		Name     func(childComplexity int) int
+		Provider func(childComplexity int) int
+		Regions  func(childComplexity int) int
+	}
+
 	ComputePlan struct {
 		DedicatedEnabled      func(childComplexity int) int
 		Desc                  func(childComplexity int) int
@@ -147,6 +155,12 @@ type ComplexityRoot struct {
 		Ports         func(childComplexity int) int
 		Region        func(childComplexity int) int
 		User          func(childComplexity int) int
+	}
+
+	EdgeRegion struct {
+		ID     func(childComplexity int) int
+		Name   func(childComplexity int) int
+		Region func(childComplexity int) int
 	}
 
 	Entity struct {
@@ -221,34 +235,36 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CoreAddDevice          func(childComplexity int, accountID repos.ID, name string) int
-		CoreCreateApp          func(childComplexity int, projectID repos.ID, app model.AppInput) int
-		CoreCreateConfig       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
-		CoreCreateProject      func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) int
-		CoreCreateRouter       func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
-		CoreCreateSecret       func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
-		CoreDeleteApp          func(childComplexity int, appID repos.ID) int
-		CoreDeleteConfig       func(childComplexity int, configID repos.ID) int
-		CoreDeleteProject      func(childComplexity int, projectID repos.ID) int
-		CoreDeleteRouter       func(childComplexity int, routerID repos.ID) int
-		CoreDeleteSecret       func(childComplexity int, secretID repos.ID) int
-		CoreRemoveDevice       func(childComplexity int, deviceID repos.ID) int
-		CoreRollbackApp        func(childComplexity int, appID repos.ID, version int) int
-		CoreUpdateApp          func(childComplexity int, projectID repos.ID, appID repos.ID, app model.AppInput) int
-		CoreUpdateConfig       func(childComplexity int, configID repos.ID, description *string, data []*model.CSEntryIn) int
-		CoreUpdateDevice       func(childComplexity int, deviceID repos.ID, name *string, region *string, ports []int) int
-		CoreUpdateProject      func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
-		CoreUpdateRouter       func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
-		CoreUpdateSecret       func(childComplexity int, secretID repos.ID, description *string, data []*model.CSEntryIn) int
-		IamInviteProjectMember func(childComplexity int, projectID repos.ID, email string, role string) int
-		IamRemoveProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID) int
-		IamUpdateProjectMember func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
-		ManagedResCreate       func(childComplexity int, installationID repos.ID, name string, resourceType string, values map[string]interface{}) int
-		ManagedResDelete       func(childComplexity int, resID repos.ID) int
-		ManagedResUpdate       func(childComplexity int, resID repos.ID, values map[string]interface{}) int
-		MangedSvcInstall       func(childComplexity int, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
-		MangedSvcUninstall     func(childComplexity int, installationID repos.ID) int
-		MangedSvcUpdate        func(childComplexity int, installationID repos.ID, values map[string]interface{}) int
+		CoreAddDevice           func(childComplexity int, accountID repos.ID, name string) int
+		CoreCreateApp           func(childComplexity int, projectID repos.ID, app model.AppInput) int
+		CoreCreateCloudProvider func(childComplexity int, accountID *repos.ID, cloudProvider model.CloudProviderIn) int
+		CoreCreateConfig        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
+		CoreCreateEdgeRegion    func(childComplexity int, edgeRegion model.EdgeRegionIn) int
+		CoreCreateProject       func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) int
+		CoreCreateRouter        func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
+		CoreCreateSecret        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
+		CoreDeleteApp           func(childComplexity int, appID repos.ID) int
+		CoreDeleteConfig        func(childComplexity int, configID repos.ID) int
+		CoreDeleteProject       func(childComplexity int, projectID repos.ID) int
+		CoreDeleteRouter        func(childComplexity int, routerID repos.ID) int
+		CoreDeleteSecret        func(childComplexity int, secretID repos.ID) int
+		CoreRemoveDevice        func(childComplexity int, deviceID repos.ID) int
+		CoreRollbackApp         func(childComplexity int, appID repos.ID, version int) int
+		CoreUpdateApp           func(childComplexity int, projectID repos.ID, appID repos.ID, app model.AppInput) int
+		CoreUpdateConfig        func(childComplexity int, configID repos.ID, description *string, data []*model.CSEntryIn) int
+		CoreUpdateDevice        func(childComplexity int, deviceID repos.ID, name *string, region *string, ports []int) int
+		CoreUpdateProject       func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
+		CoreUpdateRouter        func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
+		CoreUpdateSecret        func(childComplexity int, secretID repos.ID, description *string, data []*model.CSEntryIn) int
+		IamInviteProjectMember  func(childComplexity int, projectID repos.ID, email string, role string) int
+		IamRemoveProjectMember  func(childComplexity int, projectID repos.ID, userID repos.ID) int
+		IamUpdateProjectMember  func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
+		ManagedResCreate        func(childComplexity int, installationID repos.ID, name string, resourceType string, values map[string]interface{}) int
+		ManagedResDelete        func(childComplexity int, resID repos.ID) int
+		ManagedResUpdate        func(childComplexity int, resID repos.ID, values map[string]interface{}) int
+		MangedSvcInstall        func(childComplexity int, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
+		MangedSvcUninstall      func(childComplexity int, installationID repos.ID) int
+		MangedSvcUpdate         func(childComplexity int, installationID repos.ID, values map[string]interface{}) int
 	}
 
 	Project struct {
@@ -276,6 +292,7 @@ type ComplexityRoot struct {
 		CoreCheckDeviceExist        func(childComplexity int, accountID repos.ID, name string) int
 		CoreConfig                  func(childComplexity int, configID repos.ID) int
 		CoreConfigs                 func(childComplexity int, projectID repos.ID, search *string) int
+		CoreGetCloudProviders       func(childComplexity int, accountID repos.ID) int
 		CoreGetComputePlans         func(childComplexity int) int
 		CoreGetLamdaPlan            func(childComplexity int) int
 		CoreGetStoragePlans         func(childComplexity int) int
@@ -344,6 +361,9 @@ type AppResolver interface {
 	DoFreeze(ctx context.Context, obj *model.App) (bool, error)
 	DoUnfreeze(ctx context.Context, obj *model.App) (bool, error)
 }
+type CloudProviderResolver interface {
+	Regions(ctx context.Context, obj *model.CloudProvider) ([]*model.EdgeRegion, error)
+}
 type DeviceResolver interface {
 	User(ctx context.Context, obj *model.Device) (*model.User, error)
 
@@ -396,6 +416,8 @@ type MutationResolver interface {
 	CoreCreateRouter(ctx context.Context, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) (*model.Router, error)
 	CoreUpdateRouter(ctx context.Context, routerID repos.ID, domains []string, routes []*model.RouteInput) (bool, error)
 	CoreDeleteRouter(ctx context.Context, routerID repos.ID) (bool, error)
+	CoreCreateEdgeRegion(ctx context.Context, edgeRegion model.EdgeRegionIn) (bool, error)
+	CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error)
 }
 type ProjectResolver interface {
 	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
@@ -421,6 +443,7 @@ type QueryResolver interface {
 	CoreGetComputePlans(ctx context.Context) ([]*model.ComputePlan, error)
 	CoreGetStoragePlans(ctx context.Context) ([]*model.StoragePlan, error)
 	CoreGetLamdaPlan(ctx context.Context) (*model.LambdaPlan, error)
+	CoreGetCloudProviders(ctx context.Context, accountID repos.ID) ([]*model.CloudProvider, error)
 }
 type UserResolver interface {
 	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
@@ -728,6 +751,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CSEntry.Value(childComplexity), true
 
+	case "CloudProvider.Id":
+		if e.complexity.CloudProvider.ID == nil {
+			break
+		}
+
+		return e.complexity.CloudProvider.ID(childComplexity), true
+
+	case "CloudProvider.Name":
+		if e.complexity.CloudProvider.Name == nil {
+			break
+		}
+
+		return e.complexity.CloudProvider.Name(childComplexity), true
+
+	case "CloudProvider.provider":
+		if e.complexity.CloudProvider.Provider == nil {
+			break
+		}
+
+		return e.complexity.CloudProvider.Provider(childComplexity), true
+
+	case "CloudProvider.regions":
+		if e.complexity.CloudProvider.Regions == nil {
+			break
+		}
+
+		return e.complexity.CloudProvider.Regions(childComplexity), true
+
 	case "ComputePlan.dedicatedEnabled":
 		if e.complexity.ComputePlan.DedicatedEnabled == nil {
 			break
@@ -874,6 +925,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Device.User(childComplexity), true
+
+	case "EdgeRegion.Id":
+		if e.complexity.EdgeRegion.ID == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.ID(childComplexity), true
+
+	case "EdgeRegion.Name":
+		if e.complexity.EdgeRegion.Name == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.Name(childComplexity), true
+
+	case "EdgeRegion.region":
+		if e.complexity.EdgeRegion.Region == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.Region(childComplexity), true
 
 	case "Entity.findAccountByID":
 		if e.complexity.Entity.FindAccountByID == nil {
@@ -1242,6 +1314,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreCreateApp(childComplexity, args["projectId"].(repos.ID), args["app"].(model.AppInput)), true
 
+	case "Mutation.core_createCloudProvider":
+		if e.complexity.Mutation.CoreCreateCloudProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_createCloudProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreCreateCloudProvider(childComplexity, args["accountId"].(*repos.ID), args["cloudProvider"].(model.CloudProviderIn)), true
+
 	case "Mutation.core_createConfig":
 		if e.complexity.Mutation.CoreCreateConfig == nil {
 			break
@@ -1253,6 +1337,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreCreateConfig(childComplexity, args["projectId"].(repos.ID), args["name"].(string), args["description"].(*string), args["data"].([]*model.CSEntryIn)), true
+
+	case "Mutation.core_createEdgeRegion":
+		if e.complexity.Mutation.CoreCreateEdgeRegion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_createEdgeRegion_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreCreateEdgeRegion(childComplexity, args["edgeRegion"].(model.EdgeRegionIn)), true
 
 	case "Mutation.core_createProject":
 		if e.complexity.Mutation.CoreCreateProject == nil {
@@ -1705,6 +1801,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreConfigs(childComplexity, args["projectId"].(repos.ID), args["search"].(*string)), true
 
+	case "Query.core_getCloudProviders":
+		if e.complexity.Query.CoreGetCloudProviders == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getCloudProviders_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetCloudProviders(childComplexity, args["accountId"].(repos.ID)), true
+
 	case "Query.core_getComputePlans":
 		if e.complexity.Query.CoreGetComputePlans == nil {
 			break
@@ -2121,6 +2229,8 @@ type Query {
   core_getComputePlans: [ComputePlan!]
   core_getStoragePlans: [StoragePlan!]
   core_getLamdaPlan: LambdaPlan!
+  
+  core_getCloudProviders(accountId: ID!): [CloudProvider!]
 }
 
 type ManagedRes {
@@ -2147,6 +2257,30 @@ type ManagedSvc {
   outputs: Json!
   createdAt: String!
   updatedAt: String
+}
+
+type CloudProvider {
+  Id: ID!
+  Name: String!
+  provider: String!
+  regions: [EdgeRegion!]!
+}
+
+input CloudProviderIn {
+  Name: String!
+  provider: String!
+}
+
+type EdgeRegion {
+    Id: ID!
+  Name: String!
+  region : String!
+}
+
+input EdgeRegionIn {
+  Name: String!
+  region : String!
+  provider: ID!
 }
 
 
@@ -2214,6 +2348,9 @@ type Mutation {
   core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
+
+  core_createEdgeRegion(edgeRegion: EdgeRegionIn!): Boolean!
+  core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean!
 
 }
 
@@ -2707,6 +2844,30 @@ func (ec *executionContext) field_Mutation_core_createApp_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_core_createCloudProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountId"] = arg0
+	var arg1 model.CloudProviderIn
+	if tmp, ok := rawArgs["cloudProvider"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
+		arg1, err = ec.unmarshalNCloudProviderIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cloudProvider"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_core_createConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2746,6 +2907,21 @@ func (ec *executionContext) field_Mutation_core_createConfig_args(ctx context.Co
 		}
 	}
 	args["data"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createEdgeRegion_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.EdgeRegionIn
+	if tmp, ok := rawArgs["edgeRegion"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeRegion"))
+		arg0, err = ec.unmarshalNEdgeRegionIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegionIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["edgeRegion"] = arg0
 	return args, nil
 }
 
@@ -3622,6 +3798,21 @@ func (ec *executionContext) field_Query_core_configs_args(ctx context.Context, r
 		}
 	}
 	args["search"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getCloudProviders_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountId"] = arg0
 	return args, nil
 }
 
@@ -5260,6 +5451,146 @@ func (ec *executionContext) _CSEntry_value(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _CloudProvider_Id(ctx context.Context, field graphql.CollectedField, obj *model.CloudProvider) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CloudProvider_Name(ctx context.Context, field graphql.CollectedField, obj *model.CloudProvider) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CloudProvider_provider(ctx context.Context, field graphql.CollectedField, obj *model.CloudProvider) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Provider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CloudProvider_regions(ctx context.Context, field graphql.CollectedField, obj *model.CloudProvider) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.CloudProvider().Regions(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.EdgeRegion)
+	fc.Result = res
+	return ec.marshalNEdgeRegion2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegionᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5987,6 +6318,111 @@ func (ec *executionContext) _Device_region(ctx context.Context, field graphql.Co
 	res := resTmp.(*string)
 	fc.Result = res
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_Id(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_Name(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_region(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Region, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8733,6 +9169,90 @@ func (ec *executionContext) _Mutation_core_deleteRouter(ctx context.Context, fie
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_core_createEdgeRegion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_createEdgeRegion_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreCreateEdgeRegion(rctx, args["edgeRegion"].(model.EdgeRegionIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_core_createCloudProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_createCloudProvider_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreCreateCloudProvider(rctx, args["accountId"].(*repos.ID), args["cloudProvider"].(model.CloudProviderIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Project_id(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -9955,6 +10475,45 @@ func (ec *executionContext) _Query_core_getLamdaPlan(ctx context.Context, field 
 	res := resTmp.(*model.LambdaPlan)
 	fc.Result = res
 	return ec.marshalNLambdaPlan2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLambdaPlan(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_core_getCloudProviders(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_core_getCloudProviders_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreGetCloudProviders(rctx, args["accountId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.CloudProvider)
+	fc.Result = res
+	return ec.marshalOCloudProvider2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12314,6 +12873,37 @@ func (ec *executionContext) unmarshalInputCSEntryIn(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCloudProviderIn(ctx context.Context, obj interface{}) (model.CloudProviderIn, error) {
+	var it model.CloudProviderIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "Name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "provider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeviceIn(ctx context.Context, obj interface{}) (model.DeviceIn, error) {
 	var it model.DeviceIn
 	asMap := map[string]interface{}{}
@@ -12352,6 +12942,45 @@ func (ec *executionContext) unmarshalInputDeviceIn(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ports"))
 			it.Ports, err = ec.unmarshalNInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEdgeRegionIn(ctx context.Context, obj interface{}) (model.EdgeRegionIn, error) {
+	var it model.EdgeRegionIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "Name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "region":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			it.Region, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "provider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13265,6 +13894,77 @@ func (ec *executionContext) _CSEntry(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var cloudProviderImplementors = []string{"CloudProvider"}
+
+func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.SelectionSet, obj *model.CloudProvider) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cloudProviderImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CloudProvider")
+		case "Id":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._CloudProvider_Id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "Name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._CloudProvider_Name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "provider":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._CloudProvider_provider(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "regions":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CloudProvider_regions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var computePlanImplementors = []string{"ComputePlan", "_Entity"}
 
 func (ec *executionContext) _ComputePlan(ctx context.Context, sel ast.SelectionSet, obj *model.ComputePlan) graphql.Marshaler {
@@ -13551,6 +14251,57 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var edgeRegionImplementors = []string{"EdgeRegion"}
+
+func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSet, obj *model.EdgeRegion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, edgeRegionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdgeRegion")
+		case "Id":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._EdgeRegion_Id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._EdgeRegion_Name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "region":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._EdgeRegion_region(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14599,6 +15350,26 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "core_createEdgeRegion":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_createEdgeRegion(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "core_createCloudProvider":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_createCloudProvider(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15225,6 +15996,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_getCloudProviders":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getCloudProviders(ctx, field)
 				return res
 			}
 
@@ -16344,6 +17135,21 @@ func (ec *executionContext) unmarshalNCSEntryIn2ᚖkloudliteᚗioᚋappsᚋconso
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNCloudProvider2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProvider(ctx context.Context, sel ast.SelectionSet, v *model.CloudProvider) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._CloudProvider(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCloudProviderIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderIn(ctx context.Context, v interface{}) (model.CloudProviderIn, error) {
+	res, err := ec.unmarshalInputCloudProviderIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNComputePlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx context.Context, sel ast.SelectionSet, v model.ComputePlan) graphql.Marshaler {
 	return ec._ComputePlan(ctx, sel, &v)
 }
@@ -16472,6 +17278,65 @@ func (ec *executionContext) marshalNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋ
 		return graphql.Null
 	}
 	return ec._Device(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdgeRegion2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EdgeRegion) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNEdgeRegion2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegion(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdgeRegion2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegion(ctx context.Context, sel ast.SelectionSet, v *model.EdgeRegion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._EdgeRegion(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdgeRegionIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegionIn(ctx context.Context, v interface{}) (model.EdgeRegionIn, error) {
+	res, err := ec.unmarshalInputEdgeRegionIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNEnvVal2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvVal(ctx context.Context, sel ast.SelectionSet, v *model.EnvVal) graphql.Marshaler {
@@ -17577,6 +18442,53 @@ func (ec *executionContext) unmarshalOCSEntryIn2ᚕᚖkloudliteᚗioᚋappsᚋco
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) marshalOCloudProvider2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CloudProvider) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCloudProvider2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProvider(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOComputePlan2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ComputePlan) graphql.Marshaler {

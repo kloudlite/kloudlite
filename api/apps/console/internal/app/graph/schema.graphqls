@@ -29,6 +29,8 @@ type Query {
   core_getComputePlans: [ComputePlan!]
   core_getStoragePlans: [StoragePlan!]
   core_getLamdaPlan: LambdaPlan!
+
+  core_getCloudProviders(accountId: ID!): [CloudProvider!]
 }
 
 type ManagedRes {
@@ -55,6 +57,30 @@ type ManagedSvc {
   outputs: Json!
   createdAt: String!
   updatedAt: String
+}
+
+type CloudProvider {
+  Id: ID!
+  Name: String!
+  provider: String!
+  regions: [EdgeRegion!]!
+}
+
+input CloudProviderIn {
+  Name: String!
+  provider: String!
+}
+
+type EdgeRegion {
+    Id: ID!
+  Name: String!
+  region : String!
+}
+
+input EdgeRegionIn {
+  Name: String!
+  region : String!
+  provider: ID!
 }
 
 
@@ -122,6 +148,9 @@ type Mutation {
   core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
   core_deleteRouter(routerId: ID!): Boolean!
+
+  core_createEdgeRegion(edgeRegion: EdgeRegionIn!): Boolean!
+  core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean!
 
 }
 
