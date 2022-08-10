@@ -64,9 +64,9 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 		fx.Invoke(
 			func(lf fx.Lifecycle, env T, logger logging.Logger, app *fiber.App) {
 				app.Use(l.New(l.Config{
-					Format:     "${pid} ${status} - ${method} ${path}\n",
-					TimeFormat: "02-Jan-2006",
-					TimeZone:   "America/New_York",
+					Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
+					TimeFormat: "02-Jan-2006 15:04:05",
+					TimeZone:   "Asia/Kolkata",
 				}))
 				if env.GetHttpCors() != "" {
 					app.Use(
