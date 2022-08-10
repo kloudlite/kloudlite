@@ -70,7 +70,21 @@ func constructResetPasswordEmail(name string, token string, baseUrl string) (sub
 		Name: name,
 		Link: fmt.Sprintf("%v/reset-password/?token=%v", baseUrl, token),
 	})
-	fmt.Println(fmt.Sprintf("%v/reset-password/?token=%v", baseUrl, token))
+	if err != nil {
+		return
+	}
+	subject = email.Subject
+	plainText = email.PlainText
+	htmlContent = email.HTMLText
+	return
+}
+
+func constructWelcomeEmail(name string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := loadEmailFromYaml("welcome", struct {
+		Name string
+	}{
+		Name: name,
+	})
 	if err != nil {
 		return
 	}

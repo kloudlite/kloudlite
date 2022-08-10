@@ -61,6 +61,18 @@ func (r *rpcImpl) SendPasswordResetEmail(_ context.Context, input *comms.Passwor
 	return &comms.Void{}, nil
 }
 
+func (r *rpcImpl) SendWelcomeEmail(ctx context.Context, input *comms.WelcomeEmailInput) (*comms.Void, error) {
+	subject, plainText, htmlContent, err := constructWelcomeEmail(input.Name)
+	if err != nil {
+		return nil, err
+	}
+	err = r.sendSupportEmail(subject, input.Email, input.Name, plainText, htmlContent)
+	if err != nil {
+		return nil, err
+	}
+	return &comms.Void{}, nil
+}
+
 func (r *rpcImpl) SendVerificationEmail(_ context.Context, input *comms.VerificationEmailInput) (*comms.Void, error) {
 	subject, plainText, htmlContent, err := constructVerificationEmail(
 		input.Name,

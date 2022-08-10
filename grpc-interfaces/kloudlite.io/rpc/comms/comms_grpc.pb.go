@@ -25,6 +25,7 @@ type CommsClient interface {
 	SendVerificationEmail(ctx context.Context, in *VerificationEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendPasswordResetEmail(ctx context.Context, in *PasswordResetEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendAccountMemberInviteEmail(ctx context.Context, in *AccountMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error)
+	SendWelcomeEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error)
 }
 
 type commsClient struct {
@@ -62,6 +63,15 @@ func (c *commsClient) SendAccountMemberInviteEmail(ctx context.Context, in *Acco
 	return out, nil
 }
 
+func (c *commsClient) SendWelcomeEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/Comms/SendWelcomeEmail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CommsServer is the server API for Comms service.
 // All implementations must embed UnimplementedCommsServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type CommsServer interface {
 	SendVerificationEmail(context.Context, *VerificationEmailInput) (*Void, error)
 	SendPasswordResetEmail(context.Context, *PasswordResetEmailInput) (*Void, error)
 	SendAccountMemberInviteEmail(context.Context, *AccountMemberInviteEmailInput) (*Void, error)
+	SendWelcomeEmail(context.Context, *WelcomeEmailInput) (*Void, error)
 	mustEmbedUnimplementedCommsServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedCommsServer) SendPasswordResetEmail(context.Context, *Passwor
 }
 func (UnimplementedCommsServer) SendAccountMemberInviteEmail(context.Context, *AccountMemberInviteEmailInput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendAccountMemberInviteEmail not implemented")
+}
+func (UnimplementedCommsServer) SendWelcomeEmail(context.Context, *WelcomeEmailInput) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendWelcomeEmail not implemented")
 }
 func (UnimplementedCommsServer) mustEmbedUnimplementedCommsServer() {}
 
@@ -152,6 +166,24 @@ func _Comms_SendAccountMemberInviteEmail_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Comms_SendWelcomeEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WelcomeEmailInput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommsServer).SendWelcomeEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Comms/SendWelcomeEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommsServer).SendWelcomeEmail(ctx, req.(*WelcomeEmailInput))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Comms_ServiceDesc is the grpc.ServiceDesc for Comms service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var Comms_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendAccountMemberInviteEmail",
 			Handler:    _Comms_SendAccountMemberInviteEmail_Handler,
+		},
+		{
+			MethodName: "SendWelcomeEmail",
+			Handler:    _Comms_SendWelcomeEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

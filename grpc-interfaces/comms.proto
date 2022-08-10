@@ -6,12 +6,18 @@ service Comms {
   rpc SendVerificationEmail(VerificationEmailInput) returns (Void);
   rpc SendPasswordResetEmail(PasswordResetEmailInput) returns (Void);
   rpc SendAccountMemberInviteEmail(AccountMemberInviteEmailInput) returns (Void);
+  rpc SendWelcomeEmail(WelcomeEmailInput) returns (Void);
 }
 
 message VerificationEmailInput{
   string email = 1;
   string name = 2;
   string verificationToken = 3;
+}
+
+message WelcomeEmailInput {
+  string email = 1;
+  string name = 2;
 }
 
 message PasswordResetEmailInput{
