@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	l "github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/logging"
 	"net/http"
@@ -63,6 +64,11 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 		fx.Invoke(
 			func(lf fx.Lifecycle, env T, logger logging.Logger, app *fiber.App) {
 				if env.GetHttpCors() != "" {
+					app.Use(l.New(l.Config{
+						Format:     "${pid} ${status} - ${method} ${path}\n",
+						TimeFormat: "02-Jan-2006",
+						TimeZone:   "America/New_York",
+					}))
 					app.Use(
 						cors.New(
 							cors.Config{
