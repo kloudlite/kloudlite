@@ -54,7 +54,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			msg.Authoritative = true
 			d := q.Name
 			todo := context.TODO()
-			host := d[:len(d)-1]
+			host := strings.ToLower(d[:len(d)-1])
 			if strings.HasSuffix(host, ".edgenet.khost.dev") {
 				ips, err := h.domain.GetNodeIps(todo, nil)
 				if err != nil || len(ips) == 0 {
