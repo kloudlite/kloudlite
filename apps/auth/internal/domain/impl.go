@@ -397,7 +397,6 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find user")
 	}
-
 	if user == nil {
 		user = u
 		user.Joined = time.Now()
@@ -410,7 +409,6 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 			return nil, errors.NewEf(err, "could not create user (email=%s)", user.Email)
 		}
 	}
-
 	t, err := d.accessTokenRepo.Upsert(
 		ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
 			UserId:   user.Id,
