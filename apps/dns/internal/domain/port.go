@@ -7,7 +7,7 @@ import (
 
 type Domain interface {
 	GetNodeIps(ctx context.Context, region *string) ([]string, error)
-	GetRecords(ctx context.Context, host string) ([]*Record, error)
+	GetRecord(ctx context.Context, host string) (*Record, error)
 	DeleteRecords(ctx context.Context, host string) error
 	AddARecords(ctx context.Context, host string, aRecords []string) error
 	UpsertARecords(ctx context.Context, host string, records []string) error
@@ -18,13 +18,5 @@ type Domain interface {
 	GetAccountEdgeCName(ctx context.Context, accountId string) (string, error)
 	CreateSite(ctx context.Context, domain string, accountId repos.ID) error
 	DeleteSite(ctx context.Context, siteId repos.ID) error
-	CreateRecord(
-		ctx context.Context,
-		recordType string,
-		host string,
-		answer string,
-		ttl uint32,
-		priority int64,
-	) (*Record, error)
 	UpdateNodeIPs(ctx context.Context, region string, ips []string) bool
 }

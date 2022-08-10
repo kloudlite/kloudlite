@@ -120,6 +120,18 @@ type CSEntryIn struct {
 	Value string `json:"value"`
 }
 
+type CloudProvider struct {
+	ID       repos.ID      `json:"Id"`
+	Name     string        `json:"Name"`
+	Provider string        `json:"provider"`
+	Regions  []*EdgeRegion `json:"regions"`
+}
+
+type CloudProviderIn struct {
+	Name     string `json:"Name"`
+	Provider string `json:"provider"`
+}
+
 type ComputePlan struct {
 	Name                  string `json:"name"`
 	Desc                  string `json:"desc"`
@@ -159,6 +171,18 @@ type DeviceIn struct {
 	Name   string   `json:"name"`
 	Region string   `json:"region"`
 	Ports  []int    `json:"ports"`
+}
+
+type EdgeRegion struct {
+	ID     repos.ID `json:"Id"`
+	Name   string   `json:"Name"`
+	Region string   `json:"region"`
+}
+
+type EdgeRegionIn struct {
+	Name     string   `json:"Name"`
+	Region   string   `json:"region"`
+	Provider repos.ID `json:"provider"`
 }
 
 type EnvVal struct {
