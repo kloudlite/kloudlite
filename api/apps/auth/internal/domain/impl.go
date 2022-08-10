@@ -250,15 +250,19 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 	if err != nil {
 		return nil, err
 	}
-	user, err := d.userRepo.FindById(ctx, repos.ID(v.UserId))
+	user, err := d.userRepo.FindById(ctx, v.UserId)
 	if err != nil {
 		return nil, err
 	}
 	user.Verified = true
-	u, err := d.userRepo.UpdateById(ctx, repos.ID(v.UserId), user)
+	u, err := d.userRepo.UpdateById(ctx, v.UserId, user)
 	if err != nil {
 		return nil, err
 	}
+	d.commsClient.SendWelcomeEmail(ctx, &comms.WelcomeEmailInput{
+		Email: user.Email,
+		Name:  user.Name,
+	})
 	return common.NewSession(
 		u.Id,
 		u.Email,
@@ -398,6 +402,10 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
+		d.commsClient.SendWelcomeEmail(ctx, &comms.WelcomeEmailInput{
+			Email: user.Email,
+			Name:  user.Name,
+		})
 		if err != nil {
 			return nil, errors.NewEf(err, "could not create user (email=%s)", user.Email)
 		}
