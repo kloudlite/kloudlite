@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"kloudlite.io/pkg/config"
 	"net"
 	"time"
 
@@ -19,6 +20,7 @@ type domainI struct {
 	recordsCache      cache.Repo[[]*Record]
 	accountCNamesRepo repos.DbRepo[*AccountCName]
 	nodeIpsRepo       repos.DbRepo[*NodeIps]
+	env               *Env
 }
 
 func (d *domainI) UpsertARecords(ctx context.Context, host string, records []string) error {
@@ -167,7 +169,7 @@ func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string) (st
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s.edgenet.khost.dev", name), nil
+	return fmt.Sprintf("%s.%s", name, d.env.EdgeCnameBaseDomain), nil
 }
 
 func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string, error) {
@@ -235,6 +237,7 @@ func fxDomain(
 	nodeIpsRepo repos.DbRepo[*NodeIps],
 	accountDNSRepo repos.DbRepo[*AccountCName],
 	recordsCache cache.Repo[[]*Record],
+	env *Env,
 ) Domain {
 	return &domainI{
 		recordsRepo,
@@ -242,10 +245,17 @@ func fxDomain(
 		recordsCache,
 		accountDNSRepo,
 		nodeIpsRepo,
+		env,
 	}
+}
+
+type Env struct {
+	EdgeCnameBaseDomain string `env:"EDGE_CNAME_BASE_DOMAIN" required:"true"`
+	MongoUri            string `env:"MONGO_URI" required:"true"`
 }
 
 var Module = fx.Module(
 	"domain",
+	config.EnvFx[Env](),
 	fx.Provide(fxDomain),
 )
