@@ -22,13 +22,15 @@ import (
 )
 
 type Env struct {
-	CookieDomain   string `env:"COOKIE_DOMAIN"`
-	DNSDomainNames string `env:"DNS_DOMAIN_NAMES" required:"true"`
+	CookieDomain        string `env:"COOKIE_DOMAIN"`
+	EdgeCnameBaseDomain string `env:"EDGE_CNAME_BASE_DOMAIN" required:"true"`
+	DNSDomainNames      string `env:"DNS_DOMAIN_NAMES" required:"true"`
 }
 
 type DNSHandler struct {
-	domain         domain.Domain
-	dnsDomainNames []string
+	domain              domain.Domain
+	EdgeCnameBaseDomain string
+	dnsDomainNames      []string
 }
 
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -55,7 +57,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			d := q.Name
 			todo := context.TODO()
 			host := strings.ToLower(d[:len(d)-1])
-			if strings.HasSuffix(host, ".edge.khost.dev") {
+			if strings.HasSuffix(host, h.EdgeCnameBaseDomain) {
 				ips, err := h.domain.GetNodeIps(todo, nil)
 				if err != nil || len(ips) == 0 {
 					msg.Answer = append(msg.Answer, &dns.A{
