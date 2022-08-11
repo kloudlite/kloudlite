@@ -144,7 +144,7 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 		return err
 	}
 
-	if cname != fmt.Sprintf("%s.edgenet.khost.dev.", accountCnameIdentity) {
+	if cname != fmt.Sprintf("%s.%s.", accountCnameIdentity, d.env.EdgeCnameBaseDomain) {
 		return errors.New("cname does not match")
 	}
 	err = d.sitesRepo.UpdateMany(ctx, repos.Filter{
