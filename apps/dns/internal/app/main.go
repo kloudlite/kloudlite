@@ -55,7 +55,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			d := q.Name
 			todo := context.TODO()
 			host := strings.ToLower(d[:len(d)-1])
-			if strings.HasSuffix(host, ".edgenet.khost.dev") {
+			if strings.HasSuffix(host, ".edge.khost.dev") {
 				ips, err := h.domain.GetNodeIps(todo, nil)
 				if err != nil || len(ips) == 0 {
 					msg.Answer = append(msg.Answer, &dns.A{
