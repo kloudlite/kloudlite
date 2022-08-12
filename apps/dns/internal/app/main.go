@@ -48,7 +48,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 						Class:  q.Qclass,
 						Ttl:    60,
 					},
-					Ns: name,
+					Ns: fmt.Sprintf("%s.", name),
 				}
 				msg.Answer = append(msg.Answer, rr)
 			}
