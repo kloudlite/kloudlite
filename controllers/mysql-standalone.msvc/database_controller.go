@@ -9,6 +9,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -30,7 +31,7 @@ import (
 type DatabaseReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *DatabaseReconciler) GetName() string {
@@ -62,7 +63,7 @@ func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
 // +kubebuilder:rbac:groups=mysql-standalone.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &mysqlStandalone.Database{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &mysqlStandalone.Database{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -294,8 +295,11 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 	return req.Next()
 }
 
-func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("mysql-standalone-database")
+func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+
+	r.logger = logger.WithName("mysql-standalone-database")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlStandalone.Database{}).
 		Owns(&corev1.Secret{}).

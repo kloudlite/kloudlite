@@ -32,8 +32,8 @@ import (
 type BucketReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Env    *env.Env
-	Logger logging.Logger
+	env    *env.Env
+	logger logging.Logger
 }
 
 func (r *BucketReconciler) GetName() string {
@@ -58,7 +58,7 @@ type Credentials struct {
 // +kubebuilder:rbac:groups=s3.aws.kloudlite.io,resources=buckets/finalizers,verbs=update
 
 func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &s3awsv1.Bucket{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &s3awsv1.Bucket{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -337,7 +337,7 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 					},
 				},
 			},
-			"wildcard-domain-suffix": r.Env.WildcardDomainSuffix,
+			"wildcard-domain-suffix": r.env.WildcardDomainSuffix,
 
 			"routes": []crdsv1.Route{
 				{
@@ -363,7 +363,10 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 	return req.Next()
 }
 
-func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("s3-aws-bucket")
+func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.env = envVars
+	r.logger = logger.WithName("s3-aws-bucket")
 	return ctrl.NewControllerManagedBy(mgr).For(&s3awsv1.Bucket{}).Complete(r)
 }

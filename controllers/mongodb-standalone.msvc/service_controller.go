@@ -37,7 +37,7 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Env    *env.Env
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -53,7 +53,7 @@ const (
 // +kubebuilder:rbac:groups=mongodb-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &mongodbStandalone.Service{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &mongodbStandalone.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -283,8 +283,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("mongo-standalone-service")
+func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName("mongo-standalone-service")
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Service{})
 
 	builder.Owns(fn.NewUnstructured(constants.HelmMongoDBType))

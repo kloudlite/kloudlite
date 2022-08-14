@@ -30,7 +30,6 @@ import (
 type StatusWatcherReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Env    *env.Env
 	*Notifier
 	Logger logging.Logger
 }
@@ -132,8 +131,11 @@ func (r *StatusWatcherReconciler) RemoveWatcherFinalizer(ctx context.Context, ob
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *StatusWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("status-watcher")
+func (r *StatusWatcherReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+
+	r.Logger = logger.WithName("status-watcher")
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})

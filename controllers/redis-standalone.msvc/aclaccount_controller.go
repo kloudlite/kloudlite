@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -28,7 +29,7 @@ import (
 type ACLAccountReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *ACLAccountReconciler) GetName() string {
@@ -65,7 +66,7 @@ func parseMsvcOutput(s *corev1.Secret, aclCfg *corev1.ConfigMap) *MsvcOutputRef 
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=aclaccounts/finalizers,verbs=update
 
 func (r *ACLAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &redisStandalone.ACLAccount{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &redisStandalone.ACLAccount{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -337,8 +338,11 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ACLAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("redis-standalone-aclaccount")
+func (r *ACLAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+
+	r.logger = logger.WithName("redis-standalone-aclaccount")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redisStandalone.ACLAccount{}).
 		Owns(&corev1.Secret{}).

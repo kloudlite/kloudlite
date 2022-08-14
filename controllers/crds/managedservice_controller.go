@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -32,8 +33,7 @@ import (
 type ManagedServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	lt     metav1.Time
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *ManagedServiceReconciler) GetName() string {
@@ -45,7 +45,7 @@ func (r *ManagedServiceReconciler) GetName() string {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=managedservices/finalizers,verbs=update
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &v1.ManagedService{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &v1.ManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -206,8 +206,10 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("managed-service")
+func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName("managed-service")
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ManagedService{})
 

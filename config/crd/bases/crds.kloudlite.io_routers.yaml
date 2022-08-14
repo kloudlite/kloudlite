@@ -74,6 +74,7 @@ spec:
                     port:
                       type: integer
                     rewrite:
+                      default: false
                       type: boolean
                   required:
                   - path

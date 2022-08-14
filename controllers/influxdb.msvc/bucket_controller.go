@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	influxDB "operators.kloudlite.io/apis/influxdb.msvc/v1"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -27,7 +28,7 @@ import (
 type BucketReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *BucketReconciler) GetName() string {
@@ -62,7 +63,7 @@ func parseMsvcOutput(s *corev1.Secret) *MsvcOutputRef {
 // +kubebuilder:rbac:groups=influxdb.msvc.kloudlite.io,resources=buckets/finalizers,verbs=update
 
 func (r *BucketReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &influxDB.Bucket{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &influxDB.Bucket{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -264,8 +265,11 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("influx-standalone-bucket")
+func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+
+	r.logger = logger.WithName("influx-standalone-bucket")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&influxDB.Bucket{}).
 		Owns(&corev1.Secret{}).

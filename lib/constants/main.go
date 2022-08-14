@@ -89,6 +89,11 @@ var (
 		Kind:       "HelmInfluxDB",
 		APIVersion: MsvcApiVersion,
 	}
+
+	RedpandaClusterType = metav1.TypeMeta{
+		Kind:       "Cluster",
+		APIVersion: "redpanda.vectorized.io/v1alpha1",
+	}
 )
 
 var (

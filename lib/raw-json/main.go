@@ -29,7 +29,7 @@ type RawJson[K ~string, V any] struct {
 	json.RawMessage `json:",inline"`
 }
 
-func (s RawJson[K, V]) toMap() (map[K]V, error) {
+func (s *RawJson[K, V]) toMap() (map[K]V, error) {
 	m, err := s.RawMessage.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (s RawJson[K, V]) toMap() (map[K]V, error) {
 	return v, nil
 }
 
-func (s RawJson[K, V]) ToMap() (map[K]V, error) {
+func (s *RawJson[K, V]) ToMap() (map[K]V, error) {
 	return s.toMap()
 }
 
@@ -94,6 +94,20 @@ func (s *RawJson[K, V]) Get(key K) (V, bool) {
 		return *new(V), false
 	}
 	return value, true
+}
+
+func (s *RawJson[K, V]) Delete(key K) {
+	m, err := s.toMap()
+	if err != nil {
+		return
+	}
+	delete(m, key)
+	b, err := json.Marshal(m)
+	if err != nil {
+		return
+	}
+	s.RawMessage = b
+	return
 }
 
 func (s *RawJson[K, V]) GetString(key K) (string, bool) {

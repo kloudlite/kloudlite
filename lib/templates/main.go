@@ -146,7 +146,7 @@ const (
 
 	// ---
 
-	MongoDBCluster   templateFile = "mongodb-helm-cluster.tpl.yml"
+	MongoDBCluster   templateFile = "mongodb-helm-one-node-cluster.tpl.yml"
 	MongoDBWatcher   templateFile = "mongo-msvc-watcher.tmpl.yml"
 	Deployment       templateFile = "app.tpl.yml"
 	Service          templateFile = "service.tmpl.yml"
@@ -168,6 +168,8 @@ const (
 	// ---
 
 	Project templateFile = "./project.tpl.yml"
+
+	RedpandaOneNodeCluster templateFile = "./msvc/redpanda/one-node-cluster.tpl.yml"
 )
 
 var CoreV1 = struct {

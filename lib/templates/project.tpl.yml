@@ -15,7 +15,8 @@ kind: Namespace
 metadata:
   name: {{$name}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
-
+  labels:
+    kloudlite.io/account-ref: "{{$accRef}}"
 {{- if $accRef }}
 ---
 apiVersion: artifacts.kloudlite.io/v1

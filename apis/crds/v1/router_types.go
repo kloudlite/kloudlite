@@ -7,12 +7,12 @@ import (
 )
 
 type Route struct {
-	App     string `json:"app,omitempty"`
-	Lambda  string `json:"lambda,omitempty"`
-	Path    string `json:"path"`
-	Port    uint16 `json:"port"`
+	App    string `json:"app,omitempty"`
+	Lambda string `json:"lambda,omitempty"`
+	Path   string `json:"path"`
+	Port   uint16 `json:"port"`
 	// +kubebuilder:default=false
-	Rewrite bool   `json:"rewrite,omitempty"`
+	Rewrite bool `json:"rewrite,omitempty"`
 }
 
 type RateLimit struct {
@@ -30,7 +30,7 @@ type Https struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Https           Https     `json:"https"`
+	Https Https `json:"https"`
 	// +kubebuilder:validation:Optional
 	RateLimit       RateLimit `json:"rateLimit,omitempty"`
 	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`
