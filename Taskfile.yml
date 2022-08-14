@@ -179,8 +179,8 @@ tasks:
 
   deploy:build:
     env:
-      IMG: harbor.dev.madhouselabs.io/kloudlite/koperator:latest
-      NAMESPACE: koperator
+      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-operator:latest
+      NAMESPACE: kl-core
     cmds:
       - make dev-docker-build dev-docker-push
 

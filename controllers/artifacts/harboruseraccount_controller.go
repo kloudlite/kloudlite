@@ -33,9 +33,9 @@ import (
 type HarborUserAccountReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	Env       *env.Env
+	env       *env.Env
 	harborCli *harbor.Client
-	Logger    logging.Logger
+	logger    logging.Logger
 }
 
 func (r *HarborUserAccountReconciler) GetName() string {
@@ -63,7 +63,7 @@ func getUsername(hAcc *artifactsv1.HarborUserAccount) string {
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harboruseraccounts/finalizers,verbs=update
 
 func (r *HarborUserAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &artifactsv1.HarborUserAccount{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &artifactsv1.HarborUserAccount{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -231,7 +231,7 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 		return req.FailWithOpError(errors.Newf("Key=%s not found in GeneratedVars", KeyRobotUserPassword))
 	}
 
-	harborDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, robotUserName, robotUserPassword)
+	harborDockerConfig, err := getDockerConfig(r.env.HarborImageRegistryHost, robotUserName, robotUserPassword)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
@@ -266,13 +266,16 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("harbor-user-account")
+func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.env = envVars
+	r.logger = logger.WithName("harbor-user-account")
 	harborCli, err := harbor.NewClient(
 		harbor.Args{
-			HarborAdminUsername: r.Env.HarborAdminUsername,
-			HarborAdminPassword: r.Env.HarborAdminPassword,
-			HarborRegistryHost:  r.Env.HarborImageRegistryHost,
+			HarborAdminUsername: r.env.HarborAdminUsername,
+			HarborAdminPassword: r.env.HarborAdminPassword,
+			HarborRegistryHost:  r.env.HarborImageRegistryHost,
 		},
 	)
 	if err != nil {

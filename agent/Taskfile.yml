@@ -1,0 +1,34 @@
+version: 3
+
+tasks:
+  run:
+    env:
+      KAFKA_BROKERS: "redpanda.kl-init-redpanda.svc.cluster.local:9092"
+      KAFKA_CONSUMER_GROUP_ID: "kloudlite-operator"
+      KAFKA_INCOMING_TOPIC: "kl-incoming"
+      KAFKA_ERROR_ON_APPLY_TOPIC: "kl-error-on-apply"
+    cmds:
+      - go run ./main.go
+
+  build:dev:
+    vars:
+      Image: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-agent
+      Tag: latest
+    cmds:
+      - docker buildx build --build-context project=../ -t {{.Image}}:{{.Tag}} . --no-cache
+      - docker push {{.Image}}:{{.Tag}}
+  build:staging:
+    vars:
+      Image: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-agent
+      Tag: latest
+    cmds:
+      - docker buildx build --build-context project=../ -t {{.Image}}:{{.Tag}} .
+      - docker push {{.Image}}:{{.Tag}}
+
+  build:prod:
+    vars:
+      Image: harbor.dev.madhouselabs.io/kloudlite/kloudlite-agent
+      Tag: latest
+    cmds:
+      - docker buildx build --build-context project=../ -t {{.Image}}:{{.Tag}} .
+      - docker push {{.Image}}:{{.Tag}}

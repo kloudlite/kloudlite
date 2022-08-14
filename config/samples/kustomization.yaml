@@ -40,4 +40,6 @@ resources:
 - watcher_v1_billingwatcher.yaml
 - artifacts_v1_harborproject.yaml
 - artifacts_v1_harboruseraccount.yaml
+- redpanda.msvc_v1_service.yaml
+- redpanda.msvc_v1_topic.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

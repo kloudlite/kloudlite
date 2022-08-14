@@ -35,7 +35,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"operators.kloudlite.io/agent"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
@@ -46,8 +45,10 @@ import (
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
+	redpandamsvccontrollers "operators.kloudlite.io/controllers/redpanda.msvc"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -71,6 +72,7 @@ func init() {
 	utilruntime.Must(opensearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(s3awsv1.AddToScheme(scheme))
 	utilruntime.Must(artifactsv1.AddToScheme(scheme))
+	utilruntime.Must(redpandamsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -135,7 +137,6 @@ func main() {
 			HealthProbeBindAddress: probeAddr,
 			LeaderElection:         enableLeaderElection,
 			LeaderElectionID:       "operator.kloudlite.io",
-			// LeaderElectionID:           "sadfasdf.kloudlite.io",
 			LeaderElectionResourceLock: "configmaps",
 		}
 		if isDev {
@@ -152,33 +153,36 @@ func main() {
 	envVars := env.GetEnvOrDie()
 
 	controllers := []rApi.Reconciler{
-		&crds.ProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&crds.AppReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&crds.RouterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&crds.ManagedServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
-		&crds.ManagedResourceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&crds.ProjectReconciler{},
+		&crds.AppReconciler{},
+		&crds.RouterReconciler{},
+		&crds.ManagedServiceReconciler{},
+		&crds.ManagedResourceReconciler{},
 
-		&mongodbStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&mongodbStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&mongodbStandaloneControllers.ServiceReconciler{},
+		&mongodbStandaloneControllers.DatabaseReconciler{},
 
-		&mysqlStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&mysqlStandaloneControllers.DatabaseReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&mysqlStandaloneControllers.ServiceReconciler{},
+		&mysqlStandaloneControllers.DatabaseReconciler{},
 
-		&redisStandaloneControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&redisStandaloneControllers.ACLAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&redisStandaloneControllers.ServiceReconciler{},
+		&redisStandaloneControllers.ACLAccountReconciler{},
 
-		&serverlessControllers.LambdaReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&redpandamsvccontrollers.ServiceReconciler{},
+		&redpandamsvccontrollers.TopicReconciler{},
 
-		&elasticsearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&opensearchControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&serverlessControllers.LambdaReconciler{},
 
-		&influxDbControllers.ServiceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&influxDbControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Logger: logger},
+		&elasticsearchControllers.ServiceReconciler{},
+		&opensearchControllers.ServiceReconciler{},
 
-		&s3awsControllers.BucketReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&influxDbControllers.ServiceReconciler{},
+		&influxDbControllers.BucketReconciler{},
 
-		&artifactsControllers.HarborProjectReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
-		&artifactsControllers.HarborUserAccountReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Logger: logger},
+		&s3awsControllers.BucketReconciler{},
+
+		&artifactsControllers.HarborProjectReconciler{},
+		&artifactsControllers.HarborUserAccountReconciler{},
 	}
 
 	producer, err := redpanda.NewProducer(envVars.KafkaBrokers)
@@ -193,12 +197,8 @@ func main() {
 
 	controllers = append(
 		controllers,
-		&watchercontrollers.StatusWatcherReconciler{
-			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: statusNotifier, Logger: logger,
-		},
-		&watchercontrollers.BillingWatcherReconciler{
-			Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Env: envVars, Notifier: billingNotifier, Logger: logger,
-		},
+		&watchercontrollers.StatusWatcherReconciler{Notifier: statusNotifier},
+		&watchercontrollers.BillingWatcherReconciler{Notifier: billingNotifier},
 	)
 
 	enabledForControllers := map[string]bool{}
@@ -208,8 +208,8 @@ func main() {
 
 	for _, rc := range controllers {
 		if isAllEnabled || enabledForControllers[rc.GetName()] {
-			if err := rc.SetupWithManager(mgr); err != nil {
-				setupLog.Error(err, "unable to create controller", "controller", rc.GetName())
+			if err := rc.SetupWithManager(mgr, envVars, logger); err != nil {
+				// setupLog.Error(err, "unable to create controller", "controller", rc.GetName())
 				os.Exit(1)
 			}
 		}
@@ -226,21 +226,6 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
-
-	consumer, err := redpanda.NewConsumer(
-		envVars.KafkaBrokers, envVars.KafkaConsumerGroupId,
-		envVars.KafkaIncomingTopic, &redpanda.ConsumerOptions{
-			ErrProducer: producer,
-		},
-	)
-	if err != nil {
-		setupLog.Error(err, "creating redpanda consumer")
-		panic(err)
-	}
-	consumer.SetupLogger(logger)
-	defer consumer.Close()
-
-	go agent.Run(consumer, producer, envVars.AgentErrorTopic, logger)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

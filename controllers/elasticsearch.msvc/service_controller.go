@@ -30,8 +30,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Env    *env.Env
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -47,7 +46,7 @@ const (
 // +kubebuilder:rbac:groups=elasticsearch.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &elasticSearch.Service{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &elasticSearch.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -221,8 +220,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*elasticSearch
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("elastic-search-service")
+func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName("elastic-search-service")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&elasticSearch.Service{}).
 		Owns(fn.NewUnstructured(constants.HelmElasticType)).

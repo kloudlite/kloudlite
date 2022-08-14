@@ -1,0 +1,39 @@
+{{- $storageClass := get . "storage-class" }}
+{{- $obj := get . "obj" }}
+{{- with $obj }}
+{{- /* gotype: operators.kloudlite.io/apis/redpanda.msvc/v1.Service */ -}}
+apiVersion: redpanda.vectorized.io/v1alpha1
+kind: Cluster
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+spec:
+  image: "vectorized/redpanda"
+  version: "v22.1.6"
+  replicas: 1
+  resources:
+    requests:
+      cpu: {{.Spec.Resources.Cpu.Min}}
+      memory: {{.Spec.Resources.Memory}}
+    limits:
+      cpu: {{.Spec.Resources.Cpu.Max}}
+      memory: {{.Spec.Resources.Memory}}
+  nodeSelector:
+    kloudlite.io/region: {{.Spec.NodeProvider.Region}}
+    {{ .Spec.NodeSelector | toYAML }}
+  configuration:
+    rpcServer:
+      port: 33145
+    kafkaApi:
+      - port: 9092
+    pandaproxyApi:
+      - port: 8082
+    schemaRegistry:
+      port: 8081
+    adminApi:
+      - port: 9644
+    developerMode: true
+  storage:
+    capacity: {{.Spec.Storage.Size}}
+    storageClassName: {{$storageClass}}
+{{- end}}

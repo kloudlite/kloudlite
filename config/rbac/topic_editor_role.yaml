@@ -1,0 +1,24 @@
+# permissions for end users to edit topics.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: topic-editor-role
+rules:
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - topics
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - topics/status
+  verbs:
+  - get
