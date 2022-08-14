@@ -1,6 +1,6 @@
 domain: kloudlite.io
 layout:
-  - go.kubebuilder.io/v3
+- go.kubebuilder.io/v3
 multigroup: true
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
@@ -268,5 +268,23 @@ resources:
   group: artifacts
   kind: HarborUserAccount
   path: operators.kloudlite.io/apis/artifacts/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: redpanda.msvc
+  kind: Service
+  path: operators.kloudlite.io/apis/redpanda.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: redpanda.msvc
+  kind: Topic
+  path: operators.kloudlite.io/apis/redpanda.msvc/v1
   version: v1
 version: "3"

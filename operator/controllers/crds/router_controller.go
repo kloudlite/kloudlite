@@ -28,8 +28,8 @@ import (
 type RouterReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Env    *env.Env
-	Logger logging.Logger
+	env    *env.Env
+	logger logging.Logger
 }
 
 func (r *RouterReconciler) GetName() string {
@@ -49,7 +49,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/finalizers,verbs=update
 
 func (r *RouterReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &crdsv1.Router{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &crdsv1.Router{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -184,8 +184,8 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"routes":           lMapRoutes,
 			"virtual-hostname": fmt.Sprintf("%s.%s", lName, router.Namespace),
 
-			"ingress-class":  r.Env.DefaultIngressClass,
-			"cluster-issuer": r.Env.ClusterCertIssuer,
+			"ingress-class":  r.env.DefaultIngressClass,
+			"cluster-issuer": r.env.ClusterCertIssuer,
 		}
 
 		ingressList = append(ingressList, ingName)
@@ -210,10 +210,10 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"router-ref": router,
 			"routes":     appRoutes,
 
-			"ingress-class":  r.Env.DefaultIngressClass,
-			"cluster-issuer": r.Env.ClusterCertIssuer,
+			"ingress-class":  r.env.DefaultIngressClass,
+			"cluster-issuer": r.env.ClusterCertIssuer,
 
-			"wildcard-domain-suffix": r.Env.WildcardDomainSuffix,
+			"wildcard-domain-suffix": r.env.WildcardDomainSuffix,
 		}
 		ingressList = append(ingressList, router.Name)
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)
@@ -241,8 +241,11 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *RouterReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("router")
+func (r *RouterReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.env = envVars
+	r.logger = logger.WithName("router")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.Router{}).
 		Owns(&networkingv1.Ingress{}).

@@ -20,4 +20,6 @@ resources:
 - bases/s3.aws.kloudlite.io_buckets.yaml
 - bases/artifacts.kloudlite.io_harborprojects.yaml
 - bases/artifacts.kloudlite.io_harboruseraccounts.yaml
+- bases/redpanda.msvc.kloudlite.io_services.yaml
+- bases/redpanda.msvc.kloudlite.io_topics.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

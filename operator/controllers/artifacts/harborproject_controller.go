@@ -25,9 +25,9 @@ import (
 type HarborProjectReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	Env       *env.Env
+	env       *env.Env
 	harborCli *harbor.Client
-	Logger    logging.Logger
+	logger    logging.Logger
 }
 
 func (r *HarborProjectReconciler) GetName() string {
@@ -52,7 +52,7 @@ func convertGBToBytes(gb int) int {
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harborprojects/finalizers,verbs=update
 
 func (r *HarborProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &artifactsv1.HarborProject{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &artifactsv1.HarborProject{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -152,10 +152,10 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 		if err := func() error {
 			// 2 GB default storage size
 			if obj.Spec.SizeInGB == 0 {
-				obj.Spec.SizeInGB = r.Env.HarborProjectStorageSize
+				obj.Spec.SizeInGB = r.env.HarborProjectStorageSize
 			}
 
-			if !r.Env.HarborQuoteEnabled {
+			if !r.env.HarborQuoteEnabled {
 				obj.Spec.SizeInGB = 0
 			}
 
@@ -193,13 +193,16 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *HarborProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("harbor-project")
+func (r *HarborProjectReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.env = envVars
+	r.logger = logger.WithName("harbor-project")
 	harborCli, err := harbor.NewClient(
 		harbor.Args{
-			HarborAdminUsername: r.Env.HarborAdminUsername,
-			HarborAdminPassword: r.Env.HarborAdminPassword,
-			HarborRegistryHost:  r.Env.HarborImageRegistryHost,
+			HarborAdminUsername: r.env.HarborAdminUsername,
+			HarborAdminPassword: r.env.HarborAdminPassword,
+			HarborRegistryHost:  r.env.HarborImageRegistryHost,
 		},
 	)
 

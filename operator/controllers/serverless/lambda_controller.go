@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
@@ -28,7 +29,7 @@ import (
 type LambdaReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *LambdaReconciler) GetName() string {
@@ -61,7 +62,7 @@ func parseServingConditions(obj *unstructured.Unstructured) ([]metav1.Condition,
 // +kubebuilder:rbac:groups=serverless.kloudlite.io,resources=lambdas/finalizers,verbs=update
 
 func (r *LambdaReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.Logger), r.Client, oReq.NamespacedName, &serverlessv1.Lambda{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &serverlessv1.Lambda{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -230,8 +231,11 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *LambdaReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.Logger = r.Logger.WithName("serverless-lambda")
+func (r *LambdaReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+
+	r.logger = logger.WithName("serverless-lambda")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&serverlessv1.Lambda{}).
 		Owns(fn.NewUnstructured(constants.KnativeServiceType)).

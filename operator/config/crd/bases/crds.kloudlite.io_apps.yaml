@@ -94,7 +94,7 @@ spec:
                             path:
                               type: string
                             port:
-                              type: string
+                              type: integer
                           required:
                           - path
                           - port
@@ -109,8 +109,6 @@ spec:
                               items:
                                 type: string
                               type: array
-                          required:
-                          - command
                           type: object
                         tcp:
                           properties:
@@ -120,7 +118,10 @@ spec:
                           - port
                           type: object
                         type:
-                          description: should be one of shell, httpGet, tcp
+                          enum:
+                          - shell
+                          - httpGet
+                          - tcp
                           type: string
                       required:
                       - type
@@ -140,7 +141,7 @@ spec:
                             path:
                               type: string
                             port:
-                              type: string
+                              type: integer
                           required:
                           - path
                           - port
@@ -155,8 +156,6 @@ spec:
                               items:
                                 type: string
                               type: array
-                          required:
-                          - command
                           type: object
                         tcp:
                           properties:
@@ -166,7 +165,10 @@ spec:
                           - port
                           type: object
                         type:
-                          description: should be one of shell, httpGet, tcp
+                          enum:
+                          - shell
+                          - httpGet
+                          - tcp
                           type: string
                       required:
                       - type

@@ -73,7 +73,7 @@ spec:
             path: {{$route.Path}}?(.*)
             {{- else}}
             {{ $x := len $route.Path }}
-            path: /?{{substr 1 $x $route.Path}}
+            path: /?{{if gt $x 1}}({{substr 1 $x $route.Path}}){{else}}(.*){{ end}}
             {{- end}}
             pathType: Prefix
           {{- end}}

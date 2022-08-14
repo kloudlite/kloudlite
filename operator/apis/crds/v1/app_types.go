@@ -42,12 +42,12 @@ type ContainerVolume struct {
 }
 
 type ShellProbe struct {
-	Command []string `json:"command"`
+	Command []string `json:"command,omitempty"`
 }
 
 type HttpGetProbe struct {
 	Path        string            `json:"path"`
-	Port        string            `json:"port"`
+	Port        uint              `json:"port"`
 	HttpHeaders map[string]string `json:"httpHeaders,omitempty"`
 }
 
@@ -56,11 +56,14 @@ type TcpProbe struct {
 }
 
 type Probe struct {
-	// should be one of shell, httpGet, tcp
-	Type    string       `json:"type"`
-	Shell   ShellProbe   `json:"shell,omitempty"`
-	HttpGet HttpGetProbe `json:"httpGet,omitempty"`
-	Tcp     TcpProbe     `json:"tcp,omitempty"`
+	// +kubebuilder:validation:Enum=shell;httpGet;tcp
+	Type string `json:"type"`
+	// +kubebuilder:validation:Optional
+	Shell *ShellProbe `json:"shell,omitempty"`
+	// +kubebuilder:validation:Optional
+	HttpGet *HttpGetProbe `json:"httpGet,omitempty"`
+	// +kubebuilder:validation:Optional
+	Tcp *TcpProbe `json:"tcp,omitempty"`
 
 	FailureThreshold uint `json:"failureThreshold,omitempty"`
 	InitialDelay     uint `json:"initialDelay,omitempty"`

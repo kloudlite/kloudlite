@@ -3,6 +3,7 @@ package opensearchmsvc
 import (
 	"context"
 
+	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -17,7 +18,7 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Logger logging.Logger
+	logger logging.Logger
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -29,7 +30,7 @@ func (r *ServiceReconciler) GetName() string {
 // +kubebuilder:rbac:groups=opensearch.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(ctx, r.Client, oReq.NamespacedName, &opensearchmsvcv1.Service{})
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &opensearchmsvcv1.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -70,7 +71,11 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*opensearchmsv
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+
+	r.logger = logger.WithName("opensearch")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&opensearchmsvcv1.Service{}).
 		Complete(r)

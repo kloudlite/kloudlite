@@ -1,27 +1,21 @@
-package agent
+package main
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"flag"
+	"os"
+	"os/exec"
+
+	"github.com/codingconcepts/env"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/logging"
 	"operators.kloudlite.io/lib/redpanda"
-	"os"
-	"os/exec"
 	"sigs.k8s.io/yaml"
 )
 
-type RestartMsg struct {
-	v1.TypeMeta `json:",inline"`
-	Metadata    struct {
-		Name      string `json:"name"`
-		Namespace string `json:"namespace"`
-	} `json:"metadata"`
-}
-
-type KafkaMessage struct {
+type AgentMessage struct {
 	Action  string         `json:"action"`
 	Payload map[string]any `json:"payload"`
 }
@@ -32,13 +26,45 @@ type ErrMessage struct {
 	Payload map[string]any `json:"payload"`
 }
 
-func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, logger logging.Logger) {
-	c.StartConsuming(
-		func(b []byte, key []byte) error {
+type Env struct {
+	KafkaBrokers         string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaConsumerGroupId string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
+	KafkaIncomingTopic   string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
+	KafkaErrorOnApplyTopic string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
+}
 
-			var msg KafkaMessage
-			if err := json.Unmarshal(b, &msg); err != nil {
-				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", b)
+func main() {
+	var dev bool
+	flag.BoolVar(&dev, "dev", false, "--dev")
+	flag.Parse()
+
+	logger := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: dev})
+
+	var envVars Env
+	if err := env.Set(&envVars); err != nil {
+		panic(err)
+	}
+
+	errProducer, err := redpanda.NewProducer(envVars.KafkaBrokers)
+	if err != nil {
+		panic(err)
+	}
+
+	consumer, err := redpanda.NewConsumer(
+		envVars.KafkaBrokers, envVars.KafkaConsumerGroupId,
+		envVars.KafkaIncomingTopic, &redpanda.ConsumerOptions{
+			ErrProducer: errProducer,
+		},
+	)
+
+	logger.Infof("ready for consuming messages")
+
+	consumer.StartConsuming(
+		func(kMsg *redpanda.KafkaMessage) error {
+
+			var msg AgentMessage
+			if err := json.Unmarshal(kMsg.Value, &msg); err != nil {
+				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
 				return err
 			}
 			logger.Infof("action=%s, payload=%s\n", msg.Action, msg.Payload)
@@ -48,7 +74,6 @@ func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, 
 				{
 					if errX := func() error {
 						c := exec.Command("kubectl", msg.Action, "-f", "-")
-
 						pb, err := json.Marshal(msg.Payload)
 						if err != nil {
 							return errors.NewEf(err, "could not convert msg.Payload into []byte")
@@ -77,7 +102,7 @@ func Run(c *redpanda.Consumer, errProducer *redpanda.Producer, errTopic string, 
 							logger.Errorf(err, "error marshalling ErrMessage to []byte")
 							return err
 						}
-						if err := errProducer.Produce(context.TODO(), errTopic, string(key), b); err != nil {
+						if err := errProducer.Produce(context.TODO(), envVars.KafkaErrorOnApplyTopic, string(kMsg.Key), b); err != nil {
 							return err
 						}
 						return errX

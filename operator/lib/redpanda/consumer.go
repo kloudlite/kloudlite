@@ -2,22 +2,17 @@ package redpanda
 
 import (
 	"context"
+	"strings"
+
 	"github.com/twmb/franz-go/pkg/kgo"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/logging"
-	"strings"
 )
 
 type Consumer struct {
 	client  *kgo.Client
 	logger  logging.Logger
 	options *ConsumerOptions
-}
-
-type ReaderFunc func(msg []byte, key []byte) error
-
-func (c *Consumer) SetupLogger(logger logging.Logger) {
-	c.logger = logger
 }
 
 func (c *Consumer) Close() {
@@ -27,6 +22,7 @@ func (c *Consumer) Close() {
 type ConsumerOptions struct {
 	ErrProducer *Producer
 	ErrTopic    string
+	logger      logging.Logger
 }
 
 type ConsumerError interface {
@@ -35,6 +31,18 @@ type ConsumerError interface {
 }
 
 func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
+	logger := func() logging.Logger {
+		if c.logger != nil {
+			return c.logger
+		}
+		if c.options.logger != nil {
+			c.logger = c.options.logger
+			return c.logger
+		}
+		c.logger = logging.NewOrDie(&logging.Options{Name: "default-logger"})
+		return c.logger
+	}()
+
 	for {
 		fetches := c.client.PollFetches(context.Background())
 		if fetches.IsClientClosed() {
@@ -43,18 +51,24 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 
 		fetches.EachError(
 			func(topic string, partition int32, err error) {
-				if c.logger != nil {
-					c.logger.Warnf("topic=%s, partition=%d read failed as %v", topic, partition, err)
-				}
+				logger.Warnf("topic=%s, partition=%d read failed as %v", topic, partition, err)
 			},
 		)
 
 		fetches.EachRecord(
 			func(record *kgo.Record) {
-				if err := onMessage(record.Value, record.Key); err != nil {
-					if c.logger != nil {
-						c.logger.Errorf(err, "in onMessage()")
-					}
+				if err := onMessage(
+					&KafkaMessage{
+						Key:        record.Key,
+						Value:      record.Value,
+						Timestamp:  record.Timestamp,
+						Topic:      record.Topic,
+						Partition:  record.Partition,
+						ProducerId: record.ProducerID,
+						Offset:     record.Offset,
+					},
+				); err != nil {
+					logger.Errorf(err, "in onMessage()")
 
 					if err := c.client.CommitRecords(context.TODO(), record); err != nil {
 						return
@@ -63,7 +77,7 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 				}
 				if err := c.client.CommitRecords(context.TODO(), record); err != nil {
 					if c.logger != nil {
-						c.logger.Errorf(err, "commiting records")
+						logger.Errorf(err, "commiting records")
 					}
 					return
 				}
@@ -72,8 +86,9 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 	}
 }
 
-func NewConsumer(brokerHosts string, consumerGroup string, topicName string, options *ConsumerOptions) (*Consumer,
-	error) {
+func NewConsumer(
+	brokerHosts string, consumerGroup string, topicName string, options *ConsumerOptions,
+) (*Consumer, error) {
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
 		kgo.ConsumerGroup(consumerGroup),
