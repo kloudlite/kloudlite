@@ -5,6 +5,7 @@ import (
 	"google.golang.org/grpc"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 )
@@ -21,6 +22,10 @@ var ConsoleClientFx = fx.Provide(func(conn ConsoleClientConnection) console.Cons
 
 var IAMClientFx = fx.Provide(func(conn IAMClientConnection) iam.IAMClient {
 	return iam.NewIAMClient((*grpc.ClientConn)(conn))
+})
+
+var CommsClientFx = fx.Provide(func(conn CommsClientConnection) comms.CommsClient {
+	return comms.NewCommsClient((*grpc.ClientConn)(conn))
 })
 
 var CiClientFx = fx.Provide(
