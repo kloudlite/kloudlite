@@ -53,6 +53,7 @@ var Module = fx.Module(
 	IAMClientFx,
 	ConsoleClientFx,
 	AuthClientFx,
+	CommsClientFx,
 	fx.Invoke(
 		func(server *fiber.App, d domain.Domain, env *Env, cacheClient AuthCacheClient) {
 			schema := generated.NewExecutableSchema(

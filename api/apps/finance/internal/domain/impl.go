@@ -639,7 +639,7 @@ func fxDomain(
 	ciClient ci.CIClient,
 	authClient auth.AuthClient,
 	env *Env,
-	// commsClient comms.CommsClient,
+	commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	stripeCli *stripe.Client,
 
@@ -651,7 +651,7 @@ func fxDomain(
 		consoleClient,
 		accountRepo,
 		ciClient,
-		nil,
+		commsClient,
 		billablesRepo,
 		accountInviteTokenRepo,
 		env.InventoryPath,
