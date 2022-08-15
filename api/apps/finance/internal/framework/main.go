@@ -12,7 +12,7 @@ import (
 )
 
 type AuthGRPCEnv struct {
-	AuthService string `env:"AUTH_GRPC_SERVICE"`
+	AuthService string `env:"AUTH_SERVICE"`
 }
 
 func (e *AuthGRPCEnv) GetGRPCServerURL() string {
@@ -20,7 +20,7 @@ func (e *AuthGRPCEnv) GetGRPCServerURL() string {
 }
 
 type CommsGRPCEnv struct {
-	CommsGrpcService string `env:"COMMS_GRPC_SERVICE"`
+	CommsGrpcService string `env:"COMMS_SERVICE"`
 }
 
 func (e *CommsGRPCEnv) GetGRPCServerURL() string {
@@ -28,23 +28,15 @@ func (e *CommsGRPCEnv) GetGRPCServerURL() string {
 }
 
 type ConsoleGRPCEnv struct {
-	ConsoleGrpcService string `env:"CONSOLE_GRPC_SERVICE"`
+	ConsoleGrpcService string `env:"CONSOLE_SERVICE"`
 }
 
 func (e *ConsoleGRPCEnv) GetGRPCServerURL() string {
 	return e.ConsoleGrpcService
 }
 
-type CiGrpcEnv struct {
-	CiService string `env:"CI_GRPC_SERVICE" required:"true"`
-}
-
-func (e *CiGrpcEnv) GetGRPCServerURL() string {
-	return e.CiService
-}
-
 type IAMGRPCEnv struct {
-	IAMService string `env:"IAM_GRPC_SERVICE"`
+	IAMService string `env:"IAM_SERVICE"`
 }
 
 func (e *IAMGRPCEnv) GetGRPCServerURL() string {
@@ -94,12 +86,10 @@ var Module fx.Option = fx.Module(
 	config.EnvFx[Env](),
 	config.EnvFx[ConsoleGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),
-	config.EnvFx[CiGrpcEnv](),
 	config.EnvFx[AuthGRPCEnv](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.CommsClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
-	rpc.NewGrpcClientFx[*CiGrpcEnv, app.CIGrpcClientConn](),
 	rpc.NewGrpcClientFx[*AuthGRPCEnv, app.AuthGrpcClientConn](),
 	repos.NewMongoClientFx[*Env](),
 	redpanda.NewClientFx[*Env](),

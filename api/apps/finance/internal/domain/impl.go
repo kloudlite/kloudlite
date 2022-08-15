@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"kloudlite.io/common"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/ci"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/errors"
@@ -40,7 +39,6 @@ type domainI struct {
 	iamCli                 iam.IAMClient
 	consoleCli             console.ConsoleClient
 	accountRepo            repos.DbRepo[*Account]
-	ciClient               ci.CIClient
 	commsClient            comms.CommsClient
 	billablesRepo          repos.DbRepo[*AccountBilling]
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
@@ -636,7 +634,6 @@ func fxDomain(
 	invoiceRepo repos.DbRepo[*BillingInvoice],
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
-	ciClient ci.CIClient,
 	authClient auth.AuthClient,
 	env *Env,
 	commsClient comms.CommsClient,
@@ -650,7 +647,6 @@ func fxDomain(
 		iamCli,
 		consoleClient,
 		accountRepo,
-		ciClient,
 		commsClient,
 		billablesRepo,
 		accountInviteTokenRepo,
