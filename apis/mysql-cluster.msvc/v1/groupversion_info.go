@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the mysql-cluster.msvc v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=mysql-cluster.msvc.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=mysql-cluster.msvc.kloudlite.io
 package v1
 
 import (

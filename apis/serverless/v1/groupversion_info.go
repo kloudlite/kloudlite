@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the serverless v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=serverless.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=serverless.kloudlite.io
 package v1
 
 import (

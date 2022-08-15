@@ -40,7 +40,7 @@ func (r *TopicReconciler) GetName() string {
 	return "redpanda-topic"
 }
 
-const  (
+const (
 	TopicExists conditions.Type = "repanda.topics/exists"
 )
 
