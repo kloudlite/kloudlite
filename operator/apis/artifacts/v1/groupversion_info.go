@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the artifacts v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=artifacts.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=artifacts.kloudlite.io
 package v1
 
 import (
