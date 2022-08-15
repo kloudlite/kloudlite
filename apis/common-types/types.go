@@ -61,10 +61,11 @@ type NodeProvider struct {
 }
 
 func (c NodeProvider) GetStorageClass(fsType FsType) (string, error) {
+	// return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
 	switch c.Cloud {
 	case "do":
 		{
-			return fmt.Sprintf("do-block-storage-%s", fsType), nil
+			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
 		}
 	case "azure":
 		{
