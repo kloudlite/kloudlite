@@ -116,6 +116,7 @@ var Module = fx.Module(
 		return finance.NewFinanceClient((*grpc.ClientConn)(conn))
 	}),
 
+
 	// Grpc Server
 	fx.Provide(fxConsoleGrpcServer),
 	fx.Invoke(func(server *grpc.Server, consoleServer console.ConsoleServer) {
