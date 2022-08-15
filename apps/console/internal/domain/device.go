@@ -167,7 +167,8 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 			},
 		},
 		Spec: internal_crds.DeviceSpec{
-			Account: string(device.AccountId),
+			DeviceName: device.Name,
+			Account:    string(device.AccountId),
 			ActiveRegion: func() string {
 				if device.ActiveRegion != nil {
 					return *device.ActiveRegion

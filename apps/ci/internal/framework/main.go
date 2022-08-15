@@ -34,19 +34,14 @@ type Env struct {
 	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
 	RedisPrefix   string `env:"REDIS_PREFIX" required:"true"`
 
-	HttpPort    uint16 `env:"PORT" required:"true"`
-	HttpCors    string `env:"ORIGINS" required:"true"`
-	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
-	SendGridKey string `env:"SENDGRID_API_KEY" required:"true"`
+	HttpPort uint16 `env:"PORT" required:"true"`
+	HttpCors string `env:"ORIGINS" required:"true"`
+	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
 
 	AuthRedisHost     string `env:"AUTH_REDIS_HOSTS" required:"true"`
 	AuthRedisUsername string `env:"AUTH_REDIS_USERNAME" required:"true"`
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
-}
-
-func (e *Env) GetSendGridApiKey() string {
-	return e.SendGridKey
 }
 
 func (e *Env) GetGRPCPort() uint16 {
