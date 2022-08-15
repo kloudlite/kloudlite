@@ -79,7 +79,7 @@ var AccountCNameIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "cname", Value: repos.IndexAsc},
+			{Key: "cName", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
