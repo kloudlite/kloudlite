@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1 contains API Schema definitions for the mongodb-cluster.msvc v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=mongodb-cluster.msvc.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=mongodb-cluster.msvc.kloudlite.io
 package v1
 
 import (

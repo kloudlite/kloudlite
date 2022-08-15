@@ -139,7 +139,8 @@ tasks:
     vars:
       Name: kloudlite-operator
     env:
-      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
+#       IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
+      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
       NAMESPACE: kl-core
     cmds:
       - make manifests
@@ -179,7 +180,7 @@ tasks:
 
   deploy:build:
     env:
-      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-operator:latest
+      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.Mode}}/kloudlite-operator:latest
       NAMESPACE: kl-core
     cmds:
       - make dev-docker-build dev-docker-push

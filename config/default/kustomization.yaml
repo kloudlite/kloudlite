@@ -48,5 +48,5 @@ resources:
 - ../manager
 images:
 - name: controller
-  newName: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-operator
+  newName: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/kloudlite-operator
   newTag: latest

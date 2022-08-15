@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the s3.aws v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=s3.aws.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=s3.aws.kloudlite.io
 package v1
 
 import (

@@ -131,12 +131,12 @@ func main() {
 
 	mgr, err := func() (manager.Manager, error) {
 		cOpts := ctrl.Options{
-			Scheme:                 scheme,
-			MetricsBindAddress:     metricsAddr,
-			Port:                   9443,
-			HealthProbeBindAddress: probeAddr,
-			LeaderElection:         enableLeaderElection,
-			LeaderElectionID:       "operator.kloudlite.io",
+			Scheme:                     scheme,
+			MetricsBindAddress:         metricsAddr,
+			Port:                       9443,
+			HealthProbeBindAddress:     probeAddr,
+			LeaderElection:             enableLeaderElection,
+			LeaderElectionID:           "operator.kloudlite.io",
 			LeaderElectionResourceLock: "configmaps",
 		}
 		if isDev {
