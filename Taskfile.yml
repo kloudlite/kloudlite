@@ -51,7 +51,8 @@ tasks:
     vars:
       Name: kloudlite-operator
     env:
-      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
+#      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
+      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}
       NAMESPACE: kl-core
     cmds:
       - make manifests
@@ -234,13 +235,17 @@ tasks:
   build:
     env:
 #       IMG: harbor.dev.madhouselabs.io/kloudlite/{{.Mode}}/kloudlite-operator:latest
-      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-operator:latest
+      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-operator:{{.Tag}}
       NAMESPACE: kl-core
     cmds:
       - task: verify-vars
         vars:
           Name: "EnvName"
           Value: "{{.EnvName}}"
+      - task: verify-vars
+        vars:
+          Name: "Tag"
+          Value: "{{.Tag}}"
       - make dev-docker-build dev-docker-push
 
   pre:
