@@ -1,10 +1,22 @@
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: x-mysql
-  namespace: hotspot
+  name: mysql-svc
+  namespace: kl-core
 spec:
-  apiVersion: mysql-standalone.msvc.kloudlite.io/v1
+  cloudProvider:
+    cloud: azure
+    region: centralindia
+  nodeSelector:
+    kloudlite.io/region: centralindia
+  msvcKind:
+    apiVersion: mysql-standalone.msvc.kloudlite.io/v1
+    kind: Service
   inputs:
-    cpu: 600
-    memory: 600
+    resources:
+      cpu:
+        min: 200m
+        max: 400m
+      memory: 400Mi
+    storage:
+      size: 1Gi
