@@ -35,7 +35,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		ctx:    ctx,
 		client: c,
 		Object: resInstance,
-		Logger: logger,
+		Logger: logger.WithName(nn.String()).WithKV("NN", nn.String()),
 		locals: map[string]any{},
 	}, nil
 }
