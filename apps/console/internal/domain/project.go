@@ -100,7 +100,7 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 	return memberships, nil
 }
 
-func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, cluster string, description *string) (*entities.Project, error) {
+func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, regionId *repos.ID, description *string) (*entities.Project, error) {
 	create, err := d.projectRepo.Create(ctx, &entities.Project{
 		Name:        projectName,
 		AccountId:   accountId,
@@ -108,7 +108,7 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		DisplayName: displayName,
 		Logo:        logo,
 		Description: description,
-		Region:      cluster,
+		RegionId:    regionId,
 		Status:      entities.ProjectStateSyncing,
 	})
 	if err != nil {
@@ -172,4 +172,14 @@ func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 
 func (d *domain) OnDeleteProject(ctx context.Context, response *op_crds.StatusUpdate) error {
 	return d.projectRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}
+
+func (d *domain) getProjectRegionDetails(ctx context.Context, proj *entities.Project) (cloudProvider string, region string, err error) {
+	var projectRegion *entities.EdgeRegion
+	var projectCloudProvider *entities.CloudProvider
+	if proj.RegionId != nil {
+		projectRegion, err = d.regionRepo.FindById(ctx, *proj.RegionId)
+		projectCloudProvider, err = d.providerRepo.FindById(ctx, projectRegion.ProviderId)
+	}
+	return projectCloudProvider.Provider, projectRegion.Region, nil
 }

@@ -72,7 +72,7 @@ input CloudProviderIn {
 }
 
 type EdgeRegion {
-    Id: ID!
+  Id: ID!
   Name: String!
   region : String!
 }
@@ -106,7 +106,7 @@ type Mutation {
     displayName: String!,
     logo: String,
     description: String,
-    cluster: String,
+    regionId: ID,
   ): Project!
   core_updateProject(
     projectId: ID!,
