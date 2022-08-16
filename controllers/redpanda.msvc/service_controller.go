@@ -31,10 +31,11 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ServiceReconciler) GetName() string {
-	return "redpanda"
+	return r.Name
 }
 
 const (
@@ -171,7 +172,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redpandamsvcv
 		if obj.Spec.Storage.StorageClass != "" {
 			return obj.Spec.Storage.StorageClass, nil
 		}
-		return obj.Spec.NodeProvider.GetStorageClass(ct.Xfs)
+		return obj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
 	}()
 	if err != nil {
 		return req.FailWithOpError(errors.NewEf(err, "could not find storage class to use")).Err(nil)
@@ -219,7 +220,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redpandamsvcv
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("redpanda-service")
+	r.logger = logger.WithName(r.Name)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redpandamsvcv1.Service{}).

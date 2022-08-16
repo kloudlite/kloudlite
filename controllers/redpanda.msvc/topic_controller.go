@@ -34,10 +34,11 @@ type TopicReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *TopicReconciler) GetName() string {
-	return "redpanda-topic"
+	return r.Name
 }
 
 const (
@@ -224,7 +225,7 @@ func (r *TopicReconciler) reconcileOperations(req *rApi.Request[*redpandamsvcv1.
 func (r *TopicReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("redpanda-topics")
+	r.logger = logger.WithName(r.Name)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redpandamsvcv1.Topic{}).

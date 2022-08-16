@@ -56,12 +56,14 @@ func main() {
 			ErrProducer: errProducer,
 		},
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	logger.Infof("ready for consuming messages")
 
 	consumer.StartConsuming(
 		func(kMsg *redpanda.KafkaMessage) error {
-
 			var msg AgentMessage
 			if err := json.Unmarshal(kMsg.Value, &msg); err != nil {
 				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
@@ -88,6 +90,7 @@ func main() {
 						errStream := bytes.NewBuffer([]byte{})
 						c.Stderr = errStream
 						if err := c.Run(); err != nil {
+							logger.Errorf(err, errStream.String())
 							return errors.NewEf(err, errStream.String())
 						}
 						return nil
@@ -99,7 +102,6 @@ func main() {
 						}
 						b, err := json.Marshal(errMsg)
 						if err != nil {
-							logger.Errorf(err, "error marshalling ErrMessage to []byte")
 							return err
 						}
 						if err := errProducer.Produce(context.TODO(), envVars.KafkaErrorOnApplyTopic, string(kMsg.Key), b); err != nil {

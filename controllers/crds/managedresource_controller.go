@@ -30,10 +30,11 @@ type ManagedResourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ManagedResourceReconciler) GetName() string {
-	return "managed-resource"
+	return r.Name
 }
 
 const (
@@ -182,14 +183,19 @@ func (r *ManagedResourceReconciler) reconcileOperations(req *rApi.Request[*v1.Ma
 	if err := fn.KubectlApplyExec(ctx, b); err != nil {
 		return req.FailWithOpError(err).Err(nil)
 	}
-	return req.Done()
+
+	mres.Status.OpsConditions = []metav1.Condition{}
+	if err := r.Status().Update(ctx, mres); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("managed-resource")
+	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ManagedResource{})
 

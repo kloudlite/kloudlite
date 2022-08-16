@@ -51,7 +51,7 @@ spec:
                 - org
                 - username
                 type: object
-              nodeProvider:
+              cloudProvider:
                 properties:
                   account:
                     type: string
@@ -108,7 +108,7 @@ spec:
                 type: object
             required:
             - admin
-            - nodeProvider
+            - cloudProvider
             - resources
             - storage
             type: object

@@ -38,10 +38,11 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 	Env    *env.Env
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ServiceReconciler) GetName() string {
-	return "mongo-standalone-service"
+	return r.Name
 }
 
 const (
@@ -211,7 +212,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 	}
 
 	if errP := func() error {
-		storageClass, err := svcObj.Spec.NodeProvider.GetStorageClass(ct.Xfs)
+		storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
 		if err != nil {
 			return err
 		}
@@ -286,7 +287,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("mongo-standalone-service")
+	r.logger = logger.WithName(r.Name)
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Service{})
 
 	builder.Owns(fn.NewUnstructured(constants.HelmMongoDBType))

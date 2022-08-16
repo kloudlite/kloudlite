@@ -29,10 +29,11 @@ type BucketReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *BucketReconciler) GetName() string {
-	return "influxdb-bucket"
+	return r.Name
 }
 
 const (
@@ -268,8 +269,8 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName(r.Name)
 
-	r.logger = logger.WithName("influx-standalone-bucket")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&influxDB.Bucket{}).
 		Owns(&corev1.Secret{}).

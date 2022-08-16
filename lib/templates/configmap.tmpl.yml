@@ -1,22 +1,17 @@
+{{- $name := get . "name" }}
+{{- $namespace := get . "namespace" }}
+{{- $ownerRefs := get . "owner-refs" }}
+{{- $labels := get . "labels" }}
+{{- $data := get . "data" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.Name}}
-  namespace: {{.Namespace}}
-  {{- if .OwnerReferences }}
-  ownerReferences:
-  {{- range $i, $owner := .OwnerReferences }}
-    - apiVersion: {{ $owner.APIVersion }}
-      kind: {{ $owner.Kind }}
-      name: {{ $owner.Name }}
-      uid: {{ $owner.UID }}
-      controller: {{ $owner.Controller | default "true" }}
-      blockOwnerDeletion: {{ $owner.BlockOwnerDeletion | default "true" }}
-  {{- end }}
-  {{- end }}
-{{- if .Data }}
-data:
-  {{- range $key,$value := .Data}}
-  {{$key}}: {{ $value | squote }}
-  {{- end }}
+  name: {{$name}}
+  namespace: {{$namespace}}
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
+  {{- if $labels }}
+  labels: {{$labels | toYAML | nindent 4}}
+  {{- end}
+{{- if $data }}
+data: {{$data | toYAML | nindent 2}}
 {{- end }}
