@@ -31,6 +31,7 @@ to quickly create a Cobra application.`,
 }
 
 func TriggerSelectApp() string {
+
 	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
 	s.Start()
 	apps, err := server.GetApps()
@@ -43,7 +44,7 @@ func TriggerSelectApp() string {
 		func(i int) string {
 			return apps[i].Name
 		},
-		fuzzyfinder.WithPromptString("Select Project >"),
+		fuzzyfinder.WithPromptString("Select App >"),
 	)
 	if err != nil {
 		log.Fatal(err)
