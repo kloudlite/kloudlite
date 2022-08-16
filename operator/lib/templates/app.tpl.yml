@@ -38,6 +38,7 @@ spec:
       {{- end }}
       {{- end }}
 ---
+{{- if .Spec.Services }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -56,6 +57,7 @@ spec:
       targetPort: {{.TargetPort}}
     {{- end }}
     {{- end }}
+{{- end}}
 
 {{- if .Spec.Hpa.Enabled }}
 ---

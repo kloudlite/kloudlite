@@ -32,10 +32,11 @@ type StatusWatcherReconciler struct {
 	Scheme *runtime.Scheme
 	*Notifier
 	Logger logging.Logger
+	Name   string
 }
 
 func (r *StatusWatcherReconciler) GetName() string {
-	return "status-watcher"
+	return r.Name
 }
 
 func parseGroup(b64GroupName string) (*schema.GroupVersionKind, error) {
@@ -135,7 +136,7 @@ func (r *StatusWatcherReconciler) SetupWithManager(mgr ctrl.Manager, envVars *en
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 
-	r.Logger = logger.WithName("status-watcher")
+	r.Logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})

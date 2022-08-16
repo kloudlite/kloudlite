@@ -34,6 +34,7 @@ type ProjectReconciler struct {
 	env       *env.Env
 	harborCli *harbor.Client
 	logger    logging.Logger
+	Name      string
 }
 
 const (
@@ -163,14 +164,14 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 }
 
 func (r *ProjectReconciler) GetName() string {
-	return "project"
+	return r.Name
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("project")
+	r.logger = logger.WithName(r.Name)
 	r.env = envVars
 
 	harborCli, err := harbor.NewClient(

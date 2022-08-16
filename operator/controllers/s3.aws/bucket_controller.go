@@ -34,10 +34,11 @@ type BucketReconciler struct {
 	Scheme *runtime.Scheme
 	env    *env.Env
 	logger logging.Logger
+	Name   string
 }
 
 func (r *BucketReconciler) GetName() string {
-	return "s3aws-bucket"
+	return r.Name
 }
 
 const (
@@ -367,6 +368,6 @@ func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, 
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.env = envVars
-	r.logger = logger.WithName("s3-aws-bucket")
+	r.logger = logger.WithName(r.Name)
 	return ctrl.NewControllerManagedBy(mgr).For(&s3awsv1.Bucket{}).Complete(r)
 }

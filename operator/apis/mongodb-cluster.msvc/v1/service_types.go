@@ -11,7 +11,7 @@ import (
 
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	CloudProvider ct.NodeProvider   `json:"cloudProvider"`
+	CloudProvider ct.CloudProvider  `json:"cloudProvider"`
 	NodeSelector  map[string]string `json:"nodeSelector"`
 	// // +kubebuilder:validation:Schemaless
 	// // +kubebuilder:pruning:PreserveUnknownFields

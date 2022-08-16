@@ -1,5 +1,8 @@
 version: 3
 
+env:
+  SHELL: /bin/bash
+
 tasks:
   run:
     env:
@@ -10,25 +13,22 @@ tasks:
     cmds:
       - go run ./main.go
 
-  build:dev:
-    vars:
-      Image: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-agent
-      Tag: latest
+  verify-vars:
+    silent: true
     cmds:
-      - docker buildx build --build-context project=../ -t {{.Image}}:{{.Tag}} . --no-cache
-      - docker push {{.Image}}:{{.Tag}}
-  build:staging:
-    vars:
-      Image: harbor.dev.madhouselabs.io/dev-kloudlite/kloudlite-agent
-      Tag: latest
-    cmds:
-      - docker buildx build --build-context project=../ -t {{.Image}}:{{.Tag}} .
-      - docker push {{.Image}}:{{.Tag}}
+      - |+
+        [ -z "{{.Value}}" ] && echo "env-var {{.Name}} is required" && exit 1
+        exit 0
+      -
 
-  build:prod:
+  build:
     vars:
-      Image: harbor.dev.madhouselabs.io/kloudlite/kloudlite-agent
+      Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-agent
       Tag: latest
     cmds:
+      - task: verify-vars
+        vars:
+          Name: EnvName
+          Value: "{{.EnvName}}"
       - docker buildx build --build-context project=../ -t {{.Image}}:{{.Tag}} .
       - docker push {{.Image}}:{{.Tag}}

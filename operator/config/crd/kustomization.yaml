@@ -22,4 +22,6 @@ resources:
 - bases/artifacts.kloudlite.io_harboruseraccounts.yaml
 - bases/redpanda.msvc.kloudlite.io_services.yaml
 - bases/redpanda.msvc.kloudlite.io_topics.yaml
+- bases/mongodb.external.kloudlite.io_databases.yaml
+- bases/mysql.external.kloudlite.io_databases.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

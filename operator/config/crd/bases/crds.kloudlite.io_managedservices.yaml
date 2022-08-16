@@ -35,22 +35,7 @@ spec:
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
-              inputs:
-                description: // +kubebuilder:validation:Optional // +kubebuilder:default=1
-                  ReplicaCount int                 `json:"replicaCount,omitempty"`
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              msvcKind:
-                properties:
-                  apiVersion:
-                    type: string
-                  kind:
-                    default: Service
-                    type: string
-                required:
-                - apiVersion
-                type: object
-              nodeProvider:
+              cloudProvider:
                 properties:
                   account:
                     type: string
@@ -68,13 +53,28 @@ spec:
                 - cloud
                 - region
                 type: object
+              inputs:
+                description: // +kubebuilder:validation:Optional // +kubebuilder:default=1
+                  ReplicaCount int                 `json:"replicaCount,omitempty"`
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              msvcKind:
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    default: Service
+                    type: string
+                required:
+                - apiVersion
+                type: object
               nodeSelector:
                 additionalProperties:
                   type: string
                 type: object
             required:
+            - cloudProvider
             - msvcKind
-            - nodeProvider
             type: object
           status:
             properties:

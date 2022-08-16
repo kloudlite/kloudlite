@@ -34,10 +34,11 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ServiceReconciler) GetName() string {
-	return "redis-standalone-service"
+	return r.Name
 }
 
 const (
@@ -246,7 +247,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		return req.FailWithOpError(rApi.ErrNotInReqLocals.Format(KeyAclAccountsMap))
 	}
 
-	storageClass, err := obj.Spec.NodeProvider.GetStorageClass(ct.Ext4)
+	storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
@@ -326,7 +327,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 
-	r.logger = logger.WithName("redis-standalone-service")
+	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisStandalone.Service{})
 

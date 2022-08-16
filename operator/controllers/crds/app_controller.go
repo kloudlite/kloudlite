@@ -31,10 +31,11 @@ type AppReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *AppReconciler) GetName() string {
-	return "app"
+	return r.Name
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -233,7 +234,7 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) step
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("app")
+	r.logger = logger.WithName(r.Name)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.App{}).
 		Owns(&appsv1.Deployment{}).

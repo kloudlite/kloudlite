@@ -45,14 +45,14 @@ const (
 )
 
 // const (
-// 	Digitalocean NodeProvider = "do"
-// 	Aws          NodeProvider = "aws"
-// 	Gcp          NodeProvider = "gcp"
-// 	Azure        NodeProvider = "azure"
-// 	K3sLocal     NodeProvider = "k3s-local"
+// 	Digitalocean CloudProvider = "do"
+// 	Aws          CloudProvider = "aws"
+// 	Gcp          CloudProvider = "gcp"
+// 	Azure        CloudProvider = "azure"
+// 	K3sLocal     CloudProvider = "k3s-local"
 // )
 
-type NodeProvider struct {
+type CloudProvider struct {
 	// +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
 	Cloud  string `json:"cloud"`
 	Region string `json:"region"`
@@ -60,7 +60,7 @@ type NodeProvider struct {
 	Account string `json:"account,omitempty"`
 }
 
-func (c NodeProvider) GetStorageClass(fsType FsType) (string, error) {
+func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
 	// return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
 	switch c.Cloud {
 	case "do":
@@ -75,7 +75,7 @@ func (c NodeProvider) GetStorageClass(fsType FsType) (string, error) {
 	return "", errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType)
 }
 
-// func (c NodeProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) {
+// func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) {
 // 	switch c {
 // 	case Digitalocean:
 // 		{

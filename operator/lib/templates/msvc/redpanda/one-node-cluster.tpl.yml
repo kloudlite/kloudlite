@@ -19,7 +19,7 @@ spec:
       cpu: {{.Spec.Resources.Cpu.Max}}
       memory: {{.Spec.Resources.Memory}}
   nodeSelector:
-    kloudlite.io/region: {{.Spec.NodeProvider.Region}}
+    kloudlite.io/region: {{.Spec.CloudProvider.Region}}
     {{ .Spec.NodeSelector | toYAML }}
   configuration:
     rpcServer:

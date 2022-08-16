@@ -10,7 +10,7 @@ metadata:
   labels: {{ .Labels | toYAML | nindent 4 }}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
-  nodeProvider: {{- .Spec.NodeProvider | toYAML | nindent 4 }}
+  cloudProvider: {{- .Spec.CloudProvider | toYAML | nindent 4 }}
   nodeSelector: {{- .Spec.NodeSelector | toYAML |nindent 4 }}
   {{ .Spec.Inputs | toYAML | nindent 2 }}
 {{- end}}

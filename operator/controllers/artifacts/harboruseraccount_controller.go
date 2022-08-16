@@ -36,10 +36,11 @@ type HarborUserAccountReconciler struct {
 	env       *env.Env
 	harborCli *harbor.Client
 	logger    logging.Logger
+	Name      string
 }
 
 func (r *HarborUserAccountReconciler) GetName() string {
-	return "artifact-harbor-user-account"
+	return r.Name
 }
 
 const (
@@ -270,7 +271,7 @@ func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.env = envVars
-	r.logger = logger.WithName("harbor-user-account")
+	r.logger = logger.WithName(r.Name)
 	harborCli, err := harbor.NewClient(
 		harbor.Args{
 			HarborAdminUsername: r.env.HarborAdminUsername,
