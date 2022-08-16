@@ -9,6 +9,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
 	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
@@ -292,13 +293,26 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 		builder.Watches(
 			&source.Kind{Type: item}, handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
-					value, ok := obj.GetLabels()[fmt.Sprintf("%s/ref", mysqlStandalone.GroupVersion.Group)]
-					if !ok {
+
+					var services mysqlStandalone.ServiceList
+					if err := r.List(
+						context.TODO(), &services, &client.ListOptions{
+							LabelSelector: labels.SelectorFromValidatedSet(
+								map[string]string{
+									"kloudlite.io/msvc.name": obj.GetLabels()["kloudlite.io/msvc.name"],
+								},
+							),
+						},
+					); err != nil {
 						return nil
 					}
-					return []reconcile.Request{
-						{NamespacedName: fn.NN(obj.GetNamespace(), value)},
+
+					requests := make([]reconcile.Request, 0, len(services.Items))
+					for _, service := range services.Items {
+						requests = append(requests, reconcile.Request{NamespacedName: fn.NN(service.GetNamespace(), service.GetName())})
 					}
+
+					return requests
 				},
 			),
 		)

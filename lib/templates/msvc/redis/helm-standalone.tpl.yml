@@ -61,6 +61,14 @@ spec:
     persistence:
       enabled: true
       size: {{.Spec.Storage.Size}}
+    {{- if .Labels}}
+    podLabels: {{.Labels | toYAML | nindent 6 }}
+    {{- end}}
+
+  replica:
+    {{- if .Labels}}
+    podLabels: {{.Labels | toYAML | nindent 6 }}
+    {{- end}}
 
   volumePermissions:
     enabled: true
