@@ -48,17 +48,11 @@ var EdgeRegionIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "region", Value: repos.IndexAsc},
 		},
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "provider", Value: repos.IndexAsc},
-		},
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "region", Value: repos.IndexAsc},
-			{Key: "provider", Value: repos.IndexAsc},
-		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "provider", Value: repos.IndexAsc},
+		},
 	},
 }

@@ -48,7 +48,7 @@ func (d *domain) CreateRegion(ctx context.Context, region *entities.EdgeRegion) 
 		APIVersion: op_crds.RegionAPIVersion,
 		Kind:       op_crds.RegionKind,
 		Metadata: op_crds.RegionMetadata{
-			Name: string(region.Id),
+			Name: region.Region,
 		},
 		Spec: op_crds.RegionSpec{
 			Name: fmt.Sprint(region.Id),
