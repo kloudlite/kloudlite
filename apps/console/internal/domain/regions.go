@@ -50,7 +50,7 @@ func (d *domain) CreateRegion(ctx context.Context, region *entities.EdgeRegion) 
 			Name: region.Region,
 		},
 		Spec: op_crds.RegionSpec{
-			Name: region.Name,
+			Name: region.Region,
 			Account: func() *string {
 				if provider.AccountId != nil {
 					s := string(*provider.AccountId)
