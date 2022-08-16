@@ -147,7 +147,10 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
-			CloudProvider: cloudProvider,
+			CloudProvider: op_crds.CloudProvider{
+				Cloud:  cloudProvider,
+				Region: region,
+			},
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": region,
 			},
@@ -223,7 +226,10 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 				APIVersion: template.ApiVersion,
 				Kind:       template.Kind,
 			},
-			CloudProvider: cloudProvider,
+			CloudProvider: op_crds.CloudProvider{
+				Cloud:  cloudProvider,
+				Region: region,
+			},
 			NodeSelector: map[string]string{
 				"kloudlite.io/region": region,
 			},
