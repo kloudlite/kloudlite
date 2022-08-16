@@ -179,7 +179,13 @@ func (d *domain) getProjectRegionDetails(ctx context.Context, proj *entities.Pro
 	var projectCloudProvider *entities.CloudProvider
 	if proj.RegionId != nil {
 		projectRegion, err = d.regionRepo.FindById(ctx, *proj.RegionId)
+		if err != nil {
+			return "", "", err
+		}
 		projectCloudProvider, err = d.providerRepo.FindById(ctx, projectRegion.ProviderId)
+		if err != nil {
+			return "", "", err
+		}
 	}
 	return projectCloudProvider.Provider, projectRegion.Region, nil
 }
