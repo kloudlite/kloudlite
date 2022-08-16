@@ -274,7 +274,7 @@ func (r *mutationResolver) CoreUpdateDevice(ctx context.Context, deviceID repos.
 	return true, nil
 }
 
-func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, regionID repos.ID) (*model.Project, error) {
+func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, regionID *repos.ID) (*model.Project, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("user not logged in")

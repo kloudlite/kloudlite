@@ -39,7 +39,7 @@ type Domain interface {
 	ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error)
 	ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error)
 
-	CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, regionId repos.ID, description *string) (*entities.Project, error)
+	CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, regionId *repos.ID, description *string) (*entities.Project, error)
 	GetAccountProjects(ctx context.Context, id repos.ID) ([]*entities.Project, error)
 	GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error)
 	OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error
