@@ -30,10 +30,11 @@ type RouterReconciler struct {
 	Scheme *runtime.Scheme
 	env    *env.Env
 	logger logging.Logger
+	Name   string
 }
 
 func (r *RouterReconciler) GetName() string {
-	return "router"
+	return r.Name
 }
 
 const (
@@ -245,7 +246,7 @@ func (r *RouterReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, 
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.env = envVars
-	r.logger = logger.WithName("router")
+	r.logger = logger.WithName(r.Name)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.Router{}).
 		Owns(&networkingv1.Ingress{}).

@@ -32,10 +32,11 @@ type DatabaseReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *DatabaseReconciler) GetName() string {
-	return "mysql-standalone-database"
+	return r.Name
 }
 
 const (
@@ -298,8 +299,8 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName(r.Name)
 
-	r.logger = logger.WithName("mysql-standalone-database")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlStandalone.Database{}).
 		Owns(&corev1.Secret{}).

@@ -35,7 +35,7 @@ spec:
           spec:
             description: ServiceSpec defines the desired state of Service
             properties:
-              nodeProvider:
+              cloudProvider:
                 properties:
                   account:
                     type: string
@@ -92,7 +92,7 @@ spec:
                     type: string
                 type: object
             required:
-            - nodeProvider
+            - cloudProvider
             - resources
             - storage
             type: object

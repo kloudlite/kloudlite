@@ -37,10 +37,11 @@ type BillingWatcherReconciler struct {
 	Scheme *runtime.Scheme
 	*Notifier
 	logger logging.Logger
+	Name   string
 }
 
 func (r *BillingWatcherReconciler) GetName() string {
-	return "billing-watcher"
+	return r.Name
 }
 
 func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj client.Object, billing ResourceBilling) (ctrl.Result, error) {
@@ -288,7 +289,7 @@ func (r *BillingWatcherReconciler) RemoveBillingFinalizer(ctx context.Context, o
 func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("billing-watcher")
+	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.App{})

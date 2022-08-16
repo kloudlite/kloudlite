@@ -30,10 +30,11 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ServiceReconciler) GetName() string {
-	return "influxdb-service"
+	return r.Name
 }
 
 const (
@@ -169,7 +170,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*influxdbmsvcv
 		return req.Done()
 	}
 
-	storageClass, err := svcObj.Spec.NodeProvider.GetStorageClass(ct.Ext4)
+	storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
 	if err != nil {
 		return req.FailWithOpError(err)
 	}
@@ -250,7 +251,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*influxdbmsvcv
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("influxdb-service")
+	r.logger = logger.WithName(r.Name)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&influxdbmsvcv1.Service{}).

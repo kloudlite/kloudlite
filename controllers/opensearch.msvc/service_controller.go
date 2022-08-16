@@ -19,10 +19,11 @@ type ServiceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ServiceReconciler) GetName() string {
-	return "opensearch-service"
+	return r.Name
 }
 
 // +kubebuilder:rbac:groups=opensearch.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -74,8 +75,8 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*opensearchmsv
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName(r.Name)
 
-	r.logger = logger.WithName("opensearch")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&opensearchmsvcv1.Service{}).
 		Complete(r)

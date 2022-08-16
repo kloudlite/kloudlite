@@ -42,4 +42,6 @@ resources:
 - artifacts_v1_harboruseraccount.yaml
 - redpanda.msvc_v1_service.yaml
 - redpanda.msvc_v1_topic.yaml
+- mongodb.external_v1_database.yaml
+- mysql.external_v1_database.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

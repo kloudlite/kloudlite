@@ -370,6 +370,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - mongodb.external.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.external.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.external.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - mysql-cluster.msvc.kloudlite.io
   resources:
   - databases
@@ -443,6 +469,32 @@ rules:
   - mysql-standalone.msvc.kloudlite.io
   resources:
   - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.external.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.external.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.external.kloudlite.io
+  resources:
+  - databases/status
   verbs:
   - get
   - patch

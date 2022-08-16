@@ -30,10 +30,11 @@ type LambdaReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *LambdaReconciler) GetName() string {
-	return "lambda"
+	return r.Name
 }
 
 const (
@@ -234,8 +235,7 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 func (r *LambdaReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-
-	r.logger = logger.WithName("serverless-lambda")
+	r.logger = logger.WithName(r.Name)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&serverlessv1.Lambda{}).
 		Owns(fn.NewUnstructured(constants.KnativeServiceType)).

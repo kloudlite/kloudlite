@@ -29,10 +29,11 @@ type DatabaseReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *DatabaseReconciler) GetName() string {
-	return "mongo-standalone-database"
+	return r.Name
 }
 
 const (
@@ -285,7 +286,8 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStand
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName("mongo-standalone-database")
+	r.logger = logger.WithName(r.Name)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongodbStandalone.Database{}).
 		Owns(&corev1.Secret{}).

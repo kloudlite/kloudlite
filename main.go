@@ -40,14 +40,18 @@ import (
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
+	mongodbexternalv1 "operators.kloudlite.io/apis/mongodb.external/v1"
 	mysqlclustermsvcv1 "operators.kloudlite.io/apis/mysql-cluster.msvc/v1"
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
+	mysqlexternalv1 "operators.kloudlite.io/apis/mysql.external/v1"
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
+	mongodbexternalcontrollers "operators.kloudlite.io/controllers/mongodb.external"
+	mysqlexternalcontrollers "operators.kloudlite.io/controllers/mysql.external"
 	redpandamsvccontrollers "operators.kloudlite.io/controllers/redpanda.msvc"
 	// +kubebuilder:scaffold:imports
 )
@@ -73,6 +77,8 @@ func init() {
 	utilruntime.Must(s3awsv1.AddToScheme(scheme))
 	utilruntime.Must(artifactsv1.AddToScheme(scheme))
 	utilruntime.Must(redpandamsvcv1.AddToScheme(scheme))
+	utilruntime.Must(mongodbexternalv1.AddToScheme(scheme))
+	utilruntime.Must(mysqlexternalv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -102,6 +108,7 @@ func main() {
 	var isDev bool
 	var devServerHost string
 	var enableForArgs arrayFlags
+	var skipControllerArgs arrayFlags
 	var isAllEnabled bool
 
 	// flag.StringVar(&metricsAddr, "metrics-bind-address", ":9091", "The address the metric endpoint binds to.")
@@ -122,6 +129,7 @@ func main() {
 
 	flag.StringVar(&devServerHost, "serverHost", "localhost:8080", "--serverHost <host:port>")
 	flag.Var(&enableForArgs, "for", "--for item1 --for item2")
+	flag.Var(&skipControllerArgs, "skip", "--skip item1 --skip item2")
 	flag.BoolVar(&isAllEnabled, "all", false, "--for")
 	flag.Parse()
 
@@ -153,36 +161,39 @@ func main() {
 	envVars := env.GetEnvOrDie()
 
 	controllers := []rApi.Reconciler{
-		&crds.ProjectReconciler{},
-		&crds.AppReconciler{},
-		&crds.RouterReconciler{},
-		&crds.ManagedServiceReconciler{},
-		&crds.ManagedResourceReconciler{},
+		&crds.ProjectReconciler{Name: "project"},
+		&crds.AppReconciler{Name: "app"},
+		&crds.RouterReconciler{Name: "router"},
+		&crds.ManagedServiceReconciler{Name: "msvc"},
+		&crds.ManagedResourceReconciler{Name: "mres"},
 
-		&mongodbStandaloneControllers.ServiceReconciler{},
-		&mongodbStandaloneControllers.DatabaseReconciler{},
+		&mongodbStandaloneControllers.ServiceReconciler{Name: "msvc-mongodb-service"},
+		&mongodbStandaloneControllers.DatabaseReconciler{Name: "msvc-mongodb-database"},
 
-		&mysqlStandaloneControllers.ServiceReconciler{},
-		&mysqlStandaloneControllers.DatabaseReconciler{},
+		&mysqlStandaloneControllers.ServiceReconciler{Name: "msvc-mysql-service"},
+		&mysqlStandaloneControllers.DatabaseReconciler{Name: "msvc-mysql-database"},
 
-		&redisStandaloneControllers.ServiceReconciler{},
-		&redisStandaloneControllers.ACLAccountReconciler{},
+		&redisStandaloneControllers.ServiceReconciler{Name: "msvc-redis-service"},
+		&redisStandaloneControllers.ACLAccountReconciler{Name: "msvc-redis-aclaccount"},
 
-		&redpandamsvccontrollers.ServiceReconciler{},
-		&redpandamsvccontrollers.TopicReconciler{},
+		&redpandamsvccontrollers.ServiceReconciler{Name: "msvc-redpanda-service"},
+		&redpandamsvccontrollers.TopicReconciler{Name: "msvc-redpanda-topic"},
 
-		&serverlessControllers.LambdaReconciler{},
+		&serverlessControllers.LambdaReconciler{Name: "lambda"},
 
-		&elasticsearchControllers.ServiceReconciler{},
-		&opensearchControllers.ServiceReconciler{},
+		&elasticsearchControllers.ServiceReconciler{Name: "msvc-elasticsearch-service"},
+		&opensearchControllers.ServiceReconciler{Name: "msvc-opensearch-service"},
 
-		&influxDbControllers.ServiceReconciler{},
-		&influxDbControllers.BucketReconciler{},
+		&influxDbControllers.ServiceReconciler{Name: "msvc-influxdb-service"},
+		&influxDbControllers.BucketReconciler{Name: "msvc-influxdb-bucket"},
 
-		&s3awsControllers.BucketReconciler{},
+		&s3awsControllers.BucketReconciler{Name: "s3-aws-bucket"},
 
-		&artifactsControllers.HarborProjectReconciler{},
-		&artifactsControllers.HarborUserAccountReconciler{},
+		&artifactsControllers.HarborProjectReconciler{Name: "artifacts-harbor-project"},
+		&artifactsControllers.HarborUserAccountReconciler{Name: "artifacts-harbor-user-account"},
+
+		&mongodbexternalcontrollers.DatabaseReconciler{Name: "external-mongodb-database"},
+		&mysqlexternalcontrollers.DatabaseReconciler{Name: "external-mysql-database"},
 	}
 
 	producer, err := redpanda.NewProducer(envVars.KafkaBrokers)
@@ -197,8 +208,8 @@ func main() {
 
 	controllers = append(
 		controllers,
-		&watchercontrollers.StatusWatcherReconciler{Notifier: statusNotifier},
-		&watchercontrollers.BillingWatcherReconciler{Notifier: billingNotifier},
+		&watchercontrollers.StatusWatcherReconciler{Name: "status-watcher", Notifier: statusNotifier},
+		&watchercontrollers.BillingWatcherReconciler{Name: "billing-watcher", Notifier: billingNotifier},
 	)
 
 	enabledForControllers := map[string]bool{}
@@ -206,16 +217,23 @@ func main() {
 		enabledForControllers[arg] = true
 	}
 
+	skippedControllers := map[string]bool{}
+	for _, arg := range skipControllerArgs {
+		skippedControllers[arg] = true
+	}
+
 	for _, rc := range controllers {
+		if skippedControllers[rc.GetName()] {
+			logger.Infof("skipping %s controller (by flag) ", rc.GetName())
+			continue
+		}
 		if isAllEnabled || enabledForControllers[rc.GetName()] {
 			if err := rc.SetupWithManager(mgr, envVars, logger); err != nil {
-				// setupLog.Error(err, "unable to create controller", "controller", rc.GetName())
+				setupLog.Error(err, "unable to create controller", "controller", rc.GetName())
 				os.Exit(1)
 			}
 		}
 	}
-
-	// +kubebuilder:scaffold:builder
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")

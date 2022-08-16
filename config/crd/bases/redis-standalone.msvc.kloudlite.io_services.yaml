@@ -39,7 +39,7 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              nodeProvider:
+              cloudProvider:
                 properties:
                   account:
                     type: string
@@ -95,7 +95,7 @@ spec:
                     type: string
                 type: object
             required:
-            - nodeProvider
+            - cloudProvider
             - resources
             - storage
             type: object

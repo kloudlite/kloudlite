@@ -287,4 +287,22 @@ resources:
   kind: Topic
   path: operators.kloudlite.io/apis/redpanda.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: mongodb.external
+  kind: Database
+  path: operators.kloudlite.io/apis/mongodb.external/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  group: mysql.external
+  kind: Database
+  path: operators.kloudlite.io/apis/mysql.external/v1
+  version: v1
 version: "3"

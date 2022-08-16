@@ -30,10 +30,11 @@ type ACLAccountReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ACLAccountReconciler) GetName() string {
-	return "redis-standalone-acl-account"
+	return r.Name
 }
 
 type Key string
@@ -341,8 +342,8 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 func (r *ACLAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName(r.Name)
 
-	r.logger = logger.WithName("redis-standalone-aclaccount")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redisStandalone.ACLAccount{}).
 		Owns(&corev1.Secret{}).

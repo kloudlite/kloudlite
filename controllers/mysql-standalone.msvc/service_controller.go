@@ -34,10 +34,11 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 	Env    *env.Env
 	logger logging.Logger
+	Name   string
 }
 
 func (r *ServiceReconciler) GetName() string {
-	return "mysql-standalone-service"
+	return r.Name
 }
 
 const (
@@ -216,7 +217,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalo
 	}
 
 	// STEP: 3. apply CRs of helm/custom controller
-	storageClass, err := svcObj.Spec.NodeProvider.GetStorageClass(ct.Ext4)
+	storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
 	if err != nil {
 		req.Logger.Errorf(err, "failed to get storage class for fsType: %s", ct.Ext4)
 		return req.FailWithOpError(err).Err(nil)
@@ -276,7 +277,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 
-	r.logger = logger.WithName("mysql-standalone-service")
+	r.logger = logger.WithName(r.Name)
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlStandalone.Service{})
 
 	builder.Owns(fn.NewUnstructured(constants.HelmMysqlType))
