@@ -189,6 +189,10 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 }
 
 func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *entities.App, shouldRestart bool) error {
+	_, region, err := d.getProjectRegionDetails(ctx, prj)
+	if err != nil {
+		return err
+	}
 	if app.IsLambda {
 		err := d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.Lambda{
 			APIVersion: op_crds.LambdaAPIVersion,
@@ -223,7 +227,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 			},
 			Spec: op_crds.LambdaSpec{
 				NodeSelector: map[string]string{
-					"kloudlite.io/region": prj.Region,
+					"kloudlite.io/region": region,
 				},
 				Containers: func() []op_crds.Container {
 					cs := make([]op_crds.Container, 0)
@@ -314,7 +318,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 			},
 			Spec: op_crds.AppSpec{
 				NodeSelector: map[string]string{
-					"kloudlite.io/region": prj.Region,
+					"kloudlite.io/region": region,
 				},
 				Services: func() []op_crds.Service {
 					svcs := make([]op_crds.Service, 0)

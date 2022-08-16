@@ -92,6 +92,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
+	cloudProvider, region, err := d.getProjectRegionDetails(ctx, prj)
 	create, err := d.managedSvcRepo.Create(ctx, &entities.ManagedService{
 		Name:        name,
 		Namespace:   prj.Name,
@@ -146,9 +147,9 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
-			CloudProvider: "do",
+			CloudProvider: cloudProvider,
 			NodeSelector: map[string]string{
-				"kloudlite.io/region": prj.Region,
+				"kloudlite.io/region": region,
 			},
 			MsvcKind: op_crds.MsvcKind{
 				APIVersion: template.ApiVersion,
@@ -169,6 +170,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 	proj, err := d.projectRepo.FindById(ctx, managedSvc.ProjectId)
+	cloudProvider, region, err := d.getProjectRegionDetails(ctx, proj)
 	if err != nil {
 		return false, err
 	}
@@ -217,13 +219,13 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			}(),
 		},
 		Spec: op_crds.ManagedServiceSpec{
-			CloudProvider: "do", // TODO:
 			MsvcKind: op_crds.MsvcKind{
 				APIVersion: template.ApiVersion,
 				Kind:       template.Kind,
 			},
+			CloudProvider: cloudProvider,
 			NodeSelector: map[string]string{
-				"kloudlite.io/region": proj.Region,
+				"kloudlite.io/region": region,
 			},
 			Inputs: transformedInputs.Inputs,
 		},
