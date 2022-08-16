@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
@@ -51,7 +50,7 @@ func (d *domain) CreateRegion(ctx context.Context, region *entities.EdgeRegion) 
 			Name: region.Region,
 		},
 		Spec: op_crds.RegionSpec{
-			Name: fmt.Sprint(region.Id),
+			Name: region.Name,
 			Account: func() *string {
 				if provider.AccountId != nil {
 					s := string(*provider.AccountId)
