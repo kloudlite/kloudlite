@@ -43,7 +43,7 @@ type App struct {
 				Type  string `json:"type"`
 				Value string `json:"value"`
 			} `json:"value"`
-		} `json:"env_vars"`
+		} `json:"envVars"`
 	} `json:"containers"`
 }
 
@@ -73,6 +73,7 @@ func CreateRemoteLogin() (loginId string, err error) {
 	if err != nil {
 		return "", err
 	}
+
 	respData, err := gql(`
 		mutation Auth_createRemoteLogin($secret: String) {
 			auth_createRemoteLogin(secret: $secret)
@@ -84,11 +85,13 @@ func CreateRemoteLogin() (loginId string, err error) {
 	if err != nil {
 		return "", err
 	}
+
 	type Response struct {
 		Data struct {
 			Id string `json:"auth_createRemoteLogin"`
 		} `json:"data"`
 	}
+
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
@@ -264,10 +267,16 @@ func GetProjects() ([]Project, error) {
 
 func GetApps() ([]App, error) {
 	cookie, err := getCookie()
+	if err != nil {
+		println(err)
+		return nil, err
+	}
+
 	projectId, err := currentProjectId()
 	if err != nil {
 		return nil, err
 	}
+
 	respData, err := gql(`
 		query Core_apps($projectId: ID!) {
           core_apps(projectId: $projectId) {
@@ -276,11 +285,12 @@ func GetApps() ([]App, error) {
             readableId
             containers {
               name
-              env_vars {
+              
+              envVars {
                 key
                 value {
-                  key
                   ref
+                  key
                   type
                   value
                 }
@@ -302,7 +312,7 @@ func GetApps() ([]App, error) {
 		} `json:"data"`
 	}
 	var resp Response
-	fmt.Println(resp)
+	// fmt.Println(resp)
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
 		return nil, err
@@ -323,11 +333,12 @@ func GetApp(appId string) (*App, error) {
             readableId
             containers {
               name
-              env_vars {
+              
+              envVars {
                 key
                 value {
-                  key
                   ref
+                  key
                   type
                   value
                 }
@@ -349,7 +360,6 @@ func GetApp(appId string) (*App, error) {
 		} `json:"data"`
 	}
 	var resp Response
-	fmt.Println(resp)
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
 		return nil, err

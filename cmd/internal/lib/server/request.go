@@ -9,7 +9,7 @@ import (
 )
 
 func gql(query string, variables map[string]any, cookie *string) ([]byte, error) {
-	url := "https://gateway-01.dev.kloudlite.io/"
+	url := "http://gateway.kl-core.svc.cluster.local/"
 	method := "POST"
 	marshal, err := json.Marshal(map[string]any{
 		"query":     query,

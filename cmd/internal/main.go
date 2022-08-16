@@ -23,6 +23,10 @@ func main2() {
 	tun, err := func() (tun.Device, error) {
 		return tun.CreateTUN("utun1729", device.DefaultMTU)
 	}()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	fileUAPI, err := func() (*os.File, error) {
 		return ipc.UAPIOpen("utun1729")
@@ -38,9 +42,9 @@ func main2() {
 	errs := make(chan error)
 	go func() {
 		for {
-			conn, err := uapi.Accept()
-			if err != nil {
-				errs <- err
+			conn, e := uapi.Accept()
+			if e != nil {
+				errs <- e
 				return
 			}
 			go device.IpcHandle(conn)

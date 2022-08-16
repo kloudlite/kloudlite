@@ -31,7 +31,7 @@ func getConfigFolder() (configFolder string, err error) {
 	return configFolder, nil
 }
 
-const loginUrl = "https://auth.dev.kloudlite.io/cli-login"
+const loginUrl = "https://auth.kloudlite.io/cli-login"
 
 func open(url string) error {
 	var cmd string
@@ -57,6 +57,7 @@ func Login() {
 		return
 	}
 
+
 	err = open(fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId))
 
 	if err != nil {
@@ -69,6 +70,7 @@ func Login() {
 		return
 	}
 }
+
 func SelectAccount(accountId string) error {
 	configFolder, err := getConfigFolder()
 	if err != nil {
