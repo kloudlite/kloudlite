@@ -240,7 +240,7 @@ type ComplexityRoot struct {
 		CoreCreateCloudProvider func(childComplexity int, accountID *repos.ID, cloudProvider model.CloudProviderIn) int
 		CoreCreateConfig        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreCreateEdgeRegion    func(childComplexity int, edgeRegion model.EdgeRegionIn) int
-		CoreCreateProject       func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) int
+		CoreCreateProject       func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, regionID repos.ID) int
 		CoreCreateRouter        func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
 		CoreCreateSecret        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreDeleteApp           func(childComplexity int, appID repos.ID) int
@@ -397,7 +397,7 @@ type MutationResolver interface {
 	CoreAddDevice(ctx context.Context, accountID repos.ID, name string) (*model.Device, error)
 	CoreRemoveDevice(ctx context.Context, deviceID repos.ID) (bool, error)
 	CoreUpdateDevice(ctx context.Context, deviceID repos.ID, name *string, region *string, ports []int) (bool, error)
-	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, cluster *string) (*model.Project, error)
+	CoreCreateProject(ctx context.Context, accountID repos.ID, name string, displayName string, logo *string, description *string, regionID repos.ID) (*model.Project, error)
 	CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
 	CoreDeleteProject(ctx context.Context, projectID repos.ID) (bool, error)
 	IamInviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
@@ -1360,7 +1360,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateProject(childComplexity, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string), args["cluster"].(*string)), true
+		return e.complexity.Mutation.CoreCreateProject(childComplexity, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string), args["regionId"].(repos.ID)), true
 
 	case "Mutation.core_createRouter":
 		if e.complexity.Mutation.CoreCreateRouter == nil {
@@ -2229,7 +2229,7 @@ type Query {
   core_getComputePlans: [ComputePlan!]
   core_getStoragePlans: [StoragePlan!]
   core_getLamdaPlan: LambdaPlan!
-  
+
   core_getCloudProviders(accountId: ID!): [CloudProvider!]
 }
 
@@ -2272,7 +2272,7 @@ input CloudProviderIn {
 }
 
 type EdgeRegion {
-    Id: ID!
+  Id: ID!
   Name: String!
   region : String!
 }
@@ -2306,7 +2306,7 @@ type Mutation {
     displayName: String!,
     logo: String,
     description: String,
-    cluster: String,
+    regionId: ID!,
   ): Project!
   core_updateProject(
     projectId: ID!,
@@ -2973,15 +2973,15 @@ func (ec *executionContext) field_Mutation_core_createProject_args(ctx context.C
 		}
 	}
 	args["description"] = arg4
-	var arg5 *string
-	if tmp, ok := rawArgs["cluster"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
-		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	var arg5 repos.ID
+	if tmp, ok := rawArgs["regionId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("regionId"))
+		arg5, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["cluster"] = arg5
+	args["regionId"] = arg5
 	return args, nil
 }
 
@@ -8396,7 +8396,7 @@ func (ec *executionContext) _Mutation_core_createProject(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreCreateProject(rctx, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string), args["cluster"].(*string))
+		return ec.resolvers.Mutation().CoreCreateProject(rctx, args["accountId"].(repos.ID), args["name"].(string), args["displayName"].(string), args["logo"].(*string), args["description"].(*string), args["regionId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
