@@ -13,6 +13,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/kloudlite-operator
-  newTag: latest
+  newName: harbor.dev.madhouselabs.io/kloudlite/production/kloudlite-operator
+  newTag: v1.0.0
 namespace: kl-core
