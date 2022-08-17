@@ -54,6 +54,7 @@ type AppContainerIn struct {
 	Image             *string             `json:"image"`
 	PullSecret        *string             `json:"pullSecret"`
 	EnvVars           []*EnvVarInput      `json:"envVars"`
+	Mounts            []*MountInput       `json:"mounts"`
 	ComputePlan       string              `json:"computePlan"`
 	Quantity          float64             `json:"quantity"`
 	AttachedResources []*AttachedResInput `json:"attachedResources"`
@@ -274,6 +275,12 @@ type MetaCondition struct {
 	LastTimeStamp string `json:"lastTimeStamp"`
 	Reason        string `json:"reason"`
 	Message       string `json:"message"`
+}
+
+type MountInput struct {
+	Type string `json:"type"`
+	Ref  string `json:"ref"`
+	Path string `json:"path"`
 }
 
 type NewResourcesIn struct {
