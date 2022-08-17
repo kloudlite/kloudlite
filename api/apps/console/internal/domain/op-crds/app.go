@@ -19,12 +19,19 @@ type EnvEntry struct {
 	RefKey  *string `json:"refKey,omitempty"`
 }
 
+type Volume struct {
+	MountPath string `json:"mountPath,omitempty"`
+	Type      string `json:"type,omitempty"`
+	RefName   string `json:"refName,omitempty"`
+}
+
 type Container struct {
 	Name           string     `json:"name,omitempty"`
 	Image          *string    `json:"image,omitempty"`
 	ResourceCpu    *Limit     `json:"resourceCpu,omitempty"`
 	ResourceMemory *Limit     `json:"resourceMemory,omitempty"`
 	Env            []EnvEntry `json:"env,omitempty"`
+	Volumes        []Volume   `json:"volumes,omitempty"`
 }
 
 type HPA struct {
