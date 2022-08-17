@@ -57,8 +57,10 @@ func Login() {
 		return
 	}
 
+	link := fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId)
+	fmt.Printf("Opening %s on browser to login\n", link)
 
-	err = open(fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId))
+	err = open(link)
 
 	if err != nil {
 		fmt.Println(err)

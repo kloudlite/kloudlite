@@ -6,12 +6,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/briandowns/spinner"
+	"log"
+
 	"github.com/ktr0731/go-fuzzyfinder"
 	"kloudlite.io/cmd/internal/lib"
 	"kloudlite.io/cmd/internal/lib/server"
-	"log"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -32,10 +31,7 @@ to quickly create a Cobra application.`,
 }
 
 func TriggerSelectProject() {
-	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
-	s.Start()
 	projects, err := server.GetProjects()
-	s.Stop()
 	if err != nil {
 		log.Fatal(err)
 	}

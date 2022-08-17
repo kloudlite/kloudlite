@@ -6,13 +6,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/briandowns/spinner"
+	"log"
+
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 	"kloudlite.io/cmd/internal/lib"
 	"kloudlite.io/cmd/internal/lib/server"
-	"log"
-	"time"
 )
 
 // accountsCmd represents the accounts command
@@ -25,17 +24,14 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		TriggerSelectAccount()
-	},
+	// Run: func(cmd *cobra.Command, args []string) {
+	// 	TriggerSelectAccount()
+	// },
 }
 
 func TriggerSelectAccount() {
-	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
 
-	s.Start()
 	accounts, err := server.GetAccounts()
-	s.Stop()
 	if err != nil {
 		log.Fatal(err)
 	}
