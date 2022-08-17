@@ -319,7 +319,6 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		return req.FailWithOpError(err).Err(nil)
 	}
 
-
 	// patch := client.StrategicMergeFrom(msvcRef.ACLConfig)
 	if msvcRef.ACLConfig.Data == nil {
 		msvcRef.ACLConfig.Data = map[string]string{}
