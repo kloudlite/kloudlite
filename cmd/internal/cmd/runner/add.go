@@ -1,8 +1,4 @@
-/*
-Copyright © 2022 Kloudlite <support@kloudlite.io>
-
-*/
-package cmd
+package runner
 
 import (
 	"fmt"
@@ -10,9 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// helpCmd represents the help command
-var helpCmd = &cobra.Command{
-	Use:   "help",
+var AddCommand = &cobra.Command{
+	Use:   "add",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -21,10 +16,6 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("help called")
+		fmt.Println("list called")
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(helpCmd)
 }
