@@ -319,7 +319,8 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		return req.FailWithOpError(err).Err(nil)
 	}
 
-	patch := client.MergeFrom(msvcRef.ACLConfig)
+
+	// patch := client.StrategicMergeFrom(msvcRef.ACLConfig)
 	if msvcRef.ACLConfig.Data == nil {
 		msvcRef.ACLConfig.Data = map[string]string{}
 	}
@@ -327,9 +328,13 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 		"user %s on ~%s:* +@all -@dangerous +info resetpass >%s", obj.Name, obj.Spec.KeyPrefix, userPassword,
 	)
 
-	if err := r.Client.Patch(ctx, msvcRef.ACLConfig, patch); err != nil {
+	if err := r.Update(ctx, msvcRef.ACLConfig); err != nil {
 		return req.FailWithOpError(err)
 	}
+
+	// if err := r.Client.Patch(ctx, msvcRef.ACLConfig, patch); err != nil {
+	// 	return req.FailWithOpError(err)
+	// }
 
 	obj.Status.OpsConditions = []metav1.Condition{}
 	if err := r.Status().Update(ctx, obj); err != nil {
