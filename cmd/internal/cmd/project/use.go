@@ -24,7 +24,3 @@ to quickly create a Cobra application.`,
 		fmt.Println("use called")
 	},
 }
-
-func init() {
-	Cmd.AddCommand(useCmd)
-}
