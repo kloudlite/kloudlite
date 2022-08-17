@@ -288,6 +288,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		CoreApp                     func(childComplexity int, appID repos.ID) int
+		CoreAppEnvs                 func(childComplexity int, appID repos.ID) int
 		CoreApps                    func(childComplexity int, projectID repos.ID, search *string) int
 		CoreCheckDeviceExist        func(childComplexity int, accountID repos.ID, name string) int
 		CoreConfig                  func(childComplexity int, configID repos.ID) int
@@ -428,6 +429,7 @@ type QueryResolver interface {
 	CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error)
 	CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error)
 	CoreApp(ctx context.Context, appID repos.ID) (*model.App, error)
+	CoreAppEnvs(ctx context.Context, appID repos.ID) (*string, error)
 	CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error)
 	CoreRouter(ctx context.Context, routerID repos.ID) (*model.Router, error)
 	CoreConfigs(ctx context.Context, projectID repos.ID, search *string) ([]*model.Config, error)
@@ -1753,6 +1755,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreApp(childComplexity, args["appId"].(repos.ID)), true
 
+	case "Query.core_app_envs":
+		if e.complexity.Query.CoreAppEnvs == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_app_envs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreAppEnvs(childComplexity, args["appId"].(repos.ID)), true
+
 	case "Query.core_apps":
 		if e.complexity.Query.CoreApps == nil {
 			break
@@ -2208,6 +2222,7 @@ type Query {
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!): App
+  core_app_envs(appId: ID!): String
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
@@ -2408,7 +2423,6 @@ input AutoScaleIn {
   maxReplicas: Int!
   usage_percentage: Int!
 }
-
 
 input AppInput{
   name: String!
@@ -3700,6 +3714,21 @@ func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawA
 }
 
 func (ec *executionContext) field_Query_core_app_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["appId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["appId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_app_envs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -9903,6 +9932,45 @@ func (ec *executionContext) _Query_core_app(ctx context.Context, field graphql.C
 	return ec.marshalOApp2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_core_app_envs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_core_app_envs_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreAppEnvs(rctx, args["appId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_core_routers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -15672,6 +15740,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_core_app(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_app_envs":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_app_envs(ctx, field)
 				return res
 			}
 

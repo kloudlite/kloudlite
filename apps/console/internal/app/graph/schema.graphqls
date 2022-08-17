@@ -8,6 +8,7 @@ type Query {
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!): App
+  core_app_envs(appId: ID!): String
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
@@ -208,7 +209,6 @@ input AutoScaleIn {
   maxReplicas: Int!
   usage_percentage: Int!
 }
-
 
 input AppInput{
   name: String!
