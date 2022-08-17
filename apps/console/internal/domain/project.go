@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
@@ -9,6 +11,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
+	"strings"
 )
 
 func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error {
@@ -188,4 +191,31 @@ func (d *domain) getProjectRegionDetails(ctx context.Context, proj *entities.Pro
 		}
 	}
 	return projectCloudProvider.Provider, projectRegion.Region, nil
+}
+
+func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (username string, password string, err error) {
+	project, err := d.projectRepo.FindById(ctx, projectId)
+	if err != nil {
+		return "", "", err
+	}
+	secret, err := d.kubeCli.GetSecret(ctx, project.Name, "kloudlite-docker-registry")
+	if err != nil {
+		return "", "", err
+	}
+	var data struct {
+		Auths map[string]struct {
+			Auth string `json:"auth"`
+		} `json:"auths"`
+	}
+	err = json.Unmarshal(secret.Data[".dockerconfigjson"], &data)
+	if err != nil {
+		return "", "", err
+	}
+	connectionStr := data.Auths["harbor.dev.madhouselabs.io"].Auth
+	decodeString, err := base64.StdEncoding.DecodeString(connectionStr)
+	if err != nil {
+		return "", "", err
+	}
+	splits := strings.Split(string(decodeString), ":")
+	return splits[0], splits[1], nil
 }

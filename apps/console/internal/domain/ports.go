@@ -123,6 +123,7 @@ type Domain interface {
 
 	DeviceByNameExists(ctx context.Context, accountId repos.ID, name string) (bool, error)
 	DeleteProject(ctx context.Context, id repos.ID) (bool, error)
+	GetDockerCredentials(ctx context.Context, id repos.ID) (username string, password string, err error)
 }
 
 type InfraActionMessage interface {

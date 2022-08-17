@@ -819,6 +819,17 @@ func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) (
 	return accountMemberships, err
 }
 
+func (r *projectResolver) DockerCredentials(ctx context.Context, obj *model.Project) (*model.DockerCredentials, error) {
+	username, password, err := r.Domain.GetDockerCredentials(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &model.DockerCredentials{
+		Username: username,
+		Password: password,
+	}, nil
+}
+
 func (r *queryResolver) CoreCheckDeviceExist(ctx context.Context, accountID repos.ID, name string) (bool, error) {
 	exists, err := r.Domain.DeviceByNameExists(ctx, accountID, name)
 	if err != nil {

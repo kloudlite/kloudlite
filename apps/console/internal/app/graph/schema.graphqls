@@ -347,6 +347,11 @@ input KVInput {
   value: String!
 }
 
+type DockerCredentials {
+    username: String!
+    password: String!
+}
+
 type Project {
   id: ID!
   name: String!
@@ -358,6 +363,7 @@ type Project {
   memberships: [ProjectMembership!]!
   status: String!
   cluster: String
+  dockerCredentials: DockerCredentials
 }
 
 type ProjectMembership {
