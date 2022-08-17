@@ -5,13 +5,7 @@ Copyright © 2022 Kloudlite <support@kloudlite.io>
 package cmd
 
 import (
-	"fmt"
-	"log"
-
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
-	"kloudlite.io/cmd/internal/lib"
-	"kloudlite.io/cmd/internal/lib/server"
 )
 
 // accountsCmd represents the accounts command
@@ -27,27 +21,6 @@ to quickly create a Cobra application.`,
 	// Run: func(cmd *cobra.Command, args []string) {
 	// 	TriggerSelectAccount()
 	// },
-}
-
-func TriggerSelectAccount() {
-
-	accounts, err := server.GetAccounts()
-	if err != nil {
-		log.Fatal(err)
-	}
-	selectedIndex, err := fuzzyfinder.Find(
-		accounts,
-		func(i int) string {
-			return accounts[i].Name
-		},
-		fuzzyfinder.WithPromptString("Select Account >"),
-	)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	lib.SelectAccount(accounts[selectedIndex].Id)
-	fmt.Println("Selected account: " + accounts[selectedIndex].Name)
 }
 
 func init() {

@@ -2,10 +2,14 @@
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 
 */
-package cmd
+package account
 
 import (
 	"fmt"
+	"github.com/ktr0731/go-fuzzyfinder"
+	"kloudlite.io/cmd/internal/lib"
+	"kloudlite.io/cmd/internal/lib/server"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -21,20 +25,34 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("use called")
+		if len(args) == 0 {
+			TriggerSelectAccount()
+			return
+		}
+		lib.SelectAccount(args[0])
 	},
 }
 
+func TriggerSelectAccount() {
+	accounts, err := server.GetAccounts()
+	if err != nil {
+		log.Fatal(err)
+	}
+	selectedIndex, err := fuzzyfinder.Find(
+		accounts,
+		func(i int) string {
+			return accounts[i].Name
+		},
+		fuzzyfinder.WithPromptString("Use Account >"),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	lib.SelectAccount(accounts[selectedIndex].Id)
+	fmt.Println("Using account: " + accounts[selectedIndex].Name)
+}
+
 func init() {
-	rootCmd.AddCommand(useCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// useCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// useCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	Cmd.AddCommand(useCmd)
 }
