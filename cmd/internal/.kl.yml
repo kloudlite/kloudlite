@@ -1,0 +1,7 @@
+version: v1
+name: Sample
+mres: []
+configs: []
+secrets: []
+env: []
+ports: []
