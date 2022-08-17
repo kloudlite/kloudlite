@@ -352,6 +352,23 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 				}
 				return false
 			}(),
+			VolumeMounts: func() []entities.VolumeMount {
+				if container.Mounts == nil {
+					return nil
+				}
+				if len(container.Mounts) == 0 {
+					return nil
+				}
+				out := make([]entities.VolumeMount, 0)
+				for _, mount := range container.Mounts {
+					out = append(out, entities.VolumeMount{
+						MountPath: mount.Path,
+						Type:      mount.Type,
+						Ref:       mount.Ref,
+					})
+				}
+				return out
+			}(),
 			ImagePullSecret:   container.PullSecret,
 			EnvVars:           e,
 			ComputePlan:       container.ComputePlan,
@@ -516,6 +533,23 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 					return *container.IsShared
 				}
 				return false
+			}(),
+			VolumeMounts: func() []entities.VolumeMount {
+				if container.Mounts == nil {
+					return nil
+				}
+				if len(container.Mounts) == 0 {
+					return nil
+				}
+				out := make([]entities.VolumeMount, 0)
+				for _, mount := range container.Mounts {
+					out = append(out, entities.VolumeMount{
+						MountPath: mount.Path,
+						Type:      mount.Type,
+						Ref:       mount.Ref,
+					})
+				}
+				return out
 			}(),
 			ImagePullSecret:   container.PullSecret,
 			EnvVars:           e,

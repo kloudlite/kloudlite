@@ -235,6 +235,23 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 						cs = append(cs, op_crds.Container{
 							Name:  c.Name,
 							Image: c.Image,
+							Volumes: func() []op_crds.Volume {
+								if c.VolumeMounts == nil {
+									return nil
+								}
+								if len(c.VolumeMounts) == 0 {
+									return nil
+								}
+								vs := make([]op_crds.Volume, 0)
+								for _, v := range c.VolumeMounts {
+									vs = append(vs, op_crds.Volume{
+										MountPath: v.MountPath,
+										Type:      v.Type,
+										RefName:   v.Ref,
+									})
+								}
+								return vs
+							}(),
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
@@ -359,6 +376,23 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 						cs = append(cs, op_crds.Container{
 							Name:  c.Name,
 							Image: c.Image,
+							Volumes: func() []op_crds.Volume {
+								if c.VolumeMounts == nil {
+									return nil
+								}
+								if len(c.VolumeMounts) == 0 {
+									return nil
+								}
+								vs := make([]op_crds.Volume, 0)
+								for _, v := range c.VolumeMounts {
+									vs = append(vs, op_crds.Volume{
+										MountPath: v.MountPath,
+										Type:      v.Type,
+										RefName:   v.Ref,
+									})
+								}
+								return vs
+							}(),
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
