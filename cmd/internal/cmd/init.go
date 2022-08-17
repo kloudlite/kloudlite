@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 Kloudlite <support@kloudlite.io>
-
-*/
 package cmd
 
 import (
