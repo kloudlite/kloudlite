@@ -36,11 +36,18 @@ type EnvVar struct {
 	RefKey *string `json:"key,omitempty"`
 }
 
+type VolumeMount struct {
+	MountPath string `json:"mount_path" bson:"mount_path"`
+	Type      string `json:"type" bson:"type"`
+	Ref       string `json:"ref" bson:"ref"`
+}
+
 type Container struct {
 	Name              string             `json:"name" bson:"name"`
 	Image             *string            `json:"image" bson:"image"`
 	ImagePullSecret   *string            `json:"pull_secret" bson:"pull_secret"`
 	EnvVars           []EnvVar           `json:"env_vars" bson:"env_cars"`
+	VolumeMounts      []VolumeMount      `json:"volume_mounts" bson:"volume_mounts"`
 	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
 	ComputePlan       string             `json:"compute_plan" bson:"compute_plan"`
 	Quantity          float64            `json:"quantity" bson:"quantity"`
@@ -69,21 +76,6 @@ const (
 	AppStateError      = AppStatus("error")
 	AppStateDown       = AppStatus("down")
 )
-
-// type AppIn struct {
-// 	ReadableId   string
-// 	ProjectId    repos.ID
-// 	Name         string
-// 	Namespace    string
-// 	Description  *string
-// 	Replicas     int
-// 	ExposedPorts []ExposedPort
-// 	Containers   []ContainerIn
-// 	Status       AppStatus
-// 	Conditions   []metav1.Condition
-// 	Provider     string
-// 	Region       string
-// }
 
 type AutoScale struct {
 	MinReplicas     int64 `json:"min_replicas" bson:"min_replicas"`
