@@ -9,8 +9,7 @@ import (
 
 func init() {
 
-	rootCmd.AddCommand(auth.LoginCmd)
-	rootCmd.AddCommand(auth.LogoutCmd)
+	rootCmd.AddCommand(auth.Cmd)
 
 	rootCmd.AddCommand(wg.ConnectCmd)
 	rootCmd.AddCommand(wg.DisconnectCmd)
