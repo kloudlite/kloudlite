@@ -288,12 +288,18 @@ type AppContainer {
 #   unit: String!
 # }
 
+input MountInput {
+  type: String!
+  ref: String!
+  path: String!
+}
 
 input AppContainerIn{
   name: String!
   image: String
   pullSecret: String
   envVars:[EnvVarInput!]!
+  mounts:[MountInput!]
   computePlan: String!
   quantity: Float!
   attachedResources:[AttachedResInput!]!

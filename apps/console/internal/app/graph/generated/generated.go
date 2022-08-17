@@ -2517,12 +2517,18 @@ type AppContainer {
 #   unit: String!
 # }
 
+input MountInput {
+  type: String!
+  ref: String!
+  path: String!
+}
 
 input AppContainerIn{
   name: String!
   image: String
   pullSecret: String
   envVars:[EnvVarInput!]!
+  mounts:[MountInput!]
   computePlan: String!
   quantity: Float!
   attachedResources:[AttachedResInput!]!
@@ -12745,6 +12751,14 @@ func (ec *executionContext) unmarshalInputAppContainerIn(ctx context.Context, ob
 			if err != nil {
 				return it, err
 			}
+		case "mounts":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mounts"))
+			it.Mounts, err = ec.unmarshalOMountInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMountInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "computePlan":
 			var err error
 
@@ -13266,6 +13280,45 @@ func (ec *executionContext) unmarshalInputKVInput(ctx context.Context, obj inter
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			it.Value, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputMountInput(ctx context.Context, obj interface{}) (model.MountInput, error) {
+	var it model.MountInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ref":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ref"))
+			it.Ref, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "path":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
+			it.Path, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17915,6 +17968,11 @@ func (ec *executionContext) marshalNMetaCondition2ᚖkloudliteᚗioᚋappsᚋcon
 	return ec._MetaCondition(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNMountInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMountInput(ctx context.Context, v interface{}) (*model.MountInput, error) {
+	res, err := ec.unmarshalInputMountInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNProject2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {
 	return ec._Project(ctx, sel, &v)
 }
@@ -19034,6 +19092,26 @@ func (ec *executionContext) marshalOManagedSvc2ᚖkloudliteᚗioᚋappsᚋconsol
 		return graphql.Null
 	}
 	return ec._ManagedSvc(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOMountInput2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMountInputᚄ(ctx context.Context, v interface{}) ([]*model.MountInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.MountInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNMountInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMountInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
