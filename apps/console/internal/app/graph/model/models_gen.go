@@ -173,6 +173,11 @@ type DeviceIn struct {
 	Ports  []int    `json:"ports"`
 }
 
+type DockerCredentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type EdgeRegion struct {
 	ID     repos.ID `json:"Id"`
 	Name   string   `json:"Name"`
@@ -279,16 +284,17 @@ type NewResourcesIn struct {
 }
 
 type Project struct {
-	ID          repos.ID             `json:"id"`
-	Name        string               `json:"name"`
-	DisplayName string               `json:"displayName"`
-	ReadableID  repos.ID             `json:"readableId"`
-	Logo        *string              `json:"logo"`
-	Description *string              `json:"description"`
-	Account     *Account             `json:"account"`
-	Memberships []*ProjectMembership `json:"memberships"`
-	Status      string               `json:"status"`
-	Cluster     *string              `json:"cluster"`
+	ID                repos.ID             `json:"id"`
+	Name              string               `json:"name"`
+	DisplayName       string               `json:"displayName"`
+	ReadableID        repos.ID             `json:"readableId"`
+	Logo              *string              `json:"logo"`
+	Description       *string              `json:"description"`
+	Account           *Account             `json:"account"`
+	Memberships       []*ProjectMembership `json:"memberships"`
+	Status            string               `json:"status"`
+	Cluster           *string              `json:"cluster"`
+	DockerCredentials *DockerCredentials   `json:"dockerCredentials"`
 }
 
 type ProjectMembership struct {
