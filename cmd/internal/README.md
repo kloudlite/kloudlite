@@ -90,6 +90,11 @@ To load environment variables of the app just use the command `kl load`.
 
 ```
 kl init <filename_optional>
+
+kl add secret <name>
+kl add mres <name>
+kl add config <name>
+
 kl load
 
 ```
