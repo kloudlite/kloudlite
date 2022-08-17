@@ -6,7 +6,7 @@ includes:
   helm:
     taskfile: ./helm/Taskfile.yml
     dir: ./helm/
-
+    
 tasks:
   new-kind:
     silent: true
@@ -32,10 +32,18 @@ tasks:
     sources:
       - "./**/*.go"
     method: timestamp
-
-#  build:
-#    cmds:
-#      - operator-sdk build harbor.dev.madhouselabs.io/kloudlite/operator:latest
+  
+  build:
+    env:
+      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-operator:{{.Tag}}
+      NAMESPACE: kl-core
+    preconditions:
+      - sh: test -n '{{.Tag}}'
+        msg: "var Tag must have a value"
+      - sh: test -n '{{.EnvName}}'
+        msg: "var EnvName must have a value"
+    cmds:
+      - make dev-docker-build dev-docker-push
 
   deploy:
     env:
@@ -50,22 +58,29 @@ tasks:
   gen-yamls:
     vars:
       Name: kloudlite-operator
-    env:
-#      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
-      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}
-      NAMESPACE: kl-core
+      Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}
+      Namespace: kl-core
+#    env:
+##      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
+#      IMG: "{{.Image}}"
+#      NAMESPACE: kl-core
+    preconditions:
+      - sh: test -n '{{.Tag}}'
+        msg: "var Tag must have a value"
+      - sh: test -n '{{.EnvName}}'
+        msg: "var EnvName must have a value"
     cmds:
       - make manifests
-      - |+
-        pushd config/manager > /dev/null
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-        popd > /dev/null
-      - |+
-        pushd config/default > /dev/null
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-        popd > /dev/null
+#      - |+
+#        pushd config/manager > /dev/null
+#        kustomize edit set image controller=${IMG}
+#        kustomize edit set namespace ${NAMESPACE}
+#        popd > /dev/null
+#      - |+
+#        pushd config/default > /dev/null
+#        kustomize edit set image controller=${IMG}
+#        kustomize edit set namespace ${NAMESPACE}
+#        popd > /dev/null
       - |+
         cat config/crd/bases/*.yaml | yq -y
 
@@ -86,181 +101,27 @@ tasks:
         echo "---"
         echo "$yamls" | yq '
           select(.kind == "Deployment") |
-            .metadata.name = "{{.Name}}" |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-            .spec.template.metadata.labels."control-plane" = "{{.Name}}"
-        ' -y
-
-  deploy:prod:
-    vars:
-      Name: kloudlite-operator
-    env:
-      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.Name}}:latest
-      NAMESPACE: koperator
-    cmds:
-      - make dev-docker-build dev-docker-push
-      - |+
-        cd config/manager
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |+
-        cd config/default
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |+
-        kubectl apply -f config/crd/bases
-        yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
-
-        echo "$yamls" | yq '
-          select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
-          .metadata.name = "{{.Name}}-manager-config"
-        ' -y | kubectl apply -f -
-
-        echo "$yamls" | yq '
-          select(.kind == "Service") |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector."control-plane" = "{{.Name}}" |
-            .metadata.name = "{{.Name}}"
-        ' -y | kubectl apply -f -
-
-        echo "$yamls" | yq '
-          select(.kind == "Deployment") |
-            .metadata.name = "{{.Name}}" |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-            .spec.template.metadata.labels."control-plane" = "{{.Name}}"
-        ' -y | kubectl apply -f -
-      - echo "Deployed {{.Name}}"
-
-  deploy:staging:
-    vars:
-      Name: kloudlite-operator
-    env:
-      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
-      NAMESPACE: kl-core
-    cmds:
-      - make dev-docker-build dev-docker-push
-      - |
-        cd config/manager
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |
-        cd config/default
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-#       - |+
-#         filename=/tmp/kl-operator-$RANDOM.yml
-#         kustomize build config/default > $filename
-#         cat $filename | yq 'select((.kind != "Deployment") and (.kind != "Namespace") )' -y
-#         cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
-
-      - |+
-        kubectl apply -f config/crd/bases
-        yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
-
-        echo "$yamls" | yq '
-          select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
-          .metadata.name = "{{.Name}}-manager-config"
-        ' -y | kubectl apply -f -
-
-        echo "$yamls" | yq '
-          select(.kind == "Service") |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector."control-plane" = "{{.Name}}" |
-            .metadata.name = "{{.Name}}"
-        ' -y | kubectl apply -f -
-
-        echo "$yamls" | yq '
-          select(.kind == "Deployment") |
-            .metadata.name = "{{.Name}}" |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-            .spec.template.metadata.labels."control-plane" = "{{.Name}}"
-        ' -y | kubectl apply -f -
-      - echo "Deployed {{.Name}}"
-
-  deploy:gen-yamls:
-    vars:
-      Name: kloudlite-operator
-    env:
-#       IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
-#      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:latest
-      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
-      NAMESPACE: kl-core
-    cmds:
-      - make manifests
-      - |+
-        cd config/manager
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |+
-        cd config/default
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |+
-        cat config/crd/bases/*.yaml | yq -y
-
-        yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
-        echo "---"
-        echo "$yamls" | yq '
-          select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
-          .metadata.name = "{{.Name}}-manager-config"
-        ' -y
-
-        echo "---"
-        echo "$yamls" | yq '
-          select(.kind == "Service") |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector."control-plane" = "{{.Name}}" |
-            .metadata.name = "{{.Name}}"
-        ' -y
-        echo "---"
-        echo "$yamls" | yq '
-          select(.kind == "Deployment") |
-            .metadata.name = "{{.Name}}" |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-            .spec.template.metadata.labels."control-plane" = "{{.Name}}"
+          .metadata.name = "{{.Name}}" |
+          .metadata.namespace = "{{.Namespace}}" |
+          .metadata.labels."control-plane" = "{{.Name}}" |
+          .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+          .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
+          .spec.template.spec.containers = (
+            .spec.template.spec.containers | map_values(
+              if .name == "manager" then
+                (.image = "{{.Image}}" | .command = .command + ["--all"])
+              else . end
+            )
+          )
         ' -y
         
-  verify-vars:
-    silent: true
-    cmds:
-      - |+
-        [ -z "{{.Value}}" ] && echo "env-var {{.Name}} is required" && exit 1
-        exit 0
-      -
-
-  build:
-    env:
-#       IMG: harbor.dev.madhouselabs.io/kloudlite/{{.Mode}}/kloudlite-operator:latest
-      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-operator:{{.Tag}}
-      NAMESPACE: kl-core
-    cmds:
-      - task: verify-vars
-        vars:
-          Name: "EnvName"
-          Value: "{{.EnvName}}"
-      - task: verify-vars
-        vars:
-          Name: "Tag"
-          Value: "{{.Tag}}"
-      - make dev-docker-build dev-docker-push
-
   pre:
     run: once
     cmds:
       - go mod tidy
       - make manifests
       - make generate
-      - task: apply
-
-  apply:
-    run: once
-    dir: config/crd/bases
-    cmds:
-      - kubectl apply -f .
+      - kubectl apply -f config/crd/bases
 
   kill-port:
     run: always
