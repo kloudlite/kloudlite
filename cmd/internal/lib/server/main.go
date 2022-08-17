@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	nanoid "github.com/matoous/go-nanoid/v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	nanoid "github.com/matoous/go-nanoid/v2"
+	"kloudlite.io/cmd/internal/cmd"
 )
 
 type User struct {
@@ -167,6 +169,9 @@ func currentProjectId() (string, error) {
 		return "", err
 	}
 	file, err := ioutil.ReadFile(fmt.Sprintf("%s/project", folder))
+	if err != nil {
+		return "", err
+	}
 	return string(file), nil
 }
 
@@ -272,9 +277,15 @@ func GetApps() ([]App, error) {
 		return nil, err
 	}
 
-	projectId, err := currentProjectId()
-	if err != nil {
-		return nil, err
+	projectId := ""
+
+	for {
+		projectId, err = currentProjectId()
+		if err != nil {
+			cmd.TriggerSelectProject()
+		} else {
+			break
+		}
 	}
 
 	respData, err := gql(`
@@ -365,6 +376,40 @@ func GetApp(appId string) (*App, error) {
 		return nil, err
 	}
 	return &resp.Data.CoreApp, nil
+}
+
+func GetEnvs(appId string) (string, error) {
+	cookie, err := getCookie()
+	if err != nil {
+		return "", err
+	}
+
+	respData, err := gql(`
+		query Core_app($appId: ID!) {
+			core_app_envs(appId: $appId) 
+		}	
+		`, map[string]any{
+		"appId": appId,
+	}, &cookie)
+
+	if err != nil {
+		return "", err
+	}
+
+	type Response struct {
+		Data struct {
+			Envs string `json:"core_app_envs"`
+		} `json:"data"`
+	}
+
+	var resp Response
+
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Data.Envs, nil
 }
 
 func LoadApp() {
