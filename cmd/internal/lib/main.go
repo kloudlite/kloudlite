@@ -57,8 +57,8 @@ func Login() {
 		return
 	}
 
-
-	err = open(fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId))
+	link := fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId)
+	err = open(link)
 
 	if err != nil {
 		fmt.Println(err)
@@ -69,6 +69,21 @@ func Login() {
 		fmt.Println(err)
 		return
 	}
+}
+
+func Logout() error {
+	configFolder, err := getConfigFolder()
+	if err != nil {
+		return err
+	}
+	_, err = os.Stat(configFolder + "/session")
+	if err != nil && os.IsNotExist(err) {
+		return errors.New("not logged in")
+	}
+	if err != nil {
+		return err
+	}
+	return os.Remove(configFolder + "/session")
 }
 
 func SelectAccount(accountId string) error {

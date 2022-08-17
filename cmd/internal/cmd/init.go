@@ -1,12 +1,38 @@
-/*
-Copyright © 2022 Kloudlite <support@kloudlite.io>
-
-*/
 package cmd
 
 import (
+	"fmt"
+	"io/ioutil"
+
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
+
+type ResEnvType struct {
+	Key    string
+	RefKey string
+}
+
+type EnvType struct {
+	Key   string
+	Value string
+}
+
+type ResType struct {
+	Id   string
+	Name string
+	Env  []ResEnvType
+}
+
+type KLFileType struct {
+	Version string
+	Name    string
+	Mres    []ResType
+	Configs []ResType
+	Secrets []ResType
+	Env     []EnvType
+	Ports   []string
+}
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -19,7 +45,27 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		initFile := KLFileType{
+			Version: "v1",
+			Name:    "Sample",
+			Mres:    []ResType{},
+			Configs: []ResType{},
+			Secrets: []ResType{},
+			Env:     []EnvType{},
+			Ports:   []string{},
+		}
 
+		file, err := yaml.Marshal(initFile)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		err = ioutil.WriteFile(".kl.yml", file, 0644)
+
+		if err != nil {
+			fmt.Println(err)
+		}
 	},
 }
 
