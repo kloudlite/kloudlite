@@ -1,17 +1,12 @@
-/*
-Copyright © 2022 Kloudlite <support@kloudlite.io>
-
-*/
-package cmd
+package app
 
 import (
 	"fmt"
-	"github.com/briandowns/spinner"
+	"log"
+
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 	"kloudlite.io/cmd/internal/lib/server"
-	"log"
-	"time"
 )
 
 // appsCmd represents the apps command
@@ -32,10 +27,7 @@ to quickly create a Cobra application.`,
 
 func TriggerSelectApp() string {
 
-	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
-	s.Start()
 	apps, err := server.GetApps()
-	s.Stop()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,18 +43,4 @@ func TriggerSelectApp() string {
 	}
 
 	return apps[selectedIndex].Id
-}
-
-func init() {
-	rootCmd.AddCommand(appsCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// appsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// appsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
