@@ -985,6 +985,17 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 						ComputePlan:       c.ComputePlan,
 						Quantity:          c.Quantity,
 						IsShared:          &c.IsShared,
+						Mounts: func() []*model.Mount {
+							mounts := []*model.Mount{}
+							for _, vm := range c.VolumeMounts {
+								mounts = append(mounts, &model.Mount{
+									Type: vm.Type,
+									Ref:  vm.Ref,
+									Path: vm.MountPath,
+								})
+							}
+							return mounts
+						}(),
 					})
 				}
 				return containers
@@ -1081,6 +1092,17 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 					ComputePlan:       c.ComputePlan,
 					Quantity:          c.Quantity,
 					IsShared:          &c.IsShared,
+					Mounts: func() []*model.Mount {
+						mounts := []*model.Mount{}
+						for _, vm := range c.VolumeMounts {
+							mounts = append(mounts, &model.Mount{
+								Type: vm.Type,
+								Ref:  vm.Ref,
+								Path: vm.MountPath,
+							})
+						}
+						return mounts
+					}(),
 				})
 			}
 			return containers
