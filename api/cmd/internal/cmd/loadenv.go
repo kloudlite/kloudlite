@@ -14,6 +14,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/hashicorp/go-envparse"
 	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/cmd/app"
 	"kloudlite.io/cmd/internal/lib/server"
 )
 
@@ -63,7 +64,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// fmt.Println(args)
-		appId := TriggerSelectApp()
+		appId := app.TriggerSelectApp()
 		s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
 		s.Start()
 		envsString, err := server.GetEnvs(appId)
