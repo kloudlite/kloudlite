@@ -1,8 +1,10 @@
-package runner
+package add
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/lib/server"
 )
 
 var addMresCommand = &cobra.Command{
@@ -15,10 +17,16 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		SelectMreses()
 	},
 }
 
-func init() {
-	AddCommand.AddCommand(addMresCommand)
+func SelectMreses() {
+	configs, err := server.GetMreses()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(configs)
 }

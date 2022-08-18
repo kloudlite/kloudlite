@@ -1,4 +1,4 @@
-package cmd
+package app
 
 import (
 	"fmt"
@@ -43,8 +43,4 @@ func TriggerSelectApp() string {
 	}
 
 	return apps[selectedIndex].Id
-}
-
-func init() {
-	rootCmd.AddCommand(appsCmd)
 }
