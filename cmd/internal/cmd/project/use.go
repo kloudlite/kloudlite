@@ -1,24 +1,22 @@
 /*
-Copyright © 2022 Kloudlite <support@kloudlite.io>
+Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 
 */
-package cmd
+package project
 
 import (
 	"fmt"
-	"github.com/briandowns/spinner"
+	"os"
+
 	"github.com/ktr0731/go-fuzzyfinder"
+	"github.com/spf13/cobra"
 	"kloudlite.io/cmd/internal/lib"
 	"kloudlite.io/cmd/internal/lib/server"
-	"log"
-	"time"
-
-	"github.com/spf13/cobra"
 )
 
-// projectsCmd represents the projects command
-var projectsCmd = &cobra.Command{
-	Use:   "projects",
+// useCmd represents the use command
+var useCmd = &cobra.Command{
+	Use:   "use",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -27,17 +25,39 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		TriggerSelectProject()
+
+		if len(args) == 0 {
+			TriggerSelectProject()
+			return
+		}
+
+		projects, err := server.GetProjects()
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		found := false
+
+		for _, p := range projects {
+			if args[0] == p.Id {
+				found = true
+			}
+		}
+
+		if found {
+			lib.SelectProject(args[0])
+		} else {
+			fmt.Fprint(os.Stderr, "You don't have access to this project or either it's not present under the selected account")
+		}
+
 	},
 }
 
 func TriggerSelectProject() {
-	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
-	s.Start()
 	projects, err := server.GetProjects()
-	s.Stop()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprint(os.Stderr, err.Error())
 	}
 	selectedIndex, err := fuzzyfinder.Find(
 		projects,
@@ -47,22 +67,8 @@ func TriggerSelectProject() {
 		fuzzyfinder.WithPromptString("Select Project >"),
 	)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprint(os.Stderr, err.Error())
 	}
 	lib.SelectProject(projects[selectedIndex].Id)
 	fmt.Println("Selected project: " + projects[selectedIndex].Name)
-}
-
-func init() {
-	rootCmd.AddCommand(projectsCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// projectsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// projectsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

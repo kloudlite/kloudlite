@@ -8,8 +8,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
+	"github.com/hashicorp/go-envparse"
 	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/cmd/app"
 	"kloudlite.io/cmd/internal/lib/server"
 )
 
@@ -59,26 +64,27 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// fmt.Println(args)
-		appId := TriggerSelectApp()
-		app, err := server.GetApp(appId)
+		appId := app.TriggerSelectApp()
+		s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
+		s.Start()
+		envsString, err := server.GetEnvs(appId)
+		s.Stop()
 
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		envs := map[string]string{}
+		myReader := strings.NewReader(envsString)
 
-		for _, v := range app.Containers {
-			if v.Name != "main" {
-				continue
-			}
-			for _, e := range v.EnvVars {
-				if e.Value.Type == "literal" {
-					envs[e.Key] = e.Value.Value
-				}
-			}
+		envs, err := envparse.Parse(myReader)
+
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
+
+		// envs := map[string]string{}
 
 		if len(args) == 0 {
 			load(envs, []string{})
