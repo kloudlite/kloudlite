@@ -29,7 +29,25 @@ to quickly create a Cobra application.`,
 			TriggerSelectAccount()
 			return
 		}
-		lib.SelectAccount(args[0])
+		accounts, err := server.GetAccounts()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		found := false
+
+		for _, a := range accounts {
+			if args[0] == a.Id {
+				found = true
+			}
+		}
+
+		if found {
+			lib.SelectAccount(args[0])
+		} else {
+			fmt.Println("You don't have access to this account")
+		}
+
 	},
 }
 

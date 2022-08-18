@@ -191,7 +191,7 @@ func currentProjectId() (string, error) {
 		if err == nil {
 			break
 		}
-		exec.Command(constants.CMD_NAME, "projects").Run()
+		exec.Command(constants.CMD_NAME, "project", "list").Run()
 		count++
 	}
 
@@ -464,5 +464,4 @@ func GetEnvs(appId string) (string, error) {
 }
 
 func LoadApp() {
-
 }
