@@ -5,9 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/briandowns/spinner"
+	"kloudlite.io/cmd/internal/common"
 	"kloudlite.io/pkg/errors"
 )
 
@@ -37,7 +36,7 @@ func gql(query string, variables map[string]any, cookie *string) ([]byte, error)
 		req.Header.Add("cookie", *cookie)
 	}
 
-	s := spinner.New(spinner.CharSets[31], 100*time.Millisecond)
+	s := common.NewSpinner()
 	s.Start()
 	res, err := client.Do(req)
 	s.Stop()
