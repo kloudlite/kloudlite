@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	nanoid "github.com/matoous/go-nanoid/v2"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
+
+	nanoid "github.com/matoous/go-nanoid/v2"
+	"kloudlite.io/cmd/internal/constants"
 )
 
 type User struct {
@@ -101,7 +104,7 @@ func CreateRemoteLogin() (loginId string, err error) {
 }
 
 func Login(loginId string) error {
-	for true {
+	for {
 		respData, err := gql(`
 		query Auth_getRemoteLogin($loginId: String!, $secret: String!) {
   			auth_getRemoteLogin(loginId: $loginId, secret: $secret) {
@@ -148,8 +151,6 @@ func Login(loginId string) error {
 			continue
 		}
 	}
-
-	return nil
 }
 
 func currentAccountId() (string, error) {
@@ -157,7 +158,20 @@ func currentAccountId() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	file, err := ioutil.ReadFile(fmt.Sprintf("%s/account", folder))
+	var file []byte
+	count := 0
+	for {
+		if count > 2 {
+			return "", err
+		}
+		file, err = ioutil.ReadFile(fmt.Sprintf("%s/account", folder))
+		if err == nil {
+			break
+		}
+		exec.Command(constants.CMD_NAME, "accounts").Run()
+		count++
+	}
+
 	return string(file), nil
 }
 
@@ -166,7 +180,21 @@ func currentProjectId() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	file, err := ioutil.ReadFile(fmt.Sprintf("%s/project", folder))
+
+	var file []byte
+	count := 0
+	for {
+		if count > 2 {
+			return "", err
+		}
+		file, err = ioutil.ReadFile(fmt.Sprintf("%s/project", folder))
+		if err == nil {
+			break
+		}
+		exec.Command(constants.CMD_NAME, "project", "list").Run()
+		count++
+	}
+
 	return string(file), nil
 }
 
@@ -175,7 +203,21 @@ func getCookie() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	file, err := ioutil.ReadFile(fmt.Sprintf("%s/session", folder))
+	var file []byte
+
+	count := 0
+	for {
+		if count > 2 {
+			return "", err
+		}
+		file, err = ioutil.ReadFile(fmt.Sprintf("%s/session", folder))
+		if err == nil {
+			break
+		}
+		exec.Command(constants.CMD_NAME, "login").Run()
+		count++
+	}
+
 	return strings.TrimSpace(string(file)), nil
 }
 
@@ -225,10 +267,18 @@ func GetAccounts() ([]Account, error) {
 
 func GetProjects() ([]Project, error) {
 	cookie, err := getCookie()
-	accountId, err := currentAccountId()
+
 	if err != nil {
 		return nil, err
 	}
+
+	accountId, err := currentAccountId()
+
+	if err != nil {
+
+		return nil, err
+	}
+
 	respData, err := gql(`
 		query Projects($accountId: ID!) {
           finance_account(accountId: $accountId) {
@@ -268,14 +318,26 @@ func GetProjects() ([]Project, error) {
 func GetApps() ([]App, error) {
 	cookie, err := getCookie()
 	if err != nil {
-		println(err)
 		return nil, err
 	}
 
 	projectId, err := currentProjectId()
+
 	if err != nil {
 		return nil, err
 	}
+
+	// count := 0
+	// for {
+	// 	if count > 2 {
+	// 		return nil, err
+	// 	}
+	// 	if err == nil {
+	// 		break
+	// 	}
+	// 	exec.Command(constants.CMD_NAME, "projects").Run()
+	// 	count++
+	// }
 
 	respData, err := gql(`
 		query Core_apps($projectId: ID!) {
@@ -367,6 +429,39 @@ func GetApp(appId string) (*App, error) {
 	return &resp.Data.CoreApp, nil
 }
 
-func LoadApp() {
+func GetEnvs(appId string) (string, error) {
+	cookie, err := getCookie()
+	if err != nil {
+		return "", err
+	}
 
+	respData, err := gql(`
+		query Core_app($appId: ID!) {
+			core_app_envs(appId: $appId) 
+		}	
+		`, map[string]any{
+		"appId": appId,
+	}, &cookie)
+
+	if err != nil {
+		return "", err
+	}
+
+	type Response struct {
+		Data struct {
+			Envs string `json:"core_app_envs"`
+		} `json:"data"`
+	}
+
+	var resp Response
+
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Data.Envs, nil
+}
+
+func LoadApp() {
 }
