@@ -11,6 +11,7 @@ In case of logout your terminal auth session will be terminated.
 kl login
 kl logout
 kl connect
+kl disconnect
 ```
 
 ### Selecting your account to work with
@@ -24,8 +25,8 @@ and choose your account.
 
 
 ```sh
-kl account:list
-kl account:use <account_id>
+kl account list
+kl account use <account_id>
 ```
 
 
@@ -40,8 +41,8 @@ your provider project id.
 
 
 ```sh
-kl project:list
-kl project:use <project_id>
+kl project list
+kl project use <project_id>
 ```
 
 ### Working with environments

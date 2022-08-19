@@ -83,7 +83,7 @@ func Logout() error {
 	if err != nil {
 		return err
 	}
-	return os.Remove(configFolder + "/session")
+	return os.RemoveAll(configFolder)
 }
 
 func SelectAccount(accountId string) error {
