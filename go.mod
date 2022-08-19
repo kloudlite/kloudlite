@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
 	github.com/briandowns/spinner v1.18.1
+	github.com/charmbracelet/bubbletea v0.22.0
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/go-redis/redis/v8 v8.11.5
@@ -38,11 +39,22 @@ require (
 	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
 	k8s.io/client-go v0.23.5
 	rogchap.com/v8go v0.7.0
+)
+
+require (
+	github.com/alecthomas/kong v0.6.1 // indirect
+	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/charmbracelet/lipgloss v0.5.0 // indirect
+	github.com/containerd/console v1.0.3 // indirect
+	github.com/muesli/ansi v0.0.0-20211018074035-2e021307bc4b // indirect
+	github.com/muesli/cancelreader v0.2.1 // indirect
+	github.com/muesli/reflow v0.3.0 // indirect
+	github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739 // indirect
 )
 
 require (
@@ -57,6 +69,8 @@ require (
 	github.com/blendle/zapdriver v1.3.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/charmbracelet/bubbles v0.13.1-0.20220731172002-8f6516082803
+	github.com/charmbracelet/gum v0.4.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect

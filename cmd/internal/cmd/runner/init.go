@@ -26,13 +26,12 @@ to quickly create a Cobra application.`,
 				Mres:    []server.ResType{},
 				Configs: []server.ResType{},
 				Secrets: []server.ResType{},
-				Env: []server.EnvType{
-					{
-						Key:   "SAMPLE_ENV",
-						Value: "sample_value",
-					},
+				Env:     []server.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
+				Ports:   []string{},
+				FileMount: server.MountType{
+					MountBasePath: "./.mounts",
+					Mounts:        []server.FileEntry{},
 				},
-				Ports: []string{},
 			}
 
 		}

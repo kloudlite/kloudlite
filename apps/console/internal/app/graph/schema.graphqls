@@ -270,6 +270,7 @@ type AppContainer {
   computePlan: String!
   quantity: Float!
   isShared: Boolean
+  mounts: [Mount!]
 }
 
 
@@ -304,6 +305,12 @@ input AppContainerIn{
   quantity: Float!
   attachedResources:[AttachedResInput!]!
   isShared: Boolean
+}
+
+type Mount {
+  type: String!
+  ref: String!
+  path: String!
 }
 
 type ExposedService{

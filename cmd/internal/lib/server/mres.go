@@ -1,21 +1,22 @@
 package server
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type ResourceType struct {
+	Id           string
+	Name         string
+	Outputs      map[string]string
+	ResourceType string
+}
 
 type Mres struct {
 	Id        string
 	Name      string
-	Outputs   string
 	Source    string
-	Values    string
-	Resources struct {
-		Id           string
-		Name         string
-		Outputs      string
-		ResourceType string
-		Status       string
-		Values       string
-	}
+	Resources []ResourceType
 }
 
 func GetMreses() ([]*Mres, error) {
@@ -59,6 +60,8 @@ func GetMreses() ([]*Mres, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(string(respData))
 
 	type Response struct {
 		Data struct {
