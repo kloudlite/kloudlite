@@ -57,6 +57,7 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Statu
 	}
 	shouldUpdate := newStatus != one.Status
 	one.Conditions = response.ChildConditions
+	one.Status = newStatus
 	_, err = d.managedResRepo.UpdateById(ctx, one.Id, one)
 	if shouldUpdate {
 		err = d.notifier.Notify(one.Id)
