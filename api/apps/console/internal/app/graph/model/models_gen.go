@@ -47,6 +47,7 @@ type AppContainer struct {
 	ComputePlan       string         `json:"computePlan"`
 	Quantity          float64        `json:"quantity"`
 	IsShared          *bool          `json:"isShared"`
+	Mounts            []*Mount       `json:"mounts"`
 }
 
 type AppContainerIn struct {
@@ -275,6 +276,12 @@ type MetaCondition struct {
 	LastTimeStamp string `json:"lastTimeStamp"`
 	Reason        string `json:"reason"`
 	Message       string `json:"message"`
+}
+
+type Mount struct {
+	Type string `json:"type"`
+	Ref  string `json:"ref"`
+	Path string `json:"path"`
 }
 
 type MountInput struct {
