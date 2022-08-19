@@ -86,11 +86,11 @@ to quickly create a Cobra application.`,
 
 		}
 
-		SelectConfigMount(path, *klFile)
+		selectConfigMount(path, *klFile)
 	},
 }
 
-func SelectConfigMount(path string, klFile server.KLFileType) {
+func selectConfigMount(path string, klFile server.KLFileType) {
 
 	csName := []string{"config", "secret"}
 	cOrsIndex, err := fuzzyfinder.Find(

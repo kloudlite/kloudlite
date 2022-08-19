@@ -8,6 +8,7 @@ import (
 )
 
 type ResEnvType struct {
+	Name   string
 	Key    string
 	RefKey string
 }
@@ -18,8 +19,8 @@ type EnvType struct {
 }
 
 type ResType struct {
-	Id   string
 	Name string
+	Id   string
 	Env  []ResEnvType
 }
 

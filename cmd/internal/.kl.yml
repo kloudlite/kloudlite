@@ -1,0 +1,45 @@
+version: v1
+name: Sample
+mres:
+- name: sample
+  id: mgres-sdu9arqrtibt5zrqascofeqa9mx0
+  env:
+  - name: Username
+    key: DB_USER
+    refkey: DB_USER
+  - name: Password
+    key: DB_PASSWORD
+    refkey: DB_PASSWORD
+  - name: Connection String
+    key: DB_URL
+    refkey: DB_URL
+- name: sample
+  id: mgres-725x3bwdrzfb8ynki7vktwm4f0nf
+  env:
+  - name: Db Name
+    key: DB_NAME
+    refkey: DB_NAME
+  - name: Mysql DSN
+    key: DSN
+    refkey: DSN
+  - name: DB Hosts
+    key: HOSTS
+    refkey: HOSTS
+  - name: DB Uri
+    key: URI
+    refkey: URI
+  - name: Db password
+    key: PASSWORD
+    refkey: PASSWORD
+  - name: DB Username
+    key: USERNAME
+    refkey: USERNAME
+configs: []
+secrets: []
+env:
+- key: SAMPLE_ENV
+  value: sample_value
+ports: []
+fileMount:
+  mountBasePath: ./.mounts
+  mounts: []
