@@ -6,8 +6,12 @@ package project
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/lib"
+	"kloudlite.io/cmd/internal/lib/server"
 )
 
 // useCmd represents the use command
@@ -21,6 +25,50 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("use called")
+
+		if len(args) == 0 {
+			TriggerSelectProject()
+			return
+		}
+
+		projects, err := server.GetProjects()
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		found := false
+
+		for _, p := range projects {
+			if args[0] == p.Id {
+				found = true
+			}
+		}
+
+		if found {
+			lib.SelectProject(args[0])
+		} else {
+			fmt.Fprint(os.Stderr, "You don't have access to this project or either it's not present under the selected account")
+		}
+
 	},
+}
+
+func TriggerSelectProject() {
+	projects, err := server.GetProjects()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err.Error())
+	}
+	selectedIndex, err := fuzzyfinder.Find(
+		projects,
+		func(i int) string {
+			return projects[i].Name
+		},
+		fuzzyfinder.WithPromptString("Select Project >"),
+	)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err.Error())
+	}
+	lib.SelectProject(projects[selectedIndex].Id)
+	fmt.Println("Selected project: " + projects[selectedIndex].Name)
 }
