@@ -18,6 +18,15 @@ type Config struct {
 	status      string
 }
 
+type ConfigORSecret struct {
+	Description string
+	Entries     []CSEntry
+	Id          string
+	Name        string
+	Namsespace  string
+	status      string
+}
+
 func GetConfigs() ([]Config, error) {
 	cookie, err := getCookie()
 	if err != nil {
