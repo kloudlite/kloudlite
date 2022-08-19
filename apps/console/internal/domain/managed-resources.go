@@ -190,7 +190,7 @@ func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID)
 	if err != nil {
 		return nil, err
 	}
-	secret, err := d.kubeCli.GetSecret(ctx, mres.Namespace, fmt.Sprint("msvc-", mres.Id))
+	secret, err := d.kubeCli.GetSecret(ctx, mres.Namespace, fmt.Sprint("mres-", mres.Id))
 	if err != nil {
 		return nil, err
 	}
