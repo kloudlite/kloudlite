@@ -32,17 +32,7 @@ func GetConfigs() ([]Config, error) {
 		return nil, err
 	}
 
-	respData, err := gql(`
-	query Core_configs($projectId: ID!) {
-		core_configs(projectId: $projectId) {
-			entries {
-				key
-			}
-			id
-			name
-		}
-	}
-	`, map[string]any{
+	respData, err := klFetch("cli_getConfigs", map[string]any{
 		"projectId": projectId,
 	}, &cookie)
 
@@ -51,9 +41,7 @@ func GetConfigs() ([]Config, error) {
 	}
 
 	type Response struct {
-		Data struct {
-			CoreConfigs []Config `json:"core_configs"`
-		} `json:"data"`
+		CoreConfigs []Config `json:"data"`
 	}
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
@@ -61,5 +49,5 @@ func GetConfigs() ([]Config, error) {
 		return nil, err
 	}
 
-	return resp.Data.CoreConfigs, nil
+	return resp.CoreConfigs, nil
 }

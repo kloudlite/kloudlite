@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
+	"kloudlite.io/cmd/internal/common"
 	"kloudlite.io/cmd/internal/constants"
 )
 
@@ -65,7 +65,7 @@ func getConfigFolder() (configFolder string, err error) {
 	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(configFolder, os.ModePerm)
 		if err != nil {
-			log.Println(err)
+			common.PrintError(err)
 		}
 	}
 	return configFolder, nil
@@ -77,11 +77,7 @@ func CreateRemoteLogin() (loginId string, err error) {
 		return "", err
 	}
 
-	respData, err := gql(`
-		mutation Auth_createRemoteLogin($secret: String) {
-			auth_createRemoteLogin(secret: $secret)
-		}
-		`, map[string]any{
+	respData, err := klFetch("cli_createRemoteLogin", map[string]any{
 		"secret": authSecret,
 	}, nil)
 
@@ -90,9 +86,7 @@ func CreateRemoteLogin() (loginId string, err error) {
 	}
 
 	type Response struct {
-		Data struct {
-			Id string `json:"auth_createRemoteLogin"`
-		} `json:"data"`
+		Id string `json:"data"`
 	}
 
 	var resp Response
@@ -100,31 +94,23 @@ func CreateRemoteLogin() (loginId string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return resp.Data.Id, nil
+	return resp.Id, nil
 }
 
 func Login(loginId string) error {
 	for {
-		respData, err := gql(`
-		query Auth_getRemoteLogin($loginId: String!, $secret: String!) {
-  			auth_getRemoteLogin(loginId: $loginId, secret: $secret) {
-    			status
-				authHeader
-  			}
-		}
-		`, map[string]any{
+		respData, err := klFetch("cli_getRemoteLogin", map[string]any{
 			"loginId": loginId,
 			"secret":  authSecret,
 		}, nil)
+
 		if err != nil {
 			return err
 		}
 		type Response struct {
-			Data struct {
-				RemoteLogin struct {
-					Status     string `json:"status"`
-					AuthHeader string `json:"authHeader"`
-				} `json:"auth_getRemoteLogin"`
+			RemoteLogin struct {
+				Status     string `json:"status"`
+				AuthHeader string `json:"authHeader"`
 			} `json:"data"`
 		}
 		var loginStatusResponse Response
@@ -132,21 +118,21 @@ func Login(loginId string) error {
 		if err != nil {
 			return err
 		}
-		if loginStatusResponse.Data.RemoteLogin.Status == "succeeded" {
+		if loginStatusResponse.RemoteLogin.Status == "succeeded" {
 			configFolder, err := getConfigFolder()
 			if err != nil {
 				return err
 			}
-			err = ioutil.WriteFile(fmt.Sprintf("%v/session", configFolder), []byte(loginStatusResponse.Data.RemoteLogin.AuthHeader), 0644)
+			err = ioutil.WriteFile(fmt.Sprintf("%v/session", configFolder), []byte(loginStatusResponse.RemoteLogin.AuthHeader), 0644)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
-		if loginStatusResponse.Data.RemoteLogin.Status == "failed" {
+		if loginStatusResponse.RemoteLogin.Status == "failed" {
 			return errors.New("remote login failed")
 		}
-		if loginStatusResponse.Data.RemoteLogin.Status == "pending" {
+		if loginStatusResponse.RemoteLogin.Status == "pending" {
 			time.Sleep(time.Second * 2)
 			continue
 		}
@@ -226,18 +212,8 @@ func GetAccounts() ([]Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	respData, err := gql(`
-		query AccountMemberships {
-          auth_me {
-            accountMemberships {
-              account {
-                id
-                name
-              }
-            }
-          }
-        }
-		`, map[string]any{
+
+	respData, err := klFetch("cli_getAccountMemeberships", map[string]any{
 		"secret": authSecret,
 	}, &cookie)
 
@@ -245,12 +221,10 @@ func GetAccounts() ([]Account, error) {
 		return nil, err
 	}
 	type Response struct {
-		Data struct {
-			AuthMe struct {
-				AccountMemberships []struct {
-					Account Account `json:"account"`
-				} `json:"accountMemberships"`
-			} `json:"auth_me"`
+		AuthMe struct {
+			AccountMemberships []struct {
+				Account Account `json:"account"`
+			} `json:"accountMemberships"`
 		} `json:"data"`
 	}
 	var resp Response
@@ -258,8 +232,8 @@ func GetAccounts() ([]Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	accounts := make([]Account, len(resp.Data.AuthMe.AccountMemberships))
-	for i, v := range resp.Data.AuthMe.AccountMemberships {
+	accounts := make([]Account, len(resp.AuthMe.AccountMemberships))
+	for i, v := range resp.AuthMe.AccountMemberships {
 		accounts[i] = v.Account
 	}
 	return accounts, nil
@@ -275,22 +249,10 @@ func GetProjects() ([]Project, error) {
 	accountId, err := currentAccountId()
 
 	if err != nil {
-
 		return nil, err
 	}
 
-	respData, err := gql(`
-		query Projects($accountId: ID!) {
-          finance_account(accountId: $accountId) {
-            projects {
-              id
-              readableId
-			  displayName
-			  name
-            }
-          }
-        }
-		`, map[string]any{
+	respData, err := klFetch("cli_getProjects", map[string]any{
 		"accountId": accountId,
 	}, &cookie)
 
@@ -299,19 +261,16 @@ func GetProjects() ([]Project, error) {
 	}
 
 	type Response struct {
-		Data struct {
-			FinanceAccount struct {
-				Projects []Project `json:"projects"`
-			} `json:"finance_account"`
+		FinanceAccount struct {
+			Projects []Project `json:"projects"`
 		} `json:"data"`
 	}
 	var resp Response
-	fmt.Println(resp)
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data.FinanceAccount.Projects, nil
+	return resp.FinanceAccount.Projects, nil
 }
 
 func GetApps() ([]App, error) {
@@ -326,39 +285,7 @@ func GetApps() ([]App, error) {
 		return nil, err
 	}
 
-	// count := 0
-	// for {
-	// 	if count > 2 {
-	// 		return nil, err
-	// 	}
-	// 	if err == nil {
-	// 		break
-	// 	}
-	// 	exec.Command(constants.CMD_NAME, "projects").Run()
-	// 	count++
-	// }
-
-	respData, err := gql(`
-		query Core_apps($projectId: ID!) {
-          core_apps(projectId: $projectId) {
-            id
-            name
-            readableId
-            containers {
-              name
-              
-              envVars {
-                key
-                value {
-                  ref
-                  key
-                  type
-                }
-              }
-            }
-          }
-        }
-		`, map[string]any{
+	respData, err := klFetch("cli_getApps", map[string]any{
 		"projectId": projectId,
 	}, &cookie)
 
@@ -367,17 +294,14 @@ func GetApps() ([]App, error) {
 	}
 
 	type Response struct {
-		Data struct {
-			CoreApps []App `json:"core_apps"`
-		} `json:"data"`
+		CoreApps []App `json:"data"`
 	}
 	var resp Response
-	// fmt.Println(resp)
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data.CoreApps, nil
+	return resp.CoreApps, nil
 }
 
 func GetApp(appId string) (*App, error) {
@@ -385,28 +309,8 @@ func GetApp(appId string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	respData, err := gql(`
-		query Core_app($appId: ID!) {
-          core_app(appId: $appId) {
-            id
-            name
-            readableId
-            containers {
-              name
-              
-              envVars {
-                key
-                value {
-                  ref
-                  key
-                  type
-                  value
-                }
-              }
-            }
-          }
-        }
-		`, map[string]any{
+
+	respData, err := klFetch("cli_getApp", map[string]any{
 		"appId": appId,
 	}, &cookie)
 
@@ -415,16 +319,14 @@ func GetApp(appId string) (*App, error) {
 	}
 
 	type Response struct {
-		Data struct {
-			CoreApp App `json:"core_app"`
-		} `json:"data"`
+		CoreApp App `json:"data"`
 	}
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data.CoreApp, nil
+	return &resp.CoreApp, nil
 }
 
 func GetEnvs(appId string) (string, error) {
@@ -433,11 +335,7 @@ func GetEnvs(appId string) (string, error) {
 		return "", err
 	}
 
-	respData, err := gql(`
-		query Core_app($appId: ID!) {
-			core_app_envs(appId: $appId) 
-		}	
-		`, map[string]any{
+	respData, err := klFetch("cli_getEnv", map[string]any{
 		"appId": appId,
 	}, &cookie)
 
@@ -446,9 +344,7 @@ func GetEnvs(appId string) (string, error) {
 	}
 
 	type Response struct {
-		Data struct {
-			Envs string `json:"core_app_envs"`
-		} `json:"data"`
+		Envs string `json:"data"`
 	}
 
 	var resp Response
@@ -458,8 +354,5 @@ func GetEnvs(appId string) (string, error) {
 		return "", err
 	}
 
-	return resp.Data.Envs, nil
-}
-
-func LoadApp() {
+	return resp.Envs, nil
 }
