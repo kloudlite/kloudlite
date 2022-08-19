@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/go-envparse"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-envparse"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -1098,7 +1098,6 @@ func (r *queryResolver) CoreAppEnvs(ctx context.Context, appID repos.ID) (*strin
 	}
 
 	aId := "env-" + string(a.Id)
-
 	resp, err := r.Mutation().CoreCreateApp(ctx, a.ProjectId, model.AppInput{
 		Name:        aId,
 		IsLambda:    false,

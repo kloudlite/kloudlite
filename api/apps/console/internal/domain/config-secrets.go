@@ -158,7 +158,7 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 		APIVersion: opcrds.ConfigAPIVersion,
 		Kind:       opcrds.ConfigKind,
 		Metadata: opcrds.ConfigMetadata{
-			Name:      configName,
+			Name:      string(create.Id),
 			Namespace: prj.Name,
 		},
 		Data: nil,
@@ -193,7 +193,7 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 		APIVersion: opcrds.ConfigAPIVersion,
 		Kind:       opcrds.ConfigKind,
 		Metadata: opcrds.ConfigMetadata{
-			Name:      cfg.Name,
+			Name:      string(cfg.Id),
 			Namespace: cfg.Namespace,
 		},
 		Data: func() map[string]any {
