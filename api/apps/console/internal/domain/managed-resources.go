@@ -23,7 +23,7 @@ func (d *domain) GetManagedResourcesOfService(ctx context.Context, installationI
 	}})
 }
 
-func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error) {
+func (d *domain) getResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error) {
 	mRes, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err != nil {
 		return nil, err
@@ -39,6 +39,10 @@ func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) 
 		return nil, err
 	}
 	return nil, nil
+}
+
+func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error) {
+	return d.getResourceOutputs(ctx, managedResID)
 }
 
 func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.StatusUpdate) error {

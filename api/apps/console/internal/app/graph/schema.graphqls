@@ -1,4 +1,10 @@
 scalar Json
+scalar KLFile
+
+type LoadEnv {
+  envVars: String
+  mountFiles: Json
+}
 
 type Query {
   core_checkDeviceExist(accountId: ID!, name: String!): Boolean!
@@ -8,7 +14,7 @@ type Query {
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!): App
-  core_app_envs(appId: ID!): String
+  core_generateEnv(projectId: ID!, klConfig: KLFile): LoadEnv
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router

@@ -113,6 +113,9 @@ models:
     model:
       - kloudlite.io/apps/console/internal/domain/entities.ManagedServiceCategory
 
+  KLFile:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities/localenv.KLFile
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
