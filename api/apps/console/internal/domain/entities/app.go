@@ -46,7 +46,7 @@ type Container struct {
 	Name              string             `json:"name" bson:"name"`
 	Image             *string            `json:"image" bson:"image"`
 	ImagePullSecret   *string            `json:"pull_secret" bson:"pull_secret"`
-	EnvVars           []EnvVar           `json:"env_vars" bson:"env_cars"`
+	EnvVars           []EnvVar           `json:"env_vars" bson:"env_vars"`
 	VolumeMounts      []VolumeMount      `json:"volume_mounts" bson:"volume_mounts"`
 	AttachedResources []AttachedResource `json:"attached_resources" bson:"attached_resources"`
 	ComputePlan       string             `json:"compute_plan" bson:"compute_plan"`
