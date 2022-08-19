@@ -23,14 +23,27 @@ type ResType struct {
 	Env  []ResEnvType
 }
 
+type FileEntry struct {
+	Path string
+	Type string
+	Ref  string
+	Name string
+}
+
+type MountType struct {
+	MountBasePath string `yaml:"mountBasePath"`
+	Mounts        []FileEntry
+}
+
 type KLFileType struct {
-	Version string
-	Name    string
-	Mres    []ResType
-	Configs []ResType
-	Secrets []ResType
-	Env     []EnvType
-	Ports   []string
+	Version   string
+	Name      string
+	Mres      []ResType
+	Configs   []ResType
+	Secrets   []ResType
+	Env       []EnvType
+	Ports     []string
+	FileMount MountType `yaml:"fileMount"`
 }
 
 func WriteKLFile(fileObj KLFileType) error {

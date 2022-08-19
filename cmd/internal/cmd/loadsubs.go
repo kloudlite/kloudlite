@@ -21,6 +21,7 @@ func init() {
 
 	rootCmd.AddCommand(runner.InitCommand)
 	rootCmd.AddCommand(runner.LoadCommand)
+	rootCmd.AddCommand(runner.ShowCommand)
 
 	rootCmd.AddCommand(add.AddCommand)
 }
