@@ -13,8 +13,20 @@ mres:
   - name: Connection String
     key: DB_URL
     refkey: DB_URL
-configs: []
-secrets: []
+configs:
+- name: mount-config
+  id: cfg-vgwehodxuy2yuo3ezpv1fq5egsf7
+  env:
+  - name: ""
+    key: samp2
+    refkey: samp2
+secrets:
+- name: sample-secret
+  id: sec-angrphcea-bnygasjeswneizlutb
+  env:
+  - name: ""
+    key: sec
+    refkey: sec
 env:
 - key: SAMPLE_ENV
   value: sample_value
