@@ -223,7 +223,7 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 		APIVersion: opcrds.ConfigAPIVersion,
 		Kind:       opcrds.ConfigKind,
 		Metadata: opcrds.ConfigMetadata{
-			Name:      cfg.Name,
+			Name:      string(cfg.Id),
 			Namespace: cfg.Namespace,
 		},
 	})
