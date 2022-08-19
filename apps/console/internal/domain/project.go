@@ -209,7 +209,7 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 	}
 	err = json.Unmarshal(secret.Data[".dockerconfigjson"], &data)
 	if err != nil {
-		return "", "", err
+		return "", "", nil
 	}
 	connectionStr := data.Auths["harbor.dev.madhouselabs.io"].Auth
 	decodeString, err := base64.StdEncoding.DecodeString(connectionStr)
