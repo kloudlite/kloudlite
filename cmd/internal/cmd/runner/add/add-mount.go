@@ -108,37 +108,29 @@ func selectConfigMount(path string, klFile server.KLFileType) {
 	cOrs := csName[cOrsIndex]
 	items := []server.ConfigORSecret{}
 	if cOrs == "config" {
-		configs, err := server.GetConfigs()
+		configs, e := server.GetConfigs()
 
-		if err != nil {
-			common.PrintError(err)
+		if e != nil {
+			common.PrintError(e)
 			return
 		}
 		for _, c := range configs {
-			items = append(items, server.ConfigORSecret{
-				Description: c.Description,
-				Entries:     c.Entries,
-				Id:          c.Id,
-				Name:        c.Name,
-				Namsespace:  c.Namsespace,
-			})
+			items = append(items, server.ConfigORSecret(c))
 		}
 
 	} else {
-		secrets, err := server.GetSecrets()
+		secrets, e := server.GetSecrets()
 
-		if err != nil {
-			common.PrintError(err)
+		if e != nil {
+			common.PrintError(e)
 			return
 		}
 
 		for _, c := range secrets {
 			items = append(items, server.ConfigORSecret{
-				Description: c.Description,
-				Entries:     c.Entries,
-				Id:          c.Id,
-				Name:        c.Name,
-				Namsespace:  c.Namsespace,
+				Entries: c.Entries,
+				Id:      c.Id,
+				Name:    c.Name,
 			})
 		}
 

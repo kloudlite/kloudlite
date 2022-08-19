@@ -27,11 +27,7 @@ type MresMarketItem struct {
 	Active      bool
 	DisplayName string `json:"display_name"`
 	Name        string
-	// Outputs     []struct {
-	// 	Label string
-	// 	Name  string
-	// }
-	Resources []struct {
+	Resources   []struct {
 		DisplayName string
 		Name        string
 		Outputs     Outputs
@@ -65,18 +61,11 @@ func GetMreses() ([]*Mres, []mCategory, error) {
 				id
 				name
 				source
-				status
-				updatedAt
-				values
-				createdAt
 				resources {
-					createdAt
 					id
 					name
 					resourceType
 					status
-					updatedAt
-					values
 				}
 			}
 

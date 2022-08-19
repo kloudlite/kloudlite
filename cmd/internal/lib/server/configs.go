@@ -10,21 +10,15 @@ type CSEntry struct {
 }
 
 type Config struct {
-	Description string
-	Entries     []CSEntry
-	Id          string
-	Name        string
-	Namsespace  string
-	status      string
+	Entries []CSEntry
+	Id      string
+	Name    string
 }
 
 type ConfigORSecret struct {
-	Description string
-	Entries     []CSEntry
-	Id          string
-	Name        string
-	Namsespace  string
-	status      string
+	Entries []CSEntry
+	Id      string
+	Name    string
 }
 
 func GetConfigs() ([]Config, error) {
@@ -42,14 +36,10 @@ func GetConfigs() ([]Config, error) {
 	query Core_configs($projectId: ID!) {
 		core_configs(projectId: $projectId) {
 			entries {
-				value
 				key
 			}
-			description
 			id
 			name
-			namespace
-			status
 		}
 	}
 	`, map[string]any{
