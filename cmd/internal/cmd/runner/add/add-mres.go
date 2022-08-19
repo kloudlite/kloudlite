@@ -20,11 +20,11 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		SelectMreses()
+		selectMreses()
 	},
 }
 
-func SelectMreses() {
+func selectMreses() {
 
 	klFile, err := server.GetKlFile(nil)
 
@@ -35,7 +35,7 @@ func SelectMreses() {
 		return
 	}
 
-	mreses, err := server.GetMreses()
+	mreses, market, err := server.GetMreses()
 
 	if err != nil {
 		common.PrintError(err)
@@ -82,6 +82,30 @@ func SelectMreses() {
 
 	selectedMres := selectedMsvc.Resources[selectedMresIndex]
 
+	var outputs server.Outputs
+
+	for _, mc := range market {
+		for _, mmi := range mc.List {
+			if !mmi.Active {
+				continue
+			}
+			if mmi.Name == selectedMsvc.Source {
+				for _, v := range mmi.Resources {
+					if v.Name == selectedMres.ResourceType {
+						outputs = v.Outputs
+					}
+				}
+				break
+			}
+		}
+	}
+
+	if outputs == nil {
+		es := "Can't find the environment in selected resource"
+		common.PrintError(fmt.Errorf(es))
+		return
+	}
+
 	matchedMres := -1
 
 	for i, rt := range klFile.Mres {
@@ -91,7 +115,7 @@ func SelectMreses() {
 		}
 	}
 
-	if len(selectedMres.Outputs) == 0 {
+	if len(outputs) == 0 {
 		es := "No environment variables found in the selected managed resource\n"
 		common.PrintError(fmt.Errorf(es))
 	}
@@ -100,17 +124,25 @@ func SelectMreses() {
 		klFile.Mres[matchedMres].Env = func() []server.ResEnvType {
 			env := []server.ResEnvType{}
 
-			for k := range selectedMres.Outputs {
+			for _, op := range outputs {
 				env = append(env, server.ResEnvType{
 					Key: func() string {
 						for _, ret := range klFile.Mres[matchedMres].Env {
-							if ret.RefKey == k {
+							if ret.RefKey == op.Name {
 								return ret.Key
 							}
 						}
-						return k
+						return op.Name
 					}(),
-					RefKey: k,
+					Name: func() string {
+						for _, ret := range klFile.Mres[matchedMres].Env {
+							if ret.RefKey == op.Name {
+								return ret.Name
+							}
+						}
+						return op.Label
+					}(),
+					RefKey: op.Name,
 				})
 			}
 
@@ -123,10 +155,11 @@ func SelectMreses() {
 			Name: selectedMres.Name,
 			Env: func() []server.ResEnvType {
 				env := []server.ResEnvType{}
-				for k := range selectedMres.Outputs {
+				for _, op := range outputs {
 					env = append(env, server.ResEnvType{
-						Key:    k,
-						RefKey: k,
+						Key:    op.Name,
+						RefKey: op.Name,
+						Name:   op.Label,
 					})
 				}
 
@@ -138,7 +171,6 @@ func SelectMreses() {
 		if err != nil {
 			common.PrintError(err)
 		}
-
 	}
 
 	fmt.Printf("added mres %s/%s to your %s-file\n", selectedMsvc.Name, selectedMres.Name, constants.CMD_NAME)

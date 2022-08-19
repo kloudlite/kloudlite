@@ -2,13 +2,12 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type ResourceType struct {
-	Id           string
-	Name         string
-	Outputs      map[string]string
+	Id   string
+	Name string
+	// Outputs      map[string]string
 	ResourceType string
 }
 
@@ -19,15 +18,45 @@ type Mres struct {
 	Resources []ResourceType
 }
 
-func GetMreses() ([]*Mres, error) {
+type Outputs []struct {
+	Label string
+	Name  string
+}
+
+type MresMarketItem struct {
+	Active      bool
+	DisplayName string `json:"display_name"`
+	Name        string
+	// Outputs     []struct {
+	// 	Label string
+	// 	Name  string
+	// }
+	Resources []struct {
+		DisplayName string
+		Name        string
+		Outputs     Outputs
+	}
+}
+
+type mCategory struct {
+	Category    string
+	DisplayName string `json:"display_name"`
+	List        []MresMarketItem
+}
+
+type MresMarketCategories struct {
+	Categories []mCategory
+}
+
+func GetMreses() ([]*Mres, []mCategory, error) {
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	projectId, err := currentProjectId()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	respData, err := gql(`
@@ -35,7 +64,6 @@ func GetMreses() ([]*Mres, error) {
 			managedSvc_listInstallations(projectId: $projectId) {
 				id
 				name
-				outputs
 				source
 				status
 				updatedAt
@@ -45,34 +73,40 @@ func GetMreses() ([]*Mres, error) {
 					createdAt
 					id
 					name
-					outputs
 					resourceType
 					status
 					updatedAt
 					values
 				}
 			}
+
+	   managedSvc_marketList
 		}
 	`, map[string]any{
 		"projectId": projectId,
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	fmt.Println(string(respData))
+	// cmd := exec.Command("jq", fmt.Sprintf("%q", string(respData)))
+	// cmd.Stdout = os.Stdout
+	// cmd.Run()
+	// fmt.Println(string(respData))
 
 	type Response struct {
 		Data struct {
-			ManagedSvc_listInstallations []*Mres `json:"managedSvc_listInstallations"`
+			ManagedSvc_listInstallations []*Mres               `json:"managedSvc_listInstallations"`
+			ManagedSvc_marketList        *MresMarketCategories `json:"managedSvc_marketList"`
 		} `json:"data"`
 	}
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return resp.Data.ManagedSvc_listInstallations, nil
+	return resp.Data.ManagedSvc_listInstallations,
+		resp.Data.ManagedSvc_marketList.Categories, nil
 }
