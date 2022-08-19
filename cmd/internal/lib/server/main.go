@@ -287,7 +287,6 @@ func GetProjects() ([]Project, error) {
               readableId
 			  displayName
 			  name
-			  description
             }
           }
         }
@@ -354,7 +353,6 @@ func GetApps() ([]App, error) {
                   ref
                   key
                   type
-                  value
                 }
               }
             }
