@@ -25,15 +25,11 @@ func GetSecrets() ([]Secret, error) {
 	respData, err := gql(`
 	query Core_secrets($projectId: ID!) {
 		core_secrets(projectId: $projectId) {
-			description
 			entries {
-				value
 				key
 			}
 			id
 			name
-			namespace
-			status
 		}
 	}
 	`, map[string]any{

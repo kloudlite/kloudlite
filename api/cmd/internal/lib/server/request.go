@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"kloudlite.io/cmd/internal/common"
+	"kloudlite.io/cmd/internal/constants"
 	"kloudlite.io/pkg/errors"
 )
 
 func gql(query string, variables map[string]any, cookie *string) ([]byte, error) {
-	url := "http://gateway.kl-core.svc.cluster.local/"
+	url := constants.SERVER_URL
 	method := "POST"
 	marshal, err := json.Marshal(map[string]any{
 		"query":     query,
