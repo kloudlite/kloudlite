@@ -22,17 +22,7 @@ func GetSecrets() ([]Secret, error) {
 		return nil, err
 	}
 
-	respData, err := gql(`
-	query Core_secrets($projectId: ID!) {
-		core_secrets(projectId: $projectId) {
-			entries {
-				key
-			}
-			id
-			name
-		}
-	}
-	`, map[string]any{
+	respData, err := klFetch("cli_getSecrets", map[string]any{
 		"projectId": projectId,
 	}, &cookie)
 
@@ -41,9 +31,7 @@ func GetSecrets() ([]Secret, error) {
 	}
 
 	type Response struct {
-		Data struct {
-			CoreSecrets []Secret `json:"core_secrets"`
-		} `json:"data"`
+		CoreSecrets []Secret `json:"data"`
 	}
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
@@ -51,5 +39,5 @@ func GetSecrets() ([]Secret, error) {
 		return nil, err
 	}
 
-	return resp.Data.CoreSecrets, nil
+	return resp.CoreSecrets, nil
 }

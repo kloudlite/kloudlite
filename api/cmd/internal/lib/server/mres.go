@@ -55,34 +55,13 @@ func GetMreses() ([]*Mres, []mCategory, error) {
 		return nil, nil, err
 	}
 
-	respData, err := gql(`
-		query ManagedSvc_listInstallations($projectId: ID!) {
-			managedSvc_listInstallations(projectId: $projectId) {
-				id
-				name
-				source
-				resources {
-					id
-					name
-					resourceType
-					status
-				}
-			}
-
-	   managedSvc_marketList
-		}
-	`, map[string]any{
+	respData, err := klFetch("cli_getMsvcInstallatins", map[string]any{
 		"projectId": projectId,
 	}, &cookie)
 
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// cmd := exec.Command("jq", fmt.Sprintf("%q", string(respData)))
-	// cmd.Stdout = os.Stdout
-	// cmd.Run()
-	// fmt.Println(string(respData))
 
 	type Response struct {
 		Data struct {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/common"
 	"kloudlite.io/cmd/internal/lib"
 	"kloudlite.io/cmd/internal/lib/server"
 )
@@ -67,7 +68,8 @@ func TriggerSelectProject() {
 		fuzzyfinder.WithPromptString("Select Project >"),
 	)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err.Error())
+		common.PrintError(err)
+		return
 	}
 	lib.SelectProject(projects[selectedIndex].Id)
 	fmt.Println("Selected project: " + projects[selectedIndex].Name)
