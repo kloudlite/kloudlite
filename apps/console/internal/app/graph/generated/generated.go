@@ -17,6 +17,7 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"kloudlite.io/apps/console/internal/app/graph/model"
+	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -206,6 +207,11 @@ type ComplexityRoot struct {
 		Name func(childComplexity int) int
 	}
 
+	LoadEnv struct {
+		EnvVars    func(childComplexity int) int
+		MountFiles func(childComplexity int) int
+	}
+
 	ManagedRes struct {
 		CreatedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
@@ -301,11 +307,11 @@ type ComplexityRoot struct {
 
 	Query struct {
 		CoreApp                     func(childComplexity int, appID repos.ID) int
-		CoreAppEnvs                 func(childComplexity int, appID repos.ID) int
 		CoreApps                    func(childComplexity int, projectID repos.ID, search *string) int
 		CoreCheckDeviceExist        func(childComplexity int, accountID repos.ID, name string) int
 		CoreConfig                  func(childComplexity int, configID repos.ID) int
 		CoreConfigs                 func(childComplexity int, projectID repos.ID, search *string) int
+		CoreGenerateEnv             func(childComplexity int, projectID repos.ID, klConfig *localenv.KLFile) int
 		CoreGetCloudProviders       func(childComplexity int, accountID repos.ID) int
 		CoreGetComputePlans         func(childComplexity int) int
 		CoreGetLamdaPlan            func(childComplexity int) int
@@ -444,7 +450,7 @@ type QueryResolver interface {
 	CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error)
 	CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error)
 	CoreApp(ctx context.Context, appID repos.ID) (*model.App, error)
-	CoreAppEnvs(ctx context.Context, appID repos.ID) (*string, error)
+	CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig *localenv.KLFile) (*model.LoadEnv, error)
 	CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error)
 	CoreRouter(ctx context.Context, routerID repos.ID) (*model.Router, error)
 	CoreConfigs(ctx context.Context, projectID repos.ID, search *string) ([]*model.Config, error)
@@ -1153,6 +1159,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.LambdaPlan.Name(childComplexity), true
 
+	case "LoadEnv.envVars":
+		if e.complexity.LoadEnv.EnvVars == nil {
+			break
+		}
+
+		return e.complexity.LoadEnv.EnvVars(childComplexity), true
+
+	case "LoadEnv.mountFiles":
+		if e.complexity.LoadEnv.MountFiles == nil {
+			break
+		}
+
+		return e.complexity.LoadEnv.MountFiles(childComplexity), true
+
 	case "ManagedRes.createdAt":
 		if e.complexity.ManagedRes.CreatedAt == nil {
 			break
@@ -1819,18 +1839,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreApp(childComplexity, args["appId"].(repos.ID)), true
 
-	case "Query.core_app_envs":
-		if e.complexity.Query.CoreAppEnvs == nil {
-			break
-		}
-
-		args, err := ec.field_Query_core_app_envs_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CoreAppEnvs(childComplexity, args["appId"].(repos.ID)), true
-
 	case "Query.core_apps":
 		if e.complexity.Query.CoreApps == nil {
 			break
@@ -1878,6 +1886,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CoreConfigs(childComplexity, args["projectId"].(repos.ID), args["search"].(*string)), true
+
+	case "Query.core_generateEnv":
+		if e.complexity.Query.CoreGenerateEnv == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_generateEnv_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGenerateEnv(childComplexity, args["projectId"].(repos.ID), args["klConfig"].(*localenv.KLFile)), true
 
 	case "Query.core_getCloudProviders":
 		if e.complexity.Query.CoreGetCloudProviders == nil {
@@ -2277,6 +2297,12 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
+scalar KLFile
+
+type LoadEnv {
+  envVars: String
+  mountFiles: Json
+}
 
 type Query {
   core_checkDeviceExist(accountId: ID!, name: String!): Boolean!
@@ -2286,7 +2312,7 @@ type Query {
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!): App
-  core_app_envs(appId: ID!): String
+  core_generateEnv(projectId: ID!, klConfig: KLFile): LoadEnv
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
@@ -3811,21 +3837,6 @@ func (ec *executionContext) field_Query_core_app_args(ctx context.Context, rawAr
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_core_app_envs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["appId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["appId"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_core_apps_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3910,6 +3921,30 @@ func (ec *executionContext) field_Query_core_configs_args(ctx context.Context, r
 		}
 	}
 	args["search"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_generateEnv_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["projectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectId"] = arg0
+	var arg1 *localenv.KLFile
+	if tmp, ok := rawArgs["klConfig"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("klConfig"))
+		arg1, err = ec.unmarshalOKLFile2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋdomainᚋentitiesᚋlocalenvᚐKLFile(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["klConfig"] = arg1
 	return args, nil
 }
 
@@ -7344,6 +7379,70 @@ func (ec *executionContext) _LambdaPlan_name(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _LoadEnv_envVars(ctx context.Context, field graphql.CollectedField, obj *model.LoadEnv) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "LoadEnv",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EnvVars, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _LoadEnv_mountFiles(ctx context.Context, field graphql.CollectedField, obj *model.LoadEnv) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "LoadEnv",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MountFiles, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOJson2map(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ManagedRes_id(ctx context.Context, field graphql.CollectedField, obj *model.ManagedRes) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -10254,7 +10353,7 @@ func (ec *executionContext) _Query_core_app(ctx context.Context, field graphql.C
 	return ec.marshalOApp2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_core_app_envs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_core_generateEnv(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -10271,7 +10370,7 @@ func (ec *executionContext) _Query_core_app_envs(ctx context.Context, field grap
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_core_app_envs_args(ctx, rawArgs)
+	args, err := ec.field_Query_core_generateEnv_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -10279,7 +10378,7 @@ func (ec *executionContext) _Query_core_app_envs(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CoreAppEnvs(rctx, args["appId"].(repos.ID))
+		return ec.resolvers.Query().CoreGenerateEnv(rctx, args["projectId"].(repos.ID), args["klConfig"].(*localenv.KLFile))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10288,9 +10387,9 @@ func (ec *executionContext) _Query_core_app_envs(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.LoadEnv)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOLoadEnv2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLoadEnv(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_core_routers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -15205,6 +15304,41 @@ func (ec *executionContext) _LambdaPlan(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var loadEnvImplementors = []string{"LoadEnv"}
+
+func (ec *executionContext) _LoadEnv(ctx context.Context, sel ast.SelectionSet, obj *model.LoadEnv) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, loadEnvImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LoadEnv")
+		case "envVars":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._LoadEnv_envVars(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "mountFiles":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._LoadEnv_mountFiles(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var managedResImplementors = []string{"ManagedRes"}
 
 func (ec *executionContext) _ManagedRes(ctx context.Context, sel ast.SelectionSet, obj *model.ManagedRes) graphql.Marshaler {
@@ -16235,7 +16369,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "core_app_envs":
+		case "core_generateEnv":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -16244,7 +16378,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_core_app_envs(ctx, field)
+				res = ec._Query_core_generateEnv(ctx, field)
 				return res
 			}
 
@@ -19319,6 +19453,28 @@ func (ec *executionContext) marshalOJson2ᚕmapᚄ(ctx context.Context, sel ast.
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalOKLFile2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋdomainᚋentitiesᚋlocalenvᚐKLFile(ctx context.Context, v interface{}) (*localenv.KLFile, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputKLFile(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOKLFile2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋdomainᚋentitiesᚋlocalenvᚐKLFile(ctx context.Context, sel ast.SelectionSet, v *localenv.KLFile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._KLFile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOLoadEnv2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLoadEnv(ctx context.Context, sel ast.SelectionSet, v *model.LoadEnv) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._LoadEnv(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOManagedRes2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ManagedRes) graphql.Marshaler {

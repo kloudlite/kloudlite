@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
 )
@@ -124,6 +125,7 @@ type Domain interface {
 	DeviceByNameExists(ctx context.Context, accountId repos.ID, name string) (bool, error)
 	DeleteProject(ctx context.Context, id repos.ID) (bool, error)
 	GetDockerCredentials(ctx context.Context, id repos.ID) (username string, password string, err error)
+	GenerateEnv(ctx context.Context, klfile localenv.KLFile) (string, map[string]string, error)
 }
 
 type InfraActionMessage interface {

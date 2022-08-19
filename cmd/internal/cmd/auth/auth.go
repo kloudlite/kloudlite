@@ -6,7 +6,7 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "auth",
-	Short: "A brief description of your command",
+	Short: "Kloudlite auth management",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

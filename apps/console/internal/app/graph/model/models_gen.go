@@ -244,6 +244,11 @@ type LambdaPlan struct {
 
 func (LambdaPlan) IsEntity() {}
 
+type LoadEnv struct {
+	EnvVars    *string                `json:"envVars"`
+	MountFiles map[string]interface{} `json:"mountFiles"`
+}
+
 type ManagedRes struct {
 	ID           repos.ID               `json:"id"`
 	Name         string                 `json:"name"`

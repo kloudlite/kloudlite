@@ -8,15 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-envparse"
-	"os"
-	"os/exec"
-	"strings"
-	"time"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	"kloudlite.io/common"
 	wErrors "kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -1112,146 +1108,21 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	}, nil
 }
 
-func (r *queryResolver) CoreAppEnvs(ctx context.Context, appID repos.ID) (*string, error) {
-	// here the fun begins
-	a, err := r.Domain.GetApp(ctx, appID)
+func (r *queryResolver) CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig *localenv.KLFile) (*model.LoadEnv, error) {
+	env, m, err := r.Domain.GenerateEnv(ctx, *klConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	aId := "env-" + string(a.Id)
-	resp, err := r.Mutation().CoreCreateApp(ctx, a.ProjectId, model.AppInput{
-		Name:        aId,
-		IsLambda:    false,
-		ProjectID:   string(a.ProjectId),
-		Description: new(string),
-		AutoScale:   nil,
-		ReadableID:  repos.ID(aId),
-		Replicas:    new(int),
-		Services: func() []*model.ExposedServiceIn {
-			k := []*model.ExposedServiceIn{}
-			for _, ep := range a.ExposedPorts {
-				k = append(k, &model.ExposedServiceIn{
-					Type:    string(ep.Type),
-					Target:  int(ep.TargetPort),
-					Exposed: int(ep.Port),
-				})
+	return &model.LoadEnv{
+		EnvVars: &env,
+		MountFiles: func() map[string]any {
+			mfs := make(map[string]any)
+			for k, v := range m {
+				mfs[k] = v
 			}
-			return k
+			return mfs
 		}(),
-		Containers: func() []*model.AppContainerIn {
-			k := []*model.AppContainerIn{}
-			for _, c := range a.Containers {
-				k = append(k, &model.AppContainerIn{
-					Name: c.Name,
-					Image: func() *string {
-						s := "registry.gitlab.com/abdheshnayak/sshd:alpine3"
-						return &s
-					}(),
-					PullSecret: new(string),
-					EnvVars: func() []*model.EnvVarInput {
-						k := []*model.EnvVarInput{}
-						for _, ev := range c.EnvVars {
-							k = append(k, &model.EnvVarInput{
-								Key: ev.Key,
-								Value: &model.EnvValInput{
-									Type:  ev.Type,
-									Value: ev.Value,
-									Ref:   ev.Ref,
-									Key:   ev.RefKey,
-								},
-							})
-						}
-						return k
-					}(),
-					ComputePlan: "Basic",
-					Quantity:    0.05,
-					AttachedResources: func() []*model.AttachedResInput {
-						k := []*model.AttachedResInput{}
-						return k
-					}(),
-					IsShared: func() *bool {
-						k := true
-						return &k
-					}(),
-				})
-			}
-			return k
-		}(),
-		Metadata: map[string]interface{}{},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	c := fmt.Sprintf("kubectl get deploy/%s -n %s", aId, resp.Namespace)
-	fmt.Println(c)
-	args := strings.Fields(c)
-	cmd := exec.Command(args[0], args[1:]...)
-
-	for {
-		fmt.Println("Checking if Available")
-		cmd.Stderr = os.Stderr
-		_, e := cmd.Output()
-		if e == nil {
-			break
-		}
-		time.Sleep(time.Second * 1)
-
-		cmd = exec.Command(args[0], args[1:]...)
-	}
-
-	c = fmt.Sprintf("kubectl wait deployment -n %s %s --for condition=Available=True --timeout=30s", resp.Namespace, aId)
-	fmt.Println(c)
-	args = strings.Fields(c)
-	cmd = exec.Command(args[0], args[1:]...)
-	cmd.Stderr = os.Stderr
-	_, err = cmd.Output()
-	if err != nil {
-		fmt.Println(err, "wait err")
-		return nil, err
-	}
-
-	time.Sleep(time.Second * 1)
-
-	c = fmt.Sprintf("kubectl exec deploy/%s -n %s -- printenv", aId, resp.Namespace)
-	fmt.Println(c)
-	args = strings.Fields(c)
-
-	cmd = exec.Command(args[0], args[1:]...)
-	cmd.Stderr = os.Stderr
-
-	envsByte, err := cmd.Output()
-	if err != nil {
-		r.Mutation().CoreDeleteApp(ctx, resp.ID)
-		return nil, err
-	}
-
-	myReader := strings.NewReader(string(envsByte))
-
-	envs, err := envparse.Parse(myReader)
-	if err != nil {
-		r.Domain.DeleteApp(ctx, repos.ID(aId))
-		return nil, err
-	}
-
-	envsString := ""
-	for _, v := range a.Containers {
-		if v.Name != "main" {
-			continue
-		}
-		for _, e := range v.EnvVars {
-			envsString = fmt.Sprintf("%s%s=%q\n", envsString, e.Key, envs[e.Key])
-		}
-	}
-
-	_, err = r.Mutation().CoreDeleteApp(ctx, resp.ID)
-
-	if err != nil {
-		fmt.Println("Error deleting temp-app:", aId)
-	}
-
-	return &envsString, nil
+	}, nil
 }
 
 func (r *queryResolver) CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error) {
