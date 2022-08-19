@@ -6,6 +6,7 @@ import (
 	"kloudlite.io/cmd/internal/cmd/project"
 	"kloudlite.io/cmd/internal/cmd/runner"
 	"kloudlite.io/cmd/internal/cmd/runner/add"
+	"kloudlite.io/cmd/internal/cmd/runner/remove"
 	"kloudlite.io/cmd/internal/cmd/wg"
 )
 
@@ -24,4 +25,5 @@ func init() {
 	rootCmd.AddCommand(runner.ShowCommand)
 
 	rootCmd.AddCommand(add.AddCommand)
+	rootCmd.AddCommand(remove.RemoveCommand)
 }
