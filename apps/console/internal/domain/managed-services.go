@@ -74,6 +74,7 @@ func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.Statu
 	}
 	shouldUpdate := newStatus != one.Status
 	one.Conditions = response.ChildConditions
+	one.Status = newStatus
 	_, err = d.managedSvcRepo.UpdateById(ctx, one.Id, one)
 	if shouldUpdate {
 		err = d.notifier.Notify(one.Id)
