@@ -115,7 +115,6 @@ func SelectConfig() {
 				},
 			},
 		})
-
 	}
 
 	err = server.WriteKLFile(*klFile)
