@@ -106,7 +106,7 @@ func selectConfigMount(path string, klFile server.KLFileType) {
 	}
 
 	cOrs := csName[cOrsIndex]
-	items := []server.ConfigORSecret{}
+	items := make([]server.ConfigORSecret, 0)
 	if cOrs == "config" {
 		configs, e := server.GetConfigs()
 
