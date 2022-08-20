@@ -7,14 +7,11 @@ import (
 
 var dockerCredentialsCmd = &cobra.Command{
 	Use:   "docker-login",
-	Short: "A brief description of your command",
+	Short: "login to docker using the credential of selected project",
 	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+and usage of using your command.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		fmt.Println("not implemented yet")
 	},
 }

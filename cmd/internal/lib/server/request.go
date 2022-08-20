@@ -64,6 +64,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
+		common.PrintError(errors.New(fmt.Sprintf("Somoe Issue with server:\n%s\n", string(body))))
 		return nil, err
 	}
 

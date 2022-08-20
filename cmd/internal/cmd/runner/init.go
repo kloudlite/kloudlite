@@ -3,19 +3,17 @@ package runner
 import (
 	"github.com/spf13/cobra"
 	"kloudlite.io/cmd/internal/common"
+	"kloudlite.io/cmd/internal/constants"
 	"kloudlite.io/cmd/internal/lib/server"
 )
 
 // initCmd represents the init command
 var InitCommand = &cobra.Command{
 	Use:   "init",
-	Short: "A brief description of your command",
+	Short: "Initialize you " + constants.CMD_NAME + "-config file with some sample values",
 	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+and usage of using your command.`,
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		initFile, err := server.GetKlFile(nil)
 

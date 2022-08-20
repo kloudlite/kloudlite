@@ -2,16 +2,19 @@ package server
 
 import (
 	// "encoding/json"
-	"fmt"
+	"encoding/json"
 )
 
-func GenerateEnv() ([]Config, error) {
+type GeneratedEnvs struct {
+	EnvVars    map[string]string `json:"envVars"`
+	MountFiles map[string]string `json:"mountFiles"`
+}
+
+func GenerateEnv() (*GeneratedEnvs, error) {
 	klFile, err := GetKlFile(nil)
 	if err != nil {
 		return nil, err
 	}
-
-	// klJson, err := json.Marshal(klFile)
 
 	if err != nil {
 		return nil, err
@@ -27,8 +30,6 @@ func GenerateEnv() ([]Config, error) {
 		return nil, err
 	}
 
-	// fmt.Println(string(klJson))
-
 	respData, err := klFetch("cli_generateEnv", map[string]any{
 		"projectId": projectId,
 		"klConfig":  klFile,
@@ -38,17 +39,17 @@ func GenerateEnv() ([]Config, error) {
 		return nil, err
 	}
 
-	fmt.Println(string(respData))
+	// fmt.Println(string(respData))
 
-	// type Response struct {
-	// 	CoreConfigs []Config `json:"envVars"`
-	// }
-	// var resp Response
-	// err = json.Unmarshal(respData, &resp)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	type Response struct {
+		GeneratedEnvVars GeneratedEnvs `json:"data"`
+	}
+	var resp Response
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
 
 	// return resp.CoreConfigs, nil
-	return nil, nil
+	return &resp.GeneratedEnvVars, nil
 }
