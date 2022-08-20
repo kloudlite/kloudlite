@@ -28,7 +28,7 @@ type ManagedServiceSpec struct {
 	// // +kubebuilder:validation:Optional
 	// // +kubebuilder:default=1
 	// ReplicaCount int                 `json:"replicaCount,omitempty"`
-	Inputs rawJson.KubeRawJson `json:"inputs,omitempty"`
+	Inputs rawJson.RawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -3,6 +3,7 @@ package crds
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/labels"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/harbor"
@@ -10,6 +11,9 @@ import (
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/conditions"
@@ -37,11 +41,14 @@ type ProjectReconciler struct {
 	Name      string
 }
 
+func (r *ProjectReconciler) GetName() string {
+	return r.Name
+}
+
 const (
-	HarborProjectExists           conditions.Type = "HarborProjectExists"
-	HarborProjectAccountExists    conditions.Type = "HarborProjectAccountExists"
-	HarborProjectStorageAllocated conditions.Type = "HarborProjectStorageAllocated"
-	NamespaceExists               conditions.Type = "NamespaceExists"
+	NamespaceExists    conditions.Type = "project.namespace/Exists"
+	HarborProjectReady conditions.Type = "project.harbor-project/Ready"
+	HarborUserReady    conditions.Type = "project.harbor-user/Ready"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -103,6 +110,39 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		cs = append(cs, conditions.New(NamespaceExists, true, conditions.Found))
 	}
 
+	if accRef, ok := project.Labels["kloudlite.io/account-ref"]; ok {
+		harborProject, err := rApi.Get(ctx, r.Client, fn.NN(project.Name, accRef), &artifactsv1.HarborProject{})
+		if err != nil {
+			isReady = false
+			cs = append(cs, conditions.New(HarborProjectReady, false, conditions.NotFound))
+			if !apiErrors.IsNotFound(err) {
+				return req.FailWithStatusError(err, cs...)
+			}
+		}
+		if !harborProject.Status.IsReady {
+			isReady = false
+			cs = append(cs, conditions.New(HarborProjectReady, false, conditions.NotReady))
+		} else {
+			cs = append(cs, conditions.New(HarborProjectReady, true, conditions.Ready))
+		}
+	}
+
+	// harbor user account is ready
+	harborUser, err := rApi.Get(ctx, r.Client, fn.NN(project.Name, r.env.DockerSecretName), &artifactsv1.HarborUserAccount{})
+	if err != nil {
+		isReady = false
+		cs = append(cs, conditions.New(HarborUserReady, false, conditions.NotFound, err.Error()))
+		if !apiErrors.IsNotFound(err) {
+			return req.FailWithStatusError(err, cs...)
+		}
+	}
+	if !harborUser.Status.IsReady {
+		isReady = false
+		cs = append(cs, conditions.New(HarborUserReady, false, conditions.NotReady))
+	} else {
+		cs = append(cs, conditions.New(HarborUserReady, true, conditions.Ready))
+	}
+
 	newConditions, hasUpdated, err := conditions.Patch(project.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
@@ -160,11 +200,13 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 	if err := fn.KubectlApplyExec(ctx, b); err != nil {
 		return req.FailWithOpError(err).Err(nil)
 	}
-	return req.Next()
-}
 
-func (r *ProjectReconciler) GetName() string {
-	return r.Name
+	project.Status.OpsConditions = []metav1.Condition{}
+	project.Status.Generation = project.Generation
+	if err := r.Status().Update(ctx, project); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -194,5 +236,28 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
 		Owns(&artifactsv1.HarborUserAccount{}).
+		Watches(
+			&source.Kind{Type: &artifactsv1.HarborProject{}}, handler.EnqueueRequestsFromMapFunc(
+				func(obj client.Object) []reconcile.Request {
+					var projects crdsv1.ProjectList
+					if err := r.List(
+						context.TODO(), &projects, &client.ListOptions{
+							LabelSelector: labels.SelectorFromValidatedSet(
+								map[string]string{
+									"kloudlite.io/account-ref": obj.GetLabels()["kloudlite.io/account-ref"],
+								},
+							),
+						},
+					); err != nil {
+						return nil
+					}
+					reqs := make([]reconcile.Request, 0, len(projects.Items))
+					for _, item := range projects.Items {
+						reqs = append(reqs, reconcile.Request{NamespacedName: fn.NN(item.Namespace, item.Name)})
+					}
+					return reqs
+				},
+			),
+		).
 		Complete(r)
 }
