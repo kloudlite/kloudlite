@@ -1,9 +1,9 @@
 package runner
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+	"kloudlite.io/cmd/internal/common"
+	"kloudlite.io/cmd/internal/lib/server"
 )
 
 var LoadCommand = &cobra.Command{
@@ -16,6 +16,15 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		loadEnv()
 	},
+}
+
+func loadEnv() {
+	_, err := server.GenerateEnv()
+	if err != nil {
+		common.PrintError(err)
+		return
+	}
+
 }
