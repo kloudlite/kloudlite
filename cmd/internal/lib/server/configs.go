@@ -5,13 +5,13 @@ import (
 )
 
 type CSEntry struct {
-	Value string
-	Key   string
+	Value string `json:"value"`
+	Key   string `json:"key"`
 }
 
 type Config struct {
-	Entries []CSEntry
-	Id      string
+	Entries []CSEntry `json:"value"`
+	Id      string `json:"value"`
 	Name    string
 }
 

@@ -8,42 +8,42 @@ import (
 )
 
 type ResEnvType struct {
-	Name   string
-	Key    string
-	RefKey string
+	Name   string `json:"name"`
+	Key    string `json:"key"`
+	RefKey string `json:"refKey"`
 }
 
 type EnvType struct {
-	Key   string
-	Value string
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type ResType struct {
-	Name string
-	Id   string
-	Env  []ResEnvType
+	Name string       `json:"name"`
+	Id   string       `json:"id"`
+	Env  []ResEnvType `json:"env"`
 }
 
 type FileEntry struct {
-	Path string
-	Type string
-	Ref  string
-	Name string
+	Path string `json:"path"`
+	Type string `json:"type"`
+	Ref  string `json:"ref"`
+	Name string `json:"Name"`
 }
 
 type MountType struct {
-	MountBasePath string `yaml:"mountBasePath"`
-	Mounts        []FileEntry
+	MountBasePath string      `yaml:"mountBasePath" json:"mountBasePath"`
+	Mounts        []FileEntry `json:"mounts"`
 }
 
 type KLFileType struct {
-	Version   string
-	Name      string
-	Mres      []ResType
-	Configs   []ResType
-	Secrets   []ResType
-	Env       []EnvType
-	Ports     []string
+	Version   string    `json:"version"`
+	Name      string    `json:"name"`
+	Mres      []ResType `json:"mres"`
+	Configs   []ResType `json:"configs"`
+	Secrets   []ResType `json:"secrets"`
+	Env       []EnvType `json:"env"`
+	Ports     []string  `json:"ports"`
 	FileMount MountType `yaml:"fileMount"`
 }
 
