@@ -23,28 +23,6 @@ func (d *domain) GetManagedResourcesOfService(ctx context.Context, installationI
 	}})
 }
 
-func (d *domain) getResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error) {
-	mRes, err := d.managedResRepo.FindById(ctx, managedResID)
-	if err != nil {
-		return nil, err
-	}
-	project, err := d.projectRepo.FindById(ctx, mRes.ProjectId)
-	if err != nil {
-		return nil, err
-	}
-	_, err = d.clusterRepo.FindOne(ctx, repos.Filter{
-		"account_id": project.AccountId,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
-func (d *domain) GetResourceOutputs(ctx context.Context, managedResID repos.ID) (map[string]string, error) {
-	return d.getResourceOutputs(ctx, managedResID)
-}
-
 func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
 		"id": response.Metadata.ResourceId,
@@ -190,7 +168,7 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 	return true, err
 }
 
-func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error) {
+func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error) {
 	mres, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err != nil {
 		return nil, err
@@ -204,6 +182,10 @@ func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID)
 		parsedSec[k] = string(v)
 	}
 	return parsedSec, nil
+}
+
+func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error) {
+	return d.getManagedResOutput(ctx, managedResID)
 }
 
 func (d *domain) OnDeleteManagedResource(ctx context.Context, response *op_crds.StatusUpdate) error {

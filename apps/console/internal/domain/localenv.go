@@ -40,15 +40,14 @@ func (d *domain) GenerateEnv(ctx context.Context, klfile localenv.KLFile) (strin
 		envVars[e.Key] = e.Value
 	}
 	for _, resource := range klfile.Mres {
-		outputs, err := d.getResourceOutputs(ctx, resource.Id)
+		outputs, err := d.GetManagedResOutput(ctx, resource.Id)
 		if err != nil {
 			return "", nil, err
 		}
 		for _, e := range resource.Env {
-			envVars[e.Key] = outputs[e.RefKey]
+			envVars[e.Key] = outputs[e.RefKey].(string)
 		}
 	}
-
 	for _, mount := range klfile.FileMount.Mounts {
 		if mount.Type == "config" {
 			config, err := d.configRepo.FindById(ctx, repos.ID(mount.Ref))
