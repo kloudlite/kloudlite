@@ -13,8 +13,8 @@ tasks:
       - ./internal/**/*.go
       - ./main.go
     cmds:
-      - go run -tags dynamic main.go --dev
-#      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+      # - go run -tags dynamic main.go --dev
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
   docker-build:
     vars:
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/console:v2
