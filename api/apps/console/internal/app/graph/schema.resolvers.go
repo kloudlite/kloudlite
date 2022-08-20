@@ -1114,11 +1114,15 @@ func (r *queryResolver) CoreGenerateEnv(ctx context.Context, projectID repos.ID,
 		return nil, err
 	}
 	var klFile localenv.KLFile
-	json.Unmarshal(marshal, &klConfig)
+	json.Unmarshal(marshal, &klFile)
+
 	env, m, err := r.Domain.GenerateEnv(ctx, klFile)
 	if err != nil {
 		return nil, err
 	}
+
+	// fmt.Printf("%v", env)
+
 	return &model.LoadEnv{
 		EnvVars: &env,
 		MountFiles: func() map[string]any {

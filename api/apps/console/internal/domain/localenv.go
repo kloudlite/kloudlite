@@ -8,14 +8,14 @@ import (
 )
 
 func (d *domain) GenerateEnv(ctx context.Context, klfile localenv.KLFile) (string, map[string]string, error) {
-	var envVars map[string]string
-	var mountFiles map[string]string
+	envVars := map[string]string{}
+	mountFiles := map[string]string{}
 	for _, resource := range klfile.Configs {
 		c, err := d.configRepo.FindById(ctx, resource.Id)
 		if err != nil {
 			return "", nil, err
 		}
-		var cmap map[string]string
+		cmap := map[string]string{}
 		for _, entry := range c.Data {
 			cmap[entry.Key] = entry.Value
 		}
@@ -28,7 +28,7 @@ func (d *domain) GenerateEnv(ctx context.Context, klfile localenv.KLFile) (strin
 		if err != nil {
 			return "", nil, err
 		}
-		var cmap map[string]string
+		cmap := map[string]string{}
 		for _, entry := range c.Data {
 			cmap[entry.Key] = entry.Value
 		}
