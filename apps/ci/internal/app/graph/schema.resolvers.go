@@ -341,6 +341,22 @@ func (r *queryResolver) CiTriggerPipeline(ctx context.Context, pipelineID repos.
 	return fn.New(true), nil
 }
 
+func (r *queryResolver) CiHarborSearch(ctx context.Context, accountID repos.ID, q string) ([]*model.HarborSearchResult, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("not Authorized")
+	}
+	results, err := r.Domain.HarborImageSearch(ctx, accountID, q)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*model.HarborSearchResult, len(results))
+	for i := range results {
+		items[i] = &model.HarborSearchResult{ImageName: results[i]}
+	}
+	return items, nil
+}
+
 // App returns generated.AppResolver implementation.
 func (r *Resolver) App() generated.AppResolver { return &appResolver{r} }
 

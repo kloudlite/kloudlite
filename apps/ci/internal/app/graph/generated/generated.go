@@ -87,6 +87,10 @@ type ComplexityRoot struct {
 		Cmd       func(childComplexity int) int
 	}
 
+	HarborSearchResult struct {
+		ImageName func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CiCreatePipeline func(childComplexity int, in model.GitPipelineIn) int
 		CiDeletePipeline func(childComplexity int, pipelineID repos.ID) int
@@ -102,6 +106,7 @@ type ComplexityRoot struct {
 		CiGitlabGroups            func(childComplexity int, query *string, pagination *types.Pagination) int
 		CiGitlabRepoBranches      func(childComplexity int, repoID string, search *string, pagination *types.Pagination) int
 		CiGitlabRepos             func(childComplexity int, groupID string, search *string, pagination *types.Pagination) int
+		CiHarborSearch            func(childComplexity int, accountID repos.ID, q string) int
 		CiSearchGithubRepos       func(childComplexity int, search *string, org string, pagination *types.Pagination) int
 		CiTriggerPipeline         func(childComplexity int, pipelineID repos.ID) int
 		__resolve__service        func(childComplexity int) int
@@ -137,6 +142,7 @@ type QueryResolver interface {
 	CiGetPipelines(ctx context.Context, projectID repos.ID) ([]*model.GitPipeline, error)
 	CiGetPipeline(ctx context.Context, pipelineID repos.ID) (*model.GitPipeline, error)
 	CiTriggerPipeline(ctx context.Context, pipelineID repos.ID) (*bool, error)
+	CiHarborSearch(ctx context.Context, accountID repos.ID, q string) ([]*model.HarborSearchResult, error)
 }
 
 type executableSchema struct {
@@ -309,6 +315,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GitPipelineRun.Cmd(childComplexity), true
 
+	case "HarborSearchResult.imageName":
+		if e.complexity.HarborSearchResult.ImageName == nil {
+			break
+		}
+
+		return e.complexity.HarborSearchResult.ImageName(childComplexity), true
+
 	case "Mutation.ci_createPipeline":
 		if e.complexity.Mutation.CiCreatePipeline == nil {
 			break
@@ -441,6 +454,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CiGitlabRepos(childComplexity, args["groupId"].(string), args["search"].(*string), args["pagination"].(*types.Pagination)), true
 
+	case "Query.ci_harborSearch":
+		if e.complexity.Query.CiHarborSearch == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ci_harborSearch_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CiHarborSearch(childComplexity, args["accountId"].(repos.ID), args["q"].(string)), true
+
 	case "Query.ci_searchGithubRepos":
 		if e.complexity.Query.CiSearchGithubRepos == nil {
 			break
@@ -572,6 +597,12 @@ type Query {
   ci_getPipelines(projectId: ID!): [GitPipeline!]
   ci_getPipeline(pipelineId: ID!): GitPipeline
   ci_triggerPipeline(pipelineId: ID!): Boolean
+
+  ci_harborSearch(accountId: ID!, q: String!): [HarborSearchResult!]
+}
+
+type HarborSearchResult {
+  imageName: String!
 }
 
 input PaginationIn {
@@ -1036,6 +1067,30 @@ func (ec *executionContext) field_Query_ci_gitlabRepos_args(ctx context.Context,
 		}
 	}
 	args["pagination"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ci_harborSearch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["q"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("q"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["q"] = arg1
 	return args, nil
 }
 
@@ -1822,6 +1877,41 @@ func (ec *executionContext) _GitPipelineRun_cmd(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _HarborSearchResult_imageName(ctx context.Context, field graphql.CollectedField, obj *model.HarborSearchResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "HarborSearchResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_ci_deletePipeline(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2357,6 +2447,45 @@ func (ec *executionContext) _Query_ci_triggerPipeline(ctx context.Context, field
 	res := resTmp.(*bool)
 	fc.Result = res
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_ci_harborSearch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_ci_harborSearch_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CiHarborSearch(rctx, args["accountId"].(repos.ID), args["q"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.HarborSearchResult)
+	fc.Result = res
+	return ec.marshalOHarborSearchResult2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐHarborSearchResultᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4497,6 +4626,37 @@ func (ec *executionContext) _GitPipelineRun(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var harborSearchResultImplementors = []string{"HarborSearchResult"}
+
+func (ec *executionContext) _HarborSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.HarborSearchResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, harborSearchResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HarborSearchResult")
+		case "imageName":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._HarborSearchResult_imageName(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -4800,6 +4960,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_ci_triggerPipeline(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "ci_harborSearch":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ci_harborSearch(ctx, field)
 				return res
 			}
 
@@ -5446,6 +5626,16 @@ func (ec *executionContext) unmarshalNGitPipelineIn2kloudliteᚗioᚋappsᚋci�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNHarborSearchResult2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐHarborSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.HarborSearchResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._HarborSearchResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := repos.ID(tmp)
@@ -5992,6 +6182,53 @@ func (ec *executionContext) unmarshalOGitPipelineRunIn2ᚖkloudliteᚗioᚋapps�
 	}
 	res, err := ec.unmarshalInputGitPipelineRunIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOHarborSearchResult2ᚕᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐHarborSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HarborSearchResult) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNHarborSearchResult2ᚖkloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐHarborSearchResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOJson2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {

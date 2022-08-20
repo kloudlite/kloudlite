@@ -17,6 +17,7 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/harbor"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/tekton"
@@ -34,6 +35,19 @@ type domainI struct {
 	harborAccRepo repos.DbRepo[*HarborAccount]
 	harborHost    HarborHost
 	logger        logging.Logger
+	harborCli     *harbor.Client
+}
+
+func (d *domainI) HarborImageSearch(ctx context.Context, accountId repos.ID, q string) ([]string, error) {
+	repositories, err := d.harborCli.SearchRepositories(ctx, accountId, q)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]string, len(repositories))
+	for i := range repositories {
+		items[i] = repositories[i].Name
+	}
+	return items, nil
 }
 
 func (d *domainI) GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error) {
@@ -634,6 +648,7 @@ var Module = fx.Module(
 			github Github,
 			harborHost HarborHost,
 			logger logging.Logger,
+			harborCli *harbor.Client,
 		) Domain {
 			return &domainI{
 				authClient:   authClient,
@@ -642,6 +657,7 @@ var Module = fx.Module(
 				github:       github,
 				harborHost:   harborHost,
 				logger:       logger.WithName("[ci]:domain/main.go"),
+				harborCli:    harborCli,
 			}
 		},
 	),

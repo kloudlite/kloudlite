@@ -92,3 +92,7 @@ type GitPipelineRunIn struct {
 	BaseImage *string `json:"baseImage"`
 	Cmd       string  `json:"cmd"`
 }
+
+type HarborSearchResult struct {
+	ImageName string `json:"imageName"`
+}
