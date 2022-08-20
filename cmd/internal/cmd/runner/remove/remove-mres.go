@@ -55,7 +55,7 @@ func removeMreses() {
 
 	selectedMres := klFile.Mres[selectedMresIndex]
 
-	newMres := []server.ResType{}
+	newMres := make([]server.ResType, 0)
 
 	for i, rt := range klFile.Mres {
 		if i == selectedMresIndex {

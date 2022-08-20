@@ -56,7 +56,7 @@ func removeConfig() {
 	selectedConfig := klFile.Configs[selectedConfigIndex]
 
 	if len(selectedConfig.Env) == 1 {
-		newConfigs := []server.ResType{}
+		newConfigs := make([]server.ResType, 0)
 		for i, rt := range klFile.Configs {
 			if i == selectedConfigIndex {
 				continue
@@ -83,7 +83,7 @@ func removeConfig() {
 			return
 		}
 
-		newEnvs := []server.ResEnvType{}
+		newEnvs := make([]server.ResEnvType, 0)
 		for i, ret := range selectedConfig.Env {
 			if i == selectedKeyIndex {
 				continue
