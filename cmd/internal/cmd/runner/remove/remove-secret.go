@@ -56,7 +56,7 @@ func removeSecret() {
 	selectedSecret := klFile.Secrets[selectedSecretIndex]
 
 	if len(selectedSecret.Env) == 1 {
-		newSecrets := []server.ResType{}
+		newSecrets := make([]server.ResType, 0)
 		for i, rt := range klFile.Secrets {
 			if i == selectedSecretIndex {
 				continue
@@ -83,7 +83,7 @@ func removeSecret() {
 			return
 		}
 
-		newEnvs := []server.ResEnvType{}
+		newEnvs := make([]server.ResEnvType, 0)
 		for i, ret := range selectedSecret.Env {
 			if i == selectedKeyIndex {
 				continue

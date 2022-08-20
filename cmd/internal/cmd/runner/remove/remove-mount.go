@@ -45,7 +45,7 @@ func removeConfigMount() {
 		return
 	}
 
-	newMounts := []server.FileEntry{}
+	newMounts := make([]server.FileEntry, 0)
 	for i, fe := range klFile.FileMount.Mounts {
 		if i == selectedMount {
 			continue

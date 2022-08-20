@@ -122,7 +122,7 @@ func selectMreses() {
 
 	if matchedMres != -1 {
 		klFile.Mres[matchedMres].Env = func() []server.ResEnvType {
-			env := []server.ResEnvType{}
+			env := make([]server.ResEnvType, 0)
 
 			for _, op := range outputs {
 				env = append(env, server.ResEnvType{
@@ -154,7 +154,7 @@ func selectMreses() {
 			Id:   selectedMres.Id,
 			Name: selectedMres.Name,
 			Env: func() []server.ResEnvType {
-				env := []server.ResEnvType{}
+				env := make([]server.ResEnvType, 0)
 				for _, op := range outputs {
 					env = append(env, server.ResEnvType{
 						Key:    op.Name,
