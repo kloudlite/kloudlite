@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -14,6 +15,7 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/harbor"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
@@ -39,7 +41,10 @@ type Env struct {
 	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET" required:"true"`
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
 
-	HarborHost string `env:"HARBOR_HOST" required:"true"`
+	HarborHost          string `env:"HARBOR_HOST" required:"true"`
+	HarborAdminUsername string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
+	HarborAdminPassword string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
+	HarborRegistryHost  string `env:"HARBOR_REGISTRY_HOST" required:"true"`
 }
 
 func (env *Env) GoogleConfig() (clientId string, clientSecret string, callbackUrl string) {
@@ -231,17 +236,26 @@ var Module = fx.Module(
 		},
 	),
 
-	// fx.Invoke(
-	// 	func(server *grpc.Server, ciServer ci.CIServer) {
-	// 		ci.RegisterCIServer(server, ciServer)
-	// 	},
-	// ),
 	fx.Provide(fxGitlab),
 	fx.Provide(fxGithub),
+
 	fx.Provide(
 		func(env *Env) domain.HarborHost {
 			return domain.HarborHost(env.HarborHost)
 		},
 	),
+
+	fx.Provide(
+		func(env *Env) (*harbor.Client, error) {
+			return harbor.NewClient(
+				harbor.Args{
+					HarborAdminUsername: env.HarborAdminUsername,
+					HarborAdminPassword: env.HarborAdminPassword,
+					HarborRegistryHost:  env.HarborRegistryHost,
+				},
+			)
+		},
+	),
+
 	domain.Module,
 )

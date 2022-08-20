@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
 
@@ -30,8 +31,13 @@ type Domain interface {
 	GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error)
 
 	// tekton interceptor
+
 	TektonInterceptorGithub(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
 	TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
+
+	// harbor
+
+	HarborImageSearch(ctx context.Context, accountId repos.ID, q string) ([]string, error)
 }
 
 type Harbor interface {
