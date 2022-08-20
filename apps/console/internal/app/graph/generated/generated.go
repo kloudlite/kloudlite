@@ -2299,7 +2299,7 @@ var sources = []*ast.Source{
 
 
 type LoadEnv {
-  envVars: String
+  envVars: Json
   mountFiles: Json
 }
 
@@ -7405,9 +7405,9 @@ func (ec *executionContext) _LoadEnv_envVars(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(map[string]interface{})
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOJson2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LoadEnv_mountFiles(ctx context.Context, field graphql.CollectedField, obj *model.LoadEnv) (ret graphql.Marshaler) {
