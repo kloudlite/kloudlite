@@ -1,8 +1,0 @@
-not.pipeline:
-  first:
-    build:
-      image: node:alpine
-      cmd: |+
-        npm i
-    run:
-      cmd: npm start
