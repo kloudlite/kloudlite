@@ -16,15 +16,15 @@ metadata:
   name: {{$name}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
   labels:
-    kloudlite.io/account-ref: "{{$accRef}}"
+    kloudlite.io/account-ref: {{$accRef | squote}}
 {{- if $accRef }}
 ---
 apiVersion: artifacts.kloudlite.io/v1
 kind: HarborProject
 metadata:
   name: {{$accRef}}
-spec:
-  sizeInGB: 6
+  labels:
+    kloudlite.io/account-ref: {{$accRef | squote}}
 ---
 apiVersion: artifacts.kloudlite.io/v1
 kind: HarborUserAccount

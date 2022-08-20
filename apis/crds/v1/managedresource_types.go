@@ -2,9 +2,10 @@ package v1
 
 import (
 	"fmt"
+	"strings"
+
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -25,9 +26,9 @@ type mresKind struct {
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	MsvcRef  msvcNamedRefTT      `json:"msvcRef"`
-	MresKind mresKind            `json:"mresKind"`
-	Inputs   rawJson.KubeRawJson `json:"inputs,omitempty"`
+	MsvcRef  msvcNamedRefTT  `json:"msvcRef"`
+	MresKind mresKind        `json:"mresKind"`
+	Inputs   rawJson.RawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true

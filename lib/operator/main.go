@@ -19,14 +19,21 @@ import (
 
 type Status struct {
 	// +kubebuilder:validation:Optional
-	IsReady         bool                `json:"isReady"`
-	DisplayVars     rawJson.KubeRawJson `json:"displayVars,omitempty"`
-	GeneratedVars   rawJson.KubeRawJson `json:"generatedVars,omitempty"`
-	Conditions      []metav1.Condition  `json:"conditions,omitempty"`
-	ChildConditions []metav1.Condition  `json:"childConditions,omitempty"`
-	OpsConditions   []metav1.Condition  `json:"opsConditions,omitempty"`
-	Generation      int                 `json:"generation,omitempty"`
+	IsReady         bool               `json:"isReady"`
+	DisplayVars     rawJson.RawJson    `json:"displayVars,omitempty"`
+	GeneratedVars   rawJson.RawJson    `json:"generatedVars,omitempty"`
+	Conditions      []metav1.Condition `json:"conditions,omitempty"`
+	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
+	OpsConditions   []metav1.Condition `json:"opsConditions,omitempty"`
+	Generation      int64              `json:"generation,omitempty"`
 }
+
+// func (s *Status) Reset() {
+// 	s.OpsConditions = nil
+// 	s.Conditions = nil
+// 	s.DisplayVars = rawJson.RawJson{}
+// 	s.GeneratedVars = rawJson.RawJson{}
+// }
 
 type Reconciler interface {
 	reconcile.Reconciler

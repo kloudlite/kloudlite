@@ -1,9 +1,16 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/rest"
 	artifactsControllers "operators.kloudlite.io/controllers/artifacts"
 	elasticsearchControllers "operators.kloudlite.io/controllers/elasticsearch.msvc"
 	influxDbControllers "operators.kloudlite.io/controllers/influxdb.msvc"
@@ -15,9 +22,12 @@ import (
 	serverlessControllers "operators.kloudlite.io/controllers/serverless"
 	watchercontrollers "operators.kloudlite.io/controllers/watcher"
 	"operators.kloudlite.io/env"
+	"operators.kloudlite.io/lib/constants"
+	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/harbor"
 	rApi "operators.kloudlite.io/lib/operator"
-
-	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"operators.kloudlite.io/lib/logging"
@@ -245,9 +255,109 @@ func main() {
 		os.Exit(1)
 	}
 
+	go func() {
+		kClient := mgr.GetClient()
+		mux := http.NewServeMux()
+		mux.HandleFunc("/healthy", func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		mux.HandleFunc("/image-push", func(w http.ResponseWriter, req *http.Request) {
+			logger.Infof("webhook event received")
+			body, err2 := ioutil.ReadAll(req.Body)
+			if err2 != nil {
+				return
+			}
+			var hookBody harbor.WebhookBody
+			if err := json.Unmarshal(body, &hookBody); err != nil {
+				return
+			}
+
+			imageName := func() string {
+				for _, v := range hookBody.EventData.Resources {
+					if v.ResourceUrl != "" {
+						return v.ResourceUrl
+					}
+				}
+				return ""
+			}()
+			if err := restartApp(kClient, imageName); err != nil {
+				logger.Errorf(err, "restarting apps")
+				return
+			}
+
+			if err := restartLambda(kClient, imageName); err != nil {
+				logger.Errorf(err, "restarting lambda")
+				return
+			}
+		})
+
+		if err := http.ListenAndServe(envVars.WebhookAddr, mux); err != nil {
+			logger.Errorf(err, "failed to start webhook server")
+		}
+	}()
+
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		panic(err)
 	}
+}
+
+func restartApp(kClient client.Client, imageName string) error {
+	var apps crdsv1.AppList
+	if err := kClient.List(
+		context.TODO(), &apps, &client.ListOptions{
+			LabelSelector: labels.SelectorFromValidatedSet(
+				map[string]string{
+					fmt.Sprintf("kloudlite.io/image-%s", fn.Sha1Sum([]byte(imageName))): "true",
+				},
+			),
+		},
+	); err != nil {
+		return err
+	}
+
+	for _, item := range apps.Items {
+		if _, err := controllerutil.CreateOrUpdate(
+			context.TODO(), kClient, &item, func() error {
+				ann := item.GetAnnotations()
+				ann[constants.AnnotationKeys.Restart] = "true"
+				item.SetAnnotations(ann)
+				return nil
+			},
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func restartLambda(kClient client.Client, imageName string) error {
+	var lambdaList serverlessv1.LambdaList
+	if err := kClient.List(
+		context.TODO(), &lambdaList, &client.ListOptions{
+			LabelSelector: labels.SelectorFromValidatedSet(
+				map[string]string{
+					fmt.Sprintf("kloudlite.io/image-%s", fn.Sha1Sum([]byte(imageName))): "true",
+				},
+			),
+		},
+	); err != nil {
+		return err
+	}
+
+	for _, item := range lambdaList.Items {
+		if _, err := controllerutil.CreateOrUpdate(
+			context.TODO(), kClient, &item, func() error {
+				ann := item.GetAnnotations()
+				ann[constants.AnnotationKeys.Restart] = "true"
+				item.SetAnnotations(ann)
+				return nil
+			},
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }

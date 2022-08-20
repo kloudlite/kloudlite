@@ -35,7 +35,8 @@ spec:
           spec:
             description: HarborUserAccountSpec defines the desired state of HarborUserAccount
             properties:
-              disable:
+              enabled:
+                default: true
                 type: boolean
               projectRef:
                 type: string
@@ -187,6 +188,7 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               generation:
+                format: int64
                 type: integer
               isReady:
                 type: boolean

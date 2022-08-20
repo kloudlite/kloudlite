@@ -60,6 +60,7 @@ tasks:
       Name: kloudlite-operator
       Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}
       Namespace: kl-core
+      WebhookPort: 1717
 #    env:
 ##      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
 #      IMG: "{{.Image}}"
@@ -94,9 +95,12 @@ tasks:
         echo "---"
         echo "$yamls" | yq '
           select(.kind == "Service") |
-            .metadata.labels."control-plane" = "{{.Name}}" |
-            .spec.selector."control-plane" = "{{.Name}}" |
-            .metadata.name = "{{.Name}}"
+          .metadata.labels."control-plane" = "{{.Name}}" |
+          .spec.selector."control-plane" = "{{.Name}}" |
+          .metadata.name = "{{.Name}}" |
+          .spec.ports = (
+            .spec.ports + [{name: "http-webhook", port: {{.WebhookPort}}, protocol: "TCP"}]
+          )
         ' -y
         echo "---"
         echo "$yamls" | yq '

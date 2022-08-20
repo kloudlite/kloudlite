@@ -2,134 +2,171 @@ package raw_json
 
 import (
 	"encoding/json"
+
+	"operators.kloudlite.io/lib/errors"
 )
 
 // +kubebuilder:pruning:PreserveUnknownFields
 // +kubebuilder:validation:Schemaless
 // +kubebuilder:validation:Type=object
 
-type KubeRawJson struct {
-	RawJson[string, any] `json:",inline"`
+type RawJson struct {
+	items map[string]any
+	// RawJson[string, json.RawMessage] `json:",inline"`
+	json.RawMessage `json:",inline"`
 }
 
-func (k *KubeRawJson) DeepCopyInto(out *KubeRawJson) {
+func (k *RawJson) DeepCopyInto(out *RawJson) {
 	*out = *k
 }
 
-func (k *KubeRawJson) DeepCopy() *KubeRawJson {
+func (k *RawJson) DeepCopy() *RawJson {
 	if k == nil {
 		return nil
 	}
-	out := new(KubeRawJson)
+	out := new(RawJson)
 	k.DeepCopyInto(out)
 	return out
 }
 
-type RawJson[K ~string, V any] struct {
-	json.RawMessage `json:",inline"`
+// old set
+// type RawJson[K ~string, V any] struct {
+// 	json.RawMessage `json:",inline"`
+// }
+
+// suppressing error
+func (s *RawJson) fillMap() {
+	if s.RawMessage != nil {
+		s.items = map[string]any{}
+		m, err := s.RawMessage.MarshalJSON()
+		if err != nil {
+			panic(err)
+			return
+		}
+		if err := json.Unmarshal(m, &s.items); err != nil {
+			panic(err)
+			return
+		}
+	}
+
+	if s.items == nil {
+		s.items = map[string]any{}
+	}
 }
 
-func (s *RawJson[K, V]) toMap() (map[K]V, error) {
-	m, err := s.RawMessage.MarshalJSON()
+// func (s *RawJson) toMap() (map[K]V, error) {
+// 	m, err := s.RawMessage.MarshalJSON()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	var v map[K]V
+// 	if err := json.Unmarshal(m, &v); err != nil {
+// 		return nil, err
+// 	}
+// 	if v == nil {
+// 		v = map[K]V{}
+// 	}
+// 	return v, nil
+// }
+
+// func (s *RawJson) ToMap() (map[K]V, error) {
+// 	return s.toMap()
+// }
+
+func (s *RawJson) Set(key string, value any) error {
+	s.fillMap()
+	s.items[key] = value
+	b, err := json.Marshal(s.items)
 	if err != nil {
-		return nil, err
-	}
-	var v map[K]V
-	if err := json.Unmarshal(m, &v); err != nil {
-		return nil, err
-	}
-	if v == nil {
-		v = map[K]V{}
-	}
-	return v, nil
-}
-
-func (s *RawJson[K, V]) ToMap() (map[K]V, error) {
-	return s.toMap()
-}
-
-func (s *RawJson[K, V]) Set(key K, value V) error {
-	return s.Merge(map[K]V{key: value})
-}
-
-func (s *RawJson[K, V]) Merge(val map[K]V) error {
-	m, err := s.toMap()
-	if err != nil {
-		return nil
-	}
-
-	for k, v := range val {
-		m[k] = v
-	}
-
-	b, err := json.Marshal(m)
-	if err != nil {
-		return nil
+		return err
 	}
 	s.RawMessage = b
 	return nil
 }
 
-func (s *RawJson[K, V]) Exists(keys ...K) bool {
-	m, err := s.toMap()
-	if err != nil {
-		return false
-	}
+func (s *RawJson) Exists(keys ...string) bool {
+	s.fillMap()
 	for _, key := range keys {
-		if _, ok := m[key]; !ok {
+		if _, ok := s.items[key]; !ok {
 			return false
 		}
 	}
 	return true
 }
 
-func (s *RawJson[K, V]) Get(key K) (V, bool) {
-	m, err := s.toMap()
-	if err != nil {
-		return *new(V), false
+func (s *RawJson) Delete(key string) error {
+	s.fillMap()
+	c := len(s.items)
+	delete(s.items, key)
+	if c != len(s.items) {
+		b, err := json.Marshal(s.items)
+		if err != nil {
+			return err
+		}
+		s.RawMessage = b
 	}
+	return nil
+}
 
-	value, ok := m[key]
+func (s *RawJson) Get(key string, fillInto any) error {
+	s.fillMap()
+	// m, err := s.toMap()
+	// if err != nil {
+	// 	return *new(V), false
+	// }
+	//
+	value, ok := s.items[key]
 	if !ok {
-		return *new(V), false
+		return errors.Newf("key %s does not exist", key)
 	}
-	return value, true
+	b, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, fillInto); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *RawJson[K, V]) Delete(key K) {
-	m, err := s.toMap()
-	if err != nil {
-		return
-	}
-	delete(m, key)
-	b, err := json.Marshal(m)
-	if err != nil {
-		return
-	}
-	s.RawMessage = b
-	return
-}
-
-func (s *RawJson[K, V]) GetString(key K) (string, bool) {
-	x, ok := s.Get(key)
+func (s *RawJson) GetString(key string) (string, bool) {
+	s.fillMap()
+	x, ok := s.items[key]
 	if !ok {
 		return "", false
 	}
-	s2, ok := any(x).(string)
+	s2, ok := (x).(string)
 	if !ok {
 		return "", false
 	}
 	return s2, true
 }
 
-func (s *RawJson[K, V]) GetInt(key K) (int, bool) {
-	x, ok := s.Get(key)
-	if !ok {
-		return 0, false
-	}
-	s2, ok := any(x).(float64)
-	if !ok {
-		return 0, false
-	}
-	return int(s2), true
-}
+//
+//
+// func (s *RawJson) GetInt(key string) (int, bool) {
+// 	s.fillMap()
+// 	x, ok := s.Get(key)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	s2, ok := (x).(float64)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	return int(s2), true
+// }
+//
+// func (s *RawJson) GetInt64(key string) (int64, bool) {
+// 	s.fillMap()
+// 	x, ok := s.Get(key)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	s2, ok := (x).(float64)
+// 	if !ok {
+// 		return 0, false
+// 	}
+// 	return int64(s2), true
+// }
+// --- old set

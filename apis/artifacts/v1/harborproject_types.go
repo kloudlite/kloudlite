@@ -6,7 +6,6 @@ import (
 )
 
 type HarborProjectSpec struct {
-	SizeInGB int `json:"sizeInGB"`
 }
 
 // +kubebuilder:object:root=true

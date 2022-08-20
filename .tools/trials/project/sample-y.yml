@@ -1,13 +1,8 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Project
 metadata:
-  # name: sample-z
-  name: sakjhiuu8984-13954x
+  name: sample-y
   annotations:
-    kloudlite.io/account-ref: sample-asdfsad
-    kloudlite.io/dummy: sfafdsdd
+    kloudlite.io/account-ref: sample-y
 spec:
-  displayName: sample z
-  artifactRegistry:
-    enabled: true
-    size: 6000
+  displayName: sample y

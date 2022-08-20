@@ -19,7 +19,6 @@ import (
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
-	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -101,9 +100,9 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 				return ctrl.Result{}, client.IgnoreNotFound(err)
 			}
 
-			replicaCount, ok := app.Status.DisplayVars.GetInt("readyReplicas")
-			if !ok {
-				return ctrl.Result{}, errors.Newf("no readyReplicas key found in .DisplayVars")
+			var readyReplicas int
+			if err := app.Status.DisplayVars.Get("readyReplicas", &readyReplicas); err != nil {
+				return ctrl.Result{}, err
 			}
 
 			s, ok := app.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
@@ -122,7 +121,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			billing := ResourceBilling{
 				Name: fmt.Sprintf("%s/%s", app.Namespace, app.Name),
 				Items: []k8sItem{
-					newK8sItem(app, Compute, float32(billableQ), replicaCount),
+					newK8sItem(app, Compute, float32(billableQ), readyReplicas),
 				},
 			}
 

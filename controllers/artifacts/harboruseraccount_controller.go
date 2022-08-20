@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -44,14 +45,13 @@ func (r *HarborUserAccountReconciler) GetName() string {
 }
 
 const (
-	KeyRobotAccId        string = "robotAccId"
-	KeyRobotUserName     string = "robotUserName"
-	KeyRobotUserPassword string = "robotUserPassword"
+	KeyRobotUser string = "robot-user"
 )
 
 const (
-	HarborUserAccountExists conditions.Type = "HarborUserAccountExists"
-	HarborProjectReady      conditions.Type = "HarborProjectReady"
+	HarborUserAccountExists conditions.Type = "harbor.user-account/Exists"
+	HarborProjectReady      conditions.Type = "harbor.project/Ready"
+	DockerSecretExists      conditions.Type = "harbor.user-account/DockerSecretExists"
 )
 
 func getUsername(hAcc *artifactsv1.HarborUserAccount) string {
@@ -93,12 +93,17 @@ func (r *HarborUserAccountReconciler) Reconcile(ctx context.Context, oReq ctrl.R
 }
 
 func (r *HarborUserAccountReconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
-	robotAccId, ok := req.Object.Status.GeneratedVars.GetInt(KeyRobotAccId)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("Key=%s not found in GeneratedVars", KeyRobotAccId))
+	obj := req.Object
+	var user harbor.User
+
+	obj.Status.GeneratedVars.Get(KeyRobotUser, &user)
+
+	if &user == nil {
+		return req.Finalize()
 	}
-	if err := r.harborCli.DeleteUserAccount(req.Context(), robotAccId); err != nil {
-		return req.FailWithOpError(errors.NewEf(err, "deleting harbor user account (id=%d)", robotAccId))
+
+	if err := r.harborCli.DeleteUserAccount(req.Context(), &user); err != nil {
+		return req.FailWithOpError(errors.NewEf(err, "deleting harbor user account (id=%d)", user.Id))
 	}
 	return req.Finalize()
 }
@@ -112,31 +117,41 @@ func (r *HarborUserAccountReconciler) reconcileStatus(req *rApi.Request[*artifac
 
 	hProj, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ProjectRef), &artifactsv1.HarborProject{})
 	if err != nil {
-		cs = append(cs, conditions.New(HarborProjectExists, false, conditions.NotFound, err.Error()))
+		cs = append(cs, conditions.New(ProjectExists, false, conditions.NotFound, err.Error()))
 		return req.FailWithStatusError(err, cs...).Err(nil)
 	}
 
 	if !hProj.Status.IsReady {
 		cs = append(cs, conditions.New(HarborProjectReady, false, conditions.NotReady))
-		return req.FailWithStatusError(err, cs...).Err(nil)
+		return req.Done()
 	}
 
 	// check if user account exists
-	if obj.Status.GeneratedVars.Exists(KeyRobotAccId) {
-		robotAccId, _ := obj.Status.GeneratedVars.GetInt(KeyRobotAccId)
-		userAccExists, err := r.harborCli.CheckIfUserAccountExists(ctx, robotAccId)
+	var user harbor.User
+	obj.Status.GeneratedVars.Get(KeyRobotUser, &user)
+
+	if &user == nil {
+		isReady = false
+		cs = append(cs, conditions.New(HarborUserAccountExists, false, conditions.NotFound))
+	} else {
+		exists, err := r.harborCli.CheckIfUserAccountExists(ctx, &user)
 		if err != nil {
-			isReady = false
-			cs = append(cs, conditions.New(HarborUserAccountExists, false, conditions.NotFound, err.Error()))
+			return req.FailWithStatusError(err)
 		}
-		if !userAccExists {
+		if exists {
+			cs = append(cs, conditions.New(HarborUserAccountExists, true, conditions.Found))
+		} else {
 			isReady = false
 			cs = append(cs, conditions.New(HarborUserAccountExists, false, conditions.NotFound))
 		}
-		cs = append(cs, conditions.New(HarborUserAccountExists, true, conditions.Found))
-	} else {
+	}
+
+	// check if output exists
+	if _, err = rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Secret{}); err != nil {
 		isReady = false
-		cs = append(cs, conditions.New(HarborUserAccountExists, false, conditions.NotFound))
+		cs = append(cs, conditions.New(DockerSecretExists, false, conditions.NotFound))
+	} else {
+		cs = append(cs, conditions.New(DockerSecretExists, true, conditions.Found))
 	}
 
 	nConditions, hasUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
@@ -187,80 +202,95 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 	}
 
 	if meta.IsStatusConditionFalse(obj.Status.Conditions, HarborUserAccountExists.String()) {
-		if err := func() error {
-			if !obj.Status.GeneratedVars.Exists(KeyRobotAccId) {
-				userAcc, err := r.harborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, getUsername(obj))
-				if err != nil {
-					return errors.NewEf(err, "creating harbor project user-account")
-				}
-				if userAcc == nil {
-					return nil
-				}
-				if err := obj.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
-					return errors.NewEf(err, "could not set robotAccId")
-				}
-				if err := obj.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
-					return errors.NewEf(err, "could not set robotUserName")
-				}
-				if err := obj.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
-					return errors.NewEf(err, "could not set robotUserPassword")
-				}
-				return nil
-			}
-			robotAccId, _ := obj.Status.GeneratedVars.GetInt(KeyRobotAccId)
-			return r.harborCli.UpdateUserAccount(ctx, robotAccId, obj.Spec.Disable)
-		}(); err != nil {
+		user, err := r.harborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, getUsername(obj))
+		if err != nil {
 			return req.FailWithOpError(err)
 		}
-
+		if err := obj.Status.GeneratedVars.Set(KeyRobotUser, user); err != nil {
+			return req.FailWithOpError(err)
+		}
 		if err := r.Status().Update(ctx, obj); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return req.Done(ctrl.Result{RequeueAfter: 0})
+		return req.Done().Requeue(ctrl.Result{RequeueAfter: 0})
 	}
 
-	robotAccId, ok := obj.Status.GeneratedVars.GetInt(KeyRobotAccId)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("Key=%s not found in GeneratedVars", KeyRobotAccId))
-	}
-	robotUserName, ok := obj.Status.GeneratedVars.GetString(KeyRobotUserName)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("Key=%s not found in GeneratedVars", KeyRobotUserName))
-	}
-	robotUserPassword, ok := obj.Status.GeneratedVars.GetString(KeyRobotUserPassword)
-	if !ok {
-		return req.FailWithOpError(errors.Newf("Key=%s not found in GeneratedVars", KeyRobotUserPassword))
+	// if meta.IsStatusConditionFalse(obj.Status.Conditions, HarborUserAccountExists.String()) {
+	// 	if err := func() error {
+	// 		if !obj.Status.GeneratedVars.Exists(KeyRobotUser) {
+	// 			userAcc, err := r.harborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, getUsername(obj))
+	// 			if err != nil {
+	// 				return errors.NewEf(err, "creating harbor project user-account")
+	// 			}
+	// 			if userAcc == nil {
+	// 				return nil
+	// 			}
+	// 			if err := obj.Status.GeneratedVars.Set(KeyRobotAccId, userAcc.Id); err != nil {
+	// 				return errors.NewEf(err, "could not set robotAccId")
+	// 			}
+	// 			if err := obj.Status.GeneratedVars.Set(KeyRobotUserName, userAcc.Name); err != nil {
+	// 				return errors.NewEf(err, "could not set robotUserName")
+	// 			}
+	// 			if err := obj.Status.GeneratedVars.Set(KeyRobotUserPassword, userAcc.Secret); err != nil {
+	// 				return errors.NewEf(err, "could not set robotUserPassword")
+	// 			}
+	// 			return nil
+	// 		}
+	// 		var robotAccId int
+	// 		if err := obj.Status.GeneratedVars.Get(KeyRobotAccId, &robotAccId); err != nil {
+	// 			return err
+	// 		}
+	// 		return r.harborCli.UpdateUserAccount(ctx, robotAccId, obj.Spec.Enabled)
+	// 	}(); err != nil {
+	// 		return req.FailWithOpError(err)
+	// 	}
+	//
+	// 	if err := r.Status().Update(ctx, obj); err != nil {
+	// 		return req.FailWithOpError(err)
+	// 	}
+	// 	return req.Done(ctrl.Result{RequeueAfter: 0})
+	// }
+
+	var user harbor.User
+	if err := obj.Status.GeneratedVars.Get(KeyRobotUser, &user); err != nil {
+		return req.FailWithOpError(err).Err(nil)
 	}
 
-	harborDockerConfig, err := getDockerConfig(r.env.HarborImageRegistryHost, robotUserName, robotUserPassword)
-	if err != nil {
-		return req.FailWithOpError(err)
-	}
+	if meta.IsStatusConditionFalse(obj.Status.Conditions, DockerSecretExists.String()) {
+		harborDockerConfig, err := getDockerConfig(r.env.HarborImageRegistryHost, user.Name, user.Secret)
+		if err != nil {
+			return req.FailWithOpError(err)
+		}
 
-	b, err := templates.Parse(
-		templates.CoreV1.DockerConfigSecret, map[string]any{
-			"name":      obj.Name,
-			"namespace": obj.Namespace,
-			"owner-refs": []metav1.OwnerReference{
-				fn.AsOwner(obj, true),
+		b, err := templates.Parse(
+			templates.CoreV1.DockerConfigSecret, map[string]any{
+				"name":      obj.Name,
+				"namespace": obj.Namespace,
+				"owner-refs": []metav1.OwnerReference{
+					fn.AsOwner(obj, true),
+				},
+				"docker-config-json": string(harborDockerConfig),
+				"immutable":          true,
 			},
-			"docker-config-json": string(harborDockerConfig),
-		},
-	)
-	if err != nil {
-		return req.FailWithOpError(err)
+		)
+		if err != nil {
+			return req.FailWithOpError(err)
+		}
+
+		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+			return req.FailWithOpError(err)
+		}
 	}
 
-	if err := fn.KubectlApplyExec(ctx, b); err != nil {
-		return req.FailWithOpError(err)
-	}
-
-	if err := r.harborCli.UpdateUserAccount(ctx, robotAccId, obj.Spec.Disable); err != nil {
-		return req.FailWithOpError(err)
+	if obj.Generation > obj.Status.Generation {
+		if err := r.harborCli.UpdateUserAccount(ctx, &user, obj.Spec.Enabled); err != nil {
+			return req.FailWithOpError(err)
+		}
 	}
 
 	obj.Status.OpsConditions = []metav1.Condition{}
-	if err := r.Update(ctx, obj); err != nil {
+	obj.Status.Generation = obj.Generation
+	if err := r.Status().Update(ctx, obj); err != nil {
 		return req.FailWithOpError(err)
 	}
 	return req.Next()
@@ -286,6 +316,7 @@ func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&artifactsv1.HarborUserAccount{}).
+		Owns(&corev1.Secret{}).
 		Watches(
 			&source.Kind{Type: &artifactsv1.HarborProject{}}, handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
@@ -294,7 +325,7 @@ func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars
 						context.TODO(), &userAccList, &client.ListOptions{
 							LabelSelector: labels.SelectorFromValidatedSet(
 								map[string]string{
-									constants.LabelKeys.HarborProjectRef: obj.GetName(),
+									"kloudlite.io/harbor-project.name": obj.GetName(),
 								},
 							),
 						},

@@ -4,5 +4,7 @@ metadata:
   name: sample-x
   annotations:
     kloudlite.io/account-ref: sample-x
+  labels:
+    kloudlite.io/account-ref: sample-x
 spec:
   displayName: sample x

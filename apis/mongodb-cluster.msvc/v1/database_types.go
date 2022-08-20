@@ -2,14 +2,15 @@ package v1
 
 import (
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rApi "operators.kloudlite.io/lib/operator"
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
 type DatabaseSpec struct {
-	ManagedSvcName string              `json:"managedSvcName,omitempty"`
-	Inputs         rawJson.KubeRawJson `json:"inputs,omitempty"`
+	ManagedSvcName string          `json:"managedSvcName,omitempty"`
+	Inputs         rawJson.RawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true

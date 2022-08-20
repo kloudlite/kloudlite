@@ -33,11 +33,6 @@ spec:
           metadata:
             type: object
           spec:
-            properties:
-              sizeInGB:
-                type: integer
-            required:
-            - sizeInGB
             type: object
           status:
             properties:
@@ -184,6 +179,7 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               generation:
+                format: int64
                 type: integer
               isReady:
                 type: boolean

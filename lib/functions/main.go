@@ -2,14 +2,16 @@ package functions
 
 import (
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
-	"golang.org/x/exp/constraints"
-	corev1 "k8s.io/api/core/v1"
 	"regexp"
 	"strings"
+
+	"golang.org/x/exp/constraints"
+	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -234,4 +236,10 @@ func Contains[T constraints.Ordered](arr []T, item T) bool {
 		}
 	}
 	return false
+}
+
+func Sha1Sum(b []byte) string {
+	hash := sha1.New()
+	hash.Write(b)
+	return hex.EncodeToString(hash.Sum(nil))
 }

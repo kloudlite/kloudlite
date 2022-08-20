@@ -23,21 +23,50 @@ type Request[T Resource] struct {
 	locals map[string]any
 }
 
-func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName, resInstance T) (*Request[T], error) {
-	if err := c.Get(ctx, nn, resInstance); err != nil {
+func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName, resource T) (*Request[T], error) {
+	if err := c.Get(ctx, nn, resource); err != nil {
 		return nil, err
 	}
 	logger, ok := ctx.Value("logger").(logging.Logger)
 	if !ok {
 		panic("no logger passed into NewRequest")
 	}
+
 	return &Request[T]{
 		ctx:    ctx,
 		client: c,
-		Object: resInstance,
+		Object: resource,
 		Logger: logger.WithName(nn.String()).WithKV("NN", nn.String()),
 		locals: map[string]any{},
 	}, nil
+}
+
+// DebuggingOnlySetStatus only to be used in debugging environment, never in production
+func (r *Request[T]) DebuggingOnlySetStatus(status Status) stepResult.Result {
+	obj := r.Object
+	ctx := r.ctx
+
+	if value := obj.GetAnnotations()["kloudlite.io/reset-status"]; value == "true" {
+		ann := obj.GetAnnotations()
+
+		r.Object.GetStatus().OpsConditions = status.OpsConditions
+		r.Object.GetStatus().Conditions = status.Conditions
+		r.Object.GetStatus().ChildConditions = status.ChildConditions
+		r.Object.GetStatus().DisplayVars = status.DisplayVars
+		r.Object.GetStatus().GeneratedVars = status.GeneratedVars
+		r.Object.GetStatus().IsReady = status.IsReady
+
+		if err := r.client.Status().Update(ctx, obj); err != nil {
+			return r.FailWithStatusError(err)
+		}
+
+		delete(ann, "kloudlite.io/reset-status")
+		obj.SetAnnotations(ann)
+		if err := r.client.Update(ctx, obj); err != nil {
+			return r.FailWithStatusError(err)
+		}
+	}
+	return nil
 }
 
 func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
@@ -97,7 +126,10 @@ func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Con
 
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().Conditions = newConditions
-	return stepResult.New().Err(r.client.Status().Update(r.ctx, r.Object))
+	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
+		return stepResult.New().Err(err2)
+	}
+	return stepResult.New().Err(err)
 }
 
 func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Condition) stepResult.Result {
@@ -125,7 +157,10 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().OpsConditions = newConditions
 
-	return stepResult.New().Err(r.client.Status().Update(r.ctx, r.Object))
+	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
+		return stepResult.New().Err(err2)
+	}
+	return stepResult.New().Err(err)
 }
 
 func (r *Request[T]) Context() context.Context {

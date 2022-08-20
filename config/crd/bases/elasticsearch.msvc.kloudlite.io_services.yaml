@@ -239,6 +239,7 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               generation:
+                format: int64
                 type: integer
               isReady:
                 type: boolean

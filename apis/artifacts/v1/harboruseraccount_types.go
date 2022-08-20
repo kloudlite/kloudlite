@@ -2,13 +2,13 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
 type HarborUserAccountSpec struct {
-	Disable    bool   `json:"disable,omitempty"`
+	// +kubebuilder:default=true
+	Enabled    bool   `json:"enabled,omitempty"`
 	ProjectRef string `json:"projectRef"`
 }
 
@@ -30,7 +30,7 @@ func (h *HarborUserAccount) GetStatus() *rApi.Status {
 
 func (h *HarborUserAccount) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.LabelKeys.HarborProjectRef: h.Spec.ProjectRef,
+		"kloudlite.io/harbor-project.name": h.Spec.ProjectRef,
 	}
 }
 
