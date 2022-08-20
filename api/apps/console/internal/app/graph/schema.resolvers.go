@@ -8,11 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	"kloudlite.io/common"
 	wErrors "kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -1108,8 +1108,14 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	}, nil
 }
 
-func (r *queryResolver) CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig *localenv.KLFile) (*model.LoadEnv, error) {
-	env, m, err := r.Domain.GenerateEnv(ctx, *klConfig)
+func (r *queryResolver) CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig map[string]interface{}) (*model.LoadEnv, error) {
+	marshal, err := json.Marshal(klConfig)
+	if err != nil {
+		return nil, err
+	}
+	var klFile localenv.KLFile
+	json.Unmarshal(marshal, &klConfig)
+	env, m, err := r.Domain.GenerateEnv(ctx, klFile)
 	if err != nil {
 		return nil, err
 	}
