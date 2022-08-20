@@ -15,6 +15,12 @@ type Query {
   ci_getPipelines(projectId: ID!): [GitPipeline!]
   ci_getPipeline(pipelineId: ID!): GitPipeline
   ci_triggerPipeline(pipelineId: ID!): Boolean
+
+  ci_harborSearch(accountId: ID!, q: String!): [HarborSearchResult!]
+}
+
+type HarborSearchResult {
+  imageName: String!
 }
 
 input PaginationIn {

@@ -1,0 +1,17 @@
+---
+global:
+  sample: true
+---
+label: Search Harbor Images
+query: |
+  query Ci_harborSearch($accountId: ID!, $q: String!) {
+    ci_harborSearch(accountId: $accountId, q: $q) {
+      imageName
+    }
+  }
+variables:
+  accountId: kloudlite
+  q: ope
+
+# Request URL: https://harbor.dev.madhouselabs.io/api/v2.0/projects/kloudlite/repositories?q=name%253D~op&page_size=15&page=1
+
