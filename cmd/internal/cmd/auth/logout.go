@@ -8,19 +8,16 @@ import (
 
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "A brief description of your command",
+	Short: "logout from kloudlite",
 	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+and usage of using your command.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := lib.Logout()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+		fmt.Println("we expired the current session but the mounted config files are still present on your computer, run 'kl show' to see all the mounted files")
 		fmt.Println("Successfully logged out")
 	},
 }
