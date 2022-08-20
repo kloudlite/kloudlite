@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -53,6 +54,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+
 	type RespData struct {
 		Errors []struct {
 			Message string `json:"message"`
@@ -64,13 +66,18 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+
 	if len(respData.Errors) > 0 {
 		var errorMessages []string
 		for _, e := range respData.Errors {
 			errorMessages = append(errorMessages, e.Message)
 		}
-		return nil, errors.New(strings.Join(errorMessages, "\n"))
+
+		// fmt.Println("here")
+		return nil, errors.New(fmt.Sprintf("Error:\n%s", strings.Join(errorMessages, "\n")))
+
 	}
+
 	return body, nil
 
 }
