@@ -8,11 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	"kloudlite.io/common"
 	wErrors "kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -1124,7 +1124,13 @@ func (r *queryResolver) CoreGenerateEnv(ctx context.Context, projectID repos.ID,
 	// fmt.Printf("%v", env)
 
 	return &model.LoadEnv{
-		EnvVars: &env,
+		EnvVars: func() map[string]any {
+			mfs := make(map[string]any)
+			for k, v := range env {
+				mfs[k] = v
+			}
+			return mfs
+		}(),
 		MountFiles: func() map[string]any {
 			mfs := make(map[string]any)
 			for k, v := range m {
