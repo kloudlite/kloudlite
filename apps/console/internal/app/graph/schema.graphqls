@@ -2,7 +2,7 @@ scalar Json
 
 
 type LoadEnv {
-  envVars: String
+  envVars: Json
   mountFiles: Json
 }
 
