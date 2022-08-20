@@ -23,14 +23,14 @@ to quickly create a Cobra application.`,
 			initFile = &server.KLFileType{
 				Version: "v1",
 				Name:    "Sample",
-				Mres:    []server.ResType{},
-				Configs: []server.ResType{},
-				Secrets: []server.ResType{},
+				Mres:    make([]server.ResType, 0),
+				Configs: make([]server.ResType, 0),
+				Secrets: make([]server.ResType, 0),
 				Env:     []server.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
 				Ports:   []string{},
 				FileMount: server.MountType{
 					MountBasePath: "./.mounts",
-					Mounts:        []server.FileEntry{},
+					Mounts:        make([]server.FileEntry, 0),
 				},
 			}
 
