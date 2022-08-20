@@ -17,7 +17,6 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"kloudlite.io/apps/console/internal/app/graph/model"
-	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -311,7 +310,7 @@ type ComplexityRoot struct {
 		CoreCheckDeviceExist        func(childComplexity int, accountID repos.ID, name string) int
 		CoreConfig                  func(childComplexity int, configID repos.ID) int
 		CoreConfigs                 func(childComplexity int, projectID repos.ID, search *string) int
-		CoreGenerateEnv             func(childComplexity int, projectID repos.ID, klConfig *localenv.KLFile) int
+		CoreGenerateEnv             func(childComplexity int, projectID repos.ID, klConfig map[string]interface{}) int
 		CoreGetCloudProviders       func(childComplexity int, accountID repos.ID) int
 		CoreGetComputePlans         func(childComplexity int) int
 		CoreGetLamdaPlan            func(childComplexity int) int
@@ -450,7 +449,7 @@ type QueryResolver interface {
 	CoreProject(ctx context.Context, projectID repos.ID) (*model.Project, error)
 	CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error)
 	CoreApp(ctx context.Context, appID repos.ID) (*model.App, error)
-	CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig *localenv.KLFile) (*model.LoadEnv, error)
+	CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig map[string]interface{}) (*model.LoadEnv, error)
 	CoreRouters(ctx context.Context, projectID repos.ID, search *string) ([]*model.Router, error)
 	CoreRouter(ctx context.Context, routerID repos.ID) (*model.Router, error)
 	CoreConfigs(ctx context.Context, projectID repos.ID, search *string) ([]*model.Config, error)
@@ -1897,7 +1896,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGenerateEnv(childComplexity, args["projectId"].(repos.ID), args["klConfig"].(*localenv.KLFile)), true
+		return e.complexity.Query.CoreGenerateEnv(childComplexity, args["projectId"].(repos.ID), args["klConfig"].(map[string]interface{})), true
 
 	case "Query.core_getCloudProviders":
 		if e.complexity.Query.CoreGetCloudProviders == nil {
@@ -2297,7 +2296,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
-scalar KLFile
+
 
 type LoadEnv {
   envVars: String
@@ -2312,7 +2311,7 @@ type Query {
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!): App
-  core_generateEnv(projectId: ID!, klConfig: KLFile): LoadEnv
+  core_generateEnv(projectId: ID!, klConfig: Json): LoadEnv
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
@@ -3936,10 +3935,10 @@ func (ec *executionContext) field_Query_core_generateEnv_args(ctx context.Contex
 		}
 	}
 	args["projectId"] = arg0
-	var arg1 *localenv.KLFile
+	var arg1 map[string]interface{}
 	if tmp, ok := rawArgs["klConfig"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("klConfig"))
-		arg1, err = ec.unmarshalOKLFile2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋdomainᚋentitiesᚋlocalenvᚐKLFile(ctx, tmp)
+		arg1, err = ec.unmarshalOJson2map(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -10378,7 +10377,7 @@ func (ec *executionContext) _Query_core_generateEnv(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CoreGenerateEnv(rctx, args["projectId"].(repos.ID), args["klConfig"].(*localenv.KLFile))
+		return ec.resolvers.Query().CoreGenerateEnv(rctx, args["projectId"].(repos.ID), args["klConfig"].(map[string]interface{}))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19453,21 +19452,6 @@ func (ec *executionContext) marshalOJson2ᚕmapᚄ(ctx context.Context, sel ast.
 	}
 
 	return ret
-}
-
-func (ec *executionContext) unmarshalOKLFile2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋdomainᚋentitiesᚋlocalenvᚐKLFile(ctx context.Context, v interface{}) (*localenv.KLFile, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputKLFile(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOKLFile2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋdomainᚋentitiesᚋlocalenvᚐKLFile(ctx context.Context, sel ast.SelectionSet, v *localenv.KLFile) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._KLFile(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOLoadEnv2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐLoadEnv(ctx context.Context, sel ast.SelectionSet, v *model.LoadEnv) graphql.Marshaler {

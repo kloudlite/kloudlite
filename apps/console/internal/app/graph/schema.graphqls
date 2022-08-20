@@ -1,5 +1,5 @@
 scalar Json
-scalar KLFile
+
 
 type LoadEnv {
   envVars: String
@@ -14,7 +14,7 @@ type Query {
 
   core_apps(projectId: ID!, search: String): [App!]!
   core_app(appId: ID!): App
-  core_generateEnv(projectId: ID!, klConfig: KLFile): LoadEnv
+  core_generateEnv(projectId: ID!, klConfig: Json): LoadEnv
 
   core_routers(projectId: ID!, search: String): [Router!]!
   core_router(routerId: ID!): Router
