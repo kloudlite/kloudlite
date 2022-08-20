@@ -56,7 +56,7 @@ func (d *domain) GenerateEnv(ctx context.Context, klfile localenv.KLFile) (strin
 				return "", nil, err
 			}
 			for _, e := range config.Data {
-				mountFiles[fmt.Sprintf("%v/%v", config.Name, e.Key)] = e.Value
+				mountFiles[fmt.Sprintf("/configs/%v/%v", config.Name, e.Key)] = e.Value
 			}
 		}
 		if mount.Type == "secret" {
@@ -65,7 +65,7 @@ func (d *domain) GenerateEnv(ctx context.Context, klfile localenv.KLFile) (strin
 				return "", nil, err
 			}
 			for _, e := range secret.Data {
-				mountFiles[fmt.Sprintf("%v/%v", secret.Name, e.Key)] = e.Value
+				mountFiles[fmt.Sprintf("/secrets/%v/%v", secret.Name, e.Key)] = e.Value
 			}
 		}
 	}
