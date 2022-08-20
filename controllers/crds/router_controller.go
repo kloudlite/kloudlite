@@ -2,7 +2,6 @@ package crds
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -84,19 +83,11 @@ func (r *RouterReconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResul
 }
 
 func getIngressResources(router *crdsv1.Router) []string {
-	items, ok := router.Status.DisplayVars.Get(KeyIngressResourcesList)
-	if !ok {
+	var items []string
+	if err := router.Status.DisplayVars.Get(KeyIngressResourcesList, &items); err != nil {
 		return []string{}
 	}
-	b, err := json.Marshal(items)
-	if err != nil {
-		return []string{}
-	}
-	var x []string
-	if err := json.Unmarshal(b, &x); err != nil {
-		return []string{}
-	}
-	return x
+	return items
 }
 
 func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) stepResult.Result {

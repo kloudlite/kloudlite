@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/lib/constants"
+	fn "operators.kloudlite.io/lib/functions"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -138,9 +139,15 @@ func (app *App) GetStatus() *rApi.Status {
 }
 
 func (app *App) GetEnsuredLabels() map[string]string {
-	return map[string]string{
+	m := map[string]string{
 		"kloudlite.io/app.name": app.Name,
 	}
+
+	for idx := range app.Spec.Containers {
+		m[fmt.Sprintf("kloudlite.io/image-%s", fn.Sha1Sum([]byte(app.Spec.Containers[idx].Image)))] = "true"
+	}
+
+	return m
 }
 
 func (app *App) GetEnsuredAnnotations() map[string]string {

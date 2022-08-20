@@ -5,7 +5,8 @@ import (
 )
 
 type Env struct {
-	ClusterId string `env:"CLUSTER_ID" required:"true"`
+	ClusterId   string `env:"CLUSTER_ID" required:"true"`
+	WebhookAddr string `env:"WEBHOOK_ADDR" required:"true"`
 
 	KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
 	KafkaIncomingTopic     string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
@@ -14,12 +15,11 @@ type Env struct {
 	KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 	AgentErrorTopic        string `env:"AGENT_ERROR_TOPIC" required:"true"`
 
-	HarborAdminUsername      string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
-	HarborAdminPassword      string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
-	HarborImageRegistryHost  string `env:"HARBOR_IMAGE_REGISTRY_HOST" required:"true"`
-	HarborApiVersion         string `env:"HARBOR_API_VERSION" required:"false"`
-	HarborProjectStorageSize int    `env:"HARBOR_PROJECT_STORAGE_SIZE" required:"true"`
-	HarborQuoteEnabled       bool   `env:"HARBOR_QUOTA_ENABLED" required:"true"`
+	HarborAdminUsername     string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
+	HarborAdminPassword     string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
+	HarborImageRegistryHost string `env:"HARBOR_IMAGE_REGISTRY_HOST" required:"true"`
+	HarborWebhookAddr       string `env:"HARBOR_WEBHOOK_ADDR" required:"true"`
+	HarborApiVersion        string `env:"HARBOR_API_VERSION" required:"false"`
 
 	ReconcilePeriod string `env:"RECONCILE_PERIOD" required:"true"`
 

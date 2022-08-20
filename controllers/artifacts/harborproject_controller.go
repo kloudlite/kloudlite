@@ -9,6 +9,7 @@ import (
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
+	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -36,17 +37,14 @@ func (r *HarborProjectReconciler) GetName() string {
 }
 
 const (
-	HarborProjectExists           conditions.Type = "HarborProjectExists"
-	HarborProjectStorageAllocated conditions.Type = "HarborProjectStorageAllocated"
+	ProjectExists conditions.Type = "harbor.project/Exists"
+	WebhookExists conditions.Type = "harbor.project/WebhookExists"
 )
 
 const (
-	KeyHarborAllocatedStorage string = "allocated-size-in-gb"
+	KeyWebhook string = "webhook"
+	KeyProject string = "project"
 )
-
-func convertGBToBytes(gb int) int {
-	return gb * 1e6
-}
 
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harborprojects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harborprojects/status,verbs=get;update;patch
@@ -95,26 +93,47 @@ func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1
 	var cs []metav1.Condition
 	isReady := true
 
-	// STEP: if harbor project has been created ?
-	ok, err := r.harborCli.CheckIfProjectExists(ctx, obj.Name)
-	if err != nil {
+	var project harbor.Project
+	obj.Status.DisplayVars.Get(KeyProject, &project)
+
+	if &project == nil {
 		isReady = false
-		cs = append(cs, conditions.New(HarborProjectExists, false, conditions.NotFound, err.Error()))
-	}
-	if !ok {
-		isReady = false
-		cs = append(cs, conditions.New(HarborProjectExists, false, conditions.NotFound))
+		cs = append(cs, conditions.New(ProjectExists, false, conditions.NotFound))
 	} else {
-		cs = append(cs, conditions.New(HarborProjectExists, true, conditions.Found))
+		exists, err := r.harborCli.CheckIfProjectExists(ctx, obj.Name)
+		if err != nil {
+			isReady = false
+			return req.FailWithStatusError(errors.NewEf(err, "checking if project exists"))
+		}
+
+		if exists {
+			cs = append(cs, conditions.New(ProjectExists, true, conditions.Found))
+		} else {
+			isReady = false
+			cs = append(cs, conditions.New(ProjectExists, false, conditions.NotFound))
+		}
 	}
 
-	// STEP: if asked storage has been allocated ?
-	allocatedStorage, ok := obj.Status.DisplayVars.GetInt(KeyHarborAllocatedStorage)
-	if !ok || obj.Spec.SizeInGB != allocatedStorage {
+	// check if webhook added
+	var webhook harbor.Webhook
+	obj.Status.DisplayVars.Get(KeyWebhook, &webhook)
+
+	if &webhook == nil {
 		isReady = false
-		cs = append(cs, conditions.New(HarborProjectStorageAllocated, false, conditions.NotReconciledYet))
+		cs = append(cs, conditions.New(WebhookExists, false, conditions.NotFound))
 	} else {
-		cs = append(cs, conditions.New(HarborProjectStorageAllocated, true, conditions.Found))
+		exists, err := r.harborCli.CheckWebhookExists(ctx, &webhook)
+		if err != nil {
+			isReady = false
+			// cs = append(cs, conditions.New(WebhookExists, false, conditions.NotFound, err.Error()))
+			return req.FailWithStatusError(errors.NewEf(err, "checking if webhook exists"))
+		}
+		if exists {
+			cs = append(cs, conditions.New(WebhookExists, true, conditions.Found))
+		} else {
+			isReady = false
+			cs = append(cs, conditions.New(WebhookExists, false, conditions.NotFound))
+		}
 	}
 
 	nConditions, hasUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
@@ -123,7 +142,7 @@ func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1
 	}
 
 	if !hasUpdated && isReady == obj.Status.IsReady {
-		return stepResult.New().Continue(true)
+		return req.Next()
 	}
 
 	obj.Status.Conditions = nConditions
@@ -140,7 +159,7 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 	ctx := req.Context()
 	obj := req.Object
 
-	if !controllerutil.ContainsFinalizer(obj, constants.CommonFinalizer) {
+	if !fn.ContainsFinalizers(obj, constants.CommonFinalizer, constants.ForegroundFinalizer) {
 		controllerutil.AddFinalizer(obj, constants.CommonFinalizer)
 		controllerutil.AddFinalizer(obj, constants.ForegroundFinalizer)
 		if err := r.Update(ctx, obj); err != nil {
@@ -149,48 +168,45 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 		return req.Done()
 	}
 
-	if meta.IsStatusConditionFalse(obj.Status.Conditions, HarborProjectExists.String()) {
-		if err := func() error {
-			// 2 GB default storage size
-			if obj.Spec.SizeInGB == 0 {
-				obj.Spec.SizeInGB = r.env.HarborProjectStorageSize
-			}
+	if meta.IsStatusConditionFalse(obj.Status.Conditions, ProjectExists.String()) {
+		project, err := r.harborCli.CreateProject(ctx, obj.Name)
+		if err != nil {
+			return req.FailWithOpError(errors.NewEf(err, "creating harbor project"))
+		}
 
-			if !r.env.HarborQuoteEnabled {
-				obj.Spec.SizeInGB = 0
-			}
+		if err := obj.Status.DisplayVars.Set(KeyProject, project); err != nil {
+			return req.FailWithOpError(err).Err(nil)
+		}
 
-			if err := r.harborCli.CreateProject(ctx, obj.Name, convertGBToBytes(obj.Spec.SizeInGB)); err != nil {
-				return errors.NewEf(err, "creating harbor project")
-			}
-
-			return obj.Status.DisplayVars.Set(KeyHarborAllocatedStorage, obj.Spec.SizeInGB)
-		}(); err != nil {
+		if err := r.Status().Update(ctx, obj); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return stepResult.New().Requeue(ctrl.Result{RequeueAfter: 0})
+
+		return req.Done().Requeue(ctrl.Result{RequeueAfter: 0})
 	}
 
-	// TODO: it should not be called until harbor quota issue gets fixed
-	if meta.IsStatusConditionFalse(obj.Status.Conditions, HarborProjectStorageAllocated.String()) {
-		if err := func() error {
-			if err := r.harborCli.SetProjectQuota(ctx, obj.Name, obj.Spec.SizeInGB); err != nil {
-				return err
-			}
-			if err := obj.Status.DisplayVars.Set(KeyHarborAllocatedStorage, obj.Spec.SizeInGB); err != nil {
-				return err
-			}
-			return r.Status().Update(ctx, obj)
-		}(); err != nil {
+	if meta.IsStatusConditionFalse(obj.Status.Conditions, WebhookExists.String()) {
+		webhook, err := r.harborCli.CreateWebhook(ctx, obj.Name)
+		if err != nil {
 			return req.FailWithOpError(err)
 		}
-		return stepResult.New().Requeue(ctrl.Result{RequeueAfter: 0})
+		if err := obj.Status.DisplayVars.Set(KeyWebhook, webhook); err != nil {
+			return req.FailWithOpError(err)
+		}
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.FailWithOpError(err)
+		}
+		if webhook != nil {
+			req.Logger.Infof("webook: %+v\n", *webhook)
+		}
 	}
 
 	obj.Status.OpsConditions = []metav1.Condition{}
-
-	err := r.Status().Update(ctx, obj)
-	return stepResult.New().Continue(true).Err(err)
+	obj.Status.Generation = obj.Generation
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return req.FailWithOpError(err)
+	}
+	return req.Next()
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -205,11 +221,12 @@ func (r *HarborProjectReconciler) SetupWithManager(mgr ctrl.Manager, envVars *en
 			HarborAdminUsername: r.env.HarborAdminUsername,
 			HarborAdminPassword: r.env.HarborAdminPassword,
 			HarborRegistryHost:  r.env.HarborImageRegistryHost,
+			WebhookAddr:         r.env.HarborWebhookAddr,
 		},
 	)
 
 	if err != nil {
-		return nil
+		return err
 	}
 	r.harborCli = harborCli
 

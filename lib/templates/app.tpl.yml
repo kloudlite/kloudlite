@@ -2,7 +2,6 @@
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volume-mounts"}}
 {{- $ownerRefs := get . "owner-refs"}}
-{{- $labels := get . "labels" }}
 {{- $freeze := get . "freeze" | default false }}
 
 {{- with $obj }}

@@ -142,10 +142,12 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) stepResu
 
 	// STEP: 2.1: check current number of replicas
 	if err := func() error {
-		readyReplicas, ok := obj.Status.DisplayVars.GetInt("readyReplicas")
-		if ok && readyReplicas == int(deploymentRes.Status.ReadyReplicas) {
+		var readyReplicas int
+		obj.Status.DisplayVars.Get("readyReplicas", &readyReplicas)
+		if readyReplicas == int(deploymentRes.Status.ReadyReplicas) {
 			return nil
 		}
+
 		isReady = false
 		return obj.Status.DisplayVars.Set("readyReplicas", deploymentRes.Status.ReadyReplicas)
 	}(); err != nil {
