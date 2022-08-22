@@ -4,14 +4,30 @@ global:
 ---
 label: Search Harbor Images
 query: |
-  query Ci_harborSearch($accountId: ID!, $q: String!) {
-    ci_harborSearch(accountId: $accountId, q: $q) {
+  query Ci_harborSearch($accountId: ID!, $q: String!, $pagination: PaginationIn) {
+    ci_harborSearch(accountId: $accountId, q: $q, pagination: $pagination) {
       imageName
     }
   }
 variables:
   accountId: kloudlite
   q: ope
+  pagination:
+    page: 1
+    perPage: 100
 
-# Request URL: https://harbor.dev.madhouselabs.io/api/v2.0/projects/kloudlite/repositories?q=name%253D~op&page_size=15&page=1
+---
+
+label: List Image Tags
+query: |
+  query Query($imageName: String!, $pagination: PaginationIn) {
+    ci_harborImageTags(imageName: $imageName, pagination: $pagination) {
+      name
+    }
+  }
+variables:
+  imageName: "kloudlite/production/kloudlite-operator"
+  pagination:
+    page: 1
+    perPage: 100
 

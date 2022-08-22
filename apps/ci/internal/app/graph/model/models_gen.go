@@ -93,6 +93,12 @@ type GitPipelineRunIn struct {
 	Cmd       string  `json:"cmd"`
 }
 
+type HarborImageTagsResult struct {
+	Name      string `json:"name"`
+	Signed    bool   `json:"signed"`
+	Immutable bool   `json:"immutable"`
+}
+
 type HarborSearchResult struct {
 	ImageName string `json:"imageName"`
 }
