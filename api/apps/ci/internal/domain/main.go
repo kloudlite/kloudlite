@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/v43/github"
@@ -38,16 +39,48 @@ type domainI struct {
 	harborCli     *harbor.Client
 }
 
-func (d *domainI) HarborImageSearch(ctx context.Context, accountId repos.ID, q string) ([]string, error) {
-	repositories, err := d.harborCli.SearchRepositories(ctx, accountId, q)
-	if err != nil {
-		return nil, err
-	}
-	items := make([]string, len(repositories))
-	for i := range repositories {
-		items[i] = repositories[i].Name
-	}
-	return items, nil
+func (d *domainI) HarborImageSearch(ctx context.Context, accountId repos.ID, q string, pagination *t.Pagination) ([]harbor.Repository, error) {
+	return d.harborCli.SearchRepositories(
+		ctx, accountId, q, harbor.ListOptions{
+			Page: func() int64 {
+				if pagination == nil {
+					return 1
+				}
+				return int64(pagination.Page)
+			}(),
+			PageSize: func() int64 {
+				if pagination == nil {
+					return 20
+				}
+				return int64(pagination.PerPage)
+			}(),
+		},
+	)
+}
+
+func (d *domainI) HarborImageTags(ctx context.Context, imageName string, pagination *t.Pagination) ([]harbor.ImageTag, error) {
+	n := strings.SplitN(imageName, "/", 2)
+	projectName := n[0]
+	resourceName := n[1]
+
+	return d.harborCli.ListTags(
+		ctx, projectName, resourceName, harbor.ListTagsOpts{
+			ListOptions: harbor.ListOptions{
+				Page: func() int64 {
+					if pagination == nil {
+						return 1
+					}
+					return int64(pagination.Page)
+				}(),
+				PageSize: func() int64 {
+					if pagination == nil {
+						return 10
+					}
+					return int64(pagination.PerPage)
+				}(),
+			},
+		},
+	)
 }
 
 func (d *domainI) GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error) {

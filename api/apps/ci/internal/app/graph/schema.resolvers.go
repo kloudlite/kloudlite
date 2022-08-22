@@ -341,18 +341,38 @@ func (r *queryResolver) CiTriggerPipeline(ctx context.Context, pipelineID repos.
 	return fn.New(true), nil
 }
 
-func (r *queryResolver) CiHarborSearch(ctx context.Context, accountID repos.ID, q string) ([]*model.HarborSearchResult, error) {
+func (r *queryResolver) CiHarborSearch(ctx context.Context, accountID repos.ID, q string, pagination *types.Pagination) ([]*model.HarborSearchResult, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return nil, errors.New("not Authorized")
 	}
-	results, err := r.Domain.HarborImageSearch(ctx, accountID, q)
+	results, err := r.Domain.HarborImageSearch(ctx, accountID, q, pagination)
 	if err != nil {
 		return nil, err
 	}
 	items := make([]*model.HarborSearchResult, len(results))
 	for i := range results {
-		items[i] = &model.HarborSearchResult{ImageName: results[i]}
+		items[i] = &model.HarborSearchResult{ImageName: results[i].Name}
+	}
+	return items, nil
+}
+
+func (r *queryResolver) CiHarborImageTags(ctx context.Context, imageName string, pagination *types.Pagination) ([]*model.HarborImageTagsResult, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, errors.New("not Authorized")
+	}
+	tags, err := r.Domain.HarborImageTags(ctx, imageName, pagination)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*model.HarborImageTagsResult, len(tags))
+	for i := range tags {
+		items[i] = &model.HarborImageTagsResult{
+			Name:      tags[i].Name,
+			Signed:    tags[i].Signed,
+			Immutable: tags[i].Immutable,
+		}
 	}
 	return items, nil
 }
