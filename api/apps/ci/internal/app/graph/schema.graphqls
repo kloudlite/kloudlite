@@ -2,21 +2,21 @@ scalar Json
 scalar Any
 
 type Query {
-  ci_githubInstallations(pagination: PaginationIn): Any!
-  ci_githubInstallationToken(repoUrl: String!): Any!
-  ci_githubRepos(installationId: Int!, pagination: PaginationIn): Any!
-  ci_githubRepoBranches(repoUrl: String!, pagination: PaginationIn): Any!
-  ci_searchGithubRepos(search: String, org: String!, pagination: PaginationIn): Any!
+  ci_githubInstallations(pagination: PaginationIn): Any! # user-access
+  ci_githubInstallationToken(repoUrl: String!): Any! # user-access
+  ci_githubRepos(installationId: Int!, pagination: PaginationIn): Any! # user-access
+  ci_githubRepoBranches(repoUrl: String!, pagination: PaginationIn): Any! # user-access
+  ci_searchGithubRepos(search: String, org: String!, pagination: PaginationIn): Any! # user-access
 
-  ci_gitlabGroups(query: String, pagination: PaginationIn): Any!
-  ci_gitlabRepos(groupId: String!, search: String, pagination: PaginationIn): Any!
-  ci_gitlabRepoBranches(repoId: String!, search: String, pagination: PaginationIn): Any!
+  ci_gitlabGroups(query: String, pagination: PaginationIn): Any! # user-access
+  ci_gitlabRepos(groupId: String!, search: String, pagination: PaginationIn): Any! # user-access
+  ci_gitlabRepoBranches(repoId: String!, search: String, pagination: PaginationIn): Any! # user-access
 
-  ci_getPipelines(projectId: ID!): [GitPipeline!]
-  ci_getPipeline(pipelineId: ID!): GitPipeline
-  ci_triggerPipeline(pipelineId: ID!): Boolean
+  ci_getPipelines(projectId: ID!): [GitPipeline!] # user-access # deprecate
+  ci_getPipeline(pipelineId: ID!): GitPipeline # user-access # deprecate
+  ci_triggerPipeline(pipelineId: ID!): Boolean # user-access # deprecate
 
-  ci_harborSearch(accountId: ID!, q: String!): [HarborSearchResult!]
+  ci_harborSearch(accountId: ID!, q: String!): [HarborSearchResult!] # account-member-access
 }
 
 type HarborSearchResult {
@@ -121,12 +121,12 @@ input GitDockerPipelineIn {
 
 extend type App @key(fields: "id") {
   id: ID! @external
-  pipelines: [GitPipeline!]!
-  ci_createDockerPipeLine(containerName: String!, in: GitDockerPipelineIn!): Json!
-  ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json!
+  pipelines: [GitPipeline!]! # project-developer-access project-admin-access
+  ci_createDockerPipeLine(containerName: String!, in: GitDockerPipelineIn!): Json! # project-developer-access project-admin-access
+  ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json! # project-developer-access project-admin-access
 }
 
 type Mutation {
-  ci_deletePipeline(pipelineId: ID!): Boolean!
-  ci_createPipeline(in: GitPipelineIn!): Json!
+  ci_deletePipeline(pipelineId: ID!): Boolean! # project-developer-access project-admin-access
+  ci_createPipeline(in: GitPipelineIn!): Json! # project-developer-access project-admin-access
 }
