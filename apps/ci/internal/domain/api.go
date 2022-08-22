@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 
+	"kloudlite.io/pkg/harbor"
 	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
 
@@ -37,7 +38,8 @@ type Domain interface {
 
 	// harbor
 
-	HarborImageSearch(ctx context.Context, accountId repos.ID, q string) ([]string, error)
+	HarborImageSearch(ctx context.Context, accountId repos.ID, q string, pagination *types.Pagination) ([]harbor.Repository, error)
+	HarborImageTags(ctx context.Context, imageName string, pagination *types.Pagination) ([]harbor.ImageTag, error)
 }
 
 type Harbor interface {

@@ -16,11 +16,18 @@ type Query {
   ci_getPipeline(pipelineId: ID!): GitPipeline # user-access # deprecate
   ci_triggerPipeline(pipelineId: ID!): Boolean # user-access # deprecate
 
-  ci_harborSearch(accountId: ID!, q: String!): [HarborSearchResult!] # account-member-access
+  ci_harborSearch(accountId: ID!, q: String!, pagination: PaginationIn): [HarborSearchResult!] # account-member-access
+  ci_harborImageTags(imageName: String!, pagination: PaginationIn): [HarborImageTagsResult!]
 }
 
 type HarborSearchResult {
   imageName: String!
+}
+
+type HarborImageTagsResult {
+  name: String!
+  signed: Boolean!
+  immutable: Boolean!
 }
 
 input PaginationIn {
