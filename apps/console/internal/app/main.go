@@ -86,13 +86,13 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.EdgeRegion]("regions", "reg", entities.EdgeRegionIndexes),
 	repos.NewFxMongoRepo[*entities.CloudProvider]("providers", "cp", entities.CloudProviderIndexes),
 	repos.NewFxMongoRepo[*entities.Device]("devices", "dev", entities.DeviceIndexes),
-	repos.NewFxMongoRepo[*entities.Project]("project", "proj", entities.ProjectIndexes),
-	repos.NewFxMongoRepo[*entities.Config]("config", "cfg", entities.ConfigIndexes),
-	repos.NewFxMongoRepo[*entities.Secret]("secret", "sec", entities.SecretIndexes),
-	repos.NewFxMongoRepo[*entities.Router]("router", "route", entities.RouterIndexes),
-	repos.NewFxMongoRepo[*entities.ManagedService]("managedservice", "mgsvc", entities.ManagedServiceIndexes),
-	repos.NewFxMongoRepo[*entities.App]("app", "app", entities.AppIndexes),
-	repos.NewFxMongoRepo[*entities.ManagedResource]("managedresouce", "mgres", entities.ManagedResourceIndexes),
+	repos.NewFxMongoRepo[*entities.Project]("projects", "proj", entities.ProjectIndexes),
+	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
+	repos.NewFxMongoRepo[*entities.Secret]("secrets", "sec", entities.SecretIndexes),
+	repos.NewFxMongoRepo[*entities.Router]("routers", "route", entities.RouterIndexes),
+	repos.NewFxMongoRepo[*entities.ManagedService]("managed_services", "mgsvc", entities.ManagedServiceIndexes),
+	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
+	repos.NewFxMongoRepo[*entities.ManagedResource]("managed_resources", "mgres", entities.ManagedResourceIndexes),
 
 	// Grpc Clients
 
@@ -115,7 +115,6 @@ var Module = fx.Module(
 	fx.Provide(func(conn FinanceClientConnection) finance.FinanceClient {
 		return finance.NewFinanceClient((*grpc.ClientConn)(conn))
 	}),
-
 
 	// Grpc Server
 	fx.Provide(fxConsoleGrpcServer),
