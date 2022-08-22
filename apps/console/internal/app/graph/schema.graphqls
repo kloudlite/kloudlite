@@ -7,37 +7,37 @@ type LoadEnv {
 }
 
 type Query {
-  core_checkDeviceExist(accountId: ID!, name: String!): Boolean!
+  core_checkDeviceExist(accountId: ID!, name: String!): Boolean! #account-member-access
 
-  core_projects(accountId: ID): [Project!]!
-  core_project(projectId: ID!): Project
+  core_projects(accountId: ID): [Project!]! #account-admin-access #account-owner-access #account-member-access
+  core_project(projectId: ID!): Project #project-admin-access #project-developer-access
 
-  core_apps(projectId: ID!, search: String): [App!]!
-  core_app(appId: ID!): App
-  core_generateEnv(projectId: ID!, klConfig: Json): LoadEnv
+  core_apps(projectId: ID!, search: String): [App!]! #project-admin-access #project-developer-access
+  core_app(appId: ID!): App #project-admin-access #project-developer-access
+  core_generateEnv(projectId: ID!, klConfig: Json): LoadEnv #project-admin-access #project-developer-access
 
-  core_routers(projectId: ID!, search: String): [Router!]!
-  core_router(routerId: ID!): Router
+  core_routers(projectId: ID!, search: String): [Router!]! #project-admin-access #project-developer-access
+  core_router(routerId: ID!): Router #project-admin-access #project-developer-access
 
-  core_configs(projectId: ID!, search: String): [Config!]!
-  core_config(configId: ID!): Config!
+  core_configs(projectId: ID!, search: String): [Config!]! #project-admin-access #project-developer-access
+  core_config(configId: ID!): Config! #project-admin-access #project-developer-access
 
-  core_secrets(projectId: ID!, search: String): [Secret!]!
-  core_secret(secretId: ID!): Secret!
+  core_secrets(projectId: ID!, search: String): [Secret!]! #project-admin-access #project-developer-access
+  core_secret(secretId: ID!): Secret! #project-admin-access #project-developer-access
 
-  managedSvc_marketList: Json!
-  managedSvc_listAvailable: Json!
-  managedSvc_getInstallation(installationId: ID!, nextVersion: Boolean): ManagedSvc
-  managedSvc_listInstallations(projectId: ID!): [ManagedSvc!]
+  managedSvc_marketList: Json! #user-access
+  managedSvc_listAvailable: Json! #project-admin-access #project-developer-access
+  managedSvc_getInstallation(installationId: ID!, nextVersion: Boolean): ManagedSvc #project-admin-access #project-developer-access
+  managedSvc_listInstallations(projectId: ID!): [ManagedSvc!] #project-admin-access #project-developer-access
 
-  managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes
-  managedRes_listResources(installationId: ID!): [ManagedRes!]
+  managedRes_getResource(resId: ID!, nextVersion: Boolean): ManagedRes #project-admin-access #project-developer-access
+  managedRes_listResources(installationId: ID!): [ManagedRes!] #project-admin-access #project-developer-access
 
-  core_getComputePlans: [ComputePlan!]
-  core_getStoragePlans: [StoragePlan!]
-  core_getLamdaPlan: LambdaPlan!
+  core_getComputePlans: [ComputePlan!] #user-access
+  core_getStoragePlans: [StoragePlan!] #user-access
+  core_getLamdaPlan: LambdaPlan! #user-access
 
-  core_getCloudProviders(accountId: ID!): [CloudProvider!]
+  core_getCloudProviders(accountId: ID!): [CloudProvider!] #user-access
 }
 
 type ManagedRes {
@@ -94,18 +94,18 @@ input EdgeRegionIn {
 
 
 type Mutation {
-  mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc
-  mangedSvc_uninstall(installationId: ID!): Boolean!
-  mangedSvc_update(installationId: ID!, values: Json!): Boolean!
+  mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc #project-admin-access
+  mangedSvc_uninstall(installationId: ID!): Boolean! #project-admin-access
+  mangedSvc_update(installationId: ID!, values: Json!): Boolean! #project-admin-accessZ
 
-  managedRes_create(installationId: ID!, name: String!, resourceType: String!, values: Json!): ManagedRes!
-  managedRes_update(resId: ID!, values: Json): Boolean!
-  managedRes_delete(resId: ID!): Boolean
+  managedRes_create(installationId: ID!, name: String!, resourceType: String!, values: Json!): ManagedRes! #project-admin-access
+  managedRes_update(resId: ID!, values: Json): Boolean! #project-admin-access
+  managedRes_delete(resId: ID!): Boolean #project-admin-access
 
-  core_addDevice(accountId: ID!, name: String!): Device!
+  core_addDevice(accountId: ID!, name: String!): Device! #account-member-access
 
-  core_removeDevice(deviceId: ID!): Boolean!
-  core_updateDevice(deviceId: ID!,name:String, region: String, ports: [Int!]): Boolean!
+  core_removeDevice(deviceId: ID!): Boolean! #device-owner-access #account-admin-access #account-owner-access
+  core_updateDevice(deviceId: ID!,name:String, region: String, ports: [Int!]): Boolean! #device-owner-access
 
   core_createProject(
     accountId: ID!,
@@ -114,51 +114,50 @@ type Mutation {
     logo: String,
     description: String,
     regionId: ID,
-  ): Project!
+  ): Project! #account-owner-access account-admin-access
   core_updateProject(
     projectId: ID!,
     displayName: String,
     cluster: String,
     logo: String,
     description: String
-  ): Boolean!
-  core_deleteProject(projectId: ID!): Boolean!
+  ): Boolean! #account-owner-access account-admin-access
+  core_deleteProject(projectId: ID!): Boolean! #account-owner-access account-admin-access
 
-  iam_inviteProjectMember(projectId: ID!, email: String!, role: String!): Boolean!
-  iam_removeProjectMember(projectId: ID!, userId: ID!): Boolean!
-  iam_updateProjectMember(projectId: ID!, userId: ID!, role: String!): Boolean!
+  iam_inviteProjectMember(projectId: ID!, email: String!, role: String!): Boolean! #project-admin-access account-admin-access account-owner-access
+  iam_removeProjectMember(projectId: ID!, userId: ID!): Boolean! #project-admin-access account-admin-access account-owner-access
+  iam_updateProjectMember(projectId: ID!, userId: ID!, role: String!): Boolean! #project-admin-access account-admin-access account-owner-access
 
 
   # App
   core_createApp(
     projectId: ID!,
     app: AppInput!,
-  ): App!
+  ): App! #project-admin-access project-developer-access
   core_updateApp(
     projectId: ID!,
     appId: ID!,
     app: AppInput!,
-  ): App!
-  core_deleteApp(appId: ID!): Boolean!
+  ): App! #project-admin-access project-developer-access
+  core_deleteApp(appId: ID!): Boolean! #project-admin-access project-developer-access
 
   core_rollbackApp(appId: ID!, version: Int!): App! #TBD
 
   # Secret n Config
-  core_createSecret(projectId: ID!, name: String!, description:String, data: [CSEntryIn!]): Secret!
-  core_updateSecret(secretId: ID!, description:String, data: [CSEntryIn!]): Boolean!
-  core_deleteSecret(secretId: ID!): Boolean!
+  core_createSecret(projectId: ID!, name: String!, description:String, data: [CSEntryIn!]): Secret! #project-admin-access project-developer-access
+  core_updateSecret(secretId: ID!, description:String, data: [CSEntryIn!]): Boolean! #project-admin-access project-developer-access
+  core_deleteSecret(secretId: ID!): Boolean! #project-admin-access project-developer-access
 
-  core_createConfig(projectId: ID!, name: String!, description:String, data: [CSEntryIn!]): Config!
-  core_updateConfig(configId: ID!, description:String, data: [CSEntryIn!]): Boolean!
-  core_deleteConfig(configId: ID!): Boolean!
+  core_createConfig(projectId: ID!, name: String!, description:String, data: [CSEntryIn!]): Config! #project-admin-access project-developer-access
+  core_updateConfig(configId: ID!, description:String, data: [CSEntryIn!]): Boolean! #project-admin-access project-developer-access
+  core_deleteConfig(configId: ID!): Boolean! #project-admin-access project-developer-access
 
-  core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router!
-  core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean!
-  core_deleteRouter(routerId: ID!): Boolean!
+  core_createRouter(projectId: ID!, name: String!, domains: [String!], routes: [RouteInput!]): Router! #project-admin-access project-developer-access
+  core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean! #project-admin-access project-developer-access
+  core_deleteRouter(routerId: ID!): Boolean! #project-admin-access project-developer-access
 
-  core_createEdgeRegion(edgeRegion: EdgeRegionIn!): Boolean!
-  core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean!
-
+  core_createEdgeRegion(edgeRegion: EdgeRegionIn!): Boolean! #private-access
+  core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
 }
 
 type StoragePlan @key(fields: "name"){

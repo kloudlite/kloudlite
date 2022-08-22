@@ -6,7 +6,6 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/messaging"
 )
 
 type Env struct {
@@ -23,10 +22,10 @@ var Module = fx.Module(
 	config.EnvFx[Env](),
 	logging.FxProvider(),
 	rpc.NewGrpcServerFx[*Env](),
-	fx.Provide(
-		func(env *Env) messaging.KafkaClient {
-			return messaging.NewKafkaClient(env.KafkaBrokers)
-		},
-	),
+	//fx.Provide(
+	//	func(env *Env) messaging.KafkaClient {
+	//		return messaging.NewKafkaClient(env.KafkaBrokers)
+	//	},
+	//),
 	application.Module,
 )

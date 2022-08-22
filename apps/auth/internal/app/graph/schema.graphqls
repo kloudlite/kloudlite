@@ -5,10 +5,10 @@ scalar URL
 scalar Any
 
 type Query {
-  auth_me: User # Done
-  auth_findByEmail(email: String!): User # Done
-  oAuth_requestLogin(provider: String!, state: String): URL!
-  auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin
+  auth_me: User # public-access
+  auth_findByEmail(email: String!): User # public-access # Deprecate
+  oAuth_requestLogin(provider: String!, state: String): URL! # public-access
+  auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin # public-access
 }
 
 type RemoteLogin {
@@ -17,26 +17,23 @@ type RemoteLogin {
 }
 
 type Mutation {
-  auth_setRemoteAuthHeader(loginId: String!, authHeader:String):Boolean!
-  auth_createRemoteLogin(secret: String):String!
+  auth_setRemoteAuthHeader(loginId: String!, authHeader:String):Boolean! # user-access
+  auth_createRemoteLogin(secret: String):String! # public-access
 
-  auth_login(email: String!, password: String!): Session # Done
-  auth_signup(name: String!, email: String!, password: String!): Session # Done
-  auth_logout: Boolean! # Done
-  auth_setMetadata(values: Json!): User! # Done
-  auth_clearMetadata: User! #Done
-  auth_verifyEmail(token: String!): Session! #Done
-  auth_resetPassword(token: String!, password: String!): Boolean! #Done
-  auth_requestResetPassword(email: String!): Boolean! #Done
-  auth_loginWithInviteToken(inviteToken: String!): Session
-  auth_inviteSignup(email: String!, name: String!): ID!
-  auth_changeEmail(email: String!): Boolean! #Done
-  auth_resendVerificationEmail: Boolean! #Done
-  auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! #Done
-  oAuth_login(provider: String!, code: String!, state: String): Session!
-  oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean!
-
-#  oAuth_githubAddWebhook(repoUrl: String!): Boolean!
+  auth_login(email: String!, password: String!): Session # public-access
+  auth_signup(name: String!, email: String!, password: String!): Session # public-access
+  auth_logout: Boolean! # user-access
+  auth_setMetadata(values: Json!): User! # user-access # Deprecate
+  auth_clearMetadata: User! # user-access # Deprecate
+  auth_verifyEmail(token: String!): Session! # public-access # TBD
+  auth_resetPassword(token: String!, password: String!): Boolean! # user-access
+  auth_requestResetPassword(email: String!): Boolean! # user-access
+  auth_loginWithInviteToken(inviteToken: String!): Session # public-access # Deprecate
+  auth_changeEmail(email: String!): Boolean! # user-access #Done
+  auth_resendVerificationEmail: Boolean! # user-access #Done
+  auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! # user-access #Done
+  oAuth_login(provider: String!, code: String!, state: String): Session! # public-access
+  oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean! # public-access
 }
 
 type Session {

@@ -11,8 +11,6 @@ import (
 	"kloudlite.io/pkg/errors"
 )
 
-type Json map[string]any
-
 type Producer[T any] interface {
 	Connect(cxt context.Context) error
 	Close(ctx context.Context)
