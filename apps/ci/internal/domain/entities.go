@@ -60,9 +60,10 @@ type Pipeline struct {
 }
 
 type TektonVars struct {
-	GitRepo     string `json:"git-repo"`
-	GitUser     string `json:"git-user"`
-	GitPassword string `json:"git-password"`
+	PipelineId  repos.ID `json:"pipeline-id"`
+	GitRepo     string   `json:"git-repo"`
+	GitUser     string   `json:"git-user"`
+	GitPassword string   `json:"git-password"`
 
 	GitRef        string `json:"git-ref"`
 	GitCommitHash string `json:"git-commit-hash"`
