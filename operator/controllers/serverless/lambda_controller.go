@@ -134,7 +134,6 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 
 	isReady := true
 	var cs []metav1.Condition
-	var childC []metav1.Condition
 
 	// STEP: 1. sync conditions from Knative Serving
 	knativeRes, err := rApi.Get(
@@ -154,8 +153,8 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 		if err != nil {
 			return req.FailWithStatusError(err)
 		}
-		childC = append(childC, ksConditions...)
-		rReady := meta.IsStatusConditionTrue(ksConditions, "Ready")
+		// childC = append(childC, ksConditions...)
+		rReady := meta.IsStatusConditionTrue(ksConditions, "ConfigurationsReady")
 		if !rReady {
 			isReady = false
 		}
@@ -165,23 +164,17 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 	}
 
 	// STEP: 5. patch aggregated conditions
-	nConditionsC, hasUpdatedC, err := conditions.Patch(obj.Status.ChildConditions, childC)
-	if err != nil {
-		return req.FailWithStatusError(err)
-	}
-
 	nConditions, hasSUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
 
-	if !hasUpdatedC && !hasSUpdated && isReady == obj.Status.IsReady {
+	if !hasSUpdated && isReady == obj.Status.IsReady {
 		return req.Next()
 	}
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = nConditions
-	obj.Status.ChildConditions = nConditionsC
 	if err := r.Status().Update(ctx, obj); err != nil {
 		return req.FailWithStatusError(err)
 	}
