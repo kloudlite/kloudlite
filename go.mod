@@ -8,7 +8,6 @@ require (
 	github.com/briandowns/spinner v1.18.1
 	github.com/charmbracelet/bubbletea v0.22.0
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
-	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/adaptor/v2 v2.1.23
 	github.com/gofiber/fiber/v2 v2.32.0

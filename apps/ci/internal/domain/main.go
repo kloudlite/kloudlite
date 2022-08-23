@@ -178,6 +178,7 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 	}
 
 	tkVars := TektonVars{
+		PipelineId:     pipeline.Id,
 		GitRepo:        hookPayload.RepoUrl,
 		GitUser:        "x-access-token",
 		GitPassword:    token,
@@ -242,6 +243,7 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 	}
 
 	tkVars := TektonVars{
+		PipelineId:    pipeline.Id,
 		GitRepo:       hookPayload.RepoUrl,
 		GitUser:       "oauth2",
 		GitPassword:   token,
@@ -278,8 +280,7 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 			pipeline.ArtifactRef.DockerImageName,
 		),
 		ArtifactDockerImageTag: pipeline.ArtifactRef.DockerImageTag,
-
-		TaskNamespace: pipeline.ProjectName,
+		TaskNamespace:          pipeline.ProjectName,
 	}
 
 	return &tkVars, pipeline, nil

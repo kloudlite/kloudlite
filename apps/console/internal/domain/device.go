@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	internal_crds "kloudlite.io/apps/console/internal/domain/op-crds/internal-crds"
 	"kloudlite.io/pkg/repos"
@@ -111,7 +112,17 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 			DeviceName: deviceName,
 			Offset:     device.Index,
 			DeviceId:   string(device.Id),
-			Ports:      device.ExposedPorts,
+			Ports: func() []internal_crds.Port {
+				p := []internal_crds.Port{}
+				for _, p2 := range device.ExposedPorts {
+					p = append(p, internal_crds.Port{
+						Port:       p2.Port,
+						TargetPort: p2.TargetPort,
+					})
+				}
+				return p
+				// device.ExposedPorts
+			}(),
 		},
 	})
 	if err != nil {
@@ -138,7 +149,7 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	})
 	return err
 }
-func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName *string, region *string, ports []int32) (done bool, e error) {
+func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName *string, region *string, ports []entities.Port) (done bool, e error) {
 	device, e := d.deviceRepo.FindById(ctx, deviceId)
 	if region != nil {
 		device.ActiveRegion = region
@@ -147,7 +158,17 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 		device.Name = *deviceName
 	}
 	if ports != nil {
-		device.ExposedPorts = ports
+		device.ExposedPorts = func() []entities.Port {
+			p := []entities.Port{}
+			for _, p2 := range ports {
+				p = append(p, entities.Port{
+					Port:       p2.Port,
+					TargetPort: p2.TargetPort,
+				})
+			}
+
+			return p
+		}()
 	}
 	_, err := d.deviceRepo.UpdateById(ctx, deviceId, device)
 	if err != nil {
@@ -177,7 +198,16 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 			}(),
 			Offset:   device.Index,
 			DeviceId: string(device.Id),
-			Ports:    device.ExposedPorts,
+			Ports: func() []internal_crds.Port {
+				p := make([]internal_crds.Port, 0)
+				for _, p2 := range device.ExposedPorts {
+					p = append(p, internal_crds.Port{
+						Port:       p2.Port,
+						TargetPort: p2.TargetPort,
+					})
+				}
+				return p
+			}(),
 		},
 	})
 	if err != nil {
