@@ -162,17 +162,17 @@ type Device struct {
 	Name          string                 `json:"name"`
 	Configuration map[string]interface{} `json:"configuration"`
 	Account       *Account               `json:"account"`
-	Ports         []int                  `json:"ports"`
+	Ports         []*Port                `json:"ports"`
 	Region        *string                `json:"region"`
 }
 
 func (Device) IsEntity() {}
 
 type DeviceIn struct {
-	ID     repos.ID `json:"id"`
-	Name   string   `json:"name"`
-	Region string   `json:"region"`
-	Ports  []int    `json:"ports"`
+	ID     repos.ID  `json:"id"`
+	Name   string    `json:"name"`
+	Region string    `json:"region"`
+	Ports  []*PortIn `json:"ports"`
 }
 
 type DockerCredentials struct {
@@ -300,6 +300,16 @@ type NewResourcesIn struct {
 	Secrets    []map[string]interface{} `json:"secrets"`
 	MServices  []map[string]interface{} `json:"mServices"`
 	MResources []map[string]interface{} `json:"mResources"`
+}
+
+type Port struct {
+	Port       int  `json:"port"`
+	TargetPort *int `json:"targetPort"`
+}
+
+type PortIn struct {
+	Port       int  `json:"port"`
+	TargetPort *int `json:"targetPort"`
 }
 
 type Project struct {

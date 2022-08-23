@@ -85,12 +85,12 @@ func JSONBytesEqual(a, b []byte) (bool, error) {
 func (d *domainI) calculateBill(ctx context.Context, billables []Billable, startTime time.Time, endTime time.Time) (float64, error) {
 	var billableTotal float64
 	for _, billable := range billables {
-		if billable.ResourceType == "Pod" {
+		fmt.Println(billable)
+		if billable.ResourceType == "Compute" {
 			plan, err := d.GetComputePlanByName(ctx, billable.Plan)
 			if err != nil {
 				fmt.Println(err)
 				continue
-				//return 0, err
 			}
 			billableTotal = billableTotal + func() float64 {
 				if billable.IsShared {
@@ -98,6 +98,16 @@ func (d *domainI) calculateBill(ctx context.Context, billables []Billable, start
 				} else {
 					return float64(billable.Count) * billable.Quantity * (plan.DedicatedPrice / (28 * 24 * 60 * 60)) * endTime.Sub(startTime).Seconds()
 				}
+			}()
+		}
+		if billable.ResourceType == "Lambda" {
+			plan, err := d.GetLambdaPlanByName(ctx, billable.Plan)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			billableTotal = billableTotal + func() float64 {
+				return float64(billable.Count) * billable.Quantity * plan.PricePerGBHr * (endTime.Sub(startTime).Seconds() / 3600)
 			}()
 		}
 	}

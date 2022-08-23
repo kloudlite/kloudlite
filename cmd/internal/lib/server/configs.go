@@ -10,15 +10,15 @@ type CSEntry struct {
 }
 
 type Config struct {
-	Entries []CSEntry `json:"value"`
-	Id      string `json:"value"`
-	Name    string
+	Entries []CSEntry `json:"entries"`
+	Id      string    `json:"id"`
+	Name    string    `json:"name"`
 }
 
 type ConfigORSecret struct {
-	Entries []CSEntry
-	Id      string
-	Name    string
+	Entries []CSEntry `json:"entries"`
+	Id      string    `json:"id"`
+	Name    string    `json:"name"`
 }
 
 func GetConfigs() ([]Config, error) {

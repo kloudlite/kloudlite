@@ -17,6 +17,8 @@ import (
 )
 
 type Env struct {
+	BeaconUrl string `env:"BEACON_URL" required:"true"`
+
 	CookieDomain     string `env:"COOKIE_DOMAIN" required:"true"`
 	GithubWebhookUrl string `env:"GITHUB_WEBHOOK_URL" required:"true"`
 	GitlabWebhookUrl string `env:"GITLAB_WEBHOOK_URL" required:"true"`

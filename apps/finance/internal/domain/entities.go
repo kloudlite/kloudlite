@@ -110,11 +110,11 @@ type BillingEvent struct {
 	Billing struct {
 		Name  string `json:"name"`
 		Items []struct {
-			Type     string `json:"type"`
-			Count    int    `json:"count"`
-			Plan     string `json:"plan"`
-			PlanQ    string `json:"planQ"`
-			IsShared string `json:"isShared"`
+			Type     string  `json:"type"`
+			Count    int     `json:"count"`
+			Plan     string  `json:"plan"`
+			PlanQ    float64 `json:"planQuantity"`
+			IsShared string  `json:"isShared"`
 		} `json:"items"`
 	} `json:"billing"`
 	Metadata struct {

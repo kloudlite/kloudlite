@@ -1,12 +1,17 @@
 package internal_crds
 
+type Port struct {
+	Port       int32  `json:"port"`
+	TargetPort *int32 `json:"targetPort,omitempty"`
+}
+
 type DeviceSpec struct {
-	Account      string  `json:"account,omitempty"`
-	ActiveRegion string  `json:"activeRegion,omitempty"`
-	Offset       int     `json:"offset"`
-	DeviceId     string  `json:"deviceId,omitempty"`
-	DeviceName   string  `json:"deviceName,omitempty"`
-	Ports        []int32 `json:"ports,omitempty"`
+	Account      string `json:"account,omitempty"`
+	ActiveRegion string `json:"activeRegion,omitempty"`
+	Offset       int    `json:"offset"`
+	DeviceId     string `json:"deviceId,omitempty"`
+	DeviceName   string `json:"deviceName,omitempty"`
+	Ports        []Port `json:"ports,omitempty"`
 }
 
 type DeviceMetadata struct {
