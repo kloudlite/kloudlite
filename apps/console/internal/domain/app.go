@@ -424,7 +424,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 								o := op_crds.Limit{
 									Min: fmt.Sprintf("%vm", int(c.Quantity*(func() float64 {
 										if c.IsShared {
-											return 500
+											return 250
 										}
 										return 1000
 									})())),
