@@ -94,7 +94,7 @@ func selectConfigMount(path string, klFile server.KLFileType) {
 		func(i int) string {
 			return csName[i]
 		},
-		fuzzyfinder.WithPromptString("Select Config Group >"),
+		fuzzyfinder.WithPromptString("Mount from Config/Secret >"),
 	)
 	if err != nil {
 		common.PrintError(err)
@@ -110,8 +110,12 @@ func selectConfigMount(path string, klFile server.KLFileType) {
 			common.PrintError(e)
 			return
 		}
+
 		for _, c := range configs {
-			items = append(items, server.ConfigORSecret(c))
+			items = append(items, server.ConfigORSecret{
+				Id:   c.Id,
+				Name: c.Name,
+			})
 		}
 
 	} else {
