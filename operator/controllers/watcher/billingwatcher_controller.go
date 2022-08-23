@@ -43,11 +43,11 @@ func (r *BillingWatcherReconciler) GetName() string {
 	return r.Name
 }
 
-func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj client.Object, billing ResourceBilling) (ctrl.Result, error) {
+func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj client.Object, billing *ResourceBilling) (ctrl.Result, error) {
 	klMetadata := ExtractMetadata(obj)
 	if obj.GetDeletionTimestamp() != nil {
 		if controllerutil.ContainsFinalizer(obj, constants.BillingFinalizer) {
-			if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, &billing, Stages.Deleted); err != nil {
+			if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, billing, Stages.Deleted); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
@@ -58,7 +58,7 @@ func (r *BillingWatcherReconciler) SendBillingEvent(ctx context.Context, obj cli
 		return r.AddBillingFinalizer(ctx, obj)
 	}
 
-	if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, &billing, Stages.Exists); err != nil {
+	if err := r.notifyBilling(ctx, getMsgKey(obj), klMetadata, billing, Stages.Exists); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
@@ -92,10 +92,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 	switch *gvk {
 	case crdsv1.GroupVersion.WithKind("App"):
 		{
-
-			app, err := rApi.Get(
-				ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.App{},
-			)
+			app, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.App{})
 			if err != nil {
 				return ctrl.Result{}, client.IgnoreNotFound(err)
 			}
@@ -107,9 +104,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 
 			s, ok := app.GetAnnotations()[constants.AnnotationKeys.BillableQuantity]
 			if !ok {
-				logger.Infof(
-					"missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity,
-				)
+				logger.Infof("missing annotation key billable quantity: %v", constants.AnnotationKeys.BillableQuantity)
 				return ctrl.Result{}, nil
 			}
 			billableQ, err := strconv.ParseFloat(s, 32)
@@ -125,7 +120,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 				},
 			}
 
-			return r.SendBillingEvent(ctx, app, billing)
+			return r.SendBillingEvent(ctx, app, &billing)
 		}
 
 	case crdsv1.GroupVersion.WithKind("ManagedService"):
@@ -133,6 +128,10 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 			msvc, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), &crdsv1.ManagedService{})
 			if err != nil {
 				return ctrl.Result{}, client.IgnoreNotFound(err)
+			}
+
+			if msvc.GetDeletionTimestamp() != nil {
+				return r.SendBillingEvent(ctx, msvc, nil)
 			}
 
 			realMsvcType := metav1.TypeMeta{APIVersion: msvc.Spec.MsvcKind.APIVersion, Kind: msvc.Spec.MsvcKind.Kind}
@@ -166,7 +165,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
-					return r.SendBillingEvent(ctx, msvc, billing)
+					return r.SendBillingEvent(ctx, msvc, &billing)
 				}
 			case redisStandalone.GroupVersion.WithKind("Service"):
 				{
@@ -193,11 +192,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
-					return r.SendBillingEvent(
-						ctx,
-						msvc,
-						billing,
-					)
+					return r.SendBillingEvent(ctx, msvc, &billing)
 				}
 
 			case mysqlStandalone.GroupVersion.WithKind("Service"):
@@ -224,7 +219,7 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 							newK8sItem(msvc, BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
-					return r.SendBillingEvent(ctx, msvc, billing)
+					return r.SendBillingEvent(ctx, msvc, &billing)
 				}
 			}
 		}
@@ -266,9 +261,8 @@ func (r *BillingWatcherReconciler) Reconcile(ctx context.Context, oReq ctrl.Requ
 					newK8sItem(lambda, Lambda, float32(billableQ), len(podsList.Items)),
 				},
 			}
-			return r.SendBillingEvent(ctx, lambda, billing)
+			return r.SendBillingEvent(ctx, lambda, &billing)
 		}
-
 	}
 	return ctrl.Result{}, nil
 }
