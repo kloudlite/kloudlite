@@ -11,6 +11,11 @@ const (
 	DeviceStateDeleted  = DeviceStatus("deleted")
 )
 
+type Port struct {
+	Port       int32  `json:"port" bson:"port"`
+	TargetPort *int32 `json:"target_port" bson:"target_port"`
+}
+
 type Device struct {
 	repos.BaseEntity `bson:",inline"`
 	Index            int          `json:"index" bson:"index"`
@@ -19,7 +24,7 @@ type Device struct {
 	UserId           repos.ID     `json:"user_id" bson:"user_id"`
 	Status           DeviceStatus `json:"status" bson:"status"`
 	ActiveRegion     *string      `json:"region" bson:"region"`
-	ExposedPorts     []int32      `json:"exposed_ports" bson:"exposed_ports"`
+	ExposedPorts     []Port      `json:"exposed_ports" bson:"exposed_ports"`
 }
 
 var DeviceIndexes = []repos.IndexField{
