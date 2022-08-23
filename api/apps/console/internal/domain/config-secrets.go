@@ -63,7 +63,7 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 		APIVersion: opcrds.SecretAPIVersion,
 		Kind:       opcrds.SecretKind,
 		Metadata: opcrds.SecretMetadata{
-			Name:      secretName,
+			Name:      string(create.Id),
 			Namespace: prj.Name,
 		},
 		Data: nil,
@@ -97,7 +97,7 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 		APIVersion: opcrds.SecretAPIVersion,
 		Kind:       opcrds.SecretKind,
 		Metadata: opcrds.SecretMetadata{
-			Name:      cfg.Name,
+			Name:      string(cfg.Id),
 			Namespace: cfg.Namespace,
 		},
 		Data: (func() map[string]any {
@@ -131,7 +131,7 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 		APIVersion: opcrds.ConfigAPIVersion,
 		Kind:       opcrds.ConfigKind,
 		Metadata: opcrds.ConfigMetadata{
-			Name:      secret.Name,
+			Name:      string(secret.Id),
 			Namespace: secret.Namespace,
 		},
 	})
