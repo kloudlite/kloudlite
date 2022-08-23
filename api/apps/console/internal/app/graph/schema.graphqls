@@ -105,7 +105,7 @@ type Mutation {
   core_addDevice(accountId: ID!, name: String!): Device! #account-member-access
 
   core_removeDevice(deviceId: ID!): Boolean! #device-owner-access #account-admin-access #account-owner-access
-  core_updateDevice(deviceId: ID!,name:String, region: String, ports: [Int!]): Boolean! #device-owner-access
+  core_updateDevice(deviceId: ID!,name:String, region: String, ports: [PortIn!]): Boolean! #device-owner-access
 
   core_createProject(
     accountId: ID!,
@@ -455,12 +455,21 @@ extend type User @key(fields: "id") {
   devices: [Device]
 }
 
+input PortIn{
+  port: Int!
+  targetPort: Int
+}
 
 input DeviceIn {
   id: ID!
   name: String!
   region: String!
-  ports: [Int!]!
+  ports: [PortIn!]!
+}
+
+type Port{
+  port: Int!
+  targetPort: Int
 }
 
 type Device @key(fields: "id") {
@@ -469,6 +478,6 @@ type Device @key(fields: "id") {
   name: String!
   configuration: Json!
   account: Account!
-  ports: [Int!]!
+  ports: [Port!]!
   region: String
 }
