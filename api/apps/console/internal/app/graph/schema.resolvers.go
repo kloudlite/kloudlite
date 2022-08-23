@@ -42,10 +42,19 @@ func (r *accountResolver) Devices(ctx context.Context, obj *model.Account) ([]*m
 			Account: &model.Account{ID: device.AccountId},
 			Name:    device.Name,
 			Region:  device.ActiveRegion,
-			Ports: func() []int {
-				var ports []int
+			Ports: func() []*model.Port {
+				var ports []*model.Port
 				for _, port := range device.ExposedPorts {
-					ports = append(ports, int(port))
+					ports = append(ports, &model.Port{
+						Port: int(port.Port),
+						TargetPort: func() *int {
+							if port.TargetPort != nil {
+								i := int(*port.TargetPort)
+								return &i
+							}
+							return nil
+						}(),
+					})
 				}
 				return ports
 			}(),
@@ -239,10 +248,19 @@ func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID
 		Account: &model.Account{
 			ID: device.AccountId,
 		},
-		Ports: func() []int {
-			var ports []int
+		Ports: func() []*model.Port {
+			var ports []*model.Port
 			for _, port := range device.ExposedPorts {
-				ports = append(ports, int(port))
+				ports = append(ports, &model.Port{
+					Port: int(port.Port),
+					TargetPort: func() *int {
+						if port.TargetPort != nil {
+							i := int(*port.TargetPort)
+							return &i
+						}
+						return nil
+					}(),
+				})
 			}
 			return ports
 		}(),
@@ -261,11 +279,20 @@ func (r *mutationResolver) CoreRemoveDevice(ctx context.Context, deviceID repos.
 	return true, nil
 }
 
-func (r *mutationResolver) CoreUpdateDevice(ctx context.Context, deviceID repos.ID, name *string, region *string, ports []int) (bool, error) {
-	_, err := r.Domain.UpdateDevice(ctx, deviceID, name, region, func() []int32 {
-		makePorts := make([]int32, 0)
+func (r *mutationResolver) CoreUpdateDevice(ctx context.Context, deviceID repos.ID, name *string, region *string, ports []*model.PortIn) (bool, error) {
+	_, err := r.Domain.UpdateDevice(ctx, deviceID, name, region, func() []entities.Port {
+		makePorts := make([]entities.Port, 0)
 		for _, p := range ports {
-			makePorts = append(makePorts, int32(p))
+			makePorts = append(makePorts, entities.Port{
+				Port: int32(p.Port),
+				TargetPort: func() *int32 {
+					if p.TargetPort != nil {
+						i := int32(*p.TargetPort)
+						return &i
+					}
+					return nil
+				}(),
+			})
 		}
 		return makePorts
 	}())
@@ -1316,10 +1343,19 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 			User:    &model.User{ID: device.UserId},
 			Account: &model.Account{ID: device.AccountId},
 			Name:    device.Name,
-			Ports: func() []int {
-				var ports []int
+			Ports: func() []*model.Port {
+				var ports []*model.Port
 				for _, port := range device.ExposedPorts {
-					ports = append(ports, int(port))
+					ports = append(ports, &model.Port{
+						Port: int(port.Port),
+						TargetPort: func() *int {
+							if port.TargetPort != nil {
+								i := int(*port.TargetPort)
+								return &i
+							}
+							return nil
+						}(),
+					})
 				}
 				return ports
 			}(),
