@@ -2,6 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
+	"regexp"
+	"strings"
+
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
@@ -15,10 +20,6 @@ import (
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	rcn "kloudlite.io/pkg/res-change-notifier"
-	"math"
-	"math/rand"
-	"regexp"
-	"strings"
 )
 
 type domain struct {
