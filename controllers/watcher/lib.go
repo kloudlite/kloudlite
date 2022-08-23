@@ -29,7 +29,7 @@ type MessageReply struct {
 	IsReady         bool               `json:"isReady"`
 	// ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
 	Key      string          `json:"key"`
-	Billing  ResourceBilling `json:"billing,omitempty"`
+	Billing  *ResourceBilling `json:"billing,omitempty"`
 	Metadata KlMetadata      `json:"metadata,omitempty"`
 	Stage    stageTT         `json:"stage"`
 }
@@ -63,7 +63,7 @@ func (n *Notifier) notifyBilling(ctx context.Context, key string, metadata KlMet
 	metadata.ClusterId = n.clusterId
 	msg := MessageReply{
 		Metadata: metadata,
-		Billing:  *billing,
+		Billing:  billing,
 		Key:      key,
 		Stage:    stage,
 	}
