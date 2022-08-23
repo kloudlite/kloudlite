@@ -246,7 +246,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Type:      v.Type,
 				RefName:   v.Ref,
 				Items: func() []op_crds.VolumeItem {
-					items := []op_crds.VolumeItem{}
+					var items []op_crds.VolumeItem
 					if v.Type == "config" {
 						config, _ := d.configRepo.FindById(ctx, repos.ID(v.Ref))
 						for _, e := range config.Data {
@@ -438,9 +438,10 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					cs := make([]op_crds.Container, 0)
 					for _, c := range app.Containers {
 						cs = append(cs, op_crds.Container{
-							Name:    c.Name,
-							Image:   c.Image,
-							Volumes: configSecretFileMounts,
+							Name:            c.Name,
+							Image:           c.Image,
+							ImagePullPolicy: "Always",
+							Volumes:         configSecretFileMounts,
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
