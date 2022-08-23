@@ -198,18 +198,19 @@ var Module = fx.Module(
 		))
 		a.Get("/build-logs", fWebsocket.New(func(conn *fWebsocket.Conn) {
 			appId := conn.Query("app_id", "app_id")
+			pipelineId := conn.Query("pipeline_id", "pipeline_id")
 			app, err := d.GetApp(context.TODO(), repos.ID(appId))
-			pipelineId, ok := app.Metadata["pipeline_id"]
+			// pipelineId, ok := app.Metadata["pipeline_id"]
 			if err != nil {
 				fmt.Println(err)
 				conn.Close()
 				return
 			}
-			if !ok {
-				fmt.Println("no pipeline_id found")
-				conn.Close()
-				return
-			}
+			// if !ok {
+			// 	fmt.Println("no pipeline_id found")
+			// 	conn.Close()
+			// 	return
+			// }
 
 			// Crosscheck session
 			client.Tail([]lokiserver.StreamSelector{
@@ -221,7 +222,7 @@ var Module = fx.Module(
 				{
 					Key:       "app",
 					Operation: "=",
-					Value:     pipelineId.(string),
+					Value:     pipelineId,
 				},
 			}, nil, nil, nil, nil, conn)
 		}))
