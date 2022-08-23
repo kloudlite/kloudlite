@@ -201,6 +201,28 @@ spec:
                 type: integer
               isReady:
                 type: boolean
+              messages:
+                items:
+                  properties:
+                    container:
+                      type: string
+                    exitCode:
+                      format: int32
+                      type: integer
+                    message:
+                      type: string
+                    pod:
+                      type: string
+                    reason:
+                      type: string
+                    state:
+                      type: string
+                  required:
+                  - message
+                  - reason
+                  - state
+                  type: object
+                type: array
               opsConditions:
                 items:
                   description: "Condition contains details for one aspect of the current
