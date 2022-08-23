@@ -13,7 +13,7 @@ const (
 
 var LabelKeys = struct {
 	HarborProjectRef string
-	Freeze string
+	Freeze           string
 }{
 	HarborProjectRef: "artifacts.kloudlite.io/harbor-project-ref",
 	Freeze:           "kloudlite.io/freeze",

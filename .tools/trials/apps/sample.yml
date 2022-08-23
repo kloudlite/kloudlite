@@ -1,3 +1,15 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret
+  namespace: kl-core
+type: Opaque
+stringData:
+  key1: value1
+  key2: value2
+  key3: value3
+---
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
@@ -16,16 +28,47 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: nginx
+      image: nxtcoder17/example-http:latest
       imagePullPolicy: Always
+      args:
+        - --addr
+        - localhost:3000
       command:
-        - bash
+        - sh
         - -c
         - |+
-          echo "asdfsdafasfasf" > /dev/termination-log
+          # mkdir -p /sample
+          # echo "hi" > /sample/hi.txt
+          # # echo "asdfsdafasfasf" > /dev/termination-log
+          tail -f /dev/null
         # - |+
         #   echo "failing because i have been told to do so" > /dev/termination-log
         #   exit 1
+      
+      volumes:
+        - mountPath: /app
+          type: secret
+          refName: oauth-github-app-pk
+          items:
+            - key: github-app-pk.pem
+              fileName: github-app-pk2.pem
+
+        - mountPath: /app
+          type: secret
+          refName: example-secret
+          items:
+            - key: key1
+              fileName: file-key1
+            - key: key2
+
+        - mountPath: /app/example-secret
+          type: secret
+          refName: example-secret
+
+        - mountPath: /app/github
+          type: secret
+          refName: oauth-github-app-pk
+
       resourceCpu:
         min: 50m
         max: 100m
