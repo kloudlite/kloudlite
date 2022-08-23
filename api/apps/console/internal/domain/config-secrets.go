@@ -13,12 +13,20 @@ import (
 
 func (d *domain) GetSecret(ctx context.Context, secretId repos.ID) (*entities.Secret, error) {
 	sec, err := d.secretRepo.FindById(ctx, secretId)
+	err = d.checkProjectAccess(ctx, sec.ProjectId, "read_secrets")
+	if err != nil {
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
 	return sec, nil
 }
 func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error) {
+	err := d.checkProjectAccess(ctx, projectId, "read_secrets")
+	if err != nil {
+		return nil, err
+	}
 	secrets, err := d.secretRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"project_id": projectId,
@@ -30,6 +38,10 @@ func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entitie
 	return secrets, nil
 }
 func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error) {
+	err := d.checkProjectAccess(ctx, projectId, "add_secrets")
+	if err != nil {
+		return nil, err
+	}
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return nil, err
@@ -63,6 +75,10 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 }
 func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error) {
 	cfg, err := d.secretRepo.FindById(ctx, secretId)
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, "update_secrets")
+	if err != nil {
+		return false, err
+	}
 	if err != nil {
 		return false, err
 	}
@@ -100,6 +116,10 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 }
 func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error) {
 	secret, err := d.secretRepo.FindById(ctx, secretId)
+	err = d.checkProjectAccess(ctx, secret.ProjectId, "delete_secrets")
+	if err != nil {
+		return false, err
+	}
 	if err != nil {
 		return false, err
 	}
@@ -120,12 +140,20 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 
 func (d *domain) GetConfig(ctx context.Context, configId repos.ID) (*entities.Config, error) {
 	cfg, err := d.configRepo.FindById(ctx, configId)
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, "read_configs")
+	if err != nil {
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
 	return cfg, nil
 }
 func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error) {
+	err := d.checkProjectAccess(ctx, projectId, "read_configs")
+	if err != nil {
+		return nil, err
+	}
 	configs, err := d.configRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"project_id": projectId,
@@ -137,6 +165,10 @@ func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entitie
 	return configs, nil
 }
 func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error) {
+	err := d.checkProjectAccess(ctx, projectId, "create_configs")
+	if err != nil {
+		return nil, err
+	}
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return nil, err
@@ -174,6 +206,10 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 }
 func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error) {
 	cfg, err := d.configRepo.FindById(ctx, configId)
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, "update_configs")
+	if err != nil {
+		return false, err
+	}
 	if err != nil {
 		return false, err
 	}
@@ -212,6 +248,10 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 
 func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, error) {
 	cfg, err := d.configRepo.FindById(ctx, configId)
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, "delete_configs")
+	if err != nil {
+		return false, err
+	}
 	if err != nil {
 		return false, err
 	}

@@ -234,6 +234,7 @@ func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID
 	if session == nil {
 		return nil, errors.New("user not logged in")
 	}
+	ctx = context.WithValue(ctx, "user_id", session.UserId)
 	device, err := r.Domain.AddDevice(ctx, name, accountID, session.UserId)
 	if err != nil {
 		return nil, err
