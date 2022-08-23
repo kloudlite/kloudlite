@@ -28,10 +28,10 @@ type MessageReply struct {
 	Conditions      []metav1.Condition `json:"conditions,omitempty"`
 	IsReady         bool               `json:"isReady"`
 	// ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
-	Key      string          `json:"key"`
+	Key      string           `json:"key"`
 	Billing  *ResourceBilling `json:"billing,omitempty"`
-	Metadata KlMetadata      `json:"metadata,omitempty"`
-	Stage    stageTT         `json:"stage"`
+	Metadata KlMetadata       `json:"metadata,omitempty"`
+	Stage    stageTT          `json:"stage"`
 }
 
 type Notifier struct {
