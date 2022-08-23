@@ -313,9 +313,10 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					cs := make([]op_crds.Container, 0)
 					for _, c := range app.Containers {
 						cs = append(cs, op_crds.Container{
-							Name:    c.Name,
-							Image:   c.Image,
-							Volumes: configSecretFileMounts,
+							Name:            c.Name,
+							Image:           c.Image,
+							ImagePullPolicy: "Always",
+							Volumes:         configSecretFileMounts,
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
