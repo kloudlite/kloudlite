@@ -36,6 +36,9 @@ func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate
 		if one.Status == entities.AppStateRestarting {
 			newStatus = entities.AppStateLive
 		}
+	} else {
+		// Check for error
+		newStatus = entities.AppStateSyncing
 	}
 	shouldNotify := one.Status != newStatus
 	one.Status = newStatus
