@@ -8,20 +8,20 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/env"
+	"operators.kloudlite.io/lib/conditions"
+	"operators.kloudlite.io/lib/constants"
+	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
+	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/lib/conditions"
-	"operators.kloudlite.io/lib/constants"
-	fn "operators.kloudlite.io/lib/functions"
-	rApi "operators.kloudlite.io/lib/operator"
 
 	"operators.kloudlite.io/lib/templates"
 )
@@ -128,16 +128,35 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) stepResu
 			return req.FailWithStatusError(err)
 		}
 		childC = append(childC, rConditions...)
-		rReady := meta.IsStatusConditionTrue(rConditions, "DeploymentAvailable")
-		if !rReady {
+		deploymentReady := meta.IsStatusConditionTrue(rConditions, "DeploymentAvailable")
+		if !deploymentReady {
 			isReady = false
 		}
 		cs = append(
-			cs, conditions.New(conditions.DeploymentReady, rReady, conditions.Empty),
+			cs, conditions.New(conditions.DeploymentReady, deploymentReady, conditions.Empty),
 		)
 
-		// TODO: conditions from pod
-		// conditions.FromPod(ctx, r.Client, constants.DeploymentType)
+		if !deploymentReady {
+			var podsList corev1.PodList
+			if err := r.List(
+				ctx, &podsList, &client.ListOptions{
+					LabelSelector: labels.SelectorFromValidatedSet(
+						map[string]string{
+							"app": obj.Name,
+						},
+					),
+					Namespace: obj.Namespace,
+				},
+			); err != nil {
+				return req.FailWithStatusError(err)
+			}
+
+			cMessages, err := rApi.GetMessagesFromPods(podsList.Items...)
+			if err != nil {
+				return req.FailWithStatusError(err).Err(nil)
+			}
+			obj.Status.Messages = cMessages
+		}
 	}
 
 	// STEP: 2.1: check current number of replicas
@@ -237,6 +256,7 @@ func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, log
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&crdsv1.App{}).
 		Owns(&appsv1.Deployment{}).

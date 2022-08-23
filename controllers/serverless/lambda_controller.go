@@ -136,9 +136,7 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 	var cs []metav1.Condition
 
 	// STEP: 1. sync conditions from Knative Serving
-	knativeRes, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.KnativeServiceType),
-	)
+	knativeRes, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.KnativeServiceType))
 
 	if err != nil {
 		isReady = false
@@ -154,22 +152,35 @@ func (r *LambdaReconciler) reconcileStatus(req *rApi.Request[*serverlessv1.Lambd
 			return req.FailWithStatusError(err)
 		}
 		// childC = append(childC, ksConditions...)
-		rReady := meta.IsStatusConditionTrue(ksConditions, "ConfigurationsReady")
-		if !rReady {
+
+		condition := meta.FindStatusCondition(ksConditions, "ConfigurationsReady")
+		if condition == nil {
 			isReady = false
+			cs = append(cs, conditions.New(KnativeServingReady, false, conditions.Empty))
+		} else {
+			if condition.Status != metav1.ConditionTrue {
+				isReady = false
+				cs = append(cs, conditions.New(KnativeServingReady, false, conditions.Empty, condition.Message))
+				obj.Status.Messages = []rApi.ContainerMessage{
+					{
+						State:   "configuration-error",
+						Reason:  condition.Reason,
+						Message: condition.Message,
+					},
+				}
+			} else {
+				cs = append(cs, conditions.New(KnativeServingReady, true, conditions.Empty))
+			}
 		}
-		cs = append(
-			cs, conditions.New(KnativeServingReady, rReady, conditions.Empty),
-		)
 	}
 
 	// STEP: 5. patch aggregated conditions
-	nConditions, hasSUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
+	nConditions, hasUpdated, err := conditions.Patch(obj.Status.Conditions, cs)
 	if err != nil {
 		return req.FailWithStatusError(err)
 	}
 
-	if !hasSUpdated && isReady == obj.Status.IsReady {
+	if !hasUpdated && isReady == obj.Status.IsReady {
 		return req.Next()
 	}
 

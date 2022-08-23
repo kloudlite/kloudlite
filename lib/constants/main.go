@@ -13,7 +13,6 @@ const (
 
 var LabelKeys = struct {
 	HarborProjectRef string
-
 	Freeze string
 }{
 	HarborProjectRef: "artifacts.kloudlite.io/harbor-project-ref",

@@ -20,6 +20,7 @@ import (
 type Status struct {
 	// +kubebuilder:validation:Optional
 	IsReady         bool               `json:"isReady"`
+	Messages        []ContainerMessage `json:"messages,omitempty"`
 	DisplayVars     rawJson.RawJson    `json:"displayVars,omitempty"`
 	GeneratedVars   rawJson.RawJson    `json:"generatedVars,omitempty"`
 	Conditions      []metav1.Condition `json:"conditions,omitempty"`
