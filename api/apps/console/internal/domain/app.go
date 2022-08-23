@@ -3,10 +3,11 @@ package domain
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
-	"time"
 )
 
 func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, error) {
@@ -229,6 +230,49 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 	if err != nil {
 		return err
 	}
+
+	configSecretFileMounts, err := func(c entities.Container) ([]op_crds.Volume, error) {
+		if c.VolumeMounts == nil {
+			return []op_crds.Volume{}, nil
+		}
+		if len(c.VolumeMounts) == 0 {
+			return []op_crds.Volume{}, nil
+		}
+		vs := make([]op_crds.Volume, 0)
+
+		for _, v := range c.VolumeMounts {
+			vs = append(vs, op_crds.Volume{
+				MountPath: v.MountPath,
+				Type:      v.Type,
+				RefName:   v.Ref,
+				Items: func() []op_crds.VolumeItem {
+					items := []op_crds.VolumeItem{}
+					if v.Type == "config" {
+						config, _ := d.configRepo.FindById(ctx, repos.ID(v.Ref))
+						for _, e := range config.Data {
+							items = append(items, op_crds.VolumeItem{
+								Key: e.Key,
+							})
+						}
+					} else {
+						secret, _ := d.secretRepo.FindById(ctx, repos.ID(v.Ref))
+						for _, e := range secret.Data {
+							items = append(items, op_crds.VolumeItem{
+								Key: e.Key,
+							})
+						}
+					}
+					return items
+				}(),
+			})
+		}
+		return vs, nil
+	}(app.Containers[0])
+
+	if err != nil {
+		return err
+	}
+
 	if app.IsLambda {
 		err := d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.Lambda{
 			APIVersion: op_crds.LambdaAPIVersion,
@@ -269,25 +313,9 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					cs := make([]op_crds.Container, 0)
 					for _, c := range app.Containers {
 						cs = append(cs, op_crds.Container{
-							Name:  c.Name,
-							Image: c.Image,
-							Volumes: func() []op_crds.Volume {
-								if c.VolumeMounts == nil {
-									return nil
-								}
-								if len(c.VolumeMounts) == 0 {
-									return nil
-								}
-								vs := make([]op_crds.Volume, 0)
-								for _, v := range c.VolumeMounts {
-									vs = append(vs, op_crds.Volume{
-										MountPath: v.MountPath,
-										Type:      v.Type,
-										RefName:   v.Ref,
-									})
-								}
-								return vs
-							}(),
+							Name:    c.Name,
+							Image:   c.Image,
+							Volumes: configSecretFileMounts,
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
@@ -410,25 +438,9 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					cs := make([]op_crds.Container, 0)
 					for _, c := range app.Containers {
 						cs = append(cs, op_crds.Container{
-							Name:  c.Name,
-							Image: c.Image,
-							Volumes: func() []op_crds.Volume {
-								if c.VolumeMounts == nil {
-									return nil
-								}
-								if len(c.VolumeMounts) == 0 {
-									return nil
-								}
-								vs := make([]op_crds.Volume, 0)
-								for _, v := range c.VolumeMounts {
-									vs = append(vs, op_crds.Volume{
-										MountPath: v.MountPath,
-										Type:      v.Type,
-										RefName:   v.Ref,
-									})
-								}
-								return vs
-							}(),
+							Name:    c.Name,
+							Image:   c.Image,
+							Volumes: configSecretFileMounts,
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
