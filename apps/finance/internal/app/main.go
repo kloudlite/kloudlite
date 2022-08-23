@@ -16,7 +16,6 @@ import (
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/stripe"
-	"strconv"
 	"time"
 )
 
@@ -97,15 +96,13 @@ var Module = fx.Module(
 				func() []domain.Billable {
 					billables := make([]domain.Billable, 0)
 					for _, i := range e.Billing.Items {
-						if q, err := strconv.ParseFloat(i.PlanQ, 32); err == nil {
-							billables = append(billables, domain.Billable{
-								ResourceType: i.Type,
-								Plan:         i.Plan,
-								Quantity:     q,
-								Count:        i.Count,
-								IsShared:     i.IsShared == "true",
-							})
-						}
+						billables = append(billables, domain.Billable{
+							ResourceType: i.Type,
+							Plan:         i.Plan,
+							Quantity:     i.PlanQ,
+							Count:        i.Count,
+							IsShared:     i.IsShared == "true",
+						})
 					}
 					return billables
 				}(),
