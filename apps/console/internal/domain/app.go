@@ -10,9 +10,21 @@ import (
 )
 
 func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, error) {
-	return d.appRepo.FindById(ctx, appId)
+	app, err := d.appRepo.FindById(ctx, appId)
+	if err != nil {
+		return nil, err
+	}
+	err = d.checkProjectAccess(ctx, app.ProjectId, "read_apps")
+	if err != nil {
+		return nil, err
+	}
+	return app, nil
 }
 func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.App, error) {
+	err := d.checkProjectAccess(ctx, projectID, "update_app")
+	if err != nil {
+		return nil, err
+	}
 	apps, err := d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"project_id": projectID,
 	}})
@@ -20,6 +32,7 @@ func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.A
 		return nil, err
 	}
 	return apps, nil
+
 }
 
 func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate) error {
@@ -62,6 +75,10 @@ func (d *domain) OnDeleteApp(ctx context.Context, response *op_crds.StatusUpdate
 }
 
 func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entities.App) (*entities.App, error) {
+	err := d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err != nil {
+		return nil, err
+	}
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return nil, err
@@ -79,7 +96,12 @@ func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entitie
 	}
 	return createdApp, nil
 }
+
 func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App) (*entities.App, error) {
+	err := d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err != nil {
+		return nil, err
+	}
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
 		return nil, err
@@ -101,6 +123,7 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 
 func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
 	if err != nil {
 		return err
 	}
@@ -116,8 +139,10 @@ func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
 	d.sendAppApply(ctx, prj, app, false)
 	return nil
 }
+
 func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
 	if err != nil {
 		return err
 	}
@@ -135,6 +160,10 @@ func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
 }
 func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err != nil {
+		return err
+	}
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
 		return err
@@ -155,6 +184,10 @@ func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 }
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	app, err := d.appRepo.FindById(ctx, appID)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "delete_app")
+	if err != nil {
+		return false, err
+	}
 	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
 		APIVersion: op_crds.AppAPIVersion,
 		Kind:       op_crds.AppKind,
