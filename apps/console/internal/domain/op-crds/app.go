@@ -19,10 +19,15 @@ type EnvEntry struct {
 	RefKey  *string `json:"refKey,omitempty"`
 }
 
+type VolumeItem struct {
+	Key string `json:"key"`
+}
+
 type Volume struct {
-	MountPath string `json:"mountPath,omitempty"`
-	Type      string `json:"type,omitempty"`
-	RefName   string `json:"refName,omitempty"`
+	MountPath string       `json:"mountPath,omitempty"`
+	Type      string       `json:"type,omitempty"`
+	RefName   string       `json:"refName,omitempty"`
+	Items     []VolumeItem `json:"items"`
 }
 
 type Container struct {
