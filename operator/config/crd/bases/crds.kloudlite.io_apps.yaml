@@ -198,7 +198,6 @@ spec:
                                 key:
                                   type: string
                               required:
-                              - fileName
                               - key
                               type: object
                             type: array

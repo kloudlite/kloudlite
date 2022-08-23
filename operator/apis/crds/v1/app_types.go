@@ -25,7 +25,7 @@ type ContainerEnv struct {
 
 type ContainerVolumeItem struct {
 	Key      string `json:"key"`
-	FileName string `json:"fileName"`
+	FileName string `json:"fileName,omitempty"`
 }
 
 type EnvFrom struct {
@@ -40,6 +40,7 @@ type ContainerVolume struct {
 	Type      ResourceType          `json:"type"`
 	RefName   string                `json:"refName"`
 	Items     []ContainerVolumeItem `json:"items,omitempty"`
+	// SubPath   string                `json:"subPath,omitempty"`
 }
 
 type ShellProbe struct {
