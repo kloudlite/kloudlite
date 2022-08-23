@@ -2,16 +2,21 @@ apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
   name: elastic
-  namespace: hotspot
+  namespace: kl-core
 spec:
-  msvcRef:
+  cloudProvider:
+    cloud: azure
+    region: centralindia
+  nodeSelector:
+    kloudlite.io/region: centralindia
+  msvcKind:
     apiVersion: elasticsearch.msvc.kloudlite.io/v1
-  cloudProvider: k3s
-  nodeSelector: {}
+    kind: Service
   inputs:
-    replicaCount: 1
-    cpu: 500m
-    memory: 700Mi
+    resources:
+      cpu:
+        min: 500m
+        max: 700m
+      memory: 700Mi
     storage:
-      size: 2Gi
-      storageClass: local-path
+      size: 1Gi

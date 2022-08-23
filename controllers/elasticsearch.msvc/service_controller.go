@@ -87,13 +87,7 @@ func (r *ServiceReconciler) reconcileStatus(req *rApi.Request[*elasticSearch.Ser
 	var cs []metav1.Condition
 
 	// 1. check if helm service is available
-	helmConditions, err := conditions.FromResource(
-		ctx,
-		r.Client,
-		constants.HelmElasticType,
-		"Helm",
-		fn.NN(svcObj.Namespace, svcObj.Name),
-	)
+	helmConditions, err := conditions.FromResource(ctx, r.Client, constants.HelmElasticType, "Helm", fn.NN(svcObj.Namespace, svcObj.Name))
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.FailWithStatusError(err)
@@ -225,6 +219,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&elasticSearch.Service{}).
 		Owns(fn.NewUnstructured(constants.HelmElasticType)).

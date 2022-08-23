@@ -221,8 +221,9 @@ func ParseConfigMap(s *corev1.ConfigMap) *corev1.ConfigMap {
 }
 
 func Md5(b []byte) string {
-	sum := md5.New().Sum(b)
-	return hex.EncodeToString(sum)
+	hash := md5.New()
+	hash.Write(b)
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func New[T any](v T) *T {

@@ -36,9 +36,9 @@ func GetMessagesFromPods(pods ...corev1.Pod) ([]ContainerMessage, error) {
 					cMsgs, ContainerMessage{
 						Pod:       pods[i].Name,
 						Container: st.Name,
-						State:   "waiting",
-						Reason:  st.State.Waiting.Reason,
-						Message: st.State.Waiting.Message,
+						State:     "waiting",
+						Reason:    st.State.Waiting.Reason,
+						Message:   st.State.Waiting.Message,
 					},
 				)
 			}

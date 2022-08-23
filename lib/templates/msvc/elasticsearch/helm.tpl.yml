@@ -12,6 +12,7 @@ metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
+  labels: {{.Labels | toYAML | nindent 4}}
 spec:
   replicas: {{.Spec.ReplicaCount}}
   minimumMasterNodes: {{.Spec.ReplicaCount}}
@@ -25,10 +26,11 @@ spec:
 
   resources:
     limits:
-      cpu: {{.Spec.Resources.Cpu}}
+      cpu: {{.Spec.Resources.Cpu.Max}}
       memory: {{.Spec.Resources.Memory}}
     requests:
-      memory: {{.Spec.Resources.Cpu}}
+      cpu: {{.Spec.Resources.Cpu.Min}}
+      memory: {{.Spec.Resources.Memory}}
 
   secret:
     enabled: true

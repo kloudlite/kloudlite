@@ -3,7 +3,6 @@ package v1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
-	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -11,7 +10,7 @@ type ServiceSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	// +kubebuilder:validation:optional
-	NodeSelector map[string]string `json:"nodeSelector"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
 	// +kubebuidler:default=1
 	// +kubebuilder:validation:Optional
@@ -38,13 +37,11 @@ func (s *Service) GetStatus() *rApi.Status {
 }
 
 func (s *Service) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{"kloudlite.io/msvc.name": s.Name}
 }
 
-func (m *Service) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Service").String(),
-	}
+func (s *Service) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true
