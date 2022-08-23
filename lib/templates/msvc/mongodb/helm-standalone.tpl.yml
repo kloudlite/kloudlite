@@ -30,7 +30,7 @@ spec:
 
   {{- if .Labels }}
   commonLabels: {{.Labels | toYAML | nindent 4}}
-  {{- end}}
+  {{- end }}
 
   {{- if .Spec.NodeSelector}}
   nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
@@ -39,13 +39,27 @@ spec:
   auth:
     enabled: true
     rootPassword: {{ index $generatedVars "root-password" }}
+
   persistence:
     enabled: true
     size: {{.Spec.Storage.Size}}
+
   volumePermissions:
     enabled: true
+
   metrics:
     enabled: true
+
+  livenessProbe:
+    enabled: true
+    timeoutSeconds: 15
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 20
+
   resources:
     requests:
       cpu: {{.Spec.Resources.Cpu.Min}}
