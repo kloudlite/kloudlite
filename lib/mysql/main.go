@@ -18,11 +18,11 @@ type Client struct {
 
 func (c *Client) Connect(ctx context.Context) error {
 	if err := c.db.PingContext(ctx); err != nil {
-		return err
+		return errors.NewEf(err, "could not ping with mysql connection")
 	}
 	conn, err := c.db.Conn(ctx)
 	if err != nil {
-		return err
+		return errors.NewEf(err, "could not create db connection")
 	}
 	c.ctx = ctx
 	c.conn = conn
@@ -110,7 +110,7 @@ func (c *Client) UserExists(username string) (bool, error) {
 func NewClient(hosts, dbName, username, password string) (*Client, error) {
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", username, password, hosts, dbName))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewEf(err, "creating mysql client")
 	}
 	// See "Important settings" section.
 	// db.SetConnMaxLifetime(time.Minute * 3)

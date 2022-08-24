@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -215,7 +216,6 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 
 	obj.Status.IsReady = isReady
 	obj.Status.Conditions = newConditions
-
 	if err := r.Status().Update(ctx, obj); err != nil {
 		return req.FailWithStatusError(err)
 	}
@@ -263,21 +263,22 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 	dbUsername := sanitizeDbUsername(obj.Name)
 
 	// STEP: 4. create child components like mongo-user, redis-acl etc.
-	err4 := func() error {
+	if meta.IsStatusConditionFalse(obj.Status.Conditions, MysqlUserExists.String()) {
 		mysqlClient, err := libMysql.NewClient(msvcRef.Hosts, "mysql", "root", msvcRef.RootPassword)
 		if err != nil {
-			return err
+			req.Logger.Infof("encountered (err=%s), requeing after 10 seconds", err.Error())
+			return req.FailWithOpError(err).Err(nil).Requeue(ctrl.Result{RequeueAfter: time.Second * 10})
 		}
 		if err := mysqlClient.Connect(ctx); err != nil {
-			return err
+			req.Logger.Infof("encountered (err=%s), requeing after 10 seconds", err.Error())
+			return req.FailWithOpError(err).Err(nil).Requeue(ctrl.Result{RequeueAfter: time.Second * 10})
 		}
 		defer mysqlClient.Close()
 
-		return mysqlClient.UpsertUser(dbName, dbUsername, dbPasswd)
-	}()
-	if err4 != nil {
-		// TODO:(user) might need to reconcile with retry with timeout error
-		return req.FailWithOpError(err4)
+		if err := mysqlClient.UpsertUser(dbName, dbUsername, dbPasswd); err != nil {
+			req.Logger.Infof("encountered (err=%s), requeing after 10 seconds", err.Error())
+			return req.FailWithOpError(err).Err(nil).Requeue(ctrl.Result{RequeueAfter: time.Second * 10})
+		}
 	}
 
 	// STEP: 5. create reconciler output (eg. secret)
