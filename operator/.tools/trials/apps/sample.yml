@@ -58,7 +58,7 @@ spec:
           refName: example-secret
           items:
             - key: key1
-              fileName: file-key1
+              fileName: main.go
             - key: key2
 
         - mountPath: /app/example-secret

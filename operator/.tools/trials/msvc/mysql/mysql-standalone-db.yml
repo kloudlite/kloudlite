@@ -1,0 +1,12 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedResource
+metadata:
+  name: auth-mysql
+  namespace: kl-core
+spec:
+  mresKind:
+    kind: Database
+  msvcRef:
+    apiVersion: mysql-standalone.msvc.kloudlite.io/v1
+    kind: Service
+    name: mysql-svc
