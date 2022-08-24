@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
+
 	_ "github.com/go-sql-driver/mysql"
 	"operators.kloudlite.io/lib/errors"
-	"strings"
 )
 
 type Client struct {
@@ -37,15 +38,10 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) UpsertUser(dbName, username, password string) error {
-	defer func() {
-		err := recover()
-		fmt.Println("ERR:", err)
-	}()
 	// result, err := c.conn.ExecContext(c.ctx, fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
-	result, err := c.conn.ExecContext(
+	_, err := c.conn.ExecContext(
 		context.Background(), fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", c.sanitizeDbName(dbName)),
 	)
-	fmt.Println("result:", result)
 	if err != nil {
 		return errors.NewEf(err, "creating database")
 	}

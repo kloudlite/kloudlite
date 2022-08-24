@@ -97,8 +97,12 @@ func (r *DatabaseReconciler) finalize(req *rApi.Request[*mysqlStandalone.Databas
 	return req.Finalize()
 }
 
-func formatDbName(dbName string) string {
+func sanitizeDbName(dbName string) string {
 	return strings.ReplaceAll(dbName, "-", "_")
+}
+
+func sanitizeDbUsername(username string) string {
+	return fn.Md5([]byte(username))
 }
 
 func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.Database]) stepResult.Result {
@@ -163,7 +167,7 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 			}
 			defer mysqlClient.Close()
 
-			userExists, err := mysqlClient.UserExists(obj.Name)
+			userExists, err := mysqlClient.UserExists(sanitizeDbUsername(obj.Name))
 			if err != nil {
 				return err
 			}
@@ -180,6 +184,16 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 			isReady = false
 			return req.FailWithStatusError(err2)
 		}
+	}
+
+	if _, err = rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "mres-"+obj.Name), &corev1.Secret{}); err != nil {
+		isReady = false
+		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, false, conditions.NotFound, err.Error()))
+		if !apiErrors.IsNotFound(err) {
+			return req.FailWithStatusError(err, cs...)
+		}
+	} else {
+		cs = append(cs, conditions.New(conditions.ReconcilerOutputExists, true, conditions.Found))
 	}
 
 	// STEP: 4. check generated vars
@@ -244,7 +258,10 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 	if !ok {
 		return req.FailWithOpError(errors.Newf("key=%s must be present in .Status.GeneratedVars", DbPasswordKey))
 	}
-	dbName := formatDbName(obj.Name)
+
+	dbName := sanitizeDbName(obj.Name)
+	dbUsername := sanitizeDbUsername(obj.Name)
+
 	// STEP: 4. create child components like mongo-user, redis-acl etc.
 	err4 := func() error {
 		mysqlClient, err := libMysql.NewClient(msvcRef.Hosts, "mysql", "root", msvcRef.RootPassword)
@@ -256,7 +273,7 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 		}
 		defer mysqlClient.Close()
 
-		return mysqlClient.UpsertUser(dbName, obj.Name, dbPasswd)
+		return mysqlClient.UpsertUser(dbName, dbUsername, dbPasswd)
 	}()
 	if err4 != nil {
 		// TODO:(user) might need to reconcile with retry with timeout error
@@ -274,12 +291,12 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 				},
 			},
 			StringData: map[string]string{
-				"USERNAME": obj.Name,
+				"USERNAME": dbUsername,
 				"PASSWORD": dbPasswd,
 				"HOSTS":    msvcRef.Hosts,
-				"DB_NAME":  formatDbName(obj.Name),
-				"DSN":      fmt.Sprintf("%s:%s@tcp(%s)/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
-				"URI":      fmt.Sprintf("mysqlx://%s:%s@%s/%s", obj.Name, dbPasswd, msvcRef.Hosts, dbName),
+				"DB_NAME":  dbName,
+				"DSN":      fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUsername, dbPasswd, msvcRef.Hosts, dbName),
+				"URI":      fmt.Sprintf("mysqlx://%s:%s@%s/%s", dbUsername, dbPasswd, msvcRef.Hosts, dbName),
 			},
 		},
 	)
@@ -293,6 +310,10 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 		return req.FailWithOpError(err).Err(nil)
 	}
 
+	obj.Status.OpsConditions = []metav1.Condition{}
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return stepResult.New().Err(err)
+	}
 	return req.Next()
 }
 
