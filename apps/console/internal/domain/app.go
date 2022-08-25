@@ -3,16 +3,29 @@ package domain
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
-	"time"
 )
 
 func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, error) {
-	return d.appRepo.FindById(ctx, appId)
+	app, err := d.appRepo.FindById(ctx, appId)
+	if err != nil {
+		return nil, err
+	}
+	err = d.checkProjectAccess(ctx, app.ProjectId, "read_apps")
+	if err != nil {
+		return nil, err
+	}
+	return app, nil
 }
 func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.App, error) {
+	err := d.checkProjectAccess(ctx, projectID, "update_app")
+	if err != nil {
+		return nil, err
+	}
 	apps, err := d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"project_id": projectID,
 	}})
@@ -20,6 +33,7 @@ func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.A
 		return nil, err
 	}
 	return apps, nil
+
 }
 
 func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate) error {
@@ -62,6 +76,10 @@ func (d *domain) OnDeleteApp(ctx context.Context, response *op_crds.StatusUpdate
 }
 
 func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entities.App) (*entities.App, error) {
+	err := d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err != nil {
+		return nil, err
+	}
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return nil, err
@@ -79,7 +97,12 @@ func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entitie
 	}
 	return createdApp, nil
 }
+
 func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App) (*entities.App, error) {
+	err := d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err != nil {
+		return nil, err
+	}
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
 		return nil, err
@@ -101,6 +124,7 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 
 func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
 	if err != nil {
 		return err
 	}
@@ -116,8 +140,10 @@ func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
 	d.sendAppApply(ctx, prj, app, false)
 	return nil
 }
+
 func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
 	if err != nil {
 		return err
 	}
@@ -135,6 +161,10 @@ func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
 }
 func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err != nil {
+		return err
+	}
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
 		return err
@@ -155,6 +185,10 @@ func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 }
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	app, err := d.appRepo.FindById(ctx, appID)
+	err = d.checkProjectAccess(ctx, app.ProjectId, "delete_app")
+	if err != nil {
+		return false, err
+	}
 	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
 		APIVersion: op_crds.AppAPIVersion,
 		Kind:       op_crds.AppKind,
@@ -196,6 +230,49 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 	if err != nil {
 		return err
 	}
+
+	configSecretFileMounts, err := func(c entities.Container) ([]op_crds.Volume, error) {
+		if c.VolumeMounts == nil {
+			return []op_crds.Volume{}, nil
+		}
+		if len(c.VolumeMounts) == 0 {
+			return []op_crds.Volume{}, nil
+		}
+		vs := make([]op_crds.Volume, 0)
+
+		for _, v := range c.VolumeMounts {
+			vs = append(vs, op_crds.Volume{
+				MountPath: v.MountPath,
+				Type:      v.Type,
+				RefName:   v.Ref,
+				Items: func() []op_crds.VolumeItem {
+					var items []op_crds.VolumeItem
+					if v.Type == "config" {
+						config, _ := d.configRepo.FindById(ctx, repos.ID(v.Ref))
+						for _, e := range config.Data {
+							items = append(items, op_crds.VolumeItem{
+								Key: e.Key,
+							})
+						}
+					} else {
+						secret, _ := d.secretRepo.FindById(ctx, repos.ID(v.Ref))
+						for _, e := range secret.Data {
+							items = append(items, op_crds.VolumeItem{
+								Key: e.Key,
+							})
+						}
+					}
+					return items
+				}(),
+			})
+		}
+		return vs, nil
+	}(app.Containers[0])
+
+	if err != nil {
+		return err
+	}
+
 	if app.IsLambda {
 		err := d.workloadMessenger.SendAction("apply", string(app.Id), &op_crds.Lambda{
 			APIVersion: op_crds.LambdaAPIVersion,
@@ -236,25 +313,10 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					cs := make([]op_crds.Container, 0)
 					for _, c := range app.Containers {
 						cs = append(cs, op_crds.Container{
-							Name:  c.Name,
-							Image: c.Image,
-							Volumes: func() []op_crds.Volume {
-								if c.VolumeMounts == nil {
-									return nil
-								}
-								if len(c.VolumeMounts) == 0 {
-									return nil
-								}
-								vs := make([]op_crds.Volume, 0)
-								for _, v := range c.VolumeMounts {
-									vs = append(vs, op_crds.Volume{
-										MountPath: v.MountPath,
-										Type:      v.Type,
-										RefName:   v.Ref,
-									})
-								}
-								return vs
-							}(),
+							Name:            c.Name,
+							Image:           c.Image,
+							ImagePullPolicy: "Always",
+							Volumes:         configSecretFileMounts,
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
@@ -377,25 +439,10 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 					cs := make([]op_crds.Container, 0)
 					for _, c := range app.Containers {
 						cs = append(cs, op_crds.Container{
-							Name:  c.Name,
-							Image: c.Image,
-							Volumes: func() []op_crds.Volume {
-								if c.VolumeMounts == nil {
-									return nil
-								}
-								if len(c.VolumeMounts) == 0 {
-									return nil
-								}
-								vs := make([]op_crds.Volume, 0)
-								for _, v := range c.VolumeMounts {
-									vs = append(vs, op_crds.Volume{
-										MountPath: v.MountPath,
-										Type:      v.Type,
-										RefName:   v.Ref,
-									})
-								}
-								return vs
-							}(),
+							Name:            c.Name,
+							Image:           c.Image,
+							ImagePullPolicy: "Always",
+							Volumes:         configSecretFileMounts,
 							Env: func() []op_crds.EnvEntry {
 								env := make([]op_crds.EnvEntry, 0)
 								for _, e := range c.EnvVars {
@@ -424,7 +471,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 								o := op_crds.Limit{
 									Min: fmt.Sprintf("%vm", int(c.Quantity*(func() float64 {
 										if c.IsShared {
-											return 500
+											return 250
 										}
 										return 1000
 									})())),

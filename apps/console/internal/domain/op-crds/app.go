@@ -19,19 +19,25 @@ type EnvEntry struct {
 	RefKey  *string `json:"refKey,omitempty"`
 }
 
+type VolumeItem struct {
+	Key string `json:"key"`
+}
+
 type Volume struct {
-	MountPath string `json:"mountPath,omitempty"`
-	Type      string `json:"type,omitempty"`
-	RefName   string `json:"refName,omitempty"`
+	MountPath string       `json:"mountPath,omitempty"`
+	Type      string       `json:"type,omitempty"`
+	RefName   string       `json:"refName,omitempty"`
+	Items     []VolumeItem `json:"items"`
 }
 
 type Container struct {
-	Name           string     `json:"name,omitempty"`
-	Image          *string    `json:"image,omitempty"`
-	ResourceCpu    *Limit     `json:"resourceCpu,omitempty"`
-	ResourceMemory *Limit     `json:"resourceMemory,omitempty"`
-	Env            []EnvEntry `json:"env,omitempty"`
-	Volumes        []Volume   `json:"volumes,omitempty"`
+	Name            string     `json:"name,omitempty"`
+	Image           *string    `json:"image,omitempty"`
+	ImagePullPolicy string     `json:"imagePullPolicy,omitempty"`
+	ResourceCpu     *Limit     `json:"resourceCpu,omitempty"`
+	ResourceMemory  *Limit     `json:"resourceMemory,omitempty"`
+	Env             []EnvEntry `json:"env,omitempty"`
+	Volumes         []Volume   `json:"volumes,omitempty"`
 }
 
 type HPA struct {

@@ -17,7 +17,6 @@ import (
 func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.projectRepo.FindOne(ctx, repos.Filter{
 		"id": response.Metadata.ResourceId,
-		//"cluster_id": response.ClusterId,
 	})
 	if err != nil {
 		return err
@@ -218,4 +217,24 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 	}
 	splits := strings.Split(string(decodeString), ":")
 	return splits[0], splits[1], nil
+}
+
+func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, action string) error {
+	return nil
+
+	//if ctx.Value("user_id") == nil {
+	//	return fmt.Errorf("not authorized")
+	//}
+	//can, err := d.iamClient.Can(ctx, &iam.InCan{
+	//	UserId:      ctx.Value("user_id").(string),
+	//	ResourceIds: []string{string(projectId)},
+	//	Action:      action,
+	//})
+	//if err != nil {
+	//	return err
+	//}
+	//if !can.Status {
+	//	return fmt.Errorf("not authorized")
+	//}
+	//return nil
 }
