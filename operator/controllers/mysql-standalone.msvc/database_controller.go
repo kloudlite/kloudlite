@@ -297,7 +297,7 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 				"HOSTS":    msvcRef.Hosts,
 				"DB_NAME":  dbName,
 				"DSN":      fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUsername, dbPasswd, msvcRef.Hosts, dbName),
-				"URI":      fmt.Sprintf("mysqlx://%s:%s@%s/%s", dbUsername, dbPasswd, msvcRef.Hosts, dbName),
+				"URI":      fmt.Sprintf("mysql://%s:%s@%s/%s", dbUsername, dbPasswd, msvcRef.Hosts, dbName),
 			},
 		},
 	)

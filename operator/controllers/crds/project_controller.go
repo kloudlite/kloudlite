@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ProjectReconciler reconciles a Project object
+// ProjectReconciler reconciles a ProjectRef object
 type ProjectReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
@@ -174,7 +174,7 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 	}
 
 	var dockerConfigJson []byte
-	accountRef, ok := project.Annotations[constants.AnnotationKeys.Account]
+	accountRef, ok := project.Annotations[constants.AnnotationKeys.AccountRef]
 	if !ok {
 		req.Logger.Infof("project=%s does not have any account id annotation", project.Name)
 	}

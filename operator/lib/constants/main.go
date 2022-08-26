@@ -14,15 +14,19 @@ const (
 var LabelKeys = struct {
 	HarborProjectRef string
 	Freeze           string
+	IsIntercepted    string
+	DeviceRef        string
 }{
 	HarborProjectRef: "artifacts.kloudlite.io/harbor-project-ref",
 	Freeze:           "kloudlite.io/freeze",
+	IsIntercepted:    "kloudlite.io/is-intercepted",
+	DeviceRef:        "kloudlite.io/intercept.device-ref",
 }
 
 var AnnotationKeys = struct {
-	Account          string
-	Project          string
-	Resource         string
+	AccountRef       string
+	ProjectRef       string
+	ResourceRef      string
 	BillingPlan      string
 	BillableQuantity string
 	GroupVersionKind string
@@ -30,9 +34,9 @@ var AnnotationKeys = struct {
 
 	Restart string
 }{
-	Account:          "kloudlite.io/account-ref",
-	Project:          "kloudlite.io/project-ref",
-	Resource:         "kloudlite.io/resource-ref",
+	AccountRef:       "kloudlite.io/account-ref",
+	ProjectRef:       "kloudlite.io/project-ref",
+	ResourceRef:      "kloudlite.io/resource-ref",
 	BillingPlan:      "kloudlite.io/billing-plan",
 	BillableQuantity: "kloudlite.io/billable-quantity",
 	GroupVersionKind: "kloudlite.io/group-version-kind",
