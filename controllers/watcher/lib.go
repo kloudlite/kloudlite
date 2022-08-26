@@ -150,9 +150,9 @@ type KlMetadata struct {
 func ExtractMetadata(obj client.Object) KlMetadata {
 	items := obj.GetAnnotations()
 	return KlMetadata{
-		AccountId:        items[constants.AnnotationKeys.Account],
-		ProjectId:        items[constants.AnnotationKeys.Project],
-		ResourceId:       items[constants.AnnotationKeys.Resource],
+		AccountId:        items[constants.AnnotationKeys.AccountRef],
+		ProjectId:        items[constants.AnnotationKeys.ProjectRef],
+		ResourceId:       items[constants.AnnotationKeys.ResourceRef],
 		GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
 	}
 }

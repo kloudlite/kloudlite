@@ -3,12 +3,13 @@ package aws
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/logging"
-	"strings"
 )
 
 type s3Obj struct {
@@ -74,7 +75,7 @@ func (s *s3Obj) AddOwnerPolicy(bucketName string, user *User) ([]PolicyStatement
 			"Principal": map[string]string{
 				"AWS": user.ARN,
 			},
-			"Resource": fmt.Sprintf("arn:aws:s3:::%s", bucketName),
+			"ResourceRef": fmt.Sprintf("arn:aws:s3:::%s", bucketName),
 		},
 		{
 			// object-level permissions
@@ -87,7 +88,7 @@ func (s *s3Obj) AddOwnerPolicy(bucketName string, user *User) ([]PolicyStatement
 				"s3:GetObject",
 				"s3:DeleteObject",
 			},
-			"Resource": fmt.Sprintf("arn:aws:s3:::%s/*", bucketName),
+			"ResourceRef": fmt.Sprintf("arn:aws:s3:::%s/*", bucketName),
 		},
 	}, nil
 }
@@ -183,10 +184,10 @@ func (s *s3Obj) MakeObjectsDirsPublic(bucketName string, dirs ...string) ([]Poli
 	for _, dir := range dirs {
 		stmts = append(
 			stmts, PolicyStatement{
-				"Effect":    "Allow",
-				"Principal": "*",
-				"Action":    "s3:GetObject",
-				"Resource":  fmt.Sprintf("arn:aws:s3:::%s/%s*", bucketName, s.ensureDirPath(dir)),
+				"Effect":      "Allow",
+				"Principal":   "*",
+				"Action":      "s3:GetObject",
+				"ResourceRef": fmt.Sprintf("arn:aws:s3:::%s/%s*", bucketName, s.ensureDirPath(dir)),
 			},
 		)
 	}

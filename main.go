@@ -205,6 +205,7 @@ func main() {
 		&mongodbexternalcontrollers.DatabaseReconciler{Name: "external-mongodb-database"},
 		&mysqlexternalcontrollers.DatabaseReconciler{Name: "external-mysql-database"},
 	}
+	// +kubebuilder:scaffold:builder
 
 	producer, err := redpanda.NewProducer(envVars.KafkaBrokers)
 	if err != nil {
@@ -258,39 +259,43 @@ func main() {
 	go func() {
 		kClient := mgr.GetClient()
 		mux := http.NewServeMux()
-		mux.HandleFunc("/healthy", func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})
+		mux.HandleFunc(
+			"/healthy", func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+		)
 
-		mux.HandleFunc("/image-push", func(w http.ResponseWriter, req *http.Request) {
-			logger.Infof("webhook event received")
-			body, err2 := ioutil.ReadAll(req.Body)
-			if err2 != nil {
-				return
-			}
-			var hookBody harbor.WebhookBody
-			if err := json.Unmarshal(body, &hookBody); err != nil {
-				return
-			}
-
-			imageName := func() string {
-				for _, v := range hookBody.EventData.Resources {
-					if v.ResourceUrl != "" {
-						return v.ResourceUrl
-					}
+		mux.HandleFunc(
+			"/image-push", func(w http.ResponseWriter, req *http.Request) {
+				logger.Infof("webhook event received")
+				body, err2 := ioutil.ReadAll(req.Body)
+				if err2 != nil {
+					return
 				}
-				return ""
-			}()
-			if err := restartApp(kClient, imageName); err != nil {
-				logger.Errorf(err, "restarting apps")
-				return
-			}
+				var hookBody harbor.WebhookBody
+				if err := json.Unmarshal(body, &hookBody); err != nil {
+					return
+				}
 
-			if err := restartLambda(kClient, imageName); err != nil {
-				logger.Errorf(err, "restarting lambda")
-				return
-			}
-		})
+				imageName := func() string {
+					for _, v := range hookBody.EventData.Resources {
+						if v.ResourceUrl != "" {
+							return v.ResourceUrl
+						}
+					}
+					return ""
+				}()
+				if err := restartApp(kClient, imageName); err != nil {
+					logger.Errorf(err, "restarting apps")
+					return
+				}
+
+				if err := restartLambda(kClient, imageName); err != nil {
+					logger.Errorf(err, "restarting lambda")
+					return
+				}
+			},
+		)
 
 		if err := http.ListenAndServe(envVars.WebhookAddr, mux); err != nil {
 			logger.Errorf(err, "failed to start webhook server")
