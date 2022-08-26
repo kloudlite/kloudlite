@@ -229,10 +229,15 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) step
 			"object":        app,
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
-			"freeze":        app.GetLabels()[constants.LabelKeys.Freeze] == "true",
+			"freeze":        app.GetLabels()[constants.LabelKeys.Freeze] == "true" || app.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(app, true),
 			},
+
+			// for intercepting
+			"is-intercepted": app.GetLabels()[constants.LabelKeys.IsIntercepted],
+			"device-ref":     app.GetLabels()[constants.LabelKeys.DeviceRef],
+			"account-ref":    app.GetAnnotations()[constants.AnnotationKeys.AccountRef],
 		},
 	)
 

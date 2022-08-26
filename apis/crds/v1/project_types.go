@@ -44,7 +44,7 @@ func (p *Project) GetEnsuredLabels() map[string]string {
 
 func (p *Project) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Project").String(),
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ProjectRef").String(),
 	}
 }
 

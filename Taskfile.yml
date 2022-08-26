@@ -127,12 +127,3 @@ tasks:
       - make generate
       - kubectl apply -f config/crd/bases
 
-  kill-port:
-    run: always
-    cmds:
-      - |
-        PID=$(lsof -t -i:8089)
-        if [ "$PID" != "" ]; then
-          kill -9 $PID
-        fi
-    silent: true

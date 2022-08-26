@@ -288,7 +288,7 @@ func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager, envVars *e
 	builder.For(&crdsv1.App{})
 
 	watchList := []client.Object{
-		// &crdsv1.Project{},
+		// &crdsv1.ProjectRef{},
 		&crdsv1.App{},
 		&serverlessv1.Lambda{},
 		&crdsv1.ManagedService{},

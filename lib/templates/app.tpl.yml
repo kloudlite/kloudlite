@@ -4,6 +4,12 @@
 {{- $ownerRefs := get . "owner-refs"}}
 {{- $freeze := get . "freeze" | default false }}
 
+{{- $clusterDnsSuffix := get . "cluster-dns-suffix" |default "svc.cluster.local"}}
+
+{{- $IsIntercepted := get . "is-intercepted" | default false }}
+{{- $deviceRef := get . "device-ref"}}
+{{- $accountRef := get . "account-ref"}}
+
 {{- with $obj }}
 {{- /* gotype: operators.kloudlite.io/apis/crds/v1.App */ -}}
 apiVersion: apps/v1
@@ -45,6 +51,10 @@ metadata:
   name: {{.Name}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
+  {{- if $IsIntercepted}}
+  type: ExternalName
+  externalName: {{$deviceRef}}.wg-{{$accountRef}}.{{$clusterDnsSuffix}}
+  {{- else }}
   selector:
     app: {{.Name}}
   ports:
@@ -56,6 +66,7 @@ spec:
       targetPort: {{.TargetPort}}
     {{- end }}
     {{- end }}
+  {{- end }}
 {{- end}}
 
 {{- if .Spec.Hpa.Enabled }}
