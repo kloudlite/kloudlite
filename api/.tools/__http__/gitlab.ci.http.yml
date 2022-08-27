@@ -1,6 +1,8 @@
 ---
 global:
-  sample: true
+  accountId: "acc-imgtxz4logeg-isxm4uqlpzzwctr"
+  projectId: "proj-ci1xmobjyia7cc00optpbeavpnmn"
+  projectName: "example-plaxonic"
 ---
 label: Gitlab Groups
 query: |
@@ -33,3 +35,27 @@ variables:
   repoId: "26232015"
 
 ---
+
+label: Create Gitlab Pipeline with Docker
+query: |
+  mutation Ci_createDockerPipeline($in: GitDockerPipelineIn!) {
+    ci_createDockerPipeline(in: $in)
+  }
+variables:
+  in:
+    name: plaxonic-website-pipeline
+    accountId: "{{accountId}}"
+    projectId: "{{projectId}}"
+    appId: "not-app-id"
+    projectName: "{{projectName}}"
+    containerName: "main"
+    gitProvider: gitlab
+    repoName: "website"
+    gitRepoUrl: "https://gitlab.com/plaxoniclabs/projects/plaxonic.com/website"
+    gitBranch: latest
+    dockerFile: ./Dockerfile
+    contextDir: ./
+    buildArgs: ""
+    artifactRef:
+      dockerImageName: "harbor.dev.madhouselabs.io/{{accountId}}/website"
+      dockerImageTag: "latest"

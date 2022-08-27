@@ -122,7 +122,7 @@ input GitDockerPipelineIn {
   contextDir: String!
   buildArgs: String!
 
-  artifactRef: GitPipelineArtifactIn
+  artifactRef:GitPipelineArtifactIn
   metadata: Json
 }
 
@@ -136,4 +136,5 @@ extend type App @key(fields: "id") {
 type Mutation {
   ci_deletePipeline(pipelineId: ID!): Boolean! # project-developer-access project-admin-access
   ci_createPipeline(in: GitPipelineIn!): Json! # project-developer-access project-admin-access
+  ci_createDockerPipeline(in: GitDockerPipelineIn!): Json!
 }

@@ -1,7 +1,9 @@
 import { ApolloServer } from 'apollo-server';
 import { ApolloGateway, RemoteGraphQLDataSource, IntrospectAndCompose } from '@apollo/gateway';
 import fs from 'fs/promises';
+import yaml from 'js-yaml';
 import assert from 'assert';
+import path from 'path';
 
 const useEnv = (key) => {
   const v = process.env[key];
@@ -9,12 +11,7 @@ const useEnv = (key) => {
   return v
 };
 
-const cfgMap = await (async () => {
-  const f = await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8')
-  return JSON.parse(f)
-})()
-
-
+const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'));
 
 // const supergraphSdl = (
 //   await fs.readFile(useEnv('SUPERGRAPH_CONFIG'), 'utf8')
@@ -23,6 +20,9 @@ const cfgMap = await (async () => {
 class CustomDataSource extends RemoteGraphQLDataSource {
   // eslint-disable-next-line class-methods-use-this
   willSendRequest({ request, context }) {
+    console.log("--------------")
+    console.log("ctx.headers: ", context?.req?.headers)
+    console.log("--------------")
     if (context && context.req && context.req.headers) {
       Object.entries(context.req.headers).forEach(([key, value]) => {
         request.http.headers.set(key, value);
@@ -53,7 +53,7 @@ const gateway = new ApolloGateway({
 const server = new ApolloServer({
   cors: {
     origin: new RegExp(
-      '(https://studio.apollographql.com)|(localhost:[43]000)'
+      '(https://studio.apollographql.com)|(https?://localhost:[43]000)'
     ),
     credentials: true,
   },

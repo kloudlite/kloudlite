@@ -3,8 +3,9 @@ package application
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/common"
 	"strings"
+
+	"kloudlite.io/common"
 
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -20,10 +21,12 @@ type server struct {
 }
 
 func (s *server) ConfirmMembership(ctx context.Context, in *iam.InConfirmMembership) (*iam.OutConfirmMembership, error) {
-	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
-		"user_id":     in.UserId,
-		"resource_id": in.ResourceId,
-	})
+	one, err := s.rbRepo.FindOne(
+		ctx, repos.Filter{
+			"user_id":     in.UserId,
+			"resource_id": in.ResourceId,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -43,10 +46,12 @@ func (s *server) ConfirmMembership(ctx context.Context, in *iam.InConfirmMembers
 
 func (s *server) InviteMembership(ctx context.Context, in *iam.InAddMembership) (*iam.OutAddMembership, error) {
 	fmt.Println("InviteMembership", in)
-	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
-		"user_id":     in.UserId,
-		"resource_id": in.ResourceId,
-	})
+	one, err := s.rbRepo.FindOne(
+		ctx, repos.Filter{
+			"user_id":     in.UserId,
+			"resource_id": in.ResourceId,
+		},
+	)
 	if one != nil {
 		if one.Role == in.Role {
 			return nil, errors.New(fmt.Sprintf("user %s already has role %s on resource %s", in.UserId, in.Role, in.ResourceId))
@@ -60,13 +65,15 @@ func (s *server) InviteMembership(ctx context.Context, in *iam.InAddMembership) 
 		return &iam.OutAddMembership{Result: true}, nil
 	}
 
-	_, err = s.rbRepo.Create(ctx, &entities.RoleBinding{
-		UserId:       in.UserId,
-		ResourceType: in.ResourceType,
-		ResourceId:   in.ResourceId,
-		Role:         in.Role,
-		Accepted:     false,
-	})
+	_, err = s.rbRepo.Create(
+		ctx, &entities.RoleBinding{
+			UserId:       in.UserId,
+			ResourceType: in.ResourceType,
+			ResourceId:   in.ResourceId,
+			Role:         in.Role,
+			Accepted:     false,
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not create rolebinding")
 	}
@@ -74,10 +81,12 @@ func (s *server) InviteMembership(ctx context.Context, in *iam.InAddMembership) 
 }
 
 func (s *server) GetMembership(ctx context.Context, membership *iam.InGetMembership) (*iam.OutGetMembership, error) {
-	one, err := s.rbRepo.FindOne(ctx, repos.Filter{
-		"resource_id": membership.ResourceId,
-		"user_id":     membership.UserId,
-	})
+	one, err := s.rbRepo.FindOne(
+		ctx, repos.Filter{
+			"resource_id": membership.ResourceId,
+			"user_id":     membership.UserId,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +117,14 @@ func (s *server) ListResourceMemberships(ctx context.Context, in *iam.InResource
 
 	var result []*iam.RoleBinding
 	for _, rb := range rbs {
-		result = append(result, &iam.RoleBinding{
-			UserId:       rb.UserId,
-			ResourceType: rb.ResourceType,
-			ResourceId:   rb.ResourceId,
-			Role:         rb.Role,
-		})
+		result = append(
+			result, &iam.RoleBinding{
+				UserId:       rb.UserId,
+				ResourceType: rb.ResourceType,
+				ResourceId:   rb.ResourceId,
+				Role:         rb.Role,
+			},
+		)
 	}
 
 	return &iam.OutListMemberships{
@@ -122,10 +133,12 @@ func (s *server) ListResourceMemberships(ctx context.Context, in *iam.InResource
 }
 
 func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
-	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{
-		"resource_id": map[string]interface{}{"$in": in.ResourceIds},
-		"user_id":     in.UserId,
-	})
+	rb, err := s.rbRepo.FindOne(
+		ctx, repos.Filter{
+			"resource_id": map[string]interface{}{"$in": in.ResourceIds},
+			"user_id":     in.UserId,
+		},
+	)
 
 	if err != nil {
 		if rb == nil {
@@ -160,12 +173,14 @@ func (s *server) ListUserMemberships(ctx context.Context, in *iam.InUserMembersh
 
 	result := []*iam.RoleBinding{}
 	for _, rb := range rbs {
-		result = append(result, &iam.RoleBinding{
-			UserId:       rb.UserId,
-			ResourceType: rb.ResourceType,
-			ResourceId:   rb.ResourceId,
-			Role:         rb.Role,
-		})
+		result = append(
+			result, &iam.RoleBinding{
+				UserId:       rb.UserId,
+				ResourceType: rb.ResourceType,
+				ResourceId:   rb.ResourceId,
+				Role:         rb.Role,
+			},
+		)
 	}
 
 	return &iam.OutListMemberships{
@@ -174,14 +189,17 @@ func (s *server) ListUserMemberships(ctx context.Context, in *iam.InUserMembersh
 }
 
 // Mutation
+
 func (s *server) AddMembership(ctx context.Context, in *iam.InAddMembership) (*iam.OutAddMembership, error) {
-	_, err := s.rbRepo.Create(ctx, &entities.RoleBinding{
-		UserId:       in.UserId,
-		ResourceType: in.ResourceType,
-		ResourceId:   in.ResourceId,
-		Role:         in.Role,
-		Accepted:     true,
-	})
+	_, err := s.rbRepo.Create(
+		ctx, &entities.RoleBinding{
+			UserId:       in.UserId,
+			ResourceType: in.ResourceType,
+			ResourceId:   in.ResourceId,
+			Role:         in.Role,
+			Accepted:     true,
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not create rolebinding")
 	}
@@ -189,10 +207,12 @@ func (s *server) AddMembership(ctx context.Context, in *iam.InAddMembership) (*i
 }
 
 func (s *server) RemoveMembership(ctx context.Context, in *iam.InRemoveMembership) (*iam.OutRemoveMembership, error) {
-	rb, err := s.rbRepo.FindOne(ctx, repos.Filter{
-		"resource_id": in.ResourceId,
-		"user_id":     in.UserId,
-	})
+	rb, err := s.rbRepo.FindOne(
+		ctx, repos.Filter{
+			"resource_id": in.ResourceId,
+			"user_id":     in.UserId,
+		},
+	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not findone")
 	}
@@ -226,10 +246,13 @@ func fxServer(rbRepo repos.DbRepo[*entities.RoleBinding]) iam.IAMServer {
 	}
 }
 
-var Module = fx.Module("application",
+var Module = fx.Module(
+	"application",
 	fx.Provide(fxServer),
 	repos.NewFxMongoRepo[*entities.RoleBinding]("role_bindings", "rb", entities.RoleBindingIndices),
-	fx.Invoke(func(server *grpc.Server, iamService iam.IAMServer) {
-		iam.RegisterIAMServer(server, iamService)
-	}),
+	fx.Invoke(
+		func(server *grpc.Server, iamService iam.IAMServer) {
+			iam.RegisterIAMServer(server, iamService)
+		},
+	),
 )

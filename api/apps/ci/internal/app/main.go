@@ -41,7 +41,6 @@ type Env struct {
 	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET" required:"true"`
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
 
-	HarborHost          string `env:"HARBOR_HOST" required:"true"`
 	HarborAdminUsername string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
 	HarborAdminPassword string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
 	HarborRegistryHost  string `env:"HARBOR_REGISTRY_HOST" required:"true"`
@@ -241,7 +240,7 @@ var Module = fx.Module(
 
 	fx.Provide(
 		func(env *Env) domain.HarborHost {
-			return domain.HarborHost(env.HarborHost)
+			return domain.HarborHost(env.HarborRegistryHost)
 		},
 	),
 

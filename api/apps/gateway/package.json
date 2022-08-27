@@ -5,23 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "NODE_NO_WARNINGS=1 node --es-module-specifier-resolution=node ./src/index.js",
-    "dev": "pnpm supergraph:dev & (sleep 2 && nodemon -w ./supergraph.gql --exec 'pnpx node-runner dev ./src/index.js')",
-    "supergraph:dev": "rover supergraph compose --config ./supergraph-config.dev.yml > supergraph.gql",
-    "supergraph": "rover supergraph compose --config ./supergraph-config.yml > supergraph.gql"
+    "start": "NODE_NO_WARNINGS=1 node --es-module-specifier-resolution=node ./src/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@apollo/gateway": "^0.48.1",
-    "@apollo/rover": "^0.4.3",
-    "apollo-server": "^3.6.3",
-    "cookie": "^0.4.2",
-    "graphql": "^16.3.0"
-  },
-  "devDependencies": {
-    "chokidar-cli": "^3.0.0",
-    "nodemon": "^2.0.15"
+    "@apollo/gateway": "^2.0.5",
+    "apollo-server": "^3.10.2",
+    "cookie": "^0.5.0",
+    "graphql": "^16.6.0",
+    "js-yaml": "^4.1.0"
   }
 }
