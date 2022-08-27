@@ -36,29 +36,33 @@ func (r *accountResolver) Devices(ctx context.Context, obj *model.Account) ([]*m
 	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of account %s", obj.ID))
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
-		devices = append(devices, &model.Device{
-			ID:      device.Id,
-			User:    &model.User{ID: device.UserId},
-			Account: &model.Account{ID: device.AccountId},
-			Name:    device.Name,
-			Region:  device.ActiveRegion,
-			Ports: func() []*model.Port {
-				var ports []*model.Port
-				for _, port := range device.ExposedPorts {
-					ports = append(ports, &model.Port{
-						Port: int(port.Port),
-						TargetPort: func() *int {
-							if port.TargetPort != nil {
-								i := int(*port.TargetPort)
-								return &i
-							}
-							return nil
-						}(),
-					})
-				}
-				return ports
-			}(),
-		})
+		devices = append(
+			devices, &model.Device{
+				ID:      device.Id,
+				User:    &model.User{ID: device.UserId},
+				Account: &model.Account{ID: device.AccountId},
+				Name:    device.Name,
+				Region:  device.ActiveRegion,
+				Ports: func() []*model.Port {
+					var ports []*model.Port
+					for _, port := range device.ExposedPorts {
+						ports = append(
+							ports, &model.Port{
+								Port: int(port.Port),
+								TargetPort: func() *int {
+									if port.TargetPort != nil {
+										i := int(*port.TargetPort)
+										return &i
+									}
+									return nil
+								}(),
+							},
+						)
+					}
+					return ports
+				}(),
+			},
+		)
 	}
 	return devices, e
 }
@@ -94,11 +98,13 @@ func (r *cloudProviderResolver) Regions(ctx context.Context, obj *model.CloudPro
 	}
 	res := make([]*model.EdgeRegion, 0)
 	for _, r := range regions {
-		res = append(res, &model.EdgeRegion{
-			ID:     r.Id,
-			Name:   r.Name,
-			Region: r.Region,
-		})
+		res = append(
+			res, &model.EdgeRegion{
+				ID:     r.Id,
+				Name:   r.Name,
+				Region: r.Region,
+			},
+		)
 	}
 	return res, nil
 }
@@ -208,13 +214,15 @@ func (r *mutationResolver) ManagedResCreate(ctx context.Context, installationID 
 }
 
 func (r *mutationResolver) ManagedResUpdate(ctx context.Context, resID repos.ID, values map[string]interface{}) (bool, error) {
-	res, err := r.Domain.UpdateManagedRes(ctx, resID, func() map[string]string {
-		val := make(map[string]string, 0)
-		for k, v := range values {
-			values[k] = v.(string)
-		}
-		return val
-	}())
+	res, err := r.Domain.UpdateManagedRes(
+		ctx, resID, func() map[string]string {
+			val := make(map[string]string, 0)
+			for k, v := range values {
+				values[k] = v.(string)
+			}
+			return val
+		}(),
+	)
 	if err != nil {
 		return false, err
 	}
@@ -227,6 +235,14 @@ func (r *mutationResolver) ManagedResDelete(ctx context.Context, resID repos.ID)
 		return nil, err
 	}
 	return &res, nil
+}
+
+func withUserSession(ctx context.Context) (context.Context, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, wErrors.NotLoggedIn
+	}
+	return context.WithValue(ctx, "user_id", session.UserId), nil
 }
 
 func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID, name string) (*model.Device, error) {
@@ -252,16 +268,18 @@ func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID
 		Ports: func() []*model.Port {
 			var ports []*model.Port
 			for _, port := range device.ExposedPorts {
-				ports = append(ports, &model.Port{
-					Port: int(port.Port),
-					TargetPort: func() *int {
-						if port.TargetPort != nil {
-							i := int(*port.TargetPort)
-							return &i
-						}
-						return nil
-					}(),
-				})
+				ports = append(
+					ports, &model.Port{
+						Port: int(port.Port),
+						TargetPort: func() *int {
+							if port.TargetPort != nil {
+								i := int(*port.TargetPort)
+								return &i
+							}
+							return nil
+						}(),
+					},
+				)
 			}
 			return ports
 		}(),
@@ -281,22 +299,26 @@ func (r *mutationResolver) CoreRemoveDevice(ctx context.Context, deviceID repos.
 }
 
 func (r *mutationResolver) CoreUpdateDevice(ctx context.Context, deviceID repos.ID, name *string, region *string, ports []*model.PortIn) (bool, error) {
-	_, err := r.Domain.UpdateDevice(ctx, deviceID, name, region, func() []entities.Port {
-		makePorts := make([]entities.Port, 0)
-		for _, p := range ports {
-			makePorts = append(makePorts, entities.Port{
-				Port: int32(p.Port),
-				TargetPort: func() *int32 {
-					if p.TargetPort != nil {
-						i := int32(*p.TargetPort)
-						return &i
-					}
-					return nil
-				}(),
-			})
-		}
-		return makePorts
-	}())
+	_, err := r.Domain.UpdateDevice(
+		ctx, deviceID, name, region, func() []entities.Port {
+			makePorts := make([]entities.Port, 0)
+			for _, p := range ports {
+				makePorts = append(
+					makePorts, entities.Port{
+						Port: int32(p.Port),
+						TargetPort: func() *int32 {
+							if p.TargetPort != nil {
+								i := int32(*p.TargetPort)
+								return &i
+							}
+							return nil
+						}(),
+					},
+				)
+			}
+			return makePorts
+		}(),
+	)
 	if err != nil {
 		return false, err
 	}
@@ -347,29 +369,35 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 
 	ports := make([]entities.ExposedPort, 0)
 	for _, port := range app.Services {
-		ports = append(ports, entities.ExposedPort{
-			Port:       int64(port.Exposed),
-			TargetPort: int64(port.Target),
-			Type:       entities.PortType(port.Type),
-		})
+		ports = append(
+			ports, entities.ExposedPort{
+				Port:       int64(port.Exposed),
+				TargetPort: int64(port.Target),
+				Type:       entities.PortType(port.Type),
+			},
+		)
 	}
 	containers := make([]entities.Container, 0)
 	for _, container := range app.Containers {
 		e := make([]entities.EnvVar, 0)
 		for _, env := range container.EnvVars {
-			e = append(e, entities.EnvVar{
-				Key:    env.Key,
-				Type:   env.Value.Type,
-				Value:  env.Value.Value,
-				Ref:    env.Value.Ref,
-				RefKey: env.Value.Key,
-			})
+			e = append(
+				e, entities.EnvVar{
+					Key:    env.Key,
+					Type:   env.Value.Type,
+					Value:  env.Value.Value,
+					Ref:    env.Value.Ref,
+					RefKey: env.Value.Key,
+				},
+			)
 		}
 		a := make([]entities.AttachedResource, 0)
 		for _, attached := range container.AttachedResources {
-			a = append(a, entities.AttachedResource{
-				ResourceId: attached.ResID,
-			})
+			a = append(
+				a, entities.AttachedResource{
+					ResourceId: attached.ResID,
+				},
+			)
 		}
 
 		in := entities.Container{
@@ -390,11 +418,13 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 				}
 				out := make([]entities.VolumeMount, 0)
 				for _, mount := range container.Mounts {
-					out = append(out, entities.VolumeMount{
-						MountPath: mount.Path,
-						Type:      mount.Type,
-						Ref:       mount.Ref,
-					})
+					out = append(
+						out, entities.VolumeMount{
+							MountPath: mount.Path,
+							Type:      mount.Type,
+							Ref:       mount.Ref,
+						},
+					)
 				}
 				return out
 			}(),
@@ -406,29 +436,31 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		}
 		containers = append(containers, in)
 	}
-	entity, err := r.Domain.InstallApp(ctx, projectID, entities.App{
-		Name:      app.Name,
-		IsLambda:  app.IsLambda,
-		ProjectId: projectID,
-		AutoScale: func() *entities.AutoScale {
-			if app.AutoScale != nil {
-				return &entities.AutoScale{
-					MinReplicas:     int64(app.AutoScale.MinReplicas),
-					MaxReplicas:     int64(app.AutoScale.MaxReplicas),
-					UsagePercentage: int64(app.AutoScale.UsagePercentage),
+	entity, err := r.Domain.InstallApp(
+		ctx, projectID, entities.App{
+			Name:      app.Name,
+			IsLambda:  app.IsLambda,
+			ProjectId: projectID,
+			AutoScale: func() *entities.AutoScale {
+				if app.AutoScale != nil {
+					return &entities.AutoScale{
+						MinReplicas:     int64(app.AutoScale.MinReplicas),
+						MaxReplicas:     int64(app.AutoScale.MaxReplicas),
+						UsagePercentage: int64(app.AutoScale.UsagePercentage),
+					}
 				}
-			}
-			return nil
-		}(),
-		ReadableId:   string(app.ReadableID),
-		Description:  app.Description,
-		Replicas:     1,
-		ExposedPorts: ports,
-		Containers:   containers,
-		Metadata: func() map[string]any {
-			return app.Metadata
-		}(),
-	})
+				return nil
+			}(),
+			ReadableId:   string(app.ReadableID),
+			Description:  app.Description,
+			Replicas:     1,
+			ExposedPorts: ports,
+			Containers:   containers,
+			Metadata: func() map[string]any {
+				return app.Metadata
+			}(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -444,13 +476,15 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range entity.Conditions {
-				conditions = append(conditions, &model.MetaCondition{
-					Status:        string(condition.Status),
-					ConditionType: condition.Type,
-					LastTimeStamp: condition.LastTransitionTime.String(),
-					Reason:        condition.Reason,
-					Message:       condition.Message,
-				})
+				conditions = append(
+					conditions, &model.MetaCondition{
+						Status:        string(condition.Status),
+						ConditionType: condition.Type,
+						LastTimeStamp: condition.LastTransitionTime.String(),
+						Reason:        condition.Reason,
+						Message:       condition.Message,
+					},
+				)
 			}
 			return conditions
 		}(),
@@ -475,11 +509,13 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 		Services: func() []*model.ExposedService {
 			services := make([]*model.ExposedService, 0)
 			for _, port := range entity.ExposedPorts {
-				services = append(services, &model.ExposedService{
-					Exposed: int(port.Port),
-					Target:  int(port.TargetPort),
-					Type:    string(port.Type),
-				})
+				services = append(
+					services, &model.ExposedService{
+						Exposed: int(port.Port),
+						Target:  int(port.TargetPort),
+						Type:    string(port.Type),
+					},
+				)
 			}
 			return services
 		}(),
@@ -495,22 +531,26 @@ func (r *mutationResolver) CoreCreateApp(ctx context.Context, projectID repos.ID
 					AttachedResources: func() []*model.AttachedRes {
 						attached := make([]*model.AttachedRes, 0)
 						for _, attachedResource := range container.AttachedResources {
-							attached = append(attached, &model.AttachedRes{
-								ResID: attachedResource.ResourceId,
-							})
+							attached = append(
+								attached, &model.AttachedRes{
+									ResID: attachedResource.ResourceId,
+								},
+							)
 						}
 						return attached
 					}(),
 					EnvVars: func() []*model.EnvVar {
 						envVars := make([]*model.EnvVar, 0)
 						for _, envVar := range container.EnvVars {
-							envVars = append(envVars, &model.EnvVar{
-								Key: envVar.Key,
-								Value: &model.EnvVal{
-									Type:  envVar.Type,
-									Value: envVar.Value,
+							envVars = append(
+								envVars, &model.EnvVar{
+									Key: envVar.Key,
+									Value: &model.EnvVal{
+										Type:  envVar.Type,
+										Value: envVar.Value,
+									},
 								},
-							})
+							)
 						}
 						return envVars
 					}(),
@@ -529,29 +569,35 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 	}
 	ports := make([]entities.ExposedPort, 0)
 	for _, port := range app.Services {
-		ports = append(ports, entities.ExposedPort{
-			Port:       int64(port.Exposed),
-			TargetPort: int64(port.Target),
-			Type:       entities.PortType(port.Type),
-		})
+		ports = append(
+			ports, entities.ExposedPort{
+				Port:       int64(port.Exposed),
+				TargetPort: int64(port.Target),
+				Type:       entities.PortType(port.Type),
+			},
+		)
 	}
 	containers := make([]entities.Container, 0)
 	for _, container := range app.Containers {
 		e := make([]entities.EnvVar, 0)
 		for _, env := range container.EnvVars {
-			e = append(e, entities.EnvVar{
-				Key:    env.Key,
-				Type:   env.Value.Type,
-				Value:  env.Value.Value,
-				Ref:    env.Value.Ref,
-				RefKey: env.Value.Key,
-			})
+			e = append(
+				e, entities.EnvVar{
+					Key:    env.Key,
+					Type:   env.Value.Type,
+					Value:  env.Value.Value,
+					Ref:    env.Value.Ref,
+					RefKey: env.Value.Key,
+				},
+			)
 		}
 		a := make([]entities.AttachedResource, 0)
 		for _, attached := range container.AttachedResources {
-			a = append(a, entities.AttachedResource{
-				ResourceId: attached.ResID,
-			})
+			a = append(
+				a, entities.AttachedResource{
+					ResourceId: attached.ResID,
+				},
+			)
 		}
 
 		in := entities.Container{
@@ -572,11 +618,13 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 				}
 				out := make([]entities.VolumeMount, 0)
 				for _, mount := range container.Mounts {
-					out = append(out, entities.VolumeMount{
-						MountPath: mount.Path,
-						Type:      mount.Type,
-						Ref:       mount.Ref,
-					})
+					out = append(
+						out, entities.VolumeMount{
+							MountPath: mount.Path,
+							Type:      mount.Type,
+							Ref:       mount.Ref,
+						},
+					)
 				}
 				return out
 			}(),
@@ -588,34 +636,36 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		}
 		containers = append(containers, in)
 	}
-	entity, err := r.Domain.UpdateApp(ctx, appID, entities.App{
-		Name:        app.Name,
-		ProjectId:   projectID,
-		IsLambda:    app.IsLambda,
-		ReadableId:  string(app.ReadableID),
-		Description: app.Description,
-		Replicas: func() int {
-			if app.Replicas != nil {
-				return *app.Replicas
-			}
-			return 1
-		}(),
-		AutoScale: func() *entities.AutoScale {
-			if app.AutoScale != nil {
-				return &entities.AutoScale{
-					MinReplicas:     int64(app.AutoScale.MinReplicas),
-					MaxReplicas:     int64(app.AutoScale.MaxReplicas),
-					UsagePercentage: int64(app.AutoScale.UsagePercentage),
+	entity, err := r.Domain.UpdateApp(
+		ctx, appID, entities.App{
+			Name:        app.Name,
+			ProjectId:   projectID,
+			IsLambda:    app.IsLambda,
+			ReadableId:  string(app.ReadableID),
+			Description: app.Description,
+			Replicas: func() int {
+				if app.Replicas != nil {
+					return *app.Replicas
 				}
-			}
-			return nil
-		}(),
-		ExposedPorts: ports,
-		Containers:   containers,
-		Metadata: func() map[string]any {
-			return app.Metadata
-		}(),
-	})
+				return 1
+			}(),
+			AutoScale: func() *entities.AutoScale {
+				if app.AutoScale != nil {
+					return &entities.AutoScale{
+						MinReplicas:     int64(app.AutoScale.MinReplicas),
+						MaxReplicas:     int64(app.AutoScale.MaxReplicas),
+						UsagePercentage: int64(app.AutoScale.UsagePercentage),
+					}
+				}
+				return nil
+			}(),
+			ExposedPorts: ports,
+			Containers:   containers,
+			Metadata: func() map[string]any {
+				return app.Metadata
+			}(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -633,13 +683,15 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range entity.Conditions {
-				conditions = append(conditions, &model.MetaCondition{
-					Status:        string(condition.Status),
-					ConditionType: condition.Type,
-					LastTimeStamp: condition.LastTransitionTime.String(),
-					Reason:        condition.Reason,
-					Message:       condition.Message,
-				})
+				conditions = append(
+					conditions, &model.MetaCondition{
+						Status:        string(condition.Status),
+						ConditionType: condition.Type,
+						LastTimeStamp: condition.LastTransitionTime.String(),
+						Reason:        condition.Reason,
+						Message:       condition.Message,
+					},
+				)
 			}
 			return conditions
 		}(),
@@ -663,11 +715,13 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 		Services: func() []*model.ExposedService {
 			services := make([]*model.ExposedService, 0)
 			for _, port := range entity.ExposedPorts {
-				services = append(services, &model.ExposedService{
-					Exposed: int(port.Port),
-					Target:  int(port.TargetPort),
-					Type:    string(port.Type),
-				})
+				services = append(
+					services, &model.ExposedService{
+						Exposed: int(port.Port),
+						Target:  int(port.TargetPort),
+						Type:    string(port.Type),
+					},
+				)
 			}
 			return services
 		}(),
@@ -683,22 +737,26 @@ func (r *mutationResolver) CoreUpdateApp(ctx context.Context, projectID repos.ID
 					AttachedResources: func() []*model.AttachedRes {
 						attached := make([]*model.AttachedRes, 0)
 						for _, attachedResource := range container.AttachedResources {
-							attached = append(attached, &model.AttachedRes{
-								ResID: attachedResource.ResourceId,
-							})
+							attached = append(
+								attached, &model.AttachedRes{
+									ResID: attachedResource.ResourceId,
+								},
+							)
 						}
 						return attached
 					}(),
 					EnvVars: func() []*model.EnvVar {
 						envVars := make([]*model.EnvVar, 0)
 						for _, envVar := range container.EnvVars {
-							envVars = append(envVars, &model.EnvVar{
-								Key: envVar.Key,
-								Value: &model.EnvVal{
-									Type:  envVar.Type,
-									Value: envVar.Value,
+							envVars = append(
+								envVars, &model.EnvVar{
+									Key: envVar.Key,
+									Value: &model.EnvVal{
+										Type:  envVar.Type,
+										Value: envVar.Value,
+									},
 								},
-							})
+							)
 						}
 						return envVars
 					}(),
@@ -725,10 +783,12 @@ func (r *mutationResolver) CoreRollbackApp(ctx context.Context, appID repos.ID, 
 func (r *mutationResolver) CoreCreateSecret(ctx context.Context, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) (*model.Secret, error) {
 	entries := make([]*entities.Entry, 0)
 	for _, i := range data {
-		entries = append(entries, &entities.Entry{
-			Key:   i.Key,
-			Value: i.Value,
-		})
+		entries = append(
+			entries, &entities.Entry{
+				Key:   i.Key,
+				Value: i.Value,
+			},
+		)
 	}
 	configEntity, err := r.Domain.CreateSecret(ctx, projectID, name, description, entries)
 	if err != nil {
@@ -740,10 +800,12 @@ func (r *mutationResolver) CoreCreateSecret(ctx context.Context, projectID repos
 func (r *mutationResolver) CoreUpdateSecret(ctx context.Context, secretID repos.ID, description *string, data []*model.CSEntryIn) (bool, error) {
 	entries := make([]*entities.Entry, 0)
 	for _, i := range data {
-		entries = append(entries, &entities.Entry{
-			Key:   i.Key,
-			Value: i.Value,
-		})
+		entries = append(
+			entries, &entities.Entry{
+				Key:   i.Key,
+				Value: i.Value,
+			},
+		)
 	}
 	return r.Domain.UpdateSecret(ctx, secretID, description, entries)
 }
@@ -759,10 +821,12 @@ func (r *mutationResolver) CoreDeleteSecret(ctx context.Context, secretID repos.
 func (r *mutationResolver) CoreCreateConfig(ctx context.Context, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) (*model.Config, error) {
 	entries := make([]*entities.Entry, 0)
 	for _, i := range data {
-		entries = append(entries, &entities.Entry{
-			Key:   i.Key,
-			Value: i.Value,
-		})
+		entries = append(
+			entries, &entities.Entry{
+				Key:   i.Key,
+				Value: i.Value,
+			},
+		)
 	}
 	configEntity, err := r.Domain.CreateConfig(ctx, projectID, name, description, entries)
 	if err != nil {
@@ -774,10 +838,12 @@ func (r *mutationResolver) CoreCreateConfig(ctx context.Context, projectID repos
 func (r *mutationResolver) CoreUpdateConfig(ctx context.Context, configID repos.ID, description *string, data []*model.CSEntryIn) (bool, error) {
 	entries := make([]*entities.Entry, 0)
 	for _, i := range data {
-		entries = append(entries, &entities.Entry{
-			Key:   i.Key,
-			Value: i.Value,
-		})
+		entries = append(
+			entries, &entities.Entry{
+				Key:   i.Key,
+				Value: i.Value,
+			},
+		)
 	}
 	return r.Domain.UpdateConfig(ctx, configID, description, entries)
 }
@@ -793,16 +859,18 @@ func (r *mutationResolver) CoreDeleteConfig(ctx context.Context, configID repos.
 func (r *mutationResolver) CoreCreateRouter(ctx context.Context, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) (*model.Router, error) {
 	routeEnt := make([]*entities.Route, 0)
 	for _, r := range routes {
-		routeEnt = append(routeEnt, &entities.Route{
-			Path:    r.Path,
-			AppName: r.AppName,
-			Port: func() uint16 {
-				if r.Port != nil {
-					return uint16(*r.Port)
-				}
-				return 0
-			}(),
-		})
+		routeEnt = append(
+			routeEnt, &entities.Route{
+				Path:    r.Path,
+				AppName: r.AppName,
+				Port: func() uint16 {
+					if r.Port != nil {
+						return uint16(*r.Port)
+					}
+					return 0
+				}(),
+			},
+		)
 	}
 	d := domains
 	if domains == nil {
@@ -818,16 +886,18 @@ func (r *mutationResolver) CoreCreateRouter(ctx context.Context, projectID repos
 func (r *mutationResolver) CoreUpdateRouter(ctx context.Context, routerID repos.ID, domains []string, routes []*model.RouteInput) (bool, error) {
 	entries := make([]*entities.Route, 0)
 	for _, i := range routes {
-		entries = append(entries, &entities.Route{
-			Path:    i.Path,
-			AppName: i.AppName,
-			Port: func() uint16 {
-				if i.Port != nil {
-					return uint16(*i.Port)
-				}
-				return 0
-			}(),
-		})
+		entries = append(
+			entries, &entities.Route{
+				Path:    i.Path,
+				AppName: i.AppName,
+				Port: func() uint16 {
+					if i.Port != nil {
+						return uint16(*i.Port)
+					}
+					return 0
+				}(),
+			},
+		)
 	}
 	return r.Domain.UpdateRouter(ctx, routerID, domains, entries)
 }
@@ -841,12 +911,14 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, routerID repos.
 }
 
 func (r *mutationResolver) CoreCreateEdgeRegion(ctx context.Context, edgeRegion model.EdgeRegionIn) (bool, error) {
-	err := r.Domain.CreateRegion(ctx, &entities.EdgeRegion{
-		BaseEntity: repos.BaseEntity{},
-		Name:       edgeRegion.Name,
-		ProviderId: edgeRegion.Provider,
-		Region:     edgeRegion.Region,
-	})
+	err := r.Domain.CreateRegion(
+		ctx, &entities.EdgeRegion{
+			BaseEntity: repos.BaseEntity{},
+			Name:       edgeRegion.Name,
+			ProviderId: edgeRegion.Provider,
+			Region:     edgeRegion.Region,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -854,11 +926,13 @@ func (r *mutationResolver) CoreCreateEdgeRegion(ctx context.Context, edgeRegion 
 }
 
 func (r *mutationResolver) CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error) {
-	err := r.Domain.CreateCloudProvider(ctx, accountID, &entities.CloudProvider{
-		Name:      cloudProvider.Name,
-		Provider:  cloudProvider.Provider,
-		AccountId: accountID,
-	})
+	err := r.Domain.CreateCloudProvider(
+		ctx, accountID, &entities.CloudProvider{
+			Name:      cloudProvider.Name,
+			Provider:  cloudProvider.Provider,
+			AccountId: accountID,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -931,102 +1005,116 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 	for _, a := range appEntities {
 		services := make([]*model.ExposedService, 0)
 		for _, s := range a.ExposedPorts {
-			services = append(services, &model.ExposedService{
-				Type:    string(s.Type),
-				Target:  int(s.TargetPort),
-				Exposed: int(s.Port),
-			})
+			services = append(
+				services, &model.ExposedService{
+					Type:    string(s.Type),
+					Target:  int(s.TargetPort),
+					Exposed: int(s.Port),
+				},
+			)
 		}
 
-		apps = append(apps, &model.App{
-			IsFrozen:  a.Frozen,
-			CreatedAt: a.CreationTime.String(),
-			UpdatedAt: func() *string {
-				if !a.UpdateTime.IsZero() {
-					s := a.UpdateTime.String()
-					return &s
-				}
-				return nil
-			}(),
-			IsLambda: a.IsLambda,
-			Conditions: func() []*model.MetaCondition {
-				conditions := make([]*model.MetaCondition, 0)
-				for _, condition := range a.Conditions {
-					conditions = append(conditions, &model.MetaCondition{
-						Status:        string(condition.Status),
-						ConditionType: condition.Type,
-						LastTimeStamp: condition.LastTransitionTime.String(),
-						Reason:        condition.Reason,
-						Message:       condition.Message,
-					})
-				}
-				return conditions
-			}(),
-			ID:          a.Id,
-			Name:        a.Name,
-			Namespace:   a.Namespace,
-			Description: a.Description,
-			ReadableID:  repos.ID(a.ReadableId),
-			AutoScale: func() *model.AutoScale {
-				if a.AutoScale != nil {
-					return &model.AutoScale{
-						MinReplicas:     int(a.AutoScale.MinReplicas),
-						MaxReplicas:     int(a.AutoScale.MaxReplicas),
-						UsagePercentage: int(a.AutoScale.UsagePercentage),
+		apps = append(
+			apps, &model.App{
+				IsFrozen:  a.Frozen,
+				CreatedAt: a.CreationTime.String(),
+				UpdatedAt: func() *string {
+					if !a.UpdateTime.IsZero() {
+						s := a.UpdateTime.String()
+						return &s
 					}
-				}
-				return nil
-			}(),
-			Replicas: &a.Replicas,
-			Services: services,
-			Containers: func() []*model.AppContainer {
-				containers := make([]*model.AppContainer, 0)
-				for _, c := range a.Containers {
-					envVars := make([]*model.EnvVar, 0)
-					for _, e := range c.EnvVars {
-						envVars = append(envVars, &model.EnvVar{
-							Key: e.Key,
-							Value: &model.EnvVal{
-								Type:  e.Type,
-								Value: e.Value,
-								Ref:   e.Ref,
-								Key:   e.RefKey,
+					return nil
+				}(),
+				IsLambda: a.IsLambda,
+				Conditions: func() []*model.MetaCondition {
+					conditions := make([]*model.MetaCondition, 0)
+					for _, condition := range a.Conditions {
+						conditions = append(
+							conditions, &model.MetaCondition{
+								Status:        string(condition.Status),
+								ConditionType: condition.Type,
+								LastTimeStamp: condition.LastTransitionTime.String(),
+								Reason:        condition.Reason,
+								Message:       condition.Message,
 							},
-						})
+						)
 					}
-					res := make([]*model.AttachedRes, 0)
-					for _, r := range c.AttachedResources {
-						res = append(res, &model.AttachedRes{
-							ResID: r.ResourceId,
-						})
+					return conditions
+				}(),
+				ID:          a.Id,
+				Name:        a.Name,
+				Namespace:   a.Namespace,
+				Description: a.Description,
+				ReadableID:  repos.ID(a.ReadableId),
+				AutoScale: func() *model.AutoScale {
+					if a.AutoScale != nil {
+						return &model.AutoScale{
+							MinReplicas:     int(a.AutoScale.MinReplicas),
+							MaxReplicas:     int(a.AutoScale.MaxReplicas),
+							UsagePercentage: int(a.AutoScale.UsagePercentage),
+						}
 					}
-					containers = append(containers, &model.AppContainer{
-						Name:              c.Name,
-						Image:             c.Image,
-						PullSecret:        c.ImagePullSecret,
-						EnvVars:           envVars,
-						AttachedResources: res,
-						ComputePlan:       c.ComputePlan,
-						Quantity:          c.Quantity,
-						IsShared:          &c.IsShared,
-						Mounts: func() []*model.Mount {
-							mounts := []*model.Mount{}
-							for _, vm := range c.VolumeMounts {
-								mounts = append(mounts, &model.Mount{
-									Type: vm.Type,
-									Ref:  vm.Ref,
-									Path: vm.MountPath,
-								})
-							}
-							return mounts
-						}(),
-					})
-				}
-				return containers
-			}(),
-			Project: &model.Project{ID: projectID},
-			Status:  string(a.Status),
-		})
+					return nil
+				}(),
+				Replicas: &a.Replicas,
+				Services: services,
+				Containers: func() []*model.AppContainer {
+					containers := make([]*model.AppContainer, 0)
+					for _, c := range a.Containers {
+						envVars := make([]*model.EnvVar, 0)
+						for _, e := range c.EnvVars {
+							envVars = append(
+								envVars, &model.EnvVar{
+									Key: e.Key,
+									Value: &model.EnvVal{
+										Type:  e.Type,
+										Value: e.Value,
+										Ref:   e.Ref,
+										Key:   e.RefKey,
+									},
+								},
+							)
+						}
+						res := make([]*model.AttachedRes, 0)
+						for _, r := range c.AttachedResources {
+							res = append(
+								res, &model.AttachedRes{
+									ResID: r.ResourceId,
+								},
+							)
+						}
+						containers = append(
+							containers, &model.AppContainer{
+								Name:              c.Name,
+								Image:             c.Image,
+								PullSecret:        c.ImagePullSecret,
+								EnvVars:           envVars,
+								AttachedResources: res,
+								ComputePlan:       c.ComputePlan,
+								Quantity:          c.Quantity,
+								IsShared:          &c.IsShared,
+								Mounts: func() []*model.Mount {
+									mounts := []*model.Mount{}
+									for _, vm := range c.VolumeMounts {
+										mounts = append(
+											mounts, &model.Mount{
+												Type: vm.Type,
+												Ref:  vm.Ref,
+												Path: vm.MountPath,
+											},
+										)
+									}
+									return mounts
+								}(),
+							},
+						)
+					}
+					return containers
+				}(),
+				Project: &model.Project{ID: projectID},
+				Status:  string(a.Status),
+			},
+		)
 	}
 	return apps, nil
 }
@@ -1038,11 +1126,13 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	}
 	services := make([]*model.ExposedService, 0)
 	for _, s := range a.ExposedPorts {
-		services = append(services, &model.ExposedService{
-			Type:    string(s.Type),
-			Target:  int(s.TargetPort),
-			Exposed: int(s.Port),
-		})
+		services = append(
+			services, &model.ExposedService{
+				Type:    string(s.Type),
+				Target:  int(s.TargetPort),
+				Exposed: int(s.Port),
+			},
+		)
 	}
 
 	return &model.App{
@@ -1059,13 +1149,15 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 		Conditions: func() []*model.MetaCondition {
 			conditions := make([]*model.MetaCondition, 0)
 			for _, condition := range a.Conditions {
-				conditions = append(conditions, &model.MetaCondition{
-					Status:        string(condition.Status),
-					ConditionType: condition.Type,
-					LastTimeStamp: condition.LastTransitionTime.String(),
-					Reason:        condition.Reason,
-					Message:       condition.Message,
-				})
+				conditions = append(
+					conditions, &model.MetaCondition{
+						Status:        string(condition.Status),
+						ConditionType: condition.Type,
+						LastTimeStamp: condition.LastTransitionTime.String(),
+						Reason:        condition.Reason,
+						Message:       condition.Message,
+					},
+				)
 			}
 			return conditions
 		}(),
@@ -1091,43 +1183,51 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 			for _, c := range a.Containers {
 				envVars := make([]*model.EnvVar, 0)
 				for _, e := range c.EnvVars {
-					envVars = append(envVars, &model.EnvVar{
-						Key: e.Key,
-						Value: &model.EnvVal{
-							Type:  e.Type,
-							Value: e.Value,
-							Ref:   e.Ref,
-							Key:   e.RefKey,
+					envVars = append(
+						envVars, &model.EnvVar{
+							Key: e.Key,
+							Value: &model.EnvVal{
+								Type:  e.Type,
+								Value: e.Value,
+								Ref:   e.Ref,
+								Key:   e.RefKey,
+							},
 						},
-					})
+					)
 				}
 				res := make([]*model.AttachedRes, 0)
 				for _, r := range c.AttachedResources {
-					res = append(res, &model.AttachedRes{
-						ResID: r.ResourceId,
-					})
+					res = append(
+						res, &model.AttachedRes{
+							ResID: r.ResourceId,
+						},
+					)
 				}
-				containers = append(containers, &model.AppContainer{
-					Name:              c.Name,
-					Image:             c.Image,
-					PullSecret:        c.ImagePullSecret,
-					EnvVars:           envVars,
-					AttachedResources: res,
-					ComputePlan:       c.ComputePlan,
-					Quantity:          c.Quantity,
-					IsShared:          &c.IsShared,
-					Mounts: func() []*model.Mount {
-						mounts := []*model.Mount{}
-						for _, vm := range c.VolumeMounts {
-							mounts = append(mounts, &model.Mount{
-								Type: vm.Type,
-								Ref:  vm.Ref,
-								Path: vm.MountPath,
-							})
-						}
-						return mounts
-					}(),
-				})
+				containers = append(
+					containers, &model.AppContainer{
+						Name:              c.Name,
+						Image:             c.Image,
+						PullSecret:        c.ImagePullSecret,
+						EnvVars:           envVars,
+						AttachedResources: res,
+						ComputePlan:       c.ComputePlan,
+						Quantity:          c.Quantity,
+						IsShared:          &c.IsShared,
+						Mounts: func() []*model.Mount {
+							mounts := []*model.Mount{}
+							for _, vm := range c.VolumeMounts {
+								mounts = append(
+									mounts, &model.Mount{
+										Type: vm.Type,
+										Ref:  vm.Ref,
+										Path: vm.MountPath,
+									},
+								)
+							}
+							return mounts
+						}(),
+					},
+				)
 			}
 			return containers
 		}(),
@@ -1282,15 +1382,17 @@ func (r *queryResolver) CoreGetComputePlans(ctx context.Context) ([]*model.Compu
 	}
 	plans := make([]*model.ComputePlan, 0)
 	for _, i := range planEntities {
-		plans = append(plans, &model.ComputePlan{
-			Name:                  i.Name,
-			Desc:                  i.Desc,
-			SharingEnabled:        i.SharingEnabled,
-			DedicatedEnabled:      i.DedicatedEnabled,
-			MemoryPerVCPUCpu:      int(i.MemoryPerCPU),
-			MaxSharedCPUPerPod:    int(i.MaxSharedCPUPerPod),
-			MaxDedicatedCPUPerPod: int(i.MaxDedicatedCPUPerPod),
-		})
+		plans = append(
+			plans, &model.ComputePlan{
+				Name:                  i.Name,
+				Desc:                  i.Desc,
+				SharingEnabled:        i.SharingEnabled,
+				DedicatedEnabled:      i.DedicatedEnabled,
+				MemoryPerVCPUCpu:      int(i.MemoryPerCPU),
+				MaxSharedCPUPerPod:    int(i.MaxSharedCPUPerPod),
+				MaxDedicatedCPUPerPod: int(i.MaxDedicatedCPUPerPod),
+			},
+		)
 	}
 	return plans, nil
 }
@@ -1302,10 +1404,12 @@ func (r *queryResolver) CoreGetStoragePlans(ctx context.Context) ([]*model.Stora
 	}
 	storagePlans := make([]*model.StoragePlan, 0)
 	for _, i := range plans {
-		storagePlans = append(storagePlans, &model.StoragePlan{
-			Name:        i.Name,
-			Description: i.Desc,
-		})
+		storagePlans = append(
+			storagePlans, &model.StoragePlan{
+				Name:        i.Name,
+				Description: i.Desc,
+			},
+		)
 	}
 	return storagePlans, nil
 }
@@ -1321,11 +1425,13 @@ func (r *queryResolver) CoreGetCloudProviders(ctx context.Context, accountID rep
 	}
 	cloudProviders := make([]*model.CloudProvider, 0)
 	for _, i := range providers {
-		cloudProviders = append(cloudProviders, &model.CloudProvider{
-			ID:       i.Id,
-			Name:     i.Name,
-			Provider: i.Provider,
-		})
+		cloudProviders = append(
+			cloudProviders, &model.CloudProvider{
+				ID:       i.Id,
+				Name:     i.Name,
+				Provider: i.Provider,
+			},
+		)
 	}
 	return cloudProviders, nil
 }
@@ -1338,29 +1444,33 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 	wErrors.AssertNoError(e, fmt.Errorf("not able to list devices of user %s", user.ID))
 	devices := make([]*model.Device, 0)
 	for _, device := range deviceEntities {
-		devices = append(devices, &model.Device{
-			ID:      device.Id,
-			Region:  device.ActiveRegion,
-			User:    &model.User{ID: device.UserId},
-			Account: &model.Account{ID: device.AccountId},
-			Name:    device.Name,
-			Ports: func() []*model.Port {
-				var ports []*model.Port
-				for _, port := range device.ExposedPorts {
-					ports = append(ports, &model.Port{
-						Port: int(port.Port),
-						TargetPort: func() *int {
-							if port.TargetPort != nil {
-								i := int(*port.TargetPort)
-								return &i
-							}
-							return nil
-						}(),
-					})
-				}
-				return ports
-			}(),
-		})
+		devices = append(
+			devices, &model.Device{
+				ID:      device.Id,
+				Region:  device.ActiveRegion,
+				User:    &model.User{ID: device.UserId},
+				Account: &model.Account{ID: device.AccountId},
+				Name:    device.Name,
+				Ports: func() []*model.Port {
+					var ports []*model.Port
+					for _, port := range device.ExposedPorts {
+						ports = append(
+							ports, &model.Port{
+								Port: int(port.Port),
+								TargetPort: func() *int {
+									if port.TargetPort != nil {
+										i := int(*port.TargetPort)
+										return &i
+									}
+									return nil
+								}(),
+							},
+						)
+					}
+					return ports
+				}(),
+			},
+		)
 	}
 	return devices, e
 }

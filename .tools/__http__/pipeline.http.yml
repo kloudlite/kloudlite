@@ -1,6 +1,8 @@
-# ---
-# global:
-#   hello: world
+---
+global:
+  accountId: "acc-imgtxz4logeg-isxm4uqlpzzwctr"
+  projectId: "proj-ci1xmobjyia7cc00optpbeavpnmn"
+  projectName: "example-plaxonic"
 ---
 label: create github pipeline
 query: |
@@ -37,23 +39,27 @@ query: |
 variables:
   in:
     name: sample-pipeline
-    projectName: sample-proje-36891
-    accountId: acc-wo4rgoszo9dmsa1na-yhbsvh75gj
-    projectId: proj-ll5s-miviimb0icwvznki9jqzkyi
-    appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
+    projectName: "{{projectName}}"
+    accountId: "{{accountId}}"
+    projectId: "{{projectName}}"
+    # appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
+    appId: "sample"
     gitProvider: gitlab
-    gitRepoUrl: https://gitlab.com/nxtcoder17/sample
-    repoName: sample
-    gitBranch: master
-    build:
-      baseImage: docker
-      cmd: |+
-        docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
-    run:
-      baseImage: docker
-      cmd: ""
+    # gitRepoUrl: https://gitlab.com/nxtcoder17/sample
+    gitRepoUrl: https://gitlab.com/plaxoniclabs/projects/plaxonic.com/website
+    repoName: plaxonic-website
+    gitBranch: latest
+    docker-file: ./Dockerfile
+    docker-context-dir: ./
+    # build:
+    #   baseImage: docker
+    #   cmd: |+
+    #     docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
+    # run:
+    #   baseImage: docker
+    #   cmd: ""
     artifactRef:
-      dockerImageName: harbor.dev.madhouselabs.io/public/sample
+      dockerImageName: harbor.dev.madhouselabs.io/kloudlite/plaxonic-website
       dockerImageTag: latest
 ---
 label: Create Gitlab Pipeline with buildCmd

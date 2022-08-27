@@ -1,10 +1,8 @@
-FROM node:latest
+FROM node:current-alpine
+RUN npm i -g pnpm
 WORKDIR /home/node
 USER node
-# RUN npm config set prefix "/tmp/npm/node_modules"
-# RUN npm config set cache "/tmp/npm/cache"
-# RUN npm config set tmp "/tmp/npm/tmp"
-COPY --chown=node package.json ./package.json
-RUN npm i
+COPY --chown=node package.json pnpm-lock.yaml ./
+RUN pnpm i
 COPY --chown=node . ./
 ENTRYPOINT ["npm","start"]

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+
 	"go.uber.org/fx"
 	"kloudlite.io/apps/finance/internal/domain"
 	"kloudlite.io/apps/finance/internal/framework"
@@ -19,14 +20,14 @@ func main() {
 	fx.New(
 		fx.Provide(
 			func() (logging.Logger, error) {
-				return logging.NewLogger(
-					logging.Options{Name: "console", Dev: false},
-				)
+				return logging.New(&logging.Options{Name: "console", Dev: false})
 			},
 		),
 		framework.Module,
-		fx.Invoke(func(d domain.Domain) {
-			d.GenerateBillingInvoice(context.Background(), repos.ID(*accountId))
-		}),
+		fx.Invoke(
+			func(d domain.Domain) {
+				d.GenerateBillingInvoice(context.Background(), repos.ID(*accountId))
+			},
+		),
 	).Start(context.TODO())
 }

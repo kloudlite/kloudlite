@@ -12,6 +12,7 @@ import (
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
+	wErrors "kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
@@ -191,6 +192,51 @@ func (r *mutationResolver) CiCreatePipeline(ctx context.Context, in model.GitPip
 			},
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	marshal, err := json.Marshal(pipeline)
+	if err != nil {
+		return nil, err
+	}
+	x := make(map[string]any)
+	err = json.Unmarshal(marshal, &x)
+	if err != nil {
+		return nil, err
+	}
+	return x, err
+}
+
+func (r *mutationResolver) CiCreateDockerPipeline(ctx context.Context, in model.GitDockerPipelineIn) (map[string]interface{}, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, wErrors.NotLoggedIn
+	}
+
+	var pipeline, err = r.Domain.CreatePipeline(
+		ctx, session.UserId, domain.Pipeline{
+			Name:          in.Name,
+			ProjectName:   in.ProjectName,
+			ProjectId:     in.ProjectID,
+			AccountId:     in.AccountID,
+			AppId:         "not-app-id",
+			ContainerName: "sample",
+			GitProvider:   in.GitProvider,
+			GitRepoUrl:    in.GitRepoURL,
+			GitBranch:     in.GitBranch,
+			DockerBuildInput: &domain.DockerBuildInput{
+				DockerFile: in.DockerFile,
+				ContextDir: in.ContextDir,
+				BuildArgs:  in.BuildArgs,
+			},
+			ArtifactRef: domain.ArtifactRef{
+				DockerImageName: fn.DefaultIfNil(in.ArtifactRef.DockerImageName),
+				DockerImageTag:  fn.DefaultIfNil(in.ArtifactRef.DockerImageTag),
+			},
+			Metadata: in.Metadata,
+		},
+	)
+
 	if err != nil {
 		return nil, err
 	}

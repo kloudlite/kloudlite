@@ -1,0 +1,35 @@
+---
+global:
+  hello: world
+  accountId: "acc-imgtxz4logeg-isxm4uqlpzzwctr"
+  projectId: "proj-ci1xmobjyia7cc00optpbeavpnmn"
+  projectName: "example-plaxonic"
+---
+
+label: List Projects
+query: |
+  query Core_projects($accountId: ID) {
+    core_projects(accountId: $accountId) {
+      id
+      name
+    }
+  }
+variables:
+  accountId: "{{accountId}}" 
+
+---
+
+label: Create Project
+query: |
+  mutation Core_createProject($accountId: ID!, $name: String!, $displayName: String!, $description: String, $regionId: ID) {
+    core_createProject(accountId: $accountId, name: $name, displayName: $displayName, description: $description, regionId: $regionId) {
+      id
+      name
+    }
+  }
+variables:
+  accountId: "{{accountId}}"
+  name: "example-plaxonic"
+  displayName: "plaxonic example"
+  regionId: "centralindia"
+  description: "this is just a dev only project"

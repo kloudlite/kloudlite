@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/framework"
 	"kloudlite.io/pkg/logging"
@@ -14,9 +15,7 @@ func main() {
 		framework.Module,
 		fx.Provide(
 			func() (logging.Logger, error) {
-				return logging.NewLogger(
-					logging.Options{Name: "console", Dev: *isDev},
-				)
+				return logging.New(&logging.Options{Name: "console", Dev: *isDev})
 			},
 		),
 	).Run()

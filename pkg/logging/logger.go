@@ -2,9 +2,10 @@ package logging
 
 import (
 	"fmt"
-	"go.uber.org/fx"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"kloudlite.io/pkg/errors"
 )
 
 type Logger interface {
@@ -13,10 +14,17 @@ type Logger interface {
 	Errorf(err error, msg string, args ...any)
 	Warnf(msg string, args ...any)
 	WithName(name string) Logger
+	WithKV(key string, value any) Logger
 }
 
 type customLogger struct {
+	opts      Options
 	zapLogger *zap.SugaredLogger
+}
+
+func (c customLogger) WithKV(key string, value any) Logger {
+	c.zapLogger = c.zapLogger.With(key, value)
+	return c
 }
 
 func (c customLogger) Debugf(msg string, args ...any) {
@@ -28,7 +36,7 @@ func (c customLogger) Infof(msg string, args ...any) {
 }
 
 func (c customLogger) Errorf(err error, msg string, args ...any) {
-	c.zapLogger.Errorf("%s AS %+v happened", fmt.Sprintf(msg, args...), err)
+	c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
 }
 
 func (c customLogger) Warnf(msg string, args ...any) {
@@ -44,36 +52,32 @@ type Options struct {
 	Dev  bool
 }
 
-func NewLogger(options ...Options) (Logger, error) {
+func New(options *Options) (Logger, error) {
 	opts := Options{}
-	if len(options) > 0 {
-		opts = options[0]
+	if options != nil {
+		opts = *options
 	}
-	if opts.Dev {
-		cfg := zap.NewDevelopmentConfig()
-		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		cfg.EncoderConfig.LineEnding = "\n\n"
-		cfg.EncoderConfig.TimeKey = ""
-		cfg.EncoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(fmt.Sprintf("(%s) %s", caller.Function, caller.TrimmedPath()))
+
+	cfg := func() zap.Config {
+		if opts.Dev {
+			cfg := zap.NewDevelopmentConfig()
+			cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			cfg.EncoderConfig.LineEnding = "\n"
+			cfg.EncoderConfig.TimeKey = ""
+			cfg.EncoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
+				enc.AppendString(fmt.Sprintf("(%s) %s", caller.Function, caller.TrimmedPath()))
+			}
+			return cfg
 		}
-		logger, err := cfg.Build(zap.AddCallerSkip(1))
-		if err != nil {
-			return nil, err
-		}
-		return &customLogger{zapLogger: logger.Sugar().Named(opts.Name)}, nil
-	}
-	cfg := zap.NewProductionConfig()
-	cfg.EncoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
-		enc.AppendString(fmt.Sprintf("(%s) %s", caller.Function, caller.TrimmedPath()))
-	}
+		return zap.NewProductionConfig()
+	}()
 	logger, err := cfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
 	}
-	return &customLogger{zapLogger: logger.Sugar().Named(opts.Name)}, nil
-}
-
-func FxProvider() fx.Option {
-	return fx.Provide(NewLogger)
+	cLogger := &customLogger{zapLogger: logger.Sugar(), opts: opts}
+	if opts.Name != "" {
+		cLogger.zapLogger = cLogger.zapLogger.Named(opts.Name)
+	}
+	return cLogger, nil
 }
