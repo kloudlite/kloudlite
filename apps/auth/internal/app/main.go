@@ -17,8 +17,6 @@ import (
 )
 
 type Env struct {
-	BeaconUrl string `env:"BEACON_URL" required:"true"`
-
 	CookieDomain     string `env:"COOKIE_DOMAIN" required:"true"`
 	GithubWebhookUrl string `env:"GITHUB_WEBHOOK_URL" required:"true"`
 	GitlabWebhookUrl string `env:"GITLAB_WEBHOOK_URL" required:"true"`
@@ -89,8 +87,7 @@ var Module = fx.Module(
 				generated.Config{Resolvers: graph.NewResolver(d)},
 			)
 			httpServer.SetupGQLServer(
-				server,
-				schema,
+				server, schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
 					common.CookieName,

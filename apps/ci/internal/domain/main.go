@@ -109,14 +109,14 @@ func (d *domainI) parseGithubHook(eventType string, hookBody []byte) (*GitWebhoo
 	if err != nil {
 		return nil, err
 	}
-	switch t := hook.(type) {
+	switch h := hook.(type) {
 	case *github.PushEvent:
 		{
 			payload := GitWebhookPayload{
 				GitProvider: common.ProviderGithub,
-				RepoUrl:     *t.Repo.HTMLURL,
-				GitRef:      *t.Ref,
-				CommitHash:  t.GetAfter()[:10],
+				RepoUrl:     *h.Repo.HTMLURL,
+				GitRef:      *h.Ref,
+				CommitHash:  h.GetAfter()[:10],
 			}
 			return &payload, nil
 		}
@@ -152,14 +152,14 @@ func (d *domainI) parseGitlabHook(req *tekton.Request) (*GitWebhookPayload, erro
 	if err != nil {
 		return nil, errors.NewEf(err, "could not parse webhook body for eventType=%s", eventType)
 	}
-	switch t := hook.(type) {
+	switch h := hook.(type) {
 	case *gitlab.PushEvent:
 		{
 			payload := &GitWebhookPayload{
 				GitProvider: common.ProviderGitlab,
-				RepoUrl:     t.Repository.GitHTTPURL,
-				GitRef:      t.Ref,
-				CommitHash:  t.CheckoutSHA[:int(math.Min(10, float64(len(t.CheckoutSHA))))],
+				RepoUrl:     h.Repository.GitHTTPURL,
+				GitRef:      h.Ref,
+				CommitHash:  h.CheckoutSHA[:int(math.Min(10, float64(len(h.CheckoutSHA))))],
 			}
 			return payload, nil
 		}
@@ -211,17 +211,65 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 	}
 
 	tkVars := TektonVars{
-		PipelineId:     pipeline.Id,
-		GitRepo:        hookPayload.RepoUrl,
-		GitUser:        "x-access-token",
-		GitPassword:    token,
-		GitRef:         fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
-		GitCommitHash:  hookPayload.CommitHash,
-		BuildBaseImage: pipeline.Build.BaseImage,
-		BuildCmd:       pipeline.Build.Cmd,
-		BuildOutputDir: pipeline.Build.OutputDir,
-		RunBaseImage:   pipeline.Run.BaseImage,
-		RunCmd:         pipeline.Run.Cmd,
+		PipelineId:  pipeline.Id,
+		GitRepo:     hookPayload.RepoUrl,
+		GitUser:     "x-access-token",
+		GitPassword: token,
+		// GitRef:        fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
+		GitRef:        pipeline.GitBranch,
+		GitCommitHash: hookPayload.CommitHash,
+
+		IsDockerBuild: pipeline.DockerBuildInput != nil,
+		DockerFile: func() *string {
+			if pipeline.DockerBuildInput != nil {
+				return &pipeline.DockerBuildInput.DockerFile
+			}
+			return nil
+		}(),
+		DockerContextDir: func() *string {
+			if pipeline.DockerBuildInput != nil {
+				return &pipeline.DockerBuildInput.ContextDir
+			}
+			return nil
+		}(),
+		DockerBuildArgs: func() *string {
+			if pipeline.DockerBuildInput != nil {
+				return &pipeline.DockerBuildInput.BuildArgs
+			}
+			return nil
+		}(),
+
+		BuildBaseImage: func() string {
+			if pipeline.Build == nil {
+				return ""
+			}
+			return pipeline.Build.BaseImage
+		}(),
+		BuildCmd: func() string {
+			if pipeline.Build == nil {
+				return ""
+			}
+			return pipeline.Build.Cmd
+		}(),
+		BuildOutputDir: func() string {
+			if pipeline.Build == nil {
+				return ""
+			}
+			return pipeline.Build.OutputDir
+		}(),
+
+		RunBaseImage: func() string {
+			if pipeline.Run == nil {
+				return ""
+			}
+			return pipeline.Run.Cmd
+		}(),
+		RunCmd: func() string {
+			if pipeline.Run == nil {
+				return ""
+			}
+			return pipeline.Run.Cmd
+		}(),
 		ArtifactDockerImageName: fmt.Sprintf(
 			"%s/%s/%s",
 			d.harborHost,
@@ -263,8 +311,7 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 
 	if pipeline.GitlabTokenId == nil {
 		return nil, nil, tekton.NewError(
-			http.StatusInternalServerError,
-			errors.NewEf(err, "gitlab tokenId field is null, won't be able to pull repo"),
+			http.StatusInternalServerError, errors.NewEf(err, "gitlab tokenId field is null, won't be able to pull repo"),
 		)
 	}
 
@@ -276,12 +323,14 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 	}
 
 	tkVars := TektonVars{
-		PipelineId:    pipeline.Id,
-		GitRepo:       hookPayload.RepoUrl,
-		GitUser:       "oauth2",
-		GitPassword:   token,
-		GitRef:        fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
+		PipelineId:  pipeline.Id,
+		GitRepo:     hookPayload.RepoUrl,
+		GitUser:     "oauth2",
+		GitPassword: token,
+		// GitRef:        fmt.Sprintf("refs/heads/%s", pipeline.GitBranch),
+		GitRef:        pipeline.GitBranch,
 		GitCommitHash: hookPayload.CommitHash,
+
 		IsDockerBuild: pipeline.DockerBuildInput != nil,
 		DockerFile: func() *string {
 			if pipeline.DockerBuildInput != nil {
@@ -301,11 +350,39 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 			}
 			return nil
 		}(),
-		BuildBaseImage: pipeline.Build.BaseImage,
-		BuildCmd:       pipeline.Build.Cmd,
-		BuildOutputDir: pipeline.Build.OutputDir,
-		RunBaseImage:   pipeline.Run.BaseImage,
-		RunCmd:         pipeline.Run.Cmd,
+
+		BuildBaseImage: func() string {
+			if pipeline.Build == nil {
+				return ""
+			}
+			return pipeline.Build.BaseImage
+		}(),
+		BuildCmd: func() string {
+			if pipeline.Build == nil {
+				return ""
+			}
+			return pipeline.Build.Cmd
+		}(),
+		BuildOutputDir: func() string {
+			if pipeline.Build == nil {
+				return ""
+			}
+			return pipeline.Build.OutputDir
+		}(),
+
+		RunBaseImage: func() string {
+			if pipeline.Run == nil {
+				return ""
+			}
+			return pipeline.Run.Cmd
+		}(),
+		RunCmd: func() string {
+			if pipeline.Run == nil {
+				return ""
+			}
+			return pipeline.Run.Cmd
+		}(),
+
 		ArtifactDockerImageName: fmt.Sprintf(
 			"%s/%s/%s",
 			d.harborHost,

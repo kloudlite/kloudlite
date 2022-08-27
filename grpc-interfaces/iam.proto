@@ -25,7 +25,6 @@ message InConfirmMembership{
 }
 
 message OutConfirmMembership {
-
 }
 
 message RoleBinding {

@@ -98,8 +98,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CiCreatePipeline func(childComplexity int, in model.GitPipelineIn) int
-		CiDeletePipeline func(childComplexity int, pipelineID repos.ID) int
+		CiCreateDockerPipeline func(childComplexity int, in model.GitDockerPipelineIn) int
+		CiCreatePipeline       func(childComplexity int, in model.GitPipelineIn) int
+		CiDeletePipeline       func(childComplexity int, pipelineID repos.ID) int
 	}
 
 	Query struct {
@@ -136,6 +137,7 @@ type EntityResolver interface {
 type MutationResolver interface {
 	CiDeletePipeline(ctx context.Context, pipelineID repos.ID) (bool, error)
 	CiCreatePipeline(ctx context.Context, in model.GitPipelineIn) (map[string]interface{}, error)
+	CiCreateDockerPipeline(ctx context.Context, in model.GitDockerPipelineIn) (map[string]interface{}, error)
 }
 type QueryResolver interface {
 	CiGithubInstallations(ctx context.Context, pagination *types.Pagination) (interface{}, error)
@@ -350,6 +352,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HarborSearchResult.ImageName(childComplexity), true
+
+	case "Mutation.ci_createDockerPipeline":
+		if e.complexity.Mutation.CiCreateDockerPipeline == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_ci_createDockerPipeline_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CiCreateDockerPipeline(childComplexity, args["in"].(model.GitDockerPipelineIn)), true
 
 	case "Mutation.ci_createPipeline":
 		if e.complexity.Mutation.CiCreatePipeline == nil {
@@ -625,21 +639,21 @@ var sources = []*ast.Source{
 scalar Any
 
 type Query {
-  ci_githubInstallations(pagination: PaginationIn): Any!
-  ci_githubInstallationToken(repoUrl: String!): Any!
-  ci_githubRepos(installationId: Int!, pagination: PaginationIn): Any!
-  ci_githubRepoBranches(repoUrl: String!, pagination: PaginationIn): Any!
-  ci_searchGithubRepos(search: String, org: String!, pagination: PaginationIn): Any!
+  ci_githubInstallations(pagination: PaginationIn): Any! # user-access
+  ci_githubInstallationToken(repoUrl: String!): Any! # user-access
+  ci_githubRepos(installationId: Int!, pagination: PaginationIn): Any! # user-access
+  ci_githubRepoBranches(repoUrl: String!, pagination: PaginationIn): Any! # user-access
+  ci_searchGithubRepos(search: String, org: String!, pagination: PaginationIn): Any! # user-access
 
-  ci_gitlabGroups(query: String, pagination: PaginationIn): Any!
-  ci_gitlabRepos(groupId: String!, search: String, pagination: PaginationIn): Any!
-  ci_gitlabRepoBranches(repoId: String!, search: String, pagination: PaginationIn): Any!
+  ci_gitlabGroups(query: String, pagination: PaginationIn): Any! # user-access
+  ci_gitlabRepos(groupId: String!, search: String, pagination: PaginationIn): Any! # user-access
+  ci_gitlabRepoBranches(repoId: String!, search: String, pagination: PaginationIn): Any! # user-access
 
-  ci_getPipelines(projectId: ID!): [GitPipeline!]
-  ci_getPipeline(pipelineId: ID!): GitPipeline
-  ci_triggerPipeline(pipelineId: ID!): Boolean
+  ci_getPipelines(projectId: ID!): [GitPipeline!] # user-access # deprecate
+  ci_getPipeline(pipelineId: ID!): GitPipeline # user-access # deprecate
+  ci_triggerPipeline(pipelineId: ID!): Boolean # user-access # deprecate
 
-  ci_harborSearch(accountId: ID!, q: String!, pagination: PaginationIn): [HarborSearchResult!]
+  ci_harborSearch(accountId: ID!, q: String!, pagination: PaginationIn): [HarborSearchResult!] # account-member-access
   ci_harborImageTags(imageName: String!, pagination: PaginationIn): [HarborImageTagsResult!]
 }
 
@@ -751,14 +765,15 @@ input GitDockerPipelineIn {
 
 extend type App @key(fields: "id") {
   id: ID! @external
-  pipelines: [GitPipeline!]!
-  ci_createDockerPipeLine(containerName: String!, in: GitDockerPipelineIn!): Json!
-  ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json!
+  pipelines: [GitPipeline!]! # project-developer-access project-admin-access
+  ci_createDockerPipeLine(containerName: String!, in: GitDockerPipelineIn!): Json! # project-developer-access project-admin-access
+  ci_createPipeLine(containerName: String!, in: GitPipelineIn!): Json! # project-developer-access project-admin-access
 }
 
 type Mutation {
-  ci_deletePipeline(pipelineId: ID!): Boolean!
-  ci_createPipeline(in: GitPipelineIn!): Json!
+  ci_deletePipeline(pipelineId: ID!): Boolean! # project-developer-access project-admin-access
+  ci_createPipeline(in: GitPipelineIn!): Json! # project-developer-access project-admin-access
+  ci_createDockerPipeline(in: GitDockerPipelineIn!): Json!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -857,6 +872,21 @@ func (ec *executionContext) field_Entity_findAppByID_args(ctx context.Context, r
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_ci_createDockerPipeline_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.GitDockerPipelineIn
+	if tmp, ok := rawArgs["in"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("in"))
+		arg0, err = ec.unmarshalNGitDockerPipelineIn2kloudliteᚗioᚋappsᚋciᚋinternalᚋappᚋgraphᚋmodelᚐGitDockerPipelineIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["in"] = arg0
 	return args, nil
 }
 
@@ -2166,6 +2196,48 @@ func (ec *executionContext) _Mutation_ci_createPipeline(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CiCreatePipeline(rctx, args["in"].(model.GitPipelineIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNJson2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_ci_createDockerPipeline(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_ci_createDockerPipeline_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CiCreateDockerPipeline(rctx, args["in"].(model.GitDockerPipelineIn))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4965,6 +5037,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "ci_createPipeline":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_ci_createPipeline(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "ci_createDockerPipeline":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_ci_createDockerPipeline(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)

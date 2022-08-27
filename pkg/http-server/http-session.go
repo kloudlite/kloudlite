@@ -3,9 +3,10 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"kloudlite.io/pkg/cache"
-	"time"
 
 	"kloudlite.io/pkg/repos"
 )
@@ -20,6 +21,7 @@ func NewSessionMiddleware[T repos.Entity](
 ) fiber.Handler {
 	repo := cache.NewRepo[T](cacheClient)
 	return func(ctx *fiber.Ctx) error {
+		fmt.Printf("%s\n", ctx.Request().Header.RawHeaders())
 		cookieValue := ctx.Cookies(cookieName)
 		if cookieValue != "" {
 			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
@@ -35,6 +37,7 @@ func NewSessionMiddleware[T repos.Entity](
 				ctx.SetUserContext(context.WithValue(ctx.UserContext(), "session", get))
 			}
 		}
+
 		ctx.SetUserContext(
 			context.WithValue(
 				ctx.UserContext(), "set-session", func(session T) {
@@ -59,6 +62,7 @@ func NewSessionMiddleware[T repos.Entity](
 				},
 			),
 		)
+
 		ctx.SetUserContext(
 			context.WithValue(
 				ctx.UserContext(), "delete-session", func() {
@@ -73,7 +77,7 @@ func NewSessionMiddleware[T repos.Entity](
 }
 
 func GetSession[T repos.Entity](ctx context.Context) T {
-	userContext := ctx.Value("__local_user_context__").(context.Context)
+	userContext := ctx.Value(userContextKey).(context.Context)
 	value := userContext.Value("session")
 	if value != nil {
 		return value.(T)

@@ -1,14 +1,9 @@
 mode: dev
 dev:
-  # url: http://auth-api.dev.kloudlite.io/query
-  # authGraphql: http://localhost:12345/query
-  # url: http://localhost:12345/query
-  # url: http://localhost:8085/query
-  # url: http://auth-api/query
-  # url: http://localhost:3000/query
-  # url: http://localhost:3002/query
-  # url: http://ci-api.hotspot/query
-  url: http://localhost:3000/query
-  # url: http://ci-api.hotspot/query
+  # url: http://gateway.dev.kloudlite.io
+  url: http://gateway.kl-core.svc.cluster.local
   headers:
-    cookie: hotspot-session=ses-k-pua07tn0w4zkdmdiodzcn5ic8cp; domain=.dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
+    # hotspot-session: "true"
+    # cookie: hotspot-session=ses-80ta7vse2w-ziydcqc-lcfjcipwu; domain=.dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
+    # cookie: hotspot-session=ses-80ta7vse2w-ziydcqc-lcfjcipwu
+    cookie: hotspot-session=ses-c4uetgijz5-a7enjmqff9l6i9tm1; domain=.dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
