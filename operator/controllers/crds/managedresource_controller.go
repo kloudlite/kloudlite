@@ -226,9 +226,7 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *
 					context.TODO(), &mresList, &client.ListOptions{
 						LabelSelector: labels.SelectorFromValidatedSet(
 							map[string]string{
-								"kloudlite.io/msvc.name":    obj.GetName(),
-								"kloudlite.io/msvc.group":   obj.GetObjectKind().GroupVersionKind().Group,
-								"kloudlite.io/msvc.version": obj.GetObjectKind().GroupVersionKind().Version,
+								"kloudlite.io/msvc.name": obj.GetName(),
 							},
 						),
 						Namespace: obj.GetNamespace(),
