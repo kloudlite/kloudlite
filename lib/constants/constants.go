@@ -16,11 +16,17 @@ var LabelKeys = struct {
 	Freeze           string
 	IsIntercepted    string
 	DeviceRef        string
+
+	ProjectName string
+	AppName     string
 }{
 	HarborProjectRef: "artifacts.kloudlite.io/harbor-project-ref",
 	Freeze:           "kloudlite.io/freeze",
 	IsIntercepted:    "kloudlite.io/is-intercepted",
 	DeviceRef:        "kloudlite.io/intercept.device-ref",
+
+	ProjectName: "kloudlite.io/project.name",
+	AppName:     "kloudlite.io/app.name",
 }
 
 var AnnotationKeys = struct {
@@ -44,6 +50,13 @@ var AnnotationKeys = struct {
 
 	Restart: "kloudlite.io/do-restart",
 }
+
+const (
+	AccountRef string = "kloudlite.io/account-ref"
+	ProjectRef string = "kloudlite.io/project-ref"
+
+	ProjectName string = "kloudlite.io/project.name"
+)
 
 var (
 	PodGroup = metav1.TypeMeta{

@@ -235,7 +235,7 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) step
 			},
 
 			// for intercepting
-			"is-intercepted": app.GetLabels()[constants.LabelKeys.IsIntercepted],
+			"is-intercepted": app.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
 			"device-ref":     app.GetLabels()[constants.LabelKeys.DeviceRef],
 			"account-ref":    app.GetAnnotations()[constants.AnnotationKeys.AccountRef],
 		},

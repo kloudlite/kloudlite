@@ -2,7 +2,6 @@ package v1
 
 import (
 	"fmt"
-	"strings"
 
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -51,12 +50,9 @@ func (m *ManagedResource) GetStatus() *rApi.Status {
 }
 
 func (m *ManagedResource) GetEnsuredLabels() map[string]string {
-	splits := strings.Split(m.Spec.MsvcRef.APIVersion, "/")
 	return map[string]string{
-		"kloudlite.io/msvc.name":    m.Spec.MsvcRef.Name,
-		"kloudlite.io/msvc.group":   splits[0],
-		"kloudlite.io/msvc.version": splits[1],
-		"kloudlite.io/mres.name":    m.Name,
+		"kloudlite.io/msvc.name": m.Spec.MsvcRef.Name,
+		"kloudlite.io/mres.name": m.Name,
 	}
 }
 
