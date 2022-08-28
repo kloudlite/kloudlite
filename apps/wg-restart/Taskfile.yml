@@ -1,0 +1,28 @@
+version: "3"
+
+dotenv: [".secrets/env"]
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
+  run:
+    env:
+      CONFIG_FILE: ./conf.json
+    sources:
+      - ./internal/**/*.go
+      - ./main.go
+    cmds:
+      - go version
+#      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+      - go run -tags dynamic main.go --dev
+
+  docker-build:
+    dir: ../..
+    vars:
+      IMAGE: harbor.dev.madhouselabs.io/public/kloudlite/wg-restart:v2
+      APP_DIR: ./apps/wg-restart
+    cmds:
+      - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
+      - docker push {{.IMAGE}}
