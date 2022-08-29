@@ -16,6 +16,11 @@ metadata:
 spec:
   replicas: {{.Spec.ReplicaCount}}
   minimumMasterNodes: {{.Spec.ReplicaCount}}
+  fullnameOverride: {{.Name}}
+
+  {{- if .Spec.NodeSelector }}
+  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
+  {{- end }}
 
   volumeClaimTemplate:
     accessModes: [ "ReadWriteOnce" ]
@@ -37,5 +42,5 @@ spec:
     password: {{ index $generatedVars "password" }}
 
   service:
-    enabled: false
+    enabled: true
 {{- end}}

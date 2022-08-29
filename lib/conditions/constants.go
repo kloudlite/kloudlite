@@ -27,5 +27,6 @@ const (
 	Ready             Reason = "Ready"
 	NotReconciledYet  Reason = "NotReconciledYet"
 	ErrWhileReconcile Reason = "ErrWhileReconcilation"
+	Unknown           Reason = "Unknown"
 	Empty             Reason = ""
 )

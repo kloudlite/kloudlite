@@ -1,6 +1,8 @@
 package step_result
 
 import (
+	"time"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -11,7 +13,7 @@ type Result interface {
 
 	// builder options
 	Continue(bool) Result
-	Requeue(ctrl.Result) Result
+	RequeueAfter(time.Duration) Result
 	Err(error) Result
 }
 
@@ -34,8 +36,8 @@ func (opt options) Continue(val bool) Result {
 	return opt
 }
 
-func (opt options) Requeue(result ctrl.Result) Result {
-	opt.requeue = result
+func (opt options) RequeueAfter(d time.Duration) Result {
+	opt.requeue = ctrl.Result{RequeueAfter: d}
 	return opt
 }
 

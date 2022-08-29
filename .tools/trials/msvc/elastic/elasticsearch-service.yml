@@ -5,7 +5,8 @@ metadata:
   namespace: kl-core
 spec:
   cloudProvider:
-    cloud: azure
+    # cloud: azure
+    cloud: k3s-local
     region: centralindia
   nodeSelector:
     kloudlite.io/region: centralindia
@@ -13,6 +14,7 @@ spec:
     apiVersion: elasticsearch.msvc.kloudlite.io/v1
     kind: Service
   inputs:
+    replicaCount: 1
     resources:
       cpu:
         min: 500m

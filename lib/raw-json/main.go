@@ -54,28 +54,7 @@ func (s *RawJson) fillMap() {
 	}
 }
 
-// func (s *RawJson) toMap() (map[K]V, error) {
-// 	m, err := s.RawMessage.MarshalJSON()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var v map[K]V
-// 	if err := json.Unmarshal(m, &v); err != nil {
-// 		return nil, err
-// 	}
-// 	if v == nil {
-// 		v = map[K]V{}
-// 	}
-// 	return v, nil
-// }
-
-// func (s *RawJson) ToMap() (map[K]V, error) {
-// 	return s.toMap()
-// }
-
-func (s *RawJson) Set(key string, value any) error {
-	s.fillMap()
-	s.items[key] = value
+func (s *RawJson) complete() error {
 	b, err := json.Marshal(s.items)
 	if err != nil {
 		return err
@@ -84,14 +63,33 @@ func (s *RawJson) Set(key string, value any) error {
 	return nil
 }
 
+func (s *RawJson) Len() int {
+	s.fillMap()
+	return len(s.items)
+}
+
+func (s *RawJson) Set(key string, value any) error {
+	s.fillMap()
+	s.items[key] = value
+	return s.complete()
+}
+
+func (s *RawJson) SetFromMap(m map[string]any) error {
+	s.fillMap()
+	for k, v := range m {
+		s.items[k] = v
+	}
+	return s.complete()
+}
+
 func (s *RawJson) Exists(keys ...string) bool {
 	s.fillMap()
-	for _, key := range keys {
-		if _, ok := s.items[key]; !ok {
-			return false
+	for i := range keys {
+		if _, ok := s.items[keys[i]]; ok {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func (s *RawJson) Delete(key string) error {
@@ -99,24 +97,17 @@ func (s *RawJson) Delete(key string) error {
 	c := len(s.items)
 	delete(s.items, key)
 	if c != len(s.items) {
-		b, err := json.Marshal(s.items)
-		if err != nil {
-			return err
-		}
-		s.RawMessage = b
+		return s.complete()
 	}
 	return nil
 }
 
 func (s *RawJson) Get(key string, fillInto any) error {
 	s.fillMap()
-	// m, err := s.toMap()
-	// if err != nil {
-	// 	return *new(V), false
-	// }
-	//
 	value, ok := s.items[key]
 	if !ok {
+		fillInto = nil
+		// return nil
 		return errors.Newf("key %s does not exist", key)
 	}
 	b, err := json.Marshal(value)
@@ -141,32 +132,3 @@ func (s *RawJson) GetString(key string) (string, bool) {
 	}
 	return s2, true
 }
-
-//
-//
-// func (s *RawJson) GetInt(key string) (int, bool) {
-// 	s.fillMap()
-// 	x, ok := s.Get(key)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	s2, ok := (x).(float64)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	return int(s2), true
-// }
-//
-// func (s *RawJson) GetInt64(key string) (int64, bool) {
-// 	s.fillMap()
-// 	x, ok := s.Get(key)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	s2, ok := (x).(float64)
-// 	if !ok {
-// 		return 0, false
-// 	}
-// 	return int64(s2), true
-// }
-// --- old set
