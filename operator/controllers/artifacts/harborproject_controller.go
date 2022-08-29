@@ -182,7 +182,7 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 			return req.FailWithOpError(err)
 		}
 
-		return req.Done().Requeue(ctrl.Result{RequeueAfter: 0})
+		return req.Done().RequeueAfter(0)
 	}
 
 	if meta.IsStatusConditionFalse(obj.Status.Conditions, WebhookExists.String()) {

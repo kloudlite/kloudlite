@@ -136,12 +136,12 @@ func FromPod(ctx context.Context, client client.Client, nn types.NamespacedName)
 // 	res[i].Type = ""
 // }
 //
-// for i, condition := range obj.Object["status"].(statusStruct).Conditions {
+// for i, condition := range obj.Object["statusTT"].(statusStruct).Conditions {
 // 	condition.Type = fmt.Sprintf("%s-%s", typePrefix, condition.Type)
 // 	res[i] = condition
 // }
 //
-// for _, cs := range obj.Object["status"].(statusStruct).ContainerStatuses {
+// for _, cs := range obj.Object["statusTT"].(statusStruct).ContainerStatuses {
 // 	p := metav1.Condition{
 // 		Type:   fmt.Sprintf("%s-container-%s", typePrefix, cs.Cloud),
 // 		Status: fn.IfThenElse(cs.Ready, metav1.ConditionTrue, metav1.ConditionFalse),
@@ -158,6 +158,12 @@ func FromPod(ctx context.Context, client client.Client, nn types.NamespacedName)
 // }
 // return res, nil
 // }
+
+type StatusConditions struct {
+	Status struct {
+		Conditions []metav1.Condition `json:"conditions"`
+	} `json:"status"`
+}
 
 func FromResource(ctx context.Context, client client.Client, typeMeta metav1.TypeMeta, typePrefix string, nn types.NamespacedName) ([]metav1.Condition, error) {
 	obj := fn.NewUnstructured(typeMeta)
@@ -222,20 +228,45 @@ func ParseFromResource(resource any, cTypePrefix string) ([]metav1.Condition, er
 	return res, nil
 }
 
-func New[K Type | string, V Reason | string](cType K, status bool, reason V, msg ...string) metav1.Condition {
-	s := metav1.ConditionFalse
-	if status {
-		s = metav1.ConditionTrue
+type statusTT interface {
+	bool | metav1.ConditionStatus
+}
+
+func getStatus[K statusTT](status K) metav1.ConditionStatus {
+	switch x := (any)(status).(type) {
+	case bool:
+		{
+			if x {
+				return metav1.ConditionTrue
+			}
+			return metav1.ConditionFalse
+		}
+	case metav1.ConditionStatus:
+		return x
 	}
+	panic("should not come here")
+}
 
+func New[K ~string, V ~string, Status statusTT](cType K, status Status, reason V, msg ...string) metav1.Condition {
 	msg = append(msg, "")
-
 	return metav1.Condition{
 		Type:    string(cType),
-		Status:  s,
+		Status:  getStatus(status),
 		Reason:  string(reason),
 		Message: msg[0],
 	}
+}
+
+func FromObject(obj client.Object) ([]metav1.Condition, error) {
+	b, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+	var x StatusConditions
+	if err := json.Unmarshal(b, &x); err != nil {
+		return nil, err
+	}
+	return x.Status.Conditions, nil
 }
 
 type Type string

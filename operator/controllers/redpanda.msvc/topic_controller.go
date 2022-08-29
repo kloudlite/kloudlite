@@ -127,7 +127,7 @@ func (r *TopicReconciler) reconcileStatus(req *rApi.Request[*redpandamsvcv1.Topi
 		if err := r.Status().Update(ctx, obj); err != nil {
 			return req.FailWithStatusError(err)
 		}
-		return req.Done().Requeue(ctrl.Result{RequeueAfter: 0})
+		return req.Done().RequeueAfter(0)
 	}
 
 	cs := make([]metav1.Condition, 0, 4)
