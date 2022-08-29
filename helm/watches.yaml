@@ -13,14 +13,14 @@
   chart: helm-charts/redis
 - group: msvc.kloudlite.io
   version: v1
-  kind: HelmElasticSearch
-  chart: helm-charts/elasticsearch
-- group: msvc.kloudlite.io
-  version: v1
   kind: HelmOpenSearch
   chart: helm-charts/opensearch
 - group: msvc.kloudlite.io
   version: v1
   kind: HelmInfluxDB
   chart: helm-charts/influxdb
+- group: msvc.kloudlite.io
+  version: v1
+  kind: HelmElasticSearch
+  chart: helm-charts/elasticsearch
 #+kubebuilder:scaffold:watch
