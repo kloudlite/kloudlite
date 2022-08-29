@@ -267,17 +267,17 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 		mysqlClient, err := libMysql.NewClient(msvcRef.Hosts, "mysql", "root", msvcRef.RootPassword)
 		if err != nil {
 			req.Logger.Infof("encountered (err=%s), requeing after 10 seconds", err.Error())
-			return req.FailWithOpError(err).Err(nil).Requeue(ctrl.Result{RequeueAfter: time.Second * 10})
+			return req.FailWithOpError(err).Err(nil).RequeueAfter(10 * time.Second)
 		}
 		if err := mysqlClient.Connect(ctx); err != nil {
 			req.Logger.Infof("encountered (err=%s), requeing after 10 seconds", err.Error())
-			return req.FailWithOpError(err).Err(nil).Requeue(ctrl.Result{RequeueAfter: time.Second * 10})
+			return req.FailWithOpError(err).Err(nil).RequeueAfter(10 * time.Second)
 		}
 		defer mysqlClient.Close()
 
 		if err := mysqlClient.UpsertUser(dbName, dbUsername, dbPasswd); err != nil {
 			req.Logger.Infof("encountered (err=%s), requeing after 10 seconds", err.Error())
-			return req.FailWithOpError(err).Err(nil).Requeue(ctrl.Result{RequeueAfter: time.Second * 10})
+			return req.FailWithOpError(err).Err(nil).RequeueAfter(time.Second * 10)
 		}
 	}
 

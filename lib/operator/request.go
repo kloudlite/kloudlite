@@ -163,13 +163,22 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	return stepResult.New().Err(err)
 }
 
+func (r *Request[T]) CheckFailed(name string, check Check) stepResult.Result {
+	r.Object.GetStatus().Message.Set(name, check.Error)
+	r.Object.GetStatus().IsReady = false
+	if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
+		return stepResult.New().Err(err)
+	}
+	return stepResult.New()
+}
+
 func (r *Request[T]) Context() context.Context {
 	return r.ctx
 }
 
 func (r *Request[T]) Done(result ...ctrl.Result) stepResult.Result {
 	if len(result) > 0 {
-		return stepResult.New().Requeue(result[0])
+		return stepResult.New().RequeueAfter(0)
 	}
 	return stepResult.New()
 }

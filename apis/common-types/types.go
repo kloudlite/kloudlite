@@ -44,14 +44,6 @@ const (
 	Xfs  FsType = "xfs"
 )
 
-// const (
-// 	Digitalocean CloudProvider = "do"
-// 	Aws          CloudProvider = "aws"
-// 	Gcp          CloudProvider = "gcp"
-// 	Azure        CloudProvider = "azure"
-// 	K3sLocal     CloudProvider = "k3s-local"
-// )
-
 type CloudProvider struct {
 	// +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
 	Cloud  string `json:"cloud"`
@@ -63,6 +55,8 @@ type CloudProvider struct {
 func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
 	// return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
 	switch c.Cloud {
+	case "k3s-local":
+		return "local-path", nil
 	case "do":
 		{
 			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil

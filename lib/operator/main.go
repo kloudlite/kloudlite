@@ -2,8 +2,10 @@ package operator
 
 import (
 	"context"
+	"encoding/json"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"operators.kloudlite.io/env"
@@ -16,10 +18,18 @@ import (
 )
 
 // +kubebuilder:object:generate=true
+type Check struct {
+	Status        bool        `json:"status"`
+	Error         string      `json:"error,omitempty"`
+	Generation    int64       `json:"generation,omitempty"`
+	LastCheckedAt metav1.Time `json:"lastCheckedAt,omitempty"`
+}
 
+// +kubebuilder:object:generate=true
 type Status struct {
 	// +kubebuilder:validation:Optional
 	IsReady         bool               `json:"isReady"`
+	Message         rawJson.RawJson    `json:"message,omitempty"`
 	Messages        []ContainerMessage `json:"messages,omitempty"`
 	DisplayVars     rawJson.RawJson    `json:"displayVars,omitempty"`
 	GeneratedVars   rawJson.RawJson    `json:"generatedVars,omitempty"`
@@ -27,6 +37,7 @@ type Status struct {
 	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
 	OpsConditions   []metav1.Condition `json:"opsConditions,omitempty"`
 	Generation      int64              `json:"generation,omitempty"`
+	Checks          map[string]Check   `json:"checks,omitempty"`
 }
 
 // func (s *Status) Reset() {
@@ -68,4 +79,32 @@ func Get[T client.Object](ctx context.Context, cli client.Client, nn types.Names
 		return obj, err
 	}
 	return obj, nil
+}
+
+func GetRaw[T any](ctx context.Context, cli client.Client, nn types.NamespacedName, obj *unstructured.Unstructured) (*T, error) {
+	// b, err := json.Marshal(obj)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// var m map[string]any
+	// if err := json.Unmarshal(b, &m); err != nil {
+	// 	return nil, err
+	// }
+	//
+	// k := unstructured.Unstructured{
+	// 	Object: obj,
+	// }
+	if err := cli.Get(ctx, nn, obj); err != nil {
+		return nil, err
+	}
+
+	b, err := json.Marshal(obj.Object)
+	if err != nil {
+		return nil, err
+	}
+	var result T
+	if err := json.Unmarshal(b, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }

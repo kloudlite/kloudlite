@@ -212,7 +212,7 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 		if err := r.Status().Update(ctx, obj); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return req.Done().Requeue(ctrl.Result{RequeueAfter: 0})
+		return req.Done().RequeueAfter(0)
 	}
 
 	// if meta.IsStatusConditionFalse(obj.Status.Conditions, HarborUserAccountExists.String()) {

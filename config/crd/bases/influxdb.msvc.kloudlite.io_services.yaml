@@ -114,6 +114,23 @@ spec:
             type: object
           status:
             properties:
+              checks:
+                additionalProperties:
+                  properties:
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    lastCheckedAt:
+                      format: date-time
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
               childConditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -261,6 +278,9 @@ spec:
                 type: integer
               isReady:
                 type: boolean
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
               messages:
                 items:
                   properties:
