@@ -5,10 +5,22 @@ tasks:
     cmds:
       - operator-sdk init --plugins helm --domain kloudlite.io --group msvc --version v1 --kind MongoDB --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
 
+
   new-kind:
+    summary: '
+      example:
+        task new-kind Repo="https://charts.bitnami.com/bitnami" Chart="mongodb" Kind="MongoDB"
+    '
     vars:
       Domain: kloudlite.io
       Group: msvc
+    preconditions:
+      - sh: test -n '{{.Repo}}'
+        msg: 'var Repo must have a value'
+      - sh: test -n '{{.Chart}}'
+        msg: 'var Chart must have a value'
+      - sh: test -n '{{.Kind}}'
+        msg: 'var Kind must have a value'
     cmds:
       - operator-sdk create api --plugins helm --group {{.Group}} --version v1 --kind {{.Kind}} --helm-chart-repo {{.Repo}} --helm-chart {{.Chart}}
 
@@ -24,11 +36,11 @@ tasks:
         cd config/manager
         kustomize edit set image controller=${IMG}
         kustomize edit set namespace ${NAMESPACE}
-      - |
+      -
         cd config/default
         kustomize edit set image controller=${IMG}
         kustomize edit set namespace ${NAMESPACE}
-      - |
+      -
         filename=/tmp/kl-operator-$RANDOM.yml
         kustomize build config/default > $filename
         cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
@@ -61,26 +73,20 @@ tasks:
   deploy:gen-yamls:
     vars:
       Name: kloudlite-helm-operator
+      Namespace: kl-core
     env:
       IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
       NAMESPACE: kl-core
     cmds:
-      - |+
-        cd config/manager
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |+
-        cd config/default
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
+      - make manifests
       - |+
         cat config/crd/bases/*.yaml | yq -y
-
         yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
         echo "---"
         echo "$yamls" | yq '
           select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
-          .metadata.name = "{{.Name}}-manager-config"
+          .metadata.name = "{{.Name}}-manager-config" |
+          .metadata.namespace = "{{.Namespace}}"
         ' -y
 
         echo "---"
@@ -88,12 +94,15 @@ tasks:
           select(.kind == "Service") |
             .metadata.labels."control-plane" = "{{.Name}}" |
             .spec.selector."control-plane" = "{{.Name}}" |
-            .metadata.name = "{{.Name}}"
+            .metadata.name = "{{.Name}}" |
+            .metadata.namespace = "{{.Namespace}}"
         ' -y
+
         echo "---"
         echo "$yamls" | yq '
           select(.kind == "Deployment") |
             .metadata.name = "{{.Name}}" |
+            .metadata.namespace = "{{.Namespace}}" |
             .metadata.labels."control-plane" = "{{.Name}}" |
             .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
             .spec.template.metadata.labels."control-plane" = "{{.Name}}"

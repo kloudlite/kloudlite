@@ -1,4 +1,4 @@
-version: '3'
+version: 3
 
 dotenv: [".secrets/env"]
 
@@ -6,7 +6,7 @@ includes:
   helm:
     taskfile: ./helm/Taskfile.yml
     dir: ./helm/
-    
+
 tasks:
   new-kind:
     silent: true
@@ -32,7 +32,7 @@ tasks:
     sources:
       - "./**/*.go"
     method: timestamp
-  
+
   build:
     env:
       IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-operator:{{.Tag}}
@@ -118,7 +118,7 @@ tasks:
             )
           )
         ' -y
-        
+
   pre:
     run: once
     cmds:
