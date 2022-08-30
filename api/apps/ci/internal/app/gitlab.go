@@ -198,7 +198,7 @@ func fxGitlab(env *Env) domain.Gitlab {
 		ClientSecret: clientSecret,
 		Endpoint:     oauthGitlab.Endpoint,
 		RedirectURL:  callbackUrl,
-		Scopes:       []string{"api"},
+		Scopes:       strings.Split(env.GitlabScopes, ","),
 	}
 
 	return &gitlabI{cfg: &cfg, webhookUrl: env.GitlabWebhookUrl}

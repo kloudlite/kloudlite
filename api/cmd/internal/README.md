@@ -134,3 +134,46 @@ ports:
 ```
 
 > This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the cli will be updated to this doc.
+
+### proposition
+
+kl init
+    - --projectId={projectId}
+    - --accountId={accountId}
+
+kl list 
+  - accounts {query}
+  - projects {query}
+  - devices {query}
+  - configs {query}
+  - secrets {query}
+  - apps {query}
+  - lmbadas {query}
+  - routers {query}
+
+kl auth
+  - login
+    - --from-cookie
+  - logout
+
+kl intercept {device}
+  - app [id]
+      - --projectId={projectId}
+      - --accountId={accountId}
+  - lambda [id]
+      - --projectId={projectId}
+      - --accountId={accountId}
+
+kl {add,delete} 
+  - config [id] --map key1=var1 
+  - secret [id] --map key1=var1
+  - mres [id] --key {key}
+
+kl gen {file}
+  --config={configId} 
+  --secret={secretId}
+
+kl get
+  - config {name} --file={file} --format={format} --items
+  - secret {name} --file={file} --format={format} --items
+  - app {app}
