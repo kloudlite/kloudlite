@@ -36,6 +36,7 @@ type Env struct {
 	GitlabClientId     string `env:"GITLAB_CLIENT_ID" required:"true"`
 	GitlabClientSecret string `env:"GITLAB_CLIENT_SECRET" required:"true"`
 	GitlabCallbackUrl  string `env:"GITLAB_CALLBACK_URL" required:"true"`
+	GitlabScopes       string `env:"GITLAB_SCOPES" required:"true"`
 
 	GoogleClientId     string `env:"GOOGLE_CLIENT_ID" required:"true"`
 	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET" required:"true"`

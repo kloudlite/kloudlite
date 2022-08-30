@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
@@ -50,7 +51,7 @@ func fxGitlab(env *Env) domain.Gitlab {
 		ClientSecret: clientSecret,
 		Endpoint:     oauthGitlab.Endpoint,
 		RedirectURL:  callbackUrl,
-		Scopes:       []string{"api"},
+		Scopes:       strings.Split(env.GitlabScopes, ","),
 	}
 
 	return &gitlabI{cfg: &cfg}
