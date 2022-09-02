@@ -34,6 +34,7 @@ const (
 
 const (
 	GithubEventHeader string = "X-Github-Event"
+	GitlabEventHeader string = "X-Gitlab-Event"
 )
 
 type processor struct {
@@ -71,7 +72,7 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 					return d.ParseGithubHook(payload.ReqHeaders[GithubEventHeader], payload.Body)
 				}
 				if payload.Provider == Gitlab {
-					return d.ParseGitlabHook(payload.ReqHeaders[GithubEventHeader], payload.Body)
+					return d.ParseGitlabHook(payload.ReqHeaders[GitlabEventHeader], payload.Body)
 				}
 				return nil, errors.New("unknown git provider")
 			}()
