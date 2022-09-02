@@ -103,7 +103,7 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 				return err
 			}
 
-			agentMsgBytes, err := json.Marshal(map[string]any{"action": "create", "payload": b.Bytes()})
+			agentMsgBytes, err := json.Marshal(map[string]any{"action": "create", "yamls": b.Bytes()})
 			if err != nil {
 				return err
 			}

@@ -2,12 +2,15 @@ version: 3
 
 tasks:
   docker-build:
-    vars:
+    vars:1
       APP: webhooks
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/{{.APP}}:{{.Tag}}
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
     preconditions:
-      - sh: test -n '{{.Tag}}'
-        msg: 'var Tag must have a name'
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+
+      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
+        msg: 'var EnvName must have one of [development, staging, production] as its value'
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
