@@ -26,6 +26,7 @@ type Env struct {
 	GithubCallbackUrl  string `env:"GITHUB_CALLBACK_URL" required:"true"`
 	GithubAppId        string `env:"GITHUB_APP_ID" required:"true"`
 	GithubAppPKFile    string `env:"GITHUB_APP_PK_FILE" required:"true"`
+	GithubScopes       string `env:"GITHUB_SCOPES" required:"true"`
 
 	GitlabClientId     string `env:"GITLAB_CLIENT_ID" required:"true"`
 	GitlabClientSecret string `env:"GITLAB_CLIENT_SECRET" required:"true"`
@@ -35,6 +36,7 @@ type Env struct {
 	GoogleClientId     string `env:"GOOGLE_CLIENT_ID" required:"true"`
 	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET" required:"true"`
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
+	GoogleScopes       string `env:"GOOGLE_SCOPES" required:"true"`
 }
 
 func (env *Env) GoogleConfig() (clientId string, clientSecret string, callbackUrl string) {

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"kloudlite.io/apps/ci/internal/domain"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/types"
@@ -120,6 +119,19 @@ func (gl *gitlabI) GetRepoId(repoUrl string) string {
 	return gl.getRepoId(repoUrl)
 }
 
+func (gl *gitlabI) CheckWebhookExists(ctx context.Context, token *domain.AccessToken, repoId string, webhookId *domain.GitlabWebhookId) (bool, error) {
+	client, err := gl.getClient(ctx, token)
+	if err != nil {
+		return false, err
+	}
+
+	hook, _, err := client.Projects.GetProjectHook(repoId, int(*webhookId))
+	if err != nil {
+		return false, nil
+	}
+	return hook != nil, nil
+}
+
 func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, repoId string, pipelineId string) (*domain.GitlabWebhookId, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
@@ -129,13 +141,14 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, re
 	if err != nil {
 		return nil, err
 	}
-	webhookUrl := fmt.Sprintf("%s?pipelineId=%s", gl.webhookUrl, pipelineId)
+	// webhookUrl := fmt.Sprintf("%s?pipelineId=%s", gl.webhookUrl, pipelineId)
+
 	hook, _, err := client.Projects.AddProjectHook(
 		repoId, &gitlab.AddProjectHookOptions{
 			PushEvents:    fn.NewBool(true),
 			TagPushEvents: fn.NewBool(true),
 			Token:         &id,
-			URL:           &webhookUrl,
+			URL:           &gl.webhookUrl,
 		},
 	)
 	if err != nil {

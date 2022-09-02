@@ -4,7 +4,9 @@ import (
 	"flag"
 
 	"go.uber.org/fx"
-	"kloudlite.io/apps/ci/internal/framework"
+	"kloudlite.io/apps/webhooks/internal/env"
+	"kloudlite.io/apps/webhooks/internal/framework"
+	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/logging"
 )
 
@@ -14,11 +16,12 @@ func main() {
 	flag.Parse()
 
 	fx.New(
-		framework.Module,
 		fx.Provide(
 			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "ci", Dev: isDev})
+				return logging.New(&logging.Options{Name: "webhooks", Dev: isDev})
 			},
 		),
+		config.EnvFx[env.Env](),
+		framework.Module,
 	).Run()
 }

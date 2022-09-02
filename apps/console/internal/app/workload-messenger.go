@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/pkg/redpanda"
 )
@@ -25,8 +26,10 @@ func (i *workloadMessengerImpl) SendAction(action string, resId string, res any)
 		return err
 	}
 	fmt.Println(i.topic, resId, string(marshal))
-	i.producer.Produce(context.TODO(), i.topic, resId, marshal)
-	return err
+	if _, err := i.producer.Produce(context.TODO(), i.topic, resId, marshal); err != nil {
+		return err
+	}
+	return nil
 }
 
 func fxWorkloadMessenger(env *WorkloadConsumerEnv, p redpanda.Producer) domain.WorkloadMessenger {

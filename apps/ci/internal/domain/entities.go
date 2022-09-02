@@ -45,7 +45,7 @@ type Pipeline struct {
 	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
 	GitBranch   string `json:"git_branch" bson:"git_branch"`
 
-	GitlabTokenId *repos.ID `json:"gitlab_token,omitempty" bson:"gitlab_token_id"`
+	AccessTokenId repos.ID `json:"access_token_id,omitempty" bson:"access_token_id"`
 
 	Build            *ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
 	Run              *ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
@@ -53,10 +53,18 @@ type Pipeline struct {
 
 	ArtifactRef ArtifactRef `json:"artifact_ref,omitempty" bson:"artifact_ref,omitempty"`
 
-	GithubWebhookId *GithubWebhookId `json:"github_webhook_id,omitempty" bson:"github_webhook_id,omitempty"`
-	GitlabWebhookId *GitlabWebhookId `json:"gitlab_webhook_id,omitempty" bson:"gitlab_webhook_id,omitempty"`
+	WebhookId repos.ID `json:"webhook_id" bson:"webhook_id"`
 
 	Metadata map[string]any `json:"metadata,omitempty" bson:"metadata"`
+}
+
+var PipelineIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }
 
 type TektonVars struct {
@@ -65,7 +73,7 @@ type TektonVars struct {
 	GitUser     string   `json:"git-user"`
 	GitPassword string   `json:"git-password"`
 
-	GitRef        string `json:"git-ref"`
+	GitBranch     string `json:"git-branch"`
 	GitCommitHash string `json:"git-commit-hash"`
 
 	IsDockerBuild    bool    `json:"is-docker-build"`
@@ -98,15 +106,6 @@ func (t *TektonVars) ToJson() (map[string]any, error) {
 	return m, nil
 }
 
-var PipelineIndexes = []repos.IndexField{
-	{
-		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-}
-
 type HarborAccount struct {
 	repos.BaseEntity `bson:",inline"`
 	HarborId         int    `json:"harbor_id"`
@@ -122,4 +121,21 @@ type AccessToken struct {
 	Provider string         `json:"provider" bson:"provider"`
 	Token    *oauth2.Token  `json:"token" bson:"token"`
 	Data     map[string]any `json:"data" bson:"data"`
+}
+
+type GitRepositoryHook struct {
+	repos.BaseEntity `bson:",inline"`
+	HttpUrl          string           `json:"httpUrl" bson:"httpUrl"`
+	GitProvider      string           `json:"gitProvider" bson:"gitProvider"`
+	GitlabWebhookId  *GitlabWebhookId `json:"gitlabWebhookId" bson:"gitlabWebhookId"`
+	GithubWebhookId  *GithubWebhookId `json:"githubWebhookId" bson:"githubWebhookId"`
+}
+
+var GitRepositoryHookIndices = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "httpUrl", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }

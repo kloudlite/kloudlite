@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"kloudlite.io/apps/ci/internal/domain"
-	"kloudlite.io/pkg/types"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"kloudlite.io/apps/ci/internal/domain"
+	"kloudlite.io/pkg/types"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	// "github.com/google/go-github/v43/github"
@@ -26,11 +27,60 @@ type githubI struct {
 	cfg          *oauth2.Config
 	ghCli        *github.Client
 	ghCliForUser func(ctx context.Context, token *oauth2.Token) *github.Client
-	webhookUrl   string
 }
 
-func (gh *githubI) GetTriggerWebhookUrl() string {
-	return gh.webhookUrl
+func (gh *githubI) CheckWebhookExists(ctx context.Context, token *domain.AccessToken, repoUrl string, webhookId *domain.GithubWebhookId) (bool, error) {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	hook, _, _ := gh.ghCliForUser(ctx, token.Token).Repositories.GetHook(ctx, owner, repo, int64(*webhookId))
+
+	return hook != nil, nil
+
+	// hook, res, err := gh.ghCliForUser(ctx, token.Token).Repositories.CreateHook(
+	//	ctx, owner, repo, &github.Hook{
+	//		Config: map[string]interface{}{
+	//			"url":          gh.webhookUrl,
+	//			"content_type": "json",
+	//		},
+	//		Events: []string{"push"},
+	//		Active: fn.NewBool(true),
+	//		Name:   &hookName,
+	//	},
+	// )
+}
+
+func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl, webhookUrl string) (*domain.GithubWebhookId, error) {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	hookName := "kloudlite-pipeline"
+
+	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(
+		ctx, owner, repo, &github.Hook{
+			Config: map[string]any{
+				"url":          webhookUrl,
+				"content_type": "json",
+			},
+			Events: []string{"push"},
+			Active: fn.NewBool(true),
+			Name:   &hookName,
+		},
+	)
+	if err != nil {
+		// ASSERT: github returns 422 only if hook already exists on the repository
+		if res.StatusCode == 422 {
+			return nil, nil
+		}
+		return nil, errors.NewEf(err, "could not create github webhook")
+	}
+
+	return fn.New(domain.GithubWebhookId(*hook.ID)), nil
+}
+
+func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string, hookId domain.GithubWebhookId) error {
+	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	resp, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, int64(hookId))
+	if err != nil && resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+	return err
 }
 
 func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
@@ -87,7 +137,6 @@ func (gh *githubI) ListInstallations(ctx context.Context, accToken *domain.Acces
 
 func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, instId int64, pagination *types.Pagination) (*github.ListRepositories, error) {
 	opts := gh.buildListOptions(pagination)
-	fmt.Println("opts: ", opts)
 	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, instId, &opts)
 	// repos, _, err := gh.ghCli.Apps.ListUserRepos(ctx, instId, &opts)
 	if err != nil {
@@ -103,43 +152,6 @@ func (gh *githubI) GetLatestCommit(ctx context.Context, accToken *domain.AccessT
 		return "", err
 	}
 	return *branch.GetCommit().SHA, nil
-}
-
-func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, pipelineId string, repoUrl string) (*domain.GithubWebhookId, error) {
-	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	hookUrl := fmt.Sprintf("%s?pipelineId=%s", gh.webhookUrl, pipelineId)
-	hookName := "kloudlite-pipeline"
-
-	hook, res, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.CreateHook(
-		ctx, owner, repo, &github.Hook{
-			Config: map[string]interface{}{
-				"url":          hookUrl,
-				"content_type": "json",
-			},
-			Events: []string{"push"},
-			Active: fn.NewBool(true),
-			Name:   &hookName,
-		},
-	)
-	if err != nil {
-		// ASSERT: github returns 422 only if hook already exists on the repository
-		if res.StatusCode == 422 {
-			// fmt.Printf("Hook: %+v\n", hook)
-			return nil, nil
-		}
-		return nil, errors.NewEf(err, "could not create github webhook")
-	}
-
-	return fn.New(domain.GithubWebhookId(*hook.ID)), nil
-}
-
-func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string, hookId domain.GithubWebhookId) error {
-	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	resp, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, int64(hookId))
-	if err != nil && resp.StatusCode == http.StatusNotFound {
-		return nil
-	}
-	return err
 }
 
 func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error) {
@@ -168,7 +180,6 @@ func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (st
 	}
 	installationId := *inst.ID
 	it, _, err := gh.ghCli.Apps.CreateInstallationToken(ctx, installationId, &github.InstallationTokenOptions{})
-	fmt.Println(it)
 	if err != nil {
 		return "", errors.NewEf(err, "failed to get installation token")
 	}
@@ -186,7 +197,8 @@ func fxGithub(env *Env) domain.Github {
 		ClientSecret: clientSecret,
 		Endpoint:     oauthGithub.Endpoint,
 		RedirectURL:  callbackUrl,
-		Scopes:       []string{"user:email", "admin:org"},
+		Scopes:       strings.Split(env.GithubScopes, ","),
+		// Scopes:       []string{"user:email", "admin:org"},
 	}
 	privatePem, err := ioutil.ReadFile(ghAppPKFile)
 	if err != nil {
@@ -204,12 +216,11 @@ func fxGithub(env *Env) domain.Github {
 		return github.NewClient(oauth2.NewClient(ctx, ts))
 	}
 
-	ghCli := github.NewClient(&http.Client{Transport: itr, Timeout: time.Second * 30})
+	ghCli := github.NewClient(&http.Client{Transport: itr, Timeout: 30 * time.Second})
 
 	return &githubI{
 		cfg:          &cfg,
 		ghCli:        ghCli,
 		ghCliForUser: ghCliForUser,
-		webhookUrl:   env.GithubWebhookUrl,
 	}
 }

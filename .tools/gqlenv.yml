@@ -3,4 +3,4 @@ dev:
   url: https://gateway.dev.kloudlite.io
   # url: http://gateway.kl-core.svc.cluster.local
   headers:
-    cookie: hotspot-session=ses-bybaar8-piuoquef97unoc2ta1hh; domain=.dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
+    cookie: hotspot-session=ses-l4lcni0zgc3blhkmien3vvs2mupv; domain=.dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None

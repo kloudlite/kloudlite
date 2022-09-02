@@ -33,12 +33,8 @@ func Is(err error, target error) bool {
 	return errors.Is(err, target)
 }
 
-func Wrap(e error, msg string) error {
-	return errors.Wrap(e, msg)
-}
-
-func NewEf(err error, msg string, a ...any) error {
-	return yerrors.Errorf("%s as %+v", fmt.Sprintf(msg, a...), err)
+func NewEf(err error, msg string, args ...any) error {
+	return yerrors.WrapFrame(yerrors.Errorf("%s while %s", fmt.Sprintf(msg, args...), err.Error()), 1)
 }
 
 func ErrMarshal(err error) error {
@@ -47,7 +43,7 @@ func ErrMarshal(err error) error {
 
 func Newf(msg string, a ...any) error {
 	if len(a) > 0 {
-		return yerrors.Wrap(yerrors.Errorf(msg, a...))
+		return yerrors.WrapFrame(yerrors.Errorf(msg, a...), 1)
 	}
 	return yerrors.New(msg)
 }

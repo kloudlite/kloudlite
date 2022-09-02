@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -64,7 +65,7 @@ func fxGithub(env *Env) domain.Github {
 		ClientSecret: clientSecret,
 		Endpoint:     oauthGithub.Endpoint,
 		RedirectURL:  callbackUrl,
-		Scopes:       []string{"user:email", "admin:org"},
+		Scopes:       strings.Split(env.GithubScopes, ","),
 	}
 	privatePem, err := ioutil.ReadFile(ghAppPKFile)
 	if err != nil {

@@ -1,8 +1,8 @@
 ---
 global:
-  accountId: "acc-imgtxz4logeg-isxm4uqlpzzwctr"
-  projectId: "proj-ci1xmobjyia7cc00optpbeavpnmn"
-  projectName: "example-plaxonic"
+  accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
+  projectId: "proj-bopxvo-qpfpodbz9lciwu45s5uqd"
+  projectName: "sample"
 ---
 label: Gitlab Groups
 query: |
@@ -43,7 +43,7 @@ query: |
   }
 variables:
   in:
-    name: plaxonic-website-pipeline
+    name: sample-example
     accountId: "{{accountId}}"
     projectId: "{{projectId}}"
     appId: "not-app-id"
@@ -51,11 +51,30 @@ variables:
     containerName: "main"
     gitProvider: gitlab
     repoName: "website"
-    gitRepoUrl: "https://gitlab.com/plaxoniclabs/projects/plaxonic.com/website"
-    gitBranch: latest
+    gitRepoUrl: "https://gitlab.com/madhouselabs/sample"
+    gitBranch: master
     dockerFile: ./Dockerfile
     contextDir: ./
     buildArgs: ""
     artifactRef:
       dockerImageName: "harbor.dev.madhouselabs.io/{{accountId}}/website"
       dockerImageTag: "latest"
+
+---
+
+label: List Pipelines
+query: |
+  query Ci_getPipelines($projectId: ID!) {
+    ci_getPipelines(projectId: $projectId) {
+      id
+      name
+      dockerBuild {
+        dockerFile
+      }
+      build {
+        cmd
+      }
+    }
+  }
+variables:
+  projectId: "{{projectId}}"

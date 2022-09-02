@@ -1,0 +1,111 @@
+{{- $klCoreNamespace := "kl-core" }}
+{{- $tektonNamespace := "kl-init-tekton" }}
+{{- $svcAccount := "kloudlite-svc-account" }}
+{{- $clusterSvcAccount := "kloudlite-cluster-svc-account" }}
+{{- $secretDockerConfig := "kloudlite-docker-registry"}}
+{{- $taskName := "build-from-git" }}
+
+{{- $varPipelineId := "pipeline-id" }}
+{{- $varTaskNamespace := "task-namespace" }}
+{{- $varGitRepo := "git-repo" }}
+{{- $varGitUser := "git-user" }}
+{{- $varGitPassword := "git-password" }}
+{{- $varGitRef := "git-ref" }}
+{{- $varGitCommitHash := "git-commit-hash" }}
+
+{{- $varIsDockerBuild := "is-docker-build" }}
+{{- $varDockerContextDir := "docker-context-dir"}}
+{{- $varDockerFile := "docker-file"}}
+{{- $varDockerBuildArgs := "docker-build-args"}}
+
+{{- $varBuildBaseImage := "build-base-image" }}
+{{- $varBuildCmd := "build-cmd" }}
+{{- $varBuildOutputDir := "build-output-dir" }}
+
+{{- $varRunBaseImage := "run-base-image"}}
+{{- $varRunCmd := "run-cmd"}}
+
+{{- $varArtifactRefDockerImageName := "artifact_ref-docker_image_name"}}
+{{- $varArtifactRefDockerImageTag := "artifact_ref-docker_image_tag"}}
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  generateName: {{$taskName}}-
+  namespace: $(tt.params.{{$varTaskNamespace}})
+  labels:
+    app.kubernetes.io/name: $(tt.params.{{$varPipelineId}})
+spec:
+  serviceAccountName: {{$svcAccount}}
+  taskRef:
+    kind: ClusterTask
+    name: {{$taskName}}
+  podTemplate:
+    nodeSelector:
+      kloudlite.io/node-type: "ci"
+    tolerations:
+      - key: only-ci
+        value: "true"
+        operator: Equal
+        effect: NoSchedule
+  workspaces:
+    - name: output
+      emptyDir: {}
+
+    - name: docker-config
+      secret:
+        secretName: {{$secretDockerConfig}}
+
+  params:
+    - name: {{$varGitRepo}}
+      value: $(tt.params.{{$varGitRepo}})
+
+    - name: {{$varGitRef}}
+      value: $(tt.params.{{$varGitRef}})
+
+    - name: {{$varGitUser}}
+      value: $(tt.params.{{$varGitUser}})
+
+    - name: {{$varGitPassword}}
+      value: $(tt.params.{{$varGitPassword}})
+
+    - name: {{$varGitCommitHash}}
+      value: $(tt.params.{{$varGitCommitHash}})
+
+      {{/*          Docker configurations*/}}
+    - name: {{$varIsDockerBuild}}
+      value: $(tt.params.{{$varIsDockerBuild}})
+
+    - name: {{$varDockerFile}}
+      value: $(tt.params.{{$varDockerFile}})
+
+    - name: {{$varDockerContextDir}}
+      value: $(tt.params.{{$varDockerContextDir}})
+
+    - name: {{$varDockerBuildArgs}}
+      value: $(tt.params.{{$varDockerBuildArgs}})
+
+      {{/*            Build Configurations*/}}
+    - name: {{$varBuildBaseImage}}
+      value: $(tt.params.{{$varBuildBaseImage}})
+
+    - name: {{$varBuildCmd}}
+      value: $(tt.params.{{$varBuildCmd}})
+
+    - name: {{$varBuildOutputDir}}
+      value: $(tt.params.{{$varBuildOutputDir}})
+
+      {{/*          Run Configurations*/}}
+    - name: {{$varRunBaseImage}}
+      value: $(tt.params.{{$varRunBaseImage}})
+
+    - name: {{$varRunCmd}}
+      value: $(tt.params.{{$varRunCmd}})
+
+      {{/*          Artifacts*/}}
+    - name: {{$varArtifactRefDockerImageName}}
+      value: $(tt.params.{{$varArtifactRefDockerImageName}})
+
+    - name: {{$varArtifactRefDockerImageTag}}
+      value: $(tt.params.{{$varArtifactRefDockerImageTag}})

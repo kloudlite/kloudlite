@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -64,10 +65,7 @@ func fxGoogle(env *Env) domain.Google {
 		ClientSecret: clientSecret,
 		Endpoint:     google.Endpoint,
 		RedirectURL:  callbackUrl,
-		Scopes: []string{
-			"https://www.googleapis.com/auth/userinfo.profile",
-			"https://www.googleapis.com/auth/userinfo.email",
-		},
+		Scopes:       strings.Split(env.GoogleScopes, ","),
 	}
 	return &googleI{cfg}
 }

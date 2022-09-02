@@ -38,19 +38,18 @@ query: |
   }
 variables:
   in:
-    name: sample-pipeline
+    name: sample-pipeline2
     projectName: "{{projectName}}"
     accountId: "{{accountId}}"
     projectId: "{{projectName}}"
     # appId: app-pg5r5t4bqez31rvwyjgys8z0k55y
     appId: "sample"
     gitProvider: gitlab
-    # gitRepoUrl: https://gitlab.com/nxtcoder17/sample
-    gitRepoUrl: https://gitlab.com/plaxoniclabs/projects/plaxonic.com/website
-    repoName: plaxonic-website
+    gitRepoUrl: https://gitlab.com/madhouselabs/sample
+    repoName: sample
     gitBranch: latest
-    docker-file: ./Dockerfile
-    docker-context-dir: ./
+    dockerFile: ./Dockerfile
+    dockerContextDir: ./
     # build:
     #   baseImage: docker
     #   cmd: |+
@@ -59,7 +58,7 @@ variables:
     #   baseImage: docker
     #   cmd: ""
     artifactRef:
-      dockerImageName: harbor.dev.madhouselabs.io/kloudlite/plaxonic-website
+      dockerImageName: harbor.dev.madhouselabs.io/kloudlite/sample
       dockerImageTag: latest
 ---
 label: Create Gitlab Pipeline with buildCmd

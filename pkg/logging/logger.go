@@ -8,43 +8,41 @@ import (
 	"kloudlite.io/pkg/errors"
 )
 
-type Logger interface {
-	Debugf(msg string, args ...any)
-	Infof(msg string, args ...any)
-	Errorf(err error, msg string, args ...any)
-	Warnf(msg string, args ...any)
-	WithName(name string) Logger
-	WithKV(key string, value any) Logger
-}
+// type Logger interface {
+// 	Debugf(msg string, args ...any)
+// 	Infof(msg string, args ...any)
+// 	Errorf(err error, msg string, args ...any)
+// 	Warnf(msg string, args ...any)
+// 	WithName(name string) Logger
+// 	WithKV(keyValuePairs ...any) Logger
+// }
 
-type customLogger struct {
-	opts      Options
+type Logger struct {
 	zapLogger *zap.SugaredLogger
 }
 
-func (c customLogger) WithKV(key string, value any) Logger {
-	c.zapLogger = c.zapLogger.With(key, value)
-	return c
+func (c Logger) WithKV(keyValuePairs ...any) Logger {
+	return Logger{zapLogger: c.zapLogger.With(keyValuePairs...)}
 }
 
-func (c customLogger) Debugf(msg string, args ...any) {
+func (c Logger) Debugf(msg string, args ...any) {
 	c.zapLogger.Debugf(msg, args...)
 }
 
-func (c customLogger) Infof(msg string, args ...any) {
+func (c Logger) Infof(msg string, args ...any) {
 	c.zapLogger.Infof(msg, args...)
 }
 
-func (c customLogger) Errorf(err error, msg string, args ...any) {
-	c.zapLogger.Errorf(errors.NewEf(err, msg, args...).Error())
+func (c Logger) Errorf(err error, msg string, args ...any) {
+	c.zapLogger.Error(errors.NewEf(err, msg, args...))
 }
 
-func (c customLogger) Warnf(msg string, args ...any) {
+func (c Logger) Warnf(msg string, args ...any) {
 	c.zapLogger.Warnf(msg, args...)
 }
 
-func (c customLogger) WithName(name string) Logger {
-	return &customLogger{zapLogger: c.zapLogger.Named(name)}
+func (c Logger) WithName(name string) Logger {
+	return Logger{zapLogger: c.zapLogger.Named(name)}
 }
 
 type Options struct {
@@ -58,7 +56,7 @@ func New(options *Options) (Logger, error) {
 		opts = *options
 	}
 
-	cfg := func() zap.Config {
+	zapConfig := func() zap.Config {
 		if opts.Dev {
 			cfg := zap.NewDevelopmentConfig()
 			cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -71,11 +69,11 @@ func New(options *Options) (Logger, error) {
 		}
 		return zap.NewProductionConfig()
 	}()
-	logger, err := cfg.Build(zap.AddCallerSkip(1))
+	logger, err := zapConfig.Build(zap.AddCallerSkip(1))
 	if err != nil {
-		return nil, err
+		return Logger{}, err
 	}
-	cLogger := &customLogger{zapLogger: logger.Sugar(), opts: opts}
+	cLogger := Logger{zapLogger: logger.Sugar()}
 	if opts.Name != "" {
 		cLogger.zapLogger = cLogger.zapLogger.Named(opts.Name)
 	}

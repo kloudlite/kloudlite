@@ -15,6 +15,12 @@ type App struct {
 
 func (App) IsEntity() {}
 
+type DockerBuild struct {
+	DockerFile string  `json:"dockerFile"`
+	ContextDir string  `json:"contextDir"`
+	BuildArgs  *string `json:"buildArgs"`
+}
+
 type GitDockerPipelineIn struct {
 	Name          string                 `json:"name"`
 	AccountID     string                 `json:"accountId"`
@@ -41,6 +47,7 @@ type GitPipeline struct {
 	GitBranch   string                 `json:"gitBranch"`
 	Build       *GitPipelineBuild      `json:"build"`
 	Run         *GitPipelineRun        `json:"run"`
+	DockerBuild *DockerBuild           `json:"dockerBuild"`
 	Metadata    map[string]interface{} `json:"metadata"`
 }
 

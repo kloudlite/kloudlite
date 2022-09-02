@@ -2,17 +2,19 @@ package redpanda
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"kloudlite.io/pkg/errors"
-	"strings"
-	"time"
 )
 
 type Consumer interface {
 	SetupLogger(logger *zap.SugaredLogger)
 	Close()
+	Ping(ctx context.Context) error
 	StartConsuming(onMessage ReaderFunc)
 }
 
@@ -21,11 +23,11 @@ type ConsumerImpl struct {
 	logger *zap.SugaredLogger
 }
 
-//type Message struct {
+// type Message struct {
 //	Action  string         `json:"action"`
 //	Payload map[string]any `json:"payload"`
 //	record  *kgo.Record
-//}
+// }
 
 type ReaderFunc func(msg []byte, timeStamp time.Time, offset int64) error
 
@@ -35,6 +37,10 @@ func (c *ConsumerImpl) SetupLogger(logger *zap.SugaredLogger) {
 
 func (c *ConsumerImpl) Close() {
 	c.client.Close()
+}
+
+func (c *ConsumerImpl) Ping(ctx context.Context) error {
+	return c.client.Ping(ctx)
 }
 
 func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
@@ -95,11 +101,11 @@ type ConsumerConfig interface {
 
 func NewConsumerFx[T ConsumerConfig]() fx.Option {
 	return fx.Module(
-		"redis",
+		"consumer",
 		fx.Provide(
-			func(env T, client Client) (Consumer, error) {
-				topics := env.GetSubscriptionTopics()
-				consumerGroup := env.GetConsumerGroupId()
+			func(cfg T, client Client) (Consumer, error) {
+				topics := cfg.GetSubscriptionTopics()
+				consumerGroup := cfg.GetConsumerGroupId()
 				return NewConsumer(client.GetBrokerHosts(), consumerGroup, topics...)
 			},
 		),

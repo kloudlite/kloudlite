@@ -18,6 +18,7 @@ import (
 	"kloudlite.io/pkg/harbor"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/tekton"
 )
@@ -32,6 +33,7 @@ type Env struct {
 	GithubCallbackUrl  string `env:"GITHUB_CALLBACK_URL" required:"true"`
 	GithubAppId        string `env:"GITHUB_APP_ID" required:"true"`
 	GithubAppPKFile    string `env:"GITHUB_APP_PK_FILE" required:"true"`
+	GithubScopes       string `env:"GITHUB_SCOPES" required:"true"`
 
 	GitlabClientId     string `env:"GITLAB_CLIENT_ID" required:"true"`
 	GitlabClientSecret string `env:"GITLAB_CLIENT_SECRET" required:"true"`
@@ -41,10 +43,23 @@ type Env struct {
 	GoogleClientId     string `env:"GOOGLE_CLIENT_ID" required:"true"`
 	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET" required:"true"`
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
+	GoogleScopes       string `env:"GOOGLE_SCOPES" required:"true"`
+
+	KafkaGitWebhooksTopic      string `env:"KAFKA_GIT_WEBHOOKS_TOPIC" required:"true"`
+	KafkaGitWebhooksConsumerId string `env:"KAFKA_GIT_WEBHOOKS_CONSUMER_ID" required:"true"`
+	KafkaApplyYamlTopic        string `env:"KAFKA_APPLY_YAML_TOPIC" required:"true"`
+	KafkaBrokers               string `env:"KAFKA_BROKERS" required:"true"`
+
+	// KAFKA_GIT_WEBHOOKS_TOPIC="kl-git-webhooks"
+	// KAFKA_BROKERS="redpanda.kl-init-redpanda.svc.cluster.local"
 
 	HarborAdminUsername string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
 	HarborAdminPassword string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
 	HarborRegistryHost  string `env:"HARBOR_REGISTRY_HOST" required:"true"`
+}
+
+func (env *Env) GetBrokerHosts() string {
+	return env.KafkaBrokers
 }
 
 func (env *Env) GoogleConfig() (clientId string, clientSecret string, callbackUrl string) {
@@ -59,6 +74,14 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 	return env.GithubClientId, env.GithubClientSecret, env.GithubCallbackUrl, env.GithubAppId, env.GithubAppPKFile
 }
 
+func (env *Env) GetSubscriptionTopics() []string {
+	return []string{env.KafkaGitWebhooksTopic}
+}
+
+func (env *Env) GetConsumerGroupId() string {
+	return env.KafkaGitWebhooksConsumerId
+}
+
 type AuthCacheClient cache.Client
 type CacheClient cache.Client
 
@@ -67,10 +90,15 @@ type ConsoleGRPCClient *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
+
 	fx.Provide(config.LoadEnv[Env]()),
+	redpanda.NewConsumerFx[*Env](),
+
+	redpanda.NewProducerFx[*Env](),
 
 	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
+	repos.NewFxMongoRepo[*domain.GitRepositoryHook]("git_repo_hooks", "grh", domain.GitRepositoryHookIndices),
 	// repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
 
 	fx.Provide(
@@ -112,7 +140,7 @@ var Module = fx.Module(
 						return err
 					}
 					if provider == common.ProviderGitlab {
-						token, err := d.GitlabPullToken(ctx.Context(), *pipeline.GitlabTokenId)
+						token, err := d.GitlabPullToken(ctx.Context(), pipeline.AccessTokenId)
 						if err != nil {
 							return errors.NewEf(err, "while getting gitlab pull token")
 						}
@@ -129,6 +157,18 @@ var Module = fx.Module(
 					return errors.Newf("unknown (provider=%s) not one of [github,gitlab]", provider)
 				},
 			)
+		},
+	),
+
+	// Webhook
+	fx.Invoke(
+		func(app *fiber.App, d domain.Domain) error {
+			app.Post(
+				"/hooks/:gitProvider", func(ctx *fiber.Ctx) error {
+					return nil
+				},
+			)
+			return nil
 		},
 	),
 
@@ -256,6 +296,8 @@ var Module = fx.Module(
 			)
 		},
 	),
+
+	fx.Invoke(ProcessWebhooks),
 
 	domain.Module,
 )

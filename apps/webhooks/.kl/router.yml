@@ -1,0 +1,14 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Router
+metadata:
+  name: webhooks
+  namespace: kl-core
+spec:
+  domains:
+    - webhooks.dev.kloudlite.io
+  https:
+    enabled: true
+  routes:
+    - app: webhooks
+      path: /
+      port: 80

@@ -14,7 +14,7 @@ func getKubeConfig(isDev bool) (cfg *rest.Config, e error) {
 	if !isDev {
 		cfg, e = rest.InClusterConfig()
 		if e != nil {
-			return nil, errors.Wrap(e, "could not read incluster kubeconfig")
+			return nil, errors.NewEf(e, "could not read incluster kubeconfig")
 		}
 		return
 	}
@@ -31,7 +31,7 @@ func NewClient() (*kubernetes.Clientset, error) {
 	isDev := flag.Bool("dev", false, "is development")
 	cfg, e := getKubeConfig(*isDev)
 	if e != nil {
-		return nil, errors.Wrap(e, "could not retrieve kubeconfig")
+		return nil, errors.NewEf(e, "could not retrieve kubeconfig")
 	}
 	return kubernetes.NewForConfig(cfg)
 }
