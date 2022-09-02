@@ -7,6 +7,7 @@ import (
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -42,6 +43,12 @@ type Env struct {
 	AuthRedisUsername string `env:"AUTH_REDIS_USERNAME" required:"true"`
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
+
+	KafkaBrokers string `env:"KAFKA_BROKERS" required:"true"`
+}
+
+func (e *Env) GetBrokers() string {
+	return e.KafkaBrokers
 }
 
 func (e *Env) GetGRPCPort() uint16 {
@@ -88,5 +95,6 @@ var Module fx.Option = fx.Module(
 	repos.NewMongoClientFx[*Env](),
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthGRPCClient](),
 	rpc.NewGrpcClientFx[*GrpcConsoleConfig, app.ConsoleGRPCClient](),
+	redpanda.NewClientFx[*Env](),
 	app.Module,
 )

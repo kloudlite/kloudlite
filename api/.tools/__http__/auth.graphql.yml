@@ -55,7 +55,7 @@ query: |
     }
   }
 variables:
-  code: 7f7f607625017b950d8880047f9399ed35e064db56363211947010bfb099796b
+  code: 3fe11893f9c435fd29310b037b8ed86edf8d09ae09b36cb8fd23c3184c764b64
   provider: gitlab
   state: eyJjc3JmIjoidHZGNDJVSEF6UlZkbUNxYkt5bW93NEx0VHUtMWV2ZEgiLCJzdGF0ZSI6IiJ9
 ---

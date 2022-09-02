@@ -29,7 +29,7 @@ func Start(ctx context.Context, port uint16, app *fiber.App, logger logging.Logg
 	case status := <-errChannel:
 		return fmt.Errorf("could not start server because %v", status.Error())
 	case <-ctx.Done():
-		logger.Infof("Graphql Server started @ (port=%v)", port)
+		logger.Infof("Http Server started @ (port=%v)", port)
 	}
 	return nil
 }
@@ -45,7 +45,6 @@ func SetupGQLServer(
 		app.Use(v)
 	}
 	app.All("/query", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
-
 }
 
 type ServerOptions interface {
@@ -63,11 +62,15 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 		),
 		fx.Invoke(
 			func(lf fx.Lifecycle, env T, logger logging.Logger, app *fiber.App) {
-				app.Use(l.New(l.Config{
-					Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
-					TimeFormat: "02-Jan-2006 15:04:05",
-					TimeZone:   "Asia/Kolkata",
-				}))
+				app.Use(
+					l.New(
+						l.Config{
+							Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
+							TimeFormat: "02-Jan-2006 15:04:05",
+							TimeZone:   "Asia/Kolkata",
+						},
+					),
+				)
 				if env.GetHttpCors() != "" {
 					app.Use(
 						cors.New(
@@ -87,6 +90,9 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
 							return Start(ctx, env.GetHttpPort(), app, logger)
+						},
+						OnStop: func(ctx context.Context) error {
+							return app.Shutdown()
 						},
 					},
 				)

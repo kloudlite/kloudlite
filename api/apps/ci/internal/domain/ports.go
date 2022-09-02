@@ -17,10 +17,10 @@ type Github interface {
 	ListRepos(ctx context.Context, accToken *AccessToken, instId int64, pagination *types.Pagination) (*github.ListRepositories, error)
 	SearchRepos(ctx context.Context, accToken *AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error)
 	ListBranches(ctx context.Context, accToken *AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error)
-	AddWebhook(ctx context.Context, accToken *AccessToken, pipelineId string, repoUrl string) (*GithubWebhookId, error)
+	CheckWebhookExists(ctx context.Context, token *AccessToken, repoId string, webhookId *GithubWebhookId) (bool, error)
+	AddWebhook(ctx context.Context, accToken *AccessToken, repoUrl string, webhookUrl string) (*GithubWebhookId, error)
 	DeleteWebhook(ctx context.Context, accToken *AccessToken, repoUrl string, hookId GithubWebhookId) error
 	GetLatestCommit(ctx context.Context, accToken *AccessToken, repoUrl string, branchName string) (string, error)
-	GetTriggerWebhookUrl() string
 }
 
 type Gitlab interface {
@@ -28,6 +28,7 @@ type Gitlab interface {
 	ListGroups(ctx context.Context, token *AccessToken, query *string, pagination *types.Pagination) ([]*gitlab.Group, error)
 	ListRepos(ctx context.Context, token *AccessToken, gid string, query *string, pagination *types.Pagination) ([]*gitlab.Project, error)
 	ListBranches(ctx context.Context, token *AccessToken, repoId string, query *string, pagination *types.Pagination) ([]*gitlab.Branch, error)
+	CheckWebhookExists(ctx context.Context, token *AccessToken, repoId string, webhookId *GitlabWebhookId) (bool, error)
 	AddWebhook(ctx context.Context, token *AccessToken, repoId string, pipelineId string) (*GitlabWebhookId, error)
 	DeleteWebhook(ctx context.Context, token *AccessToken, repoUrl string, hookId GitlabWebhookId) error
 	RepoToken(ctx context.Context, token *AccessToken) (*oauth2.Token, error)

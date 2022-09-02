@@ -1,0 +1,18 @@
+version: 3
+
+tasks:
+  docker-build:
+    vars:
+      APP: webhooks
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/{{.APP}}:{{.Tag}}
+    preconditions:
+      - sh: test -n '{{.Tag}}'
+        msg: 'var Tag must have a name'
+    cmds:
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
+      - docker push {{.IMAGE}}
+
+  dev:live:
+    dir: .kl
+    cmds:
+      - kubectl apply -f .
