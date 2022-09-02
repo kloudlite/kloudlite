@@ -23,5 +23,5 @@ tasks:
       - sh: test -n '{{.Tag}}'
         msg: 'var Tag must have a value'
     cmds:
-      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..  --cache-to type=inline
       - docker push {{.IMAGE}}

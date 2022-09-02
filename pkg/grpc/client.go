@@ -2,7 +2,7 @@ package rpc
 
 import (
 	"context"
-	"fmt"
+
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -29,7 +29,6 @@ func NewGrpcClientFx[T ClientOptions, M GrpcClient]() fx.Option {
 		"grpc-client",
 		fx.Provide(
 			func(env T) (M, error) {
-				fmt.Println(env.GetGRPCServerURL())
 				return NewInsecureClient(env.GetGRPCServerURL())
 			},
 		),

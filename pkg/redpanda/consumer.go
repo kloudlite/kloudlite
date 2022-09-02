@@ -103,25 +103,27 @@ func NewConsumerFx[T ConsumerConfig]() fx.Option {
 	return fx.Module(
 		"consumer",
 		fx.Provide(
-			func(cfg T, client Client) (Consumer, error) {
+			func(cfg T, client Client, lf fx.Lifecycle) (Consumer, error) {
 				topics := cfg.GetSubscriptionTopics()
 				consumerGroup := cfg.GetConsumerGroupId()
-				return NewConsumer(client.GetBrokerHosts(), consumerGroup, topics...)
-			},
-		),
-		fx.Invoke(
-			func(lf fx.Lifecycle, r Consumer) {
+
+				consumer, err := NewConsumer(client.GetBrokerHosts(), consumerGroup, topics...)
+				if err != nil {
+					return nil, err
+				}
+
 				lf.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
-							return nil
+							return consumer.Ping(ctx)
 						},
 						OnStop: func(ctx context.Context) error {
-							r.Close()
+							consumer.Close()
 							return nil
 						},
 					},
 				)
+				return consumer, nil
 			},
 		),
 	)
