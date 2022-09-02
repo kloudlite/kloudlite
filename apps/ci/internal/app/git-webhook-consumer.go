@@ -67,10 +67,10 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 			}
 
 			hook, err := func() (*domain.GitWebhookPayload, error) {
-				if payload.Provider == "github" {
+				if payload.Provider == Github {
 					return d.ParseGithubHook(payload.ReqHeaders[GithubEventHeader], payload.Body)
 				}
-				if payload.Provider == "github" {
+				if payload.Provider == Gitlab {
 					return d.ParseGitlabHook(payload.ReqHeaders[GithubEventHeader], payload.Body)
 				}
 				return nil, errors.New("unknown git provider")
