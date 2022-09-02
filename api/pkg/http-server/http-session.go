@@ -21,7 +21,6 @@ func NewSessionMiddleware[T repos.Entity](
 ) fiber.Handler {
 	repo := cache.NewRepo[T](cacheClient)
 	return func(ctx *fiber.Ctx) error {
-		fmt.Printf("%s\n", ctx.Request().Header.RawHeaders())
 		cookieValue := ctx.Cookies(cookieName)
 		if cookieValue != "" {
 			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)

@@ -92,14 +92,13 @@ var Module = fx.Module(
 	"app",
 
 	fx.Provide(config.LoadEnv[Env]()),
-	redpanda.NewConsumerFx[*Env](),
-
-	redpanda.NewProducerFx[*Env](),
-
 	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
 	repos.NewFxMongoRepo[*domain.GitRepositoryHook]("git_repo_hooks", "grh", domain.GitRepositoryHookIndices),
 	// repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
+
+	redpanda.NewConsumerFx[*Env](),
+	redpanda.NewProducerFx[*Env](),
 
 	fx.Provide(
 		func(conn AuthGRPCClient) auth.AuthClient {
