@@ -100,7 +100,16 @@ type GitPipeline {
   build: GitPipelineBuild
   run: GitPipelineRun
 
+  dockerBuild: DockerBuild
+
   metadata: Json
+}
+
+type DockerBuild {
+  dockerFile: String!
+  contextDir: String!
+  buildArgs: String
+
 }
 
 input GitDockerPipelineIn {

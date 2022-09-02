@@ -22,3 +22,5 @@ nohup.out
 
 .GOPATH
 .GO
+
+.kl/secret*

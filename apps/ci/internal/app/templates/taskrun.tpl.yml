@@ -1,0 +1,118 @@
+{{/*Constants*/}}
+{{- $taskName := "build-from-git" }}
+{{- $svcAccountName := "kloudlite-svc-account" }}
+{{- $dockerConfigName := "kloudlite-docker-registry" }}
+
+{{- $tolerationKey := "only-ci" }}
+{{- $tolerationEffect := "NoSchedule" }}
+
+{{- $varPipelineId := "pipeline-id" }}
+{{- $varTaskNamespace := "task-namespace" }}
+{{- $varGitRepo := "git-repo" }}
+{{- $varGitUser := "git-user" }}
+{{- $varGitPassword := "git-password" }}
+{{- $varGitBranch := "git-branch" }}
+{{- $varGitCommitHash := "git-commit-hash" }}
+
+{{- $varIsDockerBuild := "is-docker-build" }}
+{{- $varDockerContextDir := "docker-context-dir"}}
+{{- $varDockerFile := "docker-file"}}
+{{- $varDockerBuildArgs := "docker-build-args"}}
+
+{{- $varBuildBaseImage := "build-base-image" }}
+{{- $varBuildCmd := "build-cmd" }}
+{{- $varBuildOutputDir := "build-output-dir" }}
+
+{{- $varRunBaseImage := "run-base-image"}}
+{{- $varRunCmd := "run-cmd"}}
+
+{{- $varArtifactRefDockerImageName := "artifact_ref-docker_image_name"}}
+{{- $varArtifactRefDockerImageTag := "artifact_ref-docker_image_tag"}}
+
+{{/*input Variables*/}}
+{{- $tektonRuns := get . "tekton-runs" }}
+
+{{- range $tkRun := $tektonRuns}}
+{{- with $tkRun }}
+{{- /*gotype: kloudlite.io/apps/ci/internal/domain.TektonVars */ -}}
+---
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  generateName: {{$taskName}}-
+  namespace: {{.TaskNamespace}}
+spec:
+  serviceAccountName: {{$svcAccountName}}
+  taskRef:
+    kind: ClusterTask
+    name: {{$taskName}}
+  podTemplate:
+    tolerations:
+      - key: {{$tolerationKey}}
+        value: "true"
+        operator: Equal
+        effect: {{$tolerationEffect}}
+
+  workspaces:
+    - name: output
+      emptyDir: {}
+
+    - name: docker-config
+      secret:
+        secretName: {{$dockerConfigName}}
+
+  params:
+    - name: {{$varGitRepo}}
+      value: {{.GitRepo}}
+
+    - name: {{$varGitBranch}}
+      value: {{.GitBranch}}
+
+    - name: {{$varGitUser}}
+      value: {{.GitUser}}
+
+    - name: {{$varGitPassword}}
+      value: {{.GitPassword}}
+
+    - name: {{$varGitCommitHash}}
+      value: {{.GitCommitHash}}
+
+      {{/*          Docker configurations*/}}
+    - name: {{$varIsDockerBuild}}
+      value: {{.IsDockerBuild}}
+
+    - name: {{$varDockerFile}}
+      value: {{.DockerFile}}
+
+    - name: {{$varDockerContextDir}}
+      value: {{.DockerContextDir}}
+
+    - name: {{$varDockerBuildArgs}}
+      value: {{.DockerBuildArgs}}
+
+      {{/*            Build Configurations*/}}
+    - name: {{$varBuildBaseImage}}
+      value: {{.BuildBaseImage}}
+
+    - name: {{$varBuildCmd}}
+      value: {{.BuildCmd}}
+
+    - name: {{$varBuildOutputDir}}
+      value: {{.BuildOutputDir}}
+
+      {{/*          Run Configurations*/}}
+    - name: {{$varRunBaseImage}}
+      value: {{.RunBaseImage}}
+
+    - name: {{$varRunCmd}}
+      value: {{.RunCmd}}
+
+      {{/*          Artifacts*/}}
+    - name: {{$varArtifactRefDockerImageName}}
+      value: {{.ArtifactDockerImageName}}
+
+    - name: {{$varArtifactRefDockerImageTag}}
+      value: {{.ArtifactDockerImageTag}}
+
+{{- end }}
+{{- end}}

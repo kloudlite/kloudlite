@@ -155,8 +155,8 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 }
 
 func (r *mutationResolver) CiDeletePipeline(ctx context.Context, pipelineID repos.ID) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if err := r.Domain.DeletePipeline(ctx, session.UserId, pipelineID); err != nil {
+	// session := httpServer.GetSession[*common.AuthSession](ctx)
+	if err := r.Domain.DeletePipeline(ctx, pipelineID); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -219,8 +219,8 @@ func (r *mutationResolver) CiCreateDockerPipeline(ctx context.Context, in model.
 			ProjectName:   in.ProjectName,
 			ProjectId:     in.ProjectID,
 			AccountId:     in.AccountID,
-			AppId:         "not-app-id",
-			ContainerName: "sample",
+			AppId:         in.AppID,
+			ContainerName: in.ContainerName,
 			GitProvider:   in.GitProvider,
 			GitRepoUrl:    in.GitRepoURL,
 			GitBranch:     in.GitBranch,
@@ -318,6 +318,16 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 			GitRepoURL:  pItem.GitRepoUrl,
 			GitBranch:   pItem.GitBranch,
 			Metadata:    pItem.Metadata,
+			DockerBuild: func() *model.DockerBuild {
+				if pItem.DockerBuildInput == nil {
+					return nil
+				}
+				return &model.DockerBuild{
+					DockerFile: pItem.DockerBuildInput.DockerFile,
+					ContextDir: pItem.DockerBuildInput.ContextDir,
+					BuildArgs:  &pItem.DockerBuildInput.BuildArgs,
+				}
+			}(),
 		}
 
 		if pItem.Build != nil {
@@ -334,6 +344,7 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 				Cmd:       pItem.Run.Cmd,
 			}
 		}
+
 	}
 	return pipelines, nil
 }
@@ -349,6 +360,7 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 		Name:        pipeline.Name,
 		GitProvider: pipeline.GitProvider,
 		GitRepoURL:  pipeline.GitRepoUrl,
+		GitBranch:   pipeline.GitBranch,
 		Build: &model.GitPipelineBuild{
 			BaseImage: &pipeline.Build.BaseImage,
 			Cmd:       pipeline.Build.Cmd,
@@ -358,6 +370,16 @@ func (r *queryResolver) CiGetPipeline(ctx context.Context, pipelineID repos.ID) 
 			BaseImage: &pipeline.Run.BaseImage,
 			Cmd:       pipeline.Run.Cmd,
 		},
+		DockerBuild: func() *model.DockerBuild {
+			if pipeline.DockerBuildInput == nil {
+				return nil
+			}
+			return &model.DockerBuild{
+				DockerFile: pipeline.DockerBuildInput.DockerFile,
+				ContextDir: pipeline.DockerBuildInput.ContextDir,
+				BuildArgs:  &pipeline.DockerBuildInput.BuildArgs,
+			}
+		}(),
 		Metadata: pipeline.Metadata,
 	}
 

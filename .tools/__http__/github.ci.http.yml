@@ -1,4 +1,9 @@
 ---
+global:
+  accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
+  projectId: "proj-bopxvo-qpfpodbz9lciwu45s5uqd"
+  projectName: "sample"
+---
 label: github installations
 query: |
   query Query($pagination: PaginationIn) {
@@ -76,3 +81,48 @@ query: |
   }
 variables:
   repoUrl: https://github.com/kloudlite/demo-env
+
+---
+
+label: Create Githhub Pipeline with Docker
+query: |
+  mutation Ci_createDockerPipeline($in: GitDockerPipelineIn!) {
+    ci_createDockerPipeline(in: $in)
+  }
+variables:
+  in:
+    name: sample-example-github
+    accountId: "{{accountId}}"
+    projectId: "{{projectId}}"
+    appId: "not-app-id-github"
+    projectName: "{{projectName}}"
+    containerName: "main"
+    gitProvider: github
+    repoName: "website"
+    gitRepoUrl: "https://github.com/nxtcoder17/sample"
+    gitBranch: master
+    dockerFile: ./Dockerfile
+    contextDir: ./
+    buildArgs: ""
+    artifactRef:
+      dockerImageName: "harbor.dev.madhouselabs.io/{{accountId}}/website2"
+      dockerImageTag: "latest"
+
+---
+
+label: List Pipelines
+query: |
+  query Ci_getPipelines($projectId: ID!) {
+    ci_getPipelines(projectId: $projectId) {
+      id
+      name
+      dockerBuild {
+        dockerFile
+      }
+      build {
+        cmd
+      }
+    }
+  }
+variables:
+  projectId: "{{projectId}}"

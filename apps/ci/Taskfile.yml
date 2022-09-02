@@ -17,8 +17,11 @@ tasks:
 
   docker-build:
     vars:
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/ci:v2
       APP: ci
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/{{.APP}}:{{.Tag}}
+    preconditions:
+      - sh: test -n '{{.Tag}}'
+        msg: 'var Tag must have a value'
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}

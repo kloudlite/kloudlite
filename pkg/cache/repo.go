@@ -3,8 +3,9 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-redis/redis/v8"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/errors"
@@ -17,7 +18,7 @@ type redisRepo[T any] struct {
 func (r *redisRepo[T]) Set(c context.Context, key string, value T) error {
 	b, err := json.Marshal(value)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal value")
+		return errors.NewEf(err, "failed to marshal value")
 	}
 	return r.cli.Set(c, key, b)
 }

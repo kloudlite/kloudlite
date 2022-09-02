@@ -1,9 +1,9 @@
 ---
 global:
   hello: world
-  accountId: "acc-imgtxz4logeg-isxm4uqlpzzwctr"
-  projectId: "proj-ci1xmobjyia7cc00optpbeavpnmn"
-  projectName: "example-plaxonic"
+  accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
+  projectId: "proj-bopxvo-qpfpodbz9lciwu45s5uqd"
+  projectName: "sample"
 ---
 
 label: List Projects
@@ -29,7 +29,7 @@ query: |
   }
 variables:
   accountId: "{{accountId}}"
-  name: "example-plaxonic"
-  displayName: "plaxonic example"
+  name: "sample"
+  displayName: "sample"
   regionId: "centralindia"
   description: "this is just a dev only project"
