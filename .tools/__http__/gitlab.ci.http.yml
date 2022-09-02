@@ -43,10 +43,10 @@ query: |
   }
 variables:
   in:
-    name: sample-example
+    name: sample-example-2
     accountId: "{{accountId}}"
     projectId: "{{projectId}}"
-    appId: "not-app-id"
+    appId: "not-app-id-gitlab"
     projectName: "{{projectName}}"
     containerName: "main"
     gitProvider: gitlab
