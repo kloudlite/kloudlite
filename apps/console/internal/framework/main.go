@@ -137,6 +137,8 @@ var Module fx.Option = fx.Module(
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),
+
+
 	fx.Provide(func(env *Env) *kubeapi.Client {
 		return kubeapi.NewClient(env.KubeAPIAddress)
 	}),

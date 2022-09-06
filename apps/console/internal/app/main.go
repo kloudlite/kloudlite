@@ -124,7 +124,7 @@ var Module = fx.Module(
 	}),
 
 	// Common Producer
-	redpanda.NewProducerFx(),
+	redpanda.NewProducerFx[redpanda.Client](),
 
 	// Workload Message Producer
 	fx.Provide(fxWorkloadMessenger),
