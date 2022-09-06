@@ -30,6 +30,9 @@ func (d *domainI) GenerateBillingInvoice(ctx context.Context, accountId repos.ID
 			"month":      nil,
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	type ProjStruct struct {
 		BillAmount       float64 `json:"bill_amount" bson:"bill_amount"`
@@ -66,7 +69,7 @@ func (d *domainI) GenerateBillingInvoice(ctx context.Context, accountId repos.ID
 	for _, ab := range accountBillings {
 		if strings.HasPrefix(string(ab.ResourceId), "app-") {
 			app := App{}
-			appOut, err := d.consoleCli.GetApp(ctx, &console.AppIn{
+			appOut, err := d.consoleClient.GetApp(ctx, &console.AppIn{
 				AppId: string(ab.Id),
 			})
 			if err != nil {
@@ -76,7 +79,7 @@ func (d *domainI) GenerateBillingInvoice(ctx context.Context, accountId repos.ID
 			if err != nil {
 				return nil, err
 			}
-			projectOut, err := d.consoleCli.GetProjectName(ctx, &console.ProjectIn{
+			projectOut, err := d.consoleClient.GetProjectName(ctx, &console.ProjectIn{
 				ProjectId: string(app.ProjectId),
 			})
 			if err != nil {

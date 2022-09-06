@@ -50,25 +50,23 @@ func open(url string) error {
 	return exec.Command(cmd, args...).Start()
 }
 
-func Login() {
+func Login() error {
 	loginId, err := server.CreateRemoteLogin()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	link := fmt.Sprintf("%s/%s%s", loginUrl, "?loginId=", loginId)
 	err = open(link)
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 	err = server.Login(loginId)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
+	return nil
 }
 
 func Logout() error {

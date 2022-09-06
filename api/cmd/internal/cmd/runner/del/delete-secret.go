@@ -1,4 +1,4 @@
-package remove
+package del
 
 import (
 	"fmt"
@@ -10,43 +10,49 @@ import (
 	"kloudlite.io/cmd/internal/lib/server"
 )
 
-var removeSecretCommand = &cobra.Command{
+var deleteSecretCommand = &cobra.Command{
 	Use:   "secret",
 	Short: "remove one secret environment from your " + constants.CMD_NAME + "-config",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		removeSecret()
+	Long: `This command help you to delete environment that that is comming from secret
+
+Examples:
+  # remov secret
+  kl del secret
+`,
+	Run: func(_ *cobra.Command, _ []string) {
+		err := removeSecret()
+
+		if err != nil {
+			common.PrintError(err)
+			return
+		}
 	},
 }
 
-func removeSecret() {
+func removeSecret() error {
 
 	klFile, err := server.GetKlFile(nil)
 	if err != nil {
 		common.PrintError(err)
-		es := "Please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
-		common.PrintError(fmt.Errorf(es))
-		return
+		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		return fmt.Errorf(es)
 	}
 
 	if len(klFile.Secrets) == 0 {
-		es := "No secrets added yet in your file"
-		common.PrintError(fmt.Errorf(es))
-		return
+		es := "no secrets added yet in your file"
+		return fmt.Errorf(es)
 	}
 
 	selectedSecretIndex, err := fuzzyfinder.Find(
 		klFile.Secrets,
 		func(i int) string {
-			return fmt.Sprintf("%s, %s", klFile.Secrets[i].Name, klFile.Secrets[i].Id)
+			return klFile.Secrets[i].Name
 		},
 		fuzzyfinder.WithPromptString("Select Secret Group >"),
 	)
 
 	if err != nil {
-		common.PrintError(err)
-		return
+		return err
 	}
 
 	selectedSecret := klFile.Secrets[selectedSecretIndex]
@@ -75,8 +81,7 @@ func removeSecret() {
 		)
 
 		if e != nil {
-			common.PrintError(e)
-			return
+			return e
 		}
 
 		newEnvs := make([]server.ResEnvType, 0)
@@ -93,8 +98,6 @@ func removeSecret() {
 	}
 
 	err = server.WriteKLFile(*klFile)
-	if err != nil {
-		common.PrintError(err)
-	}
 
+	return err
 }

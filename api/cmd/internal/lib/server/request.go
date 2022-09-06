@@ -55,6 +55,8 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		return nil, err
 	}
 
+	// fmt.Println(string(body))
+
 	type RespData struct {
 		Errors []struct {
 			Message string `json:"message"`
@@ -122,16 +124,19 @@ func gql(query string, variables map[string]any, cookie *string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
+
 	type RespData struct {
 		Errors []struct {
 			Message string `json:"message"`
 		} `json:"errors"`
 	}
+
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
 		return nil, err
 	}
+
 	if len(respData.Errors) > 0 {
 		var errorMessages []string
 		for _, e := range respData.Errors {

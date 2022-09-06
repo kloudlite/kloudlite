@@ -5,14 +5,12 @@ import (
 )
 
 type ResourceType struct {
-	Id   string
 	Name string
 	// Outputs      map[string]string
 	ResourceType string
 }
 
 type Mres struct {
-	Id        string
 	Name      string
 	Source    string
 	Resources []ResourceType
@@ -50,7 +48,7 @@ func GetMreses() ([]*Mres, []mCategory, error) {
 		return nil, nil, err
 	}
 
-	projectId, err := currentProjectId()
+	projectId, err := CurrentProjectId()
 	if err != nil {
 		return nil, nil, err
 	}

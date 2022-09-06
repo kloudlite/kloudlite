@@ -1,7 +1,5 @@
 package localenv
 
-import "kloudlite.io/pkg/repos"
-
 type ResEnv struct {
 	Name   string
 	Key    string
@@ -15,14 +13,12 @@ type Env struct {
 
 type Res struct {
 	Name string
-	Id   repos.ID
 	Env  []ResEnv
 }
 
 type FileEntry struct {
 	Path string
 	Type string
-	Ref  string
 	Name string
 }
 

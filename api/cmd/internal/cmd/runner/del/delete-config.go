@@ -1,4 +1,4 @@
-package remove
+package del
 
 import (
 	"fmt"
@@ -10,43 +10,48 @@ import (
 	"kloudlite.io/cmd/internal/lib/server"
 )
 
-var removeConfigCommand = &cobra.Command{
+var deleteConfigCommand = &cobra.Command{
 	Use:   "config",
 	Short: "remove one config environment from your " + constants.CMD_NAME + "-config",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		removeConfig()
+	Long: `This command help you to delete environment that that is comming from config
+
+Examples:
+  # remove config
+  kl del config
+	`,
+	Run: func(_ *cobra.Command, _ []string) {
+		err := removeConfig()
+		if err != nil {
+			common.PrintError(err)
+			return
+		}
 	},
 }
 
-func removeConfig() {
+func removeConfig() error {
 
 	klFile, err := server.GetKlFile(nil)
 	if err != nil {
 		common.PrintError(err)
-		es := "Please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
 		common.PrintError(fmt.Errorf(es))
-		return
 	}
 
 	if len(klFile.Configs) == 0 {
-		es := "No configs added yet in your file"
-		common.PrintError(fmt.Errorf(es))
-		return
+		es := "no configs added yet in your file"
+		return fmt.Errorf(es)
 	}
 
 	selectedConfigIndex, err := fuzzyfinder.Find(
 		klFile.Configs,
 		func(i int) string {
-			return fmt.Sprintf("%s, %s", klFile.Configs[i].Name, klFile.Configs[i].Id)
+			return klFile.Configs[i].Name
 		},
 		fuzzyfinder.WithPromptString("Select Config Group >"),
 	)
 
 	if err != nil {
-		common.PrintError(err)
-		return
+		return err
 	}
 
 	selectedConfig := klFile.Configs[selectedConfigIndex]
@@ -75,8 +80,7 @@ func removeConfig() {
 		)
 
 		if e != nil {
-			common.PrintError(e)
-			return
+			return e
 		}
 
 		newEnvs := make([]server.ResEnvType, 0)
@@ -93,8 +97,6 @@ func removeConfig() {
 	}
 
 	err = server.WriteKLFile(*klFile)
-	if err != nil {
-		common.PrintError(err)
-	}
 
+	return err
 }

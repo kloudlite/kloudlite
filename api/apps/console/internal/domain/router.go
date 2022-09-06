@@ -10,12 +10,24 @@ import (
 
 func (d *domain) GetRouter(ctx context.Context, routerID repos.ID) (*entities.Router, error) {
 	router, err := d.routerRepo.FindById(ctx, routerID)
-	if err != nil {
+
+	if err = mongoError(err, "router not found"); err != nil {
 		return nil, err
 	}
+
+	if err = d.checkProjectAccess(ctx, router.ProjectId, READ_PROJECT); err != nil {
+		return nil, err
+	}
+
 	return router, nil
 }
+
 func (d *domain) GetRouters(ctx context.Context, projectID repos.ID) ([]*entities.Router, error) {
+
+	if err := d.checkProjectAccess(ctx, projectID, READ_PROJECT); err != nil {
+		return nil, err
+	}
+
 	routers, err := d.routerRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"project_id": projectID,
@@ -24,6 +36,7 @@ func (d *domain) GetRouters(ctx context.Context, projectID repos.ID) ([]*entitie
 	if err != nil {
 		return nil, err
 	}
+
 	return routers, nil
 }
 
@@ -58,6 +71,11 @@ func (d *domain) OnDeleteRouter(ctx context.Context, response *op_crds.StatusUpd
 }
 
 func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerName string, domains []string, routes []*entities.Route) (*entities.Router, error) {
+
+	if err := d.checkProjectAccess(ctx, projectId, UPDATE_PROJECT); err != nil {
+		return nil, err
+	}
+
 	prj, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return nil, err
@@ -112,9 +130,14 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 }
 func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string, entries []*entities.Route) (bool, error) {
 	router, err := d.routerRepo.FindById(ctx, id)
-	if err != nil {
+	if err = mongoError(err, "router not found"); err != nil {
 		return false, err
 	}
+
+	if err = d.checkProjectAccess(ctx, router.ProjectId, UPDATE_PROJECT); err != nil {
+		return false, err
+	}
+
 	if domains != nil {
 		router.Domains = domains
 	}
@@ -164,13 +187,19 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 }
 func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, error) {
 	r, err := d.routerRepo.FindById(ctx, routerID)
-	if err != nil {
+	if err = mongoError(err, "router not found"); err != nil {
 		return false, err
 	}
+
+	if err = d.checkProjectAccess(ctx, routerID, UPDATE_PROJECT); err != nil {
+		return false, err
+	}
+
 	err = d.routerRepo.DeleteById(ctx, routerID)
 	if err != nil {
 		return false, err
 	}
+
 	err = d.workloadMessenger.SendAction("delete", string(r.Id), &op_crds.Router{
 		APIVersion: op_crds.RouterAPIVersion,
 		Kind:       op_crds.RouterKind,
@@ -179,5 +208,10 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 			Namespace: r.Namespace,
 		},
 	})
+
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }

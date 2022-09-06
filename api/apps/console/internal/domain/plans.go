@@ -14,26 +14,33 @@ func (d *domain) GetStoragePlans(_ context.Context) ([]entities.StoragePlan, err
 	if err != nil {
 		return nil, err
 	}
+
 	var plans []entities.StoragePlan
+
 	err = yaml.Unmarshal(fileData, &plans)
 	if err != nil {
 		return nil, err
 	}
+
 	return plans, nil
 }
+
 func (d *domain) GetComputePlan(_ context.Context, name string) (*entities.ComputePlan, error) {
 	return d.getComputePlan(name)
 }
+
 func (d *domain) GetComputePlans(_ context.Context) ([]entities.ComputePlan, error) {
 	fileData, err := ioutil.ReadFile(fmt.Sprintf("%s/compute-plans.yaml", d.inventoryPath))
 	if err != nil {
 		return nil, err
 	}
+
 	var plans []entities.ComputePlan
 	err = yaml.Unmarshal(fileData, &plans)
 	if err != nil {
 		return nil, err
 	}
+
 	return plans, nil
 }
 
@@ -42,16 +49,19 @@ func (d *domain) getStoragePlan(name string) (*entities.StoragePlan, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var plans []entities.StoragePlan
 	err = yaml.Unmarshal(fileData, &plans)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, plan := range plans {
 		if plan.Name == name {
 			return &plan, nil
 		}
 	}
+
 	return nil, errors.New("plan not found")
 }
 
@@ -60,15 +70,18 @@ func (d *domain) getComputePlan(name string) (*entities.ComputePlan, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var plans []entities.ComputePlan
 	err = yaml.Unmarshal(fileData, &plans)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, plan := range plans {
 		if plan.Name == name {
 			return &plan, nil
 		}
 	}
+
 	return nil, errors.New("plan not found")
 }

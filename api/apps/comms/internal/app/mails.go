@@ -96,11 +96,33 @@ func constructWelcomeEmail(name string) (subject string, plainText string, htmlC
 
 func constructAccountInvitationEmail(name string, accountName string, invitationToken string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
 	email, err := loadEmailFromYaml("account-invite", struct {
-		Name string
-		Link string
+		Name        string
+		Link        string
+		AccountName string
 	}{
-		Name: name,
-		Link: fmt.Sprintf("%v/invite-callback/?token=%v", baseUrl, invitationToken),
+		Name:        name,
+		Link:        fmt.Sprintf("%v/invite-callback/?token=%v", baseUrl, invitationToken),
+		AccountName: accountName,
+	})
+	fmt.Sprintf("%v/invite-callback/?token=%v", baseUrl, invitationToken)
+	if err != nil {
+		return
+	}
+	subject = email.Subject
+	plainText = email.PlainText
+	htmlContent = email.HTMLText
+	return
+}
+
+func constructProjectInvitationEmail(name string, projectName string, invitationToken string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := loadEmailFromYaml("project-invite", struct {
+		Name        string
+		Link        string
+		ProjectName string
+	}{
+		Name:        name,
+		Link:        fmt.Sprintf("%v/invite-callback/?token=%v", baseUrl, invitationToken),
+		ProjectName: projectName,
 	})
 	fmt.Sprintf("%v/invite-callback/?token=%v", baseUrl, invitationToken)
 	if err != nil {

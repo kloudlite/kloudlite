@@ -2,9 +2,12 @@ package domain
 
 import (
 	"context"
+
+	fWebsocket "github.com/gofiber/websocket/v2"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -18,7 +21,6 @@ type Domain interface {
 	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
 	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
 	GetStoragePlans(ctx context.Context) ([]entities.StoragePlan, error)
-
 	//CreateCluster(ctx context.Context, data *entities.Region) (*entities.Region, error)
 	//CreateClusterAccount(ctx context.Context, data *entities.WGAccount, region string, provider string) (*entities.WGAccount, error)
 	//UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
@@ -97,6 +99,7 @@ type Domain interface {
 	OnUpdateManagedRes(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetApps(ctx context.Context, projectId repos.ID) ([]*entities.App, error)
+	GetInterceptedApps(ctx context.Context, deviceId repos.ID) ([]*entities.App, error)
 	FreezeApp(ctx context.Context, appId repos.ID) error
 	UnFreezeApp(ctx context.Context, appId repos.ID) error
 	RestartApp(ctx context.Context, appId repos.ID) error
@@ -126,7 +129,19 @@ type Domain interface {
 	DeleteProject(ctx context.Context, id repos.ID) (bool, error)
 	GetDockerCredentials(ctx context.Context, id repos.ID) (username string, password string, err error)
 	GenerateEnv(ctx context.Context, klfile localenv.KLFile) (map[string]string, map[string]string, error)
+	InterceptApp(ctx context.Context, appId repos.ID, deviceId repos.ID) error
+	CloseIntercept(ctx context.Context, appId repos.ID) error
+
+	GetSocketCtx(
+		conn *fWebsocket.Conn,
+		cacheClient AuthCacheClient,
+		cookieName,
+		cookieDomain string,
+		sessionKeyPrefix string,
+	) context.Context
 }
+
+type AuthCacheClient cache.Client
 
 type InfraActionMessage interface {
 	entities.SetupClusterAccountAction | entities.SetupClusterAction | entities.DeleteClusterAction | entities.UpdateClusterAction | entities.AddPeerAction | entities.DeletePeerAction

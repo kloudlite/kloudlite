@@ -1,6 +1,9 @@
 package runner
 
 import (
+	"os"
+	"path"
+
 	"github.com/spf13/cobra"
 	"kloudlite.io/cmd/internal/cmd/runner/mounter"
 	"kloudlite.io/cmd/internal/common"
@@ -11,9 +14,32 @@ import (
 var LoadCommand = &cobra.Command{
 	Use:   "load",
 	Short: "load environment variables and mount config files according to defined in " + constants.CMD_NAME + "-config file",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Long: `Load Environment
+This command help you to load environments of the server according to you defined in your kl-config file.
+
+Examples:
+  # load environments and mount the configs
+  kl load
+
+	# load environments and execute a program with that loaded environments
+	kl load <your_cmd>
+
+	# example with npm start
+	kl load npm start
+
+	# get environments in json format
+	kl load -o json
+
+	# get environments in yaml format
+	kl load -o yaml
+
+	# start a new shell with loaded environments
+	kl load shell
+
+	# example of env with zsh shell
+	kl load zsh
+	`,
+	Run: func(_ *cobra.Command, args []string) {
 		loadEnv(args)
 	},
 }
@@ -38,7 +64,12 @@ func loadEnv(args []string) {
 		return
 	}
 
-	generatedConfig.EnvVars["KL_MOUNT_PATH"] = klfile.FileMount.MountBasePath
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = "."
+	}
+
+	generatedConfig.EnvVars["KL_MOUNT_PATH"] = path.Join(cwd, klfile.FileMount.MountBasePath)
 
 	err = mounter.Load(generatedConfig.EnvVars, args)
 

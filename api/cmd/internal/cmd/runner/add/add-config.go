@@ -1,7 +1,9 @@
 package add
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
@@ -13,72 +15,119 @@ import (
 var addConfigCommand = &cobra.Command{
 	Use:   "config",
 	Short: "add config to your " + constants.CMD_NAME + "-config file by selection from the all the config available in selected project",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.`,
+	Long: `Add env from managed resource
+
+Using this command you are able to add a environment from the config present on your project
+Examples:
+  # add config
+  kl add config
+
+	# add config by providing name of config
+	kl add config --name <name>
+	kl add config <name>
+
+	# add config by providing your key and refkey
+	kl add config <name> --map [ref_key]=[your_local_key]
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		selectConfig()
+		err := selectAndAddConfig(cmd, args)
+		if err != nil {
+			common.PrintError(err)
+			return
+		}
 	},
 }
 
-func selectConfig() {
+func selectAndAddConfig(cmd *cobra.Command, args []string) error {
+	m := cmd.Flag("map").Value.String()
+	name := cmd.Flag("name").Value.String()
+
+	if name == "" && len(args) >= 1 {
+		name = args[0]
+	}
 
 	klFile, err := server.GetKlFile(nil)
 	if err != nil {
 		common.PrintError(err)
-		es := "Please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
-		common.PrintError(fmt.Errorf(es))
-		return
+		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		return fmt.Errorf(es)
 	}
 
 	configs, err := server.GetConfigs()
-
 	if err != nil {
-		common.PrintError(err)
-		return
+		return err
 	}
 
 	if len(configs) == 0 {
-		es := "No configs created yet on server"
-		common.PrintError(fmt.Errorf(es))
-		return
+		return errors.New("no configs created yet on server")
 	}
 
-	selectedGroupIndex, err := fuzzyfinder.Find(
-		configs,
-		func(i int) string {
-			return configs[i].Name
-		},
-		fuzzyfinder.WithPromptString("Select Config Group >"),
-	)
+	selectedConfigGroup := server.Config{}
 
-	if err != nil {
-		common.PrintError(err)
+	if name != "" {
+		for _, c := range configs {
+			if c.Name == name {
+				selectedConfigGroup = c
+				break
+			}
+		}
+		return errors.New("can't find configs with provided name")
+	} else {
+
+		selectedGroupIndex, e := fuzzyfinder.Find(
+			configs,
+			func(i int) string {
+				return configs[i].Name
+			},
+			fuzzyfinder.WithPromptString("Select Config Group >"),
+		)
+		if e != nil {
+			return e
+		}
+
+		selectedConfigGroup = configs[selectedGroupIndex]
 	}
-
-	selectedConfigGroup := configs[selectedGroupIndex]
 
 	if len(selectedConfigGroup.Entries) == 0 {
-		es := fmt.Sprintf("No configs added yet to %s config", selectedConfigGroup.Name)
-		common.PrintError(fmt.Errorf(es))
-		return
+		return fmt.Errorf("no configs added yet to %s config", selectedConfigGroup.Name)
 	}
 
-	selectedKeyIndex, err := fuzzyfinder.Find(
-		selectedConfigGroup.Entries,
-		func(i int) string {
-			return selectedConfigGroup.Entries[i].Key
-		},
-		fuzzyfinder.WithPromptString(fmt.Sprintf("Select Key of %s >", selectedConfigGroup.Name)),
-	)
-	if err != nil {
-		common.PrintError(err)
-	}
+	selectedConfigKey := server.CSEntry{}
 
-	selectedConfigKey := selectedConfigGroup.Entries[selectedKeyIndex]
+	if m != "" {
+		kk := strings.Split(m, "=")
+		if len(kk) != 2 {
+			return errors.New("map must be in format of config_key=your_var_key")
+		}
+
+		for _, c := range selectedConfigGroup.Entries {
+			if c.Key == kk[0] {
+				selectedConfigKey = c
+				break
+			}
+		}
+
+		return errors.New("config_key not found in selected config")
+
+	} else {
+		selectedKeyIndex, e := fuzzyfinder.Find(
+			selectedConfigGroup.Entries,
+			func(i int) string {
+				return selectedConfigGroup.Entries[i].Key
+			},
+			fuzzyfinder.WithPromptString(fmt.Sprintf("Select Key of %s >", selectedConfigGroup.Name)),
+		)
+		if e != nil {
+			return e
+		}
+
+		selectedConfigKey = selectedConfigGroup.Entries[selectedKeyIndex]
+
+	}
 
 	matchedGroupIndex := -1
 	for i, rt := range klFile.Configs {
-		if rt.Id == selectedConfigGroup.Id {
+		if rt.Name == selectedConfigGroup.Name {
 			matchedGroupIndex = i
 			break
 		}
@@ -96,17 +145,28 @@ func selectConfig() {
 
 		if matchedKeyIndex == -1 {
 			klFile.Configs[matchedGroupIndex].Env = append(klFile.Configs[matchedGroupIndex].Env, server.ResEnvType{
-				Key:    selectedConfigKey.Key,
+				Key: func() string {
+					if m != "" {
+						kk := strings.Split(m, "=")
+						return kk[1]
+					}
+					return selectedConfigKey.Key
+				}(),
 				RefKey: selectedConfigKey.Key,
 			})
 		}
 	} else {
 		klFile.Configs = append(klFile.Configs, server.ResType{
-			Id:   selectedConfigGroup.Id,
 			Name: selectedConfigGroup.Name,
 			Env: []server.ResEnvType{
 				{
-					Key:    selectedConfigKey.Key,
+					Key: func() string {
+						if m != "" {
+							kk := strings.Split(m, "=")
+							return kk[1]
+						}
+						return selectedConfigKey.Key
+					}(),
 					RefKey: selectedConfigKey.Key,
 				},
 			},
@@ -115,8 +175,18 @@ func selectConfig() {
 
 	err = server.WriteKLFile(*klFile)
 	if err != nil {
-		common.PrintError(err)
+		return err
 	}
 
 	fmt.Printf("added config %s/%s to your %s-file\n", selectedConfigGroup.Name, selectedConfigKey.Key, constants.CMD_NAME)
+
+	return nil
+}
+
+func init() {
+	k := ""
+	addConfigCommand.Flags().StringVarP(&k, "map", "", "", "config_key=your_var_key")
+
+	l := ""
+	addConfigCommand.Flags().StringVarP(&l, "name", "", "", "config name")
 }
