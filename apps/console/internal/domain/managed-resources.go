@@ -9,30 +9,56 @@ import (
 )
 
 func (d *domain) GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error) {
-	return d.managedResRepo.FindById(ctx, managedResID)
+	mr, err := d.managedResRepo.FindById(ctx, managedResID)
+	if err = mongoError(err, "resource not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, mr.ProjectId, READ_PROJECT)
+	if err != nil {
+		return nil, err
+	}
+
+	return mr, nil
 }
+
 func (d *domain) GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error) {
+	err := d.checkProjectAccess(ctx, projectID, READ_PROJECT)
+	if err != nil {
+		return nil, err
+	}
+
 	return d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"project_id": projectID,
 	}})
 }
+
 func (d *domain) GetManagedResourcesOfService(ctx context.Context, installationId repos.ID) ([]*entities.ManagedResource, error) {
-	fmt.Println("GetManagedResourcesOfService", installationId)
-	return d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+	mres, err := d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"service_id": installationId,
 	}})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(mres) > 0 {
+		err = d.checkProjectAccess(ctx, mres[0].ProjectId, READ_PROJECT)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return mres, nil
 }
 
 func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.StatusUpdate) error {
-	one, err := d.managedResRepo.FindOne(ctx, repos.Filter{
-		"id": response.Metadata.ResourceId,
-	})
-	if err != nil {
-		return err
+	one, err := d.managedResRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		// Ignore unknown resource
+		return nil
 	}
-	if one == nil {
-		return fmt.Errorf("managed resource not found")
-	}
+
 	newStatus := one.Status
 	if response.IsReady {
 		newStatus = entities.ManagedResourceStateLive
@@ -52,18 +78,18 @@ func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.Statu
 
 func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID, name string, resourceType string, values map[string]string) (*entities.ManagedResource, error) {
 	svc, err := d.managedSvcRepo.FindById(ctx, installationId)
+	if err = mongoError(err, "service not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, svc.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return nil, err
 	}
-	if svc == nil {
-		return nil, fmt.Errorf("managed service not found")
-	}
+
 	prj, err := d.projectRepo.FindById(ctx, svc.ProjectId)
-	if err != nil {
+	if err = mongoError(err, "project not found"); err != nil {
 		return nil, err
-	}
-	if prj == nil {
-		return nil, fmt.Errorf("project not found")
 	}
 
 	create, err := d.managedResRepo.Create(ctx, &entities.ManagedResource{
@@ -79,6 +105,9 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 	}
 
 	template, err := d.GetManagedServiceTemplate(ctx, string(svc.ServiceType))
+	if err != nil {
+		return nil, err
+	}
 	var resTmpl entities.ManagedResourceTemplate
 	for _, rt := range template.Resources {
 		if rt.Name == resourceType {
@@ -113,9 +142,15 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 }
 func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error) {
 	mres, err := d.managedResRepo.FindById(ctx, managedResID)
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, mres.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return false, err
 	}
+
 	mres.Values = values
 	_, err = d.managedResRepo.UpdateById(ctx, managedResID, mres)
 	if err != nil {
@@ -147,6 +182,16 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 }
 func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool, error) {
 	id, err := d.managedResRepo.FindById(ctx, appID)
+
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, id.ProjectId, UPDATE_PROJECT)
+	if err != nil {
+		return false, err
+	}
+
 	if err != nil {
 		return false, err
 	}
@@ -165,14 +210,21 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 	if err != nil {
 		return false, err
 	}
-	return true, err
+	return true, nil
 }
 
 func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error) {
 	mres, err := d.managedResRepo.FindById(ctx, managedResID)
+
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, mres.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return nil, err
 	}
+
 	secret, err := d.kubeCli.GetSecret(ctx, mres.Namespace, fmt.Sprint("mres-", mres.Id))
 	if err != nil {
 		return nil, err
@@ -185,6 +237,17 @@ func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID)
 }
 
 func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID) (map[string]any, error) {
+
+	mres, err := d.managedResRepo.FindById(ctx, managedResID)
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, mres.ProjectId, READ_PROJECT)
+	if err != nil {
+		return nil, err
+	}
+
 	return d.getManagedResOutput(ctx, managedResID)
 }
 

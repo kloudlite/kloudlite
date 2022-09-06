@@ -1,4 +1,4 @@
-package remove
+package del
 
 import (
 	"fmt"
@@ -10,31 +10,37 @@ import (
 	"kloudlite.io/cmd/internal/lib/server"
 )
 
-var removeMresCommand = &cobra.Command{
+var deleteMresCommand = &cobra.Command{
 	Use:   "mres",
 	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		removeMreses()
+	Long: `This command help you to delete environment that that is comming from managed resource
+
+Examples:
+  # remove mres
+  kl del mres
+`,
+	Run: func(_ *cobra.Command, _ []string) {
+		err := removeMreses()
+		if err != nil {
+			common.PrintError(err)
+			return
+		}
 	},
 }
 
-func removeMreses() {
+func removeMreses() error {
 
 	klFile, err := server.GetKlFile(nil)
 
 	if err != nil {
 		common.PrintError(err)
-		es := "Please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
-		common.PrintError(fmt.Errorf(es))
-		return
+		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		return fmt.Errorf(es)
 	}
 
 	if len(klFile.Mres) == 0 {
-		es := "No managed resouce added yet in your file"
-		common.PrintError(fmt.Errorf(es))
-		return
+		es := "no managed resouce added yet in your file"
+		return fmt.Errorf(es)
 	}
 
 	selectedMresIndex, err := fuzzyfinder.Find(
@@ -46,7 +52,7 @@ func removeMreses() {
 	)
 
 	if err != nil {
-		common.PrintError(err)
+		return err
 	}
 
 	selectedMres := klFile.Mres[selectedMresIndex]
@@ -64,9 +70,10 @@ func removeMreses() {
 
 	err = server.WriteKLFile(*klFile)
 	if err != nil {
-		common.PrintError(err)
+		return err
 	}
 
 	fmt.Printf("removed mres %s from %s-file\n", selectedMres.Name, constants.CMD_NAME)
 
+	return nil
 }

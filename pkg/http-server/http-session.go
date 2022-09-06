@@ -56,7 +56,7 @@ func NewSessionMiddleware[T repos.Entity](
 						// SameSite: http.SameSiteStrictMode,
 						SameSite: fiber.CookieSameSiteNoneMode,
 					}
-					fmt.Println("ck: ", ck)
+					// fmt.Println("ck: ", ck)
 					ctx.Cookie(ck)
 				},
 			),
@@ -76,6 +76,11 @@ func NewSessionMiddleware[T repos.Entity](
 }
 
 func GetSession[T repos.Entity](ctx context.Context) T {
+	if ctx.Value(userContextKey) == nil {
+		var x T
+		return x
+	}
+
 	userContext := ctx.Value(userContextKey).(context.Context)
 	value := userContext.Value("session")
 	if value != nil {

@@ -8,17 +8,15 @@
 					Hey {{.Name}},
         </mj-text>
         <mj-text font-family="Open Sans, Arial" line-height="1.5">
-Forgot your password?
-</mj-text>
+					You have recieved invitation to manage account - {{.AccountName}}
+				</mj-text>
         <mj-text font-family="Open Sans, Arial" line-height="1.5">
-We recieved request to reset password for your account.
+To accept, please click the button below.
 </mj-text>
+        <mj-button align="left" href="{{.Link}}" background-color="#2563EB">Accept Invite</mj-button>
+
         <mj-text font-family="Open Sans, Arial" line-height="1.5">
-To reset password please click the button below.
-</mj-text>
-        <mj-button align="left" background-color="#2563EB">Verify Email</mj-button>
-<mj-text font-family="Open Sans, Arial" line-height="1.5">
-Or Copy this url in the browser: <a href="https://mjml.io/try-it-live/JiyoIAC3N">https://mjml.io/try-it-live/JiyoIAC3N</a>
+Or Copy this url in the browser: <a href="https://mjml.io/try-it-live/JiyoIAC3N">{{.Link}}</a>
 </mj-text>
       <mj-text font-family="Open Sans, Arial">
 	- Team Kloudlite

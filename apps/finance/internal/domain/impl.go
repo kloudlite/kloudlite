@@ -4,19 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/stripe"
 	"math"
 	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/stripe"
 
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
@@ -36,8 +37,8 @@ func generateId(prefix string) string {
 type domainI struct {
 	invoiceRepo            repos.DbRepo[*BillingInvoice]
 	authClient             auth.AuthClient
-	iamCli                 iam.IAMClient
-	consoleCli             console.ConsoleClient
+	iamClient              iam.IAMClient
+	consoleClient          console.ConsoleClient
 	accountRepo            repos.DbRepo[*Account]
 	commsClient            comms.CommsClient
 	billablesRepo          repos.DbRepo[*AccountBilling]
@@ -46,7 +47,36 @@ type domainI struct {
 	stripeCli              *stripe.Client
 }
 
+func (d *domainI) checkAccountAccess(ctx context.Context, accountId repos.ID, action string) error {
+	// userId, err := GetUser(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// can, err := d.iamClient.Can(ctx, &iam.InCan{
+	// 	UserId:      userId,
+	// 	ResourceIds: []string{string(accountId)},
+	// 	Action:      action,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if !can.Status {
+	// 	fmt.Println("here")
+	// 	return fmt.Errorf("you don't have permission to perform this operation")
+	// }
+
+	return nil
+
+}
+
 func (d *domainI) GetOutstandingAmount(ctx context.Context, accountId repos.ID) (float64, error) {
+	if err := d.checkAccountAccess(ctx, accountId, "check_outstanding"); err != nil {
+		fmt.Println(err)
+		return 0, err
+	}
+
 	accountBillings, err := d.billablesRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"account_id": accountId,
@@ -136,7 +166,7 @@ func (d *domainI) TriggerBillingEvent(
 	}
 
 	if one == nil {
-		_, err := d.billablesRepo.Create(
+		_, e := d.billablesRepo.Create(
 			ctx, &AccountBilling{
 				AccountId:  accountId,
 				ResourceId: resourceId,
@@ -145,18 +175,18 @@ func (d *domainI) TriggerBillingEvent(
 				StartTime:  timeStamp,
 			},
 		)
-		return err
+		return e
 	}
 
 	if eventType == "end" {
 		one.EndTime = &timeStamp
-		bill, err := d.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
-		if err != nil {
-			return err
+		bill, e := d.calculateBill(ctx, one.Billables, one.StartTime, timeStamp)
+		if e != nil {
+			return e
 		}
 		one.BillAmount = bill
-		_, err = d.billablesRepo.UpdateById(ctx, one.Id, one)
-		return err
+		_, e = d.billablesRepo.UpdateById(ctx, one.Id, one)
+		return e
 	}
 
 	billablesBytes, err := json.Marshal(billables)
@@ -257,6 +287,11 @@ func (d *domainI) GetComputePlanByName(ctx context.Context, name string) (*Compu
 }
 
 func (d *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID) ([]*AccountBilling, time.Time, error) {
+
+	if err := d.checkAccountAccess(ctx, accountID, READ_ACCOUNT); err != nil {
+		return nil, time.Now(), err
+	}
+
 	now := time.Now()
 	currentYear, currentMonth, _ := now.Date()
 	currentLocation := now.Location()
@@ -280,18 +315,21 @@ func (d *domainI) GetCurrentMonthBilling(ctx context.Context, accountID repos.ID
 }
 
 func (d *domainI) ConfirmAccountMembership(ctx context.Context, invitationToken string) (bool, error) {
+
 	existingToken, err := d.accountInviteTokenRepo.Get(ctx, invitationToken)
 	if err != nil {
 		return false, err
 	}
+
 	if existingToken == nil {
 		return false, errors.New("invitation token not found")
 	}
+
 	err = d.accountInviteTokenRepo.Drop(ctx, invitationToken)
 	if err != nil {
 		return false, err
 	}
-	_, err = d.iamCli.ConfirmMembership(
+	_, err = d.iamClient.ConfirmMembership(
 		ctx, &iam.InConfirmMembership{
 			UserId:     string(existingToken.UserId),
 			ResourceId: string(existingToken.AccountId),
@@ -342,7 +380,8 @@ func (d *domainI) StopBillable(
 }
 
 func (d *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error) {
-	membership, err := d.iamCli.GetMembership(
+
+	membership, err := d.iamClient.GetMembership(
 		ctx, &iam.InGetMembership{
 			UserId:       string(userId),
 			ResourceType: "account",
@@ -360,7 +399,8 @@ func (d *domainI) GetAccountMembership(ctx context.Context, userId repos.ID, acc
 }
 
 func (d *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
-	rbs, err := d.iamCli.ListResourceMemberships(
+
+	rbs, err := d.iamClient.ListResourceMemberships(
 		ctx, &iam.InResourceMemberships{
 			ResourceId:   string(id),
 			ResourceType: string(common.ResourceAccount),
@@ -371,6 +411,7 @@ func (d *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membe
 	}
 	var memberships []*Membership
 	for _, rb := range rbs.RoleBindings {
+
 		memberships = append(
 			memberships, &Membership{
 				AccountId: repos.ID(rb.ResourceId),
@@ -380,14 +421,12 @@ func (d *domainI) GetUserMemberships(ctx context.Context, id repos.ID) ([]*Membe
 		)
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	return memberships, nil
 }
 
 func (d *domainI) GetAccountMemberships(ctx context.Context, id repos.ID) ([]*Membership, error) {
-	rbs, err := d.iamCli.ListUserMemberships(
+
+	rbs, err := d.iamClient.ListUserMemberships(
 		ctx, &iam.InUserMemberships{
 			UserId:       string(id),
 			ResourceType: string(common.ResourceAccount),
@@ -428,6 +467,13 @@ func (d *domainI) CreateAccount(
 	name string,
 	billing Billing,
 ) (*Account, error) {
+
+	if uid, err := GetUser(ctx); err != nil {
+		return nil, err
+	} else if uid != string(userId) {
+		return nil, errors.New("you don't have permission to perform this operation")
+	}
+
 	id := d.accountRepo.NewId()
 	customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
 	if err != nil {
@@ -451,7 +497,7 @@ func (d *domainI) CreateAccount(
 	if err != nil {
 		return nil, err
 	}
-	_, err = d.iamCli.AddMembership(
+	_, err = d.iamClient.AddMembership(
 		ctx, &iam.InAddMembership{
 			UserId:       string(userId),
 			ResourceType: string(common.ResourceAccount),
@@ -463,7 +509,7 @@ func (d *domainI) CreateAccount(
 		return nil, err
 	}
 
-	_, err = d.consoleCli.SetupAccount(ctx, &console.AccountSetupIn{AccountId: string(acc.Id)})
+	_, err = d.consoleClient.SetupAccount(ctx, &console.AccountSetupIn{AccountId: string(acc.Id)})
 	if err != nil {
 		return nil, err
 	}
@@ -472,6 +518,11 @@ func (d *domainI) CreateAccount(
 }
 
 func (d *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error) {
+
+	if err := d.checkAccountAccess(ctx, id, "update_account"); err != nil {
+		return nil, err
+	}
+
 	acc, err := d.accountRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -490,6 +541,10 @@ func (d *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *string, 
 }
 
 func (d *domainI) UpdateAccountBilling(ctx context.Context, id repos.ID, b *Billing) (*Account, error) {
+	if err := d.checkAccountAccess(ctx, id, "update_account"); err != nil {
+		return nil, err
+	}
+
 	acc, err := d.accountRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -512,6 +567,24 @@ func (d *domainI) AddAccountMember(
 	email string,
 	role common.Role,
 ) (bool, error) {
+
+	switch role {
+	case "account-member":
+		if err := d.checkAccountAccess(ctx, accountId, "invite_acc_member"); err != nil {
+			return false, err
+		}
+	case "account-owner":
+		if err := d.checkAccountAccess(ctx, accountId, "invite_acc_owner"); err != nil {
+			return false, err
+		}
+	case "account-admin":
+		if err := d.checkAccountAccess(ctx, accountId, "invite_acc_admin"); err != nil {
+			return false, err
+		}
+	default:
+		return false, errors.New("role must be one of [ account-member, account-owner, account-admin]")
+	}
+
 	account, err := d.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
@@ -520,7 +593,7 @@ func (d *domainI) AddAccountMember(
 	if err != nil {
 		return false, err
 	}
-	_, err = d.iamCli.InviteMembership(
+	_, err = d.iamClient.InviteMembership(
 		ctx, &iam.InAddMembership{
 			UserId:       byEmail.UserId,
 			ResourceType: string(common.ResourceAccount),
@@ -562,7 +635,7 @@ func (d *domainI) RemoveAccountMember(
 	accountId repos.ID,
 	userId repos.ID,
 ) (bool, error) {
-	_, err := d.iamCli.RemoveMembership(
+	_, err := d.iamClient.RemoveMembership(
 		ctx, &iam.InRemoveMembership{
 			UserId:     string(userId),
 			ResourceId: string(accountId),
@@ -580,7 +653,12 @@ func (d *domainI) UpdateAccountMember(
 	userId repos.ID,
 	role string,
 ) (bool, error) {
-	_, err := d.iamCli.AddMembership(
+
+	if err := d.checkAccountAccess(ctx, accountId, "update_acc_member"); err != nil {
+		return false, err
+	}
+
+	_, err := d.iamClient.AddMembership(
 		ctx, &iam.InAddMembership{
 			UserId:       string(userId),
 			ResourceType: string(common.ResourceAccount),
@@ -595,6 +673,11 @@ func (d *domainI) UpdateAccountMember(
 }
 
 func (d *domainI) DeactivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+
+	if err := d.checkAccountAccess(ctx, accountId, "account-owner"); err != nil {
+		return false, err
+	}
+
 	matched, err := d.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
@@ -608,6 +691,11 @@ func (d *domainI) DeactivateAccount(ctx context.Context, accountId repos.ID) (bo
 }
 
 func (d *domainI) ActivateAccount(ctx context.Context, accountId repos.ID) (bool, error) {
+
+	if err := d.checkAccountAccess(ctx, accountId, "account-owner"); err != nil {
+		return false, err
+	}
+
 	matched, err := d.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
@@ -622,6 +710,10 @@ func (d *domainI) ActivateAccount(ctx context.Context, accountId repos.ID) (bool
 
 func (d *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (bool, error) {
 	// TODO: delete harbor project
+	if err := d.checkAccountAccess(ctx, accountId, "account-owner"); err != nil {
+		return false, err
+	}
+
 	matched, err := d.accountRepo.FindById(ctx, accountId)
 	if err != nil {
 		return false, err
@@ -635,6 +727,11 @@ func (d *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (bool, 
 }
 
 func (d *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {
+	uid, err := GetUser(ctx)
+	fmt.Println(uid, err)
+	if err := d.checkAccountAccess(ctx, id, READ_ACCOUNT); err != nil {
+		return nil, err
+	}
 	return d.accountRepo.FindById(ctx, id)
 }
 
@@ -649,7 +746,6 @@ func fxDomain(
 	commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	stripeCli *stripe.Client,
-
 ) Domain {
 	return &domainI{
 		invoiceRepo,

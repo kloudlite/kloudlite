@@ -135,21 +135,20 @@ ports:
 
 > This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the cli will be updated to this doc.
 
-### proposition
-
+## v2
 kl init
     - --projectId={projectId}
     - --accountId={accountId}
 
 kl list 
-  - accounts {query}
-  - projects {query}
-  - devices {query}
-  - configs {query}
-  - secrets {query}
-  - apps {query}
-  - lmbadas {query}
-  - routers {query}
+  - accounts
+  - projects [accountId]
+  - devices [accountId]
+  - configs [projectId]
+  - secrets [projectId]
+  - apps [projectId]
+  - lmbadas [projectId] 
+   <!-- - routers {query} -->
 
 kl auth
   - login
@@ -157,17 +156,21 @@ kl auth
   - logout
 
 kl intercept {device}
-  - app [id]
+  - app [id] [name]
       - --projectId={projectId}
       - --accountId={accountId}
   - lambda [id]
       - --projectId={projectId}
       - --accountId={accountId}
 
+kl intercept  --device-id/--device-name=val --app-id/--app-redable-id
+
+kl leave intercept --device-id/--device-name=val --app-id/--app-redable-id
+
 kl {add,delete} 
-  - config [id] --map key1=var1 
-  - secret [id] --map key1=var1
-  - mres [id] --key {key}
+  - config [name] --map key1=var1 
+  - secret [name] --map key1=var1
+  - mres [name] --key {key}
 
 kl gen {file}
   --config={configId} 

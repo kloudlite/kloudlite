@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"google.golang.org/grpc"
@@ -20,7 +22,6 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	lokiserver "kloudlite.io/pkg/loki-server"
 	"kloudlite.io/pkg/redpanda"
-	"time"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
@@ -197,9 +198,18 @@ var Module = fx.Module(
 			common.CacheSessionPrefix,
 		))
 		a.Get("/build-logs", fWebsocket.New(func(conn *fWebsocket.Conn) {
+
+			ctx := d.GetSocketCtx(
+				conn,
+				cacheClient,
+				common.CookieName,
+				env.CookieDomain,
+				common.CacheSessionPrefix,
+			)
+
 			appId := conn.Query("app_id", "app_id")
 			pipelineId := conn.Query("pipeline_id", "pipeline_id")
-			app, err := d.GetApp(context.TODO(), repos.ID(appId))
+			app, err := d.GetApp(ctx, repos.ID(appId))
 			// pipelineId, ok := app.Metadata["pipeline_id"]
 			if err != nil {
 				fmt.Println(err)
@@ -227,8 +237,16 @@ var Module = fx.Module(
 			}, nil, nil, nil, nil, conn)
 		}))
 		a.Get("/app-logs", fWebsocket.New(func(conn *fWebsocket.Conn) {
+			ctx := d.GetSocketCtx(
+				conn,
+				cacheClient,
+				common.CookieName,
+				env.CookieDomain,
+				common.CacheSessionPrefix,
+			)
+
 			appId := conn.Query("app_id", "app_id")
-			app, err := d.GetApp(context.TODO(), repos.ID(appId))
+			app, err := d.GetApp(ctx, repos.ID(appId))
 			if err != nil {
 				fmt.Println(err)
 				conn.Close()

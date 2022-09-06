@@ -1,10 +1,9 @@
 subject: "[KloudLite] Reset Password"
 
 plain: >-
-  Hello {{.Name}},
+  Hey {{.Name}},
   
-  Verify your email by navigating to the following link
-  {{.Link}}
+  You have recieved invitation to manage account - {{.AccountName}}
+  To Accept go to: {{.Link}}
   
-  Thanks,
-  Team KloudLite
+  - Team Kloudlite

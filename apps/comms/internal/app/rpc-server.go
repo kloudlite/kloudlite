@@ -49,6 +49,20 @@ func (r *rpcImpl) SendAccountMemberInviteEmail(ctx context.Context, input *comms
 	return &comms.Void{}, nil
 }
 
+func (r *rpcImpl) SendProjectMemberInviteEmail(ctx context.Context, input *comms.ProjectMemberInviteEmailInput) (*comms.Void, error) {
+	subject, plainText, htmlContent, err := constructProjectInvitationEmail(
+		input.Name, input.ProjectName, input.InvitationToken, r.emailLinksBaseUrl,
+	)
+	if err != nil {
+		return nil, err
+	}
+	err = r.sendSupportEmail(subject, input.Email, input.Name, plainText, htmlContent)
+	if err != nil {
+		return nil, err
+	}
+	return &comms.Void{}, nil
+}
+
 func (r *rpcImpl) SendPasswordResetEmail(_ context.Context, input *comms.PasswordResetEmailInput) (*comms.Void, error) {
 	subject, plainText, htmlContent, err := constructResetPasswordEmail(input.Name, input.ResetToken, r.emailLinksBaseUrl)
 	if err != nil {

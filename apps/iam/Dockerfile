@@ -1,18 +1,27 @@
-# context-dir: <project-root>
+# syntax=docker/dockerfile:1.4
 FROM golang:1.18.3-alpine3.16 AS base
 USER 1001
 ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
 WORKDIR /tmp/app
-# COPY --chown=1001 ./go.mod ./go.sum ./tools.go pkg common grpc-interfaces ./
-COPY --chown=1001 ./ ./
-ARG APP_DIR
-WORKDIR $APP_DIR
-RUN go build -tags musl -o /tmp/bin/iam ./main.go
-RUN chmod +x /tmp/bin/iam
+COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
+RUN go mod download -x
+COPY --chown=1001 --from=project-root common ./common
+COPY --chown=1001 --from=project-root grpc-interfaces ./grpc-interfaces
+COPY --chown=1001 --from=project-root pkg ./pkg
+ARG APP
+RUN mkdir -p ./apps/$APP
+WORKDIR /tmp/app/apps/$APP
+COPY --chown=1001 ./  ./
+RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
+RUN chmod +x /tmp/bin/$APP
 
-FROM golang:1.18.3-alpine3.16
+#FROM gcr.io/distroless/static-debian11
+FROM alpine
+RUN apk add curl
+RUN cd bin && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl
 USER 1001
 WORKDIR /tmp/app
-COPY --from=base --chown=1001 /tmp/bin/iam ./
-ENTRYPOINT ["./iam"]
+COPY --from=base --chown=1001 /tmp/bin/iam ./iam
+COPY ./configs/iam.json ./configs/iam.json
+CMD ["./iam"]

@@ -207,6 +207,8 @@ type App @key(fields: "id") {
   doFreeze: Boolean!
   doUnfreeze: Boolean!
   isFrozen: Boolean!
+  intercept(deviceId: ID!): Boolean!
+  closeIntercept: Boolean!
 }
 
 input AutoScaleIn {
@@ -480,4 +482,5 @@ type Device @key(fields: "id") {
   account: Account!
   ports: [Port!]!
   region: String
+  interceptingServices: [App!]!
 }

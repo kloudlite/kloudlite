@@ -35,6 +35,7 @@ const (
 	InviteAccountMember Action = "invite-account-member"
 	PayBill             Action = "pay-bill"
 
+	ReadProject         Action = "read-project"
 	CreateProject       Action = "create-project"
 	UpdateProject       Action = "update-project"
 	DeleteProject       Action = "delete-project"
@@ -62,8 +63,13 @@ var ActionMap = map[Action][]Role{
 	InviteAccountMember: {AccountOwner, AccountAdmin},
 	PayBill:             {AccountOwner, AccountAdmin, AccountBiller},
 
-	CreateProject:       {AccountOwner, AccountAdmin},
-	UpdateProject:       {AccountOwner, AccountAdmin, ProjectAdmin},
+	CreateProject: {AccountOwner, AccountAdmin},
+	ReadProject: {AccountOwner, AccountAdmin, AccountMember, ProjectAdmin,
+		ProjectMember, ProjectGuest},
+
+	UpdateProject: {AccountOwner, AccountAdmin, ProjectAdmin,
+		ProjectMember},
+
 	DeleteProject:       {AccountOwner, AccountAdmin, ProjectAdmin},
 	InviteProjectMember: {AccountOwner, AccountAdmin, ProjectAdmin},
 }

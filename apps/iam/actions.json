@@ -1,0 +1,130 @@
+{
+  "actions": {
+    "invite_acc_member": [
+      "account-owner",
+      "account-admin"
+    ],
+    "invite_acc_admin": [
+      "account-owner"
+    ],
+    "update_payment": [
+      "account-owner"
+    ],
+    "create_project": [
+      "account-admin",
+      "account-owner"
+    ],
+    "list_projects": [
+      "account-admin",
+      "account-owner",
+      "account-member"
+    ],
+    "delete_payment": [
+      "account-owner"
+    ],
+    "add_domain": [
+      "account-owner",
+      "account-admin"
+    ],
+    "update_domain": [
+      "account-owner",
+      "account-admin"
+    ],
+    "delete_domain": [
+      "account-owner",
+      "account-admin"
+    ],
+    "list_domain": [
+      "account-owner",
+      "account-admin",
+      "account-member"
+    ],
+    "check_invoices": [
+      "account-owner"
+    ],
+    "check_outstanding": [
+      "account-owner"
+    ],
+    "update_account": [
+      "account-owner"
+    ],
+    "delete_account": [
+      "account-owner"
+    ],
+    "update_acc_member": [
+      "account-owner",
+      "account-admin"
+    ],
+    "update_acc_admin": [
+      "account-owner"
+    ],
+    "cancel_acc_invite": [
+      "account-owner",
+      "account-admin"
+    ],
+    "list_devices": [
+      "account-owner",
+      "account-admin"
+    ],
+    "read_project": [
+      "account-owner",
+      "account-admin",
+      "account-memeber",
+      "project-owner",
+      "project-admin",
+      "project-memeber"
+    ],
+    "update_project": [
+      "account-owner",
+      "account-admin",
+      "account-memeber",
+      "project-owner",
+      "project-admin",
+      "project-memeber"
+    ],
+    "delete_project": [
+      "account-admin",
+      "account-owner",
+      "project-owner",
+      "project-admin"
+    ],
+    "invite_proj_admin": [
+      "account-owner",
+      "account-admin",
+      "project-owner",
+      "project-admin"
+    ],
+    "invite_proj_member": [
+      "account-owner",
+      "account-admin",
+      "account-memeber",
+      "project-owner",
+      "project-admin",
+      "project-memeber"
+    ],
+    "invite_proj_owner": [
+      "account-owner",
+      "project-owner"
+    ],
+    "cancel_proj_invite": [
+      "account-owner",
+      "account-admin",
+      "project-owner",
+      "project-admin"
+    ],
+    "get_docker_credentials": [
+      "account-owner",
+      "account-admin",
+      "project-owner",
+      "project-admin"
+    ],
+    "update_device": [
+      "device-owner"
+    ],
+    "delete_device": [
+      "account-owner",
+      "account-admin",
+      "device-owner"
+    ]
+  }
+}

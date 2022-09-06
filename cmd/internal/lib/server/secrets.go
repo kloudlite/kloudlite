@@ -1,25 +1,29 @@
 package server
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"kloudlite.io/cmd/internal/common"
+)
 
 type Secret struct {
-	Description string
-	Entries     []CSEntry
-	Id          string
-	Name        string
-	Namsespace  string
-	status      string
+	Entries []CSEntry `json:"entries"`
+	Name    string    `json:"name"`
+	Id      string    `json:"id"`
 }
 
-func GetSecrets() ([]Secret, error) {
+func GetSecrets(options ...common.Option) ([]Secret, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId, err := currentProjectId()
-	if err != nil {
-		return nil, err
+	projectId := common.GetOption(options, "projectId")
+	if projectId == "" {
+		projectId, err = CurrentProjectId()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	respData, err := klFetch("cli_getSecrets", map[string]any{
@@ -40,4 +44,30 @@ func GetSecrets() ([]Secret, error) {
 	}
 
 	return resp.CoreSecrets, nil
+}
+
+func GetSecret(id string) (*Config, error) {
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+	respData, err := klFetch("cli_getSecret", map[string]any{
+		"secretId": id,
+	}, &cookie)
+
+	if err != nil {
+		return nil, err
+	}
+
+	type Response struct {
+		CoreSecret Config `json:"data"`
+	}
+
+	var resp Response
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.CoreSecret, nil
 }

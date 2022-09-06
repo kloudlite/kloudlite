@@ -16,16 +16,43 @@ import (
 )
 
 func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error) {
-	return d.managedSvcRepo.FindById(ctx, managedSvcID)
+	msvc, err := d.managedSvcRepo.FindById(ctx, managedSvcID)
+	if err = mongoError(err, "managed service not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, msvc.ProjectId, READ_PROJECT)
+	if err != nil {
+		return nil, err
+	}
+
+	return msvc, nil
 }
 
 func (d *domain) GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error) {
-	return d.managedSvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+	msvcs, err := d.managedSvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"project_id": projectID,
 	}})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(msvcs) >= 1 {
+		err = d.checkProjectAccess(ctx, msvcs[0].ProjectId, READ_PROJECT)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return msvcs, nil
+
 }
 
 func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error) {
+	if _, err := GetUser(ctx); err != nil {
+		return nil, err
+	}
+
 	templates := make([]*entities.ManagedServiceCategory, 0)
 	data, err := os.ReadFile(d.managedTemplatesPath)
 	if err != nil {
@@ -38,7 +65,11 @@ func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.Ma
 	return templates, nil
 }
 
-func (d *domain) GetManagedServiceTemplate(_ context.Context, name string) (*entities.ManagedServiceTemplate, error) {
+func (d *domain) GetManagedServiceTemplate(ctx context.Context, name string) (*entities.ManagedServiceTemplate, error) {
+	if _, err := GetUser(ctx); err != nil {
+		return nil, err
+	}
+
 	templates := make([]*entities.ManagedServiceCategory, 0)
 	data, err := os.ReadFile(d.managedTemplatesPath)
 	if err != nil {
@@ -59,15 +90,11 @@ func (d *domain) GetManagedServiceTemplate(_ context.Context, name string) (*ent
 }
 
 func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.StatusUpdate) error {
-	one, err := d.managedSvcRepo.FindOne(ctx, repos.Filter{
-		"id": response.Metadata.ResourceId,
-	})
-	if err != nil {
+	one, err := d.managedSvcRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+	if err = mongoError(err, "managed service not found"); err != nil {
 		return err
 	}
-	if one == nil {
-		return errors.New("not found")
-	}
+
 	newStatus := one.Status
 	if response.IsReady {
 		newStatus = entities.ManagedServiceStateLive
@@ -87,13 +114,20 @@ func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.Statu
 
 func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error) {
 	prj, err := d.projectRepo.FindById(ctx, projectID)
+	if err = mongoError(err, "project not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, projectID, UPDATE_PROJECT)
 	if err != nil {
 		return nil, err
 	}
-	if prj == nil {
-		return nil, fmt.Errorf("project not found")
-	}
+
 	cloudProvider, region, err := d.getProjectRegionDetails(ctx, prj)
+	if err != nil {
+		return nil, err
+	}
+
 	create, err := d.managedSvcRepo.Create(ctx, &entities.ManagedService{
 		Name:        name,
 		Namespace:   prj.Name,
@@ -105,7 +139,12 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	if err != nil {
 		return nil, err
 	}
+
 	template, err := d.GetManagedServiceTemplate(ctx, string(templateID))
+	if err != nil {
+		return nil, err
+	}
+
 	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
 		Init:    template.InputMiddleware,
 		FunName: "inputMiddleware",
@@ -120,15 +159,18 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	if err != nil {
 		return nil, err
 	}
+
 	var transformedInputs struct {
 		Annotation map[string]string `json:"annotation,omitempty"`
 		Inputs     map[string]any    `json:"inputs"`
 		Error      error             `json:"error,omitempty"`
 	}
+
 	err = json.Unmarshal(eval.Output.Value, &transformedInputs)
 	if err != nil {
 		return nil, err
 	}
+
 	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
 		Kind:       op_crds.ManagedServiceKind,
@@ -170,17 +212,25 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 
 func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error) {
 	managedSvc, err := d.managedSvcRepo.FindById(ctx, managedServiceId)
+	if err = mongoError(err, "managed service not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, managedSvc.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return false, err
 	}
+
 	proj, err := d.projectRepo.FindById(ctx, managedSvc.ProjectId)
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		return false, err
+	}
+
 	cloudProvider, region, err := d.getProjectRegionDetails(ctx, proj)
 	if err != nil {
 		return false, err
 	}
-	if managedSvc == nil {
-		return false, fmt.Errorf("project not found")
-	}
+
 	managedSvc.Values = values
 	managedSvc.Status = entities.ManagedServiceStateSyncing
 	_, err = d.managedSvcRepo.UpdateById(ctx, managedServiceId, managedSvc)
@@ -188,6 +238,10 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 	template, err := d.GetManagedServiceTemplate(ctx, string(managedSvc.ServiceType))
+	if err != nil {
+		return false, err
+	}
+
 	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
 		Init:    template.InputMiddleware,
 		FunName: "inputMiddleware",
@@ -199,11 +253,19 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			}
 		}(),
 	})
+	if err != nil {
+		return false, err
+	}
+
 	var transformedInputs struct {
 		Inputs     map[string]any    `json:"inputs"`
 		Annotation map[string]string `json:"annotation,omitempty"`
 	}
 	err = json.Unmarshal(eval.Output.Value, &transformedInputs)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction("apply", string(managedSvc.Id), &op_crds.ManagedService{
 		APIVersion: op_crds.ManagedServiceAPIVersion,
 		Kind:       op_crds.ManagedServiceKind,
@@ -237,14 +299,24 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 			Inputs: transformedInputs.Inputs,
 		},
 	})
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
 func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos.ID) (bool, error) {
 	managedSvc, err := d.managedSvcRepo.FindById(ctx, managedServiceId)
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, managedSvc.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return false, err
 	}
+
 	managedSvc.Status = entities.ManagedServiceStateDeleting
 	_, err = d.managedSvcRepo.UpdateById(ctx, managedServiceId, managedSvc)
 	if err != nil {
@@ -258,14 +330,24 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 			Namespace: managedSvc.Namespace,
 		},
 	})
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
 func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID) (map[string]any, error) {
 	msvc, err := d.managedSvcRepo.FindById(ctx, managedSvcID)
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, msvc.ProjectId, READ_PROJECT)
 	if err != nil {
 		return nil, err
 	}
+
 	secret, err := d.kubeCli.GetSecret(ctx, msvc.Namespace, fmt.Sprint("msvc-", msvc.Id))
 	if err != nil {
 		return nil, err
