@@ -61,10 +61,7 @@ tasks:
       Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}
       Namespace: kl-core
       WebhookPort: 1717
-#    env:
-##      IMG: harbor.dev.madhouselabs.io/kloudlite/$ENV_NAME/{{.Name}}:latest
-#      IMG: "{{.Image}}"
-#      NAMESPACE: kl-core
+      SvcAccountName: kloudlite-cluster-svc-account
     preconditions:
       - sh: test -n '{{.Tag}}'
         msg: "var Tag must have a value"
@@ -72,16 +69,6 @@ tasks:
         msg: "var EnvName must have a value"
     cmds:
       - make manifests
-#      - |+
-#        pushd config/manager > /dev/null
-#        kustomize edit set image controller=${IMG}
-#        kustomize edit set namespace ${NAMESPACE}
-#        popd > /dev/null
-#      - |+
-#        pushd config/default > /dev/null
-#        kustomize edit set image controller=${IMG}
-#        kustomize edit set namespace ${NAMESPACE}
-#        popd > /dev/null
       - |+
         cat config/crd/bases/*.yaml | yq -y
 
@@ -110,10 +97,12 @@ tasks:
           .metadata.labels."control-plane" = "{{.Name}}" |
           .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
           .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
+          .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
           .spec.template.spec.containers = (
             .spec.template.spec.containers | map_values(
               if .name == "manager" then
-                (.image = "{{.Image}}" | .command = .command + ["--all"])
+                .image = "{{.Image}}" |
+                .command = .command + ["--all"]
               else . end
             )
           )

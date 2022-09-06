@@ -66,7 +66,7 @@ func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
 			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
 		}
 	}
-	return "", errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType)
+	return "", errors.Newf("no storage class found, unknown pair (provider=%s, fstype=%s)", c, fsType)
 }
 
 // func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) {

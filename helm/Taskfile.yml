@@ -5,7 +5,6 @@ tasks:
     cmds:
       - operator-sdk init --plugins helm --domain kloudlite.io --group msvc --version v1 --kind MongoDB --helm-chart-repo https://charts.bitnami.com/bitnami --helm-chart mongodb
 
-
   new-kind:
     summary: '
       example:
@@ -24,61 +23,37 @@ tasks:
     cmds:
       - operator-sdk create api --plugins helm --group {{.Group}} --version v1 --kind {{.Kind}} --helm-chart-repo {{.Repo}} --helm-chart {{.Chart}}
 
-  deploy:prod:
-    vars:
-      Name: kloudlite-helm-operator
-    env:
-      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.Name}}:latest
-      NAMESPACE: koperator
-    cmds:
-      - make docker-build docker-push
-      - |
-        cd config/manager
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      -
-        cd config/default
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      -
-        filename=/tmp/kl-operator-$RANDOM.yml
-        kustomize build config/default > $filename
-        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
-        cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
-      - echo "Deployed {{.Name}}"
-
-  deploy:staging:
-    vars:
-      Name: kloudlite-helm-operator
-    env:
-      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
-      NAMESPACE: kl-core
-    cmds:
-      - make docker-build docker-push
-      - |
-        cd config/manager
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |
-        cd config/default
-        kustomize edit set image controller=${IMG}
-        kustomize edit set namespace ${NAMESPACE}
-      - |
-        filename=/tmp/operator-build-$RANDOM.yml
-        kustomize build config/default > $filename
-        cat $filename | yq 'select(.kind != "Deployment")' -y | kubectl apply -f -
-        cat $filename | yq 'select(.kind == "Deployment") | .metadata.name="{{.Name}}"' -y | kubectl apply -f -
-      - echo "Deployed {{.Name}}"
-
-  deploy:gen-yamls:
+  build:
     vars:
       Name: kloudlite-helm-operator
       Namespace: kl-core
+      Image: "harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+    preconditions:
+      - sh: test -n '{{.EnvName}}'
+        msg: 'var EnvName must have a value'
+      - sh: test -n '{{.Tag}}'
+        msg: 'var Tag must have a value'
     env:
-      IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
+      IMG: "{{.Image}}"
+      Namespace: "{{.Namespace}}"
+    cmds:
+      - make docker-build docker-push
+
+  gen-yamls:
+    vars:
+      Name: kloudlite-helm-operator
+      Namespace: kl-core
+      Image: "harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-helm-operator:{{.Tag}}"
+      SvcAccountName: kloudlite-cluster-svc-account
+    preconditions:
+      - sh: test -n '{{.EnvName}}'
+        msg: 'var EnvName must have a value'
+      - sh: test -n '{{.Tag}}'
+        msg: 'var Tag must have a value'
+    env:
+#       IMG: harbor.dev.madhouselabs.io/dev-kloudlite/{{.Name}}:latest
       NAMESPACE: kl-core
     cmds:
-      - make manifests
       - |+
         cat config/crd/bases/*.yaml | yq -y
         yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
@@ -105,8 +80,27 @@ tasks:
             .metadata.namespace = "{{.Namespace}}" |
             .metadata.labels."control-plane" = "{{.Name}}" |
             .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-            .spec.template.metadata.labels."control-plane" = "{{.Name}}"
+            .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
+
+            .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
+            .spec.template.spec.containers = (
+              .spec.template.spec.containers |
+              map_values(
+                if .name == "manager" then
+                  .image = "{{.Image}}"
+                else . end
+              ) |
+              map_values(
+                if .name == "kube-rbac-proxy" then
+                  .resources.limits.cpu = "60m"  |
+                  .resources.limits.memory = "80Mi" |
+                  .resources.requests.cpu = "10m" |
+                  .resources.requests.memory = "20Mi"
+                else . end
+              )
+            )
         ' -y
+      #
 
   run:
     cmds:

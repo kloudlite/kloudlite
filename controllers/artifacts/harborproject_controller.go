@@ -125,7 +125,7 @@ func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1
 		exists, err := r.harborCli.CheckWebhookExists(ctx, &webhook)
 		if err != nil {
 			isReady = false
-			// cs = append(cs, conditions.New(WebhookExists, false, conditions.NotFound, err.Error()))
+			// cs = append(cs, conditions.New(WebhookExists, false, conditions.NotFound, err.Message()))
 			return req.FailWithStatusError(errors.NewEf(err, "checking if webhook exists"))
 		}
 		if exists {

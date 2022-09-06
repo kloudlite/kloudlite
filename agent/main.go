@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -17,13 +18,15 @@ import (
 
 type AgentMessage struct {
 	Action  string         `json:"action"`
-	Payload map[string]any `json:"payload"`
+	Payload map[string]any `json:"payload,omitempty"`
+	Yamls   []byte         `json:"yamls,omitempty"`
 }
 
 type ErrMessage struct {
-	Error   string         `json:"error"`
-	Action  string         `json:"action"`
-	Payload map[string]any `json:"payload"`
+	Error  string `json:"error"`
+	Action string `json:"action"`
+	// Payload map[string]any `json:"payload"`
+	Payload []byte `json:"payload"`
 }
 
 type Env struct {
@@ -60,6 +63,15 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Println(
+		`
+██████  ███████  █████  ██████  ██    ██ 
+██   ██ ██      ██   ██ ██   ██  ██  ██  
+██████  █████   ███████ ██   ██   ████   
+██   ██ ██      ██   ██ ██   ██    ██    
+██   ██ ███████ ██   ██ ██████     ██    
+	`,
+	)
 	logger.Infof("ready for consuming messages")
 
 	consumer.StartConsuming(
@@ -69,23 +81,34 @@ func main() {
 				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
 				return err
 			}
-			logger.Infof("action=%s, payload=%s\n", msg.Action, msg.Payload)
+			logger.Debugf("action=%s, payload=%s\n", msg.Action, msg.Payload)
 
 			switch msg.Action {
-			case "apply", "delete":
+			case "apply", "delete", "create":
 				{
-					if errX := func() error {
-						c := exec.Command("kubectl", msg.Action, "-f", "-")
+					yamls, err := func() ([]byte, error) {
+						if msg.Yamls != nil {
+							return msg.Yamls, nil
+						}
+
 						pb, err := json.Marshal(msg.Payload)
 						if err != nil {
-							return errors.NewEf(err, "could not convert msg.Payload into []byte")
+							return nil, errors.NewEf(err, "could not convert msg.Payload into []byte")
 						}
 						yb, err := yaml.JSONToYAML(pb)
 						if err != nil {
-							return errors.NewEf(err, "could not convert JSON to YAML")
+							return nil, errors.NewEf(err, "could not convert JSON to YAML")
+						}
+						return yb, nil
+					}()
+
+					if errX := func() error {
+						c := exec.Command("kubectl", msg.Action, "-f", "-")
+						if err != nil {
+							return err
 						}
 
-						c.Stdin = bytes.NewBuffer(yb)
+						c.Stdin = bytes.NewBuffer(yamls)
 						c.Stdout = os.Stdout
 						errStream := bytes.NewBuffer([]byte{})
 						c.Stderr = errStream
@@ -98,7 +121,7 @@ func main() {
 						errMsg := ErrMessage{
 							Action:  msg.Action,
 							Error:   errX.Error(),
-							Payload: msg.Payload,
+							Payload: yamls,
 						}
 						b, err := json.Marshal(errMsg)
 						if err != nil {

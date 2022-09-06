@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -126,6 +127,8 @@ func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Con
 
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().Conditions = newConditions
+	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
+
 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
 		return stepResult.New().Err(err2)
 	}
@@ -156,6 +159,7 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	}
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().OpsConditions = newConditions
+	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
 
 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
 		return stepResult.New().Err(err2)
@@ -164,8 +168,9 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 }
 
 func (r *Request[T]) CheckFailed(name string, check Check) stepResult.Result {
-	r.Object.GetStatus().Message.Set(name, check.Error)
+	r.Object.GetStatus().Message.Set(name, check.Message)
 	r.Object.GetStatus().IsReady = false
+	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
 	if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
 		return stepResult.New().Err(err)
 	}
@@ -177,8 +182,12 @@ func (r *Request[T]) Context() context.Context {
 }
 
 func (r *Request[T]) Done(result ...ctrl.Result) stepResult.Result {
+	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
+	if err := r.client.Status().Update(context.TODO(), r.Object); err != nil {
+		return stepResult.New().Err(err)
+	}
 	if len(result) > 0 {
-		return stepResult.New().RequeueAfter(0)
+		return stepResult.New().RequeueAfter(result[0].RequeueAfter)
 	}
 	return stepResult.New()
 }
