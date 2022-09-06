@@ -117,13 +117,10 @@ spec:
               checks:
                 additionalProperties:
                   properties:
-                    error:
-                      type: string
                     generation:
                       format: int64
                       type: integer
-                    lastCheckedAt:
-                      format: date-time
+                    message:
                       type: string
                     status:
                       type: boolean
@@ -278,6 +275,9 @@ spec:
                 type: integer
               isReady:
                 type: boolean
+              lastTransitionTime:
+                format: date-time
+                type: string
               message:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true

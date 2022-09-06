@@ -2,6 +2,7 @@ package crds
 
 import (
 	"context"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -19,11 +20,9 @@ import (
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
+	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"operators.kloudlite.io/lib/templates"
 )
 
 // AppReconciler reconciles a Deployment object
@@ -151,7 +150,7 @@ func (r *AppReconciler) reconcileStatus(req *rApi.Request[*crdsv1.App]) stepResu
 				return req.FailWithStatusError(err)
 			}
 
-			cMessages, err := rApi.GetMessagesFromPods(podsList.Items...)
+			cMessages := rApi.GetMessagesFromPods(podsList.Items...)
 			if err != nil {
 				return req.FailWithStatusError(err).Err(nil)
 			}

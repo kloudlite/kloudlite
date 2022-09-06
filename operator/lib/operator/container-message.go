@@ -13,7 +13,7 @@ type ContainerMessage struct {
 	ExitCode  int32  `json:"exitCode,omitempty"`
 }
 
-func GetMessagesFromPods(pods ...corev1.Pod) ([]ContainerMessage, error) {
+func GetMessagesFromPods(pods ...corev1.Pod) []ContainerMessage {
 	cMsgs := make([]ContainerMessage, 0, len(pods))
 
 	for i := range pods {
@@ -44,5 +44,5 @@ func GetMessagesFromPods(pods ...corev1.Pod) ([]ContainerMessage, error) {
 			}
 		}
 	}
-	return cMsgs, nil
+	return cMsgs
 }
