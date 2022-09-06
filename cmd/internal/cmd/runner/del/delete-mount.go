@@ -1,4 +1,5 @@
-package remove
+// Depricated
+package del
 
 import (
 	"fmt"
@@ -10,12 +11,12 @@ import (
 	"kloudlite.io/cmd/internal/lib/server"
 )
 
-var removeMountCommand = &cobra.Command{
+var deleteMountCommand = &cobra.Command{
 	Use:   "mount",
 	Short: "remove one mount from your " + constants.CMD_NAME + "-config",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		removeConfigMount()
 	},
 }

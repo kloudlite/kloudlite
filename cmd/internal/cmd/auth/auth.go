@@ -7,8 +7,15 @@ import (
 var Cmd = &cobra.Command{
 	Use:   "auth",
 	Short: "login | logout to kloudlite",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.`,
+	Long: `login/logout to kloudlite.
+
+Examples:
+  # login to kloudlite
+  kl auth login
+
+  # logout to kloudlite
+  kl auth logout
+	`,
 }
 
 func init() {

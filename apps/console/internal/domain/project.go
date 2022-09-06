@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+
+	// "fmt"
+	"strings"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
@@ -11,20 +16,15 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
-	"strings"
 )
 
 func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error {
-	one, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"id": response.Metadata.ResourceId,
-	})
-	if err != nil {
-		return err
-	}
-	if one == nil {
+	one, err := d.projectRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+	if err = mongoError(err, "managed resource not found"); err != nil {
 		// Ignore unknown project
 		return nil
 	}
+
 	if response.IsReady {
 		one.Status = entities.ProjectStateLive
 	} else {
@@ -36,10 +36,21 @@ func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUp
 }
 
 func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error) {
+
+	if err := d.checkProjectAccess(ctx, projectId, READ_PROJECT); err != nil {
+		return nil, err
+	}
+
 	id, err := d.projectRepo.FindById(ctx, projectId)
 	return id, err
 }
+
 func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
+
+	if err := d.checkAccountAccess(ctx, acountId, READ_PROJECT); err != nil {
+		return nil, err
+	}
+
 	res, err := d.projectRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"account_id": acountId,
@@ -48,14 +59,30 @@ func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*
 	if err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
 func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error) {
+
+	var err error
+	switch role {
+	case "project-owner":
+		err = d.checkProjectAccess(ctx, projectID, "invite_proj_owner")
+	case "project-admin":
+		err = d.checkProjectAccess(ctx, projectID, "invite_proj_admin")
+	case "project-member":
+		err = d.checkProjectAccess(ctx, projectID, "invite_proj_member")
+	}
+	if err != nil {
+		return false, err
+	}
+
 	byEmail, err := d.authClient.EnsureUserByEmail(ctx, &auth.GetUserByEmailRequest{Email: email})
 	if err != nil {
 		return false, err
 	}
+
 	if byEmail == nil {
 		return false, errors.New("user not found")
 	}
@@ -68,19 +95,33 @@ func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, em
 	if err != nil {
 		return false, err
 	}
+
 	return true, nil
 }
 func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error {
+
+	if err := d.checkProjectAccess(ctx, projectId, "cancel_proj_invite"); err != nil {
+		return err
+	}
+
 	_, err := d.iamClient.RemoveMembership(ctx, &iam.InRemoveMembership{
 		UserId:     string(userId),
 		ResourceId: string(projectId),
 	})
+
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
+
 func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error) {
+
+	if err := d.checkProjectAccess(ctx, projectID, READ_PROJECT); err != nil {
+		return nil, err
+	}
+
 	rbs, err := d.iamClient.ListResourceMemberships(ctx, &iam.InResourceMemberships{
 		ResourceId:   string(projectID),
 		ResourceType: string(common.ResourceProject),
@@ -88,6 +129,7 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 	if err != nil {
 		return nil, err
 	}
+
 	var memberships []*entities.ProjectMembership
 	for _, rb := range rbs.RoleBindings {
 		memberships = append(memberships, &entities.ProjectMembership{
@@ -99,10 +141,16 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 	if err != nil {
 		return nil, err
 	}
+
 	return memberships, nil
 }
 
 func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, regionId *repos.ID, description *string) (*entities.Project, error) {
+
+	if err := d.checkAccountAccess(ctx, accountId, "create_project"); err != nil {
+		return nil, err
+	}
+
 	create, err := d.projectRepo.Create(ctx, &entities.Project{
 		Name:        projectName,
 		AccountId:   accountId,
@@ -116,11 +164,12 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 	if err != nil {
 		return nil, err
 	}
+
 	_, err = d.iamClient.AddMembership(ctx, &iam.InAddMembership{
 		UserId:       string(ownerId),
 		ResourceType: "project",
 		ResourceId:   string(create.Id),
-		Role:         "owner",
+		Role:         "project-admin",
 	})
 	if err != nil {
 		return nil, err
@@ -151,9 +200,14 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 
 func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 	proj, err := d.projectRepo.FindById(ctx, id)
-	if err != nil {
+	if err = mongoError(err, "project not found"); err != nil {
 		return false, err
 	}
+
+	if err = d.checkAccountAccess(ctx, proj.AccountId, "delete_project"); err != nil {
+		return false, err
+	}
+
 	proj.IsDeleting = true
 	_, err = d.projectRepo.UpdateById(ctx, id, proj)
 	if err != nil {
@@ -177,64 +231,112 @@ func (d *domain) OnDeleteProject(ctx context.Context, response *op_crds.StatusUp
 }
 
 func (d *domain) getProjectRegionDetails(ctx context.Context, proj *entities.Project) (cloudProvider string, region string, err error) {
+
+	if err = d.checkProjectAccess(ctx, proj.Id, UPDATE_PROJECT); err != nil {
+		return "", "", err
+	}
+
 	var projectRegion *entities.EdgeRegion
 	var projectCloudProvider *entities.CloudProvider
+
 	if proj.RegionId != nil {
 		projectRegion, err = d.regionRepo.FindById(ctx, *proj.RegionId)
 		if err != nil {
 			return "", "", err
 		}
+
 		projectCloudProvider, err = d.providerRepo.FindById(ctx, projectRegion.ProviderId)
 		if err != nil {
 			return "", "", err
 		}
 	}
+
 	return projectCloudProvider.Provider, projectRegion.Region, nil
 }
 
 func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (username string, password string, err error) {
+
+	if err = d.checkProjectAccess(ctx, projectId, "get_docker_credentials"); err != nil {
+		return "", "", err
+	}
+
 	project, err := d.projectRepo.FindById(ctx, projectId)
 	if err != nil {
 		return "", "", err
 	}
+
 	secret, err := d.kubeCli.GetSecret(ctx, project.Name, "kloudlite-docker-registry")
 	if err != nil {
 		return "", "", err
 	}
+
 	var data struct {
 		Auths map[string]struct {
 			Auth string `json:"auth"`
 		} `json:"auths"`
 	}
-	err = json.Unmarshal(secret.Data[".dockerconfigjson"], &data)
-	if err != nil {
+
+	if err = json.Unmarshal(secret.Data[".dockerconfigjson"], &data); err != nil {
 		return "", "", nil
 	}
+
 	connectionStr := data.Auths["harbor.dev.madhouselabs.io"].Auth
 	decodeString, err := base64.StdEncoding.DecodeString(connectionStr)
 	if err != nil {
 		return "", "", err
 	}
+
 	splits := strings.Split(string(decodeString), ":")
 	return splits[0], splits[1], nil
 }
 
 func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, action string) error {
-	return nil
 
-	//if ctx.Value("user_id") == nil {
-	//	return fmt.Errorf("not authorized")
-	//}
-	//can, err := d.iamClient.Can(ctx, &iam.InCan{
-	//	UserId:      ctx.Value("user_id").(string),
-	//	ResourceIds: []string{string(projectId)},
-	//	Action:      action,
-	//})
-	//if err != nil {
-	//	return err
-	//}
-	//if !can.Status {
-	//	return fmt.Errorf("not authorized")
-	//}
-	//return nil
+	userId, err := GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	project, err := d.projectRepo.FindById(ctx, projectId)
+	if err = mongoError(err, "project not found"); err != nil {
+		return err
+	}
+
+	can, err := d.iamClient.Can(ctx, &iam.InCan{
+		UserId:      userId,
+		ResourceIds: []string{string(projectId), string(project.AccountId)},
+		Action:      action,
+	})
+	if err != nil {
+		return err
+	}
+
+	if !can.Status {
+		return fmt.Errorf("you don't have permission to perform this operation")
+	}
+
+	return nil
+}
+
+func (d *domain) checkAccountAccess(ctx context.Context, accountId repos.ID, action string) error {
+
+	// userId, err := GetUser(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// can, err := d.iamClient.Can(ctx, &iam.InCan{
+	// 	UserId:      userId,
+	// 	ResourceIds: []string{string(accountId)},
+	// 	Action:      action,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if !can.Status {
+	// 	return fmt.Errorf("you don't have permission to perform this operation")
+	// }
+
+	return nil
 }

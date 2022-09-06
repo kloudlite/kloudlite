@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"kloudlite.io/cmd/internal/lib"
 )
@@ -9,15 +10,24 @@ import (
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "logout from kloudlite",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Long: `This command will logout your session from the cli
+Example:
+  # Logout from kloudlite
+  kl auth logout
+
+  using above command you can expire your session from the current device shell.
+
+  logging out will not delete your mounted config/secret files or kl-config file.
+	`,
+	Run: func(_ *cobra.Command, _ []string) {
 		err := lib.Logout()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		fmt.Println("we expired the current session but the mounted config files are still present on your computer, run 'kl show' to see all the mounted files")
-		fmt.Println("Successfully logged out")
+		fmt.Println(`successfully logged out.
+
+but the mounted configs, secrets and kl-config stil there, so if you want to also clear this you have clean these manually. 
+		`)
 	},
 }

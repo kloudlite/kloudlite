@@ -15,25 +15,27 @@ type Account struct {
 func (Account) IsEntity() {}
 
 type App struct {
-	ID          repos.ID          `json:"id"`
-	IsLambda    bool              `json:"isLambda"`
-	Name        string            `json:"name"`
-	Namespace   string            `json:"namespace"`
-	CreatedAt   string            `json:"createdAt"`
-	UpdatedAt   *string           `json:"updatedAt"`
-	Description *string           `json:"description"`
-	ReadableID  repos.ID          `json:"readableId"`
-	Replicas    *int              `json:"replicas"`
-	Services    []*ExposedService `json:"services"`
-	Containers  []*AppContainer   `json:"containers"`
-	Project     *Project          `json:"project"`
-	Status      string            `json:"status"`
-	AutoScale   *AutoScale        `json:"autoScale"`
-	Conditions  []*MetaCondition  `json:"conditions"`
-	Restart     bool              `json:"restart"`
-	DoFreeze    bool              `json:"doFreeze"`
-	DoUnfreeze  bool              `json:"doUnfreeze"`
-	IsFrozen    bool              `json:"isFrozen"`
+	ID             repos.ID          `json:"id"`
+	IsLambda       bool              `json:"isLambda"`
+	Name           string            `json:"name"`
+	Namespace      string            `json:"namespace"`
+	CreatedAt      string            `json:"createdAt"`
+	UpdatedAt      *string           `json:"updatedAt"`
+	Description    *string           `json:"description"`
+	ReadableID     repos.ID          `json:"readableId"`
+	Replicas       *int              `json:"replicas"`
+	Services       []*ExposedService `json:"services"`
+	Containers     []*AppContainer   `json:"containers"`
+	Project        *Project          `json:"project"`
+	Status         string            `json:"status"`
+	AutoScale      *AutoScale        `json:"autoScale"`
+	Conditions     []*MetaCondition  `json:"conditions"`
+	Restart        bool              `json:"restart"`
+	DoFreeze       bool              `json:"doFreeze"`
+	DoUnfreeze     bool              `json:"doUnfreeze"`
+	IsFrozen       bool              `json:"isFrozen"`
+	Intercept      bool              `json:"intercept"`
+	CloseIntercept bool              `json:"closeIntercept"`
 }
 
 func (App) IsEntity() {}
@@ -157,13 +159,14 @@ type Config struct {
 }
 
 type Device struct {
-	ID            repos.ID               `json:"id"`
-	User          *User                  `json:"user"`
-	Name          string                 `json:"name"`
-	Configuration map[string]interface{} `json:"configuration"`
-	Account       *Account               `json:"account"`
-	Ports         []*Port                `json:"ports"`
-	Region        *string                `json:"region"`
+	ID                   repos.ID               `json:"id"`
+	User                 *User                  `json:"user"`
+	Name                 string                 `json:"name"`
+	Configuration        map[string]interface{} `json:"configuration"`
+	Account              *Account               `json:"account"`
+	Ports                []*Port                `json:"ports"`
+	Region               *string                `json:"region"`
+	InterceptingServices []*App                 `json:"interceptingServices"`
 }
 
 func (Device) IsEntity() {}

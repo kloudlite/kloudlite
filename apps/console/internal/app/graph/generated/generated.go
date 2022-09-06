@@ -62,25 +62,27 @@ type ComplexityRoot struct {
 	}
 
 	App struct {
-		AutoScale   func(childComplexity int) int
-		Conditions  func(childComplexity int) int
-		Containers  func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		Description func(childComplexity int) int
-		DoFreeze    func(childComplexity int) int
-		DoUnfreeze  func(childComplexity int) int
-		ID          func(childComplexity int) int
-		IsFrozen    func(childComplexity int) int
-		IsLambda    func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Namespace   func(childComplexity int) int
-		Project     func(childComplexity int) int
-		ReadableID  func(childComplexity int) int
-		Replicas    func(childComplexity int) int
-		Restart     func(childComplexity int) int
-		Services    func(childComplexity int) int
-		Status      func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		AutoScale      func(childComplexity int) int
+		CloseIntercept func(childComplexity int) int
+		Conditions     func(childComplexity int) int
+		Containers     func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Description    func(childComplexity int) int
+		DoFreeze       func(childComplexity int) int
+		DoUnfreeze     func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Intercept      func(childComplexity int, deviceID repos.ID) int
+		IsFrozen       func(childComplexity int) int
+		IsLambda       func(childComplexity int) int
+		Name           func(childComplexity int) int
+		Namespace      func(childComplexity int) int
+		Project        func(childComplexity int) int
+		ReadableID     func(childComplexity int) int
+		Replicas       func(childComplexity int) int
+		Restart        func(childComplexity int) int
+		Services       func(childComplexity int) int
+		Status         func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
 	}
 
 	AppContainer struct {
@@ -149,13 +151,14 @@ type ComplexityRoot struct {
 	}
 
 	Device struct {
-		Account       func(childComplexity int) int
-		Configuration func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Name          func(childComplexity int) int
-		Ports         func(childComplexity int) int
-		Region        func(childComplexity int) int
-		User          func(childComplexity int) int
+		Account              func(childComplexity int) int
+		Configuration        func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		InterceptingServices func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		Ports                func(childComplexity int) int
+		Region               func(childComplexity int) int
+		User                 func(childComplexity int) int
 	}
 
 	DockerCredentials struct {
@@ -384,6 +387,9 @@ type AppResolver interface {
 	Restart(ctx context.Context, obj *model.App) (bool, error)
 	DoFreeze(ctx context.Context, obj *model.App) (bool, error)
 	DoUnfreeze(ctx context.Context, obj *model.App) (bool, error)
+
+	Intercept(ctx context.Context, obj *model.App, deviceID repos.ID) (bool, error)
+	CloseIntercept(ctx context.Context, obj *model.App) (bool, error)
 }
 type CloudProviderResolver interface {
 	Regions(ctx context.Context, obj *model.CloudProvider) ([]*model.EdgeRegion, error)
@@ -393,6 +399,8 @@ type DeviceResolver interface {
 
 	Configuration(ctx context.Context, obj *model.Device) (map[string]interface{}, error)
 	Account(ctx context.Context, obj *model.Device) (*model.Account, error)
+
+	InterceptingServices(ctx context.Context, obj *model.Device) ([]*model.App, error)
 }
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
@@ -519,6 +527,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.AutoScale(childComplexity), true
 
+	case "App.closeIntercept":
+		if e.complexity.App.CloseIntercept == nil {
+			break
+		}
+
+		return e.complexity.App.CloseIntercept(childComplexity), true
+
 	case "App.conditions":
 		if e.complexity.App.Conditions == nil {
 			break
@@ -567,6 +582,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.ID(childComplexity), true
+
+	case "App.intercept":
+		if e.complexity.App.Intercept == nil {
+			break
+		}
+
+		args, err := ec.field_App_intercept_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.App.Intercept(childComplexity, args["deviceId"].(repos.ID)), true
 
 	case "App.isFrozen":
 		if e.complexity.App.IsFrozen == nil {
@@ -931,6 +958,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Device.ID(childComplexity), true
+
+	case "Device.interceptingServices":
+		if e.complexity.Device.InterceptingServices == nil {
+			break
+		}
+
+		return e.complexity.Device.InterceptingServices(childComplexity), true
 
 	case "Device.name":
 		if e.complexity.Device.Name == nil {
@@ -2523,6 +2557,8 @@ type App @key(fields: "id") {
   doFreeze: Boolean!
   doUnfreeze: Boolean!
   isFrozen: Boolean!
+  intercept(deviceId: ID!): Boolean!
+  closeIntercept: Boolean!
 }
 
 input AutoScaleIn {
@@ -2796,6 +2832,7 @@ type Device @key(fields: "id") {
   account: Account!
   ports: [Port!]!
   region: String
+  interceptingServices: [App!]!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -2839,6 +2876,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_App_intercept_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["deviceId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceId"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Entity_findAccountByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -4971,6 +5023,83 @@ func (ec *executionContext) _App_isFrozen(ctx context.Context, field graphql.Col
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _App_intercept(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_App_intercept_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().Intercept(rctx, obj, args["deviceId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _App_closeIntercept(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().CloseIntercept(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _AppContainer_name(ctx context.Context, field graphql.CollectedField, obj *model.AppContainer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6523,6 +6652,41 @@ func (ec *executionContext) _Device_region(ctx context.Context, field graphql.Co
 	res := resTmp.(*string)
 	fc.Result = res
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Device_interceptingServices(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Device",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Device().InterceptingServices(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.App)
+	fc.Result = res
+	return ec.marshalNApp2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _DockerCredentials_username(ctx context.Context, field graphql.CollectedField, obj *model.DockerCredentials) (ret graphql.Marshaler) {
@@ -14239,6 +14403,46 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "intercept":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_intercept(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "closeIntercept":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_closeIntercept(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14918,6 +15122,26 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = innerFunc(ctx)
 
+		case "interceptingServices":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Device_interceptingServices(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

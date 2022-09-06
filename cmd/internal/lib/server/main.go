@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 	"kloudlite.io/cmd/internal/common"
-	"kloudlite.io/cmd/internal/constants"
 )
 
 type User struct {
@@ -33,6 +31,7 @@ type Project struct {
 }
 
 type App struct {
+	IsLambda   bool   `json:"isLambda"`
 	Id         string `json:"id"`
 	Name       string `json:"name"`
 	ReadableId string `json:"readableId"`
@@ -139,46 +138,52 @@ func Login(loginId string) error {
 	}
 }
 
-func currentAccountId() (string, error) {
+func CurrentAccountId() (string, error) {
+	// klfile, err := GetKlFile(nil)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// if klfile.AccountId == "" {
+	// 	return "", errors.New("no project selected")
+	// }
+
+	// return klfile.AccountId, nil
 	folder, err := getConfigFolder()
 	if err != nil {
 		return "", err
 	}
 	var file []byte
-	count := 0
-	for {
-		if count > 2 {
-			return "", err
-		}
-		file, err = ioutil.ReadFile(fmt.Sprintf("%s/account", folder))
-		if err == nil {
-			break
-		}
-		exec.Command(constants.CMD_NAME, "accounts").Run()
-		count++
+	file, err = ioutil.ReadFile(fmt.Sprintf("%s/account", folder))
+	if err != nil {
+		return "", err
 	}
 
 	return string(file), nil
 }
 
-func currentProjectId() (string, error) {
+func CurrentProjectId() (string, error) {
+	// klfile, err := GetKlFile(nil)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// if klfile.ProjectId == "" {
+	// 	return "", errors.New("no project selected")
+	// }
+
+	// return klfile.ProjectId, nil
+
 	folder, err := getConfigFolder()
 	if err != nil {
 		return "", err
 	}
 
 	var file []byte
-	count := 0
-	for {
-		if count > 2 {
-			return "", err
-		}
-		file, err = ioutil.ReadFile(fmt.Sprintf("%s/project", folder))
-		if err == nil {
-			break
-		}
-		exec.Command(constants.CMD_NAME, "project", "list").Run()
-		count++
+
+	file, err = ioutil.ReadFile(fmt.Sprintf("%s/project", folder))
+	if err != nil {
+		return "", err
 	}
 
 	return string(file), nil
@@ -191,19 +196,10 @@ func getCookie() (string, error) {
 	}
 	var file []byte
 
-	count := 0
-	for {
-		if count > 2 {
-			return "", err
-		}
-		file, err = ioutil.ReadFile(fmt.Sprintf("%s/session", folder))
-		if err == nil {
-			break
-		}
-		exec.Command(constants.CMD_NAME, "login").Run()
-		count++
+	file, err = ioutil.ReadFile(fmt.Sprintf("%s/session", folder))
+	if err != nil {
+		return "", err
 	}
-
 	return strings.TrimSpace(string(file)), nil
 }
 
@@ -239,17 +235,21 @@ func GetAccounts() ([]Account, error) {
 	return accounts, nil
 }
 
-func GetProjects() ([]Project, error) {
+func GetProjects(options ...common.Option) ([]Project, error) {
+	accountId := common.GetOption(options, "accountId")
+
 	cookie, err := getCookie()
 
 	if err != nil {
 		return nil, err
 	}
 
-	accountId, err := currentAccountId()
+	if accountId == "" {
+		accountId, err = CurrentAccountId()
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	respData, err := klFetch("cli_getProjects", map[string]any{
@@ -273,16 +273,18 @@ func GetProjects() ([]Project, error) {
 	return resp.FinanceAccount.Projects, nil
 }
 
-func GetApps() ([]App, error) {
+func GetApps(options ...common.Option) ([]App, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId, err := currentProjectId()
-
-	if err != nil {
-		return nil, err
+	projectId := common.GetOption(options, "projectId")
+	if projectId == "" {
+		projectId, err = CurrentProjectId()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	respData, err := klFetch("cli_getApps", map[string]any{

@@ -84,21 +84,22 @@ type AutoScale struct {
 }
 
 type App struct {
-	repos.BaseEntity `bson:",inline"`
-	IsLambda         bool               `json:"is_lambda" bson:"is_lambda"`
-	ReadableId       string             `json:"readable_id" bson:"readable_id"`
-	ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
-	Name             string             `json:"name" bson:"name"`
-	Namespace        string             `json:"namespace" bson:"namespace"`
-	Frozen           bool               `json:"frozen" bson:"frozen"`
-	Description      *string            `json:"description" bson:"description"`
-	Replicas         int                `json:"replicas" bson:"replicas"`
-	AutoScale        *AutoScale         `json:"auto_scale" bson:"auto_scale"`
-	ExposedPorts     []ExposedPort      `json:"exposed_ports" bson:"exposed_ports"`
-	Containers       []Container        `json:"containers" bson:"containers"`
-	Status           AppStatus          `json:"status" bson:"status"`
-	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
-	Metadata         map[string]any     `json:"metadata" bson:"metadata"`
+	repos.BaseEntity  `bson:",inline"`
+	IsLambda          bool               `json:"is_lambda" bson:"is_lambda"`
+	ReadableId        string             `json:"readable_id" bson:"readable_id"`
+	ProjectId         repos.ID           `json:"project_id" bson:"project_id"`
+	Name              string             `json:"name" bson:"name"`
+	Namespace         string             `json:"namespace" bson:"namespace"`
+	Frozen            bool               `json:"frozen" bson:"frozen"`
+	InterceptDeviceId *repos.ID          `json:"interceptDeviceId" bson:"intercept_device_id"`
+	Description       *string            `json:"description" bson:"description"`
+	Replicas          int                `json:"replicas" bson:"replicas"`
+	AutoScale         *AutoScale         `json:"auto_scale" bson:"auto_scale"`
+	ExposedPorts      []ExposedPort      `json:"exposed_ports" bson:"exposed_ports"`
+	Containers        []Container        `json:"containers" bson:"containers"`
+	Status            AppStatus          `json:"status" bson:"status"`
+	Conditions        []metav1.Condition `json:"conditions" bson:"conditions"`
+	Metadata          map[string]any     `json:"metadata" bson:"metadata"`
 }
 
 var AppIndexes = []repos.IndexField{

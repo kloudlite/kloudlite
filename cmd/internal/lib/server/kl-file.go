@@ -2,15 +2,16 @@ package server
 
 import (
 	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 	"kloudlite.io/cmd/internal/common"
 )
 
 type ResEnvType struct {
-	Name   string `json:"name"`
-	Key    string `json:"key"`
-	RefKey string `json:"refKey"`
+	Name   *string `json:"name,omitempty" yaml:"name,omitempty"`
+	Key    string  `json:"key"`
+	RefKey string  `json:"refKey"`
 }
 
 type EnvType struct {
@@ -20,14 +21,12 @@ type EnvType struct {
 
 type ResType struct {
 	Name string       `json:"name"`
-	Id   string       `json:"id"`
 	Env  []ResEnvType `json:"env"`
 }
 
 type FileEntry struct {
 	Path string `json:"path"`
 	Type string `json:"type"`
-	Ref  string `json:"ref"`
 	Name string `json:"Name"`
 }
 
@@ -47,6 +46,18 @@ type KLFileType struct {
 	FileMount MountType `yaml:"fileMount"`
 }
 
+const (
+	defaultKLFile = "kl.yml"
+)
+
+func GetConfigPath() string {
+	klfilepath := os.Getenv("KLCONFIG_PATH")
+	if klfilepath != "" {
+		return klfilepath
+	}
+	return defaultKLFile
+}
+
 func WriteKLFile(fileObj KLFileType) error {
 	file, err := yaml.Marshal(fileObj)
 	if err != nil {
@@ -54,7 +65,7 @@ func WriteKLFile(fileObj KLFileType) error {
 		return nil
 	}
 
-	err = ioutil.WriteFile(".kl.yml", file, 0644)
+	err = ioutil.WriteFile(GetConfigPath(), file, 0644)
 	if err != nil {
 		common.PrintError(err)
 	}
@@ -64,12 +75,11 @@ func WriteKLFile(fileObj KLFileType) error {
 
 func GetKlFile(filePath *string) (*KLFileType, error) {
 	if filePath == nil {
-		s := ".kl.yml"
+		s := GetConfigPath()
 		filePath = &s
 	}
 
 	file, err := ioutil.ReadFile(*filePath)
-
 	if err != nil {
 		return nil, err
 	}

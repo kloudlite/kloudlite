@@ -2,46 +2,53 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	fWebsocket "github.com/gofiber/websocket/v2"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/repos"
 )
 
 func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, error) {
 	app, err := d.appRepo.FindById(ctx, appId)
-	if err != nil {
+
+	if err = mongoError(err, "app not found"); err != nil {
 		return nil, err
 	}
-	err = d.checkProjectAccess(ctx, app.ProjectId, "read_apps")
+
+	err = d.checkProjectAccess(ctx, app.ProjectId, READ_PROJECT)
 	if err != nil {
 		return nil, err
 	}
 	return app, nil
 }
 func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.App, error) {
-	err := d.checkProjectAccess(ctx, projectID, "update_app")
+	err := d.checkProjectAccess(ctx, projectID, READ_PROJECT)
 	if err != nil {
 		return nil, err
 	}
 	apps, err := d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"project_id": projectID,
 	}})
+
 	if err != nil {
 		return nil, err
 	}
-	return apps, nil
 
+	return apps, nil
 }
 
 func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate) error {
 	one, err := d.appRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
-
-	if err != nil {
+	if err = mongoError(err, "app not found"); err != nil {
 		return err
 	}
+
 	newStatus := one.Status
 	if response.IsReady {
 		if one.Status == entities.AppStateSyncing {
@@ -76,14 +83,17 @@ func (d *domain) OnDeleteApp(ctx context.Context, response *op_crds.StatusUpdate
 }
 
 func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entities.App) (*entities.App, error) {
-	err := d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	err := d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return nil, err
 	}
+
 	prj, err := d.projectRepo.FindById(ctx, projectId)
-	if err != nil {
+
+	if err = mongoError(err, "project not found"); err != nil {
 		return nil, err
 	}
+
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
 	app.Status = entities.AppStateSyncing
@@ -99,14 +109,16 @@ func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entitie
 }
 
 func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App) (*entities.App, error) {
-	err := d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	err := d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return nil, err
 	}
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
-	if err != nil {
+
+	if err = mongoError(err, "project not found"); err != nil {
 		return nil, err
 	}
+
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
 	app.Id = appId
@@ -124,51 +136,75 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 
 func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
-	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+
+	if err = mongoError(err, "app not found"); err != nil {
+		return err
+	}
+
+	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return err
 	}
+
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
 		return err
 	}
+
 	app.Frozen = true
 	_, err = d.appRepo.UpdateById(ctx, appId, app)
 	if err != nil {
 		return err
 	}
-	d.sendAppApply(ctx, prj, app, false)
-	return nil
+
+	err = d.sendAppApply(ctx, prj, app, false)
+
+	return err
 }
 
 func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
-	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err = mongoError(err, "app not found"); err != nil {
+		return err
+	}
+
+	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return err
 	}
+
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
 		return err
 	}
+
 	app.Frozen = false
 	_, err = d.appRepo.UpdateById(ctx, appId, app)
 	if err != nil {
 		return err
 	}
-	d.sendAppApply(ctx, prj, app, false)
-	return nil
+
+	err = d.sendAppApply(ctx, prj, app, false)
+
+	return err
+
 }
 func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
-	err = d.checkProjectAccess(ctx, app.ProjectId, "update_app")
+	if err = mongoError(err, "app not found"); err != nil {
+		return err
+	}
+
+	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return err
 	}
+
 	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
 	if err != nil {
 		return err
 	}
+
 	app.Namespace = prj.Name
 	app.ProjectId = prj.Id
 	app.Id = appId
@@ -178,17 +214,23 @@ func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 		return err
 	}
 	err = d.sendAppApply(ctx, prj, updatedApp, true)
-	if err != nil {
-		return err
-	}
-	return nil
+	// if err != nil {
+	// 	return err
+	// }
+	return err
 }
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	app, err := d.appRepo.FindById(ctx, appID)
-	err = d.checkProjectAccess(ctx, app.ProjectId, "delete_app")
+
+	if err = mongoError(err, "app not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return false, err
 	}
+
 	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.App{
 		APIVersion: op_crds.AppAPIVersion,
 		Kind:       op_crds.AppKind,
@@ -197,6 +239,11 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 			Namespace: app.Namespace,
 		},
 	})
+
+	if err != nil {
+		return false, err
+	}
+
 	app.Status = entities.AppStateDeleting
 	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	if app.IsLambda {
@@ -283,6 +330,12 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Labels: func() map[string]string {
 					labels := map[string]string{
 						"kloudlite.io/account-ref": string(prj.AccountId),
+					}
+					if app.InterceptDeviceId != nil {
+						labels["kloudlite.io/is-intercepted"] = "true"
+						labels["kloudlite.io/intercept.device-ref"] = string(*app.InterceptDeviceId)
+					} else {
+						labels["kloudlite.io/is-intercepted"] = "false"
 					}
 					if app.Frozen {
 						labels["kloudlite.io/freeze"] = "true"
@@ -371,6 +424,12 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Namespace: app.Namespace,
 				Labels: func() map[string]string {
 					labels := map[string]string{}
+					if app.InterceptDeviceId != nil {
+						labels["kloudlite.io/is-intercepted"] = "true"
+						labels["kloudlite.io/intercept.device-ref"] = string(*app.InterceptDeviceId)
+					} else {
+						labels["kloudlite.io/is-intercepted"] = "false"
+					}
 					if app.Frozen {
 						labels["kloudlite.io/freeze"] = "true"
 					}
@@ -498,4 +557,122 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 		})
 		return err
 	}
+}
+
+func (d *domain) InterceptApp(ctx context.Context, appId repos.ID, deviceId repos.ID) error {
+
+	userId, err := GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	dev, err := d.deviceRepo.FindById(ctx, deviceId)
+	if err = mongoError(err, "device not found"); err != nil {
+		return err
+	}
+	if dev.UserId != repos.ID(userId) {
+		return errors.New("provided device not belongs to you")
+	}
+
+	app, err := d.appRepo.FindById(ctx, appId)
+
+	if err = mongoError(err, "app not found"); err != nil {
+		return err
+	}
+
+	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	if err != nil {
+		return err
+	}
+
+	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
+	if err != nil {
+		return err
+	}
+
+	app.InterceptDeviceId = &deviceId
+	_, err = d.appRepo.UpdateById(ctx, appId, app)
+	if err != nil {
+		return err
+	}
+	err = d.sendAppApply(ctx, prj, app, false)
+	return err
+}
+
+func (d *domain) CloseIntercept(ctx context.Context, appId repos.ID) error {
+
+	app, err := d.appRepo.FindById(ctx, appId)
+	if err = mongoError(err, "app not found"); err != nil {
+		return err
+	}
+
+	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	if err != nil {
+		return err
+	}
+
+	prj, err := d.projectRepo.FindById(ctx, app.ProjectId)
+	if err != nil {
+		return err
+	}
+
+	app.InterceptDeviceId = nil
+	_, err = d.appRepo.UpdateById(ctx, appId, app)
+	if err != nil {
+		return err
+	}
+	err = d.sendAppApply(ctx, prj, app, false)
+
+	return err
+}
+
+func (d *domain) GetInterceptedApps(ctx context.Context, deviceId repos.ID) ([]*entities.App, error) {
+	apps, err := d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"intercept_device_id": deviceId,
+	}})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(apps) >= 1 {
+		if err = d.checkProjectAccess(ctx, apps[0].ProjectId, UPDATE_PROJECT); err != nil {
+			return nil, err
+		}
+	}
+
+	return apps, nil
+}
+
+// GetSocketCtx implements Domain
+const userContextKey = "__local_user_context__"
+
+func (*domain) GetSocketCtx(
+	conn *fWebsocket.Conn,
+	cacheClient AuthCacheClient,
+	cookieName,
+	cookieDomain string,
+	sessionKeyPrefix string,
+) context.Context {
+	repo := cache.NewRepo[*common.AuthSession](cacheClient)
+	cookieValue := conn.Cookies(cookieName)
+	c := context.TODO()
+
+	if cookieValue != "" {
+		key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
+		var get any
+		get, err := repo.Get(c, key)
+		if err != nil {
+			if !repo.ErrNoRecord(err) {
+				return c
+			}
+		}
+
+		fmt.Println(get)
+
+		if get != nil {
+			c = context.WithValue(c, userContextKey, context.WithValue(c, "session", get))
+		}
+	}
+
+	return c
 }

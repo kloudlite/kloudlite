@@ -91,6 +91,22 @@ func (r *appResolver) DoUnfreeze(ctx context.Context, obj *model.App) (bool, err
 	return true, nil
 }
 
+func (r *appResolver) Intercept(ctx context.Context, obj *model.App, deviceID repos.ID) (bool, error) {
+	err := r.Domain.InterceptApp(ctx, obj.ID, deviceID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *appResolver) CloseIntercept(ctx context.Context, obj *model.App) (bool, error) {
+	err := r.Domain.CloseIntercept(ctx, obj.ID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *cloudProviderResolver) Regions(ctx context.Context, obj *model.CloudProvider) ([]*model.EdgeRegion, error) {
 	regions, err := r.Domain.GetRegions(ctx, obj.ID)
 	if err != nil {
@@ -133,6 +149,15 @@ func (r *deviceResolver) Account(ctx context.Context, obj *model.Device) (*model
 	return &model.Account{
 		ID: deviceEntity.AccountId,
 	}, e
+}
+
+func (r *deviceResolver) InterceptingServices(ctx context.Context, obj *model.Device) ([]*model.App, error) {
+	appEntities, err := r.Domain.GetInterceptedApps(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	apps := returnApps(appEntities)
+	return apps, err
 }
 
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
@@ -235,14 +260,6 @@ func (r *mutationResolver) ManagedResDelete(ctx context.Context, resID repos.ID)
 		return nil, err
 	}
 	return &res, nil
-}
-
-func withUserSession(ctx context.Context) (context.Context, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, wErrors.NotLoggedIn
-	}
-	return context.WithValue(ctx, "user_id", session.UserId), nil
 }
 
 func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID, name string) (*model.Device, error) {
@@ -995,13 +1012,8 @@ func (r *queryResolver) CoreProject(ctx context.Context, projectID repos.ID) (*m
 	return projectModelFromEntity(p), nil
 }
 
-func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error) {
-	appEntities, err := r.Domain.GetApps(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
+func returnApps(appEntities []*entities.App) []*model.App {
 	apps := make([]*model.App, 0)
-
 	for _, a := range appEntities {
 		services := make([]*model.ExposedService, 0)
 		for _, s := range a.ExposedPorts {
@@ -1111,11 +1123,20 @@ func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search
 					}
 					return containers
 				}(),
-				Project: &model.Project{ID: projectID},
+				Project: &model.Project{ID: a.ProjectId},
 				Status:  string(a.Status),
 			},
 		)
 	}
+	return apps
+}
+
+func (r *queryResolver) CoreApps(ctx context.Context, projectID repos.ID, search *string) ([]*model.App, error) {
+	appEntities, err := r.Domain.GetApps(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	apps := returnApps(appEntities)
 	return apps, nil
 }
 
@@ -1515,3 +1536,17 @@ type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func withUserSession(ctx context.Context) (context.Context, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return nil, wErrors.NotLoggedIn
+	}
+	return context.WithValue(ctx, "user_id", session.UserId), nil
+}

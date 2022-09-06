@@ -8,6 +8,28 @@ import (
 	"github.com/briandowns/spinner"
 )
 
+type Option struct {
+	Key   string
+	Value string
+}
+
+func GetOption(op []Option, key string) string {
+	for _, o := range op {
+		if o.Key == key {
+			return o.Value
+		}
+	}
+
+	return ""
+}
+
+func MakeOption(key, value string) Option {
+	return Option{
+		Key:   key,
+		Value: value,
+	}
+}
+
 func PrintError(err error) {
 	fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 }

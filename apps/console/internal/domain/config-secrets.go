@@ -4,26 +4,28 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"fmt"
+	"strings"
+	"time"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	opcrds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
-	"strings"
-	"time"
 )
 
 func (d *domain) GetSecret(ctx context.Context, secretId repos.ID) (*entities.Secret, error) {
 	sec, err := d.secretRepo.FindById(ctx, secretId)
-	err = d.checkProjectAccess(ctx, sec.ProjectId, "read_secrets")
-	if err != nil {
+	if err = mongoError(err, "secret not found"); err != nil {
 		return nil, err
 	}
+
+	err = d.checkProjectAccess(ctx, sec.ProjectId, READ_PROJECT)
 	if err != nil {
 		return nil, err
 	}
 	return sec, nil
 }
 func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error) {
-	err := d.checkProjectAccess(ctx, projectId, "read_secrets")
+	err := d.checkProjectAccess(ctx, projectId, READ_PROJECT)
 	if err != nil {
 		return nil, err
 	}
@@ -37,18 +39,18 @@ func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entitie
 	}
 	return secrets, nil
 }
+
 func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error) {
-	err := d.checkProjectAccess(ctx, projectId, "add_secrets")
+	err := d.checkProjectAccess(ctx, projectId, UPDATE_PROJECT)
 	if err != nil {
 		return nil, err
 	}
+
 	prj, err := d.projectRepo.FindById(ctx, projectId)
-	if err != nil {
+	if err = mongoError(err, "project not found"); err != nil {
 		return nil, err
 	}
-	if prj == nil {
-		return nil, fmt.Errorf("project not found")
-	}
+
 	create, err := d.secretRepo.Create(ctx, &entities.Secret{
 		Name:        strings.ToLower(secretName),
 		ProjectId:   projectId,
@@ -75,19 +77,19 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 }
 func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error) {
 	cfg, err := d.secretRepo.FindById(ctx, secretId)
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, "update_secrets")
+	if err = mongoError(err, "secret not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return false, err
 	}
-	if err != nil {
-		return false, err
-	}
-	if cfg == nil {
-		return false, fmt.Errorf("config not found")
-	}
+
 	if desc != nil {
 		cfg.Description = desc
 	}
+
 	cfg.Data = secretData
 	_, err = d.secretRepo.UpdateById(ctx, secretId, cfg)
 	if err != nil {
@@ -116,17 +118,20 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 }
 func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error) {
 	secret, err := d.secretRepo.FindById(ctx, secretId)
-	err = d.checkProjectAccess(ctx, secret.ProjectId, "delete_secrets")
+	if err = mongoError(err, "secret not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, secret.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return false, err
 	}
-	if err != nil {
-		return false, err
-	}
+
 	err = d.secretRepo.DeleteById(ctx, secretId)
 	if err != nil {
 		return false, err
 	}
+
 	err = d.workloadMessenger.SendAction("delete", string(secretId), opcrds.Config{
 		APIVersion: opcrds.ConfigAPIVersion,
 		Kind:       opcrds.ConfigKind,
@@ -135,22 +140,28 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 			Namespace: secret.Namespace,
 		},
 	})
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
 func (d *domain) GetConfig(ctx context.Context, configId repos.ID) (*entities.Config, error) {
 	cfg, err := d.configRepo.FindById(ctx, configId)
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, "read_configs")
+	if err = mongoError(err, "config not found"); err != nil {
+		return nil, err
+	}
+
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, READ_PROJECT)
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
+
 	return cfg, nil
 }
 func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error) {
-	err := d.checkProjectAccess(ctx, projectId, "read_configs")
+	err := d.checkProjectAccess(ctx, projectId, READ_PROJECT)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +176,7 @@ func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entitie
 	return configs, nil
 }
 func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error) {
-	err := d.checkProjectAccess(ctx, projectId, "create_configs")
+	err := d.checkProjectAccess(ctx, projectId, UPDATE_PROJECT)
 	if err != nil {
 		return nil, err
 	}
@@ -206,16 +217,15 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 }
 func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error) {
 	cfg, err := d.configRepo.FindById(ctx, configId)
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, "update_configs")
+	if err = mongoError(err, "config not found"); err != nil {
+		return false, err
+	}
+
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, UPDATE_PROJECT)
 	if err != nil {
 		return false, err
 	}
-	if err != nil {
-		return false, err
-	}
-	if cfg == nil {
-		return false, fmt.Errorf("config not found")
-	}
+
 	if desc != nil {
 		cfg.Description = desc
 	}
@@ -248,13 +258,14 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 
 func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, error) {
 	cfg, err := d.configRepo.FindById(ctx, configId)
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, "delete_configs")
-	if err != nil {
+	if err = mongoError(err, "config not found"); err != nil {
 		return false, err
 	}
-	if err != nil {
+
+	if err = d.checkProjectAccess(ctx, cfg.ProjectId, UPDATE_PROJECT); err != nil {
 		return false, err
 	}
+
 	err = d.configRepo.DeleteById(ctx, configId)
 	if err != nil {
 		return false, err
@@ -267,5 +278,10 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 			Namespace: cfg.Namespace,
 		},
 	})
+
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }

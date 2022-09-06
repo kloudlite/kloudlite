@@ -2,7 +2,9 @@ package application
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"kloudlite.io/common"
@@ -141,14 +143,40 @@ func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 	)
 
 	if err != nil {
-		if rb == nil {
-			return &iam.OutCan{Status: false}, nil
-		}
 		return nil, errors.NewEf(err, "could not find resource(ids=%v)", in.ResourceIds)
+	}
+
+	var actionsConfig struct {
+		Actions map[string][]string `json:"actions"`
+	}
+
+	file, err := ioutil.ReadFile("./configs/iam.json")
+	if err != nil {
+		return &iam.OutCan{Status: false}, err
+	}
+
+	err = json.Unmarshal(file, &actionsConfig)
+
+	if err != nil {
+		return &iam.OutCan{Status: false}, err
+	}
+
+	if rb == nil {
+		return &iam.OutCan{Status: false}, nil
 	}
 
 	if strings.HasPrefix(in.UserId, "sys-user") {
 		return &iam.OutCan{Status: true}, nil
+	}
+
+	fmt.Println("here", actionsConfig.Actions[in.Action])
+
+	for _, v := range actionsConfig.Actions[in.Action] {
+		fmt.Println(v, rb.Role)
+		if v == rb.Role {
+			return &iam.OutCan{Status: true}, nil
+		}
+
 	}
 
 	for _, role := range common.ActionMap[common.Action(in.Action)] {

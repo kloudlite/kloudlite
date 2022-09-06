@@ -25,7 +25,7 @@ func GenerateEnv() (*GeneratedEnvs, error) {
 		return nil, err
 	}
 
-	projectId, err := currentProjectId()
+	projectId, err := CurrentProjectId()
 	if err != nil {
 		return nil, err
 	}
