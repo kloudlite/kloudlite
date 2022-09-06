@@ -5,6 +5,7 @@ const iam = {
       // account actions
       invite_acc_member: ['account-owner', 'account-admin'],
       invite_acc_admin: ['account-owner'],
+      invite_acc_owner: ['account-owner'],
       update_payment: ['account-owner'],
       create_project: ['account-admin', 'account-owner'],
       list_projects: ['account-admin', 'account-owner', 'account-member'],
@@ -17,6 +18,7 @@ const iam = {
       check_outstanding: ['account-owner'],
       update_account: ['account-owner'],
       delete_account: ['account-owner'],
+      read_account: ['account-owner','account-member','account-admin'],
       update_acc_member: ['account-owner', 'account-admin'],
       update_acc_admin: ['account-owner'],
       cancel_acc_invite: ['account-owner', 'account-admin'],
