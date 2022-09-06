@@ -320,23 +320,23 @@ func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, act
 
 func (d *domain) checkAccountAccess(ctx context.Context, accountId repos.ID, action string) error {
 
-	// userId, err := GetUser(ctx)
-	// if err != nil {
-	// 	return err
-	// }
+	userId, err := GetUser(ctx)
+	if err != nil {
+		return err
+	}
 
-	// can, err := d.iamClient.Can(ctx, &iam.InCan{
-	// 	UserId:      userId,
-	// 	ResourceIds: []string{string(accountId)},
-	// 	Action:      action,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
+	can, err := d.iamClient.Can(ctx, &iam.InCan{
+		UserId:      userId,
+		ResourceIds: []string{string(accountId)},
+		Action:      action,
+	})
+	if err != nil {
+		return err
+	}
 
-	// if !can.Status {
-	// 	return fmt.Errorf("you don't have permission to perform this operation")
-	// }
+	if !can.Status {
+		return fmt.Errorf("you don't have permission to perform this operation")
+	}
 
 	return nil
 }
