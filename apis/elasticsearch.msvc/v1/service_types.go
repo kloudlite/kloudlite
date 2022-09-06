@@ -6,7 +6,12 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
+type Auth struct {
+	Password string `json:"password"`
+}
+
 type ServiceSpec struct {
+	Auth          Auth             `json:"auth"`
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	// +kubebuilder:validation:optional

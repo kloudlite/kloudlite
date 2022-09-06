@@ -1,6 +1,8 @@
 package env
 
 import (
+	"time"
+
 	libEnv "github.com/codingconcepts/env"
 )
 
@@ -21,7 +23,7 @@ type Env struct {
 	HarborWebhookAddr       string `env:"HARBOR_WEBHOOK_ADDR" required:"true"`
 	HarborApiVersion        string `env:"HARBOR_API_VERSION" required:"false"`
 
-	ReconcilePeriod string `env:"RECONCILE_PERIOD" required:"true"`
+	ReconcilePeriod time.Duration `env:"RECONCILE_PERIOD" required:"true"`
 
 	AwsAccessKeyId     string `env:"AWS_ACCESS_KEY_ID" required:"true"`
 	AwsSecretAccessKey string `env:"AWS_SECRET_ACCESS_KEY" required:"true"`

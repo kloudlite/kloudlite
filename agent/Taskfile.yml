@@ -11,24 +11,15 @@ tasks:
       KAFKA_INCOMING_TOPIC: "kl-incoming"
       KAFKA_ERROR_ON_APPLY_TOPIC: "kl-error-on-apply"
     cmds:
-      - go run ./main.go
+      - go run ./main.go --dev
 
-  verify-vars:
-    silent: true
-    cmds:
-      - |+
-        [ -z "{{.Value}}" ] && echo "env-var {{.Name}} is required" && exit 1
-        exit 0
-      -
-
-  build:
+  docker-build:
     vars:
-      Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-agent
-      Tag: latest
+#       Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-agent
+      Image: harbor.dev.madhouselabs.io/kloudlite/kloudlite-agent:{{.Tag}}
+    preconditions:
+      - sh: test -n '{{.Tag}}'
+        msg: 'var Tag must have a value'
     cmds:
-      - task: verify-vars
-        vars:
-          Name: EnvName
-          Value: "{{.EnvName}}"
-      - docker buildx build --build-context project=../ -t {{.Image}}:{{.Tag}} .
-      - docker push {{.Image}}:{{.Tag}}
+      - docker buildx build --build-context project=../ -t {{.Image}} .
+      - docker push {{.Image}}

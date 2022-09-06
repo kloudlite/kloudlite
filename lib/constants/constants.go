@@ -55,24 +55,12 @@ const (
 	AccountRef string = "kloudlite.io/account-ref"
 	ProjectRef string = "kloudlite.io/project-ref"
 
-	ProjectName string = "kloudlite.io/project.name"
-)
-
-var (
-	PodGroup = metav1.TypeMeta{
-		APIVersion: "v1",
-		Kind:       "Pod",
-	}
-
-	DeploymentType = metav1.TypeMeta{
-		APIVersion: "apps/v1",
-		Kind:       "Deployment",
-	}
-
-	StatefulsetType = metav1.TypeMeta{
-		APIVersion: "apps/v1",
-		Kind:       "StatefulSet",
-	}
+	ProjectNameKey string = "kloudlite.io/project.name"
+	MsvcNameKey    string = "kloudlite.io/msvc.name"
+	MresNameKey    string = "kloudlite.io/mres.name"
+	AppNameKey     string = "kloudlite.io/app.name"
+	RouterNameKey  string = "kloudlite.io/router.name"
+	LambdaNameKey  string = "kloudlite.io/lambda.name"
 )
 
 var (

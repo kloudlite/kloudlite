@@ -17,35 +17,55 @@ import (
 	rawJson "operators.kloudlite.io/lib/raw-json"
 )
 
-// +kubebuilder:object:generate=true
-type Check struct {
-	Status        bool        `json:"status"`
-	Error         string      `json:"error,omitempty"`
-	Generation    int64       `json:"generation,omitempty"`
-	LastCheckedAt metav1.Time `json:"lastCheckedAt,omitempty"`
+type ResourceRef struct {
+	Name string `json:"name"`
+	// +kubebuilder:validation:Optional
+	Namespace string `json:"namespace"`
+	// +kubebuilder:validation:Optional
+	ApiVersion string `json:"apiVersion"`
+	// +kubebuilder:validation:Optional
+	Kind string `json:"kind"`
 }
 
 // +kubebuilder:object:generate=true
+
+type Check struct {
+	Status     bool   `json:"status"`
+	Message    string `json:"message,omitempty"`
+	Generation int64  `json:"generation,omitempty"`
+	// Resources     []ResourceRef `json:"resources,omitempty"`
+	// LastCheckedAt metav1.Time `json:"lastCheckedAt,omitempty"`
+}
+
+func (c *Check) Diff(c2 Check) bool {
+	if c.Status != c2.Status {
+		return false
+	}
+	if c.Message != c2.Message {
+		return false
+	}
+	if c.Generation != c2.Generation {
+		return false
+	}
+	return true
+}
+
+// +kubebuilder:object:generate=true
+
 type Status struct {
 	// +kubebuilder:validation:Optional
-	IsReady         bool               `json:"isReady"`
-	Message         rawJson.RawJson    `json:"message,omitempty"`
-	Messages        []ContainerMessage `json:"messages,omitempty"`
-	DisplayVars     rawJson.RawJson    `json:"displayVars,omitempty"`
-	GeneratedVars   rawJson.RawJson    `json:"generatedVars,omitempty"`
-	Conditions      []metav1.Condition `json:"conditions,omitempty"`
-	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
-	OpsConditions   []metav1.Condition `json:"opsConditions,omitempty"`
-	Generation      int64              `json:"generation,omitempty"`
-	Checks          map[string]Check   `json:"checks,omitempty"`
+	IsReady            bool               `json:"isReady"`
+	Message            rawJson.RawJson    `json:"message,omitempty"`
+	Messages           []ContainerMessage `json:"messages,omitempty"`
+	DisplayVars        rawJson.RawJson    `json:"displayVars,omitempty"`
+	GeneratedVars      rawJson.RawJson    `json:"generatedVars,omitempty"`
+	Conditions         []metav1.Condition `json:"conditions,omitempty"`
+	ChildConditions    []metav1.Condition `json:"childConditions,omitempty"`
+	OpsConditions      []metav1.Condition `json:"opsConditions,omitempty"`
+	Generation         int64              `json:"generation,omitempty"`
+	Checks             map[string]Check   `json:"checks,omitempty"`
+	LastTransitionTime metav1.Time        `json:"lastTransitionTime,omitempty"`
 }
-
-// func (s *Status) Reset() {
-// 	s.OpsConditions = nil
-// 	s.Conditions = nil
-// 	s.DisplayVars = rawJson.RawJson{}
-// 	s.GeneratedVars = rawJson.RawJson{}
-// }
 
 type Reconciler interface {
 	reconcile.Reconciler
