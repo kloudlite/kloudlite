@@ -10,6 +10,7 @@ import (
 	"kloudlite.io/cmd/internal/cmd/runner/del"
 	"kloudlite.io/cmd/internal/cmd/runner/gen"
 	"kloudlite.io/cmd/internal/cmd/use"
+	"kloudlite.io/cmd/internal/cmd/wg"
 )
 
 func init() {
@@ -20,8 +21,7 @@ func init() {
 
 	rootCmd.AddCommand(auth.Cmd)
 
-	// rootCmd.AddCommand(wg.ConnectCmd)
-	// rootCmd.AddCommand(wg.DisconnectCmd)
+	rootCmd.AddCommand(wg.Cmd)
 
 	// rootCmd.AddCommand(account.Cmd)
 	// rootCmd.AddCommand(project.Cmd)
