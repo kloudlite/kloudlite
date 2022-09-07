@@ -2,11 +2,6 @@ version: 3
 
 dotenv: [".secrets/env"]
 
-includes:
-  helm:
-    taskfile: ./helm/Taskfile.yml
-    dir: ./helm/
-
 tasks:
   new-kind:
     silent: true
