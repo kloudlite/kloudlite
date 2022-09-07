@@ -21,7 +21,7 @@ metadata:
   namespace: {{$namespace}}
   annotations:
     {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
-    {{ K8sAnnotation true "kubernetes.io/ingress.class" $ingressClass }}
+{{/*    {{ K8sAnnotation true "kubernetes.io/ingress.class" $ingressClass }}*/}}
 
     {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
     {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
@@ -50,6 +50,7 @@ metadata:
     {{- end}}
   ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
 spec:
+  ingressClassName: ingress-nginx-{{.Namespace}}
   tls:
     {{- range $v := .Spec.Domains }}
     - hosts:
