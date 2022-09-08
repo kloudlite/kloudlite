@@ -2,6 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -35,7 +36,9 @@ func (r *AccountRouter) GetStatus() *rApi.Status {
 }
 
 func (r *AccountRouter) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AccountRef: r.Spec.AccountRef,
+	}
 }
 
 func (r *AccountRouter) GetEnsuredAnnotations() map[string]string {
