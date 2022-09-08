@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/env"
@@ -97,7 +98,7 @@ func (r *AccountRouterReconciler) Reconcile(ctx context.Context, oReq reconcile.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *AccountRouterReconciler) finalize(req *rApi.Request[*crdsv1.AccountRouter]) stepResult.Result {
@@ -215,7 +216,7 @@ func (r *AccountRouterReconciler) reconcileIngressController(req *rApi.Request[*
 				"controller-name": routerCfg.ControllerName,
 				"owner-refs":      []metav1.OwnerReference{cfgAsOwner},
 				"labels": map[string]string{
-					constants.AccountRouterNameKey: routerCfg.ControllerName,
+					constants.AccountRouterNameKey: obj.Name,
 				},
 			},
 		)
@@ -298,7 +299,7 @@ func (r *AccountRouterReconciler) reconcileIngressRoutes(req *rApi.Request[*crds
 	obj, ctx, checks := req.Object, req.Context(), req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
-	accDomains := r.parseAccountDomains(ctx, obj.Namespace)
+	accDomains := r.parseAccountDomains(ctx, obj.Spec.AccountRef)
 
 	routerCfg, ok := rApi.GetLocal[AccountRouterConfig](req, KeyRouterCfg)
 	if !ok {
@@ -387,6 +388,36 @@ func (r *AccountRouterReconciler) SetupWithManager(mgr ctrl.Manager, envVars *en
 			),
 		)
 	}
+
+	builder.Watches(
+		&source.Kind{Type: fn.NewUnstructured(constants.KloudliteAccountType)}, handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+				accId := obj.GetLabels()[constants.AccountRef]
+				if accId == "" {
+					return nil
+				}
+				var accRoutersList crdsv1.AccountRouterList
+				if err := r.List(
+					context.TODO(), &accRoutersList, &client.ListOptions{
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{constants.AccountRef: accId},
+						),
+					},
+				); err != nil {
+					return nil
+				}
+
+				rr := make([]reconcile.Request, 0, len(accRoutersList.Items))
+				for i := range accRoutersList.Items {
+					rr = append(
+						rr,
+						reconcile.Request{NamespacedName: fn.NN(accRoutersList.Items[i].GetNamespace(), accRoutersList.Items[i].GetName())},
+					)
+				}
+				return rr
+			},
+		),
+	)
 
 	return builder.Complete(r)
 }
