@@ -1,0 +1,55 @@
+{{- $obj := get . "obj" }}
+{{- $ownerRefs := get . "owner-refs" }}
+{{- $controllerName := get . "controller-name" }}
+{{- $labels := get . "labels" }}
+
+{{- with $obj }}
+{{- /*gotype: operators.kloudlite.io/apis/crds/v1.AccountRouter*/ -}}
+{{- $ingClassName  := printf "ingress-nginx-%s" .Spec.AccountRef }}
+---
+apiVersion: ingress.kloudlite.io/v1
+kind: Nginx
+metadata:
+  name: {{$controllerName}}
+  namespace: {{.Namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+  labels: {{$labels | toYAML| nindent 4}}
+spec:
+  nameOverride: {{$controllerName}}
+  commonLabels: {{$labels  | toYAML| nindent 4}}
+  controller:
+    watchIngressWithoutClass: false
+    ingressClassByName: true
+    ingressClass: {{$ingClassName}}
+    ingressClassResource:
+      enabled: true
+      name: "{{$ingClassName}}"
+      controllerValue: "k8s.io/{{$ingClassName}}"
+{{/*    replicaCount: 1*/}}
+
+    service:
+      type: "{{.Spec.ServiceType}}"
+
+    {{- if .Spec.DefaultSSLCert}}
+    extraArgs:
+      default-ssl-certificate: "{{.Namespace}}/{{.Spec.DefaultSSLCert}}"
+    {{- end}}
+
+    podLabels: {{$labels  | toYAML | nindent 6}}
+
+    autoscaling:
+      enabled: true
+      maxReplicas: 7
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 200Mi
+
+
+    {{- if .Spec.NodeSelector }}
+    nodeSelector: {{ .Spec.NodeSelector | toYAML | nindent 6 }}
+    {{- end}}
+{{- end }}

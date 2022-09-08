@@ -2,6 +2,8 @@ package templates
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -67,6 +69,12 @@ func useTemplate(file templateFile) (*kt, error) {
 		return fmt.Sprintf("%s: \"%v\"", key, value)
 	}
 	klFuncs["K8sLabel"] = klFuncs["K8sAnnotation"]
+
+	klFuncs["md5"] = func(txt string) string {
+		hash := md5.New()
+		hash.Write([]byte(txt))
+		return hex.EncodeToString(hash.Sum(nil))
+	}
 
 	_, err := t.Funcs(funcMap).Funcs(klFuncs).ParseFiles(tFiles...)
 	if err != nil {
@@ -170,6 +178,9 @@ const (
 	Project templateFile = "./project.tpl.yml"
 
 	RedpandaOneNodeCluster templateFile = "./msvc/redpanda/one-node-cluster.tpl.yml"
+
+	HelmIngressNginx     templateFile = "./ingress-nginx/helm.tpl.yml"
+	AccountIngressBridge templateFile = "./ingress-nginx/ingress-bridge.tpl.yml"
 )
 
 var CoreV1 = struct {

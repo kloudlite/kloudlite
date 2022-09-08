@@ -44,4 +44,5 @@ resources:
 - redpanda.msvc_v1_topic.yaml
 - mongodb.external_v1_database.yaml
 - mysql.external_v1_database.yaml
+- crds_v1_accountrouter.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

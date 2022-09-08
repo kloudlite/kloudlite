@@ -167,7 +167,34 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	return stepResult.New().Err(err)
 }
 
+func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
+	obj, ctx, checks := r.Object, r.Context(), r.Object.GetStatus().Checks
+	nChecks := len(checks)
+
+	if checks == nil {
+		checks = map[string]Check{}
+	}
+
+	for i := range names {
+		if _, ok := checks[names[i]]; !ok {
+			checks[names[i]] = Check{}
+		}
+	}
+
+	if nChecks != len(checks) {
+		obj.GetStatus().Checks = checks
+		if err := r.client.Status().Update(ctx, obj); err != nil {
+			return r.FailWithOpError(err)
+		}
+		return stepResult.New().RequeueAfter(1 * time.Second)
+	}
+
+	return stepResult.New().Continue(true)
+}
+
 func (r *Request[T]) CheckFailed(name string, check Check) stepResult.Result {
+	check.Status = false
+	r.Object.GetStatus().Checks[name] = check
 	r.Object.GetStatus().Message.Set(name, check.Message)
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}

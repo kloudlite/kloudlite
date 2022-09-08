@@ -55,12 +55,13 @@ const (
 	AccountRef string = "kloudlite.io/account-ref"
 	ProjectRef string = "kloudlite.io/project-ref"
 
-	ProjectNameKey string = "kloudlite.io/project.name"
-	MsvcNameKey    string = "kloudlite.io/msvc.name"
-	MresNameKey    string = "kloudlite.io/mres.name"
-	AppNameKey     string = "kloudlite.io/app.name"
-	RouterNameKey  string = "kloudlite.io/router.name"
-	LambdaNameKey  string = "kloudlite.io/lambda.name"
+	ProjectNameKey       string = "kloudlite.io/project.name"
+	MsvcNameKey          string = "kloudlite.io/msvc.name"
+	MresNameKey          string = "kloudlite.io/mres.name"
+	AppNameKey           string = "kloudlite.io/app.name"
+	RouterNameKey        string = "kloudlite.io/router.name"
+	LambdaNameKey        string = "kloudlite.io/lambda.name"
+	AccountRouterNameKey string = "kloudlite.io/account-router.name"
 )
 
 var (
@@ -97,6 +98,20 @@ var (
 	RedpandaClusterType = metav1.TypeMeta{
 		Kind:       "Cluster",
 		APIVersion: "redpanda.vectorized.io/v1alpha1",
+	}
+)
+
+var (
+	HelmIngressNginx = metav1.TypeMeta{
+		Kind:       "Nginx",
+		APIVersion: "ingress.kloudlite.io/v1",
+	}
+)
+
+var (
+	KloudliteAccountType = metav1.TypeMeta{
+		Kind:       "Account",
+		APIVersion: "management.kloudlite.io/v1",
 	}
 )
 

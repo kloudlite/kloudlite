@@ -11,6 +11,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
 	artifactsControllers "operators.kloudlite.io/controllers/artifacts"
 	elasticsearchControllers "operators.kloudlite.io/controllers/elasticsearch.msvc"
 	influxDbControllers "operators.kloudlite.io/controllers/influxdb.msvc"
@@ -26,9 +30,6 @@ import (
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
 	rApi "operators.kloudlite.io/lib/operator"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"operators.kloudlite.io/lib/logging"
 	"operators.kloudlite.io/lib/redpanda"
@@ -174,6 +175,7 @@ func main() {
 		&crds.ProjectReconciler{Name: "project"},
 		&crds.AppReconciler{Name: "app"},
 		&crds.RouterReconciler{Name: "router"},
+		&crds.AccountRouterReconciler{Name: "account-router"},
 		&crds.ManagedServiceReconciler{Name: "msvc"},
 		&crds.ManagedResourceReconciler{Name: "mres"},
 

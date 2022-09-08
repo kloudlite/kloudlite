@@ -1,0 +1,56 @@
+{{- $obj := get . "obj"}}
+{{- $globalIngressClass := get . "global-ingress-class"}}
+{{- $domains := get . "domains" }}
+{{- $ownerRefs := get . "owner-refs"}}
+
+{{- $clusterIssuer := get . "cluster-issuer" }}
+{{- $ingressSvcName := get . "ingress-svc-name"}}
+
+{{- with $obj}}
+{{- /*gotype: operators.kloudlite.io/apis/crds/v1.AccountRouter*/ -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+  annotations:
+    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
+    {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
+    {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
+
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
+
+    {{- with .Spec.RateLimit}}
+    {{- if .Enabled}}
+    {{K8sAnnotation .Rps "nginx.ingress.kubernetes.io/limit-rps" .Rps }}
+    {{K8sAnnotation .Rpm "nginx.ingress.kubernetes.io/limit-rpm" .Rpm }}
+    {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}
+    {{- end}}
+    {{- end}}
+spec:
+  ingressClassName: {{$globalIngressClass}}
+  tls:
+    {{- range $v := $domains }}
+    - hosts:
+        - {{$v | squote}}
+      {{- if hasPrefix "*." $v | not }}
+      secretName: {{$v}}-tls
+      {{- end}}
+    {{- end}}
+  rules:
+    {{- range $v := $domains }}
+    - host: {{$v | squote}}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{$ingressSvcName}}
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+    {{- end }}
+{{- end}}
