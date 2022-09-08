@@ -9,8 +9,8 @@
 {{- $virtualHost := get . "virtual-hostname"}}
 
 {{- $ingressClass := get . "ingress-class" }}
-{{- $clusterIssuer := get . "cluster-issuer" }}
-{{- $wildcardDomainSuffix := get . "wildcard-domain-suffix"}}
+{{/*{{- $clusterIssuer := get . "cluster-issuer" }}*/}}
+{{/*{{- $wildcardDomainSuffix := get . "wildcard-domain-suffix"}}*/}}
 
 {{- with $router}}
 {{- /*gotype: operators.kloudlite.io/apis/crds/v1.Router */ -}}
@@ -20,13 +20,13 @@ metadata:
   name: {{$name}}
   namespace: {{$namespace}}
   annotations:
-    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
+{{/*    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}*/}}
 {{/*    {{ K8sAnnotation true "kubernetes.io/ingress.class" $ingressClass }}*/}}
 
     {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
     {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
+{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}*/}}
+{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}*/}}
 
     {{- with .Spec.RateLimit}}
     {{- if .Enabled}}
@@ -37,31 +37,31 @@ metadata:
     {{- end}}
 
     {{K8sAnnotation true "nginx.ingress.kubernetes.io/rewrite-target" "/$1" }}
-
     {{K8sAnnotation $virtualHost "nginx.ingress.kubernetes.io/upstream-vhost" $virtualHost}}
 
     {{- if $annotations}}
     {{ $annotations | toYAML | nindent 4}}
     {{- end}}
   labels:
-    {{K8sLabel true "operators.kloudlite.io/router-name" .Name }}
+{{/*    {{K8sLabel true "operators.kloudlite.io/router-name" .Name }}*/}}
     {{- if $labels }}
     {{ $labels | toYAML | nindent 4}}
     {{- end}}
   ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
 spec:
-  ingressClassName: ingress-nginx-{{.Namespace}}
-  tls:
-    {{- range $v := .Spec.Domains }}
-    - hosts:
-        - {{$v}}
-      secretName: {{$v}}-tls
-    {{- end }}
-    - hosts:
-        - "*.{{$wildcardDomainSuffix}}"
+  ingressClassName: {{$ingressClass}}
+{{/*  tls:*/}}
+{{/*    {{- range $v := .Spec.Domains }}*/}}
+{{/*    - hosts:*/}}
+{{/*        - {{$v}}*/}}
+{{/*      secretName: {{$v}}-tls*/}}
+{{/*    {{- end }}*/}}
+{{/*    - hosts:*/}}
+{{/*        - "*.{{$wildcardDomainSuffix}}"*/}}
   rules:
-    - host: {{.Name}}.{{$wildcardDomainSuffix}}
-      http: &httpPath
+    {{- range $domain := .Spec.Domains }}
+    - host: {{$domain}}
+      http:
         paths:
           {{- range $route := $routes }}
           - backend:
@@ -78,8 +78,5 @@ spec:
             {{- end}}
             pathType: Prefix
           {{- end}}
-    {{- range $domain := .Spec.Domains }}
-    - host: {{$domain}}
-      http: *httpPath
     {{- end }}
   {{- end}}

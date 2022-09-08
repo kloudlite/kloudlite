@@ -86,4 +86,18 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: "Role"
   name: {{$roleName}}
+
 ---
+
+apiVersion: crds.kloudlite.io/v1
+kind: AccountRouter
+metadata:
+  name: ingress-nginx
+  namespace: wg-{{$accRef}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+spec:
+  accountRef: {{$accRef}}
+  serviceType: ClusterIP
+  https:
+    enabled: true
+    forceRedirect: true
