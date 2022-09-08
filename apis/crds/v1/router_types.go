@@ -30,7 +30,7 @@ type Https struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Https Https `json:"https"`
+	Https Https `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional
 	RateLimit       RateLimit `json:"rateLimit,omitempty"`
 	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`

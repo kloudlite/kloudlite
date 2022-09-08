@@ -1,0 +1,24 @@
+# permissions for end users to edit accountrouters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: accountrouter-editor-role
+rules:
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - accountrouters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - accountrouters/status
+  verbs:
+  - get

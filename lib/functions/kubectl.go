@@ -154,16 +154,16 @@ func KubectlDelete(namespace, resourceRef string) error {
 }
 
 func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
-	ctrller := false
+	ctrler := false
 	if len(controller) > 0 {
-		ctrller = true
+		ctrler = true
 	}
 	return metav1.OwnerReference{
 		APIVersion:         r.GetObjectKind().GroupVersionKind().GroupVersion().String(),
 		Kind:               r.GetObjectKind().GroupVersionKind().Kind,
 		Name:               r.GetName(),
 		UID:                r.GetUID(),
-		Controller:         &ctrller,
+		Controller:         &ctrler,
 		BlockOwnerDeletion: NewBool(true),
 	}
 }

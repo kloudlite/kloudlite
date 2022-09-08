@@ -60,6 +60,32 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
+  - accountrouters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - accountrouters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - accountrouters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
   - apps
   verbs:
   - create

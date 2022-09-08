@@ -13,6 +13,7 @@ import (
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
+	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/logging"
@@ -141,6 +142,11 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) st
 func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	router := req.Object
 
+	accRef := router.GetLabels()[constants.AccountRef]
+	if accRef == "" {
+		return req.FailWithOpError(fmt.Errorf("label %s must be present in resource", constants.AccountRef)).Err(nil)
+	}
+
 	lambdaGroups := map[string][]crdsv1.Route{}
 	var appRoutes []crdsv1.Route
 
@@ -176,7 +182,7 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"routes":           lMapRoutes,
 			"virtual-hostname": fmt.Sprintf("%s.%s", lName, router.Namespace),
 
-			"ingress-class":  r.env.DefaultIngressClass,
+			"ingress-class":  "ingress-nginx-" + accRef,
 			"cluster-issuer": r.env.ClusterCertIssuer,
 		}
 
@@ -198,14 +204,16 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(router, true),
 			},
-
+			"labels": map[string]any{
+				constants.RouterNameKey: router.Name,
+			},
 			"router-ref": router,
 			"routes":     appRoutes,
 
-			"ingress-class":  r.env.DefaultIngressClass,
+			"ingress-class":  "ingress-nginx-" + accRef,
 			"cluster-issuer": r.env.ClusterCertIssuer,
-
-			"wildcard-domain-suffix": r.env.WildcardDomainSuffix,
+			//
+			// "wildcard-domain-suffix": r.env.WildcardDomainSuffix,
 		}
 		ingressList = append(ingressList, router.Name)
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)
