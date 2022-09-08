@@ -6,6 +6,8 @@
 {{- with $obj }}
 {{- /*gotype: operators.kloudlite.io/apis/crds/v1.AccountRouter*/ -}}
 {{- $ingClassName  := printf "ingress-nginx-%s" .Spec.AccountRef }}
+
+
 ---
 apiVersion: ingress.kloudlite.io/v1
 kind: Nginx
@@ -52,4 +54,8 @@ spec:
     {{- if .Spec.NodeSelector }}
     nodeSelector: {{ .Spec.NodeSelector | toYAML | nindent 6 }}
     {{- end}}
+
+    admissionWebhooks:
+{{/*      enabled: false*/}}
+      failurePolicy: Ignore
 {{- end }}
