@@ -83,7 +83,6 @@ spec:
                 type: array
             required:
             - domains
-            - https
             type: object
           status:
             properties:
