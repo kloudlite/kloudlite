@@ -17,7 +17,6 @@ metadata:
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
   annotations:
     {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
-    {{ K8sAnnotation true "kubernetes.io/ingress.class" $globalIngressClass }}
     {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
     {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
 
