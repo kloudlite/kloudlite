@@ -2,13 +2,9 @@ package wg
 
 import (
 	"errors"
-	"fmt"
 	"net"
-	"os"
 
-	"github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/common/ui/color"
-	"github.com/kloudlite/kl/lib/server"
 )
 
 const (
