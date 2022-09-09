@@ -135,6 +135,7 @@ func (d *domainI) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhoo
 		d.logger.Infof("bad webhook body, dropping message ...")
 		return nil, err
 	}
+
 	switch h := hook.(type) {
 	case *github.PushEvent:
 		{
