@@ -36,13 +36,13 @@ type MountType struct {
 }
 
 type KLFileType struct {
-	Version   string    `json:"version"`
-	Name      string    `json:"name"`
-	Mres      []ResType `json:"mres"`
-	Configs   []ResType `json:"configs"`
-	Secrets   []ResType `json:"secrets"`
-	Env       []EnvType `json:"env"`
-	Ports     []string  `json:"ports"`
+	Version string    `json:"version"`
+	Name    string    `json:"name"`
+	Mres    []ResType `json:"mres"`
+	Configs []ResType `json:"configs"`
+	Secrets []ResType `json:"secrets"`
+	Env     []EnvType `json:"env"`
+	// Ports     []string  `json:"ports"`
 	FileMount MountType `yaml:"fileMount"`
 }
 

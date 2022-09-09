@@ -1,12 +1,31 @@
 version: v1
-name: internal
-mres: []
+name: kl
+mres:
+- name: MySQLService/appointment
+  env:
+  - name: DB Username
+    key: DB_NAME
+    refkey: DB_NAME
+  - name: DB Username
+    key: DSN
+    refkey: DSN
+  - name: DB Username
+    key: HOSTS
+    refkey: HOSTS
+  - name: DB Username
+    key: URI
+    refkey: URI
+  - name: DB Username
+    key: PASSWORD
+    refkey: PASSWORD
+  - name: DB Username
+    key: USERNAME
+    refkey: USERNAME
 configs: []
 secrets: []
 env:
 - key: SAMPLE_ENV
   value: sample_value
-ports: []
 fileMount:
   mountBasePath: ./.mounts
   mounts: []

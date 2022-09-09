@@ -1,135 +1,184 @@
-# Kloudlite CLI
+# Kloudlite CLI `kl`
+
+This cli help you to work with kloudlite using your terminal.
 
 ### Authentication
 
-Use the following command to login to kloudlite and logout. when you use `kl auth login` a browser will be open
-and just put your credentials and you will be returned to authenticated session on your terminal.
-
-In case of logout your terminal auth session will be terminated.
+To login and logout you can use the following commands.
 
 ```sh
 kl auth login
 kl auth logout
 ```
 
-### Selecting your account to work with
-
-By simply using the command `kl list account` you can see all the accounts accessible to you and by
-using the command `kl use account <account_id>` your current working account will be set according to
-your provided account id.
-
-> In case you don't know your account_id then you just use the command `kl use account` 
-and choose your account.
-
-
+### Initialize your workspace
+To work with any project you need to initialize your workspace where you can define 
+environments, managed resouces, mounts and etc.
+To initialize you workspace you can use the following command.
 ```sh
-kl list account
-kl use account
-kl use account <account_id>
+kl init
+```
+
+### See your initialized file
+To see your initialized file you can use following command.
+```sh
+kl show
 ```
 
 
-### Selecting your project to work with
 
-By simply using the command `kl list project` you can see all the projects accessible to you and by
-using the command `kl use project <project_id>` your current working project will be set according to
-your provided project id.
+### Listing Resources
 
-> In case of you don't know your project_id then you just use the command `kl use project` 
- and choose your project.
+With this cli you can list accounts, projects, devices, configs, secrets, apps, lambdas and regions.
+To list resources you can use the following commands.
+For more details visit [kl list](./docs/kl_list.md)
 
 
 ```sh
-kl list project
+kl list accounts
+kl list projects
+kl list devices
+kl list configs
+kl list secrets
+kl list apps
+kl list lambdas
+kl list regions
+```
+
+### Selecting one resource to work with 
+
+Some resource needs to select before working with it like: account, project, device, region. 
+So to select resource you can use the following commands.
+
+```sh
+kl use account
 kl use project
-kl use project <project_id>
+kl use device
+kl use region
+```
+
+with these commands you can provide the resource id. In case of you don't provide resource 
+it it will show you a picker. For more details visit [kl use](./docs/kl_use.md)
+
+### Getting Resource
+
+You man needs to fetch resource to work with your own tools or method. 
+For that purpose you can get some resources like configs, secrets using following commands. 
+For more details visit [kl get](./docs/kl_get.md)
+
+```sh
+kl get config
+kl get secret
+```
+
+### Working with wireguard
+
+To access service of cluster and tunneling your local system to the cluster. you need to setup wireguard.
+For that you can use the following commands.
+
+```sh
+sudo kl wg connect
+sudo kl wg disconnect
+sudo kl wg reconnect
+kl wg expose -p <server_port>:<local_port>
+kl wg expose -p <server_port>:<local_port> -d    # provide -d flag to delete
+```
+
+### Creating Resource
+You can create some resource using cli like device. you can use following command to create device. 
+For more details visit [kl create](./docs/kl_create.md)
+
+```sh
+kl create device
 ```
 
 ### Working with environments
 We support multiple environments to work with. these commands 
-will help you to use and create new environments.
+will help you to use and create new environments and delete environments.
+For more details visit [kl add](./docs/kl_add.md) and [kl del](./docs/kl_del.md)
+
 
 ```sh
+# Adding
 kl add config
 kl add secret
 kl add mres
+
+# Deleting
+kl del config
+kl del secret
+kl del mres
 ```
 
-### Working with configs/secrets mounting
-You mount configs into a file
+### Intercepting App/Lambda
+You can tunnel you local running app to the server and intercept your app to forward all the request of that app to your local system. 
+for that you need to perform following actions.
+- [connecting to wireguard](./docs/kl_wg_connect.md)
+- [exposing port](./docs/kl_wg_expose.md)
+- [intercept an app](./docs/kl_intercept.md)
+
+So you can use following commands to work with interception. 
+For more details visit [kl intecept](./docs/kl_intercept.md) and [kl leave intecept](./docs/kl_intercept.md)
 
 ```sh
-kl gen <filename>
-```
-
-### Working with app
-
-When working with apps, you can use the following commands list, and intercept the app.
-
-```
-kl list app
-kl intercept
 kl intercept
 kl leave intercept
 ```
 
-### Intercepting an app
-You can intercept a running app in this way.
+### Working with configs/secrets mounting
+You can also mount configs/secrets into a file.
+For more details visit [kl gen](./docs/kl_gen.md)
 
+```sh
+kl gen <file_path/file_name>
 ```
-kl intercept <appp_id>
-```
 
-
-### Setting your workspace
-To setup your workspace first run `kl init`. It will generate a config file and then you can modify 
-according to your requirement to that app.
-
-To load environment variables of the app just use the command `kl load`.
-
-```
-kl init <filename_optional>
-
-kl add secret <name>
-kl add mres <name>
-kl add config <name>
-
-kl load
-
-```
 
 ### KL Config File structure
 This is the structure of app config file which will be generated by executing the command `kl load` and 
 you can also modify this file according to your requirement.
 ```yaml
 version: v1
-name: <name>
-mres:
-- id: <id>
-  name: name
+name: <project_name>
+mres: 
+- name: service/<mres_name>
   env:
-    - key: <key>
-      refKey: <refKey>
-
+  - name: <env_name>
+    key: <local_key>
+    refkey: <server_key>
 configs:
-- id: <id>
-  name: name
+- name: <config_name>
   env:
-    - key: <key>
-      refKey: <refkey>
+  - key: <local_key>
+    refkey: <server_key>
 secrets:
-- id: <id>
-  name: name
+- name: <secret_name>
   env:
-    - key: <key>
-      refKey: <refkey>
+  - key: <local_key> 
+    refkey: <server_key> 
 env:
-- key: <key>
-  value: <valu>
-ports:
-- 8000:8000
-
+- key: <env_key>    # eg. NODE_ENV
+  value: <env_value>    # eg. development
+fileMount:
+  mountBasePath: <base_mount_path> # eg. ./.mounts
+  mounts:
+  - path: <mount_path> # eg. /tmp
+    type: <type> # eg. config or secret
+    name: <config_name>
 ```
+
+## Getting All environments 
+According to above config file you can get all the environments to your local shell.
+you can use the following commands for getting all environments to working shell.
+```
+kl load   # will print environments in key=value format
+
+kl load <shell>  # will spawn new shell with all the environments eg. kl load zsh
+
+kl load <cmd>  # start command with all the environments eg. kl load npm start
+```
+
+
 
 > This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the cli will be updated to this doc.
 

@@ -48,7 +48,7 @@ Examples:
 				Configs: make([]server.ResType, 0),
 				Secrets: make([]server.ResType, 0),
 				Env:     []server.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
-				Ports:   []string{},
+				// Ports:   []string{},
 				FileMount: server.MountType{
 					MountBasePath: "./.mounts",
 					Mounts:        make([]server.FileEntry, 0),
