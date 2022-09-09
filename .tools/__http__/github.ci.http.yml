@@ -1,12 +1,12 @@
 ---
 global:
-  # accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
-  # projectId: "proj-bopxvo-qpfpodbz9lciwu45s5uqd"
-  # projectName: "sample"
+  accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
+  projectId: "proj-bopxvo-qpfpodbz9lciwu45s5uqd"
+  projectName: "sample"
 
-  accountId: acc-4xrbue-eevzhin57x8maf2ddq9md
-  projectId: "proj-wnmjf1c5ndqzevswbeuej5dyiknp"
-  projectName: "sample-14847"
+#   accountId: acc-4xrbue-eevzhin57x8maf2ddq9md
+#   projectId: "proj-wnmjf1c5ndqzevswbeuej5dyiknp"
+#   projectName: "sample-14847"
 ---
 label: github installations
 query: |
@@ -94,10 +94,10 @@ query: |
   }
 variables:
   in:
-    name: sample-example-github
+    name: sample-example-github-asdfdasfas
     accountId: "{{accountId}}"
     projectId: "{{projectId}}"
-    appId: "not-app-id-github"
+    appId: "not-app-id-github-2"
     projectName: "{{projectName}}"
     containerName: "main"
     gitProvider: github
