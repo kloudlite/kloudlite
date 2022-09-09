@@ -2,11 +2,13 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"regexp"
+	"strings"
+
 	"kloudlite.io/apps/ci/internal/domain"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/types"
-	"regexp"
-	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
@@ -42,22 +44,42 @@ func (gl *gitlabI) getClient(ctx context.Context, token *domain.AccessToken) (*g
 	return client, nil
 }
 
-func (gl *gitlabI) ListGroups(ctx context.Context, token *domain.AccessToken, query *string, pagination *types.Pagination) ([]*gitlab.Group, error) {
+func (gl *gitlabI) ListGroups(ctx context.Context, token *domain.AccessToken, query *string, pagination *types.Pagination) ([]domain.GitlabGroup, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 	groups, _, err := client.Groups.ListGroups(
 		&gitlab.ListGroupsOptions{
-			Search:       query,
-			ListOptions:  buildListOptions(pagination),
-			TopLevelOnly: fn.NewBool(true),
+			ListOptions:          buildListOptions(pagination),
+			Search:               query,
+			TopLevelOnly:         fn.NewBool(true),
+			WithCustomAttributes: nil,
 		},
 	)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
-	return groups, nil
+
+	grs := make([]domain.GitlabGroup, 0, len(groups)+1)
+
+	user, _, err := client.Users.CurrentUser()
+	if err != nil {
+		return nil, err
+	}
+
+	grs = append(grs, domain.GitlabGroup{Id: fmt.Sprintf("%d", user.ID), FullName: user.Name, AvatarUrl: user.AvatarURL})
+	for i := range groups {
+		grs = append(
+			grs, domain.GitlabGroup{
+				Id:        fmt.Sprintf("%d", groups[i].ID),
+				FullName:  groups[i].FullName,
+				AvatarUrl: groups[i].AvatarURL,
+			},
+		)
+	}
+
+	return grs, nil
 }
 
 func buildListOptions(p *types.Pagination) gitlab.ListOptions {
@@ -75,6 +97,23 @@ func (gl *gitlabI) ListRepos(ctx context.Context, token *domain.AccessToken, gid
 	if err != nil {
 		return nil, err
 	}
+
+	user, _, err := client.Users.CurrentUser()
+	if err != nil {
+		return nil, errors.NewEf(err, "could not get current gitlab user")
+	}
+
+	if fmt.Sprintf("%d", user.ID) == gid {
+		projects, _, err := client.Projects.ListUserProjects(
+			user.ID, &gitlab.ListProjectsOptions{
+				ListOptions: buildListOptions(pagination),
+				Search:      query,
+				Simple:      fn.New(true),
+			},
+		)
+		return projects, err
+	}
+
 	projects, _, err := client.Groups.ListGroupProjects(
 		gid, &gitlab.ListGroupProjectsOptions{
 			IncludeSubGroups: fn.NewBool(true),
@@ -83,10 +122,7 @@ func (gl *gitlabI) ListRepos(ctx context.Context, token *domain.AccessToken, gid
 			Simple:           fn.NewBool(true),
 		},
 	)
-	if err != nil {
-		return nil, err
-	}
-	return projects, nil
+	return projects, err
 }
 
 func (gl *gitlabI) ListBranches(ctx context.Context, token *domain.AccessToken, repoId string, query *string, pagination *types.Pagination) ([]*gitlab.Branch, error) {

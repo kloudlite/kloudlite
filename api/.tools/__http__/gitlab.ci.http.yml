@@ -10,7 +10,7 @@ query: |
     ci_gitlabGroups(query: $query)
   }
 variables:
-  query: madh
+  query: ""
 
 ---
 
@@ -21,8 +21,9 @@ query: |
   }
 
 variables:
-  groupId: "8508925"
-  search: "oper"
+  # groupId: "8508925"
+  groupId: "1459765"
+  search: "sample"
 
 ---
 
