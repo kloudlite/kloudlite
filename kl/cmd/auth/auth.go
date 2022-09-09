@@ -9,13 +9,12 @@ var Cmd = &cobra.Command{
 	Short: "login | logout to kloudlite",
 	Long: `login/logout to kloudlite.
 
-Examples:
+  Examples:
   # login to kloudlite
   kl auth login
 
   # logout to kloudlite
-  kl auth logout
-	`,
+  kl auth logout`,
 }
 
 func init() {

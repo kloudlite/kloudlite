@@ -1,17 +1,18 @@
-## kl show
+## kl help
 
-print your kl-config file and current context
+Help about any command
 
 ### Synopsis
 
 ```
-Show kl-config
+Help provides help for any command in the application.
+Simply type kl help [path to command] for full details.
 ```
 
 ### Options
 
 ```
-  -h, --help   help for show
+  -h, --help   help for help
 ```
 
 ### SEE ALSO

@@ -1,6 +1,6 @@
 # Kloudlite CLI `kl`
 
-This cli help you to work with kloudlite using your terminal.
+This CLI help you to work with kloudlite using your terminal.
 
 ### Authentication
 
@@ -29,7 +29,7 @@ kl show
 
 ### Listing Resources
 
-With this cli you can list accounts, projects, devices, configs, secrets, apps, lambdas and regions.
+With this CLI you can list accounts, projects, devices, configs, secrets, apps, lambdas and regions.
 To list resources you can use the following commands.
 For more details visit [kl list](./docs/kl_list.md)
 
@@ -85,7 +85,7 @@ kl wg expose -p <server_port>:<local_port> -d    # provide -d flag to delete
 ```
 
 ### Creating Resource
-You can create some resource using cli like device. you can use following command to create device. 
+You can create some resource using CLI like device. you can use following command to create device. 
 For more details visit [kl create](./docs/kl_create.md)
 
 ```sh
@@ -180,7 +180,7 @@ kl load <cmd>  # start command with all the environments eg. kl load npm start
 
 
 
-> This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the cli will be updated to this doc.
+> This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the CLI will be updated to this doc.
 
 
 > for more details visit [docs](./docs/kl.md)
