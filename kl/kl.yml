@@ -1,0 +1,12 @@
+version: v1
+name: internal
+mres: []
+configs: []
+secrets: []
+env:
+- key: SAMPLE_ENV
+  value: sample_value
+ports: []
+fileMount:
+  mountBasePath: ./.mounts
+  mounts: []
