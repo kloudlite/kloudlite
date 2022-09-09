@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -114,12 +113,13 @@ func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToke
 
 func (gh *githubI) SearchRepos(ctx context.Context, accToken *domain.AccessToken, q, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error) {
 	// TODO: search repos not working at all from the API
-	searchQuery2 := fmt.Sprintf("q=%s+%s", q, url.QueryEscape(fmt.Sprintf("org:%s", org)))
-	rsr, _, err := gh.ghCli.Search.Repositories(
-		context.TODO(), searchQuery2, &github.SearchOptions{
+	searchQ := fmt.Sprintf("%s org:%s", q, org)
+	rsr, resp, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(
+		context.TODO(), searchQ, &github.SearchOptions{
 			ListOptions: gh.buildListOptions(pagination),
 		},
 	)
+	fmt.Println(resp)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not search repositories")
 	}

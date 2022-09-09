@@ -139,3 +139,9 @@ var GitRepositoryHookIndices = []repos.IndexField{
 		Unique: true,
 	},
 }
+
+type GitlabGroup struct {
+	Id        string `json:"id"`
+	FullName  string `json:"full_name"`
+	AvatarUrl string `json:"avatar_url"`
+}

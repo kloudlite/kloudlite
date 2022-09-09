@@ -55,10 +55,9 @@ query: |
     }
   }
 variables:
-  code: d8955fde1c0f00f57a7c
+  code: 1798573d033fd02608a5
   provider: github
   state: eyJjc3JmIjoib1ZqM3k4eGhwLUppemVxMy1NdjktelhzLVVLLTBRUVUiLCJzdGF0ZSI6IiJ9
-
 ---
 
 label: Me

@@ -26,9 +26,8 @@ query: |
     ci_searchGithubRepos(org: $org, search: $search)
   }
 variables:
-  search: ""
-  org: nxtcoder17
-
+  search: "demo"
+  org: KloudLite
 ---
 
 label: Github Repos
