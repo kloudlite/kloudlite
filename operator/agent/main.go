@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
 	"os/exec"
 
 	"github.com/codingconcepts/env"
@@ -109,12 +108,12 @@ func main() {
 						}
 
 						c.Stdin = bytes.NewBuffer(yamls)
-						c.Stdout = os.Stdout
-						errStream := bytes.NewBuffer([]byte{})
-						c.Stderr = errStream
+						buffOut, buffErr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+						c.Stdout = buffOut
+						c.Stderr = buffErr
 						if err := c.Run(); err != nil {
-							logger.Errorf(err, errStream.String())
-							return errors.NewEf(err, errStream.String())
+							logger.Errorf(err, buffErr.String())
+							return err
 						}
 						return nil
 					}(); errX != nil {
