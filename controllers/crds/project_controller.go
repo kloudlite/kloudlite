@@ -2,6 +2,7 @@ package crds
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
@@ -51,6 +52,17 @@ const (
 	HarborUserReady    conditions.Type = "project.harbor-user/Ready"
 )
 
+const (
+	ProjectConfigMapName string = "project-config"
+)
+
+const (
+	keyProjectConfigReady string = "project-config-ready"
+)
+
+// type ProjectConfig struct {
+// }
+
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
@@ -70,8 +82,16 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
+	if step := req.EnsureChecks(keyProjectConfigReady); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if x := req.EnsureLabelsAndAnnotations(); !x.ShouldProceed() {
 		return x.ReconcilerResponse()
+	}
+
+	if step := r.reconcileProjectConfig(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if x := r.reconcileStatus(req); !x.ShouldProceed() {
@@ -87,6 +107,49 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	return req.Finalize()
+}
+
+func (r *ProjectReconciler) reconcileProjectConfig(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+	ctx, project, checks := req.Context(), req.Object, req.Object.Status.Checks
+
+	projectCfg := &corev1.ConfigMap{}
+	if err := r.Get(ctx, fn.NN(project.Name, ProjectConfigMapName), projectCfg); err != nil {
+		req.Logger.Infof("project configmap does not exist, will be creating it")
+	}
+
+	check := rApi.Check{Generation: project.Generation}
+	if projectCfg == nil {
+		if err := r.Create(
+			ctx, &corev1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ConfigMap",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      ProjectConfigMapName,
+					Namespace: project.Name,
+				},
+				Data: map[string]string{
+					"app":    "",
+					"router": "",
+				},
+			},
+		); err != nil {
+			check.Message = err.Error()
+			return req.CheckFailed(keyProjectConfigReady, check)
+		}
+	}
+
+	check.Status = true
+	if check != checks[keyProjectConfigReady] {
+		checks[keyProjectConfigReady] = check
+		if err := r.Status().Update(ctx, project); err != nil {
+			return req.FailWithOpError(err)
+		}
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
+
+	return req.Next()
 }
 
 func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
