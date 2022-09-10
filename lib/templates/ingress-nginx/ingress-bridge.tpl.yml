@@ -16,40 +16,33 @@ metadata:
   namespace: {{.Namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
   annotations:
-    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
     {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
     {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/backend-protocol" "https"}}
 
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
+{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}*/}}
+{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}*/}}
 
     {{- with .Spec.RateLimit}}
     {{- if .Enabled}}
     {{K8sAnnotation .Rps "nginx.ingress.kubernetes.io/limit-rps" .Rps }}
     {{K8sAnnotation .Rpm "nginx.ingress.kubernetes.io/limit-rpm" .Rpm }}
     {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-passthrough" "true" }}
     {{- end}}
     {{- end}}
 spec:
   ingressClassName: {{$globalIngressClass}}
-  tls:
-    {{- range $v := $domains }}
-    - hosts:
-        - {{$v | squote}}
-      {{- if hasPrefix "*." $v | not }}
-      secretName: {{$v}}-tls
-      {{- end}}
-    {{- end}}
   rules:
-    {{- range $v := $domains }}
-    - host: {{$v | squote}}
+    {{- range $v := $domains  }}
+    - host: {{if hasPrefix $v "*." }}{{$v | quote}}{{else}}{{printf "*.%s" $v | quote}}{{end}}
       http:
         paths:
           - backend:
               service:
                 name: {{$ingressSvcName}}
                 port:
-                  number: 80
+                  number: 443
             path: /
             pathType: Prefix
     {{- end }}

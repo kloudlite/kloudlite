@@ -1,6 +1,10 @@
 {{- $name := get . "name" }}
 {{- $namespace := get . "namespace" }}
 
+{{- $domains := get . "domains" }}
+{{- $wildcardDomains := get . "wildcard-domains"}}
+
+
 {{- $router := get . "router-ref"}}
 {{- $routes := get . "routes" }}
 {{- $ownerRefs := get . "owner-refs"}}
@@ -9,8 +13,7 @@
 {{- $virtualHost := get . "virtual-hostname"}}
 
 {{- $ingressClass := get . "ingress-class" }}
-{{/*{{- $clusterIssuer := get . "cluster-issuer" }}*/}}
-{{/*{{- $wildcardDomainSuffix := get . "wildcard-domain-suffix"}}*/}}
+{{- $clusterIssuer := get . "cluster-issuer" }}
 
 {{- with $router}}
 {{- /*gotype: operators.kloudlite.io/apis/crds/v1.Router */ -}}
@@ -20,13 +23,12 @@ metadata:
   name: {{$name}}
   namespace: {{$namespace}}
   annotations:
-{{/*    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}*/}}
-{{/*    {{ K8sAnnotation true "kubernetes.io/ingress.class" $ingressClass }}*/}}
+    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
 
     {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
     {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
-{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}*/}}
-{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}*/}}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
 
     {{- with .Spec.RateLimit}}
     {{- if .Enabled}}
@@ -42,14 +44,20 @@ metadata:
     {{- if $annotations}}
     {{ $annotations | toYAML | nindent 4}}
     {{- end}}
-  labels:
-{{/*    {{K8sLabel true "operators.kloudlite.io/router-name" .Name }}*/}}
-    {{- if $labels }}
-    {{ $labels | toYAML | nindent 4}}
-    {{- end}}
+  labels: {{ $labels | toYAML | nindent 4}}
   ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
 spec:
   ingressClassName: {{$ingressClass}}
+  tls:
+    {{- range $v := $domains }}
+      - hosts:
+          - {{$v | squote}}
+        secretName: {{$v}}-tls
+    {{- end}}
+    {{- range $v := $wildcardDomains}}
+      - hosts:
+          - {{printf "*.%s" $v | squote}}
+    {{- end}}
 {{/*  tls:*/}}
 {{/*    {{- range $v := .Spec.Domains }}*/}}
 {{/*    - hosts:*/}}

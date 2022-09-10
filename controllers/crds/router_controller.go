@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +23,7 @@ import (
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 // RouterReconciler reconciles a Router object
@@ -44,6 +46,10 @@ const (
 const (
 	IngressExistsCondition string = "ingress.exists/%v"
 )
+
+type RouterConfig struct {
+	WildcardDomains []string `json:"wildcard-domains"`
+}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=routers/status,verbs=get;update;patch
@@ -139,12 +145,41 @@ func (r *RouterReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Router]) st
 	return req.Done()
 }
 
+func (r *RouterReconciler) readFromProjectConfig(req *rApi.Request[*crdsv1.Router]) RouterConfig {
+	ctx, obj := req.Context(), req.Object
+
+	var rcfg RouterConfig
+
+	projectCfg := &corev1.ConfigMap{}
+	if err := r.Get(ctx, fn.NN(obj.Namespace, "project-config"), projectCfg); err != nil {
+		return rcfg
+	}
+	if err := yaml.Unmarshal([]byte(projectCfg.Data["router"]), &rcfg); err != nil {
+		return rcfg
+	}
+	return rcfg
+}
+
 func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	router := req.Object
 
 	accRef := router.GetLabels()[constants.AccountRef]
 	if accRef == "" {
 		return req.FailWithOpError(fmt.Errorf("label %s must be present in resource", constants.AccountRef)).Err(nil)
+	}
+
+	routerCfg := r.readFromProjectConfig(req)
+
+	wcDomains := make(map[string]bool, len(routerCfg.WildcardDomains))
+	for i := range routerCfg.WildcardDomains {
+		wcDomains[routerCfg.WildcardDomains[i]] = true
+	}
+
+	nonWildCardDomains := make([]string, 0, len(router.Spec.Domains))
+	for i := range router.Spec.Domains {
+		if v, ok := wcDomains[router.Spec.Domains[i]]; ok && v {
+			nonWildCardDomains = append(nonWildCardDomains, router.Spec.Domains[i])
+		}
 	}
 
 	lambdaGroups := map[string][]crdsv1.Route{}
@@ -178,6 +213,9 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 			"namespace":  router.Namespace,
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(router, true)},
 
+			"domains":          nonWildCardDomains,
+			"wildcard-domains": routerCfg.WildcardDomains,
+
 			"router-ref":       router,
 			"routes":           lMapRoutes,
 			"virtual-hostname": fmt.Sprintf("%s.%s", lName, router.Namespace),
@@ -190,6 +228,9 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)
 		if err != nil {
+			return req.FailWithOpError(err).Err(nil)
+		}
+		if err != nil {
 			return req.FailWithOpError(
 				errors.NewEf(err, "could not parse (template=%s)", templates.Ingress),
 			).Err(nil)
@@ -199,11 +240,11 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 
 	if len(appRoutes) > 0 {
 		args := map[string]any{
-			"name":      router.Name,
-			"namespace": router.Namespace,
-			"owner-refs": []metav1.OwnerReference{
-				fn.AsOwner(router, true),
-			},
+			"name":             router.Name,
+			"namespace":        router.Namespace,
+			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(router, true)},
+			"domains":          nonWildCardDomains,
+			"wildcard-domains": routerCfg.WildcardDomains,
 			"labels": map[string]any{
 				constants.RouterNameKey: router.Name,
 			},
@@ -212,11 +253,12 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 
 			"ingress-class":  "ingress-nginx-" + accRef,
 			"cluster-issuer": r.env.ClusterCertIssuer,
-			//
-			// "wildcard-domain-suffix": r.env.WildcardDomainSuffix,
 		}
 		ingressList = append(ingressList, router.Name)
 		b, err := templates.Parse(templates.CoreV1.Ingress, args)
+		if err != nil {
+			return req.FailWithOpError(err).Err(nil)
+		}
 		if err != nil {
 			return req.FailWithOpError(errors.NewEf(err, "could not parse (template=%s)", templates.Ingress)).Err(nil)
 		}
