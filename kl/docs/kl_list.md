@@ -5,8 +5,7 @@ accounts | projects | devices | configs | secrets | apps | lambdas | regions
 ### Synopsis
 
 ```
-A longer description that spans multiple lines and likely contains examples
-and usage of using your command.
+Using this command you can list multiple resources.
 
 ```
 

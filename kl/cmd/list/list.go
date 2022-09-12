@@ -7,8 +7,7 @@ import (
 var Cmd = &cobra.Command{
 	Use:   "list",
 	Short: "accounts | projects | devices | configs | secrets | apps | lambdas | regions",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command.
+	Long: `Using this command you can list multiple resources.
 `,
 }
 
