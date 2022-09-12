@@ -109,11 +109,11 @@ func printSecret(secretId string, cmd *cobra.Command) error {
 			})
 		}
 
-		fmt.Println(table.Table(header, rows))
+		fmt.Println(table.Table(&header, rows))
 
-		fmt.Println(table.KVOutput("Showing entries of secret:", secret.Name))
+		table.KVOutput("Showing entries of secret:", secret.Name, true)
 
-		fmt.Println(table.TotalResults(len(secret.Entries)))
+		table.TotalResults(len(secret.Entries), true)
 
 	}
 

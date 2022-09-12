@@ -107,13 +107,13 @@ func printConfig(configId string, cmd *cobra.Command) error {
 			})
 		}
 
-		fmt.Println(table.Table(header, rows))
+		fmt.Println(table.Table(&header, rows))
 
 		fmt.Println(
-			table.KVOutput("Showing entries of config:", config.Name),
+			table.KVOutput("Showing entries of config:", config.Name, true),
 		)
 
-		fmt.Println(table.TotalResults(len(config.Entries)))
+		table.TotalResults(len(config.Entries), true)
 
 	}
 

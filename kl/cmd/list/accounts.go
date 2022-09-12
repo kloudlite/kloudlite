@@ -51,22 +51,22 @@ func listAcocunts() error {
 		rows = append(rows, table.Row{
 			func() string {
 				if a.Id == accountId {
-					return color.ColorText(fmt.Sprint("*", a.Name), 2)
+					return color.Text(fmt.Sprint("*", a.Name), 2)
 				}
 				return a.Name
 			}(),
 
 			func() string {
 				if a.Id == accountId {
-					return color.ColorText(a.Id, 2)
+					return color.Text(a.Id, 2)
 				}
 				return a.Id
 			}(),
 		})
 	}
 
-	fmt.Println(table.Table(header, rows))
-	fmt.Println(table.TotalResults(len(accounts)))
+	fmt.Println(table.Table(&header, rows))
+	table.TotalResults(len(accounts), true)
 
 	return nil
 }

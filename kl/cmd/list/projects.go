@@ -69,31 +69,31 @@ func listProjects(accountId string) error {
 		rows = append(rows, table.Row{
 			func() string {
 				if a.Id == projectId {
-					return color.ColorText(fmt.Sprint("*", a.Name), 2)
+					return color.Text(fmt.Sprint("*", a.Name), 2)
 				}
 				return a.Name
 			}(),
 
 			func() string {
 				if a.Id == projectId {
-					return color.ColorText(a.Id, 2)
+					return color.Text(a.Id, 2)
 				}
 				return a.Id
 			}(),
 		})
 	}
 
-	fmt.Println(table.Table(header, rows))
+	fmt.Println(table.Table(&header, rows))
 
 	if accountId == "" {
 		accountId, _ = server.CurrentAccountId()
 	}
 
 	if accountId == "" {
-		fmt.Println(table.KVOutput("projects of", accountId))
+		table.KVOutput("projects of", accountId, true)
 	}
 
-	fmt.Println(table.TotalResults(len(projects)))
+	table.TotalResults(len(projects), true)
 
 	return nil
 }

@@ -2,6 +2,25 @@
 
 This CLI help you to work with kloudlite using your terminal.
 
+### Installation
+
+To install the latest version in Linux or Mac you can run the following command on terminal.
+
+##### Install latest
+```sh
+curl https://i.jpillora.com/kloudlite/kl! | bash
+```
+
+#### Install specific version
+```sh
+curl https://i.jpillora.com/kloudlite/kl@v1.0.0! | bash
+```
+
+#### download but don't install
+```sh
+curl https://i.jpillora.com/kloudlite/kl | bash
+```
+
 ### Authentication
 
 To login and logout you can use the following commands.

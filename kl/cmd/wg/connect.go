@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/common/ui/color"
+	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
 
@@ -45,9 +47,47 @@ Examples:
 		if euid := os.Geteuid(); euid != 0 {
 			common.PrintError(
 				errors.New(
-					color.ColorText("make sure you are running command with sudo", 209),
+					color.Text("make sure you are running command with sudo", 209),
 				),
 			)
+			return
+		}
+
+		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
+			Interface: "interfaces",
+		})
+
+		if err != nil {
+			common.PrintError(err)
+			return
+		}
+
+		if strings.TrimSpace(wgInterface) != "" {
+			common.PrintError(errors.New("[#] already connected"))
+			_, err := wgc.Show(nil)
+
+			if err != nil {
+				common.PrintError(err)
+				return
+			}
+
+			common.PrintError(errors.New("\n[#] reconnecting"))
+
+			if err := stopService(reconnectVerbose); err != nil {
+				common.PrintError(err)
+				return
+			}
+			common.PrintError(errors.New("[#] disconnected"))
+
+			startServiceInBg()
+			if err := startConfiguration(reconnectVerbose); err != nil {
+				common.PrintError(err)
+				return
+			}
+
+			common.PrintError(errors.New("[#] connected"))
+			common.PrintError(errors.New("[#] reconnection done"))
+
 			return
 		}
 

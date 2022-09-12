@@ -68,7 +68,7 @@ func listlambdas(args []string) error {
 		rows = append(rows, table.Row{a.Name})
 	}
 
-	fmt.Println(table.Table(header, rows))
+	fmt.Println(table.Table(&header, rows))
 
 	if projectId == "" {
 		projectId, err = server.CurrentProjectId()
@@ -77,8 +77,8 @@ func listlambdas(args []string) error {
 		}
 	}
 
-	fmt.Println(table.KVOutput("apps of", projectId))
-	fmt.Println(table.TotalResults(len(lambdas)))
+	table.KVOutput("apps of", projectId, true)
+	table.TotalResults(len(lambdas), true)
 
 	return nil
 }

@@ -66,17 +66,17 @@ func listSecrets(args []string) error {
 		rows = append(rows, table.Row{a.Name, a.Id, fmt.Sprintf("%d", len(a.Entries))})
 	}
 
-	fmt.Println(table.Table(header, rows))
+	fmt.Println(table.Table(&header, rows))
 
 	if projectId == "" {
 		projectId, _ = server.CurrentProjectId()
 	}
 
 	if projectId != "" {
-		fmt.Println(table.KVOutput("secrets of", projectId))
+		table.KVOutput("secrets of", projectId, true)
 	}
 
-	fmt.Println(table.TotalResults(len(secrets)))
+	table.TotalResults(len(secrets), true)
 
 	return nil
 }

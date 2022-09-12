@@ -39,11 +39,11 @@ var ShowCommand = &cobra.Command{
 		}
 
 		common.PrintError(errors.New(table.HeaderText("context:")))
-		common.PrintError(errors.New(color.ColorText("---------------------------------------", 4)))
+		common.PrintError(errors.New(color.Text("---------------------------------------", 4)))
 		fmt.Println(string(contextFile))
 
 		common.PrintError(errors.New(table.HeaderText("kl-config:")))
-		common.PrintError(errors.New(color.ColorText("---------------------------------------", 4)))
+		common.PrintError(errors.New(color.Text("---------------------------------------", 4)))
 		fmt.Println(string(file))
 
 	},

@@ -9,7 +9,7 @@ import (
 
 	"github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/wgquick"
+	"github.com/kloudlite/kl/lib/wgc"
 	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
@@ -60,7 +60,7 @@ func configure(
 ) error {
 
 	s := common.NewSpinner()
-	cfg := wgquick.Config{}
+	cfg := wgc.Config{}
 
 	// time.Sleep(time.Second * 2)
 

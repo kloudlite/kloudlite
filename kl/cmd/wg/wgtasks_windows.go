@@ -24,7 +24,7 @@ func setDeviceIp(deviceIp string, verbose bool) error {
 
 func startService(verbose bool) error {
 	return errors.New(
-		color.ColorText("This command is not availabel for windows, will be available soon", 209),
+		color.Text("This command is not availabel for windows, will be available soon", 209),
 	)
 }
 
@@ -34,6 +34,6 @@ func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
 
 func stopService(verbose bool) error {
 	return errors.New(
-		color.ColorText("This command is not availabel for windows, will be available soon", 209),
+		color.Text("This command is not availabel for windows, will be available soon", 209),
 	)
 }

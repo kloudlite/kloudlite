@@ -54,10 +54,10 @@ func listRegions() error {
 		})
 	}
 
-	fmt.Println(table.Table(header, rows))
+	fmt.Println(table.Table(&header, rows))
 
 	if accountId, _ := server.CurrentAccountId(); accountId != "" {
-		fmt.Println(table.KVOutput("regions of", accountId))
+		table.KVOutput("regions of", accountId, true)
 	}
 
 	return nil

@@ -73,17 +73,17 @@ func listConfigs(args []string) error {
 		)
 	}
 
-	fmt.Println(table.Table(header, rows))
+	fmt.Println(table.Table(&header, rows))
 
 	if projectId == "" {
 		projectId, _ = server.CurrentProjectId()
 	}
 
 	if projectId != "" {
-		fmt.Println(table.KVOutput("configs of", projectId))
+		table.KVOutput("configs of", projectId, true)
 	}
 
-	fmt.Println(table.TotalResults(len(configs)))
+	table.TotalResults(len(configs), true)
 
 	return nil
 }

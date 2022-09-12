@@ -64,14 +64,14 @@ func ListDevices(args []string) error {
 
 			func() string {
 				if cDid == a.Id {
-					return color.ColorText(fmt.Sprintf("*%s, %s", a.Name, a.Id), 2)
+					return color.Text(fmt.Sprintf("*%s, %s", a.Name, a.Id), 2)
 				}
 				return fmt.Sprintf("%s, %s", a.Name, a.Id)
 			}(),
 
 			func() string {
 				if cDid == a.Id {
-					return color.ColorText(a.Region, 2)
+					return color.Text(a.Region, 2)
 				}
 				return a.Region
 			}(),
@@ -98,7 +98,7 @@ func ListDevices(args []string) error {
 
 					ports = append(ports, func() string {
 						if cDid == a.Id {
-							return color.ColorText(prt, 2)
+							return color.Text(prt, 2)
 						}
 						return prt
 					}())
@@ -106,20 +106,20 @@ func ListDevices(args []string) error {
 				return ports
 			}(), func() string {
 				if cDid == a.Id {
-					return color.ColorText(", ", 2)
+					return color.Text(", ", 2)
 				}
 				return ", "
 			}()),
 		})
 	}
 
-	fmt.Println(table.Table(header, rows))
+	fmt.Println(table.Table(&header, rows))
 
 	if accountId, _ := server.CurrentAccountId(); accountId != "" {
-		fmt.Println(table.KVOutput("devices of", accountId))
+		table.KVOutput("devices of", accountId, true)
 	}
 
-	fmt.Println(table.TotalResults(len(devices)))
+	table.TotalResults(len(devices), true)
 	return nil
 }
 

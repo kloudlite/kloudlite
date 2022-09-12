@@ -3,9 +3,11 @@ package wg
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/common/ui/color"
+	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
 
@@ -27,17 +29,33 @@ Examples:
 		if euid := os.Geteuid(); euid != 0 {
 			common.PrintError(
 				errors.New(
-					color.ColorText("make sure you are running command with sudo", 209),
+					color.Text("make sure you are running command with sudo", 209),
 				),
 			)
 			return
 		}
 
-		if err := stopService(reconnectVerbose); err != nil {
+		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
+			Interface: "interfaces",
+		})
+
+		if err != nil {
 			common.PrintError(err)
 			return
 		}
-		common.PrintError(errors.New("[#] disconnected"))
+
+		if strings.TrimSpace(wgInterface) == "" {
+			common.PrintError(errors.New(color.Text("[#] no devices connected yet", 209)))
+			common.PrintError(errors.New("[#] connecting"))
+		} else {
+
+			if err := stopService(reconnectVerbose); err != nil {
+				common.PrintError(err)
+				return
+			}
+			common.PrintError(errors.New("[#] disconnected"))
+
+		}
 
 		startServiceInBg()
 		if err := startConfiguration(reconnectVerbose); err != nil {

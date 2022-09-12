@@ -13,7 +13,7 @@ const (
 )
 
 func HeaderText(text string) string {
-	return color.ColorText(text, headerColor)
+	return color.Text(text, headerColor)
 }
 
 func GetTableStyles() table.BoxStyle {
@@ -43,23 +43,31 @@ func GetTableStyles() table.BoxStyle {
 
 }
 
-func TotalResults(length int) string {
-	return KVOutput("Total Results:", length)
+func TotalResults(length int, printIt bool) string {
+	return KVOutput("Total Results:", length, printIt)
 }
 
-func KVOutput(k string, v interface{}) string {
-	return fmt.Sprint(
-		color.ColorText(k, headerColor), " ",
-		color.ColorText(fmt.Sprintf("%v", v), 2),
+func KVOutput(k string, v interface{}, printIt bool) string {
+	result := fmt.Sprint(
+		color.Text(k, headerColor), " ",
+		color.Text(fmt.Sprintf("%v", v), 2),
 	)
+
+	if printIt {
+		fmt.Println(result)
+	}
+
+	return result
 }
 
-func Table(header Row, rows []Row) string {
+func Table(header *Row, rows []Row) string {
 
 	t := table.Table{}
 
 	t.Style().Box = GetTableStyles()
-	t.AppendHeader(getRow(header))
+	if header != nil {
+		t.AppendHeader(getRow(*header))
+	}
 	t.AppendRows(getRows(rows))
 
 	return t.Render()
