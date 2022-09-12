@@ -57,10 +57,10 @@ func ActiveDns() ([]string, error) {
 		return nil, err
 	}
 
-	if len(file.DNS) == 0 {
-		return nil,
-			errors.New("no active dns found")
-	}
+	// if len(file.DNS) == 0 {
+	// 	return nil,
+	// 		errors.New("no active dns found")
+	// }
 
 	return file.DNS, nil
 }
