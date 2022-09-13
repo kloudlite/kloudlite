@@ -33,7 +33,7 @@ func getConfigFolder() (configFolder string, err error) {
 	if dirName == "/root" {
 		dirName, ok = os.LookupEnv("SUDO_USER")
 		if !ok {
-			return "", errors.New("")
+			return "", errors.New("something went wrong")
 		}
 
 		dirName = "/home/" + dirName

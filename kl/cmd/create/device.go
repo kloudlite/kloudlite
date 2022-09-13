@@ -31,6 +31,6 @@ Examples:
 			return
 		}
 
-		common.PrintError(errors.New("device created successfully"))
+		common.Log("device created successfully")
 	},
 }

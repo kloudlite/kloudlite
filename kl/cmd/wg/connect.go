@@ -1,7 +1,6 @@
 package wg
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -45,10 +44,8 @@ Examples:
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
-			common.PrintError(
-				errors.New(
-					color.Text("make sure you are running command with sudo", 209),
-				),
+			common.Log(
+				color.Text("make sure you are running command with sudo", 209),
 			)
 			return
 		}
@@ -63,7 +60,7 @@ Examples:
 		}
 
 		if strings.TrimSpace(wgInterface) != "" {
-			common.PrintError(errors.New("[#] already connected"))
+			common.Log("[#] already connected")
 			_, err := wgc.Show(nil)
 
 			if err != nil {
@@ -71,13 +68,14 @@ Examples:
 				return
 			}
 
-			common.PrintError(errors.New("\n[#] reconnecting"))
+			common.Log("\n[#] reconnecting")
 
 			if err := stopService(reconnectVerbose); err != nil {
 				common.PrintError(err)
 				return
 			}
-			common.PrintError(errors.New("[#] disconnected"))
+
+			common.Log("[#] disconnected")
 
 			startServiceInBg()
 			if err := startConfiguration(reconnectVerbose); err != nil {
@@ -85,8 +83,8 @@ Examples:
 				return
 			}
 
-			common.PrintError(errors.New("[#] connected"))
-			common.PrintError(errors.New("[#] reconnection done"))
+			common.Log("[#] connected")
+			common.Log("[#] reconnection done")
 
 			return
 		}
@@ -104,7 +102,7 @@ Examples:
 			}
 		}
 
-		common.PrintError(errors.New("[#] connected"))
+		common.Log("[#] connected")
 	},
 }
 

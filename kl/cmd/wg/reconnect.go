@@ -1,7 +1,6 @@
 package wg
 
 import (
-	"errors"
 	"os"
 	"strings"
 
@@ -27,10 +26,8 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 
 		if euid := os.Geteuid(); euid != 0 {
-			common.PrintError(
-				errors.New(
-					color.Text("make sure you are running command with sudo", 209),
-				),
+			common.Log(
+				color.Text("make sure you are running command with sudo", 209),
 			)
 			return
 		}
@@ -45,15 +42,15 @@ Examples:
 		}
 
 		if strings.TrimSpace(wgInterface) == "" {
-			common.PrintError(errors.New(color.Text("[#] no devices connected yet", 209)))
-			common.PrintError(errors.New("[#] connecting"))
+			common.Log(color.Text("[#] no devices connected yet", 209))
+			common.Log("[#] connecting")
 		} else {
 
 			if err := stopService(reconnectVerbose); err != nil {
 				common.PrintError(err)
 				return
 			}
-			common.PrintError(errors.New("[#] disconnected"))
+			common.Log("[#] disconnected")
 
 		}
 
@@ -63,8 +60,8 @@ Examples:
 			return
 		}
 
-		common.PrintError(errors.New("[#] connected"))
-		common.PrintError(errors.New("[#] reconnection done"))
+		common.Log("[#] connected")
+		common.Log("[#] reconnection done")
 	},
 }
 

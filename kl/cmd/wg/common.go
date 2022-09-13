@@ -67,7 +67,7 @@ func configure(
 	configuration := device.Configuration["config-"+device.Region]
 	s.Start()
 	if verbose {
-		common.PrintError(errors.New("[#] validating configuration"))
+		common.Log("[#] validating configuration")
 	}
 	if err := cfg.UnmarshalText([]byte(configuration)); err != nil {
 		return err
@@ -90,7 +90,7 @@ func configure(
 	}
 
 	if verbose {
-		common.PrintError(errors.New("[#] setting up connection"))
+		common.Log("[#] setting up connection")
 	}
 
 	wgc.ConfigureDevice(KL_WG_INTERFACE, cfg.Config)
@@ -114,7 +114,7 @@ func execCmd(cmdString string, verbose bool) error {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
-		common.PrintError(errors.New("[#] " + strings.Join(cmdArr, " ")))
+		common.Log("[#] " + strings.Join(cmdArr, " "))
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr

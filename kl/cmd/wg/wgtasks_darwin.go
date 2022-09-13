@@ -3,13 +3,13 @@ package wg
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/server"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
 	"golang.zx2c4.com/wireguard/tun"
 	"k8s.io/utils/strings/slices"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"net"
 	"os"
 	"os/exec"
@@ -30,7 +30,7 @@ func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
 func getNetworkServices(verbose bool) ([]string, error) {
 	output, err := exec.Command("networksetup", "-listallnetworkservices").Output()
 	if err != nil {
-		common.PrintError(errors.New(string(output)))
+		common.Log(string(output))
 		return nil, err
 	}
 	lines := strings.Split(string(output), "\n")
@@ -46,11 +46,11 @@ func getNetworkServices(verbose bool) ([]string, error) {
 
 func getDNSServers(networkService string, verbose bool) ([]string, error) {
 	if verbose {
-		common.PrintError(errors.New(fmt.Sprintf("[#] networksetup -getdnsservers %s", networkService)))
+		common.Log(fmt.Sprintf("[#] networksetup -getdnsservers %s", networkService))
 	}
 	output, err := exec.Command("networksetup", "-getdnsservers", networkService).Output()
 	if err != nil {
-		common.PrintError(errors.New(fmt.Sprintf("[#] %s", string(output))))
+		common.Log(fmt.Sprintf("[#] %s", string(output)))
 		return nil, err
 	}
 

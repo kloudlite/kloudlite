@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -38,12 +37,12 @@ var ShowCommand = &cobra.Command{
 			return
 		}
 
-		common.PrintError(errors.New(table.HeaderText("context:")))
-		common.PrintError(errors.New(color.Text("---------------------------------------", 4)))
+		common.Log(table.HeaderText("context:"))
+		common.Log(color.Text("---------------------------------------", 4))
 		fmt.Println(string(contextFile))
 
-		common.PrintError(errors.New(table.HeaderText("kl-config:")))
-		common.PrintError(errors.New(color.Text("---------------------------------------", 4)))
+		common.Log(table.HeaderText("kl-config:"))
+		common.Log(color.Text("---------------------------------------", 4))
 		fmt.Println(string(file))
 
 	},

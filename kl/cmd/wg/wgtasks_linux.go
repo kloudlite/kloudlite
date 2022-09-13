@@ -16,7 +16,7 @@ const (
 
 func setDNS(dns []net.IP, verbose bool) error {
 	if verbose {
-		common.PrintError(errors.New("[#] setting /etc/resolv.conf"))
+		common.Log("[#] setting /etc/resolv.conf")
 	}
 	file, err := os.ReadFile("/etc/resolv.conf")
 	if err != nil {
@@ -50,7 +50,7 @@ func setDNS(dns []net.IP, verbose bool) error {
 }
 func resetDNS(verbose bool) error {
 	if verbose {
-		common.PrintError(errors.New("[#] resetting /etc/resolv.conf"))
+		common.Log("[#] resetting /etc/resolv.conf")
 	}
 
 	err := os.Remove("/etc/resolv.conf")

@@ -46,7 +46,7 @@ func ListDevices(args []string) error {
 	}
 
 	if len(devices) == 0 {
-		return errors.New("no Devices found")
+		return errors.New("no devices found")
 	}
 
 	header := table.Row{
