@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/kloudlite/kl/lib/common/ui/color"
 )
 
 type Option struct {
@@ -34,7 +33,7 @@ func MakeOption(key, value string) Option {
 }
 
 func PrintError(err error) {
-	fmt.Fprintf(os.Stderr, "%s\n", color.Text(err.Error(), 1))
+	fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 }
 
 func NewSpinner() *spinner.Spinner {
