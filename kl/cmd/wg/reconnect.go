@@ -3,6 +3,7 @@ package wg
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/common/ui/color"
@@ -43,7 +44,6 @@ Examples:
 
 		if strings.TrimSpace(wgInterface) == "" {
 			common.Log(color.Text("[#] no devices connected yet", 209))
-			common.Log("[#] connecting")
 		} else {
 
 			if err := stopService(reconnectVerbose); err != nil {
@@ -51,8 +51,9 @@ Examples:
 				return
 			}
 			common.Log("[#] disconnected")
-
 		}
+		common.Log("[#] connecting")
+		time.Sleep(time.Second * 1)
 
 		startServiceInBg()
 		if err := startConfiguration(reconnectVerbose); err != nil {

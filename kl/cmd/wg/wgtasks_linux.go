@@ -79,7 +79,7 @@ func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
 }
 
 func stopService(verbose bool) error {
-	err := execCmd(fmt.Sprintf("ip link delete dev %s", KL_WG_INTERFACE), verbose)
+	err := execCmd(fmt.Sprintf("ip link del dev %s", KL_WG_INTERFACE), verbose)
 	if err != nil {
 		return err
 	}
