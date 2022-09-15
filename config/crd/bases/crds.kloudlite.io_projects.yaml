@@ -35,9 +35,13 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
+              accountRef:
+                type: string
               displayName:
                 description: DisplayName of Project
                 type: string
+            required:
+            - accountRef
             type: object
           status:
             properties:
@@ -197,12 +201,9 @@ spec:
               generatedVars:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
-              generation:
-                format: int64
-                type: integer
               isReady:
                 type: boolean
-              lastTransitionTime:
+              lastReconcileTime:
                 format: date-time
                 type: string
               message:

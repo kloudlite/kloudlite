@@ -8,15 +8,20 @@ import (
 
 // AccountRouterSpec defines the desired state of AccountRouter
 type AccountRouterSpec struct {
-	AccountRef string `json:"accountRef"`
+	ControllerName string `json:"controllerName,omitempty"`
+	AccountRef     string `json:"accountRef"`
+
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer
-	ServiceType    string            `json:"serviceType"`
+	ServiceType string `json:"serviceType"`
+
 	DefaultSSLCert string            `json:"defaultSSLCert,omitempty"`
 	NodeSelector   map[string]string `json:"nodeSelector,omitempty"`
+
 	// +kubebuilder:default=100
 	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`
 	RateLimit       RateLimit `json:"rateLimit,omitempty"`
 	Https           Https     `json:"https,omitempty"`
+	WildcardDomains []string  `json:"wildcardDomains,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -37,7 +42,8 @@ func (r *AccountRouter) GetStatus() *rApi.Status {
 
 func (r *AccountRouter) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.AccountRef: r.Spec.AccountRef,
+		constants.AccountRouterNameKey: r.Name,
+		constants.AccountRef:           r.Spec.AccountRef,
 	}
 }
 

@@ -342,7 +342,7 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *ACLAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

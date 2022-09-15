@@ -45,4 +45,13 @@ resources:
 - mongodb.external_v1_database.yaml
 - mysql.external_v1_database.yaml
 - crds_v1_accountrouter.yaml
+- mongodb.msvc_v1_standaloneservice.yaml
+- mongodb.msvc_v1_clusterservice.yaml
+- mongodb.msvc_v1_database.yaml
+- redis.msvc_v1_standaloneservice.yaml
+- redis.msvc_v1_clusterservice.yaml
+- redis.msvc_v1_aclaccount.yaml
+- mysql.msvc_v1_standaloneservice.yaml
+- mysql.msvc_v1_clusterservice.yaml
+- mysql.msvc_v1_database.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

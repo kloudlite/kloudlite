@@ -221,7 +221,7 @@ func (r *TopicReconciler) reconcileOperations(req *rApi.Request[*redpandamsvcv1.
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *TopicReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

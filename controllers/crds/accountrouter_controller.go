@@ -50,7 +50,7 @@ const (
 
 const (
 	KeyConfigMapReady         string = "ingress-configmap-ready"
-	KeyIngressControllerReady string = "ingress-controller-ready"
+	KeyIngressControllerReady string = "ingress-controllers-ready"
 	KeyIngressRoutesReady     string = "ingress-routes-ready"
 
 	KeyRouterCfg        string = "router-cfg"
@@ -58,7 +58,7 @@ const (
 )
 
 type AccountRouterConfig struct {
-	ControllerName string   `json:"controller-name"`
+	ControllerName string   `json:"controllers-name"`
 	ExtraDomains   []string `json:"extra-domains"`
 }
 
@@ -126,12 +126,11 @@ func (r *AccountRouterReconciler) reconcileConfigmap(req *rApi.Request[*crdsv1.A
 			},
 		)
 		if err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(KeyConfigMapReady, check)
+			return req.CheckFailed(KeyConfigMapReady, check, err.Error())
 		}
 
 		b, err := templates.Parse(
-			templates.ConfigMap, map[string]any{
+			templates.CoreV1.ConfigMap, map[string]any{
 				"name":       ConfigMapName,
 				"namespace":  obj.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
@@ -212,9 +211,9 @@ func (r *AccountRouterReconciler) reconcileIngressController(req *rApi.Request[*
 
 		b, err := templates.Parse(
 			templates.HelmIngressNginx, map[string]any{
-				"obj":             obj,
-				"controller-name": routerCfg.ControllerName,
-				"owner-refs":      []metav1.OwnerReference{cfgAsOwner},
+				"obj":              obj,
+				"controllers-name": routerCfg.ControllerName,
+				"owner-refs":       []metav1.OwnerReference{cfgAsOwner},
 				"labels": map[string]string{
 					constants.AccountRouterNameKey: obj.Name,
 				},
@@ -323,7 +322,7 @@ func (r *AccountRouterReconciler) reconcileIngressRoutes(req *rApi.Request[*crds
 	b, err := templates.Parse(
 		templates.AccountIngressBridge, map[string]any{
 			"obj":                  obj,
-			"controller-name":      routerCfg.ControllerName,
+			"controllers-name":     routerCfg.ControllerName,
 			"global-ingress-class": "ingress-nginx",
 			"domains":              domains,
 			"labels": map[string]string{
@@ -331,7 +330,7 @@ func (r *AccountRouterReconciler) reconcileIngressRoutes(req *rApi.Request[*crds
 			},
 			"cluster-issuer":   r.env.ClusterCertIssuer,
 			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"ingress-svc-name": routerCfg.ControllerName + "-controller",
+			"ingress-svc-name": routerCfg.ControllerName + "-controllers",
 		},
 	)
 	if err != nil {
@@ -360,7 +359,7 @@ func (r *AccountRouterReconciler) reconcileIngressRoutes(req *rApi.Request[*crds
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *AccountRouterReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

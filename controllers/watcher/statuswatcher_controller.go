@@ -131,7 +131,7 @@ func (r *StatusWatcherReconciler) RemoveWatcherFinalizer(ctx context.Context, ob
 	return ctrl.Result{}, r.Update(ctx, obj)
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *StatusWatcherReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

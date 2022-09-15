@@ -282,21 +282,19 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 		}
 	}
 
-	if obj.Generation > obj.Status.Generation {
-		if err := r.harborCli.UpdateUserAccount(ctx, &user, obj.Spec.Enabled); err != nil {
-			return req.FailWithOpError(err)
-		}
+	if err := r.harborCli.UpdateUserAccount(ctx, &user, obj.Spec.Enabled); err != nil {
+		return req.FailWithOpError(err)
 	}
 
 	obj.Status.OpsConditions = []metav1.Condition{}
-	obj.Status.Generation = obj.Generation
+	// obj.Status.Generation = obj.Generation
 	if err := r.Status().Update(ctx, obj); err != nil {
 		return req.FailWithOpError(err)
 	}
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

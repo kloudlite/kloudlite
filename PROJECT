@@ -314,4 +314,76 @@ resources:
   kind: AccountRouter
   path: operators.kloudlite.io/apis/crds/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mongodb.msvc
+  kind: StandaloneService
+  path: operators.kloudlite.io/apis/mongodb.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mongodb.msvc
+  kind: ClusterService
+  path: operators.kloudlite.io/apis/mongodb.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mongodb.msvc
+  kind: Database
+  path: operators.kloudlite.io/apis/mongodb.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: redis.msvc
+  kind: StandaloneService
+  path: operators.kloudlite.io/apis/redis.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: redis.msvc
+  kind: ClusterService
+  path: operators.kloudlite.io/apis/redis.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: redis.msvc
+  kind: ACLAccount
+  path: operators.kloudlite.io/apis/redis.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mysql.msvc
+  kind: StandaloneService
+  path: operators.kloudlite.io/apis/mysql.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mysql.msvc
+  kind: ClusterService
+  path: operators.kloudlite.io/apis/mysql.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mysql.msvc
+  kind: Database
+  path: operators.kloudlite.io/apis/mysql.msvc/v1
+  version: v1
 version: "3"

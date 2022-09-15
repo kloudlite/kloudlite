@@ -207,7 +207,7 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 		return req.Done()
 	}
 
-	// STEP: 3. apply CRs of helm/custom controller
+	// STEP: 3. apply CRs of helm/custom controllers
 	if errP := func() error {
 		b, err := templates.Parse(
 			templates.ServerlessLambda, map[string]any{
@@ -235,7 +235,7 @@ func (r *LambdaReconciler) reconcileOperations(req *rApi.Request[*serverlessv1.L
 	return req.Done()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *LambdaReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

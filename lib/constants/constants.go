@@ -62,6 +62,9 @@ const (
 	RouterNameKey        string = "kloudlite.io/router.name"
 	LambdaNameKey        string = "kloudlite.io/lambda.name"
 	AccountRouterNameKey string = "kloudlite.io/account-router.name"
+
+	ClearStatusKey string = "kloudlite.io/clear-status"
+	RestartKey     string = "kloudlite.io/do-restart"
 )
 
 var (
