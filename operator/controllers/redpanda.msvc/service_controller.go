@@ -51,9 +51,9 @@ const (
 	OutputRedpandaHostsKey string = "REDPANDA_HOSTS"
 )
 
-//+kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=services/finalizers,verbs=update
+// +kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &redpandamsvcv1.Service{})
@@ -216,7 +216,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redpandamsvcv
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

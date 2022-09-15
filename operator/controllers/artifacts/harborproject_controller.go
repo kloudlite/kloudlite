@@ -202,14 +202,14 @@ func (r *HarborProjectReconciler) reconcileOperations(req *rApi.Request[*artifac
 	}
 
 	obj.Status.OpsConditions = []metav1.Condition{}
-	obj.Status.Generation = obj.Generation
+	// obj.Status.Generation = obj.Generation
 	if err := r.Status().Update(ctx, obj); err != nil {
 		return req.FailWithOpError(err)
 	}
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *HarborProjectReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

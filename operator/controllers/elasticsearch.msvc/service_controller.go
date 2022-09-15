@@ -162,13 +162,12 @@ func (r *ServiceReconciler) ouptut(req *rApi.Request[*elasticSearch.Service]) st
 			},
 		)
 		if err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(KeyOutputReady, check)
+			return req.CheckFailed(KeyOutputReady, check, err.Error())
 		}
 
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
 			check.Message = err.Error()
-			return req.CheckFailed(KeyOutputReady, check)
+			return req.CheckFailed(KeyOutputReady, check, err.Error())
 		}
 
 		check.Status = true
@@ -203,8 +202,7 @@ func (r *ServiceReconciler) helm(req *rApi.Request[*elasticSearch.Service]) step
 
 		sc, err := obj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
 		if err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(KeyHelmReady, check)
+			return req.CheckFailed(KeyHelmReady, check, err.Error())
 		}
 
 		b, err := templates.Parse(
@@ -215,13 +213,11 @@ func (r *ServiceReconciler) helm(req *rApi.Request[*elasticSearch.Service]) step
 			},
 		)
 		if err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(KeyHelmReady, check)
+			return req.CheckFailed(KeyHelmReady, check, err.Error())
 		}
 
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(KeyHelmReady, check)
+			return req.CheckFailed(KeyHelmReady, check, err.Error())
 		}
 
 		obj.Status.Checks[KeyHelmReady] = check
@@ -235,19 +231,18 @@ func (r *ServiceReconciler) helm(req *rApi.Request[*elasticSearch.Service]) step
 	check := rApi.Check{Generation: obj.Generation}
 	cds, err := conditions.FromObject(helmRes)
 	if err != nil {
-		check.Message = err.Error()
-		return req.CheckFailed(KeyHelmReady, check)
+		return req.CheckFailed(KeyHelmReady, check, err.Error())
 	}
 
 	deployedC := meta.FindStatusCondition(cds, "Deployed")
 	if deployedC == nil || deployedC.Status == metav1.ConditionUnknown {
-		return req.CheckFailed(KeyHelmReady, check).RequeueAfter(2 * time.Second)
+		return req.CheckFailed(KeyHelmReady, check, err.Error()).RequeueAfter(2 * time.Second)
 	}
 
 	if deployedC.Status == metav1.ConditionFalse {
 		check.Status = false
 		check.Message = deployedC.Message
-		return req.CheckFailed(KeyHelmReady, check)
+		return req.CheckFailed(KeyHelmReady, check, err.Error())
 	}
 
 	if deployedC.Status == metav1.ConditionTrue {
@@ -281,8 +276,7 @@ func (r *ServiceReconciler) statefulSetsAndPods(req *rApi.Request[*elasticSearch
 			),
 		},
 	); err != nil {
-		check.Message = err.Error()
-		return req.CheckFailed(KeyStsReady, check)
+		return req.CheckFailed(KeyStsReady, check, err.Error())
 	}
 
 	for i := range stsList.Items {
@@ -306,7 +300,7 @@ func (r *ServiceReconciler) statefulSetsAndPods(req *rApi.Request[*elasticSearch
 				b, err := json.Marshal(messages)
 				if err != nil {
 					check.Message = err.Error()
-					return req.CheckFailed(KeyStsReady, check)
+					return req.CheckFailed(KeyStsReady, check, err.Error())
 				}
 
 				check.Message = string(b)
@@ -340,7 +334,7 @@ func eventFilters() predicate.Predicate {
 	}
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

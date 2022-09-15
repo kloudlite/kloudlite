@@ -220,12 +220,9 @@ spec:
               generatedVars:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
-              generation:
-                format: int64
-                type: integer
               isReady:
                 type: boolean
-              lastTransitionTime:
+              lastReconcileTime:
                 format: date-time
                 type: string
               message:

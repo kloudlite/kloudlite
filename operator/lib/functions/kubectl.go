@@ -164,7 +164,7 @@ func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
 		Name:               r.GetName(),
 		UID:                r.GetUID(),
 		Controller:         &ctrler,
-		BlockOwnerDeletion: NewBool(true),
+		BlockOwnerDeletion: &ctrler,
 	}
 }
 
