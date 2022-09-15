@@ -102,7 +102,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (c
 		return x.ReconcilerResponse()
 	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, nil
 }
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
@@ -265,14 +265,14 @@ func (r *ProjectReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Projec
 	}
 
 	project.Status.OpsConditions = []metav1.Condition{}
-	project.Status.Generation = project.Generation
+	// project.Status.Generation = project.Generation
 	if err := r.Status().Update(ctx, project); err != nil {
 		return req.FailWithOpError(err)
 	}
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()

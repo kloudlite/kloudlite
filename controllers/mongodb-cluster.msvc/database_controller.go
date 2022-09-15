@@ -61,7 +61,7 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbclust
 	return req.Done()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mongodbclustermsvcv1.Database{}).

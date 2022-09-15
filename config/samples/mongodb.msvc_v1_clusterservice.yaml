@@ -1,0 +1,6 @@
+apiVersion: mongodb.msvc.kloudlite.io/v1
+kind: ClusterService
+metadata:
+  name: clusterservice-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,19 @@
+apiVersion: redis.msvc.kloudlite.io/v1
+kind: StandaloneService
+metadata:
+  name: sample-redis
+  namespace: kl-core
+spec:
+  cloudProvider:
+    cloud: azure
+    region: centralindia
+  replicaCount: 1
+  nodeSelector:
+    kloudlite.io/region: "centralindia"
+  storage:
+    size: 1Gi
+  resources:
+    cpu:
+      min: 200m
+      max: 300m
+    memory: 400Mi

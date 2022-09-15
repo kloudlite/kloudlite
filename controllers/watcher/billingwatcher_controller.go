@@ -277,7 +277,7 @@ func (r *BillingWatcherReconciler) RemoveBillingFinalizer(ctx context.Context, o
 	return ctrl.Result{}, r.Update(ctx, obj)
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 
 func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()

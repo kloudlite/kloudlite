@@ -37,34 +37,20 @@ type Check struct {
 	// LastCheckedAt metav1.Time `json:"lastCheckedAt,omitempty"`
 }
 
-func (c *Check) Diff(c2 Check) bool {
-	if c.Status != c2.Status {
-		return false
-	}
-	if c.Message != c2.Message {
-		return false
-	}
-	if c.Generation != c2.Generation {
-		return false
-	}
-	return true
-}
-
 // +kubebuilder:object:generate=true
 
 type Status struct {
 	// +kubebuilder:validation:Optional
-	IsReady            bool               `json:"isReady"`
-	Message            rawJson.RawJson    `json:"message,omitempty"`
-	Messages           []ContainerMessage `json:"messages,omitempty"`
-	DisplayVars        rawJson.RawJson    `json:"displayVars,omitempty"`
-	GeneratedVars      rawJson.RawJson    `json:"generatedVars,omitempty"`
-	Conditions         []metav1.Condition `json:"conditions,omitempty"`
-	ChildConditions    []metav1.Condition `json:"childConditions,omitempty"`
-	OpsConditions      []metav1.Condition `json:"opsConditions,omitempty"`
-	Generation         int64              `json:"generation,omitempty"`
-	Checks             map[string]Check   `json:"checks,omitempty"`
-	LastTransitionTime metav1.Time        `json:"lastTransitionTime,omitempty"`
+	IsReady           bool               `json:"isReady"`
+	Message           rawJson.RawJson    `json:"message,omitempty"`
+	Messages          []ContainerMessage `json:"messages,omitempty"`
+	DisplayVars       rawJson.RawJson    `json:"displayVars,omitempty"`
+	GeneratedVars     rawJson.RawJson    `json:"generatedVars,omitempty"`
+	Conditions        []metav1.Condition `json:"conditions,omitempty"`
+	ChildConditions   []metav1.Condition `json:"childConditions,omitempty"`
+	OpsConditions     []metav1.Condition `json:"opsConditions,omitempty"`
+	Checks            map[string]Check   `json:"checks,omitempty"`
+	LastReconcileTime metav1.Time        `json:"lastReconcileTime,omitempty"`
 }
 
 type Reconciler interface {
@@ -99,7 +85,8 @@ func SetLocal[T any, V Resource](r *Request[V], key string, value T) {
 
 func Get[T client.Object](ctx context.Context, cli client.Client, nn types.NamespacedName, obj T) (T, error) {
 	if err := cli.Get(ctx, nn, obj); err != nil {
-		return obj, err
+		// return obj, err
+		return *new(T), err
 	}
 	return obj, nil
 }

@@ -3,32 +3,68 @@ package templates
 import (
 	"bytes"
 	"crypto/md5"
+	"embed"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"path/filepath"
 	"reflect"
 	"text/template"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/sprig/v3"
 	"operators.kloudlite.io/lib/errors"
 )
 
-func useTemplate(file templateFile) (*kt, error) {
-	tFiles := []string{file.Path()}
-	tFiles = append(tFiles, helperFiles...)
+var (
+	//go:embed templates
+	templateFS embed.FS
+)
 
-	var klFuncs template.FuncMap = map[string]any{}
+func newTemplate(name string) (*template.Template, error) {
+	t := template.New(name).Option("missingkey=error")
+	t.Funcs(txtFuncs(t))
 
-	// SOURCE: https://github.com/helm/helm/blob/8648ccf5d35d682dcd5f7a9c2082f0aaf071e817/pkg/engine/engine.go#L147-L154
-	t := template.New(filepath.Base(file.Path()))
-	funcMap := sprig.TxtFuncMap()
+	dirs, err := templateFS.ReadDir("templates/helpers")
+	if err != nil {
+		return nil, err
+	}
+	for i := range dirs {
+		if !dirs[i].IsDir() {
+			_, err := t.ParseFS(templateFS, fmt.Sprintf("templates/helpers/%s", dirs[i].Name()))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return t, nil
+}
 
-	klFuncs["include"] = func(templateName string, templateData any) (string, error) {
+func Parse(f templateFile, values any) ([]byte, error) {
+	name := filepath.Base(string(f))
+	t, err := newTemplate(name)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = t.ParseFS(templateFS, string(f))
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(bytes.Buffer)
+	if err := t.ExecuteTemplate(out, name, values); err != nil {
+		return nil, errors.NewEf(err, "could not execute template")
+	}
+
+	return out.Bytes(), nil
+}
+
+func txtFuncs(t *template.Template) template.FuncMap {
+	funcs := sprig.TxtFuncMap()
+
+	// inspired by helm include
+	funcs["include"] = func(templateName string, templateData any) (string, error) {
 		buf := bytes.NewBuffer(nil)
 		if err := t.ExecuteTemplate(buf, templateName, templateData); err != nil {
 			return "", err
@@ -36,12 +72,12 @@ func useTemplate(file templateFile) (*kt, error) {
 		return buf.String(), nil
 	}
 
-	klFuncs["toYAML"] = func(txt any) (string, error) {
+	funcs["toYAML"] = func(txt any) (string, error) {
 		if txt == nil {
 			return "", nil
 		}
 
-		a, ok := funcMap["toPrettyJson"].(func(any) string)
+		a, ok := funcs["toPrettyJson"].(func(any) string)
 		if !ok {
 			panic("could not convert sprig.TxtFuncMap[toPrettyJson] into func(any) string")
 		}
@@ -58,129 +94,67 @@ func useTemplate(file templateFile) (*kt, error) {
 		return string(ys), nil
 	}
 
-	klFuncs["ENDL"] = func() string {
-		return "\n"
-	}
-
-	klFuncs["K8sAnnotation"] = func(cond any, key string, value any) string {
-		if cond == reflect.Zero(reflect.TypeOf(cond)).Interface() {
-			return ""
-		}
-		return fmt.Sprintf("%s: \"%v\"", key, value)
-	}
-	klFuncs["K8sLabel"] = klFuncs["K8sAnnotation"]
-
-	klFuncs["md5"] = func(txt string) string {
+	funcs["md5"] = func(txt string) string {
 		hash := md5.New()
 		hash.Write([]byte(txt))
 		return hex.EncodeToString(hash.Sum(nil))
 	}
 
-	_, err := t.Funcs(funcMap).Funcs(klFuncs).ParseFiles(tFiles...)
-	if err != nil {
-		return nil, err
-	}
-	return &kt{Template: t}, nil
-}
-
-type kt struct {
-	*template.Template
-}
-
-func (kt *kt) withValues(v interface{}) ([]byte, error) {
-	w := new(bytes.Buffer)
-	if err := kt.ExecuteTemplate(w, kt.Name(), v); err != nil {
-		return nil, errors.NewEf(err, "could not execute template")
-	}
-	return w.Bytes(), nil
-}
-
-func Parse(f templateFile, values interface{}) ([]byte, error) {
-	t, err := useTemplate(f)
-	if err != nil {
-		return nil, err
-	}
-	return t.withValues(values)
-}
-
-func ParseObject(f templateFile, values interface{}) (client.Object, error) {
-	t, err := useTemplate(f)
-	if err != nil {
-		return nil, err
-	}
-	b, err := t.withValues(values)
-	if err != nil {
-		return nil, err
-	}
-	var m map[string]any
-	if err := yaml.Unmarshal(b, &m); err != nil {
-		return nil, err
-	}
-	return &unstructured.Unstructured{Object: m}, nil
-}
-
-var templateDir = filepath.Join(os.Getenv("PWD"), "lib/templates")
-
-var helperFiles []string
-
-func init() {
-	if v, ok := os.LookupEnv("TEMPLATES_DIR"); ok {
-		templateDir = v
-	}
-
-	helpersDir := filepath.Join(templateDir, "_helpers")
-	dir, err := os.ReadDir(helpersDir)
-	if err != nil {
-		fmt.Printf("ERR listing templateDir.... %+v\n", err)
-		panic(err)
-	}
-	for _, entry := range dir {
-		if !entry.IsDir() {
-			helperFiles = append(helperFiles, filepath.Join(helpersDir, entry.Name()))
+	funcs["K8sAnnotation"] = func(cond any, key string, value any) string {
+		if cond == reflect.Zero(reflect.TypeOf(cond)).Interface() {
+			return ""
 		}
+		return fmt.Sprintf("%s: '%v'", key, value)
 	}
+
+	funcs["K8sLabel"] = funcs["K8sAnnotation"]
+
+	return funcs
+}
+
+func WithFunctions(t *template.Template) *template.Template {
+	return t.Funcs(txtFuncs(t))
 }
 
 type templateFile string
 
-func (tf templateFile) Path() string {
-	return filepath.Join(templateDir, string(tf))
-}
-
 const (
-	MongoDBStandalone templateFile = "./msvc/mongodb/helm-standalone.tpl.yml"
-	MySqlStandalone   templateFile = "./msvc/mysql/helm-standalone.tpl.yml"
-	RedisStandalone   templateFile = "./msvc/redis/helm-standalone.tpl.yml"
+	MongoDBStandalone templateFile = "templates/msvc/mongodb/helm-standalone.tpl.yml"
+	MySqlStandalone   templateFile = "templates/msvc/mysql/helm-standalone.tpl.yml"
+	RedisStandalone   templateFile = "templates/msvc/redis/helm-standalone.tpl.yml"
+	RedisACLConfigMap templateFile = "templates/msvc/redis/acl-configmap.tpl.yml"
 
 	// ---
 
-	MongoDBCluster   templateFile = "mongodb-helm-one-node-cluster.tpl.yml"
-	MongoDBWatcher   templateFile = "mongo-msvc-watcher.tmpl.yml"
-	Deployment       templateFile = "app.tpl.yml"
-	Service          templateFile = "service.tmpl.yml"
-	Secret           templateFile = "./corev1/secret.tpl.yml"
-	AccountWireguard templateFile = "account-deploy.tmpl.yml"
-	CommonMsvc       templateFile = "msvc-common-service.tpl.yml"
-	CommonMres       templateFile = "mres-common.tmpl.yml"
-	ConfigMap        templateFile = "configmap.tmpl.yml"
-	Ingress          templateFile = "./ingress.tmpl.yml"
+	MongoDBCluster   templateFile = "templates/mongodb-helm-one-node-cluster.tpl.yml"
+	MongoDBWatcher   templateFile = "templates/mongo-msvc-watcher.tmpl.yml"
+	Deployment       templateFile = "templates/app.tpl.yml"
+	Service          templateFile = "templates/service.tmpl.yml"
+	Secret           templateFile = "templates/corev1/secret.tpl.yml"
+	AccountWireguard templateFile = "templates/account-deploy.tmpl.yml"
+	CommonMsvc       templateFile = "templates/msvc-common-service.tpl.yml"
+	CommonMres       templateFile = "templates/mres-common.tmpl.yml"
+	Ingress          templateFile = "templates/ingress.tmpl.yml"
 
-	IngressLambda templateFile = "./ingress-lambda.tmpl.yml"
+	IngressLambda templateFile = "templates/ingress-lambda.tmpl.yml"
 
-	ServerlessLambda templateFile = "./serverless/lambda.tpl.yml"
+	ServerlessLambda templateFile = "templates/serverless/lambda.tpl.yml"
 
-	ElasticSearch templateFile = "./msvc/elasticsearch/helm.tpl.yml"
-	OpenSearch    templateFile = "./msvc/opensearch/helm.tpl.yml"
-	InfluxDB      templateFile = "./msvc/influx/helm.tpl.yml"
+	ElasticSearch templateFile = "templates/msvc/elasticsearch/helm.tpl.yml"
+	OpenSearch    templateFile = "templates/msvc/opensearch/helm.tpl.yml"
+	InfluxDB      templateFile = "templates/msvc/influx/helm.tpl.yml"
 
 	// ---
 
-	Project templateFile = "./project.tpl.yml"
+	Project templateFile = "templates/project.tpl.yml"
 
-	RedpandaOneNodeCluster templateFile = "./msvc/redpanda/one-node-cluster.tpl.yml"
+	RedpandaOneNodeCluster templateFile = "templates/msvc/redpanda/one-node-cluster.tpl.yml"
 
-	HelmIngressNginx     templateFile = "./ingress-nginx/helm.tpl.yml"
-	AccountIngressBridge templateFile = "./ingress-nginx/ingress-bridge.tpl.yml"
+	HelmIngressNginx     templateFile = "templates/ingress-nginx/helm.tpl.yml"
+	AccountIngressBridge templateFile = "templates/ingress-nginx/ingress-bridge.tpl.yml"
+
+	ProjectRBAC   templateFile = "templates/project-rbac.yml.tpl"
+	ProjectHarbor templateFile = "templates/project-harbor.yml.tpl"
 )
 
 var CoreV1 = struct {
@@ -188,15 +162,21 @@ var CoreV1 = struct {
 	Ingress            templateFile
 	DockerConfigSecret templateFile
 	Secret             templateFile
+	Namespace          templateFile
+	ConfigMap          templateFile
 }{
-	ExternalNameSvc:    "./corev1/external-name-service.tpl.yml",
-	Ingress:            "./corev1/ingress.tpl.yml",
-	DockerConfigSecret: "./corev1/docker-config-secret.tpl.yml",
-	Secret:             "./corev1/secret.tpl.yml",
+	ExternalNameSvc:    "templates/corev1/external-name-service.tpl.yml",
+	Ingress:            "templates/corev1/ingress.tpl.yml",
+	DockerConfigSecret: "templates/corev1/docker-config-secret.tpl.yml",
+	Secret:             "templates/corev1/secret.tpl.yml",
+	Namespace:          "templates/corev1/namespace.yml.tpl",
+	ConfigMap:          "templates/corev1/configmap.yml.tpl",
 }
 
 var CrdsV1 = struct {
-	App templateFile
+	App           templateFile
+	AccountRouter templateFile
 }{
-	App: "./app.tpl.yml",
+	App:           "templates/app.tpl.yml",
+	AccountRouter: "templates/crdsv1/account-router.yml.tpl",
 }

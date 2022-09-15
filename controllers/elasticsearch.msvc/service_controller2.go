@@ -6,8 +6,8 @@ package elasticsearchmsvc
 // 	"fmt"
 // 	"time"
 //
-// 	"sigs.k8s.io/controller-runtime/pkg/event"
-// 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+// 	"sigs.k8s.io/controllers-runtime/pkg/event"
+// 	"sigs.k8s.io/controllers-runtime/pkg/predicate"
 //
 // 	appsv1 "k8s.io/api/apps/v1"
 // 	corev1 "k8s.io/api/core/v1"
@@ -26,11 +26,11 @@ package elasticsearchmsvc
 // 	rApi "operators.kloudlite.io/lib/operator"
 // 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 // 	"operators.kloudlite.io/lib/templates"
-// 	ctrl "sigs.k8s.io/controller-runtime"
-// 	"sigs.k8s.io/controller-runtime/pkg/client"
-// 	"sigs.k8s.io/controller-runtime/pkg/handler"
-// 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-// 	"sigs.k8s.io/controller-runtime/pkg/source"
+// 	ctrl "sigs.k8s.io/controllers-runtime"
+// 	"sigs.k8s.io/controllers-runtime/pkg/client"
+// 	"sigs.k8s.io/controllers-runtime/pkg/handler"
+// 	"sigs.k8s.io/controllers-runtime/pkg/reconcile"
+// 	"sigs.k8s.io/controllers-runtime/pkg/source"
 // )
 
 // ServiceReconciler reconciles a Service object
@@ -427,7 +427,7 @@ package elasticsearchmsvc
 // 	}
 // }
 //
-// // SetupWithManager sets up the controller with the Manager.
+// // SetupWithManager sets up the controllers with the Manager.
 // func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 // 	r.Client = mgr.GetClient()
 // 	r.Scheme = mgr.GetScheme()

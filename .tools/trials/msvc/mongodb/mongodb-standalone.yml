@@ -2,15 +2,21 @@ apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
   name: mongo-standalone
-  namespace: hotspot
+  namespace: kl-core
 spec:
-  cloudProvider: do
+  cloudProvider:
+    cloud: azure
+    region: centralindia
+  nodeSelector:
+    kloudlite.io/region: centralindia
   msvcKind:
     apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
     kind: Service
   inputs:
     resources:
-      cpu: 800m
-      memory: 900Mi
+      cpu: 
+        min: 300m
+        max: 400m
+      memory: 400Mi
     storage:
       size: 1Gi

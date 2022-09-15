@@ -1,0 +1,10 @@
+apiVersion: mongodb.msvc.kloudlite.io/v1
+kind: Database
+metadata:
+  name: sample-auth-db
+  namespace: kl-core
+spec:
+  msvcRef:
+    apiVersion: mongodb.msvc.kloudlite.io/v1
+    kind: StandaloneService
+    name: sample-mongodb

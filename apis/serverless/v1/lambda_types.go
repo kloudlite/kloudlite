@@ -48,7 +48,7 @@ func (lm *Lambda) GetStatus() *rApi.Status {
 
 func (lm *Lambda) GetEnsuredLabels() map[string]string {
 	m := map[string]string{
-		"kloudlite.io/lambda.name": lm.Name,
+		constants.LambdaNameKey: lm.Name,
 	}
 
 	for idx := range lm.Spec.Containers {

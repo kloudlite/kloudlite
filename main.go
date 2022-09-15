@@ -52,12 +52,15 @@ import (
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	mongodbexternalv1 "operators.kloudlite.io/apis/mongodb.external/v1"
+	mongodbmsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
 	mysqlclustermsvcv1 "operators.kloudlite.io/apis/mysql-cluster.msvc/v1"
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	mysqlexternalv1 "operators.kloudlite.io/apis/mysql.external/v1"
+	mysqlmsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	redismsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
@@ -90,6 +93,9 @@ func init() {
 	utilruntime.Must(redpandamsvcv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbexternalv1.AddToScheme(scheme))
 	utilruntime.Must(mysqlexternalv1.AddToScheme(scheme))
+	utilruntime.Must(mongodbmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(redismsvcv1.AddToScheme(scheme))
+	utilruntime.Must(mysqlmsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -128,8 +134,8 @@ func main() {
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":12346", "The address the probe endpoint binds to.")
 	flag.BoolVar(
 		&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.",
+		"Enable leader election for controllers manager. "+
+			"Enabling this will ensure there is only one active controllers manager.",
 	)
 
 	flag.BoolVar(&isDev, "dev", false, "--dev")
@@ -237,12 +243,12 @@ func main() {
 
 	for _, rc := range controllers {
 		if skippedControllers[rc.GetName()] {
-			logger.Infof("skipping %s controller (by flag) ", rc.GetName())
+			logger.Infof("skipping %s controllers (by flag) ", rc.GetName())
 			continue
 		}
 		if isAllEnabled || enabledForControllers[rc.GetName()] {
 			if err := rc.SetupWithManager(mgr, envVars, logger); err != nil {
-				setupLog.Error(err, "unable to create controller", "controller", rc.GetName())
+				setupLog.Error(err, "unable to create controllers", "controllers", rc.GetName())
 				os.Exit(1)
 			}
 		}

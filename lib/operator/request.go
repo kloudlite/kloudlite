@@ -9,8 +9,10 @@ import (
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
+	rawJson "operators.kloudlite.io/lib/raw-json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -127,7 +129,7 @@ func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Con
 
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().Conditions = newConditions
-	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
+	r.Object.GetStatus().LastReconcileTime = metav1.Time{Time: time.Now()}
 
 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
 		return stepResult.New().Err(err2)
@@ -159,7 +161,7 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	}
 	r.Object.GetStatus().IsReady = false
 	r.Object.GetStatus().OpsConditions = newConditions
-	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
+	r.Object.GetStatus().LastReconcileTime = metav1.Time{Time: time.Now()}
 
 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
 		return stepResult.New().Err(err2)
@@ -192,12 +194,83 @@ func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
 	return stepResult.New().Continue(true)
 }
 
-func (r *Request[T]) CheckFailed(name string, check Check) stepResult.Result {
+func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
+	obj := r.Object
+
+	ann := obj.GetAnnotations()
+	if v := ann[constants.ClearStatusKey]; v == "true" {
+		delete(ann, constants.ClearStatusKey)
+		obj.SetAnnotations(ann)
+		if err := r.client.Update(r.Context(), obj); err != nil {
+			return r.FailWithOpError(err)
+		}
+
+		obj.GetStatus().IsReady = false
+		obj.GetStatus().LastReconcileTime = metav1.Time{Time: time.Now()}
+		obj.GetStatus().Checks = nil
+		obj.GetStatus().Message = rawJson.RawJson{}
+		obj.GetStatus().Messages = nil
+		obj.GetStatus().Conditions = nil
+		obj.GetStatus().OpsConditions = nil
+		obj.GetStatus().ChildConditions = nil
+		obj.GetStatus().DisplayVars = rawJson.RawJson{}
+
+		if err := r.client.Status().Update(context.TODO(), obj); err != nil {
+			return r.FailWithOpError(err)
+		}
+		return r.Done().RequeueAfter(2 * time.Second)
+	}
+	return r.Next()
+}
+
+func (r *Request[T]) RestartIfAnnotated() stepResult.Result {
+	ctx, obj := r.Context(), r.Object
+	ann := obj.GetAnnotations()
+	if v := ann[constants.RestartKey]; v == "true" {
+		delete(ann, constants.RestartKey)
+		obj.SetAnnotations(ann)
+		if err := r.client.Update(ctx, obj); err != nil {
+			return r.FailWithOpError(err)
+		}
+
+		exitCode, err := kubectl.Restart(kubectl.Deployments, obj.GetNamespace(), obj.GetEnsuredLabels())
+		if exitCode != 0 {
+			// failed to restart deployments, with non-zero exit code
+			r.Logger.Error(err)
+		}
+		exitCode, err = kubectl.Restart(kubectl.Statefulsets, obj.GetNamespace(), obj.GetEnsuredLabels())
+		if exitCode != 0 {
+			// failed to restart statefultset, with non-zero exit code
+			r.Logger.Error(err)
+		}
+		return r.Done().RequeueAfter(2 * time.Second)
+	}
+
+	return r.Next()
+}
+
+func (r *Request[T]) EnsureFinalizers(finalizers ...string) stepResult.Result {
+	obj := r.Object
+
+	if !fn.ContainsFinalizers(obj, finalizers...) {
+		for i := range finalizers {
+			controllerutil.AddFinalizer(obj, finalizers[i])
+		}
+		if err := r.client.Update(r.Context(), obj); err != nil {
+			return r.FailWithOpError(err)
+		}
+		return stepResult.New()
+	}
+	return stepResult.New().Continue(true)
+}
+
+func (r *Request[T]) CheckFailed(name string, check Check, msg string) stepResult.Result {
 	check.Status = false
+	check.Message = msg
 	r.Object.GetStatus().Checks[name] = check
 	r.Object.GetStatus().Message.Set(name, check.Message)
 	r.Object.GetStatus().IsReady = false
-	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
+	r.Object.GetStatus().LastReconcileTime = metav1.Time{Time: time.Now()}
 	if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
 		return stepResult.New().Err(err)
 	}
@@ -209,7 +282,7 @@ func (r *Request[T]) Context() context.Context {
 }
 
 func (r *Request[T]) Done(result ...ctrl.Result) stepResult.Result {
-	r.Object.GetStatus().LastTransitionTime = metav1.Time{Time: time.Now()}
+	r.Object.GetStatus().LastReconcileTime = metav1.Time{Time: time.Now()}
 	if err := r.client.Status().Update(context.TODO(), r.Object); err != nil {
 		return stepResult.New().Err(err)
 	}
@@ -221,6 +294,27 @@ func (r *Request[T]) Done(result ...ctrl.Result) stepResult.Result {
 
 func (r *Request[T]) Next() stepResult.Result {
 	return stepResult.New().Continue(true)
+}
+
+func (r *Request[T]) UpdateStatus() stepResult.Result {
+	r.Object.GetStatus().LastReconcileTime = metav1.Time{Time: time.Now()}
+	checks := r.Object.GetStatus().Checks
+	for name := range checks {
+		if checks[name].Status {
+			if err := r.Object.GetStatus().Message.Delete(name); err != nil {
+				return stepResult.New().Err(err)
+			}
+
+			if r.Object.GetStatus().Message.Len() == 0 {
+				r.Object.GetStatus().Message = rawJson.RawJson{RawMessage: nil}
+			}
+		}
+	}
+
+	if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
+		return stepResult.New().Err(err)
+	}
+	return stepResult.New()
 }
 
 func (r *Request[T]) Finalize() stepResult.Result {

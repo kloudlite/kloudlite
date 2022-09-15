@@ -29,12 +29,14 @@ type Env struct {
 	AwsSecretAccessKey string `env:"AWS_SECRET_ACCESS_KEY" required:"true"`
 
 	ClusterCertIssuer    string `env:"CLUSTER_CERT_ISSUER" required:"true"`
-	DefaultIngressClass  string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
+	GlobalIngressClass   string `env:"GLOBAL_INGRESS_CLASS" required:"true"`
 	WildcardDomainSuffix string `env:"WILDCARD_DOMAIN_SUFFIX" required:"true"`
 
 	DockerSecretName        string `env:"DOCKER_SECRET_NAME" required:"true"`
 	NamespaceAdminRoleName  string `env:"NAMESPACE_ADMIN_ROLE_NAME" required:"true"`
 	NamespaceSvcAccountName string `env:"NAMESPACE_SVC_ACCOUNT_NAME" required:"true"`
+	ProjectCfgName          string `env:"PROJECT_CONFIGMAP_NAME" required:"true"`
+	AccountRouterName       string `env:"ACCOUNT_ROUTER_NAME" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

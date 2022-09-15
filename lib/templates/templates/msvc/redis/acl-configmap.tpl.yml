@@ -1,0 +1,29 @@
+{{- $name := get . "name"  -}}
+{{- $namespace := get . "namespace"  -}}
+{{- $ownerRefs := get . "owner-refs"  -}}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{$name}}
+  namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+data:
+  master.conf: |+
+    dir /data
+    # User-supplied master configuration:
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+    # End of master configuration
+
+  redis.conf: ""
+
+  replica.conf: |+
+    dir /data
+    slave-read-only yes
+    # User-supplied replica configuration:
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+    # End of replica configuration
+

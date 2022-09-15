@@ -241,7 +241,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		return req.Done()
 	}
 
-	// STEP: 3. apply CRs of helm/custom controller
+	// STEP: 3. apply CRs of helm/custom controllers
 
 	aclAccountsMap, ok := rApi.GetLocal[map[string]string](req, KeyAclAccountsMap)
 	if !ok {
@@ -323,7 +323,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 	return req.Next()
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controllers with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
