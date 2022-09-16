@@ -14,6 +14,14 @@ import (
 	rcn "kloudlite.io/pkg/res-change-notifier"
 )
 
+type GrpcDNSConfig struct {
+	DNSService string `env:"DNS_SERVICE" required:"true"`
+}
+
+func (e *GrpcDNSConfig) GetGRPCServerURL() string {
+	return e.DNSService
+}
+
 type GrpcFinanceConfig struct {
 	FinanceService string `env:"FINANCE_SERVICE" required:"true"`
 }
@@ -126,6 +134,7 @@ var Module fx.Option = fx.Module(
 	config.EnvFx[JSEvalEnv](),
 
 	config.EnvFx[GrpcAuthConfig](),
+	config.EnvFx[GrpcDNSConfig](),
 	config.EnvFx[GrpcFinanceConfig](),
 	config.EnvFx[GrpcCIConfig](),
 
@@ -137,7 +146,7 @@ var Module fx.Option = fx.Module(
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcCIConfig, app.CIClientConnection](),
 	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),
-
+	rpc.NewGrpcClientFx[*GrpcDNSConfig, app.DNSClientConnection](),
 
 	fx.Provide(func(env *Env) *kubeapi.Client {
 		return kubeapi.NewClient(env.KubeAPIAddress)

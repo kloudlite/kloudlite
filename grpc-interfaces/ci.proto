@@ -27,3 +27,4 @@ message HarborProjectIn {
 
 message HarborProjectOut {
   bool status = 1;
+}

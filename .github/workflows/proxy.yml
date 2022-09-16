@@ -3,30 +3,30 @@ name: proxy
 on:
   push:
     branches:
-      - 'working01'
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!master'   # excludes master
+
+    paths:
+      - "./apps/proxy/**"
+      - "./pkg/**"
+      - "./grpc-interfaces/**"
+      - "./common/**"
+      - "./.github/workflows/**"
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout
         uses: actions/checkout@v3
 
-      - uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            proxyChanges:
-              - './apps/proxy/**'
-
       - name: Set up QEMU
-        if : steps.changes.outputs.proxyChanges == 'true'
         uses: docker/setup-qemu-action@v2
 
-
+      
       - name: Login to GitHub Container Registry
-        if : steps.changes.outputs.proxyChanges == 'true'
         uses: docker/login-action@v2
         with:
           registry: harbor.dev.madhouselabs.io
@@ -34,13 +34,12 @@ jobs:
           password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Set up Docker Buildx
-        if : steps.changes.outputs.proxyChanges == 'true'
         uses: docker/setup-buildx-action@v2
 
       - name: Build and Push
-        if : steps.changes.outputs.proxyChanges == 'true'
         env:
-          APP_DIR: ./apps/proxy
-          IMAGE: harbor.dev.madhouselabs.io/kloudlite/proxy:v2
-        run: "docker build -f ./${APP_DIR}/Dockerfile -t ${IMAGE} ${APP_DIR} --build-arg APP_DIR=${APP_DIR}"
-
+          TAG: v2
+          REGISTRY: harbor.dev.madhouselabs.io
+          APP: proxy
+ 
+        run: docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/public/kloudlite/${APP}:${TAG} ./apps/${APP} --push --build-arg APP=${APP} --build-context project-root=.

@@ -1,7 +1,8 @@
 package internal_crds
 
 type AccountSpec struct {
-	AccountId string `json:"accountId,omitempty"`
+	AccountId    string   `json:"accountId,omitempty"`
+	OwnedDomains []string `json:"ownedDomains,omitempty"`
 }
 
 type AccountMetadata struct {

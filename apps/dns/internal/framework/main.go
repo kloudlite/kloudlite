@@ -3,6 +3,7 @@ package framework
 import (
 	"go.uber.org/fx"
 	"kloudlite.io/apps/dns/internal/app"
+	rpc "kloudlite.io/pkg/grpc"
 
 	// "kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/cache"
@@ -11,6 +12,14 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 )
+
+type GrpcConsoleConfig struct {
+	ConsoleService string `env:"CONSOLE_SERVICE" required:"true"`
+}
+
+func (e *GrpcConsoleConfig) GetGRPCServerURL() string {
+	return e.ConsoleService
+}
 
 type Env struct {
 	DNSPort       uint16 `env:"DNS_PORT" required:"true"`
@@ -23,6 +32,7 @@ type Env struct {
 	Port          uint16 `env:"PORT" required:"true"`
 	IsDev         bool   `env:"DEV" default:"false" required:"true"`
 	CorsOrigins   string `env:"ORIGINS"`
+	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
 }
 
 func (e *Env) GetDNSPort() uint16 {
@@ -45,12 +55,19 @@ func (e *Env) GetHttpCors() string {
 	return e.CorsOrigins
 }
 
+func (e *Env) GetGRPCPort() uint16 {
+	return e.GrpcPort
+}
+
 var Module = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
+	config.EnvFx[GrpcConsoleConfig](),
+	rpc.NewGrpcServerFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
+	rpc.NewGrpcClientFx[*GrpcConsoleConfig, app.ConsoleClientConnection](),
 	dns.Fx[*Env](),
 	app.Module,
 )

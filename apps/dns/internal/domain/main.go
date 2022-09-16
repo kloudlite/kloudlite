@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/pkg/config"
 	"net"
 	"time"
@@ -21,6 +22,7 @@ type domainI struct {
 	accountCNamesRepo repos.DbRepo[*AccountCName]
 	nodeIpsRepo       repos.DbRepo[*NodeIps]
 	env               *Env
+	consoleClient     console.ConsoleClient
 }
 
 func (d *domainI) UpsertARecords(ctx context.Context, host string, records []string) error {
@@ -72,7 +74,21 @@ func (d *domainI) GetNodeIps(ctx context.Context, region *string) ([]string, err
 }
 
 func (d *domainI) DeleteSite(ctx context.Context, siteId repos.ID) error {
-	return d.sitesRepo.DeleteById(ctx, siteId)
+	site, err := d.sitesRepo.FindById(ctx, siteId)
+	if err != nil {
+		return err
+	}
+	err = d.sitesRepo.DeleteById(ctx, siteId)
+	if err != nil {
+		return err
+	}
+	_, err = d.consoleClient.SetupAccount(ctx, &console.AccountSetupIn{
+		AccountId: string(site.AccountId),
+	})
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func (d *domainI) GetSiteFromDomain(ctx context.Context, domain string) (*Site, error) {
@@ -92,6 +108,15 @@ func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, erro
 	return d.sitesRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"accountId": accountId,
+		},
+	})
+}
+
+func (d *domainI) GetVerifiedSites(ctx context.Context, accountId string) ([]*Site, error) {
+	return d.sitesRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"accountId": accountId,
+			"verified":  true,
 		},
 	})
 }
@@ -157,6 +182,15 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 	}
 	site.Verified = true
 	_, err = d.sitesRepo.UpdateById(ctx, site.Id, site)
+	if err != nil {
+		return err
+	}
+	_, err = d.consoleClient.SetupAccount(ctx, &console.AccountSetupIn{
+		AccountId: string(site.AccountId),
+	})
+	if err != nil {
+		return err
+	}
 	return err
 }
 
@@ -237,6 +271,7 @@ func fxDomain(
 	nodeIpsRepo repos.DbRepo[*NodeIps],
 	accountDNSRepo repos.DbRepo[*AccountCName],
 	recordsCache cache.Repo[[]*Record],
+	consoleclient console.ConsoleClient,
 	env *Env,
 ) Domain {
 	return &domainI{
@@ -246,6 +281,7 @@ func fxDomain(
 		accountDNSRepo,
 		nodeIpsRepo,
 		env,
+		consoleclient,
 	}
 }
 

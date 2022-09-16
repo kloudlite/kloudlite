@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/grpc"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
 	"math/rand"
 	"net"
 	"strings"
@@ -100,6 +103,8 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	fmt.Println("HERE3", msg.Answer)
 }
 
+type ConsoleClientConnection *grpc.ClientConn
+
 var Module = fx.Module(
 	"app",
 	config.EnvFx[Env](),
@@ -109,6 +114,11 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.NodeIps]("node_ips", "nips", domain.NodeIpIndexes),
 	cache.NewFxRepo[[]*domain.Record](),
 	domain.Module,
+
+	fx.Provide(func(conn ConsoleClientConnection) console.ConsoleClient {
+		return console.NewConsoleClient((*grpc.ClientConn)(conn))
+	}),
+
 	fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server, d domain.Domain, recCache cache.Repo[[]*domain.Record], env *Env) {
 		lifecycle.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
@@ -119,6 +129,10 @@ var Module = fx.Module(
 				return nil
 			},
 		})
+	}),
+	fx.Provide(fxDNSGrpcServer),
+	fx.Invoke(func(server *grpc.Server, dnsServer kldns.DNSServer) {
+		kldns.RegisterDNSServer(server, dnsServer)
 	}),
 	fx.Invoke(func(
 		server *fiber.App,

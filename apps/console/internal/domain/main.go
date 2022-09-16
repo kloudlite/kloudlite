@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
 	"math"
 	"math/rand"
 	"regexp"
@@ -49,6 +50,7 @@ type domain struct {
 	inventoryPath        string
 	jsEvalClient         jseval.JSEvalClient
 	providerRepo         repos.DbRepo[*entities.CloudProvider]
+	dnsClient            kldns.DNSClient
 }
 
 func generateReadable(name string) string {
@@ -85,6 +87,7 @@ func fxDomain(
 	iamClient iam.IAMClient,
 	authClient auth.AuthClient,
 	financeClient finance.FinanceClient,
+	dnsClient kldns.DNSClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 	jsEvalClient jseval.JSEvalClient,
 	kubecli *kubeapi.Client,
@@ -115,6 +118,7 @@ func fxDomain(
 		inventoryPath:        env.InventoryPath,
 		jsEvalClient:         jsEvalClient,
 		regionRepo:           regionRepo,
+		dnsClient:            dnsClient,
 	}
 }
 
