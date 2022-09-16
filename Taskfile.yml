@@ -70,41 +70,41 @@ tasks:
       - |+
         cat config/crd/bases/*.yaml | yq -y
 
-        yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
-        echo "---"
-        echo "$yamls" | yq '
-          select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
-          .metadata.name = "{{.Name}}-manager-config"
-        ' -y
-
-        echo "---"
-        echo "$yamls" | yq '
-          select(.kind == "Service") |
-          .metadata.labels."control-plane" = "{{.Name}}" |
-          .spec.selector."control-plane" = "{{.Name}}" |
-          .metadata.name = "{{.Name}}" |
-          .spec.ports = (
-            .spec.ports + [{name: "http-webhook", port: {{.WebhookPort}}, protocol: "TCP"}]
-          )
-        ' -y
-        echo "---"
-        echo "$yamls" | yq '
-          select(.kind == "Deployment") |
-          .metadata.name = "{{.Name}}" |
-          .metadata.namespace = "{{.Namespace}}" |
-          .metadata.labels."control-plane" = "{{.Name}}" |
-          .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-          .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
-          .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
-          .spec.template.spec.containers = (
-            .spec.template.spec.containers | map_values(
-              if .name == "manager" then
-                .image = "{{.Image}}" |
-                .command = .command + ["--all"]
-              else . end
-            )
-          )
-        ' -y
+#         yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
+#         echo "---"
+#         echo "$yamls" | yq '
+#           select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
+#           .metadata.name = "{{.Name}}-manager-config"
+#         ' -y
+#
+#         echo "---"
+#         echo "$yamls" | yq '
+#           select(.kind == "Service") |
+#           .metadata.labels."control-plane" = "{{.Name}}" |
+#           .spec.selector."control-plane" = "{{.Name}}" |
+#           .metadata.name = "{{.Name}}" |
+#           .spec.ports = (
+#             .spec.ports + [{name: "http-webhook", port: {{.WebhookPort}}, protocol: "TCP"}]
+#           )
+#         ' -y
+#         echo "---"
+#         echo "$yamls" | yq '
+#           select(.kind == "Deployment") |
+#           .metadata.name = "{{.Name}}" |
+#           .metadata.namespace = "{{.Namespace}}" |
+#           .metadata.labels."control-plane" = "{{.Name}}" |
+#           .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+#           .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
+#           .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
+#           .spec.template.spec.containers = (
+#             .spec.template.spec.containers | map_values(
+#               if .name == "manager" then
+#                 .image = "{{.Image}}" |
+#                 .command = .command + ["--all"]
+#               else . end
+#             )
+#           )
+#         ' -y
       - #
 
   pre:

@@ -14,7 +14,7 @@ type AccountRouterSpec struct {
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer
 	ServiceType string `json:"serviceType"`
 
-	DefaultSSLCert string            `json:"defaultSSLCert,omitempty"`
+	DefaultSSLCert SSLCertRef        `json:"defaultSSLCert,omitempty"`
 	NodeSelector   map[string]string `json:"nodeSelector,omitempty"`
 
 	// +kubebuilder:default=100
@@ -22,6 +22,11 @@ type AccountRouterSpec struct {
 	RateLimit       RateLimit `json:"rateLimit,omitempty"`
 	Https           Https     `json:"https,omitempty"`
 	WildcardDomains []string  `json:"wildcardDomains,omitempty"`
+}
+
+type SSLCertRef struct {
+	SecretName string `json:"secretName"`
+	Namespace  string `json:"namespace,omitempty"`
 }
 
 // +kubebuilder:object:root=true
