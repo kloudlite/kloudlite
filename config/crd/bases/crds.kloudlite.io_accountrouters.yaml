@@ -40,7 +40,14 @@ spec:
               controllerName:
                 type: string
               defaultSSLCert:
-                type: string
+                properties:
+                  namespace:
+                    type: string
+                  secretName:
+                    type: string
+                required:
+                - secretName
+                type: object
               https:
                 properties:
                   enabled:
