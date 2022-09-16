@@ -2,13 +2,17 @@ name: auth
 
 on:
   push:
+    branches:
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!master'   # excludes master
+
     paths:
       - "./apps/auth/**"
       - "./pkg/**"
       - "./grpc-interfaces/**"
       - "./common/**"
-    branches:
-      - 'working01'
 
 jobs:
   docker:
@@ -37,5 +41,5 @@ jobs:
           REGISTRY: harbor.dev.madhouselabs.io
           APP: auth
  
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
+        run: docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --push --build-arg APP=${APP} --build-context project-root=.
 

@@ -3,12 +3,16 @@ name: finance
 on:
   push:
     branches:
-      - 'working01'
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!master'   # excludes master
     paths:
       - "./apps/finance/**"
       - "./pkg/**"
       - "./grpc-interfaces/**"
       - "./common/**"
+      - "./.github/workflows/**"
 
 
 jobs:
@@ -38,7 +42,5 @@ jobs:
           REGISTRY: harbor.dev.madhouselabs.io
           APP: finance
 
-        run: | 
-         docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=.
-         docker push ${REGISTRY}/kloudlite/${APP}:${TAG}
+        run: docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --push --build-arg APP=${APP} --build-context project-root=.
 

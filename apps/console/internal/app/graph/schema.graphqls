@@ -207,6 +207,7 @@ type App @key(fields: "id") {
   doFreeze: Boolean!
   doUnfreeze: Boolean!
   isFrozen: Boolean!
+  currentIntercept: ID
   intercept(deviceId: ID!): Boolean!
   closeIntercept: Boolean!
 }

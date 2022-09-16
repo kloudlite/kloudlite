@@ -1,0 +1,24 @@
+version: "3"
+
+dotenv:
+  - .secrets/env
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
+  run:
+    sources:
+      - ./internal/**/*.go
+      - ./main.go
+    cmds:
+      # - go run -tags dynamic main.go --dev
+      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+  docker-build:
+    vars:
+      IMAGE: harbor.dev.madhouselabs.io/kloudlite/nodectrl:v2
+      APP: nodectrl
+    cmds:
+      - docker buildx build --platform linux/amd64 -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
+      - docker push {{.IMAGE}}
