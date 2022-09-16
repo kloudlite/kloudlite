@@ -105,15 +105,15 @@ metadata:
   namespace: {{$namespace}}
   annotations:
     {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
-{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}*/}}
-{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}*/}}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
     {{- if $annotations}}
     {{ $annotations | toYAML | nindent 4}}
     {{- end}}
   labels: {{ $labels | toYAML | nindent 4}}
   ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
 spec:
-  ingressClassName: {{$certIngressClass}}
+  ingressClassName: {{$ingressClass}}
   tls:
     {{- range $v := $domains }}
     - hosts:

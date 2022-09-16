@@ -35,7 +35,7 @@ spec:
 
     {{- if .Spec.DefaultSSLCert}}
     extraArgs:
-      default-ssl-certificate: "{{.Namespace}}/{{.Spec.DefaultSSLCert}}"
+      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"
     {{- end}}
 
     podLabels: {{$labels  | toYAML | nindent 6}}

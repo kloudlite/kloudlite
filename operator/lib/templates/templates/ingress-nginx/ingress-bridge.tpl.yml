@@ -44,5 +44,12 @@ spec:
                   number: 443
             path: /
             pathType: Prefix
+          - backend:
+              service:
+                name: {{$ingressSvcName}}
+                port:
+                  number: 80
+            path: /.well-known
+            pathType: Prefix
     {{- end }}
 {{- end}}
