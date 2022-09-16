@@ -3,17 +3,22 @@ name: ci
 on:
   push:
     branches:
-      - 'working01'
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!master'   # excludes master
     paths:
       - "./apps/ci/**"
       - "./pkg/**"
       - "./grpc-interfaces/**"
       - "./common/**"
+      - "./.github/workflows/**"
  
 
 jobs:
   docker:
     runs-on: ubuntu-latest
+    # if: github.event.head_commit.message == 'build:ci'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -38,5 +43,5 @@ jobs:
           REGISTRY: harbor.dev.madhouselabs.io
           APP: ci
  
-        run: "docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --build-arg APP=${APP} --build-context project-root=."
-
+        run: |
+          docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${TAG} ./apps/${APP} --push --build-arg APP=${APP} --build-context project-root=.

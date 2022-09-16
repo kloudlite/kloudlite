@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -72,6 +73,7 @@ type JSEvalClientConnection *grpc.ClientConn
 type AuthClientConnection *grpc.ClientConn
 type CIClientConnection *grpc.ClientConn
 type FinanceClientConnection *grpc.ClientConn
+type DNSClientConnection *grpc.ClientConn
 
 type AuthCacheClient cache.Client
 type CacheClient cache.Client
@@ -111,6 +113,10 @@ var Module = fx.Module(
 
 	fx.Provide(func(conn AuthClientConnection) auth.AuthClient {
 		return auth.NewAuthClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(conn DNSClientConnection) kldns.DNSClient {
+		return kldns.NewDNSClient((*grpc.ClientConn)(conn))
 	}),
 
 	fx.Provide(func(conn FinanceClientConnection) finance.FinanceClient {

@@ -100,6 +100,9 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 		Metadata: op_crds.RouterMetadata{
 			Name:      string(create.Id),
 			Namespace: create.Namespace,
+			Labels: map[string]string{
+				"kloudlite.io/account-ref": string(prj.AccountId),
+			},
 		},
 		Spec: op_crds.RouterSpec{
 			Https: struct {
@@ -133,11 +136,13 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 	if err = mongoError(err, "router not found"); err != nil {
 		return false, err
 	}
-
 	if err = d.checkProjectAccess(ctx, router.ProjectId, UPDATE_PROJECT); err != nil {
 		return false, err
 	}
-
+	prj, err := d.projectRepo.FindById(ctx, router.ProjectId)
+	if err != nil {
+		return false, err
+	}
 	if domains != nil {
 		router.Domains = domains
 	}
@@ -154,6 +159,9 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 		Metadata: op_crds.RouterMetadata{
 			Name:      string(router.Id),
 			Namespace: router.Namespace,
+			Labels: map[string]string{
+				"kloudlite.io/account-ref": string(prj.AccountId),
+			},
 		},
 		Spec: op_crds.RouterSpec{
 			Https: struct {
