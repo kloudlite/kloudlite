@@ -33,10 +33,12 @@ spec:
     service:
       type: "{{.Spec.ServiceType}}"
 
-    {{- if .Spec.DefaultSSLCert}}
+{{/*    {{- if .Spec.DefaultSSLCert.SecretName}}*/}}
     extraArgs:
-      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"
-    {{- end}}
+{{/*      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"*/}}
+      default-ssl-certificate: "kl-init-cert-manager/kl-cert-issuer-tls"
+      
+{{/*    {{- end}}*/}}
 
     podLabels: {{$labels  | toYAML | nindent 6}}
 

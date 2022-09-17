@@ -118,6 +118,13 @@ func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepRes
 func (r *ProjectReconciler) reconNamespace(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
+	if obj.Spec.AccountRef == "" {
+		if accRef, ok := obj.GetLabels()[constants.AccountRef]; ok {
+			obj.Spec.AccountRef = accRef
+			return req.Done().Err(r.Update(ctx, obj))
+		}
+	}
+
 	check := rApi.Check{Generation: obj.Generation}
 
 	ns := &corev1.Namespace{}

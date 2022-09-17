@@ -27,7 +27,7 @@ metadata:
   name: {{$name}}
   namespace: {{$namespace}}
   annotations:
-{{/*    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}*/}}
+    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
 
     {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
     {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
@@ -61,15 +61,9 @@ spec:
     {{- range $v := $wildcardDomains}}
     - hosts:
         - {{printf "*.%s" $v | squote}}
+{{/*      secretName: "kl-init-cert-manager/kl-cert-issuer-tls"*/}}
+      secretName: "kl-cert-issuer-tls"
     {{- end}}
-{{/*  tls:*/}}
-{{/*    {{- range $v := .Spec.Domains }}*/}}
-{{/*    - hosts:*/}}
-{{/*        - {{$v}}*/}}
-{{/*      secretName: {{$v}}-tls*/}}
-{{/*    {{- end }}*/}}
-{{/*    - hosts:*/}}
-{{/*        - "*.{{$wildcardDomainSuffix}}"*/}}
   rules:
     {{- range $domain := .Spec.Domains }}
     - host: {{$domain}}
@@ -92,45 +86,3 @@ spec:
           {{- end}}
     {{- end }}
   {{- end}}
-
----
-
-{{/*ingress resource for getting cert*/}}
-{{- with $router}}
-{{- /*gotype: operators.kloudlite.io/apis/crds/v1.Router */ -}}
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: cert-{{$name}}
-  namespace: {{$namespace}}
-  annotations:
-    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
-    {{- if $annotations}}
-    {{ $annotations | toYAML | nindent 4}}
-    {{- end}}
-  labels: {{ $labels | toYAML | nindent 4}}
-  ownerReferences: {{ $ownerRefs | toYAML| nindent 4}}
-spec:
-  ingressClassName: {{$ingressClass}}
-  tls:
-    {{- range $v := $domains }}
-    - hosts:
-        - {{$v | squote}}
-      secretName: {{$v}}-tls
-    {{- end }}
-  rules:
-    {{- range $domain := .Spec.Domains }}
-    - host: {{$domain}}
-      http:
-        paths:
-          - backend:
-              service:
-                name: sample
-                port:
-                  number: 80
-            path: /_dummy
-            pathType: Prefix
-    {{- end }}
-{{- end }}
