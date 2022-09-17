@@ -12,7 +12,7 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountRef string `json:"accountRef"`
+	AccountRef string `json:"accountRef,omitempty"`
 	// DisplayName of Project
 	DisplayName string `json:"displayName,omitempty"`
 }

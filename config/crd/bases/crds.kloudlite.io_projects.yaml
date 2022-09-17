@@ -40,8 +40,6 @@ spec:
               displayName:
                 description: DisplayName of Project
                 type: string
-            required:
-            - accountRef
             type: object
           status:
             properties:
