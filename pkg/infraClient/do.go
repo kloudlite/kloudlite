@@ -43,6 +43,7 @@ type doProvider struct {
 	storePath   string
 	tfTemplates string
 	labels      map[string]string
+	taints      []string
 }
 
 // getFolder implements doProviderClient
@@ -60,8 +61,8 @@ func (d *doProvider) initTFdir(node DoNode) error {
 		return err
 	}
 
-	cmd := exec.Command("terraform", "init")
-	cmd.Dir = path.Join(folder, "do")
+	cmd := exec.Command("terraform", "init", "-no-color")
+	cmd.Dir = path.Join(folder, d.providerDir)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -93,8 +94,10 @@ func (d *doProvider) NewNode(node DoNode) error {
 		return err
 	}
 
+	tfPath := path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir)
+
 	// apply terraform
-	return applyTF(path.Join(d.getFolder(node.Region, node.NodeId), "do"), values)
+	return applyTF(tfPath, values)
 }
 
 // UnattachNode implements doProviderClient
@@ -102,7 +105,7 @@ func (d *doProvider) UnattachNode(node DoNode) error {
 	var out string
 	var err error
 
-	if out, err = getOutput(path.Join(d.getFolder(node.Region, node.NodeId), "do"), "node-name"); err != nil {
+	if out, err = getOutput(path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir), "node-name"); err != nil {
 		return err
 	} else if strings.TrimSpace(out) == "" {
 		fmt.Println("something went wrong, can't find node_name")
@@ -115,7 +118,7 @@ func (d *doProvider) UnattachNode(node DoNode) error {
 	}
 
 	// drain node
-	if err = execCmd(fmt.Sprintf("kubectl drain %s --ignore-daemonsets --delete-local-data", out), "drain node to delete"); err != nil {
+	if err = execCmd(fmt.Sprintf("kubectl drain %s --force --ignore-daemonsets --delete-local-data", out), "drain node to delete"); err != nil {
 		return err
 	}
 
@@ -142,7 +145,7 @@ func (d *doProvider) DeleteNode(node DoNode) error {
 	values["do-image-id"] = node.ImageId
 	values["nodeId"] = node.NodeId
 
-	nodetfpath := path.Join(d.getFolder(node.Region, node.NodeId), "do")
+	nodetfpath := path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir)
 
 	// check if dir present
 	if _, err := os.Stat(path.Join(nodetfpath, "init.sh")); err != nil && os.IsNotExist(err) {
@@ -174,7 +177,7 @@ func (d *doProvider) DeleteNode(node DoNode) error {
 // AttachNode implements ProviderClient
 func (d *doProvider) AttachNode(node DoNode) error {
 
-	out, err := getOutput(path.Join(d.getFolder(node.Region, node.NodeId), "do"), "node-ip")
+	out, err := getOutput(path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir), "node-ip")
 
 	if err != nil {
 		return err
@@ -209,16 +212,26 @@ func (d *doProvider) AttachNode(node DoNode) error {
 		return l
 	}()
 
+	taints := func() string {
+		t := ""
+
+		for _, v := range d.taints {
+			t += fmt.Sprintf(" --node-taint %s", v)
+		}
+
+		return t
+	}()
+
 	if err = execCmd(
 		fmt.Sprintf("ssh -oStrictHostKeyChecking=no -i %s/id_rsa root@%s %q",
 			d.sshKeyPath,
 			out,
 
 			fmt.Sprintf(
-				"curl -sfL https://get.k3s.io | sh -s - agent  --token=%s --server %s --node-ip=%s %s",
+				"curl -sfL https://get.k3s.io | sh -s - agent  --token=%s --server %s --node-ip=%s %s %s --node-name %s",
 				d.joinToken,
 				d.serverUrl,
-				out, labels),
+				out, labels, taints, node.NodeId),
 		),
 		"attaching node to cluster",
 	); err != nil {
@@ -241,7 +254,7 @@ type DoProvider struct {
 	AccountId string
 }
 
-type ProviderEnv struct {
+type DoProviderEnv struct {
 	ServerUrl  string
 	SshKeyPath string
 
@@ -250,9 +263,10 @@ type ProviderEnv struct {
 
 	JoinToken string
 	Labels    map[string]string
+	Taints    []string
 }
 
-func NewDOProvider(provider DoProvider, p ProviderEnv) doProviderClient {
+func NewDOProvider(provider DoProvider, p DoProviderEnv) doProviderClient {
 	return &doProvider{
 		serverUrl:   p.ServerUrl,
 		joinToken:   p.JoinToken,
@@ -263,5 +277,6 @@ func NewDOProvider(provider DoProvider, p ProviderEnv) doProviderClient {
 		storePath:   p.StorePath,
 		tfTemplates: p.TfTemplates,
 		labels:      p.Labels,
+		taints:      p.Taints,
 	}
 }
