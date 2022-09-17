@@ -43,9 +43,9 @@ func destroyNode(folder string, values map[string]string) error {
 		return err
 	}
 
-	// os.RemoveAll(folder)
+	return os.RemoveAll(folder)
 
-	return err
+	// return err
 }
 
 func getOutput(folder, key string) (string, error) {

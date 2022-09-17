@@ -1,13 +1,24 @@
-provider "aws" {
-  region = lookup(var.awsprops, "region")
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16"
+    }
+  }
+
+  required_version = ">= 1.2.0"
 }
 
-resource "aws_security_group" "project-iac-sg" {
-  name = lookup(var.awsprops, "secgroupname")
-  description = lookup(var.awsprops, "secgroupname")
-  vpc_id = lookup(var.awsprops, "vpc")
+provider "aws" {
+  region  = var.region
+  access_key = var.access_key
+  secret_key = var.secret_key
+}
 
-  // To Allow SSH Transport
+resource "aws_security_group" "sg" {
+  # name = "${var.node_id}-sg"
+
+
   ingress {
     from_port = 22
     protocol = "tcp"
@@ -18,8 +29,36 @@ resource "aws_security_group" "project-iac-sg" {
   // To Allow Port 80 Transport
   ingress {
     from_port = 80
-    protocol = ""
+    protocol = "tcp"
     to_port = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 443
+    protocol = "tcp"
+    to_port = 443
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 6443
+    protocol = "tcp"
+    to_port = 6443
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 10250
+    protocol = "tcp"
+    to_port = 10250
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 30000
+    protocol = "0"
+    to_port = 32767
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -30,40 +69,34 @@ resource "aws_security_group" "project-iac-sg" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
 
-  lifecycle {
-    create_before_destroy = true
-  }
+  # lifecycle {
+  #   create_before_destroy = true
+  # }
 }
+
 
 
 resource "aws_instance" "byoc-node" {
-  ami = lookup(var.awsprops, "ami")
-  instance_type = lookup(var.awsprops, "itype")
-  subnet_id = lookup(var.awsprops, "subnet") #FFXsubnet2
-  associate_public_ip_address = lookup(var.awsprops, "publicip")
-  key_name = lookup(var.awsprops, "keyname")
+  ami           = var.ami
+  instance_type = var.instance_type
 
+  security_groups = [aws_security_group.sg.name]
 
-  vpc_security_group_ids = [
-    aws_security_group.project-iac-sg.id
-  ]
-  root_block_device {
-    delete_on_termination = true
-    iops = 150
-    volume_size = 50
-    volume_type = "gp2"
-  }
+  user_data = templatefile("./init.sh", {
+    pubkey = file("${var.keys-path}/access.pub")
+    hostname = var.node_id
+  })
+
   tags = {
-    Name ="SERVER01"
-    Environment = "DEV"
-    OS = "UBUNTU"
-    Managed = "IAC"
+    Name = var.node_id
   }
-
-  depends_on = [ aws_security_group.project-iac-sg ]
 }
 
 
-output "ec2instance" {
-  value = aws_instance.project-iac.public_ip
+output "node-ip" {
+  value =  aws_instance.byoc-node.public_ip
+}
+
+output "node-name" {
+  value =  var.node_id
 }
