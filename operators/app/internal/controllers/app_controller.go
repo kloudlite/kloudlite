@@ -21,7 +21,6 @@ import (
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
-	rawJson "operators.kloudlite.io/lib/raw-json"
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,6 +63,14 @@ func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 
 	req.Logger.Infof("NEW RECONCILATION")
 
+	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	// TODO: initialize all checks here
 	if step := req.EnsureChecks(AppReady, HPAReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -92,22 +99,6 @@ func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 
 func (r *AppReconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	return req.Finalize()
-}
-
-func (r *AppReconciler) cleanup(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-
-	obj.Status.Message = rawJson.RawJson{}
-	obj.Status.Messages = []rApi.ContainerMessage{}
-	obj.Status.Conditions = nil
-	obj.Status.OpsConditions = nil
-	obj.Status.ChildConditions = nil
-	obj.Status.DisplayVars = rawJson.RawJson{}
-
-	if err := r.Status().Update(ctx, obj); err != nil {
-		return req.FailWithOpError(err)
-	}
-	return req.Next()
 }
 
 func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result {
@@ -151,13 +142,11 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 		)
 
 		if err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(AppReady, check).Err(nil)
+			return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
 		}
 
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(AppReady, check).Err(nil)
+			return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
 		}
 
 		return req.UpdateStatus()
@@ -165,8 +154,7 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 
 	cds, err := conditions.FromObject(deployment)
 	if err != nil {
-		check.Message = err.Error()
-		return req.CheckFailed(AppReady, check).Err(nil)
+		return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
 	}
 
 	deploymentIsReady := meta.IsStatusConditionTrue(cds, "Available")
@@ -184,28 +172,29 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 				Namespace: obj.Namespace,
 			},
 		); err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(AppReady, check)
+			return req.CheckFailed(AppReady, check, err.Error())
 		}
 
 		pMessages := rApi.GetMessagesFromPods(podList.Items...)
 		bMsg, err := json.Marshal(pMessages)
 		if err != nil {
 			check.Message = err.Error()
-			return req.CheckFailed(AppReady, check)
+			return req.CheckFailed(AppReady, check, err.Error())
 		}
 		check.Message = string(bMsg)
-		return req.CheckFailed(AppReady, check)
+		return req.CheckFailed(AppReady, check, err.Error())
 	}
 
 	if err := obj.Status.DisplayVars.Set("readyRplicas", deployment.Status.ReadyReplicas); err != nil {
-		check.Message = err.Error()
-		return req.CheckFailed(AppReady, check)
+		return req.CheckFailed(AppReady, check, err.Error())
 	}
 
 	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {
-		check.Message = fmt.Sprintf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas)
-		return req.CheckFailed(AppReady, check)
+		return req.CheckFailed(
+			AppReady,
+			check,
+			fmt.Sprintf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas),
+		)
 	}
 
 	check.Status = true
