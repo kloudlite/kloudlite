@@ -1,14 +1,27 @@
-variable "awsprops" {
-    type = "map"
-    default = {
-    region = "us-east-1"
-    vpc = "vpc-5234832d"
-    ami = "ami-0c1bea58988a989155"
-    itype = "t2.micro"
-    subnet = "subnet-81896c8e"
-    publicip = true
-    keyname = "myseckey"
-    secgroupname = "IAC-Sec-Group"
-  }
+variable "access_key" {
+  default = ""
 }
 
+variable "secret_key" {
+  default = ""
+}
+
+variable "region"{
+    default = ""
+}
+
+variable "node_id"{
+  default = ""
+}
+
+variable "instance_type"{
+  default = ""
+}
+
+variable "keys-path" {
+  default = ""
+}
+
+variable "ami" {
+  default = ""
+}
