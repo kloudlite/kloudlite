@@ -4,7 +4,6 @@
 {{- $domains := get . "domains" }}
 {{- $wildcardDomains := get . "wildcard-domains"}}
 
-
 {{- $router := get . "router-ref"}}
 {{- $routes := get . "routes" }}
 {{- $ownerRefs := get . "owner-refs"}}
@@ -61,8 +60,6 @@ spec:
     {{- range $v := $wildcardDomains}}
     - hosts:
         - {{printf "*.%s" $v | squote}}
-{{/*      secretName: "kl-init-cert-manager/kl-cert-issuer-tls"*/}}
-      secretName: "kl-cert-issuer-tls"
     {{- end}}
   rules:
     {{- range $domain := .Spec.Domains }}
