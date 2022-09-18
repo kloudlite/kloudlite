@@ -129,11 +129,11 @@ func isNonWildcardDomain(wildcardDomains []string, domain string) bool {
 }
 
 func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	ctx, router, checks := req.Context(), req.Object, req.Object.Status.Checks
+	_, router, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: router.Generation}
 
-	accRef := router.GetLabels()[constants.AccountRef]
+	// accRef := router.GetLabels()[constants.AccountRef]
 
 	routerCfg := r.readFromProjectConfig(req)
 	nonWildCardDomains := make([]string, 0, len(router.Spec.Domains))
@@ -172,82 +172,84 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 		}
 	}
 
-	ingExists := true
+	// ingExists := true
 
-	for i := range ingressList {
-		_, err := rApi.Get(ctx, r.Client, fn.NN(router.Namespace, ingressList[i]), &networkingv1.Ingress{})
+	// for i := range ingressList {
+	// 	_, err := rApi.Get(ctx, r.Client, fn.NN(router.Namespace, ingressList[i]), &networkingv1.Ingress{})
+	// 	if err != nil {
+	// 		req.Logger.Infof("ingress (%s) does not exist, creating it now...", fn.NN(router.Namespace, ingressList[i]).String())
+	// 		ingExists = false
+	// 	}
+	// }
+	//
+	// if !ingExists || check.Generation > checks[IngressReady].Generation {
+	var kubeYamls [][]byte
+
+	for lName, lRoutes := range lambdaGroups {
+		ingName := fmt.Sprintf("r-%s-lambda-%s", router.Name, lName)
+
+		b, err := templates.Parse(
+			templates.CoreV1.Ingress, map[string]any{
+				"name":       ingName,
+				"namespace":  router.Namespace,
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(router, true)},
+
+				"domains":          nonWildCardDomains,
+				"wildcard-domains": routerCfg.WildcardDomains,
+
+				"router-ref":       router,
+				"routes":           lRoutes,
+				"virtual-hostname": fmt.Sprintf("%s.%s", lName, router.Namespace),
+
+				// "ingress-class": "ingress-nginx-" + accRef,
+				"ingress-class": "ingress-nginx",
+
+				"cluster-issuer":     r.env.ClusterCertIssuer,
+				"cert-ingress-class": r.env.GlobalIngressClass,
+			},
+		)
 		if err != nil {
-			req.Logger.Infof("ingress (%s) does not exist, creating it now...", fn.NN(router.Namespace, ingressList[i]).String())
-			ingExists = false
+			return req.FailWithOpError(err).Err(nil)
 		}
+		if err != nil {
+			return req.FailWithOpError(
+				errors.NewEf(err, "could not parse (template=%s)", templates.Ingress),
+			).Err(nil)
+		}
+		kubeYamls = append(kubeYamls, b)
 	}
 
-	if !ingExists || check.Generation > checks[IngressReady].Generation {
-		var kubeYamls [][]byte
-
-		for lName, lRoutes := range lambdaGroups {
-			ingName := fmt.Sprintf("r-%s-lambda-%s", router.Name, lName)
-
-			b, err := templates.Parse(
-				templates.CoreV1.Ingress, map[string]any{
-					"name":       ingName,
-					"namespace":  router.Namespace,
-					"owner-refs": []metav1.OwnerReference{fn.AsOwner(router, true)},
-
-					"domains":          nonWildCardDomains,
-					"wildcard-domains": routerCfg.WildcardDomains,
-
-					"router-ref":       router,
-					"routes":           lRoutes,
-					"virtual-hostname": fmt.Sprintf("%s.%s", lName, router.Namespace),
-
-					"ingress-class": "ingress-nginx-" + accRef,
-
-					"cluster-issuer":     r.env.ClusterCertIssuer,
-					"cert-ingress-class": r.env.GlobalIngressClass,
+	if len(appRoutes) > 0 {
+		b, err := templates.Parse(
+			templates.CoreV1.Ingress, map[string]any{
+				"name":             router.Name,
+				"namespace":        router.Namespace,
+				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(router, true)},
+				"domains":          nonWildCardDomains,
+				"wildcard-domains": routerCfg.WildcardDomains,
+				"labels": map[string]any{
+					constants.RouterNameKey: router.Name,
 				},
-			)
-			if err != nil {
-				return req.FailWithOpError(err).Err(nil)
-			}
-			if err != nil {
-				return req.FailWithOpError(
-					errors.NewEf(err, "could not parse (template=%s)", templates.Ingress),
-				).Err(nil)
-			}
-			kubeYamls = append(kubeYamls, b)
-		}
+				"router-ref": router,
+				"routes":     appRoutes,
 
-		if len(appRoutes) > 0 {
-			b, err := templates.Parse(
-				templates.CoreV1.Ingress, map[string]any{
-					"name":             router.Name,
-					"namespace":        router.Namespace,
-					"owner-refs":       []metav1.OwnerReference{fn.AsOwner(router, true)},
-					"domains":          nonWildCardDomains,
-					"wildcard-domains": routerCfg.WildcardDomains,
-					"labels": map[string]any{
-						constants.RouterNameKey: router.Name,
-					},
-					"router-ref": router,
-					"routes":     appRoutes,
-
-					"ingress-class":      "ingress-nginx-" + accRef,
-					"cluster-issuer":     r.env.ClusterCertIssuer,
-					"cert-ingress-class": r.env.GlobalIngressClass,
-				},
-			)
-			if err != nil {
-				return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
-			}
-
-			kubeYamls = append(kubeYamls, b)
-		}
-
-		if err := fn.KubectlApplyExec(req.Context(), kubeYamls...); err != nil {
+				// "ingress-class":      "ingress-nginx-" + accRef,
+				"ingress-class":      "ingress-nginx",
+				"cluster-issuer":     r.env.ClusterCertIssuer,
+				"cert-ingress-class": r.env.GlobalIngressClass,
+			},
+		)
+		if err != nil {
 			return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
 		}
+
+		kubeYamls = append(kubeYamls, b)
 	}
+
+	if err := fn.KubectlApplyExec(req.Context(), kubeYamls...); err != nil {
+		return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
+	}
+	// }
 
 	check.Status = true
 	if check != checks[IngressReady] {
