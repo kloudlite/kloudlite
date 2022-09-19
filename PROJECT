@@ -394,4 +394,12 @@ resources:
   kind: ACLConfigMap
   path: operators.kloudlite.io/apis/redis.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: zookeeper.msvc
+  kind: Service
+  path: operators.kloudlite.io/apis/zookeeper.msvc/v1
+  version: v1
 version: "3"

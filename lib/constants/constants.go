@@ -93,6 +93,11 @@ var (
 		APIVersion: MsvcApiVersion,
 	}
 
+	HelmZookeeperType = metav1.TypeMeta{
+		Kind:       "HelmZookeeper",
+		APIVersion: MsvcApiVersion,
+	}
+
 	HelmInfluxDBType = metav1.TypeMeta{
 		Kind:       "HelmInfluxDB",
 		APIVersion: MsvcApiVersion,

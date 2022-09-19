@@ -155,6 +155,8 @@ const (
 
 	ProjectRBAC   templateFile = "templates/project-rbac.yml.tpl"
 	ProjectHarbor templateFile = "templates/project-harbor.yml.tpl"
+
+	MsvcHelmZookeeper templateFile = "templates/msvc/zookeeper/helm.tpl.yml"
 )
 
 var CoreV1 = struct {
