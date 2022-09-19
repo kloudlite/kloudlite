@@ -915,3 +915,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - zookeeper.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - zookeeper.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - zookeeper.msvc.kloudlite.io
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update

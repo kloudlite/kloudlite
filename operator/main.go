@@ -64,6 +64,7 @@ import (
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
+	zookeepermsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
 	mongodbexternalcontrollers "operators.kloudlite.io/controllers/mongodb.external"
 	mysqlexternalcontrollers "operators.kloudlite.io/controllers/mysql.external"
 	redpandamsvccontrollers "operators.kloudlite.io/controllers/redpanda.msvc"
@@ -96,6 +97,7 @@ func init() {
 	utilruntime.Must(mongodbmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(redismsvcv1.AddToScheme(scheme))
 	utilruntime.Must(mysqlmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(zookeepermsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
