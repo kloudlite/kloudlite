@@ -163,7 +163,7 @@ func (r *ACLAccountReconciler) reconcileStatus(req *rApi.Request[*redisStandalon
 
 		// acl-config
 		aclCfg, err := rApi.Get(
-			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s-acl-accounts", msvc.Name)),
+			ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s-acl-account", msvc.Name)),
 			&corev1.ConfigMap{},
 		)
 		if err != nil {

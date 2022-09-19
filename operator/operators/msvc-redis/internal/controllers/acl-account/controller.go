@@ -1,36 +1,27 @@
-{{- /*variables*/ -}}
-{{- $package := get . "package" -}}
-{{- $kind := get . "kind" -}}
-{{- $kindPkg := get . "kind-pkg" -}}
-{{- $kindPlural := get . "kind-plural" -}}
-{{- $apiGroup := get . "api-group" -}}
-
-{{- $reconType := printf "%sReconciler" .kind -}}
-{{- $kindObjName := printf "%s.%s" $kindPkg $kind -}}
-
-package {{$package}}
+package aclaccount
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
-	"encoding/json"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
+	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
-	libMongo "operators.kloudlite.io/lib/mongo"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
+	libRedis "operators.kloudlite.io/lib/redis"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -38,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-type {{$reconType}} struct {
+type Reconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
 	env       *env.Env
@@ -47,29 +38,27 @@ type {{$reconType}} struct {
 	Name      string
 }
 
-func (r *{{$reconType}}) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
 const (
-	AccessCredsReady string = "access-creds"
+	AccessCredsReady string = "access-creds-ready"
+	ACLUserReady     string = "acl-user-ready"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
 )
 
-type Output struct {
-	DbUser     string `json:"DB_USER"`
-	DbPassword string `json:"DB_PASSWORD"`
-	DbHosts    string `json:"DB_HOSTS"`
-	DbName     string `json:"DB_NAME"`
-	DbUrl      string `json:"DB_URL"`
-}
+const (
+	KeyMsvcOutput string = "msvc-output"
+	KeyOutput     string = "output"
+)
 
-// +kubebuilder:rbac:groups={{$apiGroup}},resources={{$kindPlural}},verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups={{$apiGroup}},resources={{$kindPlural}}/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups={{$apiGroup}},resources={{$kindPlural}}/finalizers,verbs=update
+// +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=aclaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=aclaccounts/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=aclaccounts/finalizers,verbs=update
 
-func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &{{$kindPkg}}.{{$kind}}{})
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &redisMsvcv1.ACLAccount{})
 
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -93,7 +82,7 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
 	}
 
 	// TODO: initialize all checks here
-	if step := req.EnsureChecks(AccessCredsReady, DBUserReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(AccessCredsReady, ACLUserReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -109,11 +98,11 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconDBCreds(req); !step.ShouldProceed() {
+	if step := r.reconAccessCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconDBUser(req); !step.ShouldProceed() {
+	if step := r.reconACLUser(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -122,11 +111,11 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
 	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
-func (r *{{$reconType}}) finalize(req *rApi.Request[*{{$kindPkg}}.{{$kind}}]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *{{$reconType}}) reconOwnership(req *rApi.Request[*{{$kindPkg}}.{{$kind}}]) stepResult.Result {
+func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -161,7 +150,31 @@ func (r *{{$reconType}}) reconOwnership(req *rApi.Request[*{{$kindPkg}}.{{$kind}
 	return req.Next()
 }
 
-func (r *{{$reconType}}) reconDBCreds(req *rApi.Request[*{{$kindPkg}}.{{$kind}}]) stepResult.Result {
+func parseMsvcOutput(scrt *corev1.Secret) (*types.MsvcOutput, error) {
+	b, err := json.Marshal(scrt)
+	if err != nil {
+		return nil, err
+	}
+	var output types.MsvcOutput
+	if err := json.Unmarshal(b, &output); err != nil {
+		return nil, err
+	}
+	return &output, nil
+}
+
+func parseMresOutput(scrt *corev1.Secret) (*types.MresOutput, error) {
+	b, err := json.Marshal(scrt)
+	if err != nil {
+		return nil, err
+	}
+	var output types.MresOutput
+	if err := json.Unmarshal(b, &output); err != nil {
+		return nil, err
+	}
+	return &output, nil
+}
+
+func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -173,21 +186,30 @@ func (r *{{$reconType}}) reconDBCreds(req *rApi.Request[*{{$kindPkg}}.{{$kind}}]
 	}
 
 	// msvc output ref
-	msvcOutput, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error())
+		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error()).Err(nil)
+	}
+
+	msvcOutput, err := parseMsvcOutput(msvcSecret)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}
 
 	if accessSecret == nil {
-		dbPasswd := fn.CleanerNanoid(40)
-		hosts := string(msvcOutput.Data["DB_HOSTS"])
-
+		passwd := fn.CleanerNanoid(40)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
 				"name":       accessSecretName,
 				"namespace":  obj.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"string-data": Output{},
+				"string-data": types.MresOutput{
+					Hosts:    msvcOutput.Hosts,
+					Password: passwd,
+					Username: obj.Name,
+					Prefix:   obj.Name,
+					Uri:      fmt.Sprintf("redis://%s:%s@%s?allowUsernameInURI=true", obj.Name, passwd, msvcOutput.Hosts),
+				},
 			},
 		)
 		if err != nil {
@@ -202,52 +224,74 @@ func (r *{{$reconType}}) reconDBCreds(req *rApi.Request[*{{$kindPkg}}.{{$kind}}]
 		return req.UpdateStatus()
 	}
 
+	mresOutput, err := parseMresOutput(accessSecret)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	}
+
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
 		return req.UpdateStatus()
 	}
 
-	b, err := json.Marshal(accessSecret.Data)
-	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	}
-
-	var output Output
-		if err := json.Unmarshal(b, &output); err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	}
-
-	rApi.SetLocal(req, "output", output)
-
+	rApi.SetLocal(req, KeyMsvcOutput, msvcOutput)
+	rApi.SetLocal(req, KeyOutput, mresOutput)
 	return req.Next()
 }
 
-func (r *{{$reconType}}) reconDBUser(req *rApi.Request[*{{$kindPkg}}.{{$kind}}]) stepResult.Result {
+func (r *Reconciler) reconACLUser(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	accessCreds, ok := rApi.GetLocal[Output](req, "output")
+	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
 	if !ok {
-		return req.CheckFailed(DBUserReady, check, "key 'output' does not exist in req-locals")
+		return req.CheckFailed(ACLUserReady, check, fmt.Sprintf("key %q does not exist in req-locals", KeyMsvcOutput))
+	}
+
+	output, ok := rApi.GetLocal[types.MresOutput](req, KeyOutput)
+	if !ok {
+		return req.CheckFailed(ACLUserReady, check, fmt.Sprintf("key %q does not exist in req-locals", KeyOutput))
+	}
+
+	redisCli, err := libRedis.NewClient(msvcOutput.Hosts, "", msvcOutput.RootPassword)
+	if err != nil {
+		return req.CheckFailed(ACLUserReady, check, err.Error())
+	}
+	defer redisCli.Close()
+
+	tCtx, _ := context.WithTimeout(ctx, 3*time.Second)
+	exists, err := redisCli.UserExists(tCtx, obj.Name)
+	if err != nil {
+		return req.CheckFailed(ACLUserReady, check, err.Error())
+	}
+
+	if !exists {
+		tCtx, _ := context.WithTimeout(ctx, 3*time.Second)
+		if err := redisCli.UpsertUser(tCtx, output.Prefix, output.Username, output.Password); err != nil {
+			return req.CheckFailed(ACLUserReady, check, err.Error())
+		}
+	}
+
+	check.Status = true
+	if check != checks[ACLUserReady] {
+		checks[ACLUserReady] = check
+		return req.UpdateStatus()
 	}
 
 	return req.Next()
 }
 
-func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.env = envVars
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&{{$kindPkg}}.{{$kind}}{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.ACLAccount{})
 	builder.Owns(&corev1.Secret{})
 
-	watchList := []client.Object{
-{{/*		&mongodbMsvcv1.StandaloneService{},*/}}
-{{/*		&mongodbMsvcv1.ClusterService{},*/}}
-	}
+	watchList := []client.Object{}
 
 	for i := range watchList {
 		builder.Watches(
@@ -258,7 +302,7 @@ func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, lo
 						return nil
 					}
 
-					var dbList {{$kindPkg}}.{{$kind}}List
+					var dbList redisMsvcv1.ACLAccountList
 					if err := r.List(
 						context.TODO(), &dbList, &client.ListOptions{
 							LabelSelector: labels.SelectorFromValidatedSet(

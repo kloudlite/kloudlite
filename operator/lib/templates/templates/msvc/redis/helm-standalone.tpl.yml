@@ -1,10 +1,10 @@
 {{- $obj := get . "object"}}
 {{- $ownerRefs := get . "owner-refs" }}
 {{- $storageClass := get . "storage-class"}}
-{{/*{{- $aclAccountsMap := get . "acl-accounts-map"}}*/}}
+{{/*{{- $aclAccountsMap := get . "acl-account-map"}}*/}}
 
 {{/*{{- $freeze := get . "freeze" | default false}}*/}}
-{{- $aclConfigmap := get . "acl-configmap"  -}}
+{{- $aclConfigmapName := get . "acl-configmap-name"  -}}
 {{- $rootPassword := get . "root-password"  -}}
 
 {{/*{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}*/}}
@@ -45,7 +45,7 @@ spec:
 
   architecture: standalone
 
-  existingConfigmap: {{$aclConfigmap}}
+  existingConfigmap: {{$aclConfigmapName}}
 {{/*  commonConfiguration: |+*/}}
 {{/*    {{- if $aclAccountsMap}}*/}}
 {{/*    {{- range $k, $v := $aclAccountsMap}}*/}}
