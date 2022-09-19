@@ -1,0 +1,24 @@
+# permissions for end users to edit aclconfigmaps.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: aclconfigmap-editor-role
+rules:
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - aclconfigmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - aclconfigmaps/status
+  verbs:
+  - get

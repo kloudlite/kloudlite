@@ -88,3 +88,9 @@ func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
 // 	}
 // 	return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
 // }
+
+type MsvcRef struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+}

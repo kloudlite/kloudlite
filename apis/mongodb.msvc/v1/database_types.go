@@ -2,6 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
@@ -9,15 +10,9 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-type MsvcRef struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-}
-
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	MsvcRef MsvcRef `json:"msvcRef"`
+	MsvcRef ct.MsvcRef `json:"msvcRef"`
 }
 
 // +kubebuilder:object:root=true

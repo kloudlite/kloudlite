@@ -5,30 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: standaloneservices.redis.msvc.kloudlite.io
+  name: aclconfigmaps.redis.msvc.kloudlite.io
 spec:
   group: redis.msvc.kloudlite.io
   names:
-    kind: StandaloneService
-    listKind: StandaloneServiceList
-    plural: standaloneservices
-    singular: standaloneservice
+    kind: ACLConfigMap
+    listKind: ACLConfigMapList
+    plural: aclconfigmaps
+    singular: aclconfigmap
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - jsonPath: .spec.cloudProvider.cloud
-      name: Cloud
-      type: string
-    - jsonPath: .spec.replicaCount
-      name: ReplicaCount
-      type: integer
-    - jsonPath: .status.isReady
-      name: Status
-      type: boolean
-    name: v1
+  - name: v1
     schema:
       openAPIV3Schema:
-        description: StandaloneService is the Schema for the standaloneservices API
+        description: ACLConfigMap is the Schema for the aclconfigmaps API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -43,67 +33,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: StandaloneServiceSpec defines the desired state of StandaloneService
-            properties:
-              cloudProvider:
-                properties:
-                  account:
-                    type: string
-                  cloud:
-                    enum:
-                    - do
-                    - aws
-                    - gcp
-                    - azure
-                    - k3s-local
-                    type: string
-                  region:
-                    type: string
-                required:
-                - cloud
-                - region
-                type: object
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
-              replicaCount:
-                default: 1
-                type: integer
-              resources:
-                properties:
-                  cpu:
-                    properties:
-                      max:
-                        pattern: '[\d]+m$'
-                        type: string
-                      min:
-                        pattern: '[\d]+m$'
-                        type: string
-                    required:
-                    - max
-                    - min
-                    type: object
-                  memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
-                required:
-                - cpu
-                - memory
-                type: object
-              storage:
-                properties:
-                  size:
-                    default: 5Gi
-                    pattern: '[\d]+Gi$'
-                    type: string
-                  storageClass:
-                    type: string
-                type: object
-            required:
-            - cloudProvider
-            - resources
-            - storage
+            description: ACLConfigMapSpec defines the desired state of ACLConfigMap
             type: object
           status:
             properties:

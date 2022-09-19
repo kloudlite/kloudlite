@@ -44,7 +44,7 @@ func (r *ServiceReconciler) GetName() string {
 
 const (
 	RedisPasswordKey  string = "redis-password"
-	KeyAclAccountsMap string = "acl-accounts-map"
+	KeyAclAccountsMap string = "acl-account-map"
 )
 
 const (
@@ -52,7 +52,7 @@ const (
 )
 
 func getACLConfigmapName(name string) string {
-	return fmt.Sprintf("msvc-%s-acl-accounts", name)
+	return fmt.Sprintf("msvc-%s-acl-account", name)
 }
 
 // +kubebuilder:rbac:groups=redis-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -254,10 +254,10 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 	}
 	b1, err := templates.Parse(
 		templates.RedisStandalone, map[string]any{
-			"object":           obj,
-			"storage-class":    storageClass,
-			"freeze":           obj.GetLabels()[constants.LabelKeys.Freeze],
-			"acl-accounts-map": aclAccountsMap,
+			"object":          obj,
+			"storage-class":   storageClass,
+			"freeze":          obj.GetLabels()[constants.LabelKeys.Freeze],
+			"acl-account-map": aclAccountsMap,
 			"owner-refs": []metav1.OwnerReference{
 				fn.AsOwner(obj, true),
 			},
@@ -308,7 +308,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redisStandalo
 		if err := r.Create(
 			ctx, &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("msvc-%s-acl-accounts", obj.Name),
+					Name:      fmt.Sprintf("msvc-%s-acl-account", obj.Name),
 					Namespace: obj.Namespace,
 					OwnerReferences: []metav1.OwnerReference{
 						fn.AsOwner(obj, true),

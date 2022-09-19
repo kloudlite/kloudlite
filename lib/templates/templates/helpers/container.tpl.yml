@@ -16,7 +16,7 @@
   {{- end}}
 
   {{- if .Env }}
-  env: {{- include "TemplateEnv" .Env | indent 6 }}
+  env: {{- include "TemplateEnv" .Env | nindent 4 }}
   {{- end }}
 
   {{- if .EnvFrom }}

@@ -710,6 +710,32 @@ rules:
 - apiGroups:
   - redis.msvc.kloudlite.io
   resources:
+  - aclaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - aclaccounts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - aclaccounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
   - standaloneservices
   verbs:
   - create

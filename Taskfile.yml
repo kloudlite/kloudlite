@@ -161,10 +161,13 @@ tasks:
         msg: 'var EnvName must have a value'
       - sh: test -n '{{.Tag}}'
         msg: 'var Tag must have a value'
+      - sh: test -n '{{.ImagePullPolicy}}'
+        msg: 'var ImagePullPolicy must be set'
     vars:
       Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
       Namespace: kl-init-operators
       SvcAccountName: kloudlite-cluster-svc-account
+#       ImagePullPolicy: IfNotPresent
     cmds:
       - |+
         kustomize build config/default | yq '
@@ -179,6 +182,7 @@ tasks:
             .spec.template.spec.containers | map_values(
               if .name == "manager" then
                 .image = "{{.Image}}" |
+                .imagePullPolicy = "{{.ImagePullPolicy}}" |
                 .resources.limits = {} |
                 .resources.requests.cpu = "64m" |
                 .resources.requests.memory = "128Mi"
@@ -216,6 +220,19 @@ tasks:
 
     cmds:
       - eval {{.KLOP}} msvc-controller create {{.CLI_ARGS}}
+
+  new:mres-controller:
+    silent: true
+    vars:
+      KLOP:
+        sh: echo $PWD/bin/klop
+    summary: |+
+      example:
+        task new:msvc-controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
+      {{.KLOP}} msvc-controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
+
+    cmds:
+      - eval {{.KLOP}} mres-controller create {{.CLI_ARGS}}
 
   install:cmd:
     cmds:
