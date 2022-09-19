@@ -35,6 +35,7 @@ func (d *domainI) doWithDO() error {
 		fmt.Println("here")
 		return err
 	}
+
 	var doConf doConfig
 	e := yaml.Unmarshal(out, &doConf)
 	if e != nil {

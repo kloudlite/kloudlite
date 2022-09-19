@@ -17,7 +17,7 @@ provider "digitalocean" {
 
 resource "digitalocean_droplet" "byoc-node"  {
   image    = var.do-image-id
-  name     = "${var.cluster-id}-byoc-${var.nodeId}"
+  name     = var.nodeId
   region = var.region
   size     = var.size
   ssh_keys = var.ssh_keys
