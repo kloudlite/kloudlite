@@ -175,7 +175,7 @@ func (r *{{$reconType}}) reconHelm(req *rApi.Request[*{{$kindObjName}}]) stepRes
   check := rApi.Check{Generation: obj.Generation}
 
   helmRes, err := rApi.Get(
-    ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMongoDBType),
+    ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(/* TODO: (user) */),
   )
   if err != nil {
     req.Logger.Infof("helm reosurce (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
@@ -194,13 +194,7 @@ func (r *{{$reconType}}) reconHelm(req *rApi.Request[*{{$kindObjName}}]) stepRes
     }
 
     b, err := templates.Parse(
-      templates.MongoDBStandalone, map[string]any{
-        "object":        obj,
-        "freeze":        obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
-        "storage-class": storageClass,
-        "owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-        "root-password": rootPassword,
-      },
+      // TODO: (user)
     )
 
     if err := fn.KubectlApplyExec(ctx, b); err != nil {
