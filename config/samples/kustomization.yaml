@@ -55,4 +55,5 @@ resources:
 - mysql.msvc_v1_clusterservice.yaml
 - mysql.msvc_v1_database.yaml
 - redis.msvc_v1_aclconfigmap.yaml
+- zookeeper.msvc_v1_service.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
