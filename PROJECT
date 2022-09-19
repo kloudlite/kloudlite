@@ -386,4 +386,12 @@ resources:
   kind: Database
   path: operators.kloudlite.io/apis/mysql.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: redis.msvc
+  kind: ACLConfigMap
+  path: operators.kloudlite.io/apis/redis.msvc/v1
+  version: v1
 version: "3"

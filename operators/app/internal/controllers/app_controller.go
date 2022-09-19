@@ -111,7 +111,7 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 		req.Logger.Infof("deployment %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
 	}
 
-	svc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
+	_, err = rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
 	if err != nil {
 		req.Logger.Infof("service %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
 	}
@@ -121,35 +121,29 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 	// 	req.Logger.Infof("service %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name+"-internal"))
 	// }
 
-	if deployment == nil || svc == nil || check.Generation > checks[AppReady].Generation {
+	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
-		volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
+	b, err := templates.Parse(
+		templates.CrdsV1.App, map[string]any{
+			"object":        obj,
+			"volumes":       volumes,
+			"volume-mounts": vMounts,
+			"freeze":        obj.GetLabels()[constants.LabelKeys.Freeze] == "true" || obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
+			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
-		b, err := templates.Parse(
-			templates.CrdsV1.App, map[string]any{
-				"object":        obj,
-				"volumes":       volumes,
-				"volume-mounts": vMounts,
-				"freeze": obj.GetLabels()[constants.LabelKeys.Freeze] == "true" || obj.GetLabels()[constants.LabelKeys.
-					IsIntercepted] == "true",
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			// for intercepting
+			"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
+			"device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
+			"account-ref":    obj.GetAnnotations()[constants.AnnotationKeys.AccountRef],
+		},
+	)
 
-				// for intercepting
-				"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
-				"device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
-				"account-ref":    obj.GetAnnotations()[constants.AnnotationKeys.AccountRef],
-			},
-		)
+	if err != nil {
+		return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
+	}
 
-		if err != nil {
-			return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
-		}
-
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
-		}
-
-		return req.UpdateStatus()
+	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
 	}
 
 	cds, err := conditions.FromObject(deployment)
@@ -182,7 +176,7 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 			return req.CheckFailed(AppReady, check, err.Error())
 		}
 		check.Message = string(bMsg)
-		return req.CheckFailed(AppReady, check, err.Error())
+		return req.CheckFailed(AppReady, check, "deployment is not ready")
 	}
 
 	if err := obj.Status.DisplayVars.Set("readyRplicas", deployment.Status.ReadyReplicas); err != nil {

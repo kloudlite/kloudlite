@@ -38,6 +38,7 @@ type Check struct {
 }
 
 // +kubebuilder:object:generate=true
+// +kubebuilder:printcolumn:JSONPath=".isReady",name=Ready,type=bool
 
 type Status struct {
 	// +kubebuilder:validation:Optional

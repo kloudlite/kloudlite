@@ -56,7 +56,6 @@ spec:
   {{- else}}
   externalName: {{.Name}}-internal.{{.Namespace}}.{{$clusterDnsSuffix}}
   {{- end }}
-
 ---
 {{- if .Spec.Services }}
 apiVersion: v1

@@ -55,7 +55,7 @@ const (
 
 const (
 	KeyRootPassword      string = "root-password"
-	KeyAclConfigMap      string = "acl-configmap"
+	KeyAclConfigMapName  string = "acl-configmap-name"
 	KeyAvailableReplicas string = "available-replicas"
 )
 
@@ -92,7 +92,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	// TODO: initialize all checks here
-	if step := req.EnsureChecks(HelmReady, StsReady, AccessCredsReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(HelmReady, StsReady, AccessCredsReady, ACLConfigMapReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -104,11 +104,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconAccessCreds(req); !step.ShouldProceed() {
+	if step := r.reconACLConfigmap(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconACLConfigmap(req); !step.ShouldProceed() {
+	if step := r.reconAccessCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -125,12 +125,66 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	req.Logger.Infof("RECONCILATION COMPLETE")
 	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	return req.Finalize()
+}
+
+func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+
+	check := rApi.Check{Generation: obj.Generation}
+
+	aclConfigmapName := "msvc-" + obj.Name + "-acl"
+
+	aclCfgMap, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, aclConfigmapName), &redisMsvcv1.ACLConfigMap{})
+	if err != nil {
+		req.Logger.Infof("acl configmap (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+	}
+
+	if aclCfgMap == nil {
+		if err := r.Create(
+			ctx, &redisMsvcv1.ACLConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ACLConfigMap",
+					APIVersion: "redis.msvc.kloudlite.io/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            aclConfigmapName,
+					Namespace:       obj.Namespace,
+					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				},
+				Spec: redisMsvcv1.ACLConfigMapSpec{},
+			},
+		); err != nil {
+			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
+		}
+
+		checks[ACLConfigMapReady] = check
+		return req.UpdateStatus()
+	}
+
+	if !aclCfgMap.Status.IsReady {
+		b, err := json.Marshal(aclCfgMap.Status.Message)
+		if err != nil {
+			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
+		}
+		return req.CheckFailed(ACLConfigMapReady, check, string(b))
+	}
+
+	check.Status = true
+	if check != checks[ACLConfigMapReady] {
+		checks[ACLConfigMapReady] = check
+		return req.UpdateStatus()
+	}
+
+	rApi.SetLocal(req, KeyAclConfigMapName, aclCfgMap.Name)
+
+	return req.Next()
 }
 
 func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
@@ -189,55 +243,6 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
-	check := rApi.Check{Generation: obj.Generation}
-
-	aclCfgMapName := "msvc-" + obj.Name + "-acl"
-
-	aclCfgMap, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, aclCfgMapName), &corev1.ConfigMap{})
-	if err != nil {
-		req.Logger.Infof("acl config map (%s) does not exist, will be creating it...", fn.NN(obj.Namespace, aclCfgMapName).String())
-	}
-
-	if aclCfgMap == nil {
-		b, err := templates.Parse(
-			templates.RedisACLConfigMap, map[string]any{
-				"name":       aclCfgMapName,
-				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
-		}
-
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
-		}
-
-		checks[ACLConfigMapReady] = check
-		return req.UpdateStatus()
-	}
-
-	if !fn.IsOwner(obj, fn.AsOwner(aclCfgMap)) {
-		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(aclCfgMap)))
-		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
-		}
-	}
-
-	check.Status = true
-	if check != checks[ACLConfigMapReady] {
-		checks[ACLConfigMapReady] = check
-		return req.UpdateStatus()
-	}
-
-	rApi.SetLocal(req, "acl-configmap", aclCfgMapName)
-	return req.Next()
-}
-
 func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
@@ -250,9 +255,9 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 	}
 
 	rootPassword, ok1 := rApi.GetLocal[string](req, KeyRootPassword)
-	aclCfgMap, ok2 := rApi.GetLocal[string](req, KeyAclConfigMap)
+	aclConfigmapName, ok2 := rApi.GetLocal[string](req, KeyAclConfigMapName)
 	if !ok1 || !ok2 {
-		return req.CheckFailed(HelmReady, check, err.Error())
+		return req.CheckFailed(HelmReady, check, fmt.Sprintf("key %s/%s not found in req locals", KeyRootPassword, KeyAclConfigMapName))
 	}
 
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
@@ -263,14 +268,18 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 
 		b, err := templates.Parse(
 			templates.RedisStandalone, map[string]any{
-				"object":        obj,
-				"freeze":        obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
-				"storage-class": storageClass,
-				"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"acl-configmap": aclCfgMap,
-				"root-password": rootPassword,
+				"object":             obj,
+				"freeze":             obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
+				"storage-class":      storageClass,
+				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"acl-configmap-name": aclConfigmapName,
+				"root-password":      rootPassword,
 			},
 		)
+
+		if err != nil {
+			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+		}
 
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
@@ -379,8 +388,8 @@ func (r *ServiceReconciler) reconOutput(req *rApi.Request[*redisMsvcv1.Standalon
 
 	if _, err := controllerutil.CreateOrUpdate(
 		ctx, r.Client, accessCreds, func() error {
-			accessCreds.StringData["HOSTS"] = strings.Join(hosts, ",")
-			accessCreds.StringData["URI"] = fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, strings.Join(hosts, ","))
+			accessCreds.Data["HOSTS"] = []byte(strings.Join(hosts, ","))
+			accessCreds.Data["URI"] = []byte(fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, strings.Join(hosts, ",")))
 			return nil
 		},
 	); err != nil {
@@ -404,6 +413,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
+	builder.Owns(&redisMsvcv1.ACLConfigMap{})
 
 	builder.Watches(
 		&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(

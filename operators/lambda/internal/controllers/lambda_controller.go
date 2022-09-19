@@ -57,15 +57,15 @@ func (r *LambdaReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 
 	req.Logger.Infof("NEW RECONCILATION")
 
-	if step := req.EnsureChecks(KnativeServingReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(KnativeServingReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -132,7 +132,7 @@ func (r *LambdaReconciler) reconLambda(req *rApi.Request[*serverlessv1.Lambda]) 
 	}
 
 	if cfgReady.Status == metav1.ConditionFalse {
-		return req.CheckFailed(KnativeServingReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(KnativeServingReady, check, "knative serving is not ready yet").Err(nil)
 	}
 
 	check.Status = true

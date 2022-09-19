@@ -153,10 +153,10 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 	var appRoutes []crdsv1.Route
 
 	for _, route := range router.Spec.Routes {
-		if !strings.HasSuffix(route.Path, "/") {
-			route.Path = route.Path + "/"
-		}
-
+		// if !strings.HasSuffix(route.Path, "/") {
+		// 	route.Path = route.Path + "/"
+		// }
+		//
 		if route.Lambda != "" {
 			if _, ok := lambdaGroups[route.Lambda]; !ok {
 				lambdaGroups[route.Lambda] = []crdsv1.Route{}
@@ -209,9 +209,6 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 			},
 		)
 		if err != nil {
-			return req.FailWithOpError(err).Err(nil)
-		}
-		if err != nil {
 			return req.FailWithOpError(
 				errors.NewEf(err, "could not parse (template=%s)", templates.Ingress),
 			).Err(nil)
@@ -237,6 +234,7 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 				"ingress-class":      "ingress-nginx",
 				"cluster-issuer":     r.env.ClusterCertIssuer,
 				"cert-ingress-class": r.env.GlobalIngressClass,
+				"virtual-hostname":   fmt.Sprintf("%s.%s", router.Name, router.Namespace),
 			},
 		)
 		if err != nil {

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -45,6 +46,14 @@ const (
 	DBUserReady      string = "db-user-ready"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
 )
+
+type Output struct {
+	DbUser     string `json:"DB_USER"`
+	DbPassword string `json:"DB_PASSWORD"`
+	DbHosts    string `json:"DB_HOSTS"`
+	DbName     string `json:"DB_NAME"`
+	DbUrl      string `json:"DB_URL"`
+}
 
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=databases/status,verbs=get;update;patch
@@ -107,6 +116,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepRe
 	return req.Finalize()
 }
 
+// ensures ManagedResource is Owned by corresponding ManagedService
 func (r *Reconciler) reconOwnership(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
@@ -163,25 +173,27 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		dbPasswd := fn.CleanerNanoid(40)
 		hosts := string(msvcOutput.Data["DB_HOSTS"])
 
-		b, err := templates.Parse(
+		output := Output{
+			DbUser:     obj.Name,
+			DbPassword: dbPasswd,
+			DbHosts:    hosts,
+			DbName:     obj.Name,
+			DbUrl:      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, hosts, obj.Name),
+		}
+
+		b2, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":       accessSecretName,
-				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"string-data": map[string]string{
-					"DB_PASSWORD": dbPasswd,
-					"DB_USER":     obj.Name,
-					"DB_HOSTS":    hosts,
-					"DB_NAME":     obj.Name,
-					"DB_URL":      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, hosts, obj.Name),
-				},
+				"name":        accessSecretName,
+				"namespace":   obj.Namespace,
+				"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"string-data": output,
 			},
 		)
 		if err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := fn.KubectlApplyExec(ctx, b2); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
@@ -195,11 +207,16 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		return req.UpdateStatus()
 	}
 
-	rApi.SetLocal(req, "db-name", obj.Name)
-	rApi.SetLocal(req, "db-user", obj.Name)
-	rApi.SetLocal(req, "db-password", string(accessSecret.Data["DB_PASSWORD"]))
-	rApi.SetLocal(req, "db-root-uri", string(msvcOutput.Data["DB_URL"]))
+	b, err := json.Marshal(accessSecret.Data)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error())
+	}
+	var output Output
+	if err := json.Unmarshal(b, &output); err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error())
+	}
 
+	rApi.SetLocal(req, "output", output)
 	return req.Next()
 }
 
@@ -207,15 +224,12 @@ func (r *Reconciler) reconDBUser(req *rApi.Request[*mongodbMsvcv1.Database]) ste
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	dbName, ok1 := rApi.GetLocal[string](req, "db-name")
-	dbUser, ok2 := rApi.GetLocal[string](req, "db-user")
-	dbPassword, ok3 := rApi.GetLocal[string](req, "db-password")
-	dbRootUri, ok4 := rApi.GetLocal[string](req, "db-root-uri")
-	if !ok1 || !ok2 || !ok3 || !ok4 {
-		return req.CheckFailed(DBUserReady, check, "key db-name/db-user/db-password/db-root-uri does not exist in req-locals")
+	accessCreds, ok := rApi.GetLocal[Output](req, "output")
+	if !ok {
+		return req.CheckFailed(DBUserReady, check, "key 'output' does not exist in req-locals")
 	}
 
-	mongoClient, err := libMongo.NewClient(dbRootUri)
+	mongoClient, err := libMongo.NewClient(accessCreds.DbUrl)
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error())
 	}
@@ -232,7 +246,7 @@ func (r *Reconciler) reconDBUser(req *rApi.Request[*mongodbMsvcv1.Database]) ste
 	}
 
 	if !userExists {
-		if err := mongoClient.UpsertUser(ctx, dbName, dbUser, dbPassword); err != nil {
+		if err := mongoClient.UpsertUser(ctx, accessCreds.DbName, accessCreds.DbUser, accessCreds.DbPassword); err != nil {
 			return req.CheckFailed(DBUserReady, check, err.Error())
 		}
 	}
