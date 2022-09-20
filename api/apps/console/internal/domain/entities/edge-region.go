@@ -4,18 +4,28 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type NodePool struct {
+	Name   string   `json:"name"`
+	Config string   `json:"config"`
+	Min    int      `json:"min"`
+	Max    int      `json:"max"`
+	Nodes  []string `bson:"nodes"`
+}
+
 type EdgeRegion struct {
 	repos.BaseEntity `bson:",inline"`
-	Name             string   `bson:"name"`
-	ProviderId       repos.ID `bson:"provider_id"`
-	Region           string   `bson:"region"`
+	Name             string     `bson:"name"`
+	ProviderId       repos.ID   `bson:"provider_id"`
+	Region           string     `bson:"region"`
+	Pools            []NodePool `bson:"pools"`
 }
 
 type CloudProvider struct {
 	repos.BaseEntity `bson:",inline"`
-	Name             string    `bson:"name"`
-	AccountId        *repos.ID `json:"account_id,omitempty" bson:"account_id"`
-	Provider         string    `json:"provider" bson:"provider"`
+	Name             string            `bson:"name"`
+	AccountId        *repos.ID         `json:"account_id,omitempty" bson:"account_id"`
+	Provider         string            `json:"provider" bson:"provider"`
+	Credentials      map[string]string `json:"credentials" bson:"credentials"`
 }
 
 var CloudProviderIndexes = []repos.IndexField{
