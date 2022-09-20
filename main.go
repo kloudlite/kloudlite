@@ -16,7 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	artifactsControllers "operators.kloudlite.io/controllers/artifacts"
-	elasticsearchControllers "operators.kloudlite.io/controllers/elasticsearch.msvc"
 	influxDbControllers "operators.kloudlite.io/controllers/influxdb.msvc"
 	mongodbStandaloneControllers "operators.kloudlite.io/controllers/mongodb-standalone.msvc"
 	mysqlStandaloneControllers "operators.kloudlite.io/controllers/mysql-standalone.msvc"
@@ -52,19 +51,15 @@ import (
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	mongodbexternalv1 "operators.kloudlite.io/apis/mongodb.external/v1"
-	mongodbmsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
 	mysqlclustermsvcv1 "operators.kloudlite.io/apis/mysql-cluster.msvc/v1"
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	mysqlexternalv1 "operators.kloudlite.io/apis/mysql.external/v1"
-	mysqlmsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
-	redismsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	zookeepermsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
 	mongodbexternalcontrollers "operators.kloudlite.io/controllers/mongodb.external"
 	mysqlexternalcontrollers "operators.kloudlite.io/controllers/mysql.external"
 	redpandamsvccontrollers "operators.kloudlite.io/controllers/redpanda.msvc"
@@ -94,10 +89,10 @@ func init() {
 	utilruntime.Must(redpandamsvcv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbexternalv1.AddToScheme(scheme))
 	utilruntime.Must(mysqlexternalv1.AddToScheme(scheme))
-	utilruntime.Must(mongodbmsvcv1.AddToScheme(scheme))
-	utilruntime.Must(redismsvcv1.AddToScheme(scheme))
-	utilruntime.Must(mysqlmsvcv1.AddToScheme(scheme))
-	utilruntime.Must(zookeepermsvcv1.AddToScheme(scheme))
+	// utilruntime.Must(mongodbmsvcv1.AddToScheme(scheme))
+	// utilruntime.Must(redismsvcv1.AddToScheme(scheme))
+	// utilruntime.Must(mysqlmsvcv1.AddToScheme(scheme))
+	// utilruntime.Must(zookeepermsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -183,7 +178,7 @@ func main() {
 		&crds.ProjectReconciler{Name: "project"},
 		&crds.AppReconciler{Name: "app"},
 		&crds.RouterReconciler{Name: "router"},
-		&crds.AccountRouterReconciler{Name: "account-router"},
+		// &crds.AccountRouterReconciler{Name: "account-router"},
 		&crds.ManagedServiceReconciler{Name: "msvc"},
 		&crds.ManagedResourceReconciler{Name: "mres"},
 
@@ -193,15 +188,15 @@ func main() {
 		&mysqlStandaloneControllers.ServiceReconciler{Name: "msvc-mysql-service"},
 		&mysqlStandaloneControllers.DatabaseReconciler{Name: "msvc-mysql-database"},
 
-		&redisStandaloneControllers.ServiceReconciler{Name: "msvc-redis-service"},
-		&redisStandaloneControllers.ACLAccountReconciler{Name: "msvc-redis-aclaccount"},
+		&redisStandaloneControllers.ServiceReconciler{Name: "msvc.redis-service"},
+		&redisStandaloneControllers.ACLAccountReconciler{Name: "msvc.redis-aclaccount"},
 
 		&redpandamsvccontrollers.ServiceReconciler{Name: "msvc-redpanda-service"},
 		&redpandamsvccontrollers.TopicReconciler{Name: "msvc-redpanda-topic"},
 
 		&serverlessControllers.LambdaReconciler{Name: "lambda"},
 
-		&elasticsearchControllers.ServiceReconciler{Name: "msvc-elasticsearch-service"},
+		// &elasticsearchControllers.ServiceReconciler{Name: "msvc-elasticsearch-service"},
 		&opensearchControllers.ServiceReconciler{Name: "msvc-opensearch-service"},
 
 		&influxDbControllers.ServiceReconciler{Name: "msvc-influxdb-service"},

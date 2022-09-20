@@ -179,7 +179,7 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 		return req.CheckFailed(AppReady, check, "deployment is not ready")
 	}
 
-	if err := obj.Status.DisplayVars.Set("readyRplicas", deployment.Status.ReadyReplicas); err != nil {
+	if err := obj.Status.DisplayVars.Set("readyReplicas", deployment.Status.ReadyReplicas); err != nil {
 		return req.CheckFailed(AppReady, check, err.Error())
 	}
 

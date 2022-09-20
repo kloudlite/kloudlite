@@ -7,9 +7,6 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
 	CloudProvider ct.CloudProvider  `json:"cloudProvider"`
@@ -24,6 +21,9 @@ type StandaloneServiceSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Cloud",type="string",JSONPath=".spec.cloudProvider.cloud"
+// +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
+// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status.isReady"
 
 // StandaloneService is the Schema for the standaloneservices API
 type StandaloneService struct {

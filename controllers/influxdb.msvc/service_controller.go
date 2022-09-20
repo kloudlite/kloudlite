@@ -215,15 +215,12 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*influxdbmsvcv
 
 	host := fmt.Sprintf("%s.%s.svc.cluster.local:8086", svcObj.Name, svcObj.Namespace)
 	b, err = templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
-				Namespace: svcObj.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(svcObj, true),
-				},
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "msvc-" + svcObj.Name,
+			"namespace":  svcObj.Namespace,
+			"labels":     svcObj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(svcObj, true)},
+			"string-data": map[string]string{
 				"USERNAME": svcObj.Spec.Admin.Username,
 				"PASSWORD": adminPassword,
 				"BUCKET":   svcObj.Spec.Admin.Bucket,

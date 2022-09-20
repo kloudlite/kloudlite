@@ -231,15 +231,12 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*influxDB.Bucke
 	// STEP: 5. create reconciler output (eg. secret)
 	if errt := func() error {
 		b, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("mres-%s", obj.Name),
-					Namespace: obj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(obj, true),
-					},
-				},
-				StringData: map[string]string{
+			templates.CoreV1.Secret, map[string]any{
+				"name":       "mres-" + obj.Name,
+				"namespace":  obj.Namespace,
+				"labels":     obj.GetLabels(),
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"string-data": map[string]string{
 					"BUCKET_NAME": obj.Name,
 					"BUCKET_ID":   bucket.BucketId,
 					"ORG_ID":      bucket.OrgId,

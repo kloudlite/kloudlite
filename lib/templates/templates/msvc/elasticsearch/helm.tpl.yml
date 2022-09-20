@@ -1,4 +1,4 @@
-{{- $obj := get . "object"}}
+{{- $obj := get . "obj"}}
 {{- $ownerRefs := get . "owner-refs"}}
 {{- $storageClass := get . "storage-class" }}
 {{- $elasticPassword := get . "elastic-password"  -}}

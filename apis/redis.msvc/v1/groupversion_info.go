@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the redis.msvc v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=redis.msvc.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=redis.msvc.kloudlite.io
 package v1
 
 import (

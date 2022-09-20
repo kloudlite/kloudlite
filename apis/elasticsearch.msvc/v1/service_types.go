@@ -11,7 +11,6 @@ type Auth struct {
 }
 
 type ServiceSpec struct {
-	Auth          Auth             `json:"auth"`
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	// +kubebuilder:validation:optional
@@ -27,6 +26,9 @@ type ServiceSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Cloud",type="string",JSONPath=".spec.cloudProvider.cloud"
+// +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
+// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status.isReady"
 
 // Service is the Schema for the services API
 type Service struct {
