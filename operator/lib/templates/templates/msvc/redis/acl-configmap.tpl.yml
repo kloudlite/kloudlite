@@ -22,7 +22,7 @@ data:
     {{- range $v := $aclSecrets}}
     {{- if $v }}
     {{- with $v}}
-    {{- /*gotype: operators.kloudlite.io/operators/msvc-redis/internal/controllers/types.MresOutput*/ -}}
+    {{- /*gotype: operators.kloudlite.io/operators/msvc.redis/internal/controllers/types.MresOutput*/ -}}
     {{printf "user %s on ~%s:* +@all -@dangerous +info resetpass >%s\n" .Username .Prefix .Password}}
     {{- end}}
     {{- end}}

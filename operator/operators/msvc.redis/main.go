@@ -1,9 +1,9 @@
 package main
 
 import (
-	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/acl-account"
-	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/acl-configmap"
-	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/standalone"
+	"operators.kloudlite.io/operators/msvc.redis/internal/controllers/acl-account"
+	"operators.kloudlite.io/operators/msvc.redis/internal/controllers/acl-configmap"
+	"operators.kloudlite.io/operators/msvc.redis/internal/controllers/standalone"
 	"operators.kloudlite.io/operators/operator"
 )
 

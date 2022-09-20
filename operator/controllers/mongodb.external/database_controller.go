@@ -35,9 +35,9 @@ const (
 	OutputExists conditions.Type = "mongo-external-db/output.exists"
 )
 
-//+kubebuilder:rbac:groups=mongodb.external.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=mongodb.external.kloudlite.io,resources=databases/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=mongodb.external.kloudlite.io,resources=databases/finalizers,verbs=update
+// +kubebuilder:rbac:groups=mongodb.external.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mongodb.external.kloudlite.io,resources=databases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mongodb.external.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &mongodbexternalv1.Database{})
@@ -116,15 +116,12 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbexter
 	ctx := req.Context()
 
 	b, err := templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mres-" + obj.Name,
-				Namespace: obj.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(obj, true),
-				},
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "mres-" + obj.Name,
+			"namespace":  obj.Namespace,
+			"labels":     obj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"string-data": map[string]string{
 				"DB_URI":  obj.Spec.ConnectionUri,
 				"DB_NAME": obj.Spec.DbName,
 			},

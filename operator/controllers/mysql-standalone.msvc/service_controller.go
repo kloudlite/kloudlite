@@ -9,7 +9,6 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
 	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
@@ -246,15 +245,12 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mysqlStandalo
 
 	mysqlHost := fmt.Sprintf("%s.%s.%s:%d", svcObj.Name, svcObj.Namespace, "svc.cluster.local", 3306)
 	b2, err := templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
-				Namespace: svcObj.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(svcObj, true),
-				},
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "msvc-" + svcObj.Name,
+			"namespace":  svcObj.Namespace,
+			"labels":     svcObj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(svcObj, true)},
+			"string-data": map[string]string{
 				"ROOT_PASSWORD": rootPassword,
 				"HOSTS":         mysqlHost,
 				"DSN":           fmt.Sprintf("%s:%s@tcp(%s)/%s", "root", rootPassword, mysqlHost, "mysql"),
@@ -293,26 +289,12 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 		builder.Watches(
 			&source.Kind{Type: item}, handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
-
-					var services mysqlStandalone.ServiceList
-					if err := r.List(
-						context.TODO(), &services, &client.ListOptions{
-							LabelSelector: labels.SelectorFromValidatedSet(
-								map[string]string{
-									"kloudlite.io/msvc.name": obj.GetLabels()["kloudlite.io/msvc.name"],
-								},
-							),
-						},
-					); err != nil {
+					v, ok := obj.GetLabels()[constants.MsvcNameKey]
+					if !ok {
 						return nil
 					}
 
-					requests := make([]reconcile.Request, 0, len(services.Items))
-					for _, service := range services.Items {
-						requests = append(requests, reconcile.Request{NamespacedName: fn.NN(service.GetNamespace(), service.GetName())})
-					}
-
-					return requests
+					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 				},
 			),
 		)

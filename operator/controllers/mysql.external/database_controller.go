@@ -35,9 +35,9 @@ func (r *DatabaseReconciler) GetName() string {
 	return r.Name
 }
 
-//+kubebuilder:rbac:groups=mysql.external.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=mysql.external.kloudlite.io,resources=databases/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=mysql.external.kloudlite.io,resources=databases/finalizers,verbs=update
+// +kubebuilder:rbac:groups=mysql.external.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mysql.external.kloudlite.io,resources=databases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mysql.external.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, oReq.NamespacedName, &mysqlexternalv1.Database{})
@@ -117,15 +117,12 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlexterna
 	ctx := req.Context()
 
 	b, err := templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mres-" + obj.Name,
-				Namespace: obj.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(obj, true),
-				},
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "mres-" + obj.Name,
+			"namespace":  obj.Namespace,
+			"labels":     obj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"string-data": map[string]string{
 				"USERNAME": obj.Spec.Username,
 				"PASSWORD": obj.Spec.Password,
 				"HOSTS":    obj.Spec.Hosts,

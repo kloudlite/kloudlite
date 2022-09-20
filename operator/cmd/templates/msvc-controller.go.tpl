@@ -197,6 +197,10 @@ func (r *{{$reconType}}) reconHelm(req *rApi.Request[*{{$kindObjName}}]) stepRes
       // TODO: (user)
     )
 
+    if err != nil {
+      return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+    }
+
     if err := fn.KubectlApplyExec(ctx, b); err != nil {
       return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
     }
@@ -288,5 +292,18 @@ func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, lo
   r.env = envVars
 
   builder := ctrl.NewControllerManagedBy(mgr).For(&{{$kindObjName}}{})
+  builder.Owns(&corev1.Secret{})
+  builder.Owns(fn.NewUnstructured(...))
+
+  builder.Watches(&source.Kind{Type: &appsv1.Statefulset{}}, handler.EnqueueRequestForMapFunc(
+    func (obj) []reconcile.Request {
+      v, ok := obj.GetLabels()[constants.MsvcNameKey]
+      if !ok {
+        return nil
+      }
+      return []reconcile.Request{{`{{ NamespacedName: fn.NN(obj.Namespace, v)}}`}}
+    }
+  )
+
   return builder.Complete(r)
 }

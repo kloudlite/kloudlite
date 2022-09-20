@@ -60,32 +60,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - accountrouters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - accountrouters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - accountrouters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
   - apps
   verbs:
   - create
@@ -266,7 +240,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - elasticsearch.msvc.kloudlite.io
+  - elasticsearc.msvc.kloudlite.io
   resources:
   - services
   verbs:
@@ -278,13 +252,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - elasticsearch.msvc.kloudlite.io
+  - elasticsearc.msvc.kloudlite.io
   resources:
   - services/finalizers
   verbs:
   - update
 - apiGroups:
-  - elasticsearch.msvc.kloudlite.io
+  - elasticsearc.msvc.kloudlite.io
   resources:
   - services/status
   verbs:
@@ -625,6 +599,32 @@ rules:
   - mysql.external.kloudlite.io
   resources:
   - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - standalone
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - standalone/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - standalone/status
   verbs:
   - get
   - patch

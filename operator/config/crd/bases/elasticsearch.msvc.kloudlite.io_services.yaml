@@ -15,7 +15,17 @@ spec:
     singular: service
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.cloudProvider.cloud
+      name: Cloud
+      type: string
+    - jsonPath: .spec.replicaCount
+      name: ReplicaCount
+      type: integer
+    - jsonPath: .status.isReady
+      name: Status
+      type: boolean
+    name: v1
     schema:
       openAPIV3Schema:
         description: Service is the Schema for the services API
@@ -34,13 +44,6 @@ spec:
             type: object
           spec:
             properties:
-              auth:
-                properties:
-                  password:
-                    type: string
-                required:
-                - password
-                type: object
               cloudProvider:
                 properties:
                   account:
@@ -96,7 +99,6 @@ spec:
                     type: string
                 type: object
             required:
-            - auth
             - cloudProvider
             - resources
             - storage

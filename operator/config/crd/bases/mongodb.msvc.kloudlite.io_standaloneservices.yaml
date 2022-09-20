@@ -15,7 +15,17 @@ spec:
     singular: standaloneservice
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.cloudProvider.cloud
+      name: Cloud
+      type: string
+    - jsonPath: .spec.replicaCount
+      name: ReplicaCount
+      type: integer
+    - jsonPath: .status.isReady
+      name: Status
+      type: boolean
+    name: v1
     schema:
       openAPIV3Schema:
         description: StandaloneService is the Schema for the standaloneservices API
