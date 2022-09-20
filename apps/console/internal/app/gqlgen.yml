@@ -47,7 +47,7 @@ skip_validation: true
 models:
   CloudProvider:
     fields:
-      regions:
+      edges:
         resolver: true
   App:
     fields:

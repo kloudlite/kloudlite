@@ -319,7 +319,6 @@ func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, act
 }
 
 func (d *domain) checkAccountAccess(ctx context.Context, accountId repos.ID, action string) error {
-
 	userId, err := GetUser(ctx)
 	if err != nil {
 		return err

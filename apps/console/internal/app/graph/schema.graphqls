@@ -67,29 +67,46 @@ type ManagedSvc {
 }
 
 type CloudProvider {
-  Id: ID!
-  Name: String!
+  id: ID!
+  name: String!
   provider: String!
-  regions: [EdgeRegion!]!
+  edges: [EdgeRegion!]!
 }
 
 input CloudProviderIn {
-  Name: String!
+  name: String!
   provider: String!
+  credentials: Json!
+}
+
+input CloudProviderUpdateIn {
+  name: String
+  credentials: Json
 }
 
 type EdgeRegion {
-  Id: ID!
-  Name: String!
+  id: ID!
+  name: String!
   region : String!
+}
+
+input NodePoolIn{
+    name: String!
+    config: String!
+    min: Int!
+    max: Int!
 }
 
 input EdgeRegionIn {
-  Name: String!
+  name: String!
   region : String!
-  provider: ID!
+  pools: [NodePoolIn]!
 }
 
+input EdgeRegionUpdateIn {
+  name: String
+  pools: [NodePoolIn]
+}
 
 
 
@@ -156,8 +173,11 @@ type Mutation {
   core_updateRouter(routerId: ID!, domains: [String!], routes: [RouteInput!]): Boolean! #project-admin-access project-developer-access
   core_deleteRouter(routerId: ID!): Boolean! #project-admin-access project-developer-access
 
-  core_createEdgeRegion(edgeRegion: EdgeRegionIn!): Boolean! #private-access
+  core_createEdgeRegion(edgeRegion: EdgeRegionIn!, providerId: ID!): Boolean! #private-access
+  core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegionUpdateIn!): Boolean! #private-access
   core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
+  core_updateCloudProvider(providerId: ID!, cloudProvider: CloudProviderUpdateIn!): Boolean! #private-access
+  core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
 }
 
 type StoragePlan @key(fields: "name"){
