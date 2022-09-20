@@ -43,7 +43,11 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 		if err := d.checkAccountAccess(ctx, *accountId, "update_account"); err != nil {
 			return err
 		}
+	} else {
+		k := repos.ID("kl-core")
+		accountId = &k
 	}
+
 	provider.AccountId = accountId
 	_, err := d.providerRepo.Create(ctx, provider)
 	if err != nil {
