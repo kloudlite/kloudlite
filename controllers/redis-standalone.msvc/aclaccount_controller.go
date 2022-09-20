@@ -8,6 +8,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	"operators.kloudlite.io/env"
@@ -23,6 +24,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // ACLAccountReconciler reconciles a ACLAccount object
@@ -294,15 +298,12 @@ func (r *ACLAccountReconciler) reconcileOperations(req *rApi.Request[*redisStand
 	// STEP: 5. create reconciler output (eg. secret)
 
 	b, err := templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("mres-%s", obj.Name),
-				Namespace: obj.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(obj, true),
-				},
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "mres-" + obj.Name,
+			"namespace":  obj.Namespace,
+			"labels":     obj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"string-data": map[string]string{
 				"HOSTS":    msvcRef.Hosts,
 				"PASSWORD": userPassword,
 				"USERNAME": obj.Name,
@@ -348,8 +349,34 @@ func (r *ACLAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.E
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&redisStandalone.ACLAccount{}).
-		Owns(&corev1.Secret{}).
-		Complete(r)
+	builder := ctrl.NewControllerManagedBy(mgr).For(&redisStandalone.ACLAccount{})
+	builder.Owns(&corev1.Secret{})
+	builder.Watches(
+		&source.Kind{Type: &redisStandalone.Service{}}, handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+
+				var aclList redisStandalone.ACLAccountList
+				if err := r.List(
+					context.TODO(), &aclList, &client.ListOptions{
+						Namespace: obj.GetNamespace(),
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{
+								constants.MsvcNameKey: obj.GetLabels()[constants.MsvcNameKey],
+							},
+						),
+					},
+				); err != nil {
+					return nil
+				}
+
+				requests := make([]reconcile.Request, 0, len(aclList.Items))
+				for _, service := range aclList.Items {
+					requests = append(requests, reconcile.Request{NamespacedName: fn.NN(service.GetNamespace(), service.GetName())})
+				}
+
+				return requests
+			},
+		),
+	)
+	return builder.Complete(r)
 }

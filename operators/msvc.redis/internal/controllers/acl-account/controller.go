@@ -21,7 +21,7 @@ import (
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	libRedis "operators.kloudlite.io/lib/redis"
 	"operators.kloudlite.io/lib/templates"
-	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/types"
+	"operators.kloudlite.io/operators/msvc.redis/internal/controllers/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"

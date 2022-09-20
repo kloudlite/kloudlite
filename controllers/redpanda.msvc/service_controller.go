@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -190,12 +189,12 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*redpandamsvcv
 
 	// access config
 	b2, err := templates.Parse(
-		templates.Secret, corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "msvc-" + obj.Name,
-				Namespace: obj.Namespace,
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "msvc-" + obj.Name,
+			"namespace":  obj.Namespace,
+			"labels":     obj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"string-data": map[string]string{
 				OutputRedpandaHostsKey: fmt.Sprintf("%s.%s.svc.cluster.local", obj.Name, obj.Namespace),
 			},
 		},

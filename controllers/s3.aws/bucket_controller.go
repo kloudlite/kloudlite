@@ -189,7 +189,10 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 	}
 
 	if meta.IsStatusConditionFalse(obj.Status.Conditions, conditions.GeneratedVars.String()) {
-		if err := obj.Status.GeneratedVars.Set(KeyBucketName, fmt.Sprintf("%s-%s", obj.Name, strings.ToLower(fn.CleanerNanoid(40)))); err != nil {
+		if err := obj.Status.GeneratedVars.Set(
+			KeyBucketName,
+			fmt.Sprintf("%s-%s", obj.Name, strings.ToLower(fn.CleanerNanoid(40))),
+		); err != nil {
 			return req.FailWithOpError(err)
 		}
 		if err := r.Status().Update(ctx, obj); err != nil {
@@ -272,15 +275,12 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 	svcExternalName := fmt.Sprintf("%s.s3.%s.amazonaws.com", bucketName, obj.Spec.Region)
 
 	b, err := templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("mres-%s", obj.Name),
-				Namespace: obj.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(obj, true),
-				},
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "mres-" + obj.Name,
+			"namespace":  obj.Namespace,
+			"labels":     obj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"string-data": map[string]string{
 				"AWS_ACCESS_KEY_ID":     accessCreds.AccessKeyId,
 				"AWS_SECRET_ACCESS_KEY": accessCreds.SecretAccessKey,
 				"AWS_REGION":            obj.Spec.Region,
@@ -358,7 +358,13 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 	}
 
 	if err := fn.KubectlApplyExec(ctx, b, b2, b3); err != nil {
-		req.Logger.Errorf(err, "failed kubectl apply for (%s, %s, %s)", templates.Secret, templates.CoreV1.ExternalNameSvc, templates.CoreV1.ExternalNameSvc)
+		req.Logger.Errorf(
+			err,
+			"failed kubectl apply for (%s, %s, %s)",
+			templates.Secret,
+			templates.CoreV1.ExternalNameSvc,
+			templates.CoreV1.ExternalNameSvc,
+		)
 		return req.FailWithOpError(err).Err(nil)
 	}
 	return req.Next()

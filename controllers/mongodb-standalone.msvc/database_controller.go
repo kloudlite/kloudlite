@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
 	"operators.kloudlite.io/env"
@@ -22,6 +23,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -246,26 +250,21 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbStand
 	// STEP: 5. create reconciler output (eg. secret)
 	if errt := func() error {
 		b, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("mres-%s", obj.Name),
-					Namespace: obj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(obj, true),
-					},
-				},
-				StringData: map[string]string{
+			templates.CoreV1.Secret, map[string]any{
+				"name":       "mres-" + obj.Name,
+				"namespace":  obj.Namespace,
+				"labels":     obj.GetLabels(),
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"string-data": map[string]string{
 					"DB_PASSWORD": dbPasswd,
 					"DB_USER":     obj.Name,
 					"DB_HOSTS":    msvcRef.Hosts,
 					"DB_NAME":     obj.Name,
-					"DB_URL": fmt.Sprintf(
-						"mongodb://%s:%s@%s/%s",
-						obj.Name, dbPasswd, msvcRef.Hosts, obj.Name,
-					),
+					"DB_URL":      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, msvcRef.Hosts, obj.Name),
 				},
 			},
 		)
+
 		if err != nil {
 			req.Logger.Errorf(err, "failed parsing template %s", templates.Secret)
 			return nil
@@ -288,8 +287,34 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&mongodbStandalone.Database{}).
-		Owns(&corev1.Secret{}).
-		Complete(r)
+	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbStandalone.Database{})
+	builder.Owns(&corev1.Secret{})
+	builder.Watches(
+		&source.Kind{Type: &mongodbStandalone.Service{}}, handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+
+				var dbList mongodbStandalone.DatabaseList
+				if err := r.List(
+					context.TODO(), &dbList, &client.ListOptions{
+						Namespace: obj.GetNamespace(),
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{
+								constants.MsvcNameKey: obj.GetLabels()[constants.MsvcNameKey],
+							},
+						),
+					},
+				); err != nil {
+					return nil
+				}
+
+				requests := make([]reconcile.Request, 0, len(dbList.Items))
+				for _, service := range dbList.Items {
+					requests = append(requests, reconcile.Request{NamespacedName: fn.NN(service.GetNamespace(), service.GetName())})
+				}
+
+				return requests
+			},
+		),
+	)
+	return builder.Complete(r)
 }

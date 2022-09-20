@@ -1,9 +1,8 @@
-package controllers
+package standalone
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -13,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
-	elasticsearchMsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
+	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -23,7 +22,6 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
-	"operators.kloudlite.io/operators/msvc.elasticsearch/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -45,21 +43,31 @@ func (r *ServiceReconciler) GetName() string {
 }
 
 const (
+	// TODO: add checks
+	CheckReady string = "check-ready"
+)
+
+const (
 	HelmReady        string = "helm-ready"
 	StsReady         string = "sts-ready"
 	AccessCredsReady string = "access-creds-ready"
 )
 
 const (
-	KeyOutput string = "output"
+	KeyRootPassword string = "root-password"
 )
 
-// +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services/finalizers,verbs=update
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &elasticsearchMsvcv1.Service{})
+	req, err := rApi.NewRequest(
+		context.WithValue(ctx, "logger", r.logger),
+		r.Client,
+		request.NamespacedName,
+		&mysqlMsvcv1.StandaloneService{},
+	)
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -111,11 +119,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -133,10 +141,9 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsv
 				"namespace":  obj.Namespace,
 				"labels":     obj.GetLabels(),
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
-				"string-data": types.MsvcOutput{
-					Username: "elastic",
-					Password: rootPassword,
-					Hosts:    fmt.Sprintf("%s-master-headless.%s.svc.cluster.local", obj.Name, obj.Namespace),
+				"string-data": map[string]string{
+					"ROOT_PASSWORD": rootPassword,
+					// TODO: user
 				},
 			},
 		)
@@ -167,50 +174,33 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsv
 		return req.UpdateStatus()
 	}
 
-	b, err := json.Marshal(scrt.Data)
-	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	}
-
-	var output types.MsvcOutput
-	if err := json.Unmarshal(b, &output); err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	}
-
-	rApi.SetLocal(req, KeyOutput, output)
+	rApi.SetLocal(req, KeyRootPassword, string(scrt.Data["ROOT_PASSWORD"]))
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
 	helmRes, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmElasticType),
+		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMysqlType),
 	)
 	if err != nil {
-		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+		req.Logger.Infof("helm reosurce (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	output, ok := rApi.GetLocal[types.MsvcOutput](req, KeyOutput)
+	rootPassword, ok := rApi.GetLocal[string](req, KeyRootPassword)
 	if !ok {
 		return req.CheckFailed(HelmReady, check, err.Error())
 	}
 
-	if helmRes == nil {
+	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
 		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
 		if err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error())
 		}
 
-		b, err := templates.Parse(
-			templates.ElasticSearch, map[string]any{
-				"obj":              obj,
-				"storage-class":    storageClass,
-				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"elastic-password": output.Password,
-			},
-		)
+		b, err := templates.Parse()
 
 		if err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
@@ -250,7 +240,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Ser
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconSts(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	var stsList appsv1.StatefulSetList
@@ -308,20 +298,18 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 	r.logger = logger.WithName(r.Name)
 	r.env = envVars
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&elasticsearchMsvcv1.Service{})
-	builder.Owns(fn.NewUnstructured(constants.HelmElasticType))
+	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
+	builder.Owns(fn.NewUnstructured(constants.HelmMysqlType))
 
 	builder.Watches(
 		&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(
 			func(obj client.Object) []reconcile.Request {
-				value, ok := obj.GetLabels()[constants.MsvcNameKey]
+				v, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {
 					return nil
 				}
-				return []reconcile.Request{
-					{NamespacedName: fn.NN(obj.GetNamespace(), value)},
-				}
+				return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 			},
 		),
 	)

@@ -25,6 +25,8 @@ type ServiceSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Service is the Schema for the services API
 type Service struct {
@@ -42,6 +44,7 @@ func (s *Service) GetStatus() *libOperator.Status {
 func (s *Service) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		fmt.Sprintf("%s/ref", GroupVersion.Group): s.Name,
+		constants.MsvcNameKey:                     s.Name,
 	}
 }
 

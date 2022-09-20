@@ -135,8 +135,7 @@ func (r *ProjectReconciler) reconcileProjectConfig(req *rApi.Request[*crdsv1.Pro
 				},
 			},
 		); err != nil {
-			check.Message = err.Error()
-			return req.CheckFailed(keyProjectConfigReady, check)
+			return req.CheckFailed(keyProjectConfigReady, check, err.Error())
 		}
 	}
 

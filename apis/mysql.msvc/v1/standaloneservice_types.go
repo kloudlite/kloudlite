@@ -2,39 +2,53 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
+	"operators.kloudlite.io/lib/constants"
+	rApi "operators.kloudlite.io/lib/operator"
 )
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	CloudProvider ct.CloudProvider  `json:"cloudProvider"`
+	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
 
-	// Foo is an example field of StandaloneService. Edit standaloneservice_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=1
+	ReplicaCount int          `json:"replicaCount,omitempty"`
+	Storage      ct.Storage   `json:"storage"`
+	Resources    ct.Resources `json:"resources"`
 }
 
-// StandaloneServiceStatus defines the observed state of StandaloneService
-type StandaloneServiceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-}
-
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Cloud",type="string",JSONPath=".spec.cloudProvider.cloud"
+// +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
+// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status.isReady"
 
 // StandaloneService is the Schema for the standaloneservices API
 type StandaloneService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   StandaloneServiceSpec   `json:"spec,omitempty"`
-	Status StandaloneServiceStatus `json:"status,omitempty"`
+	Spec   StandaloneServiceSpec `json:"spec,omitempty"`
+	Status rApi.Status           `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+func (s *StandaloneService) GetStatus() *rApi.Status {
+	return &s.Status
+}
+
+func (s *StandaloneService) GetEnsuredLabels() map[string]string {
+	return map[string]string{
+		constants.MsvcNameKey: s.Name,
+	}
+}
+
+func (s *StandaloneService) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{}
+}
+
+// +kubebuilder:object:root=true
 
 // StandaloneServiceList contains a list of StandaloneService
 type StandaloneServiceList struct {

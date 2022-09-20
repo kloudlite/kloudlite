@@ -211,6 +211,11 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 		return req.Done()
 	}
 
+	authPasswd, ok := svcObj.Status.GeneratedVars.GetString(SvcRootPasswordKey)
+	if !ok {
+		return req.Done().Err(errors.Newf("%s key not found in generated vars", SvcRootPasswordKey))
+	}
+
 	if errP := func() error {
 		storageClass, err := svcObj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
 		if err != nil {
@@ -233,6 +238,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 				"owner-refs": []metav1.OwnerReference{
 					fn.AsOwner(svcObj, true),
 				},
+				"root-password": authPasswd,
 			},
 		)
 
@@ -251,15 +257,12 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*mongodbStanda
 		}
 
 		b2, err := templates.Parse(
-			templates.Secret, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("msvc-%s", svcObj.Name),
-					Namespace: svcObj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{
-						fn.AsOwner(svcObj, true),
-					},
-				},
-				StringData: map[string]string{
+			templates.CoreV1.Secret, map[string]any{
+				"name":       "msvc-" + svcObj.Name,
+				"namespace":  svcObj.Namespace,
+				"labels":     svcObj.GetLabels(),
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(svcObj, true)},
+				"string-data": map[string]string{
 					"ROOT_PASSWORD": authPasswd,
 					"DB_HOSTS":      strings.Join(hosts, ","),
 					"DB_URL":        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", authPasswd, strings.Join(hosts, ",")),
@@ -302,13 +305,11 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 		builder.Watches(
 			&source.Kind{Type: item}, handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
-					value, ok := obj.GetLabels()[fmt.Sprintf("%s/ref", mongodbStandalone.GroupVersion.Group)]
+					value, ok := obj.GetLabels()[constants.MsvcNameKey]
 					if !ok {
 						return nil
 					}
-					return []reconcile.Request{
-						{NamespacedName: fn.NN(obj.GetNamespace(), value)},
-					}
+					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), value)}}
 				},
 			),
 		)

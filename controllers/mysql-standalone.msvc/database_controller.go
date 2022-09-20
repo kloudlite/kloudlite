@@ -10,6 +10,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
@@ -21,6 +22,9 @@ import (
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
@@ -138,10 +142,7 @@ func (r *DatabaseReconciler) reconcileStatus(req *rApi.Request[*mysqlStandalone.
 	// STEP: 2. retrieve managed svc output (usually secret)
 	if msvc != nil {
 		msvcRef, err2 := func() (*MsvcOutputRef, error) {
-			msvcOutput, err := rApi.Get(
-				ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)),
-				&corev1.Secret{},
-			)
+			msvcOutput, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, fmt.Sprintf("msvc-%s", msvc.Name)), &corev1.Secret{})
 			if err != nil {
 				isReady = false
 				cs = append(cs, conditions.New(conditions.ManagedSvcOutputExists, false, conditions.NotFound, err.Error()))
@@ -283,15 +284,12 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mysqlStandal
 
 	// STEP: 5. create reconciler output (eg. secret)
 	b, err := templates.Parse(
-		templates.Secret, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("mres-%s", obj.Name),
-				Namespace: obj.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					fn.AsOwner(obj, true),
-				},
-			},
-			StringData: map[string]string{
+		templates.CoreV1.Secret, map[string]any{
+			"name":       "mres-" + obj.Name,
+			"namespace":  obj.Namespace,
+			"labels":     obj.GetLabels(),
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"string-data": map[string]string{
 				"USERNAME": dbUsername,
 				"PASSWORD": dbPasswd,
 				"HOSTS":    msvcRef.Hosts,
@@ -323,8 +321,34 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&mysqlStandalone.Database{}).
-		Owns(&corev1.Secret{}).
-		Complete(r)
+	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlStandalone.Database{})
+	builder.Owns(&corev1.Secret{})
+	builder.Watches(
+		&source.Kind{Type: &mysqlStandalone.Service{}}, handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+
+				var dbList mysqlStandalone.DatabaseList
+				if err := r.List(
+					context.TODO(), &dbList, &client.ListOptions{
+						Namespace: obj.GetNamespace(),
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{
+								constants.MsvcNameKey: obj.GetLabels()[constants.MsvcNameKey],
+							},
+						),
+					},
+				); err != nil {
+					return nil
+				}
+
+				requests := make([]reconcile.Request, 0, len(dbList.Items))
+				for _, service := range dbList.Items {
+					requests = append(requests, reconcile.Request{NamespacedName: fn.NN(service.GetNamespace(), service.GetName())})
+				}
+
+				return requests
+			},
+		),
+	)
+	return builder.Complete(r)
 }

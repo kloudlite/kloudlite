@@ -63,7 +63,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
 
-	if step := r.cleanup(req); !step.ShouldProceed() {
+	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -92,23 +92,12 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconAccountRouter(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.reconAccountRouter(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
-}
-
-func (r *ProjectReconciler) cleanup(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
-	obj := req.Object
-
-	if len(obj.Status.Conditions) > 0 || len(obj.Status.OpsConditions) > 0 {
-		obj.Status.Conditions = nil
-		obj.Status.OpsConditions = nil
-	}
-
-	return req.UpdateStatus()
 }
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
@@ -118,14 +107,21 @@ func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepRes
 func (r *ProjectReconciler) reconNamespace(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
+	check := rApi.Check{Generation: obj.Generation}
+
 	if obj.Spec.AccountRef == "" {
-		if accRef, ok := obj.GetLabels()[constants.AccountRef]; ok {
+		accRef, ok := obj.GetAnnotations()[constants.AccountRef]
+		if !ok {
+			return req.CheckFailed(NamespaceReady, check, "no account-ref found in annotations").Err(nil)
+		}
+		if ok {
 			obj.Spec.AccountRef = accRef
-			return req.Done().Err(r.Update(ctx, obj))
+			if err := r.Update(ctx, obj); err != nil {
+				return req.FailWithOpError(err)
+			}
+			return req.Done()
 		}
 	}
-
-	check := rApi.Check{Generation: obj.Generation}
 
 	ns := &corev1.Namespace{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, obj.Name), ns); err != nil {
@@ -219,12 +215,12 @@ func (r *ProjectReconciler) reconProjectRBAC(req *rApi.Request[*crdsv1.Project])
 		req.Logger.Infof("service account %s does not exist, creating now...", r.env.NamespaceSvcAccountName)
 	}
 
-	role, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.env.NamespaceSvcAccountName), &rbacv1.Role{})
+	role, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.env.NamespaceAdminRoleName), &rbacv1.Role{})
 	if err != nil {
 		req.Logger.Infof("service account %s does not exist, creating now...", r.env.NamespaceSvcAccountName)
 	}
 
-	roleBinding, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.env.NamespaceSvcAccountName), &rbacv1.RoleBinding{})
+	roleBinding, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.env.NamespaceAdminRoleName+"-rb"), &rbacv1.RoleBinding{})
 	if err != nil {
 		req.Logger.Infof("service account %s does not exist, creating now...", r.env.NamespaceSvcAccountName)
 	}
@@ -291,16 +287,11 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 		}
 
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			check.Message = err.Error()
 			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
 		}
 
 		checks[HarborAccessReady] = check
-		if err := r.Status().Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
-		}
-
-		return req.Done().RequeueAfter(1 * time.Second)
+		return req.UpdateStatus()
 	}
 
 	if !harborProject.Status.IsReady {
@@ -308,8 +299,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 		if err != nil {
 			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
 		}
-		check.Message = string(bMessage)
-		return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(HarborAccessReady, check, string(bMessage)).Err(nil)
 	}
 
 	if !harborUserAcc.Status.IsReady {
@@ -317,8 +307,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 		if err != nil {
 			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
 		}
-		check.Message = string(bMessage)
-		return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(HarborAccessReady, check, string(bMessage)).Err(nil)
 	}
 
 	check.Status = true
