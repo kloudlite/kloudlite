@@ -12,25 +12,19 @@ import (
 )
 
 type Domain interface {
-	GetRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error)
-	CreateRegion(ctx context.Context, region *entities.EdgeRegion) error
+	GetEdgeRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error)
+	CreateEdgeRegion(ctx context.Context, providerId repos.ID, region *entities.EdgeRegion) error
+	DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error
+	UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, region *EdgeRegionUpdate) error
 
 	GetCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error)
-	CreateCloudProvider(ctx context.Context, accountId *repos.ID, region *entities.CloudProvider) error
+	CreateCloudProvider(ctx context.Context, accountId *repos.ID, provider *entities.CloudProvider) error
+	DeleteCloudProvider(ctx context.Context, providerId repos.ID) error
+	UpdateCloudProvider(ctx context.Context, providerId repos.ID, provider *CloudProviderUpdate) error
 
 	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
 	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
 	GetStoragePlans(ctx context.Context) ([]entities.StoragePlan, error)
-	//CreateCluster(ctx context.Context, data *entities.Region) (*entities.Region, error)
-	//CreateClusterAccount(ctx context.Context, data *entities.WGAccount, region string, provider string) (*entities.WGAccount, error)
-	//UpdateCluster(ctx context.Context, id repos.ID, name *string, nodeCount *int) (bool, error)
-	//DeleteCluster(ctx context.Context, clusterId repos.ID) error
-	//GetCluster(ctx context.Context, id repos.ID) (*entities.Region, error)
-	//GetClusters(ctx context.Context) ([]*entities.Region, error)
-	//ListClusterSubscriptions(ctx context.Context, accountId repos.ID) ([]*entities.WGAccount, error)
-	//OnSetupCluster(cxt context.Context, response entities.SetupClusterResponse) error
-	//OnUpdateCluster(cxt context.Context, response entities.UpdateClusterResponse) error
-	//OnSetupClusterAccount(ctx context.Context, payload entities.SetupClusterAccountResponse) error
 
 	GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error)
 	GetDeviceConfig(ctx context.Context, id repos.ID) (map[string]any, error)

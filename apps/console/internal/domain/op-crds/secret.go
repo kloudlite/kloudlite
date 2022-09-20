@@ -15,4 +15,5 @@ type Secret struct {
 	Kind       string         `json:"kind,omitempty"`
 	Metadata   SecretMetadata `json:"metadata,omitempty"`
 	Data       map[string]any `json:"data,omitempty"`
+	StringData map[string]any `json:"stringData,omitempty"`
 }

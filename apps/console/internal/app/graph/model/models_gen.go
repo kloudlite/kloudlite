@@ -15,27 +15,28 @@ type Account struct {
 func (Account) IsEntity() {}
 
 type App struct {
-	ID             repos.ID          `json:"id"`
-	IsLambda       bool              `json:"isLambda"`
-	Name           string            `json:"name"`
-	Namespace      string            `json:"namespace"`
-	CreatedAt      string            `json:"createdAt"`
-	UpdatedAt      *string           `json:"updatedAt"`
-	Description    *string           `json:"description"`
-	ReadableID     repos.ID          `json:"readableId"`
-	Replicas       *int              `json:"replicas"`
-	Services       []*ExposedService `json:"services"`
-	Containers     []*AppContainer   `json:"containers"`
-	Project        *Project          `json:"project"`
-	Status         string            `json:"status"`
-	AutoScale      *AutoScale        `json:"autoScale"`
-	Conditions     []*MetaCondition  `json:"conditions"`
-	Restart        bool              `json:"restart"`
-	DoFreeze       bool              `json:"doFreeze"`
-	DoUnfreeze     bool              `json:"doUnfreeze"`
-	IsFrozen       bool              `json:"isFrozen"`
-	Intercept      bool              `json:"intercept"`
-	CloseIntercept bool              `json:"closeIntercept"`
+	ID               repos.ID          `json:"id"`
+	IsLambda         bool              `json:"isLambda"`
+	Name             string            `json:"name"`
+	Namespace        string            `json:"namespace"`
+	CreatedAt        string            `json:"createdAt"`
+	UpdatedAt        *string           `json:"updatedAt"`
+	Description      *string           `json:"description"`
+	ReadableID       repos.ID          `json:"readableId"`
+	Replicas         *int              `json:"replicas"`
+	Services         []*ExposedService `json:"services"`
+	Containers       []*AppContainer   `json:"containers"`
+	Project          *Project          `json:"project"`
+	Status           string            `json:"status"`
+	AutoScale        *AutoScale        `json:"autoScale"`
+	Conditions       []*MetaCondition  `json:"conditions"`
+	Restart          bool              `json:"restart"`
+	DoFreeze         bool              `json:"doFreeze"`
+	DoUnfreeze       bool              `json:"doUnfreeze"`
+	IsFrozen         bool              `json:"isFrozen"`
+	CurrentIntercept *repos.ID         `json:"currentIntercept"`
+	Intercept        bool              `json:"intercept"`
+	CloseIntercept   bool              `json:"closeIntercept"`
 }
 
 func (App) IsEntity() {}
@@ -125,15 +126,21 @@ type CSEntryIn struct {
 }
 
 type CloudProvider struct {
-	ID       repos.ID      `json:"Id"`
-	Name     string        `json:"Name"`
+	ID       repos.ID      `json:"id"`
+	Name     string        `json:"name"`
 	Provider string        `json:"provider"`
-	Regions  []*EdgeRegion `json:"regions"`
+	Edges    []*EdgeRegion `json:"edges"`
 }
 
 type CloudProviderIn struct {
-	Name     string `json:"Name"`
-	Provider string `json:"provider"`
+	Name        string                 `json:"name"`
+	Provider    string                 `json:"provider"`
+	Credentials map[string]interface{} `json:"credentials"`
+}
+
+type CloudProviderUpdateIn struct {
+	Name        *string                `json:"name"`
+	Credentials map[string]interface{} `json:"credentials"`
 }
 
 type ComputePlan struct {
@@ -184,15 +191,20 @@ type DockerCredentials struct {
 }
 
 type EdgeRegion struct {
-	ID     repos.ID `json:"Id"`
-	Name   string   `json:"Name"`
+	ID     repos.ID `json:"id"`
+	Name   string   `json:"name"`
 	Region string   `json:"region"`
 }
 
 type EdgeRegionIn struct {
-	Name     string   `json:"Name"`
-	Region   string   `json:"region"`
-	Provider repos.ID `json:"provider"`
+	Name   string        `json:"name"`
+	Region string        `json:"region"`
+	Pools  []*NodePoolIn `json:"pools"`
+}
+
+type EdgeRegionUpdateIn struct {
+	Name  *string       `json:"name"`
+	Pools []*NodePoolIn `json:"pools"`
 }
 
 type EnvVal struct {
@@ -303,6 +315,13 @@ type NewResourcesIn struct {
 	Secrets    []map[string]interface{} `json:"secrets"`
 	MServices  []map[string]interface{} `json:"mServices"`
 	MResources []map[string]interface{} `json:"mResources"`
+}
+
+type NodePoolIn struct {
+	Name   string `json:"name"`
+	Config string `json:"config"`
+	Min    int    `json:"min"`
+	Max    int    `json:"max"`
 }
 
 type Port struct {

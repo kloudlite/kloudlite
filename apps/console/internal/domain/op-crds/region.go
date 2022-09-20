@@ -1,22 +1,37 @@
 package op_crds
 
-type RegionMetadata struct {
+type EdgeMetadata struct {
 	Name        string            `json:"name,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 }
 
-type RegionSpec struct {
-	Name    string  `json:"name"`
-	Account *string `json:"account,omitempty"`
+type NodePool struct {
+	Name   string `json:"name"`
+	Config string `json:"config"`
+	Min    int    `json:"min"`
+	Max    int    `json:"max"`
 }
 
-const RegionAPIVersion = "management.kloudlite.io/v1"
-const RegionKind = "Region"
+type CredentialsRef struct {
+	SecretName string `json:"secretName"`
+	Namespace  string `json:"namespace"`
+}
+
+type EdgeSpec struct {
+	AccountId      *string        `json:"accountId,omitempty"`
+	Provider       string         `json:"provider"`
+	Region         string         `json:"region"`
+	Pools          []NodePool     `json:"pools"`
+	CredentialsRef CredentialsRef `json:"credentialsRef"`
+}
+
+const EdgeAPIVersion = "infra.kloudlite.io/v1"
+const EdgeKind = "Edge"
 
 type Region struct {
-	APIVersion string         `json:"apiVersion,omitempty"`
-	Kind       string         `json:"kind,omitempty"`
-	Metadata   RegionMetadata `json:"metadata,omitempty"`
-	Spec       RegionSpec     `json:"spec,omitempty"`
+	APIVersion string       `json:"apiVersion,omitempty"`
+	Kind       string       `json:"kind,omitempty"`
+	Metadata   EdgeMetadata `json:"metadata,omitempty"`
+	Spec       EdgeSpec     `json:"spec,omitempty"`
 }

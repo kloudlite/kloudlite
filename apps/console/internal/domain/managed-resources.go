@@ -199,7 +199,7 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(appID), &op_crds.ManagedResource{
+	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.ManagedResource{
 		APIVersion: op_crds.ManagedResourceAPIVersion,
 		Kind:       op_crds.ManagedResourceKind,
 		Metadata: op_crds.ManagedResourceMetadata{
