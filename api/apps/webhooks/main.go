@@ -23,5 +23,11 @@ func main() {
 		),
 		config.EnvFx[env.Env](),
 		framework.Module,
+		func() fx.Option {
+			if !isDev {
+				return fx.NopLogger
+			}
+			return nil
+		}(),
 	).Run()
 }

@@ -55,8 +55,7 @@ query: |
     }
   }
 variables:
-  # https://auth.dev.kloudlite.io/oauth2/callback/github?code=&state=eyJjc3JmIjoicVRDZEtadEtqeng1V2VaY3dCa2RVN2Y3Y1BXVmRoOFIiLCJzdGF0ZSI6IiJ9
-  code: 1bfeea844fdbef20bd6a
+  code: a8713d28c6d43fd07b43
   provider: github
   state: eyJjc3JmIjoib1ZqM3k4eGhwLUppemVxMy1NdjktelhzLVVLLTBRUVUiLCJzdGF0ZSI6IiJ9
 ---
