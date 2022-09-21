@@ -81,7 +81,8 @@ var Module = fx.Module(
 						return ctx.Status(http.StatusInternalServerError).JSON(errMsg)
 					}
 					logger = logger.WithKV(
-						"offset:", msg.Offset,
+						"offset", msg.Offset,
+						"partition", msg.Partition,
 						"topic", msg.Topic,
 						"timestamp", msg.Timestamp,
 					)
@@ -92,4 +93,5 @@ var Module = fx.Module(
 			return nil
 		},
 	),
+	LoadHarborWebhook(),
 )

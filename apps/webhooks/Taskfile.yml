@@ -2,7 +2,7 @@ version: 3
 
 tasks:
   docker-build:
-    vars:1
+    vars:
       APP: webhooks
       IMAGE: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
     preconditions:
