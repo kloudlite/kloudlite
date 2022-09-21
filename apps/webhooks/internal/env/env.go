@@ -6,4 +6,7 @@ type Env struct {
 
 	KafkaBrokers     string `env:"KAFKA_BROKERS" required:"true"`
 	GitWebhooksTopic string `env:"GIT_WEBHOOKS_TOPIC" required:"true"`
+
+	HarborWebhookTopic string `env:"HARBOR_WEBHOOK_TOPIC" required:"true"`
+	HarborAuthzSecret  string `env:"HARBOR_AUTHZ_SECRET" required:"true"`
 }
