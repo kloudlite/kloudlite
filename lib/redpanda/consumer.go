@@ -9,20 +9,17 @@ import (
 	"operators.kloudlite.io/lib/logging"
 )
 
-type Consumer struct {
-	client  *kgo.Client
-	logger  logging.Logger
-	options *ConsumerOptions
+type consumer struct {
+	client *kgo.Client
+	logger logging.Logger
 }
 
-func (c *Consumer) Close() {
+func (c *consumer) Ping(ctx context.Context) error {
+	return c.client.Ping(ctx)
+}
+
+func (c *consumer) Close() {
 	c.client.Close()
-}
-
-type ConsumerOptions struct {
-	ErrProducer *Producer
-	ErrTopic    string
-	logger      logging.Logger
 }
 
 type ConsumerError interface {
@@ -30,24 +27,14 @@ type ConsumerError interface {
 	error
 }
 
-func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
-	logger := func() logging.Logger {
-		if c.logger != nil {
-			return c.logger
-		}
-		if c.options.logger != nil {
-			c.logger = c.options.logger
-			return c.logger
-		}
-		c.logger = logging.NewOrDie(&logging.Options{Name: "default-logger"})
-		return c.logger
-	}()
-
+func (c *consumer) StartConsuming(onMessage ReaderFunc) error {
 	for {
 		fetches := c.client.PollFetches(context.Background())
 		if fetches.IsClientClosed() {
-			return
+			return errors.Newf("client is closed")
 		}
+
+		logger := c.logger
 
 		fetches.EachError(
 			func(topic string, partition int32, err error) {
@@ -58,7 +45,7 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 		fetches.EachRecord(
 			func(record *kgo.Record) {
 				if err := onMessage(
-					&KafkaMessage{
+					KafkaMessage{
 						Key:        record.Key,
 						Value:      record.Value,
 						Timestamp:  record.Timestamp,
@@ -87,8 +74,10 @@ func (c *Consumer) StartConsuming(onMessage ReaderFunc) {
 }
 
 func NewConsumer(
-	brokerHosts string, consumerGroup string, topicName string, options *ConsumerOptions,
-) (*Consumer, error) {
+	brokerHosts string, consumerGroup string, topicName string, options *ConsumerOpts,
+) (Consumer, error) {
+	cOpts := options.getWithDefaults()
+
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
 		kgo.ConsumerGroup(consumerGroup),
@@ -100,5 +89,5 @@ func NewConsumer(
 	if err != nil {
 		return nil, errors.NewEf(err, "unable to create client")
 	}
-	return &Consumer{client: client, options: options}, nil
+	return &consumer{client: client, logger: cOpts.Logger}, nil
 }

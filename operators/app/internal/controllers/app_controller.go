@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,8 +42,9 @@ func (r *AppReconciler) GetName() string {
 }
 
 const (
-	AppReady string = "app-ready"
-	HPAReady string = "hpa-ready"
+	AppReady       string = "app-ready"
+	HPAReady       string = "hpa-ready"
+	ImagesLabelled string = "images-labelled"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -72,7 +75,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 	}
 
 	// TODO: initialize all checks here
-	if step := req.EnsureChecks(AppReady, HPAReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(AppReady, HPAReady, ImagesLabelled); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -80,11 +83,11 @@ func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.cleanup(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-
 	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.reconlabellingImages(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -99,6 +102,44 @@ func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 
 func (r *AppReconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	return req.Finalize()
+}
+
+func (r *AppReconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+
+	check := rApi.Check{Generation: obj.Generation}
+
+	newLabels := make(map[string]string, len(obj.GetLabels()))
+	for s, v := range obj.GetLabels() {
+		newLabels[s] = v
+	}
+
+	for s := range newLabels {
+		if strings.HasPrefix(s, "kloudlite.io/image-") {
+			delete(newLabels, s)
+		}
+	}
+
+	for i := range obj.Spec.Containers {
+		newLabels[fmt.Sprintf("kloudlite.io/image-%s", fn.Sha1Sum([]byte(obj.Spec.Containers[i].Image)))] = "true"
+	}
+
+	if !reflect.DeepEqual(newLabels, obj.GetLabels()) {
+		obj.SetLabels(newLabels)
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(ImagesLabelled, check, err.Error())
+		}
+		checks[ImagesLabelled] = check
+		return req.UpdateStatus()
+	}
+
+	check.Status = true
+	if check != checks[ImagesLabelled] {
+		checks[ImagesLabelled] = check
+		return req.UpdateStatus()
+	}
+
+	return req.Next()
 }
 
 func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result {
