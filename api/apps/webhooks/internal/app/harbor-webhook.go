@@ -11,6 +11,7 @@ import (
 	"kloudlite.io/pkg/harbor"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/types"
 )
 
 func getMsgKey(body []byte) string {
@@ -33,7 +34,7 @@ func LoadHarborWebhook() fx.Option {
 						return ctx.Status(http.StatusUnauthorized).JSON("bad authorization token")
 					}
 
-					httpHook := HttpHook{
+					httpHook := types.HttpHook{
 						Body:        ctx.Body(),
 						Headers:     headers,
 						Url:         ctx.Request().URI().String(),
