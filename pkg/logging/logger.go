@@ -5,7 +5,6 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"kloudlite.io/pkg/errors"
 )
 
 // type Logger interface {
@@ -33,8 +32,12 @@ func (c Logger) Infof(msg string, args ...any) {
 	c.zapLogger.Infof(msg, args...)
 }
 
-func (c Logger) Errorf(err error, msg string, args ...any) {
-	c.zapLogger.Error(errors.NewEf(err, msg, args...))
+func (c Logger) Errorf(err error, args ...string) {
+	if len(args) > 0 {
+		c.zapLogger.Error(err, args)
+		return
+	}
+	c.zapLogger.Error(err)
 }
 
 func (c Logger) Warnf(msg string, args ...any) {

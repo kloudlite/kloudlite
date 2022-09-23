@@ -40,7 +40,7 @@ query: |
     oAuth_requestLogin(provider: $provider)
   }
 variables:
-  provider: github
+  provider: gitlab
 
 ---
 label: OAuth Login
@@ -55,8 +55,9 @@ query: |
     }
   }
 variables:
-  code: a8713d28c6d43fd07b43
-  provider: github
+  # https://auth.dev.kloudlite.io/oauth2/callback/gitlab?code=0e0012fe6ef8d2f66d0b2329688d8bc99a9cec9d0ffb5113e2c5c09f46b0bc08
+  code: 0e0012fe6ef8d2f66d0b2329688d8bc99a9cec9d0ffb5113e2c5c09f46b0bc08
+  provider: gitlab
   state: eyJjc3JmIjoib1ZqM3k4eGhwLUppemVxMy1NdjktelhzLVVLLTBRUVUiLCJzdGF0ZSI6IiJ9
 ---
 
