@@ -19,8 +19,9 @@ type Consumer interface {
 }
 
 type ConsumerImpl struct {
-	client *kgo.Client
-	logger *zap.SugaredLogger
+	client      *kgo.Client
+	logger      *zap.SugaredLogger
+	isConnected bool
 }
 
 // type Message struct {
@@ -40,7 +41,11 @@ func (c *ConsumerImpl) Close() {
 }
 
 func (c *ConsumerImpl) Ping(ctx context.Context) error {
-	return c.client.Ping(ctx)
+	if err := c.client.Ping(ctx); err != nil {
+		return err
+	}
+	c.isConnected = true
+	return nil
 }
 
 func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {

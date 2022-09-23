@@ -56,6 +56,10 @@ type Env struct {
 	HarborAdminUsername string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
 	HarborAdminPassword string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
 	HarborRegistryHost  string `env:"HARBOR_REGISTRY_HOST" required:"true"`
+
+	GithubWebhookAuthzSecret string `env:"GITHUB_WEBHOOK_AUTHZ_SECRET" required:"true"`
+	GitlabWebhookAuthzSecret string `env:"GITLAB_WEBHOOK_AUTHZ_SECRET" required:"true"`
+	KlHookTriggerAuthzSecret string `env:"KL_HOOK_TRIGGER_AUTHZ_SECRET" required:"true"`
 }
 
 func (env *Env) GetBrokerHosts() string {

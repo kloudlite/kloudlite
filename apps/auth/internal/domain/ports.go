@@ -12,6 +12,7 @@ type Github interface {
 	Authorize(ctx context.Context, state string) (string, error)
 	Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error)
 	GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error)
+	GetPrimaryEmail(ctx context.Context, token *oauth2.Token) (string, error)
 }
 
 type Gitlab interface {

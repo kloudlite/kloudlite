@@ -1,6 +1,9 @@
 package app
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,10 +13,48 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/webhooks/internal/env"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/types"
 )
+
+func validateGithubHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
+	headers := ctx.GetReqHeaders()
+	if v, ok := headers["X-Kloudlite-Trigger"]; ok {
+		if len(v) != len(envVars.KlHookTriggerAuthzSecret) || v != envVars.KlHookTriggerAuthzSecret {
+			return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", v)
+		}
+		return true, nil
+	}
+
+	hash := hmac.New(sha256.New, []byte(envVars.GithubAuthzSecret))
+	hash.Write(ctx.Body())
+	cHash := "sha256=" + hex.EncodeToString(hash.Sum(nil))
+
+	ghSignature := headers["X-Hub-Signature-256"]
+	if len(cHash) != len(ghSignature) || cHash != ghSignature {
+		return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", ghSignature)
+	}
+	return true, nil
+}
+
+func validateGitlabHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
+	headers := ctx.GetReqHeaders()
+	if v, ok := headers["X-Kloudlite-Trigger"]; ok {
+		if len(v) != len(envVars.KlHookTriggerAuthzSecret) || v != envVars.KlHookTriggerAuthzSecret {
+			return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", v)
+		}
+		return true, nil
+	}
+
+	gToken := headers["X-Gitlab-Token"]
+	if len(envVars.GitlabAuthzSecret) != len(gToken) || envVars.GitlabAuthzSecret != gToken {
+		return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", gToken)
+	}
+	return true, nil
+}
 
 func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 	switch provider {
@@ -30,7 +71,6 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 
 	case "gitlab":
 		{
-
 			var ev struct {
 				Repo gitlab.Repository `json:"repository"`
 			}
@@ -44,37 +84,53 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 	return "", errors.Newf("unknown git provider")
 }
 
-type GitWebhookPayload struct {
-	Provider   string            `json:"provider"`
-	Body       []byte            `json:"body"`
-	ReqHeaders map[string]string `json:"reqHeaders"`
-}
-
 var Module = fx.Module(
 	"app",
 	fx.Invoke(
 		func(app *fiber.App, envVars *env.Env, producer redpanda.Producer, logr logging.Logger) error {
 			app.Post(
 				"/git/:provider", func(ctx *fiber.Ctx) error {
+					logger := logr.WithName("git-webhook")
+
 					gitProvider := ctx.Params("provider")
+					_, err := func() (bool, error) {
+						if gitProvider == common.ProviderGithub {
+							return validateGithubHook(ctx, envVars)
+						}
+
+						if gitProvider == common.ProviderGitlab {
+							return validateGitlabHook(ctx, envVars)
+						}
+
+						return false, errors.Newf("unknown git provider")
+					}()
+					if err != nil {
+						logr.WithName("git-webhook").Errorf(err, "dropping webhook request")
+						return ctx.Status(http.StatusUnauthorized).JSON(map[string]string{"error": err.Error()})
+					}
+
 					repoUrl, err := gitRepoUrl(gitProvider, ctx.Body())
 					if err != nil {
 						return err
 					}
-					logger := logr.WithName("git-webhook").WithKV("provider", gitProvider, "repo", repoUrl)
+					logger = logger.WithKV("provider", gitProvider, "repo", repoUrl, "user-agent", ctx.GetReqHeaders()["User-Agent"])
 					logger.Infof("received webhook")
-					p, err := json.Marshal(
-						GitWebhookPayload{
-							Provider:   gitProvider,
-							Body:       ctx.Body(),
-							ReqHeaders: ctx.GetReqHeaders(),
+
+					gitHook := types.GitHttpHook{
+						HttpHook: types.HttpHook{
+							Body:        ctx.Body(),
+							Headers:     ctx.GetReqHeaders(),
+							Url:         ctx.Request().URI().String(),
+							QueryParams: ctx.Request().URI().QueryString(),
 						},
-					)
+						GitProvider: gitProvider,
+					}
+					b, err := json.Marshal(gitHook)
 					if err != nil {
 						return err
 					}
 
-					msg, err := producer.Produce(ctx.Context(), envVars.GitWebhooksTopic, repoUrl, p)
+					msg, err := producer.Produce(ctx.Context(), envVars.GitWebhooksTopic, repoUrl, b)
 					if err != nil {
 						errMsg := fmt.Sprintf("could not produce message to topic %s", gitProvider)
 						logger.Errorf(err, errMsg)

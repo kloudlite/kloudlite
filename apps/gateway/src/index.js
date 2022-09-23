@@ -3,7 +3,6 @@ import { ApolloGateway, RemoteGraphQLDataSource, IntrospectAndCompose } from '@a
 import fs from 'fs/promises';
 import yaml from 'js-yaml';
 import assert from 'assert';
-import path from 'path';
 
 const useEnv = (key) => {
   const v = process.env[key];
@@ -20,9 +19,6 @@ const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'))
 class CustomDataSource extends RemoteGraphQLDataSource {
   // eslint-disable-next-line class-methods-use-this
   willSendRequest({ request, context }) {
-    // console.log("--------------")
-    // console.log("ctx.headers: ", context?.req?.headers)
-    // console.log("--------------")
     if (context && context.req && context.req.headers) {
       Object.entries(context.req.headers).forEach(([key, value]) => {
         request.http.headers.set(key, value);
