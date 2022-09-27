@@ -3,7 +3,7 @@ package main
 import (
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/operators/harbor/internal/controllers/project"
-	userAccount "operators.kloudlite.io/operators/harbor/internal/controllers/user"
+	userAccount "operators.kloudlite.io/operators/harbor/internal/controllers/user-account"
 	"operators.kloudlite.io/operators/operator"
 )
 
@@ -24,7 +24,7 @@ func main() {
 
 	mgr.RegisterControllers(
 		&project.Reconciler{Name: "harbor-project", HarborCli: harborCli},
-		&userAccount.Reconciler{Name: "harbor-user", HarborCli: harborCli},
+		&userAccount.Reconciler{Name: "harbor-user-account", HarborCli: harborCli},
 	)
 	mgr.Start()
 }

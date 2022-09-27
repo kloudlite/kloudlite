@@ -55,7 +55,7 @@ const (
 )
 
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status-watcher,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {

@@ -14,7 +14,7 @@ type ACLConfigMapSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status-watcher
+// +kubebuilder:subresource:status
 
 // ACLConfigMap is the Schema for the aclconfigmaps API
 type ACLConfigMap struct {
@@ -22,7 +22,7 @@ type ACLConfigMap struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   ACLConfigMapSpec `json:"spec,omitempty"`
-	Status rApi.Status      `json:"status-watcher,omitempty"`
+	Status rApi.Status      `json:"status,omitempty"`
 }
 
 func (cfg *ACLConfigMap) GetStatus() *rApi.Status {

@@ -78,6 +78,9 @@ func (c *Client) UpsertUser(dbName, username, password string) error {
 }
 
 func (c *Client) DropUser(username string) error {
+	if err := c.Connect(context.Background()); err != nil {
+		return err
+	}
 	_, err := c.conn.ExecContext(c.ctx, fmt.Sprintf("DROP USER '%s'@'%%'", username))
 	if err != nil {
 		return errors.NewEf(err, "dropping user")

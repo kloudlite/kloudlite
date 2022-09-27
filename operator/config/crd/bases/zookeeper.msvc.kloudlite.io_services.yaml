@@ -95,7 +95,7 @@ spec:
             - resources
             - storage
             type: object
-          status-watcher:
+          status:
             properties:
               checks:
                 additionalProperties:
@@ -355,6 +355,8 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
