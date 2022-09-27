@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -24,6 +23,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/msvc-mongo/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -52,10 +52,11 @@ const (
 
 const (
 	KeyRootPassword string = "root-password"
+	KeyMsvcOutput   string = "msvc-output"
 )
 
 // +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/status-watcher,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -129,10 +130,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 	}
 
 	if scrt == nil {
-		hosts := make([]string, 0, obj.Spec.ReplicaCount)
-		for idx := 0; idx < obj.Spec.ReplicaCount; idx += 1 {
-			hosts = append(hosts, fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local", obj.Name, idx, obj.Name, obj.Namespace))
-		}
+		host := fmt.Sprintf("%s-headless.%s.svc.cluster.local", obj.Name, obj.Namespace)
 
 		rootPassword := fn.CleanerNanoid(40)
 		b, err := templates.Parse(
@@ -141,10 +139,10 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 				"namespace":  obj.Namespace,
 				"labels":     obj.GetLabels(),
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
-				"string-data": map[string]string{
-					"ROOT_PASSWORD": rootPassword,
-					"DB_HOSTS":      strings.Join(hosts, ","),
-					"DB_URL":        fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", rootPassword, strings.Join(hosts, ",")),
+				"string-data": types.MsvcOutput{
+					RootPassword: rootPassword,
+					Hosts:        host,
+					URI:          fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", rootPassword, host),
 				},
 			},
 		)
@@ -175,7 +173,12 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 		return req.UpdateStatus()
 	}
 
-	rApi.SetLocal(req, KeyRootPassword, string(scrt.Data["ROOT_PASSWORD"]))
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error())
+	}
+
+	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
 	return req.Next()
 }
 
@@ -191,7 +194,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.Standalon
 		req.Logger.Infof("helm reosurce (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	rootPassword, ok := rApi.GetLocal[string](req, KeyRootPassword)
+	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
 	if !ok {
 		return req.CheckFailed(HelmReady, check, err.Error())
 	}
@@ -208,7 +211,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.Standalon
 				"freeze":        obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
 				"storage-class": storageClass,
 				"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"root-password": rootPassword,
+				"root-password": msvcOutput.RootPassword,
 			},
 		)
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
@@ -259,7 +262,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.Standalone
 			Namespace: obj.Namespace,
 		},
 	); err != nil {
-		return req.CheckFailed(StsReady, check, err.Error())
+		return req.CheckFailed(StsReady, check, err.Error()).Err(nil)
 	}
 
 	for i := range stsList.Items {
@@ -284,10 +287,12 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.Standalone
 			if len(messages) > 0 {
 				b, err := json.Marshal(messages)
 				if err != nil {
-					return req.CheckFailed(StsReady, check, err.Error())
+					return req.CheckFailed(StsReady, check, err.Error()).Err(nil)
 				}
-				return req.CheckFailed(StsReady, check, string(b))
+				return req.CheckFailed(StsReady, check, string(b)).Err(nil)
 			}
+
+			return req.CheckFailed(StsReady, check, "waiting for pods to start ...").Err(nil)
 		}
 	}
 

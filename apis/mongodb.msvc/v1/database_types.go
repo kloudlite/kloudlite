@@ -24,7 +24,7 @@ type Database struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   DatabaseSpec `json:"spec,omitempty"`
-	Status rApi.Status  `json:"status-watcher,omitempty"`
+	Status rApi.Status  `json:"status,omitempty"`
 }
 
 func (d *Database) GetStatus() *rApi.Status {

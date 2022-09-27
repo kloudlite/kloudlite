@@ -31,7 +31,7 @@ type ClusterService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   ClusterServiceSpec   `json:"spec,omitempty"`
-	Status ClusterServiceStatus `json:"status-watcher,omitempty"`
+	Status ClusterServiceStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

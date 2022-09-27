@@ -48,7 +48,7 @@ const (
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status-watcher,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {

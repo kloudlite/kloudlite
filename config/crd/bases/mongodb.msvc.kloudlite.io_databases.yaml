@@ -51,7 +51,7 @@ spec:
             required:
             - msvcRef
             type: object
-          status-watcher:
+          status:
             properties:
               checks:
                 additionalProperties:

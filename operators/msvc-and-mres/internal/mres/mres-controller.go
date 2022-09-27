@@ -40,7 +40,7 @@ const (
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status-watcher,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -162,7 +162,7 @@ func (r *ManagedResourceReconciler) reconRealMres(req *rApi.Request[*crdsv1.Mana
 	}
 
 	var realMresObj struct {
-		Status rApi.Status `json:"status-watcher"`
+		Status rApi.Status `json:"status"`
 	}
 	if err := json.Unmarshal(b, &realMresObj); err != nil {
 		return req.CheckFailed(RealMresReady, check, err.Error()).Err(nil)

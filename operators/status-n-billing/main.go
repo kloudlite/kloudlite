@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	mgr := operator.New("status-watcher-n-billing-watcher")
+	mgr := operator.New("status-n-billing-watcher")
 
 	producer, err := redpanda.NewProducer(mgr.Env.KafkaBrokers)
 	if err != nil {

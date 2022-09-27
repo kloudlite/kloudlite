@@ -44,6 +44,8 @@ const (
 	DBUserReady      string = "db-user"
 	AccessCredsReady string = "access-creds"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
+
+	DBUserDeleted string = "db-user-deleted"
 )
 
 const (
@@ -109,6 +111,38 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mysqlMsvcv1.Database]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+
+	check := rApi.Check{Generation: obj.Generation}
+
+	if step := req.EnsureChecks(DBUserDeleted); !step.ShouldProceed() {
+		return step
+	}
+
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(DBUserDeleted, check, err.Error()).Err(nil)
+	}
+
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output could not be parsed").Error()).Err(nil)
+	}
+
+	mysqlCli, err := libMysql.NewClient(msvcOutput.Hosts, "mysql", "root", msvcOutput.RootPassword)
+	if err != nil {
+		req.Logger.Infof("failed to create mysql client, retrying in 5 seconds")
+		return req.CheckFailed(DBUserReady, check, err.Error()).Err(nil).RequeueAfter(5 * time.Second)
+	}
+
+	if err := mysqlCli.Connect(ctx); err != nil {
+		return req.CheckFailed(DBUserDeleted, check, err.Error())
+	}
+
+	if err := mysqlCli.DropUser(sanitizeDbUsername(obj.Name)); err != nil {
+		return req.CheckFailed(DBUserDeleted, check, err.Error())
+	}
+
 	return req.Finalize()
 }
 
@@ -188,7 +222,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 				"namespace":  obj.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": types.MresOutput{
-					Username: obj.Name,
+					Username: dbUsername,
 					Password: dbPasswd,
 					Hosts:    msvcOutput.Hosts,
 					DbName:   dbName,

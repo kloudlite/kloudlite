@@ -86,14 +86,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - apps/status-watcher
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
   - crds
   verbs:
   - create
@@ -112,7 +104,7 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - crds/status-watcher
+  - crds/status
   verbs:
   - get
   - patch
@@ -138,7 +130,7 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - lambdas/status-watcher
+  - lambdas/status
   verbs:
   - get
   - patch
@@ -224,14 +216,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - projects/status-watcher
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
   - routers
   verbs:
   - create
@@ -276,7 +260,7 @@ rules:
 - apiGroups:
   - elasticsearc.msvc.kloudlite.io
   resources:
-  - services/status-watcher
+  - services/status
   verbs:
   - get
   - patch
@@ -354,7 +338,7 @@ rules:
 - apiGroups:
   - mongo-standalone.msvc.kloudlite.io
   resources:
-  - services/status-watcher
+  - services/status
   verbs:
   - get
   - patch
@@ -666,7 +650,7 @@ rules:
 - apiGroups:
   - mysql.msvc.kloudlite.io
   resources:
-  - standalone/status-watcher
+  - standalone/status
   verbs:
   - get
   - patch
@@ -770,7 +754,7 @@ rules:
 - apiGroups:
   - redis.msvc.kloudlite.io
   resources:
-  - aclaccounts/status-watcher
+  - aclaccounts/status
   verbs:
   - get
   - patch
@@ -978,7 +962,7 @@ rules:
 - apiGroups:
   - zookeeper.msvc.kloudlite.io
   resources:
-  - services/status-watcher
+  - services/status
   verbs:
   - get
   - patch

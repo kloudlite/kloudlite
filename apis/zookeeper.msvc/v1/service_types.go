@@ -23,7 +23,7 @@ type ServiceSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status-watcher
+// +kubebuilder:subresource:status
 
 // Service is the Schema for the services API
 type Service struct {
@@ -31,7 +31,7 @@ type Service struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   ServiceSpec `json:"spec,omitempty"`
-	Status rApi.Status `json:"status-watcher,omitempty"`
+	Status rApi.Status `json:"status,omitempty"`
 }
 
 func (s *Service) GetStatus() *rApi.Status {
