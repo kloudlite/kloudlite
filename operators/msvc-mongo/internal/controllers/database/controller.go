@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -15,12 +14,12 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
 	libMongo "operators.kloudlite.io/lib/mongo"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/msvc-mongo/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -30,11 +29,10 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	env       *env.Env
-	harborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
+	Scheme *runtime.Scheme
+	env    *env.Env
+	logger logging.Logger
+	Name   string
 }
 
 func (r *Reconciler) GetName() string {
@@ -45,15 +43,14 @@ const (
 	AccessCredsReady string = "access-creds"
 	DBUserReady      string = "db-user-ready"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
+
+	DBUserDeleted string = "db-user-deleted"
 )
 
-type Output struct {
-	DbUser     string `json:"DB_USER"`
-	DbPassword string `json:"DB_PASSWORD"`
-	DbHosts    string `json:"DB_HOSTS"`
-	DbName     string `json:"DB_NAME"`
-	DbUrl      string `json:"DB_URL"`
-}
+const (
+	KeyMsvcOutput string = "msvc-output"
+	KeyMresOutput string = "mres-output"
+)
 
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=databases/status,verbs=get;update;patch
@@ -113,6 +110,39 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+
+	if step := req.EnsureChecks(DBUserDeleted); !step.ShouldProceed() {
+		return step
+	}
+
+	check := rApi.Check{Generation: obj.Generation}
+
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(DBUserDeleted, check, errors.NewEf(err, "msvc output does not exist").Error())
+	}
+
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
+	if err != nil {
+		return req.CheckFailed(DBUserDeleted, check, err.Error()).Err(nil)
+	}
+
+	mongoCli, err := libMongo.NewClient(msvcOutput.URI)
+	if err != nil {
+		return req.CheckFailed(DBUserDeleted, check, err.Error())
+	}
+
+	mCtx, _ := context.WithTimeout(ctx, 5*time.Second)
+	if err := mongoCli.Connect(mCtx); err != nil {
+		return req.CheckFailed(DBUserDeleted, check, err.Error())
+	}
+	defer mongoCli.Close()
+
+	if err := mongoCli.DeleteUser(ctx, obj.Name, obj.Name); err != nil {
+		return req.CheckFailed(DBUserDeleted, check, err.Error())
+	}
+
 	return req.Finalize()
 }
 
@@ -156,37 +186,39 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	accessSecretName := "mres-" + obj.Name
+	secretName := "mres-" + obj.Name
 
-	accessSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, accessSecretName), &corev1.Secret{})
+	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
 	if err != nil {
-		req.Logger.Infof("access credentials %s does not exist, will be creating it now...", fn.NN(obj.Namespace, accessSecretName).String())
+		req.Logger.Infof("access credentials %s does not exist, will be creating it now...", fn.NN(obj.Namespace, secretName).String())
 	}
 
 	// msvc output ref
-	msvcOutput, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error())
 	}
 
-	if accessSecret == nil {
-		dbPasswd := fn.CleanerNanoid(40)
-		hosts := string(msvcOutput.Data["DB_HOSTS"])
+	msvcOutput, err := fn.ParseFromSecret[types.MresOutput](msvcSecret)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	}
 
-		output := Output{
-			DbUser:     obj.Name,
-			DbPassword: dbPasswd,
-			DbHosts:    hosts,
-			DbName:     obj.Name,
-			DbUrl:      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, hosts, obj.Name),
-		}
+	if scrt == nil {
+		dbPasswd := fn.CleanerNanoid(40)
 
 		b2, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":        accessSecretName,
-				"namespace":   obj.Namespace,
-				"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"string-data": output,
+				"name":       secretName,
+				"namespace":  obj.Namespace,
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"string-data": types.MresOutput{
+					Username: obj.Name,
+					Password: fn.CleanerNanoid(40),
+					Hosts:    msvcOutput.Hosts,
+					DbName:   obj.Name,
+					URI:      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, msvcOutput.Hosts, obj.Name),
+				},
 			},
 		)
 		if err != nil {
@@ -207,16 +239,13 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		return req.UpdateStatus()
 	}
 
-	b, err := json.Marshal(accessSecret.Data)
+	mresOutput, err := fn.ParseFromSecret[types.MresOutput](scrt)
 	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	}
-	var output Output
-	if err := json.Unmarshal(b, &output); err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}
 
-	rApi.SetLocal(req, "output", output)
+	rApi.SetLocal(req, KeyMsvcOutput, msvcOutput)
+	rApi.SetLocal(req, KeyMresOutput, mresOutput)
 	return req.Next()
 }
 
@@ -224,31 +253,38 @@ func (r *Reconciler) reconDBUser(req *rApi.Request[*mongodbMsvcv1.Database]) ste
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	accessCreds, ok := rApi.GetLocal[Output](req, "output")
+	mresOutput, ok := rApi.GetLocal[types.MresOutput](req, KeyMresOutput)
 	if !ok {
-		return req.CheckFailed(DBUserReady, check, "key 'output' does not exist in req-locals")
+		return req.CheckFailed(DBUserReady, check, errors.NotInLocals(KeyMresOutput).Error())
 	}
 
-	mongoClient, err := libMongo.NewClient(accessCreds.DbUrl)
+	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
+	if !ok {
+		return req.CheckFailed(DBUserReady, check, errors.NotInLocals(KeyMsvcOutput).Error())
+	}
+
+	mongoCli, err := libMongo.NewClient(msvcOutput.URI)
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error())
 	}
 
 	mCtx, _ := context.WithTimeout(ctx, 5*time.Second)
-	if err := mongoClient.Connect(mCtx); err != nil {
+	if err := mongoCli.Connect(mCtx); err != nil {
 		return req.CheckFailed(DBUserReady, check, err.Error())
 	}
-	defer mongoClient.Close()
+	defer mongoCli.Close()
 
-	userExists, err := mongoClient.UserExists(ctx, obj.Name)
+	exists, err := mongoCli.UserExists(ctx, obj.Name)
 	if err != nil {
 		return req.CheckFailed(DBUserReady, check, err.Error())
 	}
 
-	if !userExists {
-		if err := mongoClient.UpsertUser(ctx, accessCreds.DbName, accessCreds.DbUser, accessCreds.DbPassword); err != nil {
+	if !exists {
+		if err := mongoCli.UpsertUser(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
 			return req.CheckFailed(DBUserReady, check, err.Error())
 		}
+		checks[DBUserReady] = check
+		return req.UpdateStatus()
 	}
 
 	check.Status = true

@@ -76,6 +76,18 @@ func (c *Client) UserExists(ctx context.Context, userName string) (bool, error) 
 	return c.userExists(ctx, userName)
 }
 
+func (c *Client) DeleteUser(ctx context.Context, dbName string, username string) error {
+	if exists, _ := c.userExists(ctx, username); !exists {
+		return nil
+	}
+	db := c.conn.Database(dbName)
+	return db.RunCommand(
+		ctx, bson.D{
+			{Key: "dropUser", Value: username},
+		},
+	).Err()
+}
+
 func (c *Client) userExists(ctx context.Context, userName string) (bool, error) {
 	if !c.isConnected {
 		return false, ErrNotConnected

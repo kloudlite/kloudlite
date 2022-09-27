@@ -224,7 +224,7 @@ func main() {
 
 	controllers = append(
 		controllers,
-		&watchercontrollers.StatusWatcherReconciler{Name: "status-watcher", Notifier: statusNotifier},
+		&watchercontrollers.StatusWatcherReconciler{Name: "status", Notifier: statusNotifier},
 		&watchercontrollers.BillingWatcherReconciler{Name: "billing-watcher-watcher", Notifier: billingNotifier},
 	)
 

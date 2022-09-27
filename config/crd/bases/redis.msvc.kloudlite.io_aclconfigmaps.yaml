@@ -35,7 +35,7 @@ spec:
           spec:
             description: ACLConfigMapSpec defines the desired state of ACLConfigMap
             type: object
-          status-watcher:
+          status:
             properties:
               checks:
                 additionalProperties:
@@ -295,6 +295,8 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

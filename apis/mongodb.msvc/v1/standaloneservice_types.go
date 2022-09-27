@@ -23,7 +23,7 @@ type StandaloneServiceSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cloud",type="string",JSONPath=".spec.cloudProvider.cloud"
 // +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
-// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status-watcher.isReady"
+// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status.isReady"
 
 // StandaloneService is the Schema for the standaloneservices API
 type StandaloneService struct {
@@ -31,7 +31,7 @@ type StandaloneService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   StandaloneServiceSpec `json:"spec,omitempty"`
-	Status rApi.Status           `json:"status-watcher,omitempty"`
+	Status rApi.Status           `json:"status,omitempty"`
 }
 
 func (s *StandaloneService) GetStatus() *rApi.Status {
