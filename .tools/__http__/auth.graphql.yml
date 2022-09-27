@@ -198,3 +198,19 @@ query: |
 variables:
   repoId: "26232015"
 ---
+
+
+query: |
+  mutation Auth_resetPassword($email: String!) {
+    auth_requestResetPassword(email: $email)
+  }
+variables:
+  email: shashwatsingh005@gmail.com
+---
+query: |
+  mutation Auth_resetPassword($token: String!, $password: String!) {
+    auth_resetPassword(token: $token, password: $password)
+  }
+variables:
+  token:
+
