@@ -1,8 +1,9 @@
-  {{- $obj := get . "object" }}
+{{- $obj := get . "obj" }}
 {{- $ownerRefs := get .  "owner-refs" }}
 {{- $storageClass := get . "storage-class"}}
 
-{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars |toJson) }}
+{{- $adminPassword := get . "admin-password"  -}}
+{{- $adminToken := get . "admin-token"  -}}
 
 {{- with $obj}}
 {{- /* gotype: operators.kloudlite.io/apis/influxdb.msvc/v1.Service*/ -}}
@@ -19,8 +20,8 @@ spec:
     admin:
       bucket: {{ .Spec.Admin.Bucket }}
       org: {{ .Spec.Admin.Org }}
-      password: {{ index $generatedVars "admin-password" }}
-      token: {{index $generatedVars "admin-token" }}
+      password: {{$adminPassword}}
+      token: {{$adminToken}}
       username: {{ .Spec.Admin.Username }}
 
   {{- if .Labels }}
@@ -47,8 +48,9 @@ spec:
   influxdb:
     resources:
       requests:
+        cpu: {{.Spec.Resources.Cpu.Min}}
         memory: {{.Spec.Resources.Memory}}
       limits:
-        cpu: {{.Spec.Resources.Cpu}}
+        cpu: {{.Spec.Resources.Cpu.Max}}
         memory: {{.Spec.Resources.Memory}}
 {{- end }}

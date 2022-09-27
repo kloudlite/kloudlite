@@ -24,3 +24,7 @@ func NewE(err error) error {
 func New(msg string) error {
 	return yerrors.Wrap(yerrors.New(msg))
 }
+
+func NotInLocals(key string) error {
+	return yerrors.New(fmt.Sprintf("key %s not found in req.locals", key))
+}

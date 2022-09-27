@@ -115,9 +115,9 @@ func (r *TopicReconciler) reconcileStatus(req *rApi.Request[*redpandamsvcv1.Topi
 
 	isReady := true
 
-	if value := obj.GetAnnotations()["kloudlite.io/reset-status"]; value == "true" {
+	if value := obj.GetAnnotations()["kloudlite.io/reset-status-watcher"]; value == "true" {
 		ann := obj.GetAnnotations()
-		delete(ann, "kloudlite.io/reset-status")
+		delete(ann, "kloudlite.io/reset-status-watcher")
 		obj.SetAnnotations(ann)
 		if err := r.Update(ctx, obj); err != nil {
 			return req.FailWithStatusError(err)

@@ -39,11 +39,6 @@ func (r *{{$reconType}}) GetName() string {
 }
 
 const (
-  // TODO: add checks
-  CheckReady string = "check-ready"
-)
-
-const (
   HelmReady        string = "helm-ready"
   StsReady         string = "sts-ready"
   AccessCredsReady string = "access-creds-ready"

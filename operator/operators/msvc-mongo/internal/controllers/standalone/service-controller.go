@@ -55,7 +55,7 @@ const (
 )
 
 // +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/status-watcher,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {

@@ -31,7 +31,7 @@ type JobVars struct {
 }
 
 func useTemplate(filename string) (func(data interface{}) ([]byte, error), error) {
-	tPath := path.Join(os.Getenv("PWD"), fmt.Sprintf("lib/templates/%s", filename))
+	tPath := path.Join(os.Getenv("PWD"), fmt.Sprintf("types/templates/%s", filename))
 	t, err := template.New(filename).Funcs(sprig.TxtFuncMap()).ParseFiles(tPath)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not parse template %s", filename)

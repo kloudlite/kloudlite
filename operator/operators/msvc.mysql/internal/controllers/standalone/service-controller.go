@@ -3,6 +3,7 @@ package standalone
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -22,6 +23,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/msvc.mysql/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -43,22 +45,17 @@ func (r *ServiceReconciler) GetName() string {
 }
 
 const (
-	// TODO: add checks
-	CheckReady string = "check-ready"
-)
-
-const (
 	HelmReady        string = "helm-ready"
 	StsReady         string = "sts-ready"
 	AccessCredsReady string = "access-creds-ready"
 )
 
 const (
-	KeyRootPassword string = "root-password"
+	KeyMsvcOutput string = "msvc-output"
 )
 
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status-watcher,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -135,25 +132,28 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 
 	if scrt == nil {
 		rootPassword := fn.CleanerNanoid(40)
+		mysqlHost := fmt.Sprintf("%s-headless.%s.svc.cluster.local:3306", obj.Name, obj.Namespace)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
 				"name":       secretName,
 				"namespace":  obj.Namespace,
 				"labels":     obj.GetLabels(),
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
-				"string-data": map[string]string{
-					"ROOT_PASSWORD": rootPassword,
-					// TODO: user
+				"string-data": types.MsvcOutput{
+					MysqlUserPassword: fn.CleanerNanoid(40),
+					RootPassword:      rootPassword,
+					Hosts:             mysqlHost,
+					URI:               fmt.Sprintf("mysqlx://%s:%s@%s/%s", "root", rootPassword, mysqlHost, "mysql"),
 				},
 			},
 		)
 
 		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error())
+			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
 
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error())
+			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
 
 		checks[AccessCredsReady] = check
@@ -174,7 +174,16 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 		return req.UpdateStatus()
 	}
 
-	rApi.SetLocal(req, KeyRootPassword, string(scrt.Data["ROOT_PASSWORD"]))
+	output, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	}
+
+	if output == nil {
+		return req.CheckFailed(AccessCredsReady, check, "output secret is nil").Err(nil)
+	}
+
+	rApi.SetLocal(req, KeyMsvcOutput, *output)
 	return req.Next()
 }
 
@@ -186,21 +195,29 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneS
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMysqlType),
 	)
 	if err != nil {
-		req.Logger.Infof("helm reosurce (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	rootPassword, ok := rApi.GetLocal[string](req, KeyRootPassword)
+	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
 	if !ok {
-		return req.CheckFailed(HelmReady, check, err.Error())
+		return req.CheckFailed(HelmReady, check, fmt.Sprintf("key %s is not present in req locals", KeyMsvcOutput)).Err(nil)
 	}
 
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
+		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
 		if err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error())
 		}
 
-		b, err := templates.Parse()
+		b, err := templates.Parse(
+			templates.MySqlStandalone, map[string]any{
+				"obj":                 obj,
+				"owner-refs":          obj.GetOwnerReferences(),
+				"storage-class":       storageClass,
+				"root-password":       msvcOutput.RootPassword,
+				"mysql-user-password": msvcOutput.MysqlUserPassword,
+			},
+		)
 
 		if err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
@@ -280,6 +297,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneSe
 				}
 				return req.CheckFailed(StsReady, check, string(b))
 			}
+			return req.CheckFailed(StsReady, check, "waiting for pod starting ...")
 		}
 	}
 
@@ -313,6 +331,8 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 			},
 		),
 	)
+
+	// builder.WithEventFilter(rApi.ReconcileFilter())
 
 	return builder.Complete(r)
 }

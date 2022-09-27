@@ -39,7 +39,7 @@ const (
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lambdas,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lambdas/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lambdas/status-watcher,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lambdas/finalizers,verbs=update
 
 func (r *LambdaReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
