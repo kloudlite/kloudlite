@@ -29,7 +29,7 @@ type MessageReply struct {
 	IsReady         bool               `json:"isReady"`
 	// ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
 	Key      string           `json:"key"`
-	Billing  *ResourceBilling `json:"billing,omitempty"`
+	Billing  *ResourceBilling `json:"billing-watcher,omitempty"`
 	Metadata KlMetadata       `json:"metadata,omitempty"`
 	Stage    stageTT          `json:"stage"`
 }

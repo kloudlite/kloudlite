@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	"operators.kloudlite.io/lib/errors"
 )
@@ -38,19 +40,21 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) UpsertUser(dbName, username, password string) error {
-	// result, err := c.conn.ExecContext(c.ctx, fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
-	_, err := c.conn.ExecContext(
-		context.Background(), fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", c.sanitizeDbName(dbName)),
-	)
+	if c.conn == nil {
+		return errors.Newf("please connect to mysql prior to calling UpsertUser")
+	}
+
+	if err := c.Connect(context.Background()); err != nil {
+		return err
+	}
+
+	_, err := c.conn.ExecContext(context.Background(), fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
 	if err != nil {
 		return errors.NewEf(err, "creating database")
 	}
 
 	_, err = c.conn.ExecContext(
-		c.ctx, fmt.Sprintf(
-			"CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s'", username,
-			password,
-		),
+		c.ctx, fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s'", username, password),
 	)
 	if err != nil {
 		return errors.NewEf(err, "creating user")
@@ -90,12 +94,16 @@ func (c *Client) DropDatabase(dbName string) error {
 }
 
 func (c *Client) UserExists(username string) (bool, error) {
+	if c.conn == nil {
+		return false, errors.Newf("please connect to mysql prior to calling UserExists")
+	}
+
 	rows, err := c.conn.QueryContext(
 		c.ctx,
 		fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '%s')", username),
 	)
 	if err != nil {
-		return false, errors.NewEf(err, "dropping database")
+		return false, err
 	}
 	count := 0
 	if rows.Next() {
@@ -108,13 +116,23 @@ func (c *Client) UserExists(username string) (bool, error) {
 }
 
 func NewClient(hosts, dbName, username, password string) (*Client, error) {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", username, password, hosts, dbName))
+	connector, err := mysql.NewConnector(
+		&mysql.Config{
+			User:                 username,
+			Passwd:               password,
+			Addr:                 hosts,
+			DBName:               dbName,
+			Collation:            "utf8mb4_general_ci",
+			AllowNativePasswords: true,
+		},
+	)
 	if err != nil {
-		return nil, errors.NewEf(err, "creating mysql client")
+		return nil, err
 	}
+	db := sql.OpenDB(connector)
 	// See "Important settings" section.
-	// db.SetConnMaxLifetime(time.Minute * 3)
-	// db.SetMaxOpenConns(10)
-	// db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(20 * time.Minute)
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(10)
 	return &Client{db: db}, nil
 }

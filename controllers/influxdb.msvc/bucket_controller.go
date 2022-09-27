@@ -158,7 +158,7 @@ func (r *BucketReconciler) reconcileStatus(req *rApi.Request[*influxDB.Bucket]) 
 			return nil
 		}
 		cs = append(cs, conditions.New(HasBucketId, true, conditions.Found))
-		if err := influxClient.BucketExists(ctx, bucketId); err != nil {
+		if _, err := influxClient.BucketExists(ctx, bucketId); err != nil {
 			cs = append(cs, conditions.New(BucketExists, false, conditions.NotFound, err.Error()))
 			isReady = false
 			return nil

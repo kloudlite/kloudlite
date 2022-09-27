@@ -10,14 +10,35 @@ import (
 	"time"
 
 	"operators.kloudlite.io/lib/errors"
-	fn "operators.kloudlite.io/lib/functions"
 )
 
 type User struct {
 	Id       int    `json:"id"`
 	Name     string `json:"name"`
-	Secret   string `json:"secret"`
 	Location string `json:"location"`
+}
+
+type harborRobotUser struct {
+	UpdateTime   time.Time `json:"update_time"`
+	Description  string    `json:"description"`
+	Level        string    `json:"level"`
+	Editable     bool      `json:"editable"`
+	CreationTime time.Time `json:"creation_time"`
+	ExpiresAt    int       `json:"expires_at"`
+	Name         string    `json:"name"`
+	Secret       string    `json:"secret"`
+	Disable      bool      `json:"disable"`
+	Duration     int       `json:"duration"`
+	Id           int       `json:"id"`
+	Permissions  []struct {
+		Access []struct {
+			Action   string `json:"action"`
+			Resource string `json:"resource"`
+			Effect   string `json:"effect"`
+		} `json:"access"`
+		Kind      string `json:"kind"`
+		Namespace string `json:"namespace"`
+	} `json:"permissions"`
 }
 
 var dockerRepoMinACLs = []map[string]any{
@@ -31,12 +52,9 @@ var dockerRepoMinACLs = []map[string]any{
 	},
 }
 
-func (h *Client) CreateUserAccount(ctx context.Context, projectName string, userName string) (*User, error) {
-	// create account
-	s := fn.CleanerNanoid(48)
-
+func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, password string) (*User, error) {
 	body := map[string]any{
-		"secret":      s,
+		"secret":      password,
 		"name":        userName,
 		"level":       "project",
 		"duration":    0,
@@ -68,39 +86,24 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName string, user
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusCreated {
-		var user User
-		if err := json.Unmarshal(rbody, &user); err != nil {
-			return nil, errors.NewEf(err, "could not unmarshal into harborUser")
-		}
-		user.Location = resp.Header.Get("Location")
-		return &user, nil
+	if resp.StatusCode != http.StatusCreated {
+		return nil, errors.Newf("bad status code (%d), with error message %s", resp.StatusCode, rbody)
 	}
 
-	return nil, errors.Newf("bad status code (%d), with error message %s", resp.StatusCode, rbody)
-}
+	var hUser harborRobotUser
+	if err := json.Unmarshal(rbody, &hUser); err != nil {
+		return nil, errors.NewEf(err, "could not unmarshal into harborRobotUser")
+	}
 
-type harborRobotUserTT struct {
-	Description string `json:"description"`
-	Disable     bool   `json:"disable"`
-	Duration    int    `json:"duration"`
-	ExpiresAt   int    `json:"expires_at"`
-	Id          int    `json:"id"`
-	Level       string `json:"level"`
-	Name        string `json:"name"`
-	Permissions []struct {
-		Access []struct {
-			Action   string `json:"action"`
-			Resource string `json:"resource"`
-		} `json:"access"`
-		Kind      string `json:"kind"`
-		Namespace string `json:"namespace"`
-	} `json:"permissions"`
-	UpdateTime time.Time `json:"update_time"`
+	return &User{
+		Id:       hUser.Id,
+		Name:     hUser.Name,
+		Location: resp.Header.Get("Location"),
+	}, nil
 }
 
 func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool) error {
-	// ASSERT: harbor update is super super bad, they required an entire object, instead of only diffs
+	// ASSERT: harbor update is terrible, they required an entire object, instead of only diffs
 	req, err := h.NewAuthzRequest(ctx, http.MethodGet, user.Location, nil)
 	if err != nil {
 		return errors.NewEf(err, "building requests for updating robot account")
@@ -116,7 +119,7 @@ func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool
 		return err
 	}
 
-	var r harborRobotUserTT
+	var r harborRobotUser
 	if err := json.Unmarshal(respBody, &r); err != nil {
 		return err
 	}
@@ -143,11 +146,11 @@ func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool
 		return err
 	}
 
-	if resp.StatusCode == http.StatusOK {
-		return nil
+	if resp.StatusCode != http.StatusOK {
+		return errors.Newf("could not update user account as received statuscode=%d because %s", resp.StatusCode, respBody)
 	}
 
-	return errors.Newf("could not update user account as received statuscode=%d because %s", resp.StatusCode, respBody)
+	return nil
 }
 
 func (h *Client) DeleteUserAccount(ctx context.Context, user *User) error {
@@ -174,6 +177,9 @@ func (h *Client) DeleteUserAccount(ctx context.Context, user *User) error {
 }
 
 func (h *Client) CheckIfUserAccountExists(ctx context.Context, user *User) (bool, error) {
+	if user == nil || user.Location == "" {
+		return false, nil
+	}
 	req, err := h.NewAuthzRequest(ctx, http.MethodGet, user.Location, nil)
 	if err != nil {
 		return false, err

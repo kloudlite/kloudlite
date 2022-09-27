@@ -40,7 +40,7 @@ spec:
                   to remove/update
                 type: string
             type: object
-          status:
+          status-watcher:
             description: ClusterServiceStatus defines the observed state of ClusterService
             type: object
         type: object

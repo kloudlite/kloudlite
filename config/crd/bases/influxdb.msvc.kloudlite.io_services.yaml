@@ -38,13 +38,10 @@ spec:
               admin:
                 properties:
                   bucket:
-                    default: primary
                     type: string
                   org:
-                    default: primary
                     type: string
                   username:
-                    default: admin
                     type: string
                 required:
                 - bucket
@@ -107,7 +104,6 @@ spec:
                     type: string
                 type: object
             required:
-            - admin
             - cloudProvider
             - resources
             - storage

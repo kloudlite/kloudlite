@@ -225,7 +225,7 @@ func (r *ServiceReconciler) reconcileOperations(req *rApi.Request[*influxdbmsvcv
 				"PASSWORD": adminPassword,
 				"BUCKET":   svcObj.Spec.Admin.Bucket,
 				"ORG":      svcObj.Spec.Admin.Org,
-				"HOSTS":    host,
+				"HOST":     host,
 				"TOKEN":    adminToken,
 				"URI":      fmt.Sprintf("http://%s", host),
 			},

@@ -2,12 +2,15 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/influx"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
 type BucketSpec struct {
-	ManagedSvcName string `json:"managedSvcName"`
+	MsvcRef ct.MsvcRef     `json:"msvcRef"`
+	Bucket  *influx.Bucket `json:"bucketRef"`
 }
 
 // +kubebuilder:object:root=true
@@ -27,7 +30,9 @@ func (b *Bucket) GetStatus() *rApi.Status {
 }
 
 func (b *Bucket) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.MsvcNameKey: b.Spec.MsvcRef.Name,
+	}
 }
 
 func (m *Bucket) GetEnsuredAnnotations() map[string]string {
