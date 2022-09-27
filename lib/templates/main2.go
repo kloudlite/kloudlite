@@ -16,7 +16,7 @@ package templates
 // 	"sigs.k8s.io/yaml"
 //
 // 	"github.com/Masterminds/sprig/v3"
-// 	"operators.kloudlite.io/lib/errors"
+// 	"operators.kloudlite.io/types/errors"
 // )
 //
 // func txtFuncs(t *template.Template) template.FuncMap {
@@ -167,7 +167,7 @@ package templates
 // 	return &unstructured.Unstructured{Object: m}, nil
 // }
 //
-// var templateDir = filepath.Join(os.Getenv("PWD"), "lib/templates")
+// var templateDir = filepath.Join(os.Getenv("PWD"), "types/templates")
 //
 // var helperFiles []string
 //

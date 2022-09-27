@@ -15,7 +15,14 @@ spec:
     singular: harboruseraccount
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: HarborUserAccount is the Schema for the harboruseraccounts API
@@ -38,6 +45,19 @@ spec:
               enabled:
                 default: true
                 type: boolean
+              harborUser:
+                properties:
+                  id:
+                    type: integer
+                  location:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - id
+                - location
+                - name
+                type: object
               projectRef:
                 type: string
             required:

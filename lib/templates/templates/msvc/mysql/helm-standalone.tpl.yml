@@ -1,8 +1,8 @@
 {{- $ownerRefs := get . "owner-refs" }}
 {{- $storageClass := get . "storage-class"}}
-{{- $obj := get . "object"}}
-
-{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
+{{- $obj := get . "obj"}}
+{{- $rootPassword := get . "root-password"  -}}
+{{- $mysqlUserPassword := get . "mysql-user-password"  -}}
 
 {{- with $obj }}
 {{- /*gotype: operators.kloudlite.io/apis/mysql-standalone.msvc/v1.Service*/ -}}
@@ -34,8 +34,8 @@ spec:
   architecture: standalone
   auth:
     enabled: true
-    password: {{ index $generatedVars "mysql-password" }}
-    rootPassword: {{ index $generatedVars "mysql-root-password" }}
+    password: {{$mysqlUserPassword}}
+    rootPassword: {{$rootPassword}}
   primary:
     persistence:
       enabled: true

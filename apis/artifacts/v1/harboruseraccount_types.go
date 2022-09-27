@@ -2,18 +2,22 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/harbor"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
 type HarborUserAccountSpec struct {
 	// +kubebuilder:default=true
-	Enabled    bool   `json:"enabled,omitempty"`
-	ProjectRef string `json:"projectRef"`
+	Enabled    bool         `json:"enabled,omitempty"`
+	ProjectRef string       `json:"projectRef"`
+	HarborUser *harbor.User `json:"harborUser,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // HarborUserAccount is the Schema for the harboruseraccounts API
 type HarborUserAccount struct {

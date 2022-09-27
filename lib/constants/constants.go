@@ -7,7 +7,7 @@ const MsvcApiVersion = "msvc.kloudlite.io/v1"
 const (
 	CommonFinalizer        string = "finalizers.kloudlite.io"
 	ForegroundFinalizer    string = "foregroundDeletion"
-	BillingFinalizer       string = "finalizers.kloudlite.io/billing"
+	BillingFinalizer       string = "finalizers.kloudlite.io/billing-watcher"
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
 )
 
@@ -43,7 +43,7 @@ var AnnotationKeys = struct {
 	AccountRef:       "kloudlite.io/account-ref",
 	ProjectRef:       "kloudlite.io/project-ref",
 	ResourceRef:      "kloudlite.io/resource-ref",
-	BillingPlan:      "kloudlite.io/billing-plan",
+	BillingPlan:      "kloudlite.io/billing-watcher-plan",
 	BillableQuantity: "kloudlite.io/billable-quantity",
 	GroupVersionKind: "kloudlite.io/group-version-kind",
 	IsShared:         "kloudlite.io/is-shared",

@@ -1,0 +1,10 @@
+apiVersion: mysql.msvc.kloudlite.io/v1
+kind: Database
+metadata:
+  name: sample-mysql-auth-db
+  namespace: kl-core
+spec:
+  msvcRef:
+    apiVersion: mysql.msvc.kloudlite.io/v1
+    kind: StandaloneService
+    name: sample-mysql

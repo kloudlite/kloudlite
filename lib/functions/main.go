@@ -23,17 +23,6 @@ import (
 	"operators.kloudlite.io/lib/errors"
 )
 
-func NewBool(b bool) *bool {
-	return &b
-}
-
-func StatusFromBool(b bool) metav1.ConditionStatus {
-	if b {
-		return metav1.ConditionTrue
-	}
-	return metav1.ConditionFalse
-}
-
 type JsonFeatures interface {
 	ToB64Url(v interface{}) (string, error)
 	ToB64String(v interface{}) (string, error)

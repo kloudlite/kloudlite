@@ -44,7 +44,7 @@ const (
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status-watcher,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -136,7 +136,7 @@ func (r *ManagedServiceReconciler) reconRealMsvc(req *rApi.Request[*crdsv1.Manag
 		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
 	}
 	var realMsvcObj struct {
-		Status rApi.Status `json:"status"`
+		Status rApi.Status `json:"status-watcher"`
 	}
 	if err := json.Unmarshal(b, &realMsvcObj); err != nil {
 		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)

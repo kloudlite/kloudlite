@@ -20,6 +20,7 @@ import (
 	mysqlclustermsvcv1 "operators.kloudlite.io/apis/mysql-cluster.msvc/v1"
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	mysqlexternalv1 "operators.kloudlite.io/apis/mysql.external/v1"
+	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
@@ -62,6 +63,7 @@ func init() {
 	utilruntime.Must(mongodbexternalv1.AddToScheme(scheme))
 	utilruntime.Must(mysqlexternalv1.AddToScheme(scheme))
 	utilruntime.Must(mongodbMsvcv1.AddToScheme(scheme))
+	utilruntime.Must(mysqlMsvcv1.AddToScheme(scheme))
 	utilruntime.Must(redisMsvcv1.AddToScheme(scheme))
 	utilruntime.Must(zookeeperMsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme

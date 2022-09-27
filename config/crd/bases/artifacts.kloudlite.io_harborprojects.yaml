@@ -15,7 +15,14 @@ spec:
     singular: harborproject
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: HarborProject is the Schema for the harborprojects API
@@ -33,6 +40,27 @@ spec:
           metadata:
             type: object
           spec:
+            properties:
+              project:
+                properties:
+                  location:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - location
+                - name
+                type: object
+              webhook:
+                properties:
+                  location:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - location
+                - name
+                type: object
             type: object
           status:
             properties:

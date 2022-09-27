@@ -2,15 +2,20 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/lib/harbor"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
 type HarborProjectSpec struct {
+	Project *harbor.Project `json:"project,omitempty"`
+	Webhook *harbor.Webhook `json:"webhook,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // HarborProject is the Schema for the harborprojects API
 type HarborProject struct {

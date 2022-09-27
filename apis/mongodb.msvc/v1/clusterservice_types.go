@@ -22,8 +22,8 @@ type ClusterServiceStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // ClusterService is the Schema for the clusterservices API
 type ClusterService struct {
@@ -31,10 +31,10 @@ type ClusterService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   ClusterServiceSpec   `json:"spec,omitempty"`
-	Status ClusterServiceStatus `json:"status,omitempty"`
+	Status ClusterServiceStatus `json:"status-watcher,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // ClusterServiceList contains a list of ClusterService
 type ClusterServiceList struct {

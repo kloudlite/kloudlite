@@ -225,7 +225,7 @@ func main() {
 	controllers = append(
 		controllers,
 		&watchercontrollers.StatusWatcherReconciler{Name: "status-watcher", Notifier: statusNotifier},
-		&watchercontrollers.BillingWatcherReconciler{Name: "billing-watcher", Notifier: billingNotifier},
+		&watchercontrollers.BillingWatcherReconciler{Name: "billing-watcher-watcher", Notifier: billingNotifier},
 	)
 
 	enabledForControllers := map[string]bool{}

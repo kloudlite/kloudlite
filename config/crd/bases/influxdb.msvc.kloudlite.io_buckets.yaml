@@ -34,10 +34,32 @@ spec:
             type: object
           spec:
             properties:
-              managedSvcName:
-                type: string
+              bucketRef:
+                properties:
+                  bucketId:
+                    type: string
+                  orgId:
+                    type: string
+                required:
+                - bucketId
+                - orgId
+                type: object
+              msvcRef:
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                type: object
             required:
-            - managedSvcName
+            - bucketRef
+            - msvcRef
             type: object
           status:
             properties:

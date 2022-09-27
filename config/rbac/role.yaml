@@ -86,6 +86,14 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
+  - apps/status-watcher
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
   - crds
   verbs:
   - create
@@ -104,7 +112,7 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - crds/status
+  - crds/status-watcher
   verbs:
   - get
   - patch
@@ -130,7 +138,7 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - lambdas/status
+  - lambdas/status-watcher
   verbs:
   - get
   - patch
@@ -216,6 +224,14 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
+  - projects/status-watcher
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
   - routers
   verbs:
   - create
@@ -260,7 +276,7 @@ rules:
 - apiGroups:
   - elasticsearc.msvc.kloudlite.io
   resources:
-  - services/status
+  - services/status-watcher
   verbs:
   - get
   - patch
@@ -338,7 +354,7 @@ rules:
 - apiGroups:
   - mongo-standalone.msvc.kloudlite.io
   resources:
-  - services/status
+  - services/status-watcher
   verbs:
   - get
   - patch
@@ -597,6 +613,32 @@ rules:
   - update
 - apiGroups:
   - mysql.external.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
   resources:
   - databases/status
   verbs:
@@ -624,7 +666,7 @@ rules:
 - apiGroups:
   - mysql.msvc.kloudlite.io
   resources:
-  - standalone/status
+  - standalone/status-watcher
   verbs:
   - get
   - patch
@@ -728,7 +770,7 @@ rules:
 - apiGroups:
   - redis.msvc.kloudlite.io
   resources:
-  - aclaccounts/status
+  - aclaccounts/status-watcher
   verbs:
   - get
   - patch
@@ -936,7 +978,7 @@ rules:
 - apiGroups:
   - zookeeper.msvc.kloudlite.io
   resources:
-  - services/status
+  - services/status-watcher
   verbs:
   - get
   - patch

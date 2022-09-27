@@ -10,7 +10,7 @@ RUN go mod download -x
 COPY . ./
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
-RUN mkdir /tmp/lib
+RUN mkdir /tmp/types
 
 FROM vectorized/redpanda:v22.1.6 as redpanda
 
@@ -22,7 +22,7 @@ COPY --from=redpanda /usr/bin/rpk /usr/local/bin/rpk
 
 COPY --from=builder /workspace/manager /manager
 COPY --from=builder /tmp/lib /tmp/lib
-#RUN mkdir -p /tmp/lib
+#RUN mkdir -p /tmp/types
 COPY --from=builder --chown=65532:65532 /workspace/lib/templates  /tmp/lib/templates
 ENV TEMPLATES_DIR=/tmp/lib/templates
 USER 65532:65532

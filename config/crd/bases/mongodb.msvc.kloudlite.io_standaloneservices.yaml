@@ -22,7 +22,7 @@ spec:
     - jsonPath: .spec.replicaCount
       name: ReplicaCount
       type: integer
-    - jsonPath: .status.isReady
+    - jsonPath: .status-watcher.isReady
       name: Status
       type: boolean
     name: v1
@@ -105,7 +105,7 @@ spec:
             - resources
             - storage
             type: object
-          status:
+          status-watcher:
             properties:
               checks:
                 additionalProperties:

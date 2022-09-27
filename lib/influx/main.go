@@ -2,6 +2,7 @@ package influx
 
 import (
 	"context"
+
 	"github.com/influxdata/influxdb-client-go/v2"
 )
 
@@ -11,8 +12,8 @@ type Client struct {
 }
 
 type Bucket struct {
-	BucketId string
-	OrgId    string
+	BucketId string `json:"bucketId"`
+	OrgId    string `json:"orgId"`
 }
 
 func (c *Client) Connect(ctx context.Context) error {
@@ -34,8 +35,14 @@ func (c *Client) bucketExists(ctx context.Context, bucketId string) error {
 	return nil
 }
 
-func (c *Client) BucketExists(ctx context.Context, bucketId string) error {
-	return c.bucketExists(ctx, bucketId)
+func (c *Client) BucketExists(ctx context.Context, bucket *Bucket) (bool, error) {
+	if bucket == nil {
+		return false, nil
+	}
+	if err := c.bucketExists(ctx, bucket.BucketId); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (c *Client) UpsertBucket(ctx context.Context, orgName string, bucketName string) (*Bucket, error) {

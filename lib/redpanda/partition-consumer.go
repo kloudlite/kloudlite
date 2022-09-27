@@ -8,8 +8,8 @@ package redpanda
 // 	"sync"
 //
 // 	"github.com/twmb/franz-go/pkg/kgo"
-// 	"operators.kloudlite.io/lib/errors"
-// 	"operators.kloudlite.io/lib/logging"
+// 	"operators.kloudlite.io/types/errors"
+// 	"operators.kloudlite.io/types/logging"
 // )
 //
 // // Implementation derived from https://github.com/twmb/franz-go/blob/master/examples/goroutine_per_partition_consuming/manual_commit/main.go#L26

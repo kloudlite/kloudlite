@@ -7,7 +7,7 @@ COPY --from=project ./go.sum ./go.sum
 RUN ls -al
 RUN go mod download -x
 
-RUN mkdir ./lib
+RUN mkdir ./types
 COPY ./main.go ./main.go
 COPY --from=project ./lib/errors ./lib/errors
 COPY --from=project ./lib/logging ./lib/logging

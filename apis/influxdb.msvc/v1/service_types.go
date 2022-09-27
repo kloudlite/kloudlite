@@ -7,16 +7,10 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
-type adminTT struct {
-	// +kubebuilder:default=admin
-	// +kubebuidler:validation:Optional
+type Admin struct {
 	Username string `json:"username"`
-	// +kubebuidler:validation:Optional
-	// +kubebuilder:default=primary
-	Bucket string `json:"bucket"`
-	// +kubebuilder:default=primary
-	// +kubebuidler:validation:Optional
-	Org string `json:"org"`
+	Bucket   string `json:"bucket"`
+	Org      string `json:"org"`
 }
 
 // ServiceSpec defines the desired state of Service
@@ -24,7 +18,7 @@ type ServiceSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector"`
-	Admin        adminTT           `json:"admin"`
+	Admin        *Admin            `json:"admin,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=1
@@ -51,7 +45,9 @@ func (s *Service) GetStatus() *rApi.Status {
 }
 
 func (s *Service) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.MsvcNameKey: s.Name,
+	}
 }
 
 func (m *Service) GetEnsuredAnnotations() map[string]string {

@@ -214,6 +214,7 @@ func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
 		obj.GetStatus().OpsConditions = nil
 		obj.GetStatus().ChildConditions = nil
 		obj.GetStatus().DisplayVars = rawJson.RawJson{}
+		// obj.GetStatus().GeneratedVars = rawJson.RawJson{}
 
 		if err := r.client.Status().Update(context.TODO(), obj); err != nil {
 			return r.FailWithOpError(err)
