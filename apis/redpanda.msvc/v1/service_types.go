@@ -19,8 +19,10 @@ type ServiceSpec struct {
 	Resources ct.Resources `json:"resources"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Service is the Schema for the services API
 type Service struct {
@@ -45,7 +47,7 @@ func (s *Service) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{}
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // ServiceList contains a list of Service
 type ServiceList struct {

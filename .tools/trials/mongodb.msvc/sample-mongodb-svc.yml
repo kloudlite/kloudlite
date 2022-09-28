@@ -10,6 +10,7 @@ spec:
   replicaCount: 1
   nodeSelector:
     kloudlite.io/region: "centralindia"
+    kubernetes.io/hostname: "kloudlite-06"
   storage:
     size: 1Gi
   resources:
