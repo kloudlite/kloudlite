@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -51,8 +52,7 @@ const (
 )
 
 const (
-	KeyRootPassword string = "root-password"
-	KeyMsvcOutput   string = "msvc-output"
+	KeyMsvcOutput string = "msvc-output"
 )
 
 // +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -130,7 +130,10 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 	}
 
 	if scrt == nil {
-		host := fmt.Sprintf("%s-headless.%s.svc.cluster.local", obj.Name, obj.Namespace)
+		var hosts []string
+		for i := 0; i < obj.Spec.ReplicaCount; i++ {
+			hosts = append(hosts, fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:27017", obj.Name, i, obj.Name, obj.Namespace))
+		}
 
 		rootPassword := fn.CleanerNanoid(40)
 		b, err := templates.Parse(
@@ -141,8 +144,8 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
 				"string-data": types.MsvcOutput{
 					RootPassword: rootPassword,
-					Hosts:        host,
-					URI:          fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", rootPassword, host),
+					Hosts:        strings.Join(hosts, ","),
+					URI:          fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", rootPassword, strings.Join(hosts, ",")),
 				},
 			},
 		)

@@ -17,6 +17,8 @@ type ACLAccountSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ACLAccount is the Schema for the aclaccounts API
 type ACLAccount struct {

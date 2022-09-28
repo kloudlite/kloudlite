@@ -120,7 +120,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepRe
 
 	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
-		return req.CheckFailed(DBUserDeleted, check, errors.NewEf(err, "msvc output does not exist").Error())
+		req.Logger.Infof("msvc secret does not exist, means msvc does not exist, then why keep managed resource, finalizing ...")
+		return req.Finalize()
 	}
 
 	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
@@ -199,7 +200,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error())
 	}
 
-	msvcOutput, err := fn.ParseFromSecret[types.MresOutput](msvcSecret)
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}
@@ -214,7 +215,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": types.MresOutput{
 					Username: obj.Name,
-					Password: fn.CleanerNanoid(40),
+					Password: dbPasswd,
 					Hosts:    msvcOutput.Hosts,
 					DbName:   obj.Name,
 					URI:      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, msvcOutput.Hosts, obj.Name),
@@ -244,8 +245,8 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}
 
-	rApi.SetLocal(req, KeyMsvcOutput, msvcOutput)
-	rApi.SetLocal(req, KeyMresOutput, mresOutput)
+	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
+	rApi.SetLocal(req, KeyMresOutput, *mresOutput)
 	return req.Next()
 }
 
