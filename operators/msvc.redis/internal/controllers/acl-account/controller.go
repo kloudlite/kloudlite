@@ -2,7 +2,6 @@ package aclaccount
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -46,11 +45,13 @@ const (
 	AccessCredsReady string = "access-creds-ready"
 	ACLUserReady     string = "acl-user-ready"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
+
+	ACLUserDeleted string = "acl-user-deleted"
 )
 
 const (
 	KeyMsvcOutput string = "msvc-output"
-	KeyOutput     string = "output"
+	KeyMresOutput string = "mres-output"
 )
 
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=aclaccounts,verbs=get;list;watch;create;update;patch;delete
@@ -94,6 +95,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.reconDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.reconOwnership(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -112,7 +117,45 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	// msvc output ref
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error()).Err(nil)
+	}
+
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	}
+
+	redisCli, err := libRedis.NewClient(msvcOutput.Hosts, "", msvcOutput.RootPassword)
+	if err != nil {
+		return req.CheckFailed(ACLUserReady, check, err.Error())
+	}
+	defer redisCli.Close()
+
+	tctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
+	if err := redisCli.DeleteUser(tctx, obj.Name); err != nil {
+		return req.CheckFailed(ACLUserDeleted, check, err.Error())
+	}
+
 	return req.Finalize()
+}
+
+func (r *Reconciler) reconDefaults(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+
+	if obj.Spec.KeyPrefix == "" {
+		obj.Spec.KeyPrefix = obj.Name
+		if err := r.Update(ctx, obj); err != nil {
+			return nil
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
@@ -150,39 +193,15 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) 
 	return req.Next()
 }
 
-func parseMsvcOutput(scrt *corev1.Secret) (*types.MsvcOutput, error) {
-	b, err := json.Marshal(scrt)
-	if err != nil {
-		return nil, err
-	}
-	var output types.MsvcOutput
-	if err := json.Unmarshal(b, &output); err != nil {
-		return nil, err
-	}
-	return &output, nil
-}
-
-func parseMresOutput(scrt *corev1.Secret) (*types.MresOutput, error) {
-	b, err := json.Marshal(scrt)
-	if err != nil {
-		return nil, err
-	}
-	var output types.MresOutput
-	if err := json.Unmarshal(b, &output); err != nil {
-		return nil, err
-	}
-	return &output, nil
-}
-
 func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	accessSecretName := "mres-" + obj.Name
+	secretName := "mres-" + obj.Name
 
-	accessSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, accessSecretName), &corev1.Secret{})
+	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
 	if err != nil {
-		req.Logger.Infof("access credentials %s does not exist, will be creating it now...", fn.NN(obj.Namespace, accessSecretName).String())
+		req.Logger.Infof("access credentials %s does not exist, will be creating it now...", fn.NN(obj.Namespace, secretName).String())
 	}
 
 	// msvc output ref
@@ -191,23 +210,23 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error()).Err(nil)
 	}
 
-	msvcOutput, err := parseMsvcOutput(msvcSecret)
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}
 
-	if accessSecret == nil {
+	if scrt == nil {
 		passwd := fn.CleanerNanoid(40)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":       accessSecretName,
+				"name":       secretName,
 				"namespace":  obj.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": types.MresOutput{
 					Hosts:    msvcOutput.Hosts,
 					Password: passwd,
 					Username: obj.Name,
-					Prefix:   obj.Name,
+					Prefix:   obj.Spec.KeyPrefix,
 					Uri:      fmt.Sprintf("redis://%s:%s@%s?allowUsernameInURI=true", obj.Name, passwd, msvcOutput.Hosts),
 				},
 			},
@@ -224,19 +243,19 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 		return req.UpdateStatus()
 	}
 
-	mresOutput, err := parseMresOutput(accessSecret)
-	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
-	}
-
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
 		return req.UpdateStatus()
 	}
 
-	rApi.SetLocal(req, KeyMsvcOutput, msvcOutput)
-	rApi.SetLocal(req, KeyOutput, mresOutput)
+	mresOutput, err := fn.ParseFromSecret[types.MresOutput](scrt)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	}
+
+	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
+	rApi.SetLocal(req, KeyMresOutput, *mresOutput)
 	return req.Next()
 }
 
@@ -249,9 +268,9 @@ func (r *Reconciler) reconACLUser(req *rApi.Request[*redisMsvcv1.ACLAccount]) st
 		return req.CheckFailed(ACLUserReady, check, fmt.Sprintf("key %q does not exist in req-locals", KeyMsvcOutput))
 	}
 
-	output, ok := rApi.GetLocal[types.MresOutput](req, KeyOutput)
+	output, ok := rApi.GetLocal[types.MresOutput](req, KeyMresOutput)
 	if !ok {
-		return req.CheckFailed(ACLUserReady, check, fmt.Sprintf("key %q does not exist in req-locals", KeyOutput))
+		return req.CheckFailed(ACLUserReady, check, fmt.Sprintf("key %q does not exist in req-locals", KeyMresOutput))
 	}
 
 	redisCli, err := libRedis.NewClient(msvcOutput.Hosts, "", msvcOutput.RootPassword)
@@ -291,7 +310,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.ACLAccount{})
 	builder.Owns(&corev1.Secret{})
 
-	watchList := []client.Object{}
+	watchList := []client.Object{
+		&redisMsvcv1.StandaloneService{},
+		&redisMsvcv1.ClusterService{},
+	}
 
 	for i := range watchList {
 		builder.Watches(

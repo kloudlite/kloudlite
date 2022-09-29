@@ -187,7 +187,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger
 				if !ok {
 					return nil
 				}
-				return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), msvcName)}}
+				return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), "msvc-"+msvcName+"-acl")}}
 			},
 		),
 	)
