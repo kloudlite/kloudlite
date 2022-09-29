@@ -10,7 +10,7 @@ import (
 )
 
 type resStatus struct {
-	Status Status `json:"status"`
+	Status *Status `json:"status"`
 }
 
 func getStatus(obj client.Object) *resStatus {
@@ -22,6 +22,11 @@ func getStatus(obj client.Object) *resStatus {
 	if err := json.Unmarshal(b, &res); err != nil {
 		return nil
 	}
+
+	if res.Status == nil {
+		return nil
+	}
+
 	return &res
 }
 
@@ -33,6 +38,10 @@ func ReconcileFilter() predicate.Funcs {
 			}
 
 			oldObj, newObj := getStatus(ev.ObjectOld), getStatus(ev.ObjectNew)
+			if oldObj == nil || newObj == nil {
+				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
+				return true
+			}
 
 			if !reflect.DeepEqual(oldObj.Status.Checks, newObj.Status.Checks) {
 				return true

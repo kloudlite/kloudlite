@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,15 +17,16 @@ import (
 	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/msvc.redis/internal/controllers/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -57,6 +57,8 @@ const (
 	KeyRootPassword      string = "root-password"
 	KeyAclConfigMapName  string = "acl-configmap-name"
 	KeyAvailableReplicas string = "available-replicas"
+
+	KeyMsvcOutput string = "msvc-output"
 )
 
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices,verbs=get;list;watch;create;update;patch;delete
@@ -120,10 +122,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconOutput(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	req.Logger.Infof("RECONCILATION COMPLETE")
@@ -171,9 +169,9 @@ func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.Sta
 	if !aclCfgMap.Status.IsReady {
 		b, err := json.Marshal(aclCfgMap.Status.Message)
 		if err != nil {
-			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
+			return req.CheckFailed(ACLConfigMapReady, check, err.Error()).Err(nil)
 		}
-		return req.CheckFailed(ACLConfigMapReady, check, string(b))
+		return req.CheckFailed(ACLConfigMapReady, check, string(b)).Err(nil)
 	}
 
 	check.Status = true
@@ -199,16 +197,17 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 
 	if scrt == nil {
 		rootPassword := fn.CleanerNanoid(40)
+		host := fmt.Sprintf("%s-headless.%s.svc.cluster.local:6379", obj.Name, obj.Namespace)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
 				"name":       secretName,
 				"namespace":  obj.Namespace,
 				"labels":     obj.GetLabels(),
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
-				"string-data": map[string]string{
-					"ROOT_PASSWORD": rootPassword,
-					"HOSTS":         "",
-					"URI":           "",
+				"string-data": types.MsvcOutput{
+					RootPassword: rootPassword,
+					Hosts:        host,
+					Uri:          fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, host),
 				},
 			},
 		)
@@ -239,7 +238,12 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 		return req.UpdateStatus()
 	}
 
-	rApi.SetLocal(req, KeyRootPassword, string(scrt.Data["ROOT_PASSWORD"]))
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	}
+
+	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
 	return req.Next()
 }
 
@@ -254,10 +258,13 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	rootPassword, ok1 := rApi.GetLocal[string](req, KeyRootPassword)
-	aclConfigmapName, ok2 := rApi.GetLocal[string](req, KeyAclConfigMapName)
-	if !ok1 || !ok2 {
-		return req.CheckFailed(HelmReady, check, fmt.Sprintf("key %s/%s not found in req locals", KeyRootPassword, KeyAclConfigMapName))
+	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
+	if !ok {
+		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyRootPassword).Error())
+	}
+	aclConfigmapName, ok := rApi.GetLocal[string](req, KeyAclConfigMapName)
+	if !ok {
+		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyAclConfigMapName).Error())
 	}
 
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
@@ -273,7 +280,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 				"storage-class":      storageClass,
 				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"acl-configmap-name": aclConfigmapName,
-				"root-password":      rootPassword,
+				"root-password":      msvcOutput.RootPassword,
 			},
 		)
 
@@ -328,8 +335,6 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneSe
 		return req.CheckFailed(StsReady, check, err.Error())
 	}
 
-	rApi.SetLocal(req, KeyAvailableReplicas, int(sts.Status.AvailableReplicas))
-
 	if sts.Status.AvailableReplicas != sts.Status.Replicas {
 		check.Status = false
 
@@ -352,53 +357,12 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneSe
 			}
 			return req.CheckFailed(StsReady, check, string(b))
 		}
+		return req.CheckFailed(StsReady, check, "waiting for pods to start ...")
 	}
 
 	check.Status = true
 	if check != checks[StsReady] {
 		checks[StsReady] = check
-		return req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *ServiceReconciler) reconOutput(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	rootPassword, ok := rApi.GetLocal[string](req, KeyRootPassword)
-	if !ok {
-		return req.CheckFailed(OutputReady, check, "no root password found")
-	}
-
-	avReplicas, ok := rApi.GetLocal[int](req, KeyAvailableReplicas)
-	if !ok {
-		return req.CheckFailed(OutputReady, check, fmt.Sprintf("key %s not available in req locals", KeyAvailableReplicas))
-	}
-	hosts := make([]string, avReplicas)
-	for i := 0; i < avReplicas; i += 1 {
-		hosts[i] = fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local", getStsName(obj.Name), i, getStsName(obj.Name), obj.Namespace)
-	}
-
-	accessCreds, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Name), &corev1.Secret{})
-	if err != nil {
-		return req.CheckFailed(OutputReady, check, err.Error())
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(
-		ctx, r.Client, accessCreds, func() error {
-			accessCreds.Data["HOSTS"] = []byte(strings.Join(hosts, ","))
-			accessCreds.Data["URI"] = []byte(fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, strings.Join(hosts, ",")))
-			return nil
-		},
-	); err != nil {
-		return req.CheckFailed(OutputReady, check, err.Error())
-	}
-
-	check.Status = true
-	if check != checks[OutputReady] {
-		checks[OutputReady] = check
 		return req.UpdateStatus()
 	}
 
@@ -414,6 +378,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
 	builder.Owns(&redisMsvcv1.ACLConfigMap{})
+	builder.Owns(fn.NewUnstructured(constants.HelmRedisType))
 
 	builder.Watches(
 		&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(
@@ -428,6 +393,8 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env,
 			},
 		),
 	)
+
+	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	return builder.Complete(r)
 }
