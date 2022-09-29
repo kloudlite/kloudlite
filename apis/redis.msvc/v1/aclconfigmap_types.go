@@ -11,6 +11,7 @@ import (
 
 // ACLConfigMapSpec defines the desired state of ACLConfigMap
 type ACLConfigMapSpec struct {
+	MsvcName string `json:"msvcName"`
 }
 
 // +kubebuilder:object:root=true
@@ -33,7 +34,7 @@ func (cfg *ACLConfigMap) GetStatus() *rApi.Status {
 
 func (cfg *ACLConfigMap) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.MsvcNameKey: cfg.Name,
+		constants.MsvcNameKey: cfg.Spec.MsvcName,
 	}
 }
 

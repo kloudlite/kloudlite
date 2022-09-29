@@ -57,6 +57,7 @@ const (
 
 	ProjectNameKey       string = "kloudlite.io/project.name"
 	MsvcNameKey          string = "kloudlite.io/msvc.name"
+	IsMresOutput         string = "kloudlite.io/is-mres-output"
 	MresNameKey          string = "kloudlite.io/mres.name"
 	AppNameKey           string = "kloudlite.io/app.name"
 	RouterNameKey        string = "kloudlite.io/router.name"

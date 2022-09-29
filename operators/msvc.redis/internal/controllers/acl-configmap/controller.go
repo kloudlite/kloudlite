@@ -67,6 +67,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.buildRedisConf(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	req.Logger.Infof("RECONCILATION COMPLETE")
 	req.Object.Status.IsReady = true
 	return req.UpdateStatus().ReconcilerResponse()
@@ -128,7 +132,8 @@ func (r *Reconciler) buildRedisConf(req *rApi.Request[*redisMsvcv1.ACLConfigMap]
 		ctx, &scrtList, &client.ListOptions{
 			LabelSelector: labels.SelectorFromValidatedSet(
 				map[string]string{
-					constants.MsvcNameKey: obj.Name,
+					constants.MsvcNameKey:  obj.Spec.MsvcName,
+					constants.IsMresOutput: "true",
 				},
 			),
 			Namespace: obj.Namespace,
@@ -187,9 +192,13 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger
 				if !ok {
 					return nil
 				}
+				if _, ok := obj.GetLabels()[constants.IsMresOutput]; !ok {
+					return nil
+				}
 				return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), "msvc-"+msvcName+"-acl")}}
 			},
 		),
 	)
+
 	return builder.Complete(r)
 }
