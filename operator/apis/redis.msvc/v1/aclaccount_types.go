@@ -11,7 +11,7 @@ import (
 
 // ACLAccountSpec defines the desired state of ACLAccount
 type ACLAccountSpec struct {
-	KeyPrefix string     `json:"keyPrefix"`
+	KeyPrefix string     `json:"keyPrefix,omitempty"`
 	MsvcRef   ct.MsvcRef `json:"msvcRef"`
 }
 

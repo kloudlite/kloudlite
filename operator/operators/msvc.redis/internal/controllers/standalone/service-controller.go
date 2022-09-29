@@ -156,7 +156,9 @@ func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.Sta
 					Namespace:       obj.Namespace,
 					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				},
-				Spec: redisMsvcv1.ACLConfigMapSpec{},
+				Spec: redisMsvcv1.ACLConfigMapSpec{
+					MsvcName: obj.Name,
+				},
 			},
 		); err != nil {
 			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
