@@ -222,6 +222,10 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 				"name":       secretName,
 				"namespace":  obj.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"labels": map[string]string{
+					constants.MsvcNameKey:  obj.Spec.MsvcRef.Name,
+					constants.IsMresOutput: "true",
+				},
 				"string-data": types.MresOutput{
 					Hosts:    msvcOutput.Hosts,
 					Password: passwd,

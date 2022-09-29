@@ -58,7 +58,6 @@ spec:
                 - name
                 type: object
             required:
-            - keyPrefix
             - msvcRef
             type: object
           status:

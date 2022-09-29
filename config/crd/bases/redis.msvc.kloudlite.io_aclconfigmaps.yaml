@@ -41,6 +41,11 @@ spec:
             type: object
           spec:
             description: ACLConfigMapSpec defines the desired state of ACLConfigMap
+            properties:
+              msvcName:
+                type: string
+            required:
+            - msvcName
             type: object
           status:
             properties:
