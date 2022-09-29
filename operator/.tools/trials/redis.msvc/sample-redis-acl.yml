@@ -1,0 +1,11 @@
+apiVersion: redis.msvc.kloudlite.io/v1
+kind: ACLAccount
+metadata:
+  name: sample-example-redis
+  namespace: kl-core
+spec:
+  keyPrefix: "item"
+  msvcRef:
+    apiVersion: redis.msvc.kloudlite.io/v1
+    kind: StandaloneService
+    name: sample-redis

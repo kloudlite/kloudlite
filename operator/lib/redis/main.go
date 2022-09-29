@@ -67,3 +67,12 @@ func (c *Client) userExists(ctx context.Context, username string) (bool, error) 
 	}
 	return true, nil
 }
+
+func (c *Client) DeleteUser(ctx context.Context, username string) error {
+	cmd := c.cli.Do(ctx, "ACL", "DELUSER", username)
+	_, err := cmd.Result()
+	if err != nil {
+		return err
+	}
+	return nil
+}
