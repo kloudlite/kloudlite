@@ -123,7 +123,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepRe
 	// msvc output ref
 	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error()).Err(nil)
+		req.Logger.Infof("msvc output does not exist, i.e. msvc does not exist, so no need keeping mres, so finalizing it")
+		return req.Finalize()
 	}
 
 	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
