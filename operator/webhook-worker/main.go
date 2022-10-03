@@ -20,7 +20,7 @@ import (
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
 	"operators.kloudlite.io/lib/redpanda"
-	"operators.kloudlite.io/operators/webhook-worker/internal/env"
+	"operators.kloudlite.io/webhook-worker/internal/env"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )

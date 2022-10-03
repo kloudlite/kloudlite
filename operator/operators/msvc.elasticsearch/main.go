@@ -1,8 +1,8 @@
 package main
 
 import (
+	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/msvc.elasticsearch/internal/controllers"
-	"operators.kloudlite.io/operators/operator"
 )
 
 func main() {

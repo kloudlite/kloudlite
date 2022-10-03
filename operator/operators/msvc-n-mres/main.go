@@ -1,9 +1,9 @@
 package main
 
 import (
-	"operators.kloudlite.io/operators/msvc-and-mres/internal/mres"
-	"operators.kloudlite.io/operators/msvc-and-mres/internal/msvc"
-	"operators.kloudlite.io/operators/operator"
+	"operators.kloudlite.io/operator"
+	"operators.kloudlite.io/operators/msvc-n-mres/internal/mres"
+	"operators.kloudlite.io/operators/msvc-n-mres/internal/msvc"
 )
 
 func main() {

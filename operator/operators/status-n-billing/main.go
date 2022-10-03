@@ -3,7 +3,7 @@ package main
 import (
 	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/redpanda"
-	"operators.kloudlite.io/operators/operator"
+	"operators.kloudlite.io/operator"
 	billingWatcher "operators.kloudlite.io/operators/status-n-billing/internal/controllers/billing-watcher"
 	statusWatcher "operators.kloudlite.io/operators/status-n-billing/internal/controllers/status-watcher"
 	"operators.kloudlite.io/operators/status-n-billing/internal/types"

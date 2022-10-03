@@ -32,3 +32,6 @@ helm-charts
 
 # intellij workspace files
 *.iml
+
+
+.release/

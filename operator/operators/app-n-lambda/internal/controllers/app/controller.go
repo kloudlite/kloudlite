@@ -1,4 +1,4 @@
-package controllers
+package app
 
 import (
 	"context"
@@ -26,9 +26,10 @@ import (
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
-type AppReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
 	env       *env.Env
@@ -37,13 +38,12 @@ type AppReconciler struct {
 	Name      string
 }
 
-func (r *AppReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
 const (
 	AppReady       string = "app-ready"
-	HPAReady       string = "hpa-ready"
 	ImagesLabelled string = "images-labelled"
 )
 
@@ -51,7 +51,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
-func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.App{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -75,7 +75,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 	}
 
 	// TODO: initialize all checks here
-	if step := req.EnsureChecks(AppReady, HPAReady, ImagesLabelled); !step.ShouldProceed() {
+	if step := req.EnsureChecks(AppReady, ImagesLabelled); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -91,20 +91,20 @@ func (r *AppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconApp(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.reconApp(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	req.Object.Status.IsReady = true
 	req.Logger.Infof("RECONCILATION COMPLETE")
 	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
-func (r *AppReconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *AppReconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -142,24 +142,33 @@ func (r *AppReconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) ste
 	return req.Next()
 }
 
-func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
 
 	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
 	if err != nil {
-		req.Logger.Infof("deployment %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
+		req.Logger.Infof("app (deployment) %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
 	}
 
-	_, err = rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
-	if err != nil {
-		req.Logger.Infof("service %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
-	}
-
+	// svc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
+	// if err != nil {
+	// 	req.Logger.Infof("service %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
+	// }
+	//
 	// svcInternal, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name+"-internal"), &corev1.Service{})
 	// if err != nil {
 	// 	req.Logger.Infof("service %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name+"-internal"))
+	// }
+	//
+	// shouldRecon := deployment == nil || svc == nil || svcInternal == nil
+	// if obj.Spec.Hpa.Enabled {
+	// 	hpa, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &v2.HorizontalPodAutoscaler{})
+	// 	if err != nil {
+	// 		req.Logger.Infof("horizontal pod autoscalar %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
+	// 	}
+	// 	shouldRecon = shouldRecon || hpa == nil
 	// }
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
@@ -200,9 +209,7 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 		if err := r.List(
 			ctx, &podList, &client.ListOptions{
 				LabelSelector: labels.SelectorFromValidatedSet(
-					map[string]string{
-						"app": obj.Name,
-					},
+					map[string]string{"app": obj.Name},
 				),
 				Namespace: obj.Namespace,
 			},
@@ -242,13 +249,14 @@ func (r *AppReconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Resu
 	return req.Next()
 }
 
-func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.env = envVars
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: envVars.MaxConcurrentReconciles})
 	builder.Owns(&appsv1.Deployment{})
 	builder.Owns(&corev1.Service{})
 	return builder.Complete(r)
