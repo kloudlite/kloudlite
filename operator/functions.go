@@ -41,7 +41,7 @@ import (
 
 var (
 	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	setupLog = ctrl.Log.WithName("operator")
 )
 
 func init() {
@@ -70,9 +70,13 @@ func init() {
 }
 
 type operator struct {
-	Manager manager.Manager
-	Logger  logging.Logger
-	Env     *env.Env
+	Manager            manager.Manager
+	Logger             logging.Logger
+	Env                *env.Env
+	enableForArgs      flagTypes.StringArray
+	skipControllerArgs flagTypes.StringArray
+	isAllEnabled       bool
+	isDev              bool
 }
 
 func New(name string) *operator {
@@ -83,7 +87,7 @@ func New(name string) *operator {
 	var devServerHost string
 	var enableForArgs flagTypes.StringArray
 	var skipControllerArgs flagTypes.StringArray
-	var isAllEnabled bool
+	// var isAllEnabled bool
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":12345", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":12346", "The address the probe endpoint binds to.")
@@ -102,7 +106,7 @@ func New(name string) *operator {
 	flag.StringVar(&devServerHost, "serverHost", "localhost:8080", "--serverHost <host:port>")
 	flag.Var(&enableForArgs, "for", "--for item1 --for item2")
 	flag.Var(&skipControllerArgs, "skip", "--skip item1 --skip item2")
-	flag.BoolVar(&isAllEnabled, "all", false, "--for")
+	// flag.BoolVar(&isAllEnabled, "all", true, "--all")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
@@ -130,11 +134,45 @@ func New(name string) *operator {
 		os.Exit(1)
 	}
 
-	return &operator{Manager: mgr, Logger: logger, Env: env.GetEnvOrDie()}
+	ev := env.GetEnvOrDie()
+	ev.IsDev = isDev
+	if isDev {
+		ev.MaxConcurrentReconciles = 1
+	}
+
+	return &operator{
+		Manager:            mgr,
+		Logger:             logger,
+		Env:                ev,
+		enableForArgs:      enableForArgs,
+		skipControllerArgs: skipControllerArgs,
+		isDev:              isDev,
+	}
 }
 
 func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
+	// enabledForControllers := map[string]bool{}
+	// for _, arg := range op.enableForArgs {
+	// 	enabledForControllers[arg] = true
+	// }
+	//
+	// skippedControllers := map[string]bool{}
+	// for _, arg := range op.skipControllerArgs {
+	// 	skippedControllers[arg] = true
+	// }
+
 	for _, rc := range controllers {
+		// if skippedControllers[rc.GetName()] {
+		// 	setupLog.Info(fmt.Sprintf("skipping %s controllers (by flag) ", rc.GetName()))
+		// 	continue
+		// }
+		//
+		// if enabledForControllers[rc.GetName()] {
+		// 	if err := rc.SetupWithManager(op.Manager, op.Env, op.Logger); err != nil {
+		// 		setupLog.Error(err, "unable to create controllers", "controllers", rc.GetName())
+		// 		os.Exit(1)
+		// 	}
+		// }
 		if err := rc.SetupWithManager(op.Manager, op.Env, op.Logger); err != nil {
 			setupLog.Error(err, "unable to create controllers", "controllers", rc.GetName())
 			os.Exit(1)

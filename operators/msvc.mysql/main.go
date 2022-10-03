@@ -1,9 +1,9 @@
 package main
 
 import (
+	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/msvc.mysql/internal/controllers/database"
 	"operators.kloudlite.io/operators/msvc.mysql/internal/controllers/standalone"
-	"operators.kloudlite.io/operators/operator"
 )
 
 func main() {

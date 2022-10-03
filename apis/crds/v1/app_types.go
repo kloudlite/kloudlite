@@ -112,14 +112,14 @@ type AppSpec struct {
 	// +kubebuilder:default=kloudlite-svc-account
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 	// +kubebuilder:default=1
-	// +kubebuilder:validation:Optional
-	Replicas   int             `json:"replicas"`
+	Replicas   int             `json:"replicas,omitempty"`
 	Services   []AppSvc        `json:"services,omitempty"`
 	Containers []AppContainer  `json:"containers"`
 	Volumes    []corev1.Volume `json:"volumes,omitempty"`
 	Hpa        HPA             `json:"hpa,omitempty"`
 	// +kubebuilder:validation:Optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 // +kubebuilder:object:root=true

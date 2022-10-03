@@ -13,13 +13,14 @@ COPY --from=project apis ./apis
 
 ARG name
 RUN mkdir -p ./operators/$name
-COPY --from=project ./operators/operator ./operators/operator
+COPY --from=project ./operator ./operator
 COPY ./ ./operators/$name
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -a -o manager ./operators/$name/main.go
 RUN mkdir /tmp/types
 
 FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /workspace/kubectl /usr/local/bin/kubectl
+#COPY --from=redpanda /usr/bin/rpk /usr/local/bin/rpk
 COPY --from=builder /workspace/manager /manager
 USER 65532:65532
 
