@@ -31,7 +31,11 @@ spec:
       {{- if .Spec.NodeSelector }}
       nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 8}}
       {{- end }}
-      serviceAccountName: kloudlite-svc-account
+
+      {{- if .Spec.Tolerations }}
+      tolerations: {{.Spec.Tolerations | toYAML | nindent 8}}
+      {{- end}}
+      serviceAccountName: {{.Spec.ServiceAccount}}
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}
       containers: {{- include "TemplateContainer" $myDict | nindent 8 }}
       {{- if $volumes }}

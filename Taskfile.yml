@@ -7,13 +7,19 @@ vars:
 
 tasks:
   new-kind:
+    summary: |+
+      [example usage]
+      task new-kind Group=sample.kloudlite.io Kind=SampleKind
+#
+
     silent: true
+    preconditions:
+      - sh: '[ -n "{{.Group}}" ]'
+        msg: 'var Group must have a value'
+      - sh: '[ -n "{{.Kind}}" ]'
+        msg: 'var Kind must have a value'
+
     cmds:
-      - |+
-        [ -z "{{.Group}}" ] && echo env-var 'Group' not provided && exit 1
-        [ -z "{{.Kind}}" ] && echo env-var 'Kind' not provided && exit 1
-        exit 0
-#       - operator-sdk create api --group {{.Group}} --version v1 --resource --controller --kind "{{.Kind}}"
       - operator-sdk create api --group {{.Group}} --version v1 --resource --controller=false --kind "{{.Kind}}"
 
   setup:
@@ -22,90 +28,98 @@ tasks:
       - curl -L0 https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.5/kustomize_v4.5.5_linux_amd64.tar.gz > kustomize.tar.gz
       - tar xf kustomize.tar.gz && rm -rf kustomize.tar.gz
 
-  run:
-    run: always
-    cmds:
-      - go build -i -tags dynamic -o ./bin/operator
-      - ./bin/operator --dev {{.CLI_ARGS}} |& pp -rel-path
-    sources:
-      - "./**/*.go"
-    method: timestamp
-
-  build:
-    env:
-      IMG: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/kloudlite-operator:{{.Tag}}
-      NAMESPACE: kl-core
-    preconditions:
-      - sh: test -n '{{.Tag}}'
-        msg: "var Tag must have a value"
-      - sh: test -n '{{.EnvName}}'
-        msg: "var EnvName must have a value"
-    cmds:
-      - make dev-docker-build dev-docker-push
-
-  deploy:
-    env:
-      IMG: harbor.dev.madhouselabs.io/kloudlite/koperator:latest
-      NAMESPACE: koperator
-    cmds:
-      - make dev-docker-build dev-docker-push
-      - cd config/manager && kustomize edit set image controller=${IMG} && kustomize edit set namespace ${NAMESPACE}
-      - cd config/default && kustomize edit set namespace ${NAMESPACE}
-      - make deploy
-
-  gen-yamls:
-    vars:
-      Name: kloudlite-operator
-      Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}
-      Namespace: kl-core
-      WebhookPort: 1717
-      SvcAccountName: kloudlite-cluster-svc-account
-    preconditions:
-      - sh: test -n '{{.Tag}}'
-        msg: "var Tag must have a value"
-      - sh: test -n '{{.EnvName}}'
-        msg: "var EnvName must have a value"
+  yaml:crds:
     cmds:
       - make manifests
-      - |+
-        cat config/crd/bases/*.yaml | yq -y
+      - cat config/crd/bases/*.yaml | yq -y
 
-#         yamls=$(kustomize build config/default | yq 'select(.kind | [.] - ["Deployment", "Service", "ConfigMap"] | length > 0 | not)' -y)
-#         echo "---"
-#         echo "$yamls" | yq '
-#           select((.kind == "ConfigMap") and (.metadata.name == "manager-config")) |
-#           .metadata.name = "{{.Name}}-manager-config"
-#         ' -y
+  yaml:operator:
+    summary: |+
+      env `ENV_NAME`, `IMAGE_TAG` need to be injected from shell while apply these yamls
+
+      ###
+      .securityContext.capabilities.drop=["ALL"] |
+      .securityContext.seccompProfile.type = "RuntimeDefault" |
 #
-#         echo "---"
-#         echo "$yamls" | yq '
-#           select(.kind == "Service") |
-#           .metadata.labels."control-plane" = "{{.Name}}" |
-#           .spec.selector."control-plane" = "{{.Name}}" |
-#           .metadata.name = "{{.Name}}" |
-#           .spec.ports = (
-#             .spec.ports + [{name: "http-webhook", port: {{.WebhookPort}}, protocol: "TCP"}]
-#           )
-#         ' -y
-#         echo "---"
-#         echo "$yamls" | yq '
-#           select(.kind == "Deployment") |
-#           .metadata.name = "{{.Name}}" |
-#           .metadata.namespace = "{{.Namespace}}" |
-#           .metadata.labels."control-plane" = "{{.Name}}" |
-#           .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-#           .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
-#           .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
-#           .spec.template.spec.containers = (
-#             .spec.template.spec.containers | map_values(
-#               if .name == "manager" then
-#                 .image = "{{.Image}}" |
-#                 .command = .command + ["--all"]
-#               else . end
-#             )
-#           )
-#         ' -y
-      - #
+
+    preconditions:
+      - sh: '[ -n "{{.Name}}" ]'
+        msg: 'env Name must be set'
+
+    silent: true
+    vars:
+      Image: "{{.dockerRegistry}}/kloudlite/operators/${ENV_NAME}/{{.Name}}:${IMAGE_TAG}"
+      Namespace: kl-init-operators
+      SvcAccountName: kloudlite-cluster-svc-account
+      ImagePullPolicy: $IMAGE_PULL_POLICY
+    cmds:
+      - |+
+        export PATH="$PWD/bin:$PATH"
+
+        kustomize build config/default | yq '
+          select(.kind == "Deployment") |
+          .metadata.name = "kl-{{.Name}}-operator" |
+          .metadata.namespace = "{{.Namespace}}" |
+          .metadata.labels."control-plane" = "{{.Name}}" |
+          .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+          .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
+          .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
+          .spec.template.spec.containers = (
+            .spec.template.spec.containers | map_values(
+              if .name == "manager" then
+                .image = "{{.Image}}" |
+                .imagePullPolicy = "{{.ImagePullPolicy}}" |
+                .resources.limits = {} |
+                .resources.limits.memory = "200Mi" |
+                .resources.requests.cpu = "64m" |
+                .resources.requests.memory = "96Mi" |
+                .securityContext.allowPrivilegeEscalation = false
+              elif .name == "kube-rbac-proxy" then
+                .resources.limits = {} |
+                .resources.requests.cpu = "5m" |
+                .resources.requests.memory = "10Mi" |
+                .securityContext.allowPrivilegeEscalation = false
+              else . end
+            )
+          )
+        ' -y
+#
+
+  yaml:operators:
+#     preconditions:
+#       - sh: '[ -n "{{.EnvName}}"]'
+#         msg: 'var EnvName must have non-zero length'
+#       - sh: '[ -n "{{.Tag}}"]'
+#         msg: 'var Tag must have non-zero length'
+    silent: true
+    cmds:
+      - |+
+        for dir in $(ls ./operators)
+        do
+          task yaml:operator Name="$dir" > .release/deployables/$dir.yml
+        done
+#
+
+  build:operator:
+    preconditions:
+      - sh: '[ -n "{{.Name}}" ]'
+        msg: "var Name must have a value"
+      - sh: '[ -d "./operators/{{.Name}}" ]'
+        msg: 'directory operators/{{.Name}} must exist'
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+    silent: true
+    cmds:
+      - |+
+        pushd "./operators/{{.Name}}" 1> /dev/null
+        docker buildx build -t {{.Image}} . --build-context project="../.." --build-arg name="{{.Name}}"
+        docker push {{.Image}}
+        popd 1> /dev/null
+#
 
   pre:
     run: once
@@ -124,112 +138,45 @@ tasks:
     cmds:
       - mkdir -p ./operators/{{.name}}
 
-  build-operator:
-    preconditions:
-      - sh: test -n '{{.Name}}'
-        msg: "var Name must have a value"
-      - sh: test ! -d './operators/{{.Name}}'
-        msg: 'directory ./operators/{{.Name}} must not exist'
-      - sh: test -n '{{.EnvName}}'
-        msg: 'var EnvName must have a value'
-      - sh: test -n '{{.Tag}}'
-        msg: 'var Tag must have a value'
-    vars:
-      Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
-    dir: "./operators/{{.Name}}"
-    cmds:
-      - docker buildx build -t {{.Image}} . --build-context project="../.." --build-arg name="{{.Name}}"
-      - docker push {{.Image}}
-
-  new:reconciler:
-    preconditions:
-      - sh: test -n '{{.name}}'
-        msg: "var Name must have a value"
-      - sh: test -n '{{.kindRef}}'
-        msg: "var KindRef must have a value"
-    env:
-      RECONCILER_NAME: "{{.name}}"
-      KIND: "{{.kindRef}}"
-    cmds:
-      - envsubst < ./cmd/reconciler-template.go.tpl
-
-  yaml:deployment:
-    preconditions:
-      - sh: test -n '{{.Name}}'
-        msg: 'var Name must have a value'
-      - sh: test -n '{{.EnvName}}'
-        msg: 'var EnvName must have a value'
-      - sh: test -n '{{.Tag}}'
-        msg: 'var Tag must have a value'
-      - sh: test -n '{{.ImagePullPolicy}}'
-        msg: 'var ImagePullPolicy must be set'
-    vars:
-      Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
-      Namespace: kl-init-operators
-      SvcAccountName: kloudlite-cluster-svc-account
-#       ImagePullPolicy: IfNotPresent
-    cmds:
-      - |+
-        kustomize build config/default | yq '
-          select(.kind == "Deployment") |
-          .metadata.name = "kl-{{.Name}}-operator" |
-          .metadata.namespace = "{{.Namespace}}" |
-          .metadata.labels."control-plane" = "{{.Name}}" |
-          .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-          .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
-          .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
-          .spec.template.spec.containers = (
-            .spec.template.spec.containers | map_values(
-              if .name == "manager" then
-                .image = "{{.Image}}" |
-                .imagePullPolicy = "{{.ImagePullPolicy}}" |
-                .resources.limits = {} |
-                .resources.requests.cpu = "64m" |
-                .resources.requests.memory = "128Mi"
-              elif .name == "kube-rbac-proxy" then
-                .resources.limits = {} |
-                .resources.requests.cpu = "5m" |
-                .resources.requests.memory = "20Mi"
-              else . end
-            )
-          )
-        ' -y
-
   new:controller:
-    silent: true
-    vars:
-      KLOP:
-        sh: echo $PWD/bin/klop
     summary: |+
       example:
         task new:controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
       {{.KLOP}} controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
+#
 
+    silent: true
+    vars:
+      KLOP:
+        sh: echo $PWD/bin/klop
     cmds:
       - eval {{.KLOP}} controller create {{.CLI_ARGS}}
 
   new:msvc-controller:
-    silent: true
-    vars:
-      KLOP:
-        sh: echo $PWD/bin/klop
     summary: |+
       example:
         task new:msvc-controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
       {{.KLOP}} msvc-controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
+#
 
+    silent: true
+    vars:
+      KLOP:
+        sh: echo $PWD/bin/klop
     cmds:
       - eval {{.KLOP}} msvc-controller create {{.CLI_ARGS}}
 
   new:mres-controller:
-    silent: true
-    vars:
-      KLOP:
-        sh: echo $PWD/bin/klop
     summary: |+
       example:
         task new:msvc-controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
       {{.KLOP}} msvc-controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
+#
+
+    silent: true
+    vars:
+      KLOP:
+        sh: echo $PWD/bin/klop
 
     cmds:
       - eval {{.KLOP}} mres-controller create {{.CLI_ARGS}}
@@ -237,3 +184,17 @@ tasks:
   install:cmd:
     cmds:
       - go build -o ./bin/klop ./cmd/main.go
+
+  build:webhook-worker:
+    preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: webhook-worker
+      Image: "{{.dockerRegistry}}/kloudlite/workers/{{.EnvName}}/registry-webhook-worker:{{.Tag}}"
+    dir: ./webhook-worker
+    cmds:
+      - docker buildx build -t {{.Image}} . --build-context project=".." --build-arg name="{{.Name}}"
+      - docker push {{.Image}}

@@ -1,4 +1,4 @@
-package controllers
+package lambda
 
 import (
 	"context"
@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type LambdaReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
 	env       *env.Env
@@ -30,7 +30,7 @@ type LambdaReconciler struct {
 	Name      string
 }
 
-func (r *LambdaReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
@@ -42,7 +42,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lambdas/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lambdas/finalizers,verbs=update
 
-func (r *LambdaReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &serverlessv1.Lambda{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -86,11 +86,11 @@ func (r *LambdaReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
-func (r *LambdaReconciler) finalize(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *LambdaReconciler) reconLambda(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
+func (r *Reconciler) reconLambda(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -144,7 +144,7 @@ func (r *LambdaReconciler) reconLambda(req *rApi.Request[*serverlessv1.Lambda]) 
 	return req.Next()
 }
 
-func (r *LambdaReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)

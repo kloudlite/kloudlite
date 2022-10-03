@@ -1,7 +1,7 @@
 package main
 
 import (
-	"operators.kloudlite.io/operators/operator"
+	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/routers/internal/router"
 )
 

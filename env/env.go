@@ -7,6 +7,7 @@ import (
 )
 
 type Env struct {
+	IsDev       bool   `envssf:"isDev"`
 	ClusterId   string `env:"CLUSTER_ID" required:"true"`
 	WebhookAddr string `env:"WEBHOOK_ADDR" required:"true"`
 
@@ -37,6 +38,8 @@ type Env struct {
 	NamespaceSvcAccountName string `env:"NAMESPACE_SVC_ACCOUNT_NAME" required:"true"`
 	ProjectCfgName          string `env:"PROJECT_CONFIGMAP_NAME" required:"true"`
 	AccountRouterName       string `env:"ACCOUNT_ROUTER_NAME" required:"true"`
+
+	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/lib/constants"
@@ -12,20 +13,22 @@ import (
 
 // LambdaSpec defines the desired state of Lambda
 type LambdaSpec struct {
+	// +kubebuilder:default=kloudlite-svc-account
+	ServiceAccount string `json:"serviceAccount,omitempty"`
+
 	// +kubebuilder:default=1
-	// +kubebuilder:validation:Optional
-	MinScale int `json:"minScale"`
+	MinScale int `json:"minScale,omitempty"`
 
 	// +kubebuilder:default=5
-	// +kubebuilder:validation:Optional
-	MaxScale int `json:"maxScale"`
+	MaxScale int `json:"maxScale,omitempty"`
 
 	// +kubebuilder:default=100
-	// +kubebuilder:validation:Optional
-	TargetRps int `json:"targetRps"`
+	TargetRps int `json:"targetRps,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
 	Containers []v1.AppContainer `json:"containers,omitempty"`
 }

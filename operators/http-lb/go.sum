@@ -1,3 +1,0 @@
-github.com/armon/go-proxyproto v0.0.0-20210323213023-7e956b284f0a/go.mod h1:QmP9hvJ91BbJmGVGSbutW19IC0Q9phDCLGaomwTJbgU=
-inet.af/tcpproxy v0.0.0-20220326234310-be3ee21c9fa0 h1:PqdHrvQRVK1zapJkd0qf6+tevvSIcWdfenVqJd3PHWU=
-inet.af/tcpproxy v0.0.0-20220326234310-be3ee21c9fa0/go.mod h1:Tojt5kmHpDIR2jMojxzZK2w2ZR7OILODmUo2gaSwjrk=

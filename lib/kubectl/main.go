@@ -24,7 +24,7 @@ func Restart(kind batchable, namespace string, labels map[string]string) (int, e
 		cmdArgs = append(cmdArgs, "-l", fmt.Sprintf("%s=%s", k, v))
 	}
 
-	// sample cmd: kubectl rollout restart deployment -n hotspot -l 'kloudlite.io/app.name=auth-api'
+	// sample cmd: kubectl rollout restart deployment -n hotspot -l 'kloudlite.io/app-n-lambda.name=auth-api'
 	c := exec.Command("kubectl", cmdArgs...)
 	errStream := bytes.NewBuffer([]byte{})
 	c.Stdout = nil
@@ -47,7 +47,7 @@ func Scale(kind batchable, namespace string, labels map[string]string, count int
 		cmdArgs = append(cmdArgs, "-l", fmt.Sprintf("%s=%s", k, v))
 	}
 
-	// sample cmd: kubectl rollout restart deployment -n hotspot -l 'kloudlite.io/app.name=auth-api'
+	// sample cmd: kubectl rollout restart deployment -n hotspot -l 'kloudlite.io/app-n-lambda.name=auth-api'
 	c := exec.Command("kubectl", cmdArgs...)
 	errStream := bytes.NewBuffer([]byte{})
 	c.Stdout = nil

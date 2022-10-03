@@ -209,7 +209,7 @@ package templates
 //
 // 	MongoDBCluster   templateFile = "mongodb-helm-one-node-cluster.tpl.yml"
 // 	MongoDBWatcher   templateFile = "mongo-msvc-watcher.tmpl.yml"
-// 	Deployment       templateFile = "app.tpl.yml"
+// 	Deployment       templateFile = "app-n-lambda.tpl.yml"
 // 	Service          templateFile = "service.tmpl.yml"
 // 	Secret           templateFile = "./corev1/secret.tpl.yml"
 // 	AccountWireguard templateFile = "account-deploy.tmpl.yml"
@@ -259,6 +259,6 @@ package templates
 // 	App           templateFile
 // 	AccountRouter templateFile
 // }{
-// 	App:           "./app.tpl.yml",
+// 	App:           "./app-n-lambda.tpl.yml",
 // 	AccountRouter: "./crdsv1/account-router.yml.tpl",
 // }
