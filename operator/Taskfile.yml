@@ -86,17 +86,14 @@ tasks:
 #
 
   yaml:operators:
-#     preconditions:
-#       - sh: '[ -n "{{.EnvName}}"]'
-#         msg: 'var EnvName must have non-zero length'
-#       - sh: '[ -n "{{.Tag}}"]'
-#         msg: 'var Tag must have non-zero length'
     silent: true
     cmds:
       - |+
         for dir in $(ls ./operators)
         do
-          task yaml:operator Name="$dir" > .release/deployables/$dir.yml
+          #  task yaml:operator Name="$dir" > .release/deployables/$dir.yml
+          echo "---"
+          task yaml:operator Name="$dir"
         done
 #
 
