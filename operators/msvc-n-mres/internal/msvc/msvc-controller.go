@@ -135,6 +135,7 @@ func (r *ManagedServiceReconciler) reconRealMsvc(req *rApi.Request[*crdsv1.Manag
 	if err != nil {
 		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
 	}
+
 	var realMsvcObj struct {
 		Status rApi.Status `json:"status"`
 	}

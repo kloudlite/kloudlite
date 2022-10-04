@@ -2,15 +2,18 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
 type TopicSpec struct {
-	ManagedSvcName string `json:"managedSvcName,omitempty"`
+	AdminSecretRef ct.SecretRef `json:"adminSecretRef"`
+	// +kubebuilder:default=5
+	PartitionCount int `json:"partitionCount"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Topic is the Schema for the topics API
 type Topic struct {
@@ -27,7 +30,7 @@ func (t *Topic) GetStatus() *rApi.Status {
 
 func (t *Topic) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		"kloudlite.io/msvc.name": t.Spec.ManagedSvcName,
+		"kloudlite.io/msvc.name": "redpanda",
 	}
 }
 
@@ -35,7 +38,7 @@ func (t *Topic) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{}
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // TopicList contains a list of Topic
 type TopicList struct {

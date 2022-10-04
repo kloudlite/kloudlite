@@ -3,7 +3,8 @@ version: 3
 dotenv: [".secrets/env"]
 
 vars:
-  dockerRegistry: "harbor.dev.madhouselabs.io"
+#   dockerRegistry: "harbor.dev.madhouselabs.io"
+  dockerRegistry: registry.kloudlite.io
 
 tasks:
   new-kind:
@@ -181,6 +182,20 @@ tasks:
   install:cmd:
     cmds:
       - go build -o ./bin/klop ./cmd/main.go
+
+  build:agent:
+    preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: kl-agent
+      Image: "{{.dockerRegistry}}/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+    dir: ./agent
+    cmds:
+      - docker buildx build -t {{.Image}} . --build-context project=".." --build-arg name="{{.Name}}"
+      - docker push {{.Image}}
 
   build:webhook-worker:
     preconditions:

@@ -29,6 +29,10 @@ type ErrMessage struct {
 }
 
 type Env struct {
+	KafkaSASLUser      string                 `env:"KAFKA_SASL_USER" required:"true"`
+	KafkaSASLPassword  string                 `env:"KAFKA_SASL_PASSWORD" required:"true"`
+	KafkaSASLMechanism redpanda.SASLMechanism `env:"KAFKA_SASL_MECHANISM"`
+
 	KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
 	KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 	KafkaIncomingTopic     string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
@@ -42,21 +46,34 @@ func main() {
 
 	logger := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: dev})
 
-	var envVars Env
-	if err := env.Set(&envVars); err != nil {
+	var ev Env
+	if err := env.Set(&ev); err != nil {
 		panic(err)
 	}
 
-	errProducer, err := redpanda.NewProducer(envVars.KafkaBrokers)
+	kafkaSasl := redpanda.KafkaSASLAuth{
+		SASLMechanism: func() redpanda.SASLMechanism {
+			if ev.KafkaSASLMechanism != "" {
+				return ev.KafkaSASLMechanism
+			}
+			return redpanda.ScramSHA256
+		}(),
+		User:     ev.KafkaSASLUser,
+		Password: ev.KafkaSASLPassword,
+	}
+
+	errProducer, err := redpanda.NewProducer(
+		ev.KafkaBrokers, redpanda.ProducerOpts{
+			SASLAuth: &kafkaSasl,
+		},
+	)
 	if err != nil {
 		panic(err)
 	}
 
 	consumer, err := redpanda.NewConsumer(
-		envVars.KafkaBrokers, envVars.KafkaConsumerGroupId,
-		envVars.KafkaIncomingTopic, &redpanda.ConsumerOptions{
-			ErrProducer: errProducer,
-		},
+		ev.KafkaBrokers, ev.KafkaConsumerGroupId,
+		ev.KafkaIncomingTopic, redpanda.ConsumerOpts{Logger: logger, SASLAuth: &kafkaSasl},
 	)
 	if err != nil {
 		panic(err)
@@ -74,13 +91,16 @@ func main() {
 	logger.Infof("ready for consuming messages")
 
 	consumer.StartConsuming(
-		func(kMsg *redpanda.KafkaMessage) error {
+		func(kMsg redpanda.KafkaMessage) error {
+			msgLogger := logger.WithKV("offset", kMsg.Offset).WithKV("topic", kMsg.Topic).WithKV("partition", kMsg.Partition)
+			msgLogger.Infof("received message")
+
 			var msg AgentMessage
 			if err := json.Unmarshal(kMsg.Value, &msg); err != nil {
-				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
+				msgLogger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
 				return err
 			}
-			logger.Debugf("action=%s, payload=%s\n", msg.Action, msg.Payload)
+			msgLogger.Debugf("action=%s, payload=%s\n", msg.Action, msg.Payload)
 
 			switch msg.Action {
 			case "apply", "delete", "create":
@@ -115,6 +135,10 @@ func main() {
 							logger.Errorf(err, buffErr.String())
 							return err
 						}
+						msgLogger.Infof(
+							"error message published to (topic=%s), key=%s, partition=%d, offset=%d ",
+						)
+						msgLogger.Infof("processed message")
 						return nil
 					}(); errX != nil {
 						errMsg := ErrMessage{
@@ -126,15 +150,22 @@ func main() {
 						if err != nil {
 							return err
 						}
-						if err := errProducer.Produce(context.TODO(), envVars.KafkaErrorOnApplyTopic, string(kMsg.Key), b); err != nil {
+						output, err := errProducer.Produce(context.TODO(), ev.KafkaErrorOnApplyTopic, string(kMsg.Key), b)
+						if err != nil {
 							return err
 						}
+						msgLogger.Infof(
+							"error message published to (topic=%s), key=%s, partition=%d, offset=%d ",
+							output.Topic,
+							output.Key,
+							output.Offset,
+						)
 						return errX
 					}
 				}
 			default:
 				{
-					logger.Errorf(nil, "Invalid Action: %s", msg.Action)
+					msgLogger.Errorf(nil, "Invalid Action: %s", msg.Action)
 				}
 			}
 			return nil

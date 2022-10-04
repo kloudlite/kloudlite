@@ -27,11 +27,11 @@ type ConsumerError interface {
 	error
 }
 
-func (c *consumer) StartConsuming(onMessage ReaderFunc) error {
+func (c *consumer) StartConsuming(reader ReaderFunc) {
 	for {
 		fetches := c.client.PollFetches(context.Background())
 		if fetches.IsClientClosed() {
-			return errors.Newf("client is closed")
+			return
 		}
 
 		logger := c.logger
@@ -44,7 +44,7 @@ func (c *consumer) StartConsuming(onMessage ReaderFunc) error {
 
 		fetches.EachRecord(
 			func(record *kgo.Record) {
-				if err := onMessage(
+				if err := reader(
 					KafkaMessage{
 						Key:        record.Key,
 						Value:      record.Value,
@@ -55,7 +55,7 @@ func (c *consumer) StartConsuming(onMessage ReaderFunc) error {
 						Offset:     record.Offset,
 					},
 				); err != nil {
-					logger.Errorf(err, "in onMessage()")
+					logger.Errorf(err, "in readerFunc()")
 
 					if err := c.client.CommitRecords(context.TODO(), record); err != nil {
 						return
@@ -73,9 +73,7 @@ func (c *consumer) StartConsuming(onMessage ReaderFunc) error {
 	}
 }
 
-func NewConsumer(
-	brokerHosts string, consumerGroup string, topicName string, options *ConsumerOpts,
-) (Consumer, error) {
+func NewConsumer(brokerHosts string, consumerGroup string, topicName string, options ConsumerOpts) (Consumer, error) {
 	cOpts := options.getWithDefaults()
 
 	opts := []kgo.Opt{
@@ -83,6 +81,15 @@ func NewConsumer(
 		kgo.ConsumerGroup(consumerGroup),
 		kgo.ConsumeTopics(topicName),
 		kgo.DisableAutoCommit(),
+	}
+
+	saslOpt, err := parseSASLAuth(cOpts.SASLAuth)
+	if err != nil {
+		return nil, err
+	}
+
+	if saslOpt != nil {
+		opts = append(opts, saslOpt)
 	}
 
 	client, err := kgo.NewClient(opts...)
