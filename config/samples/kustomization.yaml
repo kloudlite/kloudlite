@@ -56,4 +56,5 @@ resources:
 - mysql.msvc_v1_database.yaml
 - redis.msvc_v1_aclconfigmap.yaml
 - zookeeper.msvc_v1_service.yaml
+- redpanda.msvc_v1_acluser.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

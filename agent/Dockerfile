@@ -7,11 +7,11 @@ COPY --from=project ./go.sum ./go.sum
 RUN ls -al
 RUN go mod download -x
 
-RUN mkdir ./types
 COPY ./main.go ./main.go
 COPY --from=project ./lib/errors ./lib/errors
 COPY --from=project ./lib/logging ./lib/logging
 COPY --from=project ./lib/redpanda ./lib/redpanda
+COPY --from=project ./lib/functions ./lib/functions
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o kloudlite-agent main.go
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" > \

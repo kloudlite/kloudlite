@@ -94,3 +94,8 @@ type MsvcRef struct {
 	Kind       string `json:"kind"`
 	Name       string `json:"name"`
 }
+
+type SecretRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace,omitempty"`
+}

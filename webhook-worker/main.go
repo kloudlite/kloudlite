@@ -112,7 +112,7 @@ func main() {
 
 	ev := env.GetEnvOrDie()
 	consumer, err := redpanda.NewConsumer(
-		ev.KafkaBrokers, ev.KafkaConsumerGroupId, ev.KafkaHarborWebhookIncomingTopic, &redpanda.ConsumerOpts{
+		ev.KafkaBrokers, ev.KafkaConsumerGroupId, ev.KafkaHarborWebhookIncomingTopic, redpanda.ConsumerOpts{
 			Logger: logger,
 		},
 	)
@@ -162,7 +162,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := consumer.StartConsuming(
+	if consumer.StartConsuming(
 		func(msg redpanda.KafkaMessage) error {
 			log := logger.WithKV("offset", msg.Offset).WithKV("topic", msg.Topic).WithKV("partition", msg.Partition)
 			log.Infof("received message")

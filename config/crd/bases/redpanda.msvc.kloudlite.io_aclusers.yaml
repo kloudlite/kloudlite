@@ -5,20 +5,27 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: topics.redpanda.msvc.kloudlite.io
+  name: aclusers.redpanda.msvc.kloudlite.io
 spec:
   group: redpanda.msvc.kloudlite.io
   names:
-    kind: Topic
-    listKind: TopicList
-    plural: topics
-    singular: topic
+    kind: ACLUser
+    listKind: ACLUserList
+    plural: aclusers
+    singular: acluser
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
-        description: Topic is the Schema for the topics API
+        description: ACLUser is the Schema for the aclusers API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,6 +40,7 @@ spec:
           metadata:
             type: object
           spec:
+            description: ACLUserSpec defines the desired state of ACLUser
             properties:
               adminSecretRef:
                 properties:
@@ -43,12 +51,13 @@ spec:
                 required:
                 - name
                 type: object
-              partitionCount:
-                default: 5
-                type: integer
+              topics:
+                items:
+                  type: string
+                type: array
             required:
             - adminSecretRef
-            - partitionCount
+            - topics
             type: object
           status:
             properties:

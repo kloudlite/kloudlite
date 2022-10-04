@@ -1,0 +1,10 @@
+apiVersion: redpanda.msvc.kloudlite.io/v1
+kind: Topic
+metadata:
+  name: sample-t
+  namespace: kl-core
+spec:
+  adminSecretRef:
+    name: redpanda-acl
+    namespace: kl-core
+  partitionCount: 10
