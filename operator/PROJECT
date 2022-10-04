@@ -402,4 +402,12 @@ resources:
   kind: Service
   path: operators.kloudlite.io/apis/zookeeper.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: redpanda.msvc
+  kind: ACLUser
+  path: operators.kloudlite.io/apis/redpanda.msvc/v1
+  version: v1
 version: "3"

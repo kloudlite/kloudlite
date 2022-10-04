@@ -1,12 +1,14 @@
 package functions
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	libJson "encoding/json"
+	"os/exec"
 	"regexp"
 	"strings"
 
@@ -232,4 +234,20 @@ func Sha1Sum(b []byte) string {
 	hash := sha1.New()
 	hash.Write(b)
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func Exec(command ...string) (error, *bytes.Buffer, *bytes.Buffer) {
+	args := make([]string, len(command)+1)
+	args[0] = "-c"
+	for i := range command {
+		args[i+1] = command[i]
+	}
+
+	stdout, stderr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+
+	cmd := exec.Command("bash", args...)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	return cmd.Run(), stdout, stderr
 }

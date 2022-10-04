@@ -788,6 +788,32 @@ rules:
 - apiGroups:
   - redpanda.msvc.kloudlite.io
   resources:
+  - aclusers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - aclusers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - aclusers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
   - services
   verbs:
   - create

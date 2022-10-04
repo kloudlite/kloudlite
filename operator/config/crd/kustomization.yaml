@@ -36,4 +36,5 @@ resources:
 - bases/mysql.msvc.kloudlite.io_databases.yaml
 - bases/redis.msvc.kloudlite.io_aclconfigmaps.yaml
 - bases/zookeeper.msvc.kloudlite.io_services.yaml
+- bases/redpanda.msvc.kloudlite.io_aclusers.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

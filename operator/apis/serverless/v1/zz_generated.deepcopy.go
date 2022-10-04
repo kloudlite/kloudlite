@@ -6,6 +6,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 )
@@ -77,6 +78,13 @@ func (in *LambdaSpec) DeepCopyInto(out *LambdaSpec) {
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
+		}
+	}
+	if in.Tolerations != nil {
+		in, out := &in.Tolerations, &out.Tolerations
+		*out = make([]corev1.Toleration, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.Containers != nil {
