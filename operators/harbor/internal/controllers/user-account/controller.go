@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
@@ -19,6 +18,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/harbor/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,10 +26,10 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	env       *env.Env
 	HarborCli *harbor.Client
 	logger    logging.Logger
 	Name      string
+	Env       *env.Env
 }
 
 func (r *Reconciler) GetName() string {
@@ -101,7 +101,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
@@ -160,7 +160,7 @@ func (r *Reconciler) reconOutput(req *rApi.Request[*artifactsv1.HarborUserAccoun
 	if dockerScrt == nil {
 		password := fn.CleanerNanoid(40)
 
-		harborDockerConfig, err := getDockerConfig(r.env.HarborImageRegistryHost, obj.Spec.HarborUser.Name, password)
+		harborDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, obj.Spec.HarborUser.Name, password)
 		if err != nil {
 			return req.FailWithOpError(err)
 		}
@@ -177,7 +177,7 @@ func (r *Reconciler) reconOutput(req *rApi.Request[*artifactsv1.HarborUserAccoun
 					"username":          obj.Spec.HarborUser.Name,
 					"password":          password,
 					// TODO: this registry url, can also come from project config
-					"registry": r.env.HarborImageRegistryHost,
+					"registry": r.Env.HarborImageRegistryHost,
 					"project":  obj.Spec.ProjectRef,
 				},
 				"secret-type": "kubernetes.io/dockerconfigjson",
@@ -262,11 +262,10 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 	return req.Next()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.env = envVars
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&artifactsv1.HarborUserAccount{})
 	return builder.Complete(r)

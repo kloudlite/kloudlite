@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
@@ -17,17 +16,19 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/app-n-lambda/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 type Reconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	env       *env.Env
 	harborCli *harbor.Client
 	logger    logging.Logger
 	Name      string
+	Env       *env.Env
 }
 
 func (r *Reconciler) GetName() string {
@@ -83,7 +84,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*serverlessv1.Lambda]) stepResult.Result {
@@ -144,13 +145,13 @@ func (r *Reconciler) reconLambda(req *rApi.Request[*serverlessv1.Lambda]) stepRe
 	return req.Next()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.env = envVars
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&serverlessv1.Lambda{})
 	builder.Owns(fn.NewUnstructured(constants.KnativeServiceType))
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	return builder.Complete(r)
 }

@@ -9,7 +9,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/env"
+	influxdbMsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
+	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
+	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
+	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
@@ -17,6 +20,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	env2 "operators.kloudlite.io/operators/msvc-n-mres/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -24,10 +28,10 @@ import (
 type ManagedResourceReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	env       *env.Env
 	harborCli *harbor.Client
 	logger    logging.Logger
 	Name      string
+	Env       *env2.Env
 }
 
 func (r *ManagedResourceReconciler) GetName() string {
@@ -84,7 +88,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
@@ -185,24 +189,33 @@ func (r *ManagedResourceReconciler) reconRealMres(req *rApi.Request[*crdsv1.Mana
 	return req.Next()
 }
 
-func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.env = envVars
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedResource{})
 	builder.Owns(&corev1.Secret{})
 
-	resources := []metav1.TypeMeta{
-		{Kind: "ACLAccount", APIVersion: "redis-standalone.msvc.kloudlite.io/v1"},
-		{Kind: "Database", APIVersion: "mongodb-standalone.msvc.kloudlite.io/v1"},
-		{Kind: "Database", APIVersion: "mysql-standalone.msvc.kloudlite.io/v1"},
-		{Kind: "Bucket", APIVersion: "influxdb.msvc.kloudlite.io/v1"},
+	children := []client.Object{
+		&redisMsvcv1.StandaloneService{},
+		&redisMsvcv1.ClusterService{},
+		&redisMsvcv1.ACLAccount{},
+
+		&mongodbMsvcv1.StandaloneService{},
+		&mongodbMsvcv1.ClusterService{},
+		&mongodbMsvcv1.Database{},
+
+		&mysqlMsvcv1.ClusterService{},
+		&mysqlMsvcv1.StandaloneService{},
+		&mysqlMsvcv1.Database{},
+
+		&influxdbMsvcv1.Bucket{},
+		&influxdbMsvcv1.Service{},
 	}
 
-	for _, resource := range resources {
-		builder.Owns(fn.NewUnstructured(resource))
+	for _, child := range children {
+		builder.Owns(child)
 	}
 
 	return builder.Complete(r)

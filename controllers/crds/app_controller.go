@@ -256,7 +256,7 @@ func (r *AppReconciler) reconcileOperations(req *rApi.Request[*crdsv1.App]) step
 	return req.Next()
 }
 
-func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)

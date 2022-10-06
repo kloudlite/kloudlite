@@ -144,7 +144,7 @@ func (r *DatabaseReconciler) reconcileOperations(req *rApi.Request[*mongodbexter
 	return req.Next()
 }
 
-func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)

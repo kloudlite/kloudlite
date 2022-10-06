@@ -167,12 +167,12 @@ package templates
 // 	return &unstructured.Unstructured{Object: m}, nil
 // }
 //
-// var templateDir = filepath.Join(os.Getenv("PWD"), "types/templates")
+// var templateDir = filepath.Join(os.Getenv("PWD"), "types/controller-templates")
 //
 // var helperFiles []string
 //
 // var (
-// 	//go:embed templates
+// 	//go:embed controller-templates
 // 	templateFS embed.FS
 // )
 //

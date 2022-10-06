@@ -12,7 +12,7 @@ package elasticsearchmsvc
 // 	ct "operators.kloudlite.io/apis/common-types"
 // 	"operators.kloudlite.io/types/conditions"
 // 	stepResult "operators.kloudlite.io/types/operator/step-result"
-// 	"operators.kloudlite.io/types/templates"
+// 	"operators.kloudlite.io/types/controller-templates"
 // 	"sigs.k8s.io/controller-runtime/pkg/event"
 // 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 //
@@ -146,8 +146,8 @@ package elasticsearchmsvc
 // 		username := "elastic"
 // 		host := fmt.Sprintf("%s.%s.svc.cluster.local:9200", obj.Name, obj.Namespace)
 //
-// 		b, err := templates.Parse(
-// 			templates.Secret, &corev1.Secret{
+// 		b, err := controller-templates.Parse(
+// 			controller-templates.Secret, &corev1.Secret{
 // 				ObjectMeta: metav1.ObjectMeta{
 // 					Name:      "msvc-" + obj.Name,
 // 					Namespace: obj.Namespace,
@@ -205,8 +205,8 @@ package elasticsearchmsvc
 // 			return req.CheckFailed(KeyHelmReady, check, err.Error())
 // 		}
 //
-// 		b, err := templates.Parse(
-// 			templates.ElasticSearch, map[string]any{
+// 		b, err := controller-templates.Parse(
+// 			controller-templates.ElasticSearch, map[string]any{
 // 				"object":        obj,
 // 				"storage-class": sc,
 // 				"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},

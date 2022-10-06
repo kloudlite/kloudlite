@@ -38,7 +38,7 @@ type MessageReply struct {
 
 type Notifier struct {
 	clusterId string
-	producer  *redpanda.Producer
+	producer  redpanda.Producer
 	topic     string
 }
 
@@ -58,7 +58,8 @@ func (n *Notifier) Notify(ctx context.Context, key string, metadata KlMetadata, 
 		return err
 	}
 
-	return n.producer.Produce(ctx, n.topic, key, b)
+	_, err = n.producer.Produce(ctx, n.topic, key, b)
+	return err
 }
 
 func (n *Notifier) NotifyBilling(ctx context.Context, key string, metadata KlMetadata, billing *ResourceBilling, stage stageTT) error {
@@ -74,10 +75,11 @@ func (n *Notifier) NotifyBilling(ctx context.Context, key string, metadata KlMet
 		return err
 	}
 
-	return n.producer.Produce(ctx, n.topic, key, b)
+	_, err = n.producer.Produce(ctx, n.topic, key, b)
+	return err
 }
 
-func NewNotifier(clusterId string, producer *redpanda.Producer, topic string) *Notifier {
+func NewNotifier(clusterId string, producer redpanda.Producer, topic string) *Notifier {
 	return &Notifier{producer: producer, topic: topic, clusterId: clusterId}
 }
 

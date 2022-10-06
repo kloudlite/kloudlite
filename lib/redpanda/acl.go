@@ -1,12 +1,8 @@
 package redpanda
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
-
 	exec2 "k8s.io/utils/exec"
-	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 )
 
@@ -16,7 +12,7 @@ type AdminClient interface {
 	UserExists(username string) error
 	CreateTopic(topicName string, partitionCount int) error
 	DeleteTopic(topicName string) error
-	TopicExists(topicName string) error
+	TopicExists(topicName string) (bool, error)
 	AllowUserOnTopics(username string, topicNames ...string) error
 }
 
@@ -41,26 +37,16 @@ func (admin adminCli) UserExists(username string) error {
 	return nil
 }
 
-func (admin adminCli) TopicExists(topicName string) error {
+func (admin adminCli) TopicExists(topicName string) (bool, error) {
 	err, _, _ := fn.Exec(
 		fmt.Sprintf(
 			"rpk topic describe %s --brokers %s %s", topicName, admin.kafkaBrokers, admin.saslAuthFlags,
 		),
 	)
 	if err != nil {
-		return err
+		return false, nil
 	}
-	return nil
-}
-
-func run(name string, args ...string) error {
-	stderr := bytes.NewBuffer(nil)
-	cmd := exec.Command(name, args...)
-	cmd.Stderr = stderr
-	if err := cmd.Run(); err != nil {
-		return errors.NewEf(err, "failed with stdout: %s", stderr.String())
-	}
-	return nil
+	return true, nil
 }
 
 func (admin adminCli) CreateUser(username, password string) error {
@@ -80,7 +66,7 @@ func (admin adminCli) DeleteUser(username string) error {
 }
 
 func (admin adminCli) CreateTopic(topicName string, partitionCount int) error {
-	err, _, _ := fn.Exec(
+	err, _, stderr := fn.Exec(
 		fmt.Sprintf(
 			"rpk topic create %s -p %d --brokers %s %s",
 			topicName,
@@ -92,6 +78,7 @@ func (admin adminCli) CreateTopic(topicName string, partitionCount int) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(stderr.String())
 	return nil
 }
 
