@@ -113,6 +113,11 @@ func main() {
 	ev := env.GetEnvOrDie()
 	consumer, err := redpanda.NewConsumer(
 		ev.KafkaBrokers, ev.KafkaConsumerGroupId, ev.KafkaHarborWebhookIncomingTopic, redpanda.ConsumerOpts{
+			SASLAuth: &redpanda.KafkaSASLAuth{
+				SASLMechanism: redpanda.ScramSHA256,
+				User:          ev.KafkaSASLUsername,
+				Password:      ev.KafkaSASLPassword,
+			},
 			Logger: logger,
 		},
 	)
@@ -199,5 +204,4 @@ func main() {
 	); err != nil {
 		panic(err)
 	}
-
 }

@@ -188,8 +188,8 @@ func main() {
 		&mysqlStandaloneControllers.ServiceReconciler{Name: "msvc-mysql-service"},
 		&mysqlStandaloneControllers.DatabaseReconciler{Name: "msvc-mysql-database"},
 
-		&redisStandaloneControllers.ServiceReconciler{Name: "msvc.redis-service"},
-		&redisStandaloneControllers.ACLAccountReconciler{Name: "msvc.redis-aclaccount"},
+		&redisStandaloneControllers.ServiceReconciler{Name: "msvc-redis-service"},
+		&redisStandaloneControllers.ACLAccountReconciler{Name: "msvc-redis-aclaccount"},
 
 		&redpandamsvccontrollers.ServiceReconciler{Name: "msvc-redpanda-service"},
 		&redpandamsvccontrollers.TopicReconciler{Name: "msvc-redpanda-topic"},
@@ -244,7 +244,7 @@ func main() {
 			continue
 		}
 		if isAllEnabled || enabledForControllers[rc.GetName()] {
-			if err := rc.SetupWithManager(mgr, envVars, logger); err != nil {
+			if err := rc.SetupWithManager(mgr, logger); err != nil {
 				setupLog.Error(err, "unable to create controllers", "controllers", rc.GetName())
 				os.Exit(1)
 			}

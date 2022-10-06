@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
@@ -19,6 +18,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/project/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,10 +26,10 @@ import (
 type ProjectReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	env       *env.Env
 	harborCli *harbor.Client
 	logger    logging.Logger
 	Name      string
+	Env       *env.Env
 }
 
 func (r *ProjectReconciler) GetName() string {
@@ -97,7 +97,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	// }
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
@@ -164,7 +164,7 @@ func (r *ProjectReconciler) reconNamespace(req *rApi.Request[*crdsv1.Project]) s
 func (r *ProjectReconciler) reconProjectCfg(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
-	projectCfg, err := rApi.Get[*corev1.ConfigMap](ctx, r.Client, fn.NN(obj.Name, r.env.ProjectCfgName), &corev1.ConfigMap{})
+	projectCfg, err := rApi.Get[*corev1.ConfigMap](ctx, r.Client, fn.NN(obj.Name, r.Env.ProjectCfgName), &corev1.ConfigMap{})
 	if err != nil {
 		projectCfg = nil
 		req.Logger.Infof("obj configmap does not exist, will be creating it")
@@ -174,7 +174,7 @@ func (r *ProjectReconciler) reconProjectCfg(req *rApi.Request[*crdsv1.Project]) 
 	if projectCfg == nil || check.Generation > checks[ProjectCfgReady].Generation {
 		b, err := templates.Parse(
 			templates.CoreV1.ConfigMap, map[string]any{
-				"name":       r.env.ProjectCfgName,
+				"name":       r.Env.ProjectCfgName,
 				"namespace":  obj.Name,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"data": map[string]string{
@@ -210,29 +210,29 @@ func (r *ProjectReconciler) reconProjectRBAC(req *rApi.Request[*crdsv1.Project])
 
 	check := rApi.Check{Generation: obj.Generation}
 
-	svcAccount, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.env.NamespaceSvcAccountName), &corev1.ServiceAccount{})
+	svcAccount, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.Env.SvcAccountName), &corev1.ServiceAccount{})
 	if err != nil {
-		req.Logger.Infof("service account %s does not exist, creating now...", r.env.NamespaceSvcAccountName)
+		req.Logger.Infof("service account %s does not exist, creating now...", r.Env.SvcAccountName)
 	}
 
-	role, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.env.NamespaceAdminRoleName), &rbacv1.Role{})
+	role, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.Env.AdminRoleName), &rbacv1.Role{})
 	if err != nil {
-		req.Logger.Infof("service account %s does not exist, creating now...", r.env.NamespaceSvcAccountName)
+		req.Logger.Infof("role %s does not exist, creating now...", r.Env.SvcAccountName)
 	}
 
-	roleBinding, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.env.NamespaceAdminRoleName+"-rb"), &rbacv1.RoleBinding{})
+	roleBinding, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.Env.AdminRoleName+"-rb"), &rbacv1.RoleBinding{})
 	if err != nil {
-		req.Logger.Infof("service account %s does not exist, creating now...", r.env.NamespaceSvcAccountName)
+		req.Logger.Infof("admin role binding %s does not exist, creating now...", r.Env.SvcAccountName)
 	}
 
 	if svcAccount == nil || role == nil || roleBinding == nil || check.Generation > checks[RBACReady].Generation {
 		b, err := templates.Parse(
 			templates.ProjectRBAC, map[string]any{
 				"namespace":          namespace,
-				"role-name":          r.env.NamespaceAdminRoleName,
-				"role-binding-name":  r.env.NamespaceAdminRoleName + "-rb",
-				"svc-account-name":   r.env.NamespaceSvcAccountName,
-				"docker-secret-name": r.env.DockerSecretName,
+				"role-name":          r.Env.AdminRoleName,
+				"role-binding-name":  r.Env.AdminRoleName + "-rb",
+				"svc-account-name":   r.Env.SvcAccountName,
+				"docker-secret-name": r.Env.DockerSecretName,
 				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
 		)
@@ -269,7 +269,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 		req.Logger.Infof("harbor project (%s) does not exist, creating now ...", obj.Spec.AccountRef)
 	}
 
-	if err := r.Get(ctx, fn.NN(namespace, r.env.DockerSecretName), harborUserAcc); err != nil {
+	if err := r.Get(ctx, fn.NN(namespace, r.Env.DockerSecretName), harborUserAcc); err != nil {
 		req.Logger.Infof("harbor user account (%s) does not exist, creating now ...", obj.Spec.AccountRef)
 	}
 
@@ -277,7 +277,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 		b, err := templates.Parse(
 			templates.ProjectHarbor, map[string]any{
 				"acc-ref":            obj.Spec.AccountRef,
-				"docker-secret-name": r.env.DockerSecretName,
+				"docker-secret-name": r.Env.DockerSecretName,
 				"namespace":          namespace,
 				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
@@ -326,15 +326,15 @@ func (r *ProjectReconciler) reconAccountRouter(req *rApi.Request[*crdsv1.Project
 
 	accNamespace := "wg-" + obj.Spec.AccountRef
 
-	accRouter, err := rApi.Get[*crdsv1.AccountRouter](ctx, r.Client, fn.NN(accNamespace, r.env.AccountRouterName), &crdsv1.AccountRouter{})
+	accRouter, err := rApi.Get[*crdsv1.AccountRouter](ctx, r.Client, fn.NN(accNamespace, r.Env.AccountRouterName), &crdsv1.AccountRouter{})
 	if err != nil {
-		req.Logger.Infof("account router (%s) does not exist, would be creating it now...", r.env.AccountRouterName)
+		req.Logger.Infof("account router (%s) does not exist, would be creating it now...", r.Env.AccountRouterName)
 	}
 
 	if accRouter == nil {
 		b, err := templates.Parse(
 			templates.CrdsV1.AccountRouter, map[string]any{
-				"name":      r.env.AccountRouterName,
+				"name":      r.Env.AccountRouterName,
 				"namespace": accNamespace,
 				"acc-ref":   obj.Spec.AccountRef,
 			},
@@ -369,11 +369,10 @@ func (r *ProjectReconciler) reconAccountRouter(req *rApi.Request[*crdsv1.Project
 	return req.Next()
 }
 
-func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.env = envVars
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Project{})
 	builder.Owns(&corev1.Namespace{})

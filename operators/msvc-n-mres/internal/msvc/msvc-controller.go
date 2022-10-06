@@ -8,10 +8,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
-	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
-	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
-	"operators.kloudlite.io/env"
+	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
+	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
+	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
+	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
+	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
+	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
+	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
+	env2 "operators.kloudlite.io/operators/msvc-n-mres/internal/env"
+
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
@@ -21,18 +26,15 @@ import (
 	"operators.kloudlite.io/lib/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type ManagedServiceReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	env       *env.Env
 	harborCli *harbor.Client
 	logger    logging.Logger
 	Name      string
+	Env       *env2.Env
 }
 
 func (r *ManagedServiceReconciler) GetName() string {
@@ -89,7 +91,7 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 
 	req.Object.Status.IsReady = true
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
@@ -161,31 +163,27 @@ func (r *ManagedServiceReconciler) reconRealMsvc(req *rApi.Request[*crdsv1.Manag
 	return req.Next()
 }
 
-func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.env = envVars
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
 	msvcs := []client.Object{
-		&mongodbStandalone.Service{},
-		&mysqlStandalone.Service{},
-		&redisStandalone.Service{},
+		&mongodbMsvcv1.StandaloneService{},
+		&mongodbMsvcv1.ClusterService{},
+		&mysqlMsvcv1.StandaloneService{},
+		&mysqlMsvcv1.ClusterService{},
+		&redisMsvcv1.StandaloneService{},
+		&redisMsvcv1.ClusterService{},
+		&elasticsearchmsvcv1.Service{},
+		&zookeeperMsvcv1.Service{},
+		&influxdbmsvcv1.Service{},
+		&redpandamsvcv1.Service{},
 	}
 
 	for i := range msvcs {
-		builder.Watches(
-			&source.Kind{Type: msvcs[i]}, handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
-					s, ok := obj.GetLabels()[constants.MsvcNameKey]
-					if !ok {
-						return nil
-					}
-					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), s)}}
-				},
-			),
-		)
+		builder.Owns(msvcs[i])
 	}
 
 	return builder.Complete(r)

@@ -279,7 +279,7 @@ func (r *BillingWatcherReconciler) RemoveBillingFinalizer(ctx context.Context, o
 
 // SetupWithManager sets up the controllers with the Manager.
 
-func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *BillingWatcherReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)

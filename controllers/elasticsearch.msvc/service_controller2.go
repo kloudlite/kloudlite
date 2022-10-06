@@ -25,7 +25,7 @@ package elasticsearchmsvc
 // 	"operators.kloudlite.io/types/logging"
 // 	rApi "operators.kloudlite.io/types/operator"
 // 	stepResult "operators.kloudlite.io/types/operator/step-result"
-// 	"operators.kloudlite.io/types/templates"
+// 	"operators.kloudlite.io/types/controller-templates"
 // 	ctrl "sigs.k8s.io/controllers-runtime"
 // 	"sigs.k8s.io/controllers-runtime/pkg/client"
 // 	"sigs.k8s.io/controllers-runtime/pkg/handler"
@@ -196,8 +196,8 @@ package elasticsearchmsvc
 // 			return req.CheckFailed(KeyHelmExists, check)
 // 		}
 //
-// 		b, err := templates.Parse(
-// 			templates.ElasticSearch, map[string]any{
+// 		b, err := controller-templates.Parse(
+// 			controller-templates.ElasticSearch, map[string]any{
 // 				"object":        obj,
 // 				"storage-class": storageClass,
 // 				"owner-refs": []metav1.OwnerReference{
@@ -300,8 +300,8 @@ package elasticsearchmsvc
 //
 // 		host := fmt.Sprintf("%s.%s.svc.cluster.local:9200", obj.Name, obj.Namespace)
 //
-// 		b, err := templates.Parse(
-// 			templates.Secret, &corev1.Secret{
+// 		b, err := controller-templates.Parse(
+// 			controller-templates.Secret, &corev1.Secret{
 // 				ObjectMeta: metav1.ObjectMeta{
 // 					Name:      "msvc-" + obj.Name,
 // 					Namespace: obj.Namespace,

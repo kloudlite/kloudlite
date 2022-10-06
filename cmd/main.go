@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	//go:embed templates
+	//go:embed controller-templates
 	templatesFS embed.FS
 )
 
@@ -225,6 +225,19 @@ func main() {
 						return nil
 					},
 				},
+			},
+		},
+		{
+			Name: "env",
+			Action: func(ctx *cli.Context) error {
+				file, err := templatesFS.ReadFile("controller-templates/env.go.tpl")
+				if err != nil {
+					return err
+				}
+				if _, err := os.Stdout.Write(file); err != nil {
+					return err
+				}
+				return nil
 			},
 		},
 	}

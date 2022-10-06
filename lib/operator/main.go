@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/logging"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,7 +55,7 @@ type Status struct {
 
 type Reconciler interface {
 	reconcile.Reconciler
-	SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error
+	SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error
 	GetName() string
 }
 

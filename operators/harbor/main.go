@@ -5,17 +5,20 @@ import (
 	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/harbor/internal/controllers/project"
 	userAccount "operators.kloudlite.io/operators/harbor/internal/controllers/user-account"
+	"operators.kloudlite.io/operators/harbor/internal/env"
 )
 
 func main() {
 	mgr := operator.New("artifacts-harbor")
 
+	ev := env.GetEnvOrDie()
+
 	harborCli, err := harbor.NewClient(
 		harbor.Args{
-			HarborAdminUsername: mgr.Env.HarborAdminUsername,
-			HarborAdminPassword: mgr.Env.HarborAdminPassword,
-			HarborRegistryHost:  mgr.Env.HarborImageRegistryHost,
-			WebhookAddr:         mgr.Env.HarborWebhookAddr,
+			HarborAdminUsername: ev.HarborAdminUsername,
+			HarborAdminPassword: ev.HarborAdminPassword,
+			HarborRegistryHost:  ev.HarborImageRegistryHost,
+			WebhookAddr:         ev.HarborWebhookAddr,
 		},
 	)
 	if err != nil {
@@ -23,8 +26,8 @@ func main() {
 	}
 
 	mgr.RegisterControllers(
-		&project.Reconciler{Name: "harbor-project", HarborCli: harborCli},
-		&userAccount.Reconciler{Name: "harbor-user-account", HarborCli: harborCli},
+		&project.Reconciler{Name: "harbor-project", HarborCli: harborCli, Env: ev},
+		&userAccount.Reconciler{Name: "harbor-user-account", HarborCli: harborCli, Env: ev},
 	)
 	mgr.Start()
 }

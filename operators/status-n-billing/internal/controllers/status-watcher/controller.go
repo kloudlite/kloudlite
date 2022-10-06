@@ -11,11 +11,11 @@ import (
 	types2 "k8s.io/apimachinery/pkg/types"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	"operators.kloudlite.io/operators/status-n-billing/internal/env"
 	"operators.kloudlite.io/operators/status-n-billing/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +32,7 @@ type Reconciler struct {
 	*types.Notifier
 	Logger logging.Logger
 	Name   string
+	Env    *env.Env
 }
 
 func (r *Reconciler) GetName() string {
@@ -115,10 +116,9 @@ func (r *Reconciler) RemoveWatcherFinalizer(ctx context.Context, obj client.Obje
 }
 
 // SetupWithManager sets up the controllers with the Manager.
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-
 	r.Logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr)

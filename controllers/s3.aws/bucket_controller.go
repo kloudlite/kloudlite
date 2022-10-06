@@ -370,7 +370,7 @@ func (r *BucketReconciler) reconcileOperations(req *rApi.Request[*s3awsv1.Bucket
 	return req.Next()
 }
 
-func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *BucketReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.env = envVars

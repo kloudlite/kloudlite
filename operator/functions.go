@@ -29,7 +29,6 @@ import (
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
-	"operators.kloudlite.io/env"
 	flagTypes "operators.kloudlite.io/lib/flag-types"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -72,11 +71,10 @@ func init() {
 type operator struct {
 	Manager            manager.Manager
 	Logger             logging.Logger
-	Env                *env.Env
 	enableForArgs      flagTypes.StringArray
 	skipControllerArgs flagTypes.StringArray
 	isAllEnabled       bool
-	isDev              bool
+	IsDev              bool
 }
 
 func New(name string) *operator {
@@ -134,19 +132,12 @@ func New(name string) *operator {
 		os.Exit(1)
 	}
 
-	ev := env.GetEnvOrDie()
-	ev.IsDev = isDev
-	if isDev {
-		ev.MaxConcurrentReconciles = 1
-	}
-
 	return &operator{
 		Manager:            mgr,
 		Logger:             logger,
-		Env:                ev,
 		enableForArgs:      enableForArgs,
 		skipControllerArgs: skipControllerArgs,
-		isDev:              isDev,
+		IsDev:              isDev,
 	}
 }
 
@@ -173,7 +164,7 @@ func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 		// 		os.Exit(1)
 		// 	}
 		// }
-		if err := rc.SetupWithManager(op.Manager, op.Env, op.Logger); err != nil {
+		if err := rc.SetupWithManager(op.Manager, op.Logger); err != nil {
 			setupLog.Error(err, "unable to create controllers", "controllers", rc.GetName())
 			os.Exit(1)
 		}

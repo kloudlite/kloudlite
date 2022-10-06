@@ -6,12 +6,12 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
+	"operators.kloudlite.io/operators/harbor/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -19,10 +19,10 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	env       *env.Env
 	HarborCli *harbor.Client
 	logger    logging.Logger
 	Name      string
+	Env       *env.Env
 }
 
 func (r *Reconciler) GetName() string {
@@ -90,7 +90,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	req.Object.Status.IsReady = true
 	// req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
@@ -205,11 +205,10 @@ func (r *Reconciler) reconHarborWebhook(req *rApi.Request[*artifactsv1.HarborPro
 	return req.Next()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.env = envVars
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&artifactsv1.HarborProject{})
 	return builder.Complete(r)

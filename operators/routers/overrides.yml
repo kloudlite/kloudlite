@@ -1,0 +1,3 @@
+envFrom:
+  - secretRef:
+      name: router-operator-env

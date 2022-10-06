@@ -295,7 +295,7 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 }
 
 // SetupWithManager sets up the controllers with the Manager.
-func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *HarborUserAccountReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.env = envVars

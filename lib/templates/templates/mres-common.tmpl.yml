@@ -16,7 +16,8 @@ metadata:
     mres.kloudlite.io/ref: {{.Name}}
   {{- end }}
 spec:
-  managedSvcName: {{.Spec.MsvcRef.Name}}
+  msvcRef: {{.Spec.MsvcRef |toYAML |nindent 4}}
+#   managedSvcName: {{.Spec.MsvcRef.Name}}
   {{- if .Spec.Inputs }}
   {{.Spec.Inputs | toYAML | nindent 2 }}
   {{- end}}

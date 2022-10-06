@@ -22,7 +22,7 @@ package crds
 // 	"operators.kloudlite.io/types/logging"
 // 	rApi "operators.kloudlite.io/types/operator"
 // 	stepResult "operators.kloudlite.io/types/operator/step-result"
-// 	"operators.kloudlite.io/types/templates"
+// 	"operators.kloudlite.io/types/controller-templates"
 // 	ctrl "sigs.k8s.io/controller-runtime"
 // 	"sigs.k8s.io/controller-runtime/pkg/client"
 // 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -129,8 +129,8 @@ package crds
 // 			return req.CheckFailed(KeyConfigMapReady, check, err.Error())
 // 		}
 //
-// 		b, err := templates.Parse(
-// 			templates.CoreV1.ConfigMap, map[string]any{
+// 		b, err := controller-templates.Parse(
+// 			controller-templates.CoreV1.ConfigMap, map[string]any{
 // 				"name":       ConfigMapName,
 // 				"namespace":  obj.Namespace,
 // 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
@@ -209,8 +209,8 @@ package crds
 // 			return req.CheckFailed(KeyConfigMapAsOwner, check)
 // 		}
 //
-// 		b, err := templates.Parse(
-// 			templates.HelmIngressNginx, map[string]any{
+// 		b, err := controller-templates.Parse(
+// 			controller-templates.HelmIngressNginx, map[string]any{
 // 				"obj":              obj,
 // 				"controllers-name": routerCfg.ControllerName,
 // 				"owner-refs":       []metav1.OwnerReference{cfgAsOwner},
@@ -319,8 +319,8 @@ package crds
 // 		return req.Next()
 // 	}
 //
-// 	b, err := templates.Parse(
-// 		templates.AccountIngressBridge, map[string]any{
+// 	b, err := controller-templates.Parse(
+// 		controller-templates.AccountIngressBridge, map[string]any{
 // 			"obj":                  obj,
 // 			"controllers-name":     routerCfg.ControllerName,
 // 			"global-ingress-class": "ingress-nginx",

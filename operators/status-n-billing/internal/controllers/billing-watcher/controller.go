@@ -17,11 +17,11 @@ import (
 	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
+	"operators.kloudlite.io/operators/status-n-billing/internal/env"
 	t "operators.kloudlite.io/operators/status-n-billing/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,6 +38,7 @@ type Reconciler struct {
 	*t.Notifier
 	logger logging.Logger
 	Name   string
+	Env    *env.Env
 }
 
 func (r *Reconciler) GetName() string {
@@ -281,7 +282,7 @@ func (r *Reconciler) RemoveBillingFinalizer(ctx context.Context, obj client.Obje
 
 // SetupWithManager sets up the controllers with the Manager.
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)

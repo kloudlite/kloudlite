@@ -5,6 +5,8 @@ dotenv: [".secrets/env"]
 vars:
 #   dockerRegistry: "harbor.dev.madhouselabs.io"
   dockerRegistry: registry.kloudlite.io
+  KlControllerGen: "./bin/kl-controller-gen"
+  KlTemplatizer: "./bin/kl-templatizer"
 
 tasks:
   new-kind:
@@ -47,54 +49,65 @@ tasks:
       - sh: '[ -n "{{.Name}}" ]'
         msg: 'env Name must be set'
 
-    silent: true
+#     silent: true
     vars:
       Image: "{{.dockerRegistry}}/kloudlite/operators/${ENV_NAME}/{{.Name}}:${IMAGE_TAG}"
       Namespace: kl-init-operators
       SvcAccountName: kloudlite-cluster-svc-account
       ImagePullPolicy: $IMAGE_PULL_POLICY
+      OverrideFile: "./operators/{{.Name}}/overrides.yml"
+    env:
+      Name: "{{.Name}}"
+      Namespace: "{{.Namespace}}"
+      SvcAccountName: kloudlite-cluster-svc-account
+      Image: "{{.Image}}"
+      ImagePullPolicy: "${IMAGE_PULL_POLICY}"
     cmds:
       - |+
-        export PATH="$PWD/bin:$PATH"
-
-        kustomize build config/default | yq '
-          select(.kind == "Deployment") |
-          .metadata.name = "kl-{{.Name}}-operator" |
-          .metadata.namespace = "{{.Namespace}}" |
-          .metadata.labels."control-plane" = "{{.Name}}" |
-          .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
-          .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
-          .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
-          .spec.template.spec.containers = (
-            .spec.template.spec.containers | map_values(
-              if .name == "manager" then
-                .image = "{{.Image}}" |
-                .imagePullPolicy = "{{.ImagePullPolicy}}" |
-                .resources.limits = {} |
-                .resources.limits.memory = "200Mi" |
-                .resources.requests.cpu = "64m" |
-                .resources.requests.memory = "96Mi" |
-                .securityContext.allowPrivilegeEscalation = false
-              elif .name == "kube-rbac-proxy" then
-                .resources.limits = {} |
-                .resources.requests.cpu = "5m" |
-                .resources.requests.memory = "10Mi" |
-                .securityContext.allowPrivilegeEscalation = false
-              else . end
-            )
-          )
-        ' -y
+        setArgs=""
+        [ -f "{{.OverrideFile}}" ] && {
+           setArgs=$(cat "{{.OverrideFile}}" | yq -r 'to_entries|map("--set \(.key)=###\(.value)###") | join(" ")' | sed "s/###/'/g" )
+        }
+        eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs
+#       - |+
+#         export PATH="$PWD/bin:$PATH"
+#
+#         kustomize build config/default | yq '
+#           select(.kind == "Deployment") |
+#           .metadata.name = "kl-{{.Name}}-operator" |
+#           .metadata.namespace = "{{.Namespace}}" |
+#           .metadata.labels."control-plane" = "{{.Name}}" |
+#           .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+#           .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
+#           .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
+#           .spec.template.spec.containers = (
+#             .spec.template.spec.containers | map_values(
+#               if .name == "manager" then
+#                 .image = "{{.Image}}" |
+#                 .imagePullPolicy = "{{.ImagePullPolicy}}" |
+#                 .resources.limits = {} |
+#                 .resources.limits.memory = "200Mi" |
+#                 .resources.requests.cpu = "64m" |
+#                 .resources.requests.memory = "96Mi" |
+#                 .securityContext.allowPrivilegeEscalation = false
+#               elif .name == "kube-rbac-proxy" then
+#                 .resources.limits = {} |
+#                 .resources.requests.cpu = "5m" |
+#                 .resources.requests.memory = "10Mi" |
+#                 .securityContext.allowPrivilegeEscalation = false
+#               else . end
+#             )
+#           )
+#         ' -y
 #
 
   yaml:operators:
     silent: true
     cmds:
       - |+
-        for dir in $(ls ./operators)
+        for dir in $(ls -d ./operators/*/)
         do
-          #  task yaml:operator Name="$dir" > .release/deployables/$dir.yml
-          echo "---"
-          task yaml:operator Name="$dir"
+          task yaml:operator Name="$(basename $dir)"
         done
 #
 
@@ -146,9 +159,9 @@ tasks:
     silent: true
     vars:
       KLOP:
-        sh: echo $PWD/bin/klop
+        sh: echo "$PWD/bin/{{.KlControllerGen}}"
     cmds:
-      - eval {{.KLOP}} controller create {{.CLI_ARGS}}
+      - eval {{.KlControllerGen}} controller create {{.CLI_ARGS}}
 
   new:msvc-controller:
     summary: |+
@@ -158,11 +171,8 @@ tasks:
 #
 
     silent: true
-    vars:
-      KLOP:
-        sh: echo $PWD/bin/klop
     cmds:
-      - eval {{.KLOP}} msvc-controller create {{.CLI_ARGS}}
+      - eval {{.KlControllerGen}} msvc-controller create {{.CLI_ARGS}}
 
   new:mres-controller:
     summary: |+
@@ -172,16 +182,16 @@ tasks:
 #
 
     silent: true
-    vars:
-      KLOP:
-        sh: echo $PWD/bin/klop
-
     cmds:
-      - eval {{.KLOP}} mres-controller create {{.CLI_ARGS}}
+      - eval {{.KlControllerGen}} mres-controller create {{.CLI_ARGS}}
 
   install:cmd:
     cmds:
-      - go build -o ./bin/klop ./cmd/main.go
+      - go build -o "{{.KlControllerGen}}" ./cmd/main.go
+
+  install:templatizer:
+    cmds:
+      - go build -o "{{.KlTemplatizer}}" ./cmd/template/main.go
 
   build:agent:
     preconditions:

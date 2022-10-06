@@ -283,7 +283,7 @@ func (r *RouterReconciler) reconcileOperations(req *rApi.Request[*crdsv1.Router]
 }
 
 // SetupWithManager sets up the controllers with the Manager.
-func (r *RouterReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *RouterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.env = envVars

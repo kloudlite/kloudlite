@@ -207,7 +207,7 @@ func (r *ManagedServiceReconciler) reconcileOperations(req *rApi.Request[*v1.Man
 }
 
 // SetupWithManager sets up the controllers with the Manager.
-func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
