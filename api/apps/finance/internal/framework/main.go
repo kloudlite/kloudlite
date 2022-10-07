@@ -47,6 +47,9 @@ type Env struct {
 	DBName        string `env:"MONGO_DB_NAME"`
 	DBUrl         string `env:"MONGO_URI"`
 	KafkaBrokers  string `env:"WORKLOAD_KAFKA_BROKERS" required:"true"`
+	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
+
 	RedisHosts    string `env:"REDIS_HOSTS"`
 	RedisUsername string `env:"REDIS_USERNAME"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
@@ -59,6 +62,14 @@ type Env struct {
 
 	HttpPort uint16 `env:"PORT"`
 	HttpCors string `env:"ORIGINS"`
+}
+
+func (e *Env) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          e.KafkaUsername,
+		Password:      e.KafkaPassword,
+	}
 }
 
 func (e *Env) GetBrokers() string {

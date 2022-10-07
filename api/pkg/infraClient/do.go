@@ -1,13 +1,19 @@
 package infraclient
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
+	"kloudlite.io/pkg/infraClient/templates"
 )
 
 type doProviderClient interface {
@@ -15,7 +21,7 @@ type doProviderClient interface {
 	DeleteNode(node DoNode) error
 
 	AttachNode(node DoNode) error
-	UnattachNode(node DoNode) error
+	// UnattachNode(node DoNode) error
 
 	// mkdir(folder string) error
 	// rmdir(folder string) error
@@ -33,17 +39,53 @@ type DoNode struct {
 	ImageId string
 }
 
+type talosSecret struct {
+	Secrets struct {
+		Endpoint   string `json:"endpoint" yaml:"endpoint"`
+		EndpointIp string `json:"endpointIp" yaml:"endpointIp"`
+		TConfig    struct {
+			Ca   string `json:"ca" yaml:"ca"`
+			Cert string `json:"cert" yaml:"cert"`
+			Key  string `json:"key" yaml:"key"`
+		} `json:"talosconfig" yaml:"talosconfig"`
+		Machine struct {
+			Token       string `json:"token" yaml:"token"`
+			Type        string `json:"type" yaml:"type"`
+			Certifacate string `json:"cert" yaml:"cert"`
+			Key         string `json:"key" yaml:"key"`
+		} `json:"machine" yaml:"machine"`
+
+		Cluster struct {
+			Name             string `json:"name" yaml:"name"`
+			Id               string `json:"id" yaml:"id"`
+			Secret           string `json:"secret" yaml:"secret"`
+			Token            string `json:"token" yaml:"token"`
+			EncryptionSecret string `json:"encryptionSecret" yaml:"encryptionSecret"`
+			Certifacate      string `json:"cert" yaml:"cert"`
+			Key              string `json:"key" yaml:"key"`
+
+			Aggregator struct {
+				Certifacate string `json:"cert" yaml:"cert"`
+				Key         string `json:"key" yaml:"key"`
+			} `json:"aggregator" yaml:"aggregator"`
+			ServiceAccountKey string `json:"serviceAccountKey" yaml:"serviceAccountKey"`
+		} `json:"cluster" yaml:"cluster"`
+		Etcd struct {
+			Certifacate string `json:"cert" yaml:"cert"`
+			Key         string `json:"key" yaml:"key"`
+		} `json:"etcd" yaml:"etcd"`
+	} `json:"secrets" yaml:"secrets"`
+}
+
 type doProvider struct {
-	serverUrl   string
 	apiToken    string
 	accountId   string
-	sshKeyPath  string
-	joinToken   string
 	providerDir string
 	storePath   string
 	tfTemplates string
 	labels      map[string]string
 	taints      []string
+	secrets     string
 }
 
 // getFolder implements doProviderClient
@@ -76,7 +118,7 @@ func (d *doProvider) NewNode(node DoNode) error {
 
 	values["cluster-id"] = CLUSTER_ID
 
-	values["keys-path"] = d.sshKeyPath
+	// values["keys-path"] = d.sshKeyPath
 	values["do-token"] = d.apiToken
 	values["accountId"] = d.accountId
 
@@ -100,35 +142,6 @@ func (d *doProvider) NewNode(node DoNode) error {
 	return applyTF(tfPath, values)
 }
 
-// UnattachNode implements doProviderClient
-func (d *doProvider) UnattachNode(node DoNode) error {
-	var out string
-	var err error
-
-	if out, err = getOutput(path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir), "node-name"); err != nil {
-		return err
-	} else if strings.TrimSpace(out) == "" {
-		fmt.Println("something went wrong, can't find node_name")
-		return nil
-	}
-
-	if err = execCmd(fmt.Sprintf("kubectl get node %s", out), "checknode present"); err != nil {
-		fmt.Println("node not found may be already deleted")
-		return nil
-	}
-
-	// drain node
-	if err = execCmd(fmt.Sprintf("kubectl drain %s --force --ignore-daemonsets --delete-local-data", out), "drain node to delete"); err != nil {
-		return err
-	}
-
-	fmt.Println("[#] waiting 2 minutes after drain")
-
-	// delete node
-	return execCmd(fmt.Sprintf("kubectl delete node %s", out),
-		"delete node from cluster")
-}
-
 // DeleteNode implements ProviderClient
 func (d *doProvider) DeleteNode(node DoNode) error {
 	// time.Sleep(time.Minute * 2)
@@ -138,7 +151,7 @@ func (d *doProvider) DeleteNode(node DoNode) error {
 
 	values["cluster-id"] = CLUSTER_ID
 
-	values["keys-path"] = d.sshKeyPath
+	// values["keys-path"] = d.sshKeyPath
 	values["do-token"] = d.apiToken
 	values["accountId"] = d.accountId
 
@@ -154,99 +167,182 @@ func (d *doProvider) DeleteNode(node DoNode) error {
 	}
 
 	// get node name
-	var out string
+	var out []byte
 	var err error
 	if out, err = getOutput(nodetfpath, "node-name"); err != nil {
 		return err
-	} else if strings.TrimSpace(out) == "" {
+	} else if strings.TrimSpace(string(out)) == "" {
 		fmt.Println("something went wrong, can't find node_name")
 		return nil
 	}
 
-	if err = d.UnattachNode(node); err != nil {
+	if err := d.UnattachNode(node); err != nil {
 		return err
 	}
 
 	// destroy node
 	return destroyNode(nodetfpath, values)
-
-	// remove node tf state
-	// return rmdir(d.getFolder(node.Region, node.NodeId))
 }
 
 // AttachNode implements ProviderClient
 func (d *doProvider) AttachNode(node DoNode) error {
 
-	out, err := getOutput(path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir), "node-ip")
+	var out, secretYaml []byte
+	var err error
 
-	if err != nil {
+	if out, err = getOutput(path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir), "node-ip"); err != nil {
 		return err
 	}
 
-	// wait for start
-	itrationCount := 0
-	for {
-		e := execCmd(
-			fmt.Sprintf("ssh -oStrictHostKeyChecking=no -i %s/id_rsa root@%s ls", d.sshKeyPath, out),
-			"checking node ready to attach or not",
-		)
-
-		if e == nil {
-			fmt.Println("[#] node is ready to attach")
-			break
-		}
-
-		if itrationCount >= 100 {
-			return errors.New("node is stil ready to attach after 10 minutes")
-		}
-
-		itrationCount++
-		time.Sleep(time.Second * 6)
+	if secretYaml, err = base64.StdEncoding.DecodeString(d.secrets); err != nil {
+		return err
 	}
 
-	labels := func() string {
-		l := ""
+	var sec talosSecret
+
+	if err = yaml.Unmarshal(secretYaml, &sec); err != nil {
+		return err
+	}
+
+	var config, tConf []byte
+
+	labels := func() []string {
+		l := []string{}
 		for k, v := range d.labels {
-			l += fmt.Sprintf(" --node-label=%s=%s", k, v)
+			l = append(l, fmt.Sprintf("%s=%s", k, v))
 		}
+		l = append(l, fmt.Sprintf("%s=%s", "kloudlite.io/public-ip", string(out)))
 		return l
 	}()
 
-	taints := func() string {
-		t := ""
+	// sec.Secrets.Machine.Type = "controlplane"
 
-		for _, v := range d.taints {
-			t += fmt.Sprintf(" --node-taint %s", v)
+	switch sec.Secrets.Machine.Type {
+	case "worker":
+		if config, err = templates.Parse(templates.WorkerConfig, map[string]interface{}{
+			"hostname": node.NodeId,
+
+			"machine-cert":  sec.Secrets.Machine.Certifacate,
+			"machine-type":  sec.Secrets.Machine.Type,
+			"machine-token": sec.Secrets.Machine.Token,
+
+			"endpoint": sec.Secrets.Endpoint,
+
+			"cluster-id":     sec.Secrets.Cluster.Id,
+			"cluster-token":  sec.Secrets.Cluster.Token,
+			"cluster-cert":   sec.Secrets.Cluster.Certifacate,
+			"cluster-secret": sec.Secrets.Cluster.Secret,
+			"labels":         strings.Join(labels, ","),
+		}); err != nil {
+			return err
 		}
+	case "controlplane":
+		if config, err = templates.Parse(templates.ControlePlaneConfig, map[string]interface{}{
+			"hostname": node.NodeId,
 
-		return t
-	}()
+			"machine-cert":  sec.Secrets.Machine.Certifacate,
+			"machine-key":   sec.Secrets.Machine.Key,
+			"machine-token": sec.Secrets.Machine.Token,
+			"machine-type":  sec.Secrets.Machine.Type,
 
-	if err = execCmd(
-		fmt.Sprintf("ssh -oStrictHostKeyChecking=no -i %s/id_rsa root@%s %q",
-			d.sshKeyPath,
-			out,
+			"endpoint":    sec.Secrets.Endpoint,
+			"endpoint-ip": sec.Secrets.EndpointIp,
 
-			fmt.Sprintf(
-				"curl -sfL https://get.k3s.io | sh -s - agent  --token=%s --server %s --node-ip=%s %s %s --node-name %s",
-				d.joinToken,
-				d.serverUrl,
-				out, labels, taints, node.NodeId),
-		),
-		"attaching node to cluster",
-	); err != nil {
+			"cluster-name":                sec.Secrets.Cluster.Name,
+			"cluster-token":               sec.Secrets.Cluster.Token,
+			"cluster-encryption-secret":   sec.Secrets.Cluster.EncryptionSecret,
+			"cluster-id":                  sec.Secrets.Cluster.Id,
+			"cluster-secret":              sec.Secrets.Cluster.Secret,
+			"cluster-key":                 sec.Secrets.Cluster.Key,
+			"cluster-cert":                sec.Secrets.Cluster.Certifacate,
+			"cluster-aggregator-cert":     sec.Secrets.Cluster.Aggregator.Certifacate,
+			"cluster-aggregator-key":      sec.Secrets.Cluster.Aggregator.Key,
+			"cluster-service-account-key": sec.Secrets.Cluster.ServiceAccountKey,
+
+			"etcd-key":  sec.Secrets.Etcd.Key,
+			"etcd-cert": sec.Secrets.Etcd.Certifacate,
+
+			"labels": strings.Join(labels, ","),
+		}); err != nil {
+			return err
+		}
+	}
+
+	talosConfigP := path.Join(d.getFolder(node.Region, node.NodeId), "talosconfig.yml")
+	if err = ioutil.WriteFile(talosConfigP, config, fs.ModePerm); err != nil {
 		return err
 	}
 
-	return execCmd(
-		fmt.Sprintf("ssh -oStrictHostKeyChecking=no -i %s/id_rsa root@%s %q",
-			d.sshKeyPath,
-			out,
-			"history -c",
-		),
-		"cleaning up setup",
-	)
+	if tConf, err = templates.Parse(templates.TalosConfig, map[string]interface{}{
+		"endpoint":    string(out),
+		"cluster-name": sec.Secrets.Cluster.Name,
+		"ca":          sec.Secrets.TConfig.Ca,
+		"cert":        sec.Secrets.TConfig.Cert,
+		"key":         sec.Secrets.TConfig.Key,
+	}); err != nil {
+		return err
+	} else {
+		if err = ioutil.WriteFile(talosConfigP, tConf, fs.ModePerm); err != nil {
+			return err
+		}
+	}
 
+	p := path.Join(d.getFolder(node.Region, node.NodeId), "config.yml")
+	if err = ioutil.WriteFile(p, config, fs.ModePerm); err != nil {
+		return err
+	}
+
+	count := 1
+	for {
+
+		time.Sleep(time.Second * 6)
+		if err = execCmd(fmt.Sprintf("talosctl apply-config --insecure --nodes %s --file %s", string(out), p), ""); err != nil {
+
+			if err = execCmd(fmt.Sprintf("talosctl stats -n %s --talosconfig %s", string(out), talosConfigP), ""); err == nil {
+				return nil
+			}
+
+			count++
+			continue
+		}
+
+		if count >= 10 {
+			return errors.New("faild to apply config after 10 attempts")
+		}
+
+		return nil
+	}
+
+}
+
+// UnattachNode implements doProviderClient
+func (d *doProvider) UnattachNode(node DoNode) error {
+	var out []byte
+	var err error
+
+	if out, err = getOutput(path.Join(d.getFolder(node.Region, node.NodeId), d.providerDir), "node-name"); err != nil {
+		return err
+	} else if strings.TrimSpace(string(out)) == "" {
+		fmt.Println("something went wrong, can't find node_name")
+		return nil
+	}
+
+	if err = execCmd(fmt.Sprintf("kubectl get node %s", out), "checknode present"); err != nil {
+		fmt.Println("node not found may be already deleted")
+		return nil
+	}
+
+	// drain node
+	if err = execCmd(fmt.Sprintf("kubectl taint nodes %s force=delete:NoExecute", node.NodeId), "drain node to delete"); err != nil {
+		return err
+	}
+
+	fmt.Println("[#] waiting 10 seconds after drain")
+	time.Sleep(time.Second * 10)
+
+	// delete node
+	return execCmd(fmt.Sprintf("kubectl delete node %s", out),
+		"delete node from cluster")
 }
 
 type DoProvider struct {
@@ -255,24 +351,19 @@ type DoProvider struct {
 }
 
 type DoProviderEnv struct {
-	ServerUrl  string
-	SshKeyPath string
-
 	StorePath   string
 	TfTemplates string
 
-	JoinToken string
-	Labels    map[string]string
-	Taints    []string
+	Secrets string
+	Labels  map[string]string
+	Taints  []string
 }
 
 func NewDOProvider(provider DoProvider, p DoProviderEnv) doProviderClient {
 	return &doProvider{
-		serverUrl:   p.ServerUrl,
-		joinToken:   p.JoinToken,
+		secrets:     p.Secrets,
 		apiToken:    provider.ApiToken,
 		accountId:   provider.AccountId,
-		sshKeyPath:  p.SshKeyPath,
 		providerDir: "do",
 		storePath:   p.StorePath,
 		tfTemplates: p.TfTemplates,
