@@ -10,7 +10,7 @@ tasks:
       - npm start
   docker-build:
     vars:
-      Image: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/gateway:{{.Tag}}
+      Image: registry.kloudlite.io/kloudlite/{{.EnvName}}/gateway:{{.Tag}}
     preconditions:
       - sh: test -n '{{.EnvName}}'
         msg: 'var EnvName must be defined'

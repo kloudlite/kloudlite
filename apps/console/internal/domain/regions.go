@@ -145,9 +145,9 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, providerId repos.ID, regi
 		return err
 	}
 
-	if err = d.checkAccountAccess(ctx, *provider.AccountId, "update_account"); err != nil {
-		return err
-	}
+	// if err = d.checkAccountAccess(ctx, *provider.AccountId, "update_account"); err != nil {
+	// 	return err
+	// }
 
 	createdRegion, err := d.regionRepo.Create(ctx, region)
 	if err != nil {

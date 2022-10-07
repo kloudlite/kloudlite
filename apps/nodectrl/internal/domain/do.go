@@ -61,11 +61,9 @@ func (d *domainI) doWithDO() error {
 		ApiToken:  doConf.Spec.Provider.ApiToken,
 		AccountId: doConf.Spec.Provider.AccountId,
 	}, infraclient.DoProviderEnv{
-		ServerUrl:   klConf.Values.ServerUrl,
-		SshKeyPath:  klConf.Values.SshKeyPath,
+		Secrets:     klConf.Values.Secrets,
 		StorePath:   klConf.Values.StorePath,
 		TfTemplates: klConf.Values.TfTemplates,
-		JoinToken:   klConf.Values.JoinToken,
 		Labels:      labels,
 		Taints:      taints,
 	})

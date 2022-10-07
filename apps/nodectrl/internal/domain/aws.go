@@ -24,7 +24,6 @@ type awsConfig struct {
 			Region       string `yaml:"region"`
 			InstanceType string `yaml:"instanceType"`
 			NodeId       string `yaml:"nodeId"`
-			AMI          string `yaml:"ami"`
 			VPC          string `yaml:"vpc"`
 		} `yaml:"node"`
 	} `yaml:"spec"`
@@ -61,11 +60,9 @@ func (d *domainI) doWithAWS() error {
 		AccessSecret: awsConf.Spec.Provider.AccessSecret,
 		AccountId:    awsConf.Spec.Provider.AccountId,
 	}, infraclient.AWSProviderEnv{
-		ServerUrl:   klConf.Values.ServerUrl,
-		SshKeyPath:  klConf.Values.SshKeyPath,
 		StorePath:   klConf.Values.StorePath,
 		TfTemplates: klConf.Values.TfTemplates,
-		JoinToken:   klConf.Values.JoinToken,
+		Secrets:     klConf.Values.Secrets,
 		Labels:      labels,
 		Taints:      taints,
 	})
@@ -75,7 +72,6 @@ func (d *domainI) doWithAWS() error {
 		Region:       awsConf.Spec.Node.Region,
 		InstanceType: awsConf.Spec.Node.InstanceType,
 		VPC:          awsConf.Spec.Node.VPC,
-		AMI:          awsConf.Spec.Node.AMI,
 	}
 
 	// return nil

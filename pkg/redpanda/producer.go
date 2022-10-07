@@ -2,6 +2,7 @@ package redpanda
 
 import (
 	"context"
+	"kloudlite.io/pkg/logging"
 	"strings"
 	"time"
 
@@ -60,8 +61,20 @@ func (p *ProducerImpl) Produce(ctx context.Context, topic string, key string, va
 	}, nil
 }
 
-func NewProducer(brokerHosts string) (Producer, error) {
-	client, err := kgo.NewClient(kgo.SeedBrokers(strings.Split(brokerHosts, ",")...))
+func NewProducer(brokerHosts string, producerOpts *ProducerOpts) (Producer, error) {
+
+	saslOpt, err := parseSASLAuth(producerOpts.SASLAuth)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := []kgo.Opt{
+		saslOpt,
+		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
+	}
+
+	client, err := kgo.NewClient(opts...)
+
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +90,10 @@ func NewProducerFx[T Client]() fx.Option {
 		fx.Provide(
 			// func(client Client) (Producer, error) {
 			func(client T) (Producer, error) {
-				return NewProducer(client.GetBrokerHosts())
+				return NewProducer(client.GetBrokerHosts(), &ProducerOpts{
+					SASLAuth: client.GetKafkaSASLAuth(),
+					Logger:   logging.Logger{},
+				})
 			},
 		),
 		fx.Invoke(
