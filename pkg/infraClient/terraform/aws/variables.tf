@@ -18,9 +18,9 @@ variable "instance_type"{
   default = ""
 }
 
-variable "keys-path" {
-  default = ""
-}
+# variable "keys-path" {
+#   default = ""
+# }
 
 variable "ami" {
   default = ""

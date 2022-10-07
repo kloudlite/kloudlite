@@ -48,7 +48,7 @@ func destroyNode(folder string, values map[string]string) error {
 	// return err
 }
 
-func getOutput(folder, key string) (string, error) {
+func getOutput(folder, key string) ([]byte, error) {
 	vars := []string{"output", "-json"}
 	fmt.Printf("[#] terraform %s\n", strings.Join(vars, " "))
 	cmd := exec.Command("terraform", vars...)
@@ -59,7 +59,7 @@ func getOutput(folder, key string) (string, error) {
 
 	out, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return nil, err
 
 	}
 
@@ -71,10 +71,10 @@ func getOutput(folder, key string) (string, error) {
 
 	err = json.Unmarshal(out, &resp)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return resp[key].Value, nil
+	return []byte(resp[key].Value), nil
 }
 
 // applyTF implements doProviderClient

@@ -33,7 +33,17 @@ import (
 )
 
 type WorkloadStatusConsumerEnv struct {
-	Topic string `env:"KAFKA_WORKLOAD_STATUS_TOPIC"`
+	Topic         string `env:"KAFKA_WORKLOAD_STATUS_TOPIC"`
+	KafkaUsername string `env:"KAFKA_USERNAME"`
+	KafkaPassword string `env:"KAFKA_PASSWORD"`
+}
+
+func (i *WorkloadStatusConsumerEnv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          i.KafkaUsername,
+		Password:      i.KafkaPassword,
+	}
 }
 
 func (i *WorkloadStatusConsumerEnv) GetSubscriptionTopics() []string {

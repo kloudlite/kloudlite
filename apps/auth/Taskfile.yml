@@ -16,9 +16,9 @@ tasks:
 
   docker-build:
     vars:
-#       IMAGE: harbor.dev.madhouselabs.io/kloudlite/auth:v2
+#       IMAGE: registry.kloudlite.io/kloudlite/auth:v2
       APP: auth
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
