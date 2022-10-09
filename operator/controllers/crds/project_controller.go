@@ -189,7 +189,7 @@ func (r *ProjectReconciler) reconcileStatus(req *rApi.Request[*crdsv1.Project]) 
 		}
 	}
 
-	// harbor user account is ready
+	// artifacts-harbor user account is ready
 	harborUser, err := rApi.Get(ctx, r.Client, fn.NN(project.Name, r.env.DockerSecretName), &artifactsv1.HarborUserAccount{})
 	if err != nil {
 		isReady = false

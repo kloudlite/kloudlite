@@ -91,9 +91,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.reconApp(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
+	if step := r.reconApp(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
 	req.Object.Status.IsReady = true
 	req.Logger.Infof("RECONCILATION COMPLETE")

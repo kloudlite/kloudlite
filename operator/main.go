@@ -47,6 +47,7 @@ import (
 
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
+	extensionsv1 "operators.kloudlite.io/apis/extensions/v1"
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
@@ -93,6 +94,7 @@ func init() {
 	// utilruntime.Must(redismsvcv1.AddToScheme(scheme))
 	// utilruntime.Must(mysqlmsvcv1.AddToScheme(scheme))
 	// utilruntime.Must(zookeepermsvcv1.AddToScheme(scheme))
+	utilruntime.Must(extensionsv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
