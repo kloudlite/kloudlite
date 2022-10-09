@@ -1,0 +1,10 @@
+apiVersion: extensions.kloudlite.io/v1
+kind: Cluster
+metadata:
+  name: kl-01
+  namespace: kl-core
+spec:
+  redpandaAdmin:
+    secretRef:
+      name: msvc-redpanda-admin-creds
+      namespace: kl-core

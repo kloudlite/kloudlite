@@ -2,14 +2,17 @@ package redpanda
 
 import (
 	"fmt"
+	"strings"
+
 	exec2 "k8s.io/utils/exec"
+	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 )
 
 type AdminClient interface {
 	CreateUser(username, password string) error
 	DeleteUser(username string) error
-	UserExists(username string) error
+	UserExists(username string) (bool, error)
 	CreateTopic(topicName string, partitionCount int) error
 	DeleteTopic(topicName string) error
 	TopicExists(topicName string) (bool, error)
@@ -20,6 +23,8 @@ type adminCli struct {
 	kafkaBrokers  string
 	adminEndpoint string
 	saslAuthFlags string
+	username      string
+	password      string
 }
 
 func exitCode(err error) int {
@@ -29,12 +34,30 @@ func exitCode(err error) int {
 	return 17
 }
 
-func (admin adminCli) UserExists(username string) error {
-	err, _, _ := fn.Exec(fmt.Sprintf("rpk acl user list --brokers %s %s | grep -i %s", admin.kafkaBrokers, admin.saslAuthFlags, username))
+func (admin adminCli) UserExists(username string) (bool, error) {
+	err, stdout, stderr := fn.Exec(
+		fmt.Sprintf(
+			"rpk acl user list --user %s --password '%s' --api-urls %s | grep -i %s",
+			admin.username,
+			admin.password,
+			admin.adminEndpoint,
+			username,
+		),
+	)
 	if err != nil {
-		return err
+		if stderr == nil {
+			return false, nil
+		}
+		return false, errors.NewEf(err, stderr.String())
 	}
-	return nil
+
+	foundUsername := strings.TrimSpace(stdout.String())
+
+	if len(foundUsername) != len(username) || foundUsername != username {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (admin adminCli) TopicExists(topicName string) (bool, error) {
@@ -96,13 +119,16 @@ func (admin adminCli) AllowUserOnTopics(username string, topicNames ...string) e
 		topicFlags += " --topic " + topicNames[i]
 	}
 
-	err, _, _ := fn.Exec(
+	err, _, stderr := fn.Exec(
 		fmt.Sprintf(
 			"rpk acl create --allow-principal %s --operation all %s --brokers %s %s", username, topicFlags, admin.kafkaBrokers,
 			admin.saslAuthFlags,
 		),
 	)
 	if err != nil {
+		if stderr == nil {
+			return nil
+		}
 		return err
 	}
 	return nil
@@ -110,8 +136,10 @@ func (admin adminCli) AllowUserOnTopics(username string, topicNames ...string) e
 
 func NewAdminClient(username, password, kafkaBrokers, adminEndpoint string) AdminClient {
 	return &adminCli{
+		username:      username,
+		password:      password,
 		kafkaBrokers:  kafkaBrokers,
 		adminEndpoint: adminEndpoint,
-		saslAuthFlags: fmt.Sprintf("--user %s --password %s --sasl-mechanism SCRAM-SHA-256", username, password),
+		saslAuthFlags: fmt.Sprintf("--user %s --password %s --sasl-mechanism 'SCRAM-SHA-256'", username, password),
 	}
 }

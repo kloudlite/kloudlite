@@ -42,6 +42,16 @@ spec:
           spec:
             description: RouterSpec defines the desired state of Router
             properties:
+              basicAuth:
+                properties:
+                  enabled:
+                    type: boolean
+                  secretName:
+                    type: string
+                required:
+                - enabled
+                - secretName
+                type: object
               domains:
                 items:
                   type: string

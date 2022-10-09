@@ -14,7 +14,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{$name}}
+  name: kl-{{$name}}
   namespace: {{$namespace}}
   labels:
     app: {{$name}}
@@ -39,8 +39,8 @@ spec:
       {{ printf "tolerations: {{ .Tolerations | default list | mustFromJson | toYAML | nindent 8 }}" }}
       {{ printf "{{- end }}" }}
 
-      {{ printf "{{- if .NodeSelectors }}" }}
-      {{ printf "nodeSelectors: {{ .NodeSelectors | default dict | mustFromJson | toYAML | nindent 8 }}" }}
+      {{ printf "{{- if .NodeSelector }}" }}
+      {{ printf "nodeSelector: {{ .NodeSelector | default dict | mustFromJson | toYAML | nindent 8 }}" }}
       {{ printf "{{- end }}" }}
       containers:
         - args:
@@ -103,7 +103,7 @@ spec:
               memory: 200Mi
             requests:
               cpu: 64m
-              memory: 96Mi
+              memory: 120Mi
       serviceAccountName: {{$svcAccountName}}
       terminationGracePeriodSeconds: 10
 ---

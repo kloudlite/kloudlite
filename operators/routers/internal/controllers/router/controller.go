@@ -14,7 +14,6 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -27,11 +26,10 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	harborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
-	Env       *env.Env
+	Scheme *runtime.Scheme
+	logger logging.Logger
+	Name   string
+	Env    *env.Env
 }
 
 func (r *Reconciler) GetName() string {
@@ -81,6 +79,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.reconBasicAuth(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.reconIngresses(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -126,6 +128,13 @@ func isNonWildcardDomain(wildcardDomains []string, domain string) bool {
 	}
 
 	return true
+}
+
+func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+	// ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	// check := rApi.Check{Generation: obj.Generation}
+
+	return req.Next()
 }
 
 func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {

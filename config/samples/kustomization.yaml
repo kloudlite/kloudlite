@@ -57,4 +57,6 @@ resources:
 - redis.msvc_v1_aclconfigmap.yaml
 - zookeeper.msvc_v1_service.yaml
 - redpanda.msvc_v1_acluser.yaml
+- extensions_v1_cluster.yaml
+- redpanda.msvc_v1_admin.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

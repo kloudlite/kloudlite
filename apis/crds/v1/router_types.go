@@ -28,6 +28,11 @@ type Https struct {
 	ForceRedirect bool `json:"forceRedirect,omitempty"`
 }
 
+type BasicAuth struct {
+	Enabled    bool   `json:"enabled"`
+	SecretName string `json:"secretName"`
+}
+
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
 	Https Https `json:"https,omitempty"`
@@ -36,6 +41,7 @@ type RouterSpec struct {
 	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`
 	Domains         []string  `json:"domains"`
 	Routes          []Route   `json:"routes,omitempty"`
+	BasicAuth       BasicAuth `json:"basicAuth,omitempty"`
 }
 
 // +kubebuilder:object:root=true

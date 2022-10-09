@@ -50,7 +50,7 @@ func main() {
 						&cli.StringFlag{Name: "out"},
 					},
 					Action: func(cctx *cli.Context) error {
-						tName := "templates/controller.go.tpl"
+						tName := "controller-templates/controller.go.tpl"
 						if _, err := t.ParseFS(templatesFS, tName); err != nil {
 							return err
 						}
@@ -114,7 +114,7 @@ func main() {
 						&cli.StringFlag{Name: "out"},
 					},
 					Action: func(cctx *cli.Context) error {
-						tName := "templates/msvc-controller.go.tpl"
+						tName := "controller-templates/msvc-controller.go.tpl"
 						if _, err := t.ParseFS(templatesFS, tName); err != nil {
 							return err
 						}
@@ -178,7 +178,7 @@ func main() {
 						&cli.StringFlag{Name: "out"},
 					},
 					Action: func(cctx *cli.Context) error {
-						tName := "templates/mres-controller.go.tpl"
+						tName := "controller-templates/mres-controller.go.tpl"
 						if _, err := t.ParseFS(templatesFS, tName); err != nil {
 							return err
 						}

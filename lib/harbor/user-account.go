@@ -57,7 +57,7 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, p
 		"secret":      password,
 		"name":        userName,
 		"level":       "project",
-		"duration":    0,
+		"duration":    -1,
 		"description": "created by kloudlite operator",
 		"permissions": []map[string]any{
 			{
@@ -103,7 +103,7 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, p
 }
 
 func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool) error {
-	// ASSERT: harbor update is terrible, they required an entire object, instead of only diffs
+	// ASSERT: artifacts-harbor update is terrible, they required an entire object, instead of only diffs
 	req, err := h.NewAuthzRequest(ctx, http.MethodGet, user.Location, nil)
 	if err != nil {
 		return errors.NewEf(err, "building requests for updating robot account")
@@ -166,7 +166,7 @@ func (h *Client) DeleteUserAccount(ctx context.Context, user *User) error {
 		return nil
 	}
 	if resp.StatusCode == http.StatusNotFound {
-		// ASSERT: silent exit, as harbor user account is already deleted
+		// ASSERT: silent exit, as artifacts-harbor user account is already deleted
 		return nil
 	}
 	msg, err := ioutil.ReadAll(resp.Body)

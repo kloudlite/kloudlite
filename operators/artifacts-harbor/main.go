@@ -3,9 +3,9 @@ package main
 import (
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/harbor/internal/controllers/project"
-	userAccount "operators.kloudlite.io/operators/harbor/internal/controllers/user-account"
-	"operators.kloudlite.io/operators/harbor/internal/env"
+	"operators.kloudlite.io/operators/artifacts-harbor/internal/controllers/project"
+	userAccount "operators.kloudlite.io/operators/artifacts-harbor/internal/controllers/user-account"
+	"operators.kloudlite.io/operators/artifacts-harbor/internal/env"
 )
 
 func main() {
