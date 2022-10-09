@@ -266,6 +266,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - Clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - Clusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - Clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - influxdb.msvc.kloudlite.io
   resources:
   - buckets
@@ -807,6 +833,32 @@ rules:
   - redpanda.msvc.kloudlite.io
   resources:
   - aclusers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins/status
   verbs:
   - get
   - patch

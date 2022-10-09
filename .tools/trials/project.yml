@@ -1,6 +1,8 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Project
 metadata:
+  annotations:
+    kloudlite.io/account-ref: kl-core
   name: sample-project
 spec:
   displayName: how are you guys ?

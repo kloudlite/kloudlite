@@ -39,6 +39,7 @@ const (
 )
 
 const (
+	KeyAdminCreds  string = "admin-creds"
 	KeyAccessCreds string = "access-creds"
 )
 
@@ -103,7 +104,19 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redpandaMsvcv1.ACLUser]
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Secret{})
+	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
+	}
+
+	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
+	if err != nil {
+		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
+	}
+
+	scrtName := "mres-redpanda-acl-" + obj.Name
+
+	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, scrtName), &corev1.Secret{})
 	if err != nil {
 		req.Logger.Infof("secret (%s) does not exist, will be creating it shortly...", fn.NN(obj.Namespace, obj.Name).String())
 	}
@@ -111,10 +124,10 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redpandaMsvcv1.ACLUser]
 	if scrt == nil {
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":      "msvc-" + obj.Name,
+				"name":      scrtName,
 				"namespace": obj.Namespace,
 				"string-data": types.ACLUserCreds{
-					KafkaBrokers: "",
+					KafkaBrokers: adminCreds.KafkaBrokers,
 					Username:     obj.Name,
 					Password:     fn.CleanerNanoid(40),
 				},
@@ -130,6 +143,14 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redpandaMsvcv1.ACLUser]
 		}
 	}
 
+	aclUserCreds, err := fn.ParseFromSecret[types.ACLUserCreds](scrt)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	}
+
+	rApi.SetLocal(req, KeyAdminCreds, adminCreds)
+	rApi.SetLocal(req, KeyAccessCreds, aclUserCreds)
+
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
@@ -139,40 +160,36 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redpandaMsvcv1.ACLUser]
 }
 
 func (r *Reconciler) reconACLUser(req *rApi.Request[*redpandaMsvcv1.ACLUser]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	obj, checks := req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	adminSecretNs := func() string {
-		if obj.Spec.AdminSecretRef.Namespace != "" {
-			return obj.Spec.AdminSecretRef.Namespace
-		}
-		return obj.Namespace
-	}()
-
-	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(adminSecretNs, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
-	if err != nil {
-		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
+	adminCreds, ok := rApi.GetLocal[*types.AdminUserCreds](req, KeyAdminCreds)
+	if !ok {
+		return req.CheckFailed(RedpandaUserReady, check, errors.NotInLocals(KeyAdminCreds).Error()).Err(nil)
 	}
 
-	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
-	if err != nil {
-		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
-	}
-
-	aclUserCreds, ok := rApi.GetLocal[types.ACLUserCreds](req, KeyAccessCreds)
+	aclUserCreds, ok := rApi.GetLocal[*types.ACLUserCreds](req, KeyAccessCreds)
 	if !ok {
 		return req.CheckFailed(RedpandaUserReady, check, errors.NotInLocals(KeyAccessCreds).Error()).Err(nil)
 	}
 
 	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
-	if err := adminCli.CreateUser(aclUserCreds.Username, aclUserCreds.Password); err != nil {
-		req.Logger.Error(err)
-		// return nil
+
+	userExists, err := adminCli.UserExists(aclUserCreds.Username)
+	if err != nil {
+		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
+	}
+
+	if !userExists {
+		if err := adminCli.CreateUser(aclUserCreds.Username, aclUserCreds.Password); err != nil {
+			req.Logger.Error(err)
+			return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
+		}
 	}
 
 	if err := adminCli.AllowUserOnTopics(aclUserCreds.Username, obj.Spec.Topics...); err != nil {
 		req.Logger.Error(err)
-		// return nil
+		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
@@ -189,5 +206,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redpandaMsvcv1.ACLUser{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

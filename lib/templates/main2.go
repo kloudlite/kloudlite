@@ -236,7 +236,7 @@ package templates
 // 	AccountIngressBridge templateFile = "./ingress-nginx/ingress-bridge.tpl.yml"
 //
 // 	ProjectRBAC   templateFile = "./project-rbac.yml.tpl"
-// 	ProjectHarbor templateFile = "./project-harbor.yml.tpl"
+// 	ProjectHarbor templateFile = "./project-artifacts-harbor.yml.tpl"
 // )
 //
 // var CoreV1 = struct {

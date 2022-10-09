@@ -18,7 +18,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
-	"operators.kloudlite.io/operators/harbor/internal/env"
+	"operators.kloudlite.io/operators/artifacts-harbor/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

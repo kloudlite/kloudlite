@@ -185,7 +185,7 @@ func (h *Client) DeleteProject(ctx context.Context, name string) error {
 		return nil
 	}
 	if resp.StatusCode == http.StatusNotFound {
-		// ASSERt: silent exit, as harbor project already does not exist
+		// ASSERt: silent exit, as artifacts-harbor project already does not exist
 		return nil
 	}
 

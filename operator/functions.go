@@ -12,6 +12,7 @@ import (
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
+	extensionsv1 "operators.kloudlite.io/apis/extensions/v1"
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
 	mongodbCluster "operators.kloudlite.io/apis/mongodb-cluster.msvc/v1"
 	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
@@ -65,6 +66,7 @@ func init() {
 	utilruntime.Must(mysqlMsvcv1.AddToScheme(scheme))
 	utilruntime.Must(redisMsvcv1.AddToScheme(scheme))
 	utilruntime.Must(zookeeperMsvcv1.AddToScheme(scheme))
+	utilruntime.Must(extensionsv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -114,17 +116,20 @@ func New(name string) *operator {
 	mgr, err := func() (manager.Manager, error) {
 		cOpts := ctrl.Options{
 			Scheme:                     scheme,
-			MetricsBindAddress:         metricsAddr,
 			Port:                       9443,
-			HealthProbeBindAddress:     probeAddr,
 			LeaderElection:             enableLeaderElection,
 			LeaderElectionID:           fmt.Sprintf("operator-%s.kloudlite.io", name),
 			LeaderElectionResourceLock: "configmaps",
 		}
+
 		if isDev {
+			cOpts.MetricsBindAddress = "0"
 			// cOpts.LeaderElectionID = "nxtcoder17.dev.kloudlite.io"
 			return ctrl.NewManager(&rest.Config{Host: devServerHost}, cOpts)
 		}
+
+		cOpts.MetricsBindAddress = metricsAddr
+		cOpts.HealthProbeBindAddress = probeAddr
 		return ctrl.NewManager(ctrl.GetConfigOrDie(), cOpts)
 	}()
 	if err != nil {

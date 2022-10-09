@@ -1,0 +1,24 @@
+# permissions for end users to edit admins.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: admin-editor-role
+rules:
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins/status
+  verbs:
+  - get

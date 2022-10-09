@@ -220,7 +220,7 @@ func (r *HarborUserAccountReconciler) reconcileOperations(req *rApi.Request[*art
 	// 		if !obj.Status.GeneratedVars.Exists(KeyRobotUser) {
 	// 			userAcc, err := r.harborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, getUsername(obj))
 	// 			if err != nil {
-	// 				return errors.NewEf(err, "creating harbor project user-account")
+	// 				return errors.NewEf(err, "creating artifacts-harbor project user-account")
 	// 			}
 	// 			if userAcc == nil {
 	// 				return nil

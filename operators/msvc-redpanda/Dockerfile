@@ -18,9 +18,12 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -a -o manager ./operators/
 
 FROM vectorized/redpanda:v22.1.6 as redpanda
 
-FROM gcr.io/distroless/static:nonroot
+#FROM gcr.io/distroless/static:nonroot
+FROM alpine:3.16
+RUN apk add bash
 COPY --from=builder /workspace/kubectl /usr/local/bin/kubectl
 COPY --from=redpanda /usr/bin/rpk /usr/local/bin/rpk
+COPY --from=redpanda /opt/redpanda/libexec/rpk /opt/redpanda/libexec/rpk
 COPY --from=builder /workspace/manager /manager
 USER 65532:65532
 
