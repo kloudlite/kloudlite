@@ -6,14 +6,15 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
-type RedpandaAdmin struct {
-	SecretRef ct.SecretRef `json:"secretRef"`
+type Redpanda struct {
+	AdminSecretRef     ct.SecretRef `json:"adminSecretRef"`
+	Topics             []string     `json:"topics,omitempty"`
+	ExtraTopicsWithACL []string     `json:"extraTopicsWithACL,omitempty"`
 }
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	KafkaTopics   []string      `json:"kafkaTopics,omitempty"`
-	RedpandaAdmin RedpandaAdmin `json:"redpandaAdmin"`
+	Redpanda Redpanda `json:"redpanda"`
 }
 
 // +kubebuilder:object:root=true

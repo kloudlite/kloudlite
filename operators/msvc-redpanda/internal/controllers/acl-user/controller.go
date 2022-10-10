@@ -2,9 +2,9 @@ package acluser
 
 import (
 	"context"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	redpandaMsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	"operators.kloudlite.io/lib/constants"
@@ -93,10 +93,51 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.ACLUser]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+
+	aclUserDeleted := "acl-user-deleted"
+	req.Logger.Infof("deleting user")
+	defer func() {
+		if checks[aclUserDeleted].Status {
+			req.Logger.Infof("acl user deletion successfull")
+		}
+		req.Logger.Infof("still ... deleting user")
+	}()
+
+	if step := req.EnsureChecks(aclUserDeleted); !step.ShouldProceed() {
+		return step
+	}
+
+	check := rApi.Check{Generation: obj.Generation}
+
+	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
+	}
+
+	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
+	if err != nil {
+		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
+	}
+
+	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
+
+	exists, err := adminCli.UserExists(obj.Name)
+	if err != nil {
+		return req.CheckFailed(aclUserDeleted, check, err.Error())
+	}
+	if exists {
+		if err := adminCli.DeleteUser(obj.Name); err != nil {
+			return req.CheckFailed(aclUserDeleted, check, err.Error())
+		}
+	}
+
+	check.Status = true
+
 	return req.Finalize()
 }
 
@@ -124,8 +165,9 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redpandaMsvcv1.ACLUser]
 	if scrt == nil {
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":      scrtName,
-				"namespace": obj.Namespace,
+				"name":       scrtName,
+				"namespace":  obj.Namespace,
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": types.ACLUserCreds{
 					KafkaBrokers: adminCreds.KafkaBrokers,
 					Username:     obj.Name,
@@ -141,6 +183,9 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redpandaMsvcv1.ACLUser]
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
+
+		checks[RedpandaUserReady] = check
+		return req.UpdateStatus()
 	}
 
 	aclUserCreds, err := fn.ParseFromSecret[types.ACLUserCreds](scrt)
@@ -187,7 +232,7 @@ func (r *Reconciler) reconACLUser(req *rApi.Request[*redpandaMsvcv1.ACLUser]) st
 		}
 	}
 
-	if err := adminCli.AllowUserOnTopics(aclUserCreds.Username, obj.Spec.Topics...); err != nil {
+	if err := adminCli.AllowUserOnTopics(aclUserCreds.Username, r.Env.AclAllowedOperations, obj.Spec.Topics...); err != nil {
 		req.Logger.Error(err)
 		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
 	}

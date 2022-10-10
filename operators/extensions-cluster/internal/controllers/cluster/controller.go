@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -93,6 +92,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	req.Logger.Infof("RECONCILATION COMPLETE")
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
@@ -106,9 +106,15 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*extensionsv1.Cluster]) ste
 
 	check := rApi.Check{Generation: obj.Generation}
 
-	kTopics := strings.Split(r.Env.EnsureKafkaTopics, ",")
-	if len(obj.Spec.KafkaTopics) != len(kTopics) {
-		obj.Spec.KafkaTopics = kTopics
+	kTopics := strings.Split(r.Env.DefaultCreateTopics, ",")
+	if len(obj.Spec.Redpanda.Topics) != len(kTopics) {
+		topics := make([]string, 0, len(kTopics))
+		for i := range kTopics {
+			topics = append(topics, obj.Name+"-"+kTopics[i])
+		}
+
+		obj.Spec.Redpanda.Topics = topics
+
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error())
 		}
@@ -143,21 +149,18 @@ func (r *Reconciler) reconRedpandaTopics(req *rApi.Request[*extensionsv1.Cluster
 		return nil
 	}
 
-	if len(topicsList.Items) != len(obj.Spec.KafkaTopics) {
-		for _, ktopic := range obj.Spec.KafkaTopics {
-			fmt.Println("ktopic: ", ktopic)
+	if len(topicsList.Items) != len(obj.Spec.Redpanda.Topics) {
+		for _, ktopic := range obj.Spec.Redpanda.Topics {
 			if err := r.Create(
 				ctx, &redpandaMsvcv1.Topic{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:            fmt.Sprintf("%s-%s", obj.Name, ktopic),
+						Name:            ktopic,
 						Namespace:       obj.Namespace,
 						Labels:          map[string]string{idLabel: obj.Name},
 						OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					},
 					Spec: redpandaMsvcv1.TopicSpec{
-						// AdminSecretRef: ct.SecretRef{Name: "redpanda-admin-acl"},
-						AdminSecretRef: obj.Spec.RedpandaAdmin.SecretRef,
-						PartitionCount: 10,
+						AdminSecretRef: obj.Spec.Redpanda.AdminSecretRef,
 					},
 				},
 			); err != nil {
@@ -167,8 +170,11 @@ func (r *Reconciler) reconRedpandaTopics(req *rApi.Request[*extensionsv1.Cluster
 				}
 			}
 		}
-		checks[RedpandaUserReady] = check
-		return req.UpdateStatus()
+		if check != checks[RedpandaUserReady] {
+			checks[RedpandaUserReady] = check
+			return req.UpdateStatus()
+		}
+		return req.Done().RequeueAfter(2 * time.Second)
 	}
 
 	check.Status = true
@@ -199,8 +205,8 @@ func (r *Reconciler) reconRedpandaUser(req *rApi.Request[*extensionsv1.Cluster])
 					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				},
 				Spec: redpandaMsvcv1.ACLUserSpec{
-					AdminSecretRef: obj.Spec.RedpandaAdmin.SecretRef,
-					Topics:         obj.Spec.KafkaTopics,
+					AdminSecretRef: obj.Spec.Redpanda.AdminSecretRef,
+					Topics:         append(obj.Spec.Redpanda.Topics, obj.Spec.Redpanda.ExtraTopicsWithACL...),
 				},
 			},
 		); err != nil {

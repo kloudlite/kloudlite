@@ -46,6 +46,27 @@ spec:
                 type: string
               kafkaBrokers:
                 type: string
+              output:
+                properties:
+                  configRef:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  secretRef:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
             required:
             - adminEndpoint
             - kafkaBrokers

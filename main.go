@@ -55,6 +55,7 @@ import (
 	mysqlclustermsvcv1 "operators.kloudlite.io/apis/mysql-cluster.msvc/v1"
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	mysqlexternalv1 "operators.kloudlite.io/apis/mysql.external/v1"
+	neo4jmsvcv1 "operators.kloudlite.io/apis/neo4j.msvc/v1"
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
@@ -95,6 +96,7 @@ func init() {
 	// utilruntime.Must(mysqlmsvcv1.AddToScheme(scheme))
 	// utilruntime.Must(zookeepermsvcv1.AddToScheme(scheme))
 	utilruntime.Must(extensionsv1.AddToScheme(scheme))
+	utilruntime.Must(neo4jmsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
