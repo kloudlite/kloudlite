@@ -23,7 +23,7 @@ type Domain interface {
 	DeleteSite(ctx context.Context, siteId repos.ID) error
 	UpdateNodeIPs(
 		ctx context.Context,
-		regionPart string,
+		regionId string,
 		accountId string,
 		clusterPart string,
 		ips []string,
