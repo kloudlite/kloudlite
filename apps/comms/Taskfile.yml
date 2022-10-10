@@ -10,10 +10,19 @@ tasks:
       SUPPORT_EMAIL: support@kloudlite.io
     cmds:
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+
   docker-build:
     vars:
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/comms:v2
       APP: comms
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+
+      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
+        msg: 'var EnvName must have one of [development, staging, production] as its value'
     cmds:
-      - docker buildx build --platform linux/amd64 -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
+
+

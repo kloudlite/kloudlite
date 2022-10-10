@@ -7,7 +7,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"kloudlite.io/pkg/cache"
-
 	"kloudlite.io/pkg/repos"
 )
 
@@ -22,6 +21,7 @@ func NewSessionMiddleware[T repos.Entity](
 	repo := cache.NewRepo[T](cacheClient)
 	return func(ctx *fiber.Ctx) error {
 		cookieValue := ctx.Cookies(cookieName)
+
 		if cookieValue != "" {
 			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
 			var get any

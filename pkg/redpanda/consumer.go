@@ -19,8 +19,9 @@ type Consumer interface {
 }
 
 type ConsumerImpl struct {
-	client *kgo.Client
-	logger *zap.SugaredLogger
+	client      *kgo.Client
+	logger      *zap.SugaredLogger
+	isConnected bool
 }
 
 // type Message struct {
@@ -40,7 +41,11 @@ func (c *ConsumerImpl) Close() {
 }
 
 func (c *ConsumerImpl) Ping(ctx context.Context) error {
-	return c.client.Ping(ctx)
+	if err := c.client.Ping(ctx); err != nil {
+		return err
+	}
+	c.isConnected = true
+	return nil
 }
 
 func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
@@ -79,12 +84,27 @@ func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
 	}()
 }
 
-func NewConsumer(brokerHosts string, consumerGroup string, topics ...string) (Consumer, error) {
+func NewConsumer(
+	brokerHosts string,
+	consumerGroup string,
+	options ConsumerOpts,
+	topics []string,
+) (Consumer, error) {
+	cOpts := options.getWithDefaults()
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
 		kgo.ConsumerGroup(consumerGroup),
 		kgo.ConsumeTopics(topics...),
 		kgo.DisableAutoCommit(),
+	}
+
+	saslOpt, err := parseSASLAuth(cOpts.SASLAuth)
+	if err != nil {
+		return nil, err
+	}
+
+	if saslOpt != nil {
+		opts = append(opts, saslOpt)
 	}
 
 	client, err := kgo.NewClient(opts...)
@@ -97,6 +117,7 @@ func NewConsumer(brokerHosts string, consumerGroup string, topics ...string) (Co
 type ConsumerConfig interface {
 	GetSubscriptionTopics() []string
 	GetConsumerGroupId() string
+	GetKafkaSASLAuth() *KafkaSASLAuth
 }
 
 func NewConsumerFx[T ConsumerConfig]() fx.Option {
@@ -106,8 +127,9 @@ func NewConsumerFx[T ConsumerConfig]() fx.Option {
 			func(cfg T, client Client, lf fx.Lifecycle) (Consumer, error) {
 				topics := cfg.GetSubscriptionTopics()
 				consumerGroup := cfg.GetConsumerGroupId()
-
-				consumer, err := NewConsumer(client.GetBrokerHosts(), consumerGroup, topics...)
+				consumer, err := NewConsumer(client.GetBrokerHosts(), consumerGroup, ConsumerOpts{
+					SASLAuth: cfg.GetKafkaSASLAuth(),
+				}, topics)
 				if err != nil {
 					return nil, err
 				}

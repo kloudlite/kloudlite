@@ -2,11 +2,12 @@ package domain
 
 import (
 	"fmt"
-	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
 	"math"
 	"math/rand"
 	"regexp"
 	"strings"
+
+	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -24,16 +25,16 @@ import (
 )
 
 type domain struct {
-	kubeCli              *kubeapi.Client
-	deviceRepo           repos.DbRepo[*entities.Device]
-	clusterRepo          repos.DbRepo[*entities.Cluster]
-	projectRepo          repos.DbRepo[*entities.Project]
-	configRepo           repos.DbRepo[*entities.Config]
-	routerRepo           repos.DbRepo[*entities.Router]
-	secretRepo           repos.DbRepo[*entities.Secret]
-	regionRepo           repos.DbRepo[*entities.EdgeRegion]
-	messageProducer      redpanda.Producer
-	messageTopic         string
+	kubeCli         *kubeapi.Client
+	deviceRepo      repos.DbRepo[*entities.Device]
+	clusterRepo     repos.DbRepo[*entities.Cluster]
+	projectRepo     repos.DbRepo[*entities.Project]
+	configRepo      repos.DbRepo[*entities.Config]
+	routerRepo      repos.DbRepo[*entities.Router]
+	secretRepo      repos.DbRepo[*entities.Secret]
+	regionRepo      repos.DbRepo[*entities.EdgeRegion]
+	messageProducer redpanda.Producer
+	// messageTopic         string
 	logger               logging.Logger
 	managedSvcRepo       repos.DbRepo[*entities.ManagedService]
 	managedResRepo       repos.DbRepo[*entities.ManagedResource]
@@ -61,7 +62,7 @@ func generateReadable(name string) string {
 }
 
 type Env struct {
-	KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
+	// KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
 	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
 	InventoryPath        string `env:"INVENTORY_PATH" required:"true"`
 }
@@ -93,25 +94,25 @@ func fxDomain(
 	kubecli *kubeapi.Client,
 ) Domain {
 	return &domain{
-		kubeCli:              kubecli,
-		providerRepo:         providerRepo,
-		changeNotifier:       changeNotifier,
-		notifier:             notifier,
-		ciClient:             ciClient,
-		authClient:           authClient,
-		iamClient:            iamClient,
-		workloadMessenger:    workloadMessenger,
-		deviceRepo:           deviceRepo,
-		clusterRepo:          clusterRepo,
-		projectRepo:          projectRepo,
-		routerRepo:           routerRepo,
-		secretRepo:           secretRepo,
-		configRepo:           configRepo,
-		appRepo:              appRepo,
-		managedSvcRepo:       managedSvcRepo,
-		managedResRepo:       managedResRepo,
-		messageProducer:      msgP,
-		messageTopic:         env.KafkaInfraTopic,
+		kubeCli:           kubecli,
+		providerRepo:      providerRepo,
+		changeNotifier:    changeNotifier,
+		notifier:          notifier,
+		ciClient:          ciClient,
+		authClient:        authClient,
+		iamClient:         iamClient,
+		workloadMessenger: workloadMessenger,
+		deviceRepo:        deviceRepo,
+		clusterRepo:       clusterRepo,
+		projectRepo:       projectRepo,
+		routerRepo:        routerRepo,
+		secretRepo:        secretRepo,
+		configRepo:        configRepo,
+		appRepo:           appRepo,
+		managedSvcRepo:    managedSvcRepo,
+		managedResRepo:    managedResRepo,
+		messageProducer:   msgP,
+		// messageTopic:         env.KafkaInfraTopic,
 		managedTemplatesPath: env.ManagedTemplatesPath,
 		logger:               logger,
 		financeClient:        financeClient,

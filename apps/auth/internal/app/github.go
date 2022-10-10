@@ -54,6 +54,26 @@ func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.Us
 	return u, token, nil
 }
 
+func (gh *githubI) GetPrimaryEmail(ctx context.Context, token *oauth2.Token) (string, error) {
+	emails, _, err := gh.ghCliForUser(ctx, token).Users.ListEmails(
+		ctx, &github.ListOptions{
+			Page:    1,
+			PerPage: 100, // max per page, assuming user would not have 100 emails added to his github
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	for i := range emails {
+		if emails[i].GetPrimary() {
+			return emails[i].GetEmail(), nil
+		}
+	}
+
+	return "", errors.Newf("no primary email could be found for this user, among first 100 emails provided by github")
+}
+
 type GithubOAuth interface {
 	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
 }

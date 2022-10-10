@@ -44,7 +44,17 @@ type Env struct {
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 
-	KafkaBrokers string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
+}
+
+func (e *Env) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          e.KafkaUsername,
+		Password:      e.KafkaPassword,
+	}
 }
 
 func (e *Env) GetBrokers() string {
