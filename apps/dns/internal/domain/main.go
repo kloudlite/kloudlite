@@ -34,15 +34,13 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 }
 
 func (d *domainI) UpdateNodeIPs(ctx context.Context, regionPart string, accountId string, clusterPart string, ips []string) bool {
-	accountCName, err := d.accountCNamesRepo.FindOne(ctx, repos.Filter{
-		"accountId": accountId,
-	})
+	accountCname, err := d.getAccountCName(ctx, accountId)
 	if err != nil {
 		return false
 	}
 	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{
 		"regionPart":  regionPart,
-		"accountPart": accountCName.CName,
+		"accountPart": accountCname,
 		"clusterPart": clusterPart,
 	})
 	if err != nil {
@@ -51,7 +49,7 @@ func (d *domainI) UpdateNodeIPs(ctx context.Context, regionPart string, accountI
 	if one == nil {
 		one, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
 			RegionPart:  regionPart,
-			AccountPart: accountCName.CName,
+			AccountPart: accountCname,
 			ClusterPart: clusterPart,
 			Ips:         ips,
 		})
