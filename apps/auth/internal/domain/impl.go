@@ -308,6 +308,9 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 	if err != nil {
 		return false, err
 	}
+	if one == nil {
+		return false, errors.New("no account present with provided email, register your account first.")
+	}
 	err = d.resetTokenRepo.SetWithExpiry(
 		ctx,
 		resetToken,
