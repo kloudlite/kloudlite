@@ -5,9 +5,9 @@ ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
 WORKDIR /tmp/app
 COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
-RUN go mod download -x
 COPY --chown=1001 --from=project-root common ./common
 COPY --chown=1001 --from=project-root pkg ./pkg
+RUN go mod download -x
 ARG APP
 RUN mkdir -p ./apps/$APP
 WORKDIR /tmp/app/apps/$APP
