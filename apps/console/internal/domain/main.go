@@ -66,7 +66,6 @@ type Env struct {
 	// KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
 	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
 	InventoryPath        string `env:"INVENTORY_PATH" required:"true"`
-	DefaultAccountName   string `env:"KL_DEFAULT_ACCOUNT_NAME" required:"true"`
 }
 
 func fxDomain(
@@ -121,7 +120,6 @@ func fxDomain(
 		jsEvalClient:         jsEvalClient,
 		regionRepo:           regionRepo,
 		dnsClient:            dnsClient,
-		klDefaultAccountName: env.DefaultAccountName,
 	}
 }
 
