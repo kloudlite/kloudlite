@@ -52,6 +52,7 @@ type domain struct {
 	jsEvalClient         jseval.JSEvalClient
 	providerRepo         repos.DbRepo[*entities.CloudProvider]
 	dnsClient            kldns.DNSClient
+	klDefaultAccountName string
 }
 
 func generateReadable(name string) string {
@@ -65,6 +66,7 @@ type Env struct {
 	// KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
 	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
 	InventoryPath        string `env:"INVENTORY_PATH" required:"true"`
+	DefaultAccountName   string `env:"KL_DEFAULT_ACCOUNT_NAME" required:"true"`
 }
 
 func fxDomain(
@@ -94,25 +96,24 @@ func fxDomain(
 	kubecli *kubeapi.Client,
 ) Domain {
 	return &domain{
-		kubeCli:           kubecli,
-		providerRepo:      providerRepo,
-		changeNotifier:    changeNotifier,
-		notifier:          notifier,
-		ciClient:          ciClient,
-		authClient:        authClient,
-		iamClient:         iamClient,
-		workloadMessenger: workloadMessenger,
-		deviceRepo:        deviceRepo,
-		clusterRepo:       clusterRepo,
-		projectRepo:       projectRepo,
-		routerRepo:        routerRepo,
-		secretRepo:        secretRepo,
-		configRepo:        configRepo,
-		appRepo:           appRepo,
-		managedSvcRepo:    managedSvcRepo,
-		managedResRepo:    managedResRepo,
-		messageProducer:   msgP,
-		// messageTopic:         env.KafkaInfraTopic,
+		kubeCli:              kubecli,
+		providerRepo:         providerRepo,
+		changeNotifier:       changeNotifier,
+		notifier:             notifier,
+		ciClient:             ciClient,
+		authClient:           authClient,
+		iamClient:            iamClient,
+		workloadMessenger:    workloadMessenger,
+		deviceRepo:           deviceRepo,
+		clusterRepo:          clusterRepo,
+		projectRepo:          projectRepo,
+		routerRepo:           routerRepo,
+		secretRepo:           secretRepo,
+		configRepo:           configRepo,
+		appRepo:              appRepo,
+		managedSvcRepo:       managedSvcRepo,
+		managedResRepo:       managedResRepo,
+		messageProducer:      msgP,
 		managedTemplatesPath: env.ManagedTemplatesPath,
 		logger:               logger,
 		financeClient:        financeClient,
@@ -120,6 +121,7 @@ func fxDomain(
 		jsEvalClient:         jsEvalClient,
 		regionRepo:           regionRepo,
 		dnsClient:            dnsClient,
+		klDefaultAccountName: env.DefaultAccountName,
 	}
 }
 
