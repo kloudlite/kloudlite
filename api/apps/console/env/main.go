@@ -1,7 +1,7 @@
 package env
 
 type Env struct {
-	KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
+	// KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
 	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
 	InventoryPath        string `env:"INVENTORY_PATH" required:"true"`
 
