@@ -15,8 +15,9 @@ tasks:
   docker-build:
     dir: ../..
     vars:
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/js-eval:v2
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/js-eval:{{.Tag}}
       APP_DIR: ./apps/js-eval
     cmds:
       - docker buildx build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
       - docker push {{.IMAGE}}
+

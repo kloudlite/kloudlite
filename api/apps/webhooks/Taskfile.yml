@@ -2,9 +2,9 @@ version: 3
 
 tasks:
   docker-build:
-    vars:1
+    vars:
       APP: webhooks
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'

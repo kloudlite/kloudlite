@@ -3,51 +3,75 @@ package infraclient
 import (
 	"fmt"
 	"time"
+
+	"github.com/codingconcepts/env"
 )
 
+type Env struct {
+	Secret string `env:"SECRETS" required:"true"`
+}
+
+func GetEnvOrDie() *Env {
+	var ev Env
+	if err := env.Set(&ev); err != nil {
+		panic(err)
+	}
+	return &ev
+}
+
 func testDoClient() {
+	env := GetEnvOrDie()
 
 	dop := NewDOProvider(DoProvider{
-		ApiToken:  "",
+		ApiToken:  "***REMOVED***",
 		AccountId: "kl-core",
 	}, DoProviderEnv{
-		ServerUrl:   "",
-		SshKeyPath:  "",
-		StorePath:   "",
-		TfTemplates: "",
-		JoinToken:   "",
+		StorePath:   "/home/vision/tf",
+		TfTemplates: "/home/vision/kloudlite/api-go/pkg/infraClient/terraform",
+		Secrets:     env.Secret,
+		Labels: map[string]string{
+			"kloudlite.io/region": "kl-blr1",
+		},
 	})
 
 	var err error
 
 	node := DoNode{
 		Region:  "blr1",
-		Size:    "s-1vcpu-1gb",
-		NodeId:  "node-sample-01",
-		ImageId: "ubuntu-18-04-x64",
+		Size:    "c-2",
+		NodeId:  "kl-worker-03",
+		ImageId: "117388514",
 	}
 
-	fmt.Println(node, err, dop)
+	// fmt.Println(node, err, dop)
 
-	err = dop.NewNode(node)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if false {
+
+		if err = dop.NewNode(node); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		for {
+
+			if err = dop.AttachNode(node); err != nil {
+				fmt.Println(err)
+
+				time.Sleep(time.Second * 30)
+				continue
+			}
+
+			return
+		}
+
+	} else {
+
+		if err = dop.DeleteNode(node); err != nil {
+			fmt.Println(err)
+			return
+		}
+
 	}
 
-	err = dop.AttachNode(node)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	time.Sleep(time.Second * 10)
-
-	err = dop.DeleteNode(node)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
+	// time.Sleep(time.Second * 10)
 }

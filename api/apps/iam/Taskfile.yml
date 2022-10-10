@@ -35,18 +35,18 @@ tasks:
 
   docker-build:
     vars:
-      IMAGE: harbor.dev.madhouselabs.io/kloudlite/iam:v2
       APP: iam
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+
+      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
+        msg: 'var EnvName must have one of [development, staging, production] as its value'
     cmds:
-      - docker buildx build --platform linux/amd64 -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --build-context project-root=../..
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
 
-    # dir: ../..
-    # vars:
-    #   IMAGE: harbor.dev.madhouselabs.io/kloudlite/iam:v2
-    #   APP_DIR: ./apps/iam
-    # cmds:
-    #   - docker buildx build -f {{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64 --build-arg APP_DIR={{.APP_DIR}}
-    #   - docker push {{.IMAGE}}
+
 
 

@@ -49,6 +49,8 @@ type Env struct {
 	KafkaGitWebhooksConsumerId string `env:"KAFKA_GIT_WEBHOOKS_CONSUMER_ID" required:"true"`
 	KafkaApplyYamlTopic        string `env:"KAFKA_APPLY_YAML_TOPIC" required:"true"`
 	KafkaBrokers               string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaUsername              string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword              string `env:"KAFKA_PASSWORD" required:"true"`
 
 	// KAFKA_GIT_WEBHOOKS_TOPIC="kl-git-webhooks"
 	// KAFKA_BROKERS="redpanda.kl-init-redpanda.svc.cluster.local"
@@ -56,6 +58,18 @@ type Env struct {
 	HarborAdminUsername string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
 	HarborAdminPassword string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
 	HarborRegistryHost  string `env:"HARBOR_REGISTRY_HOST" required:"true"`
+
+	GithubWebhookAuthzSecret string `env:"GITHUB_WEBHOOK_AUTHZ_SECRET" required:"true"`
+	GitlabWebhookAuthzSecret string `env:"GITLAB_WEBHOOK_AUTHZ_SECRET" required:"true"`
+	KlHookTriggerAuthzSecret string `env:"KL_HOOK_TRIGGER_AUTHZ_SECRET" required:"true"`
+}
+
+func (env *Env) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          env.KafkaUsername,
+		Password:      env.KafkaPassword,
+	}
 }
 
 func (env *Env) GetBrokerHosts() string {

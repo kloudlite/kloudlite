@@ -18,11 +18,9 @@ type domainI struct {
 type KLConf struct {
 	Version string `yaml:"version"`
 	Values  struct {
-		ServerUrl   string `yaml:"serverUrl"`
-		SshKeyPath  string `yaml:"sshKeyPath"`
 		StorePath   string `yaml:"storePath"`
 		TfTemplates string `yaml:"tfTemplatesPath"`
-		JoinToken   string `yaml:"joinToken"`
+		Secrets     string `yaml:"secrets"`
 	} `yaml:"spec"`
 }
 

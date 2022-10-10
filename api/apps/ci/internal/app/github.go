@@ -26,25 +26,21 @@ type githubI struct {
 	cfg          *oauth2.Config
 	ghCli        *github.Client
 	ghCliForUser func(ctx context.Context, token *oauth2.Token) *github.Client
+	env          *Env
 }
 
 func (gh *githubI) CheckWebhookExists(ctx context.Context, token *domain.AccessToken, repoUrl string, webhookId *domain.GithubWebhookId) (bool, error) {
+	if webhookId == nil {
+		return false, nil
+	}
+
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	hook, _, _ := gh.ghCliForUser(ctx, token.Token).Repositories.GetHook(ctx, owner, repo, int64(*webhookId))
+	hook, _, err := gh.ghCliForUser(ctx, token.Token).Repositories.GetHook(ctx, owner, repo, int64(*webhookId))
+	if err != nil {
+		return false, err
+	}
 
 	return hook != nil, nil
-
-	// hook, res, err := gh.ghCliForUser(ctx, token.Token).Repositories.CreateHook(
-	//	ctx, owner, repo, &github.Hook{
-	//		Config: map[string]interface{}{
-	//			"url":          gh.webhookUrl,
-	//			"content_type": "json",
-	//		},
-	//		Events: []string{"push"},
-	//		Active: fn.NewBool(true),
-	//		Name:   &hookName,
-	//	},
-	// )
 }
 
 func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl, webhookUrl string) (*domain.GithubWebhookId, error) {
@@ -56,6 +52,7 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 			Config: map[string]any{
 				"url":          webhookUrl,
 				"content_type": "json",
+				"secret":       gh.env.GithubWebhookAuthzSecret,
 			},
 			Events: []string{"push"},
 			Active: fn.NewBool(true),
@@ -222,5 +219,6 @@ func fxGithub(env *Env) domain.Github {
 		cfg:          &cfg,
 		ghCli:        ghCli,
 		ghCliForUser: ghCliForUser,
+		env:          env,
 	}
 }

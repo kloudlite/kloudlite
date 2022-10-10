@@ -87,15 +87,26 @@ type Env struct {
 	AuthRedisPassword string `env:"REDIS_AUTH_PASSWORD"`
 	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX" required:"true"`
 
-	MongoDbName  string `env:"MONGO_DB_NAME" required:"true"`
-	KafkaBrokers string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
-	Port         uint16 `env:"PORT" required:"true"`
-	IsDev        bool   `env:"DEV" default:"false" required:"true"`
+	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
+	KafkaBrokers  string `env:"KAFKA_BOOTSTRAP_SERVERS" required:"true"`
+	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
+
+	Port  uint16 `env:"PORT" required:"true"`
+	IsDev bool   `env:"DEV" default:"false" required:"true"`
 
 	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
 	NotifierUrl string `env:"NOTIFIER_URL" required:"true"`
 
 	KubeAPIAddress string `env:"KUBE_API_ADDRESS" required:"true"`
+}
+
+func (e *Env) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          e.KafkaUsername,
+		Password:      e.KafkaPassword,
+	}
 }
 
 func (e *Env) GetBrokers() string {

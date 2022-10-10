@@ -1,0 +1,17 @@
+{{- $endpoint := get . "endpoint"}}
+{{- $clusterName := get . "endpoint"}}
+
+{{- $ca := get . "ca"}}
+{{- $cert := get . "cert"}}
+{{- $key := get . "key"}}
+
+context: {{$clusterName}}
+contexts:
+    cluster-do-blr1-01:
+        endpoints:
+            - {{$endpoint}}
+        nodes:
+            - {{$endpoint}}
+        ca: 
+        crt: 
+        key: 

@@ -5,50 +5,48 @@ import (
 )
 
 func testAwsClient() {
+	env := GetEnvOrDie()
 
 	awsp := NewAWSProvider(AWSProvider{
-		AccessKey:    "",
-		AccessSecret: "",
+		AccessKey:    "***REMOVED***",
+		AccessSecret: "***REMOVED***",
 		AccountId:    "kl-core",
 	}, AWSProviderEnv{
-		ServerUrl:   "***REMOVED***",
-		SshKeyPath:  "/home/vision/tf/ssh",
 		StorePath:   "/home/vision/tf",
 		TfTemplates: "/home/vision/kloudlite/api-go/pkg/infraClient/terraform",
-		JoinToken:   "",
+		Secrets:     env.Secret,
 	})
 
 	var err error
 
 	node := AWSNode{
-		NodeId:       "node-sample-02",
+		NodeId:       "aws-worker-01",
 		Region:       "ap-south-1",
-		InstanceType: "t2.micro",
+		InstanceType: "m5.large",
 		VPC:          "",
-		// AMI:          "ami-0d70546e43a941d70",
-		AMI: "ami-068257025f72f470d",
 	}
 
-	// if err = awsp.NewNode(node); err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
+	if true {
 
-	// if err = awsp.AttachNode(node); err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
+		if err = awsp.NewNode(node); err != nil {
+			fmt.Println(err)
+			return
+		}
 
-	if err = awsp.UnattachNode(node); err != nil {
-		fmt.Println(err)
-		return
+		if err = awsp.AttachNode(node); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+	} else {
+
+		if err = awsp.DeleteNode(node); err != nil {
+			fmt.Println(err)
+			return
+		}
+
 	}
 
 	// time.Sleep(time.Second * 10)
-
-	if err = awsp.DeleteNode(node); err != nil {
-		fmt.Println(err)
-		return
-	}
 
 }

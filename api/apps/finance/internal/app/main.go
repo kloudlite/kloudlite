@@ -26,7 +26,17 @@ type Env struct {
 }
 
 type WorkloadFinanceConsumerEnv struct {
-	Topic string `env:"KAFKA_WORKLOAD_FINANCE_TOPIC"`
+	Topic         string `env:"KAFKA_WORKLOAD_FINANCE_TOPIC"`
+	KafkaUsername string `env:"KAFKA_USERNAME"`
+	KafkaPassword string `env:"KAFKA_PASSWORD"`
+}
+
+func (e *WorkloadFinanceConsumerEnv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          e.KafkaUsername,
+		Password:      e.KafkaPassword,
+	}
 }
 
 func (e *WorkloadFinanceConsumerEnv) GetSubscriptionTopics() []string {
