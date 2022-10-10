@@ -1,8 +1,10 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -31,6 +33,7 @@ func LoadHarborWebhook() fx.Option {
 
 					headers := ctx.GetReqHeaders()
 					if authz, ok := headers["Authorization"]; !ok || authz != envVars.HarborAuthzSecret {
+						logger.Infof("bad authorization code, dropping request...")
 						return ctx.Status(http.StatusUnauthorized).JSON("bad authorization token")
 					}
 
@@ -46,7 +49,9 @@ func LoadHarborWebhook() fx.Option {
 						return ctx.Status(http.StatusBadRequest).JSON(err.Error())
 					}
 
-					msg, err := producer.Produce(ctx.Context(), envVars.HarborWebhookTopic, getMsgKey(ctx.Body()), b)
+					tctx, cancelFunc := context.WithTimeout(ctx.Context(), 5*time.Second)
+					defer cancelFunc()
+					msg, err := producer.Produce(tctx, envVars.HarborWebhookTopic, getMsgKey(ctx.Body()), b)
 					if err != nil {
 						wErr := errors.NewEf(err, "could not produce message to topic %s", envVars.HarborWebhookTopic)
 						logger.Infof(wErr.Error())
