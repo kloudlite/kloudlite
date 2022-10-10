@@ -4,13 +4,15 @@ import "kloudlite.io/pkg/repos"
 
 type AccountCName struct {
 	repos.BaseEntity `bson:",inline"`
-	AccountId        repos.ID `bson:"accountId",json:"accountId"`
-	CName            string   `bson:"cName",json:"cName"`
+	AccountId        repos.ID `bson:"accountId" json:"accountId"`
+	CName            string   `bson:"cName" json:"cName"`
 }
 
 type NodeIps struct {
 	repos.BaseEntity `bson:",inline"`
-	Region           string   `bson:"region",json:"region"`
+	RegionPart       string   `bson:"regionPart" json:"regionPart"`
+	ClusterPart      string   `bson:"clusterPart" json:"clusterPart"`
+	AccountPart      string   `bson:"accountPart" json:"accountPart"`
 	Ips              []string `bson:"ips"`
 }
 

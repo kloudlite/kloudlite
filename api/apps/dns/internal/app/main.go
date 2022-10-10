@@ -61,8 +61,39 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			todo := context.TODO()
 			host := strings.ToLower(d[:len(d)-1])
 			if strings.HasSuffix(host, h.EdgeCnameBaseDomain) {
-				ips, err := h.domain.GetNodeIps(todo, nil)
-				if err != nil || len(ips) == 0 {
+				splits := strings.Split(host, h.EdgeCnameBaseDomain)
+				queryPart := splits[0]
+				querySplits := strings.Split(queryPart, ".")
+				var ips []string
+				var err error
+				if len(querySplits) == 3 {
+					regionPart := querySplits[0]
+					accountPart := querySplits[1]
+					clusterPart := querySplits[2]
+					ips, err = h.domain.GetNodeIps(todo, &regionPart, &accountPart, clusterPart)
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+				} else if len(querySplits) == 2 {
+					accountPart := querySplits[0]
+					clusterPart := querySplits[1]
+					ips, err = h.domain.GetNodeIps(todo, nil, &accountPart, clusterPart)
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+				} else {
+					clusterPart := querySplits[0]
+					ips, err = h.domain.GetNodeIps(todo, nil, nil, clusterPart)
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+				}
+
+				//ips, err := h.domain.GetNodeIps(todo, nil)
+				if len(ips) == 0 {
 					msg.Answer = append(msg.Answer, &dns.A{
 						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
 					})
@@ -163,14 +194,22 @@ var Module = fx.Module(
 		})
 		server.Post("/upsert-node-ips", func(c *fiber.Ctx) error {
 			var regionIps struct {
-				Region string   `json:"region"`
-				Ips    []string `json:"ips"`
+				Region    string   `json:"region"`
+				Cluster   string   `json:"cluster"`
+				AccountId string   `json:"account"`
+				Ips       []string `json:"ips"`
 			}
 			err := c.BodyParser(&regionIps)
 			if err != nil {
 				return err
 			}
-			done := d.UpdateNodeIPs(c.Context(), regionIps.Region, regionIps.Ips)
+			done := d.UpdateNodeIPs(
+				c.Context(),
+				regionIps.Region,
+				regionIps.AccountId,
+				regionIps.Cluster,
+				regionIps.Ips,
+			)
 			if !done {
 				return fmt.Errorf("failed to update node ips")
 			}
