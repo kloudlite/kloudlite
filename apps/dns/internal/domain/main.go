@@ -33,17 +33,27 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 	return d.addARecords(ctx, host, records)
 }
 
-func (d *domainI) UpdateNodeIPs(ctx context.Context, region string, ips []string) bool {
+func (d *domainI) UpdateNodeIPs(ctx context.Context, regionPart string, accountId string, clusterPart string, ips []string) bool {
+	accountCName, err := d.accountCNamesRepo.FindOne(ctx, repos.Filter{
+		"accountId": accountId,
+	})
+	if err != nil {
+		return false
+	}
 	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{
-		"region": region,
+		"regionPart":  regionPart,
+		"accountPart": accountCName.CName,
+		"clusterPart": clusterPart,
 	})
 	if err != nil {
 		return false
 	}
 	if one == nil {
 		one, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
-			Region: region,
-			Ips:    ips,
+			RegionPart:  regionPart,
+			AccountPart: accountCName.CName,
+			ClusterPart: clusterPart,
+			Ips:         ips,
 		})
 		if err != nil {
 			return false
@@ -58,10 +68,17 @@ func (d *domainI) UpdateNodeIPs(ctx context.Context, region string, ips []string
 	return true
 }
 
-func (d *domainI) GetNodeIps(ctx context.Context, region *string) ([]string, error) {
-	filter := repos.Filter{}
-	if region != nil {
-		filter["region"] = *region
+func (d *domainI) GetNodeIps(ctx context.Context,
+	regionPart *string, accountPart *string, clusterPart string,
+) ([]string, error) {
+	filter := repos.Filter{
+		"clusterPart": clusterPart,
+	}
+	if regionPart != nil {
+		filter["regionPart"] = *regionPart
+	}
+	if accountPart != nil {
+		filter["accountPart"] = *accountPart
 	}
 	all, err := d.nodeIpsRepo.Find(ctx, repos.Query{
 		Filter: filter,
