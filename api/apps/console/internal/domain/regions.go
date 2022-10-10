@@ -170,7 +170,7 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, providerId repos.ID, regi
 					s := string(*provider.AccountId)
 					return &s
 				}
-				return &d.klDefaultAccountName
+				return nil
 			}(),
 			Provider: provider.Provider,
 			Region:   region.Region,
