@@ -51,11 +51,10 @@ spec:
                 - name
                 type: object
               partitionCount:
-                default: 5
+                default: 3
                 type: integer
             required:
             - adminSecretRef
-            - partitionCount
             type: object
           status:
             properties:

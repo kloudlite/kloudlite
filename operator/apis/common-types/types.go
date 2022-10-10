@@ -69,8 +69,7 @@ func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
 	return "", errors.Newf("no storage class found, unknown pair (provider=%s, fstype=%s)", c, fsType)
 }
 
-// func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) {
-// 	switch c {
+// func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) { // 	switch c {
 // 	case Digitalocean:
 // 		{
 // 			switch fsType {
@@ -98,4 +97,16 @@ type MsvcRef struct {
 type SecretRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace,omitempty"`
+}
+
+type ConfigRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// +kubebuilder:object:generate=true
+
+type Output struct {
+	SecretRef *SecretRef `json:"secretRef,omitempty"`
+	ConfigRef *ConfigRef `json:"configRef,omitempty"`
 }

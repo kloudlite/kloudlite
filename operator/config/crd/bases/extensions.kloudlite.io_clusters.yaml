@@ -42,13 +42,9 @@ spec:
           spec:
             description: ClusterSpec defines the desired state of Cluster
             properties:
-              kafkaTopics:
-                items:
-                  type: string
-                type: array
-              redpandaAdmin:
+              redpanda:
                 properties:
-                  secretRef:
+                  adminSecretRef:
                     properties:
                       name:
                         type: string
@@ -57,11 +53,19 @@ spec:
                     required:
                     - name
                     type: object
+                  extraTopicsWithACL:
+                    items:
+                      type: string
+                    type: array
+                  topics:
+                    items:
+                      type: string
+                    type: array
                 required:
-                - secretRef
+                - adminSecretRef
                 type: object
             required:
-            - redpandaAdmin
+            - redpanda
             type: object
           status:
             properties:
