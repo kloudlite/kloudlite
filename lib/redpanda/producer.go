@@ -62,7 +62,9 @@ func NewProducer(brokerHosts string, producerOpts ProducerOpts) (Producer, error
 	if err != nil {
 		return nil, err
 	}
-	opts = append(opts, saslOpt)
+	if saslOpt != nil {
+		opts = append(opts, saslOpt)
+	}
 
 	client, err := kgo.NewClient(opts...)
 	if err != nil {

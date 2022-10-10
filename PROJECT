@@ -426,4 +426,12 @@ resources:
   kind: Admin
   path: operators.kloudlite.io/apis/redpanda.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: neo4j.msvc
+  kind: StandaloneService
+  path: operators.kloudlite.io/apis/neo4j.msvc/v1
+  version: v1
 version: "3"

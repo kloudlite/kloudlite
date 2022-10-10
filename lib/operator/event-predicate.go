@@ -9,45 +9,62 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-type resStatus struct {
+type klResource struct {
 	Status *Status `json:"status"`
 }
 
-func getStatus(obj client.Object) *resStatus {
+func getStatus(obj client.Object) *Status {
 	b, err := json.Marshal(obj)
 	if err != nil {
 		return nil
 	}
-	var res resStatus
+	var res klResource
 	if err := json.Unmarshal(b, &res); err != nil {
 		return nil
 	}
 
-	if res.Status == nil {
-		return nil
-	}
-
-	return &res
+	return res.Status
 }
 
 func ReconcileFilter() predicate.Funcs {
 	return predicate.Funcs{
 		UpdateFunc: func(ev event.UpdateEvent) bool {
-			if ev.ObjectNew.GetGeneration() > ev.ObjectOld.GetGeneration() {
+			oldObj := ev.ObjectOld
+			newObj := ev.ObjectNew
+
+			if oldObj.GetGeneration() > newObj.GetGeneration() {
 				return true
 			}
 
-			oldObj, newObj := getStatus(ev.ObjectOld), getStatus(ev.ObjectNew)
-			if oldObj == nil || newObj == nil {
+			if len(oldObj.GetLabels()) != len(newObj.GetLabels()) || !reflect.DeepEqual(oldObj.GetLabels(), newObj.GetLabels()) {
+				return true
+			}
+
+			if len(oldObj.GetAnnotations()) != len(newObj.GetAnnotations()) ||
+				!reflect.DeepEqual(oldObj.GetAnnotations(), newObj.GetAnnotations()) {
+				return true
+			}
+
+			if len(oldObj.GetFinalizers()) != len(newObj.GetFinalizers()) || !reflect.DeepEqual(oldObj.GetFinalizers(), newObj.GetFinalizers()) {
+				return true
+			}
+
+			if len(oldObj.GetOwnerReferences()) != len(newObj.GetOwnerReferences()) ||
+				!reflect.DeepEqual(oldObj.GetOwnerReferences(), newObj.GetOwnerReferences()) {
+				return true
+			}
+
+			oldStatus, newStatus := getStatus(ev.ObjectOld), getStatus(ev.ObjectNew)
+			if oldStatus == nil || newStatus == nil {
 				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
 				return true
 			}
 
-			if !reflect.DeepEqual(oldObj.Status.Checks, newObj.Status.Checks) {
+			if oldStatus.IsReady != newStatus.IsReady {
 				return true
 			}
 
-			if oldObj.Status.IsReady != newObj.Status.IsReady {
+			if !reflect.DeepEqual(oldStatus.Checks, newStatus.Checks) {
 				return true
 			}
 

@@ -236,18 +236,32 @@ func Sha1Sum(b []byte) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func Exec(command ...string) (error, *bytes.Buffer, *bytes.Buffer) {
+func Exec(command ...string) (err error, stdout *bytes.Buffer, stderr *bytes.Buffer) {
 	args := make([]string, len(command)+1)
 	args[0] = "-c"
 	for i := range command {
 		args[i+1] = command[i]
 	}
 
-	stdout, stderr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+	stdout = bytes.NewBuffer(nil)
+	stderr = bytes.NewBuffer(nil)
 
 	cmd := exec.Command("bash", args...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
-	return cmd.Run(), stdout, stderr
+	if err = cmd.Run(); err != nil {
+		return err, stdout, stderr
+	}
+	return nil, stdout, stderr
+}
+
+func ParseExitError(err error) error {
+	if e, ok := err.(*exec.ExitError); ok {
+		if e.Stderr == nil {
+			return e
+		}
+		return errors.NewEf(e, string(e.Stderr))
+	}
+	return err
 }

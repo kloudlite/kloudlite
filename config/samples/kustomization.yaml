@@ -59,4 +59,5 @@ resources:
 - redpanda.msvc_v1_acluser.yaml
 - extensions_v1_cluster.yaml
 - redpanda.msvc_v1_admin.yaml
+- neo4j.msvc_v1_standaloneservice.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

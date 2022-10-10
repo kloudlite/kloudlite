@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ct "operators.kloudlite.io/apis/common-types"
 	redpandaMsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
@@ -15,6 +16,7 @@ import (
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
+	"operators.kloudlite.io/lib/redpanda"
 	"operators.kloudlite.io/lib/templates"
 	"operators.kloudlite.io/operators/msvc-redpanda/internal/env"
 	"operators.kloudlite.io/operators/msvc-redpanda/internal/types"
@@ -37,6 +39,7 @@ func (r *Reconciler) GetName() string {
 const (
 	RedpandaAdminReady string = "redpanda-admin-ready"
 	AccessCredsReady   string = "access-creds-ready"
+	DefaultsPatched    string = "defaults-patched"
 )
 
 const (
@@ -71,7 +74,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	// TODO: initialize all checks here
-	if step := req.EnsureChecks(RedpandaAdminReady, AccessCredsReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(RedpandaAdminReady, AccessCredsReady, DefaultsPatched); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -80,6 +83,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.reconDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -94,35 +101,98 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	adminDeleted := "admin-deleted"
+	req.Logger.Infof("deleting admin ...")
+	defer func() {
+		if checks[adminDeleted].Status {
+			req.Logger.Infof("redpanda admin deleted ...")
+		}
+		req.Logger.Infof("still ... deleting admin")
+	}()
+
+	check := rApi.Check{Generation: obj.Generation}
+
+	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.Output.SecretRef.Namespace, obj.Spec.Output.SecretRef.Name), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(adminDeleted, check, err.Error()).Err(nil)
+	}
+	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](scrt)
+
+	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
+
+	exists, err := adminCli.UserExists(adminCreds.Username)
+	if err != nil {
+		return req.CheckFailed(adminDeleted, check, err.Error()).Err(nil)
+	}
+
+	if exists {
+		if err := adminCli.DeleteUser(adminCreds.Username); err != nil {
+			return req.CheckFailed(adminDeleted, check, err.Error()).Err(nil)
+		}
+	}
+	check.Status = true
 	return req.Finalize()
+}
+
+func (r *Reconciler) reconDefaults(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	if obj.Spec.Output == nil {
+		obj.Spec.Output = &ct.Output{
+			SecretRef: &ct.SecretRef{
+				Name:      "msvc-redpanda-" + obj.Name + "-creds",
+				Namespace: obj.Namespace,
+			},
+		}
+
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(DefaultsPatched, check, err.Error())
+		}
+		return req.Done().RequeueAfter(5 * time.Second)
+	}
+
+	check.Status = true
+	if check != checks[DefaultsPatched] {
+		checks[DefaultsPatched] = check
+		return req.UpdateStatus()
+	}
+	return req.Next()
 }
 
 func (r *Reconciler) createAdminCreds(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	scrtName := "msvc-redpanda-" + obj.Name + "-creds"
-
-	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, scrtName), &corev1.Secret{})
+	scrtNN := fn.NN(obj.Spec.Output.SecretRef.Namespace, obj.Spec.Output.SecretRef.Name)
+	scrt, err := rApi.Get(ctx, r.Client, scrtNN, &corev1.Secret{})
 	if err != nil {
-		req.Logger.Infof("secret %s, does not exist, will be creating now...", fn.NN(obj.Namespace, scrtName).String())
+		req.Logger.Infof("secret %s, does not exist, will be creating now...", scrtNN.String())
 	}
 
 	if scrt == nil {
+		password := fn.CleanerNanoid(40)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":       scrtName,
-				"namespace":  obj.Namespace,
+				"name":       obj.Spec.Output.SecretRef.Name,
+				"namespace":  obj.Spec.Output.SecretRef.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": types.AdminUserCreds{
 					AdminEndpoint: obj.Spec.AdminEndpoint,
 					KafkaBrokers:  obj.Spec.KafkaBrokers,
 					Username:      obj.Name,
-					Password:      fn.CleanerNanoid(40),
+					Password:      password,
+
+					RpkAdminFlags: fmt.Sprintf("--user %s --password %s --api-urls %s", obj.Name, password, obj.Spec.AdminEndpoint),
+					RpkSASLFlags: fmt.Sprintf(
+						"--user %s --password %s --brokers %s --sasl-mechanism %s", obj.Name, password,
+						obj.Spec.KafkaBrokers, redpanda.ScramSHA256,
+					),
 				},
 			},
 		)
@@ -143,9 +213,9 @@ func (r *Reconciler) createAdminCreds(req *rApi.Request[*redpandaMsvcv1.Admin]) 
 		return req.Done().Err(err)
 	}
 
+	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
-		obj.Status.DisplayVars.Set("output-secret-name", scrtName)
 		return req.UpdateStatus()
 	}
 
@@ -166,33 +236,30 @@ func (r *Reconciler) createRedpandaAdmin(req *rApi.Request[*redpandaMsvcv1.Admin
 
 	adminExists := true
 
-	err, _, stderr := fn.Exec(
+	err, _, _ := fn.Exec(
 		fmt.Sprintf(
 			"rpk acl user list --user %s --password '%s' --api-urls %s | grep -i admin", adminCreds.Username, adminCreds.Password,
 			adminCreds.AdminEndpoint,
 		),
 	)
-	fmt.Println(stderr.String())
 
 	if err != nil {
 		adminExists = false
 		req.Logger.Infof("admin user does not exist, would be creating now...")
 	}
 
-	fmt.Println(adminExists)
-
 	if !adminExists {
-		err, stdout, stderr := fn.Exec(
+		err, _, stderr := fn.Exec(
 			fmt.Sprintf(
 				"rpk acl user create %s -p '%s' --api-urls %s", adminCreds.Username, adminCreds.Password, adminCreds.AdminEndpoint,
 			),
 		)
-		fmt.Println(stderr.String(), stdout.String())
 		if err != nil {
 			return req.CheckFailed(RedpandaAdminReady, check, errors.NewEf(err, stderr.String()).Error()).Err(nil)
 		}
 	}
 
+	check.Status = true
 	if check != checks[RedpandaAdminReady] {
 		checks[RedpandaAdminReady] = check
 		return req.UpdateStatus()

@@ -8,8 +8,8 @@ import (
 
 type TopicSpec struct {
 	AdminSecretRef ct.SecretRef `json:"adminSecretRef"`
-	// +kubebuilder:default=5
-	PartitionCount int `json:"partitionCount"`
+	// +kubebuilder:default=3
+	PartitionCount int `json:"partitionCount,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -2,6 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ct "operators.kloudlite.io/apis/common-types"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
@@ -9,6 +10,8 @@ import (
 type AdminSpec struct {
 	AdminEndpoint string `json:"adminEndpoint"`
 	KafkaBrokers  string `json:"kafkaBrokers"`
+
+	Output *ct.Output `json:"output,omitempty"`
 }
 
 // +kubebuilder:object:root=true

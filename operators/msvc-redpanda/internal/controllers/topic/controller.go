@@ -5,6 +5,8 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	redpandaMsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	"operators.kloudlite.io/lib/constants"
@@ -33,6 +35,7 @@ func (r *Reconciler) GetName() string {
 
 const (
 	RedpandaTopicReady string = "redpanda-topic-ready"
+	DefaultsPatched    string = "defaults-patched"
 )
 
 // +kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=topics,verbs=get;list;watch;create;update;patch;delete
@@ -58,12 +61,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	// TODO: initialize all checks here
-	if step := req.EnsureChecks(RedpandaTopicReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(DefaultsPatched, RedpandaTopicReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -75,16 +73,80 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.reconDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.reconRedpandaTopic(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	req.Object.Status.IsReady = true
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+}
+
+func (r *Reconciler) reconDefaults(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	if obj.Spec.AdminSecretRef.Namespace == "" {
+		obj.Spec.AdminSecretRef.Namespace = obj.Namespace
+		err := r.Update(ctx, obj)
+		return req.Done().RequeueAfter(1 * time.Second).Err(err)
+	}
+
+	check.Status = true
+	if check != checks[DefaultsPatched] {
+		checks[DefaultsPatched] = check
+		return req.UpdateStatus()
+	}
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	topicDeleted := "topic-deleted"
+
+	req.Logger.Infof("deleting topic")
+	defer func() {
+		if checks[topicDeleted].Status {
+			req.Logger.Infof("topic deletion successfull")
+		}
+		req.Logger.Infof("still ... deleting topic")
+	}()
+
+	if step := req.EnsureChecks(topicDeleted); !step.ShouldProceed() {
+		return step
+	}
+
+	check := rApi.Check{Generation: obj.Generation}
+
+	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AdminSecretRef.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return req.Finalize()
+		}
+		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
+	}
+
+	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
+	if err != nil {
+		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
+	}
+
+	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
+
+	if err := adminCli.DeleteTopic(obj.Name); err != nil {
+		return req.CheckFailed(topicDeleted, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[topicDeleted] {
+		checks[topicDeleted] = check
+		return req.UpdateStatus()
+	}
 	return req.Finalize()
 }
 
@@ -92,14 +154,7 @@ func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	adminSecretNs := func() string {
-		if obj.Spec.AdminSecretRef.Namespace != "" {
-			return obj.Spec.AdminSecretRef.Namespace
-		}
-		return obj.Namespace
-	}()
-
-	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(adminSecretNs, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
+	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AdminSecretRef.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
 	}
@@ -120,9 +175,9 @@ func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]
 	if !tExists {
 		if err := adminCli.CreateTopic(obj.Name, obj.Spec.PartitionCount); err != nil {
 			return req.CheckFailed(RedpandaTopicReady, check, err.Error())
-			// return nil
 		}
-		return req.UpdateStatus()
+		checks[RedpandaTopicReady] = check
+		return req.Done().RequeueAfter(2 * time.Second)
 	}
 
 	check.Status = true
@@ -140,5 +195,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redpandaMsvcv1.Topic{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

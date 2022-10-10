@@ -2,6 +2,7 @@ package redpanda
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 
 	exec2 "k8s.io/utils/exec"
@@ -16,7 +17,7 @@ type AdminClient interface {
 	CreateTopic(topicName string, partitionCount int) error
 	DeleteTopic(topicName string) error
 	TopicExists(topicName string) (bool, error)
-	AllowUserOnTopics(username string, topicNames ...string) error
+	AllowUserOnTopics(username string, allowedOperations string, topicNames ...string) error
 }
 
 type adminCli struct {
@@ -44,11 +45,15 @@ func (admin adminCli) UserExists(username string) (bool, error) {
 			username,
 		),
 	)
+
 	if err != nil {
-		if stderr == nil {
-			return false, nil
+		if e, ok := err.(*exec.ExitError); ok {
+			if len(stderr.String()) == 0 {
+				return false, nil
+			}
+			return false, errors.NewEf(e, string(e.Stderr))
 		}
-		return false, errors.NewEf(err, stderr.String())
+		return false, err
 	}
 
 	foundUsername := strings.TrimSpace(stdout.String())
@@ -61,59 +66,66 @@ func (admin adminCli) UserExists(username string) (bool, error) {
 }
 
 func (admin adminCli) TopicExists(topicName string) (bool, error) {
-	err, _, _ := fn.Exec(
+	err, _, stderr := fn.Exec(
 		fmt.Sprintf(
-			"rpk topic describe %s --brokers %s %s", topicName, admin.kafkaBrokers, admin.saslAuthFlags,
+			"rpk topic list --brokers %s %s | grep -i %s", admin.kafkaBrokers, admin.saslAuthFlags, topicName,
 		),
 	)
 	if err != nil {
-		return false, nil
+		if len(stderr.String()) == 0 {
+			return false, nil
+		}
+		return false, errors.NewEf(err, stderr.String())
 	}
 	return true, nil
 }
 
 func (admin adminCli) CreateUser(username, password string) error {
-	err, _, _ := fn.Exec(fmt.Sprintf("rpk acl user create %s -p %s --api-urls %s", username, password, admin.adminEndpoint))
+	err, _, stderr := fn.Exec(fmt.Sprintf("rpk acl user create %s -p %s --api-urls %s", username, password, admin.adminEndpoint))
 	if err != nil {
-		return err
+		return errors.NewEf(err, stderr.String())
 	}
 	return nil
 }
 
 func (admin adminCli) DeleteUser(username string) error {
-	err, _, _ := fn.Exec(fmt.Sprintf("rpk acl user delete %s --api-urls %s", username, admin.saslAuthFlags))
+	err, _, stderr := fn.Exec(
+		fmt.Sprintf(
+			"rpk acl user delete %s  --api-urls %s %s", username, admin.adminEndpoint,
+			admin.saslAuthFlags,
+		),
+	)
 	if err != nil {
-		return err
+		return errors.NewEf(err, stderr.String())
 	}
 	return nil
 }
 
 func (admin adminCli) CreateTopic(topicName string, partitionCount int) error {
-	err, _, stderr := fn.Exec(
-		fmt.Sprintf(
-			"rpk topic create %s -p %d --brokers %s %s",
-			topicName,
-			partitionCount,
-			admin.kafkaBrokers,
-			admin.saslAuthFlags,
-		),
+	cmd := fmt.Sprintf(
+		"rpk topic create %s -p %d --brokers %s %s",
+		topicName,
+		partitionCount,
+		admin.kafkaBrokers,
+		admin.saslAuthFlags,
 	)
+	err, stdout, stderr := fn.Exec(cmd)
+	fmt.Println(stdout.String())
 	if err != nil {
-		return err
+		return errors.NewEf(err, stderr.String())
 	}
-	fmt.Println(stderr.String())
 	return nil
 }
 
 func (admin adminCli) DeleteTopic(topicName string) error {
-	err, _, _ := fn.Exec(fmt.Sprintf("rpk topic delete %s --brokers %s %s", topicName, admin.kafkaBrokers, admin.saslAuthFlags))
+	err, _, stderr := fn.Exec(fmt.Sprintf("rpk topic delete %s --brokers %s %s", topicName, admin.kafkaBrokers, admin.saslAuthFlags))
 	if err != nil {
-		return err
+		return errors.NewEf(err, stderr.String())
 	}
 	return nil
 }
 
-func (admin adminCli) AllowUserOnTopics(username string, topicNames ...string) error {
+func (admin adminCli) AllowUserOnTopics(username string, allowedOperations string, topicNames ...string) error {
 	topicFlags := ""
 	for i := range topicNames {
 		topicFlags += " --topic " + topicNames[i]
@@ -121,15 +133,15 @@ func (admin adminCli) AllowUserOnTopics(username string, topicNames ...string) e
 
 	err, _, stderr := fn.Exec(
 		fmt.Sprintf(
-			"rpk acl create --allow-principal %s --operation all %s --brokers %s %s", username, topicFlags, admin.kafkaBrokers,
+			"rpk acl create --allow-principal %s --operation %s %s --brokers %s %s", username, allowedOperations, topicFlags, admin.kafkaBrokers,
 			admin.saslAuthFlags,
 		),
 	)
 	if err != nil {
-		if stderr == nil {
+		if len(stderr.String()) == 0 {
 			return nil
 		}
-		return err
+		return errors.NewEf(err, stderr.String())
 	}
 	return nil
 }
