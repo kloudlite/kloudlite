@@ -11,6 +11,7 @@ type CloudProvider struct {
 }
 
 type ManagedServiceSpec struct {
+	Region        string            `json:"region,omitempty"`
 	CloudProvider CloudProvider     `json:"cloudProvider,omitempty"`
 	MsvcKind      MsvcKind          `json:"msvcKind,omitempty"`
 	Inputs        map[string]any    `json:"inputs,omitempty"`
