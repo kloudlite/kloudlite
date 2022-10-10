@@ -274,11 +274,11 @@ func (d *doProvider) AttachNode(node DoNode) error {
 	}
 
 	if tConf, err = templates.Parse(templates.TalosConfig, map[string]interface{}{
-		"endpoint":    string(out),
+		"endpoint":     string(out),
 		"cluster-name": sec.Secrets.Cluster.Name,
-		"ca":          sec.Secrets.TConfig.Ca,
-		"cert":        sec.Secrets.TConfig.Cert,
-		"key":         sec.Secrets.TConfig.Key,
+		"ca":           sec.Secrets.TConfig.Ca,
+		"cert":         sec.Secrets.TConfig.Cert,
+		"key":          sec.Secrets.TConfig.Key,
 	}); err != nil {
 		return err
 	} else {
