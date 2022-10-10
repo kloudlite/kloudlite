@@ -2,9 +2,10 @@ package redpanda
 
 import (
 	"context"
-	"kloudlite.io/pkg/logging"
 	"strings"
 	"time"
+
+	"kloudlite.io/pkg/logging"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/fx"
@@ -62,7 +63,6 @@ func (p *ProducerImpl) Produce(ctx context.Context, topic string, key string, va
 }
 
 func NewProducer(brokerHosts string, producerOpts *ProducerOpts) (Producer, error) {
-
 	saslOpt, err := parseSASLAuth(producerOpts.SASLAuth)
 	if err != nil {
 		return nil, err
@@ -90,10 +90,12 @@ func NewProducerFx[T Client]() fx.Option {
 		fx.Provide(
 			// func(client Client) (Producer, error) {
 			func(client T) (Producer, error) {
-				return NewProducer(client.GetBrokerHosts(), &ProducerOpts{
-					SASLAuth: client.GetKafkaSASLAuth(),
-					Logger:   logging.Logger{},
-				})
+				return NewProducer(
+					client.GetBrokerHosts(), &ProducerOpts{
+						SASLAuth: client.GetKafkaSASLAuth(),
+						Logger:   logging.Logger{},
+					},
+				)
 			},
 		),
 		fx.Invoke(
