@@ -142,6 +142,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.Record]("records", "rec", domain.RecordIndexes),
 	repos.NewFxMongoRepo[*domain.Site]("sites", "site", domain.SiteIndexes),
 	repos.NewFxMongoRepo[*domain.AccountCName]("account_cnames", "dns", domain.AccountCNameIndexes),
+	repos.NewFxMongoRepo[*domain.RegionCName]("region_cnames", "dns", domain.RegionCNameIndexes),
 	repos.NewFxMongoRepo[*domain.NodeIps]("node_ips", "nips", domain.NodeIpIndexes),
 	cache.NewFxRepo[[]*domain.Record](),
 	domain.Module,
@@ -194,7 +195,7 @@ var Module = fx.Module(
 		})
 		server.Post("/upsert-node-ips", func(c *fiber.Ctx) error {
 			var regionIps struct {
-				Region    string   `json:"region"`
+				RegionId  string   `json:"region"`
 				Cluster   string   `json:"cluster"`
 				AccountId string   `json:"account"`
 				Ips       []string `json:"ips"`
@@ -205,7 +206,7 @@ var Module = fx.Module(
 			}
 			done := d.UpdateNodeIPs(
 				c.Context(),
-				regionIps.Region,
+				regionIps.RegionId,
 				regionIps.AccountId,
 				regionIps.Cluster,
 				regionIps.Ips,
