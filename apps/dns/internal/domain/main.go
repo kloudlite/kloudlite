@@ -3,16 +3,14 @@ package domain
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
-	"kloudlite.io/pkg/config"
-	"net"
-	"time"
-
-	"github.com/goombaio/namegenerator"
 	"go.uber.org/fx"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
+	"math/rand"
+	"net"
 )
 
 type domainI struct {
@@ -20,6 +18,7 @@ type domainI struct {
 	sitesRepo         repos.DbRepo[*Site]
 	recordsCache      cache.Repo[[]*Record]
 	accountCNamesRepo repos.DbRepo[*AccountCName]
+	regionCNamesRepo  repos.DbRepo[*RegionCName]
 	nodeIpsRepo       repos.DbRepo[*NodeIps]
 	env               *Env
 	consoleClient     console.ConsoleClient
@@ -33,13 +32,14 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 	return d.addARecords(ctx, host, records)
 }
 
-func (d *domainI) UpdateNodeIPs(ctx context.Context, regionPart string, accountId string, clusterPart string, ips []string) bool {
+func (d *domainI) UpdateNodeIPs(ctx context.Context, regionId string, accountId string, clusterPart string, ips []string) bool {
 	accountCname, err := d.getAccountCName(ctx, accountId)
+	regionCname, err := d.getRegionCName(ctx, regionId)
 	if err != nil {
 		return false
 	}
 	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{
-		"regionPart":  regionPart,
+		"regionPart":  regionCname,
 		"accountPart": accountCname,
 		"clusterPart": clusterPart,
 	})
@@ -48,7 +48,7 @@ func (d *domainI) UpdateNodeIPs(ctx context.Context, regionPart string, accountI
 	}
 	if one == nil {
 		one, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
-			RegionPart:  regionPart,
+			RegionPart:  regionId,
 			AccountPart: accountCname,
 			ClusterPart: clusterPart,
 			Ips:         ips,
@@ -221,6 +221,51 @@ func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string) (st
 	return fmt.Sprintf("%s.%s", name, d.env.EdgeCnameBaseDomain), nil
 }
 
+func generateName() string {
+	randomAdjective := ADJECTIVES[rand.Intn(len(ADJECTIVES))]
+	randomNoun := NOUNS[rand.Intn(len(NOUNS))]
+	return fmt.Sprintf("%v-%v", randomAdjective, randomNoun)
+}
+
+func (d *domainI) getRegionCName(ctx context.Context, regionId string) (string, error) {
+	regionDNS, err := d.regionCNamesRepo.FindOne(ctx, repos.Filter{
+		"regionId": regionId,
+	})
+	if err != nil {
+		return "", err
+	}
+	var genUniqueName func() (string, error)
+	genUniqueName = func() (string, error) {
+		name := generateName()
+		regionDNS, err = d.regionCNamesRepo.FindOne(ctx, repos.Filter{
+			"cName": name,
+		})
+		if err != nil {
+			return "", err
+		}
+		if regionDNS != nil {
+			return genUniqueName()
+		}
+		return name, nil
+	}
+
+	generatedName, err := genUniqueName()
+	if err != nil {
+		return "", err
+	}
+	if regionDNS == nil {
+		create, err := d.regionCNamesRepo.Create(ctx, &RegionCName{
+			RegionId: repos.ID(regionId),
+			CName:    generatedName,
+		})
+		if err != nil {
+			return "", err
+		}
+		return create.CName, nil
+	}
+	return regionDNS.CName, nil
+}
+
 func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string, error) {
 	accountDNS, err := d.accountCNamesRepo.FindOne(ctx, repos.Filter{
 		"accountId": accountId,
@@ -228,14 +273,29 @@ func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string
 	if err != nil {
 		return "", err
 	}
+	var genUniqueName func() (string, error)
+	genUniqueName = func() (string, error) {
+		name := generateName()
+		accountDNS, err = d.accountCNamesRepo.FindOne(ctx, repos.Filter{
+			"cName": name,
+		})
+		if err != nil {
+			return "", err
+		}
+		if accountDNS != nil {
+			return genUniqueName()
+		}
+		return name, nil
+	}
+
+	generatedName, err := genUniqueName()
+	if err != nil {
+		return "", err
+	}
 	if accountDNS == nil {
-		seed := time.Now().UTC().UnixNano()
-		nameGenerator := namegenerator.NewNameGenerator(seed)
-		name1 := nameGenerator.Generate()
-		name2 := nameGenerator.Generate()
 		create, err := d.accountCNamesRepo.Create(ctx, &AccountCName{
 			AccountId: repos.ID(accountId),
-			CName:     fmt.Sprintf("%s-%s", name1, name2),
+			CName:     generatedName,
 		})
 		if err != nil {
 			return "", err
@@ -285,6 +345,7 @@ func fxDomain(
 	sitesRepo repos.DbRepo[*Site],
 	nodeIpsRepo repos.DbRepo[*NodeIps],
 	accountDNSRepo repos.DbRepo[*AccountCName],
+	regionDNSRepo repos.DbRepo[*RegionCName],
 	recordsCache cache.Repo[[]*Record],
 	consoleclient console.ConsoleClient,
 	env *Env,
@@ -294,6 +355,7 @@ func fxDomain(
 		sitesRepo,
 		recordsCache,
 		accountDNSRepo,
+		regionDNSRepo,
 		nodeIpsRepo,
 		env,
 		consoleclient,

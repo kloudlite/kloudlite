@@ -8,6 +8,12 @@ type AccountCName struct {
 	CName            string   `bson:"cName" json:"cName"`
 }
 
+type RegionCName struct {
+	repos.BaseEntity `bson:",inline"`
+	RegionId         repos.ID `bson:"regionId" json:"regionId"`
+	CName            string   `bson:"cName" json:"cName"`
+}
+
 type NodeIps struct {
 	repos.BaseEntity `bson:",inline"`
 	RegionPart       string   `bson:"regionPart" json:"regionPart"`
@@ -66,6 +72,28 @@ var NodeIpIndexes = []repos.IndexField{
 		Unique: true,
 	},
 }
+
+var RegionCNameIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "regionId", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "cName", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
+
 var AccountCNameIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
