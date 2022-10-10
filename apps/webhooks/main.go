@@ -17,7 +17,6 @@ func main() {
 	flag.Parse()
 
 	fx.New(
-		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
 				return logging.New(&logging.Options{Name: "webhooks", Dev: isDev})
@@ -26,5 +25,6 @@ func main() {
 		fn.FxErrorHandler(),
 		config.EnvFx[env.Env](),
 		framework.Module,
+		// fx.NopLogger,
 	).Run()
 }
