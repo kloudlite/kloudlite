@@ -102,7 +102,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, u
 	if err != nil {
 		return err
 	}
-	if err := d.checkAccountAccess(ctx, *provider.AccountId, "update_account"); err != nil {
+	if err = d.checkAccountAccess(ctx, *provider.AccountId, "update_account"); err != nil {
 		return err
 	}
 
