@@ -49,6 +49,7 @@ type HPA struct {
 }
 
 type AppSpec struct {
+	Region       string            `json:"region,omitempty"`
 	Services     []Service         `json:"services,omitempty"`
 	Containers   []Container       `json:"containers,omitempty"`
 	Replicas     int               `json:"replicas,omitempty"`
