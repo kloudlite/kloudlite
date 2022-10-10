@@ -21,7 +21,7 @@ tasks:
   docker-build:
     dir: ../..
     vars:
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/wg-restart:{{.Tag}}
+      IMAGE: registry.kloudlite.io/public/kloudlite/{{.EnvName}}/wg-restart:{{.Tag}}
       APP_DIR: ./apps/wg-restart
     cmds:
       - docker build -f ./{{.APP_DIR}}/Dockerfile -t {{.IMAGE}} . --platform linux/amd64  --build-arg APP_DIR={{.APP_DIR}}
