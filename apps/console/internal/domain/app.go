@@ -354,14 +354,12 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				}(),
 			},
 			Spec: op_crds.LambdaSpec{
-				NodeSelector: map[string]string{
-					"kloudlite.io/region": func() string {
-						if prj.RegionId != nil {
-							return string(*prj.RegionId)
-						}
-						return ""
-					}(),
-				},
+				Region: func() string {
+					if prj.RegionId != nil {
+						return string(*prj.RegionId)
+					}
+					return ""
+				}(),
 				Containers: func() []op_crds.Container {
 					cs := make([]op_crds.Container, 0)
 					for _, c := range app.Containers {
@@ -458,14 +456,12 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				}(),
 			},
 			Spec: op_crds.AppSpec{
-				NodeSelector: map[string]string{
-					"kloudlite.io/region": func() string {
-						if prj.RegionId != nil {
-							return string(*prj.RegionId)
-						}
-						return ""
-					}(),
-				},
+				Region: func() string {
+					if prj.RegionId != nil {
+						return string(*prj.RegionId)
+					}
+					return ""
+				}(),
 				Services: func() []op_crds.Service {
 					svcs := make([]op_crds.Service, 0)
 					for _, ep := range app.ExposedPorts {

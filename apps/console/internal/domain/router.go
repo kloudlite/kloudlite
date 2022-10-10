@@ -199,7 +199,7 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 		return false, err
 	}
 
-	if err = d.checkProjectAccess(ctx, routerID, UPDATE_PROJECT); err != nil {
+	if err = d.checkProjectAccess(ctx, r.ProjectId, UPDATE_PROJECT); err != nil {
 		return false, err
 	}
 
