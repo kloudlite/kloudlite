@@ -1,6 +1,7 @@
 package op_crds
 
 type LambdaSpec struct {
+	Region       string            `json:"region,omitempty"`
 	Containers   []Container       `json:"containers,omitempty"`
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
