@@ -8,6 +8,7 @@ import (
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/ci/internal/framework"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 )
 
@@ -17,18 +18,14 @@ func main() {
 	flag.Parse()
 
 	app := fx.New(
-		framework.Module,
+		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
 				return logging.New(&logging.Options{Name: "ci", Dev: isDev})
 			},
 		),
-		func() fx.Option {
-			if isDev {
-				return fx.NopLogger
-			}
-			return fx.Options()
-		}(),
+		fn.FxErrorHandler(),
+		framework.Module,
 	)
 
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)

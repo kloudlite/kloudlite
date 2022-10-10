@@ -7,9 +7,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"strings"
 	"time"
+
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 
 	"golang.org/x/oauth2"
 	"kloudlite.io/common"
@@ -259,10 +260,12 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 	if err != nil {
 		return nil, err
 	}
-	d.commsClient.SendWelcomeEmail(ctx, &comms.WelcomeEmailInput{
-		Email: user.Email,
-		Name:  user.Name,
-	})
+	d.commsClient.SendWelcomeEmail(
+		ctx, &comms.WelcomeEmailInput{
+			Email: user.Email,
+			Name:  user.Name,
+		},
+	)
 	return common.NewSession(
 		u.Id,
 		u.Email,
@@ -401,10 +404,12 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
-		d.commsClient.SendWelcomeEmail(ctx, &comms.WelcomeEmailInput{
-			Email: user.Email,
-			Name:  user.Name,
-		})
+		d.commsClient.SendWelcomeEmail(
+			ctx, &comms.WelcomeEmailInput{
+				Email: user.Email,
+				Name:  user.Name,
+			},
+		)
 		if err != nil {
 			return nil, errors.NewEf(err, "could not create user (email=%s)", user.Email)
 		}
@@ -450,7 +455,6 @@ func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *o
 		return nil, err
 	}
 	session := common.NewSession(user.Id, user.Email, user.Verified, fmt.Sprintf("oauth2/%s", provider))
-	fmt.Println("session: ", session)
 	return session, nil
 }
 
@@ -462,10 +466,33 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 			if err != nil {
 				return nil, errors.NewEf(err, "could not login to github")
 			}
+
+			email, err := func() (string, error) {
+				if u.Email != nil {
+					return *u.Email, nil
+				}
+				d.logger.Infof("user has no public email, trying to get his protected email")
+				pEmail, err := d.github.GetPrimaryEmail(ctx, t)
+				if err != nil {
+					return "", err
+				}
+				return pEmail, nil
+			}()
+			if err != nil {
+				return nil, err
+			}
+
+			name := func() string {
+				if u.Name != nil {
+					return *u.Name
+				}
+				return u.GetLogin()
+			}()
+
 			user := &User{
-				Name:   *u.Name,
+				Name:   name,
 				Avatar: u.AvatarURL,
-				Email:  *u.Email,
+				Email:  email,
 			}
 			return d.afterOAuthLogin(ctx, provider, t, user, u.AvatarURL)
 		}
@@ -482,7 +509,6 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				Avatar: &u.AvatarURL,
 				Email:  u.Email,
 			}
-			d.logger.Infof("AVATAR: %v\n", *user.Avatar)
 
 			return d.afterOAuthLogin(ctx, provider, t, user, &u.AvatarURL)
 		}
@@ -490,7 +516,6 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 	case common.ProviderGoogle:
 		{
 			u, t, err := d.google.Callback(ctx, code, state)
-			// d.logging.Infof("gitUser %+v tokens: %+v error %+v\n", u, t, err)
 			if err != nil {
 				return nil, errors.NewEf(err, "could not login to google")
 			}
@@ -500,8 +525,6 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				Avatar: u.AvatarURL,
 				Email:  u.Email,
 			}
-
-			d.logger.Infof("AVATAR: %v\n", user.Avatar)
 
 			return d.afterOAuthLogin(ctx, provider, t, user, u.AvatarURL)
 		}

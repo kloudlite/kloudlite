@@ -18,26 +18,24 @@ provider "aws" {
 resource "aws_security_group" "sg" {
   # name = "${var.node_id}-sg"
 
-
   ingress {
-    from_port = 22
+    from_port = 50000
     protocol = "tcp"
-    to_port = 22
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  // To Allow Port 80 Transport
-  ingress {
-    from_port = 80
-    protocol = "tcp"
-    to_port = 80
+    to_port = 50000
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port = 443
-    protocol = "tcp"
-    to_port = 443
+    from_port = 50000
+    protocol = "udp"
+    to_port = 50000
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 6443
+    protocol = "udp"
+    to_port = 6443
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -48,19 +46,6 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    from_port = 10250
-    protocol = "tcp"
-    to_port = 10250
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port = 30000
-    protocol = "0"
-    to_port = 32767
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   egress {
     from_port       = 0
@@ -82,10 +67,10 @@ resource "aws_instance" "byoc-node" {
 
   security_groups = [aws_security_group.sg.name]
 
-  user_data = templatefile("./init.sh", {
-    pubkey = file("${var.keys-path}/access.pub")
-    hostname = var.node_id
-  })
+  # user_data = templatefile("./init.sh", {
+  #   pubkey = file("${var.keys-path}/access.pub")
+  #   hostname = var.node_id
+  # })
 
   tags = {
     Name = var.node_id

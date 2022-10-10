@@ -12,6 +12,14 @@ type fromEnv struct {
 	*env.Env
 }
 
+func (v fromEnv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          v.KafkaUsername,
+		Password:      v.KafkaPassword,
+	}
+}
+
 func (v fromEnv) GetBrokerHosts() string {
 	return v.KafkaBrokers
 }

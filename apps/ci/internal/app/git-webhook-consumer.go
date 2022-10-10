@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"kloudlite.io/apps/ci/internal/domain"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	text_templates "kloudlite.io/pkg/text-templates"
+	"kloudlite.io/pkg/types"
 )
 
 var (
@@ -21,16 +23,11 @@ var (
 	res embed.FS
 )
 
-type GitWebhookPayload struct {
-	Provider   string            `json:"provider"`
-	Body       []byte            `json:"body"`
-	ReqHeaders map[string]string `json:"reqHeaders"`
-}
-
-const (
-	Github string = "github"
-	Gitlab string = "gitlab"
-)
+// type GitWebhookPayload struct {
+// 	Provider   string            `json:"provider"`
+// 	Body       []byte            `json:"body"`
+// 	ReqHeaders map[string]string `json:"reqHeaders"`
+// }
 
 const (
 	GithubEventHeader string = "X-Github-Event"
@@ -61,18 +58,18 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 			logger := logr.WithName("ci-webhook")
 			logger = logr.WithKV("offset", offset)
 			logger.Infof("started processing")
-			var payload GitWebhookPayload
-			if err := json.Unmarshal(msg, &payload); err != nil {
+			var gitHook types.GitHttpHook
+			if err := json.Unmarshal(msg, &gitHook); err != nil {
 				logger.Errorf(err, "could not unmarshal into *GitWebhookPayload")
 				return err
 			}
 
 			hook, err := func() (*domain.GitWebhookPayload, error) {
-				if payload.Provider == Github {
-					return d.ParseGithubHook(payload.ReqHeaders[GithubEventHeader], payload.Body)
+				if gitHook.GitProvider == common.ProviderGithub {
+					return d.ParseGithubHook(gitHook.Headers[GithubEventHeader], gitHook.Body)
 				}
-				if payload.Provider == Gitlab {
-					return d.ParseGitlabHook(payload.ReqHeaders[GitlabEventHeader], payload.Body)
+				if gitHook.GitProvider == common.ProviderGitlab {
+					return d.ParseGitlabHook(gitHook.Headers[GitlabEventHeader], gitHook.Body)
 				}
 				return nil, errors.New("unknown git provider")
 			}()

@@ -1,5 +1,6 @@
 package infraclient
 
 func InfraClientTest() {
-	testAwsClient()
+	// testAwsClient()
+	testDoClient()
 }

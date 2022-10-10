@@ -22,9 +22,9 @@ variable "region" {
   default = "blr1"
 }
 
-variable "keys-path" {
-  # default = ""
-}
+# variable "keys-path" {
+#   # default = ""
+# }
 
 variable "do-image-id" {
   default = "ubuntu-20-04-x64"

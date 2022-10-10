@@ -7,6 +7,7 @@ import (
 	"kloudlite.io/apps/webhooks/internal/env"
 	"kloudlite.io/apps/webhooks/internal/framework"
 	"kloudlite.io/pkg/config"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 )
 
@@ -21,7 +22,9 @@ func main() {
 				return logging.New(&logging.Options{Name: "webhooks", Dev: isDev})
 			},
 		),
+		fn.FxErrorHandler(),
 		config.EnvFx[env.Env](),
 		framework.Module,
+		// fx.NopLogger,
 	).Run()
 }

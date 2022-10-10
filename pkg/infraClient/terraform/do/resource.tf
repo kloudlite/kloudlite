@@ -2,11 +2,11 @@ terraform {
   required_providers {
     digitalocean = {
       source  = "digitalocean/digitalocean"
-      version = "2.19.0"
+      version = "2.22.3"
     }
     tls = {
       source  = "hashicorp/tls"
-      version = "3.1.0"
+      version = "4.0.3"
     }
   }
 }
@@ -21,9 +21,9 @@ resource "digitalocean_droplet" "byoc-node"  {
   region = var.region
   size     = var.size
   ssh_keys = var.ssh_keys
-  user_data = templatefile("./init.sh", {
-    pubkey = file("${var.keys-path}/access.pub")
-  })
+  # user_data = templatefile("./init.sh", {
+  #   pubkey = file("${var.keys-path}/access.pub")
+  # })
 
 }
 

@@ -43,11 +43,16 @@ type domainI struct {
 
 	gitlabWebhookUrl string
 	githubWebhookUrl string
+	env              *Env
 }
 
 type Env struct {
 	GithubWebhookUrl string `env:"GITHUB_WEBHOOK_URL" required:"true"`
 	GitlabWebhookUrl string `env:"GITLAB_WEBHOOK_URL" required:"true"`
+
+	GithubWebhookAuthzSecret string `env:"GITHUB_WEBHOOK_AUTHZ_SECRET" required:"true"`
+	GitlabWebhookAuthzSecret string `env:"GITLAB_WEBHOOK_AUTHZ_SECRET" required:"true"`
+	KlHookTriggerAuthzSecret string `env:"KL_HOOK_TRIGGER_AUTHZ_SECRET" required:"true"`
 }
 
 const (
@@ -474,6 +479,10 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 	for i := range pipelines {
 		p := pipelines[i]
 
+		if gitProvider == "gitlab" && p.AccessTokenId == "" {
+			continue
+		}
+
 		pullToken, err := func() (string, error) {
 			if gitProvider == "github" {
 				return d.github.GetInstallationToken(ctx, p.GitRepoUrl)
@@ -544,7 +553,7 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 					if p.Run == nil {
 						return ""
 					}
-					return p.Run.Cmd
+					return p.Run.BaseImage
 				}(),
 				RunCmd: func() string {
 					if p.Run == nil {
@@ -580,7 +589,8 @@ func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
 		req, err = http.NewRequest(http.MethodPost, d.githubWebhookUrl, bytes.NewBuffer(b))
 		req.Header.Set("X-Github-Event", "push")
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("X-Triggered-By", "kloudlite/ci")
+		req.Header.Set("User-Agent", "kloudlite/ci")
+		req.Header.Set("X-Kloudlite-Trigger", d.env.KlHookTriggerAuthzSecret)
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
 		}
@@ -601,7 +611,8 @@ func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
 		req, err = http.NewRequest(http.MethodPost, d.gitlabWebhookUrl, bytes.NewBuffer(b))
 		req.Header.Set("X-Gitlab-Event", "Push Hook")
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("X-Triggered-By", "kloudlite/ci")
+		req.Header.Set("User-Agent", "kloudlite/ci")
+		req.Header.Set("X-Kloudlite-Trigger", d.env.KlHookTriggerAuthzSecret)
 		if err != nil {
 			return errors.NewEf(err, "could not build http request")
 		}
@@ -615,7 +626,7 @@ func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
 		if r.StatusCode == http.StatusAccepted {
 			return nil
 		}
-		return errors.Newf("trigger for repo=%s failed as received StatusCode=%s", p.GitRepoUrl, r.StatusCode)
+		return errors.Newf("trigger for repo=%s failed as received StatusCode=%d", p.GitRepoUrl, r.StatusCode)
 	}
 	return errors.Newf("unknown gitProvider=%s, aborting trigger", p.GitProvider)
 }
@@ -969,6 +980,7 @@ var Module = fx.Module(
 			env *Env,
 		) Domain {
 			return &domainI{
+				env:              env,
 				authClient:       authClient,
 				pipelineRepo:     pipelineRepo,
 				gitlab:           gitlab,

@@ -19,6 +19,7 @@ import (
 type gitlabI struct {
 	cfg        *oauth2.Config
 	webhookUrl string
+	env        *Env
 }
 
 func (gl *gitlabI) GetTriggerWebhookUrl() string {
@@ -156,6 +157,9 @@ func (gl *gitlabI) GetRepoId(repoUrl string) string {
 }
 
 func (gl *gitlabI) CheckWebhookExists(ctx context.Context, token *domain.AccessToken, repoId string, webhookId *domain.GitlabWebhookId) (bool, error) {
+	if webhookId == nil {
+		return false, nil
+	}
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return false, err
@@ -173,17 +177,13 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *domain.AccessToken, re
 	if err != nil {
 		return nil, err
 	}
-	id, err := fn.CleanerNanoid(32)
-	if err != nil {
-		return nil, err
-	}
 	// webhookUrl := fmt.Sprintf("%s?pipelineId=%s", gl.webhookUrl, pipelineId)
 
 	hook, _, err := client.Projects.AddProjectHook(
 		repoId, &gitlab.AddProjectHookOptions{
 			PushEvents:    fn.NewBool(true),
 			TagPushEvents: fn.NewBool(true),
-			Token:         &id,
+			Token:         &gl.env.GitlabWebhookAuthzSecret,
 			URL:           &gl.webhookUrl,
 		},
 	)
@@ -250,5 +250,5 @@ func fxGitlab(env *Env) domain.Gitlab {
 		Scopes:       strings.Split(env.GitlabScopes, ","),
 	}
 
-	return &gitlabI{cfg: &cfg, webhookUrl: env.GitlabWebhookUrl}
+	return &gitlabI{cfg: &cfg, webhookUrl: env.GitlabWebhookUrl, env: env}
 }

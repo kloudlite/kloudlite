@@ -4,7 +4,6 @@ import (
 	"kloudlite.io/apps/auth/internal/app/graph/model"
 	"kloudlite.io/apps/auth/internal/domain"
 	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
 )
 
 func mapFromProviderDetail(detail *domain.ProviderDetail) map[string]any {
@@ -19,8 +18,8 @@ func mapFromProviderDetail(detail *domain.ProviderDetail) map[string]any {
 
 func sessionModelFromAuthSession(session *common.AuthSession) *model.Session {
 	return &model.Session{
-		ID:           repos.ID(session.Id),
-		UserID:       repos.ID(session.UserId),
+		ID:           session.Id,
+		UserID:       session.UserId,
 		UserEmail:    session.UserEmail,
 		LoginMethod:  session.LoginMethod,
 		UserVerified: session.UserVerified,

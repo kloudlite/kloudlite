@@ -40,7 +40,7 @@ query: |
     oAuth_requestLogin(provider: $provider)
   }
 variables:
-  provider: github
+  provider: gitlab
 
 ---
 label: OAuth Login
@@ -55,9 +55,9 @@ query: |
     }
   }
 variables:
-  # https://auth.dev.kloudlite.io/oauth2/callback/github?code=&state=eyJjc3JmIjoicVRDZEtadEtqeng1V2VaY3dCa2RVN2Y3Y1BXVmRoOFIiLCJzdGF0ZSI6IiJ9
-  code: 1bfeea844fdbef20bd6a
-  provider: github
+  # https://auth.dev.kloudlite.io/oauth2/callback/gitlab?code=0e0012fe6ef8d2f66d0b2329688d8bc99a9cec9d0ffb5113e2c5c09f46b0bc08
+  code: 0e0012fe6ef8d2f66d0b2329688d8bc99a9cec9d0ffb5113e2c5c09f46b0bc08
+  provider: gitlab
   state: eyJjc3JmIjoib1ZqM3k4eGhwLUppemVxMy1NdjktelhzLVVLLTBRUVUiLCJzdGF0ZSI6IiJ9
 ---
 
@@ -198,3 +198,19 @@ query: |
 variables:
   repoId: "26232015"
 ---
+
+
+query: |
+  mutation Auth_resetPassword($email: String!) {
+    auth_requestResetPassword(email: $email)
+  }
+variables:
+  email: shashwatsingh005@gmail.com
+---
+query: |
+  mutation Auth_resetPassword($token: String!, $password: String!) {
+    auth_resetPassword(token: $token, password: $password)
+  }
+variables:
+  token:
+

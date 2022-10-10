@@ -1,0 +1,17 @@
+{{- $endpoint := get . "endpoint"}}
+{{- $clusterName := get . "cluster-name"}}
+
+{{- $ca := get . "ca"}}
+{{- $cert := get . "cert"}}
+{{- $key := get . "key"}}
+
+context: {{$clusterName}}
+contexts:
+    {{$clusterName}}:
+        endpoints:
+            - {{$endpoint}}
+        nodes:
+            - {{$endpoint}}
+        ca: {{$ca}}
+        crt: {{$cert}}
+        key: {{$key}}
