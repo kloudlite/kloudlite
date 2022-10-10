@@ -273,11 +273,6 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 }
 
 func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *entities.App, shouldRestart bool) error {
-	_, region, err := d.getProjectRegionDetails(ctx, prj)
-	if err != nil {
-		return err
-	}
-
 	configSecretFileMounts, err := func(c entities.Container) ([]op_crds.Volume, error) {
 		if c.VolumeMounts == nil {
 			return []op_crds.Volume{}, nil
@@ -360,7 +355,12 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 			},
 			Spec: op_crds.LambdaSpec{
 				NodeSelector: map[string]string{
-					"kloudlite.io/region": region,
+					"kloudlite.io/region": func() string {
+						if prj.RegionId != nil {
+							return string(*prj.RegionId)
+						}
+						return ""
+					}(),
 				},
 				Containers: func() []op_crds.Container {
 					cs := make([]op_crds.Container, 0)
@@ -459,7 +459,12 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 			},
 			Spec: op_crds.AppSpec{
 				NodeSelector: map[string]string{
-					"kloudlite.io/region": region,
+					"kloudlite.io/region": func() string {
+						if prj.RegionId != nil {
+							return string(*prj.RegionId)
+						}
+						return ""
+					}(),
 				},
 				Services: func() []op_crds.Service {
 					svcs := make([]op_crds.Service, 0)
