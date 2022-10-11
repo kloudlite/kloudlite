@@ -22,13 +22,15 @@ import (
 	mysqlstandalonemsvcv1 "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
 	mysqlexternalv1 "operators.kloudlite.io/apis/mysql.external/v1"
 	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
+	neo4jMsvcv1 "operators.kloudlite.io/apis/neo4j.msvc/v1"
 	opensearchmsvcv1 "operators.kloudlite.io/apis/opensearch.msvc/v1"
 	redisclustermsvcv1 "operators.kloudlite.io/apis/redis-cluster.msvc/v1"
 	redisstandalonemsvcv1 "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	s3awsv1 "operators.kloudlite.io/apis/s3.aws/v1"
-	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
+
+	// serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
 	flagTypes "operators.kloudlite.io/lib/flag-types"
 	"operators.kloudlite.io/lib/logging"
@@ -54,7 +56,7 @@ func init() {
 	utilruntime.Must(redisstandalonemsvcv1.AddToScheme(scheme))
 	utilruntime.Must(redisclustermsvcv1.AddToScheme(scheme))
 	utilruntime.Must(influxdbmsvcv1.AddToScheme(scheme))
-	utilruntime.Must(serverlessv1.AddToScheme(scheme))
+	// utilruntime.Must(serverlessv1.AddToScheme(scheme))
 	utilruntime.Must(elasticsearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(opensearchmsvcv1.AddToScheme(scheme))
 	utilruntime.Must(s3awsv1.AddToScheme(scheme))
@@ -67,6 +69,7 @@ func init() {
 	utilruntime.Must(redisMsvcv1.AddToScheme(scheme))
 	utilruntime.Must(zookeeperMsvcv1.AddToScheme(scheme))
 	utilruntime.Must(extensionsv1.AddToScheme(scheme))
+	utilruntime.Must(neo4jMsvcv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

@@ -120,7 +120,7 @@ func (h *Client) GetProject(ctx context.Context, name string) (*Project, error) 
 
 	return &Project{
 		Name:     name,
-		Location: fmt.Sprintf("/api/%s/projects/%d", *h.args.HarborApiVersion, p.ProjectId),
+		Location: fmt.Sprintf("/api/%s/projects/%d", h.args.HarborApiVersion, p.ProjectId),
 	}, nil
 }
 

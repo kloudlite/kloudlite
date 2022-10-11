@@ -78,6 +78,10 @@ func (h *Client) CheckWebhookExists(ctx context.Context, webhook *Webhook) (bool
 		return false, nil
 	}
 
+	if resp.StatusCode == http.StatusConflict {
+		return true, nil
+	}
+
 	msg, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return false, err
@@ -85,7 +89,14 @@ func (h *Client) CheckWebhookExists(ctx context.Context, webhook *Webhook) (bool
 	return false, errors.Newf("bad status code (%d) received, with message %s", resp.StatusCode, msg)
 }
 
-func (h *Client) CreateWebhook(ctx context.Context, projectName string, webhookName string) (*Webhook, error) {
+type WebhookIn struct {
+	Name        string
+	Endpoint    string
+	Events      []Event
+	AuthzSecret string
+}
+
+func (h *Client) CreateWebhook(ctx context.Context, projectName string, webhookIn WebhookIn) (*Webhook, error) {
 	body := map[string]any{
 		"description":   "this webhook is created so that, as soon as an image is pushed, operator receives an event, and can take it calls like restarting an app, etc.",
 		"creator":       "kloudlite operator",
@@ -94,15 +105,13 @@ func (h *Client) CreateWebhook(ctx context.Context, projectName string, webhookN
 		"targets": []map[string]any{
 			{
 				"type":             "http",
-				"auth_header":      "",
+				"auth_header":      webhookIn.AuthzSecret,
 				"skip_cert_verify": true,
-				"address":          h.args.WebhookAddr,
+				"address":          webhookIn.Endpoint,
 			},
 		},
-		"event_types": []Event{
-			PushArtifact,
-		},
-		"name": webhookName,
+		"event_types": webhookIn.Events,
+		"name":        webhookIn.Name,
 	}
 
 	b, err := json.Marshal(body)
@@ -122,7 +131,7 @@ func (h *Client) CreateWebhook(ctx context.Context, projectName string, webhookN
 
 	if resp.StatusCode == http.StatusCreated {
 		return &Webhook{
-			Name:     webhookName,
+			Name:     webhookIn.Name,
 			Location: resp.Header.Get("Location"),
 		}, nil
 	}
@@ -132,4 +141,30 @@ func (h *Client) CreateWebhook(ctx context.Context, projectName string, webhookN
 		return nil, err
 	}
 	return nil, errors.Newf("bad status code (%d) received, with error body, %s", resp.StatusCode, msg)
+}
+
+func (h *Client) DeleteWebhook(ctx context.Context, webhook *Webhook) error {
+	if webhook == nil || webhook.Location == "" {
+		return errors.Newf("webhook.Location not provided")
+	}
+
+	req, err := h.NewAuthzRequest(ctx, http.MethodDelete, webhook.Location, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	msg, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return errors.Newf("bad status code (%d) received, with error body, %s", resp.StatusCode, msg)
 }

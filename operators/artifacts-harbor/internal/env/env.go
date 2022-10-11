@@ -13,8 +13,11 @@ type Env struct {
 	HarborAdminUsername     string `env:"HARBOR_ADMIN_USERNAME" required:"true"`
 	HarborAdminPassword     string `env:"HARBOR_ADMIN_PASSWORD" required:"true"`
 	HarborImageRegistryHost string `env:"HARBOR_IMAGE_REGISTRY_HOST" required:"true"`
-	HarborWebhookAddr       string `env:"HARBOR_WEBHOOK_ADDR" required:"true"`
-	HarborApiVersion        string `env:"HARBOR_API_VERSION" required:"false"`
+	HarborWebhookEndpoint   string `env:"HARBOR_WEBHOOK_ENDPOINT" required:"true"`
+	HarborApiVersion        string `env:"HARBOR_API_VERSION" required:"true"`
+	HarborWebhookAuthz      string `env:"HARBOR_WEBHOOK_AUTHZ" required:"true"`
+
+	DockerSecretName string `env:"DOCKER_SECRET_NAME" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

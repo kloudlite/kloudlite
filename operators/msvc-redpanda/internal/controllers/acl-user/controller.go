@@ -232,7 +232,8 @@ func (r *Reconciler) reconACLUser(req *rApi.Request[*redpandaMsvcv1.ACLUser]) st
 		}
 	}
 
-	if err := adminCli.AllowUserOnTopics(aclUserCreds.Username, r.Env.AclAllowedOperations, obj.Spec.Topics...); err != nil {
+	// if err := adminCli.AllowUserOnTopics(aclUserCreds.Username, r.Env.AclAllowedOperations, obj.Spec.Topics...); err != nil {
+	if err := adminCli.AllowUserOnTopics(aclUserCreds.Username, "all", obj.Spec.Topics...); err != nil {
 		req.Logger.Error(err)
 		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
 	}

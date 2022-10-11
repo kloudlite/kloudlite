@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"operators.kloudlite.io/lib/errors"
-	fn "operators.kloudlite.io/lib/functions"
 )
 
 type Config interface {
@@ -23,10 +22,10 @@ type Client struct {
 
 func (h *Client) NewAuthzRequest(ctx context.Context, method, urlPath string, body io.Reader) (*http.Request, error) {
 	nUrl := func() string {
-		if strings.HasPrefix(urlPath, fmt.Sprintf("/api/%s", *h.args.HarborApiVersion)) {
+		if strings.HasPrefix(urlPath, fmt.Sprintf("/api/%s", h.args.HarborApiVersion)) {
 			return h.url.String() + urlPath
 		}
-		return h.url.String() + "/api/" + *h.args.HarborApiVersion + urlPath
+		return h.url.String() + "/api/" + h.args.HarborApiVersion + urlPath
 	}()
 
 	req, err := http.NewRequestWithContext(ctx, method, nUrl, body)
@@ -42,14 +41,10 @@ type Args struct {
 	HarborAdminUsername string
 	HarborAdminPassword string
 	HarborRegistryHost  string
-	HarborApiVersion    *string
-	WebhookAddr         string
+	HarborApiVersion    string
 }
 
 func NewClient(args Args) (*Client, error) {
-	if args.HarborApiVersion == nil {
-		args.HarborApiVersion = fn.New("v2.0")
-	}
 	// u, err := url.Parse("https://" + args.HarborRegistryHost + "/api/" + *args.HarborApiVersion)
 	u, err := url.Parse("https://" + args.HarborRegistryHost)
 	if err != nil {

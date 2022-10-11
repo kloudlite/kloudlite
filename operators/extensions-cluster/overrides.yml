@@ -1,3 +1,3 @@
 env:
-  - name: ENSURE_KAFKA_TOPICS
-    value: "incoming,status-reply,billing-reply"
+  - name: DEFAULT_KAFKA_TOPICS
+    value: "incoming,status-reply,billing-reply,error-on-apply"

@@ -64,10 +64,14 @@ func ReconcileFilter() predicate.Funcs {
 				return true
 			}
 
-			if !reflect.DeepEqual(oldStatus.Checks, newStatus.Checks) {
+			if len(oldStatus.Checks) != len(newStatus.Checks) {
 				return true
 			}
-
+			for k, v := range oldStatus.Checks {
+				if newStatus.Checks[k] != v {
+					return true
+				}
+			}
 			return false
 		},
 	}

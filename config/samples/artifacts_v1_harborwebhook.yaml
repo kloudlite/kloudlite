@@ -1,0 +1,6 @@
+apiVersion: artifacts.kloudlite.io/v1
+kind: HarborWebhook
+metadata:
+  name: harborwebhook-sample
+spec:
+  # TODO(user): Add fields here

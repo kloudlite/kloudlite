@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: example
-  namespace: hotspot
+  namespace: kl-core
 spec:
   selector:
     matchLabels:

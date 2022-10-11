@@ -18,7 +18,7 @@ func main() {
 			HarborAdminUsername: ev.HarborAdminUsername,
 			HarborAdminPassword: ev.HarborAdminPassword,
 			HarborRegistryHost:  ev.HarborImageRegistryHost,
-			WebhookAddr:         ev.HarborWebhookAddr,
+			HarborApiVersion:    ev.HarborApiVersion,
 		},
 	)
 	if err != nil {

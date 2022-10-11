@@ -40,4 +40,5 @@ resources:
 - bases/extensions.kloudlite.io_clusters.yaml
 - bases/redpanda.msvc.kloudlite.io_admins.yaml
 - bases/neo4j.msvc.kloudlite.io_standaloneservices.yaml
+- bases/artifacts.kloudlite.io_harborwebhooks.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

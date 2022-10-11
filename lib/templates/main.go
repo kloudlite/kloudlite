@@ -109,6 +109,15 @@ func txtFuncs(t *template.Template) template.FuncMap {
 
 	funcs["K8sLabel"] = funcs["K8sAnnotation"]
 
+	funcs["Iterate"] = func(count int) []int {
+		var i int
+		var Items []int
+		for i = 0; i < count; i++ {
+			Items = append(Items, i)
+		}
+		return Items
+	}
+
 	return funcs
 }
 
@@ -157,6 +166,8 @@ const (
 	ProjectHarbor templateFile = "templates/project-harbor.yml.tpl"
 
 	MsvcHelmZookeeper templateFile = "templates/msvc/zookeeper/helm.tpl.yml"
+
+	MsvcHelmNeo4jStandalone templateFile = "templates/msvc/neo4j/helm-standalone.yaml.tpl"
 )
 
 var CoreV1 = struct {

@@ -7,9 +7,11 @@ import (
 )
 
 type Redpanda struct {
-	AdminSecretRef     ct.SecretRef `json:"adminSecretRef"`
-	Topics             []string     `json:"topics,omitempty"`
-	ExtraTopicsWithACL []string     `json:"extraTopicsWithACL,omitempty"`
+	AdminSecretRef     ct.SecretRef  `json:"adminSecretRef"`
+	Topics             []string      `json:"topics,omitempty"`
+	ExtraTopicsWithACL []string      `json:"extraTopicsWithACL,omitempty"`
+	KubeConfig         *ct.SecretRef `json:"kubeConfig,omitempty"`
+	ClusterDomain      []string      `json:"clusterDomain,omitempty"`
 }
 
 // ClusterSpec defines the desired state of Cluster

@@ -9,13 +9,15 @@ import (
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
 type HarborUserAccountSpec struct {
 	// +kubebuilder:default=true
-	Enabled    bool         `json:"enabled,omitempty"`
-	ProjectRef string       `json:"projectRef"`
-	HarborUser *harbor.User `json:"harborUser,omitempty"`
+	Enabled          bool         `json:"enabled,omitempty"`
+	ProjectRef       string       `json:"projectRef"`
+	HarborUser       *harbor.User `json:"harborUser,omitempty"`
+	DockerConfigName string       `json:"dockerConfigName,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".spec.projectRef",name=Harbor-Project,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 

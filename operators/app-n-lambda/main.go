@@ -3,7 +3,6 @@ package main
 import (
 	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/app-n-lambda/internal/controllers/app"
-	"operators.kloudlite.io/operators/app-n-lambda/internal/controllers/lambda"
 	"operators.kloudlite.io/operators/app-n-lambda/internal/env"
 )
 
@@ -14,7 +13,7 @@ func main() {
 
 	runner.RegisterControllers(
 		&app.Reconciler{Name: "app", Env: ev},
-		&lambda.Reconciler{Name: "lambda", Env: ev},
+		// &lambda.Reconciler{Name: "lambda", Env: ev},
 	)
 	runner.Start()
 }

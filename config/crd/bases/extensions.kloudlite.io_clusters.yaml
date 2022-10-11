@@ -53,10 +53,23 @@ spec:
                     required:
                     - name
                     type: object
+                  clusterDomain:
+                    items:
+                      type: string
+                    type: array
                   extraTopicsWithACL:
                     items:
                       type: string
                     type: array
+                  kubeConfig:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
                   topics:
                     items:
                       type: string

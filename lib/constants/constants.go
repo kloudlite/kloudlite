@@ -108,6 +108,11 @@ var (
 		Kind:       "Cluster",
 		APIVersion: "redpanda.vectorized.io/v1alpha1",
 	}
+
+	HelmNeo4JStandaloneType = metav1.TypeMeta{
+		Kind:       "HelmNeo4JStandalone",
+		APIVersion: MsvcApiVersion,
+	}
 )
 
 var (

@@ -2,6 +2,7 @@
 {{- $dockerSecretName := get . "docker-secret-name"  -}}
 {{- $namespace := get . "namespace"  -}}
 {{- $ownerRefs := get . "owner-refs"  -}}
+{{- $projectName := get . "project-name"  -}}
 
 ---
 apiVersion: artifacts.kloudlite.io/v1
@@ -16,7 +17,7 @@ metadata:
 apiVersion: artifacts.kloudlite.io/v1
 kind: HarborUserAccount
 metadata:
-  name: {{$dockerSecretName}}
+  name: {{$projectName}}
   namespace: {{$namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:

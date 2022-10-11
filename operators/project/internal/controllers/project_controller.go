@@ -61,7 +61,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("-------------------- NEW RECONCILATION------------------")
+	req.Logger.Infof("NEW RECONCILATION")
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -97,7 +97,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	// }
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
@@ -260,16 +261,17 @@ func (r *ProjectReconciler) reconProjectRBAC(req *rApi.Request[*crdsv1.Project])
 func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	namespace := obj.Name
-
 	check := rApi.Check{Generation: obj.Generation}
 
-	harborProject, harborUserAcc := &artifactsv1.HarborProject{}, &artifactsv1.HarborUserAccount{}
-
-	if err := r.Get(ctx, fn.NN(namespace, obj.Spec.AccountRef), harborProject); err != nil {
+	harborProject, err := rApi.Get(ctx, r.Client, fn.NN(namespace, obj.Spec.AccountRef), &artifactsv1.HarborProject{})
+	if err != nil {
+		harborProject = nil
 		req.Logger.Infof("harbor project (%s) does not exist, creating now ...", obj.Spec.AccountRef)
 	}
 
-	if err := r.Get(ctx, fn.NN(namespace, r.Env.DockerSecretName), harborUserAcc); err != nil {
+	harborUserAcc, err := rApi.Get(ctx, r.Client, fn.NN(namespace, obj.Name), &artifactsv1.HarborUserAccount{})
+	if err != nil {
+		harborUserAcc = nil
 		req.Logger.Infof("harbor user account (%s) does not exist, creating now ...", obj.Spec.AccountRef)
 	}
 
@@ -279,6 +281,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 				"acc-ref":            obj.Spec.AccountRef,
 				"docker-secret-name": r.Env.DockerSecretName,
 				"namespace":          namespace,
+				"project-name":       obj.Name,
 				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
 		)
@@ -379,7 +382,10 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.Role{})
 	builder.Owns(&rbacv1.RoleBinding{})
+	builder.Owns(&artifactsv1.HarborProject{})
 	builder.Owns(&artifactsv1.HarborUserAccount{})
+
+	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	return builder.Complete(r)
 }
