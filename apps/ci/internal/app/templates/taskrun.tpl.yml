@@ -35,6 +35,8 @@
 {{- range $tkRun := $tektonRuns}}
 {{- with $tkRun }}
 {{- /*gotype: kloudlite.io/apps/ci/internal/domain.TektonVars */ -}}
+
+{{""}}
 ---
 apiVersion: tekton.dev/v1beta1
 kind: TaskRun
