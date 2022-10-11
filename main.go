@@ -46,6 +46,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
+	csiv1 "operators.kloudlite.io/apis/csi/v1"
 	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
 	extensionsv1 "operators.kloudlite.io/apis/extensions/v1"
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
@@ -97,6 +98,7 @@ func init() {
 	// utilruntime.Must(zookeepermsvcv1.AddToScheme(scheme))
 	utilruntime.Must(extensionsv1.AddToScheme(scheme))
 	utilruntime.Must(neo4jmsvcv1.AddToScheme(scheme))
+	utilruntime.Must(csiv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

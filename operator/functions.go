@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/rest"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	csiv1 "operators.kloudlite.io/apis/csi/v1"
 	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
 	extensionsv1 "operators.kloudlite.io/apis/extensions/v1"
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
@@ -70,6 +71,7 @@ func init() {
 	utilruntime.Must(zookeeperMsvcv1.AddToScheme(scheme))
 	utilruntime.Must(extensionsv1.AddToScheme(scheme))
 	utilruntime.Must(neo4jMsvcv1.AddToScheme(scheme))
+	utilruntime.Must(csiv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
