@@ -128,7 +128,7 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 			Account: string(device.AccountId),
 			ActiveRegion: func() string {
 				if device.ActiveRegion != nil {
-					return "region-" + *device.ActiveRegion
+					return *device.ActiveRegion
 				}
 				return ""
 			}(),
@@ -136,7 +136,7 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 			Offset:     device.Index,
 			DeviceId:   string(device.Id),
 			Ports: func() []internal_crds.Port {
-				p := []internal_crds.Port{}
+				var p []internal_crds.Port
 				for _, p2 := range device.ExposedPorts {
 					p = append(p, internal_crds.Port{
 						Port:       p2.Port,
@@ -215,7 +215,7 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 			Account:    string(device.AccountId),
 			ActiveRegion: func() string {
 				if device.ActiveRegion != nil {
-					return "region-" + *device.ActiveRegion
+					return *device.ActiveRegion
 				}
 				return ""
 			}(),

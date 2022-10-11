@@ -158,7 +158,7 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, providerId repos.ID, regi
 		APIVersion: op_crds.EdgeAPIVersion,
 		Kind:       op_crds.EdgeKind,
 		Metadata: op_crds.EdgeMetadata{
-			Name: "region-" + string(createdRegion.Id),
+			Name: string(createdRegion.Id),
 		},
 		Spec: op_crds.EdgeSpec{
 			CredentialsRef: op_crds.CredentialsRef{
@@ -224,7 +224,7 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 		APIVersion: op_crds.EdgeAPIVersion,
 		Kind:       op_crds.EdgeKind,
 		Metadata: op_crds.EdgeMetadata{
-			Name: "region-" + string(edge.Id),
+			Name: string(edge.Id),
 		},
 	})
 	if err != nil {
@@ -263,7 +263,7 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 		APIVersion: op_crds.EdgeAPIVersion,
 		Kind:       op_crds.EdgeKind,
 		Metadata: op_crds.EdgeMetadata{
-			Name: "region-" + string(createdRegion.Id),
+			Name: string(createdRegion.Id),
 		},
 		Spec: op_crds.EdgeSpec{
 			CredentialsRef: op_crds.CredentialsRef{
