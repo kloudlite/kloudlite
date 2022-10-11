@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os/exec"
+	"time"
 
 	"github.com/codingconcepts/env"
 	"operators.kloudlite.io/lib/errors"
@@ -44,7 +46,7 @@ func main() {
 	flag.BoolVar(&dev, "dev", false, "--dev")
 	flag.Parse()
 
-	logger := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: dev})
+	logr := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: dev})
 
 	var ev Env
 	if err := env.Set(&ev); err != nil {
@@ -73,11 +75,19 @@ func main() {
 
 	consumer, err := redpanda.NewConsumer(
 		ev.KafkaBrokers, ev.KafkaConsumerGroupId,
-		ev.KafkaIncomingTopic, redpanda.ConsumerOpts{Logger: logger, SASLAuth: &kafkaSasl},
+		ev.KafkaIncomingTopic, redpanda.ConsumerOpts{Logger: logr, SASLAuth: &kafkaSasl},
 	)
 	if err != nil {
 		panic(err)
 	}
+
+	tctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+	defer cancelFunc()
+
+	if err := consumer.Ping(tctx); err != nil {
+		log.Fatal("failed to ping kafka brokers")
+	}
+	logr.Infof("successful ping to kafka brokers")
 
 	fmt.Println(
 		`
@@ -88,20 +98,30 @@ func main() {
 ██   ██ ███████ ██   ██ ██████     ██    
 	`,
 	)
-	logger.Infof("ready for consuming messages")
+	logr.Infof("ready for consuming messages")
 
 	consumer.StartConsuming(
 		func(kMsg redpanda.KafkaMessage) error {
-			msgLogger := logger.WithKV("offset", kMsg.Offset).WithKV("topic", kMsg.Topic).WithKV("partition", kMsg.Partition)
-			msgLogger.Infof("received message")
+			logger := logr.WithKV("offset", kMsg.Offset).WithKV("topic", kMsg.Topic).WithKV("partition", kMsg.Partition)
+			logger.Infof("received message")
+			defer func() {
+				logger.Infof("processed message")
+			}()
+
+			tctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+			defer cancelFunc()
+			go func() {
+				select {
+				case <-tctx.Done():
+					cancelFunc()
+				}
+			}()
 
 			var msg AgentMessage
 			if err := json.Unmarshal(kMsg.Value, &msg); err != nil {
-				msgLogger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
+				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
 				return err
 			}
-			msgLogger.Debugf("action=%s, payload=%s\n", msg.Action, msg.Payload)
-
 			switch msg.Action {
 			case "apply", "delete", "create":
 				{
@@ -132,15 +152,13 @@ func main() {
 						c.Stdout = buffOut
 						c.Stderr = buffErr
 						if err := c.Run(); err != nil {
-							logger.Errorf(err, buffErr.String())
+							logr.Errorf(err, buffErr.String())
 							return err
 						}
-						msgLogger.Infof(
-							"error message published to (topic=%s), key=%s, partition=%d, offset=%d ",
-						)
-						msgLogger.Infof("processed message")
 						return nil
 					}(); errX != nil {
+						// logger.Infof("failed for action=%s, payload=%s, yamls=%s\n", msg.Action, msg.Payload, msg.Yamls)
+						logger.Infof("error: %s", errX.Error())
 						errMsg := ErrMessage{
 							Action:  msg.Action,
 							Error:   errX.Error(),
@@ -154,18 +172,16 @@ func main() {
 						if err != nil {
 							return err
 						}
-						msgLogger.Infof(
-							"error message published to (topic=%s), key=%s, partition=%d, offset=%d ",
-							output.Topic,
-							output.Key,
-							output.Offset,
+
+						logger.Infof(
+							"error message published to (topic=%s)", output.Topic,
 						)
 						return errX
 					}
 				}
 			default:
 				{
-					msgLogger.Errorf(nil, "Invalid Action: %s", msg.Action)
+					logger.Errorf(nil, "Invalid Action: %s", msg.Action)
 				}
 			}
 			return nil

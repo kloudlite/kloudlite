@@ -32,13 +32,28 @@ spec:
         app: {{.Name}}
     spec:
       serviceAccount: {{.Spec.ServiceAccount}}
-      {{- if .Spec.NodeSelector }}
-      nodeSelector: {{ .Spec.NodeSelector | toYAML | nindent 8 }}
-      {{- end}}
+      nodeSelector: {{if .Spec.NodeSelector}}{{ .Spec.NodeSelector | toYAML | nindent 8 }}{{end}}
+        kloudlite.io/region: {{.Spec.Region | squote}}
 
-      {{- if .Spec.Tolerations}}
-      tolerations: {{.Spec.Tolerations | toYAML | nindent 8}}
-      {{- end}}
+      tolerations: {{if .Spec.Tolerations}}{{.Spec.Tolerations | toYAML | nindent 8}}{{end}}
+        - effect: NoExecute
+          key: kloudlite.io/region
+          operator: Equal
+          value: {{.Spec.Region | squote}}
+
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- $nWeight := 30 -}}
+            {{- range $weight := Iterate $nWeight }}
+            - weight: {{ sub $nWeight $weight }}
+              preference:
+                matchExpressions:
+                  - key: kloudlite.io/node-index
+                    operator: In
+                    values:
+                      - {{$weight | squote}}
+            {{- end }}
 
       {{- if .Spec.Containers }}
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}

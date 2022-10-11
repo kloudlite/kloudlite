@@ -103,7 +103,7 @@ spec:
               memory: 200Mi
             requests:
               cpu: 64m
-              memory: 120Mi
+              memory: 160Mi
       serviceAccountName: {{$svcAccountName}}
       terminationGracePeriodSeconds: 10
 ---

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	"operators.kloudlite.io/lib/constants"
@@ -32,7 +34,7 @@ func (r *Reconciler) GetName() string {
 const (
 	DefaultsPatched    string = "defaults-patched"
 	HarborProjectReady string = "harbor-project-ready"
-	HarborWebhookReady string = "harbor-project-webhook-ready"
+	WebhookReady       string = "webhook-ready"
 )
 
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harborprojects,verbs=get;list;watch;create;update;patch;delete
@@ -53,6 +55,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -63,7 +68,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	// TODO: initialize all checks here
-	if step := req.EnsureChecks(DefaultsPatched, HarborProjectReady, HarborWebhookReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(DefaultsPatched, HarborProjectReady, WebhookReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -83,14 +88,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconHarborWebhook(req); !step.ShouldProceed() {
+	if step := r.reconWebhook(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	req.Object.Status.IsReady = true
-	// req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
@@ -174,34 +178,40 @@ func (r *Reconciler) reconHarborProject(req *rApi.Request[*artifactsv1.HarborPro
 	return req.Next()
 }
 
-func (r *Reconciler) reconHarborWebhook(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
+func (r *Reconciler) reconWebhook(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
 	exists, err := r.HarborCli.CheckWebhookExists(ctx, obj.Spec.Webhook)
 	if err != nil {
-		return req.CheckFailed(HarborWebhookReady, check, err.Error())
+		return req.CheckFailed(WebhookReady, check, err.Error())
 	}
 
 	if !exists {
-		webhook, err := r.HarborCli.CreateWebhook(ctx, obj.Spec.Project.Name, obj.Spec.Webhook.Name)
+		webhook, err := r.HarborCli.CreateWebhook(
+			ctx, obj.Name, harbor.WebhookIn{
+				Name:        obj.Spec.Webhook.Name,
+				Endpoint:    r.Env.HarborWebhookEndpoint,
+				Events:      []harbor.Event{harbor.PushArtifact},
+				AuthzSecret: r.Env.HarborWebhookAuthz,
+			},
+		)
 		if err != nil {
-			return req.CheckFailed(HarborWebhookReady, check, err.Error())
+			return req.CheckFailed(WebhookReady, check, err.Error())
 		}
 		obj.Spec.Webhook = webhook
 		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(HarborProjectReady, check, err.Error())
+			return req.CheckFailed(WebhookReady, check, err.Error())
 		}
-		checks[HarborWebhookReady] = check
-		return req.UpdateStatus()
+		checks[WebhookReady] = check
+		req.UpdateStatus().RequeueAfter(2 * time.Second)
 	}
 
 	check.Status = true
-	if check != checks[HarborWebhookReady] {
-		checks[HarborWebhookReady] = check
+	if check != checks[WebhookReady] {
+		checks[WebhookReady] = check
 		return req.UpdateStatus()
 	}
-
 	return req.Next()
 }
 
@@ -211,5 +221,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&artifactsv1.HarborProject{})
+	builder.Owns(&corev1.Secret{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -73,6 +74,8 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, p
 		return nil, err
 	}
 
+	fmt.Println("body: ", string(b2))
+
 	req, err := h.NewAuthzRequest(ctx, http.MethodPost, "/robots", bytes.NewBuffer(b2))
 	if err != nil {
 		return nil, errors.NewEf(err, "building requests for creating robot account")
@@ -95,11 +98,26 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, p
 		return nil, errors.NewEf(err, "could not unmarshal into harborRobotUser")
 	}
 
-	return &User{
-		Id:       hUser.Id,
-		Name:     hUser.Name,
-		Location: resp.Header.Get("Location"),
-	}, nil
+	req, err = h.NewAuthzRequest(
+		ctx, http.MethodPatch, fmt.Sprintf("/robots/%d", hUser.Id),
+		bytes.NewBuffer([]byte(fmt.Sprintf("{\"secret\":\"%s\"}", password))),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resp2, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp2.StatusCode == http.StatusOK {
+		return &User{
+			Id:       hUser.Id,
+			Name:     hUser.Name,
+			Location: resp.Header.Get("Location"),
+		}, nil
+	}
+	return nil, errors.New("bad status code")
 }
 
 func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool) error {
@@ -189,6 +207,5 @@ func (h *Client) CheckIfUserAccountExists(ctx context.Context, user *User) (bool
 	if err != nil {
 		return false, err
 	}
-
-	return resp.StatusCode == http.StatusOK, nil
+	return resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusConflict, nil
 }
