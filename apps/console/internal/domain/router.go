@@ -15,7 +15,7 @@ func (d *domain) GetRouter(ctx context.Context, routerID repos.ID) (*entities.Ro
 		return nil, err
 	}
 
-	if err = d.checkProjectAccess(ctx, router.ProjectId, READ_PROJECT); err != nil {
+	if err = d.checkProjectAccess(ctx, router.ProjectId, ReadProject); err != nil {
 		return nil, err
 	}
 
@@ -24,7 +24,7 @@ func (d *domain) GetRouter(ctx context.Context, routerID repos.ID) (*entities.Ro
 
 func (d *domain) GetRouters(ctx context.Context, projectID repos.ID) ([]*entities.Router, error) {
 
-	if err := d.checkProjectAccess(ctx, projectID, READ_PROJECT); err != nil {
+	if err := d.checkProjectAccess(ctx, projectID, ReadProject); err != nil {
 		return nil, err
 	}
 
@@ -72,7 +72,7 @@ func (d *domain) OnDeleteRouter(ctx context.Context, response *op_crds.StatusUpd
 
 func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerName string, domains []string, routes []*entities.Route) (*entities.Router, error) {
 
-	if err := d.checkProjectAccess(ctx, projectId, UPDATE_PROJECT); err != nil {
+	if err := d.checkProjectAccess(ctx, projectId, UpdateProject); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +136,7 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 	if err = mongoError(err, "router not found"); err != nil {
 		return false, err
 	}
-	if err = d.checkProjectAccess(ctx, router.ProjectId, UPDATE_PROJECT); err != nil {
+	if err = d.checkProjectAccess(ctx, router.ProjectId, UpdateProject); err != nil {
 		return false, err
 	}
 	prj, err := d.projectRepo.FindById(ctx, router.ProjectId)
@@ -199,7 +199,7 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 		return false, err
 	}
 
-	if err = d.checkProjectAccess(ctx, r.ProjectId, UPDATE_PROJECT); err != nil {
+	if err = d.checkProjectAccess(ctx, r.ProjectId, UpdateProject); err != nil {
 		return false, err
 	}
 

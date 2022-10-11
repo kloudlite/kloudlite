@@ -14,7 +14,7 @@ func (d *domain) GetManagedRes(ctx context.Context, managedResID repos.ID) (*ent
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, mr.ProjectId, READ_PROJECT)
+	err = d.checkProjectAccess(ctx, mr.ProjectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (d *domain) GetManagedRes(ctx context.Context, managedResID repos.ID) (*ent
 }
 
 func (d *domain) GetManagedResources(ctx context.Context, projectID repos.ID) ([]*entities.ManagedResource, error) {
-	err := d.checkProjectAccess(ctx, projectID, READ_PROJECT)
+	err := d.checkProjectAccess(ctx, projectID, ReadProject)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (d *domain) GetManagedResourcesOfService(ctx context.Context, installationI
 	}
 
 	if len(mres) > 0 {
-		err = d.checkProjectAccess(ctx, mres[0].ProjectId, READ_PROJECT)
+		err = d.checkProjectAccess(ctx, mres[0].ProjectId, ReadProject)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, svc.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, svc.ProjectId, UpdateProject)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, mres.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, mres.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -187,7 +187,7 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, id.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, id.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -220,7 +220,7 @@ func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID)
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, mres.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, mres.ProjectId, UpdateProject)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID)
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, mres.ProjectId, READ_PROJECT)
+	err = d.checkProjectAccess(ctx, mres.ProjectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}

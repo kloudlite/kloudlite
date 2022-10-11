@@ -37,7 +37,7 @@ func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUp
 
 func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error) {
 
-	if err := d.checkProjectAccess(ctx, projectId, READ_PROJECT); err != nil {
+	if err := d.checkProjectAccess(ctx, projectId, ReadProject); err != nil {
 		return nil, err
 	}
 
@@ -47,7 +47,7 @@ func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*ent
 
 func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
 
-	if err := d.checkAccountAccess(ctx, acountId, READ_PROJECT); err != nil {
+	if err := d.checkAccountAccess(ctx, acountId, ReadProject); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +118,7 @@ func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, us
 
 func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error) {
 
-	if err := d.checkProjectAccess(ctx, projectID, READ_PROJECT); err != nil {
+	if err := d.checkProjectAccess(ctx, projectID, ReadProject); err != nil {
 		return nil, err
 	}
 
@@ -232,7 +232,7 @@ func (d *domain) OnDeleteProject(ctx context.Context, response *op_crds.StatusUp
 
 func (d *domain) getProjectRegionDetails(ctx context.Context, proj *entities.Project) (cloudProvider string, region string, err error) {
 
-	if err = d.checkProjectAccess(ctx, proj.Id, UPDATE_PROJECT); err != nil {
+	if err = d.checkProjectAccess(ctx, proj.Id, UpdateProject); err != nil {
 		return "", "", err
 	}
 

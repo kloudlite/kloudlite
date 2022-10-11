@@ -9,13 +9,10 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 )
 
-// access
 const (
-	READ_PROJECT   = "read_project"
-	UPDATE_PROJECT = "update_project"
-
-	READ_ACCOUNT   = "read_account"
-	UPDATE_ACCOUNT = "update_account"
+	ReadProject   = "read_project"
+	UpdateProject = "update_project"
+	ReadAccount   = "read_account"
 )
 
 func mongoError(err error, descp string) error {

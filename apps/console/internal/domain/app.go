@@ -21,14 +21,14 @@ func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, err
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, app.ProjectId, READ_PROJECT)
+	err = d.checkProjectAccess(ctx, app.ProjectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
 	return app, nil
 }
 func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.App, error) {
-	err := d.checkProjectAccess(ctx, projectID, READ_PROJECT)
+	err := d.checkProjectAccess(ctx, projectID, ReadProject)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (d *domain) OnDeleteApp(ctx context.Context, response *op_crds.StatusUpdate
 }
 
 func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entities.App) (*entities.App, error) {
-	err := d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err := d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entitie
 }
 
 func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App) (*entities.App, error) {
-	err := d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err := d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
 		return err
 	}
 
-	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
 		return err
 	}
 
-	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 		return err
 	}
 
-	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return err
 	}
@@ -226,7 +226,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -581,7 +581,7 @@ func (d *domain) InterceptApp(ctx context.Context, appId repos.ID, deviceId repo
 		return err
 	}
 
-	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return err
 	}
@@ -607,7 +607,7 @@ func (d *domain) CloseIntercept(ctx context.Context, appId repos.ID) error {
 		return err
 	}
 
-	err = d.checkProjectAccess(ctx, app.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, app.ProjectId, UpdateProject)
 	if err != nil {
 		return err
 	}
@@ -636,7 +636,7 @@ func (d *domain) GetInterceptedApps(ctx context.Context, deviceId repos.ID) ([]*
 	}
 
 	if len(apps) >= 1 {
-		if err = d.checkProjectAccess(ctx, apps[0].ProjectId, UPDATE_PROJECT); err != nil {
+		if err = d.checkProjectAccess(ctx, apps[0].ProjectId, UpdateProject); err != nil {
 			return nil, err
 		}
 	}
