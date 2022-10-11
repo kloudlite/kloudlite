@@ -16,9 +16,9 @@ var LabelKeys = struct {
 	Freeze           string
 	IsIntercepted    string
 	DeviceRef        string
-
-	ProjectName string
-	AppName     string
+	ProjectName      string
+	AppName          string
+	CsiForEdge       string
 }{
 	HarborProjectRef: "artifacts.kloudlite.io/harbor-project-ref",
 	Freeze:           "kloudlite.io/freeze",
@@ -27,6 +27,7 @@ var LabelKeys = struct {
 
 	ProjectName: "kloudlite.io/project.name",
 	AppName:     "kloudlite.io/app.name",
+	CsiForEdge:  "kloudlite.io/csi-for-edge",
 }
 
 var AnnotationKeys = struct {
@@ -112,6 +113,11 @@ var (
 	HelmNeo4JStandaloneType = metav1.TypeMeta{
 		Kind:       "HelmNeo4JStandalone",
 		APIVersion: MsvcApiVersion,
+	}
+
+	EdgeInfraType = metav1.TypeMeta{
+		Kind:       "Edge",
+		APIVersion: "infra.kloudlite.io/v1",
 	}
 )
 

@@ -168,6 +168,9 @@ const (
 	MsvcHelmZookeeper templateFile = "templates/msvc/zookeeper/helm.tpl.yml"
 
 	MsvcHelmNeo4jStandalone templateFile = "templates/msvc/neo4j/helm-standalone.yaml.tpl"
+
+	AwsEbsCsiDriver    templateFile = "templates/csi/aws-ebs-csi-driver.yml.tpl"
+	AwsEbsStorageClass templateFile = "templates/csi/aws-storage-class.yml.tpl"
 )
 
 var CoreV1 = struct {

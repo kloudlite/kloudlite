@@ -240,6 +240,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - drivers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - drivers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - drivers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - elasticsearc.msvc.kloudlite.io
   resources:
   - services

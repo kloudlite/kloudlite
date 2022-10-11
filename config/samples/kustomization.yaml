@@ -61,4 +61,7 @@ resources:
 - redpanda.msvc_v1_admin.yaml
 - neo4j.msvc_v1_standaloneservice.yaml
 - artifacts_v1_harborwebhook.yaml
+- csi_v1_awsebs.yaml
+- csi_v1_driver.yaml
+- csi_v1_storageclass.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
