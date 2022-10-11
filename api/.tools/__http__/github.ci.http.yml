@@ -98,7 +98,8 @@ variables:
     accountId: "{{accountId}}"
     projectId: "{{projectId}}"
     appId: "not-app-id-github-2"
-    projectName: "{{projectName}}"
+    # projectName: "{{projectName}}"
+    projectName: "kl-core"
     containerName: "main"
     gitProvider: github
     repoName: "website"
