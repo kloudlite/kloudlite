@@ -52,6 +52,7 @@ type domain struct {
 	jsEvalClient         jseval.JSEvalClient
 	providerRepo         repos.DbRepo[*entities.CloudProvider]
 	dnsClient            kldns.DNSClient
+	klDefaultAccountName string
 }
 
 func generateReadable(name string) string {
@@ -94,25 +95,24 @@ func fxDomain(
 	kubecli *kubeapi.Client,
 ) Domain {
 	return &domain{
-		kubeCli:           kubecli,
-		providerRepo:      providerRepo,
-		changeNotifier:    changeNotifier,
-		notifier:          notifier,
-		ciClient:          ciClient,
-		authClient:        authClient,
-		iamClient:         iamClient,
-		workloadMessenger: workloadMessenger,
-		deviceRepo:        deviceRepo,
-		clusterRepo:       clusterRepo,
-		projectRepo:       projectRepo,
-		routerRepo:        routerRepo,
-		secretRepo:        secretRepo,
-		configRepo:        configRepo,
-		appRepo:           appRepo,
-		managedSvcRepo:    managedSvcRepo,
-		managedResRepo:    managedResRepo,
-		messageProducer:   msgP,
-		// messageTopic:         env.KafkaInfraTopic,
+		kubeCli:              kubecli,
+		providerRepo:         providerRepo,
+		changeNotifier:       changeNotifier,
+		notifier:             notifier,
+		ciClient:             ciClient,
+		authClient:           authClient,
+		iamClient:            iamClient,
+		workloadMessenger:    workloadMessenger,
+		deviceRepo:           deviceRepo,
+		clusterRepo:          clusterRepo,
+		projectRepo:          projectRepo,
+		routerRepo:           routerRepo,
+		secretRepo:           secretRepo,
+		configRepo:           configRepo,
+		appRepo:              appRepo,
+		managedSvcRepo:       managedSvcRepo,
+		managedResRepo:       managedResRepo,
+		messageProducer:      msgP,
 		managedTemplatesPath: env.ManagedTemplatesPath,
 		logger:               logger,
 		financeClient:        financeClient,
