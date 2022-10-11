@@ -18,14 +18,14 @@ func (d *domain) GetSecret(ctx context.Context, secretId repos.ID) (*entities.Se
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, sec.ProjectId, READ_PROJECT)
+	err = d.checkProjectAccess(ctx, sec.ProjectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
 	return sec, nil
 }
 func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error) {
-	err := d.checkProjectAccess(ctx, projectId, READ_PROJECT)
+	err := d.checkProjectAccess(ctx, projectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entitie
 }
 
 func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error) {
-	err := d.checkProjectAccess(ctx, projectId, UPDATE_PROJECT)
+	err := d.checkProjectAccess(ctx, projectId, UpdateProject)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -122,7 +122,7 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, secret.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, secret.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -153,7 +153,7 @@ func (d *domain) GetConfig(ctx context.Context, configId repos.ID) (*entities.Co
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, READ_PROJECT)
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (d *domain) GetConfig(ctx context.Context, configId repos.ID) (*entities.Co
 	return cfg, nil
 }
 func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error) {
-	err := d.checkProjectAccess(ctx, projectId, READ_PROJECT)
+	err := d.checkProjectAccess(ctx, projectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entitie
 	return configs, nil
 }
 func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error) {
-	err := d.checkProjectAccess(ctx, projectId, UPDATE_PROJECT)
+	err := d.checkProjectAccess(ctx, projectId, UpdateProject)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, cfg.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -262,7 +262,7 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 		return false, err
 	}
 
-	if err = d.checkProjectAccess(ctx, cfg.ProjectId, UPDATE_PROJECT); err != nil {
+	if err = d.checkProjectAccess(ctx, cfg.ProjectId, UpdateProject); err != nil {
 		return false, err
 	}
 

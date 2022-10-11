@@ -31,7 +31,7 @@ func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, 
 }
 
 func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error) {
-	err := d.checkAccountAccess(ctx, accountId, READ_ACCOUNT)
+	err := d.checkAccountAccess(ctx, accountId, ReadAccount)
 	if err != nil {
 		return nil, err
 	}

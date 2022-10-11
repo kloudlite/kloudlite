@@ -21,7 +21,7 @@ func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*ent
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, msvc.ProjectId, READ_PROJECT)
+	err = d.checkProjectAccess(ctx, msvc.ProjectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (d *domain) GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*ent
 	}
 
 	if len(msvcs) >= 1 {
-		err = d.checkProjectAccess(ctx, msvcs[0].ProjectId, READ_PROJECT)
+		err = d.checkProjectAccess(ctx, msvcs[0].ProjectId, ReadProject)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +118,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, projectID, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, projectID, UpdateProject)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, managedSvc.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, managedSvc.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -312,7 +312,7 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, managedSvc.ProjectId, UPDATE_PROJECT)
+	err = d.checkProjectAccess(ctx, managedSvc.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -343,7 +343,7 @@ func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID)
 		return nil, err
 	}
 
-	err = d.checkProjectAccess(ctx, msvc.ProjectId, READ_PROJECT)
+	err = d.checkProjectAccess(ctx, msvc.ProjectId, ReadProject)
 	if err != nil {
 		return nil, err
 	}
