@@ -6,10 +6,15 @@ env:
 tasks:
   run:
     env:
-      KAFKA_BROKERS: "redpanda.kl-init-redpanda.svc.cluster.local:9092"
+#       KAFKA_BROKERS: "redpanda.kl-init-redpanda.svc.cluster.local:9092"
+# rpk --brokers kafka.kloudlite.io:31479 topic consume kl-01-incoming --user kl-01 --password  --sasl-mechanism scram-sha-256 -v
+
+      KAFKA_SASL_USER:  kl-01
+      KAFKA_SASL_PASSWORD: 'ZxcSVkJ8TbO0Cv0H8tW97dHKbmDINGjkHJ68CvdJ'
+      KAFKA_BROKERS: "kafka.kloudlite.io:31479"
       KAFKA_CONSUMER_GROUP_ID: "kloudlite-operator"
-      KAFKA_INCOMING_TOPIC: "kl-incoming"
-      KAFKA_ERROR_ON_APPLY_TOPIC: "kl-error-on-apply"
+      KAFKA_INCOMING_TOPIC: "kl-01-incoming"
+      KAFKA_ERROR_ON_APPLY_TOPIC: "kl-01-error-on-apply"
     cmds:
       - go run ./main.go --dev
 

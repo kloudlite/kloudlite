@@ -246,6 +246,8 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              region:
+                type: string
               replicas:
                 default: 1
                 type: integer
@@ -1781,6 +1783,7 @@ spec:
                 type: array
             required:
             - containers
+            - region
             type: object
           status:
             properties:

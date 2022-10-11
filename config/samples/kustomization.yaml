@@ -60,4 +60,5 @@ resources:
 - extensions_v1_cluster.yaml
 - redpanda.msvc_v1_admin.yaml
 - neo4j.msvc_v1_standaloneservice.yaml
+- artifacts_v1_harborwebhook.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

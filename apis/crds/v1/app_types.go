@@ -108,6 +108,7 @@ type HPA struct {
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
+	Region string `json:"region"`
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=kloudlite-svc-account
 	ServiceAccount string `json:"serviceAccount,omitempty"`

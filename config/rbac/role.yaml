@@ -682,6 +682,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - neo4j.msvc.kloudlite.io
+  resources:
+  - standaloneServices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - neo4j.msvc.kloudlite.io
+  resources:
+  - standaloneServices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - neo4j.msvc.kloudlite.io
+  resources:
+  - standaloneServices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - opensearch.msvc.kloudlite.io
   resources:
   - services

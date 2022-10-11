@@ -5,30 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: harboruseraccounts.artifacts.kloudlite.io
+  name: standaloneservices.neo4j.msvc.kloudlite.io
 spec:
-  group: artifacts.kloudlite.io
+  group: neo4j.msvc.kloudlite.io
   names:
-    kind: HarborUserAccount
-    listKind: HarborUserAccountList
-    plural: harboruseraccounts
-    singular: harboruseraccount
+    kind: StandaloneService
+    listKind: StandaloneServiceList
+    plural: standaloneservices
+    singular: standaloneservice
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - jsonPath: .spec.projectRef
-      name: Harbor-Project
-      type: string
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
+  - name: v1
     schema:
       openAPIV3Schema:
-        description: HarborUserAccount is the Schema for the harboruseraccounts API
+        description: StandaloneService is the Schema for the standaloneservices API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -43,30 +33,106 @@ spec:
           metadata:
             type: object
           spec:
-            description: HarborUserAccountSpec defines the desired state of HarborUserAccount
+            description: StandaloneServiceSpec defines the desired state of StandaloneService
             properties:
-              dockerConfigName:
-                type: string
-              enabled:
-                default: true
-                type: boolean
-              harborUser:
+              cloudProvider:
                 properties:
-                  id:
-                    type: integer
-                  location:
+                  account:
                     type: string
-                  name:
+                  cloud:
+                    enum:
+                    - do
+                    - aws
+                    - gcp
+                    - azure
+                    - k3s-local
+                    type: string
+                  region:
                     type: string
                 required:
-                - id
-                - location
-                - name
+                - cloud
+                - region
                 type: object
-              projectRef:
-                type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              replicaCount:
+                default: 1
+                type: integer
+              resources:
+                properties:
+                  cpu:
+                    properties:
+                      max:
+                        pattern: '[\d]+m$'
+                        type: string
+                      min:
+                        pattern: '[\d]+m$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
+                  memory:
+                    pattern: '[\d]+Mi$'
+                    type: string
+                required:
+                - cpu
+                - memory
+                type: object
+              storage:
+                properties:
+                  size:
+                    default: 5Gi
+                    pattern: '[\d]+Gi$'
+                    type: string
+                  storageClass:
+                    type: string
+                type: object
+              tolerations:
+                items:
+                  description: The pod this Toleration is attached to tolerates any
+                    taint that matches the triple <key,value,effect> using the matching
+                    operator <operator>.
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects. When specified, allowed values
+                        are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to. Empty means match all taint keys. If the key is empty,
+                        operator must be Exists; this combination means to match all
+                        values and all keys.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value. Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod
+                        can tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: TolerationSeconds represents the period of time
+                        the toleration (which must be of effect NoExecute, otherwise
+                        this field is ignored) tolerates the taint. By default, it
+                        is not set, which means tolerate the taint forever (do not
+                        evict). Zero and negative values will be treated as 0 (evict
+                        immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to. If the operator is Exists, the value should be empty,
+                        otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
             required:
-            - projectRef
+            - cloudProvider
+            - resources
+            - storage
             type: object
           status:
             properties:

@@ -107,7 +107,7 @@ tasks:
       - |+
         for dir in $(ls -d ./operators/*/)
         do
-          task yaml:operator Name="$(basename $dir)"
+          [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)"
         done
 #
 
@@ -219,4 +219,17 @@ tasks:
     dir: ./webhook-worker
     cmds:
       - docker buildx build -t {{.Image}} . --build-context project=".." --build-arg name="{{.Name}}"
+      - docker push {{.Image}}
+
+  build:http-lb:
+    dir: ./http-lb
+    preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Image: "{{.dockerRegistry}}/kloudlite/{{.EnvName}}/lb:{{.Tag}}"
+    cmds:
+      - docker buildx build -t {{.Image}} .
       - docker push {{.Image}}
