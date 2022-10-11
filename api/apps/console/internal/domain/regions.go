@@ -18,7 +18,7 @@ type EdgeRegionUpdate struct {
 }
 
 func (d *domain) GetCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error) {
-	if err := d.checkAccountAccess(ctx, accountId, READ_ACCOUNT); err != nil {
+	if err := d.checkAccountAccess(ctx, accountId, ReadAccount); err != nil {
 		return nil, err
 	}
 	providers, err := d.providerRepo.Find(ctx, repos.Query{
@@ -215,7 +215,7 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 		return err
 	}
 	if provider.AccountId != nil {
-		if err = d.checkAccountAccess(ctx, *provider.AccountId, READ_ACCOUNT); err != nil {
+		if err = d.checkAccountAccess(ctx, *provider.AccountId, ReadAccount); err != nil {
 			return err
 		}
 	}
