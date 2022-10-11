@@ -128,7 +128,7 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 			Account: string(device.AccountId),
 			ActiveRegion: func() string {
 				if device.ActiveRegion != nil {
-					return *device.ActiveRegion
+					return "region-" + *device.ActiveRegion
 				}
 				return ""
 			}(),
@@ -215,7 +215,7 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 			Account:    string(device.AccountId),
 			ActiveRegion: func() string {
 				if device.ActiveRegion != nil {
-					return *device.ActiveRegion
+					return "region-" + *device.ActiveRegion
 				}
 				return ""
 			}(),
