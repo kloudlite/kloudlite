@@ -95,11 +95,12 @@ query: |
 variables:
   in:
     name: sample-example-github-asdfdasfas
-    accountId: "{{accountId}}"
+    # accountId: "{{accountId}}"
+    accountId: "acc-p3as823bdcuymhtz3upzzxh2wobw"
     projectId: "{{projectId}}"
     appId: "not-app-id-github-2"
     # projectName: "{{projectName}}"
-    projectName: "kl-core"
+    projectName: "testproj-22875"
     containerName: "main"
     gitProvider: github
     repoName: "website"
@@ -109,7 +110,8 @@ variables:
     contextDir: ./
     buildArgs: ""
     artifactRef:
-      dockerImageName: "harbor.dev.madhouselabs.io/{{accountId}}/website2"
+      # dockerImageName: "{{accountId}}/website2"
+      dockerImageName: "website2"
       dockerImageTag: "latest"
 
 ---
