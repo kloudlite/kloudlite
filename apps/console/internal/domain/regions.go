@@ -59,7 +59,7 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 		Kind:       op_crds.SecretKind,
 		Metadata: op_crds.SecretMetadata{
 			Name:      "provider-" + string(provider.Id),
-			Namespace: "wg-" + string(*provider.AccountId),
+			Namespace: "kl-core",
 		},
 		StringData: func() map[string]any {
 			data := make(map[string]any)
@@ -123,7 +123,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, u
 		Kind:       op_crds.SecretKind,
 		Metadata: op_crds.SecretMetadata{
 			Name:      "provider-" + string(provider.Id),
-			Namespace: "wg-" + string(*provider.AccountId),
+			Namespace: "kl-core",
 		},
 		StringData: func() map[string]any {
 			data := make(map[string]any)
@@ -163,7 +163,7 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, providerId repos.ID, regi
 		Spec: op_crds.EdgeSpec{
 			CredentialsRef: op_crds.CredentialsRef{
 				SecretName: "provider-" + string(provider.Id),
-				Namespace:  "wg-" + string(*provider.AccountId),
+				Namespace:  "kl-core",
 			},
 			AccountId: func() *string {
 				if provider.AccountId != nil {
@@ -268,7 +268,7 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 		Spec: op_crds.EdgeSpec{
 			CredentialsRef: op_crds.CredentialsRef{
 				SecretName: "provider-" + string(provider.Id),
-				Namespace:  "wg-" + string(*provider.AccountId),
+				Namespace:  "kl-core",
 			},
 			AccountId: func() *string {
 				if provider.AccountId != nil {

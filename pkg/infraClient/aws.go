@@ -249,11 +249,11 @@ func (a *awsProvider) AttachNode(node AWSNode) error {
 	}
 
 	if tConf, err = templates.Parse(templates.TalosConfig, map[string]interface{}{
-		"endpoint":    string(out),
-		"clusterName": sec.Secrets.Cluster.Name,
-		"ca":          sec.Secrets.TConfig.Ca,
-		"cert":        sec.Secrets.TConfig.Cert,
-		"key":         sec.Secrets.TConfig.Key,
+		"endpoint":     string(out),
+		"cluster-name": sec.Secrets.Cluster.Name,
+		"ca":           sec.Secrets.TConfig.Ca,
+		"cert":         sec.Secrets.TConfig.Cert,
+		"key":          sec.Secrets.TConfig.Key,
 	}); err != nil {
 		return err
 	} else {
@@ -273,7 +273,7 @@ func (a *awsProvider) AttachNode(node AWSNode) error {
 		time.Sleep(time.Second * 6)
 		if err = execCmd(fmt.Sprintf("talosctl apply-config --insecure --nodes %s --file %s", string(out), p), ""); err != nil {
 
-			if err = execCmd(fmt.Sprintf("talosctl stats -n %s --talosconfig %s", string(out), talosConfigP), ""); err == nil {
+			if err = execCmd(fmt.Sprintf("kubectl get node %s", node.NodeId), ""); err == nil {
 				return nil
 			}
 
