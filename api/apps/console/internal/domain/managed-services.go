@@ -10,6 +10,7 @@ import (
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
 	"os"
 	"time"
@@ -347,8 +348,8 @@ func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID)
 	if err != nil {
 		return nil, err
 	}
-
-	secret, err := d.kubeCli.GetSecret(ctx, msvc.Namespace, fmt.Sprint("msvc-", msvc.Id))
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+	secret, err := kubecli.GetSecret(ctx, msvc.Namespace, fmt.Sprint("msvc-", msvc.Id))
 	if err != nil {
 		return nil, err
 	}
