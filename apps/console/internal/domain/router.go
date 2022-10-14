@@ -170,6 +170,12 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 			},
 		},
 		Spec: op_crds.RouterSpec{
+			Region: func() string {
+				if prj.RegionId != nil {
+					return string(*prj.RegionId)
+				}
+				return ""
+			}(),
 			Https: struct {
 				Enabled       bool `json:"enabled"`
 				ForceRedirect bool `json:"forceRedirect"`
