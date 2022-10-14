@@ -17,7 +17,6 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
@@ -25,7 +24,6 @@ import (
 )
 
 type domain struct {
-	kubeCli         *kubeapi.Client
 	deviceRepo      repos.DbRepo[*entities.Device]
 	clusterRepo     repos.DbRepo[*entities.Cluster]
 	projectRepo     repos.DbRepo[*entities.Project]
@@ -53,6 +51,7 @@ type domain struct {
 	providerRepo         repos.DbRepo[*entities.CloudProvider]
 	dnsClient            kldns.DNSClient
 	klDefaultAccountName string
+	clusterConfigsPath   string
 }
 
 func generateReadable(name string) string {
@@ -66,6 +65,7 @@ type Env struct {
 	// KafkaInfraTopic      string `env:"KAFKA_INFRA_TOPIC" required:"true"`
 	ManagedTemplatesPath string `env:"MANAGED_TEMPLATES_PATH" required:"true"`
 	InventoryPath        string `env:"INVENTORY_PATH" required:"true"`
+	ClusterConfigsPath   string `env:"CLUSTER_CONFIGS_PATH" required:"true"`
 }
 
 func fxDomain(
@@ -92,10 +92,8 @@ func fxDomain(
 	dnsClient kldns.DNSClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 	jsEvalClient jseval.JSEvalClient,
-	kubecli *kubeapi.Client,
 ) Domain {
 	return &domain{
-		kubeCli:              kubecli,
 		providerRepo:         providerRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,
@@ -120,6 +118,7 @@ func fxDomain(
 		jsEvalClient:         jsEvalClient,
 		regionRepo:           regionRepo,
 		dnsClient:            dnsClient,
+		clusterConfigsPath:   env.ClusterConfigsPath,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"kloudlite.io/pkg/kubeapi"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	internal_crds "kloudlite.io/apps/console/internal/domain/op-crds/internal-crds"
@@ -55,7 +56,9 @@ func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (map[st
 	if err != nil {
 		return nil, err
 	}
-	secret, err := d.kubeCli.GetSecret(ctx, fmt.Sprint("wg-", dev.AccountId), fmt.Sprint("wg-device-config-", dev.Id))
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+
+	secret, err := kubecli.GetSecret(ctx, fmt.Sprint("wg-", dev.AccountId), fmt.Sprint("wg-device-config-", dev.Id))
 	if err != nil {
 		return nil, err
 	}
