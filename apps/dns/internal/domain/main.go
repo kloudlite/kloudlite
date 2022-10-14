@@ -48,7 +48,7 @@ func (d *domainI) UpdateNodeIPs(ctx context.Context, regionId string, accountId 
 	}
 	if one == nil {
 		one, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
-			RegionPart:  regionId,
+			RegionPart:  regionCname,
 			AccountPart: accountCname,
 			ClusterPart: clusterPart,
 			Ips:         ips,
@@ -234,6 +234,9 @@ func (d *domainI) getRegionCName(ctx context.Context, regionId string) (string, 
 	if err != nil {
 		return "", err
 	}
+	if regionDNS != nil {
+		return regionDNS.CName, nil
+	}
 	var genUniqueName func() (string, error)
 	genUniqueName = func() (string, error) {
 		name := generateName()
@@ -272,6 +275,9 @@ func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string
 	})
 	if err != nil {
 		return "", err
+	}
+	if err == nil && accountDNS != nil {
+		return accountDNS.CName, nil
 	}
 	var genUniqueName func() (string, error)
 	genUniqueName = func() (string, error) {
