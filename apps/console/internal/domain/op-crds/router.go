@@ -8,6 +8,7 @@ type Route struct {
 }
 
 type RouterSpec struct {
+	Region  string   `json:"region"`
 	Domains []string `json:"domains"`
 	Https   struct {
 		Enabled       bool `json:"enabled"`
