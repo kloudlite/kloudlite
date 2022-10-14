@@ -105,6 +105,12 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 			},
 		},
 		Spec: op_crds.RouterSpec{
+			Region: func() string {
+				if prj.RegionId != nil {
+					return string(*prj.RegionId)
+				}
+				return ""
+			}(),
 			Https: struct {
 				Enabled       bool `json:"enabled"`
 				ForceRedirect bool `json:"forceRedirect"`
