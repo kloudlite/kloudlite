@@ -17,9 +17,9 @@ type Domain interface {
 	GetVerifiedSites(ctx context.Context, accountId string) ([]*Site, error)
 	GetSite(ctx context.Context, siteId string) (*Site, error)
 	GetSiteFromDomain(ctx context.Context, domain string) (*Site, error)
-	GetAccountEdgeCName(ctx context.Context, accountId string) (string, error)
+	GetAccountEdgeCName(ctx context.Context, accountId string, regionId repos.ID) (string, error)
 
-	CreateSite(ctx context.Context, domain string, accountId repos.ID) error
+	CreateSite(ctx context.Context, domain string, accountId, regionId repos.ID) error
 	DeleteSite(ctx context.Context, siteId repos.ID) error
 	UpdateNodeIPs(
 		ctx context.Context,

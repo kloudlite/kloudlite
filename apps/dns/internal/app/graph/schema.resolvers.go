@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+
 	"kloudlite.io/apps/dns/internal/app/graph/generated"
 	"kloudlite.io/apps/dns/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
@@ -17,22 +18,24 @@ func (r *accountResolver) Sites(ctx context.Context, obj *model.Account) ([]*mod
 	}
 	sites := make([]*model.Site, 0)
 	for _, e := range sitesEntities {
+		edgeCname, err := r.d.GetAccountEdgeCName(ctx, string(e.AccountId), e.RegionId)
+		if err != nil {
+			edgeCname = ""
+		}
 		sites = append(sites, &model.Site{
 			ID:         e.Id,
+			RegionID:   e.RegionId,
 			AccountID:  e.AccountId,
 			IsVerified: e.Verified,
 			Domain:     e.Domain,
+			EdgeCname:  edgeCname,
 		})
 	}
 	return sites, nil
 }
 
-func (r *accountResolver) EdgeCname(ctx context.Context, obj *model.Account) (string, error) {
-	return r.d.GetAccountEdgeCName(ctx, string(obj.ID))
-}
-
-func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, accountID repos.ID) (bool, error) {
-	err := r.d.CreateSite(ctx, domain, accountID)
+func (r *mutationResolver) DNSCreateSite(ctx context.Context, domain string, accountID repos.ID, regionID repos.ID) (bool, error) {
+	err := r.d.CreateSite(ctx, domain, accountID, regionID)
 	if err != nil {
 		return false, err
 	}
@@ -57,11 +60,18 @@ func (r *queryResolver) DNSGetSite(ctx context.Context, siteID repos.ID) (*model
 	if err != nil {
 		return nil, err
 	}
+	edgeCname, err := r.d.GetAccountEdgeCName(ctx, string(site.AccountId), site.RegionId)
+	if err != nil {
+		return nil, err
+	}
+
 	return &model.Site{
 		ID:         site.Id,
+		RegionID:   site.RegionId,
 		AccountID:  site.AccountId,
 		IsVerified: site.Verified,
 		Domain:     site.Domain,
+		EdgeCname:  edgeCname,
 	}, nil
 }
 
