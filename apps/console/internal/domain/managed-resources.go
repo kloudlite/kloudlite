@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -225,7 +226,9 @@ func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID)
 		return nil, err
 	}
 
-	secret, err := d.kubeCli.GetSecret(ctx, mres.Namespace, fmt.Sprint("mres-", mres.Id))
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+
+	secret, err := kubecli.GetSecret(ctx, mres.Namespace, fmt.Sprint("mres-", mres.Id))
 	if err != nil {
 		return nil, err
 	}

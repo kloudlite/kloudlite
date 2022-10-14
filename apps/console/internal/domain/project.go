@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/pkg/kubeapi"
 
 	// "fmt"
 	"strings"
@@ -265,7 +266,8 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 		return "", "", err
 	}
 
-	secret, err := d.kubeCli.GetSecret(ctx, project.Name, "kloudlite-docker-registry")
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+	secret, err := kubecli.GetSecret(ctx, project.Name, "kloudlite-docker-registry")
 	if err != nil {
 		return "", "", err
 	}
