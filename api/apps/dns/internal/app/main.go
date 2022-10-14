@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/codingconcepts/env"
 	"google.golang.org/grpc"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
@@ -37,6 +38,10 @@ type DNSHandler struct {
 }
 
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	var e Env
+	if err := env.Set(&e); err == nil {
+		h.EdgeCnameBaseDomain = e.EdgeCnameBaseDomain
+	}
 	msg := dns.Msg{}
 	msg.SetReply(r)
 	msg.Answer = []dns.RR{}
@@ -66,7 +71,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				querySplits := strings.Split(queryPart, ".")
 				var ips []string
 				var err error
-				if len(querySplits) == 3 {
+				if len(querySplits) == 4 {
 					regionPart := querySplits[0]
 					accountPart := querySplits[1]
 					clusterPart := querySplits[2]
@@ -75,7 +80,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 						fmt.Println(err)
 						continue
 					}
-				} else if len(querySplits) == 2 {
+				} else if len(querySplits) == 3 {
 					accountPart := querySplits[0]
 					clusterPart := querySplits[1]
 					ips, err = h.domain.GetNodeIps(todo, nil, &accountPart, clusterPart)
@@ -112,16 +117,18 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 					msg.Answer = append(msg.Answer, &dns.A{
 						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET},
 					})
-				}
-				rand.Shuffle(len(record.Answers), func(i, j int) {
-					record.Answers[i], record.Answers[j] = record.Answers[j], record.Answers[i]
-				})
-				for _, a := range record.Answers {
-					msg.Answer = append(msg.Answer, &dns.A{
-						Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(30)},
-						A:   net.ParseIP(a),
-					},
-					)
+				} else {
+					rand.Shuffle(len(record.Answers), func(i, j int) {
+						record.Answers[i], record.Answers[j] = record.Answers[j], record.Answers[i]
+					})
+
+					for _, a := range record.Answers {
+						msg.Answer = append(msg.Answer, &dns.A{
+							Hdr: dns.RR_Header{Name: d, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(30)},
+							A:   net.ParseIP(a),
+						},
+						)
+					}
 				}
 			}
 		}
@@ -181,7 +188,7 @@ var Module = fx.Module(
 				Domain   string
 				ARecords []string
 			}
-			err := c.BodyParser(&data)
+			err := json.Unmarshal(c.Body(), &data)
 			if err != nil {
 				return err
 			}
@@ -200,7 +207,8 @@ var Module = fx.Module(
 				AccountId string   `json:"account"`
 				Ips       []string `json:"ips"`
 			}
-			err := c.BodyParser(&regionIps)
+
+			err := json.Unmarshal(c.Body(), &regionIps)
 			if err != nil {
 				return err
 			}
