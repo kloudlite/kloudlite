@@ -8,20 +8,21 @@ type Query {
 extend type Account @key(fields: "id") {
   id: ID! @external
   sites:[Site]! # account-owner-access, account-admin-access, project-admin-access, project-developer-access, account-developer-access
-  edgeCname:String! # account-owner-access, account-admin-access, account-developer-access
 }
 
 type Site @key(fields: "id"){
-  id :ID!
+  id : ID!
+  regionId: ID!
   accountId: ID!
   isVerified: Boolean!
   domain: String!
   creationDate: String!
+  edgeCname: String!
 }
 
 
 type Mutation {
-  dns_createSite(domain:String!, accountId:ID!) :Boolean! # account-owner-access, account-admin-access
+  dns_createSite(domain:String!, accountId:ID!, regionId:ID!) :Boolean! # account-owner-access, account-admin-access
   dns_deleteSite(siteId:ID!) :Boolean! # account-owner-access, account-admin-access
   dns_VerifySite(siteId:ID!) :Boolean! # account-owner-access, account-admin-access
 }

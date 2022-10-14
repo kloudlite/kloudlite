@@ -136,7 +136,7 @@ func (d *domainI) GetVerifiedSites(ctx context.Context, accountId string) ([]*Si
 	})
 }
 
-func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos.ID) error {
+func (d *domainI) CreateSite(ctx context.Context, domain string, accountId, regionId repos.ID) error {
 	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
 		"host":      domain,
 		"accountId": accountId,
@@ -151,6 +151,7 @@ func (d *domainI) CreateSite(ctx context.Context, domain string, accountId repos
 		one, err = d.sitesRepo.Create(ctx, &Site{
 			Domain:    domain,
 			AccountId: accountId,
+			RegionId:  regionId,
 			Verified:  false,
 		})
 		if err != nil {
@@ -184,7 +185,12 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 		return err
 	}
 
-	if cname != fmt.Sprintf("%s.%s.", accountCnameIdentity, d.env.EdgeCnameBaseDomain) {
+	regionCnameIdentity, err := d.getRegionCName(ctx, string(site.RegionId))
+	if err != nil {
+		return err
+	}
+
+	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, "kl-01", d.env.EdgeCnameBaseDomain) {
 		return errors.New("cname does not match")
 	}
 	err = d.sitesRepo.UpdateMany(ctx, repos.Filter{
@@ -213,12 +219,18 @@ func (d *domainI) GetSite(ctx context.Context, siteId string) (*Site, error) {
 	return d.sitesRepo.FindById(ctx, repos.ID(siteId))
 }
 
-func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string) (string, error) {
+func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string, regionId repos.ID) (string, error) {
 	name, err := d.getAccountCName(ctx, accountId)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s.%s", name, d.env.EdgeCnameBaseDomain), nil
+
+	regionCnameIdentity, err := d.getRegionCName(ctx, string(regionId))
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s.%s.%s.%s", regionCnameIdentity, name, "kl-01", d.env.EdgeCnameBaseDomain), nil
 }
 
 func generateName() string {
