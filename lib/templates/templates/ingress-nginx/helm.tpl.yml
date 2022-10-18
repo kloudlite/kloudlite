@@ -1,12 +1,11 @@
 {{- $obj := get . "obj" }}
 {{- $ownerRefs := get . "owner-refs" }}
-{{- $controllerName := get . "controllers-name" }}
+{{- $controllerName := get . "controller-name" }}
 {{- $labels := get . "labels" }}
 
 {{- with $obj }}
-{{- /*gotype: operators.kloudlite.io/apis/crds/v1.AccountRouter*/ -}}
-{{- $ingClassName  := printf "ingress-nginx-%s" .Spec.AccountRef }}
-
+{{- /*gotype: operators.kloudlite.io/apis/crds/v1.EdgeRouter*/ -}}
+{{- $ingClassName  := printf "ingress-nginx-%s" .Spec.Region }}
 
 ---
 apiVersion: ingress.kloudlite.io/v1
@@ -20,6 +19,14 @@ spec:
   nameOverride: {{$controllerName}}
   commonLabels: {{$labels  | toYAML| nindent 4}}
   controller:
+    kind: DaemonSet
+{{/*    hostNetwork: true*/}}
+    hostPort:
+      enabled: true
+    ports:
+      http: 80
+      https: 443
+
     watchIngressWithoutClass: false
     ingressClassByName: true
     ingressClass: {{$ingClassName}}
@@ -35,28 +42,33 @@ spec:
 
 {{/*    {{- if .Spec.DefaultSSLCert.SecretName}}*/}}
     extraArgs:
-{{/*      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"*/}}
-      default-ssl-certificate: "kl-init-cert-manager/kl-cert-issuer-tls"
-      
+      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"
+{{/*      default-ssl-certificate: "kl-init-cert-manager/kl-cert-issuer-tls"*/}}
+
 {{/*    {{- end}}*/}}
 
     podLabels: {{$labels  | toYAML | nindent 6}}
 
-    autoscaling:
-      enabled: true
-      maxReplicas: 7
-      targetCPUUtilizationPercentage: 70
-      targetMemoryUtilizationPercentage: 80
+{{/*    autoscaling:*/}}
+{{/*      enabled: true*/}}
+{{/*      maxReplicas: 7*/}}
+{{/*      targetCPUUtilizationPercentage: 70*/}}
+{{/*      targetMemoryUtilizationPercentage: 80*/}}
 
     resources:
       requests:
         cpu: 100m
         memory: 200Mi
 
+    nodeSelector:
+      {{if .Spec.NodeSelector}}{{.Spec.NodeSelector | toYAML| nindent 6}}{{end}}
+      {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6 }}
 
-    {{- if .Spec.NodeSelector }}
-    nodeSelector: {{ .Spec.NodeSelector | toYAML | nindent 6 }}
-    {{- end}}
+    tolerations:
+      {{if .Spec.Tolerations}}{{.Spec.Tolerations | toYAML | nindent 6}}{{end}}
+      {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
+
+    affinity: {{include "NodeAffinity" (dict) | nindent 6 }}
 
     admissionWebhooks:
 {{/*      enabled: false*/}}

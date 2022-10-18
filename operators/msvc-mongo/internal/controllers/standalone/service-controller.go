@@ -92,10 +92,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.reconRootAccess(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-
 	if step := r.reconAccessCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -179,7 +175,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 		return req.CheckFailed(AccessCredsReady, check, err.Error())
 	}
 
-	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
+	rApi.SetLocal(req, KeyMsvcOutput, msvcOutput)
 	return req.Next()
 }
 
@@ -192,29 +188,27 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.Standalon
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMongoDBType),
 	)
 	if err != nil {
-		req.Logger.Infof("helm reosurce (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
+	msvcOutput, ok := rApi.GetLocal[*types.MsvcOutput](req, KeyMsvcOutput)
 	if !ok {
 		return req.CheckFailed(HelmReady, check, err.Error())
 	}
 
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error())
-		}
-
 		b, err := templates.Parse(
 			templates.MongoDBStandalone, map[string]any{
 				"object":        obj,
 				"freeze":        obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
-				"storage-class": storageClass,
+				"storage-class": fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Xfs),
 				"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"root-password": msvcOutput.RootPassword,
 			},
 		)
+		if err != nil {
+			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+		}
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}

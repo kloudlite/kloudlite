@@ -3,6 +3,7 @@ package standaloneService
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -75,6 +76,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -110,7 +114,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
@@ -137,6 +141,12 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*neo4jMsvcv1.StandaloneS
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
 				"string-data": types.MsvcOutput{
 					RootPassword: fn.CleanerNanoid(40),
+					Hosts:        fmt.Sprintf("%s-0.%s.%s.svc.cluster.local", obj.Name, obj.Name, obj.Namespace),
+					AdminHosts:   fmt.Sprintf("%s-0.%s-admin.%s.svc.cluster.local", obj.Name, obj.Name, obj.Namespace),
+					PortBolt:     "7687",
+					PortHttp:     "7474",
+					PortHttps:    "7473",
+					PortBackup:   "6362",
 				},
 			},
 		)
@@ -169,10 +179,10 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*neo4jMsvcv1.StandaloneS
 
 	accessCreds, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
 	if err != nil {
-		return req.CheckFailed(KeyRootPassword, check, err.Error())
+		return req.CheckFailed(KeyAccessCreds, check, err.Error())
 	}
 
-	rApi.SetLocal(req, KeyRootPassword, accessCreds)
+	rApi.SetLocal(req, KeyAccessCreds, accessCreds)
 	return req.Next()
 }
 
@@ -184,7 +194,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*neo4jMsvcv1.StandaloneService]
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmNeo4JStandaloneType),
 	)
 	if err != nil {
-		req.Logger.Infof("helm reosurce (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
 	accessCreds, ok := rApi.GetLocal[*types.MsvcOutput](req, KeyAccessCreds)
@@ -193,17 +203,15 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*neo4jMsvcv1.StandaloneService]
 	}
 
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error())
-		}
-
 		b, err := templates.Parse(
 			templates.MsvcHelmNeo4jStandalone, map[string]any{
 				"obj":           obj,
-				"storage-class": storageClass,
+				"storage-class": fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4),
 				"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"root-password": accessCreds.RootPassword,
+				"labels": map[string]string{
+					constants.MsvcNameKey: obj.Name,
+				},
 			},
 		)
 

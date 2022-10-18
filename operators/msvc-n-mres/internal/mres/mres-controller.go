@@ -61,6 +61,9 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady = %v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -87,7 +90,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 

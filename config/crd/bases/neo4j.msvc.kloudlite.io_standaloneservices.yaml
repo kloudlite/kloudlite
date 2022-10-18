@@ -15,7 +15,14 @@ spec:
     singular: standaloneservice
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: StandaloneService is the Schema for the standaloneservices API
@@ -35,28 +42,12 @@ spec:
           spec:
             description: StandaloneServiceSpec defines the desired state of StandaloneService
             properties:
-              cloudProvider:
-                properties:
-                  account:
-                    type: string
-                  cloud:
-                    enum:
-                    - do
-                    - aws
-                    - gcp
-                    - azure
-                    - k3s-local
-                    type: string
-                  region:
-                    type: string
-                required:
-                - cloud
-                - region
-                type: object
               nodeSelector:
                 additionalProperties:
                   type: string
                 type: object
+              region:
+                type: string
               replicaCount:
                 default: 1
                 type: integer
@@ -77,18 +68,19 @@ spec:
                   memory:
                     pattern: '[\d]+Mi$'
                     type: string
+                  storage:
+                    properties:
+                      size:
+                        pattern: '[\d]+Gi$'
+                        type: string
+                      storageClass:
+                        type: string
+                    required:
+                    - size
+                    type: object
                 required:
                 - cpu
                 - memory
-                type: object
-              storage:
-                properties:
-                  size:
-                    default: 5Gi
-                    pattern: '[\d]+Gi$'
-                    type: string
-                  storageClass:
-                    type: string
                 type: object
               tolerations:
                 items:
@@ -130,9 +122,8 @@ spec:
                   type: object
                 type: array
             required:
-            - cloudProvider
+            - region
             - resources
-            - storage
             type: object
           status:
             properties:

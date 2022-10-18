@@ -4,7 +4,7 @@ type MsvcOutput struct {
 	RootPassword      string `json:"ROOT_PASSWORD"`
 	MysqlUserPassword string `json:"MYSQL_USER_PASSWORD"`
 	Hosts             string `json:"HOSTS"`
-	DSN               string `json:"dsn,omitempty"`
+	DSN               string `json:"DSN,omitempty"`
 	URI               string `json:"URI"`
 }
 

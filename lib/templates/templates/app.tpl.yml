@@ -30,6 +30,7 @@ spec:
     metadata:
       labels:
         app: {{.Name}}
+        kloudlite.io/region: {{.Spec.Region}}
     spec:
       serviceAccount: {{.Spec.ServiceAccount}}
       nodeSelector: {{if .Spec.NodeSelector}}{{ .Spec.NodeSelector | toYAML | nindent 8 }}{{end}}
@@ -40,6 +41,8 @@ spec:
           key: kloudlite.io/region
           operator: Equal
           value: {{.Spec.Region | squote}}
+
+      dnsPolicy: ClusterFirst
 
       affinity:
         nodeAffinity:
@@ -91,7 +94,7 @@ spec:
     {{- with $svc }}
     - protocol: {{.Type | upper | default "TCP"}}
       port: {{.Port}}
-      name: {{.Name}}
+      name: {{.Port | squote}}
       targetPort: {{.TargetPort}}
     {{- end }}
     {{- end }}

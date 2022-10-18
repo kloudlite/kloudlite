@@ -75,6 +75,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -110,7 +113,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
@@ -202,16 +205,11 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneS
 	}
 
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error())
-		}
-
 		b, err := templates.Parse(
 			templates.MySqlStandalone, map[string]any{
 				"obj":                 obj,
 				"owner-refs":          obj.GetOwnerReferences(),
-				"storage-class":       storageClass,
+				"storage-class":       fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4),
 				"root-password":       msvcOutput.RootPassword,
 				"mysql-user-password": msvcOutput.MysqlUserPassword,
 			},
@@ -329,7 +327,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 		),
 	)
 
-	// builder.WithEventFilter(rApi.ReconcileFilter())
+	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	return builder.Complete(r)
 }

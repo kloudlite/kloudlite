@@ -145,8 +145,8 @@ func (r *Reconciler) buildRedisConf(req *rApi.Request[*redisMsvcv1.ACLConfigMap]
 	for i := range scrtList.Items {
 		aclSecrets[i] = types.MresOutput{
 			Password: string(scrtList.Items[i].Data["PASSWORD"]),
-			Username: string(scrtList.Items[i].Data["PREFIX"]),
-			Prefix:   string(scrtList.Items[i].Data["USERNAME"]),
+			Username: string(scrtList.Items[i].Data["USERNAME"]),
+			Prefix:   string(scrtList.Items[i].Data["PREFIX"]),
 		}
 	}
 

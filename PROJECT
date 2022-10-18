@@ -466,4 +466,20 @@ resources:
   kind: StorageClass
   path: operators.kloudlite.io/apis/csi/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: EdgeRouter
+  path: operators.kloudlite.io/apis/crds/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: elasticsearch.msvc
+  kind: Kibana
+  path: operators.kloudlite.io/apis/elasticsearch.msvc/v1
+  version: v1
 version: "3"

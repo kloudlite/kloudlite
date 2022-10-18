@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -100,6 +101,27 @@ type Config struct {
 	WildcardDomains []string `json:"wildcard-domains"`
 }
 
+func (r *Reconciler) parseAccountDomains(ctx context.Context, accountRef string) []string {
+	klAcc := fn.NewUnstructured(constants.KloudliteAccountType)
+	if err := r.Get(ctx, fn.NN("", accountRef), klAcc); err != nil {
+		return nil
+	}
+	b, err := json.Marshal(klAcc.Object)
+	if err != nil {
+		return nil
+	}
+
+	var j struct {
+		Spec struct {
+			OwnedDomains []string `json:"ownedDomains,omitempty"`
+		}
+	}
+	if err := json.Unmarshal(b, &j); err != nil {
+		return nil
+	}
+	return j.Spec.OwnedDomains
+}
+
 func (r *Reconciler) readFromProjectConfig(req *rApi.Request[*crdsv1.Router]) Config {
 	ctx, obj := req.Context(), req.Object
 
@@ -138,16 +160,44 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 }
 
 func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	_, router, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, router, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: router.Generation}
 
-	// accRef := router.GetLabels()[constants.AccountRef]
+	accRef := func() string {
+		v, ok := router.GetLabels()[constants.AccountRef]
+		if ok {
+			return v
+		}
+		v, ok = router.GetAnnotations()[constants.AccountRef]
+		if ok {
+			return v
+		}
+		return ""
+	}()
+
+	if accRef == "" {
+		return req.CheckFailed(IngressReady, check, fmt.Sprintf("could not get account-ref from labels/annotations")).Err(nil)
+	}
 
 	routerCfg := r.readFromProjectConfig(req)
+	accDomains := r.parseAccountDomains(ctx, accRef)
+
+	wcDomains := make([]string, 0, len(routerCfg.WildcardDomains)+len(accDomains))
+	for _, v := range routerCfg.WildcardDomains {
+		if strings.HasPrefix(v, "*.") {
+			wcDomains = append(wcDomains, v[2:])
+		}
+	}
+	for _, v := range accDomains {
+		if strings.HasPrefix(v, "*.") {
+			wcDomains = append(wcDomains, v[2:])
+		}
+	}
+
 	nonWildCardDomains := make([]string, 0, len(router.Spec.Domains))
 	for i := range router.Spec.Domains {
-		if isNonWildcardDomain(routerCfg.WildcardDomains, router.Spec.Domains[i]) {
+		if isNonWildcardDomain(wcDomains, router.Spec.Domains[i]) {
 			nonWildCardDomains = append(nonWildCardDomains, router.Spec.Domains[i])
 		}
 	}
@@ -204,14 +254,18 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(router, true)},
 
 				"domains":          nonWildCardDomains,
-				"wildcard-domains": routerCfg.WildcardDomains,
+				"wildcard-domains": wcDomains,
 
 				"router-ref":       router,
 				"routes":           lRoutes,
 				"virtual-hostname": fmt.Sprintf("%s.%s", lName, router.Namespace),
 
-				// "ingress-class": "ingress-nginx-" + accRef,
-				"ingress-class": "ingress-nginx",
+				"ingress-class": func() string {
+					if router.Spec.Region == "" {
+						return "ingress-nginx"
+					}
+					return "ingress-nginx-" + router.Spec.Region
+				}(),
 
 				"cluster-issuer":     r.Env.ClusterCertIssuer,
 				"cert-ingress-class": r.Env.GlobalIngressClass,
@@ -232,15 +286,19 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 				"namespace":        router.Namespace,
 				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(router, true)},
 				"domains":          nonWildCardDomains,
-				"wildcard-domains": routerCfg.WildcardDomains,
+				"wildcard-domains": wcDomains,
 				"labels": map[string]any{
 					constants.RouterNameKey: router.Name,
 				},
 				"router-ref": router,
 				"routes":     appRoutes,
 
-				// "ingress-class":      "ingress-nginx-" + accRef,
-				"ingress-class":      "ingress-nginx",
+				"ingress-class": func() string {
+					if router.Spec.Region == "" {
+						return "ingress-nginx"
+					}
+					return "ingress-nginx-" + router.Spec.Region
+				}(),
 				"cluster-issuer":     r.Env.ClusterCertIssuer,
 				"cert-ingress-class": r.Env.GlobalIngressClass,
 				"virtual-hostname":   fmt.Sprintf("%s.%s", router.Name, router.Namespace),

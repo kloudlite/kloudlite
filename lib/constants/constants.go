@@ -64,6 +64,7 @@ const (
 	RouterNameKey        string = "kloudlite.io/router.name"
 	LambdaNameKey        string = "kloudlite.io/lambda.name"
 	AccountRouterNameKey string = "kloudlite.io/account-router.name"
+	EdgeNameKey          string = "kloudlite.io/edge.name"
 
 	ClearStatusKey string = "kloudlite.io/clear-status"
 	RestartKey     string = "kloudlite.io/do-restart"
@@ -90,6 +91,11 @@ var (
 		APIVersion: MsvcApiVersion,
 	}
 
+	HelmKibanaType = metav1.TypeMeta{
+		Kind:       "HelmKibana",
+		APIVersion: MsvcApiVersion,
+	}
+
 	HelmOpenSearchType = metav1.TypeMeta{
 		Kind:       "HelmOpenSearch",
 		APIVersion: MsvcApiVersion,
@@ -111,7 +117,7 @@ var (
 	}
 
 	HelmNeo4JStandaloneType = metav1.TypeMeta{
-		Kind:       "HelmNeo4JStandalone",
+		Kind:       "HelmNeo4jStandalone",
 		APIVersion: MsvcApiVersion,
 	}
 

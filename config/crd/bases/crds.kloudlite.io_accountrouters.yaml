@@ -76,6 +76,8 @@ spec:
                   rps:
                     type: integer
                 type: object
+              region:
+                type: string
               serviceType:
                 enum:
                 - ClusterIP
@@ -87,6 +89,7 @@ spec:
                 type: array
             required:
             - accountRef
+            - region
             - serviceType
             type: object
           status:

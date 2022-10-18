@@ -84,6 +84,16 @@ spec:
                   memory:
                     pattern: '[\d]+Mi$'
                     type: string
+                  storage:
+                    properties:
+                      size:
+                        pattern: '[\d]+Gi$'
+                        type: string
+                      storageClass:
+                        type: string
+                    required:
+                    - size
+                    type: object
                 required:
                 - cpu
                 - memory
@@ -92,11 +102,12 @@ spec:
                 description: Inputs    rawJson.KubeRawJson `json:"inputs,omitempty"`
                 properties:
                   size:
-                    default: 5Gi
                     pattern: '[\d]+Gi$'
                     type: string
                   storageClass:
                     type: string
+                required:
+                - size
                 type: object
             required:
             - cloudProvider

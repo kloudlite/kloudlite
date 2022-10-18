@@ -1,34 +1,37 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
+	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
-type Auth struct {
-	Password string `json:"password"`
-}
-
 type ServiceSpec struct {
-	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	// CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	Region string `json:"region"`
 
-	// +kubebuilder:validation:optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// +kubebuidler:default=1
 	// +kubebuilder:validation:Optional
 	ReplicaCount int `json:"replicaCount"`
 
-	Storage   ct.Storage   `json:"storage"`
+	// Storage   ct.Storage   `json:"storage"`
 	Resources ct.Resources `json:"resources"`
+
+	// +kubebuilder:default=true
+	KibanaEnabled bool `json:"kibanaEnabled,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Cloud",type="string",JSONPath=".spec.cloudProvider.cloud"
+// +kubebuilder:printcolumn:name="Region",type="string",JSONPath=".spec.region"
 // +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
-// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status.isReady"
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Service is the Schema for the services API
 type Service struct {
@@ -44,7 +47,7 @@ func (s *Service) GetStatus() *rApi.Status {
 }
 
 func (s *Service) GetEnsuredLabels() map[string]string {
-	return map[string]string{"kloudlite.io/msvc.name": s.Name}
+	return map[string]string{constants.MsvcNameKey: s.Name}
 }
 
 func (s *Service) GetEnsuredAnnotations() map[string]string {

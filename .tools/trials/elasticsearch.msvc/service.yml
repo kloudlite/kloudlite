@@ -1,18 +1,21 @@
 apiVersion: elasticsearch.msvc.kloudlite.io/v1
 kind: Service
 metadata:
-  name: example-elastic-svc
+  name: sample-elastic-svc
   namespace: kl-core
 spec:
-  cloudProvider:
-    cloud: azure
-    region: centralindia
+  # cloudProvider:
+  #   cloud: azure
+  #   region: centralindia
+  region: reg-9tco8kqki8hsw8dcwftdtkesxhqa
   replicaCount: 1
-  nodeSelector:
-    kloudlite.io/region: "centralindia"
-  storage:
-    size: 1Gi
+  # nodeSelector:
+  #   kloudlite.io/region: "centralindia"
+  # storage:
+  #   size: 1Gi
   resources:
+    storage:
+      size: 1Gi
     cpu:
       min: 400m
       max: 500m

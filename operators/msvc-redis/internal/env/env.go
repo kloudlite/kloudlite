@@ -7,8 +7,8 @@ import (
 )
 
 type Env struct {
-	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
-	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
+	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD" required:"true"`
+	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

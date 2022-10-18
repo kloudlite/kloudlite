@@ -6,6 +6,7 @@
 {{/*{{- $freeze := get . "freeze" | default false}}*/}}
 {{- $aclConfigmapName := get . "acl-configmap-name"  -}}
 {{- $rootPassword := get . "root-password"  -}}
+{{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{/*{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}*/}}
 
@@ -65,14 +66,26 @@ spec:
     persistence:
       enabled: true
       size: {{.Spec.Storage.Size}}
-    {{- if .Labels}}
-    podLabels: {{.Labels | toYAML | nindent 6 }}
-    {{- end}}
+
+    podLabels:
+      {{ if .Labels}}{{.Labels | toYAML | nindent 6 }}{{ end}}
+      kloudlite.io/region: {{.Spec.Region}}
+      kloudlite.io/stateful-node: "true"
+
+    priorityClassName: {{$priorityClassName}}
+    affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}
+    tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
+    nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}
 
   replica:
     {{- if .Labels}}
     podLabels: {{.Labels | toYAML | nindent 6 }}
     {{- end}}
+
+    priorityClassName: {{$priorityClassName}}
+    affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}
+    tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
+    nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}
 
   volumePermissions:
     enabled: true

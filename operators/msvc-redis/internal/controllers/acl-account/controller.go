@@ -282,8 +282,7 @@ func (r *Reconciler) reconACLUser(req *rApi.Request[*redisMsvcv1.ACLAccount]) st
 	}
 	defer redisCli.Close()
 
-	tCtx, _ := context.WithTimeout(ctx, 3*time.Second)
-	exists, err := redisCli.UserExists(tCtx, obj.Name)
+	exists, err := redisCli.UserExists(context.TODO(), output.Username)
 	if err != nil {
 		return req.CheckFailed(ACLUserReady, check, err.Error())
 	}

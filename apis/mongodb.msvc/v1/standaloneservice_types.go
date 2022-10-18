@@ -1,6 +1,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
@@ -9,21 +10,23 @@ import (
 
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
-	CloudProvider ct.CloudProvider  `json:"cloudProvider"`
-	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
+	Region       string              `json:"region"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=1
-	ReplicaCount int          `json:"replicaCount,omitempty"`
-	Storage      ct.Storage   `json:"storage"`
-	Resources    ct.Resources `json:"resources"`
+	ReplicaCount int `json:"replicaCount,omitempty"`
+	// Storage      ct.Storage   `json:"storage"`
+	Resources ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Cloud",type="string",JSONPath=".spec.cloudProvider.cloud"
+// +kubebuilder:printcolumn:name="Region",type="string",JSONPath=".spec.region"
 // +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
-// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status.isReady"
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // StandaloneService is the Schema for the standaloneservices API
 type StandaloneService struct {

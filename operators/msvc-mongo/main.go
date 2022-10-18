@@ -1,6 +1,7 @@
 package main
 
 import (
+	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
 	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/msvc-mongo/internal/controllers/database"
 	"operators.kloudlite.io/operators/msvc-mongo/internal/controllers/standalone"
@@ -8,13 +9,14 @@ import (
 )
 
 func main() {
-	op := operator.New("mongodb")
-
 	ev := env.GetEnvOrDie()
-
-	op.RegisterControllers(
+	mgr := operator.New("mongodb")
+	mgr.AddToSchemes(
+		mongodbMsvcv1.AddToScheme,
+	)
+	mgr.RegisterControllers(
 		&standalone.ServiceReconciler{Name: "mongodb-standalone-svc", Env: ev},
 		&database.Reconciler{Name: "mongodb-database", Env: ev},
 	)
-	op.Start()
+	mgr.Start()
 }

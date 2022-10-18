@@ -64,4 +64,6 @@ resources:
 - csi_v1_awsebs.yaml
 - csi_v1_driver.yaml
 - csi_v1_storageclass.yaml
+- crds_v1_edgerouter.yaml
+- elasticsearch.msvc_v1_kibana.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

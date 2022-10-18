@@ -9,6 +9,7 @@ import (
 // AccountRouterSpec defines the desired state of AccountRouter
 type AccountRouterSpec struct {
 	ControllerName string `json:"controllerName,omitempty"`
+	Region         string `json:"region"`
 	AccountRef     string `json:"accountRef"`
 
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer
