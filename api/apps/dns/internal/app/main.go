@@ -46,6 +46,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg.SetReply(r)
 	msg.Answer = []dns.RR{}
 	for _, q := range r.Question {
+		// fmt.Println(q.Name)
 		switch q.Qtype {
 		case dns.TypeNS:
 			for _, name := range h.dnsDomainNames {
