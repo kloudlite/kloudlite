@@ -12,6 +12,7 @@ type RegionCName struct {
 	repos.BaseEntity `bson:",inline"`
 	RegionId         repos.ID `bson:"regionId" json:"regionId"`
 	CName            string   `bson:"cName" json:"cName"`
+	IsShared         bool     `bson:"isShared" json:"isShared"`
 }
 
 type NodeIps struct {

@@ -34,6 +34,9 @@ func (d *domainI) UpsertARecords(ctx context.Context, host string, records []str
 
 func (d *domainI) UpdateNodeIPs(ctx context.Context, regionId string, accountId string, clusterPart string, ips []string) bool {
 	accountCname, err := d.getAccountCName(ctx, accountId)
+	if err != nil {
+		return false
+	}
 	regionCname, err := d.getRegionCName(ctx, regionId)
 	if err != nil {
 		return false
@@ -47,7 +50,7 @@ func (d *domainI) UpdateNodeIPs(ctx context.Context, regionId string, accountId 
 		return false
 	}
 	if one == nil {
-		one, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
+		_, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
 			RegionPart:  regionCname,
 			AccountPart: accountCname,
 			ClusterPart: clusterPart,
@@ -84,6 +87,24 @@ func (d *domainI) GetNodeIps(ctx context.Context,
 	out := make([]string, 0)
 	for _, nodeIps := range all {
 		out = append(out, nodeIps.Ips...)
+	}
+	if len(out) == 0 && regionPart != nil {
+		result, e := d.regionCNamesRepo.FindOne(ctx, repos.Filter{
+			"cName": regionPart,
+		})
+		if e == nil && result.IsShared {
+			filter := repos.Filter{
+				"regionPart": regionPart,
+			}
+			all, e2 := d.nodeIpsRepo.Find(ctx, repos.Query{
+				Filter: filter,
+			})
+			if e2 == nil {
+				for _, nodeIps := range all {
+					out = append(out, nodeIps.Ips...)
+				}
+			}
+		}
 	}
 	return out, err
 }
@@ -148,7 +169,7 @@ func (d *domainI) CreateSite(ctx context.Context, domain string, accountId, regi
 		return errors.New("site already exists")
 	}
 	if one == nil {
-		one, err = d.sitesRepo.Create(ctx, &Site{
+		_, err = d.sitesRepo.Create(ctx, &Site{
 			Domain:    domain,
 			AccountId: accountId,
 			RegionId:  regionId,
@@ -175,11 +196,14 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 	if site.Verified {
 		return errors.New("site already verified")
 	}
+
 	cname, err := net.LookupCNAME(site.Domain)
-	fmt.Println(site.Domain)
 	if err != nil {
+		fmt.Println(err)
 		return errors.New("Unable to verify CName. Please wait for a while and try again.")
 	}
+
+	fmt.Println(site.Domain, cname)
 	accountCnameIdentity, err := d.getAccountCName(ctx, string(site.AccountId))
 	if err != nil {
 		return err
@@ -189,6 +213,8 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, "kl-01", d.env.EdgeCnameBaseDomain), cname)
 
 	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, "kl-01", d.env.EdgeCnameBaseDomain) {
 		return errors.New("cname does not match")
