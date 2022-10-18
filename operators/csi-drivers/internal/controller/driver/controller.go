@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	types2 "k8s.io/apimachinery/pkg/types"
 	ct "operators.kloudlite.io/apis/common-types"
 	csiv1 "operators.kloudlite.io/apis/csi/v1"
 	"operators.kloudlite.io/lib/constants"
@@ -20,6 +22,9 @@ import (
 	"operators.kloudlite.io/operators/csi-drivers/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -108,7 +113,7 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 
 		b, err := templates.Parse(
 			templates.AwsEbsCsiDriver, map[string]any{
-				"name":            fmt.Sprintf("%s-%s-csi", obj.Name, obj.Spec.Provider),
+				"name":            fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
 				"namespace":       obj.Spec.SecretRef,
 				"aws-secret-name": obj.Spec.SecretRef,
 				"aws-key":         string(accessSecret.Data["accessKey"]),
@@ -163,8 +168,11 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 			b, err := templates.Parse(
 				templates.AwsEbsStorageClass, map[string]any{
 					"name":        edgesList.Items[i].GetName(),
-					"driver-name": obj.Name,
+					"driver-name": fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
 					"fs-types":    []ct.FsType{ct.Ext4, ct.Xfs},
+					"labels": map[string]string{
+						"kloudite.io/csi-driver": obj.Name,
+					},
 				},
 			)
 			if err != nil {
@@ -191,30 +199,20 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&csiv1.Driver{})
-	// builder.Watches(
-	// 	&source.Kind{Type: fn.NewUnstructured(constants.EdgeInfraType)}, handler.EnqueueRequestsFromMapFunc(
-	// 		func(obj client.Object) []reconcile.Request {
-	// 			var drivers csiv1.DriverList
-	// 			if err := r.List(
-	// 				context.TODO(), &drivers, &client.ListOptions{
-	// 					LabelSelector: labels.SelectorFromValidatedSet(
-	// 						map[string]string{
-	// 							constants.LabelKeys.CsiForEdge: obj.GetName(),
-	// 						},
-	// 					),
-	// 				},
-	// 			); err != nil {
-	// 				return nil
-	// 			}
-	//
-	// 			for i := range drivers.Items {
-	//
-	// 			}
-	//
-	// 			return nil
-	// 		},
-	// 	),
-	// )
+	builder.Owns(
+		fn.NewUnstructured(metav1.TypeMeta{Kind: "AwsEbsCsiDriver", APIVersion: "csi.kloudlite.io/v1"}),
+	)
+	builder.Watches(
+		&source.Kind{Type: &storagev1.StorageClass{}}, handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+				s, ok := obj.GetLabels()["kloudite.io/csi-driver"]
+				if !ok {
+					return nil
+				}
+				return []reconcile.Request{{NamespacedName: types2.NamespacedName{Name: s}}}
+			},
+		),
+	)
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

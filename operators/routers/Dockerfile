@@ -7,7 +7,9 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 
 COPY --from=project go.mod go.sum ./
 COPY --from=project lib ./lib
-COPY --from=project apis ./apis
+RUN mkdir -p ./apis
+COPY --from=project apis/crds ./apis/crds
+COPY --from=project apis/common-types ./apis/common-types
 COPY --from=project ./operator ./operator
 RUN go mod download -x
 

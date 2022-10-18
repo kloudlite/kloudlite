@@ -7,9 +7,6 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
 	MsvcRef ct.MsvcRef `json:"msvcRef"`

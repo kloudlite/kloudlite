@@ -1,8 +1,10 @@
 {{- $ownerRefs := get . "owner-refs"}}
 {{- $storageClass := get . "storage-class" }}
-{{- $obj := get . "object"}}
+{{- $obj := get . "obj"}}
+{{- $elasticPassword := get . "elastic-password" -}}
+{{- $labels := get . "labels"  -}}
 
-{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}
+{{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{- with $obj}}
 {{- /* gotype: operators.kloudlite.io/apis/elasticsearch.msvc/v1.Service */ -}}
@@ -12,22 +14,28 @@ metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-  labels: {{.Labels | toYAML | nindent 4}}
+  labels: {{$labels | toYAML | nindent 4}}
 spec:
   replicas: {{.Spec.ReplicaCount}}
   minimumMasterNodes: {{.Spec.ReplicaCount}}
   fullnameOverride: {{.Name}}
 
-  {{- if .Spec.NodeSelector }}
-  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
-  {{- end }}
+  labels:
+    {{ if $labels }}{{$labels | toYAML | nindent 4}}{{end}}
+    kloudlite.io/region: {{.Spec.Region}}
+    kloudlite.io/stateful-node: "true"
+
+  priorityClassName: {{$priorityClassName}}
+  {{ include "NodeAffinity" (dict) | nindent 2 }}
+  tolerations: {{ include "RegionToleration" (dict "region" .Spec.Region) | nindent 4 }}
+  nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 4 }}
 
   volumeClaimTemplate:
     accessModes: [ "ReadWriteOnce" ]
     storageClassName: {{$storageClass}}
     resources:
       requests:
-        storage: {{.Spec.Storage.Size}}
+        storage: {{.Spec.Resources.Storage.Size}}
 
   resources:
     limits:
@@ -39,7 +47,7 @@ spec:
 
   secret:
     enabled: true
-    password: {{ index $generatedVars "password" }}
+    password: {{$elasticPassword}}
 
   service:
     enabled: true

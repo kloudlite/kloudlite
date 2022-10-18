@@ -87,6 +87,16 @@ spec:
                   memory:
                     pattern: '[\d]+Mi$'
                     type: string
+                  storage:
+                    properties:
+                      size:
+                        pattern: '[\d]+Gi$'
+                        type: string
+                      storageClass:
+                        type: string
+                    required:
+                    - size
+                    type: object
                 required:
                 - cpu
                 - memory
@@ -94,11 +104,12 @@ spec:
               storage:
                 properties:
                   size:
-                    default: 5Gi
                     pattern: '[\d]+Gi$'
                     type: string
                   storageClass:
                     type: string
+                required:
+                - size
                 type: object
             required:
             - cloudProvider

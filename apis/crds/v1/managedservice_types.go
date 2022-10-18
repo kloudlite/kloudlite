@@ -1,7 +1,7 @@
 package v1
 
 import (
-	ct "operators.kloudlite.io/apis/common-types"
+	corev1 "k8s.io/api/core/v1"
 	"operators.kloudlite.io/lib/constants"
 	rApi "operators.kloudlite.io/lib/operator"
 
@@ -19,20 +19,22 @@ type msvcKind struct {
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	Region string `json:"region"`
 
-	// +kubebuilder:validation:Optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-	MsvcKind     msvcKind          `json:"msvcKind"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	MsvcKind     msvcKind            `json:"msvcKind"`
 
 	// // +kubebuilder:validation:Optional
 	// // +kubebuilder:default=1
-	// ReplicaCount int                 `json:"replicaCount,omitempty"`
+	// ReplicaCount int             `json:"replicaCount,omitempty"`
 	Inputs rawJson.RawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".spec.msvcKind.apiVersion",name=~API,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.msvcKind.kind",name=~Kind,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 

@@ -1,7 +1,7 @@
 {{- define "TemplateEnv" }}
 {{- range $_, $v := . }}
 {{- with $v }}
-- name: {{.Key}}
+- name: {{.Key | squote}}
 {{- if .Value }}
   value: {{.Value | squote }}
 {{- else }}

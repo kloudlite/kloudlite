@@ -149,7 +149,8 @@ const (
 
 	ServerlessLambda templateFile = "templates/serverless/lambda.tpl.yml"
 
-	ElasticSearch templateFile = "templates/msvc/elasticsearch/helm.tpl.yml"
+	ElasticSearch templateFile = "templates/msvc/elasticsearch/elastic-helm.yml.tpl"
+	Kibana        templateFile = "templates/msvc/elasticsearch/kibana-helm.yml.tpl"
 	OpenSearch    templateFile = "templates/msvc/opensearch/helm.tpl.yml"
 	InfluxDB      templateFile = "templates/msvc/influx/helm.tpl.yml"
 

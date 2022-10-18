@@ -9,8 +9,6 @@ import (
 )
 
 type Storage struct {
-	// +kubebuilder:default="5Gi"
-	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Pattern=[\d]+Gi$
 	Size string `json:"size"`
 
@@ -24,17 +22,23 @@ func (s Storage) ToInt() int {
 	return int(sGb)
 }
 
-type cpuTT struct {
+// +kubebuilder:object:generate=true
+
+type CpuT struct {
 	// +kubebuilder:validation:Pattern=[\d]+m$
 	Min string `json:"min"`
 	// +kubebuilder:validation:Pattern=[\d]+m$
 	Max string `json:"max"`
 }
 
+// +kubebuilder:object:generate=true
+
 type Resources struct {
-	Cpu cpuTT `json:"cpu"`
+	Cpu CpuT `json:"cpu"`
 	// +kubebuilder:validation:Pattern=[\d]+Mi$
 	Memory string `json:"memory"`
+
+	Storage *Storage `json:"storage,omitempty"`
 }
 
 type FsType string

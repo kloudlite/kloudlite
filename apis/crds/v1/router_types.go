@@ -35,7 +35,8 @@ type BasicAuth struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Https Https `json:"https,omitempty"`
+	Region string `json:"region,omitempty"`
+	Https  Https  `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional
 	RateLimit       RateLimit `json:"rateLimit,omitempty"`
 	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`

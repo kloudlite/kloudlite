@@ -1,6 +1,7 @@
 package main
 
 import (
+	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/artifacts-harbor/internal/controllers/project"
@@ -9,7 +10,6 @@ import (
 )
 
 func main() {
-	mgr := operator.New("artifacts-harbor")
 
 	ev := env.GetEnvOrDie()
 
@@ -25,6 +25,8 @@ func main() {
 		panic(err)
 	}
 
+	mgr := operator.New("artifacts-harbor")
+	mgr.AddToSchemes(artifactsv1.AddToScheme)
 	mgr.RegisterControllers(
 		&project.Reconciler{Name: "harbor-project", HarborCli: harborCli, Env: ev},
 		&userAccount.Reconciler{Name: "harbor-user-account", HarborCli: harborCli, Env: ev},

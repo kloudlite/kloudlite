@@ -79,6 +79,8 @@ spec:
                   rps:
                     type: integer
                 type: object
+              region:
+                type: string
               routes:
                 items:
                   properties:

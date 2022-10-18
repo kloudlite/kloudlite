@@ -3,9 +3,10 @@
 {{- $obj := get . "obj"}}
 {{- $rootPassword := get . "root-password"  -}}
 {{- $mysqlUserPassword := get . "mysql-user-password"  -}}
+{{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{- with $obj }}
-{{- /*gotype: operators.kloudlite.io/apis/mysql-standalone.msvc/v1.Service*/ -}}
+{{- /*gotype: operators.kloudlite.io/apis/mysql.msvc/v1.StandaloneService*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMySqlDB
 metadata:
@@ -39,15 +40,24 @@ spec:
   primary:
     persistence:
       enabled: true
-      size: {{.Spec.Storage.Size}}
+      size: {{.Spec.Resources.Storage.Size}}
     {{- if .Labels }}
-    podLabels: {{.Labels | toYAML | nindent 6}}
+    podLabels:
+      {{.Labels | toYAML | nindent 6}}
+      kloudlite.io/region: {{.Spec.Region}}
+      kloudlite.io/stateful-node: "true"
     {{- end}}
+
+    priorityClassName: {{$priorityClassName}}
+    affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}
+    tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
+    nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}
 
   secondary:
     {{- if .Labels }}
     podLabels: {{.Labels | toYAML | nindent 6}}
     {{- end}}
+
 
   resources:
     limits:

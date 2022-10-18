@@ -44,4 +44,6 @@ resources:
 - bases/csi.kloudlite.io_awsebs.yaml
 - bases/csi.kloudlite.io_drivers.yaml
 - bases/csi.kloudlite.io_storageclasses.yaml
+- bases/crds.kloudlite.io_edgerouters.yaml
+- bases/elasticsearch.msvc.kloudlite.io_kibanas.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
