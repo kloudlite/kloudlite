@@ -37,11 +37,20 @@ roleRef:
   name: cluster-admin
   apiGroup: ""
 ---
+apiVersion: "storage.k8s.io/v1"
+kind: CSIDriver
+metadata:
+  name: ebs.csi.aws.com
+spec:
+  attachRequired: true
+  podInfoOnMount: false
+---
 apiVersion: csi.kloudlite.io/v1
 kind: AwsEbsCsiDriver
 metadata:
   name: {{$name}}
   namespace: csi-{{$awsSecretName}}
+  ownerReferences: {{$ownerRefs | toYAML |nindent 4}}
 spec:
   fullnameOverride: {{$name}}
   controller:

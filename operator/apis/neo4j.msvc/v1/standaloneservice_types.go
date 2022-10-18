@@ -10,18 +10,19 @@ import (
 
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
-	CloudProvider ct.CloudProvider    `json:"cloudProvider"`
-	NodeSelector  map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations   []corev1.Toleration `json:"tolerations,omitempty"`
+	Region       string              `json:"region"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// +kubebuilder:default=1
 	ReplicaCount int          `json:"replicaCount,omitempty"`
-	Storage      ct.Storage   `json:"storage"`
 	Resources    ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // StandaloneService is the Schema for the standaloneservices API
 type StandaloneService struct {

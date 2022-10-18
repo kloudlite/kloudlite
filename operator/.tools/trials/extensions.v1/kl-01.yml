@@ -1,20 +1,16 @@
-apiVersion: mongodb.msvc.kloudlite.io/v1
-kind: StandaloneService
+apiVersion: extensions.kloudlite.io/v1
+kind: Cluster
 metadata:
-  name: sample-mongodb
+  name: kl-01
   namespace: kl-core
 spec:
-  cloudProvider:
-    cloud: azure
-    region: centralindia
-  replicaCount: 1
-  nodeSelector:
-    kloudlite.io/region: "centralindia"
-    kubernetes.io/hostname: "kloudlite-06"
-  storage:
-    size: 1Gi
-  resources:
-    cpu:
-      min: 200m
-      max: 300m
-    memory: 400Mi
+  redpanda:
+    adminSecretRef:
+      name: msvc-redpanda-admin-creds
+      namespace: kl-core
+    extraTopicsWithACL:
+      - kl-harbor-webhooks
+
+  kubeConfig:
+    name: kl-01-kubeconfig
+    namespace: kl-core

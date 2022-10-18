@@ -1,4 +1,4 @@
-package controllers
+package service
 
 import (
 	"context"
@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/goombaio/namegenerator"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -16,6 +18,7 @@ import (
 	elasticsearchMsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -30,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-type ServiceReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	logger logging.Logger
@@ -38,7 +41,7 @@ type ServiceReconciler struct {
 	Env    *env.Env
 }
 
-func (r *ServiceReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
@@ -49,14 +52,15 @@ const (
 )
 
 const (
-	KeyOutput string = "output"
+	KeyOutput   string = "output"
+	KibanaReady string = "kibana-ready"
 )
 
 // +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &elasticsearchMsvcv1.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -70,6 +74,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -104,16 +111,20 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.reconKibana(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *Reconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -134,7 +145,9 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsv
 				"string-data": types.MsvcOutput{
 					Username: "elastic",
 					Password: rootPassword,
-					Hosts:    fmt.Sprintf("%s-master-headless.%s.svc.cluster.local", obj.Name, obj.Namespace),
+					Port:     9200,
+					Hosts:    fmt.Sprintf("%s-headless.%s.svc.cluster.local", obj.Name, obj.Namespace),
+					Uri:      fmt.Sprintf("http://%s-headless.%s.svc.cluster.local:9200", obj.Name, obj.Namespace),
 				},
 			},
 		)
@@ -165,21 +178,16 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsv
 		return req.UpdateStatus()
 	}
 
-	b, err := json.Marshal(scrt.Data)
+	secret, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error())
 	}
 
-	var output types.MsvcOutput
-	if err := json.Unmarshal(b, &output); err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	}
-
-	rApi.SetLocal(req, KeyOutput, output)
+	rApi.SetLocal(req, KeyOutput, secret)
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *Reconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -190,23 +198,22 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Ser
 		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	output, ok := rApi.GetLocal[types.MsvcOutput](req, KeyOutput)
+	output, ok := rApi.GetLocal[*types.MsvcOutput](req, KeyOutput)
 	if !ok {
 		return req.CheckFailed(HelmReady, check, err.Error())
 	}
 
-	if helmRes == nil {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error())
-		}
-
+	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
 		b, err := templates.Parse(
 			templates.ElasticSearch, map[string]any{
 				"obj":              obj,
-				"storage-class":    storageClass,
+				"storage-class":    fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4),
 				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"elastic-password": output.Password,
+				"labels": map[string]string{
+					constants.MsvcNameKey: obj.Name,
+					constants.AccountRef:  obj.GetAnnotations()[constants.AccountRef],
+				},
 			},
 		)
 
@@ -248,7 +255,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Ser
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconSts(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+func (r *Reconciler) reconSts(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	var stsList appsv1.StatefulSetList
@@ -260,6 +267,10 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*elasticsearchMsvcv1.Serv
 		},
 	); err != nil {
 		return req.CheckFailed(StsReady, check, err.Error())
+	}
+
+	if len(stsList.Items) == 0 {
+		return req.CheckFailed(StsReady, check, fmt.Sprintf("no statefulset found, yet ...")).Err(nil)
 	}
 
 	for i := range stsList.Items {
@@ -288,6 +299,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*elasticsearchMsvcv1.Serv
 				}
 				return req.CheckFailed(StsReady, check, string(b))
 			}
+			return req.CheckFailed(StsReady, check, fmt.Sprintf("waiting for pods to start ..."))
 		}
 	}
 
@@ -300,13 +312,115 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*elasticsearchMsvcv1.Serv
 	return req.Next()
 }
 
-func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) reconKibana(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	kibanaRes, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name+"-kibana"), &elasticsearchMsvcv1.Kibana{})
+	if err != nil {
+		kibanaRes = nil
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(KibanaReady, check, err.Error())
+		}
+	}
+
+	if obj.Spec.KibanaEnabled {
+		if kibanaRes == nil {
+			req.Logger.Infof("would be creating kibana resource")
+		}
+
+		if kibanaRes == nil {
+			msvcOutput, ok := rApi.GetLocal[*types.MsvcOutput](req, KeyOutput)
+			if !ok {
+				return req.CheckFailed(KibanaReady, check, errors.NotInLocals(KeyOutput).Error()).Err(nil)
+			}
+
+			seed := time.Now().UTC().UnixNano()
+			nameGenerator := namegenerator.NewNameGenerator(seed)
+			if err := r.Create(
+				ctx, &elasticsearchMsvcv1.Kibana{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            obj.Name + "-kibana",
+						Namespace:       obj.Namespace,
+						OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+						Labels: map[string]string{
+							constants.AccountRef:  obj.GetAnnotations()[constants.AccountRef],
+							constants.MsvcNameKey: obj.Name,
+						},
+					},
+					Spec: elasticsearchMsvcv1.KibanaSpec{
+						ReplicaCount: 1,
+						Region:       obj.Spec.Region,
+						Resources: ct.Resources{
+							Cpu: ct.CpuT{
+								Min: "200m",
+								Max: "400m",
+							},
+							Memory: "800Mi",
+						},
+						ElasticUrl: msvcOutput.Uri,
+						Expose: elasticsearchMsvcv1.Expose{
+							Enabled:         true,
+							Domain:          nameGenerator.Generate() + "-" + nameGenerator.Generate() + ".crewscale.kl-client.kloudlite.io",
+							BasicAuthSecret: "basic-auth-creds",
+						},
+					},
+				},
+			); err != nil {
+				return req.CheckFailed(KibanaReady, check, err.Error()).Err(nil)
+			}
+			checks[KibanaReady] = check
+			return req.Done()
+		}
+
+		if !kibanaRes.Status.IsReady {
+			check.Status = false
+			if kibanaRes.Status.Message.RawMessage != nil {
+				b, err := json.Marshal(kibanaRes.Status.Message)
+				if err != nil {
+					return req.CheckFailed(KibanaReady, check, errors.NewEf(err, "could not marshal into json").Error()).Err(nil)
+				}
+				check.Message = string(b)
+			}
+			checks[KibanaReady] = check
+			return req.UpdateStatus()
+		}
+
+		check.Status = true
+		if check != checks[KibanaReady] {
+			checks[KibanaReady] = check
+			return req.UpdateStatus()
+		}
+		return req.Next()
+	}
+
+	if kibanaRes != nil {
+		req.Logger.Infof("kibana is not enabled, but kibana exists, so would be deleting it")
+		if err := r.Delete(
+			ctx, &elasticsearchMsvcv1.Kibana{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      obj.Name,
+					Namespace: obj.Namespace,
+				},
+			},
+		); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return req.CheckFailed(KibanaReady, check, err.Error()).Err(nil)
+			}
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&elasticsearchMsvcv1.Service{})
 	builder.Owns(fn.NewUnstructured(constants.HelmElasticType))
+	builder.Owns(&elasticsearchMsvcv1.Kibana{})
 	builder.Owns(&corev1.Secret{})
 
 	builder.Watches(
@@ -323,5 +437,6 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 		),
 	)
 
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

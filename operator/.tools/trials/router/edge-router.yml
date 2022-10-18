@@ -1,0 +1,11 @@
+apiVersion: crds.kloudlite.io/v1
+kind: EdgeRouter
+metadata:
+  name: edge-1
+  namespace: kl-init-ingress-nginx
+spec:
+  accountRef: acc-xnnbf-kd254lyrcnu2jqvnoksvk
+  region: reg-9tco8kqki8hsw8dcwftdtkesxhqa
+  defaultSSLCert:
+    namespace: kl-init-cert-manager
+    secretName: kl-cert-issuer-tls

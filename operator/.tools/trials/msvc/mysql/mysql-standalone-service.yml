@@ -4,19 +4,15 @@ metadata:
   name: mysql-svc
   namespace: kl-core
 spec:
-  cloudProvider:
-    cloud: azure
-    region: centralindia
-  nodeSelector:
-    kloudlite.io/region: centralindia
+  region: reg-9tco8kqki8hsw8dcwftdtkesxhqa
   msvcKind:
-    apiVersion: mysql-standalone.msvc.kloudlite.io/v1
-    kind: Service
+    apiVersion: mysql.msvc.kloudlite.io/v1
+    kind: StandaloneService
   inputs:
     resources:
       cpu:
         min: 200m
         max: 400m
       memory: 400Mi
-    storage:
-      size: 1Gi
+      storage:
+        size: 1Gi

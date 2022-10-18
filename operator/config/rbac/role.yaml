@@ -112,6 +112,32 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
+  - edges
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - edges/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - edges/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
   - lambdas
   verbs:
   - create
@@ -287,6 +313,32 @@ rules:
   - elasticsearc.msvc.kloudlite.io
   resources:
   - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - kibanas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - kibanas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - kibanas/status
   verbs:
   - get
   - patch

@@ -3,9 +3,10 @@
 {{- $obj :=  get . "object" }}
 {{- $freeze := get . "freeze" | default false}}
 {{- $rootPassword := get . "root-password"  -}}
+{{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{- with $obj }}
-{{- /* gotype: operators.kloudlite.io/apis/mongodb-standalone.msvc/v1.Service */ -}}
+{{- /* gotype: operators.kloudlite.io/apis/mongodb.msvc/v1.StandaloneService*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMongoDB
 metadata:
@@ -31,6 +32,11 @@ spec:
   commonLabels: {{.Labels | toYAML | nindent 4}}
   {{- end }}
 
+  podLabels:
+    {{if .Labels}}{{.Labels | toYAML | nindent 4}}{{end}}
+    kloudlite.io/region: {{.Spec.Region}}
+    kloudlite.io/stateful-node: "true"
+
   {{- if .Spec.NodeSelector}}
   nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
   {{- end }}
@@ -41,7 +47,7 @@ spec:
 
   persistence:
     enabled: true
-    size: {{.Spec.Storage.Size}}
+    size: {{.Spec.Resources.Storage.Size}}
 
   volumePermissions:
     enabled: true
@@ -58,6 +64,11 @@ spec:
     initialDelaySeconds: 10
     periodSeconds: 30
     timeoutSeconds: 20
+
+  priorityClassName: {{$priorityClassName}}
+  affinity: {{include "NodeAffinity" (dict) | nindent 4 }}
+  tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 4}}
+  nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 4}}
 
   resources:
     requests:

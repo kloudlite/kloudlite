@@ -12,6 +12,7 @@ import (
 	influxdbmsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
 	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
+	neo4jmsvcv1 "operators.kloudlite.io/apis/neo4j.msvc/v1"
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
@@ -63,6 +64,9 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -90,8 +94,8 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
@@ -180,6 +184,7 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger log
 		&zookeeperMsvcv1.Service{},
 		&influxdbmsvcv1.Service{},
 		&redpandamsvcv1.Service{},
+		&neo4jmsvcv1.StandaloneService{},
 	}
 
 	for i := range msvcs {
