@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -44,8 +45,16 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	s.Start()
 	res, err := client.Do(req)
 	s.Stop()
-	if err != nil {
-		return nil, err
+	if err != nil || res.StatusCode != 200 {
+		if err != nil {
+			return nil, err
+		}
+
+		body, e := ioutil.ReadAll(res.Body)
+		if e != nil {
+			return nil, e
+		}
+		return nil, errors.New(string(body))
 	}
 	defer res.Body.Close()
 

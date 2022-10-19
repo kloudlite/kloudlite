@@ -14,6 +14,27 @@ const (
 	KL_WG_INTERFACE = "wgkl"
 )
 
+func connect(verbose bool) error {
+	success := false
+	defer func() {
+		if !success {
+			stopService(verbose)
+		}
+	}()
+
+	startService(verbose)
+
+	if err := startConfiguration(verbose); err != nil {
+		return err
+	}
+	success = true
+	return nil
+}
+
+func disconnect(verbose bool) error {
+	return stopService(verbose)
+}
+
 func setDNS(dns []net.IP, verbose bool) error {
 	if verbose {
 		common.Log("[#] setting /etc/resolv.conf")
@@ -53,11 +74,11 @@ func resetDNS(verbose bool) error {
 		common.Log("[#] resetting /etc/resolv.conf")
 	}
 
-	err := os.Remove("/etc/resolv.conf")
-	if err != nil {
-		return err
-	}
-	err = os.Rename("/etc/resolv.conf.back", "/etc/resolv.conf")
+	// err := os.Remove("/etc/resolv.conf")
+	// if err != nil {
+	// 	return err
+	// }
+	err := os.Rename("/etc/resolv.conf.back", "/etc/resolv.conf")
 	return err
 }
 

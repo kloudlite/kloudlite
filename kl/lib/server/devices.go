@@ -49,6 +49,7 @@ func GetDevice(deviceId string) (*Device, error) {
 		Device Device `json:"data"`
 	}
 
+	// fmt.Println(string(respData),"here")
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {

@@ -46,6 +46,7 @@ func startConfiguration(verbose bool) error {
 	if err != nil {
 		return err
 	}
+
 	if device.Region == "" {
 		return errors.New("region not selected in device please use 'kl use device' to select device")
 	}

@@ -45,7 +45,7 @@ Examples:
 			return
 		}
 
-		err = stopService(disconnectVerbose)
+		err = disconnect(disconnectVerbose)
 		if err != nil {
 			common.PrintError(err)
 			return

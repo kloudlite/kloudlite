@@ -3,13 +3,6 @@ package wg
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"golang.zx2c4.com/wireguard/conn"
-	"golang.zx2c4.com/wireguard/device"
-	"golang.zx2c4.com/wireguard/ipc"
-	"golang.zx2c4.com/wireguard/tun"
-	"k8s.io/utils/strings/slices"
 	"net"
 	"os"
 	"os/exec"
@@ -17,11 +10,39 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/server"
+	"golang.zx2c4.com/wireguard/conn"
+	"golang.zx2c4.com/wireguard/device"
+	"golang.zx2c4.com/wireguard/ipc"
+	"golang.zx2c4.com/wireguard/tun"
+	"k8s.io/utils/strings/slices"
 )
 
 const (
 	KL_WG_INTERFACE = "utun1729"
 )
+
+func connect(verbose bool) error {
+	success := false
+	defer func() {
+		if !success {
+			stopService(verbose)
+		}
+	}()
+
+	startServiceInBg()
+	if err := startConfiguration(connectVerbose); err != nil {
+		return err
+	}
+
+	success = true
+	return nil
+}
+func disconnect(verbose bool) error {
+	return nil
+}
 
 func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
 	return execCmd(fmt.Sprintf("route -n add -net %s %s", ip, interfaceIp), verbose)

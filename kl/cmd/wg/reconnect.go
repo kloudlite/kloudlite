@@ -45,8 +45,7 @@ Examples:
 		if strings.TrimSpace(wgInterface) == "" {
 			common.Log(color.Text("[#] no devices connected yet", 209))
 		} else {
-
-			if err := stopService(reconnectVerbose); err != nil {
+			if err := disconnect(reconnectVerbose); err != nil {
 				common.PrintError(err)
 				return
 			}
@@ -55,8 +54,8 @@ Examples:
 		common.Log("[#] connecting")
 		time.Sleep(time.Second * 1)
 
-		startServiceInBg()
-		if err := startConfiguration(reconnectVerbose); err != nil {
+		// startServiceInBg()
+		if err := connect(reconnectVerbose); err != nil {
 			common.PrintError(err)
 			return
 		}
