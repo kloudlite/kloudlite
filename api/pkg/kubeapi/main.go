@@ -1,53 +1,40 @@
 package kubeapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"io"
+	"fmt"
+	"os"
+	"os/exec"
+
 	v1 "k8s.io/api/core/v1"
-	"net/http"
 )
 
 type Client struct {
-	Address string `env:"KUBE_API_ADDRESS"`
-}
-
-func (c *Client) GetServiceIp(ctx context.Context, namespace, name string) (string, error) {
-	service := v1.Service{}
-	get, err := http.Get(c.Address + "/api/v1/namespaces/" + namespace + "/services/" + name)
-	if err != nil {
-		return "", err
-	}
-	defer get.Body.Close()
-	all, err := io.ReadAll(get.Body)
-	if err != nil {
-		return "", err
-	}
-	if err := json.Unmarshal(all, &service); err != nil {
-		return "", err
-	}
-	return service.Spec.ClusterIP, nil
+	KubeconfigPath string
 }
 
 func (c *Client) GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
-	secret := v1.Secret{}
-	get, err := http.Get(c.Address + "/api/v1/namespaces/" + namespace + "/secrets/" + name)
-	if err != nil {
+	stdout, stderr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+	cmd := exec.Command("kubectl", "get", fmt.Sprintf("secret/%s", name), "-n", namespace, "-o", "json")
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", c.KubeconfigPath))
+
+	if err := cmd.Run(); err != nil {
+		fmt.Println(stderr.String())
+		return &v1.Secret{}, nil
+	}
+
+	var secret v1.Secret
+	if err := json.Unmarshal(stdout.Bytes(), &secret); err != nil {
 		return nil, err
 	}
-	defer get.Body.Close()
-	all, err := io.ReadAll(get.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(all, &secret); err != nil {
-		return nil, err
-	}
+
 	return &secret, nil
 }
 
-func NewClient(addr string) *Client {
-	return &Client{
-		Address: addr,
-	}
+func NewClientWithConfigPath(cfgPath string) *Client {
+	return &Client{KubeconfigPath: cfgPath}
 }

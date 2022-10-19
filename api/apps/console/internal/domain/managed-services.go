@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"time"
+
 	"google.golang.org/protobuf/types/known/anypb"
 	"gopkg.in/yaml.v3"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	opCrds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
-	"os"
-	"time"
 )
 
 func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error) {
@@ -31,9 +32,11 @@ func (d *domain) GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*ent
 }
 
 func (d *domain) GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error) {
-	msvcs, err := d.managedSvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"project_id": projectID,
-	}})
+	msvcs, err := d.managedSvcRepo.Find(
+		ctx, repos.Query{Filter: repos.Filter{
+			"project_id": projectID,
+		}},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +93,7 @@ func (d *domain) GetManagedServiceTemplate(ctx context.Context, name string) (*e
 	return nil, errors.New("not found")
 }
 
-func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *op_crds.StatusUpdate) error {
+func (d *domain) OnUpdateManagedSvc(ctx context.Context, response *opCrds.StatusUpdate) error {
 	one, err := d.managedSvcRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
 	if err = mongoError(err, "managed service not found"); err != nil {
 		return err
@@ -124,19 +127,21 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
-	cloudProvider, region, err := d.getProjectRegionDetails(ctx, prj)
+	_, region, err := d.getProjectRegionDetails(ctx, prj)
 	if err != nil {
 		return nil, err
 	}
 
-	create, err := d.managedSvcRepo.Create(ctx, &entities.ManagedService{
-		Name:        name,
-		Namespace:   prj.Name,
-		ProjectId:   prj.Id,
-		ServiceType: entities.ManagedServiceType(templateID),
-		Values:      values,
-		Status:      entities.ManagedServiceStateSyncing,
-	})
+	create, err := d.managedSvcRepo.Create(
+		ctx, &entities.ManagedService{
+			Name:        name,
+			Namespace:   prj.Name,
+			ProjectId:   prj.Id,
+			ServiceType: entities.ManagedServiceType(templateID),
+			Values:      values,
+			Status:      entities.ManagedServiceStateSyncing,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -146,17 +151,19 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
-	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
-		Init:    template.InputMiddleware,
-		FunName: "inputMiddleware",
-		Inputs: func() *anypb.Any {
-			marshal, _ := json.Marshal(values)
-			return &anypb.Any{
-				TypeUrl: "",
-				Value:   marshal,
-			}
-		}(),
-	})
+	eval, err := d.jsEvalClient.Eval(
+		ctx, &jseval.EvalIn{
+			Init:    template.InputMiddleware,
+			FunName: "inputMiddleware",
+			Inputs: func() *anypb.Any {
+				marshal, _ := json.Marshal(values)
+				return &anypb.Any{
+					TypeUrl: "",
+					Value:   marshal,
+				}
+			}(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -172,39 +179,42 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedService{
-		APIVersion: op_crds.ManagedServiceAPIVersion,
-		Kind:       op_crds.ManagedServiceKind,
-		Metadata: op_crds.ManagedServiceMetadata{
-			Name:      string(create.Id),
-			Namespace: create.Namespace,
-			Annotations: func() map[string]string {
-				if transformedInputs.Annotation == nil {
-					return nil
-				}
-				a := transformedInputs.Annotation
-				a["kloudlite.io/account-ref"] = string(prj.AccountId)
-				a["kloudlite.io/project-ref"] = string(prj.Id)
-				a["kloudlite.io/resource-ref"] = string(create.Id)
-				a["kloudlite.io/updated-at"] = time.Now().String()
-				return a
-			}(),
-		},
-		Spec: op_crds.ManagedServiceSpec{
-			CloudProvider: op_crds.CloudProvider{
-				Cloud:  cloudProvider,
+	err = d.workloadMessenger.SendAction(
+		"apply", string(create.Id), &opCrds.ManagedService{
+			APIVersion: opCrds.ManagedServiceAPIVersion,
+			Kind:       opCrds.ManagedServiceKind,
+			Metadata: opCrds.ManagedServiceMetadata{
+				Name:      string(create.Id),
+				Namespace: create.Namespace,
+				Annotations: func() map[string]string {
+					if transformedInputs.Annotation == nil {
+						return nil
+					}
+					a := transformedInputs.Annotation
+					a["kloudlite.io/account-ref"] = string(prj.AccountId)
+					a["kloudlite.io/project-ref"] = string(prj.Id)
+					a["kloudlite.io/resource-ref"] = string(create.Id)
+					a["kloudlite.io/updated-at"] = time.Now().String()
+					return a
+				}(),
+			},
+			Spec: opCrds.ManagedServiceSpec{
+				// CloudProvider: op_crds.CloudProvider{
+				// 	Cloud:  cloudProvider,
+				// 	Region: region,
+				// },
 				Region: region,
+				// NodeSelector: map[string]string{
+				// 	"kloudlite.io/region": region,
+				// },
+				MsvcKind: opCrds.MsvcKind{
+					APIVersion: template.ApiVersion,
+					Kind:       template.Kind,
+				},
+				Inputs: transformedInputs.Inputs,
 			},
-			NodeSelector: map[string]string{
-				"kloudlite.io/region": region,
-			},
-			MsvcKind: op_crds.MsvcKind{
-				APIVersion: template.ApiVersion,
-				Kind:       template.Kind,
-			},
-			Inputs: transformedInputs.Inputs,
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +237,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 
-	cloudProvider, region, err := d.getProjectRegionDetails(ctx, proj)
+	_, region, err := d.getProjectRegionDetails(ctx, proj)
 	if err != nil {
 		return false, err
 	}
@@ -243,17 +253,19 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 
-	eval, err := d.jsEvalClient.Eval(ctx, &jseval.EvalIn{
-		Init:    template.InputMiddleware,
-		FunName: "inputMiddleware",
-		Inputs: func() *anypb.Any {
-			marshal, _ := json.Marshal(values)
-			return &anypb.Any{
-				TypeUrl: "",
-				Value:   marshal,
-			}
-		}(),
-	})
+	eval, err := d.jsEvalClient.Eval(
+		ctx, &jseval.EvalIn{
+			Init:    template.InputMiddleware,
+			FunName: "inputMiddleware",
+			Inputs: func() *anypb.Any {
+				marshal, _ := json.Marshal(values)
+				return &anypb.Any{
+					TypeUrl: "",
+					Value:   marshal,
+				}
+			}(),
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -267,39 +279,42 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(managedSvc.Id), &op_crds.ManagedService{
-		APIVersion: op_crds.ManagedServiceAPIVersion,
-		Kind:       op_crds.ManagedServiceKind,
-		Metadata: op_crds.ManagedServiceMetadata{
-			Name:      string(managedSvc.Id),
-			Namespace: managedSvc.Namespace,
-			Annotations: func() map[string]string {
-				if transformedInputs.Annotation == nil {
-					return nil
-				}
-				a := transformedInputs.Annotation
-				a["kloudlite.io/account-ref"] = string(proj.AccountId)
-				a["kloudlite.io/project-ref"] = string(proj.Id)
-				a["kloudlite.io/resource-ref"] = string(managedSvc.Id)
-				a["kloudlite.io/updated-at"] = time.Now().String()
-				return a
-			}(),
-		},
-		Spec: op_crds.ManagedServiceSpec{
-			MsvcKind: op_crds.MsvcKind{
-				APIVersion: template.ApiVersion,
-				Kind:       template.Kind,
+	err = d.workloadMessenger.SendAction(
+		"apply", string(managedSvc.Id), &opCrds.ManagedService{
+			APIVersion: opCrds.ManagedServiceAPIVersion,
+			Kind:       opCrds.ManagedServiceKind,
+			Metadata: opCrds.ManagedServiceMetadata{
+				Name:      string(managedSvc.Id),
+				Namespace: managedSvc.Namespace,
+				Annotations: func() map[string]string {
+					if transformedInputs.Annotation == nil {
+						return nil
+					}
+					a := transformedInputs.Annotation
+					a["kloudlite.io/account-ref"] = string(proj.AccountId)
+					a["kloudlite.io/project-ref"] = string(proj.Id)
+					a["kloudlite.io/resource-ref"] = string(managedSvc.Id)
+					a["kloudlite.io/updated-at"] = time.Now().String()
+					return a
+				}(),
 			},
-			CloudProvider: op_crds.CloudProvider{
-				Cloud:  cloudProvider,
+			Spec: opCrds.ManagedServiceSpec{
+				MsvcKind: opCrds.MsvcKind{
+					APIVersion: template.ApiVersion,
+					Kind:       template.Kind,
+				},
 				Region: region,
+				// CloudProvider: op_crds.CloudProvider{
+				// 	Cloud:  cloudProvider,
+				// 	Region: region,
+				// },
+				// NodeSelector: map[string]string{
+				// 	"kloudlite.io/region": region,
+				// },
+				Inputs: transformedInputs.Inputs,
 			},
-			NodeSelector: map[string]string{
-				"kloudlite.io/region": region,
-			},
-			Inputs: transformedInputs.Inputs,
 		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -323,14 +338,16 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("delete", string(managedServiceId), &op_crds.ManagedService{
-		APIVersion: op_crds.ManagedServiceAPIVersion,
-		Kind:       op_crds.ManagedServiceKind,
-		Metadata: op_crds.ManagedServiceMetadata{
-			Name:      string(managedServiceId),
-			Namespace: managedSvc.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"delete", string(managedServiceId), &opCrds.ManagedService{
+			APIVersion: opCrds.ManagedServiceAPIVersion,
+			Kind:       opCrds.ManagedServiceKind,
+			Metadata: opCrds.ManagedServiceMetadata{
+				Name:      string(managedServiceId),
+				Namespace: managedSvc.Namespace,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -340,7 +357,7 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 
 func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID) (map[string]any, error) {
 	msvc, err := d.managedSvcRepo.FindById(ctx, managedSvcID)
-	if err = mongoError(err, "managed resource not found"); err != nil {
+	if err = mongoError(err, "managed service not found"); err != nil {
 		return nil, err
 	}
 
@@ -360,6 +377,6 @@ func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID)
 	return parsedSec, nil
 }
 
-func (d *domain) OnDeleteManagedService(ctx context.Context, response *op_crds.StatusUpdate) error {
+func (d *domain) OnDeleteManagedService(ctx context.Context, response *opCrds.StatusUpdate) error {
 	return d.managedSvcRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -135,7 +136,6 @@ func (gh *githubI) ListInstallations(ctx context.Context, accToken *domain.Acces
 func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, instId int64, pagination *types.Pagination) (*github.ListRepositories, error) {
 	opts := gh.buildListOptions(pagination)
 	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, instId, &opts)
-	// repos, _, err := gh.ghCli.Apps.ListUserRepos(ctx, instId, &opts)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list user repositories")
 	}
@@ -187,7 +187,7 @@ type GithubOAuth interface {
 	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
 }
 
-func fxGithub(env *Env) domain.Github {
+func fxGithub(env *Env) (domain.Github, error) {
 	clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile := env.GithubConfig()
 	cfg := oauth2.Config{
 		ClientID:     clientId,
@@ -197,9 +197,14 @@ func fxGithub(env *Env) domain.Github {
 		Scopes:       strings.Split(env.GithubScopes, ","),
 		// Scopes:       []string{"user:email", "admin:org"},
 	}
+
+	if _, err := os.Stat(ghAppPKFile); err != nil {
+		return nil, fmt.Errorf("github privaate key file (path='%s') does not exist", ghAppPKFile)
+	}
+
 	privatePem, err := ioutil.ReadFile(ghAppPKFile)
 	if err != nil {
-		panic(errors.NewEf(err, "reading github app PK file"))
+		return nil, errors.NewEf(err, "reading github app PK file")
 	}
 
 	appId, _ := strconv.ParseInt(ghAppId, 10, 64)
@@ -220,5 +225,5 @@ func fxGithub(env *Env) domain.Github {
 		ghCli:        ghCli,
 		ghCliForUser: ghCliForUser,
 		env:          env,
-	}
+	}, nil
 }
