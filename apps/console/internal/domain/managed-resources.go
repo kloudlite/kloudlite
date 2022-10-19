@@ -3,13 +3,41 @@ package domain
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
-	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	opCrds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
 )
 
 func (d *domain) GetManagedRes(ctx context.Context, managedResID repos.ID) (*entities.ManagedResource, error) {
+	if strings.HasPrefix(string(managedResID), "mgsvc-") {
+		msvc, err := d.managedSvcRepo.FindById(ctx, managedResID)
+		if err = mongoError(err, "resource not found"); err != nil {
+			return nil, err
+		}
+		err = d.checkProjectAccess(ctx, msvc.ProjectId, ReadProject)
+		if err != nil {
+			return nil, err
+		}
+
+		return &entities.ManagedResource{
+			BaseEntity: repos.BaseEntity{
+				Id:           msvc.Id,
+				CreationTime: msvc.CreationTime,
+				UpdateTime:   msvc.UpdateTime,
+			},
+			ClusterId: msvc.ClusterId,
+			ProjectId: msvc.ProjectId,
+			Name:      msvc.Name,
+			Namespace: msvc.Namespace,
+			ServiceId: msvc.Id,
+			// Values:     msvc.Values,
+			// Status:     msvc.Status,
+			Conditions: msvc.Conditions,
+		}, nil
+	}
 	mr, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err = mongoError(err, "resource not found"); err != nil {
 		return nil, err
@@ -29,15 +57,19 @@ func (d *domain) GetManagedResources(ctx context.Context, projectID repos.ID) ([
 		return nil, err
 	}
 
-	return d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"project_id": projectID,
-	}})
+	return d.managedResRepo.Find(
+		ctx, repos.Query{Filter: repos.Filter{
+			"project_id": projectID,
+		}},
+	)
 }
 
 func (d *domain) GetManagedResourcesOfService(ctx context.Context, installationId repos.ID) ([]*entities.ManagedResource, error) {
-	mres, err := d.managedResRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"service_id": installationId,
-	}})
+	mres, err := d.managedResRepo.Find(
+		ctx, repos.Query{Filter: repos.Filter{
+			"service_id": installationId,
+		}},
+	)
 
 	if err != nil {
 		return nil, err
@@ -53,7 +85,7 @@ func (d *domain) GetManagedResourcesOfService(ctx context.Context, installationI
 	return mres, nil
 }
 
-func (d *domain) OnUpdateManagedRes(ctx context.Context, response *op_crds.StatusUpdate) error {
+func (d *domain) OnUpdateManagedRes(ctx context.Context, response *opCrds.StatusUpdate) error {
 	one, err := d.managedResRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
 	if err = mongoError(err, "managed resource not found"); err != nil {
 		// Ignore unknown resource
@@ -93,14 +125,16 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 		return nil, err
 	}
 
-	create, err := d.managedResRepo.Create(ctx, &entities.ManagedResource{
-		ProjectId:    prj.Id,
-		Namespace:    prj.Name,
-		ServiceId:    svc.Id,
-		ResourceType: entities.ManagedResourceType(resourceType),
-		Name:         name,
-		Values:       values,
-	})
+	create, err := d.managedResRepo.Create(
+		ctx, &entities.ManagedResource{
+			ProjectId:    prj.Id,
+			Namespace:    prj.Name,
+			ServiceId:    svc.Id,
+			ResourceType: entities.ManagedResourceType(resourceType),
+			Name:         name,
+			Values:       values,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -116,25 +150,28 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 			break
 		}
 	}
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.ManagedResource{
-		APIVersion: op_crds.ManagedResourceAPIVersion,
-		Kind:       op_crds.ManagedResourceKind,
-		Metadata: op_crds.ManagedResourceMetadata{
-			Name:      string(create.Id),
-			Namespace: create.Namespace,
-		},
-		Spec: op_crds.ManagedResourceSpec{
-			MsvcRef: op_crds.MsvcRef{
-				APIVersion: resTmpl.ApiVersion,
-				Kind:       "Service",
-				Name:       string(svc.Id),
+
+	err = d.workloadMessenger.SendAction(
+		"apply", string(create.Id), &opCrds.ManagedResource{
+			APIVersion: opCrds.ManagedResourceAPIVersion,
+			Kind:       opCrds.ManagedResourceKind,
+			Metadata: opCrds.ManagedResourceMetadata{
+				Name:      string(create.Id),
+				Namespace: create.Namespace,
 			},
-			MresKind: op_crds.MresKind{
-				Kind: resTmpl.Kind,
+			Spec: opCrds.ManagedResourceSpec{
+				MsvcRef: opCrds.MsvcRef{
+					APIVersion: template.ApiVersion,
+					Kind:       template.Kind,
+					Name:       string(svc.Id),
+				},
+				MresKind: opCrds.MresKind{
+					Kind: resTmpl.Kind,
+				},
+				Inputs: create.Values,
 			},
-			Inputs: create.Values,
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +181,12 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error) {
 	mres, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err = mongoError(err, "managed resource not found"); err != nil {
+		return false, err
+	}
+
+	msvc, err := d.managedSvcRepo.FindById(ctx, mres.ServiceId)
+	template, err := d.GetManagedServiceTemplate(ctx, string(msvc.ServiceType))
+	if err != nil {
 		return false, err
 	}
 
@@ -157,30 +200,33 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(mres.Id), &op_crds.ManagedResource{
-		APIVersion: op_crds.ManagedResourceAPIVersion,
-		Kind:       op_crds.ManagedResourceKind,
-		Metadata: op_crds.ManagedResourceMetadata{
-			Name:      string(mres.Id),
-			Namespace: mres.Namespace,
-		},
-		Spec: op_crds.ManagedResourceSpec{
-			MsvcRef: op_crds.MsvcRef{
-				APIVersion: op_crds.ManagedResourceAPIVersion,
-				Kind:       "Service",
-				Name:       string(mres.ServiceId),
+	err = d.workloadMessenger.SendAction(
+		"apply", string(mres.Id), &opCrds.ManagedResource{
+			APIVersion: opCrds.ManagedResourceAPIVersion,
+			Kind:       opCrds.ManagedResourceKind,
+			Metadata: opCrds.ManagedResourceMetadata{
+				Name:      string(mres.Id),
+				Namespace: mres.Namespace,
 			},
-			MresKind: op_crds.MresKind{
-				Kind: string(mres.ResourceType),
+			Spec: opCrds.ManagedResourceSpec{
+				MsvcRef: opCrds.MsvcRef{
+					APIVersion: template.ApiVersion,
+					Kind:       template.Kind,
+					Name:       string(mres.ServiceId),
+				},
+				MresKind: opCrds.MresKind{
+					Kind: string(mres.ResourceType),
+				},
+				Inputs: mres.Values,
 			},
-			Inputs: mres.Values,
 		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
+
 func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool, error) {
 	id, err := d.managedResRepo.FindById(ctx, appID)
 
@@ -200,14 +246,16 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("delete", string(appID), &op_crds.ManagedResource{
-		APIVersion: op_crds.ManagedResourceAPIVersion,
-		Kind:       op_crds.ManagedResourceKind,
-		Metadata: op_crds.ManagedResourceMetadata{
-			Name:      string(appID),
-			Namespace: id.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"delete", string(appID), &opCrds.ManagedResource{
+			APIVersion: opCrds.ManagedResourceAPIVersion,
+			Kind:       opCrds.ManagedResourceKind,
+			Metadata: opCrds.ManagedResourceMetadata{
+				Name:      string(appID),
+				Namespace: id.Namespace,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -254,6 +302,6 @@ func (d *domain) GetManagedResOutput(ctx context.Context, managedResID repos.ID)
 	return d.getManagedResOutput(ctx, managedResID)
 }
 
-func (d *domain) OnDeleteManagedResource(ctx context.Context, response *op_crds.StatusUpdate) error {
+func (d *domain) OnDeleteManagedResource(ctx context.Context, response *opCrds.StatusUpdate) error {
 	return d.managedResRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
 }

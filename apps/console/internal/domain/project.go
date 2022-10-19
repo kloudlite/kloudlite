@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/pkg/kubeapi"
-
 	// "fmt"
 	"strings"
+
+	"kloudlite.io/pkg/kubeapi"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
@@ -47,16 +47,17 @@ func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*ent
 }
 
 func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
-
 	if err := d.checkAccountAccess(ctx, acountId, ReadProject); err != nil {
 		return nil, err
 	}
 
-	res, err := d.projectRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": acountId,
+	res, err := d.projectRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"account_id": acountId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -87,12 +88,14 @@ func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, em
 	if byEmail == nil {
 		return false, errors.New("user not found")
 	}
-	_, err = d.iamClient.InviteMembership(ctx, &iam.InAddMembership{
-		UserId:       byEmail.UserId,
-		ResourceType: "project",
-		ResourceId:   string(projectID),
-		Role:         role,
-	})
+	_, err = d.iamClient.InviteMembership(
+		ctx, &iam.InAddMembership{
+			UserId:       byEmail.UserId,
+			ResourceType: "project",
+			ResourceId:   string(projectID),
+			Role:         role,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -105,10 +108,12 @@ func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, us
 		return err
 	}
 
-	_, err := d.iamClient.RemoveMembership(ctx, &iam.InRemoveMembership{
-		UserId:     string(userId),
-		ResourceId: string(projectId),
-	})
+	_, err := d.iamClient.RemoveMembership(
+		ctx, &iam.InRemoveMembership{
+			UserId:     string(userId),
+			ResourceId: string(projectId),
+		},
+	)
 
 	if err != nil {
 		return err
@@ -123,21 +128,25 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 		return nil, err
 	}
 
-	rbs, err := d.iamClient.ListResourceMemberships(ctx, &iam.InResourceMemberships{
-		ResourceId:   string(projectID),
-		ResourceType: string(common.ResourceProject),
-	})
+	rbs, err := d.iamClient.ListResourceMemberships(
+		ctx, &iam.InResourceMemberships{
+			ResourceId:   string(projectID),
+			ResourceType: string(common.ResourceProject),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	var memberships []*entities.ProjectMembership
 	for _, rb := range rbs.RoleBindings {
-		memberships = append(memberships, &entities.ProjectMembership{
-			ProjectId: repos.ID(rb.ResourceId),
-			UserId:    repos.ID(rb.UserId),
-			Role:      common.Role(rb.Role),
-		})
+		memberships = append(
+			memberships, &entities.ProjectMembership{
+				ProjectId: repos.ID(rb.ResourceId),
+				UserId:    repos.ID(rb.UserId),
+				Role:      common.Role(rb.Role),
+			},
+		)
 	}
 	if err != nil {
 		return nil, err
@@ -152,47 +161,53 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		return nil, err
 	}
 
-	create, err := d.projectRepo.Create(ctx, &entities.Project{
-		Name:        projectName,
-		AccountId:   accountId,
-		ReadableId:  repos.ID(generateReadable(projectName)),
-		DisplayName: displayName,
-		Logo:        logo,
-		Description: description,
-		RegionId:    regionId,
-		Status:      entities.ProjectStateSyncing,
-	})
+	create, err := d.projectRepo.Create(
+		ctx, &entities.Project{
+			Name:        projectName,
+			AccountId:   accountId,
+			ReadableId:  repos.ID(generateReadable(projectName)),
+			DisplayName: displayName,
+			Logo:        logo,
+			Description: description,
+			RegionId:    regionId,
+			Status:      entities.ProjectStateSyncing,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = d.iamClient.AddMembership(ctx, &iam.InAddMembership{
-		UserId:       string(ownerId),
-		ResourceType: "project",
-		ResourceId:   string(create.Id),
-		Role:         "project-admin",
-	})
+	_, err = d.iamClient.AddMembership(
+		ctx, &iam.InAddMembership{
+			UserId:       string(ownerId),
+			ResourceType: "project",
+			ResourceId:   string(create.Id),
+			Role:         "project-admin",
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.Project{
-		APIVersion: op_crds.APIVersion,
-		Kind:       op_crds.ProjectKind,
-		Metadata: op_crds.ProjectMetadata{
-			Name: create.Name,
-			Labels: map[string]string{
-				"kloudlite.io/account-ref":  string(create.AccountId),
-				"kloudlite.io/resource-ref": string(create.Id),
+	err = d.workloadMessenger.SendAction(
+		"apply", string(create.Id), &op_crds.Project{
+			APIVersion: op_crds.APIVersion,
+			Kind:       op_crds.ProjectKind,
+			Metadata: op_crds.ProjectMetadata{
+				Name: create.Name,
+				Labels: map[string]string{
+					"kloudlite.io/account-ref":  string(create.AccountId),
+					"kloudlite.io/resource-ref": string(create.Id),
+				},
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(create.AccountId),
+					"kloudlite.io/resource-ref": string(create.Id),
+				},
 			},
-			Annotations: map[string]string{
-				"kloudlite.io/account-ref":  string(create.AccountId),
-				"kloudlite.io/resource-ref": string(create.Id),
+			Spec: op_crds.ProjectSpec{
+				DisplayName: displayName,
 			},
 		},
-		Spec: op_crds.ProjectSpec{
-			DisplayName: displayName,
-		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -214,13 +229,15 @@ func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("delete", string(id), &op_crds.Project{
-		APIVersion: op_crds.APIVersion,
-		Kind:       op_crds.ProjectKind,
-		Metadata: op_crds.ProjectMetadata{
-			Name: proj.Name,
+	err = d.workloadMessenger.SendAction(
+		"delete", string(id), &op_crds.Project{
+			APIVersion: op_crds.APIVersion,
+			Kind:       op_crds.ProjectKind,
+			Metadata: op_crds.ProjectMetadata{
+				Name: proj.Name,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -252,7 +269,8 @@ func (d *domain) getProjectRegionDetails(ctx context.Context, proj *entities.Pro
 		}
 	}
 
-	return projectCloudProvider.Provider, projectRegion.Region, nil
+	// return projectCloudProvider.Provider, projectRegion.Region, nil
+	return projectCloudProvider.Provider, string(projectRegion.Id), nil
 }
 
 func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (username string, password string, err error) {
@@ -282,7 +300,7 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 		return "", "", nil
 	}
 
-	connectionStr := data.Auths["harbor.dev.madhouselabs.io"].Auth
+	connectionStr := data.Auths["registry.kloudlite.io"].Auth
 	decodeString, err := base64.StdEncoding.DecodeString(connectionStr)
 	if err != nil {
 		return "", "", err
@@ -304,11 +322,13 @@ func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, act
 		return err
 	}
 
-	can, err := d.iamClient.Can(ctx, &iam.InCan{
-		UserId:      userId,
-		ResourceIds: []string{string(projectId), string(project.AccountId)},
-		Action:      action,
-	})
+	can, err := d.iamClient.Can(
+		ctx, &iam.InCan{
+			UserId:      userId,
+			ResourceIds: []string{string(projectId), string(project.AccountId)},
+			Action:      action,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -331,11 +351,13 @@ func (d *domain) checkAccountAccess(ctx context.Context, accountId repos.ID, act
 		return nil
 	}
 
-	can, err := d.iamClient.Can(ctx, &iam.InCan{
-		UserId:      userId,
-		ResourceIds: []string{string(accountId)},
-		Action:      action,
-	})
+	can, err := d.iamClient.Can(
+		ctx, &iam.InCan{
+			UserId:      userId,
+			ResourceIds: []string{string(accountId)},
+			Action:      action,
+		},
+	)
 	if err != nil {
 		return err
 	}

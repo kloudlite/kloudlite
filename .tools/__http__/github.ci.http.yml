@@ -1,4 +1,3 @@
----
 global:
   accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
   projectId: "proj-bopxvo-qpfpodbz9lciwu45s5uqd"
@@ -116,6 +115,35 @@ variables:
 
 ---
 
+label: Create Github Pipeline with Docker
+query: |
+  mutation Ci_createDockerPipeline($in: GitDockerPipelineIn!) {
+    ci_createDockerPipeline(in: $in)
+  }
+variables:
+  in:
+    name: sample-example-github-asdfdasfas
+    # accountId: "{{accountId}}"
+    accountId: "acc-xnnbf-kd254lyrcnu2jqvnoksvk"
+    projectId: "proj-xv9pfmcwaov1yxuftpcwkq1n0sxi"
+    appId: "app-mnkuxqyzjrsf0e1kb9i43wrkxpho"
+    # projectName: "{{projectName}}"
+    projectName: "devenv-14473"
+    containerName: "main"
+    gitProvider: github
+    repoName: "website"
+    gitRepoUrl: "https://github.com/ScaleGroup/crewscale.git"
+    gitBranch: feature/cs-01_demo_branch
+    dockerFile: ./Dockerfile
+    contextDir: ./
+    buildArgs: ""
+    artifactRef:
+      # dockerImageName: "{{accountId}}/website2"
+      dockerImageName: "c97-4c06-ae29-d1757c984c25"
+      dockerImageTag: "latest"
+
+---
+
 label: List Pipelines
 query: |
   query Ci_getPipelines($projectId: ID!) {
@@ -132,3 +160,12 @@ query: |
   }
 variables:
   projectId: "{{projectId}}"
+---
+label: Pipeline
+query: |
+  query Query($pipelineId: ID!) {
+    ci_triggerPipeline(pipelineId: $pipelineId)
+  }
+
+variables:
+  pipelineId: pip-3pdwimijh1rnsrub72x05wmt4vcv

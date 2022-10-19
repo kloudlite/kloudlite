@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
@@ -162,6 +163,14 @@ func (r *deviceResolver) InterceptingServices(ctx context.Context, obj *model.De
 }
 
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
+	if strings.HasPrefix(string(obj.ID), "mgsvc-") {
+		output, err := r.Domain.GetManagedSvcOutput(ctx, obj.ID)
+		if err != nil {
+			return nil, err
+		}
+		return output, nil
+	}
+
 	outputs, err := r.Domain.GetManagedResOutput(ctx, obj.ID)
 	if err != nil {
 		return nil, err
@@ -937,12 +946,14 @@ func (r *mutationResolver) CoreCreateEdgeRegion(ctx context.Context, edgeRegion 
 			Pools: func() []entities.NodePool {
 				pools := make([]entities.NodePool, 0)
 				for _, p := range edgeRegion.Pools {
-					pools = append(pools, entities.NodePool{
-						Name:   p.Name,
-						Config: p.Config,
-						Min:    p.Min,
-						Max:    p.Max,
-					})
+					pools = append(
+						pools, entities.NodePool{
+							Name:   p.Name,
+							Config: p.Config,
+							Min:    p.Min,
+							Max:    p.Max,
+						},
+					)
 				}
 				return pools
 			}(),
@@ -955,24 +966,28 @@ func (r *mutationResolver) CoreCreateEdgeRegion(ctx context.Context, edgeRegion 
 }
 
 func (r *mutationResolver) CoreUpdateEdgeRegion(ctx context.Context, edgeID repos.ID, edgeRegion model.EdgeRegionUpdateIn) (bool, error) {
-	err := r.Domain.UpdateEdgeRegion(ctx, edgeID, &domain.EdgeRegionUpdate{
-		Name: edgeRegion.Name,
-		NodePools: func() []entities.NodePool {
-			if edgeRegion.Pools != nil {
-				pools := make([]entities.NodePool, 0)
-				for _, p := range edgeRegion.Pools {
-					pools = append(pools, entities.NodePool{
-						Name:   p.Name,
-						Config: p.Config,
-						Min:    p.Min,
-						Max:    p.Max,
-					})
+	err := r.Domain.UpdateEdgeRegion(
+		ctx, edgeID, &domain.EdgeRegionUpdate{
+			Name: edgeRegion.Name,
+			NodePools: func() []entities.NodePool {
+				if edgeRegion.Pools != nil {
+					pools := make([]entities.NodePool, 0)
+					for _, p := range edgeRegion.Pools {
+						pools = append(
+							pools, entities.NodePool{
+								Name:   p.Name,
+								Config: p.Config,
+								Min:    p.Min,
+								Max:    p.Max,
+							},
+						)
+					}
+					return pools
 				}
-				return pools
-			}
-			return nil
-		}(),
-	})
+				return nil
+			}(),
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -1495,9 +1510,9 @@ type userResolver struct{ *Resolver }
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have
 // one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func returnApps(appEntities []*entities.App) []*model.App {
 	apps := make([]*model.App, 0)
 	for _, a := range appEntities {

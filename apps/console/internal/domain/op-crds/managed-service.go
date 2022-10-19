@@ -11,11 +11,11 @@ type CloudProvider struct {
 }
 
 type ManagedServiceSpec struct {
-	Region        string            `json:"region,omitempty"`
-	CloudProvider CloudProvider     `json:"cloudProvider,omitempty"`
-	MsvcKind      MsvcKind          `json:"msvcKind,omitempty"`
-	Inputs        map[string]any    `json:"inputs,omitempty"`
-	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
+	Region string `json:"region,omitempty"`
+	// CloudProvider CloudProvider     `json:"cloudProvider,omitempty"`
+	MsvcKind     MsvcKind          `json:"msvcKind,omitempty"`
+	Inputs       map[string]any    `json:"inputs,omitempty"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 type ManagedServiceMetadata struct {

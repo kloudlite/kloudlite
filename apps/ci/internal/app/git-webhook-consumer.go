@@ -5,7 +5,6 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"strings"
 	"text/template"
 	"time"
 
@@ -33,18 +32,6 @@ const (
 	GithubEventHeader string = "X-Github-Event"
 	GitlabEventHeader string = "X-Gitlab-Event"
 )
-
-type processor struct {
-	domain domain.Domain
-}
-
-func getBranchFromRef(gitRef string) string {
-	sp := strings.Split(gitRef, "refs/heads/")
-	if len(sp) > 1 {
-		return sp[1]
-	}
-	return ""
-}
 
 func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpanda.Producer, logr logging.Logger, env *Env) error {
 	t := template.New("taskrun")

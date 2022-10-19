@@ -126,9 +126,8 @@ type GitWebhookPayload struct {
 }
 
 func getBranchFromRef(gitRef string) string {
-	// exmaple: gitref => refs/heads/master
-	sp := strings.Split(gitRef, "/")
-	if len(sp) > 2 {
+	sp := strings.SplitN(gitRef, "/", 3)
+	if len(sp) == 3 {
 		return sp[2]
 	}
 	return ""
