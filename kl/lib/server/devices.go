@@ -271,9 +271,10 @@ func DeleteDevicePort(ports []Port) error {
 
 	var activeDevice *Device
 
-	for _, d := range devices {
+	for i, d := range devices {
 		if d.Id == deviceId {
-			activeDevice = &d
+			dv := devices[i]
+			activeDevice = &dv
 		}
 	}
 
