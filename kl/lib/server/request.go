@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -66,7 +65,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		common.PrintError(errors.New(fmt.Sprintf("Somoe Issue with server:\n%s\n", string(body))))
+		common.PrintError(fmt.Errorf("some issue with server:\n%s", string(body)))
 		return nil, err
 	}
 
@@ -77,7 +76,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		}
 
 		// fmt.Println("here")
-		return nil, errors.New(fmt.Sprintf("Error:\n%s", strings.Join(errorMessages, "\n")))
+		return nil, fmt.Errorf(strings.Join(errorMessages, "\n"))
 
 	}
 

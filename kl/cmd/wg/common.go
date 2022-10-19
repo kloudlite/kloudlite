@@ -50,38 +50,44 @@ func startConfiguration(verbose bool) error {
 		return errors.New("region not selected in device please use 'kl use device' to select device")
 	}
 
-	err = configure(*device, verbose)
+	err = configure(device.Id, verbose)
 	return err
 }
 
 func configure(
-	device server.Device,
+	deviceId string,
 	verbose bool,
 ) error {
 
 	s := common.NewSpinner()
 	cfg := wgc.Config{}
 
+	device, err := server.GetDevice(deviceId)
+	if err != nil {
+		return err
+	}
+
 	// time.Sleep(time.Second * 2)
 
 	configuration := device.Configuration["config-"+device.Region]
+
 	s.Start()
 	if verbose {
 		common.Log("[#] validating configuration")
 	}
-	if err := cfg.UnmarshalText([]byte(configuration)); err != nil {
-		return err
+	if e := cfg.UnmarshalText([]byte(configuration)); e != nil {
+		return e
 	}
 	s.Stop()
 
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
-	} else if err := setDeviceIp(cfg.Address[0].IP.String(), verbose); err != nil {
-		return err
+	} else if e := setDeviceIp(cfg.Address[0].IP.String(), verbose); e != nil {
+		return e
 	}
 
-	if err := setDNS(cfg.DNS, verbose); err != nil {
-		return err
+	if e := setDNS(cfg.DNS, verbose); e != nil {
+		return e
 	}
 
 	wgc, err := wgctrl.New()

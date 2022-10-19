@@ -110,7 +110,10 @@ func Login(loginId string) error {
 			return errors.New("remote login failed")
 		}
 		if loginStatusResponse.RemoteLogin.Status == "pending" {
+			s := common.NewSpinner()
+			s.Start()
 			time.Sleep(time.Second * 2)
+			s.Stop()
 			continue
 		}
 	}

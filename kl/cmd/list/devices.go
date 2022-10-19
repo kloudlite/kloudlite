@@ -33,8 +33,25 @@ Examples:
 }
 
 func ListDevices(args []string) error {
+
 	var devices []server.Device
 	var err error
+
+	rs, err := server.GetRegions()
+	if err != nil {
+		return err
+	}
+
+	getRegionName := func(regionId string) string {
+		for _, r2 := range rs {
+			if r2.Region == regionId {
+				return r2.Name
+			}
+		}
+
+		return regionId
+	}
+
 	if len(args) >= 1 {
 		devices, err = server.GetDevices(common.MakeOption("accountId", ""))
 	} else {
@@ -71,7 +88,7 @@ func ListDevices(args []string) error {
 
 			func() string {
 				if cDid == a.Id {
-					return color.Text(a.Region, 2)
+					return fmt.Sprintf("%s\n%s", color.Text(a.Region, 2), color.Text(getRegionName(a.Region), 2))
 				}
 				return a.Region
 			}(),

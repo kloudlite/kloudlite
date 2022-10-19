@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/kloudlite/kl/lib/common"
 )
@@ -16,7 +17,7 @@ type Region struct {
 type Provider struct {
 	Name     string   `json:"Name"`
 	Provider string   `json:"provider"`
-	Regions  []Region `json:"regions"`
+	Edges    []Region `json:"edges"`
 }
 
 func GetRegions(options ...common.Option) ([]Region, error) {
@@ -54,8 +55,10 @@ func GetRegions(options ...common.Option) ([]Region, error) {
 
 	regions := make([]Region, 0)
 	for _, p := range resp.Providers {
-		for _, r := range p.Regions {
+		for _, r := range p.Edges {
 			r.Provider = p.Name
+			r.Region = r.Id
+			r.Name = fmt.Sprintf("(%s) %s, %s", p.Provider, p.Name, r.Name)
 			regions = append(regions, r)
 		}
 

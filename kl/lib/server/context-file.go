@@ -1,11 +1,14 @@
 package server
 
 import (
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/kloudlite/kl/lib/common"
 	"gopkg.in/yaml.v2"
@@ -86,10 +89,12 @@ func WriteContextFile(fileObj KLContext) error {
 		return nil
 	}
 
-	err = ioutil.WriteFile(path.Join(filePath, "config"), file, 0644)
-	if _, ok := os.LookupEnv("SUDO_USER"); ok {
-		err = os.Chown(path.Join(filePath, "config"), 1000, 1000)
-		if err != nil {
+	cfile := path.Join(filePath, "config")
+
+	err = ioutil.WriteFile(cfile, file, 0644)
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err = execCmd(fmt.Sprintf("chown %s %s", usr, cfile),
+			false); err != nil {
 			return err
 		}
 	}
@@ -136,4 +141,23 @@ func GetContextFile() (*KLContext, error) {
 	}
 
 	return &klfile, nil
+}
+
+func execCmd(cmdString string, verbose bool) error {
+	r := csv.NewReader(strings.NewReader(cmdString))
+	r.Comma = ' '
+	cmdArr, err := r.Read()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
+	if verbose {
+		common.Log("[#] " + strings.Join(cmdArr, " "))
+		cmd.Stdout = os.Stdout
+	}
+	cmd.Stderr = os.Stderr
+	// s.Start()
+	err = cmd.Run()
+	// s.Stop()
+	return err
 }

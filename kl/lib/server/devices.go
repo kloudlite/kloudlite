@@ -31,6 +31,33 @@ type Device struct {
 	Intercepted   []DApp            `json:"interceptingServices"`
 }
 
+func GetDevice(deviceId string) (*Device, error) {
+
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := klFetch("cli_getDevice", map[string]any{
+		"deviceId": deviceId,
+	}, &cookie)
+	if err != nil {
+		return nil, err
+	}
+
+	type Response struct {
+		Device Device `json:"data"`
+	}
+
+	var resp Response
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Device, nil
+}
+
 func GetDevices(options ...common.Option) ([]Device, error) {
 
 	cookie, err := getCookie()
@@ -175,9 +202,10 @@ func UpdateDevice(ports []Port, region *string) error {
 
 	var activeDevice *Device
 
-	for _, d := range devices {
+	for i, d := range devices {
 		if d.Id == deviceId {
-			activeDevice = &d
+			dv := devices[i]
+			activeDevice = &dv
 		}
 	}
 

@@ -24,7 +24,16 @@ func startServiceInBg() {
 		common.PrintError(err)
 		return
 	}
+
 	os.WriteFile(configFolder+"/wgpid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
+
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err = execCmd(fmt.Sprintf("chown %s %s", usr, configFolder+"/wgpid"),
+			false); err != nil {
+			common.PrintError(err)
+			return
+		}
+	}
 }
 
 var foreground bool
@@ -61,12 +70,6 @@ Examples:
 
 		if strings.TrimSpace(wgInterface) != "" {
 			common.Log("[#] already connected")
-			_, err := wgc.Show(nil)
-
-			if err != nil {
-				common.PrintError(err)
-				return
-			}
 
 			common.Log("\n[#] reconnecting")
 
