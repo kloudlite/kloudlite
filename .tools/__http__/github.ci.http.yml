@@ -49,8 +49,8 @@ query: |
     ci_githubRepoBranches(repoUrl: $repoUrl)
   }
 variables:
-  repoUrl: https://github.com/kloudlite/demo-env
-
+  # repoUrl: https://github.com/kloudlite/demo-env
+  repoUrl: https://github.com/ScaleGroup/crewscale.git
 ---
 
 label: Github Installation Token by installation id

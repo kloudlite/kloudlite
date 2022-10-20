@@ -152,25 +152,9 @@ func (d *domainI) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhoo
 			return &payload, nil
 		}
 	default:
-		return nil, errors.Newf("event type (%s), currently not supported", eventType)
+		d.logger.Infof("event type (%s), currently not supported", eventType)
+		return nil, nil
 	}
-
-	// if eventType == "ping" {
-	//	var ghPingEvent struct {
-	//		Repo *github.Repository `json:"repository,omitempty"`
-	//	}
-	//	if err := json.Unmarshal(hookBody, &ghPingEvent); err != nil {
-	//		return nil, err
-	//	}
-	//	return &GitWebhookPayload{
-	//		GitProvider: "github",
-	//		RepoUrl:     *ghPingEvent.Repo.HTMLURL,
-	//		GitBranch:      "",
-	//		CommitHash:  "",
-	//	}, nil
-	// }
-
-	// return nil, errors.Newf("unknown event type")
 }
 
 func (d *domainI) ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhookPayload, error) {
@@ -762,43 +746,55 @@ func (d *domainI) GithubListBranches(ctx context.Context, userId repos.ID, repoU
 }
 
 func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, repoUrl string) (repos.ID, error) {
-	grHook, err := d.gitRepoHookRepo.FindOne(ctx, repos.Filter{"httpUrl": d.githubWebhookUrl})
-	if err != nil {
-		return "", err
-	}
-
-	token, err := d.getAccessTokenByUserId(ctx, "github", userId)
-	if err != nil {
-		return "", err
-	}
-
-	if grHook != nil {
-		exists, _ := d.github.CheckWebhookExists(ctx, token, repoUrl, grHook.GithubWebhookId)
-		if exists {
-			return grHook.Id, nil
-		}
-		if err := d.gitRepoHookRepo.DeleteById(ctx, grHook.Id); err != nil {
-			return "", err
-		}
-	}
-
-	webhookId, err := d.github.AddWebhook(ctx, token, repoUrl, d.githubWebhookUrl)
-	if err != nil {
-		return "", err
-	}
-
-	grHook, err = d.gitRepoHookRepo.Create(
-		ctx, &GitRepositoryHook{
-			HttpUrl:         d.githubWebhookUrl,
-			GitProvider:     GithubLabel,
-			GithubWebhookId: webhookId,
+	grHook, err := d.gitRepoHookRepo.Upsert(
+		ctx, repos.Filter{"httpUrl": repoUrl}, &GitRepositoryHook{
+			HttpUrl:     repoUrl,
+			GitProvider: GithubLabel,
 		},
 	)
-
 	if err != nil {
 		return "", err
 	}
+
 	return grHook.Id, nil
+
+	// grHook, err := d.gitRepoHookRepo.FindOne(ctx, repos.Filter{"httpUrl": d.githubWebhookUrl})
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// token, err := d.getAccessTokenByUserId(ctx, "github", userId)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// if grHook != nil {
+	// 	exists, _ := d.github.CheckWebhookExists(ctx, token, repoUrl, grHook.GithubWebhookId)
+	// 	if exists {
+	// 		return grHook.Id, nil
+	// 	}
+	// 	if err := d.gitRepoHookRepo.DeleteById(ctx, grHook.Id); err != nil {
+	// 		return "", err
+	// 	}
+	// }
+
+	// webhookId, err := d.github.AddWebhook(ctx, token, repoUrl, d.githubWebhookUrl)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// grHook, err = d.gitRepoHookRepo.Create(
+	// 	ctx, &GitRepositoryHook{
+	// 		HttpUrl:     d.githubWebhookUrl,
+	// 		GitProvider: GithubLabel,
+	// 		// GithubWebhookId: webhookId,
+	// 	},
+	// )
+
+	// if err != nil {
+	// 	return "", err
+	// }
+	// return grHook.Id, nil
 }
 
 func (d *domainI) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (any, error) {
@@ -902,7 +898,6 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 }
 
 func (d *domainI) DeletePipeline(ctx context.Context, pipelineId repos.ID) error {
-	// TODO: now not deleting github/gitlab webhook on our pipeline delete
 	return d.pipelineRepo.DeleteById(ctx, pipelineId)
 
 	// if pipeline.GitProvider == common.ProviderGithub {
