@@ -38,6 +38,7 @@ type Query {
   core_getLamdaPlan: LambdaPlan! #user-access
 
   core_getCloudProviders(accountId: ID!): [CloudProvider!] #user-access
+  core_getDevice(deviceId: ID!): Device #user-access
 }
 
 type ManagedRes {
