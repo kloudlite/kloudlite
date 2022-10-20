@@ -325,6 +325,7 @@ type ComplexityRoot struct {
 		CoreGenerateEnv             func(childComplexity int, projectID repos.ID, klConfig map[string]interface{}) int
 		CoreGetCloudProviders       func(childComplexity int, accountID repos.ID) int
 		CoreGetComputePlans         func(childComplexity int) int
+		CoreGetDevice               func(childComplexity int, deviceID repos.ID) int
 		CoreGetLamdaPlan            func(childComplexity int) int
 		CoreGetStoragePlans         func(childComplexity int) int
 		CoreProject                 func(childComplexity int, projectID repos.ID) int
@@ -486,6 +487,7 @@ type QueryResolver interface {
 	CoreGetStoragePlans(ctx context.Context) ([]*model.StoragePlan, error)
 	CoreGetLamdaPlan(ctx context.Context) (*model.LambdaPlan, error)
 	CoreGetCloudProviders(ctx context.Context, accountID repos.ID) ([]*model.CloudProvider, error)
+	CoreGetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error)
 }
 type UserResolver interface {
 	Devices(ctx context.Context, obj *model.User) ([]*model.Device, error)
@@ -2020,6 +2022,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreGetComputePlans(childComplexity), true
 
+	case "Query.core_getDevice":
+		if e.complexity.Query.CoreGetDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetDevice(childComplexity, args["deviceId"].(repos.ID)), true
+
 	case "Query.core_getLamdaPlan":
 		if e.complexity.Query.CoreGetLamdaPlan == nil {
 			break
@@ -2438,6 +2452,7 @@ type Query {
   core_getLamdaPlan: LambdaPlan! #user-access
 
   core_getCloudProviders(accountId: ID!): [CloudProvider!] #user-access
+  core_getDevice(deviceId: ID!): Device #user-access
 }
 
 type ManagedRes {
@@ -4181,6 +4196,21 @@ func (ec *executionContext) field_Query_core_getCloudProviders_args(ctx context.
 		}
 	}
 	args["accountId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["deviceId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceId"] = arg0
 	return args, nil
 }
 
@@ -11563,6 +11593,45 @@ func (ec *executionContext) _Query_core_getCloudProviders(ctx context.Context, f
 	return ec.marshalOCloudProvider2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_core_getDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_core_getDevice_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreGetDevice(rctx, args["deviceId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Device)
+	fc.Result = res
+	return ec.marshalODevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDevice(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -17564,6 +17633,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_core_getCloudProviders(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_getDevice":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getDevice(ctx, field)
 				return res
 			}
 

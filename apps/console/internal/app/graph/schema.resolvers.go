@@ -1427,6 +1427,38 @@ func (r *queryResolver) CoreGetCloudProviders(ctx context.Context, accountID rep
 	return cloudProviders, nil
 }
 
+func (r *queryResolver) CoreGetDevice(ctx context.Context, deviceID repos.ID) (*model.Device, error) {
+	device, err := r.Domain.GetDevice(ctx, deviceID)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Device{
+		ID:      device.Id,
+		Region:  device.ActiveRegion,
+		User:    &model.User{ID: device.UserId},
+		Account: &model.Account{ID: device.AccountId},
+		Name:    device.Name,
+		Ports: func() []*model.Port {
+			var ports []*model.Port
+			for _, port := range device.ExposedPorts {
+				ports = append(
+					ports, &model.Port{
+						Port: int(port.Port),
+						TargetPort: func() *int {
+							if port.TargetPort != nil {
+								i := int(*port.TargetPort)
+								return &i
+							}
+							return nil
+						}(),
+					},
+				)
+			}
+			return ports
+		}(),
+	}, nil
+}
+
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)

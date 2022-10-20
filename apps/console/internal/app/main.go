@@ -298,8 +298,9 @@ var Module = fx.Module(
 							conn.Close()
 							return
 						}
+
 						// Crosscheck session
-						client.Tail(
+						err = client.Tail(
 							[]lokiserver.StreamSelector{
 								{
 									Key:       "namespace",
@@ -313,6 +314,10 @@ var Module = fx.Module(
 								},
 							}, nil, nil, nil, nil, conn,
 						)
+
+						if err != nil {
+							fmt.Println(err)
+						}
 					},
 				),
 			)
