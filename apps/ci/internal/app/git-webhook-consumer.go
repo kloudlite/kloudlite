@@ -22,12 +22,6 @@ var (
 	res embed.FS
 )
 
-// type GitWebhookPayload struct {
-// 	Provider   string            `json:"provider"`
-// 	Body       []byte            `json:"body"`
-// 	ReqHeaders map[string]string `json:"reqHeaders"`
-// }
-
 const (
 	GithubEventHeader string = "X-Github-Event"
 	GitlabEventHeader string = "X-Gitlab-Event"
@@ -42,9 +36,12 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 
 	consumer.StartConsuming(
 		func(msg []byte, timeStamp time.Time, offset int64) error {
-			logger := logr.WithName("ci-webhook")
-			logger = logr.WithKV("offset", offset)
+			logger := logr.WithName("ci-webhook").WithKV("offset", offset)
 			logger.Infof("started processing")
+			defer func() {
+				logger.Infof("finished processing")
+			}()
+
 			var gitHook types.GitHttpHook
 			if err := json.Unmarshal(msg, &gitHook); err != nil {
 				logger.Errorf(err, "could not unmarshal into *GitWebhookPayload")
@@ -76,6 +73,12 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 				logger.Errorf(err, "could not get tekton run params")
 				return err
 			}
+
+			if len(tkRuns) == 0 {
+				logger.Infof("no pipeline is configured for given hook body")
+				return nil
+			}
+
 			for i := range tkRuns {
 				tkRuns[i].GitCommitHash = hook.CommitHash
 			}
