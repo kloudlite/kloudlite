@@ -1,7 +1,6 @@
 mode: dev
 dev:
-  # url: https://gateway.dev.kloudlite.io
   url: https://gateway.kloudlite.io
-  # url: http://gateway.kl-core.svc.cluster.local
+  # url: http://localhost:3000/query
   headers:
     cookie: hotspot-session=ses-qrn1mbxjss0fsngctk-rj-x-miks; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
