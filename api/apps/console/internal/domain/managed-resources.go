@@ -168,7 +168,10 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 				MresKind: opCrds.MresKind{
 					Kind: resTmpl.Kind,
 				},
-				Inputs: create.Values,
+				Inputs: func() map[string]string {
+					create.Values["resourceName"] = svc.Name
+					return create.Values
+				}(),
 			},
 		},
 	)
@@ -185,6 +188,9 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 	}
 
 	msvc, err := d.managedSvcRepo.FindById(ctx, mres.ServiceId)
+	if err != nil {
+		return false, err
+	}
 	template, err := d.GetManagedServiceTemplate(ctx, string(msvc.ServiceType))
 	if err != nil {
 		return false, err
@@ -217,7 +223,10 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 				MresKind: opCrds.MresKind{
 					Kind: string(mres.ResourceType),
 				},
-				Inputs: mres.Values,
+				Inputs: func() map[string]string {
+					mres.Values["resourceName"] = mres.Name
+					return mres.Values
+				}(),
 			},
 		},
 	)
