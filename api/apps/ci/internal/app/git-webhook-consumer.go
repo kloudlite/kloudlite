@@ -30,7 +30,6 @@ const (
 func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpanda.Producer, logr logging.Logger, env *Env) error {
 	t := template.New("taskrun")
 	t = text_templates.WithFunctions(t)
-	// if _, err := t.ParseFS(res, "templates/taskrun.tpl.yml"); err != nil {
 	if _, err := t.ParseFS(res, "templates/pipeline-run.yml.tpl"); err != nil {
 		return err
 	}
@@ -59,6 +58,10 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 				return nil, errors.New("unknown git provider")
 			}()
 			if err != nil {
+				if _, ok := err.(*domain.ErrEventNotSupported); ok {
+					logger.Infof(err.Error())
+					return nil
+				}
 				logger.Errorf(err, "could not extract gitHook")
 				return err
 			}
@@ -86,7 +89,6 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 
 			b := new(bytes.Buffer)
 			if err := t.ExecuteTemplate(
-				// b, "taskrun.tpl.yml", map[string]any{"tekton-runs": tkRuns},
 				b, "pipeline-run.yml.tpl", map[string]any{
 					"tekton-runs": tkRuns,
 				},
