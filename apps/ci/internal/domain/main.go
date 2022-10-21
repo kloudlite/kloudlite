@@ -483,7 +483,6 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 		tkVars = append(
 			tkVars, &TektonVars{
 				PipelineId: p.Id,
-				AppName:    p.AppId,
 				GitRepo:    p.GitRepoUrl,
 				GitUser: func() string {
 					if p.GitProvider == "github" {

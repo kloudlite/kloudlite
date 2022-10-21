@@ -31,6 +31,8 @@ func LoadHarborWebhook() fx.Option {
 				"/harbor", func(ctx *fiber.Ctx) error {
 					logger := logr.WithName("harbor-webhook")
 
+					logger.Infof("received webhook")
+
 					headers := ctx.GetReqHeaders()
 					if authz, ok := headers["Authorization"]; !ok || authz != envVars.HarborAuthzSecret {
 						logger.Infof("bad authorization code, dropping request...")
@@ -58,9 +60,9 @@ func LoadHarborWebhook() fx.Option {
 						return ctx.Status(http.StatusInternalServerError).JSON(wErr.Error())
 					}
 					logger = logger.WithKV(
-						"offset:", msg.Offset,
-						"topic", msg.Topic,
-						"timestamp", msg.Timestamp,
+						"produced.offset", msg.Offset,
+						"produced.topic", msg.Topic,
+						"produced.timestamp", msg.Timestamp,
 					)
 					logger.Infof("queued webhook")
 					return ctx.Status(http.StatusAccepted).JSON(msg)
