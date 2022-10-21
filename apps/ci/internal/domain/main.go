@@ -133,6 +133,14 @@ func getBranchFromRef(gitRef string) string {
 	return ""
 }
 
+type ErrEventNotSupported struct {
+	err error
+}
+
+func (e *ErrEventNotSupported) Error() string {
+	return e.err.Error()
+}
+
 func (d *domainI) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPayload, error) {
 	hook, err := github.ParseWebHook(eventType, hookBody)
 	if err != nil {
@@ -152,8 +160,7 @@ func (d *domainI) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhoo
 			return &payload, nil
 		}
 	default:
-		d.logger.Infof("event type (%s), currently not supported", eventType)
-		return nil, nil
+		return nil, &ErrEventNotSupported{err: fmt.Errorf("event type (%s), currently not supported", eventType)}
 	}
 }
 
@@ -174,7 +181,7 @@ func (d *domainI) ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhoo
 			return payload, nil
 		}
 	default:
-		return nil, errors.Newf("event type (%s) currently not supported", eventType)
+		return nil, &ErrEventNotSupported{err: fmt.Errorf("event type (%s) currently not supported", eventType)}
 	}
 }
 
