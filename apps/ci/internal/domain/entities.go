@@ -69,7 +69,6 @@ var PipelineIndexes = []repos.IndexField{
 
 type TektonVars struct {
 	PipelineId  repos.ID `json:"pipeline-id"`
-	AppName     string   `json:"app-name"`
 	GitRepo     string   `json:"git-repo"`
 	GitUser     string   `json:"git-user"`
 	GitPassword string   `json:"git-password"`

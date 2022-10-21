@@ -263,7 +263,7 @@ var Module = fx.Module(
 						// }
 
 						// Crosscheck session
-						client.Tail(
+						if err := client.Tail(
 							[]lokiserver.StreamSelector{
 								{
 									Key:       "namespace",
@@ -276,7 +276,11 @@ var Module = fx.Module(
 									Value:     pipelineId,
 								},
 							}, nil, nil, nil, nil, conn,
-						)
+						); err != nil {
+							fmt.Println(err)
+							conn.Close()
+							return
+						}
 					},
 				),
 			)
@@ -317,6 +321,8 @@ var Module = fx.Module(
 
 						if err != nil {
 							fmt.Println(err)
+							conn.Close()
+							return
 						}
 					},
 				),

@@ -44,7 +44,7 @@ metadata:
   generateName: {{$taskName}}
   namespace: {{.TaskNamespace}}
   labels:
-    app: build-{{.AppName}}
+    app: {{.PipelineId}}
 spec:
   workspaces:
     - name: p-output

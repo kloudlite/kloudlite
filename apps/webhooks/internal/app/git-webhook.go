@@ -148,10 +148,9 @@ var Module = fx.Module(
 						return ctx.Status(http.StatusInternalServerError).JSON(errMsg)
 					}
 					logger.WithKV(
-						"offset", msg.Offset,
-						"partition", msg.Partition,
-						"topic", msg.Topic,
-						"timestamp", msg.Timestamp,
+						"produced.offset", msg.Offset,
+						"produced.topic", msg.Topic,
+						"produced.timestamp", msg.Timestamp,
 					).Infof("queued webhook")
 					return ctx.Status(http.StatusAccepted).JSON(msg)
 				},
