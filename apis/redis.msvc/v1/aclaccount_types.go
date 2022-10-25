@@ -11,8 +11,9 @@ import (
 
 // ACLAccountSpec defines the desired state of ACLAccount
 type ACLAccountSpec struct {
-	KeyPrefix string     `json:"keyPrefix,omitempty"`
-	MsvcRef   ct.MsvcRef `json:"msvcRef"`
+	KeyPrefix    string     `json:"keyPrefix,omitempty"`
+	MsvcRef      ct.MsvcRef `json:"msvcRef"`
+	ResourceName string     `json:"resourceName,omitempty"`
 }
 
 // +kubebuilder:object:root=true
