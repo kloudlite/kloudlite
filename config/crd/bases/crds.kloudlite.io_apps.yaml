@@ -19,9 +19,6 @@ spec:
     - jsonPath: .status.isReady
       name: Ready
       type: boolean
-    - jsonPath: .metadata.labels.['kloudlite.io/is-intercepted']
-      name: Intercepted
-      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date

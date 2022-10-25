@@ -1,1 +1,2 @@
 go.sum binary
+config/crd/**/*.yaml binary

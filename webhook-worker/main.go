@@ -169,7 +169,7 @@ func main() {
 
 	if consumer.StartConsuming(
 		func(msg redpanda.KafkaMessage) error {
-			log := logger.WithKV("offset", msg.Offset).WithKV("topic", msg.Topic).WithKV("partition", msg.Partition)
+			log := logger.WithKV("received.offset", msg.Offset).WithKV("received.topic", msg.Topic).WithKV("received.partition", msg.Partition)
 			log.Infof("received message")
 			var httpHook HttpHook
 			if err := json.Unmarshal(msg.Value, &httpHook); err != nil {
@@ -190,15 +190,22 @@ func main() {
 				return ""
 			}()
 
-			if err := restartApp(kClient, imageName); err != nil {
-				return errors.NewEf(err, "restarting apps")
-			}
+			log = log.WithKV("image", imageName)
+			if cErr := func() error {
+				if err := restartApp(kClient, imageName); err != nil {
+					return errors.NewEf(err, "restarting apps")
+				}
 
-			if err := restartLambda(kClient, imageName); err != nil {
-				return errors.NewEf(err, "restarting lambda")
+				if err := restartLambda(kClient, imageName); err != nil {
+					return errors.NewEf(err, "restarting lambda")
+				}
+				return nil
+			}(); cErr != nil {
+				log.WithKV("error", cErr.Error()).Infof("processed message with error")
 			}
 
 			log.Infof("processed message")
+
 			return nil
 		},
 	); err != nil {

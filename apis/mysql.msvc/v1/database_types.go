@@ -9,7 +9,8 @@ import (
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	MsvcRef ct.MsvcRef `json:"msvcRef"`
+	MsvcRef      ct.MsvcRef `json:"msvcRef"`
+	ResourceName string     `json:"resourceName"`
 }
 
 // +kubebuilder:object:root=true

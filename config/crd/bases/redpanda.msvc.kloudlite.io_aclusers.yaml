@@ -51,6 +51,8 @@ spec:
                 required:
                 - name
                 type: object
+              resourceName:
+                type: string
               topics:
                 items:
                   type: string

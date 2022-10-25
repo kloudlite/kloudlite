@@ -213,8 +213,8 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 
 	if accessSecret == nil {
 		dbPasswd := fn.CleanerNanoid(40)
-		dbName := sanitizeDbName(obj.Name)
-		dbUsername := sanitizeDbUsername(obj.Name)
+		dbName := sanitizeDbName(obj.Spec.ResourceName)
+		dbUsername := sanitizeDbUsername(obj.Spec.ResourceName)
 
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{

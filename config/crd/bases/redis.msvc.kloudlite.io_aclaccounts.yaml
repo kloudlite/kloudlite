@@ -57,6 +57,8 @@ spec:
                 - kind
                 - name
                 type: object
+              resourceName:
+                type: string
             required:
             - msvcRef
             type: object
