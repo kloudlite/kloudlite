@@ -66,7 +66,7 @@ func main() {
 
 	errProducer, err := redpanda.NewProducer(
 		ev.KafkaBrokers, redpanda.ProducerOpts{
-			SASLAuth: &kafkaSasl,
+			// SASLAuth: &kafkaSasl,
 		},
 	)
 	if err != nil {

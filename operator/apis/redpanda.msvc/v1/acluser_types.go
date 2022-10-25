@@ -11,6 +11,7 @@ import (
 type ACLUserSpec struct {
 	AdminSecretRef ct.SecretRef `json:"adminSecretRef"`
 	Topics         []string     `json:"topics"`
+	ResourceName   string       `json:"resourceName,omitempty"`
 }
 
 // +kubebuilder:object:root=true
