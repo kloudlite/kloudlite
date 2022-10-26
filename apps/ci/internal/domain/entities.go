@@ -65,6 +65,15 @@ var PipelineIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
+
+	{
+		Field: []repos.IndexKey{
+			{Key: "project_id", Value: repos.IndexAsc},
+			{Key: "app_id", Value: repos.IndexAsc},
+			{Key: "container_name", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }
 
 type TektonVars struct {
