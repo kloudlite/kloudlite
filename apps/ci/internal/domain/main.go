@@ -240,25 +240,10 @@ func (d *domainI) TektonInterceptorGithub(ctx context.Context, req *tekton.Reque
 		GitBranch:     pipeline.GitBranch,
 		GitCommitHash: hookPayload.CommitHash,
 
-		IsDockerBuild: pipeline.DockerBuildInput != nil,
-		DockerFile: func() *string {
-			if pipeline.DockerBuildInput != nil {
-				return &pipeline.DockerBuildInput.DockerFile
-			}
-			return nil
-		}(),
-		DockerContextDir: func() *string {
-			if pipeline.DockerBuildInput != nil {
-				return &pipeline.DockerBuildInput.ContextDir
-			}
-			return nil
-		}(),
-		DockerBuildArgs: func() *string {
-			if pipeline.DockerBuildInput != nil {
-				return &pipeline.DockerBuildInput.BuildArgs
-			}
-			return nil
-		}(),
+		IsDockerBuild:    pipeline.DockerBuildInput.DockerFile != "",
+		DockerFile:       &pipeline.DockerBuildInput.DockerFile,
+		DockerContextDir: &pipeline.DockerBuildInput.ContextDir,
+		DockerBuildArgs:  &pipeline.DockerBuildInput.BuildArgs,
 
 		BuildBaseImage: func() string {
 			if pipeline.Build == nil {
@@ -352,25 +337,10 @@ func (d *domainI) TektonInterceptorGitlab(ctx context.Context, req *tekton.Reque
 		GitBranch:     pipeline.GitBranch,
 		GitCommitHash: hookPayload.CommitHash,
 
-		IsDockerBuild: pipeline.DockerBuildInput != nil,
-		DockerFile: func() *string {
-			if pipeline.DockerBuildInput != nil {
-				return &pipeline.DockerBuildInput.DockerFile
-			}
-			return nil
-		}(),
-		DockerContextDir: func() *string {
-			if pipeline.DockerBuildInput != nil {
-				return &pipeline.DockerBuildInput.ContextDir
-			}
-			return nil
-		}(),
-		DockerBuildArgs: func() *string {
-			if pipeline.DockerBuildInput != nil {
-				return &pipeline.DockerBuildInput.BuildArgs
-			}
-			return nil
-		}(),
+		IsDockerBuild:    pipeline.DockerBuildInput.DockerFile != "",
+		DockerFile:       &pipeline.DockerBuildInput.DockerFile,
+		DockerContextDir: &pipeline.DockerBuildInput.ContextDir,
+		DockerBuildArgs:  &pipeline.DockerBuildInput.BuildArgs,
 
 		BuildBaseImage: func() string {
 			if pipeline.Build == nil {
@@ -510,27 +480,12 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 					}
 					return ""
 				}(),
-				GitPassword:   pullToken,
-				GitBranch:     p.GitBranch,
-				IsDockerBuild: p.DockerBuildInput != nil,
-				DockerFile: func() *string {
-					if p.DockerBuildInput != nil {
-						return &p.DockerBuildInput.DockerFile
-					}
-					return nil
-				}(),
-				DockerContextDir: func() *string {
-					if p.DockerBuildInput != nil {
-						return &p.DockerBuildInput.ContextDir
-					}
-					return nil
-				}(),
-				DockerBuildArgs: func() *string {
-					if p.DockerBuildInput != nil {
-						return &p.DockerBuildInput.BuildArgs
-					}
-					return nil
-				}(),
+				GitPassword:      pullToken,
+				GitBranch:        p.GitBranch,
+				IsDockerBuild:    p.DockerBuildInput.DockerFile != "",
+				DockerFile:       &p.DockerBuildInput.DockerFile,
+				DockerContextDir: &p.DockerBuildInput.ContextDir,
+				DockerBuildArgs:  &p.DockerBuildInput.BuildArgs,
 				BuildBaseImage: func() string {
 					if p.Build == nil {
 						return ""

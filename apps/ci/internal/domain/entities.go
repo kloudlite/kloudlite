@@ -49,7 +49,7 @@ type Pipeline struct {
 
 	Build            *ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
 	Run              *ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
-	DockerBuildInput *DockerBuildInput    `json:"docker_build_input,omitempty" bson:"docker_build_input,omitempty"`
+	DockerBuildInput DockerBuildInput     `json:"docker_build_input,omitempty" bson:"docker_build_input,omitempty"`
 
 	ArtifactRef ArtifactRef `json:"artifact_ref,omitempty" bson:"artifact_ref,omitempty"`
 
