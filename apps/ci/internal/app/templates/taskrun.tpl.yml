@@ -45,15 +45,23 @@ metadata:
   namespace: {{.TaskNamespace}}
 spec:
   serviceAccountName: {{$svcAccountName}}
+  computeResources:
+    requests:
+      cpu: 1000m
+      memory: 4000Mi
+    limits:
+      cpu: 2000m
+      memory: 4000Mi
   taskRef:
     kind: ClusterTask
     name: {{$taskName}}
   podTemplate:
+    nodeSelector:
+      kloudlite.io/auto-scaler: "true"
     tolerations:
-      - key: {{$tolerationKey}}
-        value: "true"
-        operator: Equal
-        effect: {{$tolerationEffect}}
+      - key: kloudlite.io/auto-scaler
+        operator: Exists
+        effect: NoExecute
 
   workspaces:
     - name: output
