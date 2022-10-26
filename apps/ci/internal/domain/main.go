@@ -848,7 +848,6 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		}
 		latestCommit = commit
 	}
-
 	p, err := d.pipelineRepo.Upsert(ctx, repos.Filter{"id": pipeline.Id}, &pipeline)
 	if err != nil {
 		return nil, err
