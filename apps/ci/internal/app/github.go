@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -43,7 +44,7 @@ func (gh *githubI) CheckWebhookExists(ctx context.Context, token *domain.AccessT
 	return hook != nil, nil
 }
 
-func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl, webhookUrl string) (*domain.GithubWebhookId, error) {
+func (gh *githubI) AddRepoWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl, webhookUrl string) (*domain.GithubWebhookId, error) {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
 	hookName := "kloudlite-pipeline"
 
@@ -60,7 +61,7 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 		},
 	)
 	if err != nil {
-		// ASSERT: github returns 422 only if hook already exists on the repository
+		// ASSERT: GitHub returns 422 only if hook already exists on the repository
 		if res.StatusCode == 422 {
 			return nil, nil
 		}
@@ -68,6 +69,11 @@ func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken,
 	}
 
 	return fn.New(domain.GithubWebhookId(*hook.ID)), nil
+}
+
+func (gh *githubI) AddWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl, webhookUrl string) (*domain.GithubWebhookId, error) {
+	// TODO:: we migrated to GitHub app webhook, which allows us to skip creating github repository webhooks, now
+	return nil, nil
 }
 
 func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *domain.AccessToken, repoUrl string, hookId domain.GithubWebhookId) error {
@@ -87,7 +93,9 @@ func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
 
 func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
 	if p == nil {
-		return github.ListOptions{}
+		return github.ListOptions{
+			PerPage: 200,
+		}
 	}
 	return github.ListOptions{
 		Page:    p.Page,
@@ -97,13 +105,29 @@ func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
 
 func (gh *githubI) ListBranches(ctx context.Context, accToken *domain.AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error) {
 	owner, repo := gh.getOwnerAndRepo(repoUrl)
-	branches, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(
-		ctx, owner, repo, &github.BranchListOptions{
-			ListOptions: gh.buildListOptions(pagination),
-		},
-	)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not list branches")
+
+	var branches []*github.Branch
+	hasFetchedAll := false
+	pageNo := 1
+	for !hasFetchedAll {
+		if pageNo > 5 {
+			break
+		}
+		brcs, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.ListBranches(
+			ctx, owner, repo, &github.BranchListOptions{
+				ListOptions: func() github.ListOptions {
+					return github.ListOptions{Page: pageNo, PerPage: 100}
+				}(),
+			},
+		)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not list branches")
+		}
+		branches = append(branches, brcs...)
+		if len(brcs) != 100 {
+			hasFetchedAll = true
+		}
+		pageNo++
 	}
 	return branches, nil
 }
@@ -135,7 +159,6 @@ func (gh *githubI) ListInstallations(ctx context.Context, accToken *domain.Acces
 func (gh *githubI) ListRepos(ctx context.Context, accToken *domain.AccessToken, instId int64, pagination *types.Pagination) (*github.ListRepositories, error) {
 	opts := gh.buildListOptions(pagination)
 	repos, _, err := gh.ghCliForUser(ctx, accToken.Token).Apps.ListUserRepos(ctx, instId, &opts)
-	// repos, _, err := gh.ghCli.Apps.ListUserRepos(ctx, instId, &opts)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not list user repositories")
 	}
@@ -187,7 +210,7 @@ type GithubOAuth interface {
 	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
 }
 
-func fxGithub(env *Env) domain.Github {
+func fxGithub(env *Env) (domain.Github, error) {
 	clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile := env.GithubConfig()
 	cfg := oauth2.Config{
 		ClientID:     clientId,
@@ -197,9 +220,14 @@ func fxGithub(env *Env) domain.Github {
 		Scopes:       strings.Split(env.GithubScopes, ","),
 		// Scopes:       []string{"user:email", "admin:org"},
 	}
+
+	if _, err := os.Stat(ghAppPKFile); err != nil {
+		return nil, fmt.Errorf("github privaate key file (path='%s') does not exist", ghAppPKFile)
+	}
+
 	privatePem, err := ioutil.ReadFile(ghAppPKFile)
 	if err != nil {
-		panic(errors.NewEf(err, "reading github app PK file"))
+		return nil, errors.NewEf(err, "reading github app PK file")
 	}
 
 	appId, _ := strconv.ParseInt(ghAppId, 10, 64)
@@ -220,5 +248,5 @@ func fxGithub(env *Env) domain.Github {
 		ghCli:        ghCli,
 		ghCliForUser: ghCliForUser,
 		env:          env,
-	}
+	}, nil
 }

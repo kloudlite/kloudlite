@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/codingconcepts/env"
+	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
@@ -12,7 +13,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/miekg/dns"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/dns/internal/app/graph"
@@ -46,6 +46,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg.SetReply(r)
 	msg.Answer = []dns.RR{}
 	for _, q := range r.Question {
+		// fmt.Println(q.Name)
 		switch q.Qtype {
 		case dns.TypeNS:
 			for _, name := range h.dnsDomainNames {
@@ -225,6 +226,7 @@ var Module = fx.Module(
 			c.Send([]byte("done"))
 			return nil
 		})
+
 		server.Get("/get-records/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")
 			record, err := d.GetRecord(c.Context(), domainName)
@@ -238,6 +240,18 @@ var Module = fx.Module(
 			c.Send(r)
 			return nil
 		})
+
+		server.Get("/get-region-domain/:accountId/:regionId", func(c *fiber.Ctx) error {
+			accountId := c.Params("accountId")
+			regionId := c.Params("regionId")
+			s, err := d.GetAccountEdgeCName(c.Context(), accountId, repos.ID(regionId))
+			if err != nil {
+				return err
+			}
+			c.Send([]byte(s))
+			return nil
+		})
+
 		server.Delete("/delete-domain/:domain_name", func(c *fiber.Ctx) error {
 			domainName := c.Params("domain_name")
 

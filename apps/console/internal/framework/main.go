@@ -62,12 +62,21 @@ func (e *JSEvalEnv) GetGRPCServerURL() string {
 }
 
 type LogServerEnv struct {
-	LokiServerUrl string `env:"LOKI_URL" required:"true"`
-	LogServerPort uint64 `env:"LOG_SERVER_PORT" required:"true"`
+	LokiServerUrl    string `env:"LOKI_URL" required:"true"`
+	LokiAuthUsername string `env:"LOKI_AUTH_USERNAME"`
+	LokiAuthPassword string `env:"LOKI_AUTH_PASSWORD"`
+	LogServerPort    uint64 `env:"LOG_SERVER_PORT" required:"true"`
 }
 
-func (l *LogServerEnv) GetLokiServerUrl() string {
-	return l.LokiServerUrl
+func (l *LogServerEnv) GetLokiServerUrlAndOptions() (string, loki_server.ClientOpts) {
+	opts := loki_server.ClientOpts{}
+	if l.LokiAuthUsername != "" && l.LokiAuthPassword != "" {
+		opts.BasicAuth = &loki_server.BasicAuth{
+			Username: l.LokiAuthUsername,
+			Password: l.LokiAuthPassword,
+		}
+	}
+	return l.LokiServerUrl, opts
 }
 
 func (l *LogServerEnv) GetLogServerPort() uint64 {

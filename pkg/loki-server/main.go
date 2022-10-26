@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	fWebsocket "github.com/gofiber/websocket/v2"
-	"github.com/gorilla/websocket"
-	"go.uber.org/fx"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
+	fWebsocket "github.com/gofiber/websocket/v2"
+	"github.com/gorilla/websocket"
+	"go.uber.org/fx"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -25,17 +26,12 @@ type StreamSelector struct {
 }
 
 type LokiClient interface {
-	Tail(
-		streamSelectors []StreamSelector,
-		filter *string,
-		start, end *int64,
-		limit *int,
-		connection *fWebsocket.Conn,
-	) error
+	Tail(streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error
 }
 
 type lokiClient struct {
-	url *url.URL
+	url  *url.URL
+	opts ClientOpts
 }
 
 type logResult struct {
@@ -46,13 +42,7 @@ type logResult struct {
 	} `json:"data"`
 }
 
-func (l *lokiClient) Tail(
-	streamSelectors []StreamSelector,
-	filter *string,
-	start, end *int64,
-	limit *int,
-	connection *fWebsocket.Conn,
-) error {
+func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error {
 	streamSelectorSplits := make([]string, 0)
 	for _, label := range streamSelectors {
 		streamSelectorSplits = append(streamSelectorSplits, label.Key+label.Operation+fmt.Sprintf("\"%s\"", label.Value))
@@ -80,8 +70,18 @@ func (l *lokiClient) Tail(
 		query.Set("limit", fmt.Sprintf("%v", 500))
 	}
 	for {
-		u := url.URL{Scheme: "http", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
-		get, err := http.Get(u.String())
+		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/loki/api/v1/query_range", l.url), nil)
+		if err != nil {
+			return err
+		}
+		if l.opts.BasicAuth != nil {
+			request.SetBasicAuth(l.opts.BasicAuth.Username, l.opts.BasicAuth.Password)
+		}
+		request.URL.RawQuery = query.Encode()
+
+		// u := url.URL{Scheme: "http", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
+		// get, err := http.Get(u.String())
+		get, err := http.DefaultClient.Do(request)
 		if err != nil {
 			return err
 		}
@@ -97,6 +97,8 @@ func (l *lokiClient) Tail(
 		if err != nil {
 			return err
 		}
+		// fmt.Printf("DATA: %+v\n", data)
+		// connection.WriteMessage(websocket.TextMessage, all)
 		lastTimeStamp := query.Get("start")
 		for _, result := range data.Data.Result {
 			for _, values := range result.Values {
@@ -117,53 +119,68 @@ func (l *lokiClient) Tail(
 	}
 }
 
-func NewLokiClient(serverUrl string) (LokiClient, error) {
+func NewLokiClient(serverUrl string, opts ClientOpts) (LokiClient, error) {
 	u, err := url.Parse(serverUrl)
 	if err != nil {
 		return nil, err
 	}
 	return &lokiClient{
-		url: u,
+		url:  u,
+		opts: opts,
 	}, nil
 }
 
 type LogServer *fiber.App
 
 type LokiClientOptions interface {
-	GetLokiServerUrl() string
+	GetLokiServerUrlAndOptions() (string, ClientOpts)
 	GetLogServerPort() uint64
 }
 
 func NewLogServerFx[T LokiClientOptions]() fx.Option {
-	return fx.Module("loki-client",
-		fx.Provide(func() LogServer {
-			return fiber.New()
-		}),
-		fx.Invoke(func(o T, app LogServer, lifecycle fx.Lifecycle) {
-			var a *fiber.App
-			a = app
-			lifecycle.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					go a.Listen(fmt.Sprintf(":%v", o.GetLogServerPort()))
-					return nil
-				},
-				OnStop: func(ctx context.Context) error {
-					return a.Shutdown()
-				},
-			})
-		}),
-		fx.Provide(func(o T) (LokiClient, error) {
-			return NewLokiClient(o.GetLokiServerUrl())
-		}),
-		fx.Invoke(func(app LogServer, lokiServer LokiClient) {
-			var a *fiber.App
-			a = app
-			a.Use("/", func(c *fiber.Ctx) error {
-				if fWebsocket.IsWebSocketUpgrade(c) {
-					c.Locals("allowed", true)
-					return c.Next()
-				}
-				return fiber.ErrUpgradeRequired
-			})
-		}))
+	return fx.Module(
+		"loki-client",
+		fx.Provide(
+			func() LogServer {
+				return fiber.New()
+			},
+		),
+		fx.Invoke(
+			func(o T, app LogServer, lifecycle fx.Lifecycle) {
+				var a *fiber.App
+				a = app
+				lifecycle.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							go a.Listen(fmt.Sprintf(":%v", o.GetLogServerPort()))
+							return nil
+						},
+						OnStop: func(ctx context.Context) error {
+							return a.Shutdown()
+						},
+					},
+				)
+			},
+		),
+		fx.Provide(
+			func(o T) (LokiClient, error) {
+				return NewLokiClient(o.GetLokiServerUrlAndOptions())
+			},
+		),
+		fx.Invoke(
+			func(app LogServer, lokiServer LokiClient) {
+				var a *fiber.App
+				a = app
+				a.Use(
+					"/", func(c *fiber.Ctx) error {
+						if fWebsocket.IsWebSocketUpgrade(c) {
+							c.Locals("allowed", true)
+							return c.Next()
+						}
+						return fiber.ErrUpgradeRequired
+					},
+				)
+			},
+		),
+	)
 }

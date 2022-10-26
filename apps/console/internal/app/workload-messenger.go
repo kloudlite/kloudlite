@@ -15,7 +15,6 @@ type workloadMessengerImpl struct {
 }
 
 func (i *workloadMessengerImpl) SendAction(action string, resId string, res any) error {
-	fmt.Println(res)
 	marshal, err := json.Marshal(
 		map[string]any{
 			"action":  action,
