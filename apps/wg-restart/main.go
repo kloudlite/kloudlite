@@ -22,17 +22,17 @@ type Service struct {
 }
 
 const (
-	WG_FILE_NAME           = "wg0"
-	WG_FILE_NAME_SECONDARY = "sample"
-	WG_FILE                = "/etc/wireguard/" + WG_FILE_NAME + ".conf"
-	WG_FILE_SECONDARY      = "/etc/wireguard/" + WG_FILE_NAME_SECONDARY + ".conf"
+	WgFileName          = "wg0"
+	WgFileNameSecondary = "sample"
+	WgFile          = "/etc/wireguard/" + WgFileName + ".conf"
+	WgFileSecondary = "/etc/wireguard/" + WgFileNameSecondary + ".conf"
 )
 
 func reloadConfig(conf []byte) error {
 	fmt.Println("\n================== Restart ==================")
 	if conf == nil {
 		var err error
-		conf, err = ioutil.ReadFile(WG_FILE)
+		conf, err = os.ReadFile(WgFile)
 		if err != nil {
 			return err
 		}
@@ -41,12 +41,12 @@ func reloadConfig(conf []byte) error {
 	// cmd := exec.Command(cmds[0], cmds[1:]...)
 	// cmd.Run()
 
-	err := ioutil.WriteFile(WG_FILE_SECONDARY, conf, fs.ModeAppend)
+	err := ioutil.WriteFile(WgFileSecondary, conf, fs.ModeAppend)
 	if err != nil {
 		return err
 	}
 
-	cmds := strings.Fields("wg-quick down " + WG_FILE_NAME_SECONDARY)
+	cmds := strings.Fields("wg-quick down " + WgFileNameSecondary)
 
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 	cmd.Stdout = os.Stdout
@@ -58,7 +58,7 @@ func reloadConfig(conf []byte) error {
 		fmt.Println(err)
 	}
 
-	cmds = strings.Fields("wg-quick up " + WG_FILE_NAME_SECONDARY)
+	cmds = strings.Fields("wg-quick up " + WgFileNameSecondary)
 
 	cmd = exec.Command(cmds[0], cmds[1:]...)
 	cmd.Stdout = os.Stdout
@@ -70,20 +70,30 @@ func reloadConfig(conf []byte) error {
 	return err
 }
 
-func startApi() {
+func startApi() error {
 	app := fiber.New()
 	app.Post("/post", func(c *fiber.Ctx) error {
 		err := reloadConfig(c.Body())
 		if err != nil {
 			return err
 		}
-		c.Send([]byte("done"))
+		err = c.Send([]byte("done"))
+		if err != nil {
+			return err
+		}
 		return nil
 	})
-	app.Listen(":2998")
+	err := app.Listen(":2998")
+	if err != nil {
+		return err
+	}
+	return nil
 }
+
 func main() {
-	go startApi()
+	go func() {
+		_ = startApi()
+	}()
 	err := reloadConfig(nil)
 	if err != nil {
 		panic(err)

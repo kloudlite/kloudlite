@@ -109,15 +109,16 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 	}
 	var pipeline, err = r.Domain.CreatePipeline(
 		ctx, session.UserId, domain.Pipeline{
-			AccountId:     in.AccountID,
-			ProjectName:   in.ProjectName,
-			Name:          in.Name,
-			ProjectId:     in.ProjectID,
-			AppId:         string(obj.ID),
-			ContainerName: containerName,
-			GitProvider:   in.GitProvider,
-			GitRepoUrl:    in.GitRepoURL,
-			GitBranch:     in.GitBranch,
+			AccountId:        in.AccountID,
+			ProjectName:      in.ProjectName,
+			Name:             in.Name,
+			ProjectId:        in.ProjectID,
+			AppId:            string(obj.ID),
+			ContainerName:    containerName,
+			GitProvider:      in.GitProvider,
+			GitRepoUrl:       in.GitRepoURL,
+			GitBranch:        in.GitBranch,
+			DockerBuildInput: nil,
 			Build: &domain.ContainerImageBuild{
 				BaseImage: in.Build.BaseImage,
 				Cmd:       in.Build.Cmd,

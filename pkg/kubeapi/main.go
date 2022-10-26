@@ -3,18 +3,39 @@ package kubeapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"net/http"
+	"os/exec"
 )
 
-type Client struct {
-	Address string `env:"KUBE_API_ADDRESS"`
+type AddrClientImpl struct {
+	address string
 }
 
-func (c *Client) GetServiceIp(ctx context.Context, namespace, name string) (string, error) {
+type ConfigClientImpl struct {
+	configPath string
+}
+
+type Client interface {
+	GetServiceIp(ctx context.Context, namespace, name string) (string, error)
+	GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error)
+}
+
+func (c *ConfigClientImpl) GetServiceIp(ctx context.Context, namespace, name string) (string, error) {
+	command := exec.Command("kubectl", "get", "svc", fmt.Sprintf("%s/%s", namespace, name), "-o", "jsonpath={.spec.clusterIP}")
+	output, err := command.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
+
+}
+
+func (c *AddrClientImpl) GetServiceIp(ctx context.Context, namespace, name string) (string, error) {
 	service := v1.Service{}
-	get, err := http.Get(c.Address + "/api/v1/namespaces/" + namespace + "/services/" + name)
+	get, err := http.Get(c.address + "/api/v1/namespaces/" + namespace + "/services/" + name)
 	if err != nil {
 		return "", err
 	}
@@ -29,9 +50,22 @@ func (c *Client) GetServiceIp(ctx context.Context, namespace, name string) (stri
 	return service.Spec.ClusterIP, nil
 }
 
-func (c *Client) GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
+func (c *ConfigClientImpl) GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
 	secret := v1.Secret{}
-	get, err := http.Get(c.Address + "/api/v1/namespaces/" + namespace + "/secrets/" + name)
+	command := exec.Command("kubectl", "get", "svc", fmt.Sprintf("%s/%s", namespace, name), "-o", "json")
+	output, err := command.Output()
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(output, &secret); err != nil {
+		return nil, err
+	}
+	return &secret, nil
+}
+
+func (c *AddrClientImpl) GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
+	secret := v1.Secret{}
+	get, err := http.Get(c.address + "/api/v1/namespaces/" + namespace + "/secrets/" + name)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +80,14 @@ func (c *Client) GetSecret(ctx context.Context, namespace, name string) (*v1.Sec
 	return &secret, nil
 }
 
-func NewClient(addr string) *Client {
-	return &Client{
-		Address: addr,
+func NewClientWithConfigPath(configPath string) Client {
+	return &ConfigClientImpl{
+		configPath: configPath,
+	}
+}
+
+func NewClient(addr string) Client {
+	return &AddrClientImpl{
+		address: addr,
 	}
 }
