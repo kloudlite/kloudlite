@@ -5,7 +5,6 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"strings"
 	"text/template"
 	"time"
 
@@ -23,41 +22,26 @@ var (
 	res embed.FS
 )
 
-// type GitWebhookPayload struct {
-// 	Provider   string            `json:"provider"`
-// 	Body       []byte            `json:"body"`
-// 	ReqHeaders map[string]string `json:"reqHeaders"`
-// }
-
 const (
 	GithubEventHeader string = "X-Github-Event"
 	GitlabEventHeader string = "X-Gitlab-Event"
 )
 
-type processor struct {
-	domain domain.Domain
-}
-
-func getBranchFromRef(gitRef string) string {
-	sp := strings.Split(gitRef, "refs/heads/")
-	if len(sp) > 1 {
-		return sp[1]
-	}
-	return ""
-}
-
 func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpanda.Producer, logr logging.Logger, env *Env) error {
 	t := template.New("taskrun")
 	t = text_templates.WithFunctions(t)
-	if _, err := t.ParseFS(res, "templates/taskrun.tpl.yml"); err != nil {
+	if _, err := t.ParseFS(res, "templates/pipeline-run.yml.tpl"); err != nil {
 		return err
 	}
 
 	consumer.StartConsuming(
 		func(msg []byte, timeStamp time.Time, offset int64) error {
-			logger := logr.WithName("ci-webhook")
-			logger = logr.WithKV("offset", offset)
+			logger := logr.WithName("ci-webhook").WithKV("offset", offset)
 			logger.Infof("started processing")
+			defer func() {
+				logger.Infof("finished processing")
+			}()
+
 			var gitHook types.GitHttpHook
 			if err := json.Unmarshal(msg, &gitHook); err != nil {
 				logger.Errorf(err, "could not unmarshal into *GitWebhookPayload")
@@ -74,6 +58,10 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 				return nil, errors.New("unknown git provider")
 			}()
 			if err != nil {
+				if _, ok := err.(*domain.ErrEventNotSupported); ok {
+					logger.Infof(err.Error())
+					return nil
+				}
 				logger.Errorf(err, "could not extract gitHook")
 				return err
 			}
@@ -89,13 +77,21 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 				logger.Errorf(err, "could not get tekton run params")
 				return err
 			}
+
+			if len(tkRuns) == 0 {
+				logger.Infof("no pipeline is configured for given hook body")
+				return nil
+			}
+
 			for i := range tkRuns {
 				tkRuns[i].GitCommitHash = hook.CommitHash
 			}
 
 			b := new(bytes.Buffer)
 			if err := t.ExecuteTemplate(
-				b, "taskrun.tpl.yml", map[string]any{"tekton-runs": tkRuns},
+				b, "pipeline-run.yml.tpl", map[string]any{
+					"tekton-runs": tkRuns,
+				},
 			); err != nil {
 				logger.Errorf(err, "error parsing template (taskrun.tpl.yml)")
 				return err

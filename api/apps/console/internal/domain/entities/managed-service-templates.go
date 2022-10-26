@@ -55,4 +55,6 @@ type ManagedResourceTemplate struct {
 	DisplayName string           `yaml:"displayName" json:"display_name"`
 	Fields      []*TemplateField `yaml:"fields" json:"fields"`
 	Outputs     []TemplateOutput `yaml:"outputs" json:"outputs"`
+	Default     bool             `json:"default,omitempty" yaml:"default,omitempty"`
+	GetRefKey   string           `json:"getRefKey,omitempty" yaml:"getRefKey,omitempty"`
 }

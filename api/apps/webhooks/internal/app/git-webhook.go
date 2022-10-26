@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/go-github/v43/github"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/webhooks/internal/env"
@@ -60,13 +59,25 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 	switch provider {
 	case "github":
 		{
+			// TODO: (immediate deletion, after github app webhook succeeds)
+			// var evt struct {
+			// 	Repo *github.Repository `json:"repository,omitempty"`
+			// }
+			// if err := json.Unmarshal(hookBody, &evt); err != nil {
+			// 	return "", err
+			// }
+			// return *evt.Repo.HTMLURL, nil
+
 			var evt struct {
-				Repo *github.Repository `json:"repository,omitempty"`
+				Repo struct {
+					HtmlUrl string `json:"html_url,omitempty"`
+				} `json:"repository"`
+				// Repo *github.Repository `json:"repository,omitempty"`
 			}
 			if err := json.Unmarshal(hookBody, &evt); err != nil {
 				return "", err
 			}
-			return *evt.Repo.HTMLURL, nil
+			return evt.Repo.HtmlUrl, nil
 		}
 
 	case "gitlab":
@@ -105,7 +116,7 @@ var Module = fx.Module(
 						return false, errors.Newf("unknown git provider")
 					}()
 					if err != nil {
-						logr.WithName("git-webhook").Errorf(err, "dropping webhook request")
+						logger.Errorf(err, "dropping webhook request")
 						return ctx.Status(http.StatusUnauthorized).JSON(map[string]string{"error": err.Error()})
 					}
 
@@ -136,13 +147,11 @@ var Module = fx.Module(
 						logger.Errorf(err, errMsg)
 						return ctx.Status(http.StatusInternalServerError).JSON(errMsg)
 					}
-					logger = logger.WithKV(
-						"offset", msg.Offset,
-						"partition", msg.Partition,
-						"topic", msg.Topic,
-						"timestamp", msg.Timestamp,
-					)
-					logger.Infof("queued webhook")
+					logger.WithKV(
+						"produced.offset", msg.Offset,
+						"produced.topic", msg.Topic,
+						"produced.timestamp", msg.Timestamp,
+					).Infof("queued webhook")
 					return ctx.Status(http.StatusAccepted).JSON(msg)
 				},
 			)
