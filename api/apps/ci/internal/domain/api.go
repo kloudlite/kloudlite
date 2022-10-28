@@ -12,6 +12,11 @@ import (
 
 type Domain interface {
 	GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error)
+
+	StartPipeline(ctx context.Context, pipelineId repos.ID, pipelineRunId repos.ID) error
+	FinishPipeline(ctx context.Context, pipelineId repos.ID) error
+	EndPipelineWithError(ctx context.Context, pipelineId repos.ID, err error) error
+
 	GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error)
 	GetTektonRunParams(ctx context.Context, gitProvider string, gitRepoUrl string, gitBranch string) ([]*TektonVars, error)
 	GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error)

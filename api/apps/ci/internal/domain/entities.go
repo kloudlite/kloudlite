@@ -32,18 +32,26 @@ type ArtifactRef struct {
 type GitlabWebhookId int
 type GithubWebhookId int64
 
-type Pipeline struct {
-	repos.BaseEntity `bson:",inline"`
-	Name             string `json:"name,omitempty" bson:"name"`
-	ProjectId        string `json:"project_id" bson:"project_id"`
-	AccountId        string `json:"account_id" bson:"account_id"`
-	AppId            string `json:"app_id" bson:"app_id"`
-	ProjectName      string `json:"project_name" bson:"project_name"`
-	ContainerName    string `json:"container_name" bson:"container_name"`
+type PipelineState string
 
-	GitProvider string `json:"git_provider,omitempty" bson:"git_provider"`
-	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
-	GitBranch   string `json:"git_branch" bson:"git_branch"`
+const PipelineStateIdle = PipelineState("idle")
+const PipelineStateInProgress = PipelineState("in-progress")
+const PipelineStateError = PipelineState("error")
+
+type Pipeline struct {
+	repos.BaseEntity   `bson:",inline"`
+	Name               string        `json:"name,omitempty" bson:"name"`
+	ProjectId          string        `json:"project_id" bson:"project_id"`
+	AccountId          string        `json:"account_id" bson:"account_id"`
+	AppId              string        `json:"app_id" bson:"app_id"`
+	ProjectName        string        `json:"project_name" bson:"project_name"`
+	ContainerName      string        `json:"container_name" bson:"container_name"`
+	PipelineRunId      repos.ID      `json:"pipeline_run_id" bson:"pipeline_run_id"`
+	PipelineRunMessage string        `json:"pipeline_run_message" bson:"pipeline_run_message"`
+	State              PipelineState `json:"pipeline_state" bson:"pipeline_state"`
+	GitProvider        string        `json:"git_provider,omitempty" bson:"git_provider"`
+	GitRepoUrl         string        `json:"git_repo_url,omitempty" bson:"git_repo_url"`
+	GitBranch          string        `json:"git_branch" bson:"git_branch"`
 
 	AccessTokenId repos.ID `json:"access_token_id,omitempty" bson:"access_token_id"`
 
