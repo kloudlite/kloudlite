@@ -170,6 +170,51 @@ var Module = fx.Module(
 					return errors.Newf("unknown (provider=%s) not one of [github,gitlab]", provider)
 				},
 			)
+			app.Post("/start-pipeline/:provider/:pipelineId", func(ctx *fiber.Ctx) error {
+				var body = struct {
+					PipelineRunId string `json:"pipeline_run_id"`
+				}{
+					PipelineRunId: "",
+				}
+				err := ctx.JSON(&body)
+				if err != nil {
+					return err
+				}
+				pipelineId := ctx.Params("pipelineId")
+				err = d.StartPipeline(ctx.Context(), repos.ID(pipelineId), repos.ID(body.PipelineRunId))
+				if err != nil {
+					return err
+				}
+				ctx.Send([]byte("{}"))
+				return nil
+			})
+			app.Post("/finish-pipeline/:provider/:pipelineId", func(ctx *fiber.Ctx) error {
+				pipelineId := ctx.Params("pipelineId")
+				err := d.FinishPipeline(ctx.Context(), repos.ID(pipelineId))
+				if err != nil {
+					return err
+				}
+				ctx.Send([]byte("{}"))
+				return nil
+			})
+			app.Post("/end-pipeline-with-error/:provider/:pipelineId", func(ctx *fiber.Ctx) error {
+				var body = struct {
+					Error string `json:"error"`
+				}{
+					Error: "",
+				}
+				err := ctx.JSON(&body)
+				if err != nil {
+					return err
+				}
+				pipelineId := ctx.Params("pipelineId")
+				err = d.EndPipelineWithError(ctx.Context(), repos.ID(pipelineId), errors.New(body.Error))
+				if err != nil {
+					return err
+				}
+				ctx.Send([]byte("{}"))
+				return nil
+			})
 		},
 	),
 
