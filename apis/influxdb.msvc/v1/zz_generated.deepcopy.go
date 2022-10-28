@@ -6,6 +6,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"operators.kloudlite.io/lib/influx"
 )
@@ -175,12 +176,18 @@ func (in *ServiceSpec) DeepCopyInto(out *ServiceSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.Tolerations != nil {
+		in, out := &in.Tolerations, &out.Tolerations
+		*out = make([]corev1.Toleration, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.Admin != nil {
 		in, out := &in.Admin, &out.Admin
 		*out = new(Admin)
 		**out = **in
 	}
-	out.Storage = in.Storage
 	in.Resources.DeepCopyInto(&out.Resources)
 }
 

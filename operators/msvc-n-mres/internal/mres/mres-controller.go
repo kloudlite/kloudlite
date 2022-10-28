@@ -16,6 +16,7 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -27,11 +28,12 @@ import (
 
 type ManagedResourceReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	harborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
-	Env       *env2.Env
+	Scheme     *runtime.Scheme
+	harborCli  *harbor.Client
+	logger     logging.Logger
+	Name       string
+	Env        *env2.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *ManagedResourceReconciler) GetName() string {
@@ -155,7 +157,7 @@ func (r *ManagedResourceReconciler) reconRealMres(req *rApi.Request[*crdsv1.Mana
 		if err != nil {
 			return req.CheckFailed(RealMresReady, check, err.Error()).Err(nil)
 		}
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(RealMresReady, check, err.Error()).Err(nil)
 		}
 
@@ -196,6 +198,7 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, logger lo
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedResource{})
 	builder.Owns(&corev1.Secret{})

@@ -370,6 +370,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - edgeWatchers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - edgeWatchers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - edgeWatchers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - influxdb.msvc.kloudlite.io
   resources:
   - buckets
@@ -448,110 +474,6 @@ rules:
   - patch
   - update
 - apiGroups:
-  - mongodb-cluster.msvc.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mongodb-cluster.msvc.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mongodb-cluster.msvc.kloudlite.io
-  resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mongodb-cluster.msvc.kloudlite.io
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mongodb-cluster.msvc.kloudlite.io
-  resources:
-  - services/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mongodb-cluster.msvc.kloudlite.io
-  resources:
-  - services/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mongodb-standalone.msvc.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mongodb-standalone.msvc.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mongodb-standalone.msvc.kloudlite.io
-  resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mongodb-standalone.msvc.kloudlite.io
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mongodb-standalone.msvc.kloudlite.io
-  resources:
-  - services/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mongodb-standalone.msvc.kloudlite.io
-  resources:
-  - services/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - mongodb.external.kloudlite.io
   resources:
   - databases
@@ -599,84 +521,6 @@ rules:
   - mongodb.msvc.kloudlite.io
   resources:
   - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mysql-cluster.msvc.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mysql-cluster.msvc.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mysql-cluster.msvc.kloudlite.io
-  resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mysql-standalone.msvc.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mysql-standalone.msvc.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mysql-standalone.msvc.kloudlite.io
-  resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mysql-standalone.msvc.kloudlite.io
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mysql-standalone.msvc.kloudlite.io
-  resources:
-  - services/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mysql-standalone.msvc.kloudlite.io
-  resources:
-  - services/status
   verbs:
   - get
   - patch
@@ -805,58 +649,6 @@ rules:
   - update
 - apiGroups:
   - opensearch.msvc.kloudlite.io
-  resources:
-  - services/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - redis-standalone.msvc.kloudlite.io
-  resources:
-  - aclaccounts
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - redis-standalone.msvc.kloudlite.io
-  resources:
-  - aclaccounts/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - redis-standalone.msvc.kloudlite.io
-  resources:
-  - aclaccounts/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - redis-standalone.msvc.kloudlite.io
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - redis-standalone.msvc.kloudlite.io
-  resources:
-  - services/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - redis-standalone.msvc.kloudlite.io
   resources:
   - services/status
   verbs:
