@@ -1,6 +1,8 @@
 {{- $name := get . "name" -}}
 {{- $fsTypes := get . "fs-types" -}}
 {{- $labels := get . "labels"  -}}
+{{- $ownerRefs := get . "owner-refs"  -}}
+
 
 {{- range $fsType := $fsTypes }}
 ---
@@ -9,11 +11,11 @@ kind: StorageClass
 metadata:
   name: {{$name}}-{{$fsType}}
   labels: {{$labels | toYAML | nindent 4}}
-provisioner: ebs.csi.aws.com
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+provisioner: dobs.csi.digitalocean.com
 parameters:
-  csi.storage.k8s.io/fstype: {{$fsType}}
+  fsType: {{$fsType}}
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
-{{/*volumeBindingMode: Immediate*/}}
 allowVolumeExpansion: true
 {{- end }}

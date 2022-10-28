@@ -41,7 +41,7 @@ func (c *Cluster) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
 }
 
-func (in *Cluster) GetEnsuredAnnotations() map[string]string {
+func (c *Cluster) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{}
 }
 

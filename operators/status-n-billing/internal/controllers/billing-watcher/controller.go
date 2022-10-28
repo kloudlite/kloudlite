@@ -13,9 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	types2 "k8s.io/apimachinery/pkg/types"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	mongodbStandalone "operators.kloudlite.io/apis/mongodb-standalone.msvc/v1"
-	mysqlStandalone "operators.kloudlite.io/apis/mysql-standalone.msvc/v1"
-	redisStandalone "operators.kloudlite.io/apis/redis-standalone.msvc/v1"
+	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
@@ -140,9 +138,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 			realMsvcType := metav1.TypeMeta{APIVersion: msvc.Spec.MsvcKind.APIVersion, Kind: msvc.Spec.MsvcKind.Kind}
 
 			switch realMsvcType.GetObjectKind().GroupVersionKind() {
-			case mongodbStandalone.GroupVersion.WithKind("Service"):
+			case mongodbMsvcv1.GroupVersion.WithKind("Service"):
 				{
-					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbMsvcv1.StandaloneService{})
 					if err != nil {
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}

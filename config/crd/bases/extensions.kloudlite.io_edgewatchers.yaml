@@ -5,20 +5,24 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: services.influxdb.msvc.kloudlite.io
+  name: edgewatchers.extensions.kloudlite.io
 spec:
-  group: influxdb.msvc.kloudlite.io
+  group: extensions.kloudlite.io
   names:
-    kind: Service
-    listKind: ServiceList
-    plural: services
-    singular: service
+    kind: EdgeWatcher
+    listKind: EdgeWatcherList
+    plural: edgewatchers
+    singular: edgewatcher
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.enabled
+      name: Enabled
+      type: boolean
+    name: v1
     schema:
       openAPIV3Schema:
-        description: Service is the Schema for the services API
+        description: EdgeWatcher is the Schema for the edgewatchers API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,122 +37,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServiceSpec defines the desired state of Service
+            description: EdgeWatcherSpec defines the desired state of EdgeWatcher
             properties:
-              admin:
-                properties:
-                  bucket:
-                    type: string
-                  org:
-                    type: string
-                  username:
-                    type: string
-                required:
-                - bucket
-                - org
-                - username
-                type: object
-              cloudProvider:
-                properties:
-                  account:
-                    type: string
-                  cloud:
-                    enum:
-                    - do
-                    - aws
-                    - gcp
-                    - azure
-                    - k3s-local
-                    type: string
-                  region:
-                    type: string
-                required:
-                - cloud
-                - region
-                type: object
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
-              region:
-                type: string
-              replicaCount:
-                default: 1
-                type: integer
-              resources:
-                properties:
-                  cpu:
-                    properties:
-                      max:
-                        pattern: '[\d]+m$'
-                        type: string
-                      min:
-                        pattern: '[\d]+m$'
-                        type: string
-                    required:
-                    - max
-                    - min
-                    type: object
-                  memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
-                  storage:
-                    properties:
-                      size:
-                        pattern: '[\d]+Gi$'
-                        type: string
-                      storageClass:
-                        type: string
-                    required:
-                    - size
-                    type: object
-                required:
-                - cpu
-                - memory
-                type: object
-              tolerations:
-                items:
-                  description: The pod this Toleration is attached to tolerates any
-                    taint that matches the triple <key,value,effect> using the matching
-                    operator <operator>.
-                  properties:
-                    effect:
-                      description: Effect indicates the taint effect to match. Empty
-                        means match all taint effects. When specified, allowed values
-                        are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: Key is the taint key that the toleration applies
-                        to. Empty means match all taint keys. If the key is empty,
-                        operator must be Exists; this combination means to match all
-                        values and all keys.
-                      type: string
-                    operator:
-                      description: Operator represents a key's relationship to the
-                        value. Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod
-                        can tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: TolerationSeconds represents the period of time
-                        the toleration (which must be of effect NoExecute, otherwise
-                        this field is ignored) tolerates the taint. By default, it
-                        is not set, which means tolerate the taint forever (do not
-                        evict). Zero and negative values will be treated as 0 (evict
-                        immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: Value is the taint value the toleration matches
-                        to. If the operator is Exists, the value should be empty,
-                        otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
-            required:
-            - cloudProvider
-            - region
-            - resources
+              enabled:
+                default: true
+                type: boolean
             type: object
           status:
             properties:

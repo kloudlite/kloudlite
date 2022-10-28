@@ -15,6 +15,7 @@ import (
 	csiv1 "operators.kloudlite.io/apis/csi/v1"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -29,10 +30,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -113,21 +115,44 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 
 		b, err := templates.Parse(
 			templates.AwsEbsCsiDriver, map[string]any{
-				"name":            fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
-				"namespace":       obj.Spec.SecretRef,
-				"aws-secret-name": obj.Spec.SecretRef,
-				"aws-key":         string(accessSecret.Data["accessKey"]),
-				"aws-secret":      string(accessSecret.Data["accessSecret"]),
-				"owner-refs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"name":             fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
+				"namespace":        "kl-core",
+				"aws-key":          string(accessSecret.Data["accessKey"]),
+				"aws-secret":       string(accessSecret.Data["accessSecret"]),
+				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"svc-account-name": "kloudlite-cluster-svc-account",
 				"node-selector": map[string]string{
-					"kloudlite.io/provider-ref": obj.Name,
+					constants.ProviderRef: obj.Name,
 				},
 			},
 		)
 		if err != nil {
 			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
 		}
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
+		}
+	}
+
+	if obj.Spec.Provider == "do" {
+		b, err := templates.Parse(
+			templates.DigitaloceanCSIDriver, map[string]any{
+				"name":      fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
+				"namespace": "kl-core",
+				"node-selector": map[string]string{
+					constants.ProviderRef: obj.Spec.SecretRef,
+				},
+				"owner-refs":     []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"do-secret-name": obj.Spec.SecretRef,
+				"do-secret-key":  "apiToken",
+			},
+		)
+
+		if err != nil {
+			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
+		}
+
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -151,25 +176,25 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 		},
 	}
 
-	if obj.Spec.Provider == "aws" {
-		if err := r.List(
-			ctx, &edgesList, &client.ListOptions{
-				LabelSelector: labels.SelectorFromValidatedSet(
-					map[string]string{
-						"kloudlite.io/provider-ref": obj.Name,
-					},
-				),
-			},
-		); err != nil {
-			return req.CheckFailed(StorageClassesReady, check, err.Error())
-		}
+	if err := r.List(
+		ctx, &edgesList, &client.ListOptions{
+			LabelSelector: labels.SelectorFromValidatedSet(
+				map[string]string{
+					"kloudlite.io/provider-ref": obj.Name,
+				},
+			),
+		},
+	); err != nil {
+		return req.CheckFailed(StorageClassesReady, check, err.Error())
+	}
 
+	if obj.Spec.Provider == "aws" {
 		for i := range edgesList.Items {
 			b, err := templates.Parse(
 				templates.AwsEbsStorageClass, map[string]any{
-					"name":        edgesList.Items[i].GetName(),
-					"driver-name": fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
-					"fs-types":    []ct.FsType{ct.Ext4, ct.Xfs},
+					"name":       edgesList.Items[i].GetName(),
+					"fs-types":   []ct.FsType{ct.Ext4, ct.Xfs},
+					"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					"labels": map[string]string{
 						"kloudite.io/csi-driver": obj.Name,
 					},
@@ -180,6 +205,29 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 			}
 
 			if err := fn.KubectlApplyExec(ctx, b); err != nil {
+				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
+			}
+		}
+	}
+
+	if obj.Spec.Provider == "do" {
+		for i := range edgesList.Items {
+			b, err := templates.Parse(
+				templates.DigitaloceanStorageClass, map[string]any{
+					"name":       edgesList.Items[i].GetName(),
+					"fs-types":   []ct.FsType{ct.Ext4, ct.Xfs},
+					"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+					"labels": map[string]string{
+						"kloudite.io/csi-driver": obj.Name,
+					},
+				},
+			)
+
+			if err != nil {
+				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
+			}
+
+			if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
 			}
 		}
@@ -197,11 +245,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&csiv1.Driver{})
-	builder.Owns(
-		fn.NewUnstructured(metav1.TypeMeta{Kind: "AwsEbsCsiDriver", APIVersion: "csi.kloudlite.io/v1"}),
-	)
+	builder.Owns(fn.NewUnstructured(constants.HelmAwsEbsCsiKind))
+	builder.Owns(fn.NewUnstructured(constants.HelmDigitaloceanCsiKind))
 	builder.Watches(
 		&source.Kind{Type: &storagev1.StorageClass{}}, handler.EnqueueRequestsFromMapFunc(
 			func(obj client.Object) []reconcile.Request {

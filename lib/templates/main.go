@@ -172,6 +172,9 @@ const (
 
 	AwsEbsCsiDriver    templateFile = "templates/csi/aws-ebs-csi-driver.yml.tpl"
 	AwsEbsStorageClass templateFile = "templates/csi/aws-storage-class.yml.tpl"
+
+	DigitaloceanCSIDriver    templateFile = "templates/csi/digitalocean/csi-driver.yml.tpl"
+	DigitaloceanStorageClass templateFile = "templates/csi/digitalocean/storage-class.yml.tpl"
 )
 
 var CoreV1 = struct {

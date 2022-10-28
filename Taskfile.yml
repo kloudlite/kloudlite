@@ -34,7 +34,16 @@ tasks:
   yaml:crds:
     cmds:
       - make manifests
-      - cat config/crd/bases/*.yaml | yq -y
+      - |+
+        [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
+      - |+
+        for file in $(ls config/crd/bases/*.yaml)
+        do
+          cat $file
+          echo "---"
+        done
+
+#
 
   yaml:operator:
     summary: |+
@@ -111,6 +120,54 @@ tasks:
         done
 #
 
+  gobuild:operator:
+    preconditions:
+      - sh: '[ -n "{{.Name}}" ]'
+        msg: "var Name must have a value"
+      - sh: '[ -d "./operators/{{.Name}}" ]'
+        msg: 'directory operators/{{.Name}} must exist'
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+      - |+
+        pushd "./operators/{{.Name}}" 1> /dev/null
+        go build -o /tmp/{{.Name}} ./main.go
+        popd 1> /dev/null
+
+#
+
+  local-build:operator:
+    preconditions:
+      - sh: '[ -n "{{.Name}}" ]'
+        msg: "var Name must have a value"
+      - sh: '[ -d "./operators/{{.Name}}" ]'
+        msg: 'directory operators/{{.Name}} must exist'
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    silent: true
+    cmds:
+      - |+
+        pushd "./operators/{{.Name}}" 1> /dev/null
+        lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        go build -o .tmp/{{.Name}} .
+        sed "$(( $lineNo + 1 )) i COPY .tmp/{{.Name}} /manager" Dockerfile | tail --lines=+$lineNo | grep -i --invert-match 'from=builder' > .tmp/Dockerfile
+        docker build -f .tmp/Dockerfile -t {{.Image}} .
+        docker push {{.Image}}
+        rm -rf .tmp
+        popd 1> /dev/null
+
+#
+
   build:operator:
     preconditions:
       - sh: '[ -n "{{.Name}}" ]'
@@ -138,6 +195,8 @@ tasks:
       - go mod tidy
       - make manifests
       - make generate
+      - |+
+        [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
       - kubectl apply -f config/crd/bases
 
   new:operator:

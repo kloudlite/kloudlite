@@ -53,8 +53,9 @@ var AnnotationKeys = struct {
 }
 
 const (
-	AccountRef string = "kloudlite.io/account-ref"
-	ProjectRef string = "kloudlite.io/project-ref"
+	AccountRef  string = "kloudlite.io/account-ref"
+	ProjectRef  string = "kloudlite.io/project-ref"
+	ProviderRef string = "kloudlite.io/provider-ref"
 
 	ProjectNameKey       string = "kloudlite.io/project.name"
 	MsvcNameKey          string = "kloudlite.io/msvc.name"
@@ -124,6 +125,15 @@ var (
 	EdgeInfraType = metav1.TypeMeta{
 		Kind:       "Edge",
 		APIVersion: "infra.kloudlite.io/v1",
+	}
+
+	HelmAwsEbsCsiKind = metav1.TypeMeta{
+		Kind:       "AwsEbsCsiDriver",
+		APIVersion: "csi.helm.kloudlite.io/v1",
+	}
+	HelmDigitaloceanCsiKind = metav1.TypeMeta{
+		Kind:       "DigitaloceanCSIDriver",
+		APIVersion: "csi.helm.kloudlite.io/v1",
 	}
 )
 

@@ -1,5 +1,4 @@
 {{- $nodeSelector := get . "node-selector" -}}
-{{- $tolerations := get . "tolerations" -}}
 {{- $awsSecretName := get . "aws-secret-name" -}}
 {{- $name := get . "name"  -}}
 {{- $namespace := get . "namespace"  -}}
@@ -7,36 +6,37 @@
 
 {{- $awsKey := get . "aws-key"  -}}
 {{- $awsSecret := get . "aws-secret"  -}}
+{{- $svcAccountName := get . "svc-account-name"  -}}
 
-{{- $ns := printf "%s-%s" "csi" $awsSecretName -}}
+{{/*{{- $ns := printf "%s-%s" "csi" $awsSecretName -}}*/}}
 
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{$ns}}
-  ownerReferences: {{$ownerRefs | toYAML |nindent 4}}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: {{$ns}}-cluster-svc-account
-  namespace: {{$ns}}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: {{$ns}}-cluster-svc-account-rb
-subjects:
-  - kind: ServiceAccount
-    name: {{$ns}}-cluster-svc-account
-    namespace: {{$ns}}
-    apiGroup: ""
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: ""
----
+{{/*---*/}}
+{{/*apiVersion: v1*/}}
+{{/*kind: Namespace*/}}
+{{/*metadata:*/}}
+{{/*  name: {{$ns}}*/}}
+{{/*  ownerReferences: {{$ownerRefs | toYAML |nindent 4}}*/}}
+{{/*---*/}}
+{{/*apiVersion: v1*/}}
+{{/*kind: ServiceAccount*/}}
+{{/*metadata:*/}}
+{{/*  name: {{$ns}}-cluster-svc-account*/}}
+{{/*  namespace: {{$ns}}*/}}
+{{/*---*/}}
+{{/*apiVersion: rbac.authorization.k8s.io/v1*/}}
+{{/*kind: ClusterRoleBinding*/}}
+{{/*metadata:*/}}
+{{/*  name: {{$ns}}-cluster-svc-account-rb*/}}
+{{/*subjects:*/}}
+{{/*  - kind: ServiceAccount*/}}
+{{/*    name: {{$ns}}-cluster-svc-account*/}}
+{{/*    namespace: {{$ns}}*/}}
+{{/*    apiGroup: ""*/}}
+{{/*roleRef:*/}}
+{{/*  kind: ClusterRole*/}}
+{{/*  name: cluster-admin*/}}
+{{/*  apiGroup: ""*/}}
+{{/*---*/}}
 apiVersion: "storage.k8s.io/v1"
 kind: CSIDriver
 metadata:
@@ -45,11 +45,11 @@ spec:
   attachRequired: true
   podInfoOnMount: false
 ---
-apiVersion: csi.kloudlite.io/v1
+apiVersion: csi.helm.kloudlite.io/v1
 kind: AwsEbsCsiDriver
 metadata:
   name: {{$name}}
-  namespace: csi-{{$awsSecretName}}
+  namespace: {{$namespace}}
   ownerReferences: {{$ownerRefs | toYAML |nindent 4}}
 spec:
   fullnameOverride: {{$name}}
@@ -61,22 +61,26 @@ spec:
         value: {{$awsSecret}}
     serviceAccount:
       create: false
-      name: {{$ns}}-cluster-svc-account
+      name: {{$svcAccountName}}
     {{- if $nodeSelector }}
     nodeSelector: {{$nodeSelector | toYAML | nindent 6}}
     {{- end }}
-    {{- if $tolerations }}
-    tolerations: {{$tolerations | toYAML | nindent 6}}
-    {{- end}}
+    tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
   node:
     tolerateAllTaints: false
     {{- if $nodeSelector }}
     nodeSelector: {{$nodeSelector | toYAML| nindent 6}}
     {{- end }}
-    {{- if $tolerations }}
-    tolerations: {{$tolerations | toYAML | nindent 6}}
-    {{- end}}
+    tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
     serviceAccount:
       create: false
-      name: {{$ns}}-cluster-svc-account
+      name: {{$svcAccountName}}
 ---
