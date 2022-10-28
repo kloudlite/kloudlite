@@ -2,16 +2,6 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/mongodb-standalone.msvc.kloudlite.io_services.yaml
-- bases/mongodb-standalone.msvc.kloudlite.io_databases.yaml
-- bases/mongodb-cluster.msvc.kloudlite.io_databases.yaml
-- bases/mongodb-cluster.msvc.kloudlite.io_services.yaml
-- bases/mysql-standalone.msvc.kloudlite.io_services.yaml
-- bases/mysql-standalone.msvc.kloudlite.io_databases.yaml
-- bases/mysql-cluster.msvc.kloudlite.io_services.yaml
-- bases/mysql-cluster.msvc.kloudlite.io_databases.yaml
-- bases/redis-standalone.msvc.kloudlite.io_services.yaml
-- bases/redis-standalone.msvc.kloudlite.io_aclaccounts.yaml
 - bases/serverless.kloudlite.io_lambdas.yaml
 - bases/elasticsearch.msvc.kloudlite.io_services.yaml
 - bases/opensearch.msvc.kloudlite.io_services.yaml
@@ -46,4 +36,5 @@ resources:
 - bases/csi.kloudlite.io_storageclasses.yaml
 - bases/crds.kloudlite.io_edgerouters.yaml
 - bases/elasticsearch.msvc.kloudlite.io_kibanas.yaml
+- bases/extensions.kloudlite.io_edgewatchers.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

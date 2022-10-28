@@ -1,6 +1,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/lib/constants"
@@ -16,16 +17,16 @@ type Admin struct {
 // ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
+	Region        string           `json:"region"`
 	// +kubebuilder:validation:Optional
-	NodeSelector map[string]string `json:"nodeSelector"`
-	Admin        *Admin            `json:"admin,omitempty"`
+	NodeSelector map[string]string   `json:"nodeSelector"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	Admin        *Admin              `json:"admin,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=1
-	ReplicaCount int `json:"replicaCount,omitempty"`
-
-	Storage   ct.Storage   `json:"storage"`
-	Resources ct.Resources `json:"resources"`
+	ReplicaCount int          `json:"replicaCount,omitempty"`
+	Resources    ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true

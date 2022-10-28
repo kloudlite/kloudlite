@@ -12,6 +12,7 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -24,11 +25,12 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	harborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
-	Env       *env.Env
+	Scheme     *runtime.Scheme
+	harborCli  *harbor.Client
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -149,6 +151,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&serverlessv1.Lambda{})
 	builder.Owns(fn.NewUnstructured(constants.KnativeServiceType))

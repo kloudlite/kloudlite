@@ -1,0 +1,6 @@
+apiVersion: extensions.kloudlite.io/v1
+kind: EdgeWatcher
+metadata:
+  name: edgewatcher-sample
+spec:
+  # TODO(user): Add fields here

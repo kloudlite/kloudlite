@@ -9,6 +9,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +19,7 @@ import (
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -31,11 +32,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	harborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
-	Env       *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -164,7 +165,7 @@ func (r *Reconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 	//
 	// shouldRecon := deployment == nil || svc == nil || svcInternal == nil
 	// if obj.Spec.Hpa.Enabled {
-	// 	hpa, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &v2.HorizontalPodAutoscaler{})
+	// 	hpa, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &autoscalingv2.HorizontalPodAutoscaler{})
 	// 	if err != nil {
 	// 		req.Logger.Infof("horizontal pod autoscalar %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
 	// 	}
@@ -192,7 +193,11 @@ func (r *Reconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 		return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
 	}
 
-	if err := fn.KubectlApplyExec(ctx, b); err != nil {
+	// if err := fn.KubectlApplyExec(ctx, b); err != nil {
+	// 	return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
+	// }
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
 	}
 
@@ -253,10 +258,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&appsv1.Deployment{})
 	builder.Owns(&corev1.Service{})
+	builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
 	return builder.Complete(r)
 }

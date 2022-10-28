@@ -66,4 +66,5 @@ resources:
 - csi_v1_storageclass.yaml
 - crds_v1_edgerouter.yaml
 - elasticsearch.msvc_v1_kibana.yaml
+- extensions_v1_edgewatcher.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
