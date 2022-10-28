@@ -1,2 +1,3 @@
 go.sum binary
-config/crd/**/*.yaml binary
+config/crd/bases/*.yaml binary
+zz_generated_deepcopy.go binary
