@@ -231,6 +231,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr).For(&extensionsv1.Cluster{})
 	builder.Owns(&redpandaMsvcv1.Topic{})
 	builder.Owns(&redpandaMsvcv1.ACLUser{})
-	builder.WithEventFilter(rApi.ReconcileFilter())
+	// builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

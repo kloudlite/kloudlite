@@ -149,15 +149,17 @@ type KlMetadata struct {
 	ProjectId        string                  `json:"projectId"`
 	ResourceId       string                  `json:"resourceId"`
 	GroupVersionKind schema.GroupVersionKind `json:"groupVersionKind"`
+	Labels           map[string]string       `json:"labels"`
 }
 
 func ExtractMetadata(obj client.Object) KlMetadata {
-	items := obj.GetAnnotations()
+	ann := obj.GetAnnotations()
 	return KlMetadata{
-		AccountId:        items[constants.AnnotationKeys.AccountRef],
-		ProjectId:        items[constants.AnnotationKeys.ProjectRef],
-		ResourceId:       items[constants.AnnotationKeys.ResourceRef],
+		AccountId:        ann[constants.AnnotationKeys.AccountRef],
+		ProjectId:        ann[constants.AnnotationKeys.ProjectRef],
+		ResourceId:       ann[constants.AnnotationKeys.ResourceRef],
 		GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
+		Labels:           obj.GetLabels(),
 	}
 }
 
@@ -184,7 +186,7 @@ func (w WrappedName) ParseGroup() (*schema.GroupVersionKind, error) {
 
 func GetMsgKey(c client.Object) string {
 	kind := c.GetObjectKind().GroupVersionKind().Kind
-	return fmt.Sprintf("Kind=%s/Namespace=%s/Cloud=%s", kind, c.GetNamespace(), c.GetName())
+	return fmt.Sprintf("Kind=%s/Namespace=%s/Name=%s", kind, c.GetNamespace(), c.GetName())
 }
 
 func (w WrappedName) String() (string, error) {

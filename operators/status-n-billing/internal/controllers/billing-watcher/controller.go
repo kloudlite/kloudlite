@@ -14,6 +14,8 @@ import (
 	types2 "k8s.io/apimachinery/pkg/types"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
+	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
+	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
@@ -163,14 +165,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []t.K8sItem{
 							t.NewK8sItem(msvc, t.Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							t.NewK8sItem(msvc, t.BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							t.NewK8sItem(msvc, t.BlockStorage, float32(realMsvc.Spec.Resources.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, &billing)
 				}
-			case redisStandalone.GroupVersion.WithKind("Service"):
+			case redisMsvcv1.GroupVersion.WithKind("Service"):
 				{
-					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &redisMsvcv1.StandaloneService{})
 					if err != nil {
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
@@ -196,9 +198,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 					return r.SendBillingEvent(ctx, msvc, &billing)
 				}
 
-			case mysqlStandalone.GroupVersion.WithKind("Service"):
+			case mysqlMsvcv1.GroupVersion.WithKind("Service"):
 				{
-					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mongodbStandalone.Service{})
+					realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Name), &mysqlMsvcv1.StandaloneService{})
 					if err != nil {
 						return ctrl.Result{}, client.IgnoreNotFound(err)
 					}
@@ -217,7 +219,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []t.K8sItem{
 							t.NewK8sItem(msvc, t.Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							t.NewK8sItem(msvc, t.BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							t.NewK8sItem(msvc, t.BlockStorage, float32(realMsvc.Spec.Resources.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, &billing)
