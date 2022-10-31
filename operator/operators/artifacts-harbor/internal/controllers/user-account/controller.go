@@ -142,7 +142,7 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*artifactsv1.HarborUserAcco
 
 	if obj.Spec.HarborUser == nil {
 		obj.Spec.HarborUser = &harbor.User{
-			Name: fmt.Sprintf("robot-%s+%s", obj.Spec.ProjectRef, obj.Name),
+			Name: fmt.Sprintf("robot-%s+%s-%s", obj.Spec.ProjectRef, obj.Namespace, obj.Name),
 		}
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error())
@@ -254,7 +254,7 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 	}
 
 	if !exists {
-		user, err := r.HarborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, obj.Name, password)
+		user, err := r.HarborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, fmt.Sprintf("%s-%s", obj.Namespace, obj.Name), password)
 		if err != nil {
 			return req.CheckFailed(RobotAccountReady, check, err.Error())
 		}
