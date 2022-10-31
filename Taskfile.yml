@@ -159,11 +159,16 @@ tasks:
       - |+
         pushd "./operators/{{.Name}}" 1> /dev/null
         lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        go build -o .tmp/{{.Name}} .
-        sed "$(( $lineNo + 1 )) i COPY .tmp/{{.Name}} /manager" Dockerfile | tail --lines=+$lineNo | grep -i --invert-match 'from=builder' > .tmp/Dockerfile
-        docker build -f .tmp/Dockerfile -t {{.Image}} .
+        tDir=$(mktemp -d)
+        go build -o $tDir/{{.Name}} .
+
+        nDockerfile=$(cat Dockerfile | tail --lines=+$lineNo | grep -i --invert-match 'from=builder')
+        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" | sed "3 i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
+        cat $tDir/Dockerfile
+
+        docker buildx build --build-context local-builder=${tDir} -f $tDir/Dockerfile -t {{.Image}} . 
         docker push {{.Image}}
-        rm -rf .tmp
+        rm -rf $tDir
         popd 1> /dev/null
 
 #

@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	ev := env.GetEnvOrDie()
 
 	harborCli, err := harbor.NewClient(
