@@ -30,7 +30,7 @@ type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	*types.Notifier
-	Logger logging.Logger
+	logger logging.Logger
 	Name   string
 	Env    *env.Env
 }
@@ -86,7 +86,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 
 	gvk, err := wName.ParseGroup()
 	if err != nil {
-		r.Logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
+		r.logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
 		return ctrl.Result{}, nil
 	}
 
@@ -94,7 +94,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, nil
 	}
 
-	logger := r.Logger.WithName(fn.NN(oReq.Namespace, wName.Name).String()).WithKV("RefKind", gvk.String())
+	logger := r.logger.WithName(fn.NN(oReq.Namespace, wName.Name).String()).WithKV("RefKind", gvk.String())
 	logger.Infof("request received ...")
 
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
@@ -119,7 +119,7 @@ func (r *Reconciler) RemoveWatcherFinalizer(ctx context.Context, obj client.Obje
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.Logger = logger.WithName(r.Name)
+	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})
@@ -138,8 +138,20 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			&source.Kind{Type: object},
 			handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
+					v, ok := obj.GetAnnotations()["kubectl.kubernetes.io/last-applied-configuration"]
+					if !ok {
+						return nil
+					}
+
+					var w struct {
+						metav1.TypeMeta `json:",inline"`
+					}
+					if err := json.Unmarshal([]byte(v), &w); err != nil {
+						return nil
+					}
+
 					b64Group := base64.StdEncoding.EncodeToString(
-						[]byte(obj.GetAnnotations()[constants.AnnotationKeys.GroupVersionKind]),
+						[]byte(w.TypeMeta.GroupVersionKind().String()),
 					)
 
 					if len(b64Group) == 0 {

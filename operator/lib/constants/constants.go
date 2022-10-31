@@ -142,6 +142,11 @@ var (
 		Kind:       "Nginx",
 		APIVersion: "ingress.kloudlite.io/v1",
 	}
+
+	TektonPipelineRunKind = metav1.TypeMeta{
+		Kind:       "PipelineRun",
+		APIVersion: "tekton.dev/v1beta1",
+	}
 )
 
 var (

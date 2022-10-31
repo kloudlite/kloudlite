@@ -1,6 +1,6 @@
 version: 3
 
-dotenv: [".secrets/env"]
+# dotenv: [".secrets/env"]
 
 vars:
 #   dockerRegistry: "harbor.dev.madhouselabs.io"
