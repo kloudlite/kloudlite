@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"kloudlite.io/pkg/harbor"
-	"kloudlite.io/pkg/tekton"
 	"kloudlite.io/pkg/types"
 
 	"kloudlite.io/pkg/repos"
@@ -23,6 +22,7 @@ type Domain interface {
 	CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error)
 	DeletePipeline(ctx context.Context, pipelineId repos.ID) error
 	TriggerPipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error
+	UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error
 
 	ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPayload, error)
 	ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhookPayload, error)
@@ -39,10 +39,6 @@ type Domain interface {
 	GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) (any, error)
 	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID) (repos.ID, error)
 	GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error)
-	// tekton interceptor
-
-	TektonInterceptorGithub(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
-	TektonInterceptorGitlab(ctx context.Context, req *tekton.Request) (*TektonVars, *Pipeline, error)
 
 	// harbor
 	HarborImageSearch(ctx context.Context, accountId repos.ID, q string, pagination *types.Pagination) ([]harbor.Repository, error)

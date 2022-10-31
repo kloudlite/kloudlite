@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/json"
+	"time"
 
 	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/repos"
@@ -37,6 +38,7 @@ type PipelineState string
 const PipelineStateIdle = PipelineState("idle")
 const PipelineStateInProgress = PipelineState("in-progress")
 const PipelineStateError = PipelineState("error")
+const PipelineStatueSuccess = PipelineState("success")
 
 type Pipeline struct {
 	repos.BaseEntity   `bson:",inline"`
@@ -109,6 +111,11 @@ type TektonVars struct {
 
 	ArtifactDockerImageName string `json:"artifact_ref-docker_image_name"`
 	ArtifactDockerImageTag  string `json:"artifact_ref-docker_image_tag"`
+
+	PipelineRunId     string `json:"pipeline-run-id"`
+	UrlPipelineStart  string `json:"url-pipeline-start"`
+	UrlPipelineFinish string `json:"url-pipeline-finish"`
+	UrlPipelineFail   string `json:"url-pipeline-fail"`
 }
 
 func (t *TektonVars) ToJson() (map[string]any, error) {
@@ -161,4 +168,13 @@ type GitlabGroup struct {
 	Id        string `json:"id"`
 	FullName  string `json:"full_name"`
 	AvatarUrl string `json:"avatar_url"`
+}
+
+type PipelineRunStatus struct {
+	PipelineRunId string     `json:"pipeline_run_id"`
+	PipelineId    string     `json:"pipeline_id"`
+	StartTime     time.Time  `json:"start_time"`
+	EndTime       *time.Time `json:"end_time"`
+	Success       bool       `json:"success"`
+	Message       string     `json:"message,omitempty"`
 }

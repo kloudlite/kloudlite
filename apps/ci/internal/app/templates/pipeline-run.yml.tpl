@@ -41,10 +41,11 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  generateName: {{$taskName}}
+  name: {{.PipelineRunId}}
   namespace: {{.TaskNamespace}}
   labels:
     app: {{.PipelineId}}
+    component: {{.PipelineRunId}}
 spec:
   workspaces:
     - name: p-output

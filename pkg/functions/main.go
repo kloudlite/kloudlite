@@ -76,3 +76,10 @@ func CleanerNanoid(n int) (string, error) {
 	}
 	return res, nil
 }
+func CleanerNanoidOrDie(n int) string {
+	id, err := CleanerNanoid(40)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
