@@ -1,0 +1,10 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+tasks:
+  run:
+    cmds:
+      - go build -o /tmp/artifacts-harbor
+      - /tmp/artifacts-harbor --dev

@@ -14,6 +14,7 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -25,11 +26,12 @@ import (
 
 type ProjectReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	harborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
-	Env       *env.Env
+	Scheme     *runtime.Scheme
+	harborCli  *harbor.Client
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *ProjectReconciler) GetName() string {
@@ -62,6 +64,9 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady: %v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -98,7 +103,10 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
@@ -145,7 +153,7 @@ func (r *ProjectReconciler) reconNamespace(req *rApi.Request[*crdsv1.Project]) s
 			return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
 		}
 
@@ -165,7 +173,7 @@ func (r *ProjectReconciler) reconNamespace(req *rApi.Request[*crdsv1.Project]) s
 func (r *ProjectReconciler) reconProjectCfg(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
-	projectCfg, err := rApi.Get[*corev1.ConfigMap](ctx, r.Client, fn.NN(obj.Name, r.Env.ProjectCfgName), &corev1.ConfigMap{})
+	projectCfg, err := rApi.Get(ctx, r.Client, fn.NN(obj.Name, r.Env.ProjectCfgName), &corev1.ConfigMap{})
 	if err != nil {
 		projectCfg = nil
 		req.Logger.Infof("obj configmap does not exist, will be creating it")
@@ -188,7 +196,7 @@ func (r *ProjectReconciler) reconProjectCfg(req *rApi.Request[*crdsv1.Project]) 
 			return req.CheckFailed(ProjectCfgReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(ProjectCfgReady, check, err.Error()).Err(nil)
 		}
 
@@ -241,7 +249,7 @@ func (r *ProjectReconciler) reconProjectRBAC(req *rApi.Request[*crdsv1.Project])
 			return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
 		}
 
@@ -269,7 +277,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 		req.Logger.Infof("harbor project (%s) does not exist, creating now ...", obj.Spec.AccountRef)
 	}
 
-	harborUserAcc, err := rApi.Get(ctx, r.Client, fn.NN(namespace, obj.Name), &artifactsv1.HarborUserAccount{})
+	harborUserAcc, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.Env.DockerSecretName), &artifactsv1.HarborUserAccount{})
 	if err != nil {
 		harborUserAcc = nil
 		req.Logger.Infof("harbor user account (%s) does not exist, creating now ...", obj.Spec.AccountRef)
@@ -281,7 +289,6 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 				"acc-ref":            obj.Spec.AccountRef,
 				"docker-secret-name": r.Env.DockerSecretName,
 				"namespace":          namespace,
-				"project-name":       obj.Name,
 				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
 		)
@@ -289,7 +296,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
 		}
 
@@ -329,7 +336,7 @@ func (r *ProjectReconciler) reconAccountRouter(req *rApi.Request[*crdsv1.Project
 
 	accNamespace := "wg-" + obj.Spec.AccountRef
 
-	accRouter, err := rApi.Get[*crdsv1.AccountRouter](ctx, r.Client, fn.NN(accNamespace, r.Env.AccountRouterName), &crdsv1.AccountRouter{})
+	accRouter, err := rApi.Get(ctx, r.Client, fn.NN(accNamespace, r.Env.AccountRouterName), &crdsv1.AccountRouter{})
 	if err != nil {
 		req.Logger.Infof("account router (%s) does not exist, would be creating it now...", r.Env.AccountRouterName)
 	}
@@ -346,7 +353,7 @@ func (r *ProjectReconciler) reconAccountRouter(req *rApi.Request[*crdsv1.Project
 			return req.CheckFailed(AccountRouterReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccountRouterReady, check, err.Error()).Err(nil)
 		}
 
@@ -376,13 +383,13 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Project{})
 	builder.Owns(&corev1.Namespace{})
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.Role{})
 	builder.Owns(&rbacv1.RoleBinding{})
-	builder.Owns(&artifactsv1.HarborProject{})
 	builder.Owns(&artifactsv1.HarborUserAccount{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
