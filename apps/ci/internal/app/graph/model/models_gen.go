@@ -3,6 +3,8 @@
 package model
 
 import (
+	"time"
+
 	"kloudlite.io/pkg/repos"
 )
 
@@ -110,4 +112,14 @@ type HarborImageTagsResult struct {
 
 type HarborSearchResult struct {
 	ImageName string `json:"imageName"`
+}
+
+type PipelineRun struct {
+	ID         repos.ID   `json:"id"`
+	PipelineID repos.ID   `json:"pipelineId"`
+	StartTime  *time.Time `json:"startTime"`
+	EndTime    *time.Time `json:"endTime"`
+	Success    bool       `json:"success"`
+	Message    *string    `json:"message"`
+	State      *string    `json:"state"`
 }
