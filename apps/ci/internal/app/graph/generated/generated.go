@@ -67,15 +67,17 @@ type ComplexityRoot struct {
 	}
 
 	GitPipeline struct {
-		Build       func(childComplexity int) int
-		DockerBuild func(childComplexity int) int
-		GitBranch   func(childComplexity int) int
-		GitProvider func(childComplexity int) int
-		GitRepoURL  func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Metadata    func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Run         func(childComplexity int) int
+		Build              func(childComplexity int) int
+		DockerBuild        func(childComplexity int) int
+		GitBranch          func(childComplexity int) int
+		GitProvider        func(childComplexity int) int
+		GitRepoURL         func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Metadata           func(childComplexity int) int
+		Name               func(childComplexity int) int
+		PipelineRunMessage func(childComplexity int) int
+		Run                func(childComplexity int) int
+		Status             func(childComplexity int) int
 	}
 
 	GitPipelineArtifact struct {
@@ -304,12 +306,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GitPipeline.Name(childComplexity), true
 
+	case "GitPipeline.pipelineRunMessage":
+		if e.complexity.GitPipeline.PipelineRunMessage == nil {
+			break
+		}
+
+		return e.complexity.GitPipeline.PipelineRunMessage(childComplexity), true
+
 	case "GitPipeline.run":
 		if e.complexity.GitPipeline.Run == nil {
 			break
 		}
 
 		return e.complexity.GitPipeline.Run(childComplexity), true
+
+	case "GitPipeline.status":
+		if e.complexity.GitPipeline.Status == nil {
+			break
+		}
+
+		return e.complexity.GitPipeline.Status(childComplexity), true
 
 	case "GitPipelineArtifact.dockerImageName":
 		if e.complexity.GitPipelineArtifact.DockerImageName == nil {
@@ -764,6 +780,9 @@ type GitPipelineArtifact {
 type GitPipeline {
   id: ID!
   name: String!
+
+  status: String!
+  pipelineRunMessage: String
 
   gitProvider: String!
   gitRepoUrl: String!
@@ -1701,6 +1720,73 @@ func (ec *executionContext) _GitPipeline_name(ctx context.Context, field graphql
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipeline_status(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipeline",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GitPipeline_pipelineRunMessage(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GitPipeline",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PipelineRunMessage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _GitPipeline_gitProvider(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
@@ -4969,6 +5055,23 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._GitPipeline_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "pipelineRunMessage":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._GitPipeline_pipelineRunMessage(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		case "gitProvider":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._GitPipeline_gitProvider(ctx, field, obj)

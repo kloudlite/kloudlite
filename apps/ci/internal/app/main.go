@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/json"
-
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -20,7 +18,6 @@ import (
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/tekton"
 )
 
 type Env struct {
@@ -45,12 +42,13 @@ type Env struct {
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
 	GoogleScopes       string `env:"GOOGLE_SCOPES" required:"true"`
 
-	KafkaGitWebhooksTopic      string `env:"KAFKA_GIT_WEBHOOKS_TOPIC" required:"true"`
-	KafkaGitWebhooksConsumerId string `env:"KAFKA_GIT_WEBHOOKS_CONSUMER_ID" required:"true"`
-	KafkaApplyYamlTopic        string `env:"KAFKA_APPLY_YAML_TOPIC" required:"true"`
-	KafkaBrokers               string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaUsername              string `env:"KAFKA_USERNAME" required:"true"`
-	KafkaPassword              string `env:"KAFKA_PASSWORD" required:"true"`
+	KafkaGitWebhooksTopic       string `env:"KAFKA_GIT_WEBHOOKS_TOPIC" required:"true"`
+	KafkaPipelineRunStatusTopic string `env:"KAFKA_PIPELINE_RUN_STATUS_TOPIC" required:"true"`
+	KafkaGitWebhooksConsumerId  string `env:"KAFKA_GIT_WEBHOOKS_CONSUMER_ID" required:"true"`
+	KafkaApplyYamlTopic         string `env:"KAFKA_APPLY_YAML_TOPIC" required:"true"`
+	KafkaBrokers                string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaUsername               string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword               string `env:"KAFKA_PASSWORD" required:"true"`
 
 	// KAFKA_GIT_WEBHOOKS_TOPIC="kl-git-webhooks"
 	// KAFKA_BROKERS="redpanda.kl-init-redpanda.svc.cluster.local"
@@ -170,6 +168,44 @@ var Module = fx.Module(
 					return errors.Newf("unknown (provider=%s) not one of [github,gitlab]", provider)
 				},
 			)
+
+			// app.Post(
+			// 	"/start-pipeline/:pipelineId/:pipelineRunId", func(ctx *fiber.Ctx) error {
+			// 		pipelineId := ctx.Params("pipelineId")
+			// 		pipelineRunId := ctx.Params("pipelineRunId")
+			// 		if err := d.StartPipeline(ctx.Context(), repos.ID(pipelineId), repos.ID(pipelineRunId)); err != nil {
+			// 			return err
+			// 		}
+			// 		return ctx.SendStatus(http.StatusOK)
+			// 	},
+			// )
+			//
+			// app.Post(
+			// 	"/finish-pipeline/:pipelineId", func(ctx *fiber.Ctx) error {
+			// 		pipelineId := ctx.Params("pipelineId")
+			// 		if err := d.FinishPipeline(ctx.Context(), repos.ID(pipelineId)); err != nil {
+			// 			return err
+			// 		}
+			// 		return ctx.SendStatus(http.StatusOK)
+			// 	},
+			// )
+			//
+			// app.Post(
+			// 	"/end-pipeline-with-error/:pipelineId", func(ctx *fiber.Ctx) error {
+			// 		var body struct {
+			// 			Error string `json:"error"`
+			// 		}
+			// 		if err := ctx.JSON(&body); err != nil {
+			// 			return err
+			// 		}
+			//
+			// 		pipelineId := ctx.Params("pipelineId")
+			// 		if err := d.EndPipelineWithError(ctx.Context(), repos.ID(pipelineId), errors.New(body.Error)); err != nil {
+			// 			return err
+			// 		}
+			// 		return ctx.SendStatus(http.StatusOK)
+			// 	},
+			// )
 		},
 	),
 
@@ -178,86 +214,6 @@ var Module = fx.Module(
 		func(app *fiber.App, d domain.Domain) error {
 			app.Post(
 				"/hooks/:gitProvider", func(ctx *fiber.Ctx) error {
-					return nil
-				},
-			)
-			return nil
-		},
-	),
-
-	// Tekton Interceptor
-	fx.Invoke(
-		func(app *fiber.App, d domain.Domain, logger logging.Logger, consoleCli console.ConsoleClient) error {
-			app.Post(
-				"/tekton/interceptor/:gitProvider", func(ctx *fiber.Ctx) error {
-					gitProvider := ctx.Params("gitProvider")
-
-					var req tekton.Request
-					err := json.Unmarshal(ctx.Body(), &req)
-					if err != nil {
-						return err
-					}
-
-					switch gitProvider {
-					case common.ProviderGithub:
-						{
-							tkVars, _, err := d.TektonInterceptorGithub(ctx.Context(), &req)
-							if err != nil {
-								logger.Errorf(err, "tekton interceptor github")
-								response := tekton.NewResponse(&req).Err(err)
-								jsonBody, err := response.ToJson()
-								if err != nil {
-									return ctx.JSON(err)
-								}
-								logger.Debugf("ERR Response: %s", jsonBody)
-								return ctx.Send(jsonBody)
-							}
-
-							if err != nil {
-								return ctx.JSON(err)
-							}
-							tkVarsJson, err := tkVars.ToJson()
-							if err != nil {
-								logger.Debugf("ERR %s", err)
-								return ctx.JSON(err)
-							}
-							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
-							if err != nil {
-								logger.Debugf("ERR %s", err)
-								return ctx.JSON(err)
-							}
-							logger.Debugf("responseBody: %s\n", responseBody)
-							return ctx.Send(responseBody)
-						}
-					case common.ProviderGitlab:
-						{
-							tkVars, _, err := d.TektonInterceptorGitlab(ctx.Context(), &req)
-							if err != nil {
-								response := tekton.NewResponse(&req).Err(err)
-								jsonBody, err := response.ToJson()
-								if err != nil {
-									logger.Infof("ERR Response: %v", err)
-									return ctx.JSON(err)
-								}
-
-								logger.Infof("ERR Response: %s", jsonBody)
-								return ctx.Send(jsonBody)
-							}
-							tkVarsJson, err := tkVars.ToJson()
-							if err != nil {
-								logger.Debugf("Err Response: %v", err)
-								return ctx.JSON(err)
-							}
-							responseBody, err := tekton.NewResponse(&req).Extend(tkVarsJson).Ok().ToJson()
-							if err != nil {
-								logger.Debugf("Err Response: %v", err)
-								return ctx.JSON(err)
-							}
-							logger.Debugf("responseBody: %s\n", responseBody)
-							return ctx.Send(responseBody)
-						}
-					}
-
 					return nil
 				},
 			)
@@ -311,6 +267,14 @@ var Module = fx.Module(
 	),
 
 	fx.Invoke(ProcessWebhooks),
+
+	fx.Provide(func(ev *Env, logger logging.Logger) (PipelineStatusConsumer, error) {
+		return redpanda.NewConsumer(ev.KafkaBrokers, ev.KafkaGitWebhooksConsumerId, redpanda.ConsumerOpts{
+			SASLAuth: ev.GetKafkaSASLAuth(),
+			Logger:   logger,
+		}, []string{ev.KafkaPipelineRunStatusTopic})
+	}),
+	fx.Invoke(ProcessPipelineRunEvents),
 
 	domain.Module,
 )
