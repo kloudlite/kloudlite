@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/json"
+	"time"
 
 	"golang.org/x/oauth2"
 	"kloudlite.io/pkg/repos"
@@ -32,18 +33,27 @@ type ArtifactRef struct {
 type GitlabWebhookId int
 type GithubWebhookId int64
 
-type Pipeline struct {
-	repos.BaseEntity `bson:",inline"`
-	Name             string `json:"name,omitempty" bson:"name"`
-	ProjectId        string `json:"project_id" bson:"project_id"`
-	AccountId        string `json:"account_id" bson:"account_id"`
-	AppId            string `json:"app_id" bson:"app_id"`
-	ProjectName      string `json:"project_name" bson:"project_name"`
-	ContainerName    string `json:"container_name" bson:"container_name"`
+type PipelineState string
 
-	GitProvider string `json:"git_provider,omitempty" bson:"git_provider"`
-	GitRepoUrl  string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
-	GitBranch   string `json:"git_branch" bson:"git_branch"`
+const PipelineStateIdle = PipelineState("idle")
+const PipelineStateInProgress = PipelineState("in-progress")
+const PipelineStateError = PipelineState("error")
+const PipelineStatueSuccess = PipelineState("success")
+
+type Pipeline struct {
+	repos.BaseEntity   `bson:",inline"`
+	Name               string        `json:"name,omitempty" bson:"name"`
+	ProjectId          string        `json:"project_id" bson:"project_id"`
+	AccountId          string        `json:"account_id" bson:"account_id"`
+	AppId              string        `json:"app_id" bson:"app_id"`
+	ProjectName        string        `json:"project_name" bson:"project_name"`
+	ContainerName      string        `json:"container_name" bson:"container_name"`
+	PipelineRunId      repos.ID      `json:"pipeline_run_id" bson:"pipeline_run_id"`
+	PipelineRunMessage string        `json:"pipeline_run_message" bson:"pipeline_run_message"`
+	State              PipelineState `json:"pipeline_state" bson:"pipeline_state"`
+	GitProvider        string        `json:"git_provider,omitempty" bson:"git_provider"`
+	GitRepoUrl         string        `json:"git_repo_url,omitempty" bson:"git_repo_url"`
+	GitBranch          string        `json:"git_branch" bson:"git_branch"`
 
 	AccessTokenId repos.ID `json:"access_token_id,omitempty" bson:"access_token_id"`
 
@@ -62,6 +72,15 @@ var PipelineIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+
+	{
+		Field: []repos.IndexKey{
+			{Key: "project_id", Value: repos.IndexAsc},
+			{Key: "app_id", Value: repos.IndexAsc},
+			{Key: "container_name", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
@@ -92,6 +111,11 @@ type TektonVars struct {
 
 	ArtifactDockerImageName string `json:"artifact_ref-docker_image_name"`
 	ArtifactDockerImageTag  string `json:"artifact_ref-docker_image_tag"`
+
+	PipelineRunId     string `json:"pipeline-run-id"`
+	UrlPipelineStart  string `json:"url-pipeline-start"`
+	UrlPipelineFinish string `json:"url-pipeline-finish"`
+	UrlPipelineFail   string `json:"url-pipeline-fail"`
 }
 
 func (t *TektonVars) ToJson() (map[string]any, error) {
@@ -144,4 +168,13 @@ type GitlabGroup struct {
 	Id        string `json:"id"`
 	FullName  string `json:"full_name"`
 	AvatarUrl string `json:"avatar_url"`
+}
+
+type PipelineRunStatus struct {
+	PipelineRunId string     `json:"pipeline_run_id"`
+	PipelineId    string     `json:"pipeline_id"`
+	StartTime     time.Time  `json:"start_time"`
+	EndTime       *time.Time `json:"end_time"`
+	Success       bool       `json:"success"`
+	Message       string     `json:"message,omitempty"`
 }
