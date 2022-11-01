@@ -214,6 +214,34 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 	return create, err
 }
 
+func (d *domain) UpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error) {
+	proj, err := d.projectRepo.FindById(ctx, projectID)
+	if err = mongoError(err, "project not found"); err != nil {
+		return false, err
+	}
+
+	if err = d.checkAccountAccess(ctx, proj.AccountId, "create_project"); err != nil {
+		return false, err
+	}
+	if displayName != nil {
+		proj.DisplayName = *displayName
+	}
+	if logo != nil {
+		proj.Logo = logo
+	}
+
+	if description != nil {
+		proj.Description = description
+	}
+
+	_, err = d.projectRepo.UpdateById(ctx, projectID, proj)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 	proj, err := d.projectRepo.FindById(ctx, id)
 	if err = mongoError(err, "project not found"); err != nil {
