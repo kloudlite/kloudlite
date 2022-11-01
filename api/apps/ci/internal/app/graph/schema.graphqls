@@ -1,5 +1,7 @@
 scalar Json
 scalar Any
+scalar Date
+scalar Time
 
 type Query {
   ci_githubInstallations(pagination: PaginationIn): Any! # user-access
@@ -16,12 +18,25 @@ type Query {
   ci_getPipeline(pipelineId: ID!): GitPipeline # user-access # deprecate
   ci_triggerPipeline(pipelineId: ID!): Boolean # user-access # deprecate
 
+  ci_getPipelineRuns(pipelineId: ID!): [PipelineRun!]
+  ci_getPipelineRun(pipelineRunId: ID!): PipelineRun
+
   ci_harborSearch(accountId: ID!, q: String!, pagination: PaginationIn): [HarborSearchResult!] # account-member-access
   ci_harborImageTags(imageName: String!, pagination: PaginationIn): [HarborImageTagsResult!]
 }
 
 type HarborSearchResult {
   imageName: String!
+}
+
+type PipelineRun {
+  id: ID!
+  pipelineId: ID!
+  startTime: Time
+  endTime: Time
+  success: Boolean!
+  message: String
+  state: String
 }
 
 type HarborImageTagsResult {
