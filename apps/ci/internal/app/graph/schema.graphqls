@@ -93,6 +93,9 @@ type GitPipeline {
   id: ID!
   name: String!
 
+  status: String!
+  pipelineRunMessage: String
+
   gitProvider: String!
   gitRepoUrl: String!
   gitBranch: String!

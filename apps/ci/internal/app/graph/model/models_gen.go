@@ -40,15 +40,17 @@ type GitDockerPipelineIn struct {
 }
 
 type GitPipeline struct {
-	ID          repos.ID               `json:"id"`
-	Name        string                 `json:"name"`
-	GitProvider string                 `json:"gitProvider"`
-	GitRepoURL  string                 `json:"gitRepoUrl"`
-	GitBranch   string                 `json:"gitBranch"`
-	Build       *GitPipelineBuild      `json:"build"`
-	Run         *GitPipelineRun        `json:"run"`
-	DockerBuild *DockerBuild           `json:"dockerBuild"`
-	Metadata    map[string]interface{} `json:"metadata"`
+	ID                 repos.ID               `json:"id"`
+	Name               string                 `json:"name"`
+	Status             string                 `json:"status"`
+	PipelineRunMessage *string                `json:"pipelineRunMessage"`
+	GitProvider        string                 `json:"gitProvider"`
+	GitRepoURL         string                 `json:"gitRepoUrl"`
+	GitBranch          string                 `json:"gitBranch"`
+	Build              *GitPipelineBuild      `json:"build"`
+	Run                *GitPipelineRun        `json:"run"`
+	DockerBuild        *DockerBuild           `json:"dockerBuild"`
+	Metadata           map[string]interface{} `json:"metadata"`
 }
 
 type GitPipelineArtifact struct {
