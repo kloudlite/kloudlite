@@ -98,6 +98,26 @@ func (d *domain) DeleteCloudProvider(ctx context.Context, providerId repos.ID) e
 	return nil
 }
 
+func (d *domain) OnUpdateProvider(ctx context.Context, response *op_crds.StatusUpdate) error {
+	one, err := d.providerRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		// Ignore unknown project
+		return nil
+	}
+	if response.IsReady {
+		one.Status = entities.CloudProviderStateLive
+	} else {
+		one.Status = entities.CloudProviderStateSyncing
+	}
+	one.Conditions = response.ChildConditions
+	_, err = d.providerRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnDeleteProvider(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.providerRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}
+
 func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, update *CloudProviderUpdate) error {
 	provider, err := d.providerRepo.FindById(ctx, providerId)
 	if err != nil {

@@ -186,11 +186,12 @@ var Module = fx.Module(
 
 						case "Project":
 							domain.OnUpdateProject(context.TODO(), &update)
-
 						case "ManagedResource":
 							domain.OnUpdateManagedRes(context.TODO(), &update)
 						case "ManagedService":
 							domain.OnUpdateManagedSvc(context.TODO(), &update)
+						case "CloudProvider":
+							domain.OnDeleteProvider(context.TODO(), &update)
 
 						default:
 							fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
@@ -210,6 +211,8 @@ var Module = fx.Module(
 							domain.OnDeleteManagedService(context.TODO(), &update)
 						case "ManagedResource":
 							domain.OnDeleteManagedResource(context.TODO(), &update)
+						case "CloudProvider":
+							domain.OnDeleteProvider(context.TODO(), &update)
 						default:
 							fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
 						}
