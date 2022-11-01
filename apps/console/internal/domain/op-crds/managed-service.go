@@ -5,14 +5,8 @@ type MsvcKind struct {
 	Kind       string `json:"kind"`
 }
 
-type CloudProvider struct {
-	Cloud  string `json:"cloud"`
-	Region string `json:"region"`
-}
-
 type ManagedServiceSpec struct {
-	Region string `json:"region,omitempty"`
-	// CloudProvider CloudProvider     `json:"cloudProvider,omitempty"`
+	Region       string            `json:"region,omitempty"`
 	MsvcKind     MsvcKind          `json:"msvcKind,omitempty"`
 	Inputs       map[string]any    `json:"inputs,omitempty"`
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
