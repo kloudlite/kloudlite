@@ -1,6 +1,7 @@
 package entities
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -20,13 +21,23 @@ type EdgeRegion struct {
 	Pools            []NodePool `bson:"pools"`
 }
 
+type CloudProviderStatus string
+
+const (
+	CloudProviderStateSyncing = CloudProviderStatus("sync-in-progress")
+	CloudProviderStateLive    = CloudProviderStatus("live")
+	CloudProviderStateError   = CloudProviderStatus("error")
+	CloudProviderStateDown    = CloudProviderStatus("down")
+)
+
 type CloudProvider struct {
 	repos.BaseEntity `bson:",inline"`
-	Name             string            `bson:"name"`
-	AccountId        *repos.ID         `json:"account_id,omitempty" bson:"account_id"`
-	Provider         string            `json:"provider" bson:"provider"`
-	Credentials      map[string]string `json:"credentials" bson:"credentials"`
-	Status           string            `json:"status" bson:"status"`
+	Name             string              `bson:"name"`
+	AccountId        *repos.ID           `json:"account_id,omitempty" bson:"account_id"`
+	Provider         string              `json:"provider" bson:"provider"`
+	Credentials      map[string]string   `json:"credentials" bson:"credentials"`
+	Status           CloudProviderStatus `json:"status" bson:"status"`
+	Conditions       []metav1.Condition  `json:"conditions" bson:"conditions"`
 }
 
 var CloudProviderIndexes = []repos.IndexField{
