@@ -1,4 +1,3 @@
-{{- $taskName := "build-from-git" }}
 {{- $svcAccountName := "kloudlite-svc-account" }}
 {{- $dockerConfigName := "kloudlite-docker-registry" }}
 
@@ -154,6 +153,8 @@ spec:
             - name: clone-git
               image: registry.kloudlite.io/public/git:latest
               script: |+
+                cat > clone-git.sh <<'EOF'
+
                 workdir="$(workspaces.output.path)"
                 gitUser="$(params.{{$varGitUser}})"
                 gitPassword="$(params.{{$varGitPassword}})"
@@ -171,6 +172,12 @@ spec:
                 ls -l repo
                 echo "successfully cloned git repo: $gitRepo"
 
+                echo "STEP (clone-git) FINISHED"
+                EOF
+
+                sh clone-git.sh
+                # sh clone-git.sh | sed 's|.*|[kl-build:clone-git] &|'
+
             - name: build-image
               image: registry.kloudlite.io/public/kloudlite/tekton-builder:latest
               imagePullPolicy: Always
@@ -179,79 +186,84 @@ spec:
                   value: 127.0.0.1:2375
               securityContext:
                 runAsUser: 0
-              command:
-                - bash
-                - -c
-                - |+
-                  set -o errexit
-                  set -o pipefail
-                  set -o nounset
+              script: |+
+                cat > build-image.sh <<'EOF'
 
-                  # ls -l $(workspaces.docker-config.path)
-                  mkdir -p ~/.docker
-                  cp $(workspaces.docker-config.path)/.dockerconfigjson ~/.docker/config.json
-                  cd "$(workspaces.output.path)/repo"
+                set -o errexit
+                set -o pipefail
+                set -o nounset
 
-                  buildBaseImage='$(params.{{$varBuildBaseImage}})'
-                  buildCmd='$(params.{{$varBuildCmd}})'
-                  buildOutputDir='$(params.{{$varBuildOutputDir}})'
+                # ls -l $(workspaces.docker-config.path)
+                mkdir -p ~/.docker
+                cp $(workspaces.docker-config.path)/.dockerconfigjson ~/.docker/config.json
+                cd "$(workspaces.output.path)/repo"
 
-                  runBaseImage='$(params.{{$varRunBaseImage}})'
-                  runCmd='$(params.{{$varRunCmd}})'
+                buildBaseImage='$(params.{{$varBuildBaseImage}})'
+                buildCmd='$(params.{{$varBuildCmd}})'
+                buildOutputDir='$(params.{{$varBuildOutputDir}})'
 
-                  isDockerBuild='$(params.{{$varIsDockerBuild}})'
-                  dockerfile='$(params.{{$varDockerFile}})'
-                  dockerContextDir='$(params.{{$varDockerContextDir}})'
-                  dockerBuildArgs='$(params.{{$varDockerBuildArgs}})'
+                runBaseImage='$(params.{{$varRunBaseImage}})'
+                runCmd='$(params.{{$varRunCmd}})'
 
-                  dockerImageName='$(params.{{$varArtifactRefDockerImageName}})'
-                  dockerImageTag='$(params.{{$varArtifactRefDockerImageTag}})'
+                isDockerBuild='$(params.{{$varIsDockerBuild}})'
+                dockerfile='$(params.{{$varDockerFile}})'
+                dockerContextDir='$(params.{{$varDockerContextDir}})'
+                dockerBuildArgs='$(params.{{$varDockerBuildArgs}})'
 
-                  gitCommitHash='$(params.{{$varGitCommitHash}})'
+                dockerImageName='$(params.{{$varArtifactRefDockerImageName}})'
+                dockerImageTag='$(params.{{$varArtifactRefDockerImageTag}})'
 
-                  if [ "$isDockerBuild" == "true" ]; then
-                    # eval "$buildCmd" | envsubst
-                    pushd $dockerContextDir
-                    echo "listing files in context dir"
-                    ls -al
-                    echo docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .
-                    {{/* docker buildx build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .*/}}
-                    docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag . || exit 1
-                    popd
-                  else
-                    IFS=','; read -ra arr <<< $buildOutputDir
-                    copyCmds=""
-                    for item in ${arr[@]}
-                    do
-                    item=$(echo $item | xargs echo -n)
-                    copyCmds+="COPY --from=build /app/$item ./$item\n"
-                    done
+                gitCommitHash='$(params.{{$varGitCommitHash}})'
 
-                  cat > /tmp/Dockerfile <<EOF
-                  FROM $buildBaseImage AS build
-                  WORKDIR /app
-                  COPY . ./
-                  RUN $buildCmd
-                  ####
+                if [ "$isDockerBuild" == "true" ]; then
+                  # eval "$buildCmd" | envsubst
+                  pushd $dockerContextDir
+                  echo "listing files in context dir"
+                  ls -al
+                  echo docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .
+                  {{/* docker buildx build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .*/}}
+                  docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag . || exit 1
+                  popd
+                else
+                  IFS=','; read -ra arr <<< $buildOutputDir
+                  copyCmds=""
+                  for item in ${arr[@]}
+                  do
+                  item=$(echo $item | xargs echo -n)
+                  copyCmds+="COPY --from=build /app/$item ./$item\n"
+                  done
 
-                  FROM $runBaseImage
-                  WORKDIR /app
-                  RUN ls -al
-                  $(printf $copyCmds)
-                  ENTRYPOINT [ "sh", "-c", "$runCmd"]
-                  EOF
+                cat > /tmp/Dockerfile <<EOF2
+                FROM $buildBaseImage AS build
+                WORKDIR /app
+                COPY . ./
+                RUN $buildCmd
+                ####
 
-                    cat /tmp/Dockerfile
-                    timeout 2700 docker build -f /tmp/Dockerfile -t $dockerImageName:$dockerImageTag . ||exit 1
-                  fi
+                FROM $runBaseImage
+                WORKDIR /app
+                RUN ls -al
+                $(printf $copyCmds)
+                ENTRYPOINT [ "sh", "-c", "$runCmd"]
+                EOF2
 
-                  echo "pushing docker image: $dockerImageName:$dockerImageTag"
-                  docker push "$dockerImageName:$dockerImageTag"
-                  [ -n "$gitCommitHash" ] && {
-                      docker tag $dockerImageName:$dockerImageTag $dockerImageName:$gitCommitHash
-                      echo "pushing docker image: $dockerImageName:$gitCommitHash"
-                      docker push $dockerImageName:$gitCommitHash
-                  }
-                  set -x
+                  cat /tmp/Dockerfile
+                  timeout 2700 docker build -f /tmp/Dockerfile -t $dockerImageName:$dockerImageTag . ||exit 1
+                fi
+
+                echo "pushing docker image: $dockerImageName:$dockerImageTag"
+                docker push "$dockerImageName:$dockerImageTag"
+                [ -n "$gitCommitHash" ] && {
+                    docker tag $dockerImageName:$dockerImageTag $dockerImageName:$gitCommitHash
+                    echo "pushing docker image: $dockerImageName:$gitCommitHash"
+                    docker push $dockerImageName:$gitCommitHash
+                }
+
+                echo "STEP (build-image) FINISHED"
+
+                EOF
+
+                bash build-image.sh
+                # bash build-image.sh | sed 's|.*|[kl-build:build-image] &|'
 {{- end }}
 {{- end }}
