@@ -29,7 +29,7 @@ func testDoClient() {
 		StorePath:   "/home/vision/tf",
 		TfTemplates: "/home/vision/kloudlite/api-go/pkg/infraClient/terraform",
 		Secrets:     env.Secret,
-		Labels: map[string]string{
+		Labels:      map[string]string{
 			// "kloudlite.io/region": "blr1",
 		},
 	})
@@ -38,17 +38,17 @@ func testDoClient() {
 
 	node := DoNode{
 		Region: "blr1",
-		Size:   "s-4vcpu-8gb-amd",
+		// Size:   "s-4vcpu-8gb-amd",
 		// Size: "s-2vcpu-4gb-amd",
 		// Size: "s-1vcpu-1gb-amd",
-		// Size:    "c-2",
-		NodeId:  "kl-auto-scaler",
+		Size:    "c-2",
+		NodeId:  "kl-master-04",
 		ImageId: "117388514",
 	}
 
 	// fmt.Println(node, err, dop)
 
-	if false {
+	if true {
 
 		if err = dop.NewNode(node); err != nil {
 			fmt.Println(err)

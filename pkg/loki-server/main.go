@@ -58,7 +58,7 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 	if start != nil {
 		startTime = fmt.Sprintf("%v", start)
 	} else {
-		startTime = fmt.Sprintf("%v", time.Now().Add(-time.Hour*24).UnixNano())
+		startTime = fmt.Sprintf("%v", time.Now().Add(-time.Hour*24*30).UnixNano())
 	}
 	query.Set("start", startTime)
 	if end != nil {
@@ -67,7 +67,7 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 	if limit != nil {
 		query.Set("limit", fmt.Sprintf("%v", limit))
 	} else {
-		query.Set("limit", fmt.Sprintf("%v", 500))
+		query.Set("limit", fmt.Sprintf("%v", 1000))
 	}
 	for {
 		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/loki/api/v1/query_range", l.url), nil)

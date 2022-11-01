@@ -215,7 +215,7 @@ func (d *doProvider) AttachNode(node DoNode) error {
 		return l
 	}()
 
-	// sec.Secrets.Machine.Type = "controlplane"
+	sec.Secrets.Machine.Type = "controlplane"
 
 	switch sec.Secrets.Machine.Type {
 	case "worker":

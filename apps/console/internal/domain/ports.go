@@ -121,6 +121,7 @@ type Domain interface {
 
 	DeviceByNameExists(ctx context.Context, accountId repos.ID, name string) (bool, error)
 	DeleteProject(ctx context.Context, id repos.ID) (bool, error)
+	UpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error)
 	GetDockerCredentials(ctx context.Context, id repos.ID) (username string, password string, err error)
 	GenerateEnv(ctx context.Context, klfile localenv.KLFile) (map[string]string, map[string]string, error)
 	InterceptApp(ctx context.Context, appId repos.ID, deviceId repos.ID) error

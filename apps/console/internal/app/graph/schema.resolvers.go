@@ -365,7 +365,7 @@ func (r *mutationResolver) CoreCreateProject(ctx context.Context, accountID repo
 }
 
 func (r *mutationResolver) CoreUpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Domain.UpdateProject(ctx, projectID, displayName, cluster, logo, description)
 }
 
 func (r *mutationResolver) CoreDeleteProject(ctx context.Context, projectID repos.ID) (bool, error) {
