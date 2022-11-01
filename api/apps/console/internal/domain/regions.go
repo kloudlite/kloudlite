@@ -81,19 +81,20 @@ func (d *domain) DeleteCloudProvider(ctx context.Context, providerId repos.ID) e
 	if err != nil {
 		return err
 	}
-	if err := d.checkAccountAccess(ctx, *provider.AccountId, "update_account"); err != nil {
-		return err
+	if e := d.checkAccountAccess(ctx, *provider.AccountId, "update_account"); e != nil {
+		return e
 	}
-	err = d.workloadMessenger.SendAction("delete", string(provider.Id), &op_crds.Secret{
+
+	if err = d.workloadMessenger.SendAction("delete", string(provider.Id), &op_crds.Secret{
 		APIVersion: op_crds.SecretAPIVersion,
 		Kind:       op_crds.SecretKind,
 		Metadata: op_crds.SecretMetadata{
 			Name: "provider-" + string(provider.Id),
 		},
-	})
-	if err != nil {
+	}); err != nil {
 		return err
 	}
+
 	return nil
 }
 

@@ -72,6 +72,7 @@ type CloudProvider {
   name: String!
   provider: String!
   edges: [EdgeRegion!]!
+  status: String!
 }
 
 input CloudProviderIn {

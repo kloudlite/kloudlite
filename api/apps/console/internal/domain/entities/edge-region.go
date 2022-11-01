@@ -26,6 +26,7 @@ type CloudProvider struct {
 	AccountId        *repos.ID         `json:"account_id,omitempty" bson:"account_id"`
 	Provider         string            `json:"provider" bson:"provider"`
 	Credentials      map[string]string `json:"credentials" bson:"credentials"`
+	Status           string            `json:"status" bson:"status"`
 }
 
 var CloudProviderIndexes = []repos.IndexField{
