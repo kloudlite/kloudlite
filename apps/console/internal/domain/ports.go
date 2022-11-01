@@ -21,6 +21,8 @@ type Domain interface {
 	CreateCloudProvider(ctx context.Context, accountId *repos.ID, provider *entities.CloudProvider) error
 	DeleteCloudProvider(ctx context.Context, providerId repos.ID) error
 	UpdateCloudProvider(ctx context.Context, providerId repos.ID, provider *CloudProviderUpdate) error
+	OnUpdateProvider(ctx context.Context, response *op_crds.StatusUpdate) error
+	OnDeleteProvider(ctx context.Context, response *op_crds.StatusUpdate) error
 
 	GetComputePlan(ctx context.Context, name string) (*entities.ComputePlan, error)
 	GetComputePlans(ctx context.Context) ([]entities.ComputePlan, error)
