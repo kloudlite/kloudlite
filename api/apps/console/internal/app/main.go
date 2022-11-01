@@ -22,6 +22,7 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	lokiserver "kloudlite.io/pkg/loki-server"
 	"kloudlite.io/pkg/redpanda"
 
@@ -227,7 +228,7 @@ var Module = fx.Module(
 
 	// Log Service
 	fx.Invoke(
-		func(logServer lokiserver.LogServer, client lokiserver.LokiClient, env *Env, cacheClient AuthCacheClient, d domain.Domain) {
+		func(logServer lokiserver.LogServer, client lokiserver.LokiClient, env *Env, cacheClient AuthCacheClient, d domain.Domain, logger logging.Logger) {
 			var a *fiber.App
 			a = logServer
 			a.Use(
@@ -250,8 +251,14 @@ var Module = fx.Module(
 							common.CacheSessionPrefix,
 						)
 
-						appId := conn.Query("app_id", "app_id")
-						pipelineId := conn.Query("pipeline_id", "pipeline_id")
+						appId := conn.Query("app_id", "")
+						pipelineId := conn.Query("pipeline_id", "")
+						pipelineRunId := conn.Query("pipeline_run_id", "")
+						if len(appId) == 0 || len(pipelineId) == 0 || len(pipelineRunId) == 0 {
+							logger.Infof("build logs require [app_id, pipeline_id, pipeline_run_id] in query params, missing required params, aborting ...")
+							return
+						}
+
 						app, err := d.GetApp(ctx, repos.ID(appId))
 						// pipelineId, ok := app.Metadata["pipeline_id"]
 						if err != nil {
@@ -277,6 +284,11 @@ var Module = fx.Module(
 									Key:       "app",
 									Operation: "=",
 									Value:     pipelineId,
+								},
+								{
+									Key:       "component",
+									Operation: "=",
+									Value:     pipelineRunId,
 								},
 							}, nil, nil, nil, nil, conn,
 						); err != nil {
