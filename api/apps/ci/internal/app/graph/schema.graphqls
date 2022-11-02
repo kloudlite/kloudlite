@@ -37,6 +37,14 @@ type PipelineRun {
   success: Boolean!
   message: String
   state: String
+  gitProvider: String!
+  gitRepo: String!
+  gitBranch: String!
+
+  build: GitPipelineBuild
+  run: GitPipelineRun
+  dockerBuildInput: DockerBuild
+  artifactRef: GitPipelineArtifact!
 }
 
 type HarborImageTagsResult {

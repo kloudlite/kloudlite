@@ -43,11 +43,22 @@ const PipelineStatueSuccess = PipelineState("success")
 type PipelineRun struct {
 	repos.BaseEntity `bson:",inline"`
 	PipelineID       repos.ID      `json:"pipeline_id" bson:"pipeline_id"`
-	StartTime        time.Time     `json:"start_time" bson:"start_time"`
+	CreationTime     time.Time     `json:"creation_time"`
+	StartTime        *time.Time    `json:"start_time" bson:"start_time"`
 	EndTime          *time.Time    `json:"end_time" bson:"end_time"`
 	Success          bool          `json:"success" bson:"success"`
 	Message          string        `json:"message,omitempty" bson:"message,omitempty"`
-	State            PipelineState `json:"state"`
+	State            PipelineState `json:"state" bson:"state"`
+
+	GitProvider string `json:"git_provider,omitempty" bson:"git_provider"`
+	GitBranch   string `json:"git_branch" bson:"git_branch"`
+	GitRepo     string `json:"git_repo" bson:"git_repo"`
+
+	Build            *ContainerImageBuild `json:"build,omitempty" bson:"build,omitempty"`
+	Run              *ContainerImageRun   `json:"run,omitempty" bson:"run,omitempty"`
+	DockerBuildInput *DockerBuildInput    `json:"docker_build_input,omitempty" bson:"docker_build_input,omitempty"`
+
+	ArtifactRef ArtifactRef `json:"artifact_ref,omitempty" bson:"artifact_ref,omitempty"`
 }
 
 var PipelineRunIndexes = []repos.IndexField{
@@ -112,10 +123,11 @@ var PipelineIndexes = []repos.IndexField{
 }
 
 type TektonVars struct {
-	PipelineId  repos.ID `json:"pipeline-id"`
-	GitRepo     string   `json:"git-repo"`
-	GitUser     string   `json:"git-user"`
-	GitPassword string   `json:"git-password"`
+	PipelineId    repos.ID `json:"pipeline-id"`
+	PipelineRunId repos.ID `json:"pipeline-run-id"`
+	GitRepo       string   `json:"git-repo"`
+	GitUser       string   `json:"git-user"`
+	GitPassword   string   `json:"git-password"`
 
 	GitBranch     string `json:"git-branch"`
 	GitCommitHash string `json:"git-commit-hash"`
@@ -136,11 +148,6 @@ type TektonVars struct {
 
 	ArtifactDockerImageName string `json:"artifact_ref-docker_image_name"`
 	ArtifactDockerImageTag  string `json:"artifact_ref-docker_image_tag"`
-
-	PipelineRunId     string `json:"pipeline-run-id"`
-	UrlPipelineStart  string `json:"url-pipeline-start"`
-	UrlPipelineFinish string `json:"url-pipeline-finish"`
-	UrlPipelineFail   string `json:"url-pipeline-fail"`
 }
 
 func (t *TektonVars) ToJson() (map[string]any, error) {

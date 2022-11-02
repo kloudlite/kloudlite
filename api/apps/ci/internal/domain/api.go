@@ -23,6 +23,7 @@ type Domain interface {
 	DeletePipeline(ctx context.Context, pipelineId repos.ID) error
 	TriggerPipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error
 
+	CreateNewPipelineRun(ctx context.Context, pipelineId repos.ID) (*PipelineRun, error)
 	UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error
 	ListPipelineRuns(ctx context.Context, pipelineId repos.ID) ([]*PipelineRun, error)
 	GetPipelineRun(ctx context.Context, pipelineRunId repos.ID) (*PipelineRun, error)
