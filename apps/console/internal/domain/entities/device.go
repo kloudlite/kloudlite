@@ -1,6 +1,9 @@
 package entities
 
-import "kloudlite.io/pkg/repos"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kloudlite.io/pkg/repos"
+)
 
 type DeviceStatus string
 
@@ -18,13 +21,14 @@ type Port struct {
 
 type Device struct {
 	repos.BaseEntity `bson:",inline"`
-	Index            int          `json:"index" bson:"index"`
-	Name             string       `json:"name" bson:"name"`
-	AccountId        repos.ID     `json:"account_id" bson:"account_id"`
-	UserId           repos.ID     `json:"user_id" bson:"user_id"`
-	Status           DeviceStatus `json:"status" bson:"status"`
-	ActiveRegion     *string      `json:"region" bson:"region"`
-	ExposedPorts     []Port      `json:"exposed_ports" bson:"exposed_ports"`
+	Index            int                `json:"index" bson:"index"`
+	Name             string             `json:"name" bson:"name"`
+	AccountId        repos.ID           `json:"account_id" bson:"account_id"`
+	UserId           repos.ID           `json:"user_id" bson:"user_id"`
+	Status           DeviceStatus       `json:"status" bson:"status"`
+	ActiveRegion     *string            `json:"region" bson:"region"`
+	ExposedPorts     []Port             `json:"exposed_ports" bson:"exposed_ports"`
+	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
 }
 
 var DeviceIndexes = []repos.IndexField{

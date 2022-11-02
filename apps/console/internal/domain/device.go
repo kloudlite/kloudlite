@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/kubeapi"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -156,12 +157,34 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 	}
 	return device, e
 }
+
+func (d *domain) OnDeleteDevice(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.deviceRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}
+
+func (d *domain) OnUpdateDevice(ctx context.Context, response *op_crds.StatusUpdate) error {
+	one, err := d.deviceRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		// Ignore unknown project
+		return nil
+	}
+
+	if response.IsReady {
+		one.Status = entities.DeviceStateAttached
+	} else {
+		one.Status = entities.DeviceStateSyncing
+	}
+	one.Conditions = response.ChildConditions
+	_, err = d.deviceRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
 func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	device, err := d.deviceRepo.FindById(ctx, deviceId)
 	if err != nil {
 		return err
 	}
-	device.Status = entities.DeviceStateSyncing
+	device.Status = entities.DeviceStateDeleted
 	_, err = d.deviceRepo.UpdateById(ctx, deviceId, device)
 	if err != nil {
 		return err

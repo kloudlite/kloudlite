@@ -177,13 +177,10 @@ var Module = fx.Module(
 						switch update.Metadata.GroupVersionKind.Kind {
 						case "App":
 							domain.OnUpdateApp(context.TODO(), &update)
-
 						case "Lambda":
 							domain.OnUpdateApp(context.TODO(), &update)
-
 						case "Router":
 							domain.OnUpdateRouter(context.TODO(), &update)
-
 						case "Project":
 							domain.OnUpdateProject(context.TODO(), &update)
 						case "ManagedResource":
@@ -191,7 +188,9 @@ var Module = fx.Module(
 						case "ManagedService":
 							domain.OnUpdateManagedSvc(context.TODO(), &update)
 						case "CloudProvider":
-							domain.OnDeleteProvider(context.TODO(), &update)
+							domain.OnUpdateProvider(context.TODO(), &update)
+						case "Device":
+							domain.OnUpdateDevice(context.TODO(), &update)
 
 						default:
 							fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
@@ -213,6 +212,8 @@ var Module = fx.Module(
 							domain.OnDeleteManagedResource(context.TODO(), &update)
 						case "CloudProvider":
 							domain.OnDeleteProvider(context.TODO(), &update)
+						case "Device":
+							domain.OnDeleteDevice(context.TODO(), &update)
 						default:
 							fmt.Println("Unknown Kind:", update.Metadata.GroupVersionKind.Kind)
 						}
