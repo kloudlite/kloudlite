@@ -35,7 +35,7 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 	}
 
 	consumer.StartConsuming(
-		func(msg []byte, timeStamp time.Time, offset int64) error {
+		func(msg []byte, _ time.Time, offset int64) error {
 			logger := logr.WithName("ci-webhook").WithKV("offset", offset)
 			logger.Infof("started processing")
 			defer func() {
@@ -93,7 +93,7 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 					"tekton-runs": tkRuns,
 				},
 			); err != nil {
-				logger.Errorf(err, "error parsing template (taskrun.tpl.yml)")
+				logger.Errorf(err, "error parsing template (pipeline-run.yml.tpl)")
 				return err
 			}
 
@@ -102,7 +102,9 @@ func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpa
 				return err
 			}
 
-			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancelFn()
+
 			pMsg, err := producer.Produce(ctx, env.KafkaApplyYamlTopic, hook.RepoUrl, agentMsgBytes)
 			if err != nil {
 				logger.Errorf(err, "error processing message, could not pipeline output into topic=%s", env.KafkaApplyYamlTopic)

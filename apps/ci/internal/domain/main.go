@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"kloudlite.io/pkg/config"
-	fn "kloudlite.io/pkg/functions"
 
 	"github.com/google/go-github/v43/github"
 	"github.com/xanzy/go-gitlab"
@@ -45,19 +44,43 @@ type domainI struct {
 	env              *Env
 }
 
-func (d *domainI) UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error {
-	pRun := PipelineRun{
-		BaseEntity: repos.BaseEntity{
-			Id: repos.ID(pStatus.PipelineRunId),
-		},
-		PipelineID: repos.ID(pStatus.PipelineId),
-		StartTime:  pStatus.StartTime,
-		EndTime:    pStatus.EndTime,
-		Success:    pStatus.Success,
-		Message:    pStatus.Message,
+func (d *domainI) CreateNewPipelineRun(ctx context.Context, pipelineId repos.ID) (*PipelineRun, error) {
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+	if err != nil {
+		return nil, err
 	}
 
-	pRun.State = func() PipelineState {
+	return d.pipelineRunRepo.Create(ctx, &PipelineRun{
+		BaseEntity: repos.BaseEntity{
+			Id: d.pipelineRepo.NewId(),
+		},
+		PipelineID:       pipelineId,
+		CreationTime:     time.Now(),
+		Success:          false,
+		Message:          "not-started-yet",
+		State:            PipelineStateIdle,
+		GitProvider:      pipeline.GitProvider,
+		GitBranch:        pipeline.GitBranch,
+		GitRepo:          pipeline.GitRepoUrl,
+		Build:            pipeline.Build,
+		Run:              pipeline.Run,
+		DockerBuildInput: &pipeline.DockerBuildInput,
+		ArtifactRef:      pipeline.ArtifactRef,
+	})
+}
+
+func (d *domainI) UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error {
+	prun, err := d.pipelineRunRepo.FindById(ctx, repos.ID(pStatus.PipelineRunId))
+	if err != nil {
+		return err
+	}
+
+	prun.StartTime = &pStatus.StartTime
+	prun.EndTime = pStatus.EndTime
+	prun.Success = pStatus.Success
+	prun.Message = pStatus.Message
+
+	prun.State = func() PipelineState {
 		if pStatus.EndTime == nil {
 			return PipelineStateInProgress
 		}
@@ -70,8 +93,7 @@ func (d *domainI) UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineR
 		return PipelineStateIdle
 	}()
 
-	_, err := d.pipelineRunRepo.Upsert(ctx, repos.Filter{"id": pStatus.PipelineRunId}, &pRun)
-	if err != nil {
+	if _, err = d.pipelineRunRepo.UpdateById(ctx, repos.ID(pStatus.PipelineRunId), prun); err != nil {
 		return err
 	}
 	return nil
@@ -331,7 +353,6 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 	tkVars := make([]*TektonVars, 0, len(pipelines))
 	for i := range pipelines {
 		p := pipelines[i]
-
 		if gitProvider == "gitlab" && p.AccessTokenId == "" {
 			continue
 		}
@@ -350,10 +371,17 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 			return nil, err
 		}
 
+		prun, err := d.CreateNewPipelineRun(ctx, p.Id)
+		d.logger.Infof("pipeline run: %+v\n", prun)
+		if err != nil {
+			return nil, errors.NewEf(err, "creating pipeline run")
+		}
+
 		tkVars = append(
 			tkVars, &TektonVars{
-				PipelineId: p.Id,
-				GitRepo:    p.GitRepoUrl,
+				PipelineRunId: prun.Id,
+				PipelineId:    p.Id,
+				GitRepo:       p.GitRepoUrl,
 				GitUser: func() string {
 					if p.GitProvider == "github" {
 						return "x-access-token"
@@ -402,7 +430,6 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 				TaskNamespace:           p.ProjectName,
 				ArtifactDockerImageName: fmt.Sprintf("%s/%s/%s", d.harborHost, p.AccountId, p.ArtifactRef.DockerImageName),
 				ArtifactDockerImageTag:  p.ArtifactRef.DockerImageTag,
-				PipelineRunId:           fmt.Sprintf("prun-%s", strings.ToLower(fn.CleanerNanoidOrDie(40))),
 			},
 		)
 	}
