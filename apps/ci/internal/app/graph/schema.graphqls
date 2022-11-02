@@ -32,6 +32,7 @@ type HarborSearchResult {
 type PipelineRun {
   id: ID!
   pipelineId: ID!
+  creationTime: Time!
   startTime: Time
   endTime: Time
   success: Boolean!
@@ -115,9 +116,6 @@ type GitPipelineArtifact {
 type GitPipeline {
   id: ID!
   name: String!
-
-  status: String!
-  pipelineRunMessage: String
 
   gitProvider: String!
   gitRepoUrl: String!
