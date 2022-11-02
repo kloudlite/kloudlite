@@ -33,8 +33,6 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 				GitProvider:        pipeline.GitProvider,
 				GitRepoURL:         pipeline.GitRepoUrl,
 				GitBranch:          pipeline.GitBranch,
-				Status:             string(pipeline.State),
-				PipelineRunMessage: &pipeline.PipelineRunMessage,
 				Build: func() *model.GitPipelineBuild {
 					if pipeline.Build == nil {
 						return nil
@@ -320,8 +318,6 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 			GitRepoURL:         pItem.GitRepoUrl,
 			GitBranch:          pItem.GitBranch,
 			Metadata:           pItem.Metadata,
-			Status:             string(pItem.State),
-			PipelineRunMessage: &pItem.PipelineRunMessage,
 			DockerBuild: func() *model.DockerBuild {
 				if pItem.DockerBuildInput.DockerFile == "" {
 					return nil
@@ -424,16 +420,17 @@ func (r *queryResolver) CiGetPipelineRuns(ctx context.Context, pipelineID repos.
 	for i := range pRuns {
 		pRun := pRuns[i]
 		runs[i] = &model.PipelineRun{
-			ID:          pRun.Id,
-			PipelineID:  pRun.PipelineID,
-			StartTime:   pRun.StartTime,
-			EndTime:     pRun.EndTime,
-			Success:     pRun.Success,
-			Message:     &pRun.Message,
-			State:       (*string)(&pRun.State),
-			GitProvider: pRun.GitProvider,
-			GitRepo:     pRun.GitRepo,
-			GitBranch:   pRun.GitBranch,
+			ID:           pRun.Id,
+			PipelineID:   pRun.PipelineID,
+			CreationTime: pRun.CreationTime,
+			StartTime:    pRun.StartTime,
+			EndTime:      pRun.EndTime,
+			Success:      pRun.Success,
+			Message:      &pRun.Message,
+			State:        (*string)(&pRun.State),
+			GitProvider:  pRun.GitProvider,
+			GitRepo:      pRun.GitRepo,
+			GitBranch:    pRun.GitBranch,
 			Build: func() *model.GitPipelineBuild {
 				if pRun.Build == nil {
 					return nil
@@ -481,16 +478,17 @@ func (r *queryResolver) CiGetPipelineRun(ctx context.Context, pipelineRunID repo
 	}
 
 	return &model.PipelineRun{
-		ID:          pr.Id,
-		PipelineID:  pr.PipelineID,
-		StartTime:   pr.StartTime,
-		EndTime:     pr.EndTime,
-		Success:     pr.Success,
-		Message:     &pr.Message,
-		State:       (*string)(&pr.State),
-		GitProvider: pr.GitProvider,
-		GitRepo:     pr.GitRepo,
-		GitBranch:   pr.GitBranch,
+		ID:           pr.Id,
+		PipelineID:   pr.PipelineID,
+		CreationTime: pr.CreationTime,
+		StartTime:    pr.StartTime,
+		EndTime:      pr.EndTime,
+		Success:      pr.Success,
+		Message:      &pr.Message,
+		State:        (*string)(&pr.State),
+		GitProvider:  pr.GitProvider,
+		GitRepo:      pr.GitRepo,
+		GitBranch:    pr.GitBranch,
 		Build: func() *model.GitPipelineBuild {
 			if pr.Build == nil {
 				return nil

@@ -68,17 +68,15 @@ type ComplexityRoot struct {
 	}
 
 	GitPipeline struct {
-		Build              func(childComplexity int) int
-		DockerBuild        func(childComplexity int) int
-		GitBranch          func(childComplexity int) int
-		GitProvider        func(childComplexity int) int
-		GitRepoURL         func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		Metadata           func(childComplexity int) int
-		Name               func(childComplexity int) int
-		PipelineRunMessage func(childComplexity int) int
-		Run                func(childComplexity int) int
-		Status             func(childComplexity int) int
+		Build       func(childComplexity int) int
+		DockerBuild func(childComplexity int) int
+		GitBranch   func(childComplexity int) int
+		GitProvider func(childComplexity int) int
+		GitRepoURL  func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Metadata    func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Run         func(childComplexity int) int
 	}
 
 	GitPipelineArtifact struct {
@@ -116,6 +114,7 @@ type ComplexityRoot struct {
 	PipelineRun struct {
 		ArtifactRef      func(childComplexity int) int
 		Build            func(childComplexity int) int
+		CreationTime     func(childComplexity int) int
 		DockerBuildInput func(childComplexity int) int
 		EndTime          func(childComplexity int) int
 		GitBranch        func(childComplexity int) int
@@ -328,26 +327,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GitPipeline.Name(childComplexity), true
 
-	case "GitPipeline.pipelineRunMessage":
-		if e.complexity.GitPipeline.PipelineRunMessage == nil {
-			break
-		}
-
-		return e.complexity.GitPipeline.PipelineRunMessage(childComplexity), true
-
 	case "GitPipeline.run":
 		if e.complexity.GitPipeline.Run == nil {
 			break
 		}
 
 		return e.complexity.GitPipeline.Run(childComplexity), true
-
-	case "GitPipeline.status":
-		if e.complexity.GitPipeline.Status == nil {
-			break
-		}
-
-		return e.complexity.GitPipeline.Status(childComplexity), true
 
 	case "GitPipelineArtifact.dockerImageName":
 		if e.complexity.GitPipelineArtifact.DockerImageName == nil {
@@ -475,6 +460,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PipelineRun.Build(childComplexity), true
+
+	case "PipelineRun.creationTime":
+		if e.complexity.PipelineRun.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.PipelineRun.CreationTime(childComplexity), true
 
 	case "PipelineRun.dockerBuildInput":
 		if e.complexity.PipelineRun.DockerBuildInput == nil {
@@ -864,6 +856,7 @@ type HarborSearchResult {
 type PipelineRun {
   id: ID!
   pipelineId: ID!
+  creationTime: Time!
   startTime: Time
   endTime: Time
   success: Boolean!
@@ -947,9 +940,6 @@ type GitPipelineArtifact {
 type GitPipeline {
   id: ID!
   name: String!
-
-  status: String!
-  pipelineRunMessage: String
 
   gitProvider: String!
   gitRepoUrl: String!
@@ -1919,73 +1909,6 @@ func (ec *executionContext) _GitPipeline_name(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _GitPipeline_status(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "GitPipeline",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _GitPipeline_pipelineRunMessage(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "GitPipeline",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PipelineRunMessage, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _GitPipeline_gitProvider(ctx context.Context, field graphql.CollectedField, obj *model.GitPipeline) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2783,6 +2706,41 @@ func (ec *executionContext) _PipelineRun_pipelineId(ctx context.Context, field g
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PipelineRun_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.PipelineRun) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PipelineRun",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PipelineRun_startTime(ctx context.Context, field graphql.CollectedField, obj *model.PipelineRun) (ret graphql.Marshaler) {
@@ -5799,23 +5757,6 @@ func (ec *executionContext) _GitPipeline(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "status":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_status(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "pipelineRunMessage":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._GitPipeline_pipelineRunMessage(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
 		case "gitProvider":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._GitPipeline_gitProvider(ctx, field, obj)
@@ -6168,6 +6109,16 @@ func (ec *executionContext) _PipelineRun(ctx context.Context, sel ast.SelectionS
 		case "pipelineId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._PipelineRun_pipelineId(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "creationTime":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._PipelineRun_creationTime(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -7363,6 +7314,21 @@ func (ec *executionContext) unmarshalNString2string(ctx context.Context, v inter
 
 func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
