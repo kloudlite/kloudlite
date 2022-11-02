@@ -115,11 +115,18 @@ type HarborSearchResult struct {
 }
 
 type PipelineRun struct {
-	ID         repos.ID   `json:"id"`
-	PipelineID repos.ID   `json:"pipelineId"`
-	StartTime  *time.Time `json:"startTime"`
-	EndTime    *time.Time `json:"endTime"`
-	Success    bool       `json:"success"`
-	Message    *string    `json:"message"`
-	State      *string    `json:"state"`
+	ID               repos.ID             `json:"id"`
+	PipelineID       repos.ID             `json:"pipelineId"`
+	StartTime        *time.Time           `json:"startTime"`
+	EndTime          *time.Time           `json:"endTime"`
+	Success          bool                 `json:"success"`
+	Message          *string              `json:"message"`
+	State            *string              `json:"state"`
+	GitProvider      string               `json:"gitProvider"`
+	GitRepo          string               `json:"gitRepo"`
+	GitBranch        string               `json:"gitBranch"`
+	Build            *GitPipelineBuild    `json:"build"`
+	Run              *GitPipelineRun      `json:"run"`
+	DockerBuildInput *DockerBuild         `json:"dockerBuildInput"`
+	ArtifactRef      *GitPipelineArtifact `json:"artifactRef"`
 }

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/app/graph/model"
 	"kloudlite.io/apps/ci/internal/domain"
@@ -421,14 +422,52 @@ func (r *queryResolver) CiGetPipelineRuns(ctx context.Context, pipelineID repos.
 	runs := make([]*model.PipelineRun, len(pRuns))
 
 	for i := range pRuns {
+		pRun := pRuns[i]
 		runs[i] = &model.PipelineRun{
-			ID:         pRuns[i].Id,
-			PipelineID: pRuns[i].PipelineID,
-			StartTime:  &pRuns[i].StartTime,
-			EndTime:    pRuns[i].EndTime,
-			Success:    pRuns[i].Success,
-			Message:    &pRuns[i].Message,
-			State:      (*string)(&pRuns[i].State),
+			ID:          pRun.Id,
+			PipelineID:  pRun.PipelineID,
+			StartTime:   pRun.StartTime,
+			EndTime:     pRun.EndTime,
+			Success:     pRun.Success,
+			Message:     &pRun.Message,
+			State:       (*string)(&pRun.State),
+			GitProvider: pRun.GitProvider,
+			GitRepo:     pRun.GitRepo,
+			GitBranch:   pRun.GitBranch,
+			Build: func() *model.GitPipelineBuild {
+				if pRun.Build == nil {
+					return nil
+				}
+				return &model.GitPipelineBuild{
+					BaseImage: &pRun.Build.BaseImage,
+					Cmd:       pRun.Build.Cmd,
+					OutputDir: &pRun.Build.OutputDir,
+				}
+			}(),
+			Run: func() *model.GitPipelineRun {
+				if pRun.Run == nil {
+					return nil
+				}
+				return &model.GitPipelineRun{
+					BaseImage: &pRun.Run.BaseImage,
+					Cmd:       pRun.Run.Cmd,
+				}
+			}(),
+			DockerBuildInput: func() *model.DockerBuild {
+				if pRun.DockerBuildInput == nil {
+					return nil
+				}
+				return &model.DockerBuild{
+					DockerFile: pRun.DockerBuildInput.DockerFile,
+					ContextDir: pRun.DockerBuildInput.ContextDir,
+					BuildArgs:  &pRun.DockerBuildInput.BuildArgs,
+				}
+			}(),
+			// DockerBuildInput: &model.DockerBuild{},
+			ArtifactRef: &model.GitPipelineArtifact{
+				DockerImageName: &pRun.ArtifactRef.DockerImageName,
+				DockerImageTag:  &pRun.ArtifactRef.DockerImageTag,
+			},
 		}
 	}
 
@@ -442,13 +481,49 @@ func (r *queryResolver) CiGetPipelineRun(ctx context.Context, pipelineRunID repo
 	}
 
 	return &model.PipelineRun{
-		ID:         pr.Id,
-		PipelineID: pr.PipelineID,
-		StartTime:  &pr.StartTime,
-		EndTime:    pr.EndTime,
-		Success:    pr.Success,
-		Message:    &pr.Message,
-		State:      (*string)(&pr.State),
+		ID:          pr.Id,
+		PipelineID:  pr.PipelineID,
+		StartTime:   pr.StartTime,
+		EndTime:     pr.EndTime,
+		Success:     pr.Success,
+		Message:     &pr.Message,
+		State:       (*string)(&pr.State),
+		GitProvider: pr.GitProvider,
+		GitRepo:     pr.GitRepo,
+		GitBranch:   pr.GitBranch,
+		Build: func() *model.GitPipelineBuild {
+			if pr.Build == nil {
+				return nil
+			}
+			return &model.GitPipelineBuild{
+				BaseImage: &pr.Build.BaseImage,
+				Cmd:       pr.Build.Cmd,
+				OutputDir: &pr.Build.OutputDir,
+			}
+		}(),
+		Run: func() *model.GitPipelineRun {
+			if pr.Run == nil {
+				return nil
+			}
+			return &model.GitPipelineRun{
+				BaseImage: &pr.Run.BaseImage,
+				Cmd:       pr.Run.Cmd,
+			}
+		}(),
+		DockerBuildInput: func() *model.DockerBuild {
+			if pr.DockerBuildInput == nil {
+				return nil
+			}
+			return &model.DockerBuild{
+				DockerFile: pr.DockerBuildInput.DockerFile,
+				ContextDir: pr.DockerBuildInput.ContextDir,
+				BuildArgs:  &pr.DockerBuildInput.BuildArgs,
+			}
+		}(),
+		ArtifactRef: &model.GitPipelineArtifact{
+			DockerImageName: &pr.ArtifactRef.DockerImageName,
+			DockerImageTag:  &pr.ArtifactRef.DockerImageTag,
+		},
 	}, nil
 }
 
