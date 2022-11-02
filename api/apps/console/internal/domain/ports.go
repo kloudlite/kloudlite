@@ -33,6 +33,8 @@ type Domain interface {
 	AddDevice(
 		ctx context.Context,
 		deviceName string, accountId repos.ID, userId repos.ID) (dev *entities.Device, e error)
+	OnDeleteDevice(ctx context.Context, update *op_crds.StatusUpdate) error
+	OnUpdateDevice(ctx context.Context, update *op_crds.StatusUpdate) error
 	UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName *string, region *string, ports []entities.Port) (done bool, e error)
 	RemoveDevice(ctx context.Context, deviceId repos.ID) error
 	ListAccountDevices(ctx context.Context, accountId repos.ID) ([]*entities.Device, error)
