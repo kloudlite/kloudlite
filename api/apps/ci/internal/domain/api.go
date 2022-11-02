@@ -22,7 +22,10 @@ type Domain interface {
 	CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error)
 	DeletePipeline(ctx context.Context, pipelineId repos.ID) error
 	TriggerPipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error
+
 	UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error
+	ListPipelineRuns(ctx context.Context, pipelineId repos.ID) ([]*PipelineRun, error)
+	GetPipelineRun(ctx context.Context, pipelineRunId repos.ID) (*PipelineRun, error)
 
 	ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPayload, error)
 	ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhookPayload, error)

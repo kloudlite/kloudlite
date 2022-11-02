@@ -30,6 +30,7 @@ type HarborHost string
 
 type domainI struct {
 	pipelineRepo    repos.DbRepo[*Pipeline]
+	pipelineRunRepo repos.DbRepo[*PipelineRun]
 	authClient      auth.AuthClient
 	github          Github
 	gitlab          Gitlab
@@ -45,34 +46,47 @@ type domainI struct {
 }
 
 func (d *domainI) UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error {
-	pipeline, err := d.pipelineRepo.FindById(ctx, repos.ID(pStatus.PipelineId))
-	if err != nil {
-		return err
+	pRun := PipelineRun{
+		BaseEntity: repos.BaseEntity{
+			Id: repos.ID(pStatus.PipelineRunId),
+		},
+		PipelineID: repos.ID(pStatus.PipelineId),
+		StartTime:  pStatus.StartTime,
+		EndTime:    pStatus.EndTime,
+		Success:    pStatus.Success,
+		Message:    pStatus.Message,
 	}
 
-	if pipeline.PipelineRunId != repos.ID(pStatus.PipelineRunId) {
-		pipeline.PipelineRunId = repos.ID(pStatus.PipelineRunId)
-	}
-
-	if pStatus.EndTime == nil {
-		pipeline.State = PipelineStateInProgress
-	}
-
-	if (pStatus.EndTime).Sub(pStatus.StartTime) > 0 {
-		if pStatus.Success {
-			pipeline.State = PipelineStatueSuccess
+	pRun.State = func() PipelineState {
+		if pStatus.EndTime == nil {
+			return PipelineStateInProgress
 		}
-		if !pStatus.Success {
-			pipeline.State = PipelineStateError
-			pipeline.PipelineRunMessage = pStatus.Message
+		if (pStatus.EndTime).Sub(pStatus.StartTime) > 0 {
+			if pStatus.Success {
+				return PipelineStatueSuccess
+			}
+			return PipelineStateError
 		}
-	}
+		return PipelineStateIdle
+	}()
 
-	_, err = d.pipelineRepo.UpdateById(ctx, repos.ID(pStatus.PipelineId), pipeline)
+	_, err := d.pipelineRunRepo.Upsert(ctx, repos.Filter{"id": pStatus.PipelineRunId}, &pRun)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (d *domainI) ListPipelineRuns(ctx context.Context, pipelineId repos.ID) ([]*PipelineRun, error) {
+	pr, err := d.pipelineRunRepo.Find(ctx, repos.Query{Filter: repos.Filter{"pipeline_id": pipelineId}})
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
+}
+
+func (d *domainI) GetPipelineRun(ctx context.Context, pipelineRunId repos.ID) (*PipelineRun, error) {
+	return d.pipelineRunRepo.FindById(ctx, pipelineRunId)
 }
 
 func (d *domainI) StartPipeline(ctx context.Context, pipelineId repos.ID, pipelineRunId repos.ID) error {
@@ -805,6 +819,7 @@ var Module = fx.Module(
 	fx.Provide(
 		func(
 			pipelineRepo repos.DbRepo[*Pipeline],
+			pipelineRunRepo repos.DbRepo[*PipelineRun],
 			authClient auth.AuthClient,
 			gitlab Gitlab,
 			github Github,
@@ -818,6 +833,7 @@ var Module = fx.Module(
 				env:              env,
 				authClient:       authClient,
 				pipelineRepo:     pipelineRepo,
+				pipelineRunRepo:  pipelineRunRepo,
 				gitlab:           gitlab,
 				github:           github,
 				harborHost:       harborHost,

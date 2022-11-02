@@ -412,6 +412,46 @@ func (r *queryResolver) CiTriggerPipeline(ctx context.Context, pipelineID repos.
 	return fn.New(true), nil
 }
 
+func (r *queryResolver) CiGetPipelineRuns(ctx context.Context, pipelineID repos.ID) ([]*model.PipelineRun, error) {
+	pRuns, err := r.Domain.ListPipelineRuns(ctx, pipelineID)
+	if err != nil {
+		return nil, err
+	}
+
+	runs := make([]*model.PipelineRun, len(pRuns))
+
+	for i := range pRuns {
+		runs[i] = &model.PipelineRun{
+			ID:         pRuns[i].Id,
+			PipelineID: pRuns[i].PipelineID,
+			StartTime:  &pRuns[i].StartTime,
+			EndTime:    pRuns[i].EndTime,
+			Success:    pRuns[i].Success,
+			Message:    &pRuns[i].Message,
+			State:      (*string)(&pRuns[i].State),
+		}
+	}
+
+	return runs, nil
+}
+
+func (r *queryResolver) CiGetPipelineRun(ctx context.Context, pipelineRunID repos.ID) (*model.PipelineRun, error) {
+	pr, err := r.Domain.GetPipelineRun(ctx, pipelineRunID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.PipelineRun{
+		ID:         pr.Id,
+		PipelineID: pr.PipelineID,
+		StartTime:  &pr.StartTime,
+		EndTime:    pr.EndTime,
+		Success:    pr.Success,
+		Message:    &pr.Message,
+		State:      (*string)(&pr.State),
+	}, nil
+}
+
 func (r *queryResolver) CiHarborSearch(ctx context.Context, accountID repos.ID, q string, pagination *types.Pagination) ([]*model.HarborSearchResult, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
