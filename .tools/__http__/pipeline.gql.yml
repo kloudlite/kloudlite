@@ -1,0 +1,17 @@
+label: get pipeline runs
+query: |
+  query Ci_getPipelineRuns($pipelineId: ID!) {
+    ci_getPipelineRuns(pipelineId: $pipelineId) {
+      id
+      pipelineId
+      startTime
+      endTime
+      success
+      message
+      state
+    }
+  }
+variables:
+  pipelineId: 'pip-dxgx9zuzyj-skjv4nxxarjah2lf6'
+
+---

@@ -104,10 +104,11 @@ var Module = fx.Module(
 	"app",
 
 	fx.Provide(config.LoadEnv[Env]()),
+
 	// Mongo Repos
 	repos.NewFxMongoRepo[*domain.Pipeline]("pipelines", "pip", domain.PipelineIndexes),
 	repos.NewFxMongoRepo[*domain.GitRepositoryHook]("git_repo_hooks", "grh", domain.GitRepositoryHookIndices),
-	// repos.NewFxMongoRepo[*domain.HarborAccount]("harbor-accounts", "harbor_acc", []repos.IndexField{}),
+	repos.NewFxMongoRepo[*domain.PipelineRun]("pipeline_runs", "pr", domain.PipelineRunIndexes),
 
 	redpanda.NewConsumerFx[*Env](),
 	redpanda.NewProducerFx[*Env](),

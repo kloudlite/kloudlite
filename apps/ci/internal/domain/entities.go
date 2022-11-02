@@ -40,6 +40,31 @@ const PipelineStateInProgress = PipelineState("in-progress")
 const PipelineStateError = PipelineState("error")
 const PipelineStatueSuccess = PipelineState("success")
 
+type PipelineRun struct {
+	repos.BaseEntity `bson:",inline"`
+	PipelineID       repos.ID      `json:"pipeline_id" bson:"pipeline_id"`
+	StartTime        time.Time     `json:"start_time" bson:"start_time"`
+	EndTime          *time.Time    `json:"end_time" bson:"end_time"`
+	Success          bool          `json:"success" bson:"success"`
+	Message          string        `json:"message,omitempty" bson:"message,omitempty"`
+	State            PipelineState `json:"state"`
+}
+
+var PipelineRunIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "pipeline_id", Value: repos.IndexAsc},
+		},
+		Unique: false,
+	},
+}
+
 type Pipeline struct {
 	repos.BaseEntity   `bson:",inline"`
 	Name               string        `json:"name,omitempty" bson:"name"`
