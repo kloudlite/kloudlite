@@ -111,48 +111,6 @@ func (d *domainI) GetPipelineRun(ctx context.Context, pipelineRunId repos.ID) (*
 	return d.pipelineRunRepo.FindById(ctx, pipelineRunId)
 }
 
-func (d *domainI) StartPipeline(ctx context.Context, pipelineId repos.ID, pipelineRunId repos.ID) error {
-	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
-	if err != nil {
-		return err
-	}
-	pipeline.PipelineRunId = pipelineRunId
-	pipeline.State = PipelineStateInProgress
-	_, err = d.pipelineRepo.UpdateById(ctx, pipelineId, pipeline)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *domainI) FinishPipeline(ctx context.Context, pipelineId repos.ID) error {
-	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
-	if err != nil {
-		return err
-	}
-	pipeline.State = PipelineStateIdle
-	pipeline.PipelineRunMessage = ""
-	_, err = d.pipelineRepo.UpdateById(ctx, pipelineId, pipeline)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *domainI) EndPipelineWithError(ctx context.Context, pipelineId repos.ID, err error) error {
-	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
-	if err != nil {
-		return err
-	}
-	pipeline.State = PipelineStateInProgress
-	pipeline.PipelineRunMessage = err.Error()
-	_, err = d.pipelineRepo.UpdateById(ctx, pipelineId, pipeline)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 type Env struct {
 	GithubWebhookUrl string `env:"GITHUB_WEBHOOK_URL" required:"true"`
 	GitlabWebhookUrl string `env:"GITLAB_WEBHOOK_URL" required:"true"`
