@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"kloudlite.io/pkg/kubeapi"
 
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -138,6 +139,8 @@ type Domain interface {
 		cookieDomain string,
 		sessionKeyPrefix string,
 	) context.Context
+
+	GetEdgeNodes(ctx context.Context, id repos.ID) (*kubeapi.AccountNodeList, error)
 }
 
 type AuthCacheClient cache.Client

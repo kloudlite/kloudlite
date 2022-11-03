@@ -2,9 +2,11 @@ package domain
 
 import (
 	"context"
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -284,6 +286,12 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 	}
 	return nil
 }
+
+func (d *domain) GetEdgeNodes(ctx context.Context, id repos.ID) (*kubeapi.AccountNodeList, error) {
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+	return kubecli.GetAccountNodes(ctx, string(id))
+}
+
 func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *EdgeRegionUpdate) error {
 	region, err := d.regionRepo.FindById(ctx, edgeId)
 	if err != nil {
