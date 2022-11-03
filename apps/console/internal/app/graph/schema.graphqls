@@ -86,10 +86,20 @@ input CloudProviderUpdateIn {
   credentials: Json
 }
 
+type NodePool{
+  name: String!
+  config: String!
+  min: Int!
+  max: Int!
+}
+
 type EdgeRegion {
   id: ID!
   name: String!
   region : String!
+  createdAt: String!
+  updatedAt: String
+  pools: [NodePool!]!
 }
 
 input NodePoolIn{
