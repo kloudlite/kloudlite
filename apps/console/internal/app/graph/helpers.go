@@ -13,6 +13,7 @@ func projectModelFromEntity(projectEntity *entities.Project) *model.Project {
 		ReadableID:  projectEntity.ReadableId,
 		Logo:        projectEntity.Logo,
 		Description: projectEntity.Description,
+		RegionID:    *projectEntity.RegionId,
 		Account: &model.Account{
 			ID: projectEntity.AccountId,
 		},

@@ -131,6 +131,7 @@ type CloudProvider struct {
 	Provider string        `json:"provider"`
 	Edges    []*EdgeRegion `json:"edges"`
 	Status   string        `json:"status"`
+	IsShared bool          `json:"isShared"`
 }
 
 type CloudProviderIn struct {
@@ -365,6 +366,7 @@ type Project struct {
 	Status            string               `json:"status"`
 	Cluster           *string              `json:"cluster"`
 	DockerCredentials *DockerCredentials   `json:"dockerCredentials"`
+	RegionID          repos.ID             `json:"regionId"`
 }
 
 type ProjectMembership struct {

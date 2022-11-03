@@ -127,6 +127,7 @@ type ComplexityRoot struct {
 	CloudProvider struct {
 		Edges    func(childComplexity int) int
 		ID       func(childComplexity int) int
+		IsShared func(childComplexity int) int
 		Name     func(childComplexity int) int
 		Provider func(childComplexity int) int
 		Status   func(childComplexity int) int
@@ -326,6 +327,7 @@ type ComplexityRoot struct {
 		Memberships       func(childComplexity int) int
 		Name              func(childComplexity int) int
 		ReadableID        func(childComplexity int) int
+		RegionID          func(childComplexity int) int
 		Status            func(childComplexity int) int
 	}
 
@@ -862,6 +864,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CloudProvider.ID(childComplexity), true
+
+	case "CloudProvider.isShared":
+		if e.complexity.CloudProvider.IsShared == nil {
+			break
+		}
+
+		return e.complexity.CloudProvider.IsShared(childComplexity), true
 
 	case "CloudProvider.name":
 		if e.complexity.CloudProvider.Name == nil {
@@ -2015,6 +2024,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.ReadableID(childComplexity), true
 
+	case "Project.regionId":
+		if e.complexity.Project.RegionID == nil {
+			break
+		}
+
+		return e.complexity.Project.RegionID(childComplexity), true
+
 	case "Project.status":
 		if e.complexity.Project.Status == nil {
 			break
@@ -2620,6 +2636,7 @@ type CloudProvider {
   provider: String!
   edges: [EdgeRegion!]!
   status: String!
+  isShared: Boolean!
 }
 
 input CloudProviderIn {
@@ -2964,6 +2981,7 @@ type Project {
   status: String!
   cluster: String
   dockerCredentials: DockerCredentials
+  regionId: ID!
 }
 
 type ProjectMembership {
@@ -6322,6 +6340,41 @@ func (ec *executionContext) _CloudProvider_status(ctx context.Context, field gra
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CloudProvider_isShared(ctx context.Context, field graphql.CollectedField, obj *model.CloudProvider) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsShared, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
@@ -11243,6 +11296,41 @@ func (ec *executionContext) _Project_dockerCredentials(ctx context.Context, fiel
 	return ec.marshalODockerCredentials2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐDockerCredentials(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Project_regionId(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RegionID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ProjectMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -15982,6 +16070,16 @@ func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "isShared":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._CloudProvider_isShared(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17911,6 +18009,16 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
+		case "regionId":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Project_regionId(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
