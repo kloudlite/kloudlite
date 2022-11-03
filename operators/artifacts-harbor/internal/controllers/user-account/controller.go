@@ -14,6 +14,7 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -22,15 +23,17 @@ import (
 	"operators.kloudlite.io/operators/artifacts-harbor/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type Reconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	HarborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
-	Env       *env.Env
+	Scheme     *runtime.Scheme
+	HarborCli  *harbor.Client
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -175,6 +178,57 @@ func getDockerConfig(imageRegistry, username, password string) ([]byte, error) {
 	)
 }
 
+func (r *Reconciler) patchDockerSecret(req *rApi.Request[*artifactsv1.HarborUserAccount], username, password string) error {
+	ctx, obj := req.Context(), req.Object
+	dockerScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.DockerConfigName), &corev1.Secret{})
+	if err != nil {
+		req.Logger.Infof("docker secret, does not exist will be creating now...")
+	}
+
+	harborDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, username, password)
+	if err != nil {
+		return err
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, dockerScrt, func() error {
+		b, err := json.Marshal(types.UserAccountOutput{
+			DockerConfigJson: string(harborDockerConfig),
+			Username:         username,
+			Password:         password,
+			Registry:         r.Env.HarborImageRegistryHost,
+			Project:          obj.Spec.ProjectRef,
+		})
+		if err != nil {
+			return err
+		}
+
+		json.Unmarshal(b, &dockerScrt.StringData)
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func patchServiceAccount(ctx context.Context, client client.Client, namespace, svcAccName, secretName string) error {
+	var svcAccount corev1.ServiceAccount
+	if err := client.Get(ctx, fn.NN(namespace, svcAccName), &svcAccount); err != nil {
+		return err
+	}
+
+	for _, secret := range svcAccount.ImagePullSecrets {
+		if secret.Name == secretName {
+			return nil
+		}
+	}
+
+	svcAccount.ImagePullSecrets = append(svcAccount.ImagePullSecrets, corev1.LocalObjectReference{
+		Name: secretName,
+	})
+
+	return client.Update(ctx, &svcAccount)
+}
+
 func (r *Reconciler) reconOutput(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
@@ -185,35 +239,23 @@ func (r *Reconciler) reconOutput(req *rApi.Request[*artifactsv1.HarborUserAccoun
 	}
 
 	if dockerScrt == nil {
-		password := fn.CleanerNanoid(20)
-		req.Logger.Infof("PASSWORD: %s", password)
-
-		harborDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, obj.Spec.HarborUser.Name, password)
-		if err != nil {
-			return req.FailWithOpError(err)
-		}
-
 		b, err := templates.Parse(
 			templates.CoreV1.Secret, map[string]any{
 				"name":       obj.Spec.DockerConfigName,
 				"namespace":  obj.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": types.UserAccountOutput{
-					DockerConfigJson: string(harborDockerConfig),
-					Username:         obj.Spec.HarborUser.Name,
-					Password:         password,
-					Registry:         r.Env.HarborImageRegistryHost,
-					Project:          obj.Spec.ProjectRef,
+					DockerConfigJson: string("{}"),
 				},
 				"secret-type": "kubernetes.io/dockerconfigjson",
-				"immutable":   true,
+				"immutable":   false,
 			},
 		)
 		if err != nil {
 			return req.CheckFailed(OutputReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(OutputReady, check, err.Error()).Err(nil)
 		}
 
@@ -229,13 +271,16 @@ func (r *Reconciler) reconOutput(req *rApi.Request[*artifactsv1.HarborUserAccoun
 		return req.Done().RequeueAfter(2 * time.Second)
 	}
 
+	if err := patchServiceAccount(ctx, r.Client, obj.Namespace, r.Env.ServiceAccountName, obj.Spec.DockerConfigName); err != nil {
+		return req.CheckFailed(OutputReady, check, err.Error()).Err(nil)
+	}
+
 	check.Status = true
 	if check != checks[OutputReady] {
 		checks[OutputReady] = check
 		return req.UpdateStatus()
 	}
 
-	rApi.SetLocal(req, "password", string(dockerScrt.Data["password"]))
 	return req.Next()
 }
 
@@ -248,14 +293,13 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 		return req.CheckFailed(RobotAccountReady, check, err.Error())
 	}
 
-	password, ok := rApi.GetLocal[string](req, "password")
-	if !ok {
-		return req.CheckFailed(RobotAccountReady, check, "key 'password' is not in req locals")
-	}
-
 	if !exists {
-		user, err := r.HarborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, fmt.Sprintf("%s-%s", obj.Namespace, obj.Name), password)
+		user, err := r.HarborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, fn.Md5([]byte(fmt.Sprintf("%s-%s", obj.Namespace, obj.Name))))
 		if err != nil {
+			return req.CheckFailed(RobotAccountReady, check, err.Error())
+		}
+
+		if err := r.patchDockerSecret(req, user.Name, user.Password); err != nil {
 			return req.CheckFailed(RobotAccountReady, check, err.Error())
 		}
 
@@ -290,6 +334,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&artifactsv1.HarborUserAccount{})
 	builder.Owns(&corev1.Secret{})
