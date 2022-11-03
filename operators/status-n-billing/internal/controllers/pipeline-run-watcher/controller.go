@@ -42,7 +42,7 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) er
 
 	var j struct {
 		Status struct {
-			CompletionTime time.Time          `json:"completionTime,omitempty"`
+			CompletionTime *time.Time         `json:"completionTime,omitempty"`
 			Conditions     []metav1.Condition `json:"conditions"`
 		}
 	}
@@ -63,7 +63,7 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) er
 					PipelineRunId: obj.GetName(),
 					PipelineId:    obj.GetLabels()["app"],
 					StartTime:     obj.GetCreationTimestamp().Time,
-					EndTime:       &j.Status.CompletionTime,
+					EndTime:       j.Status.CompletionTime,
 					Success:       successCondition.Status == metav1.ConditionTrue,
 					Message:       successCondition.Message,
 				},
@@ -84,7 +84,7 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) er
 			PipelineRunId: obj.GetName(),
 			PipelineId:    obj.GetLabels()["app"],
 			StartTime:     obj.GetCreationTimestamp().Time,
-			EndTime:       &j.Status.CompletionTime,
+			EndTime:       j.Status.CompletionTime,
 			Success:       successCondition.Status == metav1.ConditionTrue,
 			Message:       successCondition.Message,
 		},
