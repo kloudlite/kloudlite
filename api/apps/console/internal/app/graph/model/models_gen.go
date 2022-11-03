@@ -191,6 +191,14 @@ type DockerCredentials struct {
 	Password string `json:"password"`
 }
 
+type EdgeNode struct {
+	NodeIndex    int                    `json:"nodeIndex"`
+	Status       map[string]interface{} `json:"status"`
+	Name         string                 `json:"name"`
+	Config       string                 `json:"config"`
+	CreationTime string                 `json:"creationTime"`
+}
+
 type EdgeRegion struct {
 	ID        repos.ID    `json:"id"`
 	Name      string      `json:"name"`

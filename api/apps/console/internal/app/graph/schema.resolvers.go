@@ -1479,6 +1479,36 @@ func (r *queryResolver) CoreGetDevice(ctx context.Context, deviceID repos.ID) (*
 	}, nil
 }
 
+func (r *queryResolver) CoreGetEdgeNodes(ctx context.Context, edgeID repos.ID) ([]*model.EdgeNode, error) {
+	nodes, err := r.Domain.GetEdgeNodes(ctx, edgeID)
+	if err != nil {
+		return nil, err
+	}
+	edgeNodes := make([]*model.EdgeNode, 0)
+	for _, node := range nodes.Items {
+		edgeNodes = append(
+			edgeNodes, &model.EdgeNode{
+				NodeIndex: node.Spec.Index,
+				Status: func() (result map[string]any) {
+					defer func() {
+						if r := recover(); r != nil {
+							result = map[string]any{}
+						}
+					}()
+					status := make(map[string]any)
+					marshal, _ := json.Marshal(node.Status)
+					_ = json.Unmarshal(marshal, &status)
+					return status
+				}(),
+				Name:         node.Name,
+				Config:       node.Spec.Config,
+				CreationTime: node.ObjectMeta.CreationTimestamp.Time.String(),
+			},
+		)
+	}
+	return edgeNodes, nil
+}
+
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
@@ -1562,9 +1592,9 @@ type userResolver struct{ *Resolver }
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have
 // one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
 func returnApps(appEntities []*entities.App) []*model.App {
 	apps := make([]*model.App, 0)
 	for _, a := range appEntities {

@@ -39,6 +39,15 @@ type Query {
 
   core_getCloudProviders(accountId: ID!): [CloudProvider!] #user-access
   core_getDevice(deviceId: ID!): Device #user-access
+  core_getEdgeNodes(edgeId: ID!): [EdgeNode!]!
+}
+
+type EdgeNode {
+  nodeIndex: Int!
+  status: Json!
+  name: String!
+  config: String!
+  creationTime: String!
 }
 
 type ManagedRes {
