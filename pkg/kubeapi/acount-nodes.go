@@ -45,7 +45,7 @@ type AccountNodeList struct {
 
 func (c *Client) GetAccountNodes(ctx context.Context, edgeId string) (*AccountNodeList, error) {
 	stdout, stderr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
-	cmd := exec.Command("kubectl", "get", "accountnodes", "-l", fmt.Sprintf("kloudlite.io/region:%s", edgeId), "-o", "json")
+	cmd := exec.Command("kubectl", "get", "accountnodes", "-l", fmt.Sprintf("kloudlite.io/region=%s", edgeId), "-o", "json")
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", c.KubeconfigPath))
