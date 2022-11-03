@@ -82,6 +82,7 @@ type CloudProvider {
   provider: String!
   edges: [EdgeRegion!]!
   status: String!
+  isShared: Boolean!
 }
 
 input CloudProviderIn {
@@ -426,6 +427,7 @@ type Project {
   status: String!
   cluster: String
   dockerCredentials: DockerCredentials
+  regionId: ID!
 }
 
 type ProjectMembership {
