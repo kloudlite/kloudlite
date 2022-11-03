@@ -130,6 +130,7 @@ type CloudProvider struct {
 	Name     string        `json:"name"`
 	Provider string        `json:"provider"`
 	Edges    []*EdgeRegion `json:"edges"`
+	Status   string        `json:"status"`
 }
 
 type CloudProviderIn struct {
@@ -191,9 +192,12 @@ type DockerCredentials struct {
 }
 
 type EdgeRegion struct {
-	ID     repos.ID `json:"id"`
-	Name   string   `json:"name"`
-	Region string   `json:"region"`
+	ID        repos.ID    `json:"id"`
+	Name      string      `json:"name"`
+	Region    string      `json:"region"`
+	CreatedAt string      `json:"createdAt"`
+	UpdatedAt *string     `json:"updatedAt"`
+	Pools     []*NodePool `json:"pools"`
 }
 
 type EdgeRegionIn struct {
@@ -315,6 +319,13 @@ type NewResourcesIn struct {
 	Secrets    []map[string]interface{} `json:"secrets"`
 	MServices  []map[string]interface{} `json:"mServices"`
 	MResources []map[string]interface{} `json:"mResources"`
+}
+
+type NodePool struct {
+	Name   string `json:"name"`
+	Config string `json:"config"`
+	Min    int    `json:"min"`
+	Max    int    `json:"max"`
 }
 
 type NodePoolIn struct {

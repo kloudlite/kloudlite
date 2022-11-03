@@ -129,6 +129,7 @@ type ComplexityRoot struct {
 		ID       func(childComplexity int) int
 		Name     func(childComplexity int) int
 		Provider func(childComplexity int) int
+		Status   func(childComplexity int) int
 	}
 
 	ComputePlan struct {
@@ -168,9 +169,12 @@ type ComplexityRoot struct {
 	}
 
 	EdgeRegion struct {
-		ID     func(childComplexity int) int
-		Name   func(childComplexity int) int
-		Region func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Pools     func(childComplexity int) int
+		Region    func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
 	}
 
 	Entity struct {
@@ -289,6 +293,13 @@ type ComplexityRoot struct {
 		MangedSvcInstall        func(childComplexity int, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
 		MangedSvcUninstall      func(childComplexity int, installationID repos.ID) int
 		MangedSvcUpdate         func(childComplexity int, installationID repos.ID, values map[string]interface{}) int
+	}
+
+	NodePool struct {
+		Config func(childComplexity int) int
+		Max    func(childComplexity int) int
+		Min    func(childComplexity int) int
+		Name   func(childComplexity int) int
 	}
 
 	Port struct {
@@ -856,6 +867,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CloudProvider.Provider(childComplexity), true
 
+	case "CloudProvider.status":
+		if e.complexity.CloudProvider.Status == nil {
+			break
+		}
+
+		return e.complexity.CloudProvider.Status(childComplexity), true
+
 	case "ComputePlan.dedicatedEnabled":
 		if e.complexity.ComputePlan.DedicatedEnabled == nil {
 			break
@@ -1024,6 +1042,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DockerCredentials.Username(childComplexity), true
 
+	case "EdgeRegion.createdAt":
+		if e.complexity.EdgeRegion.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.CreatedAt(childComplexity), true
+
 	case "EdgeRegion.id":
 		if e.complexity.EdgeRegion.ID == nil {
 			break
@@ -1038,12 +1063,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EdgeRegion.Name(childComplexity), true
 
+	case "EdgeRegion.pools":
+		if e.complexity.EdgeRegion.Pools == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.Pools(childComplexity), true
+
 	case "EdgeRegion.region":
 		if e.complexity.EdgeRegion.Region == nil {
 			break
 		}
 
 		return e.complexity.EdgeRegion.Region(childComplexity), true
+
+	case "EdgeRegion.updatedAt":
+		if e.complexity.EdgeRegion.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.UpdatedAt(childComplexity), true
 
 	case "Entity.findAccountByID":
 		if e.complexity.Entity.FindAccountByID == nil {
@@ -1819,6 +1858,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.MangedSvcUpdate(childComplexity, args["installationId"].(repos.ID), args["values"].(map[string]interface{})), true
 
+	case "NodePool.config":
+		if e.complexity.NodePool.Config == nil {
+			break
+		}
+
+		return e.complexity.NodePool.Config(childComplexity), true
+
+	case "NodePool.max":
+		if e.complexity.NodePool.Max == nil {
+			break
+		}
+
+		return e.complexity.NodePool.Max(childComplexity), true
+
+	case "NodePool.min":
+		if e.complexity.NodePool.Min == nil {
+			break
+		}
+
+		return e.complexity.NodePool.Min(childComplexity), true
+
+	case "NodePool.name":
+		if e.complexity.NodePool.Name == nil {
+			break
+		}
+
+		return e.complexity.NodePool.Name(childComplexity), true
+
 	case "Port.port":
 		if e.complexity.Port.Port == nil {
 			break
@@ -2486,6 +2553,7 @@ type CloudProvider {
   name: String!
   provider: String!
   edges: [EdgeRegion!]!
+  status: String!
 }
 
 input CloudProviderIn {
@@ -2499,10 +2567,20 @@ input CloudProviderUpdateIn {
   credentials: Json
 }
 
+type NodePool{
+  name: String!
+  config: String!
+  min: Int!
+  max: Int!
+}
+
 type EdgeRegion {
   id: ID!
   name: String!
   region : String!
+  createdAt: String!
+  updatedAt: String
+  pools: [NodePool!]!
 }
 
 input NodePoolIn{
@@ -6130,6 +6208,41 @@ func (ec *executionContext) _CloudProvider_edges(ctx context.Context, field grap
 	return ec.marshalNEdgeRegion2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegionᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _CloudProvider_status(ctx context.Context, field graphql.CollectedField, obj *model.CloudProvider) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7067,6 +7180,108 @@ func (ec *executionContext) _EdgeRegion_region(ctx context.Context, field graphq
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_pools(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pools, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.NodePool)
+	fc.Result = res
+	return ec.marshalNNodePool2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐNodePoolᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10190,6 +10405,146 @@ func (ec *executionContext) _Mutation_core_deleteCloudProvider(ctx context.Conte
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NodePool_name(ctx context.Context, field graphql.CollectedField, obj *model.NodePool) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "NodePool",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NodePool_config(ctx context.Context, field graphql.CollectedField, obj *model.NodePool) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "NodePool",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Config, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NodePool_min(ctx context.Context, field graphql.CollectedField, obj *model.NodePool) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "NodePool",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Min, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NodePool_max(ctx context.Context, field graphql.CollectedField, obj *model.NodePool) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "NodePool",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Port_port(ctx context.Context, field graphql.CollectedField, obj *model.Port) (ret graphql.Marshaler) {
@@ -15319,6 +15674,16 @@ func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.Selectio
 				return innerFunc(ctx)
 
 			})
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._CloudProvider_status(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15721,6 +16086,33 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 		case "region":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._EdgeRegion_region(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createdAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._EdgeRegion_createdAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updatedAt":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._EdgeRegion_updatedAt(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "pools":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._EdgeRegion_pools(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -16908,6 +17300,67 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var nodePoolImplementors = []string{"NodePool"}
+
+func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet, obj *model.NodePool) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, nodePoolImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NodePool")
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._NodePool_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "config":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._NodePool_config(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "min":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._NodePool_min(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "max":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._NodePool_max(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -19348,6 +19801,60 @@ func (ec *executionContext) marshalNMount2ᚖkloudliteᚗioᚋappsᚋconsoleᚋi
 func (ec *executionContext) unmarshalNMountInput2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐMountInput(ctx context.Context, v interface{}) (*model.MountInput, error) {
 	res, err := ec.unmarshalInputMountInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNodePool2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐNodePoolᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.NodePool) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNNodePool2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐNodePool(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNNodePool2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐNodePool(ctx context.Context, sel ast.SelectionSet, v *model.NodePool) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._NodePool(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNNodePoolIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐNodePoolIn(ctx context.Context, v interface{}) ([]*model.NodePoolIn, error) {

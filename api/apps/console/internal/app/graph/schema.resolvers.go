@@ -118,9 +118,29 @@ func (r *cloudProviderResolver) Edges(ctx context.Context, obj *model.CloudProvi
 	for _, r := range regions {
 		res = append(
 			res, &model.EdgeRegion{
-				ID:     r.Id,
-				Name:   r.Name,
-				Region: r.Region,
+				ID:        r.Id,
+				Name:      r.Name,
+				Region:    r.Region,
+				CreatedAt: r.CreationTime.String(),
+				UpdatedAt: func() *string {
+					if !r.UpdateTime.IsZero() {
+						s := r.UpdateTime.String()
+						return &s
+					}
+					return nil
+				}(),
+				Pools: func() []*model.NodePool {
+					pools := make([]*model.NodePool, 0)
+					for _, pool := range r.Pools {
+						pools = append(pools, &model.NodePool{
+							Name:   pool.Name,
+							Config: pool.Config,
+							Min:    pool.Min,
+							Max:    pool.Max,
+						})
+					}
+					return pools
+				}(),
 			},
 		)
 	}
