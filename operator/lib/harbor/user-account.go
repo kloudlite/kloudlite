@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 type User struct {
 	Id       int    `json:"id"`
 	Name     string `json:"name"`
+	Password string `json:"-"`
 	Location string `json:"location"`
 }
 
@@ -53,9 +53,12 @@ var dockerRepoMinACLs = []map[string]any{
 	},
 }
 
-func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, password string) (*User, error) {
+func (h *Client) changePassword(ctx context.Context, user *User) (*User, error) {
+	return nil, nil
+}
+
+func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName string) (*User, error) {
 	body := map[string]any{
-		"secret":      password,
 		"name":        userName,
 		"level":       "project",
 		"duration":    -1,
@@ -73,8 +76,6 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, p
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("body: ", string(b2))
 
 	req, err := h.NewAuthzRequest(ctx, http.MethodPost, "/robots", bytes.NewBuffer(b2))
 	if err != nil {
@@ -98,26 +99,33 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName, p
 		return nil, errors.NewEf(err, "could not unmarshal into harborRobotUser")
 	}
 
-	req, err = h.NewAuthzRequest(
-		ctx, http.MethodPatch, fmt.Sprintf("/robots/%d", hUser.Id),
-		bytes.NewBuffer([]byte(fmt.Sprintf("{\"secret\":\"%s\"}", password))),
-	)
-	if err != nil {
-		return nil, err
-	}
+	return &User{
+		Id:       hUser.Id,
+		Name:     hUser.Name,
+		Password: hUser.Secret,
+		Location: resp.Header.Get("Location"),
+	}, nil
 
-	resp2, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if resp2.StatusCode == http.StatusOK {
-		return &User{
-			Id:       hUser.Id,
-			Name:     hUser.Name,
-			Location: resp.Header.Get("Location"),
-		}, nil
-	}
-	return nil, errors.New("bad status code")
+	// req, err = h.NewAuthzRequest(
+	// 	ctx, http.MethodPatch, fmt.Sprintf("/robots/%d", hUser.Id),
+	// 	bytes.NewBuffer([]byte(fmt.Sprintf("{\"secret\":\"%s\"}", password))),
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//
+	// resp2, err := http.DefaultClient.Do(req)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if resp2.StatusCode == http.StatusOK {
+	// 	return &User{
+	// 		Id:       hUser.Id,
+	// 		Name:     hUser.Name,
+	// 		Location: resp.Header.Get("Location"),
+	// 	}, nil
+	// }
+	// return nil, errors.New("bad status code")
 }
 
 func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool) error {

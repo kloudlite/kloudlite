@@ -17,7 +17,8 @@ type Env struct {
 	HarborApiVersion        string `env:"HARBOR_API_VERSION" required:"true"`
 	HarborWebhookAuthz      string `env:"HARBOR_WEBHOOK_AUTHZ" required:"true"`
 
-	DockerSecretName string `env:"DOCKER_SECRET_NAME" required:"true"`
+	DockerSecretName   string `env:"DOCKER_SECRET_NAME" required:"true"`
+	ServiceAccountName string `env:"SERVICE_ACCOUNT_NAME" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

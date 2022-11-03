@@ -43,9 +43,6 @@ metadata:
   name: {{$svcAccountName}}
   namespace: {{$namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-imagePullSecrets:
-  - name: {{$dockerSecretName}}
-
 ---
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -87,17 +84,17 @@ roleRef:
   kind: "Role"
   name: {{$roleName}}
 
----
-
-apiVersion: crds.kloudlite.io/v1
-kind: AccountRouter
-metadata:
-  name: ingress-nginx
-  namespace: wg-{{$accRef}}
-  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-spec:
-  accountRef: {{$accRef}}
-  serviceType: ClusterIP
-  https:
-    enabled: true
-    forceRedirect: true
+# ---
+#
+# apiVersion: crds.kloudlite.io/v1
+# kind: AccountRouter
+# metadata:
+#   name: ingress-nginx
+#   namespace: wg-{{$accRef}}
+#   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+# spec:
+#   accountRef: {{$accRef}}
+#   serviceType: ClusterIP
+#   https:
+#     enabled: true
+#     forceRedirect: true

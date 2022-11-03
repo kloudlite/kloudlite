@@ -160,7 +160,7 @@ tasks:
         pushd "./operators/{{.Name}}" 1> /dev/null
         lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
         tDir=$(mktemp -d)
-        go build -o $tDir/{{.Name}} .
+        CGO_ENABLED=0 go build -o $tDir/{{.Name}} .
 
         nDockerfile=$(cat Dockerfile | tail --lines=+$lineNo | grep -i --invert-match 'from=builder')
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" | sed "3 i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
