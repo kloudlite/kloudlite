@@ -1441,6 +1441,7 @@ func (r *queryResolver) CoreGetCloudProviders(ctx context.Context, accountID rep
 				ID:       i.Id,
 				Name:     i.Name,
 				Provider: i.Provider,
+				IsShared: *i.AccountId == "kl-core",
 			},
 		)
 	}
