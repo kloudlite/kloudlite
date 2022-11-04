@@ -1,12 +1,9 @@
 package op_crds
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 type EdgeMetadata struct {
-	Name            string                  `json:"name,omitempty"`
-	Annotations     map[string]string       `json:"annotations,omitempty"`
-	Labels          map[string]string       `json:"labels,omitempty"`
-	OwnerReferences []metav1.OwnerReference `json:"ownerReferences,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 type NodePool struct {
