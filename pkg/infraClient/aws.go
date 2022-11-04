@@ -271,9 +271,9 @@ func (a *awsProvider) AttachNode(node AWSNode) error {
 	for {
 
 		time.Sleep(time.Second * 6)
-		if err = execCmd(fmt.Sprintf("talosctl apply-config --insecure --nodes %s --file %s", string(out), p), ""); err != nil {
+		if err = execCmd(fmt.Sprintf("talosctl apply-config --insecure --nodes %s --file %s", string(out), p), "attaching node to cluster"); err != nil {
 
-			if err = execCmd(fmt.Sprintf("kubectl get node %s", node.NodeId), ""); err == nil {
+			if err = execCmd(fmt.Sprintf("kubectl get node %s", node.NodeId), "checking is node ready"); err == nil {
 				return nil
 			}
 

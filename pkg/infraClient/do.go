@@ -296,9 +296,9 @@ func (d *doProvider) AttachNode(node DoNode) error {
 	for {
 
 		time.Sleep(time.Second * 6)
-		if err = execCmd(fmt.Sprintf("talosctl apply-config --insecure --nodes %s --file %s", string(out), p), ""); err != nil {
+		if err = execCmd(fmt.Sprintf("talosctl apply-config --insecure --nodes %s --file %s", string(out), p), "attaching node to cluster"); err != nil {
 
-			if err = execCmd(fmt.Sprintf("talosctl stats -n %s --talosconfig %s", string(out), talosConfigP), ""); err == nil {
+			if err = execCmd(fmt.Sprintf("talosctl stats -n %s --talosconfig %s", string(out), talosConfigP), "checking is node ready"); err == nil {
 				return nil
 			}
 
@@ -327,7 +327,7 @@ func (d *doProvider) UnattachNode(node DoNode) error {
 		return nil
 	}
 
-	if err = execCmd(fmt.Sprintf("kubectl get node %s", out), "checknode present"); err != nil {
+	if err = execCmd(fmt.Sprintf("kubectl get node %s", out), "checking if node attached"); err != nil {
 		fmt.Println("node not found may be already deleted")
 		return nil
 	}

@@ -1,13 +1,10 @@
 package op_crds
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 type SecretMetadata struct {
-	Name            string                  `json:"name,omitempty"`
-	Namespace       string                  `json:"namespace,omitempty"`
-	Annotations     map[string]string       `json:"annotations,omitempty"`
-	Labels          map[string]string       `json:"labels,omitempty"`
-	OwnerReferences []metav1.OwnerReference `json:"ownerReference,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	Namespace   string            `json:"namespace,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 const SecretAPIVersion = "v1"

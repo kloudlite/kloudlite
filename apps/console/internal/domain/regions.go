@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/kubeapi"
@@ -65,19 +65,16 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 		},
 	})
 
+	if err != nil {
+		return err
+	}
+
 	err = d.workloadMessenger.SendAction("apply", string(provider.Id), &op_crds.Secret{
 		APIVersion: op_crds.SecretAPIVersion,
 		Kind:       op_crds.SecretKind,
 		Metadata: op_crds.SecretMetadata{
 			Name:      "provider-" + string(provider.Id),
 			Namespace: "kl-core",
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: op_crds.CloudProviderAPIVersion,
-					Kind:       op_crds.CloudProviderKind,
-					Name:       "provider-" + string(provider.Id),
-				},
-			},
 		},
 		StringData: func() map[string]any {
 			data := make(map[string]any)
@@ -164,13 +161,6 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, u
 		Metadata: op_crds.SecretMetadata{
 			Name:      "provider-" + string(provider.Id),
 			Namespace: "kl-core",
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: op_crds.CloudProviderAPIVersion,
-					Kind:       op_crds.CloudProviderKind,
-					Name:       "provider-" + string(provider.Id),
-				},
-			},
 		},
 		StringData: func() map[string]any {
 			data := make(map[string]any)
@@ -206,13 +196,6 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entit
 		Kind:       op_crds.EdgeKind,
 		Metadata: op_crds.EdgeMetadata{
 			Name: string(createdRegion.Id),
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: op_crds.CloudProviderAPIVersion,
-					Kind:       op_crds.CloudProviderKind,
-					Name:       "provider-" + string(provider.Id),
-				},
-			},
 		},
 		Spec: op_crds.EdgeSpec{
 			CredentialsRef: op_crds.CredentialsRef{
@@ -324,13 +307,6 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 		Kind:       op_crds.EdgeKind,
 		Metadata: op_crds.EdgeMetadata{
 			Name: string(createdRegion.Id),
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: op_crds.CloudProviderAPIVersion,
-					Kind:       op_crds.CloudProviderKind,
-					Name:       "provider-" + string(provider.Id),
-				},
-			},
 		},
 		Spec: op_crds.EdgeSpec{
 			CredentialsRef: op_crds.CredentialsRef{
