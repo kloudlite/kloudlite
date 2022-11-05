@@ -23,6 +23,7 @@ import (
   stepResult "operators.kloudlite.io/lib/operator/step-result"
   ctrl "sigs.k8s.io/controller-runtime"
   "sigs.k8s.io/controller-runtime/pkg/client"
+  "operators.kloudlite.io/lib/kubectl"
 )
 
 type {{$reconType}} struct {
@@ -67,6 +68,9 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
   }
 
   req.Logger.Infof("NEW RECONCILATION")
+  defer func() {
+    req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+  }()
 
   if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
     return step.ReconcilerResponse()
@@ -102,8 +106,7 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
   }
 
   req.Object.Status.IsReady = true
-  req.Logger.Infof("RECONCILATION COMPLETE")
-  return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+  return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *{{$reconType}}) finalize(req *rApi.Request[*{{$kindObjName}}]) stepResult.Result {
@@ -280,11 +283,11 @@ func (r *{{$reconType}}) reconSts(req *rApi.Request[*{{$kindObjName}}]) stepResu
   return req.Next()
 }
 
-func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
   r.Client = mgr.GetClient()
   r.Scheme = mgr.GetScheme()
   r.logger = logger.WithName(r.Name)
-  r.env = envVars
+  r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
   builder := ctrl.NewControllerManagedBy(mgr).For(&{{$kindObjName}}{})
   builder.Owns(&corev1.Secret{})

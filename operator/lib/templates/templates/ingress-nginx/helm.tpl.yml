@@ -2,12 +2,14 @@
 {{- $ownerRefs := get . "owner-refs" }}
 {{- $controllerName := get . "controller-name" }}
 {{- $labels := get . "labels" }}
+{{- $ingressClassName := get . "ingress-class-name"  -}}
+
+{{- $wildcardCertNamespace := get . "wildcard-cert-namespace"  -}}
+{{- $wildcardCertName := get . "wildcard-cert-name"  -}}
+
 
 {{- with $obj }}
 {{- /*gotype: operators.kloudlite.io/apis/crds/v1.EdgeRouter*/ -}}
-{{- $ingClassName  := printf "ingress-nginx-%s" .Spec.Region }}
-
----
 apiVersion: ingress.kloudlite.io/v1
 kind: Nginx
 metadata:
@@ -20,7 +22,11 @@ spec:
   commonLabels: {{$labels  | toYAML| nindent 4}}
   controller:
     kind: DaemonSet
-{{/*    hostNetwork: true*/}}
+    hostNetwork: false
+    podSecurityContext:
+      sysctls:
+        - name: net.ipv4.ip_unprivileged_port_start
+          value: "1"
     hostPort:
       enabled: true
     ports:
@@ -29,12 +35,12 @@ spec:
 
     watchIngressWithoutClass: false
     ingressClassByName: true
-    ingressClass: {{$ingClassName}}
-    electionID: {{$ingClassName}}
+    ingressClass: {{$ingressClassName}}
+    electionID: {{$ingressClassName}}
     ingressClassResource:
       enabled: true
-      name: "{{$ingClassName}}"
-      controllerValue: "k8s.io/{{$ingClassName}}"
+      name: "{{$ingressClassName}}"
+      controllerValue: "k8s.io/{{$ingressClassName}}"
 {{/*    replicaCount: 1*/}}
 
     service:
@@ -42,7 +48,9 @@ spec:
 
 {{/*    {{- if .Spec.DefaultSSLCert.SecretName}}*/}}
     extraArgs:
-      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"
+{{/*      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"*/}}
+      default-ssl-certificate: "{{$wildcardCertNamespace}}/{{$wildcardCertName}}"
+
 {{/*      default-ssl-certificate: "kl-init-cert-manager/kl-cert-issuer-tls"*/}}
 
 {{/*    {{- end}}*/}}
@@ -62,11 +70,11 @@ spec:
 
     nodeSelector:
       {{if .Spec.NodeSelector}}{{.Spec.NodeSelector | toYAML| nindent 6}}{{end}}
-      {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6 }}
+      {{include "RegionNodeSelector" (dict "region" .Name) | nindent 6 }}
 
     tolerations:
       {{if .Spec.Tolerations}}{{.Spec.Tolerations | toYAML | nindent 6}}{{end}}
-      {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
+      {{include "RegionToleration" (dict "region" .Name) | nindent 6}}
 
     affinity: {{include "NodeAffinity" (dict) | nindent 6 }}
 

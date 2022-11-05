@@ -26,8 +26,9 @@ type YAMLClient struct {
 	restMapper    meta.RESTMapper
 }
 
-func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls []byte) error {
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(yamls), 100)
+func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
+	jYamls := bytes.Join(yamls, []byte("\n---\n"))
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
 	for {
 		var rawObj runtime.RawExtension
 		if err := decoder.Decode(&rawObj); err != nil {

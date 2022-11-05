@@ -1,11 +1,11 @@
 package types
 
 type MsvcOutput struct {
-	RootPassword      string `json:"ROOT_PASSWORD"`
-	MysqlUserPassword string `json:"MYSQL_USER_PASSWORD"`
-	Hosts             string `json:"HOSTS"`
-	DSN               string `json:"DSN,omitempty"`
-	URI               string `json:"URI"`
+	RootPassword        string `json:"ROOT_PASSWORD"`
+	ReplicationPassword string `json:"REPLICATION_PASSWORD"`
+	Hosts               string `json:"HOSTS"`
+	DSN                 string `json:"DSN,omitempty"`
+	URI                 string `json:"URI"`
 }
 
 type MresOutput struct {
