@@ -9,7 +9,7 @@
 {{- $ownerRefs := get . "owner-refs"}}
 {{- $labels := get . "labels"}}
 {{- $annotations := get . "annotations"}}
-{{- $virtualHost := get . "virtual-hostname"}}
+{{- $virtualHost := get . "virtual-hostname" |default ""}}
 
 {{- $ingressClass := get . "ingress-class" }}
 {{- $clusterIssuer := get . "cluster-issuer" }}
@@ -86,7 +86,11 @@ spec:
             path: {{$route.Path}}?(.*)
             {{- else}}
             {{ $x := len $route.Path }}
-            path: /?{{if gt $x 1}}({{substr 1 $x $route.Path}}){{else}}(.*){{ end}}
+            {{if not (gt $x 1)}}
+            path: "/?(.*)"
+            {{else}}
+            path: /?({{if hasPrefix "/" $route.Path }}{{substr 1 $x $route.Path}}{{else}}{{$route.Path}}{{end}})
+            {{end}}
             {{- end}}
             pathType: Prefix
           {{- end}}

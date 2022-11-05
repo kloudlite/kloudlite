@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the csi v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=csi.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=csi.kloudlite.io
 package v1
 
 import (

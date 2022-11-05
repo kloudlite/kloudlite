@@ -1,0 +1,16 @@
+apiVersion: mysql.msvc.kloudlite.io/v1
+kind: ClusterService
+metadata:
+  name: sample-mysql
+  namespace: kl-core
+spec:
+  region: blr1
+  replicaCount: 3
+  resources:
+    cpu:
+      min: 400m
+      max: 500m
+    memory: 500Mi
+    storage:
+      size: 1Gi
+      storageClass: kl-do-block-ext4-blr1

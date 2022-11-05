@@ -37,7 +37,8 @@ type Check struct {
 }
 
 // +kubebuilder:object:generate=true
-// +kubebuilder:printcolumn:JSONPath=".isReady",name=Ready,type=bool
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 type Status struct {
 	// +kubebuilder:validation:Optional

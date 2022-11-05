@@ -15,10 +15,12 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/operators/routers/internal/controllers"
 	"operators.kloudlite.io/operators/routers/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,10 +29,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -177,7 +180,7 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 	}()
 
 	if accRef == "" {
-		return req.CheckFailed(IngressReady, check, fmt.Sprintf("could not get account-ref from labels/annotations")).Err(nil)
+		return req.CheckFailed(IngressReady, check, "could not get account-ref from labels/annotations").Err(nil)
 	}
 
 	routerCfg := r.readFromProjectConfig(req)
@@ -190,7 +193,7 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 		}
 	}
 	for _, v := range accDomains {
-		if strings.HasPrefix(v, "*.") {
+		if strings.HasPrefix(v, "*.") && strings.HasSuffix(v, ".kloudlite.io") {
 			wcDomains = append(wcDomains, v[2:])
 		}
 	}
@@ -206,7 +209,7 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 		return req.CheckFailed(IngressReady, check, "no routes specified in ingress resource").Err(nil)
 	}
 
-	var ingressList []string
+	// var ingressList []string
 
 	lambdaGroups := map[string][]crdsv1.Route{}
 	var appRoutes []crdsv1.Route
@@ -221,27 +224,16 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 				lambdaGroups[route.Lambda] = []crdsv1.Route{}
 			}
 
-			ingressList = append(ingressList, fmt.Sprintf("r-%s-lambda-%s", router.Name, route.Lambda))
+			// ingressList = append(ingressList, fmt.Sprintf("r-%s-lambda-%s", router.Name, route.Lambda))
 			lambdaGroups[route.Lambda] = append(lambdaGroups[route.Lambda], route)
 		}
 
 		if route.App != "" {
-			ingressList = append(ingressList, router.Name)
+			// ingressList = append(ingressList, router.Name)
 			appRoutes = append(appRoutes, route)
 		}
 	}
 
-	// ingExists := true
-
-	// for i := range ingressList {
-	// 	_, err := rApi.Get(ctx, r.Client, fn.NN(router.Namespace, ingressList[i]), &networkingv1.Ingress{})
-	// 	if err != nil {
-	// 		req.Logger.Infof("ingress (%s) does not exist, creating it now...", fn.NN(router.Namespace, ingressList[i]).String())
-	// 		ingExists = false
-	// 	}
-	// }
-	//
-	// if !ingExists || check.Generation > checks[IngressReady].Generation {
 	var kubeYamls [][]byte
 
 	for lName, lRoutes := range lambdaGroups {
@@ -264,11 +256,11 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 					if router.Spec.Region == "" {
 						return "ingress-nginx"
 					}
-					return "ingress-nginx-" + router.Spec.Region
+					return controllers.GetIngressClassName(router.Spec.Region)
 				}(),
 
-				"cluster-issuer":     r.Env.ClusterCertIssuer,
-				"cert-ingress-class": r.Env.GlobalIngressClass,
+				"cluster-issuer":     controllers.GetClusterIssuerName(router.Spec.Region),
+				"cert-ingress-class": controllers.GetIngressClassName(router.Spec.Region),
 			},
 		)
 		if err != nil {
@@ -297,11 +289,11 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 					if router.Spec.Region == "" {
 						return "ingress-nginx"
 					}
-					return "ingress-nginx-" + router.Spec.Region
+					return controllers.GetIngressClassName(router.Spec.Region)
 				}(),
-				"cluster-issuer":     r.Env.ClusterCertIssuer,
-				"cert-ingress-class": r.Env.GlobalIngressClass,
-				"virtual-hostname":   fmt.Sprintf("%s.%s", router.Name, router.Namespace),
+				"cluster-issuer":     controllers.GetClusterIssuerName(router.Spec.Region),
+				"cert-ingress-class": controllers.GetIngressClassName(router.Spec.Region),
+				// "virtual-hostname":   fmt.Sprintf("%s.%s", router.Name, router.Namespace),
 			},
 		)
 		if err != nil {
@@ -311,10 +303,9 @@ func (r *Reconciler) reconIngresses(req *rApi.Request[*crdsv1.Router]) stepResul
 		kubeYamls = append(kubeYamls, b)
 	}
 
-	if err := fn.KubectlApplyExec(req.Context(), kubeYamls...); err != nil {
+	if err := r.yamlClient.ApplyYAML(req.Context(), kubeYamls...); err != nil {
 		return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
 	}
-	// }
 
 	check.Status = true
 	if check != checks[IngressReady] {
@@ -329,6 +320,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
 	builder.Owns(&networkingv1.Ingress{})

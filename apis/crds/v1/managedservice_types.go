@@ -25,9 +25,6 @@ type ManagedServiceSpec struct {
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 	MsvcKind     msvcKind            `json:"msvcKind"`
 
-	// // +kubebuilder:validation:Optional
-	// // +kubebuilder:default=1
-	// ReplicaCount int             `json:"replicaCount,omitempty"`
 	Inputs rawJson.RawJson `json:"inputs,omitempty"`
 }
 

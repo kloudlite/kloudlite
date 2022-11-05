@@ -18,6 +18,7 @@ import (
 	"operators.kloudlite.io/lib/conditions"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -33,10 +34,11 @@ import (
 
 type ServiceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -53,9 +55,9 @@ const (
 	KeyMsvcOutput string = "msvc-output"
 )
 
-// +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=mongo-standalone.msvc.kloudlite.io,resources=services/finalizers,verbs=update
+// +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	ctx = context.WithValue(ctx, "logger", r.logger)
@@ -72,6 +74,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if k := req.Object.GetLabels()[constants.ClearStatusKey]; k == "true" {
 		if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
@@ -105,8 +110,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
@@ -209,7 +213,8 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.Standalon
 		if err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
 
@@ -304,6 +309,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.StandaloneService{})
 	builder.Owns(fn.NewUnstructured(constants.HelmMongoDBType))

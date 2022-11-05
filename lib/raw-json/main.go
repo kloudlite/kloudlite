@@ -11,8 +11,7 @@ import (
 // +kubebuilder:validation:Type=object
 
 type RawJson struct {
-	items map[string]any
-	// RawJson[string, json.RawMessage] `json:",inline"`
+	items           map[string]any
 	json.RawMessage `json:",inline"`
 }
 

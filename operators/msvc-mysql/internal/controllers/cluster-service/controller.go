@@ -1,4 +1,4 @@
-package standalone
+package clusterService
 
 import (
 	"context"
@@ -31,16 +31,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-type ServiceReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	logger     logging.Logger
 	Name       string
-	Env        *env.Env
 	yamlClient *kubectl.YAMLClient
+	Env        *env.Env
 }
 
-func (r *ServiceReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
@@ -54,17 +54,12 @@ const (
 	KeyMsvcOutput string = "msvc-output"
 )
 
-// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/finalizers,verbs=update
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=clusterServices,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=clusterServices/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=clusterServices/finalizers,verbs=update
 
-func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(
-		context.WithValue(ctx, "logger", r.logger),
-		r.Client,
-		request.NamespacedName,
-		&mysqlMsvcv1.StandaloneService{},
-	)
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &mysqlMsvcv1.ClusterService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -115,15 +110,14 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
-func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*mysqlMsvcv1.ClusterService]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.ClusterService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -134,7 +128,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 	}
 
 	if scrt == nil {
-		rootPassword := fn.CleanerNanoid(40)
+		rootPassword := fn.CleanerNanoid(30)
 		mysqlHost := fmt.Sprintf("%s-headless.%s.svc.cluster.local:3306", obj.Name, obj.Namespace)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
@@ -143,19 +137,20 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 				"labels":     obj.GetLabels(),
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
 				"string-data": types.MsvcOutput{
-					RootPassword: rootPassword,
-					Hosts:        mysqlHost,
-					URI:          fmt.Sprintf("mysql://%s:%s@%s/%s", "root", rootPassword, mysqlHost, "mysql"),
+					ReplicationPassword: fn.CleanerNanoid(30),
+					RootPassword:        rootPassword,
+					Hosts:               mysqlHost,
+					URI:                 fmt.Sprintf("mysql://%s:%s@%s/%s", "root", rootPassword, mysqlHost, "mysql"),
 				},
 			},
 		)
 
 		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
 		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
 		checks[AccessCredsReady] = check
@@ -185,11 +180,38 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 		return req.CheckFailed(AccessCredsReady, check, "output secret is nil").Err(nil)
 	}
 
+	// ensure existing secret for helm
+	helmSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "helm-"+obj.Name), &corev1.Secret{})
+	if err != nil {
+		req.Logger.Infof("helm secret does not exist, will be creating it prior to helm installation")
+		helmSecret = nil
+	}
+
+	if helmSecret == nil {
+		if err := r.Create(
+			ctx, &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "helm-" + obj.Name,
+					Namespace:       obj.Namespace,
+					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				},
+				StringData: map[string]string{
+					"mysql-root-password":        output.RootPassword,
+					"mysql-replication-password": output.ReplicationPassword,
+					"mysql-password":             "",
+				},
+				Type: "",
+			},
+		); err != nil {
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
+		}
+	}
+
 	rApi.SetLocal(req, KeyMsvcOutput, *output)
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+func (r *Reconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.ClusterService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -200,18 +222,18 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneS
 		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
-	if !ok {
-		return req.CheckFailed(HelmReady, check, fmt.Sprintf("key %s is not present in req locals", KeyMsvcOutput)).Err(nil)
-	}
-
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
 		b, err := templates.Parse(
-			templates.MySqlStandalone, map[string]any{
-				"obj":           obj,
-				"owner-refs":    obj.GetOwnerReferences(),
-				"storage-class": fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4),
-				"root-password": msvcOutput.RootPassword,
+			templates.MysqlCluster, map[string]any{
+				"obj":             obj,
+				"existing-secret": "helm-" + obj.Name,
+				"storage-class": func() string {
+					if obj.Spec.Resources.Storage.StorageClass != "" {
+						return obj.Spec.Resources.Storage.StorageClass
+					}
+					return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4)
+				}(),
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
 		)
 
@@ -253,7 +275,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneS
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+func (r *Reconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.ClusterService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	var stsList appsv1.StatefulSetList
@@ -293,7 +315,6 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneSe
 				}
 				return req.CheckFailed(StsReady, check, string(b))
 			}
-			return req.CheckFailed(StsReady, check, "waiting for pod starting ...")
 		}
 	}
 
@@ -306,13 +327,13 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneSe
 	return req.Next()
 }
 
-func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlMsvcv1.StandaloneService{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlMsvcv1.ClusterService{})
 	builder.Owns(&corev1.Secret{})
 	builder.Owns(fn.NewUnstructured(constants.HelmMysqlType))
 
@@ -327,8 +348,6 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 			},
 		),
 	)
-
-	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	return builder.Complete(r)
 }
