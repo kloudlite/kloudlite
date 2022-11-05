@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
-	"operators.kloudlite.io/env"
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
@@ -36,13 +35,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"operators.kloudlite.io/lib/kubectl"
 )
 
 type {{$reconType}} struct {
 	client.Client
 	Scheme    *runtime.Scheme
-	env       *env.Env
-	harborCli *harbor.Client
 	logger    logging.Logger
 	Name      string
 }
@@ -55,14 +53,6 @@ const (
 	AccessCredsReady string = "access-creds"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
 )
-
-type Output struct {
-	DbUser     string `json:"DB_USER"`
-	DbPassword string `json:"DB_PASSWORD"`
-	DbHosts    string `json:"DB_HOSTS"`
-	DbName     string `json:"DB_NAME"`
-	DbUrl      string `json:"DB_URL"`
-}
 
 // +kubebuilder:rbac:groups={{$apiGroup}},resources={{$kindPlural}},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups={{$apiGroup}},resources={{$kindPlural}}/status,verbs=get;update;patch
@@ -83,6 +73,9 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -118,8 +111,7 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *{{$reconType}}) finalize(req *rApi.Request[*{{$kindPkg}}.{{$kind}}]) stepResult.Result {
@@ -235,19 +227,16 @@ func (r *{{$reconType}}) reconDBUser(req *rApi.Request[*{{$kindPkg}}.{{$kind}}])
 	return req.Next()
 }
 
-func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, envVars *env.Env, logger logging.Logger) error {
+func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.env = envVars
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&{{$kindPkg}}.{{$kind}}{})
 	builder.Owns(&corev1.Secret{})
 
-	watchList := []client.Object{
-{{/*		&mongodbMsvcv1.StandaloneService{},*/}}
-{{/*		&mongodbMsvcv1.ClusterService{},*/}}
-	}
+	watchList := []client.Object{}
 
 	for i := range watchList {
 		builder.Watches(

@@ -129,7 +129,10 @@ type templateFile string
 
 const (
 	MongoDBStandalone templateFile = "templates/msvc/mongodb/helm-standalone.tpl.yml"
-	MySqlStandalone   templateFile = "templates/msvc/mysql/helm-standalone.tpl.yml"
+
+	MySqlStandalone templateFile = "templates/msvc/mysql/helm-standalone.tpl.yml"
+	MysqlCluster    templateFile = "templates/msvc/mysql/helm-cluster.tpl.yml"
+
 	RedisStandalone   templateFile = "templates/msvc/redis/helm-standalone.tpl.yml"
 	RedisACLConfigMap templateFile = "templates/msvc/redis/acl-configmap.tpl.yml"
 
@@ -175,6 +178,8 @@ const (
 
 	DigitaloceanCSIDriver    templateFile = "templates/csi/digitalocean/csi-driver.yml.tpl"
 	DigitaloceanStorageClass templateFile = "templates/csi/digitalocean/storage-class.yml.tpl"
+
+	ClusterIssuer templateFile = "templates/cluster-issuer.tpl.yml"
 )
 
 var CoreV1 = struct {

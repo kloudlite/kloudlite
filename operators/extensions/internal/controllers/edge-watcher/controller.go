@@ -93,7 +93,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	// check if ingress is installed on that edge
-	if step := r.ensureIngress(ctx, edge, logger); !step.ShouldProceed() {
+	if step := r.ensureEdgeRouters(ctx, edge, logger); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -130,7 +130,7 @@ func (r *Reconciler) ensureCSIDriver(ctx context.Context, edge *Edge, logger log
 	return stepResult.New().Continue(true)
 }
 
-func (r *Reconciler) ensureIngress(ctx context.Context, edge *Edge, logger logging.Logger) stepResult.Result {
+func (r *Reconciler) ensureEdgeRouters(ctx context.Context, edge *Edge, logger logging.Logger) stepResult.Result {
 	var edgeRouter crdsv1.EdgeRouter
 	if err := r.Get(ctx, fn.NN(EdgeRouterNS, edge.Name), &edgeRouter); err != nil {
 		if apiErrors.IsNotFound(err) {

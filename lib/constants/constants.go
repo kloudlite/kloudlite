@@ -69,6 +69,7 @@ const (
 
 	ClearStatusKey string = "kloudlite.io/clear-status"
 	RestartKey     string = "kloudlite.io/do-restart"
+	RegionKey      string = "kloudlite.io/region"
 )
 
 var (

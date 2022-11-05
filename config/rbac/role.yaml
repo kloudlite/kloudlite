@@ -448,7 +448,59 @@ rules:
   - patch
   - update
 - apiGroups:
-  - mongo-standalone.msvc.kloudlite.io
+  - mongodb.external.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.external.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.external.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
   resources:
   - services
   verbs:
@@ -460,13 +512,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - mongo-standalone.msvc.kloudlite.io
+  - mongodb.msvc.kloudlite.io
   resources:
   - services/finalizers
   verbs:
   - update
 - apiGroups:
-  - mongo-standalone.msvc.kloudlite.io
+  - mongodb.msvc.kloudlite.io
   resources:
   - services/status
   verbs:
@@ -474,58 +526,6 @@ rules:
   - patch
   - update
 - apiGroups:
-  - mongodb.external.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mongodb.external.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mongodb.external.kloudlite.io
-  resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mongodb.msvc.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mongodb.msvc.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mongodb.msvc.kloudlite.io
-  resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - mysql.external.kloudlite.io
   resources:
   - databases
@@ -547,6 +547,32 @@ rules:
   - mysql.external.kloudlite.io
   resources:
   - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterServices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterServices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterServices/status
   verbs:
   - get
   - patch
