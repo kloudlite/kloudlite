@@ -180,7 +180,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	}
 
 	err = d.workloadMessenger.SendAction(
-		"apply", string(create.Id), &opCrds.ManagedService{
+		"apply", "", string(create.Id), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
 			Metadata: opCrds.ManagedServiceMetadata{
@@ -280,7 +280,7 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 	}
 
 	err = d.workloadMessenger.SendAction(
-		"apply", string(managedSvc.Id), &opCrds.ManagedService{
+		"apply", "", string(managedSvc.Id), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
 			Metadata: opCrds.ManagedServiceMetadata{
@@ -339,7 +339,7 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 		return false, err
 	}
 	err = d.workloadMessenger.SendAction(
-		"delete", string(managedServiceId), &opCrds.ManagedService{
+		"delete", "", string(managedServiceId), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
 			Metadata: opCrds.ManagedServiceMetadata{
