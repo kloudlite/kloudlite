@@ -25,5 +25,5 @@ USER nonroot
 WORKDIR /tmp/app
 COPY --chown=nonroot --from=base /tmp/bin/nodectrl ./nodectrl  
 COPY --chown=nonroot --from=project-root  ./pkg/infraClient/terraform  /templates/terraform
-COPY --chown=nonroot --from=project-root  ./pkg/infraClient/templates  /tmp/app/pkg/infraClient/templates
+# COPY --chown=nonroot --from=project-root  ./pkg/infraClient/templates  /tmp/app/pkg/infraClient/templates
 CMD ["./nodectrl"]

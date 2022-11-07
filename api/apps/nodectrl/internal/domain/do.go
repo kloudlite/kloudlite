@@ -61,11 +61,12 @@ func (d *domainI) doWithDO() error {
 		ApiToken:  doConf.Spec.Provider.ApiToken,
 		AccountId: doConf.Spec.Provider.AccountId,
 	}, infraclient.DoProviderEnv{
-		Secrets:     klConf.Values.Secrets,
 		StorePath:   klConf.Values.StorePath,
 		TfTemplates: klConf.Values.TfTemplates,
+		Secrets:     klConf.Values.Secrets,
 		Labels:      labels,
 		Taints:      taints,
+		SSHPath:     klConf.Values.SSHPath,
 	})
 
 	doNode := infraclient.DoNode{
