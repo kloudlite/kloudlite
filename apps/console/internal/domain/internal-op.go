@@ -15,8 +15,13 @@ func (d *domain) SetupAccount(ctx context.Context, accountID repos.ID) (bool, er
 		return false, err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, accountID)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(accountID), &internal_crds.Account{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(accountID), &internal_crds.Account{
 			APIVersion: internal_crds.AccountAPIVersion,
 			Kind:       internal_crds.AccountKind,
 			Metadata: internal_crds.AccountMetadata{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/kubeapi"
 
@@ -125,8 +126,14 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 	if e != nil {
 		return nil, fmt.Errorf("unable to persist in db %v", e)
 	}
+
+	clusterId, err := d.getClusterForAccount(ctx, accountId)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(device.Id), &internal_crds.Device{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(device.Id), &internal_crds.Device{
 			APIVersion: internal_crds.DeviceAPIVersion,
 			Kind:       internal_crds.DeviceKind,
 			Metadata: internal_crds.DeviceMetadata{
@@ -203,8 +210,11 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	if err != nil {
 		return err
 	}
+
+	clusterId, err := d.getClusterForAccount(ctx, device.AccountId)
+
 	err = d.workloadMessenger.SendAction(
-		"delete", "", string(device.Id), &internal_crds.Device{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(device.Id), &internal_crds.Device{
 			APIVersion: internal_crds.DeviceAPIVersion,
 			Kind:       internal_crds.DeviceKind,
 			Metadata: internal_crds.DeviceMetadata{
@@ -241,8 +251,14 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 	if err != nil {
 		return false, e
 	}
+
+	clusterId, err := d.getClusterForAccount(ctx, device.AccountId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(device.Id), &internal_crds.Device{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(device.Id), &internal_crds.Device{
 			APIVersion: internal_crds.DeviceAPIVersion,
 			Kind:       internal_crds.DeviceKind,
 			Metadata: internal_crds.DeviceMetadata{

@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
@@ -100,8 +101,13 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 		return nil, err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(create.Id), &op_crds.Router{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), &op_crds.Router{
 			APIVersion: op_crds.RouterAPIVersion,
 			Kind:       op_crds.RouterKind,
 			Metadata: op_crds.RouterMetadata{
@@ -169,8 +175,14 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(router.Id), &op_crds.Router{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(router.Id), &op_crds.Router{
 			APIVersion: op_crds.RouterAPIVersion,
 			Kind:       op_crds.RouterKind,
 			Metadata: op_crds.RouterMetadata{
@@ -234,8 +246,13 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 		return false, err
 	}
 
+	clusterId, err := d.getClusterIdForProject(ctx, r.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"delete", "", string(r.Id), &op_crds.Router{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(r.Id), &op_crds.Router{
 			APIVersion: op_crds.RouterAPIVersion,
 			Kind:       op_crds.RouterKind,
 			Metadata: op_crds.RouterMetadata{

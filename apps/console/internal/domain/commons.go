@@ -37,7 +37,7 @@ func GetUser(ctx context.Context) (string, error) {
 	return string(session.UserId), nil
 }
 
-func (d *domain) getClusterFromAccount(ctx context.Context, accountId repos.ID) (string, error) {
+func (d *domain) getClusterForAccount(ctx context.Context, accountId repos.ID) (string, error) {
 	cluster, err := d.financeClient.GetAttachedCluster(ctx, &finance.GetAttachedClusterIn{AccountId: string(accountId)})
 	if err != nil {
 		return "", errors.NewEf(err, "failed to get cluster from accountId [grpc]")
@@ -55,4 +55,17 @@ const (
 
 func (d *domain) getDispatchKafkaTopic(clusterId string) string {
 	return clusterId + "-incoming"
+}
+
+func (d *domain) getClusterIdForProject(ctx context.Context, projectId repos.ID) (string, error) {
+	project, err := d.projectRepo.FindById(ctx, projectId)
+	if err != nil {
+		return "", err
+	}
+
+	clusterId, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return "", err
+	}
+	return clusterId, nil
 }

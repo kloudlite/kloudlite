@@ -43,6 +43,7 @@ func (d *domain) GetCloudProviders(ctx context.Context, accountId repos.ID) ([]*
 	}
 	return providers, nil
 }
+
 func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, provider *entities.CloudProvider) error {
 	if accountId != nil {
 		if err := d.checkAccountAccess(ctx, *accountId, "update_account"); err != nil {
@@ -59,8 +60,13 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 		return err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, *accountId)
+	if err != nil {
+		return err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(provider.Id), &op_crds.CloudProvider{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(provider.Id), &op_crds.CloudProvider{
 			APIVersion: op_crds.CloudProviderAPIVersion,
 			Kind:       op_crds.CloudProviderKind,
 			Metadata: op_crds.CloudProviderMetadata{
@@ -68,13 +74,12 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 			},
 		},
 	)
-
 	if err != nil {
 		return err
 	}
 
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(provider.Id), &op_crds.Secret{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(provider.Id), &op_crds.Secret{
 			APIVersion: op_crds.SecretAPIVersion,
 			Kind:       op_crds.SecretKind,
 			Metadata: op_crds.SecretMetadata{
@@ -106,8 +111,13 @@ func (d *domain) DeleteCloudProvider(ctx context.Context, providerId repos.ID) e
 		return e
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, *provider.AccountId)
+	if err != nil {
+		return err
+	}
+
 	if err = d.workloadMessenger.SendAction(
-		"delete", "", string(provider.Id), &op_crds.Secret{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(provider.Id), &op_crds.Secret{
 			APIVersion: op_crds.SecretAPIVersion,
 			Kind:       op_crds.SecretKind,
 			Metadata: op_crds.SecretMetadata{
@@ -163,8 +173,14 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, u
 	if err != nil {
 		return err
 	}
+
+	clusterId, err := d.getClusterForAccount(ctx, *provider.AccountId)
+	if err != nil {
+		return err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(provider.Id), &op_crds.Secret{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(provider.Id), &op_crds.Secret{
 			APIVersion: op_crds.SecretAPIVersion,
 			Kind:       op_crds.SecretKind,
 			Metadata: op_crds.SecretMetadata{
@@ -201,8 +217,13 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entit
 		return err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, *provider.AccountId)
+	if err != nil {
+		return err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(region.Id), &op_crds.Region{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(region.Id), &op_crds.Region{
 			APIVersion: op_crds.EdgeAPIVersion,
 			Kind:       op_crds.EdgeKind,
 			Metadata: op_crds.EdgeMetadata{
@@ -273,8 +294,13 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 		}
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, *provider.AccountId)
+	if err != nil {
+		return err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"delete", "", string(edge.Id), &op_crds.Region{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(edge.Id), &op_crds.Region{
 			APIVersion: op_crds.EdgeAPIVersion,
 			Kind:       op_crds.EdgeKind,
 			Metadata: op_crds.EdgeMetadata{
@@ -320,8 +346,13 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 		return err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, *provider.AccountId)
+	if err != nil {
+		return err
+	}
+
 	d.workloadMessenger.SendAction(
-		"apply", "", string(region.Id), &op_crds.Region{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(region.Id), &op_crds.Region{
 			APIVersion: op_crds.EdgeAPIVersion,
 			Kind:       op_crds.EdgeKind,
 			Metadata: op_crds.EdgeMetadata{
