@@ -130,6 +130,8 @@ type CloudProvider struct {
 	Name     string        `json:"name"`
 	Provider string        `json:"provider"`
 	Edges    []*EdgeRegion `json:"edges"`
+	Status   string        `json:"status"`
+	IsShared bool          `json:"isShared"`
 }
 
 type CloudProviderIn struct {
@@ -190,10 +192,21 @@ type DockerCredentials struct {
 	Password string `json:"password"`
 }
 
+type EdgeNode struct {
+	NodeIndex    int                    `json:"nodeIndex"`
+	Status       map[string]interface{} `json:"status"`
+	Name         string                 `json:"name"`
+	Config       string                 `json:"config"`
+	CreationTime string                 `json:"creationTime"`
+}
+
 type EdgeRegion struct {
-	ID     repos.ID `json:"id"`
-	Name   string   `json:"name"`
-	Region string   `json:"region"`
+	ID        repos.ID    `json:"id"`
+	Name      string      `json:"name"`
+	Region    string      `json:"region"`
+	CreatedAt string      `json:"createdAt"`
+	UpdatedAt *string     `json:"updatedAt"`
+	Pools     []*NodePool `json:"pools"`
 }
 
 type EdgeRegionIn struct {
@@ -317,6 +330,13 @@ type NewResourcesIn struct {
 	MResources []map[string]interface{} `json:"mResources"`
 }
 
+type NodePool struct {
+	Name   string `json:"name"`
+	Config string `json:"config"`
+	Min    int    `json:"min"`
+	Max    int    `json:"max"`
+}
+
 type NodePoolIn struct {
 	Name   string `json:"name"`
 	Config string `json:"config"`
@@ -346,6 +366,7 @@ type Project struct {
 	Status            string               `json:"status"`
 	Cluster           *string              `json:"cluster"`
 	DockerCredentials *DockerCredentials   `json:"dockerCredentials"`
+	RegionID          repos.ID             `json:"regionId"`
 }
 
 type ProjectMembership struct {
