@@ -2,14 +2,7 @@ package infraclient
 
 import (
 	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"io/fs"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -17,13 +10,13 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
-	"kloudlite.io/pkg/infraClient/templates"
 )
 
 type awsProvider struct {
 	accessKey    string
 	accessSecret string
 
+	SSHPath     string
 	accountId   string
 	secrets     string
 	providerDir string
@@ -71,7 +64,7 @@ func (d *awsProvider) initTFdir(node AWSNode) error {
 		return err
 	}
 
-	cmd := exec.Command("terraform", "init", "-no-color")
+	cmd := exec.Command("terraform", "init")
 	cmd.Dir = path.Join(folder, d.providerDir)
 
 	cmd.Stdout = os.Stdout
@@ -89,62 +82,18 @@ type TalosAmi struct {
 	Id      string
 }
 
-func getAmi(region string) (string, error) {
-
-	req, err := http.NewRequest("GET", "https://github.com/siderolabs/talos/releases/download/v1.2.3/cloud-images.json", nil)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Accept", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	amis := []TalosAmi{}
-
-	if err := json.Unmarshal(b, &amis); err != nil {
-		return "", err
-	}
-
-	ami := ""
-	for _, ta := range amis {
-		if ta.Region == region && ta.Arch == "amd64" {
-			ami = ta.Id
-		}
-	}
-	if ami == "" {
-		return "", errors.New("can't find ami for talos")
-	}
-
-	return ami, nil
-}
-
 // NewNode implements awsProviderClient
 func (a *awsProvider) NewNode(node AWSNode) error {
-
-	ami, err := getAmi(node.Region)
-	if err != nil {
-		return err
-	}
 
 	values := map[string]string{}
 
 	values["access_key"] = a.accessKey
 	values["secret_key"] = a.accessSecret
 
-	values["ami"] = ami
 	values["region"] = node.Region
 	values["node_id"] = node.NodeId
 	values["instance_type"] = node.InstanceType
+	values["keys-path"] = a.SSHPath
 
 	// making dir
 	if err := mkdir(a.getFolder(node.Region, node.NodeId)); err != nil {
@@ -175,129 +124,85 @@ func (a *awsProvider) AttachNode(node AWSNode) error {
 		return err
 	}
 
-	var sec talosSecret
+	var sec joinTokenSecret
 
 	if err = yaml.Unmarshal(secretYaml, &sec); err != nil {
 		return err
 	}
 
-	var config, tConf []byte
-
 	labels := func() []string {
 		l := []string{}
 		for k, v := range a.labels {
-			l = append(l, fmt.Sprintf("%s=%s", k, v))
+			l = append(l, fmt.Sprintf("--node-label %s=%s", k, v))
 		}
-		l = append(l, fmt.Sprintf("%s=%s", "kloudlite.io/public-ip", string(out)))
+		l = append(l, fmt.Sprintf("--node-label %s=%s", "kloudlite.io/public-ip", string(out)))
 		return l
 	}()
 
-	switch sec.Secrets.Machine.Type {
-	case "worker":
-		if config, err = templates.Parse(templates.WorkerConfig, map[string]interface{}{
-			"hostname": node.NodeId,
+	count := 0
 
-			"machine-cert":  sec.Secrets.Machine.Certifacate,
-			"machine-type":  sec.Secrets.Machine.Type,
-			"machine-token": sec.Secrets.Machine.Token,
-
-			"endpoint": sec.Secrets.Endpoint,
-
-			"cluster-id":     sec.Secrets.Cluster.Id,
-			"cluster-token":  sec.Secrets.Cluster.Token,
-			"cluster-cert":   sec.Secrets.Cluster.Certifacate,
-			"cluster-secret": sec.Secrets.Cluster.Secret,
-			"labels":         strings.Join(labels, ","),
-		}); err != nil {
-			return err
-		}
-	case "controlplane":
-		if config, err = templates.Parse(templates.ControlePlaneConfig, map[string]interface{}{
-			"hostname": node.NodeId,
-
-			"machine-cert":  sec.Secrets.Machine.Certifacate,
-			"machine-key":   sec.Secrets.Machine.Key,
-			"machine-token": sec.Secrets.Machine.Token,
-			"machine-type":  sec.Secrets.Machine.Type,
-
-			"endpoint":    sec.Secrets.Endpoint,
-			"endpoint-ip": sec.Secrets.EndpointIp,
-
-			"cluster-name":                sec.Secrets.Cluster.Name,
-			"cluster-token":               sec.Secrets.Cluster.Token,
-			"cluster-encryption-secret":   sec.Secrets.Cluster.EncryptionSecret,
-			"cluster-id":                  sec.Secrets.Cluster.Id,
-			"cluster-secret":              sec.Secrets.Cluster.Secret,
-			"cluster-key":                 sec.Secrets.Cluster.Key,
-			"cluster-cert":                sec.Secrets.Cluster.Certifacate,
-			"cluster-aggregator-cert":     sec.Secrets.Cluster.Aggregator.Certifacate,
-			"cluster-aggregator-key":      sec.Secrets.Cluster.Aggregator.Key,
-			"cluster-service-account-key": sec.Secrets.Cluster.ServiceAccountKey,
-
-			"etcd-key":  sec.Secrets.Etcd.Key,
-			"etcd-cert": sec.Secrets.Etcd.Certifacate,
-
-			"labels": strings.Join(labels, ","),
-		}); err != nil {
-			return err
-		}
-	}
-
-	talosConfigP := path.Join(a.getFolder(node.Region, node.NodeId), "talosconfig.yml")
-	if err = ioutil.WriteFile(talosConfigP, config, fs.ModePerm); err != nil {
-		return err
-	}
-
-	if tConf, err = templates.Parse(templates.TalosConfig, map[string]interface{}{
-		"endpoint":     string(out),
-		"cluster-name": sec.Secrets.Cluster.Name,
-		"ca":           sec.Secrets.TConfig.Ca,
-		"cert":         sec.Secrets.TConfig.Cert,
-		"key":          sec.Secrets.TConfig.Key,
-	}); err != nil {
-		return err
-	} else {
-		if err = ioutil.WriteFile(talosConfigP, tConf, fs.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	p := path.Join(a.getFolder(node.Region, node.NodeId), "config.yml")
-	if err = ioutil.WriteFile(p, config, fs.ModePerm); err != nil {
-		return err
-	}
-
-	count := 1
 	for {
-
-		time.Sleep(time.Second * 6)
-		if err = execCmd(fmt.Sprintf("talosctl apply-config --insecure --nodes %s --file %s", string(out), p), "attaching node to cluster"); err != nil {
-
-			if err = execCmd(fmt.Sprintf("kubectl get node %s", node.NodeId), "checking is node ready"); err == nil {
-				return nil
-			}
-
-			count++
-			continue
+		if e := execCmd(
+			fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s ls",
+				fmt.Sprintf("%v/access", a.SSHPath),
+				string(out)),
+			"checking if node is ready "); e == nil {
+			break
 		}
 
-		if count >= 10 {
-			return errors.New("faild to apply config after 10 attempts")
+		count++
+		if count > 24 {
+			return fmt.Errorf("node is not ready even after 6 minutes")
 		}
+		time.Sleep(time.Second * 15)
+	}
 
+	if err = execCmd(fmt.Sprintf("kubectl get node %s", node.NodeId), "checking if node attached"); err == nil {
+		fmt.Println("node already attached. clean exit")
 		return nil
 	}
+
+	// // install k3s
+	// if e := execCmd(
+	// 	fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s sudo sh /tmp/k3s-install.sh",
+	// 		fmt.Sprintf("%v/access", d.SSHPath), string(out)),
+	// 	""); e != nil {
+	// 	return e
+	// }
+
+	// attach node
+	if e := execCmd(
+		fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s sudo sh /tmp/k3s-install.sh agent --server %s --token %s %s --node-name %s --node-external-ip %s",
+			fmt.Sprintf("%v/access", a.SSHPath), string(out), sec.EndpointUrl, sec.JoinToken,
+			strings.Join(labels, " "), node.NodeId, string(out)),
+		"attaching to cluster"); e != nil {
+		return e
+	}
+
+	count = 0
+	for {
+		if err = execCmd(fmt.Sprintf("kubectl get node %s", node.NodeId), "checking if node attached"); err == nil {
+			fmt.Println("node attached successfully.")
+			break
+		}
+
+		count++
+		if count > 24 {
+			return fmt.Errorf("node not attached even after 6minutes")
+		}
+		time.Sleep(time.Second * 15)
+	}
+
+	// "hostname": node.NodeId,
+	// "labels":         strings.Join(labels, ","),
+	// TODO: needs to AttachNode here
+	return nil
 
 }
 
 // DeleteNode implements awsProviderClient
 func (a *awsProvider) DeleteNode(node AWSNode) error {
 	var err error
-
-	ami, err := getAmi(node.Region)
-	if err != nil {
-		return err
-	}
 
 	// time.Sleep(time.Minute * 2)
 	values := map[string]string{}
@@ -307,10 +212,10 @@ func (a *awsProvider) DeleteNode(node AWSNode) error {
 	values["access_key"] = a.accessKey
 	values["secret_key"] = a.accessSecret
 
-	values["ami"] = ami
 	values["region"] = node.Region
 	values["node_id"] = node.NodeId
 	values["instance_type"] = node.InstanceType
+	values["keys-path"] = a.SSHPath
 
 	nodetfpath := path.Join(a.getFolder(node.Region, node.NodeId), a.providerDir)
 
@@ -380,6 +285,7 @@ type AWSProviderEnv struct {
 	Labels  map[string]string
 	Taints  []string
 	Secrets string
+	SSHPath string
 }
 
 func NewAWSProvider(provider AWSProvider, p AWSProviderEnv) awsProviderClient {
@@ -394,5 +300,6 @@ func NewAWSProvider(provider AWSProvider, p AWSProviderEnv) awsProviderClient {
 		tfTemplates: p.TfTemplates,
 		labels:      p.Labels,
 		taints:      p.Taints,
+		SSHPath:     p.SSHPath,
 	}
 }

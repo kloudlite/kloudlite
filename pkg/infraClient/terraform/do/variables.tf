@@ -22,12 +22,16 @@ variable "region" {
   default = "blr1"
 }
 
-# variable "keys-path" {
+variable "keys-path" {
+  # default = ""
+}
+
+# variable "pubkey" {
 #   # default = ""
 # }
 
 variable "do-image-id" {
-  default = "ubuntu-20-04-x64"
+  default = "ubuntu-22-10-x64"
   # default = "105910703"
 }
 
