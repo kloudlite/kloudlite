@@ -28,11 +28,11 @@ func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.G
 	for _, pipeline := range pipelines {
 		res = append(
 			res, &model.GitPipeline{
-				ID:                 pipeline.Id,
-				Name:               pipeline.Name,
-				GitProvider:        pipeline.GitProvider,
-				GitRepoURL:         pipeline.GitRepoUrl,
-				GitBranch:          pipeline.GitBranch,
+				ID:          pipeline.Id,
+				Name:        pipeline.Name,
+				GitProvider: pipeline.GitProvider,
+				GitRepoURL:  pipeline.GitRepoUrl,
+				GitBranch:   pipeline.GitBranch,
 				Build: func() *model.GitPipelineBuild {
 					if pipeline.Build == nil {
 						return nil
@@ -312,12 +312,12 @@ func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) 
 	pipelines := make([]*model.GitPipeline, len(pipelineEntities))
 	for i, pItem := range pipelineEntities {
 		pipelines[i] = &model.GitPipeline{
-			ID:                 pItem.Id,
-			Name:               pItem.Name,
-			GitProvider:        pItem.GitProvider,
-			GitRepoURL:         pItem.GitRepoUrl,
-			GitBranch:          pItem.GitBranch,
-			Metadata:           pItem.Metadata,
+			ID:          pItem.Id,
+			Name:        pItem.Name,
+			GitProvider: pItem.GitProvider,
+			GitRepoURL:  pItem.GitRepoUrl,
+			GitBranch:   pItem.GitBranch,
+			Metadata:    pItem.Metadata,
 			DockerBuild: func() *model.DockerBuild {
 				if pItem.DockerBuildInput.DockerFile == "" {
 					return nil
