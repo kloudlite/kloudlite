@@ -31,7 +31,10 @@ func testDoClient() {
 		Secrets:     env.Secret,
 		Labels:      map[string]string{
 			// "kloudlite.io/region": "blr1",
+
 		},
+
+		SSHPath: "/home/vision/.ssh",
 	})
 
 	var err error
@@ -42,27 +45,25 @@ func testDoClient() {
 		// Size: "s-2vcpu-4gb-amd",
 		// Size: "s-1vcpu-1gb-amd",
 		Size:    "c-2",
-		NodeId:  "kl-master-04",
-		ImageId: "117388514",
+		NodeId:  "try-agent-01",
+		ImageId: "ubuntu-22-10-x64",
 	}
 
 	// fmt.Println(node, err, dop)
 
-	if true {
+	if false {
 
 		if err = dop.NewNode(node); err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		time.Sleep(time.Second * 30)
-
 		for {
 
 			if err = dop.AttachNode(node); err != nil {
 				fmt.Println(err)
 
-				time.Sleep(time.Second * 30)
+				time.Sleep(time.Second * 5)
 				continue
 			}
 
@@ -78,5 +79,4 @@ func testDoClient() {
 
 	}
 
-	// time.Sleep(time.Second * 10)
 }

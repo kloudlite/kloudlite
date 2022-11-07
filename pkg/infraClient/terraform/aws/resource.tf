@@ -15,8 +15,68 @@ provider "aws" {
   secret_key = var.secret_key
 }
 
+
+data "aws_ami" "latest-ubuntu" {
+  most_recent = true
+  owners = ["099720109477"] # Canonical
+
+  filter {
+      name   = "name"
+      values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+      name   = "virtualization-type"
+      values = ["hvm"]
+  }
+}
+
+
 resource "aws_security_group" "sg" {
   # name = "${var.node_id}-sg"
+
+  ingress {
+    from_port = 22
+    protocol = "tcp"
+    to_port = 22
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  ingress {
+    from_port = 6443
+    protocol = "tcp"
+    to_port = 6443
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 8472
+    protocol = "udp"
+    to_port = 8472
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 51820
+    protocol = "udp"
+    to_port = 51820
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 51821
+    protocol = "udp"
+    to_port = 51821
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  ingress {
+    from_port = 10250
+    protocol = "tcp"
+    to_port = 10250
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   ingress {
     from_port = 80
@@ -47,35 +107,6 @@ resource "aws_security_group" "sg" {
   }
 
 
-  ingress {
-    from_port = 50000
-    protocol = "tcp"
-    to_port = 50000
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port = 50000
-    protocol = "udp"
-    to_port = 50000
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port = 6443
-    protocol = "udp"
-    to_port = 6443
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port = 6443
-    protocol = "tcp"
-    to_port = 6443
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-
   egress {
     from_port       = 0
     to_port         = 0
@@ -91,15 +122,14 @@ resource "aws_security_group" "sg" {
 
 
 resource "aws_instance" "byoc-node" {
-  ami           = var.ami
+  ami           = "${data.aws_ami.latest-ubuntu.id}"
   instance_type = var.instance_type
-
   security_groups = [aws_security_group.sg.name]
 
-  # user_data = templatefile("./init.sh", {
-  #   pubkey = file("${var.keys-path}/access.pub")
-  #   hostname = var.node_id
-  # })
+  user_data = templatefile("./init.sh", {
+    pubkey = file("${var.keys-path}/access.pub")
+    # hostname = var.node_id
+  })
 
   tags = {
     Name = var.node_id

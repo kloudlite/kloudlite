@@ -21,6 +21,8 @@ type KLConf struct {
 		StorePath   string `yaml:"storePath"`
 		TfTemplates string `yaml:"tfTemplatesPath"`
 		Secrets     string `yaml:"secrets"`
+		SSHPath     string `yaml:"sshPath"`
+		PubKey      string `yaml:"pubkey"`
 	} `yaml:"spec"`
 }
 
