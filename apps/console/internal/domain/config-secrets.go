@@ -65,8 +65,14 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 	if err != nil {
 		return nil, err
 	}
+
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(create.Id), opcrds.Secret{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), opcrds.Secret{
 			APIVersion: opcrds.SecretAPIVersion,
 			Kind:       opcrds.SecretKind,
 			Metadata: opcrds.SecretMetadata{
@@ -101,8 +107,14 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterIdForProject(ctx, cfg.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(cfg.Id), opcrds.Secret{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(cfg.Id), opcrds.Secret{
 			APIVersion: opcrds.SecretAPIVersion,
 			Kind:       opcrds.SecretKind,
 			Metadata: opcrds.SecretMetadata{
@@ -140,8 +152,13 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 		return false, err
 	}
 
+	clusterId, err := d.getClusterIdForProject(ctx, secret.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"delete", "", string(secretId), opcrds.Config{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(secretId), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
@@ -211,8 +228,14 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 	if err != nil {
 		return nil, err
 	}
+
+	clusterId, err := d.getClusterIdForProject(ctx, projectId)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(create.Id), opcrds.Config{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
@@ -253,8 +276,14 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterIdForProject(ctx, cfg.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", "", string(cfg.Id), opcrds.Config{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(cfg.Id), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
@@ -290,8 +319,14 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterIdForProject(ctx, cfg.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"delete", "", string(configId), opcrds.Config{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(configId), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{

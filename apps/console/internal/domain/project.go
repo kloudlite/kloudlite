@@ -188,7 +188,7 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		return nil, err
 	}
 
-	clusterId, err := d.getClusterFromAccount(ctx, accountId)
+	clusterId, err := d.getClusterForAccount(ctx, accountId)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +257,7 @@ func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 		return false, err
 	}
 
-	clusterId, err := d.getClusterFromAccount(ctx, proj.AccountId)
+	clusterId, err := d.getClusterForAccount(ctx, proj.AccountId)
 	if err != nil {
 		return false, err
 	}
