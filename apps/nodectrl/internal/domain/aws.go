@@ -62,9 +62,10 @@ func (d *domainI) doWithAWS() error {
 	}, infraclient.AWSProviderEnv{
 		StorePath:   klConf.Values.StorePath,
 		TfTemplates: klConf.Values.TfTemplates,
-		Secrets:     klConf.Values.Secrets,
 		Labels:      labels,
 		Taints:      taints,
+		Secrets:     klConf.Values.Secrets,
+		SSHPath:     klConf.Values.SSHPath,
 	})
 
 	awsNode := infraclient.AWSNode{

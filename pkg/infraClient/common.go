@@ -25,7 +25,7 @@ func mkdir(folder string) error {
 
 // destroyNode implements doProviderClient
 func destroyNode(folder string, values map[string]string) error {
-	vars := []string{"destroy", "-auto-approve", "-no-color"}
+	vars := []string{"destroy", "-auto-approve"}
 
 	for k, v := range values {
 		vars = append(vars, fmt.Sprintf("-var=%s=%s", k, v))
@@ -80,7 +80,7 @@ func getOutput(folder, key string) ([]byte, error) {
 // applyTF implements doProviderClient
 func applyTF(folder string, values map[string]string) error {
 
-	vars := []string{"apply", "-auto-approve", "-no-color"}
+	vars := []string{"apply", "-auto-approve"}
 
 	fmt.Printf("[#] terraform %s", strings.Join(vars, " "))
 
