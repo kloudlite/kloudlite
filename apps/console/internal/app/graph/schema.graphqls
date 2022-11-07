@@ -1,6 +1,5 @@
 scalar Json
 
-
 type LoadEnv {
   envVars: Json
   mountFiles: Json
@@ -130,8 +129,6 @@ input EdgeRegionUpdateIn {
   pools: [NodePoolIn]
 }
 
-
-
 type Mutation {
   mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc #project-admin-access
   mangedSvc_uninstall(installationId: ID!): Boolean! #project-admin-access
@@ -200,6 +197,20 @@ type Mutation {
   core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
   core_updateCloudProvider(providerId: ID!, cloudProvider: CloudProviderUpdateIn!): Boolean! #private-access
   core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
+
+  core_addNewCluster(cluster: ClusterIn!): ClusterOut!
+}
+
+input ClusterIn {
+  name: String!
+  subDomain: String!
+  kubeConfig: String!
+}
+
+type ClusterOut {
+  id: ID!
+  name: String!
+  subDomain: String!
 }
 
 type StoragePlan @key(fields: "name"){

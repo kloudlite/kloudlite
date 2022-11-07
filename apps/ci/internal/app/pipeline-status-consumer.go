@@ -20,7 +20,7 @@ func ProcessPipelineRunEvents(d domain.Domain, consumer PipelineStatusConsumer, 
 	if err := consumer.Ping(ctx); err != nil {
 		log.Fatal("failed to ping kafka brokers, for pipeline status consumer")
 	}
-	logr.Infof("sucessful ping to kafka brokers")
+	logr.Infof("successful ping to kafka brokers")
 	consumer.StartConsuming(
 		func(msg []byte, _ time.Time, offset int64) error {
 			logger := logr.WithName("ci-pipeline-watcher").WithKV("offset", offset)

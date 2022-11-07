@@ -60,11 +60,13 @@ func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string
 	if session == nil {
 		return nil, errors.New("not logged in")
 	}
-	account, err := r.domain.CreateAccount(ctx, session.UserId, name, domain.Billing{
-		PaymentMethodId: billing.StripePaymentMethodID,
-		CardholderName:  billing.CardholderName,
-		Address:         billing.Address,
-	})
+	account, err := r.domain.CreateAccount(
+		ctx, session.UserId, name, domain.Billing{
+			PaymentMethodId: billing.StripePaymentMethodID,
+			CardholderName:  billing.CardholderName,
+			Address:         billing.Address,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -88,11 +90,13 @@ func (r *mutationResolver) FinanceUpdateAccountBilling(ctx context.Context, acco
 	if session == nil {
 		return nil, errors.New("not logged in")
 	}
-	account, err := r.domain.UpdateAccountBilling(ctx, accountID, &domain.Billing{
-		PaymentMethodId: billing.StripePaymentMethodID,
-		CardholderName:  billing.CardholderName,
-		Address:         billing.Address,
-	})
+	account, err := r.domain.UpdateAccountBilling(
+		ctx, accountID, &domain.Billing{
+			PaymentMethodId: billing.StripePaymentMethodID,
+			CardholderName:  billing.CardholderName,
+			Address:         billing.Address,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -145,6 +149,14 @@ func (r *mutationResolver) FinanceDeleteAccount(ctx context.Context, accountID r
 		return false, errors.New("not logged in")
 	}
 	return r.domain.DeleteAccount(ctx, accountID)
+}
+
+func (r *mutationResolver) FinanceAttachToCluster(ctx context.Context, accountID repos.ID, clusterID repos.ID) (bool, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
+	if session == nil {
+		return false, errors.New("not logged in")
+	}
+	return r.domain.AttachToCluster(ctx, accountID, clusterID)
 }
 
 func (r *queryResolver) FinanceAccount(ctx context.Context, accountID repos.ID) (*model.Account, error) {
