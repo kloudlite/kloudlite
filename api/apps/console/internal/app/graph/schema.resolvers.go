@@ -132,12 +132,14 @@ func (r *cloudProviderResolver) Edges(ctx context.Context, obj *model.CloudProvi
 				Pools: func() []*model.NodePool {
 					pools := make([]*model.NodePool, 0)
 					for _, pool := range r.Pools {
-						pools = append(pools, &model.NodePool{
-							Name:   pool.Name,
-							Config: pool.Config,
-							Min:    pool.Min,
-							Max:    pool.Max,
-						})
+						pools = append(
+							pools, &model.NodePool{
+								Name:   pool.Name,
+								Config: pool.Config,
+								Min:    pool.Min,
+								Max:    pool.Max,
+							},
+						)
 					}
 					return pools
 				}(),
@@ -1065,6 +1067,18 @@ func (r *mutationResolver) CoreDeleteCloudProvider(ctx context.Context, provider
 	return true, nil
 }
 
+func (r *mutationResolver) CoreAddNewCluster(ctx context.Context, cluster model.ClusterIn) (*model.ClusterOut, error) {
+	newCluster, err := r.Domain.AddNewCluster(ctx, cluster.Name, cluster.SubDomain, cluster.KubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ClusterOut{
+		ID:        newCluster.Id,
+		Name:      newCluster.Name,
+		SubDomain: newCluster.SubDomain,
+	}, nil
+}
+
 func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
 	entities, err := r.Domain.GetProjectMemberships(ctx, obj.ID)
 	accountMemberships := make([]*model.ProjectMembership, len(entities))
@@ -1593,9 +1607,9 @@ type userResolver struct{ *Resolver }
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have
 // one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func returnApps(appEntities []*entities.App) []*model.App {
 	apps := make([]*model.App, 0)
 	for _, a := range appEntities {
