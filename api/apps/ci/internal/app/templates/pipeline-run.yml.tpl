@@ -1,5 +1,6 @@
 {{- $svcAccountName := "kloudlite-svc-account" }}
-{{- $dockerConfigName := "kloudlite-docker-registry" }}
+{{/*{{- $dockerConfigName := "kloudlite-docker-registry" }}*/}}
+{{- $dockerConfigName := "kloudlite-harbor-creds" }}
 
 {{- $tolerationKey := "only-ci" }}
 {{- $tolerationEffect := "NoSchedule" }}
