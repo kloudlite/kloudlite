@@ -5,5 +5,5 @@ query: |
     finance_attachToCluster(accountId: $accountId, clusterId: $clusterId)
   }
 variables:
-  accountId: acc-xnnbf-kd254lyrcnu2jqvnoksvk
-  clusterId: clus-t2a-sfpxmcmw9qfydq0kzqswfhvb
+  accountId: acc-xnnbf-kd255lyrcnu2jqvnoksvk
+  clusterId: clus-2o2h7anoxoycmcgpryjw3lk1-srt

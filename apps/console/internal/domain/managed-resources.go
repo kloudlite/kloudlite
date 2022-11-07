@@ -152,7 +152,7 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 	}
 
 	err = d.workloadMessenger.SendAction(
-		"apply", string(create.Id), &opCrds.ManagedResource{
+		"apply", "", string(create.Id), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
 			Metadata: opCrds.ManagedResourceMetadata{
@@ -207,7 +207,7 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 		return false, err
 	}
 	err = d.workloadMessenger.SendAction(
-		"apply", string(mres.Id), &opCrds.ManagedResource{
+		"apply", "", string(mres.Id), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
 			Metadata: opCrds.ManagedResourceMetadata{
@@ -256,7 +256,7 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 		return false, err
 	}
 	err = d.workloadMessenger.SendAction(
-		"delete", string(appID), &opCrds.ManagedResource{
+		"delete", "", string(appID), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
 			Metadata: opCrds.ManagedResourceMetadata{

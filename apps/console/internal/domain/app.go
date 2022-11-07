@@ -234,7 +234,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	}
 
 	err = d.workloadMessenger.SendAction(
-		"delete", string(appID), &op_crds.App{
+		"delete", "", string(appID), &op_crds.App{
 			APIVersion: op_crds.AppAPIVersion,
 			Kind:       op_crds.AppKind,
 			Metadata: op_crds.AppMetadata{
@@ -252,7 +252,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	if app.IsLambda {
 		d.workloadMessenger.SendAction(
-			"delete", string(appID), &op_crds.Lambda{
+			"delete", "", string(appID), &op_crds.Lambda{
 				APIVersion: op_crds.LambdaAPIVersion,
 				Kind:       op_crds.LambdaKind,
 				Metadata: op_crds.LambdaMetadata{
@@ -263,7 +263,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 		)
 	} else {
 		d.workloadMessenger.SendAction(
-			"delete", string(appID), &op_crds.App{
+			"delete", "", string(appID), &op_crds.App{
 				APIVersion: op_crds.AppAPIVersion,
 				Kind:       op_crds.AppKind,
 				Metadata: op_crds.AppMetadata{
@@ -331,7 +331,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 
 	if app.IsLambda {
 		err := d.workloadMessenger.SendAction(
-			"apply", string(app.Id), &op_crds.Lambda{
+			"apply", "", string(app.Id), &op_crds.Lambda{
 				APIVersion: op_crds.LambdaAPIVersion,
 				Kind:       op_crds.LambdaKind,
 				Metadata: op_crds.LambdaMetadata{
@@ -448,7 +448,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 		return err
 	} else {
 		err := d.workloadMessenger.SendAction(
-			"apply", string(app.Id), &op_crds.App{
+			"apply", "", string(app.Id), &op_crds.App{
 				APIVersion: op_crds.AppAPIVersion,
 				Kind:       op_crds.AppKind,
 				Metadata: op_crds.AppMetadata{

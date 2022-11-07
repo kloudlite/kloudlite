@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	// "fmt"
 	"strings"
 
 	"kloudlite.io/pkg/kubeapi"
@@ -161,7 +160,7 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		return nil, err
 	}
 
-	create, err := d.projectRepo.Create(
+	project, err := d.projectRepo.Create(
 		ctx, &entities.Project{
 			Name:        projectName,
 			AccountId:   accountId,
@@ -181,26 +180,32 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 		ctx, &iam.InAddMembership{
 			UserId:       string(ownerId),
 			ResourceType: "project",
-			ResourceId:   string(create.Id),
+			ResourceId:   string(project.Id),
 			Role:         "project-admin",
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	clusterId, err := d.getClusterFromAccount(ctx, accountId)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", string(create.Id), &op_crds.Project{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(project.Id), &op_crds.Project{
 			APIVersion: op_crds.APIVersion,
 			Kind:       op_crds.ProjectKind,
 			Metadata: op_crds.ProjectMetadata{
-				Name: create.Name,
+				Name: project.Name,
 				Labels: map[string]string{
-					"kloudlite.io/account-ref":  string(create.AccountId),
-					"kloudlite.io/resource-ref": string(create.Id),
+					"kloudlite.io/account-ref":  string(project.AccountId),
+					"kloudlite.io/resource-ref": string(project.Id),
 				},
 				Annotations: map[string]string{
-					"kloudlite.io/account-ref":  string(create.AccountId),
-					"kloudlite.io/resource-ref": string(create.Id),
+					"kloudlite.io/account-ref":  string(project.AccountId),
+					"kloudlite.io/resource-ref": string(project.Id),
 				},
 			},
 			Spec: op_crds.ProjectSpec{
@@ -211,7 +216,7 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 	if err != nil {
 		return nil, err
 	}
-	return create, err
+	return project, err
 }
 
 func (d *domain) UpdateProject(ctx context.Context, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) (bool, error) {
@@ -252,13 +257,18 @@ func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 		return false, err
 	}
 
+	clusterId, err := d.getClusterFromAccount(ctx, proj.AccountId)
+	if err != nil {
+		return false, err
+	}
+
 	proj.IsDeleting = true
 	_, err = d.projectRepo.UpdateById(ctx, id, proj)
 	if err != nil {
 		return false, err
 	}
 	err = d.workloadMessenger.SendAction(
-		"delete", string(id), &op_crds.Project{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(id), &op_crds.Project{
 			APIVersion: op_crds.APIVersion,
 			Kind:       op_crds.ProjectKind,
 			Metadata: op_crds.ProjectMetadata{

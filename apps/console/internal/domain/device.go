@@ -40,16 +40,20 @@ func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]
 
 	q := make(repos.Filter)
 	q["account_id"] = accountId
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
+	return d.deviceRepo.Find(
+		ctx, repos.Query{
+			Filter: q,
+		},
+	)
 }
 func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error) {
 	q := make(repos.Filter)
 	q["user_id"] = userId
-	return d.deviceRepo.Find(ctx, repos.Query{
-		Filter: q,
-	})
+	return d.deviceRepo.Find(
+		ctx, repos.Query{
+			Filter: q,
+		},
+	)
 }
 
 func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (map[string]any, error) {
@@ -71,10 +75,12 @@ func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (map[st
 }
 
 func (d *domain) DeviceByNameExists(ctx context.Context, accountId repos.ID, name string) (bool, error) {
-	one, err := d.deviceRepo.FindOne(ctx, repos.Filter{
-		"account_id": accountId,
-		"name":       name,
-	})
+	one, err := d.deviceRepo.FindOne(
+		ctx, repos.Filter{
+			"account_id": accountId,
+			"name":       name,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -82,14 +88,16 @@ func (d *domain) DeviceByNameExists(ctx context.Context, accountId repos.ID, nam
 }
 
 func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId repos.ID, userId repos.ID) (*entities.Device, error) {
-	devices, err := d.deviceRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": accountId,
+	devices, err := d.deviceRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"account_id": accountId,
+			},
+			Sort: map[string]any{
+				"index": 1,
+			},
 		},
-		Sort: map[string]any{
-			"index": 1,
-		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -105,53 +113,59 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 	if index == -1 {
 		index = count
 	}
-	device, e := d.deviceRepo.Create(ctx, &entities.Device{
-		Name:      deviceName,
-		AccountId: accountId,
-		UserId:    userId,
-		Status:    entities.DeviceStateSyncing,
-		Index:     index,
-	})
+	device, e := d.deviceRepo.Create(
+		ctx, &entities.Device{
+			Name:      deviceName,
+			AccountId: accountId,
+			UserId:    userId,
+			Status:    entities.DeviceStateSyncing,
+			Index:     index,
+		},
+	)
 	if e != nil {
 		return nil, fmt.Errorf("unable to persist in db %v", e)
 	}
-	err = d.workloadMessenger.SendAction("apply", string(device.Id), &internal_crds.Device{
-		APIVersion: internal_crds.DeviceAPIVersion,
-		Kind:       internal_crds.DeviceKind,
-		Metadata: internal_crds.DeviceMetadata{
-			Name: string(device.Id),
-			Annotations: map[string]string{
-				"kloudlite.io/account-id": string(device.AccountId),
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(device.Id), &internal_crds.Device{
+			APIVersion: internal_crds.DeviceAPIVersion,
+			Kind:       internal_crds.DeviceKind,
+			Metadata: internal_crds.DeviceMetadata{
+				Name: string(device.Id),
+				Annotations: map[string]string{
+					"kloudlite.io/account-id": string(device.AccountId),
+				},
+				Labels: map[string]string{
+					"kloudlite.io/account-id": string(device.AccountId),
+					"kloudlite.io/device-id":  string(device.Id),
+				},
 			},
-			Labels: map[string]string{
-				"kloudlite.io/account-id": string(device.AccountId),
-				"kloudlite.io/device-id":  string(device.Id),
+			Spec: internal_crds.DeviceSpec{
+				Account: string(device.AccountId),
+				ActiveRegion: func() string {
+					if device.ActiveRegion != nil {
+						return *device.ActiveRegion
+					}
+					return ""
+				}(),
+				DeviceName: deviceName,
+				Offset:     device.Index,
+				DeviceId:   string(device.Id),
+				Ports: func() []internal_crds.Port {
+					var p []internal_crds.Port
+					for _, p2 := range device.ExposedPorts {
+						p = append(
+							p, internal_crds.Port{
+								Port:       p2.Port,
+								TargetPort: p2.TargetPort,
+							},
+						)
+					}
+					return p
+					// device.ExposedPorts
+				}(),
 			},
 		},
-		Spec: internal_crds.DeviceSpec{
-			Account: string(device.AccountId),
-			ActiveRegion: func() string {
-				if device.ActiveRegion != nil {
-					return *device.ActiveRegion
-				}
-				return ""
-			}(),
-			DeviceName: deviceName,
-			Offset:     device.Index,
-			DeviceId:   string(device.Id),
-			Ports: func() []internal_crds.Port {
-				var p []internal_crds.Port
-				for _, p2 := range device.ExposedPorts {
-					p = append(p, internal_crds.Port{
-						Port:       p2.Port,
-						TargetPort: p2.TargetPort,
-					})
-				}
-				return p
-				// device.ExposedPorts
-			}(),
-		},
-	})
+	)
 	if err != nil {
 		return device, err
 	}
@@ -189,13 +203,15 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	err = d.workloadMessenger.SendAction("delete", string(device.Id), &internal_crds.Device{
-		APIVersion: internal_crds.DeviceAPIVersion,
-		Kind:       internal_crds.DeviceKind,
-		Metadata: internal_crds.DeviceMetadata{
-			Name: string(device.Id),
+	err = d.workloadMessenger.SendAction(
+		"delete", "", string(device.Id), &internal_crds.Device{
+			APIVersion: internal_crds.DeviceAPIVersion,
+			Kind:       internal_crds.DeviceKind,
+			Metadata: internal_crds.DeviceMetadata{
+				Name: string(device.Id),
+			},
 		},
-	})
+	)
 	return err
 }
 func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName *string, region *string, ports []entities.Port) (done bool, e error) {
@@ -210,10 +226,12 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 		device.ExposedPorts = func() []entities.Port {
 			p := []entities.Port{}
 			for _, p2 := range ports {
-				p = append(p, entities.Port{
-					Port:       p2.Port,
-					TargetPort: p2.TargetPort,
-				})
+				p = append(
+					p, entities.Port{
+						Port:       p2.Port,
+						TargetPort: p2.TargetPort,
+					},
+				)
 			}
 
 			return p
@@ -223,42 +241,46 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 	if err != nil {
 		return false, e
 	}
-	err = d.workloadMessenger.SendAction("apply", string(device.Id), &internal_crds.Device{
-		APIVersion: internal_crds.DeviceAPIVersion,
-		Kind:       internal_crds.DeviceKind,
-		Metadata: internal_crds.DeviceMetadata{
-			Name: string(device.Id),
-			Annotations: map[string]string{
-				"kloudlite.io/account-id": string(device.AccountId),
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(device.Id), &internal_crds.Device{
+			APIVersion: internal_crds.DeviceAPIVersion,
+			Kind:       internal_crds.DeviceKind,
+			Metadata: internal_crds.DeviceMetadata{
+				Name: string(device.Id),
+				Annotations: map[string]string{
+					"kloudlite.io/account-id": string(device.AccountId),
+				},
+				Labels: map[string]string{
+					"kloudlite.io/account-id": string(device.AccountId),
+					"kloudlite.io/device-id":  string(device.Id),
+				},
 			},
-			Labels: map[string]string{
-				"kloudlite.io/account-id": string(device.AccountId),
-				"kloudlite.io/device-id":  string(device.Id),
+			Spec: internal_crds.DeviceSpec{
+				DeviceName: device.Name,
+				Account:    string(device.AccountId),
+				ActiveRegion: func() string {
+					if device.ActiveRegion != nil {
+						return *device.ActiveRegion
+					}
+					return ""
+				}(),
+				Offset:   device.Index,
+				DeviceId: string(device.Id),
+				Ports: func() []internal_crds.Port {
+					p := make([]internal_crds.Port, 0)
+					for _, p2 := range device.ExposedPorts {
+						p = append(
+							p, internal_crds.Port{
+								Port:       p2.Port,
+								TargetPort: p2.TargetPort,
+							},
+						)
+					}
+					return p
+				}(),
 			},
 		},
-		Spec: internal_crds.DeviceSpec{
-			DeviceName: device.Name,
-			Account:    string(device.AccountId),
-			ActiveRegion: func() string {
-				if device.ActiveRegion != nil {
-					return *device.ActiveRegion
-				}
-				return ""
-			}(),
-			Offset:   device.Index,
-			DeviceId: string(device.Id),
-			Ports: func() []internal_crds.Port {
-				p := make([]internal_crds.Port, 0)
-				for _, p2 := range device.ExposedPorts {
-					p = append(p, internal_crds.Port{
-						Port:       p2.Port,
-						TargetPort: p2.TargetPort,
-					})
-				}
-				return p
-			}(),
-		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}

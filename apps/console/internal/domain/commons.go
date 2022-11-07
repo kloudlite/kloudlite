@@ -2,11 +2,13 @@ package domain
 
 import (
 	"context"
-	"errors"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
+	"kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/repos"
 )
 
 const (
@@ -33,4 +35,24 @@ func GetUser(ctx context.Context) (string, error) {
 		return "", errors.New("Unauthorized")
 	}
 	return string(session.UserId), nil
+}
+
+func (d *domain) getClusterFromAccount(ctx context.Context, accountId repos.ID) (string, error) {
+	cluster, err := d.financeClient.GetAttachedCluster(ctx, &finance.GetAttachedClusterIn{AccountId: string(accountId)})
+	if err != nil {
+		return "", errors.NewEf(err, "failed to get cluster from accountId [grpc]")
+	}
+	return cluster.ClusterId, nil
+}
+
+type DispatchKafkaTopicType string
+
+const (
+	SendToAgent              DispatchKafkaTopicType = "send-to-agent"
+	StatusUpdatesFromAgent   DispatchKafkaTopicType = "status-updates-from-agent"
+	PipelineUpdatesFromAgent DispatchKafkaTopicType = "pipeline-updates-from-agent"
+)
+
+func (d *domain) getDispatchKafkaTopic(clusterId string) string {
+	return clusterId + "-incoming"
 }

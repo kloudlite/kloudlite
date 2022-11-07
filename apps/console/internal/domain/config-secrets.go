@@ -29,11 +29,13 @@ func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entitie
 	if err != nil {
 		return nil, err
 	}
-	secrets, err := d.secretRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"project_id": projectId,
+	secrets, err := d.secretRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"project_id": projectId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -51,25 +53,29 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 		return nil, err
 	}
 
-	create, err := d.secretRepo.Create(ctx, &entities.Secret{
-		Name:        strings.ToLower(secretName),
-		ProjectId:   projectId,
-		Namespace:   prj.Name,
-		Data:        secretData,
-		Description: desc,
-	})
+	create, err := d.secretRepo.Create(
+		ctx, &entities.Secret{
+			Name:        strings.ToLower(secretName),
+			ProjectId:   projectId,
+			Namespace:   prj.Name,
+			Data:        secretData,
+			Description: desc,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), opcrds.Secret{
-		APIVersion: opcrds.SecretAPIVersion,
-		Kind:       opcrds.SecretKind,
-		Metadata: opcrds.SecretMetadata{
-			Name:      string(create.Id),
-			Namespace: prj.Name,
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(create.Id), opcrds.Secret{
+			APIVersion: opcrds.SecretAPIVersion,
+			Kind:       opcrds.SecretKind,
+			Metadata: opcrds.SecretMetadata{
+				Name:      string(create.Id),
+				Namespace: prj.Name,
+			},
+			Data: nil,
 		},
-		Data: nil,
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -95,22 +101,24 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(cfg.Id), opcrds.Secret{
-		APIVersion: opcrds.SecretAPIVersion,
-		Kind:       opcrds.SecretKind,
-		Metadata: opcrds.SecretMetadata{
-			Name:      string(cfg.Id),
-			Namespace: cfg.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(cfg.Id), opcrds.Secret{
+			APIVersion: opcrds.SecretAPIVersion,
+			Kind:       opcrds.SecretKind,
+			Metadata: opcrds.SecretMetadata{
+				Name:      string(cfg.Id),
+				Namespace: cfg.Namespace,
+			},
+			Data: (func() map[string]any {
+				data := make(map[string]any, 0)
+				for _, d := range cfg.Data {
+					encoded := b64.StdEncoding.EncodeToString([]byte(d.Value))
+					data[d.Key] = encoded
+				}
+				return data
+			})(),
 		},
-		Data: (func() map[string]any {
-			data := make(map[string]any, 0)
-			for _, d := range cfg.Data {
-				encoded := b64.StdEncoding.EncodeToString([]byte(d.Value))
-				data[d.Key] = encoded
-			}
-			return data
-		})(),
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -132,14 +140,16 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction("delete", string(secretId), opcrds.Config{
-		APIVersion: opcrds.ConfigAPIVersion,
-		Kind:       opcrds.ConfigKind,
-		Metadata: opcrds.ConfigMetadata{
-			Name:      string(secret.Id),
-			Namespace: secret.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"delete", "", string(secretId), opcrds.Config{
+			APIVersion: opcrds.ConfigAPIVersion,
+			Kind:       opcrds.ConfigKind,
+			Metadata: opcrds.ConfigMetadata{
+				Name:      string(secret.Id),
+				Namespace: secret.Namespace,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -165,11 +175,13 @@ func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entitie
 	if err != nil {
 		return nil, err
 	}
-	configs, err := d.configRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"project_id": projectId,
+	configs, err := d.configRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"project_id": projectId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -187,29 +199,35 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
-	create, err := d.configRepo.Create(ctx, &entities.Config{
-		Name:        strings.ToLower(configName),
-		ProjectId:   projectId,
-		Namespace:   prj.Name,
-		Data:        configData,
-		Description: desc,
-	})
+	create, err := d.configRepo.Create(
+		ctx, &entities.Config{
+			Name:        strings.ToLower(configName),
+			ProjectId:   projectId,
+			Namespace:   prj.Name,
+			Data:        configData,
+			Description: desc,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), opcrds.Config{
-		APIVersion: opcrds.ConfigAPIVersion,
-		Kind:       opcrds.ConfigKind,
-		Metadata: opcrds.ConfigMetadata{
-			Name:      string(create.Id),
-			Namespace: prj.Name,
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(create.Id), opcrds.Config{
+			APIVersion: opcrds.ConfigAPIVersion,
+			Kind:       opcrds.ConfigKind,
+			Metadata: opcrds.ConfigMetadata{
+				Name:      string(create.Id),
+				Namespace: prj.Name,
+			},
+			Data: nil,
 		},
-		Data: nil,
-	})
-	time.AfterFunc(3*time.Second, func() {
-		fmt.Println("send apply config")
-		d.notifier.Notify(create.Id)
-	})
+	)
+	time.AfterFunc(
+		3*time.Second, func() {
+			fmt.Println("send apply config")
+			d.notifier.Notify(create.Id)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -235,21 +253,23 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(cfg.Id), opcrds.Config{
-		APIVersion: opcrds.ConfigAPIVersion,
-		Kind:       opcrds.ConfigKind,
-		Metadata: opcrds.ConfigMetadata{
-			Name:      string(cfg.Id),
-			Namespace: cfg.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(cfg.Id), opcrds.Config{
+			APIVersion: opcrds.ConfigAPIVersion,
+			Kind:       opcrds.ConfigKind,
+			Metadata: opcrds.ConfigMetadata{
+				Name:      string(cfg.Id),
+				Namespace: cfg.Namespace,
+			},
+			Data: func() map[string]any {
+				m := make(map[string]any, 0)
+				for _, i := range cfg.Data {
+					m[i.Key] = i.Value
+				}
+				return m
+			}(),
 		},
-		Data: func() map[string]any {
-			m := make(map[string]any, 0)
-			for _, i := range cfg.Data {
-				m[i.Key] = i.Value
-			}
-			return m
-		}(),
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -270,14 +290,16 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("delete", string(configId), opcrds.Config{
-		APIVersion: opcrds.ConfigAPIVersion,
-		Kind:       opcrds.ConfigKind,
-		Metadata: opcrds.ConfigMetadata{
-			Name:      string(cfg.Id),
-			Namespace: cfg.Namespace,
+	err = d.workloadMessenger.SendAction(
+		"delete", "", string(configId), opcrds.Config{
+			APIVersion: opcrds.ConfigAPIVersion,
+			Kind:       opcrds.ConfigKind,
+			Metadata: opcrds.ConfigMetadata{
+				Name:      string(cfg.Id),
+				Namespace: cfg.Namespace,
+			},
 		},
-	})
+	)
 
 	if err != nil {
 		return false, err

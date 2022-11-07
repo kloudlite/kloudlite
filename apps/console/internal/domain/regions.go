@@ -24,18 +24,20 @@ func (d *domain) GetCloudProviders(ctx context.Context, accountId repos.ID) ([]*
 	if err := d.checkAccountAccess(ctx, accountId, ReadAccount); err != nil {
 		return nil, err
 	}
-	providers, err := d.providerRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"$or": []repos.Filter{
-				{
-					"account_id": accountId,
-				},
-				{
-					"account_id": "kl-core",
+	providers, err := d.providerRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"$or": []repos.Filter{
+					{
+						"account_id": accountId,
+					},
+					{
+						"account_id": "kl-core",
+					},
 				},
 			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -57,33 +59,37 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 		return err
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(provider.Id), &op_crds.CloudProvider{
-		APIVersion: op_crds.CloudProviderAPIVersion,
-		Kind:       op_crds.CloudProviderKind,
-		Metadata: op_crds.CloudProviderMetadata{
-			Name: "provider-" + string(provider.Id),
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(provider.Id), &op_crds.CloudProvider{
+			APIVersion: op_crds.CloudProviderAPIVersion,
+			Kind:       op_crds.CloudProviderKind,
+			Metadata: op_crds.CloudProviderMetadata{
+				Name: "provider-" + string(provider.Id),
+			},
 		},
-	})
+	)
 
 	if err != nil {
 		return err
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(provider.Id), &op_crds.Secret{
-		APIVersion: op_crds.SecretAPIVersion,
-		Kind:       op_crds.SecretKind,
-		Metadata: op_crds.SecretMetadata{
-			Name:      "provider-" + string(provider.Id),
-			Namespace: "kl-core",
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(provider.Id), &op_crds.Secret{
+			APIVersion: op_crds.SecretAPIVersion,
+			Kind:       op_crds.SecretKind,
+			Metadata: op_crds.SecretMetadata{
+				Name:      "provider-" + string(provider.Id),
+				Namespace: "kl-core",
+			},
+			StringData: func() map[string]any {
+				data := make(map[string]any)
+				for k, v := range provider.Credentials {
+					data[k] = v
+				}
+				return data
+			}(),
 		},
-		StringData: func() map[string]any {
-			data := make(map[string]any)
-			for k, v := range provider.Credentials {
-				data[k] = v
-			}
-			return data
-		}(),
-	})
+	)
 
 	if err != nil {
 		return err
@@ -100,14 +106,16 @@ func (d *domain) DeleteCloudProvider(ctx context.Context, providerId repos.ID) e
 		return e
 	}
 
-	if err = d.workloadMessenger.SendAction("delete", string(provider.Id), &op_crds.Secret{
-		APIVersion: op_crds.SecretAPIVersion,
-		Kind:       op_crds.SecretKind,
-		Metadata: op_crds.SecretMetadata{
-			Name:      "provider-" + string(provider.Id),
-			Namespace: "kl-core",
+	if err = d.workloadMessenger.SendAction(
+		"delete", "", string(provider.Id), &op_crds.Secret{
+			APIVersion: op_crds.SecretAPIVersion,
+			Kind:       op_crds.SecretKind,
+			Metadata: op_crds.SecretMetadata{
+				Name:      "provider-" + string(provider.Id),
+				Namespace: "kl-core",
+			},
 		},
-	}); err != nil {
+	); err != nil {
 		return err
 	}
 
@@ -155,21 +163,23 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, u
 	if err != nil {
 		return err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(provider.Id), &op_crds.Secret{
-		APIVersion: op_crds.SecretAPIVersion,
-		Kind:       op_crds.SecretKind,
-		Metadata: op_crds.SecretMetadata{
-			Name:      "provider-" + string(provider.Id),
-			Namespace: "kl-core",
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(provider.Id), &op_crds.Secret{
+			APIVersion: op_crds.SecretAPIVersion,
+			Kind:       op_crds.SecretKind,
+			Metadata: op_crds.SecretMetadata{
+				Name:      "provider-" + string(provider.Id),
+				Namespace: "kl-core",
+			},
+			StringData: func() map[string]any {
+				data := make(map[string]any)
+				for k, v := range provider.Credentials {
+					data[k] = v
+				}
+				return data
+			}(),
 		},
-		StringData: func() map[string]any {
-			data := make(map[string]any)
-			for k, v := range provider.Credentials {
-				data[k] = v
-			}
-			return data
-		}(),
-	})
+	)
 
 	if err != nil {
 		return err
@@ -191,51 +201,57 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entit
 		return err
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(region.Id), &op_crds.Region{
-		APIVersion: op_crds.EdgeAPIVersion,
-		Kind:       op_crds.EdgeKind,
-		Metadata: op_crds.EdgeMetadata{
-			Name: string(createdRegion.Id),
-		},
-		Spec: op_crds.EdgeSpec{
-			CredentialsRef: op_crds.CredentialsRef{
-				SecretName: "provider-" + string(provider.Id),
-				Namespace:  "kl-core",
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(region.Id), &op_crds.Region{
+			APIVersion: op_crds.EdgeAPIVersion,
+			Kind:       op_crds.EdgeKind,
+			Metadata: op_crds.EdgeMetadata{
+				Name: string(createdRegion.Id),
 			},
-			AccountId: func() *string {
-				if provider.AccountId != nil {
-					s := string(*provider.AccountId)
-					return &s
-				}
-				return nil
-			}(),
-			Provider: provider.Provider,
-			Region:   region.Region,
-			Pools: func() []op_crds.NodePool {
-				var pools []op_crds.NodePool
-				for _, pool := range region.Pools {
-					pools = append(pools, op_crds.NodePool{
-						Name:   pool.Name,
-						Min:    pool.Min,
-						Max:    pool.Max,
-						Config: pool.Config,
-					})
-				}
-				return pools
-			}(),
+			Spec: op_crds.EdgeSpec{
+				CredentialsRef: op_crds.CredentialsRef{
+					SecretName: "provider-" + string(provider.Id),
+					Namespace:  "kl-core",
+				},
+				AccountId: func() *string {
+					if provider.AccountId != nil {
+						s := string(*provider.AccountId)
+						return &s
+					}
+					return nil
+				}(),
+				Provider: provider.Provider,
+				Region:   region.Region,
+				Pools: func() []op_crds.NodePool {
+					var pools []op_crds.NodePool
+					for _, pool := range region.Pools {
+						pools = append(
+							pools, op_crds.NodePool{
+								Name:   pool.Name,
+								Min:    pool.Min,
+								Max:    pool.Max,
+								Config: pool.Config,
+							},
+						)
+					}
+					return pools
+				}(),
+			},
 		},
-	})
+	)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 func (d *domain) GetEdgeRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error) {
-	edgeRegions, err := d.regionRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"provider_id": providerId,
+	edgeRegions, err := d.regionRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"provider_id": providerId,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -257,13 +273,15 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 		}
 	}
 
-	err = d.workloadMessenger.SendAction("delete", string(edge.Id), &op_crds.Region{
-		APIVersion: op_crds.EdgeAPIVersion,
-		Kind:       op_crds.EdgeKind,
-		Metadata: op_crds.EdgeMetadata{
-			Name: string(edge.Id),
+	err = d.workloadMessenger.SendAction(
+		"delete", "", string(edge.Id), &op_crds.Region{
+			APIVersion: op_crds.EdgeAPIVersion,
+			Kind:       op_crds.EdgeKind,
+			Metadata: op_crds.EdgeMetadata{
+				Name: string(edge.Id),
+			},
 		},
-	})
+	)
 	if err != nil {
 		return err
 	}
@@ -302,40 +320,44 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 		return err
 	}
 
-	d.workloadMessenger.SendAction("apply", string(region.Id), &op_crds.Region{
-		APIVersion: op_crds.EdgeAPIVersion,
-		Kind:       op_crds.EdgeKind,
-		Metadata: op_crds.EdgeMetadata{
-			Name: string(createdRegion.Id),
-		},
-		Spec: op_crds.EdgeSpec{
-			CredentialsRef: op_crds.CredentialsRef{
-				SecretName: "provider-" + string(provider.Id),
-				Namespace:  "kl-core",
+	d.workloadMessenger.SendAction(
+		"apply", "", string(region.Id), &op_crds.Region{
+			APIVersion: op_crds.EdgeAPIVersion,
+			Kind:       op_crds.EdgeKind,
+			Metadata: op_crds.EdgeMetadata{
+				Name: string(createdRegion.Id),
 			},
-			AccountId: func() *string {
-				if provider.AccountId != nil {
-					s := string(*provider.AccountId)
-					return &s
-				}
-				return nil
-			}(),
-			Provider: provider.Provider,
-			Region:   region.Region,
-			Pools: func() []op_crds.NodePool {
-				var pools []op_crds.NodePool
-				for _, pool := range region.Pools {
-					pools = append(pools, op_crds.NodePool{
-						Name:   pool.Name,
-						Min:    pool.Min,
-						Max:    pool.Max,
-						Config: pool.Config,
-					})
-				}
-				return pools
-			}(),
+			Spec: op_crds.EdgeSpec{
+				CredentialsRef: op_crds.CredentialsRef{
+					SecretName: "provider-" + string(provider.Id),
+					Namespace:  "kl-core",
+				},
+				AccountId: func() *string {
+					if provider.AccountId != nil {
+						s := string(*provider.AccountId)
+						return &s
+					}
+					return nil
+				}(),
+				Provider: provider.Provider,
+				Region:   region.Region,
+				Pools: func() []op_crds.NodePool {
+					var pools []op_crds.NodePool
+					for _, pool := range region.Pools {
+						pools = append(
+							pools, op_crds.NodePool{
+								Name:   pool.Name,
+								Min:    pool.Min,
+								Max:    pool.Max,
+								Config: pool.Config,
+							},
+						)
+					}
+					return pools
+				}(),
+			},
 		},
-	})
+	)
 	return nil
 
 }
