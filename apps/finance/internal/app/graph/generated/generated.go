@@ -96,6 +96,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		FinanceActivateAccount      func(childComplexity int, accountID repos.ID) int
+		FinanceAttachToCluster      func(childComplexity int, accountID repos.ID, clusterID repos.ID) int
 		FinanceCreateAccount        func(childComplexity int, name string, billing model.BillingInput) int
 		FinanceDeactivateAccount    func(childComplexity int, accountID repos.ID) int
 		FinanceDeleteAccount        func(childComplexity int, accountID repos.ID) int
@@ -157,6 +158,7 @@ type MutationResolver interface {
 	FinanceDeactivateAccount(ctx context.Context, accountID repos.ID) (bool, error)
 	FinanceActivateAccount(ctx context.Context, accountID repos.ID) (bool, error)
 	FinanceDeleteAccount(ctx context.Context, accountID repos.ID) (bool, error)
+	FinanceAttachToCluster(ctx context.Context, accountID repos.ID, clusterID repos.ID) (bool, error)
 }
 type QueryResolver interface {
 	FinanceAccount(ctx context.Context, accountID repos.ID) (*model.Account, error)
@@ -401,6 +403,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.FinanceActivateAccount(childComplexity, args["accountId"].(repos.ID)), true
+
+	case "Mutation.finance_attachToCluster":
+		if e.complexity.Mutation.FinanceAttachToCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_finance_attachToCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.FinanceAttachToCluster(childComplexity, args["accountId"].(repos.ID), args["clusterId"].(repos.ID)), true
 
 	case "Mutation.finance_createAccount":
 		if e.complexity.Mutation.FinanceCreateAccount == nil {
@@ -660,21 +674,22 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type Query {
-  finance_account(accountId: ID!): Account
-  finance_stripeSetupIntent: String
-  finance_testStripe(accountId: ID!): Boolean!
+  finance_account(accountId: ID!): Account # account-admin-access, account-owner-access
+  finance_stripeSetupIntent: String # user-access
+  finance_testStripe(accountId: ID!): Boolean! #private
 }
 
 type Mutation {
-    finance_createAccount(name: String!, billing: BillingInput!): Account!
-    finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account!
-    finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account!
-    finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean!
-    finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean!
-    finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean!
-    finance_deactivateAccount(accountId: ID!): Boolean!
-    finance_activateAccount(accountId: ID!): Boolean!
-    finance_deleteAccount(accountId: ID!): Boolean!
+  finance_createAccount(name: String!, billing: BillingInput!): Account! # user-access
+  finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account! # account-admin-access, account-owner-access
+  finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
+  finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean! # account-admin-access, account-owner-access
+  finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean! # account-admin-access, account-owner-access
+  finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean! # account-admin-access, account-owner-access
+  finance_deactivateAccount(accountId: ID!): Boolean! # account-owner-access
+  finance_activateAccount(accountId: ID!): Boolean! # account-owner-access
+  finance_deleteAccount(accountId: ID!): Boolean! # account-owner-access
+  finance_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
 }
 
 scalar Json
@@ -687,7 +702,7 @@ type Account @key(fields: "id") {
   isActive: Boolean!
   contactEmail: String!
   readableId: ID!
-  memberships: [AccountMembership!]!
+  memberships: [AccountMembership!]! # account-admin-access, account-owner-access
   created: Date!
   outstandingAmount: Float!
 }
@@ -712,8 +727,8 @@ extend type LambdaPlan @key(fields: "name"){
 
 extend type User @key(fields: "id") {
   id: ID! @external
-  accountMemberships:[AccountMembership!]!
-  accountMembership(accountId: ID):AccountMembership!
+  accountMemberships:[AccountMembership!]! # user-access
+  accountMembership(accountId: ID):AccountMembership! # user-access
 }
 
 type AccountMembership {
@@ -861,6 +876,30 @@ func (ec *executionContext) field_Mutation_finance_activateAccount_args(ctx cont
 		}
 	}
 	args["accountId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_finance_attachToCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountId"] = arg0
+	var arg1 repos.ID
+	if tmp, ok := rawArgs["clusterId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
+		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterId"] = arg1
 	return args, nil
 }
 
@@ -2494,6 +2533,48 @@ func (ec *executionContext) _Mutation_finance_deleteAccount(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().FinanceDeleteAccount(rctx, args["accountId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_finance_attachToCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_finance_attachToCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().FinanceAttachToCluster(rctx, args["accountId"].(repos.ID), args["clusterId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4864,6 +4945,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "finance_deleteAccount":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_finance_deleteAccount(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "finance_attachToCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_finance_attachToCluster(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)

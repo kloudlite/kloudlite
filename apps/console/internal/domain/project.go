@@ -102,6 +102,7 @@ func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, em
 
 	return true, nil
 }
+
 func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error {
 
 	if err := d.checkProjectAccess(ctx, projectId, "cancel_proj_invite"); err != nil {
@@ -156,7 +157,6 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 }
 
 func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId repos.ID, projectName string, displayName string, logo *string, regionId *repos.ID, description *string) (*entities.Project, error) {
-
 	if err := d.checkAccountAccess(ctx, accountId, "create_project"); err != nil {
 		return nil, err
 	}

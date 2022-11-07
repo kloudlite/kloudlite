@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/pkg/kubeapi"
 
 	fWebsocket "github.com/gofiber/websocket/v2"
@@ -53,7 +54,7 @@ type Domain interface {
 	GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error)
 	GetConfig(ctx context.Context, configId repos.ID) (*entities.Config, error)
 	DeleteConfig(ctx context.Context, configId repos.ID) (bool, error)
-	//OnUpdateConfig(ctx context.Context, configId repos.ID) error
+	// OnUpdateConfig(ctx context.Context, configId repos.ID) error
 
 	CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error)
 	UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error)
@@ -61,7 +62,7 @@ type Domain interface {
 	DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error)
 	GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error)
 	GetSecret(ctx context.Context, secretId repos.ID) (*entities.Secret, error)
-	//OnUpdateSecret(ctx context.Context, secretId repos.ID) error
+	// OnUpdateSecret(ctx context.Context, secretId repos.ID) error
 
 	GetRouters(ctx context.Context, projectID repos.ID) ([]*entities.Router, error)
 	GetRouter(ctx context.Context, routerID repos.ID) (*entities.Router, error)
@@ -141,6 +142,10 @@ type Domain interface {
 	) context.Context
 
 	GetEdgeNodes(ctx context.Context, id repos.ID) (*kubeapi.AccountNodeList, error)
+
+	// Cluster
+
+	AddNewCluster(ctx context.Context, name, subDomain, kubeConfig string) (*entities.Cluster, error)
 }
 
 type AuthCacheClient cache.Client

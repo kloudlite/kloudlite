@@ -145,6 +145,18 @@ type CloudProviderUpdateIn struct {
 	Credentials map[string]interface{} `json:"credentials"`
 }
 
+type ClusterIn struct {
+	Name       string `json:"name"`
+	SubDomain  string `json:"subDomain"`
+	KubeConfig string `json:"kubeConfig"`
+}
+
+type ClusterOut struct {
+	ID        repos.ID `json:"id"`
+	Name      string   `json:"name"`
+	SubDomain string   `json:"subDomain"`
+}
+
 type ComputePlan struct {
 	Name                  string `json:"name"`
 	Desc                  string `json:"desc"`

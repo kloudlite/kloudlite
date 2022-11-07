@@ -133,6 +133,12 @@ type ComplexityRoot struct {
 		Status   func(childComplexity int) int
 	}
 
+	ClusterOut struct {
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		SubDomain func(childComplexity int) int
+	}
+
 	ComputePlan struct {
 		DedicatedEnabled      func(childComplexity int) int
 		Desc                  func(childComplexity int) int
@@ -270,6 +276,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CoreAddDevice           func(childComplexity int, accountID repos.ID, name string) int
+		CoreAddNewCluster       func(childComplexity int, cluster model.ClusterIn) int
 		CoreCreateApp           func(childComplexity int, projectID repos.ID, app model.AppInput) int
 		CoreCreateCloudProvider func(childComplexity int, accountID *repos.ID, cloudProvider model.CloudProviderIn) int
 		CoreCreateConfig        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
@@ -480,6 +487,7 @@ type MutationResolver interface {
 	CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error)
 	CoreUpdateCloudProvider(ctx context.Context, providerID repos.ID, cloudProvider model.CloudProviderUpdateIn) (bool, error)
 	CoreDeleteCloudProvider(ctx context.Context, providerID repos.ID) (bool, error)
+	CoreAddNewCluster(ctx context.Context, cluster model.ClusterIn) (*model.ClusterOut, error)
 }
 type ProjectResolver interface {
 	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
@@ -892,6 +900,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CloudProvider.Status(childComplexity), true
+
+	case "ClusterOut.id":
+		if e.complexity.ClusterOut.ID == nil {
+			break
+		}
+
+		return e.complexity.ClusterOut.ID(childComplexity), true
+
+	case "ClusterOut.name":
+		if e.complexity.ClusterOut.Name == nil {
+			break
+		}
+
+		return e.complexity.ClusterOut.Name(childComplexity), true
+
+	case "ClusterOut.subDomain":
+		if e.complexity.ClusterOut.SubDomain == nil {
+			break
+		}
+
+		return e.complexity.ClusterOut.SubDomain(childComplexity), true
 
 	case "ComputePlan.dedicatedEnabled":
 		if e.complexity.ComputePlan.DedicatedEnabled == nil {
@@ -1527,6 +1556,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreAddDevice(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
+
+	case "Mutation.core_addNewCluster":
+		if e.complexity.Mutation.CoreAddNewCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_addNewCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreAddNewCluster(childComplexity, args["cluster"].(model.ClusterIn)), true
 
 	case "Mutation.core_createApp":
 		if e.complexity.Mutation.CoreCreateApp == nil {
@@ -2554,7 +2595,6 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
 
-
 type LoadEnv {
   envVars: Json
   mountFiles: Json
@@ -2684,8 +2724,6 @@ input EdgeRegionUpdateIn {
   pools: [NodePoolIn]
 }
 
-
-
 type Mutation {
   mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc #project-admin-access
   mangedSvc_uninstall(installationId: ID!): Boolean! #project-admin-access
@@ -2754,6 +2792,20 @@ type Mutation {
   core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
   core_updateCloudProvider(providerId: ID!, cloudProvider: CloudProviderUpdateIn!): Boolean! #private-access
   core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
+
+  core_addNewCluster(cluster: ClusterIn!): ClusterOut!
+}
+
+input ClusterIn {
+  name: String!
+  subDomain: String!
+  kubeConfig: String!
+}
+
+type ClusterOut {
+  id: ID!
+  name: String!
+  subDomain: String!
 }
 
 type StoragePlan @key(fields: "name"){
@@ -3266,6 +3318,21 @@ func (ec *executionContext) field_Mutation_core_addDevice_args(ctx context.Conte
 		}
 	}
 	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_addNewCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ClusterIn
+	if tmp, ok := rawArgs["cluster"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+		arg0, err = ec.unmarshalNClusterIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cluster"] = arg0
 	return args, nil
 }
 
@@ -6375,6 +6442,111 @@ func (ec *executionContext) _CloudProvider_isShared(ctx context.Context, field g
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ClusterOut_id(ctx context.Context, field graphql.CollectedField, obj *model.ClusterOut) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ClusterOut",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ClusterOut_name(ctx context.Context, field graphql.CollectedField, obj *model.ClusterOut) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ClusterOut",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ClusterOut_subDomain(ctx context.Context, field graphql.CollectedField, obj *model.ClusterOut) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ClusterOut",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SubDomain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
@@ -10716,6 +10888,48 @@ func (ec *executionContext) _Mutation_core_deleteCloudProvider(ctx context.Conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_core_addNewCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_addNewCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreAddNewCluster(rctx, args["cluster"].(model.ClusterIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ClusterOut)
+	fc.Result = res
+	return ec.marshalNClusterOut2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterOut(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _NodePool_name(ctx context.Context, field graphql.CollectedField, obj *model.NodePool) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -14808,6 +15022,45 @@ func (ec *executionContext) unmarshalInputCloudProviderUpdateIn(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj interface{}) (model.ClusterIn, error) {
+	var it model.ClusterIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "subDomain":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subDomain"))
+			it.SubDomain, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kubeConfig":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kubeConfig"))
+			it.KubeConfig, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeviceIn(ctx context.Context, obj interface{}) (model.DeviceIn, error) {
 	var it model.DeviceIn
 	asMap := map[string]interface{}{}
@@ -16079,6 +16332,57 @@ func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.Selectio
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var clusterOutImplementors = []string{"ClusterOut"}
+
+func (ec *executionContext) _ClusterOut(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterOut) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, clusterOutImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ClusterOut")
+		case "id":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ClusterOut_id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ClusterOut_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "subDomain":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ClusterOut_subDomain(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -17764,6 +18068,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "core_deleteCloudProvider":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_deleteCloudProvider(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "core_addNewCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_addNewCluster(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -19743,6 +20057,25 @@ func (ec *executionContext) unmarshalNCloudProviderIn2kloudliteᚗioᚋappsᚋco
 func (ec *executionContext) unmarshalNCloudProviderUpdateIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderUpdateIn(ctx context.Context, v interface{}) (model.CloudProviderUpdateIn, error) {
 	res, err := ec.unmarshalInputCloudProviderUpdateIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNClusterIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterIn(ctx context.Context, v interface{}) (model.ClusterIn, error) {
+	res, err := ec.unmarshalInputClusterIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNClusterOut2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterOut(ctx context.Context, sel ast.SelectionSet, v model.ClusterOut) graphql.Marshaler {
+	return ec._ClusterOut(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNClusterOut2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterOut(ctx context.Context, sel ast.SelectionSet, v *model.ClusterOut) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ClusterOut(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNComputePlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx context.Context, sel ast.SelectionSet, v model.ComputePlan) graphql.Marshaler {
