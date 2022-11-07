@@ -18,10 +18,10 @@ variable "instance_type"{
   default = ""
 }
 
-# variable "keys-path" {
-#   default = ""
-# }
+variable "pubkey" {
+  default = ""
+}
 
-variable "ami" {
+variable "keys-path" {
   default = ""
 }

@@ -15,6 +15,7 @@ func testAwsClient() {
 		StorePath:   "/home/vision/tf",
 		TfTemplates: "/home/vision/kloudlite/api-go/pkg/infraClient/terraform",
 		Secrets:     env.Secret,
+		SSHPath:     "/home/vision/.ssh",
 	})
 
 	var err error
@@ -26,7 +27,7 @@ func testAwsClient() {
 		VPC:          "",
 	}
 
-	if true {
+	if false {
 
 		if err = awsp.NewNode(node); err != nil {
 			fmt.Println(err)
