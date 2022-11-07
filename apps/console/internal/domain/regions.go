@@ -62,6 +62,9 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 		Kind:       op_crds.CloudProviderKind,
 		Metadata: op_crds.CloudProviderMetadata{
 			Name: "provider-" + string(provider.Id),
+			Annotations: map[string]string{
+				"kloudlite.io/account-id": string(*provider.AccountId),
+			},
 		},
 	})
 
