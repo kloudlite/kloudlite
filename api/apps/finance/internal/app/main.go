@@ -4,19 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
+	"google.golang.org/grpc"
 	"kloudlite.io/apps/finance/internal/app/graph"
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/domain"
 	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/stripe"
-	"time"
 )
 
 type Env struct {
@@ -82,53 +85,61 @@ var Module = fx.Module(
 
 	config.EnvFx[WorkloadFinanceConsumerEnv](),
 	redpanda.NewConsumerFx[*WorkloadFinanceConsumerEnv](),
-	fx.Invoke(func(d domain.Domain, consumer redpanda.Consumer) {
-		consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
-			var e domain.BillingEvent
-			err := json.Unmarshal(msg, &e)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
-			err = d.TriggerBillingEvent(
-				context.TODO(),
-				repos.ID(e.Metadata.AccountId),
-				repos.ID(e.Metadata.ResourceId),
-				repos.ID(e.Metadata.ProjectId),
-				(func() string {
-					fmt.Println(e.Stage)
-					if e.Stage == "EXISTS" {
-						return "exists"
-					} else {
-						return "end"
+	fx.Invoke(
+		func(d domain.Domain, consumer redpanda.Consumer) {
+			consumer.StartConsuming(
+				func(msg []byte, timeStamp time.Time, offset int64) error {
+					var e domain.BillingEvent
+					err := json.Unmarshal(msg, &e)
+					if err != nil {
+						fmt.Println(err)
+						return err
 					}
-				})(),
-				func() []domain.Billable {
-					billables := make([]domain.Billable, 0)
-					for _, i := range e.Billing.Items {
-						billables = append(billables, domain.Billable{
-							ResourceType: i.Type,
-							Plan:         i.Plan,
-							Quantity:     i.PlanQ,
-							Count:        i.Count,
-							IsShared:     i.IsShared == "true",
-						})
-					}
-					return billables
-				}(),
-				timeStamp,
+					err = d.TriggerBillingEvent(
+						context.TODO(),
+						repos.ID(e.Metadata.AccountId),
+						repos.ID(e.Metadata.ResourceId),
+						repos.ID(e.Metadata.ProjectId),
+						(func() string {
+							fmt.Println(e.Stage)
+							if e.Stage == "EXISTS" {
+								return "exists"
+							} else {
+								return "end"
+							}
+						})(),
+						func() []domain.Billable {
+							billables := make([]domain.Billable, 0)
+							for _, i := range e.Billing.Items {
+								billables = append(
+									billables, domain.Billable{
+										ResourceType: i.Type,
+										Plan:         i.Plan,
+										Quantity:     i.PlanQ,
+										Count:        i.Count,
+										IsShared:     i.IsShared == "true",
+									},
+								)
+							}
+							return billables
+						}(),
+						timeStamp,
+					)
+					fmt.Println(err)
+					return err
+				},
 			)
-			fmt.Println(err)
-			return err
-		})
-	}),
+		},
+	),
 
-	fx.Provide(func(env *Env) *stripe.Client {
-		return stripe.NewClient(env.StripeSecretKey)
-	}),
+	fx.Provide(
+		func(env *Env) *stripe.Client {
+			return stripe.NewClient(env.StripeSecretKey)
+		},
+	),
 	fx.Invoke(
 		func(server *fiber.App) {
-			//server.Get(
+			// server.Get(
 			//	"/stripe/get-setup-intent", func(ctx *fiber.Ctx) error {
 			//		intentClientSecret, err := ds.GetSetupIntent()
 			//		if err != nil {
@@ -140,9 +151,9 @@ var Module = fx.Module(
 			//			},
 			//		)
 			//	},
-			//)
+			// )
 
-			//server.Post(
+			// server.Post(
 			//	"/stripe/create-customer", func(ctx *fiber.Ctx) error {
 			//		var j struct {
 			//			AccountId       string `json:"accountId"`
@@ -166,9 +177,15 @@ var Module = fx.Module(
 			//			},
 			//		)
 			//	},
-			//)
+			// )
 		},
 	),
 
+	fx.Provide(fxFinanceGrpcServer),
+	fx.Invoke(
+		func(server *grpc.Server, financeServer finance.FinanceServer) {
+			finance.RegisterFinanceServer(server, financeServer)
+		},
+	),
 	domain.Module,
 )

@@ -15,26 +15,28 @@ func (d *domain) SetupAccount(ctx context.Context, accountID repos.ID) (bool, er
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(accountID), &internal_crds.Account{
-		APIVersion: internal_crds.AccountAPIVersion,
-		Kind:       internal_crds.AccountKind,
-		Metadata: internal_crds.AccountMetadata{
-			Name: string(accountID),
-			Annotations: map[string]string{
-				"kloudlite.io/account-ref": string(accountID),
+	err = d.workloadMessenger.SendAction(
+		"apply", "", string(accountID), &internal_crds.Account{
+			APIVersion: internal_crds.AccountAPIVersion,
+			Kind:       internal_crds.AccountKind,
+			Metadata: internal_crds.AccountMetadata{
+				Name: string(accountID),
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref": string(accountID),
+				},
+			},
+			Spec: internal_crds.AccountSpec{
+				AccountId: string(accountID),
+				OwnedDomains: func() []string {
+					st := make([]string, 0)
+					for _, v := range domainsOut.Domains {
+						st = append(st, fmt.Sprintf("*.%s", v))
+					}
+					return st
+				}(),
 			},
 		},
-		Spec: internal_crds.AccountSpec{
-			AccountId: string(accountID),
-			OwnedDomains: func() []string {
-				st := make([]string, 0)
-				for _, v := range domainsOut.Domains {
-					st = append(st, fmt.Sprintf("*.%s", v))
-				}
-				return st
-			}(),
-		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}

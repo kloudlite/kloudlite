@@ -159,7 +159,7 @@ type InfraMessenger interface {
 }
 
 type WorkloadMessenger interface {
-	SendAction(action string, resId string, res any) error
+	SendAction(action string, kafkaTopic string, resId string, res any) error
 }
 
 func SendAction[T InfraActionMessage](i InfraMessenger, action T) error {
