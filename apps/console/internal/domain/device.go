@@ -60,7 +60,7 @@ func (d *domain) GetDeviceConfig(ctx context.Context, deviceId repos.ID) (map[st
 	if err != nil {
 		return nil, err
 	}
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, cluster))
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, getClusterKubeConfig(cluster)))
 
 	secret, err := kubecli.GetSecret(ctx, fmt.Sprint("wg-", dev.AccountId), fmt.Sprint("wg-device-config-", dev.Id))
 	if err != nil {

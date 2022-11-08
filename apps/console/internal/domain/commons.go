@@ -53,6 +53,10 @@ const (
 	PipelineUpdatesFromAgent DispatchKafkaTopicType = "pipeline-updates-from-agent"
 )
 
+func getClusterKubeConfig(clusterName string) string {
+	return clusterName + "-kubeconfig"
+}
+
 func (d *domain) getDispatchKafkaTopic(clusterId string) string {
 	return clusterId + "-incoming"
 }
