@@ -41,7 +41,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: {{.PipelineRunId}}
+  generateName: {{.PipelineRunId}}-
   namespace: {{.TaskNamespace}}
   labels:
     app: {{.PipelineId}}

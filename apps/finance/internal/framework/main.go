@@ -62,6 +62,11 @@ type Env struct {
 
 	HttpPort uint16 `env:"PORT"`
 	HttpCors string `env:"ORIGINS"`
+	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
+}
+
+func (e *Env) GetGRPCPort() uint16 {
+	return e.GrpcPort
 }
 
 func (e *Env) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
@@ -99,6 +104,7 @@ var Module fx.Option = fx.Module(
 	config.EnvFx[CommsGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),
 	config.EnvFx[AuthGRPCEnv](),
+	rpc.NewGrpcServerFx[*Env](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
 	rpc.NewGrpcClientFx[*CommsGRPCEnv, app.CommsClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),

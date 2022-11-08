@@ -5,15 +5,16 @@ type Query {
 }
 
 type Mutation {
-    finance_createAccount(name: String!, billing: BillingInput!): Account! # user-access
-    finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account! # account-admin-access, account-owner-access
-    finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
-    finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean! # account-admin-access, account-owner-access
-    finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean! # account-admin-access, account-owner-access
-    finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean! # account-admin-access, account-owner-access
-    finance_deactivateAccount(accountId: ID!): Boolean! # account-owner-access
-    finance_activateAccount(accountId: ID!): Boolean! # account-owner-access
-    finance_deleteAccount(accountId: ID!): Boolean! # account-owner-access
+  finance_createAccount(name: String!, billing: BillingInput!): Account! # user-access
+  finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account! # account-admin-access, account-owner-access
+  finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
+  finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean! # account-admin-access, account-owner-access
+  finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean! # account-admin-access, account-owner-access
+  finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean! # account-admin-access, account-owner-access
+  finance_deactivateAccount(accountId: ID!): Boolean! # account-owner-access
+  finance_activateAccount(accountId: ID!): Boolean! # account-owner-access
+  finance_deleteAccount(accountId: ID!): Boolean! # account-owner-access
+  finance_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
 }
 
 scalar Json

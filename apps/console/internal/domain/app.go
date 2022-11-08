@@ -233,16 +233,26 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"delete", string(appID), &op_crds.App{
-			APIVersion: op_crds.AppAPIVersion,
-			Kind:       op_crds.AppKind,
-			Metadata: op_crds.AppMetadata{
-				Name:      app.Name,
-				Namespace: app.Namespace,
-			},
-		},
-	)
+	project, err := d.projectRepo.FindById(ctx, app.ProjectId)
+	if err != nil {
+		return false, nil
+	}
+
+	clusterId, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return false, nil
+	}
+
+	// err = d.workloadMessenger.SendAction(
+	// 	"delete", d.getDispatchKafkaTopic(clusterId), string(appID), &op_crds.App{
+	// 		APIVersion: op_crds.AppAPIVersion,
+	// 		Kind:       op_crds.AppKind,
+	// 		Metadata: op_crds.AppMetadata{
+	// 			Name:      app.Name,
+	// 			Namespace: app.Namespace,
+	// 		},
+	// 	},
+	// )
 
 	if err != nil {
 		return false, err
@@ -252,7 +262,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	_, err = d.appRepo.UpdateById(ctx, appID, app)
 	if app.IsLambda {
 		d.workloadMessenger.SendAction(
-			"delete", string(appID), &op_crds.Lambda{
+			"delete", d.getDispatchKafkaTopic(clusterId), string(appID), &op_crds.Lambda{
 				APIVersion: op_crds.LambdaAPIVersion,
 				Kind:       op_crds.LambdaKind,
 				Metadata: op_crds.LambdaMetadata{
@@ -263,7 +273,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 		)
 	} else {
 		d.workloadMessenger.SendAction(
-			"delete", string(appID), &op_crds.App{
+			"delete", d.getDispatchKafkaTopic(clusterId), string(appID), &op_crds.App{
 				APIVersion: op_crds.AppAPIVersion,
 				Kind:       op_crds.AppKind,
 				Metadata: op_crds.AppMetadata{
@@ -329,9 +339,14 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 		return err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return err
+	}
+
 	if app.IsLambda {
 		err := d.workloadMessenger.SendAction(
-			"apply", string(app.Id), &op_crds.Lambda{
+			"apply", d.getDispatchKafkaTopic(clusterId), string(app.Id), &op_crds.Lambda{
 				APIVersion: op_crds.LambdaAPIVersion,
 				Kind:       op_crds.LambdaKind,
 				Metadata: op_crds.LambdaMetadata{
@@ -448,7 +463,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 		return err
 	} else {
 		err := d.workloadMessenger.SendAction(
-			"apply", string(app.Id), &op_crds.App{
+			"apply", d.getDispatchKafkaTopic(clusterId), string(app.Id), &op_crds.App{
 				APIVersion: op_crds.AppAPIVersion,
 				Kind:       op_crds.AppKind,
 				Metadata: op_crds.AppMetadata{

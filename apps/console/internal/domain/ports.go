@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/pkg/kubeapi"
 
 	fWebsocket "github.com/gofiber/websocket/v2"
@@ -14,11 +15,13 @@ import (
 
 type Domain interface {
 	GetEdgeRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error)
+	GetEdgeRegion(ctx context.Context, edgeId repos.ID) (*entities.EdgeRegion, error)
 	CreateEdgeRegion(ctx context.Context, providerId repos.ID, region *entities.EdgeRegion) error
 	DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error
 	UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, region *EdgeRegionUpdate) error
 
 	GetCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error)
+	GetCloudProvider(ctx context.Context, providerId repos.ID) (*entities.CloudProvider, error)
 	CreateCloudProvider(ctx context.Context, accountId *repos.ID, provider *entities.CloudProvider) error
 	DeleteCloudProvider(ctx context.Context, providerId repos.ID) error
 	UpdateCloudProvider(ctx context.Context, providerId repos.ID, provider *CloudProviderUpdate) error
@@ -53,7 +56,7 @@ type Domain interface {
 	GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error)
 	GetConfig(ctx context.Context, configId repos.ID) (*entities.Config, error)
 	DeleteConfig(ctx context.Context, configId repos.ID) (bool, error)
-	//OnUpdateConfig(ctx context.Context, configId repos.ID) error
+	// OnUpdateConfig(ctx context.Context, configId repos.ID) error
 
 	CreateSecret(ctx context.Context, projectId repos.ID, secretName string, desc *string, secretData []*entities.Entry) (*entities.Secret, error)
 	UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error)
@@ -61,7 +64,7 @@ type Domain interface {
 	DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error)
 	GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error)
 	GetSecret(ctx context.Context, secretId repos.ID) (*entities.Secret, error)
-	//OnUpdateSecret(ctx context.Context, secretId repos.ID) error
+	// OnUpdateSecret(ctx context.Context, secretId repos.ID) error
 
 	GetRouters(ctx context.Context, projectID repos.ID) ([]*entities.Router, error)
 	GetRouter(ctx context.Context, routerID repos.ID) (*entities.Router, error)
@@ -141,6 +144,10 @@ type Domain interface {
 	) context.Context
 
 	GetEdgeNodes(ctx context.Context, id repos.ID) (*kubeapi.AccountNodeList, error)
+
+	// Cluster
+
+	AddNewCluster(ctx context.Context, name, subDomain, kubeConfig string) (*entities.Cluster, error)
 }
 
 type AuthCacheClient cache.Client
@@ -154,7 +161,7 @@ type InfraMessenger interface {
 }
 
 type WorkloadMessenger interface {
-	SendAction(action string, resId string, res any) error
+	SendAction(action string, kafkaTopic string, resId string, res any) error
 }
 
 func SendAction[T InfraActionMessage](i InfraMessenger, action T) error {

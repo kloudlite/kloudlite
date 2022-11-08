@@ -26,7 +26,7 @@ type StreamSelector struct {
 }
 
 type LokiClient interface {
-	Tail(streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error
+	Tail(clusterId string, streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error
 }
 
 type lokiClient struct {
@@ -42,7 +42,7 @@ type logResult struct {
 	} `json:"data"`
 }
 
-func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error {
+func (l *lokiClient) Tail(clusterId string, streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error {
 	streamSelectorSplits := make([]string, 0)
 	for _, label := range streamSelectors {
 		streamSelectorSplits = append(streamSelectorSplits, label.Key+label.Operation+fmt.Sprintf("\"%s\"", label.Value))
@@ -70,12 +70,21 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 		query.Set("limit", fmt.Sprintf("%v", 1000))
 	}
 	for {
-		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/loki/api/v1/query_range", l.url), nil)
+		request, err := http.NewRequest(
+			http.MethodGet, fmt.Sprintf("https://%s/loki/api/v1/query_range", strings.Replace(l.url.String(), "REPLACE_ME", clusterId, 1)),
+			nil,
+		)
 		if err != nil {
 			return err
 		}
 		if l.opts.BasicAuth != nil {
-			request.SetBasicAuth(l.opts.BasicAuth.Username, l.opts.BasicAuth.Password)
+			username := func() string {
+				if l.opts.BasicAuth.Username == "" {
+					return clusterId
+				}
+				return l.opts.BasicAuth.Username
+			}()
+			request.SetBasicAuth(username, l.opts.BasicAuth.Password)
 		}
 		request.URL.RawQuery = query.Encode()
 
