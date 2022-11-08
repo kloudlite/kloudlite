@@ -381,7 +381,18 @@ func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID)
 	if err != nil {
 		return nil, err
 	}
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+
+	project, err := d.projectRepo.FindById(ctx, msvc.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	cluster, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, cluster))
 	secret, err := kubecli.GetSecret(ctx, msvc.Namespace, fmt.Sprint("msvc-", msvc.Id))
 	if err != nil {
 		return nil, err
