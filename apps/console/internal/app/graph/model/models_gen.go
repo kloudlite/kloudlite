@@ -145,6 +145,18 @@ type CloudProviderUpdateIn struct {
 	Credentials map[string]interface{} `json:"credentials"`
 }
 
+type ClusterIn struct {
+	Name       string `json:"name"`
+	SubDomain  string `json:"subDomain"`
+	KubeConfig string `json:"kubeConfig"`
+}
+
+type ClusterOut struct {
+	ID        repos.ID `json:"id"`
+	Name      string   `json:"name"`
+	SubDomain string   `json:"subDomain"`
+}
+
 type ComputePlan struct {
 	Name                  string `json:"name"`
 	Desc                  string `json:"desc"`
@@ -201,12 +213,13 @@ type EdgeNode struct {
 }
 
 type EdgeRegion struct {
-	ID        repos.ID    `json:"id"`
-	Name      string      `json:"name"`
-	Region    string      `json:"region"`
-	CreatedAt string      `json:"createdAt"`
-	UpdatedAt *string     `json:"updatedAt"`
-	Pools     []*NodePool `json:"pools"`
+	ID        repos.ID       `json:"id"`
+	Name      string         `json:"name"`
+	Region    string         `json:"region"`
+	Provider  *CloudProvider `json:"provider"`
+	CreatedAt string         `json:"createdAt"`
+	UpdatedAt *string        `json:"updatedAt"`
+	Pools     []*NodePool    `json:"pools"`
 }
 
 type EdgeRegionIn struct {
@@ -367,6 +380,7 @@ type Project struct {
 	Cluster           *string              `json:"cluster"`
 	DockerCredentials *DockerCredentials   `json:"dockerCredentials"`
 	RegionID          repos.ID             `json:"regionId"`
+	Region            *EdgeRegion          `json:"region"`
 }
 
 type ProjectMembership struct {

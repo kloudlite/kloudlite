@@ -47,6 +47,19 @@ type domainI struct {
 	stripeCli              *stripe.Client
 }
 
+func (d *domainI) AttachToCluster(ctx context.Context, accountId repos.ID, clusterId repos.ID) (bool, error) {
+	account, err := d.accountRepo.FindById(ctx, accountId)
+	if err != nil {
+		return false, err
+	}
+	account.ClusterID = clusterId
+	upAccount, err := d.accountRepo.UpdateById(ctx, accountId, account)
+	if err != nil {
+		return false, err
+	}
+	return upAccount.ClusterID == clusterId, nil
+}
+
 func (d *domainI) checkAccountAccess(ctx context.Context, accountId repos.ID, action string) error {
 	// userId, err := GetUser(ctx)
 	// if err != nil {
@@ -77,12 +90,14 @@ func (d *domainI) GetOutstandingAmount(ctx context.Context, accountId repos.ID) 
 		return 0, err
 	}
 
-	accountBillings, err := d.billablesRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"account_id": accountId,
-			"month":      nil,
+	accountBillings, err := d.billablesRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"account_id": accountId,
+				"month":      nil,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -518,7 +533,6 @@ func (d *domainI) CreateAccount(
 }
 
 func (d *domainI) UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error) {
-
 	if err := d.checkAccountAccess(ctx, id, "update_account"); err != nil {
 		return nil, err
 	}

@@ -71,6 +71,12 @@ models:
         resolver: true
       memberships:
         resolver: true
+      region:
+        resolver: true
+  EdgeRegion:
+    fields:
+      provider:
+        resolver: true
   ClusterSubscription:
     fields:
       cluster:

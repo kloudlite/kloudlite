@@ -151,8 +151,13 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 		}
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", string(create.Id), &opCrds.ManagedResource{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
 			Metadata: opCrds.ManagedResourceMetadata{
@@ -206,8 +211,14 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterIdForProject(ctx, msvc.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", string(mres.Id), &opCrds.ManagedResource{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(mres.Id), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
 			Metadata: opCrds.ManagedResourceMetadata{
@@ -236,14 +247,14 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 	return true, nil
 }
 
-func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool, error) {
-	id, err := d.managedResRepo.FindById(ctx, appID)
+func (d *domain) UnInstallManagedRes(ctx context.Context, mresId repos.ID) (bool, error) {
+	mres, err := d.managedResRepo.FindById(ctx, mresId)
 
 	if err = mongoError(err, "managed resource not found"); err != nil {
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, id.ProjectId, UpdateProject)
+	err = d.checkProjectAccess(ctx, mres.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
@@ -251,17 +262,23 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, appID repos.ID) (bool,
 	if err != nil {
 		return false, err
 	}
-	err = d.managedResRepo.DeleteById(ctx, appID)
+	err = d.managedResRepo.DeleteById(ctx, mresId)
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterIdForProject(ctx, mres.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"delete", string(appID), &opCrds.ManagedResource{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(mresId), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
 			Metadata: opCrds.ManagedResourceMetadata{
-				Name:      string(appID),
-				Namespace: id.Namespace,
+				Name:      string(mresId),
+				Namespace: mres.Namespace,
 			},
 		},
 	)
@@ -283,7 +300,17 @@ func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID)
 		return nil, err
 	}
 
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+	project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	cluster, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, getClusterKubeConfig(cluster)))
 
 	secret, err := kubecli.GetSecret(ctx, mres.Namespace, fmt.Sprint("mres-", mres.Id))
 	if err != nil {

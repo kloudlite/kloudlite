@@ -5,6 +5,7 @@ option go_package = "kloudlite.io/rpc/finance";
 service Finance {
   rpc startBillable(StartBillableIn) returns (StartBillableOut);
   rpc stopBillable(StopBillableIn) returns (StopBillableOut);
+  rpc getAttachedCluster(GetAttachedClusterIn) returns (GetAttachedClusterOut);
 }
 
 message ComputePlan {
@@ -32,3 +33,12 @@ message StartBillableOut {
 message StopBillableOut {
   string billingId = 1;
 }
+
+message GetAttachedClusterIn {
+  string accountId = 1;
+}
+
+message GetAttachedClusterOut {
+  string clusterId = 1;
+}
+

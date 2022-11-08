@@ -2,18 +2,16 @@ package domain
 
 import (
 	"context"
+	"time"
+
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
-	"time"
 )
 
 type Domain interface {
-	CreateAccount(
-		ctx context.Context,
-		userId repos.ID,
-		name string,
-		billing Billing,
-	) (*Account, error)
+	// CRUD
+
+	CreateAccount(ctx context.Context, userId repos.ID, name string, billing Billing) (*Account, error)
 	GetAccount(ctx context.Context, id repos.ID) (*Account, error)
 	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
 	DeleteAccount(ctx context.Context, id repos.ID) (bool, error)
@@ -21,12 +19,15 @@ type Domain interface {
 	DeactivateAccount(ctx context.Context, id repos.ID) (bool, error)
 	ActivateAccount(ctx context.Context, id repos.ID) (bool, error)
 
-	UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error)
+	// Membership
 
 	AddAccountMember(ctx context.Context, accountId repos.ID, email string, role common.Role) (bool, error)
 	RemoveAccountMember(ctx context.Context, accountId repos.ID, userId repos.ID) (bool, error)
 	UpdateAccountMember(ctx context.Context, id repos.ID, id2 repos.ID, role string) (bool, error)
 
+	// Billing
+
+	UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error)
 	GetOutstandingAmount(ctx context.Context, accountId repos.ID) (float64, error)
 
 	GetAccountMemberships(ctx context.Context, userId repos.ID) ([]*Membership, error)
@@ -47,4 +48,5 @@ type Domain interface {
 	GetStoragePlanByName(ctx context.Context, name string) (*StoragePlan, error)
 	GetSetupIntent(ctx context.Context) (string, error)
 	Test(ctx context.Context, accountId repos.ID) error
+	AttachToCluster(ctx context.Context, accountId repos.ID, clusterId repos.ID) (bool, error)
 }
