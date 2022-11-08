@@ -289,6 +289,7 @@ type ComplexityRoot struct {
 		CoreDeleteApp           func(childComplexity int, appID repos.ID) int
 		CoreDeleteCloudProvider func(childComplexity int, providerID repos.ID) int
 		CoreDeleteConfig        func(childComplexity int, configID repos.ID) int
+		CoreDeleteEdgeRegion    func(childComplexity int, edgeID repos.ID) int
 		CoreDeleteProject       func(childComplexity int, projectID repos.ID) int
 		CoreDeleteRouter        func(childComplexity int, routerID repos.ID) int
 		CoreDeleteSecret        func(childComplexity int, secretID repos.ID) int
@@ -490,6 +491,7 @@ type MutationResolver interface {
 	CoreDeleteRouter(ctx context.Context, routerID repos.ID) (bool, error)
 	CoreCreateEdgeRegion(ctx context.Context, edgeRegion model.EdgeRegionIn, providerID repos.ID) (bool, error)
 	CoreUpdateEdgeRegion(ctx context.Context, edgeID repos.ID, edgeRegion model.EdgeRegionUpdateIn) (bool, error)
+	CoreDeleteEdgeRegion(ctx context.Context, edgeID repos.ID) (bool, error)
 	CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error)
 	CoreUpdateCloudProvider(ctx context.Context, providerID repos.ID, cloudProvider model.CloudProviderUpdateIn) (bool, error)
 	CoreDeleteCloudProvider(ctx context.Context, providerID repos.ID) (bool, error)
@@ -1704,6 +1706,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreDeleteConfig(childComplexity, args["configId"].(repos.ID)), true
 
+	case "Mutation.core_deleteEdgeRegion":
+		if e.complexity.Mutation.CoreDeleteEdgeRegion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_deleteEdgeRegion_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreDeleteEdgeRegion(childComplexity, args["edgeId"].(repos.ID)), true
+
 	case "Mutation.core_deleteProject":
 		if e.complexity.Mutation.CoreDeleteProject == nil {
 			break
@@ -2812,6 +2826,7 @@ type Mutation {
 
   core_createEdgeRegion(edgeRegion: EdgeRegionIn!, providerId: ID!): Boolean! #private-access
   core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegionUpdateIn!): Boolean! #private-access
+  core_deleteEdgeRegion(edgeId: ID!): Boolean! #private-access
   core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
   core_updateCloudProvider(providerId: ID!, cloudProvider: CloudProviderUpdateIn!): Boolean! #private-access
   core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
@@ -3660,6 +3675,21 @@ func (ec *executionContext) field_Mutation_core_deleteConfig_args(ctx context.Co
 		}
 	}
 	args["configId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteEdgeRegion_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["edgeId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["edgeId"] = arg0
 	return args, nil
 }
 
@@ -10802,6 +10832,48 @@ func (ec *executionContext) _Mutation_core_updateEdgeRegion(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CoreUpdateEdgeRegion(rctx, args["edgeId"].(repos.ID), args["edgeRegion"].(model.EdgeRegionUpdateIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_core_deleteEdgeRegion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_deleteEdgeRegion_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreDeleteEdgeRegion(rctx, args["edgeId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18146,6 +18218,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "core_updateEdgeRegion":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_updateEdgeRegion(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "core_deleteEdgeRegion":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_deleteEdgeRegion(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)

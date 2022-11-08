@@ -1033,6 +1033,14 @@ func (r *mutationResolver) CoreUpdateEdgeRegion(ctx context.Context, edgeID repo
 	return true, nil
 }
 
+func (r *mutationResolver) CoreDeleteEdgeRegion(ctx context.Context, edgeID repos.ID) (bool, error) {
+	err := r.Domain.DeleteEdgeRegion(ctx, edgeID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *mutationResolver) CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error) {
 	err := r.Domain.CreateCloudProvider(
 		ctx, accountID, &entities.CloudProvider{
