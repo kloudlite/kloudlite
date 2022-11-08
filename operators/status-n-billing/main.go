@@ -52,18 +52,18 @@ func main() {
 		&statusWatcher.Reconciler{
 			Name:     "status-watcher",
 			Env:      ev,
-			Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaStatusReplyTopic),
+			Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaTopicStatusUpdates),
 		},
 		&pipelineRunWatcher.Reconciler{
 			Name:       "pipeline-run",
 			Env:        ev,
 			Producer:   producer,
-			KafkaTopic: ev.KafkaPipelineRunTopic,
+			KafkaTopic: ev.KafkaTopicPipelineRunUpdates,
 		},
 		&billingWatcher.Reconciler{
 			Name:     "billing-watcher",
 			Env:      ev,
-			Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaBillingReplyTopic),
+			Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaTopicBillingUpdates),
 		},
 	)
 	mgr.Start()

@@ -2,7 +2,7 @@ package types
 
 type MsvcOutput struct {
 	RootPassword        string `json:"ROOT_PASSWORD"`
-	ReplicationPassword string `json:"REPLICATION_PASSWORD"`
+	ReplicationPassword string `json:"REPLICATION_PASSWORD,omitempty"`
 	Hosts               string `json:"HOSTS"`
 	DSN                 string `json:"DSN,omitempty"`
 	URI                 string `json:"URI"`

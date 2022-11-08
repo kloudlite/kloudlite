@@ -39,6 +39,10 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
+	IngressControllerNS = "kl-init-ingress-nginx"
+)
+
+const (
 	DefaultsPatched        string = "defaults-patched"
 	ClusterIssuerPatched   string = "cluster-issuer-patched"
 	ClusterIssuerReady     string = "cluster-issuer-ready"
@@ -141,9 +145,17 @@ func (r *Reconciler) reconIngressController(req *rApi.Request[*crdsv1.EdgeRouter
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	ingressC, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ControllerName), fn.NewUnstructured(constants.HelmIngressNginx))
+	ingressC, err := rApi.Get(
+		ctx,
+		r.Client,
+		fn.NN(IngressControllerNS, obj.Spec.ControllerName),
+		fn.NewUnstructured(constants.HelmIngressNginx),
+	)
 	if err != nil {
-		req.Logger.Infof("ingress controller (%s) does not exist, will be creating it", fn.NN(obj.Namespace, obj.Spec.ControllerName).String())
+		req.Logger.Infof(
+			"ingress controller (%s) does not exist, will be creating it",
+			fn.NN(IngressControllerNS, obj.Spec.ControllerName).String(),
+		)
 	}
 
 	if ingressC == nil || check.Generation > checks[IngressControllerReady].Generation {
@@ -196,6 +208,7 @@ func (r *Reconciler) reconClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) s
 				"kl-cloudflare-wildcard-domains": strings.Split(r.Env.CloudflareWildcardDomains, ","),
 				"kl-cloudflare-email":            r.Env.CloudflareEmail,
 				"kl-cloudflare-secret-name":      r.Env.CloudflareSecretName,
+				"owner-refs":                     []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 				"kl-acme-email": r.Env.AcmeEmail,
 				"issuer-name":   controllers.GetClusterIssuerName(obj.Name),
@@ -293,5 +306,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.EdgeRouter{})
 	builder.Owns(fn.NewUnstructured(constants.HelmIngressNginx))
 	builder.Owns(&appsv1.DaemonSet{})
+	builder.Owns(fn.NewUnstructured(constants.ClusterIssuerType))
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

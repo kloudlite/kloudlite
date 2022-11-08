@@ -9,11 +9,13 @@
 
 {{- $tolerations := get . "tolerations" | default list -}}
 {{- $nodeSelector := get . "node-selector"  |default dict -}}
+{{- $ownerRefs := get . "owner-refs"  -}}
 
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: {{$issuerName}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4 }}
 spec:
   acme:
     email: {{$klAcmeEmail}}

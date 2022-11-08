@@ -74,7 +74,7 @@ func New(name string) *operator {
 			Port:                       9443,
 			LeaderElection:             enableLeaderElection,
 			LeaderElectionID:           fmt.Sprintf("operator-%s.kloudlite.io", name),
-			LeaderElectionResourceLock: "configmaps",
+			LeaderElectionResourceLock: "configmapsleases",
 		}
 		if isDev {
 			cOpts.MetricsBindAddress = "0"

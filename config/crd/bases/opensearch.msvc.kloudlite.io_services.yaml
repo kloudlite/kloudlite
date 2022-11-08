@@ -191,8 +191,10 @@ spec:
                 type: array
               displayVars:
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               generatedVars:
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               isReady:
                 type: boolean
               lastReconcileTime:
@@ -200,6 +202,7 @@ spec:
                 type: string
               message:
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               messages:
                 items:
                   properties:

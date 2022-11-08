@@ -17,7 +17,6 @@ import (
 )
 
 func main() {
-	ev := env.GetEnvOrDie()
 	mgr := operator.New("msvc-and-mres")
 	mgr.AddToSchemes(
 		crdsv1.AddToScheme,
@@ -30,6 +29,7 @@ func main() {
 		zookeeperMsvcv1.AddToScheme,
 		neo4jMsvcv1.AddToScheme,
 	)
+	ev := env.GetEnvOrDie()
 	mgr.RegisterControllers(
 		&msvc.ManagedServiceReconciler{Name: "msvc", Env: ev},
 		&mres.ManagedResourceReconciler{Name: "mres", Env: ev},

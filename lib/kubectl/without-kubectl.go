@@ -82,7 +82,7 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
 					// log.Fatal(err)
 					return err
 				}
-				return nil
+				continue
 			}
 			// log.Fatal(err)
 			return err

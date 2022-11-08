@@ -7,20 +7,21 @@ import (
 )
 
 type Redpanda struct {
-	AdminSecretRef     ct.SecretRef  `json:"adminSecretRef"`
-	Topics             []string      `json:"topics,omitempty"`
-	ExtraTopicsWithACL []string      `json:"extraTopicsWithACL,omitempty"`
-	KubeConfig         *ct.SecretRef `json:"kubeConfig,omitempty"`
-	ClusterDomain      []string      `json:"clusterDomain,omitempty"`
+	AdminSecretRef     ct.SecretRef `json:"adminSecretRef"`
+	Topics             []string     `json:"topics,omitempty"`
+	PushAccessToTopics []string     `json:"pushAccessToTopics,omitempty"`
+	ClusterDomain      []string     `json:"clusterDomain,omitempty"`
 }
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	Redpanda Redpanda `json:"redpanda"`
+	Redpanda   Redpanda      `json:"redpanda,omitempty"`
+	KubeConfig *ct.SecretRef `json:"kubeConfig,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 

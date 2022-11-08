@@ -2,24 +2,29 @@ package common_types
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
+	"k8s.io/apimachinery/pkg/api/resource"
 	"operators.kloudlite.io/lib/errors"
 )
 
 type Storage struct {
-	// +kubebuilder:validation:Pattern=[\d]+Gi$
+	// +kubebuilder:validation:Pattern=[\d]+(M|G)i$
 	Size string `json:"size"`
 
 	// +kubebuilder:validation:Optional
 	StorageClass string `json:"storageClass,omitempty"`
 }
 
-func (s Storage) ToInt() int {
-	sp := strings.Split(s.Size, "Gi")
-	sGb, _ := strconv.ParseInt(sp[0], 0, 32)
-	return int(sGb)
+func (s Storage) ToInt() (int64, error) {
+	quantity, err := resource.ParseQuantity(s.Size)
+	if err != nil {
+		fmt.Printf("could not convert storage (%s) to int\n", s.Size)
+		return -1, nil
+	}
+	size, ok := quantity.AsInt64()
+	if !ok {
+		return -1, nil
+	}
+	return size, nil
 }
 
 // +kubebuilder:object:generate=true

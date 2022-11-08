@@ -5,6 +5,7 @@
 {{/*{{- $mysqlUserPassword := get . "mysql-user-password"  -}}*/}}
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 {{- $existingSecret := get . "existing-secret"  -}}
+{{- $klStsPvcInitSize := get . "kl-sts-pvc-init-size" -}}
 
 {{- with $obj }}
 {{- /*gotype: operators.kloudlite.io/apis/mysql.msvc/v1.StandaloneService*/ -}}
@@ -36,7 +37,7 @@ spec:
   primary:
     persistence: &persistence
       enabled: true
-      size: {{.Spec.Resources.Storage.Size}}
+      size: {{$klStsPvcInitSize}}
     podLabels: &podLabels
       {{.Labels | toYAML | nindent 6}}
       kloudlite.io/region: {{.Spec.Region}}

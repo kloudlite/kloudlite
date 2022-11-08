@@ -44,7 +44,7 @@ spec:
 {{/*    replicaCount: 1*/}}
 
     service:
-      type: "{{.Spec.ServiceType}}"
+      type: "ClusterIP"
 
 {{/*    {{- if .Spec.DefaultSSLCert.SecretName}}*/}}
     extraArgs:

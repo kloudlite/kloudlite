@@ -60,7 +60,7 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) er
 		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
 			if err := r.dispatchMsg(
 				ctx, types.GetMsgKey(obj), Msg{
-					PipelineRunId: obj.GetName(),
+					PipelineRunId: obj.GetLabels()["component"],
 					PipelineId:    obj.GetLabels()["app"],
 					StartTime:     obj.GetCreationTimestamp().Time,
 					EndTime:       j.Status.CompletionTime,
@@ -81,7 +81,7 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) er
 
 	return r.dispatchMsg(
 		ctx, types.GetMsgKey(obj), Msg{
-			PipelineRunId: obj.GetName(),
+			PipelineRunId: obj.GetLabels()["component"],
 			PipelineId:    obj.GetLabels()["app"],
 			StartTime:     obj.GetCreationTimestamp().Time,
 			EndTime:       j.Status.CompletionTime,
@@ -149,8 +149,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
-	builder := ctrl.NewControllerManagedBy(mgr)
-	builder.For(fn.NewUnstructured(constants.TektonPipelineRunKind))
-
+	builder := ctrl.NewControllerManagedBy(mgr).For(fn.NewUnstructured(constants.TektonPipelineRunKind))
 	return builder.Complete(r)
 }

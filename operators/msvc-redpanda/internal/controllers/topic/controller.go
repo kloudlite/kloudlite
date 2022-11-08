@@ -2,15 +2,18 @@ package topic
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ct "operators.kloudlite.io/apis/common-types"
 	redpandaMsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	"operators.kloudlite.io/lib/constants"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
@@ -23,10 +26,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -125,7 +129,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 
 	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AdminSecretRef.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apiErrors.IsNotFound(err) {
 			return req.Finalize()
 		}
 		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
@@ -193,6 +197,32 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+
+	for _, topic := range strings.Split(r.Env.MustHaveTopics, ",") {
+		name := strings.TrimSpace(topic)
+		if err := r.Client.Create(
+			context.TODO(), &redpandaMsvcv1.Topic{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: "kl-core",
+				},
+				Spec: redpandaMsvcv1.TopicSpec{
+					AdminSecretRef: ct.SecretRef{
+						Name:      r.Env.RepdandaDefaultSecretName,
+						Namespace: r.Env.RedpandaDefaultSecretNamespace,
+					},
+					PartitionCount: 3,
+				},
+			},
+		); err != nil {
+			if !apiErrors.IsAlreadyExists(err) {
+				return err
+			}
+		}
+	}
+
+	r.logger.Infof("ensured must have topics exists in the cluster")
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redpandaMsvcv1.Topic{})
 	builder.WithEventFilter(rApi.ReconcileFilter())

@@ -476,6 +476,32 @@ rules:
 - apiGroups:
   - mongodb.msvc.kloudlite.io
   resources:
+  - clusterServices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - clusterServices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - clusterServices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
   - databases
   verbs:
   - create

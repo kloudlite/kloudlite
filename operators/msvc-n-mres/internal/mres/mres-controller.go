@@ -21,7 +21,7 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
-	env2 "operators.kloudlite.io/operators/msvc-n-mres/internal/env"
+	"operators.kloudlite.io/operators/msvc-n-mres/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -32,7 +32,7 @@ type ManagedResourceReconciler struct {
 	harborCli  *harbor.Client
 	logger     logging.Logger
 	Name       string
-	Env        *env2.Env
+	Env        *env.Env
 	yamlClient *kubectl.YAMLClient
 }
 

@@ -1,20 +1,19 @@
+{{- $obj :=  get . "object" }}
 {{- $ownerRefs := get . "owner-refs"}}
 {{- $storageClass := get . "storage-class"}}
-{{- $obj :=  get . "object" }}
 {{- $freeze := get . "freeze" | default false}}
-{{- $rootPassword := get . "root-password"  -}}
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
+{{- $existingSecret := get . "existing-secret" -}}
 
 {{- with $obj }}
 {{- /* gotype: operators.kloudlite.io/apis/mongodb.msvc/v1.StandaloneService*/ -}}
+{{$labels := .Labels | default dict}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMongoDB
 metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
-  {{- if .Labels }}
-  labels: {{ .Labels | toYAML | nindent 4 }}
-  {{- end}}
+  labels: {{ $labels | toYAML | nindent 4 }}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
 spec:
   global:
@@ -28,22 +27,16 @@ spec:
 
   replicaCount: {{ if $freeze}}0{{else}}{{.Spec.ReplicaCount}}{{end}}
 
-  {{- if .Labels }}
-  commonLabels: {{.Labels | toYAML | nindent 4}}
-  {{- end }}
+  commonLabels: {{$labels | toYAML | nindent 4}}
 
   podLabels:
-    {{if .Labels}}{{.Labels | toYAML | nindent 4}}{{end}}
+    {{$labels | toYAML | nindent 4}}
     kloudlite.io/region: {{.Spec.Region}}
     kloudlite.io/stateful-node: "true"
 
-  {{- if .Spec.NodeSelector}}
-  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
-  {{- end }}
-
   auth:
     enabled: true
-    rootPassword: {{$rootPassword}}
+    existingSecret: {{$existingSecret}}
 
   persistence:
     enabled: true
@@ -67,8 +60,16 @@ spec:
 
   priorityClassName: {{$priorityClassName}}
   affinity: {{include "NodeAffinity" (dict) | nindent 4 }}
-  tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 4}}
-  nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 4}}
+  tolerations:
+    {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 4}}
+    {{ if .Spec.Tolerations }}
+    {{.Spec.Tolerations | toYAML | nindent 4}}
+    {{ end }}
+  nodeSelector:
+    {{ include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 4 }}
+    {{ if .Spec.NodeSelector }}
+    {{.Spec.NodeSelector | toYAML | nindent 4}}
+    {{ end }}
 
   resources:
     requests:

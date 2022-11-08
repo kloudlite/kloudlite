@@ -62,14 +62,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
-
-	// if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
 
 	if step := req.EnsureChecks(IngressReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -92,8 +91,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -324,5 +323,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
 	builder.Owns(&networkingv1.Ingress{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

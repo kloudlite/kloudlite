@@ -10,13 +10,14 @@ type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD" required:"true"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 
-	KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaSASLUsername      string `env:"KAFKA_SASL_USERNAME" required:"true"`
-	KafkaSASLPassword      string `env:"KAFKA_SASL_PASSWORD" required:"true"`
-	ClusterId              string `env:"CLUSTER_ID" required:"true"`
-	KafkaStatusReplyTopic  string `env:"KAFKA_STATUS_REPLY_TOPIC" required:"true"`
-	KafkaBillingReplyTopic string `env:"KAFKA_BILLING_REPLY_TOPIC" required:"true"`
-	KafkaPipelineRunTopic  string `env:"KAFKA_PIPELINE_RUN_TOPIC" required:"true"`
+	KafkaBrokers      string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaSASLUsername string `env:"KAFKA_SASL_USERNAME" required:"true"`
+	KafkaSASLPassword string `env:"KAFKA_SASL_PASSWORD" required:"true"`
+	ClusterId         string `env:"CLUSTER_ID" required:"true"`
+
+	KafkaTopicStatusUpdates      string `env:"KAFKA_TOPIC_STATUS_UPDATES" required:"true"`
+	KafkaTopicBillingUpdates     string `env:"KAFKA_TOPIC_BILLING_UPDATES" required:"true"`
+	KafkaTopicPipelineRunUpdates string `env:"KAFKA_TOPIC_PIPELINE_RUN_UPDATES" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

@@ -14,12 +14,13 @@ import (
 	"operators.kloudlite.io/lib/constants"
 	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
+	"operators.kloudlite.io/lib/kubectl"
 	"operators.kloudlite.io/lib/logging"
 	libMysql "operators.kloudlite.io/lib/mysql"
 	rApi "operators.kloudlite.io/lib/operator"
 	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/lib/templates"
-	env2 "operators.kloudlite.io/operators/msvc-mysql/internal/env"
+	"operators.kloudlite.io/operators/msvc-mysql/internal/env"
 	"operators.kloudlite.io/operators/msvc-mysql/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,10 +31,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env2.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -44,8 +46,7 @@ const (
 	DBUserReady      string = "db-user"
 	AccessCredsReady string = "access-creds"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
-
-	DBUserDeleted string = "db-user-deleted"
+	DBUserDeleted    string = "db-user-deleted"
 )
 
 const (
@@ -72,6 +73,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -106,7 +110,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
@@ -129,18 +133,20 @@ func (r *Reconciler) finalize(req *rApi.Request[*mysqlMsvcv1.Database]) stepResu
 		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output could not be parsed").Error()).Err(nil)
 	}
 
-	mysqlCli, err := libMysql.NewClient(msvcOutput.Hosts, "mysql", "root", msvcOutput.RootPassword)
-	if err != nil {
-		req.Logger.Infof("failed to create mysql client, retrying in 5 seconds")
-		return req.CheckFailed(DBUserReady, check, err.Error()).Err(nil).RequeueAfter(5 * time.Second)
-	}
+	if obj.Status.IsReady {
+		mysqlCli, err := libMysql.NewClient(msvcOutput.Hosts, "mysql", "root", msvcOutput.RootPassword)
+		if err != nil {
+			req.Logger.Infof("failed to create mysql client, retrying in 5 seconds")
+			return req.CheckFailed(DBUserReady, check, err.Error()).Err(nil).RequeueAfter(5 * time.Second)
+		}
 
-	if err := mysqlCli.Connect(ctx); err != nil {
-		return req.CheckFailed(DBUserDeleted, check, err.Error())
-	}
+		if err := mysqlCli.Connect(ctx); err != nil {
+			return req.CheckFailed(DBUserDeleted, check, err.Error())
+		}
 
-	if err := mysqlCli.DropUser(sanitizeDbUsername(obj.Name)); err != nil {
-		return req.CheckFailed(DBUserDeleted, check, err.Error())
+		if err := mysqlCli.DropUser(sanitizeDbUsername(obj.Name)); err != nil {
+			return req.CheckFailed(DBUserDeleted, check, err.Error())
+		}
 	}
 
 	return req.Finalize()
@@ -226,7 +232,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 					Password: dbPasswd,
 					Hosts:    msvcOutput.Hosts,
 					DbName:   dbName,
-					DSN:      fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUsername, dbPasswd, msvcOutput.Hosts, dbName),
+					DSN:      fmt.Sprintf("mysql://%s:%s@tcp(%s)/%s", dbUsername, dbPasswd, msvcOutput.Hosts, dbName),
 					URI:      fmt.Sprintf("mysql://%s:%s@%s/%s", dbUsername, dbPasswd, msvcOutput.Hosts, dbName),
 				},
 			},
@@ -235,7 +241,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
@@ -281,7 +287,7 @@ func (r *Reconciler) reconDBUser(req *rApi.Request[*mysqlMsvcv1.Database]) stepR
 	}
 
 	if err := mysqlCli.Connect(ctx); err != nil {
-		req.Logger.Infof("failed to connect to mysql db instance, retrying in 5 seconds")
+		req.Logger.Errorf(err, "failed to connect to mysql db instance, retrying in 5 seconds because")
 		return req.CheckFailed(DBUserReady, check, errors.NewEf(err, "failed to connect to db").Error()).Err(nil).RequeueAfter(5 * time.Second)
 	}
 	defer mysqlCli.Close()
@@ -313,11 +319,13 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlMsvcv1.Database{})
 	builder.Owns(&corev1.Secret{})
 
 	watchList := []client.Object{
+		&mysqlMsvcv1.ClusterService{},
 		&mysqlMsvcv1.StandaloneService{},
 	}
 

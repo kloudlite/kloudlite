@@ -158,18 +158,27 @@ tasks:
     cmds:
       - |+
         pushd "./operators/{{.Name}}" 1> /dev/null
-        lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        tDir=$(mktemp -d)
-        CGO_ENABLED=0 go build -o $tDir/{{.Name}} .
+        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
 
-        nDockerfile=$(cat Dockerfile | tail --lines=+$lineNo | grep -i --invert-match 'from=builder')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" | sed "3 i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
+        startLineNo=$(echo "$lineNumbers" | head -n+1)
+        finalLineNo=$(echo "$lineNumbers" | tail -1)
+
+        tDir=$(mktemp -d)
+
+        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=builder')
+        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
+
+        #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+
+        cat $tDir/Dockerfile.base | sed "3 i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
-        docker buildx build --build-context local-builder=${tDir} -f $tDir/Dockerfile -t {{.Image}} . 
+        docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
         docker push {{.Image}}
         rm -rf $tDir
         popd 1> /dev/null
+
 
 #
 

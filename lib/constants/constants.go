@@ -162,6 +162,11 @@ var (
 		Kind:       "Service",
 		APIVersion: "serving.knative.dev/v1",
 	}
+
+	ClusterIssuerType = metav1.TypeMeta{
+		Kind:       "ClusterIssuer",
+		APIVersion: "cert-manager.io/v1",
+	}
 )
 
 const (

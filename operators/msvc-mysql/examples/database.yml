@@ -1,0 +1,25 @@
+apiVersion: mysql.msvc.kloudlite.io/v1
+kind: Database
+metadata:
+  name: sample-db
+  namespace: kl-core
+spec:
+  resourceName: sample-db
+  msvcRef:
+    apiVersion: mysql.msvc.kloudlite.io/v1
+    kind: ClusterService
+    name: sample-mysql
+
+---
+
+apiVersion: mysql.msvc.kloudlite.io/v1
+kind: Database
+metadata:
+  name: cluster-kl-01
+  namespace: kl-core
+spec:
+  resourceName: kl-01
+  msvcRef:
+    apiVersion: mysql.msvc.kloudlite.io/v1
+    kind: ClusterService
+    name: sample-mysql
