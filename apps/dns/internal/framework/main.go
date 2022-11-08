@@ -21,6 +21,14 @@ func (e *GrpcConsoleConfig) GetGRPCServerURL() string {
 	return e.ConsoleService
 }
 
+type GrpcFinanceConfig struct {
+	FinanceService string `env:"FINANCE_SERVICE" required:"true"`
+}
+
+func (e *GrpcFinanceConfig) GetGRPCServerURL() string {
+	return e.FinanceService
+}
+
 type Env struct {
 	DNSPort       uint16 `env:"DNS_PORT" required:"true"`
 	MongoUri      string `env:"MONGO_URI" required:"true"`
@@ -63,11 +71,13 @@ var Module = fx.Module(
 	"framework",
 	config.EnvFx[Env](),
 	config.EnvFx[GrpcConsoleConfig](),
+	config.EnvFx[GrpcFinanceConfig](),
 	rpc.NewGrpcServerFx[*Env](),
 	repos.NewMongoClientFx[*Env](),
 	cache.NewRedisFx[*Env](),
 	httpServer.NewHttpServerFx[*Env](),
 	rpc.NewGrpcClientFx[*GrpcConsoleConfig, app.ConsoleClientConnection](),
+	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceClientConnection](),
 	dns.Fx[*Env](),
 	app.Module,
 )

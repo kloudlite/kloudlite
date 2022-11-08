@@ -327,7 +327,7 @@ func (d *domain) GetEdgeNodes(ctx context.Context, edgeId repos.ID) (*kubeapi.Ac
 	if err != nil {
 		return nil, err
 	}
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, cluster))
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, getClusterKubeConfig(cluster)))
 	return kubecli.GetAccountNodes(ctx, string(edgeId))
 }
 
