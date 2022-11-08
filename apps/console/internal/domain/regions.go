@@ -314,9 +314,21 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 	return nil
 }
 
-func (d *domain) GetEdgeNodes(ctx context.Context, id repos.ID) (*kubeapi.AccountNodeList, error) {
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
-	return kubecli.GetAccountNodes(ctx, string(id))
+func (d *domain) GetEdgeNodes(ctx context.Context, edgeId repos.ID) (*kubeapi.AccountNodeList, error) {
+	region, err := d.regionRepo.FindById(ctx, edgeId)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := d.providerRepo.FindById(ctx, region.ProviderId)
+	if err != nil {
+		return nil, err
+	}
+	cluster, err := d.getClusterForAccount(ctx, *provider.AccountId)
+	if err != nil {
+		return nil, err
+	}
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, cluster))
+	return kubecli.GetAccountNodes(ctx, string(edgeId))
 }
 
 func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *EdgeRegionUpdate) error {

@@ -321,8 +321,8 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 	if err != nil {
 		return "", "", err
 	}
-
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+	cluster, err := d.getClusterForAccount(ctx, project.AccountId)
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, cluster))
 	secret, err := kubecli.GetSecret(ctx, project.Name, "kloudlite-docker-registry")
 	if err != nil {
 		return "", "", err
@@ -349,12 +349,10 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 }
 
 func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, action string) error {
-
 	userId, err := GetUser(ctx)
 	if err != nil {
 		return err
 	}
-
 	project, err := d.projectRepo.FindById(ctx, projectId)
 	if err = mongoError(err, "project not found"); err != nil {
 		return err

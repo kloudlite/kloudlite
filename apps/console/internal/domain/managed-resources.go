@@ -300,7 +300,17 @@ func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID)
 		return nil, err
 	}
 
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+	project, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	cluster, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, cluster))
 
 	secret, err := kubecli.GetSecret(ctx, mres.Namespace, fmt.Sprint("mres-", mres.Id))
 	if err != nil {
