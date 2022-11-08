@@ -15,9 +15,9 @@ type EdgeRouterSpec struct {
 	// +kubebuilder:default=LoadBalancer
 	ServiceType string `json:"serviceType,omitempty"`
 
-	DefaultSSLCert  SSLCertRef          `json:"defaultSSLCert,omitempty"`
-	NodeSelector    map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations     []corev1.Toleration `json:"tolerations,omitempty"`
+	DefaultSSLCert SSLCertRef          `json:"defaultSSLCert,omitempty"`
+	NodeSelector   map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations    []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// +kubebuilder:default=100
 	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`
@@ -28,6 +28,7 @@ type EdgeRouterSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
