@@ -13,7 +13,7 @@ spec:
     listKind: ClusterList
     plural: clusters
     singular: cluster
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.isReady
@@ -42,6 +42,15 @@ spec:
           spec:
             description: ClusterSpec defines the desired state of Cluster
             properties:
+              kubeConfig:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
               redpanda:
                 properties:
                   adminSecretRef:
@@ -57,19 +66,10 @@ spec:
                     items:
                       type: string
                     type: array
-                  extraTopicsWithACL:
+                  pushAccessToTopics:
                     items:
                       type: string
                     type: array
-                  kubeConfig:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    type: object
                   topics:
                     items:
                       type: string
@@ -77,8 +77,6 @@ spec:
                 required:
                 - adminSecretRef
                 type: object
-            required:
-            - redpanda
             type: object
           status:
             properties:
@@ -234,8 +232,10 @@ spec:
                 type: array
               displayVars:
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               generatedVars:
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               isReady:
                 type: boolean
               lastReconcileTime:
@@ -243,6 +243,7 @@ spec:
                 type: string
               message:
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               messages:
                 items:
                   properties:

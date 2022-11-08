@@ -293,15 +293,18 @@ func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, logger logging.Logge
   builder.Owns(&corev1.Secret{})
   builder.Owns(fn.NewUnstructured(...))
 
-  builder.Watches(&source.Kind{Type: &appsv1.Statefulset{}}, handler.EnqueueRequestForMapFunc(
-    func (obj) []reconcile.Request {
-      v, ok := obj.GetLabels()[constants.MsvcNameKey]
-      if !ok {
-        return nil
-      }
-      return []reconcile.Request{{`{{ NamespacedName: fn.NN(obj.Namespace, v)}}`}}
-    }
+  builder.Watches(
+    &source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(
+      func(obj client.Object) []reconcile.Request {
+        v, ok := obj.GetLabels()[constants.MsvcNameKey]
+        if !ok {
+          return nil
+        }
+        return []reconcile.Request{fn.NN(obj.GetNamespace(), v)}
+      },
+    ),
   )
+
 
   return builder.Complete(r)
 }

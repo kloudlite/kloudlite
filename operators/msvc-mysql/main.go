@@ -5,7 +5,7 @@ import (
 	"operators.kloudlite.io/operator"
 	clusterService "operators.kloudlite.io/operators/msvc-mysql/internal/controllers/cluster-service"
 	"operators.kloudlite.io/operators/msvc-mysql/internal/controllers/database"
-	"operators.kloudlite.io/operators/msvc-mysql/internal/controllers/standalone"
+	standaloneService "operators.kloudlite.io/operators/msvc-mysql/internal/controllers/standalone-service"
 	"operators.kloudlite.io/operators/msvc-mysql/internal/env"
 )
 
@@ -16,9 +16,9 @@ func main() {
 		mysqlMsvcv1.AddToScheme,
 	)
 	mgr.RegisterControllers(
-		&standalone.ServiceReconciler{Name: "standalone-service", Env: ev},
-		&database.Reconciler{Name: "database", Env: ev},
+		&standaloneService.ServiceReconciler{Name: "standalone-svc", Env: ev},
 		&clusterService.Reconciler{Name: "cluster-svc", Env: ev},
+		&database.Reconciler{Name: "database", Env: ev},
 	)
 	mgr.Start()
 }

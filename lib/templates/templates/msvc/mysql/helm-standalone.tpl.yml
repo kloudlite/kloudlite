@@ -3,6 +3,7 @@
 {{- $obj := get . "obj"}}
 {{- $rootPassword := get . "root-password"  -}}
 {{- $mysqlUserPassword := get . "mysql-user-password"  -}}
+{{- $existingSecret := get . "existing-secret"  -}}
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{- with $obj }}
@@ -13,9 +14,7 @@ metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
-  {{- if .Labels }}
-  labels: {{ .Labels | toYAML | nindent 4 }}
-  {{- end}}
+  labels: {{ .Labels | default dict | toYAML | nindent 4 }}
 spec:
   global:
     storageClass: {{$storageClass}}
@@ -28,42 +27,29 @@ spec:
   commonLabels: {{.Labels | toYAML | nindent 4}}
   {{- end }}
 
-  {{- if .Spec.NodeSelector}}
-  nodeSelector: {{.Spec.NodeSelector | toYAML | nindent 4}}
-  {{- end }}
-
   architecture: standalone
   auth:
     enabled: true
-    password: {{$mysqlUserPassword}}
-    rootPassword: {{$rootPassword}}
+    existingSecret: {{$existingSecret}}
   primary:
     persistence:
       enabled: true
       size: {{.Spec.Resources.Storage.Size}}
-    {{- if .Labels }}
     podLabels:
-      {{.Labels | toYAML | nindent 6}}
+      {{.Labels  | default dict | toYAML | nindent 6 }}
       kloudlite.io/region: {{.Spec.Region}}
       kloudlite.io/stateful-node: "true"
-    {{- end}}
 
     priorityClassName: {{$priorityClassName}}
     affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}
     tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
     nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}
 
-  secondary:
-    {{- if .Labels }}
-    podLabels: {{.Labels | toYAML | nindent 6}}
-    {{- end}}
-
-
-  resources:
-    limits:
-      cpu: {{.Spec.Resources.Cpu.Max}}
-      memory: {{.Spec.Resources.Memory}}
-    requests:
-      cpu: {{.Spec.Resources.Cpu.Min}}
-      memory: {{.Spec.Resources.Memory}}
+    resources:
+      limits:
+        cpu: {{.Spec.Resources.Cpu.Max}}
+        memory: {{.Spec.Resources.Memory}}
+      requests:
+        cpu: {{.Spec.Resources.Cpu.Min}}
+        memory: {{.Spec.Resources.Memory}}
 {{- end}}

@@ -161,11 +161,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 						return ctrl.Result{}, nil
 					}
 
+					storageSize, err := realMsvc.Spec.Resources.Storage.ToInt()
+					if err != nil {
+						return ctrl.Result{}, err
+					}
 					billing := t.ResourceBilling{
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []t.K8sItem{
 							t.NewK8sItem(msvc, t.Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							t.NewK8sItem(msvc, t.BlockStorage, float32(realMsvc.Spec.Resources.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							t.NewK8sItem(msvc, t.BlockStorage, float32(storageSize), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, &billing)
@@ -188,11 +192,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 						return ctrl.Result{}, nil
 					}
 
+					storageSize, err := realMsvc.Spec.Storage.ToInt()
+					if err != nil {
+						return ctrl.Result{}, err
+					}
 					billing := t.ResourceBilling{
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []t.K8sItem{
 							t.NewK8sItem(msvc, t.Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							t.NewK8sItem(msvc, t.BlockStorage, float32(realMsvc.Spec.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							t.NewK8sItem(msvc, t.BlockStorage, float32(storageSize), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, &billing)
@@ -215,11 +223,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 						return ctrl.Result{}, nil
 					}
 
+					storageSize, err := realMsvc.Spec.Resources.Storage.ToInt()
 					billing := t.ResourceBilling{
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []t.K8sItem{
 							t.NewK8sItem(msvc, t.Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							t.NewK8sItem(msvc, t.BlockStorage, float32(realMsvc.Spec.Resources.Storage.ToInt()), realMsvc.Spec.ReplicaCount),
+							t.NewK8sItem(msvc, t.BlockStorage, float32(storageSize), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, &billing)

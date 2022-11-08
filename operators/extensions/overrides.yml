@@ -1,3 +1,7 @@
 env:
-  - name: DEFAULT_KAFKA_TOPICS
-    value: "incoming,status-reply,billing-reply,error-on-apply"
+#   - name: DEFAULT_KAFKA_TOPICS
+#     value: "incoming,status-reply,billing-reply,error-on-apply"
+  - name: REDPANDA_SECRET_NAME
+    value: msvc-redpanda-admin-creds
+  - name: REDPANDA_SECRET_NAMESPACE
+    value: kl-core

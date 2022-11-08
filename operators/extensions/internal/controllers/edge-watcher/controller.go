@@ -35,7 +35,6 @@ func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-const EdgeRouterNS = "kl-init-ingress-nginx"
 const SSLSecretName = "kl-cert-issuer-tls"
 const SSLSecretNamespace = "kl-init-cert-manager"
 
@@ -132,14 +131,13 @@ func (r *Reconciler) ensureCSIDriver(ctx context.Context, edge *Edge, logger log
 
 func (r *Reconciler) ensureEdgeRouters(ctx context.Context, edge *Edge, logger logging.Logger) stepResult.Result {
 	var edgeRouter crdsv1.EdgeRouter
-	if err := r.Get(ctx, fn.NN(EdgeRouterNS, edge.Name), &edgeRouter); err != nil {
+	if err := r.Get(ctx, fn.NN("", edge.Name), &edgeRouter); err != nil {
 		if apiErrors.IsNotFound(err) {
 			logger.Infof("creating EdgeRouter for (edge=%s, provider=%s), as it does not exist", edge.Name, edge.Spec.Provider)
 			if err := r.Create(
 				ctx, &crdsv1.EdgeRouter{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            edge.Name,
-						Namespace:       EdgeRouterNS,
 						OwnerReferences: edge.GetOwnerReferences(),
 						Labels: map[string]string{
 							"kloudlite.io/created-by-edge-watcher": edge.Name,
