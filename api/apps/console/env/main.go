@@ -11,7 +11,7 @@ type Env struct {
 	KafkaConsumerGroupId string `env:"KAFKA_GROUP_ID"`
 	CookieDomain         string `env:"COOKIE_DOMAIN"`
 
-	ResponseTopic string `env:"KAFKA_WORKLOAD_RESP_TOPIC"`
+	// ResponseTopic string `env:"KAFKA_WORKLOAD_RESP_TOPIC"`
 
 	LokiServerUrl  string `env:"LOKI_URL" required:"true"`
 	LogServerPort  uint64 `env:"LOG_SERVER_PORT" required:"true"`

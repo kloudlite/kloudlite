@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"math/rand"
 	"net"
 	"strings"
@@ -143,6 +144,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 type ConsoleClientConnection *grpc.ClientConn
+type FinanceClientConnection *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
@@ -157,6 +159,10 @@ var Module = fx.Module(
 
 	fx.Provide(func(conn ConsoleClientConnection) console.ConsoleClient {
 		return console.NewConsoleClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(conn FinanceClientConnection) finance.FinanceClient {
+		return finance.NewFinanceClient((*grpc.ClientConn)(conn))
 	}),
 
 	fx.Invoke(func(lifecycle fx.Lifecycle, s *dns.Server, d domain.Domain, recCache cache.Repo[[]*domain.Record], env *Env) {

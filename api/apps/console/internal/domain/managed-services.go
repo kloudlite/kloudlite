@@ -179,8 +179,13 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", string(create.Id), &opCrds.ManagedService{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
 			Metadata: opCrds.ManagedServiceMetadata{
@@ -279,8 +284,13 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 
+	clusterId, err := d.getClusterForAccount(ctx, proj.AccountId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"apply", string(managedSvc.Id), &opCrds.ManagedService{
+		"apply", d.getDispatchKafkaTopic(clusterId), string(managedSvc.Id), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
 			Metadata: opCrds.ManagedServiceMetadata{
@@ -338,8 +348,14 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterIdForProject(ctx, managedSvc.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
 	err = d.workloadMessenger.SendAction(
-		"delete", string(managedServiceId), &opCrds.ManagedService{
+		"delete", d.getDispatchKafkaTopic(clusterId), string(managedServiceId), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
 			Metadata: opCrds.ManagedServiceMetadata{
@@ -365,7 +381,18 @@ func (d *domain) GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID)
 	if err != nil {
 		return nil, err
 	}
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/kl-01", d.clusterConfigsPath))
+
+	project, err := d.projectRepo.FindById(ctx, msvc.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	cluster, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, getClusterKubeConfig(cluster)))
 	secret, err := kubecli.GetSecret(ctx, msvc.Namespace, fmt.Sprint("msvc-", msvc.Id))
 	if err != nil {
 		return nil, err

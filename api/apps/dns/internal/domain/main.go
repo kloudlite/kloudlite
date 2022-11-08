@@ -3,14 +3,16 @@ package domain
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"net"
+
 	"go.uber.org/fx"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
-	"math/rand"
-	"net"
 )
 
 type domainI struct {
@@ -22,6 +24,7 @@ type domainI struct {
 	nodeIpsRepo       repos.DbRepo[*NodeIps]
 	env               *Env
 	consoleClient     console.ConsoleClient
+	financeClient     finance.FinanceClient
 }
 
 func (d *domainI) UpsertARecords(ctx context.Context, host string, records []string) error {
@@ -41,21 +44,25 @@ func (d *domainI) UpdateNodeIPs(ctx context.Context, regionId string, accountId 
 	if err != nil {
 		return false
 	}
-	one, err := d.nodeIpsRepo.FindOne(ctx, repos.Filter{
-		"regionPart":  regionCname,
-		"accountPart": accountCname,
-		"clusterPart": clusterPart,
-	})
+	one, err := d.nodeIpsRepo.FindOne(
+		ctx, repos.Filter{
+			"regionPart":  regionCname,
+			"accountPart": accountCname,
+			"clusterPart": clusterPart,
+		},
+	)
 	if err != nil {
 		return false
 	}
 	if one == nil {
-		_, err = d.nodeIpsRepo.Create(ctx, &NodeIps{
-			RegionPart:  regionCname,
-			AccountPart: accountCname,
-			ClusterPart: clusterPart,
-			Ips:         ips,
-		})
+		_, err = d.nodeIpsRepo.Create(
+			ctx, &NodeIps{
+				RegionPart:  regionCname,
+				AccountPart: accountCname,
+				ClusterPart: clusterPart,
+				Ips:         ips,
+			},
+		)
 		if err != nil {
 			return false
 		}
@@ -81,24 +88,31 @@ func (d *domainI) GetNodeIps(ctx context.Context,
 	if accountPart != nil {
 		filter["accountPart"] = *accountPart
 	}
-	all, err := d.nodeIpsRepo.Find(ctx, repos.Query{
-		Filter: filter,
-	})
+	all, err := d.nodeIpsRepo.Find(
+		ctx, repos.Query{
+			Filter: filter,
+		},
+	)
 	out := make([]string, 0)
 	for _, nodeIps := range all {
 		out = append(out, nodeIps.Ips...)
 	}
 	if len(out) == 0 && regionPart != nil {
-		result, e := d.regionCNamesRepo.FindOne(ctx, repos.Filter{
-			"cName": regionPart,
-		})
+		// TODO: (abdhesh), check if this is really required ?
+		result, e := d.regionCNamesRepo.FindOne(
+			ctx, repos.Filter{
+				"cName": regionPart,
+			},
+		)
 		if e == nil && result.IsShared {
 			filter := repos.Filter{
 				"regionPart": regionPart,
 			}
-			all, e2 := d.nodeIpsRepo.Find(ctx, repos.Query{
-				Filter: filter,
-			})
+			all, e2 := d.nodeIpsRepo.Find(
+				ctx, repos.Query{
+					Filter: filter,
+				},
+			)
 			if e2 == nil {
 				for _, nodeIps := range all {
 					out = append(out, nodeIps.Ips...)
@@ -118,9 +132,11 @@ func (d *domainI) DeleteSite(ctx context.Context, siteId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	_, err = d.consoleClient.SetupAccount(ctx, &console.AccountSetupIn{
-		AccountId: string(site.AccountId),
-	})
+	_, err = d.consoleClient.SetupAccount(
+		ctx, &console.AccountSetupIn{
+			AccountId: string(site.AccountId),
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -128,9 +144,11 @@ func (d *domainI) DeleteSite(ctx context.Context, siteId repos.ID) error {
 }
 
 func (d *domainI) GetSiteFromDomain(ctx context.Context, domain string) (*Site, error) {
-	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
-		"host": domain,
-	})
+	one, err := d.sitesRepo.FindOne(
+		ctx, repos.Filter{
+			"host": domain,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -141,27 +159,33 @@ func (d *domainI) GetSiteFromDomain(ctx context.Context, domain string) (*Site, 
 }
 
 func (d *domainI) GetSites(ctx context.Context, accountId string) ([]*Site, error) {
-	return d.sitesRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"accountId": accountId,
+	return d.sitesRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"accountId": accountId,
+			},
 		},
-	})
+	)
 }
 
 func (d *domainI) GetVerifiedSites(ctx context.Context, accountId string) ([]*Site, error) {
-	return d.sitesRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"accountId": accountId,
-			"verified":  true,
+	return d.sitesRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"accountId": accountId,
+				"verified":  true,
+			},
 		},
-	})
+	)
 }
 
 func (d *domainI) CreateSite(ctx context.Context, domain string, accountId, regionId repos.ID) error {
-	one, err := d.sitesRepo.FindOne(ctx, repos.Filter{
-		"host":      domain,
-		"accountId": accountId,
-	})
+	one, err := d.sitesRepo.FindOne(
+		ctx, repos.Filter{
+			"host":      domain,
+			"accountId": accountId,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -169,12 +193,14 @@ func (d *domainI) CreateSite(ctx context.Context, domain string, accountId, regi
 		return errors.New("site already exists")
 	}
 	if one == nil {
-		_, err = d.sitesRepo.Create(ctx, &Site{
-			Domain:    domain,
-			AccountId: accountId,
-			RegionId:  regionId,
-			Verified:  false,
-		})
+		_, err = d.sitesRepo.Create(
+			ctx, &Site{
+				Domain:    domain,
+				AccountId: accountId,
+				RegionId:  regionId,
+				Verified:  false,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -214,16 +240,23 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 		return err
 	}
 
-	fmt.Println(fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, "kl-01", d.env.EdgeCnameBaseDomain), cname)
+	accountId := string(site.AccountId)
 
-	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, "kl-01", d.env.EdgeCnameBaseDomain) {
+	cluster, err := d.getClusterFromAccount(ctx, err, accountId)
+	if err != nil {
+		return err
+	}
+
+	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, cluster, d.env.EdgeCnameBaseDomain) {
 		return errors.New("cname does not match")
 	}
-	err = d.sitesRepo.UpdateMany(ctx, repos.Filter{
-		"host": site.Domain,
-	}, map[string]any{
-		"verified": false,
-	})
+	err = d.sitesRepo.UpdateMany(
+		ctx, repos.Filter{
+			"host": site.Domain,
+		}, map[string]any{
+			"verified": false,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -232,13 +265,27 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	_, err = d.consoleClient.SetupAccount(ctx, &console.AccountSetupIn{
-		AccountId: string(site.AccountId),
-	})
+	_, err = d.consoleClient.SetupAccount(
+		ctx, &console.AccountSetupIn{
+			AccountId: string(site.AccountId),
+		},
+	)
 	if err != nil {
 		return err
 	}
 	return err
+}
+
+func (d *domainI) getClusterFromAccount(ctx context.Context, err error, accountId string) (*finance.GetAttachedClusterOut, error) {
+	cluster, err := d.financeClient.GetAttachedCluster(
+		ctx, &finance.GetAttachedClusterIn{
+			AccountId: accountId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return cluster, nil
 }
 
 func (d *domainI) GetSite(ctx context.Context, siteId string) (*Site, error) {
@@ -256,7 +303,11 @@ func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string, reg
 		return "", err
 	}
 
-	return fmt.Sprintf("%s.%s.%s.%s", regionCnameIdentity, name, "kl-01", d.env.EdgeCnameBaseDomain), nil
+	cluster, err := d.getClusterFromAccount(ctx, err, accountId)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s.%s.%s.%s", regionCnameIdentity, name, cluster, d.env.EdgeCnameBaseDomain), nil
 }
 
 func generateName() string {
@@ -266,9 +317,11 @@ func generateName() string {
 }
 
 func (d *domainI) getRegionCName(ctx context.Context, regionId string) (string, error) {
-	regionDNS, err := d.regionCNamesRepo.FindOne(ctx, repos.Filter{
-		"regionId": regionId,
-	})
+	regionDNS, err := d.regionCNamesRepo.FindOne(
+		ctx, repos.Filter{
+			"regionId": regionId,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -278,9 +331,11 @@ func (d *domainI) getRegionCName(ctx context.Context, regionId string) (string, 
 	var genUniqueName func() (string, error)
 	genUniqueName = func() (string, error) {
 		name := generateName()
-		regionDNS, err = d.regionCNamesRepo.FindOne(ctx, repos.Filter{
-			"cName": name,
-		})
+		regionDNS, err = d.regionCNamesRepo.FindOne(
+			ctx, repos.Filter{
+				"cName": name,
+			},
+		)
 		if err != nil {
 			return "", err
 		}
@@ -295,10 +350,12 @@ func (d *domainI) getRegionCName(ctx context.Context, regionId string) (string, 
 		return "", err
 	}
 	if regionDNS == nil {
-		create, err := d.regionCNamesRepo.Create(ctx, &RegionCName{
-			RegionId: repos.ID(regionId),
-			CName:    generatedName,
-		})
+		create, err := d.regionCNamesRepo.Create(
+			ctx, &RegionCName{
+				RegionId: repos.ID(regionId),
+				CName:    generatedName,
+			},
+		)
 		if err != nil {
 			return "", err
 		}
@@ -308,9 +365,11 @@ func (d *domainI) getRegionCName(ctx context.Context, regionId string) (string, 
 }
 
 func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string, error) {
-	accountDNS, err := d.accountCNamesRepo.FindOne(ctx, repos.Filter{
-		"accountId": accountId,
-	})
+	accountDNS, err := d.accountCNamesRepo.FindOne(
+		ctx, repos.Filter{
+			"accountId": accountId,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -320,9 +379,11 @@ func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string
 	var genUniqueName func() (string, error)
 	genUniqueName = func() (string, error) {
 		name := generateName()
-		accountDNS, err = d.accountCNamesRepo.FindOne(ctx, repos.Filter{
-			"cName": name,
-		})
+		accountDNS, err = d.accountCNamesRepo.FindOne(
+			ctx, repos.Filter{
+				"cName": name,
+			},
+		)
 		if err != nil {
 			return "", err
 		}
@@ -337,10 +398,12 @@ func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string
 		return "", err
 	}
 	if accountDNS == nil {
-		create, err := d.accountCNamesRepo.Create(ctx, &AccountCName{
-			AccountId: repos.ID(accountId),
-			CName:     generatedName,
-		})
+		create, err := d.accountCNamesRepo.Create(
+			ctx, &AccountCName{
+				AccountId: repos.ID(accountId),
+				CName:     generatedName,
+			},
+		)
 		if err != nil {
 			return "", err
 		}
@@ -350,9 +413,11 @@ func (d *domainI) getAccountCName(ctx context.Context, accountId string) (string
 }
 
 func (d *domainI) GetRecord(ctx context.Context, host string) (*Record, error) {
-	one, err := d.recordsRepo.FindOne(ctx, repos.Filter{
-		"host": host,
-	})
+	one, err := d.recordsRepo.FindOne(
+		ctx, repos.Filter{
+			"host": host,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -361,9 +426,11 @@ func (d *domainI) GetRecord(ctx context.Context, host string) (*Record, error) {
 
 func (d *domainI) deleteRecords(ctx context.Context, host string) error {
 	d.recordsCache.Drop(ctx, host)
-	return d.recordsRepo.DeleteMany(ctx, repos.Filter{
-		"host": host,
-	})
+	return d.recordsRepo.DeleteMany(
+		ctx, repos.Filter{
+			"host": host,
+		},
+	)
 }
 
 func (d *domainI) DeleteRecords(ctx context.Context, host string) error {
@@ -373,10 +440,12 @@ func (d *domainI) DeleteRecords(ctx context.Context, host string) error {
 func (d *domainI) addARecords(ctx context.Context, host string, aRecords []string) error {
 	var err error
 	d.recordsCache.Drop(ctx, host)
-	_, err = d.recordsRepo.Create(ctx, &Record{
-		Host:    host,
-		Answers: aRecords,
-	})
+	_, err = d.recordsRepo.Create(
+		ctx, &Record{
+			Host:    host,
+			Answers: aRecords,
+		},
+	)
 	return err
 }
 
@@ -392,6 +461,7 @@ func fxDomain(
 	regionDNSRepo repos.DbRepo[*RegionCName],
 	recordsCache cache.Repo[[]*Record],
 	consoleclient console.ConsoleClient,
+	financeClient finance.FinanceClient,
 	env *Env,
 ) Domain {
 	return &domainI{
@@ -403,6 +473,7 @@ func fxDomain(
 		nodeIpsRepo,
 		env,
 		consoleclient,
+		financeClient,
 	}
 }
 

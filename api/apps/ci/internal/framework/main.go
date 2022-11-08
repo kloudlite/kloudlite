@@ -27,6 +27,14 @@ func (e *GrpcConsoleConfig) GetGRPCServerURL() string {
 	return e.Addr
 }
 
+type GrpcFinanceConfig struct {
+	Addr string `env:"FINANCE_ADDR" required:"true"`
+}
+
+func (e *GrpcFinanceConfig) GetGRPCServerURL() string {
+	return e.Addr
+}
+
 type Env struct {
 	DBName        string `env:"MONGO_DB_NAME" required:"true"`
 	DBUrl         string `env:"MONGO_URI" required:"true"`
@@ -86,6 +94,7 @@ var Module fx.Option = fx.Module(
 	config.EnvFx[Env](),
 	config.EnvFx[GrpcAuthConfig](),
 	config.EnvFx[GrpcConsoleConfig](),
+	config.EnvFx[GrpcFinanceConfig](),
 	fx.Provide(
 		func(env *Env) app.AuthCacheClient {
 			return cache.NewRedisClient(env.AuthRedisHost, env.AuthRedisUsername, env.AuthRedisPassword, env.AuthRedisPrefix)
@@ -105,6 +114,7 @@ var Module fx.Option = fx.Module(
 	repos.NewMongoClientFx[*Env](),
 	rpc.NewGrpcClientFx[*GrpcAuthConfig, app.AuthGRPCClient](),
 	rpc.NewGrpcClientFx[*GrpcConsoleConfig, app.ConsoleGRPCClient](),
+	rpc.NewGrpcClientFx[*GrpcFinanceConfig, app.FinanceGRPCClient](),
 	redpanda.NewClientFx[*Env](),
 	app.Module,
 )
