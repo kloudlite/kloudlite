@@ -17,8 +17,8 @@ var (
 	dirTemplates embed.FS
 )
 
-func withConsoleTemplates() (*template.Template, error) {
-	t := template.New("console")
+func fxClusterTemplate() (*template.Template, error) {
+	t := template.New("cluster")
 	t = text_templates.WithFunctions(t)
 	if _, err := t.ParseFS(dirTemplates, "templates/secret.yml.tpl", "templates/cluster.yml.tpl"); err != nil {
 		return nil, err
