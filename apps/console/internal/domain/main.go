@@ -133,6 +133,6 @@ func fxDomain(
 var Module = fx.Module(
 	"domain",
 	config.EnvFx[Env](),
-	fx.Provide(withConsoleTemplates),
+	fx.Provide(fxClusterTemplate),
 	fx.Provide(fxDomain),
 )
