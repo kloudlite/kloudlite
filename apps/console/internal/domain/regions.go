@@ -331,6 +331,14 @@ func (d *domain) GetEdgeNodes(ctx context.Context, edgeId repos.ID) (*kubeapi.Ac
 	return kubecli.GetAccountNodes(ctx, string(edgeId))
 }
 
+func (d *domain) GetEdgeRegion(ctx context.Context, edgeId repos.ID) (*entities.EdgeRegion, error) {
+	return d.regionRepo.FindById(ctx, edgeId)
+}
+
+func (d *domain) GetCloudProvider(ctx context.Context, providerId repos.ID) (*entities.CloudProvider, error) {
+	return d.providerRepo.FindById(ctx, providerId)
+}
+
 func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *EdgeRegionUpdate) error {
 	region, err := d.regionRepo.FindById(ctx, edgeId)
 	if err != nil {
@@ -402,5 +410,4 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 		},
 	)
 	return nil
-
 }

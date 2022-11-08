@@ -15,11 +15,13 @@ import (
 
 type Domain interface {
 	GetEdgeRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error)
+	GetEdgeRegion(ctx context.Context, edgeId repos.ID) (*entities.EdgeRegion, error)
 	CreateEdgeRegion(ctx context.Context, providerId repos.ID, region *entities.EdgeRegion) error
 	DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error
 	UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, region *EdgeRegionUpdate) error
 
 	GetCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error)
+	GetCloudProvider(ctx context.Context, providerId repos.ID) (*entities.CloudProvider, error)
 	CreateCloudProvider(ctx context.Context, accountId *repos.ID, provider *entities.CloudProvider) error
 	DeleteCloudProvider(ctx context.Context, providerId repos.ID) error
 	UpdateCloudProvider(ctx context.Context, providerId repos.ID, provider *CloudProviderUpdate) error

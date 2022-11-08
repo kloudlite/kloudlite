@@ -121,7 +121,6 @@ require (
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tektoncd/pipeline v0.35.0 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.1.0 // indirect
 	github.com/urfave/cli/v2 v2.3.0 // indirect
