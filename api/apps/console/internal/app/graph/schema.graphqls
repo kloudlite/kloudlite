@@ -195,6 +195,7 @@ type Mutation {
 
   core_createEdgeRegion(edgeRegion: EdgeRegionIn!, providerId: ID!): Boolean! #private-access
   core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegionUpdateIn!): Boolean! #private-access
+  core_deleteEdgeRegion(edgeId: ID!): Boolean! #private-access
   core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
   core_updateCloudProvider(providerId: ID!, cloudProvider: CloudProviderUpdateIn!): Boolean! #private-access
   core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
