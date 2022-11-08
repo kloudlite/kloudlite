@@ -41,7 +41,7 @@ func (d *domain) AddNewCluster(ctx context.Context, name string, subDomain strin
 	b := new(bytes.Buffer)
 	if err := d.consoleTemplate.ExecuteTemplate(
 		b, "secret.yml.tpl", map[string]any{
-			"name":       fmt.Sprintf("%s-kubeconfig", cluster.Id),
+			"name":       getClusterKubeConfig(string(cluster.Id)),
 			"namespace":  fmt.Sprintf("kl-core"),
 			"kubeconfig": kubeConfig,
 		},
@@ -53,7 +53,7 @@ func (d *domain) AddNewCluster(ctx context.Context, name string, subDomain strin
 	if err := d.consoleTemplate.ExecuteTemplate(
 		b2, "cluster.yml.tpl", map[string]any{
 			"name":                 cluster.Id,
-			"kubeconfig-name":      fmt.Sprintf("%s-kubeconfig", cluster.Id),
+			"kubeconfig-name":      getClusterKubeConfig(string(cluster.Id)),
 			"kubeconfig-namespace": "kl-core",
 		},
 	); err != nil {

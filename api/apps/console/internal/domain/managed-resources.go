@@ -310,7 +310,7 @@ func (d *domain) getManagedResOutput(ctx context.Context, managedResID repos.ID)
 		return nil, err
 	}
 
-	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, cluster))
+	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, getClusterKubeConfig(cluster)))
 
 	secret, err := kubecli.GetSecret(ctx, mres.Namespace, fmt.Sprint("mres-", mres.Id))
 	if err != nil {
