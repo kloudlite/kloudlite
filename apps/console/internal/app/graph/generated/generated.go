@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	App() AppResolver
 	CloudProvider() CloudProviderResolver
 	Device() DeviceResolver
+	EdgeRegion() EdgeRegionResolver
 	Entity() EntityResolver
 	ManagedRes() ManagedResResolver
 	ManagedSvc() ManagedSvcResolver
@@ -188,6 +189,7 @@ type ComplexityRoot struct {
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
 		Pools     func(childComplexity int) int
+		Provider  func(childComplexity int) int
 		Region    func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
@@ -334,6 +336,7 @@ type ComplexityRoot struct {
 		Memberships       func(childComplexity int) int
 		Name              func(childComplexity int) int
 		ReadableID        func(childComplexity int) int
+		Region            func(childComplexity int) int
 		RegionID          func(childComplexity int) int
 		Status            func(childComplexity int) int
 	}
@@ -436,6 +439,9 @@ type DeviceResolver interface {
 
 	InterceptingServices(ctx context.Context, obj *model.Device) ([]*model.App, error)
 }
+type EdgeRegionResolver interface {
+	Provider(ctx context.Context, obj *model.EdgeRegion) (*model.CloudProvider, error)
+}
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindAppByID(ctx context.Context, id repos.ID) (*model.App, error)
@@ -493,6 +499,8 @@ type ProjectResolver interface {
 	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
 
 	DockerCredentials(ctx context.Context, obj *model.Project) (*model.DockerCredentials, error)
+
+	Region(ctx context.Context, obj *model.Project) (*model.EdgeRegion, error)
 }
 type QueryResolver interface {
 	CoreCheckDeviceExist(ctx context.Context, accountID repos.ID, name string) (bool, error)
@@ -1152,6 +1160,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EdgeRegion.Pools(childComplexity), true
+
+	case "EdgeRegion.provider":
+		if e.complexity.EdgeRegion.Provider == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.Provider(childComplexity), true
 
 	case "EdgeRegion.region":
 		if e.complexity.EdgeRegion.Region == nil {
@@ -2065,6 +2080,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.ReadableID(childComplexity), true
 
+	case "Project.region":
+		if e.complexity.Project.Region == nil {
+			break
+		}
+
+		return e.complexity.Project.Region(childComplexity), true
+
 	case "Project.regionId":
 		if e.complexity.Project.RegionID == nil {
 			break
@@ -2701,6 +2723,7 @@ type EdgeRegion {
   id: ID!
   name: String!
   region : String!
+  provider: CloudProvider
   createdAt: String!
   updatedAt: String
   pools: [NodePool!]!
@@ -3034,6 +3057,7 @@ type Project {
   cluster: String
   dockerCredentials: DockerCredentials
   regionId: ID!
+  region: EdgeRegion!
 }
 
 type ProjectMembership {
@@ -7663,6 +7687,38 @@ func (ec *executionContext) _EdgeRegion_region(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _EdgeRegion_provider(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.EdgeRegion().Provider(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CloudProvider)
+	fc.Result = res
+	return ec.marshalOCloudProvider2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProvider(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _EdgeRegion_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -11543,6 +11599,41 @@ func (ec *executionContext) _Project_regionId(ctx context.Context, field graphql
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Project_region(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Project().Region(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EdgeRegion)
+	fc.Result = res
+	return ec.marshalNEdgeRegion2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegion(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
@@ -16842,7 +16933,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -16852,7 +16943,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "region":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -16862,8 +16953,25 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "provider":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EdgeRegion_provider(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._EdgeRegion_createdAt(ctx, field, obj)
@@ -16872,7 +16980,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -16889,7 +16997,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -18333,6 +18441,26 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "region":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_region(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -20262,6 +20390,10 @@ func (ec *executionContext) marshalNEdgeNode2ᚖkloudliteᚗioᚋappsᚋconsole�
 	return ec._EdgeNode(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNEdgeRegion2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegion(ctx context.Context, sel ast.SelectionSet, v model.EdgeRegion) graphql.Marshaler {
+	return ec._EdgeRegion(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNEdgeRegion2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EdgeRegion) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -21606,6 +21738,13 @@ func (ec *executionContext) marshalOCloudProvider2ᚕᚖkloudliteᚗioᚋappsᚋ
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalOCloudProvider2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProvider(ctx context.Context, sel ast.SelectionSet, v *model.CloudProvider) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CloudProvider(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOComputePlan2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ComputePlan) graphql.Marshaler {

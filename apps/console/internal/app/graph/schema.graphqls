@@ -106,6 +106,7 @@ type EdgeRegion {
   id: ID!
   name: String!
   region : String!
+  provider: CloudProvider
   createdAt: String!
   updatedAt: String
   pools: [NodePool!]!
@@ -439,6 +440,7 @@ type Project {
   cluster: String
   dockerCredentials: DockerCredentials
   regionId: ID!
+  region: EdgeRegion!
 }
 
 type ProjectMembership {
