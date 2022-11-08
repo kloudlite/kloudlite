@@ -14,22 +14,17 @@ import (
 )
 
 func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
-
 	userId, err := GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	dev, err := d.deviceRepo.FindById(ctx, id)
-
 	if err = mongoError(err, "device not found"); err != nil {
 		return nil, err
 	}
-
 	if dev.UserId != repos.ID(userId) {
 		return nil, errors.New("you don't have to access this resource")
 	}
-
 	return dev, nil
 }
 
@@ -38,7 +33,6 @@ func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]
 	if err != nil {
 		return nil, err
 	}
-
 	q := make(repos.Filter)
 	q["account_id"] = accountId
 	return d.deviceRepo.Find(
