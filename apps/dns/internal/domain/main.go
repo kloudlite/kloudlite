@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
@@ -22,6 +23,7 @@ type domainI struct {
 	nodeIpsRepo       repos.DbRepo[*NodeIps]
 	env               *Env
 	consoleClient     console.ConsoleClient
+	financeClient     finance.FinanceClient
 }
 
 func (d *domainI) UpsertARecords(ctx context.Context, host string, records []string) error {
@@ -199,7 +201,6 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 
 	cname, err := net.LookupCNAME(site.Domain)
 	if err != nil {
-		fmt.Println(err)
 		return errors.New("Unable to verify CName. Please wait for a while and try again.")
 	}
 
@@ -214,9 +215,14 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 		return err
 	}
 
-	fmt.Println(fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, "kl-01", d.env.EdgeCnameBaseDomain), cname)
+	accountId := string(site.AccountId)
 
-	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, "kl-01", d.env.EdgeCnameBaseDomain) {
+	clusterId, err := d.getClusterFromAccount(ctx, err, accountId)
+	if err != nil {
+		return err
+	}
+
+	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, clusterId, d.env.EdgeCnameBaseDomain) {
 		return errors.New("cname does not match")
 	}
 	err = d.sitesRepo.UpdateMany(ctx, repos.Filter{
@@ -241,6 +247,16 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 	return err
 }
 
+func (d *domainI) getClusterFromAccount(ctx context.Context, err error, accountId string) (string, error) {
+	cluster, err := d.financeClient.GetAttachedCluster(ctx, &finance.GetAttachedClusterIn{
+		AccountId: accountId,
+	})
+	if err != nil {
+		return "", err
+	}
+	return cluster.ClusterId, nil
+}
+
 func (d *domainI) GetSite(ctx context.Context, siteId string) (*Site, error) {
 	return d.sitesRepo.FindById(ctx, repos.ID(siteId))
 }
@@ -256,7 +272,11 @@ func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string, reg
 		return "", err
 	}
 
-	return fmt.Sprintf("%s.%s.%s.%s", regionCnameIdentity, name, "kl-01", d.env.EdgeCnameBaseDomain), nil
+	cluster, err := d.getClusterFromAccount(ctx, err, accountId)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s.%s.%s.%s", regionCnameIdentity, name, cluster, d.env.EdgeCnameBaseDomain), nil
 }
 
 func generateName() string {
@@ -392,6 +412,7 @@ func fxDomain(
 	regionDNSRepo repos.DbRepo[*RegionCName],
 	recordsCache cache.Repo[[]*Record],
 	consoleclient console.ConsoleClient,
+	financeClient finance.FinanceClient,
 	env *Env,
 ) Domain {
 	return &domainI{
@@ -403,6 +424,7 @@ func fxDomain(
 		nodeIpsRepo,
 		env,
 		consoleclient,
+		financeClient,
 	}
 }
 

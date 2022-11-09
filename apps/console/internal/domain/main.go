@@ -6,8 +6,10 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
+	"text/template"
 
 	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
+	"kloudlite.io/pkg/k8s"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -52,6 +54,8 @@ type domain struct {
 	dnsClient            kldns.DNSClient
 	klDefaultAccountName string
 	clusterConfigsPath   string
+	consoleTemplate      *template.Template
+	k8sYamlClient        *k8s.YAMLClient
 }
 
 func generateReadable(name string) string {
@@ -92,6 +96,8 @@ func fxDomain(
 	dnsClient kldns.DNSClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 	jsEvalClient jseval.JSEvalClient,
+	consoleTemplate *template.Template,
+	k8sYamlClient *k8s.YAMLClient,
 ) Domain {
 	return &domain{
 		providerRepo:         providerRepo,
@@ -119,11 +125,14 @@ func fxDomain(
 		regionRepo:           regionRepo,
 		dnsClient:            dnsClient,
 		clusterConfigsPath:   env.ClusterConfigsPath,
+		consoleTemplate:      consoleTemplate,
+		k8sYamlClient:        k8sYamlClient,
 	}
 }
 
 var Module = fx.Module(
 	"domain",
 	config.EnvFx[Env](),
+	fx.Provide(fxClusterTemplate),
 	fx.Provide(fxDomain),
 )
