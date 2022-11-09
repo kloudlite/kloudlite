@@ -27,7 +27,7 @@ const (
 	GitlabEventHeader string = "X-Gitlab-Event"
 )
 
-func ProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpanda.Producer, logr logging.Logger, env *Env) error {
+func fxProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpanda.Producer, logr logging.Logger, env *Env) error {
 	t := template.New("taskrun")
 	t = text_templates.WithFunctions(t)
 	if _, err := t.ParseFS(res, "templates/pipeline-run.yml.tpl"); err != nil {
