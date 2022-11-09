@@ -24,6 +24,6 @@ RUN chmod +x /tmp/bin/ci
 # FROM gcr.io/distroless/static-debian11
 FROM alpine
 USER 1001
-WORKDIR /tmp/app
+#WORKDIR /tmp/app
 COPY --link --from=base --chown=1001 /tmp/bin/ci ./ci
 CMD ["./ci"]

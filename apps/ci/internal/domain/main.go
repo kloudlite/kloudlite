@@ -50,23 +50,25 @@ func (d *domainI) CreateNewPipelineRun(ctx context.Context, pipelineId repos.ID)
 		return nil, err
 	}
 
-	return d.pipelineRunRepo.Create(ctx, &PipelineRun{
-		BaseEntity: repos.BaseEntity{
-			Id: d.pipelineRepo.NewId(),
+	return d.pipelineRunRepo.Create(
+		ctx, &PipelineRun{
+			BaseEntity: repos.BaseEntity{
+				Id: d.pipelineRepo.NewId(),
+			},
+			PipelineID:       pipelineId,
+			CreationTime:     time.Now(),
+			Success:          false,
+			Message:          "not-started-yet",
+			State:            PipelineStateIdle,
+			GitProvider:      pipeline.GitProvider,
+			GitBranch:        pipeline.GitBranch,
+			GitRepo:          pipeline.GitRepoUrl,
+			Build:            pipeline.Build,
+			Run:              pipeline.Run,
+			DockerBuildInput: &pipeline.DockerBuildInput,
+			ArtifactRef:      pipeline.ArtifactRef,
 		},
-		PipelineID:       pipelineId,
-		CreationTime:     time.Now(),
-		Success:          false,
-		Message:          "not-started-yet",
-		State:            PipelineStateIdle,
-		GitProvider:      pipeline.GitProvider,
-		GitBranch:        pipeline.GitBranch,
-		GitRepo:          pipeline.GitRepoUrl,
-		Build:            pipeline.Build,
-		Run:              pipeline.Run,
-		DockerBuildInput: &pipeline.DockerBuildInput,
-		ArtifactRef:      pipeline.ArtifactRef,
-	})
+	)
 }
 
 func (d *domainI) UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error {
@@ -330,7 +332,7 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 		}
 
 		prun, err := d.CreateNewPipelineRun(ctx, p.Id)
-		d.logger.Infof("pipeline run: %+v\n", prun)
+		// d.logger.Infof("pipeline run: %+v\n", prun)
 		if err != nil {
 			return nil, errors.NewEf(err, "creating pipeline run")
 		}
@@ -339,7 +341,9 @@ func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gi
 			tkVars, &TektonVars{
 				PipelineRunId: prun.Id,
 				PipelineId:    p.Id,
-				GitRepo:       p.GitRepoUrl,
+				AccountId:     p.AccountId,
+
+				GitRepo: p.GitRepoUrl,
 				GitUser: func() string {
 					if p.GitProvider == "github" {
 						return "x-access-token"

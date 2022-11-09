@@ -28,7 +28,7 @@ func (i *workloadMessengerImpl) SendAction(action string, kafkaTopic string, res
 	return nil
 }
 
-func fxWorkloadMessenger(_ *WorkloadConsumerEnv, p redpanda.Producer) domain.WorkloadMessenger {
+func fxWorkloadMessenger(p redpanda.Producer) domain.WorkloadMessenger {
 	return &workloadMessengerImpl{
 		producer: p,
 	}

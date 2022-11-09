@@ -10,6 +10,7 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/errors"
@@ -42,13 +43,13 @@ type Env struct {
 	GoogleCallbackUrl  string `env:"GOOGLE_CALLBACK_URL" required:"true"`
 	GoogleScopes       string `env:"GOOGLE_SCOPES" required:"true"`
 
-	KafkaGitWebhooksTopic       string `env:"KAFKA_GIT_WEBHOOKS_TOPIC" required:"true"`
-	KafkaPipelineRunStatusTopic string `env:"KAFKA_PIPELINE_RUN_STATUS_TOPIC" required:"true"`
-	KafkaGitWebhooksConsumerId  string `env:"KAFKA_GIT_WEBHOOKS_CONSUMER_ID" required:"true"`
-	KafkaApplyYamlTopic         string `env:"KAFKA_APPLY_YAML_TOPIC" required:"true"`
-	KafkaBrokers                string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaUsername               string `env:"KAFKA_USERNAME" required:"true"`
-	KafkaPassword               string `env:"KAFKA_PASSWORD" required:"true"`
+	KafkaTopicGitWebhooks        string `env:"KAFKA_TOPIC_GIT_WEBHOOKS" required:"true"`
+	KafkaTopicPipelineRunUpdates string `env:"KAFKA_TOPIC_PIPELINE_RUN_UPDATES" required:"true"`
+
+	KafkaGitWebhooksConsumerId string `env:"KAFKA_GIT_WEBHOOKS_CONSUMER_ID" required:"true"`
+	KafkaBrokers               string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaUsername              string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword              string `env:"KAFKA_PASSWORD" required:"true"`
 
 	// KAFKA_GIT_WEBHOOKS_TOPIC="kl-git-webhooks"
 	// KAFKA_BROKERS="redpanda.kl-init-redpanda.svc.cluster.local"
@@ -87,7 +88,7 @@ func (env *Env) GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId
 }
 
 func (env *Env) GetSubscriptionTopics() []string {
-	return []string{env.KafkaGitWebhooksTopic}
+	return []string{env.KafkaTopicGitWebhooks}
 }
 
 func (env *Env) GetConsumerGroupId() string {
@@ -99,6 +100,7 @@ type CacheClient cache.Client
 
 type AuthGRPCClient *grpc.ClientConn
 type ConsoleGRPCClient *grpc.ClientConn
+type FinanceGRPCClient *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
@@ -122,6 +124,12 @@ var Module = fx.Module(
 	fx.Provide(
 		func(conn ConsoleGRPCClient) console.ConsoleClient {
 			return console.NewConsoleClient((*grpc.ClientConn)(conn))
+		},
+	),
+
+	fx.Provide(
+		func(conn FinanceGRPCClient) finance.FinanceClient {
+			return finance.NewFinanceClient((*grpc.ClientConn)(conn))
 		},
 	),
 
@@ -267,15 +275,20 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Invoke(fxProcessWebhooks),
+	fx.Invoke(fxInvokeProcessWebhooks),
 
-	fx.Provide(func(ev *Env, logger logging.Logger) (PipelineStatusConsumer, error) {
-		return redpanda.NewConsumer(ev.KafkaBrokers, ev.KafkaGitWebhooksConsumerId, redpanda.ConsumerOpts{
-			SASLAuth: ev.GetKafkaSASLAuth(),
-			Logger:   logger,
-		}, []string{ev.KafkaPipelineRunStatusTopic})
-	}),
-	fx.Invoke(fxProcessPipelineRunEvents),
+	fx.Provide(
+		func(ev *Env, logger logging.Logger) (PipelineStatusConsumer, error) {
+			return redpanda.NewConsumer(
+				ev.KafkaBrokers, ev.KafkaGitWebhooksConsumerId, redpanda.ConsumerOpts{
+					SASLAuth: ev.GetKafkaSASLAuth(),
+					Logger:   logger,
+				}, []string{ev.KafkaTopicPipelineRunUpdates},
+			)
+		},
+	),
+
+	fx.Invoke(fxInvokeProcessPipelineRunEvents),
 
 	domain.Module,
 )
