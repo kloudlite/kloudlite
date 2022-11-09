@@ -178,43 +178,6 @@ var Module = fx.Module(
 				},
 			)
 
-			// app.Post(
-			// 	"/start-pipeline/:pipelineId/:pipelineRunId", func(ctx *fiber.Ctx) error {
-			// 		pipelineId := ctx.Params("pipelineId")
-			// 		pipelineRunId := ctx.Params("pipelineRunId")
-			// 		if err := d.StartPipeline(ctx.Context(), repos.ID(pipelineId), repos.ID(pipelineRunId)); err != nil {
-			// 			return err
-			// 		}
-			// 		return ctx.SendStatus(http.StatusOK)
-			// 	},
-			// )
-			//
-			// app.Post(
-			// 	"/finish-pipeline/:pipelineId", func(ctx *fiber.Ctx) error {
-			// 		pipelineId := ctx.Params("pipelineId")
-			// 		if err := d.FinishPipeline(ctx.Context(), repos.ID(pipelineId)); err != nil {
-			// 			return err
-			// 		}
-			// 		return ctx.SendStatus(http.StatusOK)
-			// 	},
-			// )
-			//
-			// app.Post(
-			// 	"/end-pipeline-with-error/:pipelineId", func(ctx *fiber.Ctx) error {
-			// 		var body struct {
-			// 			Error string `json:"error"`
-			// 		}
-			// 		if err := ctx.JSON(&body); err != nil {
-			// 			return err
-			// 		}
-			//
-			// 		pipelineId := ctx.Params("pipelineId")
-			// 		if err := d.EndPipelineWithError(ctx.Context(), repos.ID(pipelineId), errors.New(body.Error)); err != nil {
-			// 			return err
-			// 		}
-			// 		return ctx.SendStatus(http.StatusOK)
-			// 	},
-			// )
 		},
 	),
 
