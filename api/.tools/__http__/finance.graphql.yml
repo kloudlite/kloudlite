@@ -1,0 +1,9 @@
+---
+label: Attach A Cluster
+query: |
+  mutation Finance_attachToCluster($accountId: ID!, $clusterId: ID!) {
+    finance_attachToCluster(accountId: $accountId, clusterId: $clusterId)
+  }
+variables:
+  accountId: acc-xnnbf-kd255lyrcnu2jqvnoksvk
+  clusterId: clus-2o2h7anoxoycmcgpryjw3lk1-srt

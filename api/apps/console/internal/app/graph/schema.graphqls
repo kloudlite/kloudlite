@@ -1,6 +1,5 @@
 scalar Json
 
-
 type LoadEnv {
   envVars: Json
   mountFiles: Json
@@ -107,6 +106,7 @@ type EdgeRegion {
   id: ID!
   name: String!
   region : String!
+  provider: CloudProvider
   createdAt: String!
   updatedAt: String
   pools: [NodePool!]!
@@ -129,8 +129,6 @@ input EdgeRegionUpdateIn {
   name: String
   pools: [NodePoolIn]
 }
-
-
 
 type Mutation {
   mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc #project-admin-access
@@ -197,9 +195,24 @@ type Mutation {
 
   core_createEdgeRegion(edgeRegion: EdgeRegionIn!, providerId: ID!): Boolean! #private-access
   core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegionUpdateIn!): Boolean! #private-access
+  core_deleteEdgeRegion(edgeId: ID!): Boolean! #private-access
   core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
   core_updateCloudProvider(providerId: ID!, cloudProvider: CloudProviderUpdateIn!): Boolean! #private-access
   core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
+
+  core_addNewCluster(cluster: ClusterIn!): ClusterOut!
+}
+
+input ClusterIn {
+  name: String!
+  subDomain: String!
+  kubeConfig: String!
+}
+
+type ClusterOut {
+  id: ID!
+  name: String!
+  subDomain: String!
 }
 
 type StoragePlan @key(fields: "name"){
@@ -428,6 +441,7 @@ type Project {
   cluster: String
   dockerCredentials: DockerCredentials
   regionId: ID!
+  region: EdgeRegion!
 }
 
 type ProjectMembership {

@@ -132,12 +132,14 @@ func (r *cloudProviderResolver) Edges(ctx context.Context, obj *model.CloudProvi
 				Pools: func() []*model.NodePool {
 					pools := make([]*model.NodePool, 0)
 					for _, pool := range r.Pools {
-						pools = append(pools, &model.NodePool{
-							Name:   pool.Name,
-							Config: pool.Config,
-							Min:    pool.Min,
-							Max:    pool.Max,
-						})
+						pools = append(
+							pools, &model.NodePool{
+								Name:   pool.Name,
+								Config: pool.Config,
+								Min:    pool.Min,
+								Max:    pool.Max,
+							},
+						)
 					}
 					return pools
 				}(),
@@ -180,6 +182,23 @@ func (r *deviceResolver) InterceptingServices(ctx context.Context, obj *model.De
 	}
 	apps := returnApps(appEntities)
 	return apps, err
+}
+
+func (r *edgeRegionResolver) Provider(ctx context.Context, obj *model.EdgeRegion) (*model.CloudProvider, error) {
+	region, err := r.Domain.GetEdgeRegion(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := r.Domain.GetCloudProvider(ctx, region.ProviderId)
+	if err != nil {
+		return nil, err
+	}
+	return &model.CloudProvider{
+		ID:       provider.Id,
+		Name:     provider.Name,
+		Provider: provider.Provider,
+		IsShared: *provider.AccountId == "kl-core",
+	}, nil
 }
 
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
@@ -1014,6 +1033,14 @@ func (r *mutationResolver) CoreUpdateEdgeRegion(ctx context.Context, edgeID repo
 	return true, nil
 }
 
+func (r *mutationResolver) CoreDeleteEdgeRegion(ctx context.Context, edgeID repos.ID) (bool, error) {
+	err := r.Domain.DeleteEdgeRegion(ctx, edgeID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *mutationResolver) CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error) {
 	err := r.Domain.CreateCloudProvider(
 		ctx, accountID, &entities.CloudProvider{
@@ -1065,6 +1092,18 @@ func (r *mutationResolver) CoreDeleteCloudProvider(ctx context.Context, provider
 	return true, nil
 }
 
+func (r *mutationResolver) CoreAddNewCluster(ctx context.Context, cluster model.ClusterIn) (*model.ClusterOut, error) {
+	newCluster, err := r.Domain.AddNewCluster(ctx, cluster.Name, cluster.SubDomain, cluster.KubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ClusterOut{
+		ID:        newCluster.Id,
+		Name:      newCluster.Name,
+		SubDomain: newCluster.SubDomain,
+	}, nil
+}
+
 func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
 	entities, err := r.Domain.GetProjectMemberships(ctx, obj.ID)
 	accountMemberships := make([]*model.ProjectMembership, len(entities))
@@ -1090,6 +1129,40 @@ func (r *projectResolver) DockerCredentials(ctx context.Context, obj *model.Proj
 	return &model.DockerCredentials{
 		Username: username,
 		Password: password,
+	}, nil
+}
+
+func (r *projectResolver) Region(ctx context.Context, obj *model.Project) (*model.EdgeRegion, error) {
+	reg, err := r.Domain.GetEdgeRegion(ctx, obj.RegionID)
+	if err != nil {
+		return nil, err
+	}
+	return &model.EdgeRegion{
+		ID:        reg.Id,
+		Name:      reg.Name,
+		Region:    reg.Region,
+		CreatedAt: reg.CreationTime.String(),
+		UpdatedAt: func() *string {
+			if !reg.UpdateTime.IsZero() {
+				s := reg.UpdateTime.String()
+				return &s
+			}
+			return nil
+		}(),
+		Pools: func() []*model.NodePool {
+			pools := make([]*model.NodePool, 0)
+			for _, pool := range reg.Pools {
+				pools = append(
+					pools, &model.NodePool{
+						Name:   pool.Name,
+						Config: pool.Config,
+						Min:    pool.Min,
+						Max:    pool.Max,
+					},
+				)
+			}
+			return pools
+		}(),
 	}, nil
 }
 
@@ -1561,6 +1634,9 @@ func (r *Resolver) CloudProvider() generated.CloudProviderResolver { return &clo
 // Device returns generated.DeviceResolver implementation.
 func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r} }
 
+// EdgeRegion returns generated.EdgeRegionResolver implementation.
+func (r *Resolver) EdgeRegion() generated.EdgeRegionResolver { return &edgeRegionResolver{r} }
+
 // ManagedRes returns generated.ManagedResResolver implementation.
 func (r *Resolver) ManagedRes() generated.ManagedResResolver { return &managedResResolver{r} }
 
@@ -1583,141 +1659,10 @@ type accountResolver struct{ *Resolver }
 type appResolver struct{ *Resolver }
 type cloudProviderResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
+type edgeRegionResolver struct{ *Resolver }
 type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func returnApps(appEntities []*entities.App) []*model.App {
-	apps := make([]*model.App, 0)
-	for _, a := range appEntities {
-		services := make([]*model.ExposedService, 0)
-		for _, s := range a.ExposedPorts {
-			services = append(
-				services, &model.ExposedService{
-					Type:    string(s.Type),
-					Target:  int(s.TargetPort),
-					Exposed: int(s.Port),
-				},
-			)
-		}
-
-		apps = append(
-			apps, &model.App{
-				IsFrozen:  a.Frozen,
-				CreatedAt: a.CreationTime.String(),
-				UpdatedAt: func() *string {
-					if !a.UpdateTime.IsZero() {
-						s := a.UpdateTime.String()
-						return &s
-					}
-					return nil
-				}(),
-				IsLambda: a.IsLambda,
-				Conditions: func() []*model.MetaCondition {
-					conditions := make([]*model.MetaCondition, 0)
-					for _, condition := range a.Conditions {
-						conditions = append(
-							conditions, &model.MetaCondition{
-								Status:        string(condition.Status),
-								ConditionType: condition.Type,
-								LastTimeStamp: condition.LastTransitionTime.String(),
-								Reason:        condition.Reason,
-								Message:       condition.Message,
-							},
-						)
-					}
-					return conditions
-				}(),
-				ID:          a.Id,
-				Name:        a.Name,
-				Namespace:   a.Namespace,
-				Description: a.Description,
-				ReadableID:  repos.ID(a.ReadableId),
-				AutoScale: func() *model.AutoScale {
-					if a.AutoScale != nil {
-						return &model.AutoScale{
-							MinReplicas:     int(a.AutoScale.MinReplicas),
-							MaxReplicas:     int(a.AutoScale.MaxReplicas),
-							UsagePercentage: int(a.AutoScale.UsagePercentage),
-						}
-					}
-					return nil
-				}(),
-				Replicas: &a.Replicas,
-				Services: services,
-				Containers: func() []*model.AppContainer {
-					containers := make([]*model.AppContainer, 0)
-					for _, c := range a.Containers {
-						envVars := make([]*model.EnvVar, 0)
-						for _, e := range c.EnvVars {
-							envVars = append(
-								envVars, &model.EnvVar{
-									Key: e.Key,
-									Value: &model.EnvVal{
-										Type:  e.Type,
-										Value: e.Value,
-										Ref:   e.Ref,
-										Key:   e.RefKey,
-									},
-								},
-							)
-						}
-						res := make([]*model.AttachedRes, 0)
-						for _, r := range c.AttachedResources {
-							res = append(
-								res, &model.AttachedRes{
-									ResID: r.ResourceId,
-								},
-							)
-						}
-						containers = append(
-							containers, &model.AppContainer{
-								Name:              c.Name,
-								Image:             c.Image,
-								PullSecret:        c.ImagePullSecret,
-								EnvVars:           envVars,
-								AttachedResources: res,
-								ComputePlan:       c.ComputePlan,
-								Quantity:          c.Quantity,
-								IsShared:          &c.IsShared,
-								Mounts: func() []*model.Mount {
-									mounts := []*model.Mount{}
-									for _, vm := range c.VolumeMounts {
-										mounts = append(
-											mounts, &model.Mount{
-												Type: vm.Type,
-												Ref:  vm.Ref,
-												Path: vm.MountPath,
-											},
-										)
-									}
-									return mounts
-								}(),
-							},
-						)
-					}
-					return containers
-				}(),
-				Project: &model.Project{ID: a.ProjectId},
-				Status:  string(a.Status),
-			},
-		)
-	}
-	return apps
-}
-func withUserSession(ctx context.Context) (context.Context, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, wErrors.NotLoggedIn
-	}
-	return context.WithValue(ctx, "user_id", session.UserId), nil
-}
