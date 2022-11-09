@@ -267,7 +267,7 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Invoke(ProcessWebhooks),
+	fx.Invoke(fxProcessWebhooks),
 
 	fx.Provide(func(ev *Env, logger logging.Logger) (PipelineStatusConsumer, error) {
 		return redpanda.NewConsumer(ev.KafkaBrokers, ev.KafkaGitWebhooksConsumerId, redpanda.ConsumerOpts{
@@ -275,7 +275,7 @@ var Module = fx.Module(
 			Logger:   logger,
 		}, []string{ev.KafkaPipelineRunStatusTopic})
 	}),
-	fx.Invoke(ProcessPipelineRunEvents),
+	fx.Invoke(fxProcessPipelineRunEvents),
 
 	domain.Module,
 )

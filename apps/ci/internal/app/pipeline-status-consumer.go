@@ -13,7 +13,7 @@ import (
 
 type PipelineStatusConsumer redpanda.Consumer
 
-func ProcessPipelineRunEvents(d domain.Domain, consumer PipelineStatusConsumer, logr logging.Logger) {
+func fxProcessPipelineRunEvents(d domain.Domain, consumer PipelineStatusConsumer, logr logging.Logger) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFn()
 

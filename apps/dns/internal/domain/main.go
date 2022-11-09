@@ -201,7 +201,6 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 
 	cname, err := net.LookupCNAME(site.Domain)
 	if err != nil {
-		fmt.Println(err)
 		return errors.New("Unable to verify CName. Please wait for a while and try again.")
 	}
 
@@ -218,12 +217,12 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 
 	accountId := string(site.AccountId)
 
-	cluster, err := d.getClusterFromAccount(ctx, err, accountId)
+	clusterId, err := d.getClusterFromAccount(ctx, err, accountId)
 	if err != nil {
 		return err
 	}
 
-	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, cluster, d.env.EdgeCnameBaseDomain) {
+	if cname != fmt.Sprintf("%s.%s.%s.%s.", regionCnameIdentity, accountCnameIdentity, clusterId, d.env.EdgeCnameBaseDomain) {
 		return errors.New("cname does not match")
 	}
 	err = d.sitesRepo.UpdateMany(ctx, repos.Filter{
@@ -248,14 +247,14 @@ func (d *domainI) VerifySite(ctx context.Context, siteId repos.ID) error {
 	return err
 }
 
-func (d *domainI) getClusterFromAccount(ctx context.Context, err error, accountId string) (*finance.GetAttachedClusterOut, error) {
+func (d *domainI) getClusterFromAccount(ctx context.Context, err error, accountId string) (string, error) {
 	cluster, err := d.financeClient.GetAttachedCluster(ctx, &finance.GetAttachedClusterIn{
 		AccountId: accountId,
 	})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return cluster, nil
+	return cluster.ClusterId, nil
 }
 
 func (d *domainI) GetSite(ctx context.Context, siteId string) (*Site, error) {
