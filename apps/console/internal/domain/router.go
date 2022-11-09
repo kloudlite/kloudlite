@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/pkg/repos"
@@ -28,11 +29,13 @@ func (d *domain) GetRouters(ctx context.Context, projectID repos.ID) ([]*entitie
 		return nil, err
 	}
 
-	routers, err := d.routerRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"project_id": projectID,
+	routers, err := d.routerRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{
+				"project_id": projectID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +44,11 @@ func (d *domain) GetRouters(ctx context.Context, projectID repos.ID) ([]*entitie
 }
 
 func (d *domain) OnUpdateRouter(ctx context.Context, response *op_crds.StatusUpdate) error {
-	one, err := d.routerRepo.FindOne(ctx, repos.Filter{
-		"id": response.Metadata.ResourceId,
-	})
+	one, err := d.routerRepo.FindOne(
+		ctx, repos.Filter{
+			"id": response.Metadata.ResourceId,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -83,55 +88,66 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
-	create, err := d.routerRepo.Create(ctx, &entities.Router{
-		ProjectId: projectId,
-		Name:      routerName,
-		Namespace: prj.Name,
-		Domains:   domains,
-		Routes:    routes,
-	})
+	create, err := d.routerRepo.Create(
+		ctx, &entities.Router{
+			ProjectId: projectId,
+			Name:      routerName,
+			Namespace: prj.Name,
+			Domains:   domains,
+			Routes:    routes,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction("apply", string(create.Id), &op_crds.Router{
-		APIVersion: op_crds.RouterAPIVersion,
-		Kind:       op_crds.RouterKind,
-		Metadata: op_crds.RouterMetadata{
-			Name:      string(create.Id),
-			Namespace: create.Namespace,
-			Labels: map[string]string{
-				"kloudlite.io/account-ref": string(prj.AccountId),
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), &op_crds.Router{
+			APIVersion: op_crds.RouterAPIVersion,
+			Kind:       op_crds.RouterKind,
+			Metadata: op_crds.RouterMetadata{
+				Name:      string(create.Id),
+				Namespace: create.Namespace,
+				Labels: map[string]string{
+					"kloudlite.io/account-ref": string(prj.AccountId),
+				},
+			},
+			Spec: op_crds.RouterSpec{
+				Region: func() string {
+					if prj.RegionId != nil {
+						return string(*prj.RegionId)
+					}
+					return ""
+				}(),
+				Https: struct {
+					Enabled       bool `json:"enabled"`
+					ForceRedirect bool `json:"forceRedirect"`
+				}(struct {
+					Enabled       bool
+					ForceRedirect bool
+				}{Enabled: true, ForceRedirect: true}),
+				Domains: create.Domains,
+				Routes: func() []op_crds.Route {
+					i := make([]op_crds.Route, 0)
+					for _, r := range create.Routes {
+						i = append(
+							i, op_crds.Route{
+								Path: r.Path,
+								App:  r.AppName,
+								Port: r.Port,
+							},
+						)
+					}
+					return i
+				}(),
 			},
 		},
-		Spec: op_crds.RouterSpec{
-			Region: func() string {
-				if prj.RegionId != nil {
-					return string(*prj.RegionId)
-				}
-				return ""
-			}(),
-			Https: struct {
-				Enabled       bool `json:"enabled"`
-				ForceRedirect bool `json:"forceRedirect"`
-			}(struct {
-				Enabled       bool
-				ForceRedirect bool
-			}{Enabled: true, ForceRedirect: true}),
-			Domains: create.Domains,
-			Routes: func() []op_crds.Route {
-				i := make([]op_crds.Route, 0)
-				for _, r := range create.Routes {
-					i = append(i, op_crds.Route{
-						Path: r.Path,
-						App:  r.AppName,
-						Port: r.Port,
-					})
-				}
-				return i
-			}(),
-		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -159,44 +175,54 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction("apply", string(router.Id), &op_crds.Router{
-		APIVersion: op_crds.RouterAPIVersion,
-		Kind:       op_crds.RouterKind,
-		Metadata: op_crds.RouterMetadata{
-			Name:      string(router.Id),
-			Namespace: router.Namespace,
-			Labels: map[string]string{
-				"kloudlite.io/account-ref": string(prj.AccountId),
+
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return false, err
+	}
+
+	err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(router.Id), &op_crds.Router{
+			APIVersion: op_crds.RouterAPIVersion,
+			Kind:       op_crds.RouterKind,
+			Metadata: op_crds.RouterMetadata{
+				Name:      string(router.Id),
+				Namespace: router.Namespace,
+				Labels: map[string]string{
+					"kloudlite.io/account-ref": string(prj.AccountId),
+				},
+			},
+			Spec: op_crds.RouterSpec{
+				Region: func() string {
+					if prj.RegionId != nil {
+						return string(*prj.RegionId)
+					}
+					return ""
+				}(),
+				Https: struct {
+					Enabled       bool `json:"enabled"`
+					ForceRedirect bool `json:"forceRedirect"`
+				}(struct {
+					Enabled       bool
+					ForceRedirect bool
+				}{Enabled: true, ForceRedirect: true}),
+				Domains: router.Domains,
+				Routes: func() []op_crds.Route {
+					i := make([]op_crds.Route, 0)
+					for _, r := range router.Routes {
+						i = append(
+							i, op_crds.Route{
+								Path: r.Path,
+								App:  r.AppName,
+								Port: r.Port,
+							},
+						)
+					}
+					return i
+				}(),
 			},
 		},
-		Spec: op_crds.RouterSpec{
-			Region: func() string {
-				if prj.RegionId != nil {
-					return string(*prj.RegionId)
-				}
-				return ""
-			}(),
-			Https: struct {
-				Enabled       bool `json:"enabled"`
-				ForceRedirect bool `json:"forceRedirect"`
-			}(struct {
-				Enabled       bool
-				ForceRedirect bool
-			}{Enabled: true, ForceRedirect: true}),
-			Domains: router.Domains,
-			Routes: func() []op_crds.Route {
-				i := make([]op_crds.Route, 0)
-				for _, r := range router.Routes {
-					i = append(i, op_crds.Route{
-						Path: r.Path,
-						App:  r.AppName,
-						Port: r.Port,
-					})
-				}
-				return i
-			}(),
-		},
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -220,14 +246,21 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction("delete", string(r.Id), &op_crds.Router{
-		APIVersion: op_crds.RouterAPIVersion,
-		Kind:       op_crds.RouterKind,
-		Metadata: op_crds.RouterMetadata{
-			Name:      string(r.Id),
-			Namespace: r.Namespace,
+	clusterId, err := d.getClusterIdForProject(ctx, r.ProjectId)
+	if err != nil {
+		return false, err
+	}
+
+	err = d.workloadMessenger.SendAction(
+		"delete", d.getDispatchKafkaTopic(clusterId), string(r.Id), &op_crds.Router{
+			APIVersion: op_crds.RouterAPIVersion,
+			Kind:       op_crds.RouterKind,
+			Metadata: op_crds.RouterMetadata{
+				Name:      string(r.Id),
+				Namespace: r.Namespace,
+			},
 		},
-	})
+	)
 
 	if err != nil {
 		return false, err

@@ -22,7 +22,7 @@ type Billing struct {
 }
 
 type Account struct {
-	repos.BaseEntity `bson:",inline" json:"repos_._base_entity"`
+	repos.BaseEntity `bson:",inline"`
 	Name             string    `json:"name,omitempty" bson:"name,omitempty"`
 	ContactEmail     string    `bson:"contact_email" json:"contact_email,omitempty"`
 	Billing          Billing   `json:"billing" bson:"billing"`
@@ -30,6 +30,7 @@ type Account struct {
 	IsDeleted        bool      `json:"is_deleted,omitempty" bson:"is_deleted"`
 	CreatedAt        time.Time `json:"created_at" bson:"created_at"`
 	ReadableId       repos.ID  `json:"readable_id" bson:"readable_id"`
+	ClusterID        repos.ID  `json:"cluster_id" bson:"cluster_id"`
 }
 
 type Membership struct {

@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	App() AppResolver
 	CloudProvider() CloudProviderResolver
 	Device() DeviceResolver
+	EdgeRegion() EdgeRegionResolver
 	Entity() EntityResolver
 	ManagedRes() ManagedResResolver
 	ManagedSvc() ManagedSvcResolver
@@ -133,6 +134,12 @@ type ComplexityRoot struct {
 		Status   func(childComplexity int) int
 	}
 
+	ClusterOut struct {
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		SubDomain func(childComplexity int) int
+	}
+
 	ComputePlan struct {
 		DedicatedEnabled      func(childComplexity int) int
 		Desc                  func(childComplexity int) int
@@ -182,6 +189,7 @@ type ComplexityRoot struct {
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
 		Pools     func(childComplexity int) int
+		Provider  func(childComplexity int) int
 		Region    func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
@@ -270,6 +278,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CoreAddDevice           func(childComplexity int, accountID repos.ID, name string) int
+		CoreAddNewCluster       func(childComplexity int, cluster model.ClusterIn) int
 		CoreCreateApp           func(childComplexity int, projectID repos.ID, app model.AppInput) int
 		CoreCreateCloudProvider func(childComplexity int, accountID *repos.ID, cloudProvider model.CloudProviderIn) int
 		CoreCreateConfig        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
@@ -280,6 +289,7 @@ type ComplexityRoot struct {
 		CoreDeleteApp           func(childComplexity int, appID repos.ID) int
 		CoreDeleteCloudProvider func(childComplexity int, providerID repos.ID) int
 		CoreDeleteConfig        func(childComplexity int, configID repos.ID) int
+		CoreDeleteEdgeRegion    func(childComplexity int, edgeID repos.ID) int
 		CoreDeleteProject       func(childComplexity int, projectID repos.ID) int
 		CoreDeleteRouter        func(childComplexity int, routerID repos.ID) int
 		CoreDeleteSecret        func(childComplexity int, secretID repos.ID) int
@@ -327,6 +337,7 @@ type ComplexityRoot struct {
 		Memberships       func(childComplexity int) int
 		Name              func(childComplexity int) int
 		ReadableID        func(childComplexity int) int
+		Region            func(childComplexity int) int
 		RegionID          func(childComplexity int) int
 		Status            func(childComplexity int) int
 	}
@@ -429,6 +440,9 @@ type DeviceResolver interface {
 
 	InterceptingServices(ctx context.Context, obj *model.Device) ([]*model.App, error)
 }
+type EdgeRegionResolver interface {
+	Provider(ctx context.Context, obj *model.EdgeRegion) (*model.CloudProvider, error)
+}
 type EntityResolver interface {
 	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
 	FindAppByID(ctx context.Context, id repos.ID) (*model.App, error)
@@ -477,14 +491,18 @@ type MutationResolver interface {
 	CoreDeleteRouter(ctx context.Context, routerID repos.ID) (bool, error)
 	CoreCreateEdgeRegion(ctx context.Context, edgeRegion model.EdgeRegionIn, providerID repos.ID) (bool, error)
 	CoreUpdateEdgeRegion(ctx context.Context, edgeID repos.ID, edgeRegion model.EdgeRegionUpdateIn) (bool, error)
+	CoreDeleteEdgeRegion(ctx context.Context, edgeID repos.ID) (bool, error)
 	CoreCreateCloudProvider(ctx context.Context, accountID *repos.ID, cloudProvider model.CloudProviderIn) (bool, error)
 	CoreUpdateCloudProvider(ctx context.Context, providerID repos.ID, cloudProvider model.CloudProviderUpdateIn) (bool, error)
 	CoreDeleteCloudProvider(ctx context.Context, providerID repos.ID) (bool, error)
+	CoreAddNewCluster(ctx context.Context, cluster model.ClusterIn) (*model.ClusterOut, error)
 }
 type ProjectResolver interface {
 	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
 
 	DockerCredentials(ctx context.Context, obj *model.Project) (*model.DockerCredentials, error)
+
+	Region(ctx context.Context, obj *model.Project) (*model.EdgeRegion, error)
 }
 type QueryResolver interface {
 	CoreCheckDeviceExist(ctx context.Context, accountID repos.ID, name string) (bool, error)
@@ -893,6 +911,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CloudProvider.Status(childComplexity), true
 
+	case "ClusterOut.id":
+		if e.complexity.ClusterOut.ID == nil {
+			break
+		}
+
+		return e.complexity.ClusterOut.ID(childComplexity), true
+
+	case "ClusterOut.name":
+		if e.complexity.ClusterOut.Name == nil {
+			break
+		}
+
+		return e.complexity.ClusterOut.Name(childComplexity), true
+
+	case "ClusterOut.subDomain":
+		if e.complexity.ClusterOut.SubDomain == nil {
+			break
+		}
+
+		return e.complexity.ClusterOut.SubDomain(childComplexity), true
+
 	case "ComputePlan.dedicatedEnabled":
 		if e.complexity.ComputePlan.DedicatedEnabled == nil {
 			break
@@ -1123,6 +1162,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EdgeRegion.Pools(childComplexity), true
+
+	case "EdgeRegion.provider":
+		if e.complexity.EdgeRegion.Provider == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.Provider(childComplexity), true
 
 	case "EdgeRegion.region":
 		if e.complexity.EdgeRegion.Region == nil {
@@ -1528,6 +1574,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreAddDevice(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
 
+	case "Mutation.core_addNewCluster":
+		if e.complexity.Mutation.CoreAddNewCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_addNewCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreAddNewCluster(childComplexity, args["cluster"].(model.ClusterIn)), true
+
 	case "Mutation.core_createApp":
 		if e.complexity.Mutation.CoreCreateApp == nil {
 			break
@@ -1647,6 +1705,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreDeleteConfig(childComplexity, args["configId"].(repos.ID)), true
+
+	case "Mutation.core_deleteEdgeRegion":
+		if e.complexity.Mutation.CoreDeleteEdgeRegion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_deleteEdgeRegion_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreDeleteEdgeRegion(childComplexity, args["edgeId"].(repos.ID)), true
 
 	case "Mutation.core_deleteProject":
 		if e.complexity.Mutation.CoreDeleteProject == nil {
@@ -2023,6 +2093,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Project.ReadableID(childComplexity), true
+
+	case "Project.region":
+		if e.complexity.Project.Region == nil {
+			break
+		}
+
+		return e.complexity.Project.Region(childComplexity), true
 
 	case "Project.regionId":
 		if e.complexity.Project.RegionID == nil {
@@ -2554,7 +2631,6 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
 
-
 type LoadEnv {
   envVars: Json
   mountFiles: Json
@@ -2661,6 +2737,7 @@ type EdgeRegion {
   id: ID!
   name: String!
   region : String!
+  provider: CloudProvider
   createdAt: String!
   updatedAt: String
   pools: [NodePool!]!
@@ -2683,8 +2760,6 @@ input EdgeRegionUpdateIn {
   name: String
   pools: [NodePoolIn]
 }
-
-
 
 type Mutation {
   mangedSvc_install(projectId: ID!, category: ID!, serviceType: ID!, name: String!, values: Json!): ManagedSvc #project-admin-access
@@ -2751,9 +2826,24 @@ type Mutation {
 
   core_createEdgeRegion(edgeRegion: EdgeRegionIn!, providerId: ID!): Boolean! #private-access
   core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegionUpdateIn!): Boolean! #private-access
+  core_deleteEdgeRegion(edgeId: ID!): Boolean! #private-access
   core_createCloudProvider(accountId: ID, cloudProvider: CloudProviderIn!): Boolean! #private-access
   core_updateCloudProvider(providerId: ID!, cloudProvider: CloudProviderUpdateIn!): Boolean! #private-access
   core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
+
+  core_addNewCluster(cluster: ClusterIn!): ClusterOut!
+}
+
+input ClusterIn {
+  name: String!
+  subDomain: String!
+  kubeConfig: String!
+}
+
+type ClusterOut {
+  id: ID!
+  name: String!
+  subDomain: String!
 }
 
 type StoragePlan @key(fields: "name"){
@@ -2982,6 +3072,7 @@ type Project {
   cluster: String
   dockerCredentials: DockerCredentials
   regionId: ID!
+  region: EdgeRegion!
 }
 
 type ProjectMembership {
@@ -3266,6 +3357,21 @@ func (ec *executionContext) field_Mutation_core_addDevice_args(ctx context.Conte
 		}
 	}
 	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_addNewCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ClusterIn
+	if tmp, ok := rawArgs["cluster"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+		arg0, err = ec.unmarshalNClusterIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterIn(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cluster"] = arg0
 	return args, nil
 }
 
@@ -3569,6 +3675,21 @@ func (ec *executionContext) field_Mutation_core_deleteConfig_args(ctx context.Co
 		}
 	}
 	args["configId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteEdgeRegion_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["edgeId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["edgeId"] = arg0
 	return args, nil
 }
 
@@ -6377,6 +6498,111 @@ func (ec *executionContext) _CloudProvider_isShared(ctx context.Context, field g
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ClusterOut_id(ctx context.Context, field graphql.CollectedField, obj *model.ClusterOut) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ClusterOut",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ClusterOut_name(ctx context.Context, field graphql.CollectedField, obj *model.ClusterOut) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ClusterOut",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ClusterOut_subDomain(ctx context.Context, field graphql.CollectedField, obj *model.ClusterOut) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ClusterOut",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SubDomain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ComputePlan_name(ctx context.Context, field graphql.CollectedField, obj *model.ComputePlan) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7489,6 +7715,38 @@ func (ec *executionContext) _EdgeRegion_region(ctx context.Context, field graphq
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_provider(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.EdgeRegion().Provider(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CloudProvider)
+	fc.Result = res
+	return ec.marshalOCloudProvider2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProvider(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _EdgeRegion_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
@@ -10590,6 +10848,48 @@ func (ec *executionContext) _Mutation_core_updateEdgeRegion(ctx context.Context,
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_core_deleteEdgeRegion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_deleteEdgeRegion_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreDeleteEdgeRegion(rctx, args["edgeId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_core_createCloudProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -10714,6 +11014,48 @@ func (ec *executionContext) _Mutation_core_deleteCloudProvider(ctx context.Conte
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_core_addNewCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_addNewCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreAddNewCluster(rctx, args["cluster"].(model.ClusterIn))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ClusterOut)
+	fc.Result = res
+	return ec.marshalNClusterOut2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterOut(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NodePool_name(ctx context.Context, field graphql.CollectedField, obj *model.NodePool) (ret graphql.Marshaler) {
@@ -11329,6 +11671,41 @@ func (ec *executionContext) _Project_regionId(ctx context.Context, field graphql
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Project_region(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Project().Region(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EdgeRegion)
+	fc.Result = res
+	return ec.marshalNEdgeRegion2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegion(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectMembership_user(ctx context.Context, field graphql.CollectedField, obj *model.ProjectMembership) (ret graphql.Marshaler) {
@@ -14808,6 +15185,45 @@ func (ec *executionContext) unmarshalInputCloudProviderUpdateIn(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj interface{}) (model.ClusterIn, error) {
+	var it model.ClusterIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "subDomain":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subDomain"))
+			it.SubDomain, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kubeConfig":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kubeConfig"))
+			it.KubeConfig, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeviceIn(ctx context.Context, obj interface{}) (model.DeviceIn, error) {
 	var it model.DeviceIn
 	asMap := map[string]interface{}{}
@@ -16091,6 +16507,57 @@ func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var clusterOutImplementors = []string{"ClusterOut"}
+
+func (ec *executionContext) _ClusterOut(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterOut) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, clusterOutImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ClusterOut")
+		case "id":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ClusterOut_id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ClusterOut_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "subDomain":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ClusterOut_subDomain(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var computePlanImplementors = []string{"ComputePlan", "_Entity"}
 
 func (ec *executionContext) _ComputePlan(ctx context.Context, sel ast.SelectionSet, obj *model.ComputePlan) graphql.Marshaler {
@@ -16538,7 +17005,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -16548,7 +17015,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "region":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -16558,8 +17025,25 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "provider":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EdgeRegion_provider(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._EdgeRegion_createdAt(ctx, field, obj)
@@ -16568,7 +17052,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -16585,7 +17069,7 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -17741,6 +18225,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "core_deleteEdgeRegion":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_deleteEdgeRegion(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "core_createCloudProvider":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_createCloudProvider(ctx, field)
@@ -17764,6 +18258,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "core_deleteCloudProvider":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_deleteCloudProvider(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "core_addNewCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_addNewCluster(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -18019,6 +18523,26 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "region":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_region(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19745,6 +20269,25 @@ func (ec *executionContext) unmarshalNCloudProviderUpdateIn2kloudliteᚗioᚋapp
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNClusterIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterIn(ctx context.Context, v interface{}) (model.ClusterIn, error) {
+	res, err := ec.unmarshalInputClusterIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNClusterOut2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterOut(ctx context.Context, sel ast.SelectionSet, v model.ClusterOut) graphql.Marshaler {
+	return ec._ClusterOut(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNClusterOut2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterOut(ctx context.Context, sel ast.SelectionSet, v *model.ClusterOut) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ClusterOut(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNComputePlan2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlan(ctx context.Context, sel ast.SelectionSet, v model.ComputePlan) graphql.Marshaler {
 	return ec._ComputePlan(ctx, sel, &v)
 }
@@ -19927,6 +20470,10 @@ func (ec *executionContext) marshalNEdgeNode2ᚖkloudliteᚗioᚋappsᚋconsole�
 		return graphql.Null
 	}
 	return ec._EdgeNode(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdgeRegion2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegion(ctx context.Context, sel ast.SelectionSet, v model.EdgeRegion) graphql.Marshaler {
+	return ec._EdgeRegion(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNEdgeRegion2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEdgeRegionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EdgeRegion) graphql.Marshaler {
@@ -21273,6 +21820,13 @@ func (ec *executionContext) marshalOCloudProvider2ᚕᚖkloudliteᚗioᚋappsᚋ
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalOCloudProvider2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐCloudProvider(ctx context.Context, sel ast.SelectionSet, v *model.CloudProvider) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CloudProvider(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOComputePlan2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐComputePlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ComputePlan) graphql.Marshaler {
