@@ -10,6 +10,7 @@ import (
 
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -27,7 +28,9 @@ const (
 	GitlabEventHeader string = "X-Gitlab-Event"
 )
 
-func fxProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer redpanda.Producer, logr logging.Logger, env *Env) error {
+func fxInvokeProcessWebhooks(d domain.Domain, financeClient finance.FinanceClient, consumer redpanda.Consumer, producer redpanda.Producer,
+	logr logging.Logger,
+	env *Env) error {
 	t := template.New("taskrun")
 	t = text_templates.WithFunctions(t)
 	if _, err := t.ParseFS(res, "templates/pipeline-run.yml.tpl"); err != nil {
@@ -83,34 +86,46 @@ func fxProcessWebhooks(d domain.Domain, consumer redpanda.Consumer, producer red
 				return nil
 			}
 
+			accountRuns := map[string][]*domain.TektonVars{}
+
 			for i := range tkRuns {
 				tkRuns[i].GitCommitHash = hook.CommitHash
+				accountRuns[tkRuns[i].AccountId] = append(accountRuns[tkRuns[i].AccountId], tkRuns[i])
 			}
 
-			b := new(bytes.Buffer)
-			if err := t.ExecuteTemplate(
-				b, "pipeline-run.yml.tpl", map[string]any{
-					"tekton-runs": tkRuns,
-				},
-			); err != nil {
-				logger.Errorf(err, "error parsing template (pipeline-run.yml.tpl)")
-				return err
+			for k := range accountRuns {
+				cluster, err := financeClient.GetAttachedCluster(context.TODO(), &finance.GetAttachedClusterIn{AccountId: k})
+				if err != nil {
+					continue
+				}
+				b := new(bytes.Buffer)
+				if err := t.ExecuteTemplate(
+					b, "pipeline-run.yml.tpl", map[string]any{
+						"tekton-runs": accountRuns[k],
+					},
+				); err != nil {
+					logger.Errorf(err, "error parsing template (pipeline-run.yml.tpl)")
+					return err
+				}
+
+				agentMsgBytes, err := json.Marshal(map[string]any{"action": "create", "yamls": b.Bytes()})
+				if err != nil {
+					return err
+				}
+
+				ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
+				topicName := cluster.ClusterId + "-incoming"
+
+				pMsg, err := producer.Produce(ctx, topicName, hook.RepoUrl, agentMsgBytes)
+				if err != nil {
+					cancelFn()
+					logger.Errorf(err, "error processing message, could not pipeline output into topic=%s", topicName)
+					return err
+				}
+				logger.Infof("processed git webhook, pipelined output into to topic=%s, offset=%d", pMsg.Topic, pMsg.Offset)
+				cancelFn()
 			}
 
-			agentMsgBytes, err := json.Marshal(map[string]any{"action": "create", "yamls": b.Bytes()})
-			if err != nil {
-				return err
-			}
-
-			ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancelFn()
-
-			pMsg, err := producer.Produce(ctx, env.KafkaApplyYamlTopic, hook.RepoUrl, agentMsgBytes)
-			if err != nil {
-				logger.Errorf(err, "error processing message, could not pipeline output into topic=%s", env.KafkaApplyYamlTopic)
-				return err
-			}
-			logger.Infof("processed git webhook, pipelined output into to topic=%s, offset=%d", pMsg.Topic, pMsg.Offset)
 			return nil
 		},
 	)

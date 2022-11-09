@@ -58,21 +58,6 @@ func (i *WorkloadStatusConsumerEnv) GetConsumerGroupId() string {
 	return "console-workload-consumer-2"
 }
 
-type WorkloadConsumerEnv struct {
-	Topic         string `env:"KAFKA_WORKLOAD_TOPIC"`
-	ResponseTopic string `env:"KAFKA_WORKLOAD_RESP_TOPIC"`
-}
-
-func (i *WorkloadConsumerEnv) GetSubscriptionTopics() []string {
-	return []string{
-		i.ResponseTopic,
-	}
-}
-
-func (i *WorkloadConsumerEnv) GetConsumerGroupId() string {
-	return "console-workload-consumer-2"
-}
-
 type Env struct {
 	KafkaConsumerGroupId string `env:"KAFKA_GROUP_ID"`
 	CookieDomain         string `env:"COOKIE_DOMAIN"`
@@ -160,8 +145,6 @@ var Module = fx.Module(
 
 	// Workload Message Producer
 	fx.Provide(fxWorkloadMessenger),
-	// Workload Message Consumer
-	config.EnvFx[WorkloadConsumerEnv](),
 	config.EnvFx[WorkloadStatusConsumerEnv](),
 	redpanda.NewConsumerFx[*WorkloadStatusConsumerEnv](),
 	fx.Invoke(
@@ -229,7 +212,9 @@ var Module = fx.Module(
 
 	// Log Service
 	fx.Invoke(
-		func(logServer lokiserver.LogServer, client lokiserver.LokiClient, env *Env, cacheClient AuthCacheClient, d domain.Domain, logger logging.Logger) {
+		func(logServer lokiserver.LogServer,
+			financeClient finance.FinanceClient,
+			client lokiserver.LokiClient, env *Env, cacheClient AuthCacheClient, d domain.Domain, logger logging.Logger) {
 			var a *fiber.App
 			a = logServer
 			a.Use(
@@ -255,18 +240,31 @@ var Module = fx.Module(
 						appId := conn.Query("app_id", "")
 						pipelineId := conn.Query("pipeline_id", "")
 						pipelineRunId := conn.Query("pipeline_run_id", "")
+
 						if len(appId) == 0 || len(pipelineId) == 0 || len(pipelineRunId) == 0 {
 							logger.Infof("build logs require [app_id, pipeline_id, pipeline_run_id] in query params, missing required params, aborting ...")
 							return
 						}
 
 						app, err := d.GetApp(ctx, repos.ID(appId))
-						// pipelineId, ok := app.Metadata["pipeline_id"]
 						if err != nil {
 							fmt.Println(err)
 							conn.Close()
 							return
 						}
+
+						project, err := d.GetProjectWithID(ctx, app.ProjectId)
+						if err != nil {
+							conn.Close()
+							return
+						}
+
+						cluster, err := financeClient.GetAttachedCluster(
+							context.TODO(),
+							&finance.GetAttachedClusterIn{AccountId: string(project.AccountId)},
+						)
+
+						// pipelineId, ok := app.Metadata["pipeline_id"]
 						// if !ok {
 						// 	fmt.Println("no pipeline_id found")
 						// 	conn.Close()
@@ -275,7 +273,7 @@ var Module = fx.Module(
 
 						// Crosscheck session
 						if err := client.Tail(
-							[]lokiserver.StreamSelector{
+							cluster.ClusterId, []lokiserver.StreamSelector{
 								{
 									Key:       "namespace",
 									Operation: "=",
@@ -319,9 +317,20 @@ var Module = fx.Module(
 							return
 						}
 
+						project, err := d.GetProjectWithID(ctx, app.ProjectId)
+						if err != nil {
+							conn.Close()
+							return
+						}
+
+						cluster, err := financeClient.GetAttachedCluster(
+							context.TODO(),
+							&finance.GetAttachedClusterIn{AccountId: string(project.AccountId)},
+						)
+
 						// Crosscheck session
 						err = client.Tail(
-							[]lokiserver.StreamSelector{
+							cluster.ClusterId, []lokiserver.StreamSelector{
 								{
 									Key:       "namespace",
 									Operation: "=",
