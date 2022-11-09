@@ -77,16 +77,16 @@ var PipelineRunIndexes = []repos.IndexField{
 }
 
 type Pipeline struct {
-	repos.BaseEntity   `bson:",inline"`
-	Name               string        `json:"name,omitempty" bson:"name"`
-	ProjectId          string        `json:"project_id" bson:"project_id"`
-	AccountId          string        `json:"account_id" bson:"account_id"`
-	AppId              string        `json:"app_id" bson:"app_id"`
-	ProjectName        string        `json:"project_name" bson:"project_name"`
-	ContainerName      string        `json:"container_name" bson:"container_name"`
-	GitProvider        string        `json:"git_provider,omitempty" bson:"git_provider"`
-	GitRepoUrl         string        `json:"git_repo_url,omitempty" bson:"git_repo_url"`
-	GitBranch          string        `json:"git_branch" bson:"git_branch"`
+	repos.BaseEntity `bson:",inline"`
+	Name             string `json:"name,omitempty" bson:"name"`
+	ProjectId        string `json:"project_id" bson:"project_id"`
+	AccountId        string `json:"account_id" bson:"account_id"`
+	AppId            string `json:"app_id" bson:"app_id"`
+	ProjectName      string `json:"project_name" bson:"project_name"`
+	ContainerName    string `json:"container_name" bson:"container_name"`
+	GitProvider      string `json:"git_provider,omitempty" bson:"git_provider"`
+	GitRepoUrl       string `json:"git_repo_url,omitempty" bson:"git_repo_url"`
+	GitBranch        string `json:"git_branch" bson:"git_branch"`
 
 	AccessTokenId repos.ID `json:"access_token_id,omitempty" bson:"access_token_id"`
 
@@ -122,9 +122,11 @@ var PipelineIndexes = []repos.IndexField{
 type TektonVars struct {
 	PipelineId    repos.ID `json:"pipeline-id"`
 	PipelineRunId repos.ID `json:"pipeline-run-id"`
-	GitRepo       string   `json:"git-repo"`
-	GitUser       string   `json:"git-user"`
-	GitPassword   string   `json:"git-password"`
+	AccountId     string   `json:"account-id"`
+
+	GitRepo     string `json:"git-repo"`
+	GitUser     string `json:"git-user"`
+	GitPassword string `json:"git-password"`
 
 	GitBranch     string `json:"git-branch"`
 	GitCommitHash string `json:"git-commit-hash"`
