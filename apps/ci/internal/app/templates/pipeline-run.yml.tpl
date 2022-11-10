@@ -30,10 +30,10 @@
 {{/*{{- $varAppName := get . "app-name"  -}}*/}}
 
 {{/*input Variables*/}}
-{{- $tektonRuns := get . "tekton-runs" }}
+{{- $pipelineRuns := get . "pipeline-runs" }}
 
-{{- range $tkRun := $tektonRuns}}
-{{- with $tkRun }}
+{{- range $pRun := $pipelineRuns}}
+{{- with $pRun }}
 {{- /*gotype: kloudlite.io/apps/ci/internal/domain.TektonVars*/ -}}
 {{""}}
 
