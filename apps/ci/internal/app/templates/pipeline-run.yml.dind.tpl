@@ -133,22 +133,21 @@ spec:
 {{/*            limits:*/}}
 {{/*              cpu: 200m*/}}
 {{/*              memory: 400Mi*/}}
-
-{{/*          sidecars:*/}}
-{{/*            - name: dind*/}}
-{{/*              image: docker:19.03.5-dind*/}}
-{{/*              args:*/}}
-{{/*                - dockerd*/}}
-{{/*                - --host*/}}
-{{/*                - tcp://127.0.0.1:2375*/}}
-{{/*                - --max-concurrent-downloads*/}}
-{{/*                - "1"*/}}
-{{/*              securityContext:*/}}
-{{/*                privileged: true*/}}
-{{/*              volumeMounts:*/}}
-{{/*                - name: $(workspaces.output.volume)*/}}
-{{/*                  mountPath: /var/lib/docker*/}}
-{{/*                  subPath: docker*/}}
+          sidecars:
+            - name: dind
+              image: docker:19.03.5-dind
+              args:
+                - dockerd
+                - --host
+                - tcp://127.0.0.1:2375
+                - --max-concurrent-downloads
+                - "1"
+              securityContext:
+                privileged: true
+              volumeMounts:
+                - name: $(workspaces.output.volume)
+                  mountPath: /var/lib/docker
+                  subPath: docker
 
           workspaces:
             - name: output
@@ -224,9 +223,9 @@ spec:
                   pushd $dockerContextDir
                   echo "listing files in context dir"
                   ls -al
-{{/*                  echo docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .*/}}
-{{/*                  */}}{{/* docker buildx build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .*/}}
-{{/*                  docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag . || exit 1*/}}
+                  echo docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .
+                  {{/* docker buildx build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .*/}}
+                  docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag . || exit 1
                   popd
                 else
                   IFS=','; read -ra arr <<< $buildOutputDir
@@ -237,7 +236,7 @@ spec:
                   copyCmds+="COPY --from=build /app/$item ./$item\n"
                   done
 
-                cat > ./Dockerfile <<EOF2
+                cat > /tmp/Dockerfile <<EOF2
                 FROM $buildBaseImage AS build
                 WORKDIR /app
                 COPY . ./
@@ -251,39 +250,23 @@ spec:
                 ENTRYPOINT [ "sh", "-c", "$runCmd"]
                 EOF2
 
-                  cat ./Dockerfile
-{{/*                  timeout 2700 docker build -f /tmp/Dockerfile -t $dockerImageName:$dockerImageTag . ||exit 1*/}}
+                  cat /tmp/Dockerfile
+                  timeout 2700 docker build -f /tmp/Dockerfile -t $dockerImageName:$dockerImageTag . ||exit 1
                 fi
 
-{{/*                echo "pushing docker image: $dockerImageName:$dockerImageTag"*/}}
-{{/*                docker push "$dockerImageName:$dockerImageTag"*/}}
-{{/*                [ -n "$gitCommitHash" ] && {*/}}
-{{/*                    docker tag $dockerImageName:$dockerImageTag $dockerImageName:$gitCommitHash*/}}
-{{/*                    echo "pushing docker image: $dockerImageName:$gitCommitHash"*/}}
-{{/*                    docker push $dockerImageName:$gitCommitHash*/}}
-{{/*                }*/}}
+                echo "pushing docker image: $dockerImageName:$dockerImageTag"
+                docker push "$dockerImageName:$dockerImageTag"
+                [ -n "$gitCommitHash" ] && {
+                    docker tag $dockerImageName:$dockerImageTag $dockerImageName:$gitCommitHash
+                    echo "pushing docker image: $dockerImageName:$gitCommitHash"
+                    docker push $dockerImageName:$gitCommitHash
+                }
 
                 echo "STEP (build-image) FINISHED"
+
                 EOF
 
                 bash build-image.sh
                 # bash build-image.sh | sed 's|.*|[kl-build:build-image] &|'
-            - name: kaniko-build-n-push
-              image: gcr.io/kaniko-project/executor:debug
-              securityContext:
-                runAsUser: 0
-              script: |+
-                mkdir -p /kaniko/.docker
-
-                dockerImageName='$(params.{{$varArtifactRefDockerImageName}})'
-                dockerImageTag='$(params.{{$varArtifactRefDockerImageTag}})'
-
-                dockerfile='$(params.{{$varDockerFile}})'
-                dockerContextDir='$(params.{{$varDockerContextDir}})'
-                dockerBuildArgs='$(params.{{$varDockerBuildArgs}})'
-
-                cp $(workspaces.docker-config.path)/.dockerconfigjson /kaniko/.docker/config.json
-                cd "$(workspaces.output.path)/repo"
-                /kaniko/executor --context $dockerContextDir --dockerfile $dockerfile --destination $dockerImageName:$dockerImageTag --cache=true
 {{- end }}
 {{- end }}
