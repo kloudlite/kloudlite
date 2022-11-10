@@ -238,7 +238,7 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Invoke(fxInvokeProcessWebhooks),
+	fxInvokeProcessGitWebhooks(),
 
 	fx.Provide(
 		func(ev *Env, logger logging.Logger) (PipelineStatusConsumer, error) {

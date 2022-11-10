@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bytes"
 	"context"
 	// "github.com/google/go-github/v43/github"
 	"github.com/google/go-github/v45/github"
@@ -35,4 +36,8 @@ type Gitlab interface {
 	GetRepoId(repoUrl string) string
 	GetLatestCommit(ctx context.Context, token *AccessToken, repoUrl string, branchName string) (string, error)
 	GetTriggerWebhookUrl() string
+}
+
+type PipelineTemplate interface {
+	RenderPipelineRun(runs []*TektonVars) (*bytes.Buffer, error)
 }
