@@ -305,7 +305,7 @@ func (r *queryResolver) CiGitlabRepoBranches(ctx context.Context, repoID string,
 }
 
 func (r *queryResolver) CiGetPipelines(ctx context.Context, projectID repos.ID) ([]*model.GitPipeline, error) {
-	pipelineEntities, err := r.Domain.GetPipelines(ctx, projectID)
+	pipelineEntities, err := r.Domain.ListPipelines(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
