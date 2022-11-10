@@ -56,23 +56,12 @@ spec:
         secretName: {{$dockerConfigName}}
   serviceAccountName: {{$svcAccountName}}
   podTemplate:
-    hostNetwork: true
     nodeSelector:
       kloudlite.io/auto-scaler: "true"
     tolerations:
     - key: kloudlite.io/auto-scaler
       operator: Exists
       effect: NoExecute
-    volumes:
-      - name: host-ssh-root
-        hostPath:
-          path: /root/.ssh
-
-      - name: host-dir
-        hostPath:
-          path: /tmp/{{.PipelineRunId}}
-          type: DirectoryOrCreate
-
   pipelineSpec:
     workspaces:
       - name: p-output
@@ -169,70 +158,49 @@ spec:
               image: registry.kloudlite.io/public/git:latest
               script: |+
                 cat > clone-git.sh <<'EOF'
+
                 workdir="$(workspaces.output.path)"
-                mkdir -p $workdir
                 gitUser="$(params.{{$varGitUser}})"
                 gitPassword="$(params.{{$varGitPassword}})"
-                gitRepo="$(params.{{$varGitRepo}})"
-                gitRepoUrl=$(echo $(params.{{$varGitRepo}}) | sed -E "s/https:[/]{2}(.*?\/)/https\:\/\/${gitUser}\:${gitPassword}@\1/g")
+                gitRepo=$(echo $(params.{{$varGitRepo}}) | sed -E "s/https:[/]{2}(.*?\/)/https\:\/\/${gitUser}\:${gitPassword}@\1/g")
                 gitBranch="$(params.{{$varGitBranch}})"
 
                 echo "cloning git repo: $gitRepo"
 
                 # if not using git submodules
+
                 cd $workdir
-{{/*                echo git clone --depth=1 --branch ${gitBranch} --single-branch "$gitRepo" "./repo"*/}}
-                git clone --depth=1 --branch ${gitBranch} --single-branch "$gitRepoUrl" "./repo"
+                {{/*        git clone --depth=1 --config remote.origin.pull="${gitBranch}" "$gitRepo" "./repo"*/}}
+                echo git clone --depth=1 --branch ${gitBranch} --single-branch "$gitRepo" "./repo"
+                git clone --depth=1 --branch ${gitBranch} --single-branch "$gitRepo" "./repo"
                 ls -l repo
                 echo "successfully cloned git repo: $gitRepo"
+
                 echo "STEP (clone-git) FINISHED"
                 EOF
 
                 sh clone-git.sh
-{{/*                ssh root@localhost bash -c "$(cat clone-git.sh)"*/}}
                 # sh clone-git.sh | sed 's|.*|[kl-build:clone-git] &|'
 
             - name: build-image
-              image: docker.io/nxtcoder17/alpine.ssh:root
+              image: registry.kloudlite.io/public/kloudlite/tekton-builder:latest
               imagePullPolicy: Always
               env:
                 - name: DOCKER_HOST
                   value: 127.0.0.1:2375
               securityContext:
                 runAsUser: 0
-              volumeMounts:
-                - name: host-ssh-root
-                  mountPath: /root/.ssh
-                - name: host-dir
-                  mountPath: /app
               script: |+
-{{/*                ls -al $(workspaces.docker-config.path)*/}}
-{{/*                ls -al $(workspaces.output.path)*/}}
-
-                cp $(workspaces.docker-config.path)/.dockerconfigjson /app/docker-config.json
-                cp -r $(workspaces.output.path)/repo /app/repo
-
-                cat > /app/build-image.sh <<'EOF'
+                cat > build-image.sh <<'EOF'
 
                 set -o errexit
                 set -o pipefail
                 set -o nounset
 
-                DOCKER="podman"
-
-                cat > /etc/containers/registries.conf <<'END1'
-                [registries.search]
-                registries = ['docker.io']
-                END1
-
                 # ls -l $(workspaces.docker-config.path)
                 mkdir -p ~/.docker
-                cp /tmp/{{.PipelineRunId}}/docker-config.json ~/.docker/config.json
-{{/*                cp $(workspaces.docker-config.path)/.dockerconfigjson ~/.docker/config.json*/}}
-
-                ls -al /tmp/{{.PipelineRunId}}
-                cd /tmp/{{.PipelineRunId}}/repo
-{{/*                cd "$(workspaces.output.path)/repo"*/}}
+                cp $(workspaces.docker-config.path)/.dockerconfigjson ~/.docker/config.json
+                cd "$(workspaces.output.path)/repo"
 
                 buildBaseImage='$(params.{{$varBuildBaseImage}})'
                 buildCmd='$(params.{{$varBuildCmd}})'
@@ -256,8 +224,9 @@ spec:
                   pushd $dockerContextDir
                   echo "listing files in context dir"
                   ls -al
-                  echo $DOCKER build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .
-                  $DOCKER build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag . || exit 1
+{{/*                  echo docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .*/}}
+{{/*                  */}}{{/* docker buildx build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .*/}}
+{{/*                  docker build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag . || exit 1*/}}
                   popd
                 else
                   IFS=','; read -ra arr <<< $buildOutputDir
@@ -266,9 +235,9 @@ spec:
                   do
                   item=$(echo $item | xargs echo -n)
                   copyCmds+="COPY --from=build /app/$item ./$item\n"
-                done
+                  done
 
-                cat > /tmp/Dockerfile <<EOF2
+                cat > ./Dockerfile <<EOF2
                 FROM $buildBaseImage AS build
                 WORKDIR /app
                 COPY . ./
@@ -282,23 +251,22 @@ spec:
                 ENTRYPOINT [ "sh", "-c", "$runCmd"]
                 EOF2
 
-                  cat /tmp/Dockerfile
-                  timeout 2700 $DOCKER build -f /tmp/Dockerfile -t $dockerImageName:$dockerImageTag . ||exit 1
+                  cat ./Dockerfile
+{{/*                  timeout 2700 docker build -f /tmp/Dockerfile -t $dockerImageName:$dockerImageTag . ||exit 1*/}}
                 fi
 
-                echo "pushing docker image: $dockerImageName:$dockerImageTag"
-                $DOCKER push "$dockerImageName:$dockerImageTag"
-                [ -n "$gitCommitHash" ] && {
-                    $DOCKER tag $dockerImageName:$dockerImageTag $dockerImageName:$gitCommitHash
-                    echo "pushing docker image: $dockerImageName:$gitCommitHash"
-                    $DOCKER push $dockerImageName:$gitCommitHash
-                }
+{{/*                echo "pushing docker image: $dockerImageName:$dockerImageTag"*/}}
+{{/*                docker push "$dockerImageName:$dockerImageTag"*/}}
+{{/*                [ -n "$gitCommitHash" ] && {*/}}
+{{/*                    docker tag $dockerImageName:$dockerImageTag $dockerImageName:$gitCommitHash*/}}
+{{/*                    echo "pushing docker image: $dockerImageName:$gitCommitHash"*/}}
+{{/*                    docker push $dockerImageName:$gitCommitHash*/}}
+{{/*                }*/}}
+
                 echo "STEP (build-image) FINISHED"
                 EOF
 
-                ssh root@localhost "bash /tmp/{{.PipelineRunId}}/build-image.sh"
-                # ssh root@localhost bash -c "$(cat build-image.sh)"
-{{/*                bash build-image.sh*/}}
+                bash build-image.sh
                 # bash build-image.sh | sed 's|.*|[kl-build:build-image] &|'
             - name: kaniko-build-n-push
               image: gcr.io/kaniko-project/executor:debug
