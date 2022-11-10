@@ -16,8 +16,9 @@ type Domain interface {
 	// FinishPipeline(ctx context.Context, pipelineId repos.ID) error
 	// EndPipelineWithError(ctx context.Context, pipelineId repos.ID, err error) error
 
-	GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error)
-	GetTektonRunParams(ctx context.Context, gitProvider string, gitRepoUrl string, gitBranch string) ([]*TektonVars, error)
+	ListPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error)
+	ListPipelinesByGitInfo(ctx context.Context, url, provider, branch string) ([]*Pipeline, error)
+	GetPipelineRunParams(ctx context.Context, p *Pipeline, pRun *PipelineRun) (*TektonVars, error)
 	GetAppPipelines(ctx context.Context, appId repos.ID) ([]*Pipeline, error)
 	CreatePipeline(ctx context.Context, userId repos.ID, pipeline Pipeline) (*Pipeline, error)
 	DeletePipeline(ctx context.Context, pipelineId repos.ID) error
