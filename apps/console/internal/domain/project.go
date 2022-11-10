@@ -324,7 +324,7 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 	cluster, err := d.getClusterForAccount(ctx, project.AccountId)
 	kubecli := kubeapi.NewClientWithConfigPath(fmt.Sprintf("%s/%s", d.clusterConfigsPath, getClusterKubeConfig(cluster)))
 	//TODO
-	secret, err := kubecli.GetSecret(ctx, project.Name, "kloudlite-docker-registry")
+	secret, err := kubecli.GetSecret(ctx, project.Name, "kloudlite-harbor-creds")
 	if err != nil {
 		return "", "", err
 	}
