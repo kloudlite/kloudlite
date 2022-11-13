@@ -53,12 +53,15 @@ spec:
                 type: object
               webhook:
                 properties:
+                  id:
+                    format: int64
+                    type: integer
                   location:
                     type: string
                   name:
                     type: string
                 required:
-                - location
+                - id
                 - name
                 type: object
             type: object

@@ -306,3 +306,20 @@ tasks:
     cmds:
       - docker buildx build -t {{.Image}} .
       - docker push {{.Image}}
+
+  run:operator:
+    vars:
+      Dir:
+        sh: ls | fzf
+    dir: "./operators/{{.Dir}}"
+    silent: true
+    interactive: true
+    cmds:
+      - |+
+        set -a
+        source .secrets/env
+        set +a
+        CGO_ENABLED=0 go build -o /tmp/{{.Dir}}
+        # /tmp/{{.Dir}} --dev
+        # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
+        dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Dir}} -- --dev

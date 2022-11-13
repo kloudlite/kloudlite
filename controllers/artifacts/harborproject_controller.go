@@ -122,7 +122,7 @@ func (r *HarborProjectReconciler) reconcileStatus(req *rApi.Request[*artifactsv1
 		isReady = false
 		cs = append(cs, conditions.New(WebhookExists, false, conditions.NotFound))
 	} else {
-		exists, err := r.harborCli.CheckWebhookExists(ctx, &webhook)
+		exists, err := r.harborCli.CheckWebhookExists(ctx, "", &webhook)
 		if err != nil {
 			isReady = false
 			// cs = append(cs, conditions.New(WebhookExists, false, conditions.NotFound, err.Message()))

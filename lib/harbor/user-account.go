@@ -4,42 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"time"
+	"strings"
 
 	"operators.kloudlite.io/lib/errors"
+	hTypes "operators.kloudlite.io/lib/harbor/internal/types"
 )
 
 type User struct {
 	Id       int    `json:"id"`
 	Name     string `json:"name"`
 	Password string `json:"-"`
-	Location string `json:"location"`
-}
-
-type harborRobotUser struct {
-	UpdateTime   time.Time `json:"update_time"`
-	Description  string    `json:"description"`
-	Level        string    `json:"level"`
-	Editable     bool      `json:"editable"`
-	CreationTime time.Time `json:"creation_time"`
-	ExpiresAt    int       `json:"expires_at"`
-	Name         string    `json:"name"`
-	Secret       string    `json:"secret"`
-	Disable      bool      `json:"disable"`
-	Duration     int       `json:"duration"`
-	Id           int       `json:"id"`
-	Permissions  []struct {
-		Access []struct {
-			Action   string `json:"action"`
-			Resource string `json:"resource"`
-			Effect   string `json:"effect"`
-		} `json:"access"`
-		Kind      string `json:"kind"`
-		Namespace string `json:"namespace"`
-	} `json:"permissions"`
 }
 
 var dockerRepoMinACLs = []map[string]any{
@@ -94,7 +72,7 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName st
 		return nil, errors.Newf("bad status code (%d), with error message %s", resp.StatusCode, rbody)
 	}
 
-	var hUser harborRobotUser
+	var hUser hTypes.RobotUser
 	if err := json.Unmarshal(rbody, &hUser); err != nil {
 		return nil, errors.NewEf(err, "could not unmarshal into harborRobotUser")
 	}
@@ -103,7 +81,6 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName st
 		Id:       hUser.Id,
 		Name:     hUser.Name,
 		Password: hUser.Secret,
-		Location: resp.Header.Get("Location"),
 	}, nil
 
 	// req, err = h.NewAuthzRequest(
@@ -128,9 +105,9 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName st
 	// return nil, errors.New("bad status code")
 }
 
-func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool) error {
+func (h *Client) UpdateUserAccount(ctx context.Context, robotId int64, enabled bool) error {
 	// ASSERT: artifacts-harbor update is terrible, they required an entire object, instead of only diffs
-	req, err := h.NewAuthzRequest(ctx, http.MethodGet, user.Location, nil)
+	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/robots/%d", robotId), nil)
 	if err != nil {
 		return errors.NewEf(err, "building requests for updating robot account")
 	}
@@ -145,7 +122,7 @@ func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool
 		return err
 	}
 
-	var r harborRobotUser
+	var r hTypes.RobotUser
 	if err := json.Unmarshal(respBody, &r); err != nil {
 		return err
 	}
@@ -157,7 +134,7 @@ func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool
 		return err
 	}
 
-	req, err = h.NewAuthzRequest(ctx, http.MethodPut, user.Location, bytes.NewBuffer(b))
+	req, err = h.NewAuthzRequest(ctx, http.MethodPut, fmt.Sprintf("/robots/%d", robotId), bytes.NewBuffer(b))
 	if err != nil {
 		return errors.NewEf(err, "building requests for updating robot account")
 	}
@@ -179,8 +156,8 @@ func (h *Client) UpdateUserAccount(ctx context.Context, user *User, enabled bool
 	return nil
 }
 
-func (h *Client) DeleteUserAccount(ctx context.Context, user *User) error {
-	req, err := h.NewAuthzRequest(ctx, http.MethodDelete, user.Location, nil)
+func (h *Client) DeleteUserAccount(ctx context.Context, userId int64) error {
+	req, err := h.NewAuthzRequest(ctx, http.MethodDelete, fmt.Sprintf("/robots/%d", userId), nil)
 	if err != nil {
 		return errors.NewEf(err, "making request to delete harbor account")
 	}
@@ -202,11 +179,8 @@ func (h *Client) DeleteUserAccount(ctx context.Context, user *User) error {
 	return errors.Newf("bad status code (%d), with error message, %s", resp.StatusCode, msg)
 }
 
-func (h *Client) CheckIfUserAccountExists(ctx context.Context, user *User) (bool, error) {
-	if user == nil || user.Location == "" {
-		return false, nil
-	}
-	req, err := h.NewAuthzRequest(ctx, http.MethodGet, user.Location, nil)
+func (h *Client) CheckIfUserAccountExists(ctx context.Context, userId int64) (bool, error) {
+	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/robots/%d", userId), nil)
 	if err != nil {
 		return false, err
 	}
@@ -216,4 +190,41 @@ func (h *Client) CheckIfUserAccountExists(ctx context.Context, user *User) (bool
 		return false, err
 	}
 	return resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusConflict, nil
+}
+
+func (h *Client) FindUserAccountByName(ctx context.Context, projectName string, username string) (*User, error) {
+	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/projects/%s/robots", projectName), nil)
+	if err != nil {
+		return nil, errors.NewEf(err, "creating request")
+	}
+
+	qp := req.URL.Query()
+	qp.Add("q", fmt.Sprintf("name=~%s", username))
+	req.URL.RawQuery = qp.Encode()
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, errors.NewEf(err, "while calling")
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []hTypes.RobotUser
+	if err := json.Unmarshal(b, &users); err != nil {
+		return nil, err
+	}
+
+	for i := range users {
+		if strings.HasSuffix(users[i].Name, username) {
+			return &User{
+				Id:   users[i].Id,
+				Name: users[i].Name,
+			}, nil
+		}
+	}
+
+	return nil, errors.NewHttpError(http.StatusNotFound, fmt.Sprintf("no robot user account named (%s) found", username))
 }

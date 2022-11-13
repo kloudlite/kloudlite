@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -9,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/errors"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/logging"
 	rApi "operators.kloudlite.io/lib/operator"
@@ -63,10 +65,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	// TODO: initialize all checks here
 	if step := req.EnsureChecks(DefaultsPatched, HarborProjectReady, WebhookReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -106,13 +104,9 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*artifactsv1.HarborProject]
 
 	check := rApi.Check{Generation: obj.Generation}
 
-	if obj.Spec.Project == nil || obj.Spec.Webhook == nil {
+	if obj.Spec.Project == nil {
 		obj.Spec.Project = &harbor.Project{
 			Name: obj.Name,
-		}
-
-		obj.Spec.Webhook = &harbor.Webhook{
-			Name: "kloudlite-webhook",
 		}
 
 		if err := r.Update(ctx, obj); err != nil {
@@ -182,15 +176,26 @@ func (r *Reconciler) reconWebhook(req *rApi.Request[*artifactsv1.HarborProject])
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	exists, err := r.HarborCli.CheckWebhookExists(ctx, obj.Spec.Webhook)
+	webhook, err := r.HarborCli.FindWebhookByName(ctx, obj.Name, r.Env.HarborWebhookName)
 	if err != nil {
-		return req.CheckFailed(WebhookReady, check, err.Error())
+		httpErr, ok := err.(*errors.HttpError)
+		if !ok || httpErr.Code != http.StatusNotFound {
+			return req.CheckFailed(WebhookReady, check, err.Error()).Err(nil)
+		}
+		req.Logger.Infof("webhook does not exist, will be creating now ...")
 	}
 
-	if !exists {
+	if webhook != nil && (obj.Spec.Webhook == nil || obj.Spec.Webhook.Location == "") {
+		if err := r.HarborCli.DeleteWebhook(ctx, obj.Spec.Project.Name, webhook.Id); err != nil {
+			return req.CheckFailed(WebhookReady, check, err.Error()).Err(nil)
+		}
+		webhook = nil
+	}
+
+	if webhook == nil {
 		webhook, err := r.HarborCli.CreateWebhook(
 			ctx, obj.Name, harbor.WebhookIn{
-				Name:        obj.Spec.Webhook.Name,
+				Name:        r.Env.HarborWebhookName,
 				Endpoint:    r.Env.HarborWebhookEndpoint,
 				Events:      []harbor.Event{harbor.PushArtifact},
 				AuthzSecret: r.Env.HarborWebhookAuthz,

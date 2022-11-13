@@ -16,6 +16,7 @@ type Env struct {
 	HarborWebhookEndpoint   string `env:"HARBOR_WEBHOOK_ENDPOINT" required:"true"`
 	HarborApiVersion        string `env:"HARBOR_API_VERSION" required:"true"`
 	HarborWebhookAuthz      string `env:"HARBOR_WEBHOOK_AUTHZ" required:"true"`
+	HarborWebhookName       string `env:"HARBOR_WEBHOOK_NAME" required:"true"`
 
 	DockerSecretName   string `env:"DOCKER_SECRET_NAME" required:"true"`
 	ServiceAccountName string `env:"SERVICE_ACCOUNT_NAME" required:"true"`
