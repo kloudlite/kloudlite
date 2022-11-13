@@ -6,13 +6,17 @@ import (
 	rApi "operators.kloudlite.io/lib/operator"
 )
 
+type OperatorProps struct {
+	HarborUser       *harbor.User  `json:"harborUser,omitempty"`
+}
+
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
 type HarborUserAccountSpec struct {
 	// +kubebuilder:default=true
-	Enabled          bool         `json:"enabled,omitempty"`
-	ProjectRef       string       `json:"projectRef"`
-	HarborUser       *harbor.User `json:"harborUser,omitempty"`
-	DockerConfigName string       `json:"dockerConfigName,omitempty"`
+	Enabled          bool          `json:"enabled,omitempty"`
+	ProjectRef       string        `json:"projectRef"`
+	DockerConfigName string        `json:"dockerConfigName,omitempty"`
+	OperatorProps    OperatorProps `json:"operatorProps,omitempty"`
 }
 
 // +kubebuilder:object:root=true

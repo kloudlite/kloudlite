@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	"operators.kloudlite.io/lib/constants"
+	"operators.kloudlite.io/lib/errors"
 	fn "operators.kloudlite.io/lib/functions"
 	"operators.kloudlite.io/lib/harbor"
 	"operators.kloudlite.io/lib/kubectl"
@@ -125,8 +127,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount])
 		req.Logger.Infof("deleting user (deleted: %s)", check.Status)
 	}()
 
-	if obj.Spec.HarborUser.Id > 0 {
-		if err := r.HarborCli.DeleteUserAccount(ctx, obj.Spec.HarborUser); err != nil {
+	if obj.Spec.OperatorProps.HarborUser != nil {
+		if err := r.HarborCli.DeleteUserAccount(ctx, int64(obj.Spec.OperatorProps.HarborUser.Id)); err != nil {
 			return req.CheckFailed(userDeleted, check, err.Error()).Err(nil)
 		}
 	}
@@ -139,19 +141,30 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*artifactsv1.HarborUserAcco
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
+	hasUpdated := false
+
 	if obj.Spec.DockerConfigName == "" {
+		hasUpdated = true
 		obj.Spec.DockerConfigName = r.Env.DockerSecretName
 	}
 
-	if obj.Spec.HarborUser == nil {
-		obj.Spec.HarborUser = &harbor.User{
-			Name: fmt.Sprintf("robot-%s+%s-%s", obj.Spec.ProjectRef, obj.Namespace, obj.Name),
-		}
+	// if obj.Spec.OperatorProps.HarborUser == nil {
+	// 	obj.Spec.OperatorProps.HarborUser = &harbor.User{
+	// 		Name: fmt.Sprintf("robot-%s+%s-%s", obj.Spec.ProjectRef, obj.Namespace, obj.Name),
+	// 	}
+	// 	if err := r.Update(ctx, obj); err != nil {
+	// 		return req.CheckFailed(DefaultsPatched, check, err.Error())
+	// 	}
+	// 	return req.Done().RequeueAfter(1 * time.Second)
+	// }
+
+	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error())
 		}
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
+
 	check.Status = true
 	checks := req.Object.Status.Checks
 	if check != checks[DefaultsPatched] {
@@ -288,22 +301,35 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	exists, err := r.HarborCli.CheckIfUserAccountExists(ctx, obj.Spec.HarborUser)
+	robotUsername := fmt.Sprintf("%s-%s", obj.Namespace, obj.Name)
+
+	robotUser, err := r.HarborCli.FindUserAccountByName(ctx, obj.Spec.ProjectRef, robotUsername)
 	if err != nil {
-		return req.CheckFailed(RobotAccountReady, check, err.Error())
+		httpErr, ok := err.(*errors.HttpError)
+		if !ok || httpErr.Code != http.StatusNotFound {
+			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
+		}
+		req.Logger.Infof("robot account (%s) does not exist, will be creating now...", robotUsername)
 	}
 
-	if !exists {
-		user, err := r.HarborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, fn.Md5([]byte(fmt.Sprintf("%s-%s", obj.Namespace, obj.Name))))
+	if robotUser != nil && (obj.Spec.OperatorProps.HarborUser == nil || obj.Spec.OperatorProps.HarborUser.Id != robotUser.Id) {
+		if err := r.HarborCli.DeleteUserAccount(ctx, int64(robotUser.Id)); err != nil {
+			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
+		}
+		robotUser = nil
+	}
+
+	if robotUser == nil {
+		user, err := r.HarborCli.CreateUserAccount(ctx, obj.Spec.ProjectRef, robotUsername)
 		if err != nil {
-			return req.CheckFailed(RobotAccountReady, check, err.Error())
+			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
 
 		if err := r.patchDockerSecret(req, user.Name, user.Password); err != nil {
-			return req.CheckFailed(RobotAccountReady, check, err.Error())
+			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
 
-		obj.Spec.HarborUser = user
+		obj.Spec.OperatorProps.HarborUser = user
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(RobotAccountReady, check, err.Error())
 		}
@@ -313,8 +339,8 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 	}
 
 	if check.Generation > checks[RobotAccountReady].Generation {
-		if err := r.HarborCli.UpdateUserAccount(ctx, obj.Spec.HarborUser, obj.Spec.Enabled); err != nil {
-			return req.CheckFailed(RobotAccountReady, check, err.Error())
+		if err := r.HarborCli.UpdateUserAccount(ctx, int64(obj.Spec.OperatorProps.HarborUser.Id), obj.Spec.Enabled); err != nil {
+			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
 
 		checks[RobotAccountReady] = check

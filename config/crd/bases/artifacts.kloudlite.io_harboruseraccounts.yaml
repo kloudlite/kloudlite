@@ -50,18 +50,18 @@ spec:
               enabled:
                 default: true
                 type: boolean
-              harborUser:
+              operatorProps:
                 properties:
-                  id:
-                    type: integer
-                  location:
-                    type: string
-                  name:
-                    type: string
-                required:
-                - id
-                - location
-                - name
+                  harborUser:
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                    required:
+                    - id
+                    - name
+                    type: object
                 type: object
               projectRef:
                 type: string
