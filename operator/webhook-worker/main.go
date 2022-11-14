@@ -167,7 +167,7 @@ func main() {
 		panic(err)
 	}
 
-	if consumer.StartConsuming(
+	consumer.StartConsuming(
 		func(msg redpanda.KafkaMessage) error {
 			log := logger.WithKV("received.offset", msg.Offset).WithKV("received.topic", msg.Topic).WithKV("received.partition", msg.Partition)
 			log.Infof("received message")
@@ -205,10 +205,7 @@ func main() {
 			}
 
 			log.Infof("processed message")
-
 			return nil
 		},
-	); err != nil {
-		panic(err)
-	}
+	)
 }
