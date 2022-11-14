@@ -323,3 +323,20 @@ tasks:
         # /tmp/{{.Dir}} --dev
         # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
         dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Dir}} -- --dev
+
+  run:webhook-worker:
+    dir: "./webhook-worker"
+    silent: true
+    interactive: true
+    vars:
+      Name: webhook-worker
+    cmds:
+      - |+
+        set -a
+        source .secrets/env
+        set +a
+        CGO_ENABLED=0 go build -o /tmp/{{.Name}}
+        # /tmp/{{.Dir}} --dev
+        # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
+        dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Name}} -- --dev
+
