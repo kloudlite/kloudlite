@@ -617,25 +617,25 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 	// 	}
 	// 	latestCommit = commit
 	// }
-	//
-	// if pipeline.GitProvider == common.ProviderGitlab {
-	// 	token, err := d.getAccessTokenByUserId(ctx, pipeline.GitProvider, userId)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	pipeline.AccessTokenId = token.Id
-	// 	hookId, err := d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), pipeline.Id)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	pipeline.WebhookId = hookId
-	//
-	// 	commit, err := d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	latestCommit = commit
-	// }
+
+	if pipeline.GitProvider == common.ProviderGitlab {
+		token, err := d.getAccessTokenByUserId(ctx, pipeline.GitProvider, userId)
+		if err != nil {
+			return nil, err
+		}
+		pipeline.AccessTokenId = token.Id
+		hookId, err := d.GitlabAddWebhook(ctx, userId, d.gitlab.GetRepoId(pipeline.GitRepoUrl), pipeline.Id)
+		if err != nil {
+			return nil, err
+		}
+		pipeline.WebhookId = hookId
+
+		// commit, err := d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// latestCommit = commit
+	}
 
 	p, err := d.pipelineRepo.Upsert(ctx, repos.Filter{"id": pipeline.Id}, &pipeline)
 	if err != nil {

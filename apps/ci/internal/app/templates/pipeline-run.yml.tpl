@@ -58,11 +58,16 @@ spec:
   podTemplate:
     hostNetwork: true
     nodeSelector:
-      kloudlite.io/auto-scaler: "true"
+{{/*      kloudlite.io/auto-scaler: "true"*/}}
+      kloudlite.io/region: "reg-20chh-dzgubg4o-nczwa93eciqbs"
     tolerations:
-    - key: kloudlite.io/auto-scaler
-      operator: Exists
-      effect: NoExecute
+{{/*    - key: kloudlite.io/auto-scaler*/}}
+{{/*      operator: Exists*/}}
+{{/*      effect: NoExecute*/}}
+      - effect: NoExecute
+        key: kloudlite.io/region
+        operator: Equal
+        value: reg-20chh-dzgubg4o-nczwa93eciqbs
     volumes:
       - name: host-ssh-root
         hostPath:
@@ -209,6 +214,15 @@ spec:
 {{/*                ls -al $(workspaces.docker-config.path)*/}}
 {{/*                ls -al $(workspaces.output.path)*/}}
 
+{{/*                [ -f /root/.ssh/id_rsa.pub ] || ssh-keygen -t rsa -N "" -f /root/.ssh/id_rsa*/}}
+{{/*                echo "here"*/}}
+{{/*                touch /root/.ssh/authorized_keys*/}}
+{{/*                cat /root/.ssh/authorized_keys | grep -i "$(cat /root/.ssh/id_rsa.pub)"*/}}
+{{/*                [ $? -ne 0 ] && {*/}}
+{{/*                  cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys*/}}
+{{/*                }*/}}
+{{/*                bash -x sx.sh*/}}
+
                 cp $(workspaces.docker-config.path)/.dockerconfigjson /app/docker-config.json
                 cp -r $(workspaces.output.path)/repo /app/repo
 
@@ -220,6 +234,7 @@ spec:
 
                 DOCKER="podman"
 
+                mkdir -p /etc/containers
                 cat > /etc/containers/registries.conf <<'END1'
                 [registries.search]
                 registries = ['docker.io']
@@ -230,7 +245,6 @@ spec:
                 cp /tmp/{{.PipelineRunId}}/docker-config.json ~/.docker/config.json
 {{/*                cp $(workspaces.docker-config.path)/.dockerconfigjson ~/.docker/config.json*/}}
 
-                ls -al /tmp/{{.PipelineRunId}}
                 cd /tmp/{{.PipelineRunId}}/repo
 {{/*                cd "$(workspaces.output.path)/repo"*/}}
 
@@ -254,8 +268,8 @@ spec:
                 if [ "$isDockerBuild" == "true" ]; then
                   # eval "$buildCmd" | envsubst
                   pushd $dockerContextDir
-                  echo "listing files in context dir"
-                  ls -al
+{{/*                  echo "listing files in context dir"*/}}
+{{/*                  ls -al*/}}
                   echo $DOCKER build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag .
                   $DOCKER build -f $dockerfile $dockerBuildArgs -t $dockerImageName:$dockerImageTag . || exit 1
                   popd
@@ -300,22 +314,5 @@ spec:
                 # ssh root@localhost bash -c "$(cat build-image.sh)"
 {{/*                bash build-image.sh*/}}
                 # bash build-image.sh | sed 's|.*|[kl-build:build-image] &|'
-            - name: kaniko-build-n-push
-              image: gcr.io/kaniko-project/executor:debug
-              securityContext:
-                runAsUser: 0
-              script: |+
-                mkdir -p /kaniko/.docker
-
-                dockerImageName='$(params.{{$varArtifactRefDockerImageName}})'
-                dockerImageTag='$(params.{{$varArtifactRefDockerImageTag}})'
-
-                dockerfile='$(params.{{$varDockerFile}})'
-                dockerContextDir='$(params.{{$varDockerContextDir}})'
-                dockerBuildArgs='$(params.{{$varDockerBuildArgs}})'
-
-                cp $(workspaces.docker-config.path)/.dockerconfigjson /kaniko/.docker/config.json
-                cd "$(workspaces.output.path)/repo"
-                /kaniko/executor --context $dockerContextDir --dockerfile $dockerfile --destination $dockerImageName:$dockerImageTag --cache=true
 {{- end }}
 {{- end }}
