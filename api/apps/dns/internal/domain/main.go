@@ -94,7 +94,7 @@ func (d *domainI) GetNodeIps(ctx context.Context,
 		result, e := d.regionCNamesRepo.FindOne(ctx, repos.Filter{
 			"cName": regionPart,
 		})
-		if e == nil && result.IsShared {
+		if e == nil && result != nil && result.IsShared {
 			filter := repos.Filter{
 				"regionPart": regionPart,
 			}
