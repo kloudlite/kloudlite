@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-
-	"k8s.io/apimachinery/pkg/types"
 )
 
 type YAMLClient struct {
@@ -88,6 +89,56 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
 			return err
 		}
 	}
+	return nil
+}
+
+type Restartable string
+
+const (
+	Deployment  Restartable = "deployment"
+	StatefulSet Restartable = "statefulset"
+)
+
+func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error {
+	switch kind {
+	case Deployment:
+		{
+			dl, err := yc.k8sClient.AppsV1().Deployments(namespace).List(
+				ctx, metav1.ListOptions{
+					LabelSelector: apiLabels.FormatLabels(labels),
+				},
+			)
+			if err != nil {
+				return err
+			}
+			for _, d := range dl.Items {
+				if d.Annotations == nil {
+					d.Annotations = map[string]string{}
+				}
+				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				yc.k8sClient.AppsV1().Deployments(namespace).Update(ctx, &d, metav1.UpdateOptions{})
+			}
+		}
+	case StatefulSet:
+		{
+			sl, err := yc.k8sClient.AppsV1().StatefulSets(namespace).List(
+				ctx, metav1.ListOptions{
+					LabelSelector: apiLabels.FormatLabels(labels),
+				},
+			)
+			if err != nil {
+				return err
+			}
+			for _, d := range sl.Items {
+				if d.Annotations == nil {
+					d.Annotations = map[string]string{}
+				}
+				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				yc.k8sClient.AppsV1().StatefulSets(namespace).Update(ctx, &d, metav1.UpdateOptions{})
+			}
+		}
+	}
+
 	return nil
 }
 

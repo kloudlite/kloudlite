@@ -234,15 +234,11 @@ func (r *Request[T]) RestartIfAnnotated() stepResult.Result {
 			return r.FailWithOpError(err)
 		}
 
-		exitCode, err := kubectl.Restart(kubectl.Deployments, obj.GetNamespace(), obj.GetEnsuredLabels())
-		if exitCode != 0 {
-			// failed to restart deployments, with non-zero exit code
-			r.Logger.Error(err)
+		if err := kubectl.RolloutRestart(r.client, kubectl.Deployment, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
+			return stepResult.New().Err(err)
 		}
-		exitCode, err = kubectl.Restart(kubectl.Statefulsets, obj.GetNamespace(), obj.GetEnsuredLabels())
-		if exitCode != 0 {
-			// failed to restart statefultset, with non-zero exit code
-			r.Logger.Error(err)
+		if err := kubectl.RolloutRestart(r.client, kubectl.StatefulSet, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
+			return stepResult.New().Err(err)
 		}
 		return r.Done().RequeueAfter(2 * time.Second)
 	}

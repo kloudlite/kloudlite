@@ -2,10 +2,15 @@ package kubectl
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
+	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"operators.kloudlite.io/lib/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type batchable string
@@ -15,7 +20,65 @@ const (
 	Statefulsets batchable = "statefulsets"
 )
 
-func Restart(kind batchable, namespace string, labels map[string]string) (int, error) {
+func RolloutRestart(c client.Client, kind Restartable, namespace string, labels map[string]string) error {
+	switch kind {
+	case Deployment:
+		{
+			ctx, cancelFn := context.WithTimeout(context.TODO(), 5*time.Second)
+			defer cancelFn()
+			var dl appsv1.DeploymentList
+			if err := c.List(
+				ctx, &dl, &client.ListOptions{
+					Namespace:     namespace,
+					LabelSelector: apiLabels.SelectorFromValidatedSet(labels),
+				},
+			); err != nil {
+				return err
+			}
+
+			for _, d := range dl.Items {
+				if d.Spec.Template.ObjectMeta.Annotations == nil {
+					d.Spec.Template.ObjectMeta.Annotations = map[string]string{}
+				}
+				// [source] (https://stackoverflow.com/a/59051313)
+				d.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				if err := c.Update(ctx, &d); err != nil {
+					return err
+				}
+			}
+		}
+	case StatefulSet:
+		{
+			ctx, cancelFn := context.WithTimeout(context.TODO(), 5*time.Second)
+			defer cancelFn()
+
+			var sl appsv1.StatefulSetList
+
+			if err := c.List(
+				ctx, &sl, &client.ListOptions{
+					Namespace:     namespace,
+					LabelSelector: apiLabels.SelectorFromValidatedSet(labels),
+				},
+			); err != nil {
+				return err
+			}
+
+			for _, d := range sl.Items {
+				if d.Spec.Template.ObjectMeta.Annotations == nil {
+					d.Spec.Template.ObjectMeta.Annotations = map[string]string{}
+				}
+				d.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				if err := c.Update(ctx, &d); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func RestartWithKubectl(kind batchable, namespace string, labels map[string]string) (int, error) {
 	cmdArgs := []string{
 		"rollout", "restart", string(kind),
 		"-n", namespace,
