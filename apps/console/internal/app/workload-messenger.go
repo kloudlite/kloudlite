@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/pkg/redpanda"
 )
@@ -28,8 +29,12 @@ func (i *workloadMessengerImpl) SendAction(action string, kafkaTopic string, res
 	return nil
 }
 
-func fxWorkloadMessenger(p redpanda.Producer) domain.WorkloadMessenger {
-	return &workloadMessengerImpl{
-		producer: p,
-	}
+func fxWorkloadMessenger() fx.Option {
+	return fx.Invoke(
+		func(p redpanda.Producer) domain.WorkloadMessenger {
+			return &workloadMessengerImpl{
+				producer: p,
+			}
+		},
+	)
 }
