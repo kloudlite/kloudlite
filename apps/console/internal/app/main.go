@@ -80,6 +80,7 @@ var Module = fx.Module(
 
 	// Configs
 	config.EnvFx[Env](),
+	config.EnvFx[PrometheusOpts](),
 
 	// Repos
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
@@ -354,6 +355,8 @@ var Module = fx.Module(
 			)
 		},
 	),
+
+	fxWorkloadMessenger(),
 
 	// GraphQL Service
 	fx.Invoke(
