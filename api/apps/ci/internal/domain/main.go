@@ -1,16 +1,17 @@
 package domain
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"math"
-	"net/http"
 	"strings"
 	"time"
 
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/config"
+	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/redpanda"
 
 	"github.com/google/go-github/v43/github"
 	"github.com/xanzy/go-gitlab"
@@ -42,20 +43,30 @@ type domainI struct {
 	gitlabWebhookUrl string
 	githubWebhookUrl string
 	env              *Env
+	producer         redpanda.Producer
+	financeClient    finance.FinanceClient
+	pipelineTemplate PipelineTemplate
 }
 
-func (d *domainI) CreateNewPipelineRun(ctx context.Context, pipelineId repos.ID) (*PipelineRun, error) {
-	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
-	if err != nil {
-		return nil, err
+func (d *domainI) ListPipelinesByGitInfo(ctx context.Context, url, provider, branch string) ([]*Pipeline, error) {
+	return d.pipelineRepo.Find(
+		ctx, repos.Query{
+			Filter: repos.Filter{"git_repo_url": url, "git_provider": provider, "git_branch": branch},
+		},
+	)
+}
+
+func (d *domainI) createNewPipelineRun(ctx context.Context, pipeline *Pipeline) (*PipelineRun, error) {
+	if pipeline == nil {
+		return nil, errors.New("pipeline is nil")
 	}
 
 	return d.pipelineRunRepo.Create(
 		ctx, &PipelineRun{
-			BaseEntity: repos.BaseEntity{
-				Id: d.pipelineRepo.NewId(),
-			},
-			PipelineID:       pipelineId,
+			// BaseEntity: repos.BaseEntity{
+			// 	Id: d.pipelineRunRepo.NewId(),
+			// },
+			PipelineID:       pipeline.Id,
 			CreationTime:     time.Now(),
 			Success:          false,
 			Message:          "not-started-yet",
@@ -69,6 +80,14 @@ func (d *domainI) CreateNewPipelineRun(ctx context.Context, pipelineId repos.ID)
 			ArtifactRef:      pipeline.ArtifactRef,
 		},
 	)
+}
+
+func (d *domainI) CreateNewPipelineRun(ctx context.Context, pipelineId repos.ID) (*PipelineRun, error) {
+	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+	return d.createNewPipelineRun(ctx, pipeline)
 }
 
 func (d *domainI) UpdatePipelineRunStatus(ctx context.Context, pStatus PipelineRunStatus) error {
@@ -123,8 +142,8 @@ type Env struct {
 }
 
 const (
-	GitlabLabel string = "gitlab"
-	GithubLabel string = "github"
+	GitlabProvider string = "gitlab"
+	GithubProvider string = "github"
 )
 
 func (d *domainI) HarborImageSearch(ctx context.Context, accountId repos.ID, q string, pagination *t.Pagination) ([]harbor.Repository, error) {
@@ -281,7 +300,7 @@ func (d *domainI) GitlabPullToken(ctx context.Context, tokenId repos.ID) (string
 	return d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: string(tokenId)})
 }
 
-func (d *domainI) GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error) {
+func (d *domainI) ListPipelines(ctx context.Context, projectId repos.ID) ([]*Pipeline, error) {
 	find, err := d.pipelineRepo.Find(
 		ctx, repos.Query{
 			Filter: repos.Filter{
@@ -295,168 +314,57 @@ func (d *domainI) GetPipelines(ctx context.Context, projectId repos.ID) ([]*Pipe
 	return find, nil
 }
 
-func (d *domainI) GetTektonRunParams(ctx context.Context, gitProvider string, gitRepoUrl string, gitBranch string) ([]*TektonVars, error) {
-	pipelines, err := d.pipelineRepo.Find(
-		ctx, repos.Query{
-			Filter: repos.Filter{
-				"git_provider": gitProvider,
-				"git_repo_url": gitRepoUrl,
-				"git_branch":   gitBranch,
-			},
-			Sort: nil,
-		},
-	)
+func (d *domainI) GetPipelineRunParams(ctx context.Context, p *Pipeline, pRun *PipelineRun) (*TektonVars, error) {
+	if p == nil || pRun == nil {
+		return nil, errors.Newf("pipeline and pipeline-run must be non-nil")
+	}
+
+	pullToken, err := func() (string, error) {
+		if p.GitProvider == GithubProvider {
+			return d.github.GetInstallationToken(ctx, p.GitRepoUrl)
+		}
+		if p.GitProvider == GitlabProvider {
+			if p.AccessTokenId == "" {
+				return "", errors.Newf("pipeline has no associated gitlab access-token information")
+			}
+			return d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: string(p.AccessTokenId)})
+		}
+		return "", errors.Newf("unknown git provider")
+	}()
 	if err != nil {
 		return nil, err
 	}
 
-	tkVars := make([]*TektonVars, 0, len(pipelines))
-	for i := range pipelines {
-		p := pipelines[i]
-		if gitProvider == "gitlab" && p.AccessTokenId == "" {
-			continue
-		}
-
-		pullToken, err := func() (string, error) {
-			if gitProvider == "github" {
-				return d.github.GetInstallationToken(ctx, p.GitRepoUrl)
+	return &TektonVars{
+		PipelineId:    p.Id,
+		PipelineRunId: pRun.Id,
+		AccountId:     p.AccountId,
+		GitRepo:       p.GitRepoUrl,
+		GitUser: func() string {
+			if p.GitProvider == "github" {
+				return "x-access-token"
 			}
-			if gitProvider == "gitlab" {
-				return d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: string(p.AccessTokenId)})
+			if p.GitProvider == "gitlab" {
+				return "oauth2"
 			}
-			return "", errors.Newf("unknown git provider")
-		}()
-
-		if err != nil {
-			return nil, err
-		}
-
-		prun, err := d.CreateNewPipelineRun(ctx, p.Id)
-		// d.logger.Infof("pipeline run: %+v\n", prun)
-		if err != nil {
-			return nil, errors.NewEf(err, "creating pipeline run")
-		}
-
-		tkVars = append(
-			tkVars, &TektonVars{
-				PipelineRunId: prun.Id,
-				PipelineId:    p.Id,
-				AccountId:     p.AccountId,
-
-				GitRepo: p.GitRepoUrl,
-				GitUser: func() string {
-					if p.GitProvider == "github" {
-						return "x-access-token"
-					}
-					if p.GitProvider == "gitlab" {
-						return "oauth2"
-					}
-					return ""
-				}(),
-				GitPassword:      pullToken,
-				GitBranch:        p.GitBranch,
-				IsDockerBuild:    p.DockerBuildInput.DockerFile != "",
-				DockerFile:       &p.DockerBuildInput.DockerFile,
-				DockerContextDir: &p.DockerBuildInput.ContextDir,
-				DockerBuildArgs:  &p.DockerBuildInput.BuildArgs,
-				BuildBaseImage: func() string {
-					if p.Build == nil {
-						return ""
-					}
-					return p.Build.BaseImage
-				}(),
-				BuildCmd: func() string {
-					if p.Build == nil {
-						return ""
-					}
-					return p.Build.Cmd
-				}(),
-				BuildOutputDir: func() string {
-					if p.Build == nil {
-						return ""
-					}
-					return p.Build.OutputDir
-				}(),
-				RunBaseImage: func() string {
-					if p.Run == nil {
-						return ""
-					}
-					return p.Run.BaseImage
-				}(),
-				RunCmd: func() string {
-					if p.Run == nil {
-						return ""
-					}
-					return p.Run.Cmd
-				}(),
-				TaskNamespace:           p.ProjectName,
-				ArtifactDockerImageName: fmt.Sprintf("%s/%s/%s", d.harborHost, p.AccountId, p.ArtifactRef.DockerImageName),
-				ArtifactDockerImageTag:  p.ArtifactRef.DockerImageTag,
-			},
-		)
-	}
-
-	return tkVars, nil
-}
-
-func (d *domainI) TriggerHook(p *Pipeline, latestCommitSHA string) error {
-	var req *http.Request
-	if p.GitProvider == common.ProviderGithub {
-		body := t.M{
-			"ref":   fmt.Sprintf("refs/heads/%s", p.GitBranch),
-			"after": latestCommitSHA,
-			"repository": t.M{
-				"html_url": p.GitRepoUrl,
-			},
-		}
-
-		b, err := json.Marshal(body)
-		if err != nil {
-			return errors.ErrMarshal(err)
-		}
-		req, err = http.NewRequest(http.MethodPost, d.githubWebhookUrl, bytes.NewBuffer(b))
-		req.Header.Set("X-Github-Event", "push")
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", "kloudlite/ci")
-		req.Header.Set("X-Kloudlite-Trigger", d.env.KlHookTriggerAuthzSecret)
-		if err != nil {
-			return errors.NewEf(err, "could not build http request")
-		}
-	}
-
-	if p.GitProvider == common.ProviderGitlab {
-		body := t.M{
-			"ref":          fmt.Sprintf("refs/heads/%s", p.GitBranch),
-			"checkout_sha": latestCommitSHA,
-			"repository": t.M{
-				"git_http_url": p.GitRepoUrl,
-			},
-		}
-		b, err := json.Marshal(body)
-		if err != nil {
-			return errors.ErrMarshal(err)
-		}
-		req, err = http.NewRequest(http.MethodPost, d.gitlabWebhookUrl, bytes.NewBuffer(b))
-		req.Header.Set("X-Gitlab-Event", "Push Hook")
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", "kloudlite/ci")
-		req.Header.Set("X-Kloudlite-Trigger", d.env.KlHookTriggerAuthzSecret)
-		if err != nil {
-			return errors.NewEf(err, "could not build http request")
-		}
-	}
-
-	if req != nil {
-		r, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return errors.NewEf(err, "while making request")
-		}
-		if r.StatusCode == http.StatusAccepted {
-			return nil
-		}
-		return errors.Newf("trigger for repo=%s failed as received StatusCode=%d", p.GitRepoUrl, r.StatusCode)
-	}
-	return errors.Newf("unknown gitProvider=%s, aborting trigger", p.GitProvider)
+			return ""
+		}(),
+		GitPassword:             pullToken,
+		GitBranch:               p.GitBranch,
+		GitCommitHash:           "",
+		IsDockerBuild:           p.DockerBuildInput.DockerFile != "",
+		DockerFile:              &p.DockerBuildInput.DockerFile,
+		DockerContextDir:        &p.DockerBuildInput.ContextDir,
+		DockerBuildArgs:         &p.DockerBuildInput.BuildArgs,
+		BuildBaseImage:          fn.DefaultIfNil(p.Build).BaseImage,
+		BuildCmd:                fn.DefaultIfNil(p.Build).Cmd,
+		BuildOutputDir:          fn.DefaultIfNil(p.Build).OutputDir,
+		RunBaseImage:            fn.DefaultIfNil(p.Run).BaseImage,
+		RunCmd:                  fn.DefaultIfNil(p.Run).Cmd,
+		TaskNamespace:           p.ProjectName,
+		ArtifactDockerImageName: fmt.Sprintf("%s/%s/%s", d.harborHost, p.AccountId, p.ArtifactRef.DockerImageName),
+		ArtifactDockerImageTag:  p.ArtifactRef.DockerImageTag,
+	}, nil
 }
 
 func (d *domainI) GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *t.Pagination) (any, error) {
@@ -512,7 +420,7 @@ func (d *domainI) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId 
 	grHook, err = d.gitRepoHookRepo.Create(
 		ctx, &GitRepositoryHook{
 			HttpUrl:         d.gitlabWebhookUrl,
-			GitProvider:     GitlabLabel,
+			GitProvider:     GitlabProvider,
 			GitlabWebhookId: webhookId,
 		},
 	)
@@ -594,7 +502,7 @@ func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, repoUrl
 	grHook, err := d.gitRepoHookRepo.Upsert(
 		ctx, repos.Filter{"httpUrl": repoUrl}, &GitRepositoryHook{
 			HttpUrl:     repoUrl,
-			GitProvider: GithubLabel,
+			GitProvider: GithubProvider,
 		},
 	)
 	if err != nil {
@@ -631,7 +539,7 @@ func (d *domainI) GithubAddWebhook(ctx context.Context, userId repos.ID, repoUrl
 	// grHook, err = d.gitRepoHookRepo.Create(
 	// 	ctx, &GitRepositoryHook{
 	// 		HttpUrl:     d.githubWebhookUrl,
-	// 		GitProvider: GithubLabel,
+	// 		GitProvider: GithubProvider,
 	// 		// GithubWebhookId: webhookId,
 	// 	},
 	// )
@@ -691,27 +599,24 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		pipeline.Id = d.pipelineRepo.NewId()
 	}
 
-	latestCommit := ""
-	if pipeline.GitProvider == common.ProviderGithub {
-		token, err := d.getAccessTokenByUserId(ctx, "github", userId)
-		if err != nil {
-			return nil, err
-		}
-
-		pipeline.AccessTokenId = token.Id
-		hookId, err := d.GithubAddWebhook(ctx, userId, pipeline.GitRepoUrl)
-		if err != nil {
-			return nil, err
-		}
-		pipeline.WebhookId = hookId
-
-		// pipeline.WebhookId = hookId
-		commit, err := d.github.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
-		if err != nil {
-			return nil, err
-		}
-		latestCommit = commit
-	}
+	// latestCommit := ""
+	// 		return nil, err
+	// 	}
+	//
+	// 	pipeline.AccessTokenId = token.Id
+	// 	hookId, err := d.GithubAddWebhook(ctx, userId, pipeline.GitRepoUrl)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	pipeline.WebhookId = hookId
+	//
+	// 	// pipeline.WebhookId = hookId
+	// 	commit, err := d.github.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	latestCommit = commit
+	// }
 
 	if pipeline.GitProvider == common.ProviderGitlab {
 		token, err := d.getAccessTokenByUserId(ctx, pipeline.GitProvider, userId)
@@ -725,18 +630,19 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 		}
 		pipeline.WebhookId = hookId
 
-		commit, err := d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
-		if err != nil {
-			return nil, err
-		}
-		latestCommit = commit
+		// commit, err := d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// latestCommit = commit
 	}
+
 	p, err := d.pipelineRepo.Upsert(ctx, repos.Filter{"id": pipeline.Id}, &pipeline)
 	if err != nil {
 		return nil, err
 	}
-	if err = d.TriggerHook(p, latestCommit); err != nil {
-		return nil, errors.NewEf(err, "failed to trigger webhook")
+	if err := d.TriggerPipeline(ctx, userId, p.Id); err != nil {
+		return nil, errors.NewEf(err, "failed to trigger pipeline run")
 	}
 	return p, nil
 }
@@ -763,34 +669,52 @@ func (d *domainI) DeletePipeline(ctx context.Context, pipelineId repos.ID) error
 	//	//	return err
 	//	//}
 	// }
-
 }
 
 func (d *domainI) TriggerPipeline(ctx context.Context, userId repos.ID, pipelineId repos.ID) error {
+	// TODO: (nxtcoder17) Can this userId, trigger pipeline ?
+
 	pipeline, err := d.pipelineRepo.FindById(ctx, pipelineId)
 	if err != nil {
 		return err
 	}
 
-	token, err := d.getAccessTokenByUserId(ctx, pipeline.GitProvider, userId)
+	cluster, err := d.financeClient.GetAttachedCluster(ctx, &finance.GetAttachedClusterIn{AccountId: pipeline.AccountId})
 	if err != nil {
 		return err
 	}
 
-	var latestCommit string
-	if pipeline.GitProvider == common.ProviderGithub {
-		latestCommit, err = d.github.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
-		if err != nil {
-			return errors.NewEf(err, "getting latest commit")
-		}
+	pRun, err := d.createNewPipelineRun(ctx, pipeline)
+	if err != nil {
+		return err
 	}
-	if pipeline.GitProvider == common.ProviderGitlab {
-		latestCommit, err = d.gitlab.GetLatestCommit(ctx, token, pipeline.GitRepoUrl, pipeline.GitBranch)
-		if err != nil {
-			return errors.NewEf(err, "getting latest commit")
-		}
+
+	pRunParams, err := d.GetPipelineRunParams(ctx, pipeline, pRun)
+	if err != nil {
+		return err
 	}
-	return d.TriggerHook(pipeline, latestCommit)
+
+	b, err := d.pipelineTemplate.RenderPipelineRun([]*TektonVars{pRunParams})
+	if err != nil {
+		return err
+	}
+
+	agentMsgBytes, err := json.Marshal(map[string]any{"action": "create", "yamls": b.Bytes()})
+	if err != nil {
+		return err
+	}
+
+	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFn()
+	topicName := cluster.ClusterId + "-incoming"
+
+	pMsg, err := d.producer.Produce(ctx, topicName, pRunParams.GitRepo, agentMsgBytes)
+	if err != nil {
+		d.logger.Errorf(err, "error processing message, could not pipeline output into topic=%s", topicName)
+		return err
+	}
+	d.logger.Infof("processed git webhook, pipelined output into to topic=%s, offset=%d", pMsg.Topic, pMsg.Offset)
+	return nil
 }
 
 func (d *domainI) GetPipeline(ctx context.Context, pipelineId repos.ID) (*Pipeline, error) {
@@ -816,6 +740,9 @@ var Module = fx.Module(
 			logger logging.Logger,
 			harborCli *harbor.Client,
 			gitRepoHookRepo repos.DbRepo[*GitRepositoryHook],
+			producer redpanda.Producer,
+			financeClient finance.FinanceClient,
+			pt PipelineTemplate,
 			env *Env,
 		) Domain {
 			return &domainI{
@@ -831,6 +758,9 @@ var Module = fx.Module(
 				gitRepoHookRepo:  gitRepoHookRepo,
 				gitlabWebhookUrl: env.GitlabWebhookUrl,
 				githubWebhookUrl: env.GithubWebhookUrl,
+				financeClient:    financeClient,
+				producer:         producer,
+				pipelineTemplate: pt,
 			}
 		},
 	),
