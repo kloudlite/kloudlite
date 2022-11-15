@@ -30,7 +30,7 @@ func (i *workloadMessengerImpl) SendAction(action string, kafkaTopic string, res
 }
 
 func fxWorkloadMessenger() fx.Option {
-	return fx.Invoke(
+	return fx.Provide(
 		func(p redpanda.Producer) domain.WorkloadMessenger {
 			return &workloadMessengerImpl{
 				producer: p,
