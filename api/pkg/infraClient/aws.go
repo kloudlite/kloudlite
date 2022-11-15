@@ -172,9 +172,9 @@ func (a *awsProvider) AttachNode(node AWSNode) error {
 
 	// attach node
 	if e := execCmd(
-		fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s sudo sh /tmp/k3s-install.sh agent --server %s --token %s %s --node-name %s --node-external-ip %s",
+		fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s sudo sh /tmp/k3s-install.sh agent --server %s --token %s %s --node-name %s --node-external-ip %s --node-ip %s",
 			fmt.Sprintf("%v/access", a.SSHPath), string(out), sec.EndpointUrl, sec.JoinToken,
-			strings.Join(labels, " "), node.NodeId, string(out)),
+			strings.Join(labels, " "), node.NodeId, string(out), string(out)),
 		"attaching to cluster"); e != nil {
 		return e
 	}
