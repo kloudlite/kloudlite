@@ -19,6 +19,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
+	github.com/slack-go/slack v0.11.4
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/tektoncd/triggers v0.20.1
 	github.com/twmb/franz-go v1.6.0
