@@ -153,25 +153,6 @@ func (r *Reconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 		req.Logger.Infof("app (deployment) %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
 	}
 
-	// svc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
-	// if err != nil {
-	// 	req.Logger.Infof("service %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
-	// }
-	//
-	// svcInternal, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name+"-internal"), &corev1.Service{})
-	// if err != nil {
-	// 	req.Logger.Infof("service %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name+"-internal"))
-	// }
-	//
-	// shouldRecon := deployment == nil || svc == nil || svcInternal == nil
-	// if obj.Spec.Hpa.Enabled {
-	// 	hpa, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &autoscalingv2.HorizontalPodAutoscaler{})
-	// 	if err != nil {
-	// 		req.Logger.Infof("horizontal pod autoscalar %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
-	// 	}
-	// 	shouldRecon = shouldRecon || hpa == nil
-	// }
-
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
 	b, err := templates.Parse(
@@ -192,10 +173,6 @@ func (r *Reconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 	if err != nil {
 		return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
 	}
-
-	// if err := fn.KubectlApplyExec(ctx, b); err != nil {
-	// 	return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
-	// }
 
 	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
@@ -265,5 +242,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&appsv1.Deployment{})
 	builder.Owns(&corev1.Service{})
 	builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }
