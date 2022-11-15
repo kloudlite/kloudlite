@@ -20,7 +20,7 @@ RUN adduser -D -h /home/nonroot nonroot
 RUN apk add curl git openssh-client
 RUN cd bin && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl
 RUN cd bin && curl -o tf.zip https://releases.hashicorp.com/terraform/1.2.9/terraform_1.2.9_linux_amd64.zip && unzip tf.zip
-RUN cd bin && curl -L0 -o talosctl https://github.com/siderolabs/talos/releases/download/v1.2.3/talosctl-linux-amd64 && chmod +x talosctl
+# RUN cd bin && curl -L0 -o talosctl https://github.com/siderolabs/talos/releases/download/v1.2.3/talosctl-linux-amd64 && chmod +x talosctl
 USER nonroot
 WORKDIR /tmp/app
 COPY --chown=nonroot --from=base /tmp/bin/nodectrl ./nodectrl  
