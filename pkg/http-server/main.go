@@ -3,6 +3,10 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/99designs/gqlgen/graphql"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -12,9 +16,6 @@ import (
 	l "github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/fx"
 	"kloudlite.io/pkg/logging"
-	"net/http"
-	"strings"
-	"time"
 )
 
 func Start(ctx context.Context, port uint16, app *fiber.App, logger logging.Logger) error {
