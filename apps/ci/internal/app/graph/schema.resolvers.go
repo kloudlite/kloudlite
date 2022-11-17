@@ -154,6 +154,22 @@ func (r *appResolver) CiCreatePipeLine(ctx context.Context, obj *model.App, cont
 	return x, err
 }
 
+func (r *harborSearchResultResolver) Tags(ctx context.Context, obj *model.HarborSearchResult) ([]*model.HarborImageTagsResult, error) {
+	tags, err := r.Domain.HarborImageTags(ctx, obj.ImageName, &types.Pagination{Page: 1, PerPage: 20})
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*model.HarborImageTagsResult, len(tags))
+	for i := range tags {
+		items[i] = &model.HarborImageTagsResult{
+			Name:      tags[i].Name,
+			Signed:    tags[i].Signed,
+			Immutable: tags[i].Immutable,
+		}
+	}
+	return items, nil
+}
+
 func (r *mutationResolver) CiDeletePipeline(ctx context.Context, pipelineID repos.ID) (bool, error) {
 	// session := httpServer.GetSession[*common.AuthSession](ctx)
 	if err := r.Domain.DeletePipeline(ctx, pipelineID); err != nil {
@@ -536,7 +552,11 @@ func (r *queryResolver) CiHarborSearch(ctx context.Context, accountID repos.ID, 
 	}
 	items := make([]*model.HarborSearchResult, len(results))
 	for i := range results {
-		items[i] = &model.HarborSearchResult{ImageName: results[i].Name}
+		items[i] = &model.HarborSearchResult{
+			ImageName: results[i].Name,
+			UpdatedAt: &results[i].UpdateTime,
+			CreatedAt: &results[i].CreationTime,
+		}
 	}
 	return items, nil
 }
@@ -564,6 +584,11 @@ func (r *queryResolver) CiHarborImageTags(ctx context.Context, imageName string,
 // App returns generated.AppResolver implementation.
 func (r *Resolver) App() generated.AppResolver { return &appResolver{r} }
 
+// HarborSearchResult returns generated.HarborSearchResultResolver implementation.
+func (r *Resolver) HarborSearchResult() generated.HarborSearchResultResolver {
+	return &harborSearchResultResolver{r}
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -571,5 +596,6 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type appResolver struct{ *Resolver }
+type harborSearchResultResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

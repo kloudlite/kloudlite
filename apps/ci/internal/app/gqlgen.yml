@@ -53,6 +53,11 @@ models:
         resolver: true
       ci_createPipeLine:
         resolver: true
+        
+  HarborSearchResult:
+    fields:
+      tags:
+        resolver: true
   ID:
     model:
       - kloudlite.io/pkg/repos.ID

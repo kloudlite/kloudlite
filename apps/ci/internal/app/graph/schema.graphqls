@@ -27,6 +27,9 @@ type Query {
 
 type HarborSearchResult {
   imageName: String!
+  updatedAt: Time
+  createdAt: Time
+  tags: [HarborImageTagsResult!]!
 }
 
 type PipelineRun {
