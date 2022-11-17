@@ -7,11 +7,16 @@ query: |
   query Ci_harborSearch($accountId: ID!, $q: String!, $pagination: PaginationIn) {
     ci_harborSearch(accountId: $accountId, q: $q, pagination: $pagination) {
       imageName
+      createdAt
+      updatedAt
+      # tags {
+      #   name
+      # }
     }
   }
 variables:
-  accountId: kloudlite
-  q: ope
+  accountId: acc-xnnbf-kd254lyrcnu2jqvnoksvk
+  q: mon
   pagination:
     page: 1
     perPage: 100
