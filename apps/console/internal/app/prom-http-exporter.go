@@ -9,20 +9,35 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	l "github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
-	lokiserver "kloudlite.io/pkg/loki-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
 type PrometheusOpts struct {
+	HttpPort          uint16 `env:"METRICS_HTTP_PORT" required:"true"`
 	Endpoint          string `env:"PROMETHEUS_ENDPOINT" required:"true"`
 	BasicAuthUsername string `env:"PROMETHEUS_BASIC_AUTH_USERNAME" required:"false"`
 	BasicAuthPassword string `env:"PROMETHEUS_BASIC_AUTH_PASSWORD" required:"false"`
+}
+
+func (p PrometheusOpts) GetHttpPort() uint16 {
+	return p.HttpPort
+}
+
+func (p PrometheusOpts) GetHttpCors() string {
+	return ""
+}
+
+type PromMetricsHttpServer struct {
+	*fiber.App
 }
 
 type PromMetricsType string
@@ -42,11 +57,9 @@ func getPromQuery(resType PromMetricsType, name string) string {
 	return ""
 }
 
-func metricsQuerySvc(logserver lokiserver.LogServer, promOpts *PrometheusOpts, d domain.Domain, financeClient finance.FinanceClient,
+func metricsQuerySvc(app *PromMetricsHttpServer, promOpts *PrometheusOpts, d domain.Domain, financeClient finance.FinanceClient,
 	env *Env,
 	cacheClient AuthCacheClient) {
-	var app *fiber.App
-	app = logserver
 	app.Use(
 		httpServer.NewSessionMiddleware[*common.AuthSession](
 			cacheClient,
@@ -143,5 +156,53 @@ func metricsQuerySvc(logserver lokiserver.LogServer, promOpts *PrometheusOpts, d
 }
 
 func fxMetricsQuerySvc() fx.Option {
-	return fx.Invoke(metricsQuerySvc)
+	return fx.Module(
+		"http-server",
+		fx.Provide(
+			func() *PromMetricsHttpServer {
+				return &PromMetricsHttpServer{App: fiber.New()}
+			},
+		),
+
+		fx.Invoke(
+			func(lf fx.Lifecycle, p *PrometheusOpts, logger logging.Logger, app *PromMetricsHttpServer) {
+				app.Use(
+					l.New(
+						l.Config{
+							Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
+							TimeFormat: "02-Jan-2006 15:04:05",
+							TimeZone:   "Asia/Kolkata",
+						},
+					),
+				)
+				if p.GetHttpCors() != "" {
+					app.Use(
+						cors.New(
+							cors.Config{
+								AllowOrigins:     p.GetHttpCors(),
+								AllowCredentials: true,
+								AllowMethods: strings.Join(
+									[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+									",",
+								),
+							},
+						),
+					)
+				}
+
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return httpServer.Start(ctx, p.GetHttpPort(), app.App, logger)
+						},
+						OnStop: func(ctx context.Context) error {
+							return app.Shutdown()
+						},
+					},
+				)
+			},
+		),
+
+		fx.Invoke(metricsQuerySvc),
+	)
 }
