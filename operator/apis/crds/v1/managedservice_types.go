@@ -2,12 +2,12 @@ package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	"operators.kloudlite.io/lib/constants"
-	rApi "operators.kloudlite.io/lib/operator"
+	"operators.kloudlite.io/pkg/constants"
+	rApi "operators.kloudlite.io/pkg/operator"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	rawJson "operators.kloudlite.io/lib/raw-json"
+	rawJson "operators.kloudlite.io/pkg/raw-json"
 )
 
 type msvcKind struct {

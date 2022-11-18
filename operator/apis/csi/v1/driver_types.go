@@ -3,7 +3,7 @@ package v1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	rApi "operators.kloudlite.io/lib/operator"
+	rApi "operators.kloudlite.io/pkg/operator"
 )
 
 // DriverSpec defines the desired state of Driver

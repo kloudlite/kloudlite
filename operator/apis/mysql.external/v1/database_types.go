@@ -2,7 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	rApi "operators.kloudlite.io/lib/operator"
+	rApi "operators.kloudlite.io/pkg/operator"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!

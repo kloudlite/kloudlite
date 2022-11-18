@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/codingconcepts/env"
-	"operators.kloudlite.io/lib/errors"
-	"operators.kloudlite.io/lib/logging"
-	"operators.kloudlite.io/lib/redpanda"
+	"operators.kloudlite.io/pkg/errors"
+	"operators.kloudlite.io/pkg/logging"
+	"operators.kloudlite.io/pkg/redpanda"
 	"sigs.k8s.io/yaml"
 )
 

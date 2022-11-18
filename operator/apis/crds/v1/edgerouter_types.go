@@ -3,14 +3,14 @@ package v1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	rApi "operators.kloudlite.io/lib/operator"
+	rApi "operators.kloudlite.io/pkg/operator"
 )
 
 // EdgeRouterSpec defines the desired state of EdgeRouter
 type EdgeRouterSpec struct {
-	ControllerName string `json:"controllerName,omitempty"`
-	Region         string `json:"region"`
-	AccountRef     string `json:"accountRef"`
+	EdgeName   string `json:"edgeName"`
+	Region     string `json:"region"`
+	AccountRef string `json:"accountRef"`
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer
 	// +kubebuilder:default=LoadBalancer
 	ServiceType string `json:"serviceType,omitempty"`
@@ -28,7 +28,6 @@ type EdgeRouterSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
