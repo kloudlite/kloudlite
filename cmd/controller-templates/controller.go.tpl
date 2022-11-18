@@ -15,7 +15,6 @@ import (
   "time"
 
   "k8s.io/apimachinery/pkg/runtime"
-  "operators.kloudlite.io/env"
   "operators.kloudlite.io/lib/harbor"
   "operators.kloudlite.io/lib/logging"
   rApi "operators.kloudlite.io/lib/operator"

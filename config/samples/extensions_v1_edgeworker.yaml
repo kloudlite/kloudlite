@@ -1,0 +1,6 @@
+apiVersion: extensions.kloudlite.io/v1
+kind: EdgeWorker
+metadata:
+  name: edgeworker-sample
+spec:
+  # TODO(user): Add fields here

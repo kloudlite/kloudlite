@@ -13,7 +13,7 @@ spec:
     listKind: EdgeRouterList
     plural: edgerouters
     singular: edgerouter
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.isReady
@@ -44,8 +44,6 @@ spec:
             properties:
               accountRef:
                 type: string
-              controllerName:
-                type: string
               defaultSSLCert:
                 properties:
                   namespace:
@@ -55,6 +53,8 @@ spec:
                 required:
                 - secretName
                 type: object
+              edgeName:
+                type: string
               https:
                 properties:
                   enabled:
@@ -136,6 +136,7 @@ spec:
                 type: array
             required:
             - accountRef
+            - edgeName
             - region
             type: object
           status:

@@ -11,11 +11,10 @@ import (
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	csiv1 "operators.kloudlite.io/apis/csi/v1"
 	extensionsv1 "operators.kloudlite.io/apis/extensions/v1"
-	"operators.kloudlite.io/lib/constants"
-	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/logging"
-	stepResult "operators.kloudlite.io/lib/operator/step-result"
 	"operators.kloudlite.io/operators/extensions/internal/env"
+	"operators.kloudlite.io/pkg/constants"
+	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/logging"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -34,9 +33,6 @@ type Reconciler struct {
 func (r *Reconciler) GetName() string {
 	return r.Name
 }
-
-const SSLSecretName = "kl-cert-issuer-tls"
-const SSLSecretNamespace = "kl-init-cert-manager"
 
 type Edge struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -67,12 +63,7 @@ func parseEdge(edge *unstructured.Unstructured) (*Edge, error) {
 	return &j, nil
 }
 
-// +kubebuilder:rbac:groups=extensions.kloudlite.io,resources=edgeWatchers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=extensions.kloudlite.io,resources=edgeWatchers/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=extensions.kloudlite.io,resources=edgeWatchers/finalizers,verbs=update
-
-func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	// check if request is for an Infra Edge or ignore otherwise
+func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	edgeRes := fn.NewUnstructured(constants.EdgeInfraType)
 	if err := r.Get(ctx, request.NamespacedName, edgeRes); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -85,80 +76,39 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	logger := r.logger.WithName(request.NamespacedName.String())
 	logger.Infof("NEW RECONCILATION")
+	defer func() {
+		logger.Infof("RECONCILATION COMPLETE")
+	}()
 
-	// check if csi driver is present
-	if step := r.ensureCSIDriver(ctx, edge, logger); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	// check if ingress is installed on that edge
-	if step := r.ensureEdgeRouters(ctx, edge, logger); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
-}
-
-func (r *Reconciler) ensureCSIDriver(ctx context.Context, edge *Edge, logger logging.Logger) stepResult.Result {
-	if err := r.Get(ctx, fn.NN("", edge.Spec.CredentialsRef.SecretName), &csiv1.Driver{}); err != nil {
-		if apiErrors.IsNotFound(err) {
-			logger.Infof("creating CSI Driver for (edge=%s, provider=%s), as it does not exist", edge.Name, edge.Spec.Provider)
-
-			if err := r.Create(
-				ctx, &csiv1.Driver{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:            edge.Spec.CredentialsRef.SecretName,
-						OwnerReferences: edge.GetOwnerReferences(),
-						Labels: map[string]string{
-							"kloudlite.io/created-by-edge-watcher": edge.Name,
-						},
-					},
-					Spec: csiv1.DriverSpec{
-						Provider:  edge.Spec.Provider,
-						SecretRef: edge.Spec.CredentialsRef.SecretName,
-					},
-				},
-			); err != nil {
-				return stepResult.New().Err(err)
-			}
+	edgeWorker := &extensionsv1.EdgeWorker{}
+	if err := r.Get(ctx, fn.NN("", edge.Name), edgeWorker); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return reconcile.Result{}, err
 		}
-		return stepResult.New().Err(err)
+		logger.Infof("edge worker (%s) not found, will be creating now...", edge.Name)
+		edgeWorker = nil
 	}
 
-	return stepResult.New().Continue(true)
-}
-
-func (r *Reconciler) ensureEdgeRouters(ctx context.Context, edge *Edge, logger logging.Logger) stepResult.Result {
-	var edgeRouter crdsv1.EdgeRouter
-	if err := r.Get(ctx, fn.NN("", edge.Name), &edgeRouter); err != nil {
-		if apiErrors.IsNotFound(err) {
-			logger.Infof("creating EdgeRouter for (edge=%s, provider=%s), as it does not exist", edge.Name, edge.Spec.Provider)
-			if err := r.Create(
-				ctx, &crdsv1.EdgeRouter{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:            edge.Name,
-						OwnerReferences: edge.GetOwnerReferences(),
-						Labels: map[string]string{
-							"kloudlite.io/created-by-edge-watcher": edge.Name,
-						},
-					},
-					Spec: crdsv1.EdgeRouterSpec{
-						Region:     edge.Spec.Region,
-						AccountRef: edge.Spec.AccountId,
-						DefaultSSLCert: crdsv1.SSLCertRef{
-							SecretName: SSLSecretName,
-							Namespace:  SSLSecretNamespace,
-						},
-					},
+	if err := r.Create(
+		ctx, &extensionsv1.EdgeWorker{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: edge.Name,
+				Labels: map[string]string{
+					"kloudlite.io/created-by-edge-watcher": "true",
 				},
-			); err != nil {
-				return stepResult.New().Err(err)
-			}
-		}
-		return stepResult.New().Err(err)
+			},
+			Spec: extensionsv1.EdgeWorkerSpec{
+				AccountId: edge.Spec.AccountId,
+				Creds:     edge.Spec.CredentialsRef,
+				Provider:  edge.Spec.Provider,
+				Region:    edge.Spec.Region,
+			},
+		},
+	); err != nil {
+		return reconcile.Result{}, err
 	}
-	return stepResult.New().Continue(true)
+
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -187,5 +137,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			},
 		),
 	)
+
 	return builder.Complete(r)
 }

@@ -1,9 +1,6 @@
 version: 3
 
-# dotenv: [".secrets/env"]
-
 vars:
-#   dockerRegistry: "harbor.dev.madhouselabs.io"
   dockerRegistry: registry.kloudlite.io
   KlControllerGen: "./bin/kl-controller-gen"
   KlTemplatizer: "./bin/kl-templatizer"
@@ -57,27 +54,31 @@ tasks:
     preconditions:
       - sh: '[ -n "{{.Name}}" ]'
         msg: 'env Name must be set'
+      - sh: '[ -n "{{.Dir}}" ]'
+        msg: 'env var Dir must be set'
 
-#     silent: true
     vars:
-      Image: "{{.dockerRegistry}}/kloudlite/operators/${ENV_NAME}/{{.Name}}:${IMAGE_TAG}"
+#      Image: "{{.dockerRegistry}}/kloudlite/operators/${ENV_NAME}/{{.Name}}:${IMAGE_TAG}"
+      Image: '{{ printf "%s/kloudlite/operators/{{.ENV_NAME}}/%s:{{.IMAGE_TAG}}" .dockerRegistry .Name }}'
       Namespace: kl-init-operators
       SvcAccountName: kloudlite-cluster-svc-account
-      ImagePullPolicy: $IMAGE_PULL_POLICY
+      ImagePullPolicy: '{{ printf "{{.IMAGE_PULL_POLICY}}" }}'
       OverrideFile: "./operators/{{.Name}}/overrides.yml"
     env:
       Name: "{{.Name}}"
       Namespace: "{{.Namespace}}"
       SvcAccountName: kloudlite-cluster-svc-account
       Image: "{{.Image}}"
-      ImagePullPolicy: "${IMAGE_PULL_POLICY}"
+      ImagePullPolicy: "{{.ImagePullPolicy}}"
     cmds:
       - |+
         setArgs=""
         [ -f "{{.OverrideFile}}" ] && {
            setArgs=$(cat "{{.OverrideFile}}" | yq -r 'to_entries|map("--set \(.key)=###\(.value)###") | join(" ")' | sed "s/###/'/g" )
         }
-        eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs
+        outputName="{{.Dir}}/{{.Name}}.yml"
+        echo "saving to file: $outputName"
+        eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs > $outputName
 #       - |+
 #         export PATH="$PWD/bin:$PATH"
 #
@@ -114,11 +115,25 @@ tasks:
     silent: true
     cmds:
       - |+
+        outputDir=$(mktemp -d)
+        echo "outputDir: $outputDir"
         for dir in $(ls -d ./operators/*/)
         do
-          [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)"
+          [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
         done
 #
+  
+  yaml:primary-operators:
+    cmds:
+      - |+
+        outputDir=$(mktemp -d)
+        echo "outputDir: $outputDir"
+        #for dir in $(ls -d ./operators/*/)
+        dirs=("./operators/app-n-lambda" "./operators/msvc-mongo" "./operators/msvc-redis" "./operators/msvc-redpanda" "./operators/routers" "./operators/extensions" "./operators/csi-drivers")
+        for dir in "${dirs[@]}"
+        do
+          task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
+        done
 
   gobuild:operator:
     preconditions:
@@ -170,8 +185,11 @@ tasks:
 
         #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
         CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
-
-        cat $tDir/Dockerfile.base | sed "3 i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
+        
+        echo "[Debug]: $tDir/Dockerfile.base"
+  
+        lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
         docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}

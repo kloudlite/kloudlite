@@ -3,7 +3,7 @@ package v1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
-	rApi "operators.kloudlite.io/lib/operator"
+	rApi "operators.kloudlite.io/pkg/operator"
 )
 
 // AdminSpec defines the desired state of Admin

@@ -4,6 +4,7 @@ import (
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
 	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/msvc-mongo/internal/controllers/database"
+	standalone_service "operators.kloudlite.io/operators/msvc-mongo/internal/controllers/standalone-service"
 	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
 )
 

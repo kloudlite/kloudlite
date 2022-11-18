@@ -1,3 +1,12 @@
 env:
   - name: ACL_ALLOWED_OPERATIONS
     value: read,write,describe
+    
+  - name: MUST_HAVE_TOPICS
+    value: kl-status-updates, kl-billing-updates, kl-pipeline-run-updates, kl-git-webhooks, kl-harbor-webhooks
+    
+  - name: REDPANDA_ADMIN_SECRET_NAMESPACE
+    value: kl-core
+    
+  - name: REDPANDA_ADMIN_SECRET_NAME
+    value: msvc-redpanda-admin-creds

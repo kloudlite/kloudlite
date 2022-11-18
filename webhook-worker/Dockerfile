@@ -4,9 +4,8 @@ WORKDIR /workspace
 RUN apk add curl
 ARG name
 COPY --from=project go.mod go.sum ./
-COPY --from=project lib ./lib
+COPY --from=project pkg ./pkg
 COPY --from=project apis ./apis
-COPY --from=project env ./env
 RUN mkdir -p ./$name
 WORKDIR ./$name
 COPY ./ ./

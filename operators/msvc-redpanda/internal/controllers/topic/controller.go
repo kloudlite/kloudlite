@@ -11,15 +11,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
 	redpandaMsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
-	"operators.kloudlite.io/lib/constants"
-	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/kubectl"
-	"operators.kloudlite.io/lib/logging"
-	rApi "operators.kloudlite.io/lib/operator"
-	stepResult "operators.kloudlite.io/lib/operator/step-result"
-	"operators.kloudlite.io/lib/redpanda"
 	"operators.kloudlite.io/operators/msvc-redpanda/internal/env"
 	"operators.kloudlite.io/operators/msvc-redpanda/internal/types"
+	"operators.kloudlite.io/pkg/constants"
+	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/kubectl"
+	"operators.kloudlite.io/pkg/logging"
+	rApi "operators.kloudlite.io/pkg/operator"
+	stepResult "operators.kloudlite.io/pkg/operator/step-result"
+	"operators.kloudlite.io/pkg/redpanda"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -209,8 +209,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				},
 				Spec: redpandaMsvcv1.TopicSpec{
 					AdminSecretRef: ct.SecretRef{
-						Name:      r.Env.RepdandaDefaultSecretName,
-						Namespace: r.Env.RedpandaDefaultSecretNamespace,
+						Name:      r.Env.AdminSecretName,
+						Namespace: r.Env.AdminSecretNamespace,
 					},
 					PartitionCount: 3,
 				},

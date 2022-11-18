@@ -11,8 +11,8 @@ import (
 	"text/template"
 
 	"github.com/urfave/cli/v2"
-	"operators.kloudlite.io/lib/errors"
-	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/pkg/errors"
+	"operators.kloudlite.io/pkg/templates"
 )
 
 var (

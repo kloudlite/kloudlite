@@ -9,8 +9,6 @@ import (
 type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
-	ClusterCertIssuer       string        `env:"CLUSTER_CERT_ISSUER" required:"true"`
-	GlobalIngressClass      string        `env:"GLOBAL_INGRESS_CLASS" required:"true"`
 
 	CloudflareWildcardDomains string `env:"CLOUDFLARE_WILDCARD_DOMAINS" required:"true"`
 	CloudflareEmail           string `env:"CLOUDFLARE_EMAIL" required:"true"`

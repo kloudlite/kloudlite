@@ -13,14 +13,14 @@ import (
 	types2 "k8s.io/apimachinery/pkg/types"
 	ct "operators.kloudlite.io/apis/common-types"
 	csiv1 "operators.kloudlite.io/apis/csi/v1"
-	"operators.kloudlite.io/lib/constants"
-	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/kubectl"
-	"operators.kloudlite.io/lib/logging"
-	rApi "operators.kloudlite.io/lib/operator"
-	stepResult "operators.kloudlite.io/lib/operator/step-result"
-	"operators.kloudlite.io/lib/templates"
 	"operators.kloudlite.io/operators/csi-drivers/internal/env"
+	"operators.kloudlite.io/pkg/constants"
+	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/kubectl"
+	"operators.kloudlite.io/pkg/logging"
+	rApi "operators.kloudlite.io/pkg/operator"
+	stepResult "operators.kloudlite.io/pkg/operator/step-result"
+	"operators.kloudlite.io/pkg/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -115,12 +115,11 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 
 		b, err := templates.Parse(
 			templates.AwsEbsCsiDriver, map[string]any{
-				"name":             fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
-				"namespace":        "kl-core",
-				"aws-key":          string(accessSecret.Data["accessKey"]),
-				"aws-secret":       string(accessSecret.Data["accessSecret"]),
-				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"svc-account-name": "kloudlite-cluster-svc-account",
+				"name":       fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
+				"namespace":  `kl-` + obj.Name,
+				"aws-key":    string(accessSecret.Data["accessKey"]),
+				"aws-secret": string(accessSecret.Data["accessSecret"]),
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"node-selector": map[string]string{
 					constants.ProviderRef: obj.Name,
 				},
@@ -204,7 +203,7 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
 			}
 
-			if err := fn.KubectlApplyExec(ctx, b); err != nil {
+			if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
 			}
 		}

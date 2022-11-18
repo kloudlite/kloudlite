@@ -37,4 +37,5 @@ resources:
 - bases/crds.kloudlite.io_edgerouters.yaml
 - bases/elasticsearch.msvc.kloudlite.io_kibanas.yaml
 - bases/extensions.kloudlite.io_edgewatchers.yaml
+- bases/extensions.kloudlite.io_edgeworkers.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
