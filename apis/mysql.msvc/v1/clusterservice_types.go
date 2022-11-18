@@ -4,8 +4,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
-	"operators.kloudlite.io/lib/constants"
-	rApi "operators.kloudlite.io/lib/operator"
+	"operators.kloudlite.io/pkg/constants"
+	rApi "operators.kloudlite.io/pkg/operator"
 )
 
 // ClusterServiceSpec defines the desired state of ClusterService

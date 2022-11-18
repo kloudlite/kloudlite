@@ -164,58 +164,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - managedresources
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - managedresources/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - managedresources/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - managedservices
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - managedservices/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - managedservices/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
   - projects
   verbs:
   - create
@@ -235,32 +183,6 @@ rules:
   - crds.kloudlite.io
   resources:
   - projects/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - routers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - routers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - routers/status
   verbs:
   - get
   - patch
@@ -372,7 +294,7 @@ rules:
 - apiGroups:
   - extensions.kloudlite.io
   resources:
-  - edgeWatchers
+  - edgeworkers
   verbs:
   - create
   - delete
@@ -384,13 +306,13 @@ rules:
 - apiGroups:
   - extensions.kloudlite.io
   resources:
-  - edgeWatchers/finalizers
+  - edgeworkers/finalizers
   verbs:
   - update
 - apiGroups:
   - extensions.kloudlite.io
   resources:
-  - edgeWatchers/status
+  - edgeworkers/status
   verbs:
   - get
   - patch
@@ -443,32 +365,6 @@ rules:
   - influxdb.msvc.kloudlite.io
   resources:
   - services/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mongodb.external.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mongodb.external.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mongodb.external.kloudlite.io
-  resources:
-  - databases/status
   verbs:
   - get
   - patch
@@ -547,32 +443,6 @@ rules:
   - mongodb.msvc.kloudlite.io
   resources:
   - services/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mysql.external.kloudlite.io
-  resources:
-  - databases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mysql.external.kloudlite.io
-  resources:
-  - databases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mysql.external.kloudlite.io
-  resources:
-  - databases/status
   verbs:
   - get
   - patch
@@ -677,32 +547,6 @@ rules:
   - neo4j.msvc.kloudlite.io
   resources:
   - standaloneServices/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - opensearch.msvc.kloudlite.io
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - opensearch.msvc.kloudlite.io
-  resources:
-  - services/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - opensearch.msvc.kloudlite.io
-  resources:
-  - services/status
   verbs:
   - get
   - patch
@@ -814,32 +658,6 @@ rules:
 - apiGroups:
   - redpanda.msvc.kloudlite.io
   resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - redpanda.msvc.kloudlite.io
-  resources:
-  - services/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - redpanda.msvc.kloudlite.io
-  resources:
-  - services/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - redpanda.msvc.kloudlite.io
-  resources:
   - topics
   verbs:
   - create
@@ -859,58 +677,6 @@ rules:
   - redpanda.msvc.kloudlite.io
   resources:
   - topics/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - s3.aws.kloudlite.io
-  resources:
-  - buckets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - s3.aws.kloudlite.io
-  resources:
-  - buckets/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - s3.aws.kloudlite.io
-  resources:
-  - buckets/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - serverless.kloudlite.io
-  resources:
-  - lambdas
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - serverless.kloudlite.io
-  resources:
-  - lambdas/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - serverless.kloudlite.io
-  resources:
-  - lambdas/status
   verbs:
   - get
   - patch

@@ -9,12 +9,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	"operators.kloudlite.io/lib/constants"
-	"operators.kloudlite.io/lib/errors"
-	"operators.kloudlite.io/lib/harbor"
-	"operators.kloudlite.io/lib/logging"
-	rApi "operators.kloudlite.io/lib/operator"
-	stepResult "operators.kloudlite.io/lib/operator/step-result"
+	"operators.kloudlite.io/pkg/constants"
+	"operators.kloudlite.io/pkg/errors"
+	"operators.kloudlite.io/pkg/harbor"
+	"operators.kloudlite.io/pkg/logging"
+	rApi "operators.kloudlite.io/pkg/operator"
+	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/operators/artifacts-harbor/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,7 +65,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// TODO: initialize all checks here
 	if step := req.EnsureChecks(DefaultsPatched, HarborProjectReady, WebhookReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}

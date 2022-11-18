@@ -12,15 +12,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	"operators.kloudlite.io/lib/constants"
-	"operators.kloudlite.io/lib/errors"
-	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/harbor"
-	"operators.kloudlite.io/lib/kubectl"
-	"operators.kloudlite.io/lib/logging"
-	rApi "operators.kloudlite.io/lib/operator"
-	stepResult "operators.kloudlite.io/lib/operator/step-result"
-	"operators.kloudlite.io/lib/templates"
+	"operators.kloudlite.io/pkg/constants"
+	"operators.kloudlite.io/pkg/errors"
+	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/harbor"
+	"operators.kloudlite.io/pkg/kubectl"
+	"operators.kloudlite.io/pkg/logging"
+	rApi "operators.kloudlite.io/pkg/operator"
+	stepResult "operators.kloudlite.io/pkg/operator/step-result"
+	"operators.kloudlite.io/pkg/templates"
 	"operators.kloudlite.io/operators/artifacts-harbor/internal/env"
 	"operators.kloudlite.io/operators/artifacts-harbor/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -203,21 +203,27 @@ func (r *Reconciler) patchDockerSecret(req *rApi.Request[*artifactsv1.HarborUser
 		return err
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, dockerScrt, func() error {
-		b, err := json.Marshal(types.UserAccountOutput{
-			DockerConfigJson: string(harborDockerConfig),
-			Username:         username,
-			Password:         password,
-			Registry:         r.Env.HarborImageRegistryHost,
-			Project:          obj.Spec.ProjectRef,
-		})
-		if err != nil {
-			return err
-		}
+	if _, err := controllerutil.CreateOrUpdate(
+		ctx, r.Client, dockerScrt, func() error {
+			b, err := json.Marshal(
+				types.UserAccountOutput{
+					DockerConfigJson: string(harborDockerConfig),
+					Username:         username,
+					Password:         password,
+					Registry:         r.Env.HarborImageRegistryHost,
+					Project:          obj.Spec.ProjectRef,
+				},
+			)
+			if err != nil {
+				return err
+			}
 
-		json.Unmarshal(b, &dockerScrt.StringData)
-		return nil
-	}); err != nil {
+			if err := json.Unmarshal(b, &dockerScrt.StringData); err != nil {
+				return err
+			}
+			return nil
+		},
+	); err != nil {
 		return err
 	}
 	return nil
@@ -235,9 +241,11 @@ func patchServiceAccount(ctx context.Context, client client.Client, namespace, s
 		}
 	}
 
-	svcAccount.ImagePullSecrets = append(svcAccount.ImagePullSecrets, corev1.LocalObjectReference{
-		Name: secretName,
-	})
+	svcAccount.ImagePullSecrets = append(
+		svcAccount.ImagePullSecrets, corev1.LocalObjectReference{
+			Name: secretName,
+		},
+	)
 
 	return client.Update(ctx, &svcAccount)
 }

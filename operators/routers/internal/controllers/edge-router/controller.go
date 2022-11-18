@@ -6,21 +6,20 @@ import (
 	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/goombaio/namegenerator"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/lib/constants"
-	fn "operators.kloudlite.io/lib/functions"
-	"operators.kloudlite.io/lib/kubectl"
-	"operators.kloudlite.io/lib/logging"
-	rApi "operators.kloudlite.io/lib/operator"
-	stepResult "operators.kloudlite.io/lib/operator/step-result"
-	"operators.kloudlite.io/lib/templates"
 	"operators.kloudlite.io/operators/routers/internal/controllers"
 	"operators.kloudlite.io/operators/routers/internal/env"
+	"operators.kloudlite.io/pkg/constants"
+	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/kubectl"
+	"operators.kloudlite.io/pkg/logging"
+	rApi "operators.kloudlite.io/pkg/operator"
+	stepResult "operators.kloudlite.io/pkg/operator/step-result"
+	"operators.kloudlite.io/pkg/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -39,10 +38,6 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	IngressControllerNS = "kl-init-ingress-nginx"
-)
-
-const (
 	DefaultsPatched        string = "defaults-patched"
 	ClusterIssuerPatched   string = "cluster-issuer-patched"
 	ClusterIssuerReady     string = "cluster-issuer-ready"
@@ -50,6 +45,7 @@ const (
 )
 
 const (
+	WildcardCertName      string = "kl-cert-issuer-tls"
 	WildcardCertNamespace string = "kl-init-cert-manager"
 )
 
@@ -95,15 +91,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconDefaults(req); !step.ShouldProceed() {
+	// if step := r.reconDefaults(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
+
+	if step := r.ensureClusterIssuer(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconClusterIssuer(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.reconIngressController(req); !step.ShouldProceed() {
+	if step := r.ensureIngressController(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -120,56 +116,30 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.
 	return req.Finalize()
 }
 
-func (r *Reconciler) reconDefaults(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	hasPatched := false
-
-	if obj.Spec.ControllerName == "" {
-		hasPatched = true
-		seed := time.Now().UTC().UnixNano()
-		nameGenerator := namegenerator.NewNameGenerator(seed)
-		obj.Spec.ControllerName = "ingress-" + nameGenerator.Generate()
-	}
-
-	if hasPatched {
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(DefaultsPatched, check, err.Error())
-		}
-	}
-	return req.Next()
-}
-
-func (r *Reconciler) reconIngressController(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
+func (r *Reconciler) ensureIngressController(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	ingressC, err := rApi.Get(
-		ctx,
-		r.Client,
-		fn.NN(IngressControllerNS, obj.Spec.ControllerName),
-		fn.NewUnstructured(constants.HelmIngressNginx),
-	)
+	ingressC, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmIngressNginx))
 	if err != nil {
 		req.Logger.Infof(
 			"ingress controller (%s) does not exist, will be creating it",
-			fn.NN(IngressControllerNS, obj.Spec.ControllerName).String(),
+			fn.NN(obj.Namespace, obj.Name).String(),
 		)
 	}
 
 	if ingressC == nil || check.Generation > checks[IngressControllerReady].Generation {
 		b, err := templates.Parse(
 			templates.HelmIngressNginx, map[string]any{
-				"obj":             obj,
-				"controller-name": obj.Spec.ControllerName,
-				"owner-refs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"obj":        obj,
+				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"labels": map[string]string{
-					constants.EdgeNameKey: obj.Name,
+					constants.EdgeRouterNameKey: obj.Name,
+					constants.EdgeNameKey:       obj.Spec.EdgeName,
 				},
-				"wildcard-cert-name":      controllers.GetClusterIssuerName(obj.Name),
+				"wildcard-cert-name":      WildcardCertName,
 				"wildcard-cert-namespace": WildcardCertNamespace,
-				"ingress-class-name":      controllers.GetIngressClassName(obj.Name),
+				"ingress-class-name":      controllers.GetIngressClassName(obj.Spec.EdgeName),
 			},
 		)
 		if err != nil {
@@ -192,11 +162,13 @@ func (r *Reconciler) reconIngressController(req *rApi.Request[*crdsv1.EdgeRouter
 	return req.Next()
 }
 
-func (r *Reconciler) reconClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
+func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", controllers.GetClusterIssuerName(obj.Name)), &certmanagerv1.ClusterIssuer{})
+	issuerName := controllers.GetClusterIssuerName(obj.Spec.EdgeName)
+
+	clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", issuerName), &certmanagerv1.ClusterIssuer{})
 	if err != nil {
 		req.Logger.Infof("cluster issuer does not exist yet, would be creating now...")
 		clusterIssuer = nil
@@ -209,20 +181,21 @@ func (r *Reconciler) reconClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) s
 				"kl-cloudflare-email":            r.Env.CloudflareEmail,
 				"kl-cloudflare-secret-name":      r.Env.CloudflareSecretName,
 				"owner-refs":                     []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"namespace":                      obj.Namespace,
 
 				"kl-acme-email": r.Env.AcmeEmail,
-				"issuer-name":   controllers.GetClusterIssuerName(obj.Name),
-				"ingress-class": controllers.GetIngressClassName(obj.Name),
+				"issuer-name":   issuerName,
+				"ingress-class": controllers.GetIngressClassName(obj.Spec.EdgeName),
 				"tolerations": []corev1.Toleration{
 					{
 						Key:      constants.RegionKey,
 						Operator: "Equal",
-						Value:    obj.Name,
+						Value:    obj.Spec.EdgeName,
 						Effect:   "NoExecute",
 					},
 				},
 				"node-selector": map[string]string{
-					constants.RegionKey: obj.Name,
+					constants.RegionKey: obj.Spec.EdgeName,
 				},
 			},
 		)

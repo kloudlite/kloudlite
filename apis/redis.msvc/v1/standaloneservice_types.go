@@ -3,8 +3,8 @@ package v1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
-	"operators.kloudlite.io/lib/constants"
-	rApi "operators.kloudlite.io/lib/operator"
+	"operators.kloudlite.io/pkg/constants"
+	rApi "operators.kloudlite.io/pkg/operator"
 )
 
 // StandaloneServiceSpec defines the desired state of StandaloneService

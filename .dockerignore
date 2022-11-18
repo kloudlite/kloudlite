@@ -4,7 +4,7 @@
 !apis
 !agent
 !controllers
-!lib
+!pkg
 !main.go
 !go.mod
 !go.sum
