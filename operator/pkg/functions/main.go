@@ -13,8 +13,6 @@ import (
 	"strings"
 
 	"golang.org/x/exp/constraints"
-	corev1 "k8s.io/api/core/v1"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -153,27 +151,18 @@ func MapSet[T any](m map[string]T, key string, value T) {
 	m[key] = value
 }
 
-func MapContains[T comparable](target map[string]T, m map[string]T) bool {
-	if target == nil && m == nil {
+// MapContains checks if `destination` contains all keys from `source`
+func MapContains[T comparable](destination map[string]T, source map[string]T) bool {
+	if len(destination) == 0 && len(source) == 0 {
 		return true
 	}
-	for k, v := range m {
-		if target[k] != v {
+
+	for k, v := range source {
+		if destination[k] != v {
 			return false
 		}
 	}
 	return true
-}
-
-func MapMerge[T any](m1 map[string]T, m2 map[string]T) map[string]T {
-	x := map[string]T{}
-	for k, v := range m1 {
-		x[k] = v
-	}
-	for k, v := range m2 {
-		x[k] = v
-	}
-	return x
 }
 
 func NN(namespace, name string) types.NamespacedName {
@@ -193,22 +182,6 @@ func NewUnstructured(t metav1.TypeMeta, m ...metav1.ObjectMeta) *unstructured.Un
 	}
 
 	return obj
-}
-
-func ParseSecret(s *corev1.Secret) *corev1.Secret {
-	s.TypeMeta = metav1.TypeMeta{
-		Kind:       "Secret",
-		APIVersion: "v1",
-	}
-	return s
-}
-
-func ParseConfigMap(s *corev1.ConfigMap) *corev1.ConfigMap {
-	s.TypeMeta = metav1.TypeMeta{
-		Kind:       "ConfigMap",
-		APIVersion: "v1",
-	}
-	return s
 }
 
 func Md5(b []byte) string {
@@ -254,14 +227,4 @@ func Exec(command ...string) (err error, stdout *bytes.Buffer, stderr *bytes.Buf
 		return err, stdout, stderr
 	}
 	return nil, stdout, stderr
-}
-
-func ParseExitError(err error) error {
-	if e, ok := err.(*exec.ExitError); ok {
-		if e.Stderr == nil {
-			return e
-		}
-		return errors.NewEf(e, string(e.Stderr))
-	}
-	return err
 }
