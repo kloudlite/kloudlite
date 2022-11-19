@@ -23,6 +23,7 @@ import (
 
 type PrometheusOpts struct {
 	HttpPort          uint16 `env:"METRICS_HTTP_PORT" required:"true"`
+	HttpCors          string `env:"METRICS_HTTP_CORS" required:"true"`
 	Endpoint          string `env:"PROMETHEUS_ENDPOINT" required:"true"`
 	BasicAuthUsername string `env:"PROMETHEUS_BASIC_AUTH_USERNAME" required:"false"`
 	BasicAuthPassword string `env:"PROMETHEUS_BASIC_AUTH_PASSWORD" required:"false"`
@@ -33,7 +34,7 @@ func (p PrometheusOpts) GetHttpPort() uint16 {
 }
 
 func (p PrometheusOpts) GetHttpCors() string {
-	return ""
+	return p.HttpCors
 }
 
 type PromMetricsHttpServer struct {
@@ -52,7 +53,13 @@ func getPromQuery(resType PromMetricsType, name string) string {
 	case Memory:
 		return fmt.Sprintf(`sum(avg_over_time(container_memory_working_set_bytes{pod =~ "%s.*", container != ""} [30s])) /1024/1024`, name)
 	case Cpu:
-		return fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{container!="", pod=~"%s.*"}[2m])) * 1000`, name)
+		return fmt.Sprintf(
+			`
+		sum(rate(container_cpu_usage_seconds_total{pod=~"^%s.*", container!=""}[2m])) by (pod, container) /
+sum(container_spec_cpu_quota{pod=~"^%s.*", container!=""}/container_spec_cpu_period{pod=~"^%s.*", container!=""}) by (pod, container) * 1000
+		`, name, name, name,
+		)
+		// return fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{container!="", pod=~"%s.*"}[2m])) * 1000`, name)
 	}
 	return ""
 }
