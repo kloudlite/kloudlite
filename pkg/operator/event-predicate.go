@@ -9,18 +9,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-type klResource struct {
-	Status *Status `json:"status"`
+type pStatus struct {
+	Checks  map[string]Check `json:"checks,omitempty"`
+	IsReady *bool            `json:"isReady"`
 }
 
-func getStatus(obj client.Object) *Status {
+func getStatus(obj client.Object) pStatus {
 	b, err := json.Marshal(obj)
 	if err != nil {
-		return nil
+		return pStatus{}
 	}
-	var res klResource
+	var res struct {
+		Status pStatus `json:"status"`
+	}
 	if err := json.Unmarshal(b, &res); err != nil {
-		return nil
+		return pStatus{}
 	}
 
 	return res.Status
@@ -55,12 +58,8 @@ func ReconcileFilter() predicate.Funcs {
 			}
 
 			oldStatus, newStatus := getStatus(ev.ObjectOld), getStatus(ev.ObjectNew)
-			if oldStatus == nil || newStatus == nil {
+			if oldStatus.IsReady == nil || newStatus.IsReady == nil || oldStatus.IsReady != newStatus.IsReady {
 				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
-				return true
-			}
-
-			if oldStatus.IsReady != newStatus.IsReady {
 				return true
 			}
 
