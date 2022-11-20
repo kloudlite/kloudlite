@@ -16,8 +16,8 @@ import (
 )
 
 type Webhook struct {
-	Name     string `json:"name"`
-	Id       int64  `json:"id"`
+	Name     string `json:"name,omitempty"`
+	Id       int64  `json:"id,omitempty"`
 	Location string `json:"location,omitempty"`
 }
 
