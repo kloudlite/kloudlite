@@ -140,7 +140,7 @@ const (
 
 	MongoDBCluster   templateFile = "templates/mongodb-helm-one-node-cluster.tpl.yml"
 	MongoDBWatcher   templateFile = "templates/mongo-msvc-watcher.tmpl.yml"
-	Deployment       templateFile = "templates/app.tpl.yml"
+	Deployment       templateFile = "templates/app.yml.tpl"
 	Service          templateFile = "templates/service.tmpl.yml"
 	Secret           templateFile = "templates/corev1/secret.tpl.yml"
 	AccountWireguard templateFile = "templates/account-deploy.tmpl.yml"
@@ -202,6 +202,6 @@ var CrdsV1 = struct {
 	App           templateFile
 	AccountRouter templateFile
 }{
-	App:           "templates/app.tpl.yml",
+	App:           "templates/app.yml.tpl",
 	AccountRouter: "templates/crdsv1/account-router.yml.tpl",
 }
