@@ -24,6 +24,7 @@ type NodePool struct {
 
 type EdgeRegion struct {
 	repos.BaseEntity `bson:",inline"`
+	IsDeleting       bool               `json:"is_deleting" bson:"is_deleting"`
 	Name             string             `bson:"name"`
 	ProviderId       repos.ID           `bson:"provider_id"`
 	Region           string             `bson:"region"`

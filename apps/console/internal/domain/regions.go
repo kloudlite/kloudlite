@@ -297,6 +297,12 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 		}
 	}
 
+	edge.IsDeleting = true
+	_, err = d.regionRepo.UpdateById(ctx, edgeId, edge)
+	if err != nil {
+		return err
+	}
+
 	clusterId, err := d.getClusterForAccount(ctx, *provider.AccountId)
 	if err != nil {
 		return err
