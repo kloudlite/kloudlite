@@ -163,6 +163,11 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 			Metadata: opCrds.ManagedResourceMetadata{
 				Name:      string(create.Id),
 				Namespace: create.Namespace,
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(prj.AccountId),
+					"kloudlite.io/project-ref":  string(prj.Id),
+					"kloudlite.io/resource-ref": string(create.Id),
+				},
 			},
 			Spec: opCrds.ManagedResourceSpec{
 				MsvcRef: opCrds.MsvcRef{
@@ -191,7 +196,10 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 	if err = mongoError(err, "managed resource not found"); err != nil {
 		return false, err
 	}
-
+	proj, err := d.projectRepo.FindById(ctx, mres.ProjectId)
+	if err != nil {
+		return false, err
+	}
 	msvc, err := d.managedSvcRepo.FindById(ctx, mres.ServiceId)
 	if err != nil {
 		return false, err
@@ -224,6 +232,11 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 			Metadata: opCrds.ManagedResourceMetadata{
 				Name:      string(mres.Id),
 				Namespace: mres.Namespace,
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(proj.AccountId),
+					"kloudlite.io/project-ref":  string(proj.Id),
+					"kloudlite.io/resource-ref": string(mres.Id),
+				},
 			},
 			Spec: opCrds.ManagedResourceSpec{
 				MsvcRef: opCrds.MsvcRef{
