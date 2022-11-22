@@ -122,6 +122,7 @@ func (r *cloudProviderResolver) Edges(ctx context.Context, obj *model.CloudProvi
 				Name:      r.Name,
 				Region:    r.Region,
 				CreatedAt: r.CreationTime.String(),
+				Status:    string(r.Status),
 				UpdatedAt: func() *string {
 					if !r.UpdateTime.IsZero() {
 						s := r.UpdateTime.String()
@@ -1142,6 +1143,7 @@ func (r *projectResolver) Region(ctx context.Context, obj *model.Project) (*mode
 		Name:      reg.Name,
 		Region:    reg.Region,
 		CreatedAt: reg.CreationTime.String(),
+		Status:    string(reg.Status),
 		UpdatedAt: func() *string {
 			if !reg.UpdateTime.IsZero() {
 				s := reg.UpdateTime.String()

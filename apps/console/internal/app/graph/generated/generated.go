@@ -191,6 +191,7 @@ type ComplexityRoot struct {
 		Pools     func(childComplexity int) int
 		Provider  func(childComplexity int) int
 		Region    func(childComplexity int) int
+		Status    func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
 
@@ -1176,6 +1177,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EdgeRegion.Region(childComplexity), true
+
+	case "EdgeRegion.status":
+		if e.complexity.EdgeRegion.Status == nil {
+			break
+		}
+
+		return e.complexity.EdgeRegion.Status(childComplexity), true
 
 	case "EdgeRegion.updatedAt":
 		if e.complexity.EdgeRegion.UpdatedAt == nil {
@@ -2741,6 +2749,7 @@ type EdgeRegion {
   createdAt: String!
   updatedAt: String
   pools: [NodePool!]!
+  status: String!
 }
 
 input NodePoolIn{
@@ -7849,6 +7858,41 @@ func (ec *executionContext) _EdgeRegion_pools(ctx context.Context, field graphql
 	res := resTmp.([]*model.NodePool)
 	fc.Result = res
 	return ec.marshalNNodePool2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐNodePoolᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EdgeRegion_status(ctx context.Context, field graphql.CollectedField, obj *model.EdgeRegion) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EdgeRegion",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -17064,6 +17108,16 @@ func (ec *executionContext) _EdgeRegion(ctx context.Context, sel ast.SelectionSe
 		case "pools":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._EdgeRegion_pools(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "status":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._EdgeRegion_status(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)

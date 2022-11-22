@@ -110,6 +110,7 @@ type EdgeRegion {
   createdAt: String!
   updatedAt: String
   pools: [NodePool!]!
+  status: String!
 }
 
 input NodePoolIn{
