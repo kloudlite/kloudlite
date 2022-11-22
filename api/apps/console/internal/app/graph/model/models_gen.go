@@ -220,6 +220,7 @@ type EdgeRegion struct {
 	CreatedAt string         `json:"createdAt"`
 	UpdatedAt *string        `json:"updatedAt"`
 	Pools     []*NodePool    `json:"pools"`
+	Status    string         `json:"status"`
 }
 
 type EdgeRegionIn struct {
