@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/pkg/mail"
 )
@@ -11,6 +12,7 @@ type rpcImpl struct {
 	mailer            mail.Mailer
 	supportEmail      string
 	emailLinksBaseUrl string
+	emailTemplatesDir EmailTemplatesDir
 }
 
 func (r *rpcImpl) sendSupportEmail(
@@ -36,7 +38,7 @@ func (r *rpcImpl) sendSupportEmail(
 }
 
 func (r *rpcImpl) SendAccountMemberInviteEmail(ctx context.Context, input *comms.AccountMemberInviteEmailInput) (*comms.Void, error) {
-	subject, plainText, htmlContent, err := constructAccountInvitationEmail(
+	subject, plainText, htmlContent, err := r.constructAccountInvitationEmail(
 		input.Name, input.AccountName, input.InvitationToken, r.emailLinksBaseUrl,
 	)
 	if err != nil {
@@ -50,7 +52,7 @@ func (r *rpcImpl) SendAccountMemberInviteEmail(ctx context.Context, input *comms
 }
 
 func (r *rpcImpl) SendProjectMemberInviteEmail(ctx context.Context, input *comms.ProjectMemberInviteEmailInput) (*comms.Void, error) {
-	subject, plainText, htmlContent, err := constructProjectInvitationEmail(
+	subject, plainText, htmlContent, err := r.constructProjectInvitationEmail(
 		input.Name, input.ProjectName, input.InvitationToken, r.emailLinksBaseUrl,
 	)
 	if err != nil {
@@ -64,7 +66,7 @@ func (r *rpcImpl) SendProjectMemberInviteEmail(ctx context.Context, input *comms
 }
 
 func (r *rpcImpl) SendPasswordResetEmail(_ context.Context, input *comms.PasswordResetEmailInput) (*comms.Void, error) {
-	subject, plainText, htmlContent, err := constructResetPasswordEmail(input.Name, input.ResetToken, r.emailLinksBaseUrl)
+	subject, plainText, htmlContent, err := r.constructResetPasswordEmail(input.Name, input.ResetToken, r.emailLinksBaseUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (r *rpcImpl) SendPasswordResetEmail(_ context.Context, input *comms.Passwor
 }
 
 func (r *rpcImpl) SendWelcomeEmail(ctx context.Context, input *comms.WelcomeEmailInput) (*comms.Void, error) {
-	subject, plainText, htmlContent, err := constructWelcomeEmail(input.Name)
+	subject, plainText, htmlContent, err := r.constructWelcomeEmail(input.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +90,7 @@ func (r *rpcImpl) SendWelcomeEmail(ctx context.Context, input *comms.WelcomeEmai
 }
 
 func (r *rpcImpl) SendVerificationEmail(_ context.Context, input *comms.VerificationEmailInput) (*comms.Void, error) {
-	subject, plainText, htmlContent, err := constructVerificationEmail(
+	subject, plainText, htmlContent, err := r.constructVerificationEmail(
 		input.Name,
 		input.VerificationToken,
 		r.emailLinksBaseUrl,
@@ -103,10 +105,11 @@ func (r *rpcImpl) SendVerificationEmail(_ context.Context, input *comms.Verifica
 	return &comms.Void{}, nil
 }
 
-func fxRPCServer(mailer mail.Mailer, env *Env) comms.CommsServer {
+func fxRPCServer(mailer mail.Mailer, env *Env, templatesDir EmailTemplatesDir) comms.CommsServer {
 	return &rpcImpl{
 		mailer:            mailer,
 		supportEmail:      env.SupportEmail,
 		emailLinksBaseUrl: env.EmailsBaseUrl,
+		emailTemplatesDir: templatesDir,
 	}
 }
