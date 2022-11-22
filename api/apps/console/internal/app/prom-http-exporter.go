@@ -5,87 +5,211 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	l "github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/errors"
+	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
 type PrometheusOpts struct {
+	HttpPort          uint16 `env:"METRICS_HTTP_PORT" required:"true"`
+	HttpCors          string `env:"METRICS_HTTP_CORS" required:"true"`
 	Endpoint          string `env:"PROMETHEUS_ENDPOINT" required:"true"`
 	BasicAuthUsername string `env:"PROMETHEUS_BASIC_AUTH_USERNAME" required:"false"`
 	BasicAuthPassword string `env:"PROMETHEUS_BASIC_AUTH_PASSWORD" required:"false"`
 }
 
-func metricsQuerySvc(app *fiber.App, promOpts *PrometheusOpts, d domain.Domain, financeClient finance.FinanceClient) {
-	app.Get("/metrics/:appId", func(ctx *fiber.Ctx) error {
-		appId := ctx.Params("appId", "")
-		if appId == "" {
-			return ctx.Status(http.StatusBadRequest).JSON(errors.New("appId is empty"))
-		}
+func (p PrometheusOpts) GetHttpPort() uint16 {
+	return p.HttpPort
+}
 
-		app, err := d.GetApp(ctx.Context(), repos.ID(appId))
-		if err != nil {
-			fmt.Println(err)
-		}
+func (p PrometheusOpts) GetHttpCors() string {
+	return p.HttpCors
+}
 
-		if app == nil {
-			return ctx.Status(http.StatusBadRequest).JSON("app does not exist")
-		}
+type PromMetricsHttpServer struct {
+	*fiber.App
+}
 
-		project, err := d.GetProjectWithID(ctx.Context(), app.ProjectId)
-		if err != nil {
-			return err
-		}
+type PromMetricsType string
 
-		cluster, err := financeClient.GetAttachedCluster(
-			context.TODO(),
-			&finance.GetAttachedClusterIn{AccountId: string(project.AccountId)},
+const (
+	Cpu    PromMetricsType = "cpu"
+	Memory PromMetricsType = "memory"
+)
+
+func getPromQuery(resType PromMetricsType, name string) string {
+	switch resType {
+	case Memory:
+		return fmt.Sprintf(`sum(avg_over_time(container_memory_working_set_bytes{pod =~ "%s.*", container != ""} [30s])) /1024/1024`, name)
+	case Cpu:
+		return fmt.Sprintf(
+			`
+		sum(rate(container_cpu_usage_seconds_total{pod=~"^%s.*", container!=""}[2m])) by (pod, container) /
+sum(container_spec_cpu_quota{pod=~"^%s.*", container!=""}/container_spec_cpu_period{pod=~"^%s.*", container!=""}) by (pod, container) * 1000
+		`, name, name, name,
 		)
+		// return fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{container!="", pod=~"%s.*"}[2m])) * 1000`, name)
+	}
+	return ""
+}
 
-		// GET
-		// http://localhost:9090/api/v1/query_range?query=sum(container_memory_working_set_bytes{pod =~ "kl-project.*", container != ""}) / 1024/1024&start=1667812368.6&end=1668417168.6&step=2419
+func metricsQuerySvc(app *PromMetricsHttpServer, promOpts *PrometheusOpts, d domain.Domain, financeClient finance.FinanceClient,
+	env *Env,
+	cacheClient AuthCacheClient) {
+	app.Use(
+		httpServer.NewSessionMiddleware[*common.AuthSession](
+			cacheClient,
+			"hotspot-session",
+			env.CookieDomain,
+			common.CacheSessionPrefix,
+		),
+	)
 
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/query_range", promOpts.Endpoint), nil)
-		if err != nil {
-			return err
-		}
+	app.Get(
+		"/metrics/:metricsType", func(ctx *fiber.Ctx) error {
+			metricsType := ctx.Params("metricsType", "")
+			if metricsType == "" {
+				return ctx.Status(http.StatusInternalServerError).JSON(map[string]string{"error": "metricsType is empty"})
+			}
 
-		qp := req.URL.Query()
-		qp.Add("query", fmt.Sprintf(`sum(container_memory_working_set_bytes{pod =~ "%s.*", container != ""}) / 1024/1024`, app.Name))
-		t := time.Now()
-		qp.Add("start", fmt.Sprintf("%v", t.Add(-2*24*time.Hour).Unix()))
-		qp.Add("end", fmt.Sprintf("%v", t.Unix()))
-		qp.Add("step", "900") // 1 hour
+			appId := ctx.Query("appId", "")
+			if appId == "" {
+				return ctx.Status(http.StatusInternalServerError).JSON(map[string]string{"error": "query params (appId) is empty"})
+			}
 
-		if promOpts.BasicAuthPassword != "" {
-			req.SetBasicAuth(cluster.ClusterId, promOpts.BasicAuthPassword)
-		}
+			app, err := d.GetApp(ctx.Context(), repos.ID(appId))
+			if err != nil {
+				return err
+			}
 
-		req.URL.RawQuery = qp.Encode()
+			if app == nil {
+				return ctx.Status(http.StatusBadRequest).JSON(map[string]string{"error": "app does not exist"})
+			}
 
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return err
-		}
+			project, err := d.GetProjectWithID(ctx.Context(), app.ProjectId)
+			if err != nil {
+				return err
+			}
 
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		//
-		if resp.StatusCode != http.StatusOK {
-			return ctx.Status(http.StatusInternalServerError).JSON(string(b))
-		}
+			cluster, err := financeClient.GetAttachedCluster(
+				context.TODO(),
+				&finance.GetAttachedClusterIn{AccountId: string(project.AccountId)},
+			)
 
-		return ctx.JSON(string(b))
-	})
+			promQuery := getPromQuery(PromMetricsType(metricsType), app.Name)
+			if promQuery == "" {
+				return errors.Newf("could not build prom query, invalid (metricsType=%s or name=%s)", metricsType, app.Name)
+			}
+
+			// GET http://localhost:9090/api/v1/query_range?query=sum(container_memory_working_set_bytes{pod =~ "kl-project.*",container != ""})/1024/1024&start=1667812368.6&end=1668417168.6&step=2419
+
+			req, err := http.NewRequest(
+				http.MethodGet, fmt.Sprintf(
+					"%s/api/v1/query_range", strings.Replace(promOpts.Endpoint, "REPLACE_ME", cluster.ClusterId, 1),
+				),
+				nil,
+			)
+			if err != nil {
+				return err
+			}
+
+			qp := req.URL.Query()
+			qp.Add("query", promQuery)
+			t := time.Now()
+			qp.Add("start", fmt.Sprintf("%v", t.Add(-2*24*time.Hour).Unix()))
+			qp.Add("end", fmt.Sprintf("%v", t.Unix()))
+			qp.Add("step", "900") // 15 minute
+
+			if promOpts.BasicAuthPassword != "" {
+				username := func() string {
+					if promOpts.BasicAuthUsername != "" {
+						return promOpts.BasicAuthUsername
+					}
+					return cluster.ClusterId
+				}()
+				req.SetBasicAuth(username, promOpts.BasicAuthPassword)
+			}
+
+			req.URL.RawQuery = qp.Encode()
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return err
+			}
+
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				return ctx.Status(http.StatusInternalServerError).Send(b)
+			}
+
+			return ctx.Send(b)
+		},
+	)
 }
 
 func fxMetricsQuerySvc() fx.Option {
-	return fx.Invoke(metricsQuerySvc)
+	return fx.Module(
+		"http-server",
+		fx.Provide(
+			func() *PromMetricsHttpServer {
+				return &PromMetricsHttpServer{App: fiber.New()}
+			},
+		),
+
+		fx.Invoke(
+			func(lf fx.Lifecycle, p *PrometheusOpts, logger logging.Logger, app *PromMetricsHttpServer) {
+				app.Use(
+					l.New(
+						l.Config{
+							Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
+							TimeFormat: "02-Jan-2006 15:04:05",
+							TimeZone:   "Asia/Kolkata",
+						},
+					),
+				)
+				if p.GetHttpCors() != "" {
+					app.Use(
+						cors.New(
+							cors.Config{
+								AllowOrigins:     p.GetHttpCors(),
+								AllowCredentials: true,
+								AllowMethods: strings.Join(
+									[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+									",",
+								),
+							},
+						),
+					)
+				}
+
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							return httpServer.Start(ctx, p.GetHttpPort(), app.App, logger)
+						},
+						OnStop: func(ctx context.Context) error {
+							return app.Shutdown()
+						},
+					},
+				)
+			},
+		),
+
+		fx.Invoke(metricsQuerySvc),
+	)
 }

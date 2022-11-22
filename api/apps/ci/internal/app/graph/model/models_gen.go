@@ -109,7 +109,10 @@ type HarborImageTagsResult struct {
 }
 
 type HarborSearchResult struct {
-	ImageName string `json:"imageName"`
+	ImageName string                   `json:"imageName"`
+	UpdatedAt *time.Time               `json:"updatedAt"`
+	CreatedAt *time.Time               `json:"createdAt"`
+	Tags      []*HarborImageTagsResult `json:"tags"`
 }
 
 type PipelineRun struct {
