@@ -174,7 +174,7 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 					Kind: resTmpl.Kind,
 				},
 				Inputs: func() map[string]string {
-					create.Values["resourceName"] = svc.Name
+					create.Values["resourceName"] = name
 					return create.Values
 				}(),
 			},

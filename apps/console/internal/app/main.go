@@ -357,6 +357,7 @@ var Module = fx.Module(
 	),
 
 	fxWorkloadMessenger(),
+	fxMetricsQuerySvc(),
 
 	// GraphQL Service
 	fx.Invoke(
