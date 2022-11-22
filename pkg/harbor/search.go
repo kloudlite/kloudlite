@@ -26,7 +26,6 @@ type Repository struct {
 }
 
 func (h *Client) SearchRepositories(ctx context.Context, accountId repos.ID, searchQ string, searchOpts ListOptions) ([]Repository, error) {
-
 	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/projects/%s/repositories", accountId), nil)
 	if err != nil {
 		return nil, err
@@ -81,9 +80,10 @@ type Artifact struct {
 }
 
 type ImageTag struct {
-	Name      string `json:"name"`
-	Signed    bool   `json:"signed"`
-	Immutable bool   `json:"immutable"`
+	Name      string    `json:"name"`
+	Signed    bool      `json:"signed"`
+	Immutable bool      `json:"immutable"`
+	PushedAt  time.Time `json:"pushed_at"`
 }
 
 type ListOptions struct {
@@ -99,7 +99,12 @@ type ListTagsOpts struct {
 }
 
 func (h *Client) ListTags(ctx context.Context, projectName string, repoName string, tagOpts ListTagsOpts) ([]ImageTag, error) {
-	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/projects/%s/repositories/%s/artifacts", projectName, url.PathEscape(repoName)), nil)
+	req, err := h.NewAuthzRequest(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("/projects/%s/repositories/%s/artifacts", projectName, url.PathEscape(repoName)),
+		nil,
+	)
 	q := req.URL.Query()
 
 	q.Add("with_tag", "true")
@@ -145,7 +150,7 @@ func (h *Client) ListTags(ctx context.Context, projectName string, repoName stri
 			for j := range artifacts[i].Tags {
 				tag := artifacts[i].Tags[j]
 				if tag.Name != "" {
-					tags = append(tags, ImageTag{Name: tag.Name, Signed: tag.Signed, Immutable: tag.Immutable})
+					tags = append(tags, ImageTag{Name: tag.Name, Signed: tag.Signed, Immutable: tag.Immutable, PushedAt: tag.PushTime})
 				}
 			}
 		}
