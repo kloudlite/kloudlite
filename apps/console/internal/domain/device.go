@@ -137,7 +137,8 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 			Metadata: internal_crds.DeviceMetadata{
 				Name: string(device.Id),
 				Annotations: map[string]string{
-					"kloudlite.io/account-id": string(device.AccountId),
+					"kloudlite.io/account-id":   string(device.AccountId),
+					"kloudlite.io/resource-ref": string(device.Id),
 				},
 				Labels: map[string]string{
 					"kloudlite.io/account-id": string(device.AccountId),
@@ -262,7 +263,8 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 			Metadata: internal_crds.DeviceMetadata{
 				Name: string(device.Id),
 				Annotations: map[string]string{
-					"kloudlite.io/account-id": string(device.AccountId),
+					"kloudlite.io/account-id":   string(device.AccountId),
+					"kloudlite.io/resource-ref": string(device.Id),
 				},
 				Labels: map[string]string{
 					"kloudlite.io/account-id": string(device.AccountId),
