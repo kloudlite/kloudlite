@@ -15,6 +15,7 @@ const (
 	ReadProject   = "read_project"
 	UpdateProject = "update_project"
 	ReadAccount   = "read_account"
+	UpdateAccount = "update_account"
 )
 
 func mongoError(err error, descp string) error {
