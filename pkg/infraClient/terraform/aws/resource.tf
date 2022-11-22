@@ -141,6 +141,14 @@ resource "aws_instance" "byoc-node" {
   tags = {
     Name = var.node_id
   }
+
+  root_block_device {
+    volume_size = 100 # in GB <<----- I increased this!
+    volume_type = "standard"
+    encrypted   = false
+    # kms_key_id  = data.aws_kms_key.customer_master_key.arn
+  }
+
 }
 
 
