@@ -215,12 +215,9 @@ func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	err = d.sendAppApply(ctx, prj, updatedApp, true)
-	// if err != nil {
-	// 	return err
-	// }
-	return err
+	return d.sendAppApply(ctx, prj, updatedApp, true)
 }
+
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 	app, err := d.appRepo.FindById(ctx, appID)
 

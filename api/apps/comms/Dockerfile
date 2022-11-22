@@ -24,7 +24,7 @@ RUN chmod +x /tmp/bin/$APP
 FROM golang:1.18.3-alpine3.16
 USER 1001:1001
 ARG APP
-WORKDIR /comms
+#WORKDIR /comms
 COPY --from=base /tmp/app/email-templates /comms/email-templates
 COPY --from=base /tmp/bin/$APP /comms/comms
 CMD ["./comms"]

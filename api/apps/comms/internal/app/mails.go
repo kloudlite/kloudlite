@@ -2,10 +2,12 @@ package app
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"text/template"
+
+	"gopkg.in/yaml.v2"
 )
 
 type email struct {
@@ -14,9 +16,16 @@ type email struct {
 	HTMLText  string `json:"html,omitempty" yaml:"html,omitempty"`
 }
 
-func loadEmailFromYaml(templateName string, params any) (*email, error) {
-	file, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v/email.yaml", templateName))
-	htmlFile, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v/email.html", templateName))
+type EmailTemplatesDir struct {
+	embed.FS
+}
+
+func (r *rpcImpl) loadEmailFromYaml(templateName string, params any) (*email, error) {
+
+	file, err := r.emailTemplatesDir.ReadFile(fmt.Sprintf("email-templates/%v/email.yaml", templateName))
+	// file, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v/email.yaml", templateName))
+	// htmlFile, err := ioutil.ReadFile(fmt.Sprintf("email-templates/%v/email.html", templateName))
+	htmlFile, err := r.emailTemplatesDir.ReadFile(fmt.Sprintf("email-templates/%v/email.html", templateName))
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +54,8 @@ func loadEmailFromYaml(templateName string, params any) (*email, error) {
 	return &email, nil
 }
 
-func constructVerificationEmail(name string, token string, emailLinksBaseUrl string) (subject string, plainText string, htmlContent string, err error) {
-	email, err := loadEmailFromYaml("user-verification", struct {
+func (r *rpcImpl) constructVerificationEmail(name string, token string, emailLinksBaseUrl string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := r.loadEmailFromYaml("user-verification", struct {
 		Name string
 		Link string
 	}{
@@ -62,8 +71,8 @@ func constructVerificationEmail(name string, token string, emailLinksBaseUrl str
 	return
 }
 
-func constructResetPasswordEmail(name string, token string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
-	email, err := loadEmailFromYaml("reset-password", struct {
+func (r *rpcImpl) constructResetPasswordEmail(name string, token string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := r.loadEmailFromYaml("reset-password", struct {
 		Name string
 		Link string
 	}{
@@ -79,8 +88,8 @@ func constructResetPasswordEmail(name string, token string, baseUrl string) (sub
 	return
 }
 
-func constructWelcomeEmail(name string) (subject string, plainText string, htmlContent string, err error) {
-	email, err := loadEmailFromYaml("welcome", struct {
+func (r *rpcImpl) constructWelcomeEmail(name string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := r.loadEmailFromYaml("welcome", struct {
 		Name string
 	}{
 		Name: name,
@@ -94,8 +103,8 @@ func constructWelcomeEmail(name string) (subject string, plainText string, htmlC
 	return
 }
 
-func constructAccountInvitationEmail(name string, accountName string, invitationToken string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
-	email, err := loadEmailFromYaml("account-invite", struct {
+func (r *rpcImpl) constructAccountInvitationEmail(name string, accountName string, invitationToken string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := r.loadEmailFromYaml("account-invite", struct {
 		Name        string
 		Link        string
 		AccountName string
@@ -114,8 +123,8 @@ func constructAccountInvitationEmail(name string, accountName string, invitation
 	return
 }
 
-func constructProjectInvitationEmail(name string, projectName string, invitationToken string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
-	email, err := loadEmailFromYaml("project-invite", struct {
+func (r *rpcImpl) constructProjectInvitationEmail(name string, projectName string, invitationToken string, baseUrl string) (subject string, plainText string, htmlContent string, err error) {
+	email, err := r.loadEmailFromYaml("project-invite", struct {
 		Name        string
 		Link        string
 		ProjectName string
