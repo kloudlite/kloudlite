@@ -1,4 +1,4 @@
-subject: "[KloudLite] Reset Password"
+subject: "[KloudLite] Account Invite"
 
 plain: >-
   Hey {{.Name}},
