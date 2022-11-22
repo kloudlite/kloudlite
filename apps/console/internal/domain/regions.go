@@ -317,6 +317,27 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 	return nil
 }
 
+func (d *domain) OnUpdateEdge(ctx context.Context, response *op_crds.StatusUpdate) error {
+	one, err := d.regionRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		// Ignore unknown project
+		return nil
+	}
+
+	if response.IsReady {
+		one.Status = entities.EdgeStateLive
+	} else {
+		one.Status = entities.EdgeStateSyncing
+	}
+	one.Conditions = response.ChildConditions
+	_, err = d.regionRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnDeleteEdge(ctx context.Context, response *op_crds.StatusUpdate) error {
+	return d.regionRepo.DeleteById(ctx, repos.ID(response.Metadata.ResourceId))
+}
+
 func (d *domain) GetEdgeNodes(ctx context.Context, edgeId repos.ID) (*kubeapi.AccountNodeList, error) {
 	region, err := d.regionRepo.FindById(ctx, edgeId)
 	if err != nil {
