@@ -72,7 +72,8 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 			Metadata: op_crds.CloudProviderMetadata{
 				Name: "provider-" + string(provider.Id),
 				Annotations: map[string]string{
-					"kloudlite.io/account-id": string(*provider.AccountId),
+					"kloudlite.io/account-ref":  string(*provider.AccountId),
+					"kloudlite.io/resource-ref": string(provider.Id),
 				},
 			},
 		},
@@ -88,6 +89,10 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 			Metadata: op_crds.SecretMetadata{
 				Name:      "provider-" + string(provider.Id),
 				Namespace: "kl-core",
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(*provider.AccountId),
+					"kloudlite.io/resource-ref": string(provider.Id),
+				},
 			},
 			StringData: func() map[string]any {
 				data := make(map[string]any)
@@ -189,6 +194,10 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, u
 			Metadata: op_crds.SecretMetadata{
 				Name:      "provider-" + string(provider.Id),
 				Namespace: "kl-core",
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(*provider.AccountId),
+					"kloudlite.io/resource-ref": string(provider.Id),
+				},
 			},
 			StringData: func() map[string]any {
 				data := make(map[string]any)
@@ -231,6 +240,10 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entit
 			Kind:       op_crds.EdgeKind,
 			Metadata: op_crds.EdgeMetadata{
 				Name: string(createdRegion.Id),
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(*provider.AccountId),
+					"kloudlite.io/resource-ref": string(createdRegion.Id),
+				},
 			},
 			Spec: op_crds.EdgeSpec{
 				CredentialsRef: op_crds.CredentialsRef{
@@ -407,6 +420,10 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 			Kind:       op_crds.EdgeKind,
 			Metadata: op_crds.EdgeMetadata{
 				Name: string(createdRegion.Id),
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(*provider.AccountId),
+					"kloudlite.io/resource-ref": string(createdRegion.Id),
+				},
 			},
 			Spec: op_crds.EdgeSpec{
 				CredentialsRef: op_crds.CredentialsRef{
