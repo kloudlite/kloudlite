@@ -174,6 +174,8 @@ var Module = fx.Module(
 							domain.OnUpdateManagedSvc(context.TODO(), &update)
 						case "CloudProvider":
 							domain.OnUpdateProvider(context.TODO(), &update)
+						case "Edge":
+							domain.OnUpdateEdge(context.TODO(), &update)
 						case "Device":
 							domain.OnUpdateDevice(context.TODO(), &update)
 
@@ -197,6 +199,8 @@ var Module = fx.Module(
 							domain.OnDeleteManagedResource(context.TODO(), &update)
 						case "CloudProvider":
 							domain.OnDeleteProvider(context.TODO(), &update)
+						case "Edge":
+							domain.OnDeleteEdge(context.TODO(), &update)
 						case "Device":
 							domain.OnDeleteDevice(context.TODO(), &update)
 						default:

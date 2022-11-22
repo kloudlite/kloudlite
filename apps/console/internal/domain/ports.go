@@ -17,6 +17,8 @@ type Domain interface {
 	GetEdgeRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error)
 	GetEdgeRegion(ctx context.Context, edgeId repos.ID) (*entities.EdgeRegion, error)
 	CreateEdgeRegion(ctx context.Context, providerId repos.ID, region *entities.EdgeRegion) error
+	OnUpdateEdge(ctx context.Context, response *op_crds.StatusUpdate) error
+	OnDeleteEdge(ctx context.Context, response *op_crds.StatusUpdate) error
 	DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error
 	UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, region *EdgeRegionUpdate) error
 

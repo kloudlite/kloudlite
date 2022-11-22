@@ -5,6 +5,15 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type EdgeStatus string
+
+const (
+	EdgeStateSyncing = EdgeStatus("sync-in-progress")
+	EdgeStateLive    = EdgeStatus("live")
+	EdgeStateError   = EdgeStatus("error")
+	EdgeStateDown    = EdgeStatus("down")
+)
+
 type NodePool struct {
 	Name   string   `json:"name"`
 	Config string   `json:"config"`
@@ -15,10 +24,12 @@ type NodePool struct {
 
 type EdgeRegion struct {
 	repos.BaseEntity `bson:",inline"`
-	Name             string     `bson:"name"`
-	ProviderId       repos.ID   `bson:"provider_id"`
-	Region           string     `bson:"region"`
-	Pools            []NodePool `bson:"pools"`
+	Name             string             `bson:"name"`
+	ProviderId       repos.ID           `bson:"provider_id"`
+	Region           string             `bson:"region"`
+	Pools            []NodePool         `bson:"pools"`
+	Status           EdgeStatus         `json:"status" bson:"status"`
+	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
 }
 
 type CloudProviderStatus string
