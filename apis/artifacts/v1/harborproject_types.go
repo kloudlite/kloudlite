@@ -2,6 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/harbor"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
@@ -35,7 +36,9 @@ func (hp *HarborProject) GetEnsuredLabels() map[string]string {
 }
 
 func (in *HarborProject) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("HarborProject").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

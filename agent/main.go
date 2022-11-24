@@ -1,45 +1,22 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
-	"os/exec"
 	"time"
 
-	"github.com/codingconcepts/env"
+	"k8s.io/client-go/rest"
+	"operators.kloudlite.io/agent/internal/env"
+	t "operators.kloudlite.io/agent/internal/types"
 	"operators.kloudlite.io/pkg/errors"
+	"operators.kloudlite.io/pkg/kubectl"
 	"operators.kloudlite.io/pkg/logging"
 	"operators.kloudlite.io/pkg/redpanda"
 	"sigs.k8s.io/yaml"
 )
-
-type AgentMessage struct {
-	Action  string         `json:"action"`
-	Payload map[string]any `json:"payload,omitempty"`
-	Yamls   []byte         `json:"yamls,omitempty"`
-}
-
-type ErrMessage struct {
-	Error  string `json:"error"`
-	Action string `json:"action"`
-	// Payload map[string]any `json:"payload"`
-	Payload []byte `json:"payload"`
-}
-
-type Env struct {
-	KafkaSASLUser      string                 `env:"KAFKA_SASL_USER" required:"true"`
-	KafkaSASLPassword  string                 `env:"KAFKA_SASL_PASSWORD" required:"true"`
-	KafkaSASLMechanism redpanda.SASLMechanism `env:"KAFKA_SASL_MECHANISM"`
-
-	KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
-	KafkaIncomingTopic     string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
-	KafkaErrorOnApplyTopic string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
-}
 
 func main() {
 	var dev bool
@@ -48,10 +25,18 @@ func main() {
 
 	logr := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: dev})
 
-	var ev Env
-	if err := env.Set(&ev); err != nil {
-		panic(err)
-	}
+	ev := env.GetEnvOrDie()
+
+	yamlClient := func() *kubectl.YAMLClient {
+		if dev {
+			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
+		}
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			panic(err)
+		}
+		return kubectl.NewYAMLClientOrDie(config)
+	}()
 
 	kafkaSasl := redpanda.KafkaSASLAuth{
 		SASLMechanism: func() redpanda.SASLMechanism {
@@ -64,14 +49,14 @@ func main() {
 		Password: ev.KafkaSASLPassword,
 	}
 
-	errProducer, err := redpanda.NewProducer(
-		ev.KafkaBrokers, redpanda.ProducerOpts{
-			// SASLAuth: &kafkaSasl,
-		},
-	)
-	if err != nil {
-		panic(err)
-	}
+	// errProducer, err := redpanda.NewProducer(
+	// 	ev.KafkaBrokers, redpanda.ProducerOpts{
+	// 		SASLAuth: &kafkaSasl,
+	// 	},
+	// )
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	consumer, err := redpanda.NewConsumer(
 		ev.KafkaBrokers, ev.KafkaConsumerGroupId,
@@ -95,8 +80,7 @@ func main() {
 ██   ██ ██      ██   ██ ██   ██  ██  ██  
 ██████  █████   ███████ ██   ██   ████   
 ██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
+██   ██ ███████ ██   ██ ██████     ██`,
 	)
 	logr.Infof("ready for consuming messages")
 
@@ -107,7 +91,6 @@ func main() {
 			defer func() {
 				logger.Infof("processed message")
 			}()
-
 			tctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
 			defer cancelFunc()
 			go func() {
@@ -117,7 +100,7 @@ func main() {
 				}
 			}()
 
-			var msg AgentMessage
+			var msg t.AgentMessage
 			if err := json.Unmarshal(kMsg.Value, &msg); err != nil {
 				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
 				return err
@@ -125,6 +108,12 @@ func main() {
 			switch msg.Action {
 			case "apply", "delete", "create":
 				{
+					mLogger := logger.WithKV("action", msg.Action)
+					mLogger.WithKV("action", msg.Action).Infof("received message")
+					defer func() {
+						mLogger.WithKV("action", msg.Action).Infof("processed message")
+					}()
+
 					yamls, err := func() ([]byte, error) {
 						if msg.Yamls != nil {
 							return msg.Yamls, nil
@@ -140,44 +129,56 @@ func main() {
 						}
 						return yb, nil
 					}()
-
-					if errX := func() error {
-						c := exec.Command("kubectl", msg.Action, "-f", "-")
-						if err != nil {
-							return err
-						}
-
-						c.Stdin = bytes.NewBuffer(yamls)
-						buffOut, buffErr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
-						c.Stdout = buffOut
-						c.Stderr = buffErr
-						if err := c.Run(); err != nil {
-							logr.Errorf(err, buffErr.String())
-							return err
-						}
-						return nil
-					}(); errX != nil {
-						// logger.Infof("failed for action=%s, payload=%s, yamls=%s\n", msg.Action, msg.Payload, msg.Yamls)
-						logger.Infof("error: %s", errX.Error())
-						errMsg := ErrMessage{
-							Action:  msg.Action,
-							Error:   errX.Error(),
-							Payload: yamls,
-						}
-						b, err := json.Marshal(errMsg)
-						if err != nil {
-							return err
-						}
-						output, err := errProducer.Produce(context.TODO(), ev.KafkaErrorOnApplyTopic, string(kMsg.Key), b)
-						if err != nil {
-							return err
-						}
-
-						logger.Infof(
-							"error message published to (topic=%s)", output.Topic,
-						)
-						return errX
+					if err != nil {
+						return err
 					}
+
+					// with-api
+					if msg.Action == "apply" {
+						return yamlClient.ApplyYAML(context.TODO(), yamls)
+					}
+					if msg.Action == "delete" {
+						return yamlClient.DeleteYAML(context.TODO(), yamls)
+					}
+					return nil
+
+					// if errX := func() error {
+					// 	ctx, cancelFn := context.WithTimeout(context.TODO(), 12*time.Second)
+					// 	defer cancelFn()
+					// 	c := exec.CommandContext(ctx, "kubectl", msg.Action, "-f", "-")
+					// 	if err != nil {
+					// 		return err
+					// 	}
+					//
+					// 	c.Stdin = bytes.NewBuffer(yamls)
+					// 	buffOut, buffErr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+					// 	c.Stdout = buffOut
+					// 	c.Stderr = buffErr
+					// 	if err := c.Run(); err != nil {
+					// 		logr.Errorf(err, buffErr.String())
+					// 		return err
+					// 	}
+					// 	return nil
+					// }(); errX != nil {
+					// 	// logger.Infof("failed for action=%s, payload=%s, yamls=%s\n", msg.Action, msg.Payload, msg.Yamls)
+					// 	mLogger.Infof("error: %s", errX.Error())
+					// 	errMsg := t.ErrMessage{
+					// 		Action:  msg.Action,
+					// 		Error:   errX.Error(),
+					// 		Payload: yamls,
+					// 	}
+					// 	b, err := json.Marshal(errMsg)
+					// 	if err != nil {
+					// 		return err
+					// 	}
+					// 	output, err := errProducer.Produce(context.TODO(), ev.KafkaErrorOnApplyTopic, string(kMsg.Key), b)
+					// 	if err != nil {
+					// 		return err
+					// 	}
+					//
+					// 	mLogger.Infof("error message published to (topic=%s)", output.Topic)
+					// 	return errX
+					// }
 				}
 			default:
 				{

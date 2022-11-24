@@ -1,4 +1,4 @@
-package controllers
+package project
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	"operators.kloudlite.io/operators/project/internal/env"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
 	"operators.kloudlite.io/pkg/harbor"
@@ -19,12 +20,11 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/project/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ProjectReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	harborCli  *harbor.Client
@@ -34,7 +34,7 @@ type ProjectReconciler struct {
 	yamlClient *kubectl.YAMLClient
 }
 
-func (r *ProjectReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
@@ -50,7 +50,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
-func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.Project{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -81,7 +81,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconNamespace(req); !step.ShouldProceed() {
+	if step := r.ensureNamespace(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -109,11 +109,11 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *ProjectReconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ProjectReconciler) reconNamespace(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -170,7 +170,7 @@ func (r *ProjectReconciler) reconNamespace(req *rApi.Request[*crdsv1.Project]) s
 	return req.Next()
 }
 
-func (r *ProjectReconciler) reconProjectCfg(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+func (r *Reconciler) reconProjectCfg(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	projectCfg, err := rApi.Get(ctx, r.Client, fn.NN(obj.Name, r.Env.ProjectCfgName), &corev1.ConfigMap{})
@@ -213,7 +213,7 @@ func (r *ProjectReconciler) reconProjectCfg(req *rApi.Request[*crdsv1.Project]) 
 	return req.Next()
 }
 
-func (r *ProjectReconciler) reconProjectRBAC(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+func (r *Reconciler) reconProjectRBAC(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	namespace := obj.Name
 
@@ -266,7 +266,7 @@ func (r *ProjectReconciler) reconProjectRBAC(req *rApi.Request[*crdsv1.Project])
 	return req.Next()
 }
 
-func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+func (r *Reconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	namespace := obj.Name
 	check := rApi.Check{Generation: obj.Generation}
@@ -329,7 +329,7 @@ func (r *ProjectReconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]
 	return req.Next()
 }
 
-func (r *ProjectReconciler) reconAccountRouter(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+func (r *Reconciler) reconAccountRouter(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -379,7 +379,7 @@ func (r *ProjectReconciler) reconAccountRouter(req *rApi.Request[*crdsv1.Project
 	return req.Next()
 }
 
-func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)

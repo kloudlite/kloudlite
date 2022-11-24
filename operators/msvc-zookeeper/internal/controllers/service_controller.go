@@ -14,25 +14,27 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-zookeeper/internal/env"
+	"operators.kloudlite.io/operators/msvc-zookeeper/internal/types"
 	"operators.kloudlite.io/pkg/conditions"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/kubectl"
 	"operators.kloudlite.io/pkg/logging"
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-zookeeper/internal/env"
-	"operators.kloudlite.io/operators/msvc-zookeeper/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ServiceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -294,6 +296,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&zookeeperMsvcv1.Service{})
 	builder.Owns(fn.NewUnstructured(constants.HelmZookeeperType))

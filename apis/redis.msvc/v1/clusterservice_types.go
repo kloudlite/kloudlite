@@ -22,8 +22,10 @@ type ClusterServiceStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ClusterService is the Schema for the clusterservices API
 type ClusterService struct {
@@ -34,7 +36,7 @@ type ClusterService struct {
 	Status ClusterServiceStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // ClusterServiceList contains a list of ClusterService
 type ClusterServiceList struct {

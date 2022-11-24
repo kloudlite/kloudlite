@@ -3,11 +3,12 @@ package app
 import (
   "context"
   "fmt"
-  crdsv1 "operators.kloudlite.io/apis/crds/v1"
-  fn "operators.kloudlite.io/pkg/functions"
   "time"
 
-  . "github.com/onsi/ginkgo"
+  crdsv1 "operators.kloudlite.io/apis/crds/v1"
+  fn "operators.kloudlite.io/pkg/functions"
+
+  . "github.com/onsi/ginkgo/v2"
   . "github.com/onsi/gomega"
 )
 

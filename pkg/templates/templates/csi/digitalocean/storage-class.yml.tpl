@@ -2,7 +2,7 @@
 {{- $fsTypes := get . "fs-types" -}}
 {{- $labels := get . "labels"  -}}
 {{- $ownerRefs := get . "owner-refs"  -}}
-
+{{- $provisioner := get . "provisioner" -}}
 
 {{- range $fsType := $fsTypes }}
 ---
@@ -12,7 +12,7 @@ metadata:
   name: {{$name}}-{{$fsType}}
   labels: {{$labels | toYAML | nindent 4}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-provisioner: dobs.csi.digitalocean.com
+provisioner: {{$provisioner}}
 parameters:
   fsType: {{$fsType}}
 reclaimPolicy: Delete

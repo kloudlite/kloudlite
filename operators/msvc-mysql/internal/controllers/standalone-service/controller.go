@@ -15,6 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
 	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-mysql/internal/env"
+	"operators.kloudlite.io/operators/msvc-mysql/internal/types"
 	"operators.kloudlite.io/pkg/conditions"
 	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/errors"
@@ -24,8 +26,6 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-mysql/internal/env"
-	"operators.kloudlite.io/operators/msvc-mysql/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -152,7 +152,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 				"name":       secretName,
 				"namespace":  obj.Namespace,
 				"labels":     obj.GetLabels(),
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
+				"owner-refs": obj.GetOwnerReferences(),
 				"string-data": types.MsvcOutput{
 					RootPassword: rootPassword,
 					Hosts:        mysqlHost,

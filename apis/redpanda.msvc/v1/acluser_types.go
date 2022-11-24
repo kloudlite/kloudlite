@@ -39,7 +39,9 @@ func (user *ACLUser) GetEnsuredLabels() map[string]string {
 }
 
 func (user *ACLUser) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ACLUser").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

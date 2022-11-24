@@ -51,7 +51,9 @@ func (s *Service) GetEnsuredLabels() map[string]string {
 }
 
 func (s *Service) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Service").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

@@ -3,6 +3,7 @@ package v1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/pkg/constants"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
 
@@ -37,7 +38,9 @@ func (d *Driver) GetEnsuredLabels() map[string]string {
 }
 
 func (d *Driver) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Driver").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-redis/internal/env"
+	"operators.kloudlite.io/operators/msvc-redis/internal/types"
 	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/errors"
 	fn "operators.kloudlite.io/pkg/functions"
@@ -18,8 +20,6 @@ import (
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	libRedis "operators.kloudlite.io/pkg/redis"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-redis/internal/env"
-	"operators.kloudlite.io/operators/msvc-redis/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -220,7 +220,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 			templates.Secret, map[string]any{
 				"name":       secretName,
 				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"owner-refs": obj.GetOwnerReferences(),
 				"labels": map[string]string{
 					constants.MsvcNameKey:  obj.Spec.MsvcRef.Name,
 					constants.IsMresOutput: "true",

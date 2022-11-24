@@ -36,7 +36,9 @@ func (c *ClusterService) GetEnsuredLabels() map[string]string {
 }
 
 func (c *ClusterService) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ClusterService").String(),
+	}
 }
 
 // +kubebuilder:object:root=true
