@@ -41,7 +41,9 @@ func (d *Database) GetEnsuredLabels() map[string]string {
 }
 
 func (d *Database) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Database").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

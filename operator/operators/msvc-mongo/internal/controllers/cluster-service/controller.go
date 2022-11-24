@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
 	"operators.kloudlite.io/pkg/conditions"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
@@ -21,7 +22,6 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -133,7 +133,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.ClusterSe
 				"name":       secretName,
 				"namespace":  obj.Namespace,
 				"labels":     obj.GetLabels(),
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
+				"owner-refs": obj.GetOwnerReferences(),
 				"string-data": map[string]string{
 					"ROOT_PASSWORD": rootPassword,
 					// TODO: user
@@ -145,7 +145,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.ClusterSe
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
@@ -194,7 +194,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
 

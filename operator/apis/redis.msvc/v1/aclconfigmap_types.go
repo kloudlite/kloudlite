@@ -39,7 +39,9 @@ func (cfg *ACLConfigMap) GetEnsuredLabels() map[string]string {
 }
 
 func (cfg *ACLConfigMap) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ACLConfigMap").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

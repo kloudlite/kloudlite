@@ -128,6 +128,14 @@ var (
 		Kind:       "Edge",
 		APIVersion: "infra.kloudlite.io/v1",
 	}
+	CloudProviderType = metav1.TypeMeta{
+		Kind:       "CloudProvider",
+		APIVersion: "infra.kloudlite.io/v1",
+	}
+	DeviceType = metav1.TypeMeta{
+		Kind:       "Device",
+		APIVersion: "management.kloudlite.io/v1",
+	}
 
 	HelmAwsEbsCsiKind = metav1.TypeMeta{
 		Kind:       "AwsEbsCsiDriver",

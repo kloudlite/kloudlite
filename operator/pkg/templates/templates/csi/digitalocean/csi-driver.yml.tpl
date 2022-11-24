@@ -3,8 +3,33 @@
 {{- $nodeSelector := get . "node-selector" | default dict -}}
 {{/*{{- $tolerations := get . "tolerations" | default list -}}*/}}
 {{- $ownerRefs := get . "owner-refs" -}}
-{{- $doSecretName := get . "do-secret-name" -}}
-{{- $doSecretKey := get . "do-secret-key" -}}
+{{- $doAccessToken := get . "do-access-token" -}}
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cluster-svc-account
+  namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML| nindent 4 }}
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{$namespace}}-cluster-svc-account-rb
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: cluster-svc-account
+    namespace: {{$namespace}}
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: ""
+
+---
 
 apiVersion: csi.helm.kloudlite.io/v1
 kind: DigitaloceanCSIDriver
@@ -15,11 +40,10 @@ metadata:
 spec:
   name: {{$name}}
   namespace: {{$namespace}}
-  serviceAccountName: "kloudlite-cluster-svc-account"
+  serviceAccountName: "cluster-svc-account"
+  driverName: "{{$name}}"
   digitalocean:
-    accessToken:
-      secretName: {{$doSecretName}}
-      secretKey: {{$doSecretKey}}
+    accessToken: {{$doAccessToken}}
 
   controller:
     nodeSelector: {{$nodeSelector | toYAML | nindent 6 }}

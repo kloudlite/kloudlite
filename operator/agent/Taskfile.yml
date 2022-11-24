@@ -28,3 +28,6 @@ tasks:
     cmds:
       - docker buildx build --build-context project=../ -t {{.Image}} .
       - docker push {{.Image}}
+
+  build:
+    `

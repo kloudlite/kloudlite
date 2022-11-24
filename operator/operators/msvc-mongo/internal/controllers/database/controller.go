@@ -10,16 +10,17 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
+	"operators.kloudlite.io/operators/msvc-mongo/internal/types"
 	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/errors"
 	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/kubectl"
 	"operators.kloudlite.io/pkg/logging"
 	libMongo "operators.kloudlite.io/pkg/mongo"
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -29,10 +30,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -212,13 +214,14 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			templates.Secret, map[string]any{
 				"name":       secretName,
 				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"owner-refs": obj.GetOwnerReferences(),
 				"string-data": types.MresOutput{
 					Username: obj.Name,
 					Password: dbPasswd,
 					Hosts:    msvcOutput.Hosts,
-					DbName:   obj.Name,
-					URI:      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, msvcOutput.Hosts, obj.Name),
+					// DbName:   obj.Name,
+					DbName: obj.Spec.ResourceName,
+					URI:    fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, msvcOutput.Hosts, obj.Spec.ResourceName),
 				},
 			},
 		)
@@ -226,7 +229,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b2); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
@@ -301,6 +304,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.Database{})
 	builder.Owns(&corev1.Secret{})

@@ -48,7 +48,9 @@ func (k *Kibana) GetEnsuredLabels() map[string]string {
 }
 
 func (k *Kibana) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Kibana").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

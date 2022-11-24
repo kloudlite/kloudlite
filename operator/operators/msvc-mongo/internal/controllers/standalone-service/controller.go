@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
+	"operators.kloudlite.io/operators/msvc-mongo/internal/types"
 	"operators.kloudlite.io/pkg/conditions"
 	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/errors"
@@ -25,8 +27,6 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -108,6 +108,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.reconHelmSecret(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.reconHelm(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -149,7 +153,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 				"name":       secretName,
 				"namespace":  obj.Namespace,
 				"labels":     obj.GetLabels(),
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
+				"owner-refs": obj.GetOwnerReferences(),
 				"string-data": types.MsvcOutput{
 					RootPassword: rootPassword,
 					Hosts:        strings.Join(hosts, ","),
@@ -162,7 +166,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 

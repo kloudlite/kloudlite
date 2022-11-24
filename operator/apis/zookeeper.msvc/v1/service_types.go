@@ -1,29 +1,28 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/pkg/constants"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// ServiceSpec defines the desired state of Service
 type ServiceSpec struct {
-	CloudProvider ct.CloudProvider  `json:"cloudProvider"`
-	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
+	Region       string              `json:"region"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=1
 	ReplicaCount int          `json:"replicaCount,omitempty"`
-	Storage      ct.Storage   `json:"storage"`
 	Resources    ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Service is the Schema for the services API
 type Service struct {
@@ -43,7 +42,9 @@ func (s *Service) GetEnsuredLabels() map[string]string {
 }
 
 func (s *Service) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Service").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

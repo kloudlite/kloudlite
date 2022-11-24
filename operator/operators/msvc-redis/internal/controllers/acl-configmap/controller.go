@@ -8,14 +8,14 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-redis/internal/env"
+	"operators.kloudlite.io/operators/msvc-redis/internal/types"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
 	"operators.kloudlite.io/pkg/logging"
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-redis/internal/env"
-	"operators.kloudlite.io/operators/msvc-redis/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -89,7 +89,7 @@ func (r *Reconciler) reconRedisConfigmap(req *rApi.Request[*redisMsvcv1.ACLConfi
 			templates.RedisACLConfigMap, map[string]any{
 				"name":       obj.Name,
 				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"owner-refs": obj.GetOwnerReferences(),
 			},
 		)
 		if err != nil {
