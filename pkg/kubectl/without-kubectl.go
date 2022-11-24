@@ -92,6 +92,61 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
 	return nil
 }
 
+func (yc *YAMLClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
+	jYamls := bytes.Join(yamls, []byte("\n---\n"))
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
+	for {
+		var rawObj runtime.RawExtension
+		if err := decoder.Decode(&rawObj); err != nil {
+			if err != io.EOF {
+				return err
+			}
+			break
+		}
+
+		if rawObj.Raw == nil {
+			continue
+		}
+
+		obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
+		if err != nil {
+			return err
+		}
+		unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		if err != nil {
+			// log.Fatal(err)
+			return err
+		}
+
+		unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
+
+		var dri dynamic.ResourceInterface
+
+		mapping, err := yc.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if err != nil {
+			// log.Fatal(err)
+			return err
+		}
+		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+			if unstructuredObj.GetNamespace() == "" {
+				unstructuredObj.SetNamespace("default")
+			}
+			dri = yc.dynamicClient.Resource(mapping.Resource).Namespace(unstructuredObj.GetNamespace())
+		} else {
+			dri = yc.dynamicClient.Resource(mapping.Resource)
+		}
+
+		if err := dri.Delete(ctx, unstructuredObj.GetName(), metav1.DeleteOptions{}); err != nil {
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 type Restartable string
 
 const (

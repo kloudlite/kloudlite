@@ -12,11 +12,15 @@ kind: ServiceAccount
 metadata:
   name: cluster-svc-account
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML |nindent 4}}
+
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: {{$namespace}}-cluster-svc-account-rb
+  ownerReferences: {{$ownerRefs | toYAML |nindent 4}}
 subjects:
   - kind: ServiceAccount
     name: cluster-svc-account
@@ -29,14 +33,6 @@ roleRef:
 
 ---
 
-apiVersion: "storage.k8s.io/v1"
-kind: CSIDriver
-metadata:
-  name: ebs.csi.aws.com
-spec:
-  attachRequired: true
-  podInfoOnMount: true
----
 apiVersion: csi.helm.kloudlite.io/v1
 kind: AwsEbsCsiDriver
 metadata:
@@ -45,6 +41,7 @@ metadata:
   ownerReferences: {{$ownerRefs | toYAML |nindent 4}}
 spec:
   fullnameOverride: {{$name}}
+  driverName: {{$name}}
   controller:
     replicaCount: 1
     env:
@@ -52,6 +49,8 @@ spec:
         value: {{$awsKey}}
       - name: AWS_SECRET_ACCESS_KEY
         value: {{$awsSecret}}
+      - name: CSI_DRIVER_NAME
+        value: "{{$name}}"
     serviceAccount:
       create: false
       name: "cluster-svc-account"
@@ -64,6 +63,13 @@ spec:
       - effect: NoExecute
         operator: Exists
   node:
+    env:
+      - name: AWS_ACCESS_KEY_ID
+        value: {{$awsKey}}
+      - name: AWS_SECRET_ACCESS_KEY
+        value: {{$awsSecret}}
+      - name: CSI_DRIVER_NAME
+        value: "{{$name}}"
     tolerateAllTaints: false
     {{- if $nodeSelector }}
     nodeSelector: {{$nodeSelector | toYAML| nindent 6}}

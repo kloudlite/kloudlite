@@ -11,6 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-mysql/internal/env"
+	"operators.kloudlite.io/operators/msvc-mysql/internal/types"
 	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/errors"
 	fn "operators.kloudlite.io/pkg/functions"
@@ -20,8 +22,6 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-mysql/internal/env"
-	"operators.kloudlite.io/operators/msvc-mysql/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -226,7 +226,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 			templates.Secret, map[string]any{
 				"name":       accessSecretName,
 				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"owner-refs": obj.GetOwnerReferences(),
 				"string-data": types.MresOutput{
 					Username: dbUsername,
 					Password: dbPasswd,

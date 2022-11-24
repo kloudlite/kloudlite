@@ -16,6 +16,7 @@ import (
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
+	env2 "operators.kloudlite.io/operators/msvc-n-mres/internal/env"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
 	"operators.kloudlite.io/pkg/harbor"
@@ -24,7 +25,6 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	env2 "operators.kloudlite.io/operators/msvc-n-mres/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

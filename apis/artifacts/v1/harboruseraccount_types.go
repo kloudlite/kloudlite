@@ -2,12 +2,13 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/harbor"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
 
 type OperatorProps struct {
-	HarborUser       *harbor.User  `json:"harborUser,omitempty"`
+	HarborUser *harbor.User `json:"harborUser,omitempty"`
 }
 
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
@@ -45,7 +46,9 @@ func (h *HarborUserAccount) GetEnsuredLabels() map[string]string {
 }
 
 func (h *HarborUserAccount) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("HarborUserAccount").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

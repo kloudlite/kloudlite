@@ -3,6 +3,7 @@ package v1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
+	"operators.kloudlite.io/pkg/constants"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
 
@@ -37,7 +38,9 @@ func (adm *Admin) GetEnsuredLabels() map[string]string {
 }
 
 func (adm *Admin) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Admin").String(),
+	}
 }
 
 // +kubebuilder:object:root=true

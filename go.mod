@@ -13,7 +13,7 @@ require (
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/influxdata/influxdb-client-go/v2 v2.9.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
-	github.com/onsi/ginkgo/v2 v2.5.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.5.0
 	github.com/onsi/gomega v1.24.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/twmb/franz-go v1.6.0
@@ -30,8 +30,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.13.0
 	sigs.k8s.io/yaml v1.3.0
 )
-
-require github.com/onsi/ginkgo v1.16.5
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
@@ -86,7 +84,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.13.0 // indirect
@@ -119,7 +116,6 @@ require (
 	google.golang.org/genproto v0.0.0-20220624142145-8cd45d7dbd1f // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.25.2 // indirect
