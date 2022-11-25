@@ -21,10 +21,10 @@ func (d *domain) GetApp(ctx context.Context, appId repos.ID) (*entities.App, err
     return nil, err
   }
 
-  err = d.checkProjectAccess(ctx, app.ProjectId, ReadProject)
-  if err != nil {
-    return nil, err
-  }
+  // err = d.checkProjectAccess(ctx, app.ProjectId, ReadProject)
+  // if err != nil {
+  //   return nil, err
+  // }
   return app, nil
 }
 func (d *domain) GetApps(ctx context.Context, projectID repos.ID) ([]*entities.App, error) {
