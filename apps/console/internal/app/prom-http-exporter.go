@@ -48,18 +48,18 @@ const (
   Memory PromMetricsType = "memory"
 )
 
-func getPromQuery(resType PromMetricsType, name string) string {
+func getPromQuery(resType PromMetricsType, namespace string, name string) string {
   switch resType {
   case Memory:
-    return fmt.Sprintf(`sum(avg_over_time(container_memory_working_set_bytes{pod =~ "%s.*", container != ""} [30s])) /1024/1024`, name)
+    return fmt.Sprintf(`sum(avg_over_time(container_memory_working_set_bytes{pod=~"%s.*",container!="",namespace="%s"}[30s])) /1024/1024`, name, namespace)
   case Cpu:
-    // 		return fmt.Sprintf(
-    // 			`
+    // return fmt.Sprintf(
+    //   `
     // 		sum(rate(container_cpu_usage_seconds_total{pod=~"^%s.*", container!=""}[2m])) by (pod, container) /
-    // sum(container_spec_cpu_quota{pod=~"^%s.*", container!=""}/container_spec_cpu_period{pod=~"^%s.*", container!=""}) by (pod, container) * 1000
+    // sum(container_spec_cpu_quota{pod=~"^%s.*", container!=""}/container_spec_cpu_period{pod=~"^%s.*", container=!""}) by (pod, container) * 1000
     // 		`, name, name, name,
-    // 		)
-    return fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{container!="", pod=~"%s.*"}[2m]) * 60) * 1000`, name)
+    // )
+    return fmt.Sprintf(`sum without(cpu) (rate(container_cpu_usage_seconds_total{container!="",pod=~"%s.*",namespace="%s"}[1m])) * 1000`, name, namespace)
   }
   return ""
 }
@@ -107,7 +107,7 @@ func metricsQuerySvc(app *PromMetricsHttpServer, promOpts *PrometheusOpts, d dom
         &finance.GetAttachedClusterIn{AccountId: string(project.AccountId)},
       )
 
-      promQuery := getPromQuery(PromMetricsType(metricsType), app.Name)
+      promQuery := getPromQuery(PromMetricsType(metricsType), strings.ToLower(app.Namespace), strings.ToLower(app.Name))
       if promQuery == "" {
         return errors.Newf("could not build prom query, invalid (metricsType=%s or name=%s)", metricsType, app.Name)
       }
@@ -129,7 +129,7 @@ func metricsQuerySvc(app *PromMetricsHttpServer, promOpts *PrometheusOpts, d dom
       t := time.Now()
       qp.Add("start", fmt.Sprintf("%v", t.Add(-2*24*time.Hour).Unix()))
       qp.Add("end", fmt.Sprintf("%v", t.Unix()))
-      qp.Add("step", "900") // 15 minute
+      qp.Add("step", "700") // 15 minute
 
       if promOpts.BasicAuthPassword != "" {
         username := func() string {
@@ -142,6 +142,8 @@ func metricsQuerySvc(app *PromMetricsHttpServer, promOpts *PrometheusOpts, d dom
       }
 
       req.URL.RawQuery = qp.Encode()
+
+      fmt.Println(req.URL.String())
 
       resp, err := http.DefaultClient.Do(req)
       if err != nil {
