@@ -15,7 +15,14 @@ spec:
     singular: service
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: Service is the Schema for the services API
@@ -33,7 +40,6 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServiceSpec defines the desired state of Service
             properties:
               nodeSelector:
                 additionalProperties:

@@ -1,7 +1,8 @@
-{{- $obj := get . "obj"  -}}
-{{- $ownerRefs := get . "owner-refs"  -}}
-{{- $storageClass := get . "storage-class"  -}}
-{{- $rootPassword := get . "root-password"  -}}
+{{- $obj := get . "obj" -}}
+{{- $ownerRefs := get . "owner-refs" -}}
+{{- $storageClass := get . "storage-class" -}}
+{{- $rootPassword := get . "root-password" -}}
+{{- $helmSecret := get . "helm-secret" -}}
 
 {{- with $obj }}
 {{- /* gotype: operators.kloudlite.io/apis/zookeeper.msvc/v1.Service */ -}}
@@ -39,13 +40,14 @@ spec:
     enabled: true
     accessModes:
       - ReadWriteOnce
-    size: {{.Spec.Storage.Size}}
+    size: {{.Spec.Resources.Storage.Size}}
 
   auth:
     client:
-      enabled: true
-      clientUser: "root"
-      clientPassword: "{{$rootPassword}}"
-      serverUsers: "root"
-      serverPasswords: "{{$rootPassword}}"
+      enabled: false
+{{/*      existingSecret: {{$helmSecret}}*/}}
+{{/*      clientUser: "root"*/}}
+{{/*      clientPassword: "{{$rootPassword}}"*/}}
+{{/*      serverUsers: "root"*/}}
+{{/*      serverPasswords: "{{$rootPassword}}"*/}}
 {{- end}}

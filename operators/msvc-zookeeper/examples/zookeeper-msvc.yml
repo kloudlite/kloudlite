@@ -1,0 +1,16 @@
+apiVersion: zookeeper.msvc.kloudlite.io/v1
+kind: Service
+metadata:
+  name: sample-zookeeper
+  namespace: default
+spec:
+  region: reg-gqgunj1omuuolw2rzx-7dh-yre3h
+  replicaCount: 1
+  resources:
+    cpu:
+      max: 500m
+      min: 500m
+    memory: 500Mi
+    storage:
+      size: 1Gi
+      storageClass: local-path
