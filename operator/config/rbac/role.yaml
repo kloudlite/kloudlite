@@ -58,6 +58,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - primaryclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - primaryclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - primaryclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - crds.kloudlite.io
   resources:
   - apps

@@ -1,13 +1,14 @@
 package env
 
 import (
-	"time"
 	"github.com/codingconcepts/env"
+	"time"
 )
 
 type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
+	GithubToken             string        `env:"GITHUB_TOKEN"`
 }
 
 func GetEnvOrDie() *Env {

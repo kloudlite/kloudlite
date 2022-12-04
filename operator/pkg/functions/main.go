@@ -12,7 +12,6 @@ import (
 	"regexp"
 	"strings"
 
-	"golang.org/x/exp/constraints"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -165,6 +164,19 @@ func MapContains[T comparable](destination map[string]T, source map[string]T) bo
 	return true
 }
 
+func MapEqual[K comparable, V comparable](first map[K]V, second map[K]V) bool {
+	if len(first) != len(second) {
+		return false
+	}
+
+	for k := range first {
+		if second[k] != first[k] {
+			return false
+		}
+	}
+	return true
+}
+
 func NN(namespace, name string) types.NamespacedName {
 	return types.NamespacedName{Namespace: namespace, Name: name}
 }
@@ -194,15 +206,6 @@ func New[T any](v T) *T {
 	return &v
 }
 
-func Contains[T constraints.Ordered](arr []T, item T) bool {
-	for _, v := range arr {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
-
 func Sha1Sum(b []byte) string {
 	hash := sha1.New()
 	hash.Write(b)
@@ -227,4 +230,20 @@ func Exec(command ...string) (err error, stdout *bytes.Buffer, stderr *bytes.Buf
 		return err, stdout, stderr
 	}
 	return nil, stdout, stderr
+}
+
+func Filter[T comparable](from []T, items []T, filterFunc func(fromItem T, targetItem T) bool) []T {
+	tm := make(map[T]bool, len(items))
+	result := make([]T, 0, len(items))
+
+	for i := range items {
+		tm[items[i]] = true
+	}
+
+	for i := range from {
+		if tm[from[i]] {
+			result = append(result, from[i])
+		}
+	}
+	return result
 }
