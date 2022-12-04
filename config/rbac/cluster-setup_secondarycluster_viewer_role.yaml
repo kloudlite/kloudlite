@@ -1,0 +1,20 @@
+# permissions for end users to view secondaryclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secondarycluster-viewer-role
+rules:
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - secondaryclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - secondaryclusters/status
+  verbs:
+  - get

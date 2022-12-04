@@ -1,4 +1,4 @@
-.GO*
+.go
 
 # Binaries for programs and plugins
 *.exe
@@ -36,3 +36,5 @@ helm-charts
 
 .release/
 .tmp
+
+dist/
