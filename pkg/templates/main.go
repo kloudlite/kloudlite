@@ -179,7 +179,7 @@ const (
 	DigitaloceanCSIDriver    templateFile = "templates/csi/digitalocean/csi-driver.yml.tpl"
 	DigitaloceanStorageClass templateFile = "templates/csi/digitalocean/storage-class.yml.tpl"
 
-	ClusterIssuer templateFile = "templates/cluster-issuer.tpl.yml"
+	ClusterIssuer templateFile = "templates/cluster-issuer.yml.tpl"
 )
 
 var CoreV1 = struct {

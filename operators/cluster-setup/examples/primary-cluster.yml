@@ -1,0 +1,66 @@
+apiVersion: cluster-setup.kloudlite.io/v1
+kind: PrimaryCluster
+metadata:
+  name: main
+spec:
+  imagePullSecrets:
+    - name: kloudlite-docker-registry
+      namespace: kube-system
+  loki:
+    s3:
+      awsAccessKeyId: ***REMOVED***
+      awsSecretAccessKey: ***REMOVED***
+      bucketName: first-one
+      endpoint: s3.ap-northeast-1.wasabisys.com
+    resources:
+      cpu:
+        min: 100m
+        max: 200m
+      memory: 200Mi
+
+  prometheus:
+    resources:
+      cpu:
+        min: 1200m
+        max: 1800m
+      memory: 2000Mi
+      storage:
+        size: 2Gi
+        storageClass: local-path
+
+  certManager:
+    nodeSelector:
+      kloudlite.io/master: "true"
+    tolerations:
+      - key: "kloudite.io/master"
+        operator: "Equal"
+        effect: "NoSchedule"
+        value: "true"
+
+    clusterIssuer:
+      name: kl-cert-issuer
+      acmeEmail: nxtcoder17@gmail.com
+#      cloudflare:
+#        secretKeyRef:
+#          name:
+#          namespace:
+#          key:
+#        dnsNames:
+#          - '*.kloudlite.io'
+      ingressClass: "ingress-nginx"
+
+  ingress:
+    className: ingress-nginx
+    resources:
+      cpu:
+        min: 100m
+        max: 200m
+      memory: 200Mi
+
+  operators:
+    crds:
+      repo: kloudlite/operator
+      tag: v1.0.4
+      artifacts:
+        - crds.yml
+        - primary-operators.yml

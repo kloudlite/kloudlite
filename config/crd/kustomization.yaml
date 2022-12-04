@@ -38,4 +38,6 @@ resources:
 - bases/elasticsearch.msvc.kloudlite.io_kibanas.yaml
 - bases/extensions.kloudlite.io_edgewatchers.yaml
 - bases/extensions.kloudlite.io_edgeworkers.yaml
+- bases/cluster-setup.kloudlite.io_primaryclusters.yaml
+- bases/cluster-setup.kloudlite.io_secondaryclusters.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

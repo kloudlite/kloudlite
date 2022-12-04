@@ -68,4 +68,6 @@ resources:
 - elasticsearch.msvc_v1_kibana.yaml
 - extensions_v1_edgewatcher.yaml
 - extensions_v1_edgeworker.yaml
+- cluster-setup_v1_primarycluster.yaml
+- cluster-setup_v1_secondarycluster.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

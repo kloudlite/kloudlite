@@ -400,4 +400,20 @@ resources:
   kind: EdgeWorker
   path: operators.kloudlite.io/apis/extensions/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: cluster-setup
+  kind: PrimaryCluster
+  path: operators.kloudlite.io/apis/cluster-setup/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: cluster-setup
+  kind: SecondaryCluster
+  path: operators.kloudlite.io/apis/cluster-setup/v1
+  version: v1
 version: "3"

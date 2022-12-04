@@ -1,0 +1,24 @@
+# permissions for end users to edit primaryclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: primarycluster-editor-role
+rules:
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - primaryclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - primaryclusters/status
+  verbs:
+  - get

@@ -77,7 +77,7 @@ spec:
             {{$env | toYAML | nindent 12}}
             {{- end}}
           {{if $envFrom }}
-          envFrom: {{$envFrom |toYAML| nindent 13}}
+          envFrom: {{$envFrom | toYAML | nindent 13}}
           {{- end}}
 {{/*            - secretRef:*/}}
 {{/*                name: operator-env*/}}

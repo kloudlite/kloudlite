@@ -44,7 +44,14 @@ tasks:
 
   yaml:operator:
     summary: |+
-      env `ENV_NAME`, `IMAGE_TAG` need to be injected from shell while apply these yamls
+      template args
+        - Namespace
+        - EnvName
+        - ImageTag
+        - ImagePullPolicy
+        - SvcAccountName
+      
+      need to be provided while applying this generated manifest
 
       ###
       .securityContext.capabilities.drop=["ALL"] |
@@ -54,20 +61,25 @@ tasks:
     preconditions:
       - sh: '[ -n "{{.Name}}" ]'
         msg: 'env Name must be set'
-      - sh: '[ -n "{{.Dir}}" ]'
-        msg: 'env var Dir must be set'
-
+#      - sh: '[ -n "{{.Dir}}" ]'
+#        msg: 'env var Dir must be set'
+#
     vars:
 #      Image: "{{.dockerRegistry}}/kloudlite/operators/${ENV_NAME}/{{.Name}}:${IMAGE_TAG}"
-      Image: '{{ printf "%s/kloudlite/operators/{{.ENV_NAME}}/%s:{{.IMAGE_TAG}}" .dockerRegistry .Name }}'
-      Namespace: kl-init-operators
-      SvcAccountName: kloudlite-cluster-svc-account
-      ImagePullPolicy: '{{ printf "{{.IMAGE_PULL_POLICY}}" }}'
+#      Image: '{{ printf "%s/kloudlite/operators/{{.ENV_NAME}}/%s:{{.IMAGE_TAG}}" .dockerRegistry .Name }}'
+      Image: '{{ printf "%s/kloudlite/operators/{{.EnvName}}/%s:{{.ImageTag}}" .dockerRegistry .Name }}'
+      Namespace: '{{ printf "{{.Namespace}}" }}'
+#      SvcAccountName: kloudlite-cluster-svc-account
+      SvcAccountName: '{{ printf "{{.SvcAccountName}}" }}'
+#      ImagePullPolicy: '{{ printf "{{.IMAGE_PULL_POLICY}}" }}'
+      ImagePullPolicy: '{{ printf "{{.ImagePullPolicy}}" }}'
       OverrideFile: "./operators/{{.Name}}/overrides.yml"
+    silent: true
     env:
       Name: "{{.Name}}"
       Namespace: "{{.Namespace}}"
-      SvcAccountName: kloudlite-cluster-svc-account
+#      SvcAccountName: kloudlite-cluster-svc-account
+      SvcAccountName: "{{.SvcAccountName}}"
       Image: "{{.Image}}"
       ImagePullPolicy: "{{.ImagePullPolicy}}"
     cmds:
@@ -76,9 +88,14 @@ tasks:
         [ -f "{{.OverrideFile}}" ] && {
            setArgs=$(cat "{{.OverrideFile}}" | yq -r 'to_entries|map("--set \(.key)=###\(.value)###") | join(" ")' | sed "s/###/'/g" )
         }
-        outputName="{{.Dir}}/{{.Name}}.yml"
-        echo "saving to file: $outputName"
-        eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs > $outputName
+        
+        if [[ -z "{{.Dir}}" ]]; then
+          eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs
+        else
+          outputName="{{.Dir}}/{{.Name}}.yml"
+          eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs > $outputName
+          echo "saving to file: $outputName"
+        fi
 #       - |+
 #         export PATH="$PWD/bin:$PATH"
 #
@@ -116,7 +133,7 @@ tasks:
     cmds:
       - |+
         outputDir=$(mktemp -d)
-        echo "outputDir: $outputDir"
+        #echo "outputDir: $outputDir"
         for dir in $(ls -d ./operators/*/)
         do
           [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
@@ -127,12 +144,13 @@ tasks:
     cmds:
       - |+
         outputDir=$(mktemp -d)
-        echo "outputDir: $outputDir"
+        #echo "outputDir: $outputDir"
         #for dir in $(ls -d ./operators/*/)
         dirs=("./operators/app-n-lambda" "./operators/msvc-mongo" "./operators/msvc-redis" "./operators/msvc-redpanda" "./operators/routers" "./operators/extensions" "./operators/csi-drivers")
         for dir in "${dirs[@]}"
         do
-          task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
+          # task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
+          task yaml:operator Name="$(basename $dir)"
         done
 
   gobuild:operator:
