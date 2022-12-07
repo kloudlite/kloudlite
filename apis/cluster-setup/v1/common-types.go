@@ -23,6 +23,7 @@ type PrometheusValues struct {
 }
 
 // +kubebuilder:object:generate=true
+
 type Cloudflare struct {
 	Email        string          `json:"email"`
 	SecretKeyRef ct.SecretKeyRef `json:"secretKeyRef"`
@@ -59,9 +60,11 @@ type GithubReleaseArtifacts struct {
 	// Github Release Tag
 	Tag string `json:"tag"`
 	// list of artifact names that we want to refer
-	Artifacts []string `json:"artifacts"`
+	Artifacts []string `json:"artifacts,omitempty"`
+
+	TokenSecret SecretKeyReference `json:"ghTokenSecret"`
 }
 
 type Operators struct {
-	CRDs GithubReleaseArtifacts `json:"crds"`
+	Manifests []GithubReleaseArtifacts `json:"manifests"`
 }

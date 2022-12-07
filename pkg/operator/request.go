@@ -2,6 +2,8 @@ package operator
 
 import (
 	"context"
+	"github.com/fatih/color"
+	"go.uber.org/zap"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,11 +21,12 @@ import (
 )
 
 type Request[T Resource] struct {
-	ctx    context.Context
-	client client.Client
-	Object T
-	Logger logging.Logger
-	locals map[string]any
+	ctx            context.Context
+	client         client.Client
+	Object         T
+	Logger         logging.Logger
+	internalLogger logging.Logger
+	locals         map[string]any
 }
 
 func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName, resource T) (*Request[T], error) {
@@ -36,11 +39,12 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 	}
 
 	return &Request[T]{
-		ctx:    ctx,
-		client: c,
-		Object: resource,
-		Logger: logger.WithName(nn.String()).WithKV("NN", nn.String()),
-		locals: map[string]any{},
+		ctx:            ctx,
+		client:         c,
+		Object:         resource,
+		Logger:         logger.WithName(nn.String()).WithKV("NN", nn.String()),
+		internalLogger: logger.WithName(nn.String()).WithKV("NN", nn.String()).WithOptions(zap.AddCallerSkip(1)),
+		locals:         map[string]any{},
 	}, nil
 }
 
@@ -196,8 +200,18 @@ func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
 
 func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
 	obj := r.Object
-
 	ann := obj.GetAnnotations()
+
+	if v, ok := ann[constants.ResetCheckKey]; ok {
+		if _, ok2 := obj.GetStatus().Checks[v]; ok2 {
+			delete(obj.GetStatus().Checks, v)
+			if err := r.client.Status().Update(context.TODO(), obj); err != nil {
+				return stepResult.New().Err(err)
+			}
+			return r.Done().RequeueAfter(2 * time.Second)
+		}
+	}
+
 	if v := ann[constants.ClearStatusKey]; v == "true" {
 		delete(ann, constants.ClearStatusKey)
 		obj.SetAnnotations(ann)
@@ -217,7 +231,7 @@ func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
 		// obj.GetStatus().GeneratedVars = rawJson.RawJson{}
 
 		if err := r.client.Status().Update(context.TODO(), obj); err != nil {
-			return r.FailWithOpError(err)
+			return stepResult.New().Err(err)
 		}
 		return r.Done().RequeueAfter(2 * time.Second)
 	}
@@ -318,4 +332,19 @@ func (r *Request[T]) Finalize() stepResult.Result {
 	controllerutil.RemoveFinalizer(r.Object, constants.CommonFinalizer)
 	controllerutil.RemoveFinalizer(r.Object, constants.ForegroundFinalizer)
 	return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
+}
+
+func (r *Request[T]) LogPreCheck(checkName string) {
+	var blue = color.New(color.FgBlue).SprintFunc()
+	r.internalLogger.Infof(blue("[check] %-20s [status] %v"), checkName, r.Object.GetStatus().Checks[checkName].Status)
+}
+
+func (r *Request[T]) LogPostCheck(checkName string) {
+	check := r.Object.GetStatus().Checks[checkName]
+	if !check.Status {
+		var red = color.New(color.FgRed).SprintFunc()
+		r.internalLogger.Infof(red("[check] %-20s [status] %v [message] %v"), checkName, check.Status, check.Message)
+	}
+	var green = color.New(color.FgGreen).SprintFunc()
+	r.internalLogger.Infof(green("[check] %-20s [status] %v"), checkName, check.Status)
 }

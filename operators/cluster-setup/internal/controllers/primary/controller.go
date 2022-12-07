@@ -8,8 +8,11 @@ import (
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	certmanagerMetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"io"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"sigs.k8s.io/yaml"
+	"strings"
 	"time"
 
 	"github.com/mittwald/go-helm-client"
@@ -78,14 +81,20 @@ func areHelmValuesEqual(releaseValues map[string]any, templateValues []byte) boo
 }
 
 const (
-	NamespacesReady   string = "namespaces-ready"
-	SvcAccountsReady  string = "svc-accounts-ready"
-	LokiReady         string = "loki-ready"
-	PrometheusReady   string = "prometheus-ready"
-	CertManagerReady  string = "cert-manager-ready"
-	CertIssuerReady   string = "cert-issuer-ready"
-	IngressReady      string = "ingress-ready"
-	OperatorCRDsReady string = "operator-crds-ready"
+	NamespacesReady    string = "namespaces-ready"
+	SvcAccountsReady   string = "svc-accounts-ready"
+	LokiReady          string = "loki-ready"
+	GrafanaReady       string = "grafana-ready"
+	PrometheusReady    string = "prometheus-ready"
+	CertManagerReady   string = "cert-manager-ready"
+	CertIssuerReady    string = "cert-issuer-ready"
+	IngressReady       string = "ingress-ready"
+	OperatorCRDsReady  string = "operator-crds-ready"
+	MsvcAndMresReady   string = "msvc-and-mres-ready"
+	OperatorsEnvReady  string = "operator-env-ready"
+	KloudliteAPIsReady string = "kloudlite-apis-ready"
+	KloudliteWebReady  string = "kloudite-web-ready"
+	DefaultsPatched    string = "defaults-patched"
 )
 
 var (
@@ -130,7 +139,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	// TODO: initialize all checks here
-	if step := req.EnsureChecks(NamespacesReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(NamespacesReady, DefaultsPatched, SvcAccountsReady, LokiReady, GrafanaReady, PrometheusReady, CertManagerReady, CertIssuerReady, IngressReady, OperatorCRDsReady, MsvcAndMresReady, OperatorsEnvReady, KloudliteAPIsReady, KloudliteWebReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -139,6 +148,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -178,9 +191,93 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.ensureOperators(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureMsvcAndMres(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureKloudliteApis(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(DefaultsPatched)
+	defer req.LogPostCheck(DefaultsPatched)
+
+	if obj.Spec.SharedConstants == nil {
+		sharedC := v1.SharedConstants{
+			// mongo
+			MongoSvcName:  "mongo-svc",
+			AuthDbName:    "auth-db",
+			ConsoleDbName: "console-db",
+			CiDbName:      "ci-db",
+			DnsDbName:     "dns-db",
+			FinanceDbName: "finance-db",
+			IamDbName:     "iam-db",
+			CommsDbName:   "comms-db",
+
+			// redis
+			RedisSvcName:     "redis-svc",
+			AuthRedisName:    "auth-redis",
+			ConsoleRedisName: "console-redis",
+			CiRedisName:      "ci-redis",
+			DnsRedisName:     "dns-redis",
+			IamRedisName:     "iam-redis",
+			SocketRedisName:  "socket-redis",
+
+			// Apps api
+			AppAuthApi:       "auth-api",
+			AppConsoleApi:    "console-api",
+			AppCiApi:         "ci-api",
+			AppFinanceApi:    "finance-api",
+			AppCommsApi:      "comms-api",
+			AppDnsApi:        "dns-api",
+			AppIAMApi:        "iam-api",
+			AppJsEvalApi:     "js-eval-api",
+			AppGqlGatewayApi: "gateway",
+			AppWebhooksApi:   "webhooks",
+
+			// Apps web
+			AppAuthWeb:     "auth-web",
+			AppAccountsWeb: "accounts-web",
+			AppConsoleWeb:  "console-web",
+			AppSocketWeb:   "socket-web",
+
+			CookieDomain: obj.Spec.Domain,
+
+			// Secrets
+			OAuthSecretName: "oauth-secrets",
+
+			// Routers
+			AuthWebDomain: fmt.Sprintf("auth.%s", obj.Spec.Domain),
+		}
+
+		if *obj.Spec.SharedConstants != sharedC {
+			obj.Spec.SharedConstants = &sharedC
+			if err := r.Update(ctx, obj); err != nil {
+				return req.CheckFailed(DefaultsPatched, check, err.Error())
+			}
+			return req.Done().RequeueAfter(1 * time.Second)
+		}
+	}
+
+	check.Status = true
+	if check != checks[DefaultsPatched] {
+		checks[DefaultsPatched] = check
+		return req.UpdateStatus()
+	}
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
@@ -191,12 +288,14 @@ func (r *Reconciler) ensureNamespaces(req *rApi.Request[*v1.PrimaryCluster]) ste
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(NamespacesReady)
+	defer req.LogPostCheck(NamespacesReady)
+
 	for i := range namespacesList {
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
 			Name:            namespacesList[i],
 			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		},
-		}
+		}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
 			if ns.Labels == nil {
 				ns.Labels = make(map[string]string, 1)
@@ -204,7 +303,7 @@ func (r *Reconciler) ensureNamespaces(req *rApi.Request[*v1.PrimaryCluster]) ste
 			ns.Labels["kloudlite.io/cluster-installation"] = obj.Name
 			return nil
 		}); err != nil {
-			return req.CheckFailed(SvcAccountsReady, check, err.Error()).Err(nil)
+			return req.CheckFailed(NamespacesReady, check, err.Error()).Err(nil)
 		}
 	}
 
@@ -219,6 +318,9 @@ func (r *Reconciler) ensureNamespaces(req *rApi.Request[*v1.PrimaryCluster]) ste
 func (r *Reconciler) ensureSvcAccounts(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(SvcAccountsReady)
+	defer req.LogPostCheck(SvcAccountsReady)
 
 	for _, ps := range obj.Spec.ImgPullSecrets {
 		pullScrt, err := rApi.Get(ctx, r.Client, fn.NN(ps.Namespace, ps.Name), &corev1.Secret{})
@@ -307,6 +409,9 @@ func (r *Reconciler) ensureLoki(req *rApi.Request[*v1.PrimaryCluster]) stepResul
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(LokiReady)
+	defer req.LogPostCheck(LokiReady)
+
 	const releaseName = "loki"
 
 	helmCli, err := newHelmClient(r.restConfig, lc.NsMonitoring)
@@ -353,6 +458,9 @@ func (r *Reconciler) ensureLoki(req *rApi.Request[*v1.PrimaryCluster]) stepResul
 func (r *Reconciler) ensurePrometheus(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(PrometheusReady)
+	defer req.LogPostCheck(PrometheusReady)
 
 	const releaseName = "prometheus"
 
@@ -402,11 +510,14 @@ func (r *Reconciler) ensureGrafana(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(GrafanaReady)
+	defer req.LogPostCheck(GrafanaReady)
+
 	const releaseName = "grafana"
 
 	helmCli, err := newHelmClient(r.restConfig, lc.NsMonitoring)
 	if err != nil {
-		return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(GrafanaReady, check, err.Error()).Err(nil)
 	}
 
 	helmValues, err := helmCli.GetReleaseValues(releaseName, false)
@@ -416,7 +527,7 @@ func (r *Reconciler) ensureGrafana(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 
 	b, err := templates.Parse(templates.PrometheusValues, map[string]any{"prometheus-values": obj.Spec.PrometheusValues, "name": releaseName})
 	if err != nil {
-		return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(GrafanaReady, check, err.Error()).Err(nil)
 	}
 
 	if !areHelmValuesEqual(helmValues, b) {
@@ -424,7 +535,7 @@ func (r *Reconciler) ensureGrafana(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 			Name: "bitnami",
 			URL:  "https://charts.bitnami.com/bitnami",
 		}); err != nil {
-			return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
+			return req.CheckFailed(GrafanaReady, check, err.Error()).Err(nil)
 		}
 
 		if _, err := helmCli.InstallOrUpgradeChart(ctx, &helmclient.ChartSpec{
@@ -438,8 +549,8 @@ func (r *Reconciler) ensureGrafana(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 	}
 
 	check.Status = true
-	if check != checks[PrometheusReady] {
-		checks[PrometheusReady] = check
+	if check != checks[GrafanaReady] {
+		checks[GrafanaReady] = check
 		return req.UpdateStatus()
 	}
 	return req.Next()
@@ -448,6 +559,9 @@ func (r *Reconciler) ensureGrafana(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 func (r *Reconciler) ensureCertManager(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(CertManagerReady)
+	defer req.LogPostCheck(CertManagerReady)
 
 	const releaseName = "cert-manager"
 
@@ -496,6 +610,9 @@ func (r *Reconciler) ensureIngressNginx(req *rApi.Request[*v1.PrimaryCluster]) s
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(IngressReady)
+	defer req.LogPostCheck(IngressReady)
+
 	const releaseName = "ingress-nginx"
 
 	helmCli, err := newHelmClient(r.restConfig, lc.NsIngress)
@@ -542,6 +659,9 @@ func (r *Reconciler) ensureIngressNginx(req *rApi.Request[*v1.PrimaryCluster]) s
 func (r *Reconciler) ensureCertIssuer(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(CertIssuerReady)
+	defer req.LogPostCheck(CertIssuerReady)
 
 	clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.CertManagerValues.ClusterIssuer.Name), &certmanagerv1.ClusterIssuer{})
 	if err != nil {
@@ -590,58 +710,71 @@ func (r *Reconciler) ensureOperatorCRDs(req *rApi.Request[*v1.PrimaryCluster]) s
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(OperatorCRDsReady)
+	defer req.LogPostCheck(OperatorCRDsReady)
+
 	if check.Generation > checks[OperatorCRDsReady].Generation || !checks[OperatorCRDsReady].Status {
-		artifactsMap := make(map[string]bool, len(obj.Spec.Operators.CRDs.Artifacts))
-		for _, a := range obj.Spec.Operators.CRDs.Artifacts {
-			artifactsMap[a] = true
-		}
 
-		artifactIds := make([]int64, 0, len(artifactsMap))
-
-		httpReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://api.github.com/repos/%s/releases/tags/%s", obj.Spec.Operators.CRDs.Repo, obj.Spec.Operators.CRDs.Tag), nil)
-		httpReq.Header.Set("Authorization", fmt.Sprintf("token %s", r.Env.GithubToken))
-		if err != nil {
-			return req.CheckFailed(OperatorCRDsReady, check, err.Error()).Err(nil)
-		}
-
-		ghRelease, _, err := kHttp.Get[githubRelease](httpReq)
-
-		if ghRelease == nil {
-			return req.CheckFailed(OperatorCRDsReady, check, "github release not found").Err(nil)
-		}
-
-		for i := range ghRelease.Assets {
-			if artifactsMap[ghRelease.Assets[i].Name] {
-				artifactIds = append(artifactIds, ghRelease.Assets[i].Id)
+		for _, ghSource := range obj.Spec.Operators.Manifests {
+			artifactsMap := make(map[string]bool, len(ghSource.Artifacts))
+			for _, a := range ghSource.Artifacts {
+				artifactsMap[a] = true
 			}
-		}
 
-		for i := range artifactIds {
-			dReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://api.github.com/repos/%s/releases/assets/%d", obj.Spec.Operators.CRDs.Repo, artifactIds[i]), nil)
-			dReq.Header.Set("Authorization", fmt.Sprintf("token %s", r.Env.GithubToken))
+			artifactIds := make([]int64, 0, len(artifactsMap))
+
+			ghTokenScrt, err := rApi.Get(ctx, r.Client, fn.NN(ghSource.TokenSecret.Namespace, ghSource.TokenSecret.Name), &corev1.Secret{})
 			if err != nil {
-				return req.CheckFailed(OperatorCRDsReady, check, err.Error())
-			}
-			dReq.Header.Set("Accept", "application/octet-stream")
-			resp, err := http.DefaultClient.Do(dReq)
-			if err != nil {
-				return req.CheckFailed(OperatorCRDsReady, check, err.Error())
-			}
-			output, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return req.CheckFailed(OperatorCRDsReady, check, err.Error())
+				return req.CheckFailed(OperatorCRDsReady, check, err.Error()).Err(nil)
 			}
 
-			b, err := templates.ParseBytes(output, map[string]any{
-				"Namespace":       lc.NsOperators,
-				"SvcAccountName":  lc.ClusterSvcAccount,
-				"ImagePullPolicy": "Always",
-				"EnvName":         "production",
-				"ImageTag":        "v1.0.4",
-			})
+			ghToken := string(ghTokenScrt.Data[ghSource.TokenSecret.Key])
 
-			if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-				return req.CheckFailed(OperatorCRDsReady, check, err.Error())
+			httpReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://api.github.com/repos/%s/releases/tags/%s", ghSource.Repo, ghSource.Tag), nil)
+			httpReq.Header.Set("Authorization", fmt.Sprintf("token %s", ghToken))
+			if err != nil {
+				return req.CheckFailed(OperatorCRDsReady, check, err.Error()).Err(nil)
+			}
+
+			ghRelease, _, err := kHttp.Get[githubRelease](httpReq)
+
+			if ghRelease == nil {
+				return req.CheckFailed(OperatorCRDsReady, check, "github release not found").Err(nil)
+			}
+
+			for i := range ghRelease.Assets {
+				if artifactsMap[ghRelease.Assets[i].Name] {
+					artifactIds = append(artifactIds, ghRelease.Assets[i].Id)
+				}
+			}
+
+			for i := range artifactIds {
+				dReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://api.github.com/repos/%s/releases/assets/%d", ghSource.Repo, artifactIds[i]), nil)
+				dReq.Header.Set("Authorization", fmt.Sprintf("token %s", ghToken))
+				if err != nil {
+					return req.CheckFailed(OperatorCRDsReady, check, err.Error())
+				}
+				dReq.Header.Set("Accept", "application/octet-stream")
+				resp, err := http.DefaultClient.Do(dReq)
+				if err != nil {
+					return req.CheckFailed(OperatorCRDsReady, check, err.Error())
+				}
+				output, err := io.ReadAll(resp.Body)
+				if err != nil {
+					return req.CheckFailed(OperatorCRDsReady, check, err.Error())
+				}
+
+				b, err := templates.ParseBytes(output, map[string]any{
+					"Namespace":       lc.NsOperators,
+					"SvcAccountName":  lc.ClusterSvcAccount,
+					"ImagePullPolicy": "Always",
+					"EnvName":         "production",
+					"ImageTag":        "v1.0.4",
+				})
+
+				if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+					return req.CheckFailed(OperatorCRDsReady, check, err.Error())
+				}
 			}
 		}
 	}
@@ -656,19 +789,167 @@ func (r *Reconciler) ensureOperatorCRDs(req *rApi.Request[*v1.PrimaryCluster]) s
 
 func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
 	// operator, helm-operator and internal-operator
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(OperatorsEnvReady)
+	defer req.LogPostCheck(OperatorsEnvReady)
+
+	b, err := templates.Parse(templates.InternalOperatorEnv, map[string]any{
+		"namespace":       "kl-core",
+		"cluster-id":      obj.Spec.ClusterID,
+		"wildcard-domain": fmt.Sprintf("*.%s", obj.Spec.Domain),
+	})
+	if err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+	}
+
+	cfSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CloudflareCreds.SecretKeyRef.Namespace, obj.Spec.CloudflareCreds.SecretKeyRef.Name), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+	}
+
+	cfCertManagerScrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.CloudflareCreds.SecretKeyRef.Name, Namespace: lc.NsCertManager}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfCertManagerScrt, func() error {
+		if cfCertManagerScrt.Type != "" {
+			cfCertManagerScrt.Type = cfSecret.Type
+		}
+		cfCertManagerScrt.Data = cfSecret.Data
+		return nil
+	}); err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+	}
+
+	b, err = templates.Parse(templates.RouterOperatorEnv, map[string]any{
+		"namespace":               lc.NsOperators,
+		"cluster-wildcard-domain": fmt.Sprintf("*.%v", obj.Spec.Domain),
+		"cloudflare-email":        obj.Spec.CloudflareCreds.Email,
+		"cloudflare-secret-name":  cfCertManagerScrt.Name,
+	})
+	if err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error())
+	}
+
+	b, err = templates.Parse(templates.InternalOperatorEnv, map[string]any{
+		"namespace":       lc.NsOperators,
+		"cluster-id":      obj.Spec.ClusterID,
+		"wildcard-domain": obj.Spec.Domain,
+	})
+	if err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(OperatorsEnvReady, check, err.Error())
+	}
+
+	check.Status = true
+	if check != checks[OperatorsEnvReady] {
+		checks[OperatorsEnvReady] = check
+		return req.UpdateStatus()
+	}
 	return req.Next()
 }
 
-func (r *Reconciler) ensureMsvc(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
-	return req.Next()
-}
+func (r *Reconciler) ensureMsvcAndMres(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
 
-func (r *Reconciler) ensureMres(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
+	req.LogPreCheck(MsvcAndMresReady)
+	defer req.LogPostCheck(MsvcAndMresReady)
+
+	b, err := templates.Parse(templates.MongoMsvcAndMres, map[string]any{
+		"namespace":           lc.NsCore,
+		"local-storage-class": obj.Spec.StorageClass,
+		"region":              "master",
+	})
+	if err != nil {
+		return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
+	}
+
+	b, err = templates.Parse(templates.RedisMsvcAndMres, map[string]any{
+		"namespace":           lc.NsCore,
+		"local-storage-class": obj.Spec.StorageClass,
+		"region":              "master",
+	})
+	if err != nil {
+		return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[MsvcAndMresReady] {
+		checks[MsvcAndMresReady] = check
+		return req.UpdateStatus()
+	}
+
 	return req.Next()
 }
 
 func (r *Reconciler) ensureKloudliteApis(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(KloudliteAPIsReady)
+	defer req.LogPostCheck(KloudliteAPIsReady)
+
+	// patch oauth-secrets
+	oauthSecrets := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.OAuthCreds.Name, Namespace: obj.Spec.OAuthCreds.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, oauthSecrets, func() error {
+		if oauthSecrets != nil {
+			oauthSecrets.Data["GITHUB_CALLBACK_URL"] = []byte(strings.Replace(string(oauthSecrets.Data["GITHUB_CALLBACK_URL"]), "AUTH_WEB_DOMAIN", fmt.Sprintf("auth.%s", obj.Spec.Domain), 1))
+			oauthSecrets.Data["GITLAB_CALLBACK_URL"] = []byte(strings.Replace(string(oauthSecrets.Data["GITLAB_CALLBACK_URL"]), "AUTH_WEB_DOMAIN", fmt.Sprintf("auth.%s", obj.Spec.Domain), 1))
+			oauthSecrets.Data["GOOGLE_CALLBACK_URL"] = []byte(strings.Replace(string(oauthSecrets.Data["GOOGLE_CALLBACK_URL"]), "AUTH_WEB_DOMAIN", fmt.Sprintf("auth.%s", obj.Spec.Domain), 1))
+		}
+		return nil
+	}); err != nil {
+		return req.CheckFailed(KloudliteAPIsReady, check, err.Error()).Err(nil)
+	}
+
+	authApi, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.AppAuthApi), &crdsv1.App{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(KloudliteAPIsReady, check, err.Error()).Err(nil)
+		}
+	}
+
+	if authApi != nil || check.Generation > checks[KloudliteWebReady].Generation {
+		b, err := templates.Parse(templates.AuthApi, map[string]any{
+			"namespace":        lc.NsCore,
+			"image-auth-api":   fmt.Sprintf("registry.kloudlite.io/kloudlite/production/auth:v1.0.4"),
+			"shared-constants": obj.Spec.SharedConstants,
+		})
+		if err != nil {
+			return req.CheckFailed(KloudliteAPIsReady, check, err.Error()).Err(nil)
+		}
+
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+			return req.CheckFailed(KloudliteAPIsReady, check, err.Error()).Err(nil)
+		}
+	}
+
+	check.Status = true
+	if check != checks[KloudliteAPIsReady] {
+		checks[KloudliteAPIsReady] = check
+		return req.UpdateStatus()
+	}
 	return req.Next()
+
 }
 
 func (r *Reconciler) ensureKloudliteWebs(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
