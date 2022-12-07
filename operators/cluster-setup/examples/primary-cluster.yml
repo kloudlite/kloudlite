@@ -3,6 +3,16 @@ kind: PrimaryCluster
 metadata:
   name: main
 spec:
+  clusterId: dev
+  domain: "staged.kloudlite.io"
+  cloudflareCreds:
+    email: nxtcoder17@gmail.com
+    secretKeyRef:
+      name: cloudflare-zone-secret
+      namespace: kube-system
+      key: api-token
+    dnsNames:
+      - "*.staged.kloudlite.io"
   imagePullSecrets:
     - name: kloudlite-docker-registry
       namespace: kube-system
@@ -57,10 +67,36 @@ spec:
         max: 200m
       memory: 200Mi
 
+  oAuthCreds:
+    name: oauth-secrets
+    namespace: kube-system
+
   operators:
-    crds:
-      repo: kloudlite/operator
-      tag: v1.0.4
-      artifacts:
-        - crds.yml
-        - primary-operators.yml
+    manifests:
+      - repo: kloudlite/operator
+        tag: v1.0.4
+        ghTokenSecret:
+          name: kl-repo-gh-token
+          namespace: kube-system
+          key: "gh-token"
+        artifacts:
+#          - crds.yml
+          - primary-operators.yml
+      - repo: kloudlite/helm-operator
+        tag: v1.0.0
+        ghTokenSecret:
+          name: kl-repo-gh-token
+          namespace: kube-system
+          key: "gh-token"
+        artifacts:
+          - crds.yml
+          - operator.yml.tpl
+      - repo: kloudlite/internal_operator_v2
+        tag: v1.0.4
+        ghTokenSecret:
+          name: kl-repo-gh-token
+          namespace: kube-system
+          key: "gh-token"
+        artifacts:
+          - crds.yml
+          - operator.yml.tpl

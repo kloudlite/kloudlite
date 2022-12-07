@@ -69,6 +69,7 @@ const (
 	EdgeRouterNameKey    string = "kloudlite.io/edge-router.name"
 
 	ClearStatusKey string = "kloudlite.io/clear-status"
+	ResetCheckKey  string = "kloudlite.io/reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
 	RegionKey      string = "kloudlite.io/region"
 )

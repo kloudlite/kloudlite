@@ -133,6 +133,45 @@ spec:
                 required:
                 - clusterIssuer
                 type: object
+              cloudflareCreds:
+                properties:
+                  dnsNames:
+                    items:
+                      type: string
+                    type: array
+                  email:
+                    type: string
+                  secretKeyRef:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
+                required:
+                - dnsNames
+                - email
+                - secretKeyRef
+                type: object
+              clusterId:
+                type: string
+              domain:
+                type: string
+              harborAdminCreds:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               imagePullSecrets:
                 items:
                   properties:
@@ -287,28 +326,52 @@ spec:
                 - resources
                 - s3
                 type: object
+              oAuthCreds:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               operators:
                 properties:
-                  crds:
-                    properties:
-                      artifacts:
-                        description: list of artifact names that we want to refer
-                        items:
+                  manifests:
+                    items:
+                      properties:
+                        artifacts:
+                          description: list of artifact names that we want to refer
+                          items:
+                            type: string
+                          type: array
+                        ghTokenSecret:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        repo:
+                          description: Github Repo in form of <owner>/<rep-name>
                           type: string
-                        type: array
-                      repo:
-                        description: Github Repo in form of <owner>/<rep-name>
-                        type: string
-                      tag:
-                        description: Github Release Tag
-                        type: string
-                    required:
-                    - artifacts
-                    - repo
-                    - tag
-                    type: object
+                        tag:
+                          description: Github Release Tag
+                          type: string
+                      required:
+                      - ghTokenSecret
+                      - repo
+                      - tag
+                      type: object
+                    type: array
                 required:
-                - crds
+                - manifests
                 type: object
               prometheus:
                 properties:
@@ -346,10 +409,121 @@ spec:
                 required:
                 - resources
                 type: object
+              sharedConstants:
+                properties:
+                  appAccountsWeb:
+                    type: string
+                  appAuthApi:
+                    description: API
+                    type: string
+                  appAuthWeb:
+                    description: Web
+                    type: string
+                  appCiApi:
+                    type: string
+                  appCommsApi:
+                    type: string
+                  appConsoleApi:
+                    type: string
+                  appConsoleWeb:
+                    type: string
+                  appDnsApi:
+                    type: string
+                  appFinanceApi:
+                    type: string
+                  appGqlGatewayApi:
+                    type: string
+                  appIAMApi:
+                    type: string
+                  appJsEval:
+                    type: string
+                  appSocketWeb:
+                    type: string
+                  appWebhooksApi:
+                    type: string
+                  authDbName:
+                    type: string
+                  authRedisName:
+                    type: string
+                  authWebDomain:
+                    type: string
+                  ciDbName:
+                    type: string
+                  ciRedisName:
+                    type: string
+                  commsDbName:
+                    type: string
+                  consoleDbName:
+                    type: string
+                  consoleRedisName:
+                    type: string
+                  cookieDomain:
+                    type: string
+                  dnsDbName:
+                    type: string
+                  dnsRedisName:
+                    type: string
+                  financeDbName:
+                    type: string
+                  iamDbName:
+                    type: string
+                  iamRedisName:
+                    type: string
+                  mongoSvcName:
+                    description: Mongo
+                    type: string
+                  oauthSecretName:
+                    description: Secrets
+                    type: string
+                  redisSvcName:
+                    description: Redis
+                    type: string
+                  socketRedisName:
+                    type: string
+                required:
+                - appAccountsWeb
+                - appAuthApi
+                - appAuthWeb
+                - appCiApi
+                - appCommsApi
+                - appConsoleApi
+                - appConsoleWeb
+                - appDnsApi
+                - appFinanceApi
+                - appGqlGatewayApi
+                - appIAMApi
+                - appJsEval
+                - appSocketWeb
+                - appWebhooksApi
+                - authDbName
+                - authRedisName
+                - authWebDomain
+                - ciDbName
+                - ciRedisName
+                - commsDbName
+                - consoleDbName
+                - consoleRedisName
+                - cookieDomain
+                - dnsDbName
+                - dnsRedisName
+                - financeDbName
+                - iamDbName
+                - iamRedisName
+                - mongoSvcName
+                - oauthSecretName
+                - redisSvcName
+                - socketRedisName
+                type: object
+              storageClass:
+                type: string
             required:
+            - cloudflareCreds
+            - clusterId
+            - domain
             - imagePullSecrets
             - ingress
             - loki
+            - oAuthCreds
             - operators
             - prometheus
             type: object
