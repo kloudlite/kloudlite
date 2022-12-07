@@ -54,3 +54,18 @@ const (
 	CertIssuer         templateFile = "templates/cert-issuer.yml.tpl"
 	IngressNginxValues templateFile = "templates/ingress-nginx.yml.tpl"
 )
+
+const (
+	MongoMsvcAndMres templateFile = "templates/kl-mongo-svc-n-res.yml.tpl"
+	RedisMsvcAndMres templateFile = "templates/kl-redis-svc-n-res.yml.tpl"
+)
+
+const (
+	RouterOperatorEnv   templateFile = "templates/secrets/router-operator-env.yml.tpl"
+	InternalOperatorEnv templateFile = "templates/secrets/internal-operator-env.yml.tpl"
+	ProjectOperatorEnv  templateFile = "templates/secrets/project-operator-env.yml.tpl"
+)
+
+const (
+	AuthApi templateFile = "templates/apps/auth-api.yml.tpl"
+)

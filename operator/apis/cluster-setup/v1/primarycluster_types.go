@@ -10,14 +10,80 @@ type NamespacedReference struct {
 	Namespace string `json:"namespace"`
 }
 
+type SecretReference struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type SecretKeyReference struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace,omitempty"`
+	Key       string `json:"key"`
+}
+
+type SharedConstants struct {
+	// Mongo
+	MongoSvcName  string `json:"mongoSvcName"`
+	AuthDbName    string `json:"authDbName"`
+	ConsoleDbName string `json:"consoleDbName"`
+	CiDbName      string `json:"ciDbName"`
+	DnsDbName     string `json:"dnsDbName"`
+	FinanceDbName string `json:"financeDbName"`
+	IamDbName     string `json:"iamDbName"`
+	CommsDbName   string `json:"commsDbName"`
+
+	// Redis
+	RedisSvcName     string `json:"redisSvcName"`
+	AuthRedisName    string `json:"authRedisName"`
+	ConsoleRedisName string `json:"consoleRedisName"`
+	CiRedisName      string `json:"ciRedisName"`
+	DnsRedisName     string `json:"dnsRedisName"`
+	IamRedisName     string `json:"iamRedisName"`
+	SocketRedisName  string `json:"socketRedisName"`
+
+	// Apps
+
+	// API
+	AppAuthApi       string `json:"appAuthApi"`
+	AppConsoleApi    string `json:"appConsoleApi"`
+	AppCiApi         string `json:"appCiApi"`
+	AppFinanceApi    string `json:"appFinanceApi"`
+	AppCommsApi      string `json:"appCommsApi"`
+	AppDnsApi        string `json:"appDnsApi"`
+	AppIAMApi        string `json:"appIAMApi"`
+	AppJsEvalApi     string `json:"appJsEval"`
+	AppGqlGatewayApi string `json:"appGqlGatewayApi"`
+	AppWebhooksApi   string `json:"appWebhooksApi"`
+
+	// Web
+	AppAuthWeb     string `json:"appAuthWeb"`
+	AppAccountsWeb string `json:"appAccountsWeb"`
+	AppConsoleWeb  string `json:"appConsoleWeb"`
+	AppSocketWeb   string `json:"appSocketWeb"`
+	CookieDomain   string `json:"cookieDomain"`
+
+	// Secrets
+	OAuthSecretName string `json:"oauthSecretName"`
+	AuthWebDomain   string `json:"authWebDomain"`
+}
+
 // PrimaryClusterSpec defines the desired state of PrimaryCluster
 type PrimaryClusterSpec struct {
+	ClusterID    string `json:"clusterId"`
+	Domain       string `json:"domain"`
+	StorageClass string `json:"storageClass,omitempty"`
+
+	CloudflareCreds   Cloudflare            `json:"cloudflareCreds"`
+	HarborAdminCreds  SecretReference       `json:"harborAdminCreds,omitempty"`
 	ImgPullSecrets    []NamespacedReference `json:"imagePullSecrets"`
 	LokiValues        LokiValues            `json:"loki"`
 	PrometheusValues  PrometheusValues      `json:"prometheus"`
 	CertManagerValues CertManagerValues     `json:"certManager,omitempty"`
 	IngressValues     IngressValues         `json:"ingress"`
 	Operators         Operators             `json:"operators"`
+	OAuthCreds        SecretReference       `json:"oAuthCreds"`
+
+	SharedConstants *SharedConstants `json:"sharedConstants,omitempty"`
 }
 
 // +kubebuilder:object:root=true

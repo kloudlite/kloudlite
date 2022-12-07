@@ -17,11 +17,17 @@ type Logger interface {
 	Warnf(msg string, args ...any)
 	WithKV(key string, value any) Logger
 	WithName(name string) Logger
+	WithOptions(options ...zap.Option) Logger
 }
 
 type customLogger struct {
 	opts   Options
 	logger *zap.SugaredLogger
+}
+
+func (c customLogger) WithOptions(options ...zap.Option) Logger {
+	lg := c.logger.Desugar().WithOptions(options...)
+	return &customLogger{logger: lg.Sugar(), opts: c.opts}
 }
 
 func (c customLogger) Debugf(msg string, args ...any) {
