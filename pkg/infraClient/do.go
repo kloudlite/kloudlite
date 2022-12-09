@@ -121,7 +121,8 @@ func (d *doProvider) DeleteNode(node DoNode) error {
 	values["do-token"] = d.apiToken
 	values["accountId"] = d.accountId
 
-	values["do-image-id"] = node.ImageId
+	// values["do-image-id"] = node.ImageId
+	values["do-image-id"] = "ubuntu-22-10-x64"
 	values["nodeId"] = node.NodeId
 	values["keys-path"] = d.SSHPath
 
