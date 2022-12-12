@@ -235,14 +235,34 @@ func (s *server) AddMembership(ctx context.Context, in *iam.InAddMembership) (*i
 }
 
 func (s *server) RemoveMembership(ctx context.Context, in *iam.InRemoveMembership) (*iam.OutRemoveMembership, error) {
-	rb, err := s.rbRepo.FindOne(
-		ctx, repos.Filter{
-			"resource_id": in.ResourceId,
-			"user_id":     in.UserId,
-		},
-	)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not findone")
+	var rb *entities.RoleBinding
+	var err error
+
+	if in.UserId != "" && in.ResourceId != "" {
+
+		rb, err = s.rbRepo.FindOne(
+			ctx, repos.Filter{
+				"resource_id": in.ResourceId,
+				"user_id":     in.UserId,
+			},
+		)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not findone")
+		}
+
+	} else if in.ResourceId != "" {
+
+		rb, err = s.rbRepo.FindOne(
+			ctx, repos.Filter{
+				"resource_id": in.ResourceId,
+			},
+		)
+		if err != nil {
+			return nil, errors.NewEf(err, "could not findone")
+		}
+
+	} else {
+		return nil, errors.NewEf(err, "no resourceId provided")
 	}
 
 	err = s.rbRepo.DeleteById(ctx, rb.Id)
