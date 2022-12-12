@@ -65,6 +65,12 @@ models:
     fields:
       devices:
         resolver: true
+      projectMemberships:
+        resolver: true
+  ProjectMembership:
+    fields:
+      project:
+        resolver: true
   Project:
     fields:
       dockerCredentials:

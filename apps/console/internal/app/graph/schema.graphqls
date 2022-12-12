@@ -514,6 +514,7 @@ input NewResourcesIN {
 extend type User @key(fields: "id") {
   id: ID! @external
   devices: [Device]
+  projectMemberships:[ProjectMembership!]! # user-access
 }
 
 input PortIn{

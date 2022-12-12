@@ -124,6 +124,8 @@ type Domain interface {
 	) (*entities.App, error)
 
 	GetProjectMemberships(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error)
+
+	GetProjectMembershipsByUser(ctx context.Context, projectID repos.ID) ([]*entities.ProjectMembership, error)
 	InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error)
 	RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error
 

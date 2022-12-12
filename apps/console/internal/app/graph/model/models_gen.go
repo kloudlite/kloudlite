@@ -429,8 +429,9 @@ type StoragePlan struct {
 func (StoragePlan) IsEntity() {}
 
 type User struct {
-	ID      repos.ID  `json:"id"`
-	Devices []*Device `json:"devices"`
+	ID                 repos.ID             `json:"id"`
+	Devices            []*Device            `json:"devices"`
+	ProjectMemberships []*ProjectMembership `json:"projectMemberships"`
 }
 
 func (User) IsEntity() {}

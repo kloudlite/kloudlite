@@ -1168,6 +1168,16 @@ func (r *projectResolver) Region(ctx context.Context, obj *model.Project) (*mode
 	}, nil
 }
 
+func (r *projectMembershipResolver) Project(ctx context.Context, obj *model.ProjectMembership) (*model.Project, error) {
+
+	p, err := r.Domain.GetProjectWithID(ctx, obj.Project.ID)
+	if err != nil {
+		return nil, err
+	}
+	return projectModelFromEntity(p), nil
+
+}
+
 func (r *queryResolver) CoreCheckDeviceExist(ctx context.Context, accountID repos.ID, name string) (bool, error) {
 	exists, err := r.Domain.DeviceByNameExists(ctx, accountID, name)
 	if err != nil {
@@ -1624,6 +1634,23 @@ func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.D
 	return devices, e
 }
 
+func (r *userResolver) ProjectMemberships(ctx context.Context, obj *model.User) ([]*model.ProjectMembership, error) {
+	entities, err := r.Domain.GetProjectMembershipsByUser(ctx, obj.ID)
+	projectMemberships := make([]*model.ProjectMembership, len(entities))
+	for i, entity := range entities {
+		projectMemberships[i] = &model.ProjectMembership{
+			Project: &model.Project{
+				ID: entity.ProjectId,
+			},
+			User: &model.User{
+				ID: entity.UserId,
+			},
+			Role: string(entity.Role),
+		}
+	}
+	return projectMemberships, err
+}
+
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
@@ -1651,6 +1678,11 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Project returns generated.ProjectResolver implementation.
 func (r *Resolver) Project() generated.ProjectResolver { return &projectResolver{r} }
 
+// ProjectMembership returns generated.ProjectMembershipResolver implementation.
+func (r *Resolver) ProjectMembership() generated.ProjectMembershipResolver {
+	return &projectMembershipResolver{r}
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
@@ -1666,5 +1698,6 @@ type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
+type projectMembershipResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
