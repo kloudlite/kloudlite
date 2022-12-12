@@ -3,6 +3,7 @@ package graph
 import (
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/pkg/repos"
 )
 
 func projectModelFromEntity(projectEntity *entities.Project) *model.Project {
@@ -13,7 +14,12 @@ func projectModelFromEntity(projectEntity *entities.Project) *model.Project {
 		ReadableID:  projectEntity.ReadableId,
 		Logo:        projectEntity.Logo,
 		Description: projectEntity.Description,
-		RegionID:    *projectEntity.RegionId,
+		RegionID: func() repos.ID {
+			if projectEntity.RegionId != nil {
+				return *projectEntity.RegionId
+			}
+			return ""
+		}(),
 		Account: &model.Account{
 			ID: projectEntity.AccountId,
 		},
