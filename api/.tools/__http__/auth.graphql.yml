@@ -18,6 +18,18 @@ variables:
   name: Sample Kumar
 
 ---
+query: |+
+  query ProjectMemberships {
+    auth_me {
+      projectMemberships {
+        project {
+          id
+          name
+        }
+      }
+    }
+  }
+---
 label: Login
 query: |
   mutation Auth_login($email: String!, $password: String!) {
