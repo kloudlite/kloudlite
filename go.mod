@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.105
 	github.com/cert-manager/cert-manager v1.10.0
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
+	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/fatih/color v1.13.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
@@ -22,6 +23,7 @@ require (
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54
 	go.mongodb.org/mongo-driver v1.9.1
 	go.uber.org/zap v1.21.0
+	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b
 	helm.sh/helm/v3 v3.10.0
 	k8s.io/api v0.25.2
 	k8s.io/apimachinery v0.25.2
@@ -65,7 +67,6 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
-	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
@@ -150,7 +151,6 @@ require (
 	go.starlark.net v0.0.0-20220928063852-5fccb4daaf6d // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
 	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0 // indirect

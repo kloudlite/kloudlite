@@ -48,9 +48,10 @@ spec:
                     type: boolean
                   secretName:
                     type: string
+                  username:
+                    type: string
                 required:
                 - enabled
-                - secretName
                 type: object
               domains:
                 items:

@@ -23,7 +23,7 @@ spec:
               name: {{.Cloudflare.SecretKeyRef.Name}}
             email: {{.Cloudflare.Email}}
         selector:
-          dnsNames: {{.Cloudflare.DnsNames | toYAML | nindent 7 }}
+          dnsNames: {{.Cloudflare.DnsNames | toYAML | nindent 12 }}
 {{/*            - '*.kloudlite.io'*/}}
 {{/*            - '*.khost.dev'*/}}
 {{/*            - crewscale.kl-client.kloudlite.io*/}}
@@ -31,3 +31,4 @@ spec:
       - http01:
           ingress:
             class: {{.IngressClass}}
+{{end}}

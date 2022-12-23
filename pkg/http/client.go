@@ -2,9 +2,9 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
+	"operators.kloudlite.io/pkg/errors"
 )
 
 func Get[T any](req *http.Request) (*T, *http.Response, error) {
@@ -14,7 +14,7 @@ func Get[T any](req *http.Request) (*T, *http.Response, error) {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, resp, errors.New("bad status code, should be >= 200 & < 300")
+		return nil, resp, errors.Newf("bad status code (%d), should be >= 200 & < 300", resp.StatusCode)
 	}
 
 	var b T

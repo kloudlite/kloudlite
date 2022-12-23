@@ -67,11 +67,17 @@ const (
 	AccountRouterNameKey string = "kloudlite.io/account-router.name"
 	EdgeNameKey          string = "kloudlite.io/edge.name"
 	EdgeRouterNameKey    string = "kloudlite.io/edge-router.name"
+	EnvNameKey           string = "kloudlite.io/env.name"
 
 	ClearStatusKey string = "kloudlite.io/clear-status"
 	ResetCheckKey  string = "kloudlite.io/reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
 	RegionKey      string = "kloudlite.io/region"
+
+	IsBluePrintKey    string = "kloudlite.io/is-blueprint"
+	MarkedAsBlueprint string = "kloudlite.io/marked-as-blueprint"
+
+	LastAppliedKey string = "kloudlite.io/last-applied"
 )
 
 var (

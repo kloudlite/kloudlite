@@ -84,6 +84,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - secondaryclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - secondaryclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - secondaryclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - crds.kloudlite.io
   resources:
   - apps
@@ -105,6 +131,32 @@ rules:
   - crds.kloudlite.io
   resources:
   - apps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - configs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - configs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - configs/status
   verbs:
   - get
   - patch
@@ -164,6 +216,32 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
+  - envs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
   - lambdas
   verbs:
   - create
@@ -209,6 +287,32 @@ rules:
   - crds.kloudlite.io
   resources:
   - projects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - secrets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - secrets/status
   verbs:
   - get
   - patch

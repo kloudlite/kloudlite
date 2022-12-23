@@ -326,6 +326,19 @@ spec:
                 - resources
                 - s3
                 type: object
+              networking:
+                properties:
+                  dnsNames:
+                    items:
+                      type: string
+                    type: array
+                  edgeCNAME:
+                    type: string
+                type: object
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
               oAuthCreds:
                 properties:
                   name:
@@ -370,8 +383,6 @@ spec:
                       - tag
                       type: object
                     type: array
-                required:
-                - manifests
                 type: object
               prometheus:
                 properties:
@@ -409,8 +420,61 @@ spec:
                 required:
                 - resources
                 type: object
+              redpanda:
+                properties:
+                  resources:
+                    properties:
+                      cpu:
+                        properties:
+                          max:
+                            pattern: '[\d]+m$'
+                            type: string
+                          min:
+                            pattern: '[\d]+m$'
+                            type: string
+                        required:
+                        - max
+                        - min
+                        type: object
+                      memory:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      storage:
+                        properties:
+                          size:
+                            pattern: '[\d]+(M|G)i$'
+                            type: string
+                          storageClass:
+                            type: string
+                        required:
+                        - size
+                        type: object
+                    required:
+                    - cpu
+                    - memory
+                    type: object
+                  version:
+                    default: v22.1.6
+                    type: string
+                required:
+                - resources
+                type: object
+              secondaryClusterId:
+                type: string
               sharedConstants:
                 properties:
+                  ImageJsEvalApi:
+                    type: string
+                  KafkaTopicBillingUpdates:
+                    type: string
+                  KafkaTopicGitWebhooks:
+                    type: string
+                  KafkaTopicPipelineRunUpdates:
+                    type: string
+                  KafkaTopicsStatusUpdates:
+                    type: string
+                  accountsWebDomain:
+                    type: string
                   appAccountsWeb:
                     type: string
                   appAuthApi:
@@ -437,6 +501,8 @@ spec:
                     type: string
                   appJsEval:
                     type: string
+                  appKlAgent:
+                    type: string
                   appSocketWeb:
                     type: string
                   appWebhooksApi:
@@ -446,6 +512,7 @@ spec:
                   authRedisName:
                     type: string
                   authWebDomain:
+                    description: Routers
                     type: string
                   ciDbName:
                     type: string
@@ -457,6 +524,8 @@ spec:
                     type: string
                   consoleRedisName:
                     type: string
+                  consoleWebDomain:
+                    type: string
                   cookieDomain:
                     type: string
                   dnsDbName:
@@ -465,9 +534,44 @@ spec:
                     type: string
                   financeDbName:
                     type: string
+                  financeRedisName:
+                    type: string
+                  harborAdminCredsSecretName:
+                    type: string
                   iamDbName:
                     type: string
                   iamRedisName:
+                    type: string
+                  imageAccountsWeb:
+                    type: string
+                  imageAuthApi:
+                    description: Images
+                    type: string
+                  imageAuthWeb:
+                    type: string
+                  imageCiApi:
+                    type: string
+                  imageCommsApi:
+                    type: string
+                  imageConsoleApi:
+                    type: string
+                  imageConsoleWeb:
+                    type: string
+                  imageDnsApi:
+                    type: string
+                  imageFinanceApi:
+                    type: string
+                  imageGqlGatewayApi:
+                    type: string
+                  imageIAMApi:
+                    type: string
+                  imageKlAgent:
+                    type: string
+                  imageSocketWeb:
+                    type: string
+                  imageWebhooksApi:
+                    type: string
+                  kafkaTopicHarborWebhooks:
                     type: string
                   mongoSvcName:
                     description: Mongo
@@ -478,44 +582,51 @@ spec:
                   redisSvcName:
                     description: Redis
                     type: string
+                  redpandaAdminSecretName:
+                    type: string
                   socketRedisName:
                     type: string
-                required:
-                - appAccountsWeb
-                - appAuthApi
-                - appAuthWeb
-                - appCiApi
-                - appCommsApi
-                - appConsoleApi
-                - appConsoleWeb
-                - appDnsApi
-                - appFinanceApi
-                - appGqlGatewayApi
-                - appIAMApi
-                - appJsEval
-                - appSocketWeb
-                - appWebhooksApi
-                - authDbName
-                - authRedisName
-                - authWebDomain
-                - ciDbName
-                - ciRedisName
-                - commsDbName
-                - consoleDbName
-                - consoleRedisName
-                - cookieDomain
-                - dnsDbName
-                - dnsRedisName
-                - financeDbName
-                - iamDbName
-                - iamRedisName
-                - mongoSvcName
-                - oauthSecretName
-                - redisSvcName
-                - socketRedisName
+                  socketWebDomain:
+                    type: string
+                  statefulPriorityClass:
+                    type: string
+                  stripeSecretName:
+                    type: string
+                  subDomain:
+                    type: string
+                  webhookApiDomain:
+                    type: string
+                  webhookAuthzSecretName:
+                    type: string
                 type: object
+              shouldInstallSecondary:
+                type: boolean
               storageClass:
                 type: string
+              stripeCreds:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              tolerations:
+                additionalProperties:
+                  type: string
+                type: object
+              webhookAuthzCreds:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
             required:
             - cloudflareCreds
             - clusterId
@@ -523,9 +634,12 @@ spec:
             - imagePullSecrets
             - ingress
             - loki
+            - networking
             - oAuthCreds
             - operators
             - prometheus
+            - redpanda
+            - stripeCreds
             type: object
           status:
             properties:

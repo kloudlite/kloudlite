@@ -1,0 +1,10 @@
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: nginx
+  namespace: sample-24826-blueprint
+spec:
+  region: master
+  containers:
+    - name: main
+      image: nginx

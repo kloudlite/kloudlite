@@ -8,8 +8,6 @@
 {{- $rootPassword := get . "root-password"  -}}
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
-{{/*{{- $generatedVars := mustFromJson ($obj.Status.GeneratedVars | toJson) }}*/}}
-
 {{- with $obj }}
 {{- /*gotype: operators.kloudlite.io/apis/redis-standalone.msvc/v1.Service */ -}}
 apiVersion: msvc.kloudlite.io/v1
@@ -38,7 +36,6 @@ spec:
 
   auth:
     enabled: true
-{{/*    password: {{ index $generatedVars "redis-password" }}*/}}
     password: {{$rootPassword}}
 
   replica:
@@ -65,7 +62,7 @@ spec:
         memory: {{.Spec.Resources.Memory}}
     persistence:
       enabled: true
-      size: {{.Spec.Storage.Size}}
+      size: {{.Spec.Resources.Storage.Size}}
 
     podLabels:
       {{ if .Labels}}{{.Labels | toYAML | nindent 6 }}{{ end}}

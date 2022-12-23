@@ -1,50 +1,55 @@
 package app
 
 import (
-  "context"
-  "encoding/json"
-  "fmt"
-  "reflect"
-  "strings"
+	"context"
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"strings"
+	"time"
 
-  appsv1 "k8s.io/api/apps/v1"
-  autoscalingv2 "k8s.io/api/autoscaling/v2"
-  corev1 "k8s.io/api/core/v1"
-  "k8s.io/apimachinery/pkg/api/meta"
-  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-  "k8s.io/apimachinery/pkg/labels"
-  "k8s.io/apimachinery/pkg/runtime"
-  crdsv1 "operators.kloudlite.io/apis/crds/v1"
-  "operators.kloudlite.io/operators/app-n-lambda/internal/env"
-  "operators.kloudlite.io/pkg/conditions"
-  "operators.kloudlite.io/pkg/constants"
-  fn "operators.kloudlite.io/pkg/functions"
-  "operators.kloudlite.io/pkg/kubectl"
-  "operators.kloudlite.io/pkg/logging"
-  rApi "operators.kloudlite.io/pkg/operator"
-  stepResult "operators.kloudlite.io/pkg/operator/step-result"
-  "operators.kloudlite.io/pkg/templates"
-  ctrl "sigs.k8s.io/controller-runtime"
-  "sigs.k8s.io/controller-runtime/pkg/client"
-  "sigs.k8s.io/controller-runtime/pkg/controller"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	"operators.kloudlite.io/operators/app-n-lambda/internal/env"
+	"operators.kloudlite.io/pkg/conditions"
+	"operators.kloudlite.io/pkg/constants"
+	fn "operators.kloudlite.io/pkg/functions"
+	"operators.kloudlite.io/pkg/kubectl"
+	"operators.kloudlite.io/pkg/logging"
+	rApi "operators.kloudlite.io/pkg/operator"
+	stepResult "operators.kloudlite.io/pkg/operator/step-result"
+	"operators.kloudlite.io/pkg/templates"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 type Reconciler struct {
-  client.Client
-  Scheme     *runtime.Scheme
-  logger     logging.Logger
-  Name       string
-  Env        *env.Env
-  yamlClient *kubectl.YAMLClient
+	client.Client
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
-  return r.Name
+	return r.Name
 }
 
 const (
-  AppReady       string = "app-ready"
-  ImagesLabelled string = "images-labelled"
+	DeploymentSvcAndHpaCreated string = "deployment-svc-and-hpa-created"
+	ImagesLabelled             string = "images-labelled"
+	DeploymentReady            string = "deployment-ready"
+	SvcReady                   string = "svc-ready"
+	HpaReady                   string = "hpa-ready"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -52,196 +57,233 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-  req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.App{})
-  if err != nil {
-    return ctrl.Result{}, client.IgnoreNotFound(err)
-  }
+	if strings.HasSuffix(request.Namespace, "-blueprint") {
+		return ctrl.Result{}, nil
+	}
 
-  if req.Object.GetDeletionTimestamp() != nil {
-    if x := r.finalize(req); !x.ShouldProceed() {
-      return x.ReconcilerResponse()
-    }
-    return ctrl.Result{}, nil
-  }
+	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.App{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-  req.Logger.Infof("NEW RECONCILATION")
-  defer func() {
-    req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-  }()
+	if req.Object.GetDeletionTimestamp() != nil {
+		if x := r.finalize(req); !x.ShouldProceed() {
+			return x.ReconcilerResponse()
+		}
+		return ctrl.Result{}, nil
+	}
 
-  if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
+	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
-  if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
+	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
-  if step := req.EnsureChecks(AppReady, ImagesLabelled); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
+	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
-  if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
+	if step := req.EnsureChecks(DeploymentSvcAndHpaCreated, ImagesLabelled); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
-  if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
+	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
-  if step := r.reconlabellingImages(req); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
+	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
-  if step := r.reconApp(req); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
+	if step := r.reconlabellingImages(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
-  req.Object.Status.IsReady = true
-  return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	if step := r.ensureDeploymentThings(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.checkDeploymentReady(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	req.Object.Status.IsReady = true
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	req.Object.Status.DisplayVars.Set("intercepted", func() string {
+		if req.Object.GetLabels()[constants.LabelKeys.IsIntercepted] == "true" {
+			return "true/" + req.Object.GetLabels()[constants.LabelKeys.DeviceRef]
+		}
+		return "false"
+	}())
+
+	req.Object.Status.DisplayVars.Set("frozen", req.Object.GetLabels()[constants.LabelKeys.Freeze] == "true")
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-  return req.Finalize()
+	return req.Finalize()
 }
 
 func (r *Reconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-  ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
 
-  check := rApi.Check{Generation: obj.Generation}
+	newLabels := make(map[string]string, len(obj.GetLabels()))
+	for s, v := range obj.GetLabels() {
+		newLabels[s] = v
+	}
 
-  newLabels := make(map[string]string, len(obj.GetLabels()))
-  for s, v := range obj.GetLabels() {
-    newLabels[s] = v
-  }
+	for s := range newLabels {
+		if strings.HasPrefix(s, "kloudlite.io/image-") {
+			delete(newLabels, s)
+		}
+	}
 
-  for s := range newLabels {
-    if strings.HasPrefix(s, "kloudlite.io/image-") {
-      delete(newLabels, s)
-    }
-  }
+	for i := range obj.Spec.Containers {
+		newLabels[fmt.Sprintf("kloudlite.io/image-%s", fn.Sha1Sum([]byte(obj.Spec.Containers[i].Image)))] = "true"
+	}
 
-  for i := range obj.Spec.Containers {
-    newLabels[fmt.Sprintf("kloudlite.io/image-%s", fn.Sha1Sum([]byte(obj.Spec.Containers[i].Image)))] = "true"
-  }
+	if !reflect.DeepEqual(newLabels, obj.GetLabels()) {
+		obj.SetLabels(newLabels)
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(ImagesLabelled, check, err.Error())
+		}
+		checks[ImagesLabelled] = check
+		return req.UpdateStatus()
+	}
 
-  if !reflect.DeepEqual(newLabels, obj.GetLabels()) {
-    obj.SetLabels(newLabels)
-    if err := r.Update(ctx, obj); err != nil {
-      return req.CheckFailed(ImagesLabelled, check, err.Error())
-    }
-    checks[ImagesLabelled] = check
-    return req.UpdateStatus()
-  }
+	check.Status = true
+	if check != checks[ImagesLabelled] {
+		checks[ImagesLabelled] = check
+		return req.UpdateStatus()
+	}
 
-  check.Status = true
-  if check != checks[ImagesLabelled] {
-    checks[ImagesLabelled] = check
-    return req.UpdateStatus()
-  }
-
-  return req.Next()
+	return req.Next()
 }
 
-func (r *Reconciler) reconApp(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-  ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
 
-  check := rApi.Check{Generation: obj.Generation}
+	req.LogPreCheck(DeploymentSvcAndHpaCreated)
+	defer req.LogPostCheck(DeploymentSvcAndHpaCreated)
 
-  deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
-  if err != nil {
-    req.Logger.Infof("app (deployment) %s does not exist, will be creating it", fn.NN(obj.Namespace, obj.Name))
-  }
+	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
-  volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
+	isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
+	isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
 
-  b, err := templates.Parse(
-    templates.CrdsV1.App, map[string]any{
-      "object":        obj,
-      "volumes":       volumes,
-      "volume-mounts": vMounts,
-      "freeze":        obj.GetLabels()[constants.LabelKeys.Freeze] == "true" || obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
-      "owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	b, err := templates.Parse(
+		templates.CrdsV1.App, map[string]any{
+			"object":        obj,
+			"volumes":       volumes,
+			"volume-mounts": vMounts,
+			"freeze":        isFrozen || isIntercepted,
+			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
-      // for intercepting
-      "is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
-      "device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
-      "account-ref":    obj.GetAnnotations()[constants.AnnotationKeys.AccountRef],
-    },
-  )
+			// for intercepting
+			"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
+			"device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
+			"account-ref":    obj.GetAnnotations()[constants.AnnotationKeys.AccountRef],
+		},
+	)
 
-  if err != nil {
-    return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
-  }
+	if err != nil {
+		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
+	}
 
-  if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-    return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
-  }
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
+	}
 
-  cds, err := conditions.FromObject(deployment)
-  if err != nil {
-    return req.CheckFailed(AppReady, check, err.Error()).Err(nil)
-  }
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
+		return nil
+	}); err != nil {
+		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
+	}
 
-  deploymentIsReady := meta.IsStatusConditionTrue(cds, "Available")
-  check.Status = deploymentIsReady
+	check.Status = true
+	if check != checks[DeploymentSvcAndHpaCreated] {
+		checks[DeploymentSvcAndHpaCreated] = check
+		return req.UpdateStatus()
+	}
 
-  if !deploymentIsReady {
-    var podList corev1.PodList
-    if err := r.List(
-      ctx, &podList, &client.ListOptions{
-        LabelSelector: labels.SelectorFromValidatedSet(
-          map[string]string{"app": obj.Name},
-        ),
-        Namespace: obj.Namespace,
-      },
-    ); err != nil {
-      return req.CheckFailed(AppReady, check, err.Error())
-    }
+	return req.Next()
+}
 
-    pMessages := rApi.GetMessagesFromPods(podList.Items...)
-    bMsg, err := json.Marshal(pMessages)
-    if err != nil {
-      check.Message = err.Error()
-      return req.CheckFailed(AppReady, check, err.Error())
-    }
-    check.Message = string(bMsg)
-    return req.CheckFailed(AppReady, check, "deployment is not ready")
-  }
+func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
 
-  if err := obj.Status.DisplayVars.Set("readyReplicas", deployment.Status.ReadyReplicas); err != nil {
-    return req.CheckFailed(AppReady, check, err.Error())
-  }
+	req.LogPreCheck(DeploymentReady)
+	defer req.LogPostCheck(DeploymentReady)
 
-  if deployment.Status.ReadyReplicas != deployment.Status.Replicas {
-    return req.CheckFailed(
-      AppReady,
-      check,
-      fmt.Sprintf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas),
-    )
-  }
+	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
+	if err != nil {
+		return req.CheckFailed(DeploymentReady, check, err.Error()).Err(nil)
+	}
 
-  check.Status = true
+	cds, err := conditions.FromObject(deployment)
+	if err != nil {
+		return req.CheckFailed(DeploymentReady, check, err.Error()).Err(nil)
+	}
 
-  if check != checks[AppReady] {
-    checks[AppReady] = check
-    return req.UpdateStatus()
-  }
+	isReady := meta.IsStatusConditionTrue(cds, "Available")
+	check.Status = isReady
 
-  return req.Next()
+	if !isReady {
+		var podList corev1.PodList
+		if err := r.List(
+			ctx, &podList, &client.ListOptions{
+				LabelSelector: labels.SelectorFromValidatedSet(
+					map[string]string{"app": obj.Name},
+				),
+				Namespace: obj.Namespace,
+			},
+		); err != nil {
+			return req.CheckFailed(DeploymentReady, check, err.Error())
+		}
+
+		pMessages := rApi.GetMessagesFromPods(podList.Items...)
+		bMsg, err := json.Marshal(pMessages)
+		if err != nil {
+			check.Message = err.Error()
+			return req.CheckFailed(DeploymentReady, check, err.Error())
+		}
+		check.Message = string(bMsg)
+		return req.CheckFailed(DeploymentReady, check, "deployment is not ready")
+	}
+
+	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {
+		return req.CheckFailed(
+			DeploymentReady,
+			check,
+			fmt.Sprintf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas),
+		)
+	}
+
+	check.Status = true
+	if check != checks[DeploymentReady] {
+		checks[DeploymentReady] = check
+		return req.UpdateStatus()
+	}
+	return req.Next()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
-  r.Client = mgr.GetClient()
-  r.Scheme = mgr.GetScheme()
-  r.logger = logger.WithName(r.Name)
-  r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.Client = mgr.GetClient()
+	r.Scheme = mgr.GetScheme()
+	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
-  builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
-  builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
-  builder.Owns(&appsv1.Deployment{})
-  builder.Owns(&corev1.Service{})
-  builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
-  builder.WithEventFilter(rApi.ReconcileFilter())
-  return builder.Complete(r)
+	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+	builder.Owns(&appsv1.Deployment{})
+	builder.Owns(&corev1.Service{})
+	builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
+	return builder.Complete(r)
 }

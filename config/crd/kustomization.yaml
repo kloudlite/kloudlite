@@ -40,4 +40,7 @@ resources:
 - bases/extensions.kloudlite.io_edgeworkers.yaml
 - bases/cluster-setup.kloudlite.io_primaryclusters.yaml
 - bases/cluster-setup.kloudlite.io_secondaryclusters.yaml
+- bases/crds.kloudlite.io_envs.yaml
+- bases/crds.kloudlite.io_configs.yaml
+- bases/crds.kloudlite.io_secrets.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

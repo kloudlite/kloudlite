@@ -66,6 +66,7 @@ spec:
       {{- end }}
       {{- end }}
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -79,7 +80,9 @@ spec:
   {{- else}}
   externalName: {{.Name}}-internal.{{.Namespace}}.{{$clusterDnsSuffix}}
   {{- end }}
+
 ---
+
 {{- if .Spec.Services }}
 apiVersion: v1
 kind: Service

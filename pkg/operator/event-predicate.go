@@ -58,8 +58,11 @@ func ReconcileFilter() predicate.Funcs {
 			}
 
 			oldStatus, newStatus := getStatus(ev.ObjectOld), getStatus(ev.ObjectNew)
-			if oldStatus.IsReady == nil || newStatus.IsReady == nil || oldStatus.IsReady != newStatus.IsReady {
+			if oldStatus.IsReady == nil || newStatus.IsReady == nil {
 				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
+				return true
+			}
+			if *oldStatus.IsReady != *newStatus.IsReady {
 				return true
 			}
 

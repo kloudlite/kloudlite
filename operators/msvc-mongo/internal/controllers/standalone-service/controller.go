@@ -130,8 +130,11 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Standalone
 
 func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(AccessCredsReady)
+	defer req.LogPostCheck(AccessCredsReady)
+
 	secretName := "msvc-" + obj.Name
 	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
 	if err != nil {
@@ -201,6 +204,9 @@ func (r *ServiceReconciler) reconHelmSecret(req *rApi.Request[*mongodbMsvcv1.Sta
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(HelmSecretReady)
+	defer req.LogPostCheck(HelmSecretReady)
+
 	helmSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getHelmSecretName(obj.Name)), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -245,8 +251,10 @@ func (r *ServiceReconciler) reconHelmSecret(req *rApi.Request[*mongodbMsvcv1.Sta
 
 func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(HelmReady)
+	defer req.LogPostCheck(HelmReady)
 
 	helmRes, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMongoDBType),
@@ -315,8 +323,10 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.Standalon
 
 func (r *ServiceReconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(StsReady)
+	defer req.LogPostCheck(StsReady)
 
 	var stsList appsv1.StatefulSetList
 	if err := r.List(
@@ -400,5 +410,6 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 		)
 	}
 
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

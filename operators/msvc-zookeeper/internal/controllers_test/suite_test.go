@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
-	testlib "operators.kloudlite.io/test-lib"
+	testlib "operators.kloudlite.io/testing"
 )
 
 func TestAPIs(t *testing.T) {

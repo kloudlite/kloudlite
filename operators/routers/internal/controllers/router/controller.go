@@ -3,10 +3,9 @@ package router
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	"golang.org/x/crypto/bcrypt"
+	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,6 +22,9 @@ import (
 	"operators.kloudlite.io/pkg/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"strings"
+	"time"
 )
 
 type Reconciler struct {
@@ -39,7 +41,9 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	IngressReady string = "ingress-ready"
+	IngressReady    string = "ingress-ready"
+	BasicAuthReady  string = "basic-auth-ready"
+	DefaultsPatched string = "patch-defaults"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -59,9 +63,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
+	req.Logger.Infof("new reconcilation request")
 	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+		req.Logger.Infof("reconcilation complete (isReady=%v)", req.Object.Status.IsReady)
 	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
@@ -80,9 +84,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.reconBasicAuth(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.reconBasicAuth(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
 	if step := r.ensureIngresses(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -91,6 +99,35 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(DefaultsPatched)
+	defer req.LogPostCheck(DefaultsPatched)
+
+	hasUpdated := false
+
+	if obj.Spec.BasicAuth.Enabled && obj.Spec.BasicAuth.SecretName == "" {
+		hasUpdated = true
+		obj.Spec.BasicAuth.SecretName = obj.Name + "-basic-auth"
+	}
+
+	if hasUpdated {
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
+		}
+	}
+
+	check.Status = true
+	if check != checks[DefaultsPatched] {
+		checks[DefaultsPatched] = check
+		return req.UpdateStatus()
+	}
+	return req.Next()
+
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -102,15 +139,49 @@ type Config struct {
 }
 
 func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	// ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	// check := rApi.Check{Generation: obj.Generation}
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(BasicAuthReady)
+	defer req.LogPostCheck(BasicAuthReady)
+
+	if obj.Spec.BasicAuth.Enabled {
+		basicAuthScrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.BasicAuth.SecretName, Namespace: obj.Namespace}, Type: "Opaque"}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, basicAuthScrt, func() error {
+			if _, ok := basicAuthScrt.Data["password"]; ok {
+				return nil
+			}
+
+			password := fn.CleanerNanoid(48)
+			ePass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+			if err != nil {
+				return err
+			}
+			basicAuthScrt.Data = map[string][]byte{
+				"auth":     []byte(fmt.Sprintf("%s:%s", obj.Spec.BasicAuth.Username, ePass)),
+				"username": []byte(obj.Spec.BasicAuth.Username),
+				"password": []byte(password),
+			}
+			return nil
+		}); err != nil {
+			return req.CheckFailed(BasicAuthReady, check, err.Error()).Err(nil)
+		}
+	}
+
+	check.Status = true
+	if check != checks[BasicAuthReady] {
+		checks[BasicAuthReady] = check
+		return req.UpdateStatus()
+	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(IngressReady)
+	defer req.LogPostCheck(IngressReady)
 
 	if len(obj.Spec.Routes) == 0 {
 		return req.CheckFailed(IngressReady, check, "no routes specified in ingress resource").Err(nil)

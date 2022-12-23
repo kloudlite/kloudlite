@@ -70,4 +70,7 @@ resources:
 - extensions_v1_edgeworker.yaml
 - cluster-setup_v1_primarycluster.yaml
 - cluster-setup_v1_secondarycluster.yaml
+- crds_v1_env.yaml
+- crds_v1_config.yaml
+- crds_v1_secret.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

@@ -201,9 +201,9 @@ package templates
 // }
 //
 // const (
-// 	MongoDBStandalone templateFile = "./msvc/mongodb/helm-standalone.tpl.yml"
-// 	MySqlStandalone   templateFile = "./msvc/mysql/helm-standalone.tpl.yml"
-// 	RedisStandalone   templateFile = "./msvc/redis/helm-standalone.tpl.yml"
+// 	MongoDBStandalone templateFile = "./msvc/mongodb/helm-standalone.yml.tpl"
+// 	MySqlStandalone   templateFile = "./msvc/mysql/helm-standalone.yml.tpl"
+// 	RedisStandalone   templateFile = "./msvc/redis/helm-standalone.yml.tpl"
 //
 // 	// ---
 //
@@ -222,9 +222,9 @@ package templates
 //
 // 	ServerlessLambda templateFile = "./serverless/lambda.tpl.yml"
 //
-// 	ElasticSearch templateFile = "./msvc/elasticsearch/helm.tpl.yml"
-// 	OpenSearch    templateFile = "./msvc/opensearch/helm.tpl.yml"
-// 	InfluxDB      templateFile = "./msvc/influx/helm.tpl.yml"
+// 	ElasticSearch templateFile = "./msvc/elasticsearch/helm.yml.tpl"
+// 	OpenSearch    templateFile = "./msvc/opensearch/helm.yml.tpl"
+// 	InfluxDB      templateFile = "./msvc/influx/helm.yml.tpl"
 //
 // 	// ---
 //
@@ -232,7 +232,7 @@ package templates
 //
 // 	RedpandaOneNodeCluster templateFile = "./msvc/redpanda/one-node-cluster.tpl.yml"
 //
-// 	HelmIngressNginx     templateFile = "./ingress-nginx/helm.tpl.yml"
+// 	HelmIngressNginx     templateFile = "./ingress-nginx/helm.yml.tpl"
 // 	AccountIngressBridge templateFile = "./ingress-nginx/ingress-bridge.tpl.yml"
 //
 // 	ProjectRBAC   templateFile = "./project-rbac.yml.tpl"
@@ -248,7 +248,7 @@ package templates
 // 	ConfigMap          templateFile
 // }{
 // 	ExternalNameSvc:    "./corev1/external-name-service.tpl.yml",
-// 	Ingress:            "./corev1/ingress.tpl.yml",
+// 	Ingress:            "./corev1/ingress.yml.tpl",
 // 	DockerConfigSecret: "./corev1/docker-config-secret.tpl.yml",
 // 	Secret:             "./corev1/secret.tpl.yml",
 // 	Namespace:          "./corev1/namespace.yml.tpl",

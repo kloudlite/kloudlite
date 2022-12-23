@@ -204,6 +204,12 @@ func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
 
 	if v, ok := ann[constants.ResetCheckKey]; ok {
 		if _, ok2 := obj.GetStatus().Checks[v]; ok2 {
+			delete(ann, constants.ResetCheckKey)
+			obj.SetAnnotations(ann)
+			if err := r.client.Update(context.TODO(), obj); err != nil {
+				return stepResult.New().Err(err)
+			}
+
 			delete(obj.GetStatus().Checks, v)
 			if err := r.client.Status().Update(context.TODO(), obj); err != nil {
 				return stepResult.New().Err(err)
@@ -336,7 +342,7 @@ func (r *Request[T]) Finalize() stepResult.Result {
 
 func (r *Request[T]) LogPreCheck(checkName string) {
 	var blue = color.New(color.FgBlue).SprintFunc()
-	r.internalLogger.Infof(blue("[check] %-20s [status] %v"), checkName, r.Object.GetStatus().Checks[checkName].Status)
+	r.internalLogger.Infof(blue("[check] %-20s [status] %-5v"), checkName, r.Object.GetStatus().Checks[checkName].Status)
 }
 
 func (r *Request[T]) LogPostCheck(checkName string) {
@@ -345,6 +351,6 @@ func (r *Request[T]) LogPostCheck(checkName string) {
 		var red = color.New(color.FgRed).SprintFunc()
 		r.internalLogger.Infof(red("[check] %-20s [status] %v [message] %v"), checkName, check.Status, check.Message)
 	}
-	var green = color.New(color.FgGreen).SprintFunc()
+	var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
 	r.internalLogger.Infof(green("[check] %-20s [status] %v"), checkName, check.Status)
 }

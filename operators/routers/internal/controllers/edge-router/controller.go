@@ -120,38 +120,28 @@ func (r *Reconciler) ensureIngressController(req *rApi.Request[*crdsv1.EdgeRoute
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	ingressC, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmIngressNginx))
+	req.LogPreCheck(IngressControllerReady)
+	defer req.LogPostCheck(IngressControllerReady)
+
+	b, err := templates.Parse(
+		templates.HelmIngressNginx, map[string]any{
+			"obj":        obj,
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"labels": map[string]string{
+				constants.EdgeRouterNameKey: obj.Name,
+				constants.EdgeNameKey:       obj.Spec.EdgeName,
+			},
+			"wildcard-cert-name":      WildcardCertName,
+			"wildcard-cert-namespace": WildcardCertNamespace,
+			"ingress-class-name":      controllers.GetIngressClassName(obj.Spec.EdgeName),
+		},
+	)
 	if err != nil {
-		req.Logger.Infof(
-			"ingress controller (%s) does not exist, will be creating it",
-			fn.NN(obj.Namespace, obj.Name).String(),
-		)
+		return req.CheckFailed(IngressControllerReady, check, err.Error())
 	}
 
-	if ingressC == nil || check.Generation > checks[IngressControllerReady].Generation {
-		b, err := templates.Parse(
-			templates.HelmIngressNginx, map[string]any{
-				"obj":        obj,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"labels": map[string]string{
-					constants.EdgeRouterNameKey: obj.Name,
-					constants.EdgeNameKey:       obj.Spec.EdgeName,
-				},
-				"wildcard-cert-name":      WildcardCertName,
-				"wildcard-cert-namespace": WildcardCertNamespace,
-				"ingress-class-name":      controllers.GetIngressClassName(obj.Spec.EdgeName),
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(IngressControllerReady, check, err.Error())
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(IngressControllerReady, check, err.Error())
-		}
-
-		checks[IngressControllerReady] = check
-		return req.UpdateStatus()
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(IngressControllerReady, check, err.Error())
 	}
 
 	check.Status = true

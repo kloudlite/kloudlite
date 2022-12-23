@@ -4,18 +4,41 @@ metadata:
   name: main
 spec:
   clusterId: dev
-  domain: "staged.kloudlite.io"
+  domain: &domain "dev.kloudlite.io"
+  storageClass: "local-path"
+
+  shouldInstallSecondary: true
+  secondaryClusterId: clus-l04kd86qbhdy1ra5htzjejznsgou
+
+  networking:
+    dnsNames:
+      - "ns1.dev.kloudlite.io"
+    edgeCNAME: "dev.edge.khost.dev"
+
+  harborAdminCreds:
+    name: harbor-admin-creds
+    namespace: kube-system
+
+  webhookAuthzCreds:
+    name: "webhook-authz-secrets"
+    namespace: "kube-system"
+
+  stripeCreds:
+    name: "stripe-creds"
+    namespace: "kube-system"
+
   cloudflareCreds:
     email: nxtcoder17@gmail.com
     secretKeyRef:
       name: cloudflare-zone-secret
       namespace: kube-system
       key: api-token
-    dnsNames:
-      - "*.staged.kloudlite.io"
+    dnsNames: &dnsNames
+      - "*.dev.kloudlite.io"
   imagePullSecrets:
     - name: kloudlite-docker-registry
       namespace: kube-system
+
   loki:
     s3:
       awsAccessKeyId: ***REMOVED***
@@ -27,6 +50,15 @@ spec:
         min: 100m
         max: 200m
       memory: 200Mi
+
+  redpanda:
+    resources:
+      cpu:
+        min: 200m
+        max: 300m
+      memory: 300Mi
+      storage:
+        size: 1Gi
 
   prometheus:
     resources:
@@ -50,13 +82,13 @@ spec:
     clusterIssuer:
       name: kl-cert-issuer
       acmeEmail: nxtcoder17@gmail.com
-#      cloudflare:
-#        secretKeyRef:
-#          name:
-#          namespace:
-#          key:
-#        dnsNames:
-#          - '*.kloudlite.io'
+      cloudflare:
+        email: nxtcoder17@gmail.com
+        secretKeyRef:
+          name: cloudflare-zone-secret
+          namespace: kube-system
+          key: api-token
+        dnsNames: *dnsNames
       ingressClass: "ingress-nginx"
 
   ingress:

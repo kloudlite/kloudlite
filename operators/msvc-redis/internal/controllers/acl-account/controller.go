@@ -3,6 +3,7 @@ package aclaccount
 import (
 	"context"
 	"fmt"
+	"operators.kloudlite.io/pkg/kubectl"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -29,10 +30,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -71,6 +73,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady = %v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -80,7 +85,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// TODO: initialize all checks here
 	if step := req.EnsureChecks(AccessCredsReady, ACLUserReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -110,8 +114,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
@@ -159,8 +163,10 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*redisMsvcv1.ACLAccount]) s
 
 func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(IsOwnedByMsvc)
+	defer req.LogPostCheck(IsOwnedByMsvc)
 
 	msvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
@@ -195,6 +201,9 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) 
 func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(AccessCredsReady)
+	defer req.LogPostCheck(AccessCredsReady)
 
 	secretName := "mres-" + obj.Name
 
@@ -238,7 +247,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
@@ -266,6 +275,9 @@ func (r *Reconciler) reconACLUser(req *rApi.Request[*redisMsvcv1.ACLAccount]) st
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(ACLUserReady)
+	defer req.LogPostCheck(ACLUserReady)
+
 	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
 	if !ok {
 		return req.CheckFailed(ACLUserReady, check, fmt.Sprintf("key %q does not exist in req-locals", KeyMsvcOutput))
@@ -288,7 +300,8 @@ func (r *Reconciler) reconACLUser(req *rApi.Request[*redisMsvcv1.ACLAccount]) st
 	}
 
 	if !exists {
-		tCtx, _ := context.WithTimeout(ctx, 3*time.Second)
+		tCtx, cancelFn := context.WithTimeout(ctx, 3*time.Second)
+		defer cancelFn()
 		if err := redisCli.UpsertUser(tCtx, output.Prefix, output.Username, output.Password); err != nil {
 			return req.CheckFailed(ACLUserReady, check, err.Error())
 		}
@@ -307,6 +320,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.ACLAccount{})
 	builder.Owns(&corev1.Secret{})
@@ -348,5 +362,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		)
 	}
 
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

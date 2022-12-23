@@ -3,8 +3,12 @@ package kubectl
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
+	"operators.kloudlite.io/pkg/constants"
 	"time"
+
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -49,11 +53,18 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
 		}
 		unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 		if err != nil {
-			// log.Fatal(err)
 			return err
 		}
 
 		unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
+
+		ann := unstructuredObj.GetAnnotations()
+		if ann == nil {
+			ann = make(map[string]string, 1)
+		}
+
+		ann[constants.LastAppliedKey] = string(rawObj.Raw)
+		unstructuredObj.SetAnnotations(ann)
 
 		var dri dynamic.ResourceInterface
 
@@ -71,11 +82,105 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
 			dri = yc.dynamicClient.Resource(mapping.Resource)
 		}
 
+		resource, err := dri.Get(ctx, unstructuredObj.GetName(), metav1.GetOptions{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return err
+			}
+		}
+
+		// TODO (nxtcoder17): delete, and recreate deployment if service account has been changed
+
+		if resource != nil && resource.GetAnnotations()[constants.LastAppliedKey] == string(rawObj.Raw) {
+			continue
+		}
+
+		resourceRaw, err := json.Marshal(unstructuredObj.Object)
+		if err != nil {
+			continue
+		}
+
 		if _, err := dri.Patch(
 			context.Background(),
 			unstructuredObj.GetName(),
 			types.MergePatchType,
-			rawObj.Raw,
+			resourceRaw,
+			metav1.PatchOptions{},
+		); err != nil {
+			if errors.IsNotFound(err) {
+				if _, err := dri.Create(ctx, unstructuredObj, metav1.CreateOptions{}); err != nil {
+					// log.Fatal(err)
+					return err
+				}
+				continue
+			}
+			// log.Fatal(err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (yc *YAMLClient) ApplyYAML2(ctx context.Context, yamls ...[]byte) error {
+	jYamls := bytes.Join(yamls, []byte("\n---\n"))
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
+	for {
+		var rawObj runtime.RawExtension
+		if err := decoder.Decode(&rawObj); err != nil {
+			if err != io.EOF {
+				return err
+			}
+			break
+		}
+
+		if rawObj.Raw == nil {
+			continue
+		}
+
+		obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
+		if err != nil {
+			return err
+		}
+		unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		if err != nil {
+			return err
+		}
+
+		unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
+		ann := unstructuredObj.GetAnnotations()
+		if ann == nil {
+			ann = make(map[string]string, 1)
+		}
+
+		ann[constants.LastAppliedKey] = string(rawObj.Raw)
+		unstructuredObj.SetAnnotations(ann)
+
+		var dri dynamic.ResourceInterface
+
+		mapping, err := yc.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if err != nil {
+			// log.Fatal(err)
+			return err
+		}
+		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+			if unstructuredObj.GetNamespace() == "" {
+				unstructuredObj.SetNamespace("default")
+			}
+			dri = yc.dynamicClient.Resource(mapping.Resource).Namespace(unstructuredObj.GetNamespace())
+		} else {
+			dri = yc.dynamicClient.Resource(mapping.Resource)
+		}
+
+		resourceRaw, err := json.Marshal(unstructuredObj.Object)
+		if err != nil {
+			return err
+		}
+
+		if _, err := dri.Patch(
+			context.Background(),
+			unstructuredObj.GetName(),
+			types.MergePatchType,
+			resourceRaw,
 			metav1.PatchOptions{},
 		); err != nil {
 			if errors.IsNotFound(err) {

@@ -49,8 +49,8 @@ metadata:
 {{/*    basic auth*/}}
     {{- if .Spec.BasicAuth.Enabled }}
     nginx.ingress.kubernetes.io/auth-type: basic
-    nginx.ingress.kubernetes.io/auth-secret: {{.Spec.BasicAuth.SecretName}}
-    nginx.ingress.kubernetes.io/auth-realm: 'Route is protected by basic authz'
+    nginx.ingress.kubernetes.io/auth-secret: {{.Spec.BasicAuth.SecretName }}
+    nginx.ingress.kubernetes.io/auth-realm: 'Route is protected by basic authentication'
     {{- end }}
 
     {{- if $annotations}}

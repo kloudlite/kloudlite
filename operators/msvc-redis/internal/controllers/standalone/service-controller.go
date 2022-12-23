@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"operators.kloudlite.io/pkg/kubectl"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,11 +36,12 @@ import (
 
 type ServiceReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	harborCli *harbor.Client
-	logger    logging.Logger
-	Name      string
-	Env       *env.Env
+	Scheme     *runtime.Scheme
+	harborCli  *harbor.Client
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -50,15 +53,13 @@ const (
 	StsReady          string = "sts-ready"
 	AccessCredsReady  string = "access-creds-ready"
 	ACLConfigMapReady string = "acl-configmap-ready"
-	OutputReady       string = "output-ready"
 )
 
 const (
-	KeyRootPassword      string = "root-password"
-	KeyAclConfigMapName  string = "acl-configmap-name"
-	KeyAvailableReplicas string = "available-replicas"
-
-	KeyMsvcOutput string = "msvc-output"
+	KeyRootPassword     string = "root-password"
+	KeyAclConfigMapName string = "acl-configmap-name"
+	KeyMsvcOutput       string = "msvc-output"
+	DefaultsPatched     string = "defaults-patched"
 )
 
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices,verbs=get;list;watch;create;update;patch;delete
@@ -84,6 +85,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Logger.Infof("NEW RECONCILATION")
+	defer func() {
+		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
+	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -124,8 +128,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
@@ -134,13 +137,18 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneSe
 
 func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(ACLConfigMapReady)
+	defer req.LogPostCheck(ACLConfigMapReady)
 
 	aclConfigmapName := "msvc-" + obj.Name + "-acl"
 
 	aclCfgMap, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, aclConfigmapName), &redisMsvcv1.ACLConfigMap{})
 	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
+		}
 		req.Logger.Infof("acl configmap (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
@@ -189,8 +197,11 @@ func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.Sta
 
 func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(AccessCredsReady)
+	defer req.LogPostCheck(AccessCredsReady)
+
 	secretName := "msvc-" + obj.Name
 	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
 	if err != nil {
@@ -218,7 +229,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
@@ -253,10 +264,16 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(HelmReady)
+	defer req.LogPostCheck(HelmReady)
+
 	helmRes, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmRedisType),
 	)
 	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(HelmReady, check, err.Error())
+		}
 		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
@@ -270,16 +287,18 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 	}
 
 	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Xfs)
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error())
-		}
+		sc := func() string {
+			if obj.Spec.Resources.Storage != nil && obj.Spec.Resources.Storage.StorageClass != "" {
+				return obj.Spec.Resources.Storage.StorageClass
+			}
+			return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4)
+		}()
 
 		b, err := templates.Parse(
 			templates.RedisStandalone, map[string]any{
 				"object":             obj,
 				"freeze":             obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
-				"storage-class":      storageClass,
+				"storage-class":      sc,
 				"owner-refs":         obj.GetOwnerReferences(),
 				"acl-configmap-name": aclConfigmapName,
 				"root-password":      msvcOutput.RootPassword,
@@ -290,7 +309,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
+		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
 
@@ -331,6 +350,9 @@ func getStsName(objName string) string {
 func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(StsReady)
+	defer req.LogPostCheck(StsReady)
 
 	sts, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getStsName(obj.Name)), &appsv1.StatefulSet{})
 	if err != nil {
@@ -375,6 +397,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
@@ -396,6 +419,5 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	)
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
-
 	return builder.Complete(r)
 }

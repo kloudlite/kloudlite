@@ -1,14 +1,17 @@
-{{/*{{- $namespace := get . "namespace" -}}*/}}
 {{- $namespace := get . "namespace" -}}
 {{- $region := get . "region" -}}
 {{- $localStorageClass := get . "local-storage-class" -}}
+{{- $sharedConstants := get . "shared-constants" -}}
+{{- $ownerRefs := get . "owner-refs" | default list -}}
 
-{{- $mongoSvcName := "mongo-svc" -}}
+{{- with $sharedConstants -}}
+{{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.SharedConstants*/}}
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: {{$mongoSvcName}}
+  name: {{.MongoSvcName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
   region: {{$region}}
   msvcKind:
@@ -20,23 +23,26 @@ spec:
         min: 300m
         max: 500m
       memory: 400Mi
-    storage:
-      size: 1Gi
-      {{ if $localStorageClass }}
-      storageClass: $localStorageClass
-      {{end}}
+      storage:
+        size: 1Gi
+        {{ if $localStorageClass }}
+        storageClass: {{$localStorageClass}}
+        {{end}}
 ---
 # auth-db
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: auth-db
+  name: {{.AuthDbName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
+  inputs:
+    resourceName: {{.AuthDbName}}
   msvcRef:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$mongoSvcName}}
+    name: {{.MongoSvcName}}
   mresKind:
     kind: Database
 
@@ -45,13 +51,16 @@ spec:
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: ci-db
+  name: {{.CiDbName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
+  inputs:
+    resourceName: {{.CiDbName}}
   msvcRef:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$mongoSvcName}}
+    name: {{.MongoSvcName}}
   mresKind:
     kind: Database
 
@@ -60,13 +69,16 @@ spec:
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: console-db
+  name: {{.ConsoleDbName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
+  inputs:
+    resourceName: {{.ConsoleDbName}}
   msvcRef:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$mongoSvcName}}
+    name: {{.MongoSvcName}}
   mresKind:
     kind: Database
 ---
@@ -74,13 +86,16 @@ spec:
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: dns-db
+  name: {{.DnsDbName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
+  inputs:
+    resourceName: {{.DnsDbName}}
   msvcRef:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$mongoSvcName}}
+    name: {{.MongoSvcName}}
   mresKind:
     kind: Database
 ---
@@ -88,13 +103,16 @@ spec:
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: finance-db
+  name: {{.FinanceDbName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
+  inputs:
+    resourceName: {{.FinanceDbName}}
   msvcRef:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$mongoSvcName}}
+    name: {{.MongoSvcName}}
   mresKind:
     kind: Database
 ---
@@ -102,27 +120,34 @@ spec:
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: iam-db
+  name: {{.IamDbName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
+  inputs:
+    resourceName: {{.IamDbName}}
   msvcRef:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$mongoSvcName}}
+    name: {{.MongoSvcName}}
   mresKind:
     kind: Database
 
 ---
-# iam db
+# comms db
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
   name: comms-db
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs| toYAML | nindent 4}}
 spec:
+  inputs:
+    resourceName: {{.CommsDbName}}
   msvcRef:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$mongoSvcName}}
+    name: {{.MongoSvcName}}
   mresKind:
     kind: Database
+{{end}}

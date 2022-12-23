@@ -1,0 +1,24 @@
+# permissions for end users to edit envs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: env-editor-role
+rules:
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs/status
+  verbs:
+  - get

@@ -128,12 +128,12 @@ func WithFunctions(t *template.Template) *template.Template {
 type templateFile string
 
 const (
-	MongoDBStandalone templateFile = "templates/msvc/mongodb/helm-standalone.tpl.yml"
+	MongoDBStandalone templateFile = "templates/msvc/mongodb/helm-standalone.yml.tpl"
 
-	MySqlStandalone templateFile = "templates/msvc/mysql/helm-standalone.tpl.yml"
+	MySqlStandalone templateFile = "templates/msvc/mysql/helm-standalone.yml.tpl"
 	MysqlCluster    templateFile = "templates/msvc/mysql/helm-cluster.tpl.yml"
 
-	RedisStandalone   templateFile = "templates/msvc/redis/helm-standalone.tpl.yml"
+	RedisStandalone   templateFile = "templates/msvc/redis/helm-standalone.yml.tpl"
 	RedisACLConfigMap templateFile = "templates/msvc/redis/acl-configmap.tpl.yml"
 
 	// ---
@@ -154,8 +154,8 @@ const (
 
 	ElasticSearch templateFile = "templates/msvc/elasticsearch/elastic-helm.yml.tpl"
 	Kibana        templateFile = "templates/msvc/elasticsearch/kibana-helm.yml.tpl"
-	OpenSearch    templateFile = "templates/msvc/opensearch/helm.tpl.yml"
-	InfluxDB      templateFile = "templates/msvc/influx/helm.tpl.yml"
+	OpenSearch    templateFile = "templates/msvc/opensearch/helm.yml.tpl"
+	InfluxDB      templateFile = "templates/msvc/influx/helm.yml.tpl"
 
 	// ---
 
@@ -163,13 +163,13 @@ const (
 
 	RedpandaOneNodeCluster templateFile = "templates/msvc/redpanda/one-node-cluster.tpl.yml"
 
-	HelmIngressNginx     templateFile = "templates/ingress-nginx/helm.tpl.yml"
+	HelmIngressNginx     templateFile = "templates/ingress-nginx/helm.yml.tpl"
 	AccountIngressBridge templateFile = "templates/ingress-nginx/ingress-bridge.tpl.yml"
 
 	ProjectRBAC   templateFile = "templates/project-rbac.yml.tpl"
 	ProjectHarbor templateFile = "templates/project-harbor.yml.tpl"
 
-	MsvcHelmZookeeper templateFile = "templates/msvc/zookeeper/helm.tpl.yml"
+	MsvcHelmZookeeper templateFile = "templates/msvc/zookeeper/helm.yml.tpl"
 
 	MsvcHelmNeo4jStandalone templateFile = "templates/msvc/neo4j/helm-standalone.yaml.tpl"
 
@@ -189,9 +189,10 @@ var CoreV1 = struct {
 	Secret             templateFile
 	Namespace          templateFile
 	ConfigMap          templateFile
+	Deployment         templateFile
 }{
 	ExternalNameSvc:    "templates/corev1/external-name-service.tpl.yml",
-	Ingress:            "templates/corev1/ingress.tpl.yml",
+	Ingress:            "templates/corev1/ingress.yml.tpl",
 	DockerConfigSecret: "templates/corev1/docker-config-secret.tpl.yml",
 	Secret:             "templates/corev1/secret.tpl.yml",
 	Namespace:          "templates/corev1/namespace.yml.tpl",

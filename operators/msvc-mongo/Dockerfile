@@ -6,7 +6,7 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
     ./kubectl && chmod +x ./kubectl
 
 COPY --from=project go.mod go.sum ./
-COPY --from=project lib ./lib
+COPY --from=project pkg ./pkg
 COPY --from=project apis ./apis
 COPY --from=project ./operator ./operator
 RUN go mod download -x

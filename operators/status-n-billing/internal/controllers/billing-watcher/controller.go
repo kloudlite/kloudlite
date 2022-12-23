@@ -17,12 +17,12 @@ import (
 	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
+	"operators.kloudlite.io/operators/status-n-billing/internal/env"
+	t "operators.kloudlite.io/operators/status-n-billing/internal/types"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
 	"operators.kloudlite.io/pkg/logging"
 	rApi "operators.kloudlite.io/pkg/operator"
-	"operators.kloudlite.io/operators/status-n-billing/internal/env"
-	t "operators.kloudlite.io/operators/status-n-billing/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -192,7 +192,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 						return ctrl.Result{}, nil
 					}
 
-					storageSize, err := realMsvc.Spec.Storage.ToInt()
+					//storageSize, err := realMsvc.Spec.Storage.ToInt()
 					if err != nil {
 						return ctrl.Result{}, err
 					}
@@ -200,7 +200,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 						Name: fmt.Sprintf("%s/%s", msvc.Namespace, msvc.Name),
 						Items: []t.K8sItem{
 							t.NewK8sItem(msvc, t.Compute, float32(billableQ), realMsvc.Spec.ReplicaCount),
-							t.NewK8sItem(msvc, t.BlockStorage, float32(storageSize), realMsvc.Spec.ReplicaCount),
+							//t.NewK8sItem(msvc, t.BlockStorage, float32(storageSize), realMsvc.Spec.ReplicaCount),
 						},
 					}
 					return r.SendBillingEvent(ctx, msvc, &billing)

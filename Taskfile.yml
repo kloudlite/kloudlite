@@ -146,7 +146,7 @@ tasks:
         outputDir=$(mktemp -d)
         #echo "outputDir: $outputDir"
         #for dir in $(ls -d ./operators/*/)
-        dirs=("./operators/app-n-lambda" "./operators/msvc-mongo" "./operators/msvc-redis" "./operators/msvc-redpanda" "./operators/routers" "./operators/extensions" "./operators/csi-drivers")
+        dirs=("./operators/projec "./operators/app-n-lambda" "./operators/msvc-n-mres" "./operators/msvc-mongo" "./operators/msvc-redis" "./operators/msvc-redpanda" "./operators/routers" "./operators/extensions" "./operators/csi-drivers")
         for dir in "${dirs[@]}"
         do
           # task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
@@ -192,7 +192,7 @@ tasks:
       - |+
         pushd "./operators/{{.Name}}" 1> /dev/null
         lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
+        
         startLineNo=$(echo "$lineNumbers" | head -n+1)
         finalLineNo=$(echo "$lineNumbers" | tail -1)
 
@@ -202,7 +202,7 @@ tasks:
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
 
         #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+        CGO_ENABLED=0 go build -v -o $tDir/{{.APP}} .
         
         echo "[Debug]: $tDir/Dockerfile.base"
   
@@ -413,3 +413,16 @@ tasks:
         # /tmp/{{.Dir}} --dev
         # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
         dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Name}} -- --dev
+
+  test:app:
+    interactive: true
+    cmds:
+      - nodemon -e 'go'  -w "./operators/app-n-lambda/internal/controllers/app" --exec "go test -v operators.kloudlite.io/operators/app-n-lambda/internal/controllers/app || exit 1"
+
+  test:project:
+    interactive: true
+#    sources:
+#      - ./operators/project/internal/controllers/envenv/*
+    cmds:
+#      - go build operators.kloudlite.io/operators/project
+      - nodemon -w "./operators/project/internal/controllers/env" --exec "go test operators.kloudlite.io/operators/project/internal/controllers/env | tail -f /dev/null"

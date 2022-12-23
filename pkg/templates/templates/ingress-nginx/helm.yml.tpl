@@ -52,18 +52,17 @@ spec:
 
   controller:
     kind: DaemonSet
-    hostNetwork: false
-    podSecurityContext:
-      sysctls:
-        - name: net.ipv4.ip_unprivileged_port_start
-          value: "1"
+    hostNetwork: true
     hostPort:
       enabled: true
-    ports:
-      http: 80
-      https: 443
+      ports:
+        http: 80
+        https: 443
+        healthz: 10254
 
-    watchIngressWithoutClass: false
+    dnsPolicy: ClusterFirstWithHostNet
+
+{{/*    watchIngressWithoutClass: false*/}}
     ingressClassByName: true
     ingressClass: {{$ingressClassName}}
     electionID: {{$ingressClassName}}
@@ -71,27 +70,13 @@ spec:
       enabled: true
       name: "{{$ingressClassName}}"
       controllerValue: "k8s.io/{{$ingressClassName}}"
-{{/*    replicaCount: 1*/}}
 
     service:
       type: "ClusterIP"
 
-{{/*    {{- if .Spec.DefaultSSLCert.SecretName}}*/}}
     extraArgs:
-{{/*      default-ssl-certificate: "{{.Spec.DefaultSSLCert.Namespace|default .Namespace}}/{{.Spec.DefaultSSLCert.SecretName}}"*/}}
       default-ssl-certificate: "{{$wildcardCertNamespace}}/{{$wildcardCertName}}"
-
-{{/*      default-ssl-certificate: "kl-init-cert-manager/kl-cert-issuer-tls"*/}}
-
-{{/*    {{- end}}*/}}
-
     podLabels: {{$labels  | toYAML | nindent 6}}
-
-{{/*    autoscaling:*/}}
-{{/*      enabled: true*/}}
-{{/*      maxReplicas: 7*/}}
-{{/*      targetCPUUtilizationPercentage: 70*/}}
-{{/*      targetMemoryUtilizationPercentage: 80*/}}
 
     resources:
       requests:
