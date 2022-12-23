@@ -1,10 +1,14 @@
-{{- $namespace := get . "namespace" | default "kl-core" -}}
+{{- $namespace := get . "namespace" -}}
+{{- $svcAccount := get . "svc-account" -}}
+{{- $sharedConstants := get . "shared-constants" -}}
+
+{{- $ownerRefs := get . "owner-refs" | default list -}}
 {{- $accountRef := get . "account-ref" | default "kl-core" -}}
 {{- $region := get . "region" | default "master" -}}
-{{- $imageAuthApi := get . "image-auth-api" -}}
 {{- $imagePullPolicy := get . "image-pull-policy" | default "Always" -}}
 
-{{- $sharedConstants := get . "shared-constants" -}}
+{{- $nodeSelector := get . "node-selector" | default dict -}}
+{{- $tolerations := get . "tolerations" | default list -}}
 
 {{ with $sharedConstants}}
 {{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.SharedConstants*/}}
@@ -15,6 +19,7 @@ metadata:
   namespace: {{$namespace}}
   annotations:
     kloudlite.io/account-ref: {{$accountRef}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4 }}
 spec:
   region: {{$region}}
   services:
@@ -28,7 +33,7 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: {{$imageAuthApi}}
+      image: {{.ImageAuthApi}}
       imagePullPolicy: {{$imagePullPolicy}}
       resourceCpu:
         min: "100m"
@@ -81,7 +86,7 @@ spec:
           value: "3001"
 
         - key: ORIGINS
-          value: "http://localhost:4001,https://studio.apollographql.com"
+          value: "https://{{.AuthWebDomain}},http://localhost:4001,https://studio.apollographql.com"
 
         - key: COOKIE_DOMAIN
           value: "{{.CookieDomain}}"
@@ -91,12 +96,12 @@ spec:
 
       envFrom:
         - type: secret
-          refName: oauth-secrets
+          refName: {{.OAuthSecretName}}
 
       volumes:
         - mountPath: /github
           type: secret
-          refName: oauth-github-app-pk
+          refName: oauth-secrets
           items:
             - key: github-app-pk.pem
               fileName: github-app-pk.pem

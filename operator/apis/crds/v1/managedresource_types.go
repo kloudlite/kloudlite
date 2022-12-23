@@ -40,6 +40,7 @@ type ManagedResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              ManagedResourceSpec `json:"spec,omitempty"`
+	Overrides         *JsonPatch          `json:"overrides,omitempty"`
 	Status            rApi.Status         `json:"status,omitempty"`
 }
 

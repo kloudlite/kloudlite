@@ -1,0 +1,20 @@
+# permissions for end users to view envs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: env-viewer-role
+rules:
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs/status
+  verbs:
+  - get

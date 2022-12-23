@@ -1,0 +1,173 @@
+package env
+
+import (
+	"context"
+	"fmt"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	"operators.kloudlite.io/pkg/constants"
+	fn "operators.kloudlite.io/pkg/functions"
+	jsonPatch "operators.kloudlite.io/pkg/json-patch"
+	. "operators.kloudlite.io/testing"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"testing"
+	"time"
+)
+
+//	func TestController(t *testing.T) {
+//		RegisterFailHandler(Fail)
+//		RunSpecs(t, "Controller Suite")
+//	}
+
+//var _ = SetupWithDefaults(AddToSchemes(crdsv1.AddToScheme))
+
+const (
+	testEnvName       = "sample-test"
+	testProjectName   = "sample"
+	testBlueprintName = "sample-blueprint"
+
+	testCfgName = "example-config"
+)
+
+var _ = Describe("Env Controller says", func() {
+
+	Context("Initialize an Environment CR", func() {
+		It("Should succeed", func() {
+			ctx, cancelFunc := context.WithTimeout(context.TODO(), 2*time.Second)
+			defer cancelFunc()
+
+			env := &crdsv1.Env{ObjectMeta: metav1.ObjectMeta{Name: testEnvName}}
+			_, err := controllerutil.CreateOrUpdate(ctx, K8sClient, env, func() error {
+				env.Spec.Primary = true
+				env.Spec.ProjectName = testProjectName
+				return nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	It("can list this environment, by project name", func() {
+		ctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+		defer cancelFunc()
+
+		Eventually(func() error {
+			var envList crdsv1.EnvList
+			err := K8sClient.List(ctx, &envList, &client.ListOptions{
+				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.ProjectNameKey: testProjectName}),
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			hasFound := false
+			for i := range envList.Items {
+				if envList.Items[i].Name == testEnvName {
+					hasFound = true
+					break
+				}
+			}
+
+			if !hasFound {
+				return fmt.Errorf("could not find testEnv in list of environments")
+			}
+			return nil
+		}).WithPolling(1 * time.Second).WithTimeout(5 * time.Second).ShouldNot(HaveOccurred())
+	})
+
+	It("env namespace has been created", func() {
+		Eventually(func(g Gomega) {
+			ctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+			defer cancelFunc()
+			ns := &corev1.Namespace{}
+			err := K8sClient.Get(ctx, fn.NN("", testEnvName), ns)
+			g.Expect(err).NotTo(HaveOccurred())
+
+			env := &crdsv1.Env{}
+			err = K8sClient.Get(ctx, fn.NN("", testEnvName), env)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(env.Status.Checks[NamespaceReady].Status).Should(Equal(true))
+		}).WithPolling(1 * time.Second).WithTimeout(5 * time.Second).Should(Succeed())
+	})
+
+	It("config from blueprint, is copied and acted upon in the environment", func() {
+		ctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+		defer cancelFunc()
+
+		blCfg := &crdsv1.Config{ObjectMeta: metav1.ObjectMeta{Name: testCfgName, Namespace: testBlueprintName}}
+		_, err := controllerutil.CreateOrUpdate(ctx, K8sClient, blCfg, func() error {
+			blCfg.Overrides = nil
+			blCfg.Data = map[string]string{"hello": "hi"}
+			return nil
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(func(g Gomega) {
+			ctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+			defer cancelFunc()
+			cfg := &crdsv1.Config{}
+			err := K8sClient.Get(ctx, fn.NN(testEnvName, testCfgName), cfg)
+			g.Expect(err).NotTo(HaveOccurred())
+
+			g.Expect(cfg.Data["hello"]).Should(Equal("hi"))
+		}).WithPolling(1 * time.Second).WithTimeout(5 * time.Second).Should(Succeed())
+	})
+
+	It("overrides on resources in environment namespace, are patched into their respective spec", func() {
+		ctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+		defer cancelFunc()
+
+		blcfg := &crdsv1.Config{ObjectMeta: metav1.ObjectMeta{Name: testCfgName + "2", Namespace: testBlueprintName}}
+		_, err := controllerutil.CreateOrUpdate(ctx, K8sClient, blcfg, func() error {
+			blcfg.Data = map[string]string{"hi": "hello"}
+			return nil
+		})
+		Expect(err).NotTo(HaveOccurred())
+
+		cfg := &crdsv1.Config{ObjectMeta: metav1.ObjectMeta{Name: testCfgName + "2", Namespace: testEnvName}}
+		_, err = controllerutil.CreateOrUpdate(ctx, K8sClient, cfg, func() error {
+			cfg.Data = map[string]string{"hi": "hello"}
+			cfg.Overrides = &crdsv1.JsonPatch{
+				Patches: []jsonPatch.PatchOperation{
+					{
+						Op:    "replace",
+						Path:  "/hi",
+						Value: "world",
+					},
+				},
+			}
+			return nil
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(func(g Gomega) {
+			cfg := &crdsv1.Config{}
+			err := K8sClient.Get(ctx, fn.NN(testEnvName, testCfgName+"2"), cfg)
+			g.Expect(err).NotTo(HaveOccurred())
+
+			g.Expect(cfg.Data["hi"]).Should(Equal("world"))
+		}).WithPolling(1 * time.Second).WithTimeout(10 * time.Second).Should(Succeed())
+	})
+
+	//It("env can be deleted", func() {
+	//	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
+	//	defer cancelFn()
+	//	env := &crdsv1.Env{ObjectMeta: metav1.ObjectMeta{Name: testEnvName}}
+	//	err := K8sClient.Delete(ctx, env)
+	//	Expect(err).NotTo(HaveOccurred())
+	//	Eventually(func(g Gomega) {
+	//		env := &crdsv1.Env{}
+	//		err := K8sClient.Get(ctx, fn.NN(testEnvName, ""), env)
+	//
+	//		if err != nil {
+	//			if apiErrors.IsNotFound(err) {
+	//				return
+	//			}
+	//		}
+	//		Expect(err).NotTo(HaveOccurred())
+	//	}).WithPolling(1 * time.Second).WithTimeout(3 * time.Second).Should(Succeed())
+	//})
+})

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
 	"operators.kloudlite.io/pkg/constants"
@@ -9,13 +10,13 @@ import (
 
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
-	CloudProvider ct.CloudProvider  `json:"cloudProvider"`
-	NodeSelector  map[string]string `json:"nodeSelector,omitempty"`
+	Region       string              `json:"region"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=1
 	ReplicaCount int          `json:"replicaCount,omitempty"`
-	Storage      ct.Storage   `json:"storage"`
 	Resources    ct.Resources `json:"resources"`
 }
 

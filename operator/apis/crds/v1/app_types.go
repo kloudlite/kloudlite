@@ -2,10 +2,10 @@ package v1
 
 import (
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"operators.kloudlite.io/pkg/constants"
+	jsonPatch "operators.kloudlite.io/pkg/json-patch"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
 
@@ -123,18 +123,26 @@ type AppSpec struct {
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
+type JsonPatch struct {
+	Applied bool                       `json:"applied,omitempty"`
+	Patches []jsonPatch.PatchOperation `json:"patches,omitempty"`
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.displayVars.intercepted",name=Intercepted,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.displayVars.frozen",name=Frozen,type=boolean
 
 // App is the Schema for the apps API
 type App struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AppSpec     `json:"spec,omitempty"`
-	Status rApi.Status `json:"status,omitempty"`
+	Spec      AppSpec     `json:"spec,omitempty"`
+	Overrides *JsonPatch  `json:"overrides,omitempty"`
+	Status    rApi.Status `json:"status,omitempty"`
 }
 
 func (app *App) GetStatus() *rApi.Status {

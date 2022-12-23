@@ -1,3 +1,0 @@
-- [ ] Github Login issues after selecting only repositories
-- [ ] Github Branch Result is paginated, and not fully searchable in UI
-- [ ] Github App Webhook is needed

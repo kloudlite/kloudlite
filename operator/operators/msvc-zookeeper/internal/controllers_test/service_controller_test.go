@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "operators.kloudlite.io/apis/common-types"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
-	. "operators.kloudlite.io/test-lib"
+	. "operators.kloudlite.io/testing"
 )
 
 var namespace = "ginkgo-test-1"

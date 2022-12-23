@@ -13,7 +13,7 @@ metadata:
 stringData:
   COMM: "true"
   INFRA: "true"
-  NAMESERVER_ENDPOINT: "https://dns-api.kloudlite.io"
+  NAMESERVER_ENDPOINT: {{$nameserverEndpoint}}
   WG_DOMAIN: '{{$wildcardDomain}}'
 
   SSH_PATH: /home/nonroot/ssh

@@ -39,6 +39,25 @@ spec:
             type: string
           metadata:
             type: object
+          overrides:
+            properties:
+              applied:
+                type: boolean
+              patches:
+                items:
+                  properties:
+                    op:
+                      type: string
+                    path:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - op
+                  - path
+                  type: object
+                type: array
+            type: object
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:

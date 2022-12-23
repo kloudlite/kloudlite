@@ -2,36 +2,44 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	rApi "operators.kloudlite.io/pkg/operator"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// SecondaryClusterSpec defines the desired state of SecondaryCluster
-type SecondaryClusterSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of SecondaryCluster. Edit secondarycluster_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type SecondarySharedConstants struct {
+	StatefulPriorityClass string `json:"statefulPriorityClass,omitempty"`
+	AppKlAgent string `json:"appKlAgent,omitempty"`
+	ImageKlAgent string `json:"imageKlAgent,omitempty"`
 }
 
-// SecondaryClusterStatus defines the observed state of SecondaryCluster
-type SecondaryClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+type SecondaryClusterSpec struct {
+	SharedConstants SecondarySharedConstants `json:"SharedConstants,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // SecondaryCluster is the Schema for the secondaryclusters API
 type SecondaryCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   SecondaryClusterSpec   `json:"spec,omitempty"`
-	Status SecondaryClusterStatus `json:"status,omitempty"`
+	Spec   SecondaryClusterSpec `json:"spec,omitempty"`
+	Status rApi.Status          `json:"status,omitempty"`
+}
+
+func (sc *SecondaryCluster) GetStatus() *rApi.Status {
+	return &sc.Status
+}
+
+func (sc *SecondaryCluster) GetEnsuredLabels() map[string]string {
+	return map[string]string{}
+}
+
+func (sc *SecondaryCluster) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{}
 }
 
 //+kubebuilder:object:root=true

@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	testlib "operators.kloudlite.io/test-lib"
+	testlib "operators.kloudlite.io/testing"
 )
 
 func TestAPIs(t *testing.T) {
