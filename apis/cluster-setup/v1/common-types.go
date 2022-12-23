@@ -18,6 +18,12 @@ type LokiValues struct {
 	Url       string       `json:"url,omitempty"`
 }
 
+type RedpandaValues struct {
+	// +kubebuilder:default=v22.1.6
+	Version   string       `json:"version,omitempty"`
+	Resources ct.Resources `json:"resources"`
+}
+
 type PrometheusValues struct {
 	Resources ct.Resources `json:"resources"`
 }
@@ -66,5 +72,10 @@ type GithubReleaseArtifacts struct {
 }
 
 type Operators struct {
-	Manifests []GithubReleaseArtifacts `json:"manifests"`
+	Manifests []GithubReleaseArtifacts `json:"manifests,omitempty"`
+}
+
+type NetworkingValues struct {
+	DnsNames  []string `json:"dnsNames,omitempty"`
+	EdgeCNAME string   `json:"edgeCNAME,omitempty"`
 }

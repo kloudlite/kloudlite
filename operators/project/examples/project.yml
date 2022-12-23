@@ -1,0 +1,6 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Project
+metadata:
+  name: sample
+spec:
+  accountRef: kl-core

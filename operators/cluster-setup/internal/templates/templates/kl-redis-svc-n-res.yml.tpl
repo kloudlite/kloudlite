@@ -1,14 +1,18 @@
 {{- $namespace := get . "namespace" -}}
 {{- $region := get . "region" -}}
 {{- $localStorageClass := get . "local-storage-class" -}}
+{{- $sharedConstants := get . "shared-constants" -}}
+{{- $ownerRefs := get . "owner-refs" | default list -}}
 
-{{- $redisSvcName := "redis-svc" -}}
+{{- with $sharedConstants -}}
+{{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.SharedConstants*/}}
 
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: {{$redisSvcName}}
+  name: {{.MongoSvcName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   region: {{$region}}
   msvcKind:
@@ -20,19 +24,20 @@ spec:
         min: 200m
         max: 300m
       memory: 300Mi
-    storage:
-      size: 1Gi
-      {{if $localStorageClass}}
-      storageClass: {{$localStorageClass}}
-      {{end}}
+      storage:
+        size: 1Gi
+        {{if $localStorageClass}}
+        storageClass: {{$localStorageClass}}
+        {{end}}
 
 ---
 # auth-redis
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: auth-redis
+  name: {{.AuthRedisName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   inputs:
     keyPrefix: auth
@@ -41,14 +46,15 @@ spec:
   msvcRef:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$redisSvcName}}
+    name: {{.RedisSvcName}}
 ---
 # console-redis
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: console-redis
+  name: {{.ConsoleRedisName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   inputs:
     keyPrefix: console
@@ -57,15 +63,16 @@ spec:
   msvcRef:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$redisSvcName}}
+    name: {{.RedisSvcName}}
 
 ---
 # ci-redis
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: ci-redis
+  name: {{.CiRedisName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   inputs:
     keyPrefix: ci
@@ -74,14 +81,15 @@ spec:
   msvcRef:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$redisSvcName}}
+    name: {{.RedisSvcName}}
 ---
 # dns-redis
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: dns-redis
+  name: {{.DnsRedisName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   inputs:
     keyPrefix: dns
@@ -90,15 +98,16 @@ spec:
   msvcRef:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$redisSvcName}}
+    name: {{.RedisSvcName}}
 
 ---
 # finance-redis
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: finance-redis
+  name: {{.FinanceRedisName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   inputs:
     keyPrefix: finance
@@ -107,15 +116,16 @@ spec:
   msvcRef:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$redisSvcName}}
+    name: {{.RedisSvcName}}
 
 ---
 # iam-redis
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: iam-redis
+  name: {{.IamRedisName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   inputs:
     keyPrefix: iam
@@ -124,15 +134,16 @@ spec:
   msvcRef:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$redisSvcName}}
+    name: {{.RedisSvcName}}
 
 ---
 # socket-redis
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedResource
 metadata:
-  name: socket-redis
+  name: {{.SocketRedisName}}
   namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   inputs:
     keyPrefix: socket
@@ -141,4 +152,5 @@ spec:
   msvcRef:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
-    name: {{$redisSvcName}}
+    name: {{.RedisSvcName}}
+{{end}}

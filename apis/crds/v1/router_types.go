@@ -30,7 +30,8 @@ type Https struct {
 
 type BasicAuth struct {
 	Enabled    bool   `json:"enabled"`
-	SecretName string `json:"secretName"`
+	Username   string `json:"username,omitempty"`
+	SecretName string `json:"secretName,omitempty"`
 }
 
 // RouterSpec defines the desired state of Router

@@ -66,7 +66,7 @@ func New(name string) *operator {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-	logger := logging.NewOrDie(&logging.Options{Dev: isDev})
+	logger := logging.NewOrDie(&logging.Options{Dev: true})
 
 	mgrConfig, mgrOptions := func() (*rest.Config, ctrl.Options) {
 		cOpts := ctrl.Options{

@@ -13,6 +13,7 @@ import (
 	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
 	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-n-mres/internal/env"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
 	"operators.kloudlite.io/pkg/harbor"
@@ -21,7 +22,6 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-n-mres/internal/env"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -93,7 +93,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
@@ -223,6 +223,6 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, logger lo
 	for _, child := range children {
 		builder.Owns(child)
 	}
-
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

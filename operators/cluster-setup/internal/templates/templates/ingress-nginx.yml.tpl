@@ -1,4 +1,6 @@
 {{- $ingressValues := get . "ingress-values" -}}
+{{- $wildcardCertNamespace := get . "wildcard-cert-namespace" -}}
+{{- $wildcardCertName := get . "wildcard-cert-name" -}}
 
 {{- with $ingressValues }}
 {{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.IngressValues*/}}
@@ -17,8 +19,14 @@ controller:
     ports:
       http: 80
       https: 443
+      healthz: 10254
+
+  dnsPolicy: ClusterFirstWithHostNet
 
   kind: DaemonSet
+
+  extraArgs:
+    default-ssl-certificate: "{{$wildcardCertNamespace}}/{{$wildcardCertName}}"
 
   service:
     type: "ClusterIP"

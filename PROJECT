@@ -416,4 +416,28 @@ resources:
   kind: SecondaryCluster
   path: operators.kloudlite.io/apis/cluster-setup/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: Env
+  path: operators.kloudlite.io/apis/crds/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: Config
+  path: operators.kloudlite.io/apis/crds/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: Secret
+  path: operators.kloudlite.io/apis/crds/v1
+  version: v1
 version: "3"

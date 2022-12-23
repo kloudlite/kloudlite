@@ -15,22 +15,22 @@ import (
   "time"
 
   "k8s.io/apimachinery/pkg/runtime"
-  "operators.kloudlite.io/lib/harbor"
-  "operators.kloudlite.io/lib/logging"
-  rApi "operators.kloudlite.io/lib/operator"
-  stepResult "operators.kloudlite.io/lib/operator/step-result"
+  "operators.kloudlite.io/pkg/harbor"
+  "operators.kloudlite.io/pkg/logging"
+  rApi "operators.kloudlite.io/pkg/operator"
+  stepResult "operators.kloudlite.io/pkg/operator/step-result"
   ctrl "sigs.k8s.io/controller-runtime"
   "sigs.k8s.io/controller-runtime/pkg/client"
-  "operators.kloudlite.io/lib/kubectl"
+  "operators.kloudlite.io/pkg/kubectl"
 )
 
 type {{$reconType}} struct {
   client.Client
   Scheme    *runtime.Scheme
-  env       *env.Env
-  harborCli *harbor.Client
+  Env       *env.Env
   logger    logging.Logger
   Name      string
+  yamlClient *kubectl.YAMLClient
 }
 
 func (r *{{$reconType}}) GetName() string {
@@ -86,7 +86,7 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
   }
 
   req.Object.Status.IsReady = true
-  return ctrl.Result{RequeueAfter: r.env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+  return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *{{$reconType}}) finalize(req *rApi.Request[*{{$kindObjName}}]) stepResult.Result {

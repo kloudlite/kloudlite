@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	fn "operators.kloudlite.io/pkg/functions"
-	. "operators.kloudlite.io/test-lib"
+	. "operators.kloudlite.io/testing"
 )
 
 var testProjectName = "kl-test-ginkgo-project"

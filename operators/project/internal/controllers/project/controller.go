@@ -3,6 +3,8 @@ package project
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -32,6 +34,7 @@ type Reconciler struct {
 	Name       string
 	Env        *env.Env
 	yamlClient *kubectl.YAMLClient
+	IsDev      bool
 }
 
 func (r *Reconciler) GetName() string {
@@ -81,7 +84,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureNamespace(req); !step.ShouldProceed() {
+	if step := r.ensureNamespaces(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -113,52 +116,46 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Res
 	return req.Finalize()
 }
 
-func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+func (r *Reconciler) ensureNamespaces(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
 
-	if obj.Spec.AccountRef == "" {
-		accRef, ok := obj.GetAnnotations()[constants.AccountRef]
-		if !ok {
-			return req.CheckFailed(NamespaceReady, check, "no account-ref found in annotations").Err(nil)
+	req.LogPreCheck(NamespaceReady)
+	defer req.LogPostCheck(NamespaceReady)
+
+	blueprintNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-blueprint", obj.Name)}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, blueprintNs, func() error {
+		if !fn.IsOwner(blueprintNs, fn.AsOwner(obj)) {
+			blueprintNs.SetOwnerReferences(append(blueprintNs.GetOwnerReferences(), fn.AsOwner(obj, true)))
 		}
-		if ok {
-			obj.Spec.AccountRef = accRef
-			if err := r.Update(ctx, obj); err != nil {
-				return req.FailWithOpError(err)
-			}
-			return req.Done()
+
+		if blueprintNs.ObjectMeta.Labels == nil {
+			blueprintNs.ObjectMeta.Labels = make(map[string]string, 3)
 		}
+
+		blueprintNs.SetLabels(map[string]string{
+			constants.ProjectNameKey:    obj.Name,
+			constants.AccountRef:        obj.Spec.AccountRef,
+			constants.IsBluePrintKey:    "true",
+			constants.MarkedAsBlueprint: "true",
+		})
+
+		return nil
+	}); err != nil {
+		return req.CheckFailed(NamespaceReady, check, err.Error())
 	}
 
-	ns := &corev1.Namespace{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, obj.Name), ns); err != nil {
-		req.Logger.Infof("namespace (%s) does not exist, will be creating one now", obj.Name)
-	}
-
-	if ns == nil || check.Generation > checks[NamespaceReady].Generation {
-		b, err := templates.Parse(
-			templates.CoreV1.Namespace, map[string]any{
-				"name":       obj.Name,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"labels": map[string]string{
-					constants.ProjectNameKey: obj.Name,
-					constants.AccountRef:     obj.Spec.AccountRef,
-				},
-			},
-		)
-
-		if err != nil {
-			return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
+	defaultEnv := &crdsv1.Env{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-default", obj.Name)}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, defaultEnv, func() error {
+		if !fn.IsOwner(defaultEnv, fn.AsOwner(obj)) {
+			defaultEnv.SetOwnerReferences(append(blueprintNs.GetOwnerReferences(), fn.AsOwner(obj, true)))
 		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
-		}
-
-		checks[NamespaceReady] = check
-		return req.UpdateStatus()
+		defaultEnv.Spec.ProjectName = obj.Name
+		defaultEnv.Spec.AccountRef = obj.Spec.AccountRef
+		defaultEnv.Spec.Primary = true
+		return nil
+	}); err != nil {
+		return req.CheckFailed(NamespaceReady, check, err.Error())
 	}
 
 	check.Status = true
@@ -271,37 +268,29 @@ func (r *Reconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Project]) stepR
 	namespace := obj.Name
 	check := rApi.Check{Generation: obj.Generation}
 
-	harborProject, err := rApi.Get(ctx, r.Client, fn.NN(namespace, obj.Spec.AccountRef), &artifactsv1.HarborProject{})
-	if err != nil {
-		harborProject = nil
-		req.Logger.Infof("harbor project (%s) does not exist, creating now ...", obj.Spec.AccountRef)
+	req.LogPreCheck(HarborAccessReady)
+	defer req.LogPostCheck(HarborAccessReady)
+
+	harborProject := &artifactsv1.HarborProject{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.AccountRef}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborProject, func() error {
+		if harborProject.Labels == nil {
+			harborProject.Labels = make(map[string]string, 1)
+		}
+		harborProject.Labels[constants.AccountRef] = obj.Spec.AccountRef
+		return nil
+	}); err != nil {
+		return req.CheckFailed(HarborAccessReady, check, err.Error())
 	}
 
-	harborUserAcc, err := rApi.Get(ctx, r.Client, fn.NN(namespace, r.Env.DockerSecretName), &artifactsv1.HarborUserAccount{})
-	if err != nil {
-		harborUserAcc = nil
-		req.Logger.Infof("harbor user account (%s) does not exist, creating now ...", obj.Spec.AccountRef)
-	}
-
-	if harborProject == nil || harborUserAcc == nil || check.Generation > checks[HarborAccessReady].Generation {
-		b, err := templates.Parse(
-			templates.ProjectHarbor, map[string]any{
-				"acc-ref":            obj.Spec.AccountRef,
-				"docker-secret-name": r.Env.DockerSecretName,
-				"namespace":          namespace,
-				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
+	harborUserAcc := &artifactsv1.HarborUserAccount{ObjectMeta: metav1.ObjectMeta{Name: r.Env.DockerSecretName, Namespace: namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborUserAcc, func() error {
+		if !fn.IsOwner(harborUserAcc, fn.AsOwner(obj)) {
+			obj.SetOwnerReferences(append(harborUserAcc.OwnerReferences, fn.AsOwner(obj, true)))
 		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
-		}
-
-		checks[HarborAccessReady] = check
-		return req.UpdateStatus()
+		harborUserAcc.Spec.ProjectRef = harborProject.Name
+		return nil
+	}); err != nil {
+		return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
 	}
 
 	if !harborProject.Status.IsReady {
