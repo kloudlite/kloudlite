@@ -207,7 +207,7 @@ func (h *Client) FindUserAccountByName(ctx context.Context, projectName string, 
 		return nil, errors.NewEf(err, "while calling")
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

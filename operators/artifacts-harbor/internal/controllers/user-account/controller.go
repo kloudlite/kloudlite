@@ -5,13 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
+	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
+	"operators.kloudlite.io/operators/artifacts-harbor/internal/env"
 	"operators.kloudlite.io/pkg/constants"
 	"operators.kloudlite.io/pkg/errors"
 	fn "operators.kloudlite.io/pkg/functions"
@@ -20,12 +24,8 @@ import (
 	"operators.kloudlite.io/pkg/logging"
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
-	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/artifacts-harbor/internal/env"
-	"operators.kloudlite.io/operators/artifacts-harbor/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type Reconciler struct {
@@ -70,10 +70,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -100,15 +98,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconOutput(req); !step.ShouldProceed() {
+	//if step := r.reconOutput(req); !step.ShouldProceed() {
+	//	return step.ReconcilerResponse()
+	//}
+
+	if step := r.ensureRobotAccount(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconRobotAccount(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	//if step := r.reconRobotAccount(req); !step.ShouldProceed() {
+	//	return step.ReconcilerResponse()
+	//}
 
 	req.Object.Status.IsReady = true
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
@@ -141,22 +144,15 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*artifactsv1.HarborUserAcco
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(DefaultsPatched)
+	defer req.LogPostCheck(DefaultsPatched)
+
 	hasUpdated := false
 
 	if obj.Spec.DockerConfigName == "" {
 		hasUpdated = true
 		obj.Spec.DockerConfigName = r.Env.DockerSecretName
 	}
-
-	// if obj.Spec.OperatorProps.HarborUser == nil {
-	// 	obj.Spec.OperatorProps.HarborUser = &harbor.User{
-	// 		Name: fmt.Sprintf("robot-%s+%s-%s", obj.Spec.ProjectRef, obj.Namespace, obj.Name),
-	// 	}
-	// 	if err := r.Update(ctx, obj); err != nil {
-	// 		return req.CheckFailed(DefaultsPatched, check, err.Error())
-	// 	}
-	// 	return req.Done().RequeueAfter(1 * time.Second)
-	// }
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
@@ -191,44 +187,6 @@ func getDockerConfig(imageRegistry, username, password string) ([]byte, error) {
 	)
 }
 
-func (r *Reconciler) patchDockerSecret(req *rApi.Request[*artifactsv1.HarborUserAccount], username, password string) error {
-	ctx, obj := req.Context(), req.Object
-	dockerScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.DockerConfigName), &corev1.Secret{})
-	if err != nil {
-		req.Logger.Infof("docker secret, does not exist will be creating now...")
-	}
-
-	harborDockerConfig, err := getDockerConfig(r.Env.HarborImageRegistryHost, username, password)
-	if err != nil {
-		return err
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(
-		ctx, r.Client, dockerScrt, func() error {
-			b, err := json.Marshal(
-				types.UserAccountOutput{
-					DockerConfigJson: string(harborDockerConfig),
-					Username:         username,
-					Password:         password,
-					Registry:         r.Env.HarborImageRegistryHost,
-					Project:          obj.Spec.ProjectRef,
-				},
-			)
-			if err != nil {
-				return err
-			}
-
-			if err := json.Unmarshal(b, &dockerScrt.StringData); err != nil {
-				return err
-			}
-			return nil
-		},
-	); err != nil {
-		return err
-	}
-	return nil
-}
-
 func patchServiceAccount(ctx context.Context, client client.Client, namespace, svcAccName, secretName string) error {
 	var svcAccount corev1.ServiceAccount
 	if err := client.Get(ctx, fn.NN(namespace, svcAccName), &svcAccount); err != nil {
@@ -250,67 +208,14 @@ func patchServiceAccount(ctx context.Context, client client.Client, namespace, s
 	return client.Update(ctx, &svcAccount)
 }
 
-func (r *Reconciler) reconOutput(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
+func (r *Reconciler) ensureRobotAccount(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	dockerScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.DockerConfigName), &corev1.Secret{})
-	if err != nil {
-		req.Logger.Infof("docker secret, does not exist will be creating now...")
-	}
-
-	if dockerScrt == nil {
-		b, err := templates.Parse(
-			templates.CoreV1.Secret, map[string]any{
-				"name":       obj.Spec.DockerConfigName,
-				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"string-data": types.UserAccountOutput{
-					DockerConfigJson: string("{}"),
-				},
-				"secret-type": "kubernetes.io/dockerconfigjson",
-				"immutable":   false,
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(OutputReady, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(OutputReady, check, err.Error()).Err(nil)
-		}
-
-		checks[OutputReady] = check
-		return req.UpdateStatus().RequeueAfter(2 * time.Second)
-	}
-
-	if fn.IsOwner(obj, fn.AsOwner(dockerScrt)) {
-		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(dockerScrt)))
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(OutputReady, check, err.Error())
-		}
-		return req.Done().RequeueAfter(2 * time.Second)
-	}
-
-	if err := patchServiceAccount(ctx, r.Client, obj.Namespace, r.Env.ServiceAccountName, obj.Spec.DockerConfigName); err != nil {
-		return req.CheckFailed(OutputReady, check, err.Error()).Err(nil)
-	}
-
-	check.Status = true
-	if check != checks[OutputReady] {
-		checks[OutputReady] = check
-		return req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUserAccount]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
+	req.LogPreCheck(RobotAccountReady)
+	defer req.LogPostCheck(RobotAccountReady)
 
 	robotUsername := fmt.Sprintf("%s-%s", obj.Namespace, obj.Name)
-
 	robotUser, err := r.HarborCli.FindUserAccountByName(ctx, obj.Spec.ProjectRef, robotUsername)
 	if err != nil {
 		httpErr, ok := err.(*errors.HttpError)
@@ -320,7 +225,25 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 		req.Logger.Infof("robot account (%s) does not exist, will be creating now...", robotUsername)
 	}
 
-	if robotUser != nil && (obj.Spec.OperatorProps.HarborUser == nil || obj.Spec.OperatorProps.HarborUser.Id != robotUser.Id) {
+	harborAccessSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.DockerConfigName), &crdsv1.Secret{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
+		}
+		harborAccessSecret = nil
+	}
+
+	if harborAccessSecret != nil {
+		if !fn.IsOwner(obj, fn.AsOwner(harborAccessSecret)) {
+			obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(harborAccessSecret)))
+			if err := r.Update(ctx, obj); err != nil {
+				return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
+			}
+			return req.Done().RequeueAfter(1 * time.Second)
+		}
+	}
+
+	if robotUser != nil && harborAccessSecret == nil {
 		if err := r.HarborCli.DeleteUserAccount(ctx, int64(robotUser.Id)); err != nil {
 			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
@@ -333,26 +256,38 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.patchDockerSecret(req, user.Name, user.Password); err != nil {
+		dockerCfg, err := getDockerConfig(r.Env.HarborImageRegistryHost, user.Name, user.Password)
+		if err != nil {
 			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
 
-		obj.Spec.OperatorProps.HarborUser = user
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(RobotAccountReady, check, err.Error())
+		secret := &crdsv1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.DockerConfigName, Namespace: obj.Namespace}, Type: corev1.SecretTypeDockerConfigJson}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
+			if !fn.IsOwner(secret, fn.AsOwner(obj)) {
+				secret.SetOwnerReferences(append(secret.GetOwnerReferences(), fn.AsOwner(obj, true)))
+			}
+			if secret.Data == nil {
+				secret.Data = make(map[string][]byte, 1)
+				secret.StringData = make(map[string]string, 5)
+			}
+			secret.Data[".dockerconfigjson"] = dockerCfg
+			secret.StringData["username"] = user.Name
+			secret.StringData["password"] = user.Password
+			secret.StringData["registry"] = r.Env.HarborImageRegistryHost
+			secret.StringData["project"] = obj.Spec.ProjectRef
+			secret.StringData["harborUserId"] = fmt.Sprintf("%d", user.Id)
+			return nil
+		}); err != nil {
+			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
 
-		checks[RobotAccountReady] = check
-		return req.UpdateStatus().RequeueAfter(2 * time.Second)
+		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	if check.Generation > checks[RobotAccountReady].Generation {
-		if err := r.HarborCli.UpdateUserAccount(ctx, int64(obj.Spec.OperatorProps.HarborUser.Id), obj.Spec.Enabled); err != nil {
+		if err := r.HarborCli.UpdateUserAccount(ctx, int64(robotUser.Id), obj.Spec.Enabled); err != nil {
 			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
-
-		checks[RobotAccountReady] = check
-		return req.UpdateStatus()
 	}
 
 	check.Status = true
@@ -360,7 +295,6 @@ func (r *Reconciler) reconRobotAccount(req *rApi.Request[*artifactsv1.HarborUser
 		checks[RobotAccountReady] = check
 		return req.UpdateStatus()
 	}
-
 	return req.Next()
 }
 
@@ -372,6 +306,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&artifactsv1.HarborUserAccount{})
 	builder.Owns(&corev1.Secret{})
+	builder.Owns(&crdsv1.Secret{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

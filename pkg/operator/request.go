@@ -340,17 +340,37 @@ func (r *Request[T]) Finalize() stepResult.Result {
 	return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
 }
 
+func (r *Request[T]) LogPreReconcile() {
+	var blue = color.New(color.FgBlue).SprintFunc()
+	r.internalLogger.Infof(blue("[new] reconcilation start"))
+}
+
+func (r *Request[T]) LogPostReconcile() {
+	if !r.Object.GetStatus().IsReady {
+		var yellow = color.New(color.FgHiYellow, color.Bold).SprintFunc()
+		r.internalLogger.Infof(yellow("[end] reconcilation in progress"))
+		return
+	}
+	var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
+	r.internalLogger.Infof(green("[end] reconcilation success"))
+}
+
 func (r *Request[T]) LogPreCheck(checkName string) {
 	var blue = color.New(color.FgBlue).SprintFunc()
-	r.internalLogger.Infof(blue("[check] %-20s [status] %-5v"), checkName, r.Object.GetStatus().Checks[checkName].Status)
+	check, ok := r.Object.GetStatus().Checks[checkName]
+	if ok {
+		r.internalLogger.Infof(blue("[check] %-20s [status] %-5v"), checkName, check.Status)
+	}
 }
 
 func (r *Request[T]) LogPostCheck(checkName string) {
-	check := r.Object.GetStatus().Checks[checkName]
-	if !check.Status {
-		var red = color.New(color.FgRed).SprintFunc()
-		r.internalLogger.Infof(red("[check] %-20s [status] %v [message] %v"), checkName, check.Status, check.Message)
+	check, ok := r.Object.GetStatus().Checks[checkName]
+	if ok {
+		if !check.Status {
+			var red = color.New(color.FgRed).SprintFunc()
+			r.internalLogger.Infof(red("[check] %-20s [status] %v [message] %v"), checkName, check.Status, check.Message)
+		}
+		var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
+		r.internalLogger.Infof(green("[check] %-20s [status] %v"), checkName, check.Status)
 	}
-	var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
-	r.internalLogger.Infof(green("[check] %-20s [status] %v"), checkName, check.Status)
 }

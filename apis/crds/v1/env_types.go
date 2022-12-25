@@ -7,9 +7,10 @@ import (
 )
 
 type EnvSpec struct {
-	ProjectName string `json:"projectName"`
-	AccountRef  string `json:"accountRef"`
-	Primary     bool   `json:"primary"`
+	ProjectName   string `json:"projectName"`
+	BlueprintName string `json:"blueprintName"`
+	AccountRef    string `json:"accountRef"`
+	Primary       bool   `json:"primary"`
 }
 
 //+kubebuilder:object:root=true
@@ -33,7 +34,9 @@ func (e *Env) GetStatus() *rApi.Status {
 
 func (e *Env) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.ProjectNameKey: e.Spec.ProjectName,
+		constants.ProjectNameKey:   e.Spec.ProjectName,
+		constants.BlueprintNameKey: e.Spec.BlueprintName,
+		constants.AccountRef:       e.Spec.AccountRef,
 	}
 }
 

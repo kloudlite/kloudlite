@@ -7,7 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/operators/project/internal/env"
 	"operators.kloudlite.io/pkg/constants"
@@ -51,6 +50,7 @@ const (
 	NamespacedRBACsReady string = "namespaced-rbac-ready"
 	RBACReady            string = "rbac-ready"
 	HarborAccessReady    string = "harbor-access-ready"
+	HarborCredsAvailable string = "harbor-creds-available"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs,verbs=get;list;watch;create;update;patch;delete
@@ -70,10 +70,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -103,9 +101,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconHarborAccess(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	//if step := r.copyHarborCreds(req); !step.ShouldProceed() {
+	//	return step.ReconcilerResponse()
+	//}
 
 	if step := r.ensureCfgAndSecrets(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -147,7 +145,6 @@ func (r *Reconciler) ensureNamespaces(req *rApi.Request[*crdsv1.Env]) stepResult
 		if ns.Labels == nil {
 			ns.Labels = make(map[string]string, 1)
 		}
-		ns.Labels[constants.EnvNameKey] = obj.Name
 		return nil
 	}); err != nil {
 		return req.CheckFailed(NamespaceReady, check, err.Error())
@@ -170,7 +167,7 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 
 	var cfgList crdsv1.ConfigList
 	if err := r.List(ctx, &cfgList, &client.ListOptions{
-		Namespace: obj.Spec.ProjectName + "-blueprint",
+		Namespace: obj.Spec.BlueprintName,
 	}); err != nil {
 		return req.CheckFailed(CfgNSecretsCreated, check, err.Error()).Err(nil)
 	}
@@ -197,15 +194,15 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 	}
 
 	var scrtList crdsv1.SecretList
-	if err := r.List(ctx, &cfgList, &client.ListOptions{
-		Namespace: obj.Spec.ProjectName + "-blueprint",
+	if err := r.List(ctx, &scrtList, &client.ListOptions{
+		Namespace: obj.Spec.BlueprintName,
 	}); err != nil {
 		return req.CheckFailed(CfgNSecretsCreated, check, err.Error()).Err(nil)
 	}
 
 	for i := range scrtList.Items {
 		scrt := scrtList.Items[i]
-		nScrt := &crdsv1.Secret{ObjectMeta: metav1.ObjectMeta{Name: scrt.Name, Namespace: obj.Name}}
+		nScrt := &crdsv1.Secret{ObjectMeta: metav1.ObjectMeta{Name: scrt.Name, Namespace: obj.Name}, Type: scrt.Type}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nScrt, func() error {
 			if !fn.IsOwner(nScrt, fn.AsOwner(obj)) {
 				nScrt.SetOwnerReferences(append(nScrt.GetOwnerReferences(), fn.AsOwner(obj, true)))
@@ -244,6 +241,41 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 	return req.Next()
 }
 
+func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	namespace := obj.Name
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(NamespacedRBACsReady)
+	defer req.LogPreCheck(NamespacedRBACsReady)
+
+	b, err := templates.Parse(
+		templates.ProjectRBAC, map[string]any{
+			"namespace":          namespace,
+			"role-name":          r.Env.AdminRoleName,
+			"role-binding-name":  r.Env.AdminRoleName + "-rb",
+			"svc-account-name":   r.Env.SvcAccountName,
+			"docker-secret-name": r.Env.DockerSecretName,
+			"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
+	)
+	if err != nil {
+		return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[RBACReady] {
+		checks[RBACReady] = check
+		return req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+
 func (r *Reconciler) ensureMsvc(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
@@ -253,7 +285,7 @@ func (r *Reconciler) ensureMsvc(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 
 	var msvcList crdsv1.ManagedServiceList
 	if err := r.List(ctx, &msvcList, &client.ListOptions{
-		Namespace: obj.Spec.ProjectName + "-blueprint",
+		Namespace: obj.Spec.BlueprintName,
 	}); err != nil {
 		return req.CheckFailed(MsvcCreated, check, err.Error()).Err(nil)
 	}
@@ -297,7 +329,7 @@ func (r *Reconciler) ensureMres(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 
 	var mresList crdsv1.ManagedResourceList
 	if err := r.List(ctx, &mresList, &client.ListOptions{
-		Namespace: obj.Spec.ProjectName + "-blueprint",
+		Namespace: obj.Spec.BlueprintName,
 	}); err != nil {
 		return req.CheckFailed(MresCreated, check, err.Error()).Err(nil)
 	}
@@ -328,98 +360,6 @@ func (r *Reconciler) ensureMres(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 	return req.Next()
 }
 
-func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	namespace := obj.Name
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(NamespacedRBACsReady)
-	defer req.LogPreCheck(NamespacedRBACsReady)
-
-	if r.IsDev || check.Generation > checks[RBACReady].Generation {
-		b, err := templates.Parse(
-			templates.ProjectRBAC, map[string]any{
-				"namespace":          namespace,
-				"role-name":          r.Env.AdminRoleName,
-				"role-binding-name":  r.Env.AdminRoleName + "-rb",
-				"svc-account-name":   r.Env.SvcAccountName,
-				"docker-secret-name": r.Env.DockerSecretName,
-				"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
-		}
-	}
-
-	check.Status = true
-	if check != checks[RBACReady] {
-		checks[RBACReady] = check
-		return req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *Reconciler) reconHarborAccess(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	namespace := obj.Name
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(HarborAccessReady)
-	defer req.LogPostCheck(HarborAccessReady)
-
-	harborProject := &artifactsv1.HarborProject{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.AccountRef}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborProject, func() error {
-		if harborProject.Labels == nil {
-			harborProject.Labels = make(map[string]string, 1)
-		}
-		harborProject.Labels[constants.AccountRef] = obj.Spec.AccountRef
-		return nil
-	}); err != nil {
-		return req.CheckFailed(HarborAccessReady, check, err.Error())
-	}
-
-	harborUserAcc := &artifactsv1.HarborUserAccount{ObjectMeta: metav1.ObjectMeta{Name: r.Env.DockerSecretName, Namespace: namespace}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborUserAcc, func() error {
-		if !fn.IsOwner(harborUserAcc, fn.AsOwner(obj)) {
-			obj.SetOwnerReferences(append(harborUserAcc.OwnerReferences, fn.AsOwner(obj, true)))
-		}
-		harborUserAcc.Spec.ProjectRef = harborProject.Name
-		return nil
-	}); err != nil {
-		return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
-	}
-
-	if !harborProject.Status.IsReady {
-		bMessage, err := json.Marshal(harborProject.Status.Message)
-		if err != nil {
-			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
-		}
-		return req.CheckFailed(HarborAccessReady, check, string(bMessage)).Err(nil)
-	}
-
-	if !harborUserAcc.Status.IsReady {
-		bMessage, err := json.Marshal(harborUserAcc.Status.Message)
-		if err != nil {
-			return req.CheckFailed(HarborAccessReady, check, err.Error()).Err(nil)
-		}
-		return req.CheckFailed(HarborAccessReady, check, string(bMessage)).Err(nil)
-	}
-
-	check.Status = true
-	if check != checks[HarborAccessReady] {
-		checks[HarborAccessReady] = check
-		return req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
 func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
@@ -429,9 +369,9 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 
 	var appsList crdsv1.AppList
 	if err := r.List(ctx, &appsList, &client.ListOptions{
-		Namespace: obj.Spec.ProjectName + "-blueprint",
+		Namespace: obj.Spec.BlueprintName,
 	}); err != nil {
-		return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(AppsCreated, check, err.Error()).Err(nil)
 	}
 
 	for i := range appsList.Items {
@@ -451,7 +391,7 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 			nApp.Spec = app.Spec
 			return nil
 		}); err != nil {
-			return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
+			return req.CheckFailed(AppsCreated, check, err.Error()).Err(nil)
 		}
 	}
 
