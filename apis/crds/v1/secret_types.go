@@ -1,6 +1,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
@@ -9,12 +10,15 @@ import (
 //+kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+// +kubebuilder:printcolumn:JSONPath=".type",name=Type,type=string
 
 // Secret is the Schema for the secrets API
 type Secret struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// +kubebuilder:default="Opaque"
+	Type       corev1.SecretType `json:"type,omitempty"`
 	Data       map[string][]byte `json:"data,omitempty"`
 	StringData map[string]string `json:"stringData,omitempty"`
 	Overrides  *JsonPatch        `json:"overrides,omitempty"`

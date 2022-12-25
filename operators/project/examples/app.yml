@@ -2,15 +2,15 @@
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
-  name: sample-app
-  namespace: sample-blueprint
+  name: nginx-app
+  namespace: sample-24826-blueprint
   labels:
     kloudlite.io/project.name: sample
 spec:
   region: master
   containers:
     - name: main
-      image: nginx
+      image: registry.kloudlite.io/acc-k-hw-z1woxao88zzw8wjwl5mu2bih/nginx:latest
 
 ---
 ## override

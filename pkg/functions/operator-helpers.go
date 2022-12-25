@@ -23,6 +23,26 @@ func ContainsFinalizers(obj client.Object, finalizers ...string) bool {
 	return true
 }
 
+func ParseFromMap[T any, K any](m map[string]K) (*T, error) {
+	b, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	var output T
+	if err := json.Unmarshal(b, &output); err != nil {
+		return nil, err
+	}
+	return &output, nil
+}
+
+func IntoMap(value any, targetMap any) error {
+	b, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, &targetMap)
+}
+
 func ParseFromSecret[T any](secret *corev1.Secret) (*T, error) {
 	x := make(map[string]string, len(secret.Data))
 	for k, v := range secret.Data {

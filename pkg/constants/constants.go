@@ -58,6 +58,7 @@ const (
 	ProviderRef string = "kloudlite.io/provider-ref"
 
 	ProjectNameKey       string = "kloudlite.io/project.name"
+	BlueprintNameKey     string = "kloudlite.io/blueprint.name"
 	MsvcNameKey          string = "kloudlite.io/msvc.name"
 	IsMresOutput         string = "kloudlite.io/is-mres-output"
 	MresNameKey          string = "kloudlite.io/mres.name"

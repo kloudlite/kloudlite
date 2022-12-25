@@ -101,7 +101,7 @@ func (r *Reconciler) ensureSecret(req *rApi.Request[*crdsv1.Secret]) stepResult.
 	req.LogPreCheck(K8sSecretCreated)
 	defer req.LogPostCheck(K8sSecretCreated)
 
-	scrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	scrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}, Type: obj.Type}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
 		if !fn.IsOwner(scrt, fn.AsOwner(obj)) {
 			scrt.SetOwnerReferences(append(scrt.GetOwnerReferences(), fn.AsOwner(obj, true)))
