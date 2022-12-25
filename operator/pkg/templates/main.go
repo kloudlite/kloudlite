@@ -201,8 +201,10 @@ var CoreV1 = struct {
 
 var CrdsV1 = struct {
 	App           templateFile
+	Secret        templateFile
 	AccountRouter templateFile
 }{
 	App:           "templates/app.yml.tpl",
+	Secret:        "templates/crdsv1/secret.yml.tpl",
 	AccountRouter: "templates/crdsv1/account-router.yml.tpl",
 }

@@ -43,12 +43,15 @@ spec:
             properties:
               accountRef:
                 type: string
+              blueprintName:
+                type: string
               primary:
                 type: boolean
               projectName:
                 type: string
             required:
             - accountRef
+            - blueprintName
             - primary
             - projectName
             type: object
