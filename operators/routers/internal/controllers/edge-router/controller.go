@@ -2,7 +2,7 @@ package edgeRouter
 
 import (
 	"context"
-	"strings"
+	acmev1 "github.com/cert-manager/cert-manager/pkg/apis/acme/v1"
 	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -66,10 +66,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETED (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -91,10 +89,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.reconDefaults(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-
 	if step := r.ensureClusterIssuer(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -102,10 +96,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	if step := r.ensureIngressController(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
-
-	// if step := r.patchClusterIssuer(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
@@ -156,47 +146,56 @@ func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) 
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(ClusterIssuerReady)
+	defer req.LogPostCheck(ClusterIssuerReady)
+
 	issuerName := controllers.GetClusterIssuerName(obj.Spec.EdgeName)
 
-	clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", issuerName), &certmanagerv1.ClusterIssuer{})
+	// copy dnsNames from default cluster issuer
+	defaultIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", r.Env.DefaultClusterIssuerName), &certmanagerv1.ClusterIssuer{})
 	if err != nil {
-		req.Logger.Infof("cluster issuer does not exist yet, would be creating now...")
-		clusterIssuer = nil
+		return req.CheckFailed(ClusterIssuerReady, check, err.Error())
 	}
 
-	if clusterIssuer == nil || check.Generation > checks[ClusterIssuerReady].Generation {
-		b, err := templates.Parse(
-			templates.ClusterIssuer, map[string]any{
-				"kl-cloudflare-wildcard-domains": strings.Split(r.Env.CloudflareWildcardDomains, ","),
-				"kl-cloudflare-email":            r.Env.CloudflareEmail,
-				"kl-cloudflare-secret-name":      r.Env.CloudflareSecretName,
-				"owner-refs":                     []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"namespace":                      obj.Namespace,
+	var acmeSolvers []acmev1.ACMEChallengeSolver
 
-				"kl-acme-email": r.Env.AcmeEmail,
-				"issuer-name":   issuerName,
-				"ingress-class": controllers.GetIngressClassName(obj.Spec.EdgeName),
-				"tolerations": []corev1.Toleration{
-					{
-						Key:      constants.RegionKey,
-						Operator: "Equal",
-						Value:    obj.Spec.EdgeName,
-						Effect:   "NoExecute",
-					},
-				},
-				"node-selector": map[string]string{
-					constants.RegionKey: obj.Spec.EdgeName,
+	if defaultIssuer != nil && defaultIssuer.Spec.ACME != nil {
+		for _, s := range defaultIssuer.Spec.ACME.Solvers {
+			if s.DNS01 != nil {
+				acmeSolvers = append(acmeSolvers, s)
+			}
+		}
+	}
+
+	b, err := templates.Parse(
+		templates.ClusterIssuer, map[string]any{
+			"owner-refs":   []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"namespace":    obj.Namespace,
+			"acme-solvers": acmeSolvers,
+
+			"kl-acme-email": r.Env.AcmeEmail,
+			"issuer-name":   issuerName,
+			"ingress-class": controllers.GetIngressClassName(obj.Spec.EdgeName),
+			"tolerations": []corev1.Toleration{
+				{
+					Key:      constants.RegionKey,
+					Operator: "Equal",
+					Value:    obj.Spec.EdgeName,
+					Effect:   "NoExecute",
 				},
 			},
-		)
+			"node-selector": map[string]string{
+				constants.RegionKey: obj.Spec.EdgeName,
+			},
+		},
+	)
 
-		if err != nil {
-			return req.CheckFailed(ClusterIssuerReady, check, err.Error()).Err(nil)
-		}
+	if err != nil {
+		return req.CheckFailed(ClusterIssuerReady, check, err.Error()).Err(nil)
+	}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(ClusterIssuerReady, check, err.Error()).Err(nil)
-		}
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(ClusterIssuerReady, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true

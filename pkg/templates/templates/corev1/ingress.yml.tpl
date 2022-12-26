@@ -30,8 +30,10 @@ metadata:
 
     {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
     {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}
+    nginx.ingress.kubernetes.io/ssl-redirect: {{.Spec.Https.Enabled | squote }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: {{.Spec.Https.ForceRedirect | squote}}
+{{/*    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"*/}}
+
 
     {{- with .Spec.RateLimit}}
     {{- if .Enabled}}
@@ -72,6 +74,28 @@ spec:
     {{- end}}
   rules:
     {{- range $domain := .Spec.Domains }}
+    - host: www.{{$domain}}
+      http:
+        paths:
+          {{- range $route := $routes }}
+          - backend:
+              service:
+                name: {{$route.App | default $route.Lambda}}
+                port:
+                  number: {{$route.Port}}
+
+            {{- if $route.Rewrite }}
+            path: {{$route.Path}}?(.*)
+            {{- else}}
+            {{ $x := len $route.Path }}
+{{/*            {{if not (gt $x 1)}}*/}}
+{{/*            path: "/(.*)"*/}}
+{{/*            {{else}}*/}}
+            path: /({{if hasPrefix "/" $route.Path }}{{substr 1 $x $route.Path}}{{else}}{{$route.Path}}{{end}}.*)
+{{/*            {{end}}*/}}
+            {{- end}}
+            pathType: Prefix
+          {{- end}}
     - host: {{$domain}}
       http:
         paths:

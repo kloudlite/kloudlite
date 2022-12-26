@@ -56,8 +56,9 @@ type Router struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RouterSpec  `json:"spec,omitempty"`
-	Status rApi.Status `json:"status,omitempty"`
+	Spec      RouterSpec  `json:"spec,omitempty"`
+	Overrides *JsonPatch  `json:"overrides,omitempty"`
+	Status    rApi.Status `json:"status,omitempty"`
 }
 
 func (r *Router) GetStatus() *rApi.Status {

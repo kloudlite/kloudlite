@@ -7,6 +7,7 @@ import (
 	"operators.kloudlite.io/operators/project/internal/controllers/config"
 	envC "operators.kloudlite.io/operators/project/internal/controllers/env"
 	"operators.kloudlite.io/operators/project/internal/controllers/project"
+	secondary_env "operators.kloudlite.io/operators/project/internal/controllers/secondary-env"
 	"operators.kloudlite.io/operators/project/internal/controllers/secret"
 	"operators.kloudlite.io/operators/project/internal/env"
 )
@@ -18,6 +19,7 @@ func main() {
 	mgr.RegisterControllers(
 		&project.Reconciler{Name: "project", Env: ev, IsDev: mgr.IsDev},
 		&envC.Reconciler{Name: "env", Env: ev, IsDev: mgr.IsDev},
+		&secondary_env.Reconciler{Name: "secondary_env", Env: ev},
 		&config.Reconciler{Name: "config", Env: ev},
 		&secret.Reconciler{Name: "secret", Env: ev},
 	)

@@ -1,4 +1,5 @@
 {{- $clusterIssuer := get . "cluster-issuer" -}}
+{{- $dnsNames := get . "dns-names" | default list -}}
 
 {{- with $clusterIssuer }}
 {{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.clusterIssuer*/}}
@@ -23,7 +24,16 @@ spec:
               name: {{.Cloudflare.SecretKeyRef.Name}}
             email: {{.Cloudflare.Email}}
         selector:
-          dnsNames: {{.Cloudflare.DnsNames | toYAML | nindent 12 }}
+          dnsNames: {{ $dnsNames | toYAML | nindent 12 }}
+{{/*            {{ range $k := .Cloudflare.DnsNames }}*/}}
+{{/*            - {{$k | squote}}*/}}
+{{/*            - {{printf "www.%s" $k | squote}}*/}}
+{{/*            {{end}}*/}}
+{{/*            {{ range $k := $dnsNames }}*/}}
+{{/*            - {{$k | squote}}*/}}
+{{/*            {{end}}*/}}
+{{/*          dnsNames: {{.Cloudflare.DnsNames | toYAML | nindent 12 }}*/}}
+{{/*            {{$dnsNames | toYAML | nindent 12 }}*/}}
 {{/*            - '*.kloudlite.io'*/}}
 {{/*            - '*.khost.dev'*/}}
 {{/*            - crewscale.kl-client.kloudlite.io*/}}
