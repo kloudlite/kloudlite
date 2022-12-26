@@ -1,10 +1,72 @@
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
-  name: nginx
+  name: nginx-app
   namespace: sample-24826-blueprint
 spec:
-  region: master
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  services:
+    - port: 80
   containers:
     - name: main
-      image: nginx
+      image: registry.kloudlite.io/acc-k-hw-z1woxao88zzw8wjwl5mu2bih/nginx:latest
+      env:
+        - key: hi
+          value: hello
+---
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: nginx-app
+  namespace: sample-24826-default
+spec:
+overrides:
+  patches:
+    - op: replace
+      path: /containers/0/image
+      value: nginx2
+---
+apiVersion: crds.kloudlite.io/v1
+kind: Router
+metadata:
+  name: main
+  namespace: sample-24826-blueprint
+spec:
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  domains:
+    - nginx.clus-l04kd86qbhdy1ra5htzjejznsgou.clusters.dev.kloudlite.io
+  routes:
+    - app: nginx-app
+      path: /
+      port: 80
+      rewrite: false
+
+---
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: sample-db
+  namespace: sample-24826-blueprint
+spec:
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  msvcKind:
+    apiVersion: mongodb.msvc.kloudlite.io/v1
+    kind: StandaloneService
+  inputs:
+    resources:
+      cpu:
+        max: 300m
+        min: 200m
+      memory: 300Mi
+      storage:
+        size: 1Gi
+        storageClass: local-path
+        
+---
+
+apiVersion: crds.kloudlite.io/v1
+kind: SecondaryEnv
+metadata:
+  name: sample-24826-derived-1
+spec:
+  primaryEnvName: sample-24826-default

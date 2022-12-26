@@ -3,6 +3,7 @@ package clusterService
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -58,6 +59,10 @@ const (
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=clusterServices/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	if strings.HasSuffix(request.Namespace, "-blueprint") {
+		return ctrl.Result{}, nil
+	}
+
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &mongodbMsvcv1.ClusterService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -70,10 +75,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -83,7 +86,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// TODO: initialize all checks here
 	if step := req.EnsureChecks(HelmReady, StsReady, AccessCredsReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}

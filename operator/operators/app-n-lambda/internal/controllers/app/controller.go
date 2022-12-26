@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 	"time"
 
@@ -73,10 +72,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -196,12 +193,6 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	}
 
 	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
-		return nil
-	}); err != nil {
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
 

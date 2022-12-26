@@ -5,14 +5,14 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: envs.crds.kloudlite.io
+  name: secondaryenvs.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: Env
-    listKind: EnvList
-    plural: envs
-    singular: env
+    kind: SecondaryEnv
+    listKind: SecondaryEnvList
+    plural: secondaryenvs
+    singular: secondaryenv
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -25,7 +25,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: Env is the Schema for the envs API
+        description: SecondaryEnv is the Schema for the secondaryenvs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -40,22 +40,12 @@ spec:
           metadata:
             type: object
           spec:
+            description: SecondaryEnvSpec defines the desired state of SecondaryEnv
             properties:
-              accountRef:
-                type: string
-              blueprintName:
-                type: string
-              primary:
-                type: boolean
-              projectName:
-                type: string
-              routerBaseDomain:
+              primaryEnvName:
                 type: string
             required:
-            - accountRef
-            - blueprintName
-            - primary
-            - projectName
+            - primaryEnvName
             type: object
           status:
             properties:
