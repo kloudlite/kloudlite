@@ -16,18 +16,21 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.region
+      name: Region
+      type: string
     - jsonPath: .status.isReady
       name: Ready
       type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
     - jsonPath: .status.displayVars.intercepted
       name: Intercepted
       type: string
     - jsonPath: .status.displayVars.frozen
       name: Frozen
       type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1
     schema:
       openAPIV3Schema:

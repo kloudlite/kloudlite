@@ -1,8 +1,5 @@
-{{- $klCloudflareWildcardDomains := get . "kl-cloudflare-wildcard-domains" | default list -}}
-{{- $klCloudflareEmail := get . "kl-cloudflare-email" -}}
-{{- $klCloudflareSecretName := get . "kl-cloudflare-secret-name" -}}
-
 {{- $klAcmeEmail := get . "kl-acme-email" -}}
+{{- $acmeSolvers := get . "acme-solvers" | default list -}}
 
 {{- $issuerName := get . "issuer-name" }}
 {{- $ingressClass := get . "ingress-class" -}}
@@ -23,18 +20,7 @@ spec:
       name: {{$issuerName}}
     server: https://acme-v02.api.letsencrypt.org/directory
     solvers:
-      - dns01:
-          cloudflare:
-            email: {{$klCloudflareEmail}}
-            apiTokenSecretRef:
-              name: {{$klCloudflareSecretName}}
-              key: api-token
-        selector:
-          dnsNames: {{ $klCloudflareWildcardDomains | toYAML | nindent 12 }}
-{{/*            - "*.$DOMAIN_1"*/}}
-{{/*            - "*.$DOMAIN_2"*/}}
-{{/*            - "crewscale.kl-client.kloudlite.io"*/}}
-{{/*            - "*.crewscale.kl-client.kloudlite.io"*/}}
+      {{$acmeSolvers |toYAML | nindent 6 }}
       - http01:
           ingress:
             class: {{$ingressClass}}

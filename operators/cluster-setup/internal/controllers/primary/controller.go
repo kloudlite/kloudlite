@@ -329,58 +329,12 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		WebhookApiDomain:  fmt.Sprintf("webhook-api.%s", obj.Spec.Domain),
 	}
 
-	//defaultsM := map[string]string{}
-	//b, err := json.Marshal(sharedC)
-	//if err != nil {
-	//	return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
-	//}
-	//if err := json.Unmarshal(b, &defaultsM); err != nil {
-	//	return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
-	//}
-	//
-	//currM := map[string]string{}
-	//if obj.Spec.SharedConstants != nil {
-	//	b2, err := json.Marshal(obj.Spec.SharedConstants)
-	//	if err != nil {
-	//		return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
-	//	}
-	//	if err := json.Unmarshal(b2, &currM); err != nil {
-	//		return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
-	//	}
-	//}
-	//
-	//var shouldUpdate bool
-	//for s := range defaultsM {
-	//	if v, ok := currM[s]; !ok || v == "" {
-	//		shouldUpdate = true
-	//		currM[s] = defaultsM[s]
-	//	}
-	//}
-
 	hasUpdated := false
 
 	if obj.Spec.SharedConstants == nil || *obj.Spec.SharedConstants != sharedC {
 		hasUpdated = true
 		obj.Spec.SharedConstants = &sharedC
 	}
-
-	//if obj.Spec.SharedConstants == nil || shouldUpdate {
-	//	b, err := json.Marshal(currM)
-	//	if err != nil {
-	//		return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
-	//	}
-	//	sc := v1.SharedConstants{}
-	//	if err := json.Unmarshal(b, &sc); err != nil {
-	//		return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
-	//	}
-	//
-	//	obj.Spec.SharedConstants = &sc
-	//	if err := r.Update(ctx, obj); err != nil {
-	//		return req.CheckFailed(DefaultsPatched, check, err.Error())
-	//	}
-	//	return req.Done().RequeueAfter(1 * time.Second)
-	//}
-	//
 
 	// redpanda
 	if obj.Spec.RedpandaValues.Resources.Storage == nil {
@@ -952,23 +906,7 @@ func (r *Reconciler) ensureCertIssuer(req *rApi.Request[*v1.PrimaryCluster]) ste
 	req.LogPreCheck(CertIssuerReady)
 	defer req.LogPostCheck(CertIssuerReady)
 
-	clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.CertManagerValues.ClusterIssuer.Name), &certmanagerv1.ClusterIssuer{})
-	if err != nil {
-		req.Logger.Infof("cluster issuer (%s) not found, will be creating it", obj.Spec.CertManagerValues.ClusterIssuer.Name)
-		clusterIssuer = nil
-	}
-
-	if clusterIssuer == nil || check.Generation > checks[CertIssuerReady].Generation {
-		b, err := templates.Parse(templates.ClusterIssuer, map[string]any{"cluster-issuer": obj.Spec.CertManagerValues.ClusterIssuer})
-		if err != nil {
-			return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
-		}
-	}
-
+	// issuer secret ref
 	cloudflareScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CertManagerValues.ClusterIssuer.Cloudflare.SecretKeyRef.Namespace, obj.Spec.CertManagerValues.ClusterIssuer.Cloudflare.SecretKeyRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
@@ -986,6 +924,33 @@ func (r *Reconciler) ensureCertIssuer(req *rApi.Request[*v1.PrimaryCluster]) ste
 		return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
 	}
 
+	// issuer
+	issuerVals := map[string]any{
+		"cluster-issuer": obj.Spec.CertManagerValues.ClusterIssuer,
+	}
+
+	//dnsNames := make([]string, 0, (len(obj.Spec.CloudflareCreds.DnsNames)+1)*2)
+	dnsNames := make([]string, 0, len(obj.Spec.CloudflareCreds.DnsNames)+1)
+	for i := range obj.Spec.CloudflareCreds.DnsNames {
+		dnsNames = append(dnsNames, obj.Spec.CloudflareCreds.DnsNames[i])
+		//dnsNames = append(dnsNames, fmt.Sprintf("www.%s", obj.Spec.CloudflareCreds.DnsNames[i]))
+	}
+
+	if obj.Spec.ShouldInstallSecondary {
+		dnsNames = append(dnsNames, fmt.Sprintf("*.%s.clusters.%s", obj.Spec.SecondaryClusterId, obj.Spec.Domain))
+		//dnsNames = append(dnsNames, fmt.Sprintf("www.*.%s.clusters.%s", obj.Spec.SecondaryClusterId, obj.Spec.Domain))
+	}
+
+	issuerVals["dns-names"] = dnsNames
+	b, err := templates.Parse(templates.ClusterIssuer, issuerVals)
+	if err != nil {
+		return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
+	}
+
 	// creating wildcard certificates for specified cloudflare domains
 	wcert := &certmanagerv1.Certificate{ObjectMeta: metav1.ObjectMeta{
 		Name:      obj.Spec.CertManagerValues.ClusterIssuer.Name,
@@ -993,7 +958,8 @@ func (r *Reconciler) ensureCertIssuer(req *rApi.Request[*v1.PrimaryCluster]) ste
 	}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, wcert, func() error {
-		wcert.Spec.DNSNames = obj.Spec.CertManagerValues.ClusterIssuer.Cloudflare.DnsNames
+		wcert.Spec.DNSNames = dnsNames
+
 		wcert.Spec.SecretName = obj.Spec.CertManagerValues.ClusterIssuer.Name + "-tls"
 		wcert.Spec.IssuerRef = certmanagerMetav1.ObjectReference{
 			Kind: "ClusterIssuer",
@@ -1133,10 +1099,8 @@ func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) step
 	}
 
 	b, err = templates.Parse(templates.RouterOperatorEnv, map[string]any{
-		"namespace":               lc.NsOperators,
-		"cluster-wildcard-domain": fmt.Sprintf("*.%v", obj.Spec.Domain),
-		"cloudflare-email":        obj.Spec.CloudflareCreds.Email,
-		"cloudflare-secret-name":  cfCertManagerScrt.Name,
+		"namespace":                   lc.NsOperators,
+		"default-cluster-issuer-name": obj.Spec.CertManagerValues.ClusterIssuer.Name,
 	})
 	if err != nil {
 		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)

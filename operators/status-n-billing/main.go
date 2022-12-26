@@ -9,14 +9,12 @@ import (
 	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	"operators.kloudlite.io/pkg/errors"
-	"operators.kloudlite.io/pkg/redpanda"
 	"operators.kloudlite.io/operator"
-	billingWatcher "operators.kloudlite.io/operators/status-n-billing/internal/controllers/billing-watcher"
-	pipelineRunWatcher "operators.kloudlite.io/operators/status-n-billing/internal/controllers/pipeline-run-watcher"
 	statusWatcher "operators.kloudlite.io/operators/status-n-billing/internal/controllers/status-watcher"
 	env "operators.kloudlite.io/operators/status-n-billing/internal/env"
 	"operators.kloudlite.io/operators/status-n-billing/internal/types"
+	"operators.kloudlite.io/pkg/errors"
+	"operators.kloudlite.io/pkg/redpanda"
 )
 
 func main() {
@@ -54,17 +52,17 @@ func main() {
 			Env:      ev,
 			Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaTopicStatusUpdates),
 		},
-		&pipelineRunWatcher.Reconciler{
-			Name:       "pipeline-run",
-			Env:        ev,
-			Producer:   producer,
-			KafkaTopic: ev.KafkaTopicPipelineRunUpdates,
-		},
-		&billingWatcher.Reconciler{
-			Name:     "billing-watcher",
-			Env:      ev,
-			Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaTopicBillingUpdates),
-		},
+		//&pipelineRunWatcher.Reconciler{
+		//	Name:       "pipeline-run",
+		//	Env:        ev,
+		//	Producer:   producer,
+		//	KafkaTopic: ev.KafkaTopicPipelineRunUpdates,
+		//},
+		//&billingWatcher.Reconciler{
+		//	Name:     "billing-watcher",
+		//	Env:      ev,
+		//	Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaTopicBillingUpdates),
+		//},
 	)
 	mgr.Start()
 }

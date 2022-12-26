@@ -7,10 +7,11 @@ import (
 )
 
 type EnvSpec struct {
-	ProjectName   string `json:"projectName"`
-	BlueprintName string `json:"blueprintName"`
-	AccountRef    string `json:"accountRef"`
-	Primary       bool   `json:"primary"`
+	ProjectName      string `json:"projectName"`
+	BlueprintName    string `json:"blueprintName"`
+	AccountRef       string `json:"accountRef"`
+	Primary          bool   `json:"primary"`
+	RouterBaseDomain string `json:"routerBaseDomain,omitempty"`
 }
 
 //+kubebuilder:object:root=true

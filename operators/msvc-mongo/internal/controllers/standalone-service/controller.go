@@ -67,6 +67,10 @@ func getHelmSecretName(name string) string {
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	if strings.HasSuffix(request.Namespace, "-blueprint") {
+		return ctrl.Result{}, nil
+	}
+
 	ctx = context.WithValue(ctx, "logger", r.logger)
 	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &mongodbMsvcv1.StandaloneService{})
 	if err != nil {
@@ -80,15 +84,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPostReconcile()
+	defer req.LogPostReconcile()
 
-	if k := req.Object.GetLabels()[constants.ClearStatusKey]; k == "true" {
-		if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-			return step.ReconcilerResponse()
-		}
+	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	// TODO: initialize all checks here

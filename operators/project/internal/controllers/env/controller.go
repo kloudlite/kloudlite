@@ -49,8 +49,7 @@ const (
 	MresCreated          string = "mres-created"
 	NamespacedRBACsReady string = "namespaced-rbac-ready"
 	RBACReady            string = "rbac-ready"
-	HarborAccessReady    string = "harbor-access-ready"
-	HarborCredsAvailable string = "harbor-creds-available"
+	RoutersCreated       string = "routers-created"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs,verbs=get;list;watch;create;update;patch;delete
@@ -118,6 +117,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.ensureMres(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureRouters(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -381,6 +384,7 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 			if !fn.IsOwner(nApp, fn.AsOwner(obj)) {
 				nApp.SetOwnerReferences(append(nApp.GetOwnerReferences(), fn.AsOwner(obj, true)))
 			}
+			//nApp.Spec = app.Spec
 			if nApp.Overrides != nil {
 				patchedBytes, err := jsonPatch.ApplyPatch(app.Spec, nApp.Overrides.Patches)
 				if err != nil {
@@ -398,6 +402,49 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 	check.Status = true
 	if check != checks[AppsCreated] {
 		checks[AppsCreated] = check
+		return req.UpdateStatus()
+	}
+	return req.Next()
+}
+
+func (r *Reconciler) ensureRouters(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	var routers crdsv1.RouterList
+	if err := r.List(ctx, &routers, &client.ListOptions{
+		Namespace: obj.Spec.BlueprintName,
+	}); err != nil {
+		return req.CheckFailed(RoutersCreated, check, err.Error()).Err(nil)
+	}
+
+	for i := range routers.Items {
+		router := routers.Items[i]
+
+		localRouter := &crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: router.Name, Namespace: obj.Name}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, localRouter, func() error {
+			if !fn.IsOwner(localRouter, fn.AsOwner(obj)) {
+				localRouter.SetOwnerReferences(append(localRouter.OwnerReferences, fn.AsOwner(obj, true)))
+			}
+			localRouter.Labels = router.Labels
+
+			if localRouter.Overrides != nil {
+				patchedBytes, err := jsonPatch.ApplyPatch(router.Spec, localRouter.Overrides.Patches)
+				if err != nil {
+					return err
+				}
+				return json.Unmarshal(patchedBytes, &localRouter.Spec)
+			}
+			localRouter.Spec = router.Spec
+			return nil
+		}); err != nil {
+			return req.CheckFailed(RoutersCreated, check, err.Error()).Err(nil)
+		}
+	}
+
+	check.Status = true
+	if check != checks[RoutersCreated] {
+		checks[RoutersCreated] = check
 		return req.UpdateStatus()
 	}
 	return req.Next()

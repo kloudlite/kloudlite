@@ -3,7 +3,7 @@ package main
 import (
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/app-n-lambda/internal/controllers/app/.old"
+	"operators.kloudlite.io/operators/app-n-lambda/internal/controllers/app"
 	"operators.kloudlite.io/operators/app-n-lambda/internal/env"
 )
 
@@ -13,7 +13,7 @@ func main() {
 	mgr := operator.New("app-n-lambda")
 	mgr.AddToSchemes(crdsv1.AddToScheme)
 	mgr.RegisterControllers(
-		&_old.Reconciler{Name: "app", Env: ev},
+		&app.Reconciler{Name: "app", Env: ev},
 		// &lambda.Reconciler{Name: "lambda", Env: ev},
 	)
 	mgr.Start()
