@@ -17,6 +17,8 @@
 {{- $certIngressClass := get . "cert-ingress-class"  -}}
 {{- $globalIngressClass := get . "global-ingress-class"  -}}
 
+{{- $isBlueprint := get . "is-blueprint" -}}
+{{- $bpOverridePort := "80" -}}
 
 {{- with $router}}
 {{- /*gotype: operators.kloudlite.io/apis/crds/v1.Router */ -}}
@@ -82,7 +84,7 @@ spec:
               service:
                 name: {{$route.App | default $route.Lambda}}
                 port:
-                  number: {{$route.Port}}
+                  number: {{if $isBlueprint}} {{$bpOverridePort}} {{else}}{{$route.Port}}{{end}}
 
             {{- if $route.Rewrite }}
             path: {{$route.Path}}?(.*)
@@ -104,7 +106,7 @@ spec:
               service:
                 name: {{$route.App | default $route.Lambda}}
                 port:
-                  number: {{$route.Port}}
+                  number: {{if $isBlueprint}} {{$bpOverridePort}} {{else}}{{$route.Port}}{{end}}
 
             {{- if $route.Rewrite }}
             path: {{$route.Path}}?(.*)

@@ -113,7 +113,8 @@ spec:
           key: "gh-token"
         artifacts:
 #          - crds.yml
-          - primary-operators.yml
+          - all-operators.yml
+#          - primary-operators.yml
       - repo: kloudlite/helm-operator
         tag: v1.0.0
         ghTokenSecret:

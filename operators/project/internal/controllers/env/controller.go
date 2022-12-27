@@ -3,6 +3,7 @@ package env
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -428,14 +429,19 @@ func (r *Reconciler) ensureRouters(req *rApi.Request[*crdsv1.Env]) stepResult.Re
 			}
 			localRouter.Labels = router.Labels
 
-			if localRouter.Overrides != nil {
-				patchedBytes, err := jsonPatch.ApplyPatch(router.Spec, localRouter.Overrides.Patches)
-				if err != nil {
-					return err
-				}
-				return json.Unmarshal(patchedBytes, &localRouter.Spec)
-			}
 			localRouter.Spec = router.Spec
+			for j := range router.Spec.Domains {
+				localRouter.Spec.Domains[j] = fmt.Sprintf("env.%s.%s", obj.Name, router.Spec.Domains[j])
+			}
+
+			//	if localRouter.Overrides != nil {
+			//		patchedBytes, err := jsonPatch.ApplyPatch(router.Spec, localRouter.Overrides.Patches)
+			//		if err != nil {
+			//			return err
+			//		}
+			//		return json.Unmarshal(patchedBytes, &localRouter.Spec)
+			//	}
+			//	localRouter.Spec = router.Spec
 			return nil
 		}); err != nil {
 			return req.CheckFailed(RoutersCreated, check, err.Error()).Err(nil)

@@ -61,12 +61,54 @@ spec:
       storage:
         size: 1Gi
         storageClass: local-path
-        
+
 ---
 
 apiVersion: crds.kloudlite.io/v1
 kind: SecondaryEnv
 metadata:
   name: sample-24826-derived-1
+  labels:
+    kloudlite.io/primary-env: sample-24826-default
 spec:
   primaryEnvName: sample-24826-default
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: env-route-switcher
+  namespace: sample-24826-blueprint
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: env-route-switcher
+  template:
+    metadata:
+      labels:
+        app: env-route-switcher
+    spec:
+      serviceAccountName: kloudlite-svc-account
+      containers:
+        - name: env-route-switcher
+          image: registry.kloudlite.io/public/env-route-switcher:v1.0.5
+          imagePullPolicy: Always
+          env:
+            - name: PRIMARY_ENV_NAME
+              value: sample-24826-blueprint
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: env-route-switcher
+  namespace: sample-24826-blueprint
+spec:
+  ports:
+    - name: "80"
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: env-route-switcher
+  type: ClusterIP
