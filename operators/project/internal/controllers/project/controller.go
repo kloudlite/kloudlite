@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"operators.kloudlite.io/pkg/templates"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
@@ -44,6 +45,7 @@ const (
 	BlueprintCreated      string = "blueprint-created"
 	DefaultEnvCreated     string = "default-env-created"
 	HarborAccessAvailable string = "harbor-creds-available"
+	NamespacedRBACsReady  string = "namespaced-rbacs-ready"
 )
 
 func getBlueprintName(projName string) string {
@@ -88,6 +90,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.ensureBlueprint(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureNamespacedRBACs(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -139,6 +145,40 @@ func (r *Reconciler) ensureBlueprint(req *rApi.Request[*v1.Project]) stepResult.
 		checks[BlueprintCreated] = check
 		return req.UpdateStatus()
 	}
+	return req.Next()
+}
+
+func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(NamespacedRBACsReady)
+	defer req.LogPreCheck(NamespacedRBACsReady)
+
+	b, err := templates.Parse(
+		templates.ProjectRBAC, map[string]any{
+			"namespace":          getBlueprintName(obj.Name),
+			"role-name":          r.Env.AdminRoleName,
+			"role-binding-name":  r.Env.AdminRoleName + "-rb",
+			"svc-account-name":   r.Env.SvcAccountName,
+			"docker-secret-name": r.Env.DockerSecretName,
+			"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
+	)
+	if err != nil {
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[NamespacedRBACsReady] {
+		checks[NamespacedRBACsReady] = check
+		return req.UpdateStatus()
+	}
+
 	return req.Next()
 }
 
