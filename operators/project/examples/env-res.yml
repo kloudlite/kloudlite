@@ -24,7 +24,7 @@ overrides:
   patches:
     - op: replace
       path: /containers/0/image
-      value: nginx2
+      value: nginx
 ---
 apiVersion: crds.kloudlite.io/v1
 kind: Router
@@ -55,9 +55,9 @@ spec:
   inputs:
     resources:
       cpu:
-        max: 300m
-        min: 200m
-      memory: 300Mi
+        max: 500m
+        min: 400m
+      memory: 500Mi
       storage:
         size: 1Gi
         storageClass: local-path
