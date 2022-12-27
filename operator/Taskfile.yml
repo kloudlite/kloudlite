@@ -136,7 +136,8 @@ tasks:
         #echo "outputDir: $outputDir"
         for dir in $(ls -d ./operators/*/)
         do
-          [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
+          # [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
+          [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)"
         done
 #
   
@@ -146,7 +147,7 @@ tasks:
         outputDir=$(mktemp -d)
         #echo "outputDir: $outputDir"
         #for dir in $(ls -d ./operators/*/)
-        dirs=("./operators/projec "./operators/app-n-lambda" "./operators/msvc-n-mres" "./operators/msvc-mongo" "./operators/msvc-redis" "./operators/msvc-redpanda" "./operators/routers" "./operators/extensions" "./operators/csi-drivers")
+        dirs=("./operators/project" "./operators/status-n-billing" "./operators/app-n-lambda" "./operators/msvc-n-mres" "./operators/msvc-mongo" "./operators/msvc-redis" "./operators/msvc-redpanda" "./operators/routers" "./operators/extensions" "./operators/csi-drivers")
         for dir in "${dirs[@]}"
         do
           # task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
@@ -426,3 +427,49 @@ tasks:
     cmds:
 #      - go build operators.kloudlite.io/operators/project
       - nodemon -w "./operators/project/internal/controllers/env" --exec "go test operators.kloudlite.io/operators/project/internal/controllers/env | tail -f /dev/null"
+
+  run:env-route-switcher:
+    dir: ./apps/env-route-switcher
+    dotenv:
+      - ./.secrets/env
+    cmds:
+      - go run ./main.go --dev --dev-server-addr=localhost:8080
+
+  build:env-route-switcher:
+    dir: ./apps/env-route-switcher
+    vars:
+      App: "env-route-switcher"
+#      Image: "{{.dockerRegistry}}/kloudlite/production/env-route-switcher:v1.0.5"
+      Image: "{{.dockerRegistry}}/public/env-route-switcher:v1.0.5"
+
+    dotenv:
+      - ./.secrets/env
+    interactive: true
+    silent: true
+    cmds:
+      - |
+        # pushd "./apps/env-route-switcher" 1> /dev/null
+        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+        
+        startLineNo=$(echo "$lineNumbers" | head -n+1)
+        finalLineNo=$(echo "$lineNumbers" | tail -1)
+
+        tDir=$(mktemp -d)
+        echo "temp dir: $tDir"
+
+        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=builder')
+        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
+
+        #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        CGO_ENABLED=0 go build -v -o $tDir/{{.App}} .
+
+        echo "[Debug]: $tDir/Dockerfile.base"
+
+        lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.App}} /{{.App}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile
+
+        docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
+        docker push {{.Image}}
+        rm -rf $tDir
+        #popd 1> /dev/null

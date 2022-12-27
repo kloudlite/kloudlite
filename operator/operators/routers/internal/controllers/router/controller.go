@@ -51,10 +51,6 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	if strings.HasSuffix(request.Namespace, "-blueprint") {
-		return ctrl.Result{}, nil
-	}
-
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.Router{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -138,6 +134,10 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Resu
 
 type Config struct {
 	WildcardDomains []string `json:"wildcard-domains"`
+}
+
+func isBlueprint(obj client.Object) bool {
+	return strings.HasSuffix(obj.GetNamespace(), "-blueprint")
 }
 
 func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -237,8 +237,14 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		}
 
 		if route.App != "" {
+			if isBlueprint(obj) {
+				route.App = "env-route-switcher"
+				appRoutes = append(appRoutes, route)
+				continue
+			}
 			appRoutes = append(appRoutes, route)
 		}
+
 	}
 
 	var kubeYamls [][]byte
@@ -246,27 +252,28 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	for lName, lRoutes := range lambdaGroups {
 		ingName := fmt.Sprintf("r-%s-lambda-%s", obj.Name, lName)
 
-		b, err := templates.Parse(
-			templates.CoreV1.Ingress, map[string]any{
-				"name":       ingName,
-				"namespace":  obj.Namespace,
-				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"labels": map[string]string{
-					constants.RouterNameKey: obj.Name,
-				},
-
-				"domains":          nonWildCardDomains,
-				"wildcard-domains": wcDomains,
-
-				"router-ref":       obj,
-				"routes":           lRoutes,
-				"virtual-hostname": fmt.Sprintf("%s.%s", lName, obj.Namespace),
-
-				"ingress-class":      controllers.GetIngressClassName(obj.Spec.Region),
-				"cluster-issuer":     controllers.GetClusterIssuerName(obj.Spec.Region),
-				"cert-ingress-class": controllers.GetIngressClassName(obj.Spec.Region),
+		vals := map[string]any{
+			"name":       ingName,
+			"namespace":  obj.Namespace,
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"labels": map[string]string{
+				constants.RouterNameKey: obj.Name,
 			},
-		)
+
+			"domains":          nonWildCardDomains,
+			"wildcard-domains": wcDomains,
+
+			"router-ref":       obj,
+			"routes":           lRoutes,
+			"virtual-hostname": fmt.Sprintf("%s.%s", lName, obj.Namespace),
+
+			"ingress-class":      controllers.GetIngressClassName(obj.Spec.Region),
+			"cluster-issuer":     controllers.GetClusterIssuerName(obj.Spec.Region),
+			"cert-ingress-class": controllers.GetIngressClassName(obj.Spec.Region),
+			"is-blueprint":       isBlueprint(obj),
+		}
+
+		b, err := templates.Parse(templates.CoreV1.Ingress, vals)
 		if err != nil {
 			return req.FailWithOpError(
 				errors.NewEf(err, "could not parse (template=%s)", templates.Ingress),
@@ -295,6 +302,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 					}
 					return controllers.GetIngressClassName(obj.Spec.Region)
 				}(),
+				"is-blueprint":       isBlueprint(obj),
 				"cluster-issuer":     controllers.GetClusterIssuerName(obj.Spec.Region),
 				"cert-ingress-class": controllers.GetIngressClassName(obj.Spec.Region),
 			},
