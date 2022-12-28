@@ -44,11 +44,16 @@ metadata:
     {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}
     {{- end}}
     {{- end}}
-
-{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/rewrite-target" "$1" }}*/}}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/rewrite-target" "/$1" }}
+    {{K8sAnnotation (not $isBlueprint) "nginx.ingress.kubernetes.io/rewrite-target" "/$1" }}
     {{K8sAnnotation $virtualHost "nginx.ingress.kubernetes.io/upstream-vhost" $virtualHost}}
     {{K8sAnnotation true "nginx.ingress.kubernetes.io/preserve-trailing-slash" "true"}}
+
+    {{ if .Spec.Cors }}
+    nginx.ingress.kubernetes.io/enable-cors: {{.Spec.Cors.Enabled | squote}}
+    nginx.ingress.kubernetes.io/cors-allow-origin: {{.Spec.Cors.Origins | join "," | squote}}
+    nginx.ingress.kubernetes.io/cors-allow-credentials: {{.Spec.Cors.AllowCredentials | squote}}
+    {{ end}}
+
 
 {{/*    basic auth*/}}
     {{- if .Spec.BasicAuth.Enabled }}
@@ -86,7 +91,7 @@ spec:
                 port:
                   number: {{if $isBlueprint}} {{$bpOverridePort}} {{else}}{{$route.Port}}{{end}}
 
-            {{- if $route.Rewrite }}
+            {{- if $route.Rewrite}}
             path: {{$route.Path}}?(.*)
             {{- else}}
             {{ $x := len $route.Path }}
@@ -121,4 +126,4 @@ spec:
             pathType: Prefix
           {{- end}}
     {{- end }}
-  {{- end}}
+{{- end}}

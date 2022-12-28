@@ -56,10 +56,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()

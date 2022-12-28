@@ -91,7 +91,7 @@ func main() {
 			defer func() {
 				logger.Infof("processed message")
 			}()
-			tctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+			tctx, cancelFunc := context.WithTimeout(context.TODO(), 3*time.Second)
 			defer cancelFunc()
 			go func() {
 				select {
@@ -135,50 +135,12 @@ func main() {
 
 					// with-api
 					if msg.Action == "apply" {
-						return yamlClient.ApplyYAML(context.TODO(), yamls)
+						return yamlClient.ApplyYAML(tctx, yamls)
 					}
 					if msg.Action == "delete" {
-						return yamlClient.DeleteYAML(context.TODO(), yamls)
+						return yamlClient.DeleteYAML(tctx, yamls)
 					}
 					return nil
-
-					// if errX := func() error {
-					// 	ctx, cancelFn := context.WithTimeout(context.TODO(), 12*time.Second)
-					// 	defer cancelFn()
-					// 	c := exec.CommandContext(ctx, "kubectl", msg.Action, "-f", "-")
-					// 	if err != nil {
-					// 		return err
-					// 	}
-					//
-					// 	c.Stdin = bytes.NewBuffer(yamls)
-					// 	buffOut, buffErr := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
-					// 	c.Stdout = buffOut
-					// 	c.Stderr = buffErr
-					// 	if err := c.Run(); err != nil {
-					// 		logr.Errorf(err, buffErr.String())
-					// 		return err
-					// 	}
-					// 	return nil
-					// }(); errX != nil {
-					// 	// logger.Infof("failed for action=%s, payload=%s, yamls=%s\n", msg.Action, msg.Payload, msg.Yamls)
-					// 	mLogger.Infof("error: %s", errX.Error())
-					// 	errMsg := t.ErrMessage{
-					// 		Action:  msg.Action,
-					// 		Error:   errX.Error(),
-					// 		Payload: yamls,
-					// 	}
-					// 	b, err := json.Marshal(errMsg)
-					// 	if err != nil {
-					// 		return err
-					// 	}
-					// 	output, err := errProducer.Produce(context.TODO(), ev.KafkaErrorOnApplyTopic, string(kMsg.Key), b)
-					// 	if err != nil {
-					// 		return err
-					// 	}
-					//
-					// 	mLogger.Infof("error message published to (topic=%s)", output.Topic)
-					// 	return errX
-					// }
 				}
 			default:
 				{

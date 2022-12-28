@@ -72,6 +72,18 @@ spec:
                 required:
                 - enabled
                 type: object
+              cors:
+                properties:
+                  allowCredentials:
+                    type: boolean
+                  enabled:
+                    default: false
+                    type: boolean
+                  origins:
+                    items:
+                      type: string
+                    type: array
+                type: object
               domains:
                 items:
                   type: string
