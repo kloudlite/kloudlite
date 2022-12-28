@@ -410,28 +410,18 @@ func (r *Reconciler) ensureGatewayApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 	req.LogPreCheck(GatewayApiCreated)
 	defer req.LogPostCheck(GatewayApiCreated)
 
-	gatewayApi, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.AppGqlGatewayApi), &crdsv1.App{})
+	b, err := templates.Parse(templates.GatewayApi, map[string]any{
+		"namespace":        lc.NsCore,
+		"svc-account":      lc.DefaultSvcAccount,
+		"shared-constants": obj.Spec.SharedConstants,
+		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	})
 	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(GatewayApiCreated, check, err.Error())
-		}
-		req.Logger.Infof("comms-api does not exist, will be creating it")
+		return req.CheckFailed(GatewayApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if gatewayApi == nil || check.Generation > checks[GatewayApiCreated].Generation {
-		b, err := templates.Parse(templates.GatewayApi, map[string]any{
-			"namespace":        lc.NsCore,
-			"svc-account":      lc.DefaultSvcAccount,
-			"shared-constants": obj.Spec.SharedConstants,
-			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		})
-		if err != nil {
-			return req.CheckFailed(GatewayApiCreated, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(GatewayApiCreated, check, err.Error()).Err(nil)
-		}
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(GatewayApiCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true

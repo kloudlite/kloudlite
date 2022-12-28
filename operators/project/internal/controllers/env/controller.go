@@ -49,9 +49,27 @@ const (
 	MsvcCreated          string = "msvc-created"
 	MresCreated          string = "mres-created"
 	NamespacedRBACsReady string = "namespaced-rbac-ready"
-	RBACReady            string = "rbac-ready"
 	RoutersCreated       string = "routers-created"
 )
+
+func ensureOwnership(childRes client.Object, ownerRes client.Object) {
+	if !fn.IsOwner(childRes, fn.AsOwner(ownerRes)) {
+		childRes.SetOwnerReferences(append(childRes.GetOwnerReferences(), fn.AsOwner(ownerRes, true)))
+	}
+}
+
+func copyLabels(into map[string]string, from map[string]string) {
+	if into == nil {
+		into = make(map[string]string, 1)
+	}
+	for k, v := range from {
+		into[k] = v
+	}
+
+	if _, ok := into[constants.ShouldReconcile]; !ok {
+		into[constants.ShouldReconcile] = "false"
+	}
+}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/status,verbs=get;update;patch
@@ -100,10 +118,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	if step := r.ensureNamespacedRBACs(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
-
-	//if step := r.copyHarborCreds(req); !step.ShouldProceed() {
-	//	return step.ReconcilerResponse()
-	//}
 
 	if step := r.ensureCfgAndSecrets(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -264,16 +278,16 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Env]) stepR
 		},
 	)
 	if err != nil {
-		return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
 	}
 
 	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-		return req.CheckFailed(RBACReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
-	if check != checks[RBACReady] {
-		checks[RBACReady] = check
+	if check != checks[NamespacedRBACsReady] {
+		checks[NamespacedRBACsReady] = check
 		return req.UpdateStatus()
 	}
 
@@ -298,15 +312,15 @@ func (r *Reconciler) ensureMsvc(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 		msvc := msvcList.Items[i]
 		nMsvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: msvc.Name, Namespace: obj.Name}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nMsvc, func() error {
-			if !fn.IsOwner(nMsvc, fn.AsOwner(obj)) {
-				nMsvc.SetOwnerReferences(append(nMsvc.GetOwnerReferences(), fn.AsOwner(obj, true)))
-			}
-			nMsvc.Labels = msvc.Labels
+			ensureOwnership(nMsvc, obj)
+			copyLabels(nMsvc.Labels, msvc.Labels)
+
 			if nMsvc.Overrides != nil {
 				patchedBytes, err := jsonPatch.ApplyPatch(msvc.Spec, nMsvc.Overrides.Patches)
 				if err != nil {
 					return err
 				}
+				nMsvc.Overrides = nil
 				return json.Unmarshal(patchedBytes, &nMsvc.Spec)
 			}
 			nMsvc.Spec = msvc.Spec
@@ -342,11 +356,15 @@ func (r *Reconciler) ensureMres(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 		mres := mresList.Items[i]
 		nMres := &crdsv1.ManagedResource{ObjectMeta: metav1.ObjectMeta{Name: mres.Name, Namespace: obj.Name}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nMres, func() error {
+			ensureOwnership(nMres, obj)
+			copyLabels(nMres.Labels, mres.Labels)
+
 			if nMres.Overrides != nil {
 				patchedBytes, err := jsonPatch.ApplyPatch(mres.Spec, nMres.Overrides.Patches)
 				if err != nil {
 					return err
 				}
+				nMres.Overrides = nil
 				return json.Unmarshal(patchedBytes, &nMres.Spec)
 			}
 			nMres.Spec = mres.Spec
@@ -382,15 +400,15 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 		app := appsList.Items[i]
 		nApp := &crdsv1.App{ObjectMeta: metav1.ObjectMeta{Name: app.Name, Namespace: obj.Name}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nApp, func() error {
-			if !fn.IsOwner(nApp, fn.AsOwner(obj)) {
-				nApp.SetOwnerReferences(append(nApp.GetOwnerReferences(), fn.AsOwner(obj, true)))
-			}
-			//nApp.Spec = app.Spec
+			ensureOwnership(nApp, obj)
+			copyLabels(nApp.Labels, app.Labels)
+
 			if nApp.Overrides != nil {
 				patchedBytes, err := jsonPatch.ApplyPatch(app.Spec, nApp.Overrides.Patches)
 				if err != nil {
 					return err
 				}
+				nApp.Overrides = nil
 				return json.Unmarshal(patchedBytes, &nApp.Spec)
 			}
 			nApp.Spec = app.Spec
@@ -424,10 +442,8 @@ func (r *Reconciler) ensureRouters(req *rApi.Request[*crdsv1.Env]) stepResult.Re
 
 		localRouter := &crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: router.Name, Namespace: obj.Name}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, localRouter, func() error {
-			if !fn.IsOwner(localRouter, fn.AsOwner(obj)) {
-				localRouter.SetOwnerReferences(append(localRouter.OwnerReferences, fn.AsOwner(obj, true)))
-			}
-			localRouter.Labels = router.Labels
+			ensureOwnership(localRouter, obj)
+			copyLabels(localRouter.Labels, router.Labels)
 
 			localRouter.Spec = router.Spec
 			for j := range router.Spec.Domains {
@@ -476,11 +492,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		builder.Owns(watchList[i])
 	}
 
-	envMap := map[string]bool{}
-
 	for i := range watchList {
 		builder.Watches(&source.Kind{Type: watchList[i]},
 			handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+				envMap := map[string]bool{}
 				if !strings.HasSuffix(obj.GetNamespace(), "-blueprint") {
 					return nil
 				}

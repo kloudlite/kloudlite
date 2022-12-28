@@ -173,6 +173,10 @@ func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Conditi
 	return stepResult.New().Err(err)
 }
 
+func (r *Request[T]) ShouldReconcile() bool {
+	return r.Object.GetLabels()[constants.ShouldReconcile] != "false"
+}
+
 func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
 	obj, ctx, checks := r.Object, r.Context(), r.Object.GetStatus().Checks
 	nChecks := len(checks)

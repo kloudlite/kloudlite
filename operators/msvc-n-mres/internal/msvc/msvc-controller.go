@@ -3,6 +3,7 @@ package msvc
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,10 +53,20 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	if strings.HasSuffix(request.Namespace, "-blueprint") {
+		return ctrl.Result{}, nil
+	}
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	if req.ShouldReconcile() {
+		return ctrl.Result{}, nil
+	}
+
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -63,11 +74,6 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 		}
 		return ctrl.Result{}, nil
 	}
-
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -77,7 +83,6 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 		return step.ReconcilerResponse()
 	}
 
-	// TODO: initialize all checks here
 	if step := req.EnsureChecks(RealMsvcReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}

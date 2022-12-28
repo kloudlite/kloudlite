@@ -34,6 +34,13 @@ type BasicAuth struct {
 	SecretName string `json:"secretName,omitempty"`
 }
 
+type Cors struct {
+	// +kubebuilder:default=false
+	Enabled          bool     `json:"enabled,omitempty"`
+	Origins          []string `json:"origins,omitempty"`
+	AllowCredentials bool     `json:"allowCredentials,omitempty"`
+}
+
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
 	Region string `json:"region,omitempty"`
@@ -44,6 +51,7 @@ type RouterSpec struct {
 	Domains         []string  `json:"domains"`
 	Routes          []Route   `json:"routes,omitempty"`
 	BasicAuth       BasicAuth `json:"basicAuth,omitempty"`
+	Cors            *Cors     `json:"cors,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -56,15 +56,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if !req.ShouldReconcile() {
+		return ctrl.Result{}, nil
+	}
+
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
 		return ctrl.Result{}, nil
 	}
-
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
