@@ -65,6 +65,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if !req.ShouldReconcile() {
+		return ctrl.Result{}, nil
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
@@ -127,6 +131,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 func (r *Reconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(ImagesLabelled)
+	defer req.LogPostCheck(ImagesLabelled)
 
 	newLabels := make(map[string]string, len(obj.GetLabels()))
 	for s, v := range obj.GetLabels() {

@@ -97,6 +97,11 @@ spec:
   https:
     enabled: true
     forceRedirect: true
+  cors:
+    enabled: true
+    origins:
+      - https://studio.apollographql.com
+    allowCredentials: true
   basicAuth:
     enabled: true
     username: {{.AppGqlGatewayApi}}

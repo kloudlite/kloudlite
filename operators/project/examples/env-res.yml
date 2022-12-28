@@ -40,7 +40,10 @@ spec:
       path: /
       port: 80
       rewrite: false
-
+    - app: example-app
+      path: /example
+      port: 80
+      rewrite: true
 ---
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
@@ -112,3 +115,22 @@ spec:
   selector:
     app: env-route-switcher
   type: ClusterIP
+
+---
+
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: example-app
+  namespace: sample-24826-blueprint
+spec:
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  services:
+    - port: 80
+  containers:
+    - name: main
+#      image: registry.kloudlite.io/acc-k-hw-z1woxao88zzw8wjwl5mu2bih/nginx:latest
+      image: kennethreitz/httpbin
+      env:
+        - key: hello
+          value: world

@@ -3,6 +3,7 @@ package mres
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -50,10 +51,21 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	if strings.HasSuffix(request.Namespace, "-blueprint") {
+		return ctrl.Result{}, nil
+	}
+
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedResource{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	if req.ShouldReconcile() {
+		return ctrl.Result{}, nil
+	}
+
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -61,11 +73,6 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 		}
 		return ctrl.Result{}, nil
 	}
-
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady = %v)", req.Object.Status.IsReady)
-	}()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -102,7 +109,6 @@ func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedRe
 
 func (r *ManagedResourceReconciler) reconOwnership(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
 	msvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &crdsv1.ManagedService{},
@@ -132,6 +138,9 @@ func (r *ManagedResourceReconciler) reconOwnership(req *rApi.Request[*crdsv1.Man
 func (r *ManagedResourceReconciler) reconRealMres(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(RealMresReady)
+	defer req.LogPostCheck(RealMresReady)
 
 	realMres, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(

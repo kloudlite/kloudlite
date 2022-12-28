@@ -53,9 +53,10 @@ var AnnotationKeys = struct {
 }
 
 const (
-	AccountRef  string = "kloudlite.io/account-ref"
-	ProjectRef  string = "kloudlite.io/project-ref"
-	ProviderRef string = "kloudlite.io/provider-ref"
+	AccountRef      string = "kloudlite.io/account-ref"
+	ProjectRef      string = "kloudlite.io/project-ref"
+	ProviderRef     string = "kloudlite.io/provider-ref"
+	ShouldReconcile string = "kloudlite.io/should-reconcile"
 
 	ProjectNameKey       string = "kloudlite.io/project.name"
 	BlueprintNameKey     string = "kloudlite.io/blueprint.name"
