@@ -433,7 +433,7 @@ tasks:
     dotenv:
       - ./.secrets/env
     cmds:
-      - go run ./main.go --dev --dev-server-addr=localhost:8080
+      - go run ./main.go --dev --addr=localhost:8081
 
   build:env-route-switcher:
     dir: ./apps/env-route-switcher
