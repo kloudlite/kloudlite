@@ -6,6 +6,7 @@ import (
 	"kloudlite.io/pkg/kubeapi"
 
 	fWebsocket "github.com/gofiber/websocket/v2"
+	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/apps/console/internal/domain/entities/localenv"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
@@ -107,7 +108,7 @@ type Domain interface {
 	FreezeApp(ctx context.Context, appId repos.ID) error
 	UnFreezeApp(ctx context.Context, appId repos.ID) error
 	RestartApp(ctx context.Context, appId repos.ID) error
-	GetApp(ctx context.Context, projectID repos.ID) (*entities.App, error)
+	GetApp(ctx context.Context, appID repos.ID) (*entities.App, error)
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.StatusUpdate) error
 	OnDeleteApp(ctx context.Context, r *op_crds.StatusUpdate) error
@@ -150,6 +151,20 @@ type Domain interface {
 	GetEdgeNodes(ctx context.Context, id repos.ID) (*kubeapi.AccountNodeList, error)
 
 	// Cluster
+	GetResInstances(ctx context.Context, envId repos.ID, resType string) ([]*entities.ResInstance, error)
+	GetResInstance(ctx context.Context, envID repos.ID, resID string) (*entities.ResInstance, error)
+
+	UpdateInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (*entities.ResInstance, error)
+
+	CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId *repos.ID, resType string, overrides string) (*entities.ResInstance, error)
+
+	ReturnResInstance(ctx context.Context, instance *entities.ResInstance) *model.ResInstance
+
+	GetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*entities.Environment, error)
+	GetEnvironment(ctx context.Context, envId repos.ID) (*entities.Environment, error)
+	CreateEnvironment(ctx context.Context, blueprintID *repos.ID, name string) (*entities.Environment, error)
+
+	ValidateResourecType(ctx context.Context, resType string) bool
 
 	AddNewCluster(ctx context.Context, name, subDomain, kubeConfig string) (*entities.Cluster, error)
 }

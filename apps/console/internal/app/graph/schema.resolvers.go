@@ -202,6 +202,10 @@ func (r *edgeRegionResolver) Provider(ctx context.Context, obj *model.EdgeRegion
 	}, nil
 }
 
+func (r *environmentResolver) ResInstances(ctx context.Context, obj *model.Environment, resType string) ([]*model.ResInstance, error) {
+	return getInstances(r.Domain, obj, ctx, resType)
+}
+
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
 	if strings.HasPrefix(string(obj.ID), "mgsvc-") {
 		output, err := r.Domain.GetManagedSvcOutput(ctx, obj.ID)
@@ -1105,6 +1109,27 @@ func (r *mutationResolver) CoreAddNewCluster(ctx context.Context, cluster model.
 	}, nil
 }
 
+func (r *mutationResolver) CoreCreateEnvironement(ctx context.Context, environment *model.EnvironmentIn) (*model.Environment, error) {
+	e, err := r.Domain.CreateEnvironment(ctx, environment.BlueprintID, *environment.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Environment{
+		ID:          e.Id,
+		Name:        e.Name,
+		BlueprintID: e.BlueprintId,
+	}, nil
+}
+
+func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (bool, error) {
+	if _, err := r.Domain.UpdateInstance(ctx, resID, resType, overrides); err != nil {
+		return false, err
+
+	}
+	return true, nil
+}
+
 func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
 	entities, err := r.Domain.GetProjectMemberships(ctx, obj.ID)
 	accountMemberships := make([]*model.ProjectMembership, len(entities))
@@ -1169,13 +1194,11 @@ func (r *projectResolver) Region(ctx context.Context, obj *model.Project) (*mode
 }
 
 func (r *projectMembershipResolver) Project(ctx context.Context, obj *model.ProjectMembership) (*model.Project, error) {
-
 	p, err := r.Domain.GetProjectWithID(ctx, obj.Project.ID)
 	if err != nil {
 		return nil, err
 	}
 	return projectModelFromEntity(p), nil
-
 }
 
 func (r *queryResolver) CoreCheckDeviceExist(ctx context.Context, accountID repos.ID, name string) (bool, error) {
@@ -1191,10 +1214,12 @@ func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) (
 	if err != nil {
 		return nil, err
 	}
+
 	projects := make([]*model.Project, 0)
 	for _, projectEntity := range projectEntities {
 		projects = append(projects, projectModelFromEntity(projectEntity))
 	}
+
 	return projects, nil
 }
 
@@ -1220,116 +1245,117 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	if err != nil {
 		return nil, err
 	}
-	services := make([]*model.ExposedService, 0)
-	for _, s := range a.ExposedPorts {
-		services = append(
-			services, &model.ExposedService{
-				Type:    string(s.Type),
-				Target:  int(s.TargetPort),
-				Exposed: int(s.Port),
-			},
-		)
-	}
-
-	return &model.App{
-		IsFrozen:  a.Frozen,
-		CreatedAt: a.CreationTime.String(),
-		UpdatedAt: func() *string {
-			if !a.UpdateTime.IsZero() {
-				s := a.UpdateTime.String()
-				return &s
-			}
-			return nil
-		}(),
-		IsLambda: a.IsLambda,
-		Conditions: func() []*model.MetaCondition {
-			conditions := make([]*model.MetaCondition, 0)
-			for _, condition := range a.Conditions {
-				conditions = append(
-					conditions, &model.MetaCondition{
-						Status:        string(condition.Status),
-						ConditionType: condition.Type,
-						LastTimeStamp: condition.LastTransitionTime.String(),
-						Reason:        condition.Reason,
-						Message:       condition.Message,
-					},
-				)
-			}
-			return conditions
-		}(),
-		ID:          a.Id,
-		Name:        a.Name,
-		Namespace:   a.Namespace,
-		Description: a.Description,
-		ReadableID:  repos.ID(a.ReadableId),
-		Replicas:    &a.Replicas,
-		AutoScale: func() *model.AutoScale {
-			if a.AutoScale != nil {
-				return &model.AutoScale{
-					MinReplicas:     int(a.AutoScale.MinReplicas),
-					MaxReplicas:     int(a.AutoScale.MaxReplicas),
-					UsagePercentage: int(a.AutoScale.UsagePercentage),
-				}
-			}
-			return nil
-		}(),
-		Services: services,
-		Containers: func() []*model.AppContainer {
-			containers := make([]*model.AppContainer, 0)
-			for _, c := range a.Containers {
-				envVars := make([]*model.EnvVar, 0)
-				for _, e := range c.EnvVars {
-					envVars = append(
-						envVars, &model.EnvVar{
-							Key: e.Key,
-							Value: &model.EnvVal{
-								Type:  e.Type,
-								Value: e.Value,
-								Ref:   e.Ref,
-								Key:   e.RefKey,
-							},
-						},
-					)
-				}
-				res := make([]*model.AttachedRes, 0)
-				for _, r := range c.AttachedResources {
-					res = append(
-						res, &model.AttachedRes{
-							ResID: r.ResourceId,
-						},
-					)
-				}
-				containers = append(
-					containers, &model.AppContainer{
-						Name:              c.Name,
-						Image:             c.Image,
-						PullSecret:        c.ImagePullSecret,
-						EnvVars:           envVars,
-						AttachedResources: res,
-						ComputePlan:       c.ComputePlan,
-						Quantity:          c.Quantity,
-						IsShared:          &c.IsShared,
-						Mounts: func() []*model.Mount {
-							mounts := []*model.Mount{}
-							for _, vm := range c.VolumeMounts {
-								mounts = append(
-									mounts, &model.Mount{
-										Type: vm.Type,
-										Ref:  vm.Ref,
-										Path: vm.MountPath,
-									},
-								)
-							}
-							return mounts
-						}(),
-					},
-				)
-			}
-			return containers
-		}(),
-		Project: &model.Project{ID: a.ProjectId},
-		Status:  string(a.Status),
-	}, nil
+	return ReturnApp(a), nil
+	// services := make([]*model.ExposedService, 0)
+	// for _, s := range a.ExposedPorts {
+	// 	services = append(
+	// 		services, &model.ExposedService{
+	// 			Type:    string(s.Type),
+	// 			Target:  int(s.TargetPort),
+	// 			Exposed: int(s.Port),
+	// 		},
+	// 	)
+	// }
+	//
+	// return &model.App{
+	// 	IsFrozen:  a.Frozen,
+	// 	CreatedAt: a.CreationTime.String(),
+	// 	UpdatedAt: func() *string {
+	// 		if !a.UpdateTime.IsZero() {
+	// 			s := a.UpdateTime.String()
+	// 			return &s
+	// 		}
+	// 		return nil
+	// 	}(),
+	// 	IsLambda: a.IsLambda,
+	// 	Conditions: func() []*model.MetaCondition {
+	// 		conditions := make([]*model.MetaCondition, 0)
+	// 		for _, condition := range a.Conditions {
+	// 			conditions = append(
+	// 				conditions, &model.MetaCondition{
+	// 					Status:        string(condition.Status),
+	// 					ConditionType: condition.Type,
+	// 					LastTimeStamp: condition.LastTransitionTime.String(),
+	// 					Reason:        condition.Reason,
+	// 					Message:       condition.Message,
+	// 				},
+	// 			)
+	// 		}
+	// 		return conditions
+	// 	}(),
+	// 	ID:          a.Id,
+	// 	Name:        a.Name,
+	// 	Namespace:   a.Namespace,
+	// 	Description: a.Description,
+	// 	ReadableID:  repos.ID(a.ReadableId),
+	// 	Replicas:    &a.Replicas,
+	// 	AutoScale: func() *model.AutoScale {
+	// 		if a.AutoScale != nil {
+	// 			return &model.AutoScale{
+	// 				MinReplicas:     int(a.AutoScale.MinReplicas),
+	// 				MaxReplicas:     int(a.AutoScale.MaxReplicas),
+	// 				UsagePercentage: int(a.AutoScale.UsagePercentage),
+	// 			}
+	// 		}
+	// 		return nil
+	// 	}(),
+	// 	Services: services,
+	// 	Containers: func() []*model.AppContainer {
+	// 		containers := make([]*model.AppContainer, 0)
+	// 		for _, c := range a.Containers {
+	// 			envVars := make([]*model.EnvVar, 0)
+	// 			for _, e := range c.EnvVars {
+	// 				envVars = append(
+	// 					envVars, &model.EnvVar{
+	// 						Key: e.Key,
+	// 						Value: &model.EnvVal{
+	// 							Type:  e.Type,
+	// 							Value: e.Value,
+	// 							Ref:   e.Ref,
+	// 							Key:   e.RefKey,
+	// 						},
+	// 					},
+	// 				)
+	// 			}
+	// 			res := make([]*model.AttachedRes, 0)
+	// 			for _, r := range c.AttachedResources {
+	// 				res = append(
+	// 					res, &model.AttachedRes{
+	// 						ResID: r.ResourceId,
+	// 					},
+	// 				)
+	// 			}
+	// 			containers = append(
+	// 				containers, &model.AppContainer{
+	// 					Name:              c.Name,
+	// 					Image:             c.Image,
+	// 					PullSecret:        c.ImagePullSecret,
+	// 					EnvVars:           envVars,
+	// 					AttachedResources: res,
+	// 					ComputePlan:       c.ComputePlan,
+	// 					Quantity:          c.Quantity,
+	// 					IsShared:          &c.IsShared,
+	// 					Mounts: func() []*model.Mount {
+	// 						mounts := []*model.Mount{}
+	// 						for _, vm := range c.VolumeMounts {
+	// 							mounts = append(
+	// 								mounts, &model.Mount{
+	// 									Type: vm.Type,
+	// 									Ref:  vm.Ref,
+	// 									Path: vm.MountPath,
+	// 								},
+	// 							)
+	// 						}
+	// 						return mounts
+	// 					}(),
+	// 				},
+	// 			)
+	// 		}
+	// 		return containers
+	// 	}(),
+	// 	Project: &model.Project{ID: a.ProjectId},
+	// 	Status:  string(a.Status),
+	// }, nil
 }
 
 func (r *queryResolver) CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig map[string]interface{}) (*model.LoadEnv, error) {
@@ -1595,6 +1621,84 @@ func (r *queryResolver) CoreGetEdgeNodes(ctx context.Context, edgeID repos.ID) (
 	return edgeNodes, nil
 }
 
+func (r *queryResolver) CoreGetResInstances(ctx context.Context, envID repos.ID, resType string) ([]*model.ResInstance, error) {
+	return getInstances(r.Domain, &model.Environment{
+		ID: envID,
+	}, ctx, resType)
+}
+
+func (r *queryResolver) CoreGetResInstance(ctx context.Context, envID repos.ID, resID string) (*model.ResInstance, error) {
+	// instance, err := r.Domain.GetResInstance(ctx, envID, resID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return ReturnResInstance(ctx, r, instance), nil
+	return nil, nil
+}
+
+func (r *queryResolver) CoreGetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*model.Environment, error) {
+	e, err := r.Domain.GetEnvironments(ctx, blueprintID)
+	if err != nil {
+		return nil, err
+	}
+
+	environments := make([]*model.Environment, 0)
+	for _, environment := range e {
+		ee := environment
+		environments = append(environments, &model.Environment{
+			ID:          ee.Id,
+			BlueprintID: ee.BlueprintId,
+		})
+	}
+
+	return environments, nil
+}
+
+func (r *resInstanceResolver) App(ctx context.Context, obj *model.ResInstance) (*model.App, error) {
+	a, err := r.Domain.GetApp(ctx, obj.ResourceID)
+	if err != nil {
+		return nil, err
+	}
+	return ReturnApp(a), nil
+}
+
+func (r *resInstanceResolver) Router(ctx context.Context, obj *model.ResInstance) (*model.Router, error) {
+	routerEntity, err := r.Domain.GetRouter(ctx, obj.ResourceID)
+	if err != nil {
+		return nil, err
+	}
+	return routerModelFromEntity(routerEntity), nil
+}
+
+func (r *resInstanceResolver) MResource(ctx context.Context, obj *model.ResInstance) (*model.ManagedRes, error) {
+	res, err := r.Domain.GetManagedRes(ctx, obj.ResourceID)
+	if err != nil {
+		return nil, err
+	}
+	return managedResourceModelFromEntity(res), nil
+}
+
+func (r *resInstanceResolver) MService(ctx context.Context, obj *model.ResInstance) (*model.ManagedSvc, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *resInstanceResolver) Config(ctx context.Context, obj *model.ResInstance) (*model.Config, error) {
+	configEntity, err := r.Domain.GetConfig(ctx, obj.ResourceID)
+	if err != nil {
+		return nil, err
+	}
+	return configModelFromEntity(configEntity), nil
+}
+
+func (r *resInstanceResolver) Secret(ctx context.Context, obj *model.ResInstance) (*model.Secret, error) {
+	secretEntity, err := r.Domain.GetSecret(ctx, obj.ResourceID)
+	if err != nil {
+		return nil, err
+	}
+	return secretModelFromEntity(secretEntity), nil
+}
+
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
 	var e error
 	defer wErrors.HandleErr(&e)
@@ -1666,6 +1770,9 @@ func (r *Resolver) Device() generated.DeviceResolver { return &deviceResolver{r}
 // EdgeRegion returns generated.EdgeRegionResolver implementation.
 func (r *Resolver) EdgeRegion() generated.EdgeRegionResolver { return &edgeRegionResolver{r} }
 
+// Environment returns generated.EnvironmentResolver implementation.
+func (r *Resolver) Environment() generated.EnvironmentResolver { return &environmentResolver{r} }
+
 // ManagedRes returns generated.ManagedResResolver implementation.
 func (r *Resolver) ManagedRes() generated.ManagedResResolver { return &managedResResolver{r} }
 
@@ -1686,6 +1793,9 @@ func (r *Resolver) ProjectMembership() generated.ProjectMembershipResolver {
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// ResInstance returns generated.ResInstanceResolver implementation.
+func (r *Resolver) ResInstance() generated.ResInstanceResolver { return &resInstanceResolver{r} }
+
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
@@ -1694,10 +1804,12 @@ type appResolver struct{ *Resolver }
 type cloudProviderResolver struct{ *Resolver }
 type deviceResolver struct{ *Resolver }
 type edgeRegionResolver struct{ *Resolver }
+type environmentResolver struct{ *Resolver }
 type managedResResolver struct{ *Resolver }
 type managedSvcResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type projectMembershipResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type resInstanceResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

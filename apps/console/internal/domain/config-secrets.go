@@ -24,6 +24,7 @@ func (d *domain) GetSecret(ctx context.Context, secretId repos.ID) (*entities.Se
 	}
 	return sec, nil
 }
+
 func (d *domain) GetSecrets(ctx context.Context, projectId repos.ID) ([]*entities.Secret, error) {
 	err := d.checkProjectAccess(ctx, projectId, ReadProject)
 	if err != nil {
@@ -87,6 +88,7 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 	}
 	return create, nil
 }
+
 func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error) {
 	cfg, err := d.secretRepo.FindById(ctx, secretId)
 	if err = mongoError(err, "secret not found"); err != nil {
@@ -136,6 +138,7 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 	}
 	return true, nil
 }
+
 func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, error) {
 	secret, err := d.secretRepo.FindById(ctx, secretId)
 	if err = mongoError(err, "secret not found"); err != nil {
@@ -187,6 +190,7 @@ func (d *domain) GetConfig(ctx context.Context, configId repos.ID) (*entities.Co
 
 	return cfg, nil
 }
+
 func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entities.Config, error) {
 	err := d.checkProjectAccess(ctx, projectId, ReadProject)
 	if err != nil {
@@ -204,6 +208,7 @@ func (d *domain) GetConfigs(ctx context.Context, projectId repos.ID) ([]*entitie
 	}
 	return configs, nil
 }
+
 func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error) {
 	err := d.checkProjectAccess(ctx, projectId, UpdateProject)
 	if err != nil {
@@ -256,6 +261,7 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 	}
 	return create, nil
 }
+
 func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error) {
 	cfg, err := d.configRepo.FindById(ctx, configId)
 	if err = mongoError(err, "config not found"); err != nil {

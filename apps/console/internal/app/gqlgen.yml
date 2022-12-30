@@ -45,6 +45,25 @@ autobind:
 # your liking
 skip_validation: true
 models:
+  ResInstance:
+    fields:
+      app:
+        resolver: true
+      config:
+        resolver: true
+      secret:
+        resolver: true
+      mResource:
+        resolver: true
+      mService:
+        resolver: true
+      router:
+        resolver: true
+
+  Environment:
+    fields:
+      resInstances: 
+        resolver: true
   CloudProvider:
     fields:
       edges:

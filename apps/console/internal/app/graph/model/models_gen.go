@@ -258,6 +258,18 @@ type EnvVarInput struct {
 	Value *EnvValInput `json:"value"`
 }
 
+type Environment struct {
+	ID           repos.ID       `json:"id"`
+	Name         string         `json:"name"`
+	BlueprintID  *repos.ID      `json:"blueprintId"`
+	ResInstances []*ResInstance `json:"resInstances"`
+}
+
+type EnvironmentIn struct {
+	BlueprintID *repos.ID `json:"blueprintId"`
+	Name        *string   `json:"name"`
+}
+
 type ExposedService struct {
 	Type    string `json:"type"`
 	Target  int    `json:"target"`
@@ -388,6 +400,21 @@ type ProjectMembership struct {
 	User    *User    `json:"user"`
 	Role    string   `json:"role"`
 	Project *Project `json:"project"`
+}
+
+type ResInstance struct {
+	ID            repos.ID    `json:"id"`
+	ResourceID    repos.ID    `json:"resourceId"`
+	EnvironmentID repos.ID    `json:"environmentId"`
+	BlueprintID   *repos.ID   `json:"blueprintId"`
+	Overrides     *string     `json:"overrides"`
+	App           *App        `json:"app"`
+	Router        *Router     `json:"router"`
+	MResource     *ManagedRes `json:"mResource"`
+	MService      *ManagedSvc `json:"mService"`
+	Config        *Config     `json:"config"`
+	Secret        *Secret     `json:"secret"`
+	ResourceType  string      `json:"resourceType"`
 }
 
 type Route struct {
