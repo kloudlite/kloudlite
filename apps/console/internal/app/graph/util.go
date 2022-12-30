@@ -338,6 +338,15 @@ func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, 
 				resIds = append(resIds, res.Id)
 			}
 
+		case common.ResourceManagedService:
+			svcs, err := d.GetManagedSvcs(ctx, *obj.BlueprintID)
+			if err != nil {
+				break
+			}
+			for _, res := range svcs {
+				resIds = append(resIds, res.Id)
+			}
+
 		}
 
 		for _, res := range resIds {
@@ -353,12 +362,12 @@ func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, 
 			}
 
 			instances = append(instances, &model.ResInstance{
-				ID:                  ri.Id,
-				ResourceID:          ri.ResourceId,
-				EnvironmentID:       ri.EnvironmentId,
-				BlueprintID:         ri.BlueprintId,
-				Overrides:           &ri.Overrides,
-				ResourceType:        resType,
+				ID:            ri.Id,
+				ResourceID:    ri.ResourceId,
+				EnvironmentID: ri.EnvironmentId,
+				BlueprintID:   ri.BlueprintId,
+				Overrides:     &ri.Overrides,
+				ResourceType:  resType,
 			})
 		}
 
