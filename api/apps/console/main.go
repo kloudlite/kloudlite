@@ -19,7 +19,7 @@ func main() {
 		fx.Provide(
 			func() (*k8s.YAMLClient, error) {
 				if isDev {
-					return k8s.NewYAMLClient(&rest.Config{Host: "localhost:8080"})
+					return k8s.NewYAMLClient(&rest.Config{Host: "127.0.0.1:8080"})
 				}
 				inclusterCfg, err := rest.InClusterConfig()
 				if err != nil {

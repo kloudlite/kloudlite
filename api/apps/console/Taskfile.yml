@@ -75,4 +75,5 @@ tasks:
     run: always
     cmds:
       - CGO_BUILD=0 go build -o /tmp/console ./main.go
-      - dlv exec -l 127.0.0.1:31117 --headless /tmp/console -- --dev
+      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/console -- --dev
+      - /tmp/console --dev

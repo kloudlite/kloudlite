@@ -39,6 +39,8 @@ type domain struct {
 	managedSvcRepo       repos.DbRepo[*entities.ManagedService]
 	managedResRepo       repos.DbRepo[*entities.ManagedResource]
 	appRepo              repos.DbRepo[*entities.App]
+	instanceRepo         repos.DbRepo[*entities.ResInstance]
+	environmentRepo      repos.DbRepo[*entities.Environment]
 	managedTemplatesPath string
 	workloadMessenger    WorkloadMessenger
 	ciClient             ci.CIClient
@@ -85,6 +87,8 @@ func fxDomain(
 	appRepo repos.DbRepo[*entities.App],
 	managedSvcRepo repos.DbRepo[*entities.ManagedService],
 	managedResRepo repos.DbRepo[*entities.ManagedResource],
+	instanceRepo repos.DbRepo[*entities.ResInstance],
+	environmentRepo repos.DbRepo[*entities.Environment],
 	msgP redpanda.Producer,
 	env *Env,
 	logger logging.Logger,
@@ -100,6 +104,8 @@ func fxDomain(
 	k8sYamlClient *k8s.YAMLClient,
 ) Domain {
 	return &domain{
+		instanceRepo: instanceRepo,
+		environmentRepo: environmentRepo,
 		providerRepo:         providerRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,

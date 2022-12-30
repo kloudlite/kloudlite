@@ -1,4 +1,5 @@
 scalar Json
+scalar Any
 
 type LoadEnv {
   envVars: Json
@@ -39,7 +40,33 @@ type Query {
   core_getCloudProviders(accountId: ID!): [CloudProvider!] #user-access
   core_getDevice(deviceId: ID!): Device #user-access
   core_getEdgeNodes(edgeId: ID!): [EdgeNode!]!
+  core_getResInstances(envId: ID!,resType:String!): [ResInstance!]
+  core_getResInstance(envId: ID!,resId:String!): ResInstance
+  core_getEnvironments(blueprintId: ID!): [Environment!]
 }
+
+type Environment{
+  id: ID!
+  name: String!
+  blueprintId: ID
+  resInstances(resType:String!): [ResInstance!]
+}
+
+type ResInstance{
+  id: ID!
+  resourceId: ID!
+  environmentId: ID!
+  blueprintId: ID
+  overrides: String
+  app: App
+  router: Router
+  mResource: ManagedRes
+  mService: ManagedSvc
+  config: Config
+  secret: Secret
+  resourceType: String!
+}
+
 
 type EdgeNode {
   nodeIndex: Int!
@@ -202,6 +229,16 @@ type Mutation {
   core_deleteCloudProvider(providerId: ID!): Boolean! #private-access
 
   core_addNewCluster(cluster: ClusterIn!): ClusterOut!
+
+  core_createEnvironement(environment: EnvironmentIn): Environment!
+  core_updateResInstance(resId: ID!,resType: String!,overrides: String!): Boolean!
+
+
+}
+
+input EnvironmentIn {
+  blueprintId: ID
+  name: String
 }
 
 input ClusterIn {
