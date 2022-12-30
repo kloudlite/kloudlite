@@ -130,7 +130,7 @@ spec:
   containers:
     - name: main
 #      image: registry.kloudlite.io/acc-k-hw-z1woxao88zzw8wjwl5mu2bih/nginx:latest
-      image: kennethreitz/httpbin
+      image: kong/httpbin
       env:
         - key: hello
           value: world
