@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/client-go/tools/record"
 	"reflect"
 	"strings"
 	"time"
@@ -37,6 +38,7 @@ type Reconciler struct {
 	Name       string
 	Env        *env.Env
 	yamlClient *kubectl.YAMLClient
+	recorder   record.EventRecorder
 }
 
 func (r *Reconciler) GetName() string {
@@ -276,6 +278,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
