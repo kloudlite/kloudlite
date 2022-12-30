@@ -60,6 +60,8 @@ func New(name string) *operator {
 	}
 	opts.BindFlags(flag.CommandLine)
 
+	rest.SetDefaultWarningHandler(rest.NoWarnings{})
+
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.StringVar(&devServerHost, "serverHost", "localhost:8080", "--serverHost <host:port>")
 	// flag.BoolVar(&isAllEnabled, "all", true, "--all")
