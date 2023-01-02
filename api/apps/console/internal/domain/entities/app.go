@@ -100,6 +100,7 @@ type App struct {
 	Status            AppStatus          `json:"status" bson:"status"`
 	Conditions        []metav1.Condition `json:"conditions" bson:"conditions"`
 	Metadata          map[string]any     `json:"metadata" bson:"metadata"`
+	Overrides         string             `bson:"overrides,omitempty" json:"overrides,omitempty"`
 }
 
 var AppIndexes = []repos.IndexField{
