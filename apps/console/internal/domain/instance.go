@@ -41,9 +41,18 @@ func (d *domain) GetResInstance(ctx context.Context, envID repos.ID, resID strin
 }
 
 func (d *domain) UpdateInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (*entities.ResInstance, error) {
-	return d.instanceRepo.UpdateById(ctx, resID, &entities.ResInstance{
+	inst, err := d.instanceRepo.UpdateById(ctx, resID, &entities.ResInstance{
 		Overrides: overrides,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	switch inst.ResourceType {
+	case common.ResourceApp:
+	}
+
+	return inst, nil
 }
 
 func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId *repos.ID, resType string, overrides string) (*entities.ResInstance, error) {
