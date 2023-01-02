@@ -49,6 +49,7 @@ type Environment{
   id: ID!
   name: String!
   blueprintId: ID
+  readableId: String
   resInstances(resType:String!): [ResInstance!]
 }
 
@@ -230,7 +231,7 @@ type Mutation {
 
   core_addNewCluster(cluster: ClusterIn!): ClusterOut!
 
-  core_createEnvironement(environment: EnvironmentIn): Environment!
+  core_createEnvironment(environment: EnvironmentIn): Environment!
   core_updateResInstance(resId: ID!,resType: String!,overrides: String!): Boolean!
 
 
@@ -239,6 +240,7 @@ type Mutation {
 input EnvironmentIn {
   blueprintId: ID
   name: String
+  readableId: String
 }
 
 input ClusterIn {

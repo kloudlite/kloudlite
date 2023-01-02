@@ -1109,8 +1109,9 @@ func (r *mutationResolver) CoreAddNewCluster(ctx context.Context, cluster model.
 	}, nil
 }
 
-func (r *mutationResolver) CoreCreateEnvironement(ctx context.Context, environment *model.EnvironmentIn) (*model.Environment, error) {
-	e, err := r.Domain.CreateEnvironment(ctx, environment.BlueprintID, *environment.Name)
+func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env *model.EnvironmentIn) (*model.Environment, error) {
+
+	e, err := r.Domain.CreateEnvironment(ctx, env.BlueprintID, *env.Name, *env.ReadableID)
 	if err != nil {
 		return nil, err
 	}
@@ -1119,6 +1120,7 @@ func (r *mutationResolver) CoreCreateEnvironement(ctx context.Context, environme
 		ID:          e.Id,
 		Name:        e.Name,
 		BlueprintID: e.BlueprintId,
+		ReadableID:  env.ReadableID,
 	}, nil
 }
 
@@ -1649,6 +1651,8 @@ func (r *queryResolver) CoreGetEnvironments(ctx context.Context, blueprintID rep
 		environments = append(environments, &model.Environment{
 			ID:          ee.Id,
 			BlueprintID: ee.BlueprintId,
+			Name:        ee.Name,
+			ReadableID:  &ee.ReadableId,
 		})
 	}
 

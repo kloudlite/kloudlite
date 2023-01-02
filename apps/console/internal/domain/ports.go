@@ -162,7 +162,7 @@ type Domain interface {
 
 	GetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*entities.Environment, error)
 	GetEnvironment(ctx context.Context, envId repos.ID) (*entities.Environment, error)
-	CreateEnvironment(ctx context.Context, blueprintID *repos.ID, name string) (*entities.Environment, error)
+	CreateEnvironment(ctx context.Context, blueprintID *repos.ID, name string, readableId string) (*entities.Environment, error)
 
 	ValidateResourecType(ctx context.Context, resType string) bool
 

@@ -300,6 +300,7 @@ func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, 
 	}
 
 	if blueprintId != nil {
+
 		resIds := make([]repos.ID, 0)
 		switch common.ResourceType(resType) {
 		case common.ResourceApp:
@@ -307,9 +308,12 @@ func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, 
 			if err != nil {
 				break
 			}
+			fmt.Println(len(apps), obj.BlueprintID)
+
 			for _, res := range apps {
 				resIds = append(resIds, res.Id)
 			}
+			fmt.Println(resIds)
 
 		case common.ResourceConfig:
 			configs, err := d.GetConfigs(ctx, *obj.BlueprintID)
@@ -349,6 +353,8 @@ func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, 
 
 		}
 
+		// end of switch
+
 		for _, res := range resIds {
 			for _, instance := range instances {
 				if res == instance.ID {
@@ -358,6 +364,7 @@ func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, 
 
 			ri, err := d.CreateResInstance(ctx, res, obj.ID, obj.BlueprintID, resType, "[]")
 			if err != nil {
+				fmt.Println("here",err)
 				continue
 			}
 

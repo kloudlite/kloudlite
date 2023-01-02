@@ -262,12 +262,14 @@ type Environment struct {
 	ID           repos.ID       `json:"id"`
 	Name         string         `json:"name"`
 	BlueprintID  *repos.ID      `json:"blueprintId"`
+	ReadableID   *string        `json:"readableId"`
 	ResInstances []*ResInstance `json:"resInstances"`
 }
 
 type EnvironmentIn struct {
 	BlueprintID *repos.ID `json:"blueprintId"`
 	Name        *string   `json:"name"`
+	ReadableID  *string   `json:"readableId"`
 }
 
 type ExposedService struct {

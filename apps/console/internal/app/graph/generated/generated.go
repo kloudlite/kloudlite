@@ -224,6 +224,7 @@ type ComplexityRoot struct {
 		BlueprintID  func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Name         func(childComplexity int) int
+		ReadableID   func(childComplexity int) int
 		ResInstances func(childComplexity int, resType string) int
 	}
 
@@ -294,7 +295,7 @@ type ComplexityRoot struct {
 		CoreCreateCloudProvider func(childComplexity int, accountID *repos.ID, cloudProvider model.CloudProviderIn) int
 		CoreCreateConfig        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
 		CoreCreateEdgeRegion    func(childComplexity int, edgeRegion model.EdgeRegionIn, providerID repos.ID) int
-		CoreCreateEnvironement  func(childComplexity int, environment *model.EnvironmentIn) int
+		CoreCreateEnvironment   func(childComplexity int, environment *model.EnvironmentIn) int
 		CoreCreateProject       func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, regionID *repos.ID) int
 		CoreCreateRouter        func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
 		CoreCreateSecret        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
@@ -531,7 +532,7 @@ type MutationResolver interface {
 	CoreUpdateCloudProvider(ctx context.Context, providerID repos.ID, cloudProvider model.CloudProviderUpdateIn) (bool, error)
 	CoreDeleteCloudProvider(ctx context.Context, providerID repos.ID) (bool, error)
 	CoreAddNewCluster(ctx context.Context, cluster model.ClusterIn) (*model.ClusterOut, error)
-	CoreCreateEnvironement(ctx context.Context, environment *model.EnvironmentIn) (*model.Environment, error)
+	CoreCreateEnvironment(ctx context.Context, environment *model.EnvironmentIn) (*model.Environment, error)
 	CoreUpdateResInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (bool, error)
 }
 type ProjectResolver interface {
@@ -1390,6 +1391,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Environment.Name(childComplexity), true
 
+	case "Environment.readableId":
+		if e.complexity.Environment.ReadableID == nil {
+			break
+		}
+
+		return e.complexity.Environment.ReadableID(childComplexity), true
+
 	case "Environment.resInstances":
 		if e.complexity.Environment.ResInstances == nil {
 			break
@@ -1726,17 +1734,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreCreateEdgeRegion(childComplexity, args["edgeRegion"].(model.EdgeRegionIn), args["providerId"].(repos.ID)), true
 
-	case "Mutation.core_createEnvironement":
-		if e.complexity.Mutation.CoreCreateEnvironement == nil {
+	case "Mutation.core_createEnvironment":
+		if e.complexity.Mutation.CoreCreateEnvironment == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_core_createEnvironement_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_core_createEnvironment_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateEnvironement(childComplexity, args["environment"].(*model.EnvironmentIn)), true
+		return e.complexity.Mutation.CoreCreateEnvironment(childComplexity, args["environment"].(*model.EnvironmentIn)), true
 
 	case "Mutation.core_createProject":
 		if e.complexity.Mutation.CoreCreateProject == nil {
@@ -2923,6 +2931,7 @@ type Environment{
   id: ID!
   name: String!
   blueprintId: ID
+  readableId: String
   resInstances(resType:String!): [ResInstance!]
 }
 
@@ -3104,7 +3113,7 @@ type Mutation {
 
   core_addNewCluster(cluster: ClusterIn!): ClusterOut!
 
-  core_createEnvironement(environment: EnvironmentIn): Environment!
+  core_createEnvironment(environment: EnvironmentIn): Environment!
   core_updateResInstance(resId: ID!,resType: String!,overrides: String!): Boolean!
 
 
@@ -3113,6 +3122,7 @@ type Mutation {
 input EnvironmentIn {
   blueprintId: ID
   name: String
+  readableId: String
 }
 
 input ClusterIn {
@@ -3786,7 +3796,7 @@ func (ec *executionContext) field_Mutation_core_createEdgeRegion_args(ctx contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_core_createEnvironement_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_core_createEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.EnvironmentIn
@@ -8891,6 +8901,38 @@ func (ec *executionContext) _Environment_blueprintId(ctx context.Context, field 
 	return ec.marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Environment_readableId(ctx context.Context, field graphql.CollectedField, obj *model.Environment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Environment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadableID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Environment_resInstances(ctx context.Context, field graphql.CollectedField, obj *model.Environment) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -11642,7 +11684,7 @@ func (ec *executionContext) _Mutation_core_addNewCluster(ctx context.Context, fi
 	return ec.marshalNClusterOut2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterOut(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_core_createEnvironement(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_core_createEnvironment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -11659,7 +11701,7 @@ func (ec *executionContext) _Mutation_core_createEnvironement(ctx context.Contex
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_core_createEnvironement_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_core_createEnvironment_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -11667,7 +11709,7 @@ func (ec *executionContext) _Mutation_core_createEnvironement(ctx context.Contex
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreCreateEnvironement(rctx, args["environment"].(*model.EnvironmentIn))
+		return ec.resolvers.Mutation().CoreCreateEnvironment(rctx, args["environment"].(*model.EnvironmentIn))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16660,6 +16702,14 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
+		case "readableId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readableId"))
+			it.ReadableID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -18660,6 +18710,13 @@ func (ec *executionContext) _Environment(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = innerFunc(ctx)
 
+		case "readableId":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Environment_readableId(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		case "resInstances":
 			field := field
 
@@ -19597,9 +19654,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "core_createEnvironement":
+		case "core_createEnvironment":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_core_createEnvironement(ctx, field)
+				return ec._Mutation_core_createEnvironment(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)

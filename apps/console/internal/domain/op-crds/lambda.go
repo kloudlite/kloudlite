@@ -21,5 +21,5 @@ type Lambda struct {
 	Kind       string `json:"kind,omitempty"`
 
 	Metadata LambdaMetadata `json:"metadata"`
-	Spec     LambdaSpec     `json:"spec,omitempty"`
+	Spec     *LambdaSpec    `json:"spec,omitempty"`
 }
