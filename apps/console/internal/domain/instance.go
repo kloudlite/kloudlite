@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -11,6 +12,10 @@ import (
 	"kloudlite.io/pkg/repos"
 
 	createjsonpatch "github.com/snorwin/jsonpatch"
+)
+
+const (
+	ENV_INSTANCE string = "self"
 )
 
 func (d *domain) GetResInstances(ctx context.Context, envId repos.ID, resType string) ([]*entities.ResInstance, error) {
@@ -89,6 +94,8 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 	}
 
 	var apiVersion, kind, name string
+	name = string(instance.ResourceId)
+	isSelf := strings.HasPrefix(string(instance.ResourceId), ENV_INSTANCE)
 
 	switch inst.ResourceType {
 	case common.ResourceRouter:
@@ -98,55 +105,69 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 		apiVersion = op_crds.ConfigAPIVersion
 		kind = op_crds.ConfigKind
 
-		if c, err := d.configRepo.FindById(ctx, instance.ResourceId); err != nil {
-			return nil, err
-		} else {
-			name = string(c.Id)
+		if !isSelf {
+			if c, err := d.configRepo.FindById(ctx, instance.ResourceId); err != nil {
+				return nil, err
+			} else {
+				name = string(c.Id)
+			}
 		}
 
 	case common.ResourceSecret:
 		apiVersion = op_crds.SecretAPIVersion
 		kind = op_crds.SecretKind
 
-		if s, err := d.secretRepo.FindById(ctx, instance.ResourceId); err != nil {
-			return nil, err
-		} else {
-			name = string(s.Id)
+		if !isSelf {
+			if s, err := d.secretRepo.FindById(ctx, instance.ResourceId); err != nil {
+				return nil, err
+			} else {
+				name = string(s.Id)
+			}
 		}
 
 	case common.ResourceManagedService:
 		apiVersion = op_crds.ManagedServiceAPIVersion
 		kind = op_crds.ManagedServiceKind
 
-		if m, err := d.managedSvcRepo.FindById(ctx, instance.ResourceId); err != nil {
-			return nil, err
-		} else {
-			name = string(m.Id)
+		if !isSelf {
+			if m, err := d.managedSvcRepo.FindById(ctx, instance.ResourceId); err != nil {
+				return nil, err
+			} else {
+				name = string(m.Id)
+			}
 		}
 
 	case common.ResourceManagedResource:
 		apiVersion = op_crds.ManagedResourceAPIVersion
 		kind = op_crds.ManagedResourceKind
-
-		if r, err := d.managedResRepo.FindById(ctx, instance.ResourceId); err != nil {
-			return nil, err
-		} else {
-			name = string(r.Id)
+		if !isSelf {
+			if r, err := d.managedResRepo.FindById(ctx, instance.ResourceId); err != nil {
+				return nil, err
+			} else {
+				name = string(r.Id)
+			}
 		}
 
 	case common.ResourceApp:
 		apiVersion = op_crds.AppAPIVersion
 		kind = op_crds.AppKind
-		if a, err := d.appRepo.FindById(ctx, instance.ResourceId); err != nil {
-			return nil, err
+		if !isSelf {
+			if a, err := d.appRepo.FindById(ctx, instance.ResourceId); err != nil {
+				return nil, err
+			} else {
+				name = a.ReadableId
+			}
 		} else {
-			name = a.ReadableId
+			if instance.ExtraDatas != nil {
+				name = string(instance.ExtraDatas.ReadableId)
+			} else {
+				return nil, fmt.Errorf("readable_id not found to apply")
+			}
 		}
 
 	default:
 		return nil, fmt.Errorf("resource_type not found")
-
-	}	// switch end
+	} // switch end
 
 	if err = d.workloadMessenger.SendAction("apply", d.getDispatchKafkaTopic(clusterId), string(inst.Id), &op_crds.Resource{
 		APIVersion: apiVersion,
@@ -166,7 +187,7 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 	return nil, nil
 }
 
-func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId *repos.ID, resType string, overrides string) (*entities.ResInstance, error) {
+func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId repos.ID, resType string, overrides string) (*entities.ResInstance, error) {
 	return d.instanceRepo.Create(ctx,
 		&entities.ResInstance{
 			Overrides:     overrides,
@@ -234,7 +255,7 @@ func (d *domain) OnUpdateInstance(ctx context.Context, response *op_crds.StatusU
 	}, &entities.ResInstance{
 		ResourceId:    repos.ID(response.Metadata.ResourceId),
 		EnvironmentId: repos.ID(response.Metadata.EnvironmentId),
-		BlueprintId:   (*repos.ID)(&response.Metadata.ProjectId),
+		BlueprintId:   repos.ID(response.Metadata.ProjectId),
 		ResourceType:  types[response.Metadata.GroupVersionKind.Kind],
 		Status: func() entities.InstanceStatus {
 			if response.IsReady {

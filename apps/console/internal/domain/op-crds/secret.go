@@ -11,9 +11,9 @@ const SecretAPIVersion = "crds.kloudlite.io/v1"
 const SecretKind = "Secret"
 
 type Secret struct {
-	APIVersion string         `json:"apiVersion,omitempty"`
-	Kind       string         `json:"kind,omitempty"`
-	Metadata   SecretMetadata `json:"metadata,omitempty"`
+	APIVersion string            `json:"apiVersion,omitempty"`
+	Kind       string            `json:"kind,omitempty"`
+	Metadata   SecretMetadata    `json:"metadata,omitempty"`
 	Data       map[string][]byte `json:"data,omitempty"`
-	StringData map[string]any `json:"stringData,omitempty"`
+	StringData map[string]any    `json:"stringData,omitempty"`
 }
