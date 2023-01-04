@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
+	createjsonpatch "github.com/snorwin/jsonpatch"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/app/util"
@@ -21,8 +22,6 @@ import (
 	wErrors "kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
-
-	createjsonpatch "github.com/snorwin/jsonpatch"
 )
 
 func (r *accountResolver) Projects(ctx context.Context, obj *model.Account) ([]*model.Project, error) {
@@ -330,6 +329,7 @@ func (r *mutationResolver) CoreAddDevice(ctx context.Context, accountID repos.ID
 	if err != nil {
 		return nil, err
 	}
+
 	return &model.Device{
 		ID: device.Id,
 		User: &model.User{
@@ -1128,16 +1128,16 @@ func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, environmen
 }
 
 func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource model.ResourceIn, overrides *string) (bool, error) {
-	ri, err := r.Domain.GetResInstanceById(ctx, resource.ResID)
+	instance, err := r.Domain.GetResInstanceById(ctx, resource.ResID)
 	if err != nil {
 		return false, err
 	}
 
-	if err = r.Domain.ValidateResourecType(ctx, string(ri.ResourceType)); err != nil {
+	if err = r.Domain.ValidateResourecType(ctx, string(instance.ResourceType)); err != nil {
 		return false, err
 	}
 
-	project, err := r.Domain.GetProjectWithID(ctx, *ri.BlueprintId)
+	project, err := r.Domain.GetProjectWithID(ctx, instance.BlueprintId)
 	if err != nil {
 		return false, err
 	}
@@ -1147,16 +1147,20 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 	if err != nil {
 		return false, err
 	}
+	isSelf := strings.HasPrefix(string(instance.ResourceId), domain.ENV_INSTANCE)
 
-	switch ri.ResourceType {
+	switch instance.ResourceType {
 	case common.ResourceRouter:
 		return false, fmt.Errorf("not implemented")
 
 	case common.ResourceConfig:
 
-		oldConfig, err := r.Domain.GetConfig(ctx, ri.ResourceId)
-		if err != nil {
-			return false, err
+		oldConfig := &entities.Config{}
+		if !isSelf {
+			oldConfig, err = r.Domain.GetConfig(ctx, instance.ResourceId)
+			if err != nil {
+				return false, err
+			}
 		}
 
 		oldConfigJson, err := json.Marshal(configModelFromEntity(oldConfig))
@@ -1194,10 +1198,14 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 		}
 
 	case common.ResourceSecret:
-		oldSecret, err := r.Domain.GetSecret(ctx, ri.ResourceId)
-		if err != nil {
-			return false, err
+		oldSecret := &entities.Secret{}
+		if !isSelf {
+			oldSecret, err = r.Domain.GetSecret(ctx, instance.ResourceId)
+			if err != nil {
+				return false, err
+			}
 		}
+
 		oldSecretJson, err := json.Marshal(secretModelFromEntity(oldSecret))
 		if err != nil {
 			return false, err
@@ -1234,9 +1242,12 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 
 	case common.ResourceManagedService:
 		{
-			oldManagedSvc, err := r.Domain.GetManagedSvc(ctx, ri.ResourceId)
-			if err != nil {
-				return false, err
+			oldManagedSvc := &entities.ManagedService{}
+			if !isSelf {
+				oldManagedSvc, err = r.Domain.GetManagedSvc(ctx, instance.ResourceId)
+				if err != nil {
+					return false, err
+				}
 			}
 			oldManagedSvcJson, err := json.Marshal(managedSvcModelFromEntity(oldManagedSvc))
 			if err != nil {
@@ -1276,10 +1287,14 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 	case common.ResourceManagedResource:
 		{
 
-			oldMRes, err := r.Domain.GetManagedRes(ctx, ri.ResourceId)
-			if err != nil {
-				return false, err
+			oldMRes := &entities.ManagedResource{}
+			if !isSelf {
+				oldMRes, err = r.Domain.GetManagedRes(ctx, instance.ResourceId)
+				if err != nil {
+					return false, err
+				}
 			}
+
 			oldMResJson, err := json.Marshal(managedResourceModelFromEntity(oldMRes))
 			if err != nil {
 				return false, err
@@ -1317,9 +1332,12 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 
 	case common.ResourceApp:
 		{
-			oldApp, err := r.Domain.GetApp(ctx, ri.ResourceId)
-			if err != nil {
-				return false, err
+			oldApp := &entities.App{}
+			if !isSelf {
+				oldApp, err = r.Domain.GetApp(ctx, instance.ResourceId)
+				if err != nil {
+					return false, err
+				}
 			}
 
 			oldAppJson, err := json.Marshal(util.ReturnApp(oldApp))
@@ -1350,13 +1368,29 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 			}
 		}
 
-		if _, err := r.Domain.UpdateInstance(ctx, ri, project, &final_patch, resource.Enabled, overrides); err != nil {
-			return false, err
-		}
+	}
 
+	if _, err := r.Domain.UpdateInstance(ctx, instance, project, &final_patch, resource.Enabled, overrides); err != nil {
+		return false, err
 	}
 
 	return true, nil
+}
+
+func (r *mutationResolver) CoreCreateInstance(ctx context.Context, instance model.InstanceIn) (*model.ResInstance, error) {
+	ri, err := r.Domain.CreateResInstance(ctx, NewId(domain.ENV_INSTANCE), instance.EnvironmentID, instance.BlueprintID, instance.ResourceType, *instance.Overrides)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ResInstance{
+		ID:            ri.Id,
+		Enabled:       ri.Enabled,
+		ResourceID:    ri.ResourceId,
+		EnvironmentID: ri.EnvironmentId,
+		BlueprintID:   ri.BlueprintId,
+		Overrides:     &ri.Overrides,
+		ResourceType:  string(ri.ResourceType),
+	}, nil
 }
 
 func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
@@ -1475,116 +1509,6 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 		return nil, err
 	}
 	return util.ReturnApp(a), nil
-	// services := make([]*model.ExposedService, 0)
-	// for _, s := range a.ExposedPorts {
-	// 	services = append(
-	// 		services, &model.ExposedService{
-	// 			Type:    string(s.Type),
-	// 			Target:  int(s.TargetPort),
-	// 			Exposed: int(s.Port),
-	// 		},
-	// 	)
-	// }
-	//
-	// return &model.App{
-	// 	IsFrozen:  a.Frozen,
-	// 	CreatedAt: a.CreationTime.String(),
-	// 	UpdatedAt: func() *string {
-	// 		if !a.UpdateTime.IsZero() {
-	// 			s := a.UpdateTime.String()
-	// 			return &s
-	// 		}
-	// 		return nil
-	// 	}(),
-	// 	IsLambda: a.IsLambda,
-	// 	Conditions: func() []*model.MetaCondition {
-	// 		conditions := make([]*model.MetaCondition, 0)
-	// 		for _, condition := range a.Conditions {
-	// 			conditions = append(
-	// 				conditions, &model.MetaCondition{
-	// 					Status:        string(condition.Status),
-	// 					ConditionType: condition.Type,
-	// 					LastTimeStamp: condition.LastTransitionTime.String(),
-	// 					Reason:        condition.Reason,
-	// 					Message:       condition.Message,
-	// 				},
-	// 			)
-	// 		}
-	// 		return conditions
-	// 	}(),
-	// 	ID:          a.Id,
-	// 	Name:        a.Name,
-	// 	Namespace:   a.Namespace,
-	// 	Description: a.Description,
-	// 	ReadableID:  repos.ID(a.ReadableId),
-	// 	Replicas:    &a.Replicas,
-	// 	AutoScale: func() *model.AutoScale {
-	// 		if a.AutoScale != nil {
-	// 			return &model.AutoScale{
-	// 				MinReplicas:     int(a.AutoScale.MinReplicas),
-	// 				MaxReplicas:     int(a.AutoScale.MaxReplicas),
-	// 				UsagePercentage: int(a.AutoScale.UsagePercentage),
-	// 			}
-	// 		}
-	// 		return nil
-	// 	}(),
-	// 	Services: services,
-	// 	Containers: func() []*model.AppContainer {
-	// 		containers := make([]*model.AppContainer, 0)
-	// 		for _, c := range a.Containers {
-	// 			envVars := make([]*model.EnvVar, 0)
-	// 			for _, e := range c.EnvVars {
-	// 				envVars = append(
-	// 					envVars, &model.EnvVar{
-	// 						Key: e.Key,
-	// 						Value: &model.EnvVal{
-	// 							Type:  e.Type,
-	// 							Value: e.Value,
-	// 							Ref:   e.Ref,
-	// 							Key:   e.RefKey,
-	// 						},
-	// 					},
-	// 				)
-	// 			}
-	// 			res := make([]*model.AttachedRes, 0)
-	// 			for _, r := range c.AttachedResources {
-	// 				res = append(
-	// 					res, &model.AttachedRes{
-	// 						ResID: r.ResourceId,
-	// 					},
-	// 				)
-	// 			}
-	// 			containers = append(
-	// 				containers, &model.AppContainer{
-	// 					Name:              c.Name,
-	// 					Image:             c.Image,
-	// 					PullSecret:        c.ImagePullSecret,
-	// 					EnvVars:           envVars,
-	// 					AttachedResources: res,
-	// 					ComputePlan:       c.ComputePlan,
-	// 					Quantity:          c.Quantity,
-	// 					IsShared:          &c.IsShared,
-	// 					Mounts: func() []*model.Mount {
-	// 						mounts := []*model.Mount{}
-	// 						for _, vm := range c.VolumeMounts {
-	// 							mounts = append(
-	// 								mounts, &model.Mount{
-	// 									Type: vm.Type,
-	// 									Ref:  vm.Ref,
-	// 									Path: vm.MountPath,
-	// 								},
-	// 							)
-	// 						}
-	// 						return mounts
-	// 					}(),
-	// 				},
-	// 			)
-	// 		}
-	// 		return containers
-	// 	}(),
-	// 	Project: &model.Project{ID: a.ProjectId},
-	// 	Status:  string(a.Status),
-	// }, nil
 }
 
 func (r *queryResolver) CoreGenerateEnv(ctx context.Context, projectID repos.ID, klConfig map[string]interface{}) (*model.LoadEnv, error) {
@@ -1894,27 +1818,41 @@ func (r *queryResolver) CoreGetEnvironments(ctx context.Context, blueprintID rep
 }
 
 func (r *resInstanceResolver) App(ctx context.Context, obj *model.ResInstance) (*model.App, error) {
-	a, err := r.Domain.GetApp(ctx, obj.ResourceID)
-	if err != nil {
-		return nil, err
+
+	isSelf := strings.HasPrefix(string(obj.ResourceID), domain.ENV_INSTANCE)
+	if isSelf {
+		return util.ReturnApp(&entities.App{}), nil
 	}
-	return util.ReturnApp(a), nil
+
+	if a, err := r.Domain.GetApp(ctx, obj.ResourceID); err != nil {
+		return nil, err
+	} else {
+		return util.ReturnApp(a), nil
+	}
 }
 
 func (r *resInstanceResolver) Router(ctx context.Context, obj *model.ResInstance) (*model.Router, error) {
-	routerEntity, err := r.Domain.GetRouter(ctx, obj.ResourceID)
-	if err != nil {
-		return nil, err
+	if strings.HasPrefix(string(obj.ResourceID), domain.ENV_INSTANCE) {
+		return routerModelFromEntity(&entities.Router{}), nil
 	}
-	return routerModelFromEntity(routerEntity), nil
+
+	if routerEntity, err := r.Domain.GetRouter(ctx, obj.ResourceID); err != nil {
+		return nil, err
+	} else {
+		return routerModelFromEntity(routerEntity), nil
+	}
 }
 
 func (r *resInstanceResolver) MResource(ctx context.Context, obj *model.ResInstance) (*model.ManagedRes, error) {
-	res, err := r.Domain.GetManagedRes(ctx, obj.ResourceID)
-	if err != nil {
-		return nil, err
+	if strings.HasPrefix(string(obj.ResourceID), domain.ENV_INSTANCE) {
+		return managedResourceModelFromEntity(&entities.ManagedResource{}), nil
 	}
-	return managedResourceModelFromEntity(res), nil
+
+	if res, err := r.Domain.GetManagedRes(ctx, obj.ResourceID); err != nil {
+		return nil, err
+	} else {
+		return managedResourceModelFromEntity(res), nil
+	}
 }
 
 func (r *resInstanceResolver) MService(ctx context.Context, obj *model.ResInstance) (*model.ManagedSvc, error) {
@@ -1922,19 +1860,27 @@ func (r *resInstanceResolver) MService(ctx context.Context, obj *model.ResInstan
 }
 
 func (r *resInstanceResolver) Config(ctx context.Context, obj *model.ResInstance) (*model.Config, error) {
-	configEntity, err := r.Domain.GetConfig(ctx, obj.ResourceID)
-	if err != nil {
-		return nil, err
+	if strings.HasPrefix(string(obj.ResourceID), domain.ENV_INSTANCE) {
+		return configModelFromEntity(&entities.Config{}), nil
 	}
-	return configModelFromEntity(configEntity), nil
+
+	if configEntity, err := r.Domain.GetConfig(ctx, obj.ResourceID); err != nil {
+		return nil, err
+	} else {
+		return configModelFromEntity(configEntity), nil
+	}
 }
 
 func (r *resInstanceResolver) Secret(ctx context.Context, obj *model.ResInstance) (*model.Secret, error) {
-	secretEntity, err := r.Domain.GetSecret(ctx, obj.ResourceID)
-	if err != nil {
-		return nil, err
+	if strings.HasPrefix(string(obj.ResourceID), domain.ENV_INSTANCE) {
+		return secretModelFromEntity(&entities.Secret{}), nil
 	}
-	return secretModelFromEntity(secretEntity), nil
+
+	if secretEntity, err := r.Domain.GetSecret(ctx, obj.ResourceID); err != nil {
+		return nil, err
+	} else {
+		return secretModelFromEntity(secretEntity), nil
+	}
 }
 
 func (r *userResolver) Devices(ctx context.Context, obj *model.User) ([]*model.Device, error) {
