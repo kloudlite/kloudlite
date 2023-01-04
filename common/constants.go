@@ -6,6 +6,7 @@ const (
 	ResourceConfig          ResourceType = "config"
 	ResourceSecret          ResourceType = "secret"
 	ResourceApp             ResourceType = "app"
+	ResourceLambda          ResourceType = "lambda"
 	ResourceProject         ResourceType = "project"
 	ResourceAccount         ResourceType = "account"
 	ResourceRouter          ResourceType = "router"

@@ -406,6 +406,7 @@ type ProjectMembership struct {
 
 type ResInstance struct {
 	ID            repos.ID    `json:"id"`
+	Enabled       bool        `json:"enabled"`
 	ResourceID    repos.ID    `json:"resourceId"`
 	EnvironmentID repos.ID    `json:"environmentId"`
 	BlueprintID   *repos.ID   `json:"blueprintId"`
@@ -417,6 +418,11 @@ type ResInstance struct {
 	Config        *Config     `json:"config"`
 	Secret        *Secret     `json:"secret"`
 	ResourceType  string      `json:"resourceType"`
+}
+
+type ResourceIn struct {
+	ResID   repos.ID `json:"resId"`
+	Enabled *bool    `json:"enabled"`
 }
 
 type Route struct {

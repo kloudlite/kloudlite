@@ -7,13 +7,13 @@ type SecretMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 }
 
-const SecretAPIVersion = "v1"
+const SecretAPIVersion = "crds.kloudlite.io/v1"
 const SecretKind = "Secret"
 
 type Secret struct {
 	APIVersion string         `json:"apiVersion,omitempty"`
 	Kind       string         `json:"kind,omitempty"`
 	Metadata   SecretMetadata `json:"metadata,omitempty"`
-	Data       map[string]any `json:"data,omitempty"`
+	Data       map[string][]byte `json:"data,omitempty"`
 	StringData map[string]any `json:"stringData,omitempty"`
 }

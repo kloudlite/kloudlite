@@ -56,6 +56,45 @@ func (d *domain) CreateEnvironment(ctx context.Context, blueprintID *repos.ID, n
 
 }
 
+func (d *domain) GetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*entities.Environment, error) {
+	return d.environmentRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"blueprint_id": blueprintID,
+			"is_deleted":   false,
+		},
+	})
+}
+
 func (d *domain) GetEnvironment(ctx context.Context, envId repos.ID) (*entities.Environment, error) {
 	return d.environmentRepo.FindById(ctx, envId)
+}
+
+func (d *domain) OnUpdateEnv(ctx context.Context, response *op_crds.StatusUpdate) error {
+	one, err := d.environmentRepo.FindById(ctx, repos.ID(response.Metadata.ResourceId))
+	if err = mongoError(err, "managed resource not found"); err != nil {
+		// Ignore unknown project
+		return nil
+	}
+
+	if response.IsReady {
+		one.Status = entities.ProjectStateLive
+	} else {
+		one.Status = entities.ProjectStateSyncing
+	}
+	one.Conditions = response.ChildConditions
+	_, err = d.environmentRepo.UpdateById(ctx, one.Id, one)
+	return err
+}
+
+func (d *domain) OnDeleteEnv(ctx context.Context, response *op_crds.StatusUpdate) error {
+
+	if err := d.environmentRepo.UpdateMany(ctx, repos.Filter{
+		"id": repos.ID(response.Metadata.ResourceId),
+	}, map[string]any{
+		"is_deleted": true,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

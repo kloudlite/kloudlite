@@ -226,6 +226,10 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 	return create, err
 }
 
+func (d *domain) JsEval(ctx context.Context, evalIn *jseval.EvalIn) (*jseval.EvalOut, error) {
+	return d.jsEvalClient.Eval(ctx, evalIn)
+}
+
 func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID, values map[string]interface{}) (bool, error) {
 	managedSvc, err := d.managedSvcRepo.FindById(ctx, managedServiceId)
 	if err = mongoError(err, "managed service not found"); err != nil {
