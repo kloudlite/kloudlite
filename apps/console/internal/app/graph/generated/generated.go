@@ -314,7 +314,7 @@ type ComplexityRoot struct {
 		CoreUpdateDevice        func(childComplexity int, deviceID repos.ID, name *string, region *string, ports []*model.PortIn) int
 		CoreUpdateEdgeRegion    func(childComplexity int, edgeID repos.ID, edgeRegion model.EdgeRegionUpdateIn) int
 		CoreUpdateProject       func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
-		CoreUpdateResInstance   func(childComplexity int, resID repos.ID, resType string, overrides string) int
+		CoreUpdateResInstance   func(childComplexity int, resource model.ResourceIn, overrides *string) int
 		CoreUpdateRouter        func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
 		CoreUpdateSecret        func(childComplexity int, secretID repos.ID, description *string, data []*model.CSEntryIn) int
 		IamInviteProjectMember  func(childComplexity int, projectID repos.ID, email string, role string) int
@@ -398,6 +398,7 @@ type ComplexityRoot struct {
 		App           func(childComplexity int) int
 		BlueprintID   func(childComplexity int) int
 		Config        func(childComplexity int) int
+		Enabled       func(childComplexity int) int
 		EnvironmentID func(childComplexity int) int
 		ID            func(childComplexity int) int
 		MResource     func(childComplexity int) int
@@ -533,7 +534,7 @@ type MutationResolver interface {
 	CoreDeleteCloudProvider(ctx context.Context, providerID repos.ID) (bool, error)
 	CoreAddNewCluster(ctx context.Context, cluster model.ClusterIn) (*model.ClusterOut, error)
 	CoreCreateEnvironment(ctx context.Context, environment *model.EnvironmentIn) (*model.Environment, error)
-	CoreUpdateResInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (bool, error)
+	CoreUpdateResInstance(ctx context.Context, resource model.ResourceIn, overrides *string) (bool, error)
 }
 type ProjectResolver interface {
 	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
@@ -1972,7 +1973,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateResInstance(childComplexity, args["resId"].(repos.ID), args["resType"].(string), args["overrides"].(string)), true
+		return e.complexity.Mutation.CoreUpdateResInstance(childComplexity, args["resource"].(model.ResourceIn), args["overrides"].(*string)), true
 
 	case "Mutation.core_updateRouter":
 		if e.complexity.Mutation.CoreUpdateRouter == nil {
@@ -2599,6 +2600,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ResInstance.Config(childComplexity), true
 
+	case "ResInstance.enabled":
+		if e.complexity.ResInstance.Enabled == nil {
+			break
+		}
+
+		return e.complexity.ResInstance.Enabled(childComplexity), true
+
 	case "ResInstance.environmentId":
 		if e.complexity.ResInstance.EnvironmentID == nil {
 			break
@@ -2937,6 +2945,7 @@ type Environment{
 
 type ResInstance{
   id: ID!
+  enabled: Boolean!
   resourceId: ID!
   environmentId: ID!
   blueprintId: ID
@@ -3114,9 +3123,12 @@ type Mutation {
   core_addNewCluster(cluster: ClusterIn!): ClusterOut!
 
   core_createEnvironment(environment: EnvironmentIn): Environment!
-  core_updateResInstance(resId: ID!,resType: String!,overrides: String!): Boolean!
+  core_updateResInstance(resource: ResourceIn!, overrides: String): Boolean!
+}
 
-
+input ResourceIn{
+  resId: ID!
+  enabled: Boolean
 }
 
 input EnvironmentIn {
@@ -4309,33 +4321,24 @@ func (ec *executionContext) field_Mutation_core_updateProject_args(ctx context.C
 func (ec *executionContext) field_Mutation_core_updateResInstance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["resId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 model.ResourceIn
+	if tmp, ok := rawArgs["resource"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
+		arg0, err = ec.unmarshalNResourceIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐResourceIn(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["resId"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["resType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resType"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["resType"] = arg1
-	var arg2 string
+	args["resource"] = arg0
+	var arg1 *string
 	if tmp, ok := rawArgs["overrides"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("overrides"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["overrides"] = arg2
+	args["overrides"] = arg1
 	return args, nil
 }
 
@@ -11751,7 +11754,7 @@ func (ec *executionContext) _Mutation_core_updateResInstance(ctx context.Context
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CoreUpdateResInstance(rctx, args["resId"].(repos.ID), args["resType"].(string), args["overrides"].(string))
+		return ec.resolvers.Mutation().CoreUpdateResInstance(rctx, args["resource"].(model.ResourceIn), args["overrides"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13758,6 +13761,41 @@ func (ec *executionContext) _ResInstance_id(ctx context.Context, field graphql.C
 	res := resTmp.(repos.ID)
 	fc.Result = res
 	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ResInstance_enabled(ctx context.Context, field graphql.CollectedField, obj *model.ResInstance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ResInstance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ResInstance_resourceId(ctx context.Context, field graphql.CollectedField, obj *model.ResInstance) (ret graphql.Marshaler) {
@@ -16941,6 +16979,37 @@ func (ec *executionContext) unmarshalInputPortIn(ctx context.Context, obj interf
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
 			it.TargetPort, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputResourceIn(ctx context.Context, obj interface{}) (model.ResourceIn, error) {
+	var it model.ResourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "resId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resId"))
+			it.ResID, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "enabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			it.Enabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -20700,6 +20769,16 @@ func (ec *executionContext) _ResInstance(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "enabled":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ResInstance_enabled(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "resourceId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._ResInstance_resourceId(ctx, field, obj)
@@ -22851,6 +22930,11 @@ func (ec *executionContext) marshalNResInstance2ᚖkloudliteᚗioᚋappsᚋconso
 		return graphql.Null
 	}
 	return ec._ResInstance(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNResourceIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐResourceIn(ctx context.Context, v interface{}) (model.ResourceIn, error) {
+	res, err := ec.unmarshalInputResourceIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNRoute2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {

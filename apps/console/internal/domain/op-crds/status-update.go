@@ -6,6 +6,7 @@ type StatusMetadata struct {
 	ClusterId        string                  `json:"clusterId,omitempty"`
 	ProjectId        string                  `json:"projectId,omitempty"`
 	ResourceId       string                  `json:"resourceId,omitempty"`
+	EnvironmentId    string                  `json:"environmentId,omitempty"`
 	GroupVersionKind metav1.GroupVersionKind `json:"groupVersionKind,omitempty"`
 }
 

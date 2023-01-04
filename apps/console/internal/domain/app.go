@@ -8,6 +8,7 @@ import (
 	"time"
 
 	fWebsocket "github.com/gofiber/websocket/v2"
+	createjsonpatch "github.com/snorwin/jsonpatch"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
@@ -66,6 +67,7 @@ func (d *domain) OnUpdateApp(ctx context.Context, response *op_crds.StatusUpdate
 	}
 	shouldNotify := one.Status != newStatus
 	one.Status = newStatus
+
 	one.Conditions = response.ChildConditions
 	_, err = d.appRepo.SilentUpdateById(ctx, one.Id, one)
 	if err != nil {
@@ -265,7 +267,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 				Kind:       op_crds.LambdaKind,
 				Metadata: op_crds.LambdaMetadata{
 					Name:      app.ReadableId,
-					Namespace: app.Namespace,
+					Namespace: app.Namespace + "-blueprint",
 				},
 			},
 		)
@@ -276,7 +278,7 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 				Kind:       op_crds.AppKind,
 				Metadata: op_crds.AppMetadata{
 					Name:      app.ReadableId,
-					Namespace: app.Namespace,
+					Namespace: app.Namespace + "-blueprint",
 				},
 			},
 		)
@@ -343,12 +345,12 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 	}
 
 	overrides := op_crds.Overrides{
-		Patches: []op_crds.Patch{},
+		Patches: []createjsonpatch.JSONPatch{},
 	}
 
 	// patches
 	if app.Overrides != "" {
-		var patches []op_crds.Patch
+		var patches []createjsonpatch.JSONPatch
 		err := json.Unmarshal([]byte(app.Overrides), &patches)
 		if err != nil {
 			return err
@@ -363,7 +365,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Kind:       op_crds.LambdaKind,
 				Metadata: op_crds.LambdaMetadata{
 					Name:      app.ReadableId,
-					Namespace: app.Namespace,
+					Namespace: app.Namespace + "-blueprint",
 					Labels: func() map[string]string {
 						labels := map[string]string{
 							"kloudlite.io/account-ref": string(prj.AccountId),
@@ -490,7 +492,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 				Kind:       op_crds.AppKind,
 				Metadata: op_crds.AppMetadata{
 					Name:      app.ReadableId,
-					Namespace: app.Namespace,
+					Namespace: app.Namespace + "-blueprint",
 					Labels: func() map[string]string {
 						labels := map[string]string{}
 						if app.InterceptDeviceId != nil {
@@ -527,9 +529,6 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 						return data
 					}(),
 				},
-				Overrides: func() *op_crds.Overrides {
-					return &overrides
-				}(),
 				Spec: func() *op_crds.AppSpec {
 					if app.Overrides != "" {
 						return nil

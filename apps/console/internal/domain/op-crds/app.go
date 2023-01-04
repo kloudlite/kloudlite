@@ -67,21 +67,18 @@ type AppMetadata struct {
 const AppAPIVersion = "crds.kloudlite.io/v1"
 const AppKind = "App"
 
-type Patch struct {
-	Operation string `json:"op,omitempty"`
-	Path      string `json:"path,omitempty"`
-	Value     string `json:"value,omitempty"`
-}
-
-type Overrides struct {
-	Patches []Patch `json:"patches,omitempty"`
-}
+// type Patch struct {
+// 	Operation string `json:"op,omitempty"`
+// 	Path      string `json:"path,omitempty"`
+// 	Value     any    `json:"value,omitempty"`
+// }
 
 type App struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 	Kind       string `json:"kind,omitempty"`
 
-	Metadata  AppMetadata `json:"metadata"`
-	Spec      *AppSpec    `json:"spec,omitempty"`
-	Overrides *Overrides  `json:"overrides,omitempty"`
+	Metadata AppMetadata `json:"metadata"`
+	Spec     *AppSpec    `json:"spec,omitempty"`
+	// Overrides *Overrides  `json:"overrides,omitempty"`
+	Enabled *bool `json:"enabled,omitempty"`
 }

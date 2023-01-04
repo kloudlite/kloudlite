@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	b64 "encoding/base64"
+	// b64 "encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -123,11 +123,11 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 				Name:      string(cfg.Id),
 				Namespace: cfg.Namespace,
 			},
-			Data: (func() map[string]any {
-				data := make(map[string]any, 0)
+			Data: (func() map[string][]byte {
+				data := make(map[string][]byte, 0)
 				for _, d := range cfg.Data {
-					encoded := b64.StdEncoding.EncodeToString([]byte(d.Value))
-					data[d.Key] = encoded
+					// encoded := b64.StdEncoding.EncodeToString([]byte(d.Value))
+					data[d.Key] = []byte(d.Value)
 				}
 				return data
 			})(),
@@ -296,8 +296,8 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 				Name:      string(cfg.Id),
 				Namespace: cfg.Namespace,
 			},
-			Data: func() map[string]any {
-				m := make(map[string]any, 0)
+			Data: func() map[string]string {
+				m := make(map[string]string, 0)
 				for _, i := range cfg.Data {
 					m[i.Key] = i.Value
 				}

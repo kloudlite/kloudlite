@@ -10,8 +10,10 @@ import (
 	"fmt"
 	"strings"
 
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
+	"kloudlite.io/apps/console/internal/app/util"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/apps/console/internal/domain/entities/localenv"
@@ -19,6 +21,8 @@ import (
 	wErrors "kloudlite.io/pkg/errors"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
+
+	createjsonpatch "github.com/snorwin/jsonpatch"
 )
 
 func (r *accountResolver) Projects(ctx context.Context, obj *model.Account) ([]*model.Project, error) {
@@ -1109,9 +1113,8 @@ func (r *mutationResolver) CoreAddNewCluster(ctx context.Context, cluster model.
 	}, nil
 }
 
-func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env *model.EnvironmentIn) (*model.Environment, error) {
-
-	e, err := r.Domain.CreateEnvironment(ctx, env.BlueprintID, *env.Name, *env.ReadableID)
+func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, environment *model.EnvironmentIn) (*model.Environment, error) {
+	e, err := r.Domain.CreateEnvironment(ctx, environment.BlueprintID, *environment.Name, *environment.ReadableID)
 	if err != nil {
 		return nil, err
 	}
@@ -1120,15 +1123,239 @@ func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env *model
 		ID:          e.Id,
 		Name:        e.Name,
 		BlueprintID: e.BlueprintId,
-		ReadableID:  env.ReadableID,
+		ReadableID:  environment.ReadableID,
 	}, nil
 }
 
-func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (bool, error) {
-	if _, err := r.Domain.UpdateInstance(ctx, resID, resType, overrides); err != nil {
+func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource model.ResourceIn, overrides *string) (bool, error) {
+	ri, err := r.Domain.GetResInstanceById(ctx, resource.ResID)
+	if err != nil {
 		return false, err
+	}
+
+	if err = r.Domain.ValidateResourecType(ctx, string(ri.ResourceType)); err != nil {
+		return false, err
+	}
+
+	project, err := r.Domain.GetProjectWithID(ctx, *ri.BlueprintId)
+	if err != nil {
+		return false, err
+	}
+
+	final_patch := createjsonpatch.JSONPatchList{}
+
+	if err != nil {
+		return false, err
+	}
+
+	switch ri.ResourceType {
+	case common.ResourceRouter:
+		return false, fmt.Errorf("not implemented")
+
+	case common.ResourceConfig:
+
+		oldConfig, err := r.Domain.GetConfig(ctx, ri.ResourceId)
+		if err != nil {
+			return false, err
+		}
+
+		oldConfigJson, err := json.Marshal(configModelFromEntity(oldConfig))
+		if err != nil {
+			return false, err
+		}
+
+		patch, err := jsonpatch.DecodePatch([]byte(*overrides))
+		if err != nil {
+			return false, err
+		}
+
+		newConfigJson, err := patch.Apply(oldConfigJson)
+		if err != nil {
+			return false, err
+		}
+
+		newConfig := configModelFromEntity(&entities.Config{})
+		if err := json.Unmarshal(newConfigJson, newConfig); err != nil {
+			return false, err
+		}
+
+		oldConfigData := configOverrideDataGenerator(configModelFromEntity(oldConfig))
+		if err != nil {
+			return false, err
+		}
+
+		newConfigData := configOverrideDataGenerator(newConfig)
+		if err != nil {
+			return false, err
+		}
+
+		if final_patch, err = createjsonpatch.CreateJSONPatch(newConfigData, oldConfigData); err != nil {
+			return false, err
+		}
+
+	case common.ResourceSecret:
+		oldSecret, err := r.Domain.GetSecret(ctx, ri.ResourceId)
+		if err != nil {
+			return false, err
+		}
+		oldSecretJson, err := json.Marshal(secretModelFromEntity(oldSecret))
+		if err != nil {
+			return false, err
+		}
+
+		patch, err := jsonpatch.DecodePatch([]byte(*overrides))
+		if err != nil {
+			return false, err
+		}
+
+		newSecretJson, err := patch.Apply(oldSecretJson)
+		if err != nil {
+			return false, err
+		}
+
+		newSecret := secretModelFromEntity(&entities.Secret{})
+		if err := json.Unmarshal(newSecretJson, newSecret); err != nil {
+			return false, err
+		}
+
+		oldSecretData := secretOverrideDataGenerator(secretModelFromEntity(oldSecret))
+		if err != nil {
+			return false, err
+		}
+
+		newSecretData := secretOverrideDataGenerator(newSecret)
+		if err != nil {
+			return false, err
+		}
+
+		if final_patch, err = createjsonpatch.CreateJSONPatch(newSecretData, oldSecretData); err != nil {
+			return false, err
+		}
+
+	case common.ResourceManagedService:
+		{
+			oldManagedSvc, err := r.Domain.GetManagedSvc(ctx, ri.ResourceId)
+			if err != nil {
+				return false, err
+			}
+			oldManagedSvcJson, err := json.Marshal(managedSvcModelFromEntity(oldManagedSvc))
+			if err != nil {
+				return false, err
+			}
+
+			patch, err := jsonpatch.DecodePatch([]byte(*overrides))
+			if err != nil {
+				return false, err
+			}
+
+			newManagedSvcJson, err := patch.Apply(oldManagedSvcJson)
+			if err != nil {
+				return false, err
+			}
+
+			newManagedSvc := managedSvcModelFromEntity(&entities.ManagedService{})
+			if err := json.Unmarshal(newManagedSvcJson, newManagedSvc); err != nil {
+				return false, err
+			}
+
+			oldManagedSvcSpec, err := managedSvcSpecGenerator(ctx, managedSvcModelFromEntity(oldManagedSvc), project, r.Domain)
+			if err != nil {
+				return false, err
+			}
+			newManagedSvcSpec, err := managedSvcSpecGenerator(ctx, newManagedSvc, project, r.Domain)
+			if err != nil {
+				return false, err
+			}
+
+			if final_patch, err = createjsonpatch.CreateJSONPatch(newManagedSvcSpec, oldManagedSvcSpec); err != nil {
+				return false, err
+			}
+
+		}
+
+	case common.ResourceManagedResource:
+		{
+
+			oldMRes, err := r.Domain.GetManagedRes(ctx, ri.ResourceId)
+			if err != nil {
+				return false, err
+			}
+			oldMResJson, err := json.Marshal(managedResourceModelFromEntity(oldMRes))
+			if err != nil {
+				return false, err
+			}
+
+			patch, err := jsonpatch.DecodePatch([]byte(*overrides))
+			if err != nil {
+				return false, err
+			}
+
+			newMResJson, err := patch.Apply(oldMResJson)
+			if err != nil {
+				return false, err
+			}
+
+			newMRes := managedResourceModelFromEntity(&entities.ManagedResource{})
+			if err := json.Unmarshal(newMResJson, newMRes); err != nil {
+				return false, err
+			}
+
+			oldMResSpec, err := mResSpecGenerator(ctx, managedResourceModelFromEntity(oldMRes), oldMRes, r.Domain)
+			if err != nil {
+				return false, err
+			}
+			newMResSpec, err := mResSpecGenerator(ctx, newMRes, oldMRes, r.Domain)
+			if err != nil {
+				return false, err
+			}
+
+			if final_patch, err = createjsonpatch.CreateJSONPatch(newMResSpec, oldMResSpec); err != nil {
+				return false, err
+			}
+
+		}
+
+	case common.ResourceApp:
+		{
+			oldApp, err := r.Domain.GetApp(ctx, ri.ResourceId)
+			if err != nil {
+				return false, err
+			}
+
+			oldAppJson, err := json.Marshal(util.ReturnApp(oldApp))
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			patch, err := jsonpatch.DecodePatch([]byte(*overrides))
+			if err != nil {
+				return false, err
+			}
+
+			newAppJson, err := patch.Apply(oldAppJson)
+			if err != nil {
+				return false, err
+			}
+
+			newApp := util.ReturnApp(&entities.App{})
+			if err := json.Unmarshal(newAppJson, newApp); err != nil {
+				return false, err
+			}
+
+			oldAppSpec := appSpecGenerator(ctx, util.ReturnApp(oldApp), project, r.Domain)
+			newAppSpec := appSpecGenerator(ctx, newApp, project, r.Domain)
+
+			if final_patch, err = createjsonpatch.CreateJSONPatch(newAppSpec, oldAppSpec); err != nil {
+				return false, err
+			}
+		}
+
+		if _, err := r.Domain.UpdateInstance(ctx, ri, project, &final_patch, resource.Enabled, overrides); err != nil {
+			return false, err
+		}
 
 	}
+
 	return true, nil
 }
 
@@ -1247,7 +1474,7 @@ func (r *queryResolver) CoreApp(ctx context.Context, appID repos.ID) (*model.App
 	if err != nil {
 		return nil, err
 	}
-	return ReturnApp(a), nil
+	return util.ReturnApp(a), nil
 	// services := make([]*model.ExposedService, 0)
 	// for _, s := range a.ExposedPorts {
 	// 	services = append(
@@ -1630,13 +1857,20 @@ func (r *queryResolver) CoreGetResInstances(ctx context.Context, envID repos.ID,
 }
 
 func (r *queryResolver) CoreGetResInstance(ctx context.Context, envID repos.ID, resID string) (*model.ResInstance, error) {
-	// instance, err := r.Domain.GetResInstance(ctx, envID, resID)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	instance, err := r.Domain.GetResInstance(ctx, envID, resID)
+	if err != nil {
+		return nil, err
+	}
 
-	// return ReturnResInstance(ctx, r, instance), nil
-	return nil, nil
+	return &model.ResInstance{
+		ID:            instance.Id,
+		Enabled:       instance.Enabled,
+		ResourceID:    instance.ResourceId,
+		EnvironmentID: instance.EnvironmentId,
+		BlueprintID:   instance.BlueprintId,
+		Overrides:     &instance.Overrides,
+		ResourceType:  string(instance.ResourceType),
+	}, nil
 }
 
 func (r *queryResolver) CoreGetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*model.Environment, error) {
@@ -1664,7 +1898,7 @@ func (r *resInstanceResolver) App(ctx context.Context, obj *model.ResInstance) (
 	if err != nil {
 		return nil, err
 	}
-	return ReturnApp(a), nil
+	return util.ReturnApp(a), nil
 }
 
 func (r *resInstanceResolver) Router(ctx context.Context, obj *model.ResInstance) (*model.Router, error) {

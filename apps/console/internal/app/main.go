@@ -83,8 +83,8 @@ var Module = fx.Module(
 	config.EnvFx[PrometheusOpts](),
 
 	// Repos
-	repos.NewFxMongoRepo[*entities.ResInstance]("res_instances", "ins", entities.ClusterIndexes),
-	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.ClusterIndexes),
+	repos.NewFxMongoRepo[*entities.ResInstance]("res_instances", "ins", entities.ResourceIndexs),
+	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexs),
 
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
 	repos.NewFxMongoRepo[*entities.EdgeRegion]("regions", "reg", entities.EdgeRegionIndexes),
@@ -163,18 +163,32 @@ var Module = fx.Module(
 					fmt.Println("processing", offset, string(msg), timestamp)
 					if update.Stage == "EXISTS" {
 						switch update.Metadata.GroupVersionKind.Kind {
-						case "App":
-							domain.OnUpdateApp(context.TODO(), &update)
-						case "Lambda":
-							domain.OnUpdateApp(context.TODO(), &update)
-						case "Router":
-							domain.OnUpdateRouter(context.TODO(), &update)
+
+						case "App",
+							"Lambda",
+							"Config",
+							"Secret",
+							"Router",
+							"ManagedResource",
+							"ManagedService":
+							domain.OnUpdateInstance(context.TODO(), &update)
+
+						// case "App":
+						// 	domain.OnUpdateApp(context.TODO(), &update)
+						// case "Lambda":
+						// 	domain.OnUpdateApp(context.TODO(), &update)
+						// case "Router":
+						// 	domain.OnUpdateRouter(context.TODO(), &update)
+						// case "ManagedResource":
+						// 	domain.OnUpdateManagedRes(context.TODO(), &update)
+						// case "ManagedService":
+						// 	domain.OnUpdateManagedSvc(context.TODO(), &update)
+
+						case "Env":
+							domain.OnUpdateEnv(context.TODO(), &update)
+
 						case "Project":
 							domain.OnUpdateProject(context.TODO(), &update)
-						case "ManagedResource":
-							domain.OnUpdateManagedRes(context.TODO(), &update)
-						case "ManagedService":
-							domain.OnUpdateManagedSvc(context.TODO(), &update)
 						case "CloudProvider":
 							domain.OnUpdateProvider(context.TODO(), &update)
 						case "Edge":
@@ -188,18 +202,32 @@ var Module = fx.Module(
 					}
 					if update.Stage == "DELETED" {
 						switch update.Metadata.GroupVersionKind.Kind {
-						case "App":
-							domain.OnDeleteApp(context.TODO(), &update)
-						case "Lambda":
-							domain.OnDeleteApp(context.TODO(), &update)
-						case "Router":
-							domain.OnDeleteRouter(context.TODO(), &update)
+
+						case "App",
+							"Lambda",
+							"Config",
+							"Secret",
+							"Router",
+							"ManagedResource",
+							"ManagedService":
+							domain.OnDeleteInstance(context.TODO(), &update)
+						// case "App":
+						// 	domain.OnDeleteApp(context.TODO(), &update)
+						// case "Lambda":
+						// 	domain.OnDeleteApp(context.TODO(), &update)
+						// case "Router":
+						// 	domain.OnDeleteRouter(context.TODO(), &update)
+						// case "Project":
+						// 	domain.OnDeleteProject(context.TODO(), &update)
+						// case "ManagedService":
+						// 	domain.OnDeleteManagedService(context.TODO(), &update)
+						// case "ManagedResource":
+						// 	domain.OnDeleteManagedResource(context.TODO(), &update)
+
+						case "Env":
+							domain.OnDeleteEnv(context.TODO(), &update)
 						case "Project":
 							domain.OnDeleteProject(context.TODO(), &update)
-						case "ManagedService":
-							domain.OnDeleteManagedService(context.TODO(), &update)
-						case "ManagedResource":
-							domain.OnDeleteManagedResource(context.TODO(), &update)
 						case "CloudProvider":
 							domain.OnDeleteProvider(context.TODO(), &update)
 						case "Edge":

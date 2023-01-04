@@ -3,9 +3,11 @@ package domain
 import (
 	"context"
 
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
 	"kloudlite.io/pkg/kubeapi"
 
 	fWebsocket "github.com/gofiber/websocket/v2"
+	createjsonpatch "github.com/snorwin/jsonpatch"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/apps/console/internal/domain/entities/localenv"
@@ -53,6 +55,9 @@ type Domain interface {
 	OnUpdateProject(ctx context.Context, response *op_crds.StatusUpdate) error
 	OnDeleteProject(ctx context.Context, response *op_crds.StatusUpdate) error
 
+	OnUpdateEnv(ctx context.Context, response *op_crds.StatusUpdate) error
+	OnDeleteEnv(ctx context.Context, response *op_crds.StatusUpdate) error
+
 	CreateConfig(ctx context.Context, id repos.ID, configName string, desc *string, configData []*entities.Entry) (*entities.Config, error)
 	UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error)
 
@@ -78,6 +83,10 @@ type Domain interface {
 	OnDeleteRouter(ctx context.Context, r *op_crds.StatusUpdate) error
 
 	GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error)
+	GetManagedServiceTemplate(ctx context.Context, name string) (*entities.ManagedServiceTemplate, error)
+
+JsEval(ctx context.Context, evalIn *jseval.EvalIn) (*jseval.EvalOut, error) 
+
 	GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID) (map[string]any, error)
 	GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error)
 	InstallManagedSvc(ctx context.Context, projectID repos.ID, templateID repos.ID, name string, values map[string]interface{}) (*entities.ManagedService, error)
@@ -112,6 +121,9 @@ type Domain interface {
 	DeleteApp(ctx context.Context, appID repos.ID) (bool, error)
 	OnUpdateApp(ctx context.Context, r *op_crds.StatusUpdate) error
 	OnDeleteApp(ctx context.Context, r *op_crds.StatusUpdate) error
+
+	OnUpdateInstance(ctx context.Context, r *op_crds.StatusUpdate) error
+	OnDeleteInstance(ctx context.Context, r *op_crds.StatusUpdate) error
 	GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error)
 	InstallApp(
 		ctx context.Context,
@@ -153,8 +165,11 @@ type Domain interface {
 	// Cluster
 	GetResInstances(ctx context.Context, envId repos.ID, resType string) ([]*entities.ResInstance, error)
 	GetResInstance(ctx context.Context, envID repos.ID, resID string) (*entities.ResInstance, error)
+	GetResInstanceById(ctx context.Context, instanceId repos.ID) (*entities.ResInstance, error)
 
-	UpdateInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (*entities.ResInstance, error)
+	// UpdateInstance(ctx context.Context, resID repos.ID, overrides *string, enabled *bool) (*entities.ResInstance, error)
+
+	UpdateInstance(ctx context.Context, instance *entities.ResInstance, project *entities.Project, jsonPatchList *createjsonpatch.JSONPatchList, enabled *bool, overrides *string) (*entities.ResInstance, error)
 
 	CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId *repos.ID, resType string, overrides string) (*entities.ResInstance, error)
 
@@ -164,7 +179,7 @@ type Domain interface {
 	GetEnvironment(ctx context.Context, envId repos.ID) (*entities.Environment, error)
 	CreateEnvironment(ctx context.Context, blueprintID *repos.ID, name string, readableId string) (*entities.Environment, error)
 
-	ValidateResourecType(ctx context.Context, resType string) bool
+	ValidateResourecType(ctx context.Context, resType string) error
 
 	AddNewCluster(ctx context.Context, name, subDomain, kubeConfig string) (*entities.Cluster, error)
 }

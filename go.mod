@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
+	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/adaptor/v2 v2.1.23
 	github.com/gofiber/fiber/v2 v2.32.0
@@ -121,6 +122,7 @@ require (
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/snorwin/jsonpatch v1.4.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/tektoncd/pipeline v0.35.0 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.1.0 // indirect

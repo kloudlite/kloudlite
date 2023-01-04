@@ -2,11 +2,15 @@ package domain
 
 import (
 	"context"
+	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
+
+	createjsonpatch "github.com/snorwin/jsonpatch"
 )
 
 func (d *domain) GetResInstances(ctx context.Context, envId repos.ID, resType string) ([]*entities.ResInstance, error) {
@@ -14,11 +18,12 @@ func (d *domain) GetResInstances(ctx context.Context, envId repos.ID, resType st
 		Filter: repos.Filter{
 			"environment_id": envId,
 			"resource_type":  resType,
+			"is_deleted":     false,
 		},
 	})
 }
 
-func (d *domain) ValidateResourecType(ctx context.Context, resType string) bool {
+func (d *domain) ValidateResourecType(ctx context.Context, resType string) error {
 	switch common.ResourceType(resType) {
 	case common.ResourceApp,
 		common.ResourceRouter,
@@ -26,9 +31,19 @@ func (d *domain) ValidateResourecType(ctx context.Context, resType string) bool 
 		common.ResourceSecret,
 		common.ResourceManagedResource,
 		common.ResourceManagedService:
-		return true
+		return nil
+
 	default:
-		return false
+
+		return fmt.Errorf(
+			"resource type is not valid, use one of [%s, %s, %s, %s, %s, %s] resource type",
+			common.ResourceApp,
+			common.ResourceRouter,
+			common.ResourceConfig,
+			common.ResourceSecret,
+			common.ResourceManagedResource,
+			common.ResourceManagedService,
+		)
 	}
 }
 
@@ -37,22 +52,118 @@ func (d *domain) GetResInstance(ctx context.Context, envID repos.ID, resID strin
 		repos.Filter{
 			"environment_id": envID,
 			"resource_id":    resID,
+			"is_deleted":     false,
 		})
 }
 
-func (d *domain) UpdateInstance(ctx context.Context, resID repos.ID, resType string, overrides string) (*entities.ResInstance, error) {
-	inst, err := d.instanceRepo.UpdateById(ctx, resID, &entities.ResInstance{
-		Overrides: overrides,
-	})
+func (d *domain) GetResInstanceById(ctx context.Context, instanceId repos.ID) (*entities.ResInstance, error) {
+	return d.instanceRepo.FindById(ctx, repos.ID(instanceId))
+}
+
+func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInstance, project *entities.Project, jsonPatchList *createjsonpatch.JSONPatchList, enabled *bool, overrides *string) (*entities.ResInstance, error) {
+
+	func() {
+		if enabled != nil {
+			instance.Enabled = *enabled
+		}
+		if overrides != nil {
+			instance.Overrides = *overrides
+		} else {
+			instance.Overrides = "[]"
+		}
+	}()
+
+	inst, err := d.instanceRepo.UpdateById(ctx, instance.Id, instance)
 	if err != nil {
 		return nil, err
 	}
 
-	switch inst.ResourceType {
-	case common.ResourceApp:
+	env, err := d.environmentRepo.FindById(ctx, inst.EnvironmentId)
+	if err != nil {
+		return nil, err
 	}
 
-	return inst, nil
+	clusterId, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	var apiVersion, kind, name string
+
+	switch inst.ResourceType {
+	case common.ResourceRouter:
+		return nil, fmt.Errorf("not implemented")
+
+	case common.ResourceConfig:
+		apiVersion = op_crds.ConfigAPIVersion
+		kind = op_crds.ConfigKind
+
+		if c, err := d.configRepo.FindById(ctx, instance.ResourceId); err != nil {
+			return nil, err
+		} else {
+			name = string(c.Id)
+		}
+
+	case common.ResourceSecret:
+		apiVersion = op_crds.SecretAPIVersion
+		kind = op_crds.SecretKind
+
+		if s, err := d.secretRepo.FindById(ctx, instance.ResourceId); err != nil {
+			return nil, err
+		} else {
+			name = string(s.Id)
+		}
+
+	case common.ResourceManagedService:
+		apiVersion = op_crds.ManagedServiceAPIVersion
+		kind = op_crds.ManagedServiceKind
+
+		if m, err := d.managedSvcRepo.FindById(ctx, instance.ResourceId); err != nil {
+			return nil, err
+		} else {
+			name = string(m.Id)
+		}
+
+	case common.ResourceManagedResource:
+		apiVersion = op_crds.ManagedResourceAPIVersion
+		kind = op_crds.ManagedResourceKind
+
+		if r, err := d.managedResRepo.FindById(ctx, instance.ResourceId); err != nil {
+			return nil, err
+		} else {
+			name = string(r.Id)
+		}
+
+	case common.ResourceApp:
+		apiVersion = op_crds.AppAPIVersion
+		kind = op_crds.AppKind
+		if a, err := d.appRepo.FindById(ctx, instance.ResourceId); err != nil {
+			return nil, err
+		} else {
+			name = a.ReadableId
+		}
+
+	default:
+		return nil, fmt.Errorf("resource_type not found")
+
+	}	// switch end
+
+	if err = d.workloadMessenger.SendAction("apply", d.getDispatchKafkaTopic(clusterId), string(inst.Id), &op_crds.Resource{
+		APIVersion: apiVersion,
+		Kind:       kind,
+		Metadata: op_crds.ResourceMetadata{
+			Name:      name,
+			Namespace: fmt.Sprintf("%s-%s", project.Name, string(env.ReadableId)),
+		},
+		Overrides: &op_crds.Overrides{
+			Patches: jsonPatchList.List(),
+		},
+		Enabled: enabled,
+	}); err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId *repos.ID, resType string, overrides string) (*entities.ResInstance, error) {
@@ -66,14 +177,6 @@ func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, env
 		})
 }
 
-func (d *domain) GetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*entities.Environment, error) {
-	return d.environmentRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"blueprint_id": blueprintID,
-		},
-	})
-}
-
 func (d *domain) ReturnResInstance(ctx context.Context, instance *entities.ResInstance) *model.ResInstance {
 
 	return &model.ResInstance{
@@ -84,5 +187,85 @@ func (d *domain) ReturnResInstance(ctx context.Context, instance *entities.ResIn
 		Overrides:     &instance.Overrides,
 		ResourceType:  string(instance.ResourceType),
 	}
+
+}
+
+var types = map[string]common.ResourceType{
+	"App":             common.ResourceApp,
+	"Config":          common.ResourceConfig,
+	"Secret":          common.ResourceSecret,
+	"Lambda":          common.ResourceLambda,
+	"Router":          common.ResourceRouter,
+	"ManagedResource": common.ResourceManagedResource,
+	"ManagedService":  common.ResourceManagedService,
+}
+
+func validateValues(response *op_crds.StatusUpdate) error {
+	if response.Metadata.ResourceId == "" {
+		return fmt.Errorf("resource id not provided")
+	} else if response.Metadata.ProjectId == "" {
+		return fmt.Errorf("project id/ blueprint id not provided")
+	} else if response.Metadata.EnvironmentId == "" {
+		return fmt.Errorf("environment id not provided")
+	} else if types[response.Metadata.GroupVersionKind.Kind] == "" {
+		return fmt.Errorf("group id not provided")
+	}
+
+	return nil
+}
+
+func (d *domain) OnUpdateInstance(ctx context.Context, response *op_crds.StatusUpdate) error {
+	err := validateValues(response)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if types[response.Metadata.GroupVersionKind.Kind] == "" {
+		fmt.Println("unknown kind")
+		return fmt.Errorf("unknown kind")
+	}
+
+	_, err = d.instanceRepo.Upsert(ctx, repos.Filter{
+		"resource_id":    response.Metadata.ResourceId,
+		"blueprint_id":   response.Metadata.ProjectId,
+		"environment_id": response.Metadata.EnvironmentId,
+		"resource_type":  string(types[response.Metadata.GroupVersionKind.Kind]),
+	}, &entities.ResInstance{
+		ResourceId:    repos.ID(response.Metadata.ResourceId),
+		EnvironmentId: repos.ID(response.Metadata.EnvironmentId),
+		BlueprintId:   (*repos.ID)(&response.Metadata.ProjectId),
+		ResourceType:  types[response.Metadata.GroupVersionKind.Kind],
+		Status: func() entities.InstanceStatus {
+			if response.IsReady {
+				return entities.InstanceStatus(entities.InstanceStateLive)
+			}
+			return entities.InstanceStateError
+		}(),
+		Conditions: response.Conditions,
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return err
+
+}
+
+func (d *domain) OnDeleteInstance(ctx context.Context, response *op_crds.StatusUpdate) error {
+
+	err := validateValues(response)
+	if err != nil {
+		return err
+	}
+
+	return d.instanceRepo.SilentUpdateMany(ctx, repos.Filter{
+		"resource_id":    response.Metadata.ResourceId,
+		"blueprint_id":   response.Metadata.ProjectId,
+		"environment_id": response.Metadata.EnvironmentId,
+		"resource_type":  string(types[response.Metadata.GroupVersionKind.Kind]),
+	}, map[string]any{
+		"is_deleted": true,
+	})
 
 }

@@ -241,10 +241,12 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 				Labels: map[string]string{
 					"kloudlite.io/account-ref":  string(project.AccountId),
 					"kloudlite.io/resource-ref": string(project.Id),
+					"kloudlite.io/project-ref":  string(project.Id),
 				},
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":  string(project.AccountId),
 					"kloudlite.io/resource-ref": string(project.Id),
+					"kloudlite.io/project-ref":  string(project.Id),
 				},
 			},
 			Spec: op_crds.ProjectSpec{
