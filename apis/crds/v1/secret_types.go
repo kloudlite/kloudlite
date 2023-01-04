@@ -3,6 +3,7 @@ package v1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/pkg/constants"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
 
@@ -22,7 +23,9 @@ type Secret struct {
 	Data       map[string][]byte `json:"data,omitempty"`
 	StringData map[string]string `json:"stringData,omitempty"`
 	Overrides  *JsonPatch        `json:"overrides,omitempty"`
-	Status     rApi.Status       `json:"status,omitempty"`
+	// +kubebuilder:default=true
+	Enabled bool        `json:"enabled,omitempty"`
+	Status  rApi.Status `json:"status,omitempty"`
 }
 
 func (scrt *Secret) GetStatus() *rApi.Status {
@@ -34,7 +37,9 @@ func (scrt *Secret) GetEnsuredLabels() map[string]string {
 }
 
 func (scrt *Secret) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.GVKKey: scrt.GroupVersionKind().String(),
+	}
 }
 
 //+kubebuilder:object:root=true

@@ -2,8 +2,10 @@ package operator
 
 import (
 	"context"
+	"fmt"
 	"github.com/fatih/color"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,11 +27,18 @@ type Request[T Resource] struct {
 	client         client.Client
 	Object         T
 	Logger         logging.Logger
+	anchorName     string
 	internalLogger logging.Logger
 	locals         map[string]any
 }
 
-func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName, resource T) (*Request[T], error) {
+type ReconcilerCtx context.Context
+
+func NewReconcilerCtx(parent context.Context, logger logging.Logger) ReconcilerCtx {
+	return context.WithValue(parent, "logger", logger)
+}
+
+func NewRequest[T Resource](ctx ReconcilerCtx, c client.Client, nn types.NamespacedName, resource T) (*Request[T], error) {
 	if err := c.Get(ctx, nn, resource); err != nil {
 		return nil, err
 	}
@@ -38,14 +47,31 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		panic("no logger passed into NewRequest")
 	}
 
+	anchorName := func() string {
+		x := strings.ToLower(fmt.Sprintf("%s-%s", resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
+		if len(x) >= 63 {
+			return x[:62]
+		}
+		return x
+	}()
+
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
 		Logger:         logger.WithName(nn.String()).WithKV("NN", nn.String()),
 		internalLogger: logger.WithName(nn.String()).WithKV("NN", nn.String()).WithOptions(zap.AddCallerSkip(1)),
+		anchorName:     anchorName,
 		locals:         map[string]any{},
 	}, nil
+}
+
+func (r *Request[T]) GetAnchorName() string {
+	return r.anchorName
+}
+
+func (r *Request[T]) GetClient() client.Client {
+	return r.client
 }
 
 // DebuggingOnlySetStatus only to be used in debugging environment, never in production

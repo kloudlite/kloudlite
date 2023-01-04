@@ -10,7 +10,6 @@ type EnvSpec struct {
 	ProjectName      string `json:"projectName"`
 	BlueprintName    string `json:"blueprintName"`
 	AccountRef       string `json:"accountRef"`
-	Primary          bool   `json:"primary"`
 	RouterBaseDomain string `json:"routerBaseDomain,omitempty"`
 }
 
@@ -42,7 +41,9 @@ func (e *Env) GetEnsuredLabels() map[string]string {
 }
 
 func (e *Env) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.GVKKey: e.GroupVersionKind().String(),
+	}
 }
 
 //+kubebuilder:object:root=true

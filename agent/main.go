@@ -91,7 +91,12 @@ func main() {
 			defer func() {
 				logger.Infof("processed message")
 			}()
-			tctx, cancelFunc := context.WithTimeout(context.TODO(), 3*time.Second)
+			tctx, cancelFunc := func() (context.Context, context.CancelFunc) {
+				if dev {
+					return context.WithCancel(context.TODO())
+				}
+				return context.WithTimeout(context.TODO(), 3*time.Second)
+			}()
 			defer cancelFunc()
 			go func() {
 				select {

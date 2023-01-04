@@ -2,10 +2,8 @@ package primary
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "operators.kloudlite.io/apis/cluster-setup/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	lc "operators.kloudlite.io/operators/cluster-setup/internal/constants"
 	"operators.kloudlite.io/operators/cluster-setup/internal/templates"
 	fn "operators.kloudlite.io/pkg/functions"
@@ -97,28 +95,18 @@ func (r *Reconciler) ensureAuthApi(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 	req.LogPreCheck(AuthApiCreated)
 	defer req.LogPostCheck(AuthApiCreated)
 
-	authApi, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.AppAuthApi), &crdsv1.App{})
+	b, err := templates.Parse(templates.AuthApi, map[string]any{
+		"namespace":        lc.NsCore,
+		"image-auth-api":   obj.Spec.SharedConstants.ImageAuthApi,
+		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"shared-constants": obj.Spec.SharedConstants,
+	})
 	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(AuthApiCreated, check, err.Error()).Err(nil)
-		}
-		req.Logger.Infof("auth-api does not exist, will be creating it")
+		return req.CheckFailed(AuthApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if authApi == nil || check.Generation > checks[AuthApiCreated].Generation {
-		b, err := templates.Parse(templates.AuthApi, map[string]any{
-			"namespace":        lc.NsCore,
-			"image-auth-api":   obj.Spec.SharedConstants.ImageAuthApi,
-			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"shared-constants": obj.Spec.SharedConstants,
-		})
-		if err != nil {
-			return req.CheckFailed(AuthApiCreated, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(AuthApiCreated, check, err.Error()).Err(nil)
-		}
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(AuthApiCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
@@ -136,28 +124,18 @@ func (r *Reconciler) ensureConsoleApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 	req.LogPreCheck(ConsoleApiCreated)
 	defer req.LogPostCheck(ConsoleApiCreated)
 
-	consoleApi, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.AppConsoleApi), &crdsv1.App{})
+	b, err := templates.Parse(templates.ConsoleApi, map[string]any{
+		"namespace":        lc.NsCore,
+		"svc-account":      lc.ClusterSvcAccount,
+		"shared-constants": obj.Spec.SharedConstants,
+		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	})
 	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
-		}
-		req.Logger.Infof("console-api does not exist, will be creating it")
+		return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if consoleApi == nil || check.Generation > checks[ConsoleApiCreated].Generation {
-		b, err := templates.Parse(templates.ConsoleApi, map[string]any{
-			"namespace":        lc.NsCore,
-			"svc-account":      lc.ClusterSvcAccount,
-			"shared-constants": obj.Spec.SharedConstants,
-			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		})
-		if err != nil {
-			return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
-		}
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
@@ -175,28 +153,18 @@ func (r *Reconciler) ensureCIApi(req *rApi.Request[*v1.PrimaryCluster]) stepResu
 	req.LogPreCheck(CiApiCreated)
 	defer req.LogPostCheck(CiApiCreated)
 
-	ciApi, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.AppCiApi), &crdsv1.App{})
+	b, err := templates.Parse(templates.CiApi, map[string]any{
+		"namespace":        lc.NsCore,
+		"svc-account":      lc.DefaultSvcAccount,
+		"shared-constants": obj.Spec.SharedConstants,
+		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	})
 	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(CiApiCreated, check, err.Error()).Err(nil)
-		}
-		req.Logger.Infof("ci-api does not exist, will be creating it")
+		return req.CheckFailed(CiApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if ciApi == nil || check.Generation > checks[CiApiCreated].Generation {
-		b, err := templates.Parse(templates.CiApi, map[string]any{
-			"namespace":        lc.NsCore,
-			"svc-account":      lc.DefaultSvcAccount,
-			"shared-constants": obj.Spec.SharedConstants,
-			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		})
-		if err != nil {
-			return req.CheckFailed(CiApiCreated, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(CiApiCreated, check, err.Error()).Err(nil)
-		}
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(CiApiCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
@@ -214,30 +182,20 @@ func (r *Reconciler) ensureDnsApi(req *rApi.Request[*v1.PrimaryCluster]) stepRes
 	req.LogPreCheck(DnsApiCreated)
 	defer req.LogPostCheck(DnsApiCreated)
 
-	dnsApi, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.AppDnsApi), &crdsv1.App{})
+	b, err := templates.Parse(templates.DnsApi, map[string]any{
+		"namespace":         lc.NsCore,
+		"svc-account":       lc.DefaultSvcAccount,
+		"shared-constants":  obj.Spec.SharedConstants,
+		"owner-refs":        []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"dns-names":         strings.Join(obj.Spec.Networking.DnsNames, ","),
+		"cname-base-domain": obj.Spec.Networking.EdgeCNAME,
+	})
 	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(DnsApiCreated, check, err.Error())
-		}
-		req.Logger.Infof("dns-api does not exist, will be creating it")
+		return req.CheckFailed(DnsApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if dnsApi == nil || check.Generation > checks[DnsApiCreated].Generation {
-		b, err := templates.Parse(templates.DnsApi, map[string]any{
-			"namespace":         lc.NsCore,
-			"svc-account":       lc.DefaultSvcAccount,
-			"shared-constants":  obj.Spec.SharedConstants,
-			"owner-refs":        []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"dns-names":         strings.Join(obj.Spec.Networking.DnsNames, ","),
-			"cname-base-domain": obj.Spec.Networking.EdgeCNAME,
-		})
-		if err != nil {
-			return req.CheckFailed(DnsApiCreated, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(DnsApiCreated, check, err.Error()).Err(nil)
-		}
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(DnsApiCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
@@ -371,28 +329,18 @@ func (r *Reconciler) ensureJsEvalApi(req *rApi.Request[*v1.PrimaryCluster]) step
 	req.LogPreCheck(JsEvalApiCreated)
 	defer req.LogPostCheck(JsEvalApiCreated)
 
-	commsApi, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.AppCommsApi), &crdsv1.App{})
+	b, err := templates.Parse(templates.JsEvalApi, map[string]any{
+		"namespace":        lc.NsCore,
+		"svc-account":      lc.DefaultSvcAccount,
+		"shared-constants": obj.Spec.SharedConstants,
+		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	})
 	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(JsEvalApiCreated, check, err.Error())
-		}
-		req.Logger.Infof("comms-api does not exist, will be creating it")
+		return req.CheckFailed(JsEvalApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if commsApi == nil || check.Generation > checks[JsEvalApiCreated].Generation {
-		b, err := templates.Parse(templates.JsEvalApi, map[string]any{
-			"namespace":        lc.NsCore,
-			"svc-account":      lc.DefaultSvcAccount,
-			"shared-constants": obj.Spec.SharedConstants,
-			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		})
-		if err != nil {
-			return req.CheckFailed(JsEvalApiCreated, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(JsEvalApiCreated, check, err.Error()).Err(nil)
-		}
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(JsEvalApiCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
