@@ -71,8 +71,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	ctx = context.WithValue(ctx, "logger", r.logger)
-	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &mongodbMsvcv1.StandaloneService{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &mongodbMsvcv1.StandaloneService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}

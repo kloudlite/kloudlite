@@ -45,8 +45,6 @@ spec:
                 type: string
               blueprintName:
                 type: string
-              primary:
-                type: boolean
               projectName:
                 type: string
               routerBaseDomain:
@@ -54,7 +52,6 @@ spec:
             required:
             - accountRef
             - blueprintName
-            - primary
             - projectName
             type: object
           status:

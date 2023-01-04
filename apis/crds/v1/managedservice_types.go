@@ -40,9 +40,11 @@ type ManagedService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec      ManagedServiceSpec `json:"spec,omitempty"`
-	Overrides *JsonPatch         `json:"overrides,omitempty"`
-	Status    rApi.Status        `json:"status,omitempty"`
+	Spec ManagedServiceSpec `json:"spec,omitempty"`
+	// +kubebuilder:default=true
+	Enabled   *bool       `json:"enabled,omitempty"`
+	Overrides *JsonPatch  `json:"overrides,omitempty"`
+	Status    rApi.Status `json:"status,omitempty"`
 }
 
 func (m *ManagedService) GetStatus() *rApi.Status {

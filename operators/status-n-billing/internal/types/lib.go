@@ -150,6 +150,7 @@ type KlMetadata struct {
 	ResourceId       string                  `json:"resourceId"`
 	GroupVersionKind schema.GroupVersionKind `json:"groupVersionKind"`
 	Labels           map[string]string       `json:"labels"`
+	EnvironmentId    string                  `json:"environmentId"`
 }
 
 func ExtractMetadata(obj client.Object) KlMetadata {
@@ -159,6 +160,7 @@ func ExtractMetadata(obj client.Object) KlMetadata {
 		ProjectId:        ann[constants.AnnotationKeys.ProjectRef],
 		ResourceId:       ann[constants.AnnotationKeys.ResourceRef],
 		GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
+		EnvironmentId:    ann[constants.EnvironmentRef],
 		Labels:           obj.GetLabels(),
 	}
 }

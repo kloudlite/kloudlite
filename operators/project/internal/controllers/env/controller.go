@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/operators/project/internal/env"
 	"operators.kloudlite.io/pkg/constants"
@@ -36,6 +37,7 @@ type Reconciler struct {
 	Name       string
 	yamlClient *kubectl.YAMLClient
 	IsDev      bool
+	recorder   record.EventRecorder
 }
 
 func (r *Reconciler) GetName() string {
@@ -58,10 +60,11 @@ func ensureOwnership(childRes client.Object, ownerRes client.Object) {
 	}
 }
 
-func copyLabels(into map[string]string, from map[string]string) {
+func copyMap(into map[string]string, from map[string]string) {
 	if into == nil {
 		into = make(map[string]string, 1)
 	}
+
 	for k, v := range from {
 		into[k] = v
 	}
@@ -76,7 +79,7 @@ func copyLabels(into map[string]string, from map[string]string) {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.Env{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Env{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -163,6 +166,7 @@ func (r *Reconciler) ensureNamespaces(req *rApi.Request[*crdsv1.Env]) stepResult
 		if ns.Labels == nil {
 			ns.Labels = make(map[string]string, 1)
 		}
+		ns.Labels[constants.EnvNameKey] = obj.Name
 		return nil
 	}); err != nil {
 		return req.CheckFailed(NamespaceReady, check, err.Error())
@@ -197,6 +201,7 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 			if !fn.IsOwner(nCfg, fn.AsOwner(obj)) {
 				nCfg.SetOwnerReferences(append(nCfg.GetOwnerReferences(), fn.AsOwner(obj, true)))
 			}
+			nCfg.Data = cfg.Data
 			if nCfg.Overrides != nil {
 				patchedBytes, err := jsonPatch.ApplyPatch(cfg.Data, nCfg.Overrides.Patches)
 				if err != nil {
@@ -204,7 +209,6 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 				}
 				return json.Unmarshal(patchedBytes, &nCfg.Data)
 			}
-			nCfg.Data = cfg.Data
 			return nil
 		}); err != nil {
 			return req.CheckFailed(CfgNSecretsCreated, check, err.Error())
@@ -310,20 +314,25 @@ func (r *Reconciler) ensureMsvc(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 
 	for i := range msvcList.Items {
 		msvc := msvcList.Items[i]
-		nMsvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: msvc.Name, Namespace: obj.Name}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nMsvc, func() error {
-			ensureOwnership(nMsvc, obj)
-			copyLabels(nMsvc.Labels, msvc.Labels)
+		lMsvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: msvc.Name, Namespace: obj.Name}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lMsvc, func() error {
+			ensureOwnership(lMsvc, obj)
+			copyMap(lMsvc.Labels, msvc.Labels)
+			copyMap(lMsvc.Annotations, msvc.Annotations)
+			fn.MapSet(lMsvc.Annotations, constants.EnvironmentRef, obj.Annotations[constants.ResourceRef])
 
-			if nMsvc.Overrides != nil {
-				patchedBytes, err := jsonPatch.ApplyPatch(msvc.Spec, nMsvc.Overrides.Patches)
+			if lMsvc.Enabled == nil {
+				lMsvc.Enabled = fn.New(false)
+			}
+
+			if lMsvc.Overrides != nil {
+				patchedBytes, err := jsonPatch.ApplyPatch(msvc.Spec, lMsvc.Overrides.Patches)
 				if err != nil {
 					return err
 				}
-				nMsvc.Overrides = nil
-				return json.Unmarshal(patchedBytes, &nMsvc.Spec)
+				return json.Unmarshal(patchedBytes, &lMsvc.Spec)
 			}
-			nMsvc.Spec = msvc.Spec
+			lMsvc.Spec = msvc.Spec
 			return nil
 		}); err != nil {
 			return req.CheckFailed(MsvcCreated, check, err.Error())
@@ -354,20 +363,25 @@ func (r *Reconciler) ensureMres(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 
 	for i := range mresList.Items {
 		mres := mresList.Items[i]
-		nMres := &crdsv1.ManagedResource{ObjectMeta: metav1.ObjectMeta{Name: mres.Name, Namespace: obj.Name}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nMres, func() error {
-			ensureOwnership(nMres, obj)
-			copyLabels(nMres.Labels, mres.Labels)
+		lMres := &crdsv1.ManagedResource{ObjectMeta: metav1.ObjectMeta{Name: mres.Name, Namespace: obj.Name}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lMres, func() error {
+			ensureOwnership(lMres, obj)
+			copyMap(lMres.Labels, mres.Labels)
+			copyMap(lMres.Annotations, mres.Annotations)
+			fn.MapSet(lMres.Annotations, constants.EnvironmentRef, obj.Annotations[constants.ResourceRef])
 
-			if nMres.Overrides != nil {
-				patchedBytes, err := jsonPatch.ApplyPatch(mres.Spec, nMres.Overrides.Patches)
+			if lMres.Enabled == nil {
+				lMres.Enabled = fn.New(false)
+			}
+
+			if lMres.Overrides != nil {
+				patchedBytes, err := jsonPatch.ApplyPatch(mres.Spec, lMres.Overrides.Patches)
 				if err != nil {
 					return err
 				}
-				nMres.Overrides = nil
-				return json.Unmarshal(patchedBytes, &nMres.Spec)
+				return json.Unmarshal(patchedBytes, &lMres.Spec)
 			}
-			nMres.Spec = mres.Spec
+			lMres.Spec = mres.Spec
 			return nil
 		}); err != nil {
 			return req.CheckFailed(MresCreated, check, err.Error()).Err(nil)
@@ -398,24 +412,30 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 
 	for i := range appsList.Items {
 		app := appsList.Items[i]
-		nApp := &crdsv1.App{ObjectMeta: metav1.ObjectMeta{Name: app.Name, Namespace: obj.Name}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nApp, func() error {
-			ensureOwnership(nApp, obj)
-			copyLabels(nApp.Labels, app.Labels)
+		lApp := &crdsv1.App{ObjectMeta: metav1.ObjectMeta{Name: app.Name, Namespace: obj.Name}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lApp, func() error {
+			ensureOwnership(lApp, obj)
+			copyMap(lApp.Labels, app.Labels)
+			copyMap(lApp.Annotations, app.Annotations)
+			fn.MapSet(lApp.Annotations, constants.EnvironmentRef, obj.Annotations[constants.ResourceRef])
 
-			if nApp.Overrides != nil {
-				patchedBytes, err := jsonPatch.ApplyPatch(app.Spec, nApp.Overrides.Patches)
+			if lApp.Enabled == nil {
+				lApp.Enabled = fn.New(false)
+			}
+
+			if lApp.Overrides != nil {
+				patchedBytes, err := jsonPatch.ApplyPatch(app.Spec, lApp.Overrides.Patches)
 				if err != nil {
 					return err
 				}
-				nApp.Overrides = nil
-				return json.Unmarshal(patchedBytes, &nApp.Spec)
+				return json.Unmarshal(patchedBytes, &lApp.Spec)
 			}
-			nApp.Spec = app.Spec
+			lApp.Spec = app.Spec
 			return nil
 		}); err != nil {
 			return req.CheckFailed(AppsCreated, check, err.Error()).Err(nil)
 		}
+		r.recorder.Event(lApp, "Normal", "EnvEnsureApp", "hi")
 	}
 
 	check.Status = true
@@ -443,7 +463,8 @@ func (r *Reconciler) ensureRouters(req *rApi.Request[*crdsv1.Env]) stepResult.Re
 		localRouter := &crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: router.Name, Namespace: obj.Name}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, localRouter, func() error {
 			ensureOwnership(localRouter, obj)
-			copyLabels(localRouter.Labels, router.Labels)
+			copyMap(localRouter.Labels, router.Labels)
+			copyMap(localRouter.Annotations, router.Annotations)
 
 			localRouter.Spec = router.Spec
 			for j := range router.Spec.Domains {
@@ -477,6 +498,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Env{})
 	watchList := []client.Object{

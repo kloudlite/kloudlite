@@ -5,40 +5,26 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: configs.crds.kloudlite.io
+  name: anchors.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: Config
-    listKind: ConfigList
-    plural: configs
-    singular: config
+    kind: Anchor
+    listKind: AnchorList
+    plural: anchors
+    singular: anchor
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
+  - name: v1
     schema:
       openAPIV3Schema:
-        description: Config is the Schema for the configs API
+        description: Anchor is the Schema for the anchors API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
-          data:
-            additionalProperties:
-              type: string
-            type: object
-          enabled:
-            default: true
-            type: boolean
           kind:
             description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
@@ -46,24 +32,29 @@ spec:
             type: string
           metadata:
             type: object
-          overrides:
+          spec:
             properties:
-              applied:
-                type: boolean
-              patches:
-                items:
-                  properties:
-                    op:
-                      type: string
-                    path:
-                      type: string
-                    value:
-                      type: string
-                  required:
-                  - op
-                  - path
-                  type: object
-                type: array
+              parentGVK:
+                description: GroupVersionKind unambiguously identifies a kind.  It
+                  doesn't anonymously include GroupVersion to avoid automatic coercion.  It
+                  doesn't use a GroupVersion to avoid custom marshalling
+                properties:
+                  group:
+                    type: string
+                  kind:
+                    type: string
+                  version:
+                    type: string
+                required:
+                - group
+                - kind
+                - version
+                type: object
+              type:
+                type: string
+            required:
+            - parentGVK
+            - type
             type: object
           status:
             properties:

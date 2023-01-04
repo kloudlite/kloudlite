@@ -448,4 +448,12 @@ resources:
   kind: SecondaryEnv
   path: operators.kloudlite.io/apis/crds/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: Anchor
+  path: operators.kloudlite.io/apis/crds/v1
+  version: v1
 version: "3"

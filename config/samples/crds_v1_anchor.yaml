@@ -1,0 +1,6 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Anchor
+metadata:
+  name: anchor-sample
+spec:
+  # TODO(user): Add fields here

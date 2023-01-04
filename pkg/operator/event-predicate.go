@@ -2,6 +2,7 @@ package operator
 
 import (
 	"encoding/json"
+	jsonPatch "operators.kloudlite.io/pkg/json-patch"
 	"reflect"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -9,24 +10,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-type pStatus struct {
-	Checks  map[string]Check `json:"checks,omitempty"`
-	IsReady *bool            `json:"isReady"`
+type res struct {
+	Enabled   bool `json:"enabled,omitempty"`
+	Overrides struct {
+		Patches []jsonPatch.PatchOperation `json:"patches,omitempty"`
+	} `json:"overrides,omitempty"`
+	Status struct {
+		Checks  map[string]Check `json:"checks,omitempty"`
+		IsReady *bool            `json:"isReady"`
+	} `json:"status"`
 }
 
-func getStatus(obj client.Object) pStatus {
+func getRes(obj client.Object) res {
 	b, err := json.Marshal(obj)
 	if err != nil {
-		return pStatus{}
+		return res{}
 	}
-	var res struct {
-		Status pStatus `json:"status"`
-	}
-	if err := json.Unmarshal(b, &res); err != nil {
-		return pStatus{}
+	var xRes res
+	if err := json.Unmarshal(b, &xRes); err != nil {
+		return res{}
 	}
 
-	return res.Status
+	return xRes
 }
 
 func ReconcileFilter() predicate.Funcs {
@@ -57,20 +62,28 @@ func ReconcileFilter() predicate.Funcs {
 				return true
 			}
 
-			oldStatus, newStatus := getStatus(ev.ObjectOld), getStatus(ev.ObjectNew)
-			if oldStatus.IsReady == nil || newStatus.IsReady == nil {
-				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
-				return true
-			}
-			if *oldStatus.IsReady != *newStatus.IsReady {
+			oldRes, newRes := getRes(ev.ObjectOld), getRes(ev.ObjectNew)
+			if oldRes.Enabled != newRes.Enabled {
 				return true
 			}
 
-			if len(oldStatus.Checks) != len(newStatus.Checks) {
+			if !reflect.DeepEqual(oldRes.Overrides, newRes.Overrides) {
 				return true
 			}
-			for k, v := range oldStatus.Checks {
-				if newStatus.Checks[k] != v {
+
+			if oldRes.Status.IsReady == nil || newRes.Status.IsReady == nil {
+				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
+				return true
+			}
+			if *oldRes.Status.IsReady != *newRes.Status.IsReady {
+				return true
+			}
+
+			if len(oldRes.Status.Checks) != len(newRes.Status.Checks) {
+				return true
+			}
+			for k, v := range oldRes.Status.Checks {
+				if newRes.Status.Checks[k] != v {
 					return true
 				}
 			}

@@ -141,7 +141,9 @@ type App struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec      AppSpec     `json:"spec,omitempty"`
+	Spec AppSpec `json:"spec,omitempty"`
+	// +kubebuilder:default=true
+	Enabled   *bool       `json:"enabled,omitempty"`
 	Overrides *JsonPatch  `json:"overrides,omitempty"`
 	Status    rApi.Status `json:"status,omitempty"`
 }

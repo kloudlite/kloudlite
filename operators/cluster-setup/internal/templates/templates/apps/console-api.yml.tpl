@@ -135,7 +135,7 @@ spec:
 
 
         - key: KAFKA_WORKLOAD_STATUS_TOPIC
-          value: ${REDPANDA_TOPIC_STATUS_UPDATES}
+          value: {{.KafkaTopicsStatusUpdates}}
 
         - key: KAFKA_GROUP_ID
           value: control-plane

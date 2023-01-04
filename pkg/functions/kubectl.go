@@ -156,15 +156,16 @@ func KubectlDelete(namespace, resourceRef string) error {
 func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
 	ctrler := false
 	if len(controller) > 0 {
-		ctrler = true
+		ctrler = controller[0]
 	}
 	return metav1.OwnerReference{
-		APIVersion:         r.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-		Kind:               r.GetObjectKind().GroupVersionKind().Kind,
-		Name:               r.GetName(),
-		UID:                r.GetUID(),
-		Controller:         &ctrler,
-		BlockOwnerDeletion: New(false),
+		APIVersion: r.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		Kind:       r.GetObjectKind().GroupVersionKind().Kind,
+		Name:       r.GetName(),
+		UID:        r.GetUID(),
+		Controller: &ctrler,
+		//BlockOwnerDeletion: New(false),
+		BlockOwnerDeletion: &ctrler,
 	}
 }
 
@@ -178,4 +179,13 @@ func IsOwner(obj client.Object, ownerRef metav1.OwnerReference) bool {
 		}
 	}
 	return false
+}
+
+func GVK(obj client.Object) metav1.GroupVersionKind {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	return metav1.GroupVersionKind{
+		Group:   gvk.Group,
+		Version: gvk.Version,
+		Kind:    gvk.Kind,
+	}
 }

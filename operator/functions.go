@@ -3,14 +3,13 @@ package operator
 import (
 	"flag"
 	"fmt"
-	"log"
-	"os"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"log"
 	"operators.kloudlite.io/pkg/kubectl"
+	"os"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"operators.kloudlite.io/pkg/logging"

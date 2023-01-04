@@ -44,4 +44,5 @@ resources:
 - bases/crds.kloudlite.io_configs.yaml
 - bases/crds.kloudlite.io_secrets.yaml
 - bases/crds.kloudlite.io_secondaryenvs.yaml
+- bases/crds.kloudlite.io_anchors.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

@@ -15,9 +15,11 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Data      map[string]string `json:"data,omitempty"`
-	Overrides *JsonPatch        `json:"overrides,omitempty"`
-	Status    rApi.Status       `json:"status,omitempty"`
+	Data map[string]string `json:"data,omitempty"`
+	// +kubebuilder:default=true
+	Enabled   bool        `json:"enabled,omitempty"`
+	Overrides *JsonPatch  `json:"overrides,omitempty"`
+	Status    rApi.Status `json:"status,omitempty"`
 }
 
 func (cfg *Config) GetStatus() *rApi.Status {

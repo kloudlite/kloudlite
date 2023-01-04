@@ -1,0 +1,11 @@
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: tst-sample-66141
+  namespace: sample-24826-env-ss3-r
+spec:
+overrides:
+  patches:
+    - op: replace
+      path: /containers/0/image
+      value: nginx

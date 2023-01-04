@@ -3,6 +3,10 @@ package msvc
 import (
 	"context"
 	"encoding/json"
+	"operators.kloudlite.io/operator"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 	"strings"
 	"time"
 
@@ -17,10 +21,9 @@ import (
 	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
 	redpandamsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
-	env2 "operators.kloudlite.io/operators/msvc-n-mres/internal/env"
+	"operators.kloudlite.io/operators/msvc-n-mres/internal/env"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
-	"operators.kloudlite.io/pkg/harbor"
 	"operators.kloudlite.io/pkg/kubectl"
 	"operators.kloudlite.io/pkg/logging"
 	rApi "operators.kloudlite.io/pkg/operator"
@@ -33,10 +36,9 @@ import (
 type ManagedServiceReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	harborCli  *harbor.Client
 	logger     logging.Logger
 	Name       string
-	Env        *env2.Env
+	Env        *env.Env
 	yamlClient *kubectl.YAMLClient
 }
 
@@ -45,7 +47,8 @@ func (r *ManagedServiceReconciler) GetName() string {
 }
 
 const (
-	RealMsvcReady string = "real-msvc-ready"
+	RealMsvcCreated string = "real-msvc-created"
+	RealMsvcReady   string = "real-msvc-ready"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -56,13 +59,9 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 	if strings.HasSuffix(request.Namespace, "-blueprint") {
 		return ctrl.Result{}, nil
 	}
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedService{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if req.ShouldReconcile() {
-		return ctrl.Result{}, nil
 	}
 
 	req.LogPreReconcile()
@@ -95,7 +94,20 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconRealMsvc(req); !step.ShouldProceed() {
+	if req.Object.Enabled != nil && !*req.Object.Enabled {
+		anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.GetNamespace()}}
+		return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
+	}
+
+	if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureRealMsvcCreated(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureRealMsvcReady(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -108,10 +120,45 @@ func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedSer
 	return req.Finalize()
 }
 
-func (r *ManagedServiceReconciler) reconRealMsvc(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+func (r *ManagedServiceReconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(RealMsvcCreated)
+	defer req.LogPostCheck(RealMsvcCreated)
+
+	anchor, _ := rApi.GetLocal[*crdsv1.Anchor](req, "anchor")
+
+	b, err := templates.Parse(
+		templates.CommonMsvc, map[string]any{
+			"obj":        obj,
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(anchor, true)},
+		},
+	)
+	if err != nil {
+		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[RealMsvcCreated] {
+		checks[RealMsvcCreated] = check
+		req.UpdateStatus()
+		//return req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+
+func (r *ManagedServiceReconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(RealMsvcReady)
+	defer req.LogPostCheck(RealMsvcReady)
 
 	realMsvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(
@@ -119,28 +166,7 @@ func (r *ManagedServiceReconciler) reconRealMsvc(req *rApi.Request[*crdsv1.Manag
 		),
 	)
 	if err != nil {
-		req.Logger.Infof("real msvc (%s) does not exist, creating it now...", fn.NN(obj.Namespace, obj.Name).String())
-	}
-
-	if realMsvc == nil || check.Generation > checks[RealMsvcReady].Generation {
-		b, err := templates.Parse(
-			templates.CommonMsvc, map[string]any{
-				"obj": obj,
-				"owner-refs": []metav1.OwnerReference{
-					fn.AsOwner(obj, true),
-				},
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
-		}
-
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
-		}
-
-		checks[RealMsvcReady] = check
-		return req.UpdateStatus()
+		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
 	}
 
 	b, err := json.Marshal(realMsvc)
@@ -156,6 +182,9 @@ func (r *ManagedServiceReconciler) reconRealMsvc(req *rApi.Request[*crdsv1.Manag
 	}
 
 	if !realMsvcObj.Status.IsReady {
+		if realMsvcObj.Status.Message.RawMessage == nil {
+			return req.CheckFailed(RealMsvcReady, check, "waiting for real managed resource to reconcile ...").Err(nil)
+		}
 		b, err := realMsvcObj.Status.Message.MarshalJSON()
 		if err != nil {
 			return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
@@ -164,12 +193,10 @@ func (r *ManagedServiceReconciler) reconRealMsvc(req *rApi.Request[*crdsv1.Manag
 	}
 
 	check.Status = true
-
 	if check != checks[RealMsvcReady] {
 		checks[RealMsvcReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
-
 	return req.Next()
 }
 
@@ -195,6 +222,14 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger log
 	}
 
 	for i := range msvcs {
+		builder.Watches(&source.Kind{Type: msvcs[i]},
+			handler.EnqueueRequestsFromMapFunc(
+				func(obj client.Object) []reconcile.Request {
+					if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
+						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
+					}
+					return nil
+				}))
 		builder.Owns(msvcs[i])
 	}
 
