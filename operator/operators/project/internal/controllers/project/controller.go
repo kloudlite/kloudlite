@@ -198,7 +198,6 @@ func (r *Reconciler) ensureDefaultEnv(req *rApi.Request[*v1.Project]) stepResult
 			ProjectName:   obj.Name,
 			BlueprintName: obj.Name + "-blueprint",
 			AccountRef:    obj.Spec.AccountRef,
-			Primary:       true,
 		}
 		return nil
 	}); err != nil {

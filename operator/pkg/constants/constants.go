@@ -56,6 +56,8 @@ const (
 	AccountRef      string = "kloudlite.io/account-ref"
 	ProjectRef      string = "kloudlite.io/project-ref"
 	ProviderRef     string = "kloudlite.io/provider-ref"
+	EnvironmentRef  string = "kloudlite.io/environment-ref"
+	ResourceRef     string = "kloudlite.io/resource-ref"
 	ShouldReconcile string = "kloudlite.io/should-reconcile"
 
 	ProjectNameKey       string = "kloudlite.io/project.name"
@@ -80,6 +82,8 @@ const (
 	MarkedAsBlueprint string = "kloudlite.io/marked-as-blueprint"
 
 	LastAppliedKey string = "kloudlite.io/last-applied"
+
+	GVKKey string = "kloudlite.io/group-version-kind"
 )
 
 var (

@@ -4,10 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"k8s.io/client-go/tools/record"
+	"operators.kloudlite.io/operator"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 	"strings"
 	"time"
+
+	"k8s.io/client-go/tools/record"
 
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -49,8 +54,7 @@ const (
 	DeploymentSvcAndHpaCreated string = "deployment-svc-and-hpa-created"
 	ImagesLabelled             string = "images-labelled"
 	DeploymentReady            string = "deployment-ready"
-	SvcReady                   string = "svc-ready"
-	HpaReady                   string = "hpa-ready"
+	AnchorReady                string = "anchor-ready"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -62,13 +66,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.App{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.App{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if !req.ShouldReconcile() {
-		return ctrl.Result{}, nil
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -101,6 +101,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if req.Object.Enabled != nil && !*req.Object.Enabled {
+		anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.Namespace}}
+		return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
+	}
+
+	if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.reconlabellingImages(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -121,7 +130,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		}
 		return "false"
 	}())
-
 	req.Object.Status.DisplayVars.Set("frozen", req.Object.GetLabels()[constants.LabelKeys.Freeze] == "true")
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
@@ -182,13 +190,15 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
 	isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
 
+	anchor, _ := rApi.GetLocal[*crdsv1.Anchor](req, "anchor")
+
 	b, err := templates.Parse(
 		templates.CrdsV1.App, map[string]any{
 			"object":        obj,
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
 			"freeze":        isFrozen || isIntercepted,
-			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(anchor, true)},
 
 			// for intercepting
 			"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
@@ -281,10 +291,27 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
-	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
-	builder.Owns(&appsv1.Deployment{})
-	builder.Owns(&corev1.Service{})
-	builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
+	builder.Owns(&crdsv1.Anchor{})
+
+	watchList := []client.Object{
+		&appsv1.Deployment{},
+		&corev1.Service{},
+		&autoscalingv2.HorizontalPodAutoscaler{},
+	}
+
+	for i := range watchList {
+		builder.Watches(&source.Kind{Type: watchList[i]}, handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+				if v, ok := obj.GetLabels()[constants.AppNameKey]; ok {
+					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
+				}
+				return nil
+			}))
+	}
+	builder.WithOptions(controller.Options{
+		MaxConcurrentReconciles: 1,
+		//MaxConcurrentReconciles: 10,
+	})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }
