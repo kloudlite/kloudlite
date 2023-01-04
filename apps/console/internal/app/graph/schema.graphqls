@@ -48,7 +48,7 @@ type Query {
 type Environment{
   id: ID!
   name: String!
-  blueprintId: ID
+  blueprintId: ID!
   readableId: String
   resInstances(resType:String!): [ResInstance!]
 }
@@ -58,7 +58,7 @@ type ResInstance{
   enabled: Boolean!
   resourceId: ID!
   environmentId: ID!
-  blueprintId: ID
+  blueprintId: ID!
   overrides: String
   app: App
   router: Router
@@ -234,6 +234,15 @@ type Mutation {
 
   core_createEnvironment(environment: EnvironmentIn): Environment!
   core_updateResInstance(resource: ResourceIn!, overrides: String): Boolean!
+  core_createInstance(instance: InstanceIn!): ResInstance
+}
+
+input InstanceIn{
+  enabled: Boolean!
+  environmentId: ID!
+  blueprintId: ID!
+  overrides: String
+  resourceType: String!
 }
 
 input ResourceIn{
@@ -242,7 +251,7 @@ input ResourceIn{
 }
 
 input EnvironmentIn {
-  blueprintId: ID
+  blueprintId: ID!
   name: String
   readableId: String
 }

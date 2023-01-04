@@ -2,15 +2,26 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/common"
 	wErrors "kloudlite.io/pkg/errors"
+	fn "kloudlite.io/pkg/functions"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/repos"
 )
+
+func NewId(shortName string) repos.ID {
+	id, e := fn.CleanerNanoid(28)
+	if e != nil {
+		panic(fmt.Errorf("could not get cleanerNanoid()"))
+	}
+	return repos.ID(fmt.Sprintf("%s-%s", shortName, strings.ToLower(id)))
+}
 
 func returnApps(appEntities []*entities.App) []*model.App {
 	apps := make([]*model.App, 0)

@@ -9,9 +9,9 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) CreateEnvironment(ctx context.Context, blueprintID *repos.ID, name string, readableId string) (*entities.Environment, error) {
+func (d *domain) CreateEnvironment(ctx context.Context, blueprintID repos.ID, name string, readableId string) (*entities.Environment, error) {
 
-	p, err := d.projectRepo.FindById(ctx, *blueprintID)
+	p, err := d.projectRepo.FindById(ctx, blueprintID)
 	if err != nil {
 		return nil, err
 	}

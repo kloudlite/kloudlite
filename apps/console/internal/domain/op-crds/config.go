@@ -11,8 +11,8 @@ const ConfigAPIVersion = "crds.kloudlite.io/v1"
 const ConfigKind = "Config"
 
 type Config struct {
-	APIVersion string         `json:"apiVersion,omitempty"`
-	Kind       string         `json:"kind,omitempty"`
-	Metadata   ConfigMetadata `json:"metadata,omitempty"`
+	APIVersion string            `json:"apiVersion,omitempty"`
+	Kind       string            `json:"kind,omitempty"`
+	Metadata   ConfigMetadata    `json:"metadata,omitempty"`
 	Data       map[string]string `json:"data,omitempty"`
 }

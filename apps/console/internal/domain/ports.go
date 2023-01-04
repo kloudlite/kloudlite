@@ -85,7 +85,7 @@ type Domain interface {
 	GetManagedSvc(ctx context.Context, managedSvcID repos.ID) (*entities.ManagedService, error)
 	GetManagedServiceTemplate(ctx context.Context, name string) (*entities.ManagedServiceTemplate, error)
 
-JsEval(ctx context.Context, evalIn *jseval.EvalIn) (*jseval.EvalOut, error) 
+	JsEval(ctx context.Context, evalIn *jseval.EvalIn) (*jseval.EvalOut, error)
 
 	GetManagedSvcOutput(ctx context.Context, managedSvcID repos.ID) (map[string]any, error)
 	GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*entities.ManagedService, error)
@@ -171,13 +171,13 @@ JsEval(ctx context.Context, evalIn *jseval.EvalIn) (*jseval.EvalOut, error)
 
 	UpdateInstance(ctx context.Context, instance *entities.ResInstance, project *entities.Project, jsonPatchList *createjsonpatch.JSONPatchList, enabled *bool, overrides *string) (*entities.ResInstance, error)
 
-	CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId *repos.ID, resType string, overrides string) (*entities.ResInstance, error)
+	CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId repos.ID, resType string, overrides string) (*entities.ResInstance, error)
 
 	ReturnResInstance(ctx context.Context, instance *entities.ResInstance) *model.ResInstance
 
 	GetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*entities.Environment, error)
 	GetEnvironment(ctx context.Context, envId repos.ID) (*entities.Environment, error)
-	CreateEnvironment(ctx context.Context, blueprintID *repos.ID, name string, readableId string) (*entities.Environment, error)
+	CreateEnvironment(ctx context.Context, blueprintID repos.ID, name string, readableId string) (*entities.Environment, error)
 
 	ValidateResourecType(ctx context.Context, resType string) error
 

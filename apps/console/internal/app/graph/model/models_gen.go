@@ -261,15 +261,15 @@ type EnvVarInput struct {
 type Environment struct {
 	ID           repos.ID       `json:"id"`
 	Name         string         `json:"name"`
-	BlueprintID  *repos.ID      `json:"blueprintId"`
+	BlueprintID  repos.ID       `json:"blueprintId"`
 	ReadableID   *string        `json:"readableId"`
 	ResInstances []*ResInstance `json:"resInstances"`
 }
 
 type EnvironmentIn struct {
-	BlueprintID *repos.ID `json:"blueprintId"`
-	Name        *string   `json:"name"`
-	ReadableID  *string   `json:"readableId"`
+	BlueprintID repos.ID `json:"blueprintId"`
+	Name        *string  `json:"name"`
+	ReadableID  *string  `json:"readableId"`
 }
 
 type ExposedService struct {
@@ -282,6 +282,14 @@ type ExposedServiceIn struct {
 	Type    string `json:"type"`
 	Target  int    `json:"target"`
 	Exposed int    `json:"exposed"`
+}
+
+type InstanceIn struct {
+	Enabled       bool     `json:"enabled"`
+	EnvironmentID repos.ID `json:"environmentId"`
+	BlueprintID   repos.ID `json:"blueprintId"`
+	Overrides     *string  `json:"overrides"`
+	ResourceType  string   `json:"resourceType"`
 }
 
 type Kv struct {
@@ -409,7 +417,7 @@ type ResInstance struct {
 	Enabled       bool        `json:"enabled"`
 	ResourceID    repos.ID    `json:"resourceId"`
 	EnvironmentID repos.ID    `json:"environmentId"`
-	BlueprintID   *repos.ID   `json:"blueprintId"`
+	BlueprintID   repos.ID    `json:"blueprintId"`
 	Overrides     *string     `json:"overrides"`
 	App           *App        `json:"app"`
 	Router        *Router     `json:"router"`

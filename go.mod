@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
-	github.com/evanphx/json-patch v5.6.0+incompatible
+	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/adaptor/v2 v2.1.23
 	github.com/gofiber/fiber/v2 v2.32.0
@@ -21,6 +21,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
 	github.com/slack-go/slack v0.11.4
+	github.com/snorwin/jsonpatch v1.4.0
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/tektoncd/triggers v0.20.1
 	github.com/twmb/franz-go v1.6.0
@@ -68,7 +69,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
+	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/fasthttp/websocket v1.5.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
@@ -122,7 +123,6 @@ require (
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/snorwin/jsonpatch v1.4.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/tektoncd/pipeline v0.35.0 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.1.0 // indirect
