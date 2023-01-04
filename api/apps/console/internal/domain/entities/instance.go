@@ -34,6 +34,8 @@ type ResInstance struct {
 	ResourceType     common.ResourceType `bson:"resource_type" json:"resource_type"`
 	Status           InstanceStatus      `json:"status" bson:"status"`
 	Conditions       []metav1.Condition  `json:"conditions" bson:"conditions"`
+	IsDeleted        bool                `json:"is_deleted" bson:"is_deleted"`
+	Enabled          bool                `json:"enabled" bson:"enabled"`
 }
 
 var ResourceIndexs = []repos.IndexField{

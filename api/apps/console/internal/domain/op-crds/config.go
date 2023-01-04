@@ -7,12 +7,12 @@ type ConfigMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 }
 
-const ConfigAPIVersion = "v1"
-const ConfigKind = "ConfigMap"
+const ConfigAPIVersion = "crds.kloudlite.io/v1"
+const ConfigKind = "Config"
 
 type Config struct {
 	APIVersion string         `json:"apiVersion,omitempty"`
 	Kind       string         `json:"kind,omitempty"`
 	Metadata   ConfigMetadata `json:"metadata,omitempty"`
-	Data       map[string]any `json:"data,omitempty"`
+	Data       map[string]string `json:"data,omitempty"`
 }
