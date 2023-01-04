@@ -1378,10 +1378,15 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 }
 
 func (r *mutationResolver) CoreCreateInstance(ctx context.Context, instance model.InstanceIn) (*model.ResInstance, error) {
+	if err := r.Domain.ValidateResourecType(ctx, instance.ResourceType); err != nil {
+		return nil, err
+	}
+
 	ri, err := r.Domain.CreateResInstance(ctx, NewId(domain.ENV_INSTANCE), instance.EnvironmentID, instance.BlueprintID, instance.ResourceType, *instance.Overrides)
 	if err != nil {
 		return nil, err
 	}
+
 	return &model.ResInstance{
 		ID:            ri.Id,
 		Enabled:       ri.Enabled,
