@@ -69,16 +69,17 @@ const (
 )
 
 const (
-	AuthApi     templateFile = "templates/apps/auth-api.yml.tpl"
-	ConsoleApi  templateFile = "templates/apps/console-api.yml.tpl"
-	CiApi       templateFile = "templates/apps/ci-api.yml.tpl"
-	DnsApi      templateFile = "templates/apps/dns-api.yml.tpl"
-	FinanceApi  templateFile = "templates/apps/finance-api.yml.tpl"
-	CommsApi    templateFile = "templates/apps/comms-api.yml.tpl"
-	GatewayApi  templateFile = "templates/apps/gateway-api.yml.tpl"
-	IamApi      templateFile = "templates/apps/iam-api.yml.tpl"
-	JsEvalApi   templateFile = "templates/apps/js-eval-api.yml.tpl"
-	WebhooksApi templateFile = "templates/apps/webhooks-api.yml.tpl"
+	AuthApi            templateFile = "templates/apps/auth-api.yml.tpl"
+	ConsoleApi         templateFile = "templates/apps/console-api.yml.tpl"
+	CiApi              templateFile = "templates/apps/ci-api.yml.tpl"
+	DnsApi             templateFile = "templates/apps/dns-api.yml.tpl"
+	FinanceApi         templateFile = "templates/apps/finance-api.yml.tpl"
+	CommsApi           templateFile = "templates/apps/comms-api.yml.tpl"
+	GatewayApi         templateFile = "templates/apps/gateway-api.yml.tpl"
+	IamApi             templateFile = "templates/apps/iam-api.yml.tpl"
+	JsEvalApi          templateFile = "templates/apps/js-eval-api.yml.tpl"
+	WebhooksApi        templateFile = "templates/apps/webhooks-api.yml.tpl"
+	AuditLoggingWorker templateFile = "templates/apps/audit-logging-worker.yml.tpl"
 )
 
 const (

@@ -2,14 +2,12 @@ package topic
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	ct "operators.kloudlite.io/apis/common-types"
 	redpandaMsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
 	"operators.kloudlite.io/operators/msvc-redpanda/internal/env"
 	"operators.kloudlite.io/operators/msvc-redpanda/internal/types"
@@ -199,30 +197,30 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
-	for _, topic := range strings.Split(r.Env.MustHaveTopics, ",") {
-		name := strings.TrimSpace(topic)
-		if err := r.Client.Create(
-			context.TODO(), &redpandaMsvcv1.Topic{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: "kl-core",
-				},
-				Spec: redpandaMsvcv1.TopicSpec{
-					AdminSecretRef: ct.SecretRef{
-						Name:      r.Env.AdminSecretName,
-						Namespace: r.Env.AdminSecretNamespace,
-					},
-					PartitionCount: 3,
-				},
-			},
-		); err != nil {
-			if !apiErrors.IsAlreadyExists(err) {
-				return err
-			}
-		}
-	}
-
-	r.logger.Infof("ensured must have topics exists in the cluster")
+	//for _, topic := range strings.Split(r.Env.MustHaveTopics, ",") {
+	//	name := strings.TrimSpace(topic)
+	//	if err := r.Client.Create(
+	//		context.TODO(), &redpandaMsvcv1.Topic{
+	//			ObjectMeta: metav1.ObjectMeta{
+	//				Name:      name,
+	//				Namespace: "kl-core",
+	//			},
+	//			Spec: redpandaMsvcv1.TopicSpec{
+	//				AdminSecretRef: ct.SecretRef{
+	//					Name:      r.Env.AdminSecretName,
+	//					Namespace: r.Env.AdminSecretNamespace,
+	//				},
+	//				PartitionCount: 3,
+	//			},
+	//		},
+	//	); err != nil {
+	//		if !apiErrors.IsAlreadyExists(err) {
+	//			return err
+	//		}
+	//	}
+	//}
+	//
+	//r.logger.Infof("ensured must have topics exists in the cluster")
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redpandaMsvcv1.Topic{})
 	builder.WithEventFilter(rApi.ReconcileFilter())

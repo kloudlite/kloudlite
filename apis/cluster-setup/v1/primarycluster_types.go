@@ -28,6 +28,7 @@ type SharedConstants struct {
 	FinanceDbName string `json:"financeDbName,omitempty"`
 	IamDbName     string `json:"iamDbName,omitempty"`
 	CommsDbName   string `json:"commsDbName,omitempty"`
+	EventsDbName  string `json:"eventsDbName,omitempty"`
 
 	// Redis
 	RedisSvcName     string `json:"redisSvcName,omitempty"`
@@ -80,17 +81,20 @@ type SharedConstants struct {
 	ImageConsoleWeb    string `json:"imageConsoleWeb,omitempty"`
 	ImageKlAgent       string `json:"imageKlAgent,omitempty"`
 
-	ImageSocketWeb               string `json:"imageSocketWeb,omitempty"`
-	RedpandaAdminSecretName      string `json:"redpandaAdminSecretName,omitempty"`
-	HarborAdminCredsSecretName   string `json:"harborAdminCredsSecretName,omitempty"`
+	ImageSocketWeb             string `json:"imageSocketWeb,omitempty"`
+	RedpandaAdminSecretName    string `json:"redpandaAdminSecretName,omitempty"`
+	HarborAdminCredsSecretName string `json:"harborAdminCredsSecretName,omitempty"`
+
 	KafkaTopicGitWebhooks        string `json:"KafkaTopicGitWebhooks,omitempty"`
 	KafkaTopicPipelineRunUpdates string `json:"KafkaTopicPipelineRunUpdates,omitempty"`
 	KafkaTopicsStatusUpdates     string `json:"KafkaTopicsStatusUpdates,omitempty"`
 	KafkaTopicBillingUpdates     string `json:"KafkaTopicBillingUpdates,omitempty"`
 	KafkaTopicHarborWebhooks     string `json:"kafkaTopicHarborWebhooks,omitempty"`
-	StatefulPriorityClass        string `json:"statefulPriorityClass,omitempty"`
-	WebhookAuthzSecretName       string `json:"webhookAuthzSecretName,omitempty"`
-	StripeSecretName             string `json:"stripeSecretName,omitempty"`
+	KafkaTopicEvents             string `json:"kafkaTopicEvents,omitempty"`
+
+	StatefulPriorityClass  string `json:"statefulPriorityClass,omitempty"`
+	WebhookAuthzSecretName string `json:"webhookAuthzSecretName,omitempty"`
+	StripeSecretName       string `json:"stripeSecretName,omitempty"`
 
 	// Routers
 	AuthWebDomain     string `json:"authWebDomain,omitempty"`

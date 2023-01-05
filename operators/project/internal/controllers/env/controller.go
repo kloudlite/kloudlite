@@ -196,19 +196,20 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 
 	for i := range cfgList.Items {
 		cfg := cfgList.Items[i]
-		nCfg := &crdsv1.Config{ObjectMeta: metav1.ObjectMeta{Name: cfg.Name, Namespace: obj.Name}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nCfg, func() error {
-			if !fn.IsOwner(nCfg, fn.AsOwner(obj)) {
-				nCfg.SetOwnerReferences(append(nCfg.GetOwnerReferences(), fn.AsOwner(obj, true)))
-			}
-			nCfg.Data = cfg.Data
-			if nCfg.Overrides != nil {
-				patchedBytes, err := jsonPatch.ApplyPatch(cfg.Data, nCfg.Overrides.Patches)
+		lCfg := &crdsv1.Config{ObjectMeta: metav1.ObjectMeta{Name: cfg.Name, Namespace: obj.Name}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lCfg, func() error {
+			ensureOwnership(lCfg, obj)
+			copyMap(lCfg.Labels, cfg.Labels)
+			copyMap(lCfg.Annotations, cfg.Annotations)
+			fn.MapSet(lCfg.Annotations, constants.EnvironmentRef, obj.Annotations[constants.ResourceRef])
+			if lCfg.Overrides != nil {
+				patchedBytes, err := jsonPatch.ApplyPatch(cfg.Data, lCfg.Overrides.Patches)
 				if err != nil {
 					return err
 				}
-				return json.Unmarshal(patchedBytes, &nCfg.Data)
+				return json.Unmarshal(patchedBytes, &lCfg.Data)
 			}
+			lCfg.Data = cfg.Data
 			return nil
 		}); err != nil {
 			return req.CheckFailed(CfgNSecretsCreated, check, err.Error())
@@ -224,31 +225,37 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 
 	for i := range scrtList.Items {
 		scrt := scrtList.Items[i]
-		nScrt := &crdsv1.Secret{ObjectMeta: metav1.ObjectMeta{Name: scrt.Name, Namespace: obj.Name}, Type: scrt.Type}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nScrt, func() error {
-			if !fn.IsOwner(nScrt, fn.AsOwner(obj)) {
-				nScrt.SetOwnerReferences(append(nScrt.GetOwnerReferences(), fn.AsOwner(obj, true)))
+		lScrt := &crdsv1.Secret{ObjectMeta: metav1.ObjectMeta{Name: scrt.Name, Namespace: obj.Name}, Type: scrt.Type}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lScrt, func() error {
+			ensureOwnership(lScrt, obj)
+			copyMap(lScrt.Labels, scrt.Labels)
+			copyMap(lScrt.Annotations, scrt.Annotations)
+			fn.MapSet(lScrt.Annotations, constants.EnvironmentRef, obj.Annotations[constants.ResourceRef])
+
+			if lScrt.Overrides != nil {
+				if scrt.Data != nil {
+					b1, err := jsonPatch.ApplyPatch(scrt.Data, scrt.Overrides.Patches)
+					if err != nil {
+						return err
+					}
+					if err := json.Unmarshal(b1, &lScrt.Data); err != nil {
+						return err
+					}
+				}
+
+				if scrt.StringData != nil {
+					b2, err := jsonPatch.ApplyPatch(scrt.StringData, scrt.Overrides.Patches)
+					if err != nil {
+						return err
+					}
+					if err := json.Unmarshal(b2, &lScrt.StringData); err != nil {
+						return err
+					}
+				}
+				return nil
 			}
-
-			if nScrt.Overrides != nil {
-				b1, err := jsonPatch.ApplyPatch(scrt.Data, scrt.Overrides.Patches)
-				if err != nil {
-					return err
-				}
-				if err := json.Unmarshal(b1, &nScrt.Data); err != nil {
-					return err
-				}
-
-				b2, err := jsonPatch.ApplyPatch(scrt.StringData, scrt.Overrides.Patches)
-				if err != nil {
-					return err
-				}
-
-				return json.Unmarshal(b2, &nScrt.StringData)
-			}
-
-			nScrt.Data = scrt.Data
-			nScrt.StringData = scrt.StringData
+			lScrt.Data = scrt.Data
+			lScrt.StringData = scrt.StringData
 			return nil
 		}); err != nil {
 			return req.CheckFailed(CfgNSecretsCreated, check, err.Error()).Err(nil)

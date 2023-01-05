@@ -101,6 +101,7 @@ const (
 	KloudliteWebReady     string = "kloudlite-web-ready"
 	DefaultsPatched       string = "defaults-patched"
 	HarborAdminCredsReady string = "harbor-admin-creds"
+	RedpandaTopicsCreated string = "redpanda-topic-created"
 )
 
 var (
@@ -210,6 +211,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.ensureRedpandaTopics(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.ensureMsvcAndMres(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -252,6 +257,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		FinanceDbName: "finance-db",
 		IamDbName:     "iam-db",
 		CommsDbName:   "comms-db",
+		EventsDbName:  "events-db",
 
 		// redis
 		RedisSvcName:     "redis-svc",
@@ -317,6 +323,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		KafkaTopicPipelineRunUpdates: "kl-pipeline-run-updates",
 		KafkaTopicsStatusUpdates:     "kl-status-updates",
 		KafkaTopicBillingUpdates:     "kl-billing-updates",
+		KafkaTopicEvents:             "kl-events",
 
 		StatefulPriorityClass:  "stateful",
 		WebhookAuthzSecretName: obj.Spec.WebhookAuthzCreds.Name,
@@ -404,7 +411,7 @@ func (r *Reconciler) ensureNamespaces(req *rApi.Request[*v1.PrimaryCluster]) ste
 	check.Status = true
 	if check != checks[NamespacesReady] {
 		checks[NamespacesReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -435,7 +442,7 @@ func (r *Reconciler) ensureHarborAdminCreds(req *rApi.Request[*v1.PrimaryCluster
 	check.Status = true
 	if check != checks[HarborAdminCredsReady] {
 		checks[HarborAdminCredsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 
@@ -525,7 +532,7 @@ func (r *Reconciler) ensureSvcAccounts(req *rApi.Request[*v1.PrimaryCluster]) st
 	check.Status = true
 	if check != checks[SvcAccountsReady] {
 		checks[SvcAccountsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -576,7 +583,7 @@ func (r *Reconciler) ensureLoki(req *rApi.Request[*v1.PrimaryCluster]) stepResul
 	check.Status = true
 	if check != checks[LokiReady] {
 		checks[LokiReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -627,7 +634,7 @@ func (r *Reconciler) ensurePrometheus(req *rApi.Request[*v1.PrimaryCluster]) ste
 	check.Status = true
 	if check != checks[PrometheusReady] {
 		checks[PrometheusReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -677,7 +684,7 @@ func (r *Reconciler) ensureGrafana(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 	check.Status = true
 	if check != checks[GrafanaReady] {
 		checks[GrafanaReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -790,7 +797,7 @@ func (r *Reconciler) ensureRedpanda(req *rApi.Request[*v1.PrimaryCluster]) stepR
 	check.Status = true
 	if check != checks[RedpandaReady] {
 		checks[RedpandaReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -840,7 +847,7 @@ func (r *Reconciler) ensureCertManager(req *rApi.Request[*v1.PrimaryCluster]) st
 	check.Status = true
 	if check != checks[CertManagerReady] {
 		checks[CertManagerReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -894,7 +901,7 @@ func (r *Reconciler) ensureIngressNginx(req *rApi.Request[*v1.PrimaryCluster]) s
 	check.Status = true
 	if check != checks[IngressReady] {
 		checks[IngressReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -973,7 +980,7 @@ func (r *Reconciler) ensureCertIssuer(req *rApi.Request[*v1.PrimaryCluster]) ste
 	check.Status = true
 	if check != checks[CertIssuerReady] {
 		checks[CertIssuerReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -1056,7 +1063,7 @@ func (r *Reconciler) ensureOperatorCRDs(req *rApi.Request[*v1.PrimaryCluster]) s
 	check.Status = true
 	if check != checks[OperatorCRDsReady] {
 		checks[OperatorCRDsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -1129,7 +1136,46 @@ func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) step
 	check.Status = true
 	if check != checks[OperatorsEnvReady] {
 		checks[OperatorsEnvReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
+	}
+	return req.Next()
+}
+
+func (r *Reconciler) ensureRedpandaTopics(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	topics := []string{
+		obj.Spec.SharedConstants.KafkaTopicGitWebhooks,
+		obj.Spec.SharedConstants.KafkaTopicEvents,
+		obj.Spec.SharedConstants.KafkaTopicHarborWebhooks,
+		obj.Spec.SharedConstants.KafkaTopicsStatusUpdates,
+		obj.Spec.SharedConstants.KafkaTopicPipelineRunUpdates,
+		obj.Spec.SharedConstants.KafkaTopicBillingUpdates,
+	}
+
+	for i := range topics {
+		kt := &redpandaMsvcv1.Topic{ObjectMeta: metav1.ObjectMeta{Name: topics[i], Namespace: lc.NsCore}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, kt, func() error {
+			if !fn.IsOwner(kt, fn.AsOwner(obj)) {
+				kt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+			}
+			kt.Spec = redpandaMsvcv1.TopicSpec{
+				AdminSecretRef: ct.SecretRef{
+					Name:      obj.Spec.SharedConstants.RedpandaAdminSecretName,
+					Namespace: lc.NsCore,
+				},
+			}
+			return nil
+		}); err != nil {
+			return req.CheckFailed(RedpandaTopicsCreated, check, err.Error()).Err(nil)
+		}
+	}
+
+	check.Status = true
+	if check != checks[RedpandaTopicsCreated] {
+		checks[RedpandaTopicsCreated] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -1192,7 +1238,7 @@ func (r *Reconciler) ensureMsvcAndMres(req *rApi.Request[*v1.PrimaryCluster]) st
 	check.Status = true
 	if check != checks[MsvcAndMresReady] {
 		checks[MsvcAndMresReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -1251,6 +1297,7 @@ func (r *Reconciler) ensureKloudliteApis(req *rApi.Request[*v1.PrimaryCluster]) 
 		r.ensureIAMApi,
 		r.ensureWebhooksApi,
 		r.ensureJsEvalApi,
+		r.ensureAuditLoggingWorker,
 		r.ensureGatewayApi,
 	}
 
@@ -1263,7 +1310,7 @@ func (r *Reconciler) ensureKloudliteApis(req *rApi.Request[*v1.PrimaryCluster]) 
 	check.Status = true
 	if check != checks[KloudliteAPIsReady] {
 		checks[KloudliteAPIsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -1291,7 +1338,7 @@ func (r *Reconciler) ensureKloudliteWebs(req *rApi.Request[*v1.PrimaryCluster]) 
 	check.Status = true
 	if check != checks[KloudliteWebReady] {
 		checks[KloudliteWebReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }

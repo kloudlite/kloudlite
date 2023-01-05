@@ -49,7 +49,7 @@ func (r *Reconciler) ensureAuthWeb(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 	check.Status = true
 	if check != checks[AuthWebReady] {
 		checks[AuthWebReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -87,7 +87,7 @@ func (r *Reconciler) ensureConsoleWeb(req *rApi.Request[*v1.PrimaryCluster]) ste
 	check.Status = true
 	if check != checks[ConsoleWebCreated] {
 		checks[ConsoleWebCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -125,7 +125,7 @@ func (r *Reconciler) ensureAccountsWeb(req *rApi.Request[*v1.PrimaryCluster]) st
 	check.Status = true
 	if check != checks[AccountsWebCreated] {
 		checks[AccountsWebCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -163,7 +163,7 @@ func (r *Reconciler) ensureSocketWeb(req *rApi.Request[*v1.PrimaryCluster]) step
 	check.Status = true
 	if check != checks[SocketWebCreated] {
 		checks[SocketWebCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }

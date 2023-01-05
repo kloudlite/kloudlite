@@ -14,7 +14,7 @@ type Env struct {
 	AdminSecretNamespace string `env:"REDPANDA_ADMIN_SECRET_NAMESPACE" required:"true"`
 	AdminSecretName      string `env:"REDPANDA_ADMIN_SECRET_NAME" required:"true"`
 
-	MustHaveTopics string `env:"MUST_HAVE_TOPICS" required:"true"`
+	//MustHaveTopics string `env:"MUST_HAVE_TOPICS" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

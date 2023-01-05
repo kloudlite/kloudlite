@@ -2,6 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"operators.kloudlite.io/pkg/constants"
 	rApi "operators.kloudlite.io/pkg/operator"
 )
 
@@ -26,12 +27,14 @@ func (cfg *Config) GetStatus() *rApi.Status {
 	return &cfg.Status
 }
 
-func (in *Config) GetEnsuredLabels() map[string]string {
+func (cfg *Config) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
 }
 
-func (in *Config) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+func (cfg *Config) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{
+		constants.GVKKey: cfg.GroupVersionKind().String(),
+	}
 }
 
 //+kubebuilder:object:root=true
