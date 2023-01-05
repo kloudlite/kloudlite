@@ -14,18 +14,19 @@ import (
 )
 
 const (
-	DnsApiCreated            string = "dns-api-created"
-	AuthApiCreated           string = "auth-api-created"
-	ConsoleApiCreated        string = "console-api-created"
-	CiApiCreated             string = "ci-api-created"
-	FinanceApiCreated        string = "finance-api-created"
-	IAMApiCreated            string = "iAMA-api-created"
-	CommsApiCreated          string = "comms-api-created"
-	GatewayApiCreated        string = "gateway-api-created"
-	WebhooksApiCreated       string = "webhooks-api-created"
-	JsEvalApiCreated         string = "js-eval-api-created"
-	WebhookAuthzSecretsReady string = "webhook-authz-secrets-ready"
-	StripeCredsReady         string = "stripe-creds-ready"
+	DnsApiCreated             string = "dns-api-created"
+	AuthApiCreated            string = "auth-api-created"
+	ConsoleApiCreated         string = "console-api-created"
+	CiApiCreated              string = "ci-api-created"
+	FinanceApiCreated         string = "finance-api-created"
+	IAMApiCreated             string = "iAMA-api-created"
+	CommsApiCreated           string = "comms-api-created"
+	GatewayApiCreated         string = "gateway-api-created"
+	WebhooksApiCreated        string = "webhooks-api-created"
+	JsEvalApiCreated          string = "js-eval-api-created"
+	WebhookAuthzSecretsReady  string = "webhook-authz-secrets-ready"
+	StripeCredsReady          string = "stripe-creds-ready"
+	AuditLoggingWorkerCreated string = "audit-logging-worker-created"
 )
 
 type ReconFn func(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result
@@ -53,7 +54,7 @@ func (r *Reconciler) ensureWebhookAuthzSecrets(req *rApi.Request[*v1.PrimaryClus
 	check.Status = true
 	if check != checks[WebhookAuthzSecretsReady] {
 		checks[WebhookAuthzSecretsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -82,7 +83,7 @@ func (r *Reconciler) ensureStripeCreds(req *rApi.Request[*v1.PrimaryCluster]) st
 	check.Status = true
 	if check != checks[StripeCredsReady] {
 		checks[StripeCredsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 
@@ -112,7 +113,7 @@ func (r *Reconciler) ensureAuthApi(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 	check.Status = true
 	if check != checks[AuthApiCreated] {
 		checks[AuthApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -141,7 +142,7 @@ func (r *Reconciler) ensureConsoleApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 	check.Status = true
 	if check != checks[ConsoleApiCreated] {
 		checks[ConsoleApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -170,7 +171,7 @@ func (r *Reconciler) ensureCIApi(req *rApi.Request[*v1.PrimaryCluster]) stepResu
 	check.Status = true
 	if check != checks[CiApiCreated] {
 		checks[CiApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -201,7 +202,7 @@ func (r *Reconciler) ensureDnsApi(req *rApi.Request[*v1.PrimaryCluster]) stepRes
 	check.Status = true
 	if check != checks[DnsApiCreated] {
 		checks[DnsApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -288,7 +289,7 @@ func (r *Reconciler) ensureCommsApi(req *rApi.Request[*v1.PrimaryCluster]) stepR
 	check.Status = true
 	if check != checks[CommsApiCreated] {
 		checks[CommsApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -317,7 +318,7 @@ func (r *Reconciler) ensureWebhooksApi(req *rApi.Request[*v1.PrimaryCluster]) st
 	check.Status = true
 	if check != checks[WebhooksApiCreated] {
 		checks[WebhooksApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -346,9 +347,36 @@ func (r *Reconciler) ensureJsEvalApi(req *rApi.Request[*v1.PrimaryCluster]) step
 	check.Status = true
 	if check != checks[JsEvalApiCreated] {
 		checks[JsEvalApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
+}
+
+func (r *Reconciler) ensureAuditLoggingWorker(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	b, err := templates.Parse(templates.AuditLoggingWorker, map[string]any{
+		"namespace":        lc.NsCore,
+		"svc-account":      lc.DefaultSvcAccount,
+		"shared-constants": obj.Spec.SharedConstants,
+		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	})
+	if err != nil {
+		return req.CheckFailed(AuditLoggingWorkerCreated, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(AuditLoggingWorkerCreated, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[AuditLoggingWorkerCreated] {
+		checks[AuditLoggingWorkerCreated] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
+
 }
 
 func (r *Reconciler) ensureGatewayApi(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
@@ -375,7 +403,7 @@ func (r *Reconciler) ensureGatewayApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 	check.Status = true
 	if check != checks[GatewayApiCreated] {
 		checks[GatewayApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }

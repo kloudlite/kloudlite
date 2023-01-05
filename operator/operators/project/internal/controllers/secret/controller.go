@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"operators.kloudlite.io/pkg/harbor"
 	"operators.kloudlite.io/pkg/kubectl"
 	"operators.kloudlite.io/pkg/logging"
 	rApi "operators.kloudlite.io/pkg/operator"
@@ -24,7 +23,6 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	harborCli  *harbor.Client
 	logger     logging.Logger
 	Name       string
 	yamlClient *kubectl.YAMLClient
@@ -44,7 +42,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=secrets/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.Secret{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Secret{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -104,7 +102,6 @@ func (r *Reconciler) ensureSecret(req *rApi.Request[*crdsv1.Secret]) stepResult.
 		if !fn.IsOwner(scrt, fn.AsOwner(obj)) {
 			scrt.SetOwnerReferences(append(scrt.GetOwnerReferences(), fn.AsOwner(obj, true)))
 		}
-
 		scrt.Labels = obj.Labels
 		scrt.Data = obj.Data
 		scrt.StringData = obj.StringData
@@ -116,7 +113,7 @@ func (r *Reconciler) ensureSecret(req *rApi.Request[*crdsv1.Secret]) stepResult.
 	check.Status = true
 	if check != checks[K8sSecretCreated] {
 		checks[K8sSecretCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -128,5 +125,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Secret{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

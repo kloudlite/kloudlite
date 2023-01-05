@@ -137,6 +137,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&crdsv1.ManagedResource{},
 		&crdsv1.Router{},
 		&crdsv1.Env{},
+		&crdsv1.Config{},
+		&crdsv1.Secret{},
 		fn.NewUnstructured(constants.EdgeInfraType),
 		fn.NewUnstructured(constants.CloudProviderType),
 		fn.NewUnstructured(constants.DeviceType),

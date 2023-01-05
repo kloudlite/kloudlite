@@ -58,7 +58,6 @@ func New(name string) *operator {
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
-
 	rest.SetDefaultWarningHandler(rest.NoWarnings{})
 
 	flag.BoolVar(&isDev, "dev", false, "--dev")
