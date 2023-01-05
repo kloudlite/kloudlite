@@ -532,6 +532,8 @@ spec:
                     type: string
                   dnsRedisName:
                     type: string
+                  eventsDbName:
+                    type: string
                   financeDbName:
                     type: string
                   financeRedisName:
@@ -570,6 +572,8 @@ spec:
                   imageSocketWeb:
                     type: string
                   imageWebhooksApi:
+                    type: string
+                  kafkaTopicEvents:
                     type: string
                   kafkaTopicHarborWebhooks:
                     type: string
