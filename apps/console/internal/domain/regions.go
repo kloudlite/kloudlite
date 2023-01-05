@@ -110,6 +110,7 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 
 	return nil
 }
+
 func (d *domain) DeleteCloudProvider(ctx context.Context, providerId repos.ID) error {
 	provider, err := d.providerRepo.FindById(ctx, providerId)
 	if err != nil {
@@ -214,6 +215,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, providerId repos.ID, u
 	}
 	return nil
 }
+
 func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entities.EdgeRegion) error {
 	provider, err := d.providerRepo.FindById(ctx, region.ProviderId)
 	if err = mongoError(err, "provider not found"); err != nil {
@@ -281,6 +283,7 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entit
 	}
 	return nil
 }
+
 func (d *domain) GetEdgeRegions(ctx context.Context, providerId repos.ID) ([]*entities.EdgeRegion, error) {
 	edgeRegions, err := d.regionRepo.Find(
 		ctx, repos.Query{
@@ -294,6 +297,7 @@ func (d *domain) GetEdgeRegions(ctx context.Context, providerId repos.ID) ([]*en
 	}
 	return edgeRegions, nil
 }
+
 func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 	edge, err := d.regionRepo.FindById(ctx, edgeId)
 	if err != nil {
