@@ -153,20 +153,17 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					if !ok {
 						return nil
 					}
-					b64Group := base64.StdEncoding.EncodeToString(
-						[]byte(v),
-					)
+					b64Group := base64.StdEncoding.EncodeToString([]byte(v))
 					if len(b64Group) == 0 {
 						return nil
 					}
+
 					wName, err := types.WrappedName{Name: obj.GetName(), Group: b64Group}.String()
 					if err != nil {
 						return nil
 					}
 					return []reconcile.Request{
-						{
-							NamespacedName: types2.NamespacedName{Namespace: obj.GetNamespace(), Name: wName},
-						},
+						{NamespacedName: types2.NamespacedName{Namespace: obj.GetNamespace(), Name: wName}},
 					}
 				},
 			),

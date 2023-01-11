@@ -320,6 +320,9 @@ spec:
                     - bucketName
                     - endpoint
                     type: object
+                  serviceName:
+                    default: loki
+                    type: string
                   url:
                     type: string
                 required:
@@ -417,6 +420,9 @@ spec:
                     - cpu
                     - memory
                     type: object
+                  serviceName:
+                    default: prometheus
+                    type: string
                 required:
                 - resources
                 type: object
@@ -577,11 +583,15 @@ spec:
                     type: string
                   kafkaTopicHarborWebhooks:
                     type: string
+                  lokiBasicAuthSecretName:
+                    type: string
                   mongoSvcName:
                     description: Mongo
                     type: string
                   oauthSecretName:
                     description: Secrets
+                    type: string
+                  prometheusBasicAuthSecretName:
                     type: string
                   redisSvcName:
                     description: Redis

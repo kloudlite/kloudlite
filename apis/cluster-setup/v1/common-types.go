@@ -13,9 +13,11 @@ type S3 struct {
 }
 
 type LokiValues struct {
-	S3        S3           `json:"s3"`
-	Resources ct.Resources `json:"resources"`
-	Url       string       `json:"url,omitempty"`
+	// +kubebuilder:default=loki
+	ServiceName string       `json:"serviceName,omitempty"`
+	S3          S3           `json:"s3"`
+	Resources   ct.Resources `json:"resources"`
+	Url         string       `json:"url,omitempty"`
 }
 
 type RedpandaValues struct {
@@ -25,7 +27,9 @@ type RedpandaValues struct {
 }
 
 type PrometheusValues struct {
-	Resources ct.Resources `json:"resources"`
+	// +kubebuilder:default=prometheus
+	ServiceName string       `json:"serviceName,omitempty"`
+	Resources   ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:generate=true

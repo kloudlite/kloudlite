@@ -134,10 +134,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -231,6 +229,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		if step := r.installKloudliteAgent(req); !step.ShouldProceed() {
 			return step.ReconcilerResponse()
 		}
+
+		if step := r.ensureLokiRouter(req); !step.ShouldProceed() {
+			return step.ReconcilerResponse()
+		}
+
+		if step := r.ensurePrometheusRouter(req); !step.ShouldProceed() {
+			return step.ReconcilerResponse()
+		}
 	}
 
 	req.Object.Status.IsReady = true
@@ -312,10 +318,12 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		ImageSocketWeb:   fmt.Sprintf("%s/kloudlite/production/web-socket:v1.0.3", ImageRegistryHost),
 
 		// constants
-		RedpandaAdminSecretName:    "msvc-redpanda-admin-creds",
-		OAuthSecretName:            obj.Spec.OAuthCreds.Name,
-		HarborAdminCredsSecretName: "harbor-admin-creds",
-		StripeSecretName:           obj.Spec.StripeCreds.Name,
+		RedpandaAdminSecretName:       "msvc-redpanda-admin-creds",
+		OAuthSecretName:               obj.Spec.OAuthCreds.Name,
+		HarborAdminCredsSecretName:    "harbor-admin-creds",
+		StripeSecretName:              obj.Spec.StripeCreds.Name,
+		LokiBasicAuthSecretName:       obj.Spec.LokiValues.ServiceName + "-basic-auth",
+		PrometheusBasicAuthSecretName: obj.Spec.PrometheusValues.ServiceName + "-basic-auth",
 
 		// KafkaTopics
 		KafkaTopicGitWebhooks:        "kl-git-webhooks",
@@ -545,12 +553,12 @@ func (r *Reconciler) ensureLoki(req *rApi.Request[*v1.PrimaryCluster]) stepResul
 	req.LogPreCheck(LokiReady)
 	defer req.LogPostCheck(LokiReady)
 
-	const releaseName = "loki"
-
 	helmCli, err := newHelmClient(r.restConfig, lc.NsMonitoring)
 	if err != nil {
 		return req.CheckFailed(LokiReady, check, err.Error()).Err(nil)
 	}
+
+	releaseName := obj.Spec.LokiValues.ServiceName
 
 	helmValues, err := helmCli.GetReleaseValues(releaseName, false)
 	if err != nil {
@@ -595,12 +603,12 @@ func (r *Reconciler) ensurePrometheus(req *rApi.Request[*v1.PrimaryCluster]) ste
 	req.LogPreCheck(PrometheusReady)
 	defer req.LogPostCheck(PrometheusReady)
 
-	const releaseName = "prometheus"
-
 	helmCli, err := newHelmClient(r.restConfig, lc.NsMonitoring)
 	if err != nil {
 		return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
 	}
+
+	releaseName := obj.Spec.PrometheusValues.ServiceName
 
 	helmValues, err := helmCli.GetReleaseValues(releaseName, false)
 	if err != nil {
@@ -938,14 +946,12 @@ func (r *Reconciler) ensureCertIssuer(req *rApi.Request[*v1.PrimaryCluster]) ste
 
 	//dnsNames := make([]string, 0, (len(obj.Spec.CloudflareCreds.DnsNames)+1)*2)
 	dnsNames := make([]string, 0, len(obj.Spec.CloudflareCreds.DnsNames)+1)
+	if obj.Spec.ShouldInstallSecondary {
+		dnsNames = append(dnsNames, fmt.Sprintf("*.%s.clusters.%s", obj.Spec.SecondaryClusterId, obj.Spec.Domain))
+	}
 	for i := range obj.Spec.CloudflareCreds.DnsNames {
 		dnsNames = append(dnsNames, obj.Spec.CloudflareCreds.DnsNames[i])
 		//dnsNames = append(dnsNames, fmt.Sprintf("www.%s", obj.Spec.CloudflareCreds.DnsNames[i]))
-	}
-
-	if obj.Spec.ShouldInstallSecondary {
-		dnsNames = append(dnsNames, fmt.Sprintf("*.%s.clusters.%s", obj.Spec.SecondaryClusterId, obj.Spec.Domain))
-		//dnsNames = append(dnsNames, fmt.Sprintf("www.*.%s.clusters.%s", obj.Spec.SecondaryClusterId, obj.Spec.Domain))
 	}
 
 	issuerVals["dns-names"] = dnsNames

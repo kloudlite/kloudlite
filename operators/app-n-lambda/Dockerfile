@@ -9,15 +9,25 @@ COPY --from=project go.mod go.sum ./
 COPY --from=project lib ./lib
 COPY --from=project apis ./apis
 COPY --from=project ./operator ./operator
+
+#COPY ./go.mod ./go.sum ./
+#COPY ./pkg ./pkg
+#COPY ./apis ./apis
+#COPY ./operator ./operator
 RUN go mod download -x
+
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=amd64
 
 ARG name
 RUN mkdir -p ./operators/$name
 COPY ./ ./operators/$name
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-ENV GOARCH=amd64
 RUN go build -o manager ./operators/$name/main.go
+
+#RUN ls -al
+#COPY ./operators/$name ./operators/$name
+#RUN go build -o manager ./operators/$name/main.go
 
 FROM gcr.io/distroless/static:nonroot
 #COPY --from=builder /workspace/kubectl /usr/local/bin/kubectl

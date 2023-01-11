@@ -92,9 +92,14 @@ type SharedConstants struct {
 	KafkaTopicHarborWebhooks     string `json:"kafkaTopicHarborWebhooks,omitempty"`
 	KafkaTopicEvents             string `json:"kafkaTopicEvents,omitempty"`
 
+	// constants
+
 	StatefulPriorityClass  string `json:"statefulPriorityClass,omitempty"`
 	WebhookAuthzSecretName string `json:"webhookAuthzSecretName,omitempty"`
 	StripeSecretName       string `json:"stripeSecretName,omitempty"`
+
+	LokiBasicAuthSecretName       string `json:"lokiBasicAuthSecretName,omitempty"`
+	PrometheusBasicAuthSecretName string `json:"prometheusBasicAuthSecretName,omitempty"`
 
 	// Routers
 	AuthWebDomain     string `json:"authWebDomain,omitempty"`

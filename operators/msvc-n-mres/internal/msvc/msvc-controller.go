@@ -56,9 +56,6 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	if strings.HasSuffix(request.Namespace, "-blueprint") {
-		return ctrl.Result{}, nil
-	}
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -71,6 +68,10 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
+	}
+
+	if strings.HasSuffix(request.Namespace, "-blueprint") {
 		return ctrl.Result{}, nil
 	}
 

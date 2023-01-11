@@ -44,6 +44,10 @@ func ReconcileFilter() predicate.Funcs {
 				return true
 			}
 
+			if oldObj.GetDeletionTimestamp() != newObj.GetDeletionTimestamp() {
+				return true
+			}
+
 			if len(oldObj.GetLabels()) != len(newObj.GetLabels()) || !reflect.DeepEqual(oldObj.GetLabels(), newObj.GetLabels()) {
 				return true
 			}
