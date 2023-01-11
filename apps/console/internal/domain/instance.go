@@ -12,6 +12,7 @@ import (
 	"kloudlite.io/pkg/repos"
 
 	createjsonpatch "github.com/snorwin/jsonpatch"
+	"github.com/valyala/fasthttp/reuseport"
 )
 
 const (
@@ -53,12 +54,19 @@ func (d *domain) ValidateResourecType(ctx context.Context, resType string) error
 }
 
 func (d *domain) GetResInstance(ctx context.Context, envID repos.ID, resID string) (*entities.ResInstance, error) {
-	return d.instanceRepo.FindOne(ctx,
+	inst, err := d.instanceRepo.FindOne(ctx,
 		repos.Filter{
 			"environment_id": envID,
 			"resource_id":    resID,
 			"is_deleted":     false,
 		})
+	if err != nil {
+		return nil, err
+	}
+	if inst == nil {
+		return nil, fmt.Errorf("no resource found with given id")
+	}
+	return inst, nil
 }
 
 func (d *domain) GetResInstanceById(ctx context.Context, instanceId repos.ID) (*entities.ResInstance, error) {

@@ -64,6 +64,8 @@ models:
     fields:
       resInstances: 
         resolver: true
+      project:
+        resolver: true
   CloudProvider:
     fields:
       edges:

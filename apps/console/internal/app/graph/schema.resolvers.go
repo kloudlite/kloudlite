@@ -209,6 +209,14 @@ func (r *environmentResolver) ResInstances(ctx context.Context, obj *model.Envir
 	return getInstances(r.Domain, obj, ctx, resType)
 }
 
+func (r *environmentResolver) Project(ctx context.Context, obj *model.Environment) (*model.Project, error) {
+	p, err := r.Domain.GetProjectWithID(ctx, obj.BlueprintID)
+	if err != nil {
+		return nil, err
+	}
+	return projectModelFromEntity(p), nil
+}
+
 func (r *managedResResolver) Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error) {
 	if strings.HasPrefix(string(obj.ID), "mgsvc-") {
 		output, err := r.Domain.GetManagedSvcOutput(ctx, obj.ID)
@@ -1802,6 +1810,25 @@ func (r *queryResolver) CoreGetResInstance(ctx context.Context, envID repos.ID, 
 	}, nil
 }
 
+func (r *queryResolver) CoreGetResInstanceByID(ctx context.Context, instanceID repos.ID) (*model.ResInstance, error) {
+
+	instance, err := r.Domain.GetResInstanceById(ctx, instanceID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ResInstance{
+		ID:            instance.Id,
+		Enabled:       instance.Enabled,
+		ResourceID:    instance.ResourceId,
+		EnvironmentID: instance.EnvironmentId,
+		BlueprintID:   instance.BlueprintId,
+		Overrides:     &instance.Overrides,
+		ResourceType:  string(instance.ResourceType),
+	}, nil
+}
+
 func (r *queryResolver) CoreGetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*model.Environment, error) {
 	e, err := r.Domain.GetEnvironments(ctx, blueprintID)
 	if err != nil {
@@ -1822,8 +1849,21 @@ func (r *queryResolver) CoreGetEnvironments(ctx context.Context, blueprintID rep
 	return environments, nil
 }
 
-func (r *resInstanceResolver) App(ctx context.Context, obj *model.ResInstance) (*model.App, error) {
+func (r *queryResolver) CoreGetEnvironment(ctx context.Context, environmentID repos.ID) (*model.Environment, error) {
+	e, err := r.Domain.GetEnvironment(ctx, environmentID)
+	if err != nil {
+		return nil, err
+	}
 
+	return &model.Environment{
+		ID:          e.Id,
+		Name:        e.Name,
+		BlueprintID: e.BlueprintId,
+		ReadableID:  &e.ReadableId,
+	}, nil
+}
+
+func (r *resInstanceResolver) App(ctx context.Context, obj *model.ResInstance) (*model.App, error) {
 	isSelf := strings.HasPrefix(string(obj.ResourceID), domain.ENV_INSTANCE)
 	if isSelf {
 		return util.ReturnApp(&entities.App{}), nil
@@ -1862,6 +1902,7 @@ func (r *resInstanceResolver) MResource(ctx context.Context, obj *model.ResInsta
 
 func (r *resInstanceResolver) MService(ctx context.Context, obj *model.ResInstance) (*model.ManagedSvc, error) {
 	panic(fmt.Errorf("not implemented"))
+
 }
 
 func (r *resInstanceResolver) Config(ctx context.Context, obj *model.ResInstance) (*model.Config, error) {

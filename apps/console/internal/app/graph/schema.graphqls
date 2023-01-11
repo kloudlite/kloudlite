@@ -42,7 +42,9 @@ type Query {
   core_getEdgeNodes(edgeId: ID!): [EdgeNode!]!
   core_getResInstances(envId: ID!,resType:String!): [ResInstance!]
   core_getResInstance(envId: ID!,resId:String!): ResInstance
+  core_getResInstanceById(instanceId: ID!): ResInstance
   core_getEnvironments(blueprintId: ID!): [Environment!]
+  core_getEnvironment(environmentId: ID!): Environment
 }
 
 type Environment{
@@ -51,6 +53,7 @@ type Environment{
   blueprintId: ID!
   readableId: String
   resInstances(resType:String!): [ResInstance!]
+  project: Project
 }
 
 type ResInstance{

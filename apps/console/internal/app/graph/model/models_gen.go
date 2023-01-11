@@ -264,6 +264,7 @@ type Environment struct {
 	BlueprintID  repos.ID       `json:"blueprintId"`
 	ReadableID   *string        `json:"readableId"`
 	ResInstances []*ResInstance `json:"resInstances"`
+	Project      *Project       `json:"project"`
 }
 
 type EnvironmentIn struct {
