@@ -224,6 +224,7 @@ type ComplexityRoot struct {
 		BlueprintID  func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Name         func(childComplexity int) int
+		Project      func(childComplexity int) int
 		ReadableID   func(childComplexity int) int
 		ResInstances func(childComplexity int, resType string) int
 	}
@@ -374,9 +375,11 @@ type ComplexityRoot struct {
 		CoreGetComputePlans         func(childComplexity int) int
 		CoreGetDevice               func(childComplexity int, deviceID repos.ID) int
 		CoreGetEdgeNodes            func(childComplexity int, edgeID repos.ID) int
+		CoreGetEnvironment          func(childComplexity int, environmentID repos.ID) int
 		CoreGetEnvironments         func(childComplexity int, blueprintID repos.ID) int
 		CoreGetLamdaPlan            func(childComplexity int) int
 		CoreGetResInstance          func(childComplexity int, envID repos.ID, resID string) int
+		CoreGetResInstanceByID      func(childComplexity int, instanceID repos.ID) int
 		CoreGetResInstances         func(childComplexity int, envID repos.ID, resType string) int
 		CoreGetStoragePlans         func(childComplexity int) int
 		CoreProject                 func(childComplexity int, projectID repos.ID) int
@@ -489,6 +492,7 @@ type EntityResolver interface {
 }
 type EnvironmentResolver interface {
 	ResInstances(ctx context.Context, obj *model.Environment, resType string) ([]*model.ResInstance, error)
+	Project(ctx context.Context, obj *model.Environment) (*model.Project, error)
 }
 type ManagedResResolver interface {
 	Outputs(ctx context.Context, obj *model.ManagedRes) (map[string]interface{}, error)
@@ -575,7 +579,9 @@ type QueryResolver interface {
 	CoreGetEdgeNodes(ctx context.Context, edgeID repos.ID) ([]*model.EdgeNode, error)
 	CoreGetResInstances(ctx context.Context, envID repos.ID, resType string) ([]*model.ResInstance, error)
 	CoreGetResInstance(ctx context.Context, envID repos.ID, resID string) (*model.ResInstance, error)
+	CoreGetResInstanceByID(ctx context.Context, instanceID repos.ID) (*model.ResInstance, error)
 	CoreGetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*model.Environment, error)
+	CoreGetEnvironment(ctx context.Context, environmentID repos.ID) (*model.Environment, error)
 }
 type ResInstanceResolver interface {
 	App(ctx context.Context, obj *model.ResInstance) (*model.App, error)
@@ -1393,6 +1399,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Environment.Name(childComplexity), true
+
+	case "Environment.project":
+		if e.complexity.Environment.Project == nil {
+			break
+		}
+
+		return e.complexity.Environment.Project(childComplexity), true
 
 	case "Environment.readableId":
 		if e.complexity.Environment.ReadableID == nil {
@@ -2390,6 +2403,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreGetEdgeNodes(childComplexity, args["edgeId"].(repos.ID)), true
 
+	case "Query.core_getEnvironment":
+		if e.complexity.Query.CoreGetEnvironment == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getEnvironment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetEnvironment(childComplexity, args["environmentId"].(repos.ID)), true
+
 	case "Query.core_getEnvironments":
 		if e.complexity.Query.CoreGetEnvironments == nil {
 			break
@@ -2420,6 +2445,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CoreGetResInstance(childComplexity, args["envId"].(repos.ID), args["resId"].(string)), true
+
+	case "Query.core_getResInstanceById":
+		if e.complexity.Query.CoreGetResInstanceByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getResInstanceById_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetResInstanceByID(childComplexity, args["instanceId"].(repos.ID)), true
 
 	case "Query.core_getResInstances":
 		if e.complexity.Query.CoreGetResInstances == nil {
@@ -2946,7 +2983,9 @@ type Query {
   core_getEdgeNodes(edgeId: ID!): [EdgeNode!]!
   core_getResInstances(envId: ID!,resType:String!): [ResInstance!]
   core_getResInstance(envId: ID!,resId:String!): ResInstance
+  core_getResInstanceById(instanceId: ID!): ResInstance
   core_getEnvironments(blueprintId: ID!): [Environment!]
+  core_getEnvironment(environmentId: ID!): Environment
 }
 
 type Environment{
@@ -2955,6 +2994,7 @@ type Environment{
   blueprintId: ID!
   readableId: String
   resInstances(resType:String!): [ResInstance!]
+  project: Project
 }
 
 type ResInstance{
@@ -4908,6 +4948,21 @@ func (ec *executionContext) field_Query_core_getEdgeNodes_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_core_getEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["environmentId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environmentId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["environmentId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_core_getEnvironments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4920,6 +4975,21 @@ func (ec *executionContext) field_Query_core_getEnvironments_args(ctx context.Co
 		}
 	}
 	args["blueprintId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getResInstanceById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["instanceId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["instanceId"] = arg0
 	return args, nil
 }
 
@@ -9014,6 +9084,38 @@ func (ec *executionContext) _Environment_resInstances(ctx context.Context, field
 	res := resTmp.([]*model.ResInstance)
 	fc.Result = res
 	return ec.marshalOResInstance2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐResInstanceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Environment_project(ctx context.Context, field graphql.CollectedField, obj *model.Environment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Environment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Environment().Project(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Project)
+	fc.Result = res
+	return ec.marshalOProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ExposedService_type(ctx context.Context, field graphql.CollectedField, obj *model.ExposedService) (ret graphql.Marshaler) {
@@ -13621,6 +13723,45 @@ func (ec *executionContext) _Query_core_getResInstance(ctx context.Context, fiel
 	return ec.marshalOResInstance2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐResInstance(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_core_getResInstanceById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_core_getResInstanceById_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreGetResInstanceByID(rctx, args["instanceId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ResInstance)
+	fc.Result = res
+	return ec.marshalOResInstance2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐResInstance(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_core_getEnvironments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -13658,6 +13799,45 @@ func (ec *executionContext) _Query_core_getEnvironments(ctx context.Context, fie
 	res := resTmp.([]*model.Environment)
 	fc.Result = res
 	return ec.marshalOEnvironment2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvironmentᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_core_getEnvironment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_core_getEnvironment_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreGetEnvironment(rctx, args["environmentId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Environment)
+	fc.Result = res
+	return ec.marshalOEnvironment2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvironment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -18944,6 +19124,23 @@ func (ec *executionContext) _Environment(ctx context.Context, sel ast.SelectionS
 				return innerFunc(ctx)
 
 			})
+		case "project":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Environment_project(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -20806,6 +21003,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "core_getResInstanceById":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getResInstanceById(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "core_getEnvironments":
 			field := field
 
@@ -20816,6 +21033,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_core_getEnvironments(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_getEnvironment":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getEnvironment(ctx, field)
 				return res
 			}
 
@@ -23913,6 +24150,13 @@ func (ec *executionContext) marshalOEnvironment2ᚕᚖkloudliteᚗioᚋappsᚋco
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalOEnvironment2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvironment(ctx context.Context, sel ast.SelectionSet, v *model.Environment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Environment(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOEnvironmentIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvironmentIn(ctx context.Context, v interface{}) (*model.EnvironmentIn, error) {

@@ -58,7 +58,7 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 		ctx, &entities.Secret{
 			Name:        strings.ToLower(secretName),
 			ProjectId:   projectId,
-			Namespace:   prj.Name,
+			Namespace:   prj.Name + "-blueprint",
 			Data:        secretData,
 			Description: desc,
 		},
@@ -78,7 +78,12 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 			Kind:       opcrds.SecretKind,
 			Metadata: opcrds.SecretMetadata{
 				Name:      string(create.Id),
-				Namespace: prj.Name,
+				Namespace: prj.Name + "-blueprint",
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(prj.AccountId),
+					"kloudlite.io/project-ref":  string(prj.Id),
+					"kloudlite.io/resource-ref": string(create.Id),
+				},
 			},
 			Data: nil,
 		},
@@ -121,7 +126,11 @@ func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *stri
 			Kind:       opcrds.SecretKind,
 			Metadata: opcrds.SecretMetadata{
 				Name:      string(cfg.Id),
-				Namespace: cfg.Namespace,
+				Namespace: cfg.Namespace + "-blueprint",
+				Annotations: map[string]string{
+					"kloudlite.io/project-ref":  string(cfg.ProjectId),
+					"kloudlite.io/resource-ref": string(cfg.Id),
+				},
 			},
 			Data: (func() map[string][]byte {
 				data := make(map[string][]byte, 0)
@@ -166,7 +175,11 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
 				Name:      string(secret.Id),
-				Namespace: secret.Namespace,
+				Namespace: secret.Namespace + "-blueprint",
+				Annotations: map[string]string{
+					"kloudlite.io/project-ref":  string(secret.ProjectId),
+					"kloudlite.io/resource-ref": string(secretId),
+				},
 			},
 		},
 	)
@@ -225,7 +238,7 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 		ctx, &entities.Config{
 			Name:        strings.ToLower(configName),
 			ProjectId:   projectId,
-			Namespace:   prj.Name,
+			Namespace:   prj.Name + "-blueprint",
 			Data:        configData,
 			Description: desc,
 		},
@@ -245,7 +258,12 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
 				Name:      string(create.Id),
-				Namespace: prj.Name,
+				Namespace: prj.Name + "-blueprint",
+				Annotations: map[string]string{
+					"kloudlite.io/account-ref":  string(prj.AccountId),
+					"kloudlite.io/project-ref":  string(prj.Id),
+					"kloudlite.io/resource-ref": string(create.Id),
+				},
 			},
 			Data: nil,
 		},
@@ -294,7 +312,11 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
 				Name:      string(cfg.Id),
-				Namespace: cfg.Namespace,
+				Namespace: cfg.Namespace + "-blueprint",
+				Annotations: map[string]string{
+					"kloudlite.io/project-ref":  string(cfg.ProjectId),
+					"kloudlite.io/resource-ref": string(cfg.Id),
+				},
 			},
 			Data: func() map[string]string {
 				m := make(map[string]string, 0)
@@ -337,7 +359,11 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
 				Name:      string(cfg.Id),
-				Namespace: cfg.Namespace,
+				Namespace: cfg.Namespace + "-blueprint",
+				Annotations: map[string]string{
+					"kloudlite.io/project-ref":  string(cfg.ProjectId),
+					"kloudlite.io/resource-ref": string(cfg.Id),
+				},
 			},
 		},
 	)
