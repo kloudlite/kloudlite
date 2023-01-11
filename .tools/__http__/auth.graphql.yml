@@ -1,6 +1,7 @@
 ---
 global:
   hello: world
+  password: sample
 ---
 query: |
   mutation Auth_signup($name: String!, $email: String!, $password: String!) {
@@ -14,7 +15,7 @@ query: |
   }
 variables:
   email: sample@gmail.com
-  password: sample
+  password: "{{.password}}"
   name: Sample Kumar
 
 ---

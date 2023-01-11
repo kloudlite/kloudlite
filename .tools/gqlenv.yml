@@ -1,6 +1,9 @@
 mode: dev
-dev:
-  url: https://gateway.kloudlite.io
-  # url: http://localhost:3000/query
-  headers:
-    cookie: hotspot-session=ses-yuiimr5j9zgj7a1jcipmnebmpzzl; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
+map:
+  dev:
+    # url: https://gateway.kloudlite.io
+    # url: https://gateway.dev.kloudlite.io
+    url: ***REMOVED***
+    # url: http://localhost:3000/query
+    headers:
+      cookie: hotspot-session=ses-yuiimr5j9zgj7a1jcipmnebmpzzl; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
