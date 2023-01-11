@@ -272,9 +272,11 @@ tasks:
     silent: true
     cmds:
       - |+
-        pushd "./operators/{{.Name}}" 1> /dev/null
-        docker buildx build -t {{.Image}} . --build-context project="../.." --build-arg name="{{.Name}}"
-        docker push {{.Image}}
+        #pushd "./operators/{{.Name}}" 1> /dev/null
+        # docker buildx build -t {{.Image}} . --build-context project="../.." --build-arg name="{{.Name}}"
+        # docker push {{.Image}}
+        depot build -t {{.Image}} --build-arg name="{{.Name}}" -f operators/{{.Name}}/Dockerfile .
+        depot push {{.Image}}
         popd 1> /dev/null
 #
 

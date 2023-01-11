@@ -10,6 +10,9 @@
 {{- $nodeSelector := get . "node-selector" | default dict -}}
 {{- $tolerations := get . "tolerations" | default list -}}
 
+{{- $lokiBasicAuthPassword := get . "loki-basic-auth-password" -}}
+{{- $promBasicAuthPassword := get . "prom-basic-auth-password" -}}
+
 {{ with $sharedConstants}}
 {{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.SharedConstants*/}}
 apiVersion: crds.kloudlite.io/v1
@@ -107,9 +110,6 @@ spec:
         - key: MANAGED_TEMPLATES_PATH
           value: /console.d/templates/managed-svc-templates.yml
 
-        - key: IAM_SERVICE
-          value: iam-api.{{$namespace}}.svc.cluster.local:3001
-
         - key: FINANCE_SERVICE
           value: finance-api.{{$namespace}}.svc.cluster.local:3001
 
@@ -118,9 +118,6 @@ spec:
 
         - key: CI_SERVICE
           value: ci-api.{{$namespace}}.svc.cluster.local:3001
-
-        - key: IAM_SERVICE
-          value: iam-api.{{$namespace}}.svc.cluster.local:3001
 
         - key: IAM_SERVICE
           value: iam-api.{{$namespace}}.svc.cluster.local:3001
@@ -164,6 +161,21 @@ spec:
 
         - key: CLUSTER_CONFIGS_PATH
           value: /tmp/k8s
+
+        - key: LOKI_AUTH_PASSWORD
+          value: {{$lokiBasicAuthPassword}}
+{{/*          type: secret*/}}
+{{/*          refName: "{{.LokiBasicAuthSecretName}}"*/}}
+{{/*          refKey: "password"*/}}
+
+        - key: PROMETHEUS_BASIC_AUTH_PASSWORD
+          value: {{$promBasicAuthPassword}}
+{{/*          type: secret*/}}
+{{/*          refName: "{{.PrometheusBasicAuthSecretName}}"*/}}
+{{/*          refKey: "password"*/}}
+
+        - key: KAFKA_AUDIT_EVENTS_TOPIC
+          value: {{.KafkaTopicEvents}}
 
       envFrom:
         - type: secret
@@ -928,6 +940,7 @@ data:
           displayName: Memcached Cluster
           description: Memcached Cluster
           active: false
+
         - name: memcached_standalone
           logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
           displayName: Memcached Standalone

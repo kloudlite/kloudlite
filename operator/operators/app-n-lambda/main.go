@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	crdsv1 "operators.kloudlite.io/apis/crds/v1"
 	"operators.kloudlite.io/operator"
 	"operators.kloudlite.io/operators/app-n-lambda/internal/controllers/app"
@@ -10,6 +11,7 @@ import (
 func main() {
 	ev := env.GetEnvOrDie()
 
+	fmt.Println("asdfasdf")
 	mgr := operator.New("app-n-lambda")
 	mgr.AddToSchemes(crdsv1.AddToScheme)
 	mgr.RegisterControllers(

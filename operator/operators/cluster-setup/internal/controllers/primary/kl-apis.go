@@ -1,7 +1,9 @@
 package primary
 
 import (
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "operators.kloudlite.io/apis/cluster-setup/v1"
 	lc "operators.kloudlite.io/operators/cluster-setup/internal/constants"
@@ -125,11 +127,29 @@ func (r *Reconciler) ensureConsoleApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 	req.LogPreCheck(ConsoleApiCreated)
 	defer req.LogPostCheck(ConsoleApiCreated)
 
+	lokiAuthScrt, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsMonitoring, fmt.Sprintf("%s-basic-auth", obj.Spec.LokiValues.ServiceName)), &corev1.Secret{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
+		}
+		lokiAuthScrt = &corev1.Secret{}
+	}
+
+	promAuthScrt, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsMonitoring, fmt.Sprintf("%s-basic-auth", obj.Spec.PrometheusValues.ServiceName)), &corev1.Secret{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
+		}
+		promAuthScrt = &corev1.Secret{}
+	}
+
 	b, err := templates.Parse(templates.ConsoleApi, map[string]any{
-		"namespace":        lc.NsCore,
-		"svc-account":      lc.ClusterSvcAccount,
-		"shared-constants": obj.Spec.SharedConstants,
-		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"namespace":                lc.NsCore,
+		"svc-account":              lc.ClusterSvcAccount,
+		"shared-constants":         obj.Spec.SharedConstants,
+		"owner-refs":               []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"loki-basic-auth-password": string(lokiAuthScrt.Data["password"]),
+		"prom-basic-auth-password": string(promAuthScrt.Data["password"]),
 	})
 	if err != nil {
 		return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
