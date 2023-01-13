@@ -7,6 +7,8 @@ import (
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	opCrds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
 )
@@ -125,7 +127,7 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 		return nil, err
 	}
 
-	create, err := d.managedResRepo.Create(
+	mres, err := d.managedResRepo.Create(
 		ctx, &entities.ManagedResource{
 			ProjectId:    prj.Id,
 			Namespace:    prj.Name,
@@ -156,17 +158,17 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), &opCrds.ManagedResource{
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(mres.Id), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
 			Metadata: opCrds.ManagedResourceMetadata{
-				Name:      string(create.Id),
-				Namespace: create.Namespace,
+				Name:      string(mres.Id),
+				Namespace: mres.Namespace,
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":  string(prj.AccountId),
 					"kloudlite.io/project-ref":  string(prj.Id),
-					"kloudlite.io/resource-ref": string(create.Id),
+					"kloudlite.io/resource-ref": string(mres.Id),
 				},
 			},
 			Spec: opCrds.ManagedResourceSpec{
@@ -179,18 +181,26 @@ func (d *domain) InstallManagedRes(ctx context.Context, installationId repos.ID,
 					Kind: resTmpl.Kind,
 				},
 				Inputs: func() map[string]string {
-					create.Values["resourceName"] = name
-					return create.Values
+					mres.Values["resourceName"] = name
+					return mres.Values
 				}(),
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
 
-	return create, nil
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.CreateMres,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceManagedResource,
+		ResourceId:   mres.Id,
+		Tags:         map[string]string{"projectId": string(mres.ProjectId)},
+	})
+
+	return mres, nil
 }
+
 func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, values map[string]string) (bool, error) {
 	mres, err := d.managedResRepo.FindById(ctx, managedResID)
 	if err = mongoError(err, "managed resource not found"); err != nil {
@@ -225,7 +235,7 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(mres.Id), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
@@ -253,10 +263,18 @@ func (d *domain) UpdateManagedRes(ctx context.Context, managedResID repos.ID, va
 				}(),
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return false, err
 	}
+
+  go d.beacon.TriggerWithUserCtx(ctx, proj.AccountId, beacon.EventAction{
+    Action:       constants.UpdateMres,
+    Status:       beacon.StatusOK(),
+    ResourceType: constants.ResourceManagedResource,
+    ResourceId:   mres.Id,
+    Tags:         map[string]string{"projectId": string(mres.ProjectId)},
+  })
+
 	return true, nil
 }
 
@@ -285,7 +303,7 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, mresId repos.ID) (bool
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"delete", d.getDispatchKafkaTopic(clusterId), string(mresId), &opCrds.ManagedResource{
 			APIVersion: opCrds.ManagedResourceAPIVersion,
 			Kind:       opCrds.ManagedResourceKind,
@@ -294,10 +312,23 @@ func (d *domain) UnInstallManagedRes(ctx context.Context, mresId repos.ID) (bool
 				Namespace: mres.Namespace,
 			},
 		},
-	)
+	); err != nil {
+		return false, err
+	}
+
+	accountId, err := d.getAccountIdForProject(ctx, mres.ProjectId)
 	if err != nil {
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.DeleteMres,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceManagedResource,
+		ResourceId:   mres.Id,
+		Tags:         map[string]string{"projectId": string(mres.ProjectId)},
+	})
+
 	return true, nil
 }
 

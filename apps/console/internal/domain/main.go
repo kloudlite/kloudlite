@@ -2,6 +2,8 @@ package domain
 
 import (
 	"fmt"
+	"kloudlite.io/pkg/beacon"
+	"kloudlite.io/pkg/cache"
 	"math"
 	"math/rand"
 	"regexp"
@@ -58,6 +60,8 @@ type domain struct {
 	clusterConfigsPath   string
 	consoleTemplate      *template.Template
 	k8sYamlClient        *k8s.YAMLClient
+	beacon               beacon.Beacon
+	consoleCacheRepo     cache.Repo[entities.AccountId]
 }
 
 func generateReadable(name string) string {
@@ -102,10 +106,12 @@ func fxDomain(
 	jsEvalClient jseval.JSEvalClient,
 	consoleTemplate *template.Template,
 	k8sYamlClient *k8s.YAMLClient,
+	beacon beacon.Beacon,
+	consoleCacheRepo cache.Repo[entities.AccountId],
 ) Domain {
 	return &domain{
-		instanceRepo: instanceRepo,
-		environmentRepo: environmentRepo,
+		instanceRepo:         instanceRepo,
+		environmentRepo:      environmentRepo,
 		providerRepo:         providerRepo,
 		changeNotifier:       changeNotifier,
 		notifier:             notifier,
@@ -133,6 +139,8 @@ func fxDomain(
 		clusterConfigsPath:   env.ClusterConfigsPath,
 		consoleTemplate:      consoleTemplate,
 		k8sYamlClient:        k8sYamlClient,
+		beacon:               beacon,
+		consoleCacheRepo:     consoleCacheRepo,
 	}
 }
 

@@ -2,13 +2,14 @@ package domain
 
 import (
 	"context"
-	// b64 "encoding/base64"
 	"fmt"
 	"strings"
 	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	opcrds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -54,7 +55,7 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 		return nil, err
 	}
 
-	create, err := d.secretRepo.Create(
+	scrt, err := d.secretRepo.Create(
 		ctx, &entities.Secret{
 			Name:        strings.ToLower(secretName),
 			ProjectId:   projectId,
@@ -72,79 +73,105 @@ func (d *domain) CreateSecret(ctx context.Context, projectId repos.ID, secretNam
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), opcrds.Secret{
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(scrt.Id), opcrds.Secret{
 			APIVersion: opcrds.SecretAPIVersion,
 			Kind:       opcrds.SecretKind,
 			Metadata: opcrds.SecretMetadata{
-				Name:      string(create.Id),
+				Name:      string(scrt.Id),
 				Namespace: prj.Name + "-blueprint",
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":  string(prj.AccountId),
 					"kloudlite.io/project-ref":  string(prj.Id),
-					"kloudlite.io/resource-ref": string(create.Id),
+					"kloudlite.io/resource-ref": string(scrt.Id),
 				},
 			},
 			Data: nil,
 		},
-	)
+	); err != nil {
+		return nil, err
+	}
+
+	accountId, err := d.getAccountIdForProject(ctx, scrt.ProjectId)
 	if err != nil {
 		return nil, err
 	}
-	return create, nil
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.CreateSecret,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceSecret,
+		ResourceId:   scrt.Id,
+		Tags:         map[string]string{"projectId": string(scrt.ProjectId)},
+	})
+
+	return scrt, nil
 }
 
 func (d *domain) UpdateSecret(ctx context.Context, secretId repos.ID, desc *string, secretData []*entities.Entry) (bool, error) {
-	cfg, err := d.secretRepo.FindById(ctx, secretId)
+	secret, err := d.secretRepo.FindById(ctx, secretId)
 	if err = mongoError(err, "secret not found"); err != nil {
 		return false, err
 	}
 
-	err = d.checkProjectAccess(ctx, cfg.ProjectId, UpdateProject)
+	err = d.checkProjectAccess(ctx, secret.ProjectId, UpdateProject)
 	if err != nil {
 		return false, err
 	}
 
 	if desc != nil {
-		cfg.Description = desc
+		secret.Description = desc
 	}
 
-	cfg.Data = secretData
-	_, err = d.secretRepo.UpdateById(ctx, secretId, cfg)
+	secret.Data = secretData
+	_, err = d.secretRepo.UpdateById(ctx, secretId, secret)
 	if err != nil {
 		return false, err
 	}
 
-	clusterId, err := d.getClusterIdForProject(ctx, cfg.ProjectId)
+	clusterId, err := d.getClusterIdForProject(ctx, secret.ProjectId)
 	if err != nil {
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"apply", d.getDispatchKafkaTopic(clusterId), string(cfg.Id), opcrds.Secret{
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(secret.Id), opcrds.Secret{
 			APIVersion: opcrds.SecretAPIVersion,
 			Kind:       opcrds.SecretKind,
 			Metadata: opcrds.SecretMetadata{
-				Name:      string(cfg.Id),
-				Namespace: cfg.Namespace + "-blueprint",
+				Name:      string(secret.Id),
+				Namespace: secret.Namespace + "-blueprint",
 				Annotations: map[string]string{
-					"kloudlite.io/project-ref":  string(cfg.ProjectId),
-					"kloudlite.io/resource-ref": string(cfg.Id),
+					"kloudlite.io/project-ref":  string(secret.ProjectId),
+					"kloudlite.io/resource-ref": string(secret.Id),
 				},
 			},
 			Data: (func() map[string][]byte {
 				data := make(map[string][]byte, 0)
-				for _, d := range cfg.Data {
+				for _, d := range secret.Data {
 					// encoded := b64.StdEncoding.EncodeToString([]byte(d.Value))
 					data[d.Key] = []byte(d.Value)
 				}
 				return data
 			})(),
 		},
-	)
+	); err != nil {
+		return false, err
+	}
+
+	accountId, err := d.getAccountIdForProject(ctx, secret.ProjectId)
 	if err != nil {
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.UpdateSecret,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceSecret,
+		ResourceId:   secretId,
+		Tags:         map[string]string{"projectId": string(secret.ProjectId)},
+	})
+
 	return true, nil
 }
 
@@ -169,7 +196,7 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"delete", d.getDispatchKafkaTopic(clusterId), string(secretId), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
@@ -182,10 +209,22 @@ func (d *domain) DeleteSecret(ctx context.Context, secretId repos.ID) (bool, err
 				},
 			},
 		},
-	)
+	); err != nil {
+		return false, err
+	}
+
+	accountId, err := d.getAccountIdForProject(ctx, secret.ProjectId)
 	if err != nil {
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.DeleteSecret,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceSecret,
+		ResourceId:   secretId,
+		Tags:         map[string]string{"projectId": string(secret.ProjectId)},
+	})
 
 	return true, nil
 }
@@ -234,7 +273,8 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
-	create, err := d.configRepo.Create(
+
+	cfg, err := d.configRepo.Create(
 		ctx, &entities.Config{
 			Name:        strings.ToLower(configName),
 			ProjectId:   projectId,
@@ -252,32 +292,41 @@ func (d *domain) CreateConfig(ctx context.Context, projectId repos.ID, configNam
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), opcrds.Config{
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(cfg.Id), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
 			Metadata: opcrds.ConfigMetadata{
-				Name:      string(create.Id),
+				Name:      string(cfg.Id),
 				Namespace: prj.Name + "-blueprint",
 				Annotations: map[string]string{
 					"kloudlite.io/account-ref":  string(prj.AccountId),
 					"kloudlite.io/project-ref":  string(prj.Id),
-					"kloudlite.io/resource-ref": string(create.Id),
+					"kloudlite.io/resource-ref": string(cfg.Id),
 				},
 			},
 			Data: nil,
 		},
-	)
+	); err != nil {
+		return nil, err
+	}
+
 	time.AfterFunc(
 		3*time.Second, func() {
 			fmt.Println("send apply config")
-			d.notifier.Notify(create.Id)
+			d.notifier.Notify(cfg.Id)
 		},
 	)
-	if err != nil {
-		return nil, err
-	}
-	return create, nil
+
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.CreateConfig,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceConfig,
+		ResourceId:   cfg.Id,
+		Tags:         map[string]string{"projectId": string(prj.Id)},
+	})
+
+	return cfg, nil
 }
 
 func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *string, configData []*entities.Entry) (bool, error) {
@@ -306,7 +355,7 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(cfg.Id), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
@@ -326,10 +375,23 @@ func (d *domain) UpdateConfig(ctx context.Context, configId repos.ID, desc *stri
 				return m
 			}(),
 		},
-	)
+	); err != nil {
+		return false, err
+	}
+
+	accountId, err := d.getAccountIdForProject(ctx, cfg.ProjectId)
 	if err != nil {
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.UpdateConfig,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceConfig,
+		ResourceId:   cfg.Id,
+		Tags:         map[string]string{"projectId": string(cfg.ProjectId)},
+	})
+
 	return true, nil
 }
 
@@ -353,7 +415,7 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"delete", d.getDispatchKafkaTopic(clusterId), string(configId), opcrds.Config{
 			APIVersion: opcrds.ConfigAPIVersion,
 			Kind:       opcrds.ConfigKind,
@@ -366,11 +428,22 @@ func (d *domain) DeleteConfig(ctx context.Context, configId repos.ID) (bool, err
 				},
 			},
 		},
-	)
+	); err != nil {
+		return false, err
+	}
 
+	accountId, err := d.getAccountIdForProject(ctx, cfg.ProjectId)
 	if err != nil {
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.DeleteConfig,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceConfig,
+		ResourceId:   cfg.Id,
+		Tags:         map[string]string{"projectId": string(cfg.ProjectId)},
+	})
 
 	return true, nil
 }

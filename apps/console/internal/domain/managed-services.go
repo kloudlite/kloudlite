@@ -11,7 +11,9 @@ import (
 	"gopkg.in/yaml.v3"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	opCrds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/jseval"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
@@ -53,7 +55,7 @@ func (d *domain) GetManagedSvcs(ctx context.Context, projectID repos.ID) ([]*ent
 }
 
 func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.ManagedServiceCategory, error) {
-	if _, err := GetUser(ctx); err != nil {
+	if _, err := GetUserId(ctx); err != nil {
 		return nil, err
 	}
 
@@ -70,7 +72,7 @@ func (d *domain) GetManagedServiceTemplates(ctx context.Context) ([]*entities.Ma
 }
 
 func (d *domain) GetManagedServiceTemplate(ctx context.Context, name string) (*entities.ManagedServiceTemplate, error) {
-	if _, err := GetUser(ctx); err != nil {
+	if _, err := GetUserId(ctx); err != nil {
 		return nil, err
 	}
 
@@ -132,7 +134,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
-	create, err := d.managedSvcRepo.Create(
+	msvc, err := d.managedSvcRepo.Create(
 		ctx, &entities.ManagedService{
 			Name:        name,
 			Namespace:   prj.Name,
@@ -184,13 +186,13 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), &opCrds.ManagedService{
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(msvc.Id), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
 			Metadata: opCrds.ManagedServiceMetadata{
-				Name:      string(create.Id),
-				Namespace: create.Namespace,
+				Name:      string(msvc.Id),
+				Namespace: msvc.Namespace,
 				Annotations: func() map[string]string {
 					if transformedInputs.Annotation == nil {
 						return nil
@@ -198,7 +200,7 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 					a := transformedInputs.Annotation
 					a["kloudlite.io/account-ref"] = string(prj.AccountId)
 					a["kloudlite.io/project-ref"] = string(prj.Id)
-					a["kloudlite.io/resource-ref"] = string(create.Id)
+					a["kloudlite.io/resource-ref"] = string(msvc.Id)
 					a["kloudlite.io/updated-at"] = time.Now().String()
 					return a
 				}(),
@@ -219,11 +221,19 @@ func (d *domain) InstallManagedSvc(ctx context.Context, projectID repos.ID, temp
 				Inputs: transformedInputs.Inputs,
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
-	return create, err
+
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.CreateMsvc,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceManagedService,
+		ResourceId:   msvc.Id,
+		Tags:         map[string]string{"projectId": string(prj.Id)},
+	})
+
+	return msvc, err
 }
 
 func (d *domain) JsEval(ctx context.Context, evalIn *jseval.EvalIn) (*jseval.EvalOut, error) {
@@ -333,6 +343,14 @@ func (d *domain) UpdateManagedSvc(ctx context.Context, managedServiceId repos.ID
 		return false, err
 	}
 
+	go d.beacon.TriggerWithUserCtx(ctx, proj.AccountId, beacon.EventAction{
+		Action:       constants.UpdateMsvc,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceManagedService,
+		ResourceId:   managedSvc.Id,
+		Tags:         map[string]string{"projectId": string(proj.Id)},
+	})
+
 	return true, nil
 }
 
@@ -358,7 +376,7 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"delete", d.getDispatchKafkaTopic(clusterId), string(managedServiceId), &opCrds.ManagedService{
 			APIVersion: opCrds.ManagedServiceAPIVersion,
 			Kind:       opCrds.ManagedServiceKind,
@@ -367,10 +385,22 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, managedServiceId repos
 				Namespace: managedSvc.Namespace,
 			},
 		},
-	)
+	); err != nil {
+		return false, err
+	}
+
+	accountId, err := d.getAccountIdForProject(ctx, managedSvc.ProjectId)
 	if err != nil {
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.DeleteMsvc,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceManagedService,
+		ResourceId:   managedSvc.Id,
+		Tags:         map[string]string{"projectId": string(managedSvc.ProjectId)},
+	})
 
 	return true, nil
 }

@@ -5,12 +5,12 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"kloudlite.io/constants"
 	"text/template"
 	"time"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/ci/internal/domain"
-	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logging"
@@ -79,10 +79,10 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 						}
 
 						hook, err := func() (*domain.GitWebhookPayload, error) {
-							if gitHook.GitProvider == common.ProviderGithub {
+							if gitHook.GitProvider == constants.ProviderGithub {
 								return d.ParseGithubHook(gitHook.Headers[GithubEventHeader], gitHook.Body)
 							}
-							if gitHook.GitProvider == common.ProviderGitlab {
+							if gitHook.GitProvider == constants.ProviderGitlab {
 								return d.ParseGitlabHook(gitHook.Headers[GitlabEventHeader], gitHook.Body)
 							}
 							return nil, errors.New("unknown git provider")

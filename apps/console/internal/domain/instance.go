@@ -3,16 +3,15 @@ package domain
 import (
 	"context"
 	"fmt"
+	"kloudlite.io/constants"
 	"strings"
 
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
-	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 
 	createjsonpatch "github.com/snorwin/jsonpatch"
-	"github.com/valyala/fasthttp/reuseport"
 )
 
 const (
@@ -29,26 +28,26 @@ func (d *domain) GetResInstances(ctx context.Context, envId repos.ID, resType st
 	})
 }
 
-func (d *domain) ValidateResourecType(ctx context.Context, resType string) error {
-	switch common.ResourceType(resType) {
-	case common.ResourceApp,
-		common.ResourceRouter,
-		common.ResourceConfig,
-		common.ResourceSecret,
-		common.ResourceManagedResource,
-		common.ResourceManagedService:
+func (d *domain) ValidateResourceType(ctx context.Context, resType string) error {
+	switch constants.ResourceType(resType) {
+	case constants.ResourceApp,
+		constants.ResourceRouter,
+		constants.ResourceConfig,
+		constants.ResourceSecret,
+		constants.ResourceManagedResource,
+		constants.ResourceManagedService:
 		return nil
 
 	default:
 
 		return fmt.Errorf(
 			"resource type is not valid, use one of [%s, %s, %s, %s, %s, %s] resource type",
-			common.ResourceApp,
-			common.ResourceRouter,
-			common.ResourceConfig,
-			common.ResourceSecret,
-			common.ResourceManagedResource,
-			common.ResourceManagedService,
+			constants.ResourceApp,
+			constants.ResourceRouter,
+			constants.ResourceConfig,
+			constants.ResourceSecret,
+			constants.ResourceManagedResource,
+			constants.ResourceManagedService,
 		)
 	}
 }
@@ -106,10 +105,10 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 	isSelf := strings.HasPrefix(string(instance.ResourceId), ENV_INSTANCE)
 
 	switch inst.ResourceType {
-	case common.ResourceRouter:
+	case constants.ResourceRouter:
 		return nil, fmt.Errorf("not implemented")
 
-	case common.ResourceConfig:
+	case constants.ResourceConfig:
 		apiVersion = op_crds.ConfigAPIVersion
 		kind = op_crds.ConfigKind
 
@@ -121,7 +120,7 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 			}
 		}
 
-	case common.ResourceSecret:
+	case constants.ResourceSecret:
 		apiVersion = op_crds.SecretAPIVersion
 		kind = op_crds.SecretKind
 
@@ -133,7 +132,7 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 			}
 		}
 
-	case common.ResourceManagedService:
+	case constants.ResourceManagedService:
 		apiVersion = op_crds.ManagedServiceAPIVersion
 		kind = op_crds.ManagedServiceKind
 
@@ -145,7 +144,7 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 			}
 		}
 
-	case common.ResourceManagedResource:
+	case constants.ResourceManagedResource:
 		apiVersion = op_crds.ManagedResourceAPIVersion
 		kind = op_crds.ManagedResourceKind
 		if !isSelf {
@@ -156,7 +155,7 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 			}
 		}
 
-	case common.ResourceApp:
+	case constants.ResourceApp:
 		apiVersion = op_crds.AppAPIVersion
 		kind = op_crds.AppKind
 		if !isSelf {
@@ -202,7 +201,7 @@ func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, env
 			ResourceId:    resourceId,
 			EnvironmentId: environmentId,
 			BlueprintId:   blueprintId,
-			ResourceType:  common.ResourceType(resType),
+			ResourceType:  constants.ResourceType(resType),
 		})
 }
 
@@ -219,14 +218,14 @@ func (d *domain) ReturnResInstance(ctx context.Context, instance *entities.ResIn
 
 }
 
-var types = map[string]common.ResourceType{
-	"App":             common.ResourceApp,
-	"Config":          common.ResourceConfig,
-	"Secret":          common.ResourceSecret,
-	"Lambda":          common.ResourceLambda,
-	"Router":          common.ResourceRouter,
-	"ManagedResource": common.ResourceManagedResource,
-	"ManagedService":  common.ResourceManagedService,
+var types = map[string]constants.ResourceType{
+	"App":             constants.ResourceApp,
+	"Config":          constants.ResourceConfig,
+	"Secret":          constants.ResourceSecret,
+	"Lambda":          constants.ResourceLambda,
+	"Router":          constants.ResourceRouter,
+	"ManagedResource": constants.ResourceManagedResource,
+	"ManagedService":  constants.ResourceManagedService,
 }
 
 func validateValues(response *op_crds.StatusUpdate) error {

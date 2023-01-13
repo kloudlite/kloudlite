@@ -28,8 +28,16 @@ func mongoError(err error, descp string) error {
 	return nil
 }
 
-func GetUser(ctx context.Context) (string, error) {
+func GetSession(ctx context.Context) (*common.AuthSession, error) {
+	session := httpServer.GetSession[*common.AuthSession](ctx)
 
+	if session == nil {
+		return nil, errors.New("Unauthorized")
+	}
+	return session, nil
+}
+
+func GetUserId(ctx context.Context) (string, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 
 	if session == nil {

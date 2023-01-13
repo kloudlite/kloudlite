@@ -2,6 +2,7 @@ package op_crds
 
 type ProjectSpec struct {
 	DisplayName string `json:"displayName,omitempty"`
+	AccountRef  string `json:"accountRef,omitempty"`
 }
 
 type ProjectMetadata struct {

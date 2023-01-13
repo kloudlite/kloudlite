@@ -6,6 +6,8 @@ import (
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/kubeapi"
 	"kloudlite.io/pkg/repos"
 )
@@ -82,7 +84,7 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 		return err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(provider.Id), &op_crds.Secret{
 			APIVersion: op_crds.SecretAPIVersion,
 			Kind:       op_crds.SecretKind,
@@ -102,11 +104,16 @@ func (d *domain) CreateCloudProvider(ctx context.Context, accountId *repos.ID, p
 				return data
 			}(),
 		},
-	)
-
-	if err != nil {
+	); err != nil {
 		return err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, *accountId, beacon.EventAction{
+		Action:       constants.CreateCloudProvider,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceCloudProvider,
+		ResourceId:   provider.Id,
+	})
 
 	return nil
 }
@@ -137,6 +144,13 @@ func (d *domain) DeleteCloudProvider(ctx context.Context, providerId repos.ID) e
 	); err != nil {
 		return err
 	}
+
+	d.beacon.TriggerWithUserCtx(ctx, *provider.AccountId, beacon.EventAction{
+		Action:       constants.DeleteCloudProvider,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceCloudProvider,
+		ResourceId:   providerId,
+	})
 
 	return nil
 }
@@ -236,7 +250,7 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entit
 		return err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(region.Id), &op_crds.Region{
 			APIVersion: op_crds.EdgeAPIVersion,
 			Kind:       op_crds.EdgeKind,
@@ -277,10 +291,17 @@ func (d *domain) CreateEdgeRegion(ctx context.Context, _ repos.ID, region *entit
 				}(),
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, *provider.AccountId, beacon.EventAction{
+		Action:       constants.CreateEdgeRegion,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceEdgeRegion,
+		ResourceId:   createdRegion.Id,
+	})
+
 	return nil
 }
 
@@ -325,7 +346,7 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 		return err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"delete", d.getDispatchKafkaTopic(clusterId), string(edge.Id), &op_crds.Region{
 			APIVersion: op_crds.EdgeAPIVersion,
 			Kind:       op_crds.EdgeKind,
@@ -333,10 +354,17 @@ func (d *domain) DeleteEdgeRegion(ctx context.Context, edgeId repos.ID) error {
 				Name: string(edge.Id),
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, *provider.AccountId, beacon.EventAction{
+		Action:       constants.DeleteEdgeRegion,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceEdgeRegion,
+		ResourceId:   edgeId,
+	})
+
 	return nil
 }
 
@@ -418,7 +446,7 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 		return err
 	}
 
-	d.workloadMessenger.SendAction(
+	if err := d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(region.Id), &op_crds.Region{
 			APIVersion: op_crds.EdgeAPIVersion,
 			Kind:       op_crds.EdgeKind,
@@ -459,6 +487,16 @@ func (d *domain) UpdateEdgeRegion(ctx context.Context, edgeId repos.ID, update *
 				}(),
 			},
 		},
-	)
+	); err != nil {
+		return err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, *provider.AccountId, beacon.EventAction{
+		Action:       constants.DeleteEdgeRegion,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceEdgeRegion,
+		ResourceId:   edgeId,
+	})
+
 	return nil
 }

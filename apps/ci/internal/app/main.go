@@ -8,6 +8,7 @@ import (
 	"kloudlite.io/apps/ci/internal/app/graph/generated"
 	"kloudlite.io/apps/ci/internal/domain"
 	"kloudlite.io/common"
+	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
@@ -159,7 +160,7 @@ var Module = fx.Module(
 					if err != nil {
 						return err
 					}
-					if provider == common.ProviderGitlab {
+					if provider == constants.ProviderGitlab {
 						token, err := d.GitlabPullToken(ctx.Context(), pipeline.AccessTokenId)
 						if err != nil {
 							return errors.NewEf(err, "while getting gitlab pull token")
@@ -167,7 +168,7 @@ var Module = fx.Module(
 						return ctx.JSON(token)
 					}
 
-					if provider == common.ProviderGithub {
+					if provider == constants.ProviderGithub {
 						token, err := d.GithubInstallationToken(ctx.Context(), pipeline.GitRepoUrl)
 						if err != nil {
 							return errors.NewEf(err, "while getting gitlab pull token")
@@ -209,9 +210,9 @@ var Module = fx.Module(
 				schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
-					common.CookieName,
+					constants.CookieName,
 					env.CookieDomain,
-					common.CacheSessionPrefix,
+					constants.CacheSessionPrefix,
 				),
 			)
 		},

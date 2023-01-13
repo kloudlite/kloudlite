@@ -1,9 +1,9 @@
 package domain
 
 import (
+	"kloudlite.io/constants"
 	"time"
 
-	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -36,7 +36,7 @@ type Account struct {
 type Membership struct {
 	AccountId repos.ID
 	UserId    repos.ID
-	Role      common.Role
+	Role      constants.Role
 	Accepted  bool
 }
 

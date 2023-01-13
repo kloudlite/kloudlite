@@ -183,5 +183,6 @@ var Module fx.Option = fx.Module(
 	cache.FxLifeCycle[app.CacheClient](),
 	httpServer.NewHttpServerFx[*Env](),
 	loki_server.NewLogServerFx[*LogServerEnv](), // will provide log server and loki client
+
 	app.Module,
 )

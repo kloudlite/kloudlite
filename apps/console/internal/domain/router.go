@@ -6,6 +6,8 @@ import (
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -76,7 +78,6 @@ func (d *domain) OnDeleteRouter(ctx context.Context, response *op_crds.StatusUpd
 }
 
 func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerName string, domains []string, routes []*entities.Route) (*entities.Router, error) {
-
 	if err := d.checkProjectAccess(ctx, projectId, UpdateProject); err != nil {
 		return nil, err
 	}
@@ -88,7 +89,8 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 	if prj == nil {
 		return nil, fmt.Errorf("project not found")
 	}
-	create, err := d.routerRepo.Create(
+
+	router, err := d.routerRepo.Create(
 		ctx, &entities.Router{
 			ProjectId: projectId,
 			Name:      routerName,
@@ -106,82 +108,7 @@ func (d *domain) CreateRouter(ctx context.Context, projectId repos.ID, routerNam
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"apply", d.getDispatchKafkaTopic(clusterId), string(create.Id), &op_crds.Router{
-			APIVersion: op_crds.RouterAPIVersion,
-			Kind:       op_crds.RouterKind,
-			Metadata: op_crds.RouterMetadata{
-				Name:      string(create.Id),
-				Namespace: create.Namespace,
-				Labels: map[string]string{
-					"kloudlite.io/account-ref": string(prj.AccountId),
-				},
-			},
-			Spec: op_crds.RouterSpec{
-				Region: func() string {
-					if prj.RegionId != nil {
-						return string(*prj.RegionId)
-					}
-					return ""
-				}(),
-				Https: struct {
-					Enabled       bool `json:"enabled"`
-					ForceRedirect bool `json:"forceRedirect"`
-				}(struct {
-					Enabled       bool
-					ForceRedirect bool
-				}{Enabled: true, ForceRedirect: true}),
-				Domains: create.Domains,
-				Routes: func() []op_crds.Route {
-					i := make([]op_crds.Route, 0)
-					for _, r := range create.Routes {
-						i = append(
-							i, op_crds.Route{
-								Path: r.Path,
-								App:  r.AppName,
-								Port: r.Port,
-							},
-						)
-					}
-					return i
-				}(),
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return create, nil
-}
-func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string, entries []*entities.Route) (bool, error) {
-	router, err := d.routerRepo.FindById(ctx, id)
-	if err = mongoError(err, "router not found"); err != nil {
-		return false, err
-	}
-	if err = d.checkProjectAccess(ctx, router.ProjectId, UpdateProject); err != nil {
-		return false, err
-	}
-	prj, err := d.projectRepo.FindById(ctx, router.ProjectId)
-	if err != nil {
-		return false, err
-	}
-	if domains != nil {
-		router.Domains = domains
-	}
-	if entries != nil {
-		router.Routes = entries
-	}
-	_, err = d.routerRepo.UpdateById(ctx, id, router)
-	if err != nil {
-		return false, err
-	}
-
-	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
-	if err != nil {
-		return false, err
-	}
-
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(router.Id), &op_crds.Router{
 			APIVersion: op_crds.RouterAPIVersion,
 			Kind:       op_crds.RouterKind,
@@ -222,22 +149,111 @@ func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string
 				}(),
 			},
 		},
-	)
+	); err != nil {
+		return nil, err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.CreateRouter,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceRouter,
+		ResourceId:   router.Id,
+		Tags:         map[string]string{"projectId": string(router.ProjectId)},
+	})
+
+	return router, nil
+}
+
+func (d *domain) UpdateRouter(ctx context.Context, id repos.ID, domains []string, entries []*entities.Route) (bool, error) {
+	router, err := d.routerRepo.FindById(ctx, id)
+	if err = mongoError(err, "router not found"); err != nil {
+		return false, err
+	}
+	if err = d.checkProjectAccess(ctx, router.ProjectId, UpdateProject); err != nil {
+		return false, err
+	}
+	prj, err := d.projectRepo.FindById(ctx, router.ProjectId)
 	if err != nil {
 		return false, err
 	}
+	if domains != nil {
+		router.Domains = domains
+	}
+	if entries != nil {
+		router.Routes = entries
+	}
+	_, err = d.routerRepo.UpdateById(ctx, id, router)
 	if err != nil {
 		return false, err
 	}
+
+	clusterId, err := d.getClusterForAccount(ctx, prj.AccountId)
+	if err != nil {
+		return false, err
+	}
+
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(router.Id), &op_crds.Router{
+			APIVersion: op_crds.RouterAPIVersion,
+			Kind:       op_crds.RouterKind,
+			Metadata: op_crds.RouterMetadata{
+				Name:      string(router.Id),
+				Namespace: router.Namespace,
+				Labels: map[string]string{
+					"kloudlite.io/account-ref": string(prj.AccountId),
+				},
+			},
+			Spec: op_crds.RouterSpec{
+				Region: func() string {
+					if prj.RegionId != nil {
+						return string(*prj.RegionId)
+					}
+					return ""
+				}(),
+				Https: struct {
+					Enabled       bool `json:"enabled"`
+					ForceRedirect bool `json:"forceRedirect"`
+				}(struct {
+					Enabled       bool
+					ForceRedirect bool
+				}{Enabled: true, ForceRedirect: true}),
+				Domains: router.Domains,
+				Routes: func() []op_crds.Route {
+					i := make([]op_crds.Route, 0)
+					for _, r := range router.Routes {
+						i = append(
+							i, op_crds.Route{
+								Path: r.Path,
+								App:  r.AppName,
+								Port: r.Port,
+							},
+						)
+					}
+					return i
+				}(),
+			},
+		},
+	); err != nil {
+		return false, err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.UpdateRouter,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceRouter,
+		ResourceId:   router.Id,
+		Tags:         map[string]string{"projectId": string(router.ProjectId)},
+	})
+
 	return true, nil
 }
 func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, error) {
-	r, err := d.routerRepo.FindById(ctx, routerID)
+	router, err := d.routerRepo.FindById(ctx, routerID)
 	if err = mongoError(err, "router not found"); err != nil {
 		return false, err
 	}
 
-	if err = d.checkProjectAccess(ctx, r.ProjectId, UpdateProject); err != nil {
+	if err = d.checkProjectAccess(ctx, router.ProjectId, UpdateProject); err != nil {
 		return false, err
 	}
 
@@ -246,25 +262,36 @@ func (d *domain) DeleteRouter(ctx context.Context, routerID repos.ID) (bool, err
 		return false, err
 	}
 
-	clusterId, err := d.getClusterIdForProject(ctx, r.ProjectId)
+	clusterId, err := d.getClusterIdForProject(ctx, router.ProjectId)
 	if err != nil {
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
-		"delete", d.getDispatchKafkaTopic(clusterId), string(r.Id), &op_crds.Router{
+	if err = d.workloadMessenger.SendAction(
+		"delete", d.getDispatchKafkaTopic(clusterId), string(router.Id), &op_crds.Router{
 			APIVersion: op_crds.RouterAPIVersion,
 			Kind:       op_crds.RouterKind,
 			Metadata: op_crds.RouterMetadata{
-				Name:      string(r.Id),
-				Namespace: r.Namespace,
+				Name:      string(router.Id),
+				Namespace: router.Namespace,
 			},
 		},
-	)
+	); err != nil {
+		return false, err
+	}
 
+	accountId, err := d.getAccountIdForProject(ctx, router.ProjectId)
 	if err != nil {
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.DeleteRouter,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceRouter,
+		ResourceId:   router.Id,
+		Tags:         map[string]string{"projectId": string(router.ProjectId)},
+	})
 
 	return true, nil
 }

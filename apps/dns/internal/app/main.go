@@ -7,6 +7,7 @@ import (
 	"github.com/codingconcepts/env"
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc"
+	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
@@ -276,9 +277,9 @@ var Module = fx.Module(
 			schema,
 			httpServer.NewSessionMiddleware[*common.AuthSession](
 				cacheClient,
-				common.CookieName,
+				constants.CookieName,
 				env.CookieDomain,
-				common.CacheSessionPrefix,
+				constants.CacheSessionPrefix,
 			),
 		)
 	}),
