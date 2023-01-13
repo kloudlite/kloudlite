@@ -300,7 +300,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 
 		// Images
 		ImageAuthApi:       fmt.Sprintf("%s/kloudlite/production/auth:v1.0.4", ImageRegistryHost),
-		ImageConsoleApi:    fmt.Sprintf("%s/kloudlite/production/console:v1.0.4", ImageRegistryHost),
+		ImageConsoleApi:    fmt.Sprintf("%s/kloudlite/development/console:v1.0.5", ImageRegistryHost),
 		ImageCiApi:         fmt.Sprintf("%s/kloudlite/production/ci:v1.0.4", ImageRegistryHost),
 		ImageFinanceApi:    fmt.Sprintf("%s/kloudlite/production/finance:v1.0.4", ImageRegistryHost),
 		ImageCommsApi:      fmt.Sprintf("%s/kloudlite/production/comms:v1.0.4", ImageRegistryHost),
@@ -375,7 +375,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 	check.Status = true
 	if check != checks[DefaultsPatched] {
 		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -1055,7 +1055,7 @@ func (r *Reconciler) ensureOperatorCRDs(req *rApi.Request[*v1.PrimaryCluster]) s
 					"Namespace":       lc.NsOperators,
 					"SvcAccountName":  lc.ClusterSvcAccount,
 					"ImagePullPolicy": "Always",
-					"EnvName":         "production",
+					"EnvName":         "development",
 					"ImageTag":        "v1.0.5",
 				})
 
@@ -1136,6 +1136,29 @@ func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) step
 
 		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(OperatorsEnvReady, check, err.Error())
+		}
+
+		rpkAdminScrt, err := rApi.Get(ctx, r.Client, fn.NN(lc.NsCore, obj.Spec.SharedConstants.RedpandaAdminSecretName), &corev1.Secret{})
+		if err != nil {
+			return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+		}
+
+		b2, err := templates.Parse(templates.StatusNBillingOperatorEnv, map[string]any{
+			"namespace":                        lc.NsOperators,
+			"kafka-brokers":                    string(rpkAdminScrt.Data["KAFKA_BROKERS"]),
+			"kafka-sasl-username":              string(rpkAdminScrt.Data["USERNAME"]),
+			"kafka-sasl-password":              string(rpkAdminScrt.Data["PASSWORD"]),
+			"cluster-id":                       obj.Spec.SecondaryClusterId,
+			"kafka-topic-status-updates":       obj.Spec.SharedConstants.KafkaTopicsStatusUpdates,
+			"kafka-topic-billing-updates":      obj.Spec.SharedConstants.KafkaTopicBillingUpdates,
+			"kafka-topic-pipeline-run-updates": obj.Spec.SharedConstants.KafkaTopicPipelineRunUpdates,
+		})
+		if err != nil {
+			return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
+		}
+
+		if err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
+			return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
 		}
 	}
 

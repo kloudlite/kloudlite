@@ -106,7 +106,7 @@ spec:
   operators:
     manifests:
       - repo: kloudlite/operator
-        tag: v1.0.4
+        tag: dev-v1.0.5
         ghTokenSecret:
           name: kl-repo-gh-token
           namespace: kube-system
