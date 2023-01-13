@@ -6,11 +6,12 @@ import (
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/repos"
 )
 
 func (d *domain) CreateEnvironment(ctx context.Context, blueprintID repos.ID, name string, readableId string) (*entities.Environment, error) {
-
 	p, err := d.projectRepo.FindById(ctx, blueprintID)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func (d *domain) CreateEnvironment(ctx context.Context, blueprintID repos.ID, na
 		return nil, err
 	}
 
-	d.workloadMessenger.SendAction("apply", d.getDispatchKafkaTopic(clusterId), string(env.Id), &op_crds.Environment{
+	if err := d.workloadMessenger.SendAction("apply", d.getDispatchKafkaTopic(clusterId), string(env.Id), &op_crds.Environment{
 		APIVersion: op_crds.APIVersion,
 		Kind:       op_crds.EnvKind,
 		Metadata: op_crds.EnvMetadata{
@@ -50,10 +51,19 @@ func (d *domain) CreateEnvironment(ctx context.Context, blueprintID repos.ID, na
 			AccountRef:    string(p.AccountId),
 			// RouterBaseDomain: "example.com",
 		},
+	}); err != nil {
+		return nil, err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, p.AccountId, beacon.EventAction{
+		Action:       constants.CreateEnvironment,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceEnvironment,
+		ResourceId:   p.Id,
+		Tags:         map[string]string{"projectId": string(p.Id)},
 	})
 
 	return env, nil
-
 }
 
 func (d *domain) GetEnvironments(ctx context.Context, blueprintID repos.ID) ([]*entities.Environment, error) {
@@ -87,7 +97,6 @@ func (d *domain) OnUpdateEnv(ctx context.Context, response *op_crds.StatusUpdate
 }
 
 func (d *domain) OnDeleteEnv(ctx context.Context, response *op_crds.StatusUpdate) error {
-
 	if err := d.environmentRepo.UpdateMany(ctx, repos.Filter{
 		"id": repos.ID(response.Metadata.ResourceId),
 	}, map[string]any{

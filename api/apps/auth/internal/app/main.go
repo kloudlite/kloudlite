@@ -8,6 +8,7 @@ import (
 	"kloudlite.io/apps/auth/internal/app/graph/generated"
 	"kloudlite.io/apps/auth/internal/domain"
 	"kloudlite.io/common"
+	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/pkg/cache"
@@ -93,9 +94,9 @@ var Module = fx.Module(
 				server, schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
-					common.CookieName,
+					constants.CookieName,
 					env.CookieDomain,
-					common.CacheSessionPrefix,
+					constants.CacheSessionPrefix,
 				),
 			)
 		},

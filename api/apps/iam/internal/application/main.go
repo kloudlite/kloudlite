@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"kloudlite.io/constants"
 	"strings"
-
-	"kloudlite.io/common"
 
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -179,8 +178,8 @@ func (s *server) Can(ctx context.Context, in *iam.InCan) (*iam.OutCan, error) {
 
 	}
 
-	for _, role := range common.ActionMap[common.Action(in.Action)] {
-		if role == common.Role(rb.Role) {
+	for _, role := range constants.ActionMap[constants.Action(in.Action)] {
+		if role == constants.Role(rb.Role) {
 			return &iam.OutCan{Status: true}, nil
 		}
 	}

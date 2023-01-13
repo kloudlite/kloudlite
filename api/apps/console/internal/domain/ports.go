@@ -179,7 +179,7 @@ type Domain interface {
 	GetEnvironment(ctx context.Context, envId repos.ID) (*entities.Environment, error)
 	CreateEnvironment(ctx context.Context, blueprintID repos.ID, name string, readableId string) (*entities.Environment, error)
 
-	ValidateResourecType(ctx context.Context, resType string) error
+	ValidateResourceType(ctx context.Context, resType string) error
 
 	AddNewCluster(ctx context.Context, name, subDomain, kubeConfig string) (*entities.Cluster, error)
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"time"
 
 	kldns "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/dns"
@@ -59,9 +61,10 @@ func (i *WorkloadStatusConsumerEnv) GetConsumerGroupId() string {
 }
 
 type Env struct {
-	KafkaConsumerGroupId string `env:"KAFKA_GROUP_ID"`
-	CookieDomain         string `env:"COOKIE_DOMAIN"`
-	AuthRedisPrefix      string `env:"REDIS_AUTH_PREFIX"`
+	KafkaConsumerGroupId  string `env:"KAFKA_GROUP_ID"`
+	CookieDomain          string `env:"COOKIE_DOMAIN"`
+	AuthRedisPrefix       string `env:"REDIS_AUTH_PREFIX"`
+	KafkaAuditEventsTopic string `env:"KAFKA_AUDIT_EVENTS_TOPIC" required:"true"`
 }
 
 type InfraClientConnection *grpc.ClientConn
@@ -97,6 +100,10 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.ManagedService]("managed_services", "mgsvc", entities.ManagedServiceIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managed_resources", "mgres", entities.ManagedResourceIndexes),
+
+	fx.Provide(func(client CacheClient) cache.Repo[entities.AccountId] {
+		return cache.NewRepo[entities.AccountId](client)
+	}),
 
 	// Grpc Clients
 
@@ -244,6 +251,10 @@ var Module = fx.Module(
 		},
 	),
 
+	fx.Provide(func(producer redpanda.Producer, env *Env) beacon.Beacon {
+		return beacon.NewBeacon(producer, env.KafkaAuditEventsTopic)
+	}),
+
 	domain.Module,
 
 	// Log Service
@@ -258,7 +269,7 @@ var Module = fx.Module(
 					cacheClient,
 					"hotspot-session",
 					env.CookieDomain,
-					common.CacheSessionPrefix,
+					constants.CacheSessionPrefix,
 				),
 			)
 			a.Get(
@@ -268,9 +279,9 @@ var Module = fx.Module(
 						ctx := d.GetSocketCtx(
 							conn,
 							cacheClient,
-							common.CookieName,
+							constants.CookieName,
 							env.CookieDomain,
-							common.CacheSessionPrefix,
+							constants.CacheSessionPrefix,
 						)
 
 						appId := conn.Query("app_id", "")
@@ -340,9 +351,9 @@ var Module = fx.Module(
 						ctx := d.GetSocketCtx(
 							conn,
 							cacheClient,
-							common.CookieName,
+							constants.CookieName,
 							env.CookieDomain,
-							common.CacheSessionPrefix,
+							constants.CacheSessionPrefix,
 						)
 
 						appId := conn.Query("app_id", "app_id")
@@ -412,7 +423,7 @@ var Module = fx.Module(
 					cacheClient,
 					"hotspot-session",
 					env.CookieDomain,
-					common.CacheSessionPrefix,
+					constants.CacheSessionPrefix,
 				),
 			)
 		},

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/constants"
 	"strings"
 	"time"
 
@@ -98,7 +99,7 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 		return false, errors.NewEf(err, "could not find user")
 	}
 	switch provider {
-	case common.ProviderGithub:
+	case constants.ProviderGithub:
 		{
 			u, t, err := d.github.Callback(ctx, code, state)
 			if err != nil {
@@ -111,7 +112,7 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 			return true, err
 		}
 
-	case common.ProviderGitlab:
+	case constants.ProviderGitlab:
 		{
 			u, t, err := d.gitlab.Callback(ctx, code, state)
 			if err != nil {
@@ -383,15 +384,15 @@ func (d *domainI) ChangePassword(ctx context.Context, id repos.ID, currentPasswo
 }
 
 func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state string) (string, error) {
-	if provider == common.ProviderGithub {
+	if provider == constants.ProviderGithub {
 		return d.github.Authorize(ctx, state)
 	}
 
-	if provider == common.ProviderGitlab {
+	if provider == constants.ProviderGitlab {
 		return d.gitlab.Authorize(ctx, state)
 	}
 
-	if provider == common.ProviderGoogle {
+	if provider == constants.ProviderGoogle {
 		return d.google.Authorize(ctx, state)
 	}
 
@@ -432,15 +433,15 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 
 	p := &ProviderDetail{TokenId: t.Id, Avatar: avatarUrl}
 
-	if provider == common.ProviderGithub {
+	if provider == constants.ProviderGithub {
 		user.ProviderGithub = p
 	}
 
-	if provider == common.ProviderGitlab {
+	if provider == constants.ProviderGitlab {
 		user.ProviderGitlab = p
 	}
 
-	if provider == common.ProviderGoogle {
+	if provider == constants.ProviderGoogle {
 		user.ProviderGoogle = p
 	}
 
@@ -463,7 +464,7 @@ func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *o
 
 func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
 	switch provider {
-	case common.ProviderGithub:
+	case constants.ProviderGithub:
 		{
 			u, t, err := d.github.Callback(ctx, code, state)
 			if err != nil {
@@ -500,7 +501,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 			return d.afterOAuthLogin(ctx, provider, t, user, u.AvatarURL)
 		}
 
-	case common.ProviderGitlab:
+	case constants.ProviderGitlab:
 		{
 			u, t, err := d.gitlab.Callback(ctx, code, state)
 			if err != nil {
@@ -516,7 +517,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 			return d.afterOAuthLogin(ctx, provider, t, user, &u.AvatarURL)
 		}
 
-	case common.ProviderGoogle:
+	case constants.ProviderGoogle:
 		{
 			u, t, err := d.google.Callback(ctx, code, state)
 			if err != nil {

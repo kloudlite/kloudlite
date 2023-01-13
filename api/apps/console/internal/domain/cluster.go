@@ -50,13 +50,11 @@ func (d *domain) AddNewCluster(ctx context.Context, name string, subDomain strin
 	}
 
 	b2 := new(bytes.Buffer)
-	if err := d.consoleTemplate.ExecuteTemplate(
-		b2, "cluster.yml.tpl", map[string]any{
-			"name":                 cluster.Id,
-			"kubeconfig-name":      getClusterKubeConfig(string(cluster.Id)),
-			"kubeconfig-namespace": "kl-core",
-		},
-	); err != nil {
+	if err := d.consoleTemplate.ExecuteTemplate(b2, "cluster.yml.tpl", map[string]any{
+		"name":                 cluster.Id,
+		"kubeconfig-name":      getClusterKubeConfig(string(cluster.Id)),
+		"kubeconfig-namespace": "kl-core",
+	}); err != nil {
 		return nil, err
 	}
 

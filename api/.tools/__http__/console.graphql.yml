@@ -1,21 +1,22 @@
 ---
 global:
-  hello: world
-  accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
-  projectId: "proj-bopxvo-qpfpodbz9lciwu45s5uqd"
-  projectName: "sample"
+  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+  projectId: proj-hhaqjt-f-hwjisccuugzkru25ami
 ---
-
 label: List Projects
 query: |
   query Core_projects($accountId: ID) {
     core_projects(accountId: $accountId) {
       id
       name
+      region {
+        id
+        name
+      }
     }
   }
 variables:
-  accountId: "{{accountId}}" 
+  accountId: "{{.accountId}}" 
 
 ---
 
@@ -28,11 +29,11 @@ query: |
     }
   }
 variables:
-  accountId: "{{accountId}}"
-  name: "sample"
-  displayName: "sample"
-  regionId: "centralindia"
-  description: "this is just a dev only project"
+  accountId: "{{.accountId}}"
+  name: "anotherone-t"
+  displayName: "sample x"
+  regionId: "reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz"
+  description: "this is just a dummy, project and will be deleted soon"
 
 ---
 # clus-t2a-sfpxmcmw9qfydq0kzqswfhvb
@@ -69,3 +70,40 @@ variables:
         user:
           client-certificate-data: ***REMOVED***=
           client-key-data: ***REMOVED***=
+
+---
+label: Create App
+query: |+
+  mutation Core_createApp($projectId: ID!, $app: AppInput!) {
+    core_createApp(projectId: $projectId, app: $app) {
+      id
+      name
+      namespace
+      project {
+        id
+        name
+      }
+    }
+  }
+variables:
+  projectId: "{{.projectId}}"
+  app: 
+    isLambda: false
+    name: sample
+    projectId: "{{.projectId}}"
+    readableId: "sample-app-2312"
+    services:
+      - exposed: 80
+        target: 80
+        type: tcp
+    containers:
+      - computePlan: basic
+        quantity: 1
+        name: sample-app
+        attachedResources: []
+        envVars:
+          - key: NAME
+            value:
+              type: literal
+              value: "sample-app"
+---
