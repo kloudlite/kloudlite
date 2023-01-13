@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/constants"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -75,9 +76,9 @@ var Module = fx.Module(
 				schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
-					common.CookieName,
+					constants.CookieName,
 					env.CookieDomain,
-					common.CacheSessionPrefix,
+					constants.CacheSessionPrefix,
 				),
 			)
 		},

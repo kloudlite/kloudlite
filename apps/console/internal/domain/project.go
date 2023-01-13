@@ -5,13 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strings"
-
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/kubeapi"
+	"strings"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
-	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/errors"
@@ -36,10 +36,9 @@ func (d *domain) OnUpdateProject(ctx context.Context, response *op_crds.StatusUp
 }
 
 func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error) {
-
-	// if err := d.checkProjectAccess(ctx, projectId, ReadProject); err != nil {
-	// 	return nil, err
-	// }
+	if err := d.checkProjectAccess(ctx, projectId, ReadProject); err != nil {
+		return nil, err
+	}
 
 	project, err := d.projectRepo.FindById(ctx, projectId)
 	if err = mongoError(err, "project not found"); err != nil {
@@ -54,10 +53,10 @@ func (d *domain) GetProjectWithID(ctx context.Context, projectId repos.ID) (*ent
 }
 
 func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*entities.Project, error) {
-	if err := d.checkAccountAccess(ctx, acountId, ReadProject); err != nil {
-		return nil, err
-	}
-
+	//if err := d.checkAccountAccess(ctx, acountId, ReadProject); err != nil {
+	//	return nil, err
+	//}
+	//
 	res, err := d.projectRepo.Find(
 		ctx, repos.Query{
 			Filter: repos.Filter{
@@ -73,7 +72,6 @@ func (d *domain) GetAccountProjects(ctx context.Context, acountId repos.ID) ([]*
 }
 
 func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, email string, role string) (bool, error) {
-
 	var err error
 	switch role {
 	case "project-owner":
@@ -107,11 +105,28 @@ func (d *domain) InviteProjectMember(ctx context.Context, projectID repos.ID, em
 		return false, err
 	}
 
+	accountId, err := d.getAccountIdForProject(ctx, projectID)
+	if err != nil {
+		d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+			Action:       constants.InviteProjectMember,
+			Status:       beacon.StatusError(err),
+			ResourceType: constants.ResourceProject,
+			ResourceId:   projectID,
+		})
+		return false, err
+	}
+
+	d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.InviteProjectMember,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceProject,
+		ResourceId:   projectID,
+	})
+
 	return true, nil
 }
 
 func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, userId repos.ID) error {
-
 	if err := d.checkProjectAccess(ctx, projectId, "cancel_proj_invite"); err != nil {
 		return err
 	}
@@ -123,10 +138,27 @@ func (d *domain) RemoveProjectMember(ctx context.Context, projectId repos.ID, us
 		},
 	)
 
+	accountId, err := d.getAccountIdForProject(ctx, projectId)
 	if err != nil {
 		return err
 	}
 
+	if err != nil {
+		go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+			Action:       constants.RemoveProjectMember,
+			Status:       beacon.StatusOK(),
+			ResourceType: constants.ResourceProject,
+			ResourceId:   projectId,
+		})
+		return err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.RemoveProjectMember,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceProject,
+		ResourceId:   projectId,
+	})
 	return nil
 }
 
@@ -139,7 +171,7 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 	rbs, err := d.iamClient.ListResourceMemberships(
 		ctx, &iam.InResourceMemberships{
 			ResourceId:   string(projectID),
-			ResourceType: string(common.ResourceProject),
+			ResourceType: string(constants.ResourceProject),
 		},
 	)
 	if err != nil {
@@ -152,7 +184,7 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 			memberships, &entities.ProjectMembership{
 				ProjectId: repos.ID(rb.ResourceId),
 				UserId:    repos.ID(rb.UserId),
-				Role:      common.Role(rb.Role),
+				Role:      constants.Role(rb.Role),
 			},
 		)
 	}
@@ -164,11 +196,10 @@ func (d *domain) GetProjectMemberships(ctx context.Context, projectID repos.ID) 
 }
 
 func (d *domain) GetProjectMembershipsByUser(ctx context.Context, userId repos.ID) ([]*entities.ProjectMembership, error) {
-
 	rbs, err := d.iamClient.ListUserMemberships(
 		ctx, &iam.InUserMemberships{
 			UserId:       string(userId),
-			ResourceType: string(common.ResourceProject),
+			ResourceType: string(constants.ResourceProject),
 		},
 	)
 	if err != nil {
@@ -181,7 +212,7 @@ func (d *domain) GetProjectMembershipsByUser(ctx context.Context, userId repos.I
 			memberships, &entities.ProjectMembership{
 				ProjectId: repos.ID(rb.ResourceId),
 				UserId:    repos.ID(rb.UserId),
-				Role:      common.Role(rb.Role),
+				Role:      constants.Role(rb.Role),
 				Accepted:  rb.Accepted,
 			},
 		)
@@ -251,12 +282,20 @@ func (d *domain) CreateProject(ctx context.Context, ownerId repos.ID, accountId 
 			},
 			Spec: op_crds.ProjectSpec{
 				DisplayName: displayName,
+				AccountRef:  string(project.AccountId),
 			},
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.CreateProject,
+		ResourceType: constants.ResourceProject,
+		ResourceId:   project.Id,
+	})
+
 	return project, err
 }
 
@@ -280,10 +319,22 @@ func (d *domain) UpdateProject(ctx context.Context, projectID repos.ID, displayN
 		proj.Description = description
 	}
 
-	_, err = d.projectRepo.UpdateById(ctx, projectID, proj)
-	if err != nil {
+	if _, err = d.projectRepo.UpdateById(ctx, projectID, proj); err != nil {
+		go d.beacon.TriggerWithUserCtx(ctx, proj.AccountId, beacon.EventAction{
+			Action:       constants.UpdateProject,
+			Status:       beacon.StatusError(err),
+			ResourceType: constants.ResourceProject,
+			ResourceId:   projectID,
+		})
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, proj.AccountId, beacon.EventAction{
+		Action:       constants.UpdateProject,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceProject,
+		ResourceId:   projectID,
+	})
 
 	return true, nil
 }
@@ -308,7 +359,8 @@ func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	err = d.workloadMessenger.SendAction(
+
+	if err = d.workloadMessenger.SendAction(
 		"delete", d.getDispatchKafkaTopic(clusterId), string(id), &op_crds.Project{
 			APIVersion: op_crds.APIVersion,
 			Kind:       op_crds.ProjectKind,
@@ -316,10 +368,23 @@ func (d *domain) DeleteProject(ctx context.Context, id repos.ID) (bool, error) {
 				Name: proj.Name,
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
+		go d.beacon.TriggerWithUserCtx(ctx, proj.AccountId, beacon.EventAction{
+			Action:       constants.DeleteProject,
+			Status:       beacon.StatusError(err),
+			ResourceType: constants.ResourceProject,
+			ResourceId:   proj.Id,
+		})
 		return false, err
 	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, proj.AccountId, beacon.EventAction{
+		Action:       constants.DeleteProject,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceProject,
+		ResourceId:   proj.Id,
+	})
+
 	return true, nil
 }
 
@@ -406,7 +471,7 @@ func (d *domain) GetDockerCredentials(ctx context.Context, projectId repos.ID) (
 }
 
 func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, action string) error {
-	userId, err := GetUser(ctx)
+	userId, err := GetUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -434,7 +499,7 @@ func (d *domain) checkProjectAccess(ctx context.Context, projectId repos.ID, act
 }
 
 func (d *domain) checkAccountAccess(ctx context.Context, accountId repos.ID, action string) error {
-	userId, err := GetUser(ctx)
+	userId, err := GetUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -460,4 +525,30 @@ func (d *domain) checkAccountAccess(ctx context.Context, accountId repos.ID, act
 	}
 
 	return nil
+}
+
+// getAccountIdForProject uses redisCache to keep the map for <projectId> => <accountId>
+func (d *domain) getAccountIdForProject(ctx context.Context, projectId repos.ID) (repos.ID, error) {
+	accountId, err := d.consoleCacheRepo.Get(ctx, string(projectId))
+	if err != nil {
+		return "", err
+	}
+
+	if accountId == "" {
+		return repos.ID(accountId), nil
+	}
+
+	project, err := d.projectRepo.FindById(ctx, projectId)
+	if err != nil {
+		return "", err
+	}
+	if project == nil {
+		return "", fmt.Errorf("project with %v not found", projectId)
+	}
+
+	if err := d.consoleCacheRepo.Set(ctx, string(projectId), entities.AccountId(project.AccountId)); err != nil {
+		return "", err
+	}
+
+	return project.AccountId, nil
 }

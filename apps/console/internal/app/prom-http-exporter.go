@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"kloudlite.io/constants"
 	"net/http"
 	"strings"
 	"time"
@@ -77,7 +78,7 @@ func metricsQuerySvc(app *PromMetricsHttpServer, promOpts *PrometheusOpts, d dom
 			cacheClient,
 			"hotspot-session",
 			env.CookieDomain,
-			common.CacheSessionPrefix,
+			constants.CacheSessionPrefix,
 		),
 	)
 

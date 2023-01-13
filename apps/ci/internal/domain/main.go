@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/constants"
 	"math"
 	"strings"
 	"time"
@@ -17,7 +18,6 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"golang.org/x/oauth2"
-	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/harbor"
@@ -238,7 +238,7 @@ func (d *domainI) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhoo
 	case *github.PushEvent:
 		{
 			payload := GitWebhookPayload{
-				GitProvider: common.ProviderGithub,
+				GitProvider: constants.ProviderGithub,
 				RepoUrl:     *h.Repo.HTMLURL,
 				GitBranch:   getBranchFromRef(h.GetRef()),
 				CommitHash:  h.GetAfter()[:int(math.Min(10, float64(len(h.GetAfter()))))],
@@ -259,7 +259,7 @@ func (d *domainI) ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhoo
 	case *gitlab.PushEvent:
 		{
 			payload := &GitWebhookPayload{
-				GitProvider: common.ProviderGitlab,
+				GitProvider: constants.ProviderGitlab,
 				RepoUrl:     h.Repository.GitHTTPURL,
 				GitBranch:   getBranchFromRef(h.Ref),
 				CommitHash:  h.CheckoutSHA[:int(math.Min(10, float64(len(h.CheckoutSHA))))],
@@ -618,7 +618,7 @@ func (d *domainI) CreatePipeline(ctx context.Context, userId repos.ID, pipeline 
 	// 	latestCommit = commit
 	// }
 
-	if pipeline.GitProvider == common.ProviderGitlab {
+	if pipeline.GitProvider == constants.ProviderGitlab {
 		token, err := d.getAccessTokenByUserId(ctx, pipeline.GitProvider, userId)
 		if err != nil {
 			return nil, err

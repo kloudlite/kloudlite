@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
 	"kloudlite.io/pkg/kubeapi"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -14,7 +16,7 @@ import (
 )
 
 func (d *domain) GetDevice(ctx context.Context, id repos.ID) (*entities.Device, error) {
-	userId, err := GetUser(ctx)
+	userId, err := GetUserId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +43,7 @@ func (d *domain) ListAccountDevices(ctx context.Context, accountId repos.ID) ([]
 		},
 	)
 }
+
 func (d *domain) ListUserDevices(ctx context.Context, userId repos.ID) ([]*entities.Device, error) {
 	q := make(repos.Filter)
 	q["user_id"] = userId
@@ -130,7 +133,7 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 		return nil, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(device.Id), &internal_crds.Device{
 			APIVersion: internal_crds.DeviceAPIVersion,
 			Kind:       internal_crds.DeviceKind,
@@ -171,10 +174,17 @@ func (d *domain) AddDevice(ctx context.Context, deviceName string, accountId rep
 				}(),
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return device, err
 	}
+
+	d.beacon.TriggerWithUserCtx(ctx, accountId, beacon.EventAction{
+		Action:       constants.CreateDevice,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceDevice,
+		ResourceId:   device.Id,
+	})
+
 	return device, e
 }
 
@@ -212,7 +222,7 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 
 	clusterId, err := d.getClusterForAccount(ctx, device.AccountId)
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"delete", d.getDispatchKafkaTopic(clusterId), string(device.Id), &internal_crds.Device{
 			APIVersion: internal_crds.DeviceAPIVersion,
 			Kind:       internal_crds.DeviceKind,
@@ -220,9 +230,20 @@ func (d *domain) RemoveDevice(ctx context.Context, deviceId repos.ID) error {
 				Name: string(device.Id),
 			},
 		},
-	)
-	return err
+	); err != nil {
+		return err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, device.AccountId, beacon.EventAction{
+		Action:       constants.DeleteDevice,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceDevice,
+		ResourceId:   device.Id,
+	})
+
+	return nil
 }
+
 func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName *string, region *string, ports []entities.Port) (done bool, e error) {
 	device, e := d.deviceRepo.FindById(ctx, deviceId)
 	if region != nil {
@@ -256,7 +277,7 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 		return false, err
 	}
 
-	err = d.workloadMessenger.SendAction(
+	if err = d.workloadMessenger.SendAction(
 		"apply", d.getDispatchKafkaTopic(clusterId), string(device.Id), &internal_crds.Device{
 			APIVersion: internal_crds.DeviceAPIVersion,
 			Kind:       internal_crds.DeviceKind,
@@ -296,10 +317,16 @@ func (d *domain) UpdateDevice(ctx context.Context, deviceId repos.ID, deviceName
 				}(),
 			},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return false, err
 	}
-	return true, nil
 
+	go d.beacon.TriggerWithUserCtx(ctx, device.AccountId, beacon.EventAction{
+		Action:       constants.UpdateDevice,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceDevice,
+		ResourceId:   device.Id,
+	})
+
+	return true, nil
 }

@@ -152,7 +152,7 @@ func withUserSession(ctx context.Context) (context.Context, error) {
 
 func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, resType string) ([]*model.ResInstance, error) {
 
-	if err := d.ValidateResourecType(ctx, resType); err != nil {
+	if err := d.ValidateResourceType(ctx, resType); err != nil {
 		return nil, err
 	}
 

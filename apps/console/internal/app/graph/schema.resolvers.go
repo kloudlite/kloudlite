@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"kloudlite.io/constants"
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
@@ -1141,7 +1142,7 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 		return false, err
 	}
 
-	if err = r.Domain.ValidateResourecType(ctx, string(instance.ResourceType)); err != nil {
+	if err = r.Domain.ValidateResourceType(ctx, string(instance.ResourceType)); err != nil {
 		return false, err
 	}
 
@@ -1158,11 +1159,10 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 	isSelf := strings.HasPrefix(string(instance.ResourceId), domain.ENV_INSTANCE)
 
 	switch instance.ResourceType {
-	case common.ResourceRouter:
+	case constants.ResourceRouter:
 		return false, fmt.Errorf("not implemented")
 
-	case common.ResourceConfig:
-
+	case constants.ResourceConfig:
 		oldConfig := &entities.Config{}
 		if !isSelf {
 			oldConfig, err = r.Domain.GetConfig(ctx, instance.ResourceId)
@@ -1205,7 +1205,7 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 			return false, err
 		}
 
-	case common.ResourceSecret:
+	case constants.ResourceSecret:
 		oldSecret := &entities.Secret{}
 		if !isSelf {
 			oldSecret, err = r.Domain.GetSecret(ctx, instance.ResourceId)
@@ -1248,7 +1248,7 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 			return false, err
 		}
 
-	case common.ResourceManagedService:
+	case constants.ResourceManagedService:
 		{
 			oldManagedSvc := &entities.ManagedService{}
 			if !isSelf {
@@ -1292,7 +1292,7 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 
 		}
 
-	case common.ResourceManagedResource:
+	case constants.ResourceManagedResource:
 		{
 
 			oldMRes := &entities.ManagedResource{}
@@ -1338,7 +1338,7 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 
 		}
 
-	case common.ResourceApp:
+	case constants.ResourceApp:
 		{
 			oldApp := &entities.App{}
 			if !isSelf {
@@ -1386,7 +1386,7 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 }
 
 func (r *mutationResolver) CoreCreateInstance(ctx context.Context, instance model.InstanceIn) (*model.ResInstance, error) {
-	if err := r.Domain.ValidateResourecType(ctx, instance.ResourceType); err != nil {
+	if err := r.Domain.ValidateResourceType(ctx, instance.ResourceType); err != nil {
 		return nil, err
 	}
 

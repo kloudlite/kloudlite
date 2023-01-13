@@ -2,9 +2,9 @@ package domain
 
 import (
 	"context"
+	"kloudlite.io/constants"
 	"time"
 
-	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -21,7 +21,7 @@ type Domain interface {
 
 	// Membership
 
-	AddAccountMember(ctx context.Context, accountId repos.ID, email string, role common.Role) (bool, error)
+	AddAccountMember(ctx context.Context, accountId repos.ID, email string, role constants.Role) (bool, error)
 	RemoveAccountMember(ctx context.Context, accountId repos.ID, userId repos.ID) (bool, error)
 	UpdateAccountMember(ctx context.Context, id repos.ID, id2 repos.ID, role string) (bool, error)
 

@@ -6,13 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/constants"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/webhooks/internal/env"
-	"kloudlite.io/common"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -105,11 +105,11 @@ var Module = fx.Module(
 
 					gitProvider := ctx.Params("provider")
 					_, err := func() (bool, error) {
-						if gitProvider == common.ProviderGithub {
+						if gitProvider == constants.ProviderGithub {
 							return validateGithubHook(ctx, envVars)
 						}
 
-						if gitProvider == common.ProviderGitlab {
+						if gitProvider == constants.ProviderGitlab {
 							return validateGitlabHook(ctx, envVars)
 						}
 

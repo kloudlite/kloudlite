@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"kloudlite.io/constants"
 
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
@@ -109,7 +110,7 @@ func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accou
 	if session == nil {
 		return false, errors.New("not logged in")
 	}
-	return r.domain.AddAccountMember(ctx, repos.ID(accountID), email, common.Role(role))
+	return r.domain.AddAccountMember(ctx, repos.ID(accountID), email, constants.Role(role))
 }
 
 func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {

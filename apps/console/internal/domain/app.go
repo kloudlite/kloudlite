@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"time"
 
+	"kloudlite.io/constants"
+	"kloudlite.io/pkg/beacon"
+
 	fWebsocket "github.com/gofiber/websocket/v2"
 	createjsonpatch "github.com/snorwin/jsonpatch"
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -110,6 +113,13 @@ func (d *domain) InstallApp(ctx context.Context, projectId repos.ID, app entitie
 	if err != nil {
 		return nil, err
 	}
+	d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.CreateApp,
+		Status:       beacon.StatusOK(),
+		Tags:         map[string]string{"projectId": string(prj.Id)},
+		ResourceType: constants.ResourceApp,
+		ResourceId:   app.Id,
+	})
 	return createdApp, nil
 }
 
@@ -136,6 +146,13 @@ func (d *domain) UpdateApp(ctx context.Context, appId repos.ID, app entities.App
 	if err != nil {
 		return nil, err
 	}
+	d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.UpdateApp,
+		Status:       beacon.StatusOK(),
+		Tags:         map[string]string{"projectId": string(prj.Id)},
+		ResourceType: constants.ResourceApp,
+		ResourceId:   appId,
+	})
 	return updatedApp, nil
 }
 
@@ -162,9 +179,19 @@ func (d *domain) FreezeApp(ctx context.Context, appId repos.ID) error {
 		return err
 	}
 
-	err = d.sendAppApply(ctx, prj, app, false)
+	if err = d.sendAppApply(ctx, prj, app, false); err != nil {
+		return err
+	}
 
-	return err
+	d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.FreezeApp,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceApp,
+		ResourceId:   app.Id,
+		Tags:         map[string]string{"projectId": string(app.ProjectId)},
+	})
+
+	return nil
 }
 
 func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
@@ -189,11 +216,20 @@ func (d *domain) UnFreezeApp(ctx context.Context, appId repos.ID) error {
 		return err
 	}
 
-	err = d.sendAppApply(ctx, prj, app, false)
+	if err = d.sendAppApply(ctx, prj, app, false); err != nil {
+		return err
+	}
 
-	return err
-
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.UnfreezeApp,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceApp,
+		ResourceId:   app.Id,
+		Tags:         map[string]string{"projectId": string(app.ProjectId)},
+	})
+	return nil
 }
+
 func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 	app, err := d.appRepo.FindById(ctx, appId)
 	if err = mongoError(err, "app not found"); err != nil {
@@ -218,7 +254,18 @@ func (d *domain) RestartApp(ctx context.Context, appId repos.ID) error {
 	if err != nil {
 		return err
 	}
-	return d.sendAppApply(ctx, prj, updatedApp, true)
+	if err := d.sendAppApply(ctx, prj, updatedApp, true); err != nil {
+		return err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.RestartApp,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceApp,
+		ResourceId:   app.Id,
+		Tags:         map[string]string{"projectId": string(prj.Id)},
+	})
+	return nil
 }
 
 func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
@@ -243,23 +290,15 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 		return false, nil
 	}
 
-	// err = d.workloadMessenger.SendAction(
-	// 	"delete", d.getDispatchKafkaTopic(clusterId), string(appID), &op_crds.App{
-	// 		APIVersion: op_crds.AppAPIVersion,
-	// 		Kind:       op_crds.AppKind,
-	// 		Metadata: op_crds.AppMetadata{
-	// 			Name:      app.Name,
-	// 			Namespace: app.Namespace,
-	// 		},
-	// 	},
-	// )
-
 	if err != nil {
 		return false, err
 	}
 
 	app.Status = entities.AppStateDeleting
-	_, err = d.appRepo.UpdateById(ctx, appID, app)
+	if _, err = d.appRepo.UpdateById(ctx, appID, app); err != nil {
+		return false, err
+	}
+
 	if app.IsLambda {
 		d.workloadMessenger.SendAction(
 			"delete", d.getDispatchKafkaTopic(clusterId), string(appID), &op_crds.Lambda{
@@ -284,9 +323,14 @@ func (d *domain) DeleteApp(ctx context.Context, appID repos.ID) (bool, error) {
 		)
 	}
 
-	if err != nil {
-		return false, err
-	}
+	go d.beacon.TriggerWithUserCtx(ctx, project.AccountId, beacon.EventAction{
+		Action:       constants.DeleteApp,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceApp,
+		ResourceId:   appID,
+		Tags:         map[string]string{"projectId": string(project.Id)},
+	})
+
 	return true, err
 }
 
@@ -666,8 +710,7 @@ func (d *domain) sendAppApply(ctx context.Context, prj *entities.Project, app *e
 }
 
 func (d *domain) InterceptApp(ctx context.Context, appId repos.ID, deviceId repos.ID) error {
-
-	userId, err := GetUser(ctx)
+	userId, err := GetUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -701,12 +744,22 @@ func (d *domain) InterceptApp(ctx context.Context, appId repos.ID, deviceId repo
 	if err != nil {
 		return err
 	}
-	err = d.sendAppApply(ctx, prj, app, false)
-	return err
+	if err = d.sendAppApply(ctx, prj, app, false); err != nil {
+		return err
+	}
+
+	go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+		Action:       constants.InterceptApp,
+		Status:       beacon.StatusOK(),
+		ResourceType: constants.ResourceApp,
+		ResourceId:   appId,
+		Tags:         map[string]string{"projectId": string(prj.Id)},
+	})
+
+	return nil
 }
 
 func (d *domain) CloseIntercept(ctx context.Context, appId repos.ID) error {
-
 	app, err := d.appRepo.FindById(ctx, appId)
 	if err = mongoError(err, "app not found"); err != nil {
 		return err
@@ -723,13 +776,23 @@ func (d *domain) CloseIntercept(ctx context.Context, appId repos.ID) error {
 	}
 
 	app.InterceptDeviceId = nil
-	_, err = d.appRepo.UpdateById(ctx, appId, app)
-	if err != nil {
+	if _, err = d.appRepo.UpdateById(ctx, appId, app); err != nil {
 		return err
 	}
-	err = d.sendAppApply(ctx, prj, app, false)
+	if err = d.sendAppApply(ctx, prj, app, false); err != nil {
+		return err
+	}
 
-	return err
+
+  go d.beacon.TriggerWithUserCtx(ctx, prj.AccountId, beacon.EventAction{
+    Action:       constants.CloseInterceptApp,
+    Status:       beacon.StatusOK(),
+    ResourceType: constants.ResourceApp,
+    ResourceId:   appId,
+    Tags:         map[string]string{"projectId": string(prj.Id)},
+  })
+
+	return nil
 }
 
 func (d *domain) GetInterceptedApps(ctx context.Context, deviceId repos.ID) ([]*entities.App, error) {

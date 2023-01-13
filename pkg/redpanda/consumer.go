@@ -117,7 +117,6 @@ func NewConsumer(
 type ConsumerConfig interface {
 	GetSubscriptionTopics() []string
 	GetConsumerGroupId() string
-	GetKafkaSASLAuth() *KafkaSASLAuth
 }
 
 func NewConsumerFx[T ConsumerConfig]() fx.Option {
@@ -128,7 +127,7 @@ func NewConsumerFx[T ConsumerConfig]() fx.Option {
 				topics := cfg.GetSubscriptionTopics()
 				consumerGroup := cfg.GetConsumerGroupId()
 				consumer, err := NewConsumer(client.GetBrokerHosts(), consumerGroup, ConsumerOpts{
-					SASLAuth: cfg.GetKafkaSASLAuth(),
+					SASLAuth: client.GetKafkaSASLAuth(),
 				}, topics)
 				if err != nil {
 					return nil, err

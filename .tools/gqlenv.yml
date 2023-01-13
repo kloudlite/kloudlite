@@ -6,4 +6,4 @@ map:
     url: ***REMOVED***
     # url: http://localhost:3000/query
     headers:
-      cookie: hotspot-session=ses-yuiimr5j9zgj7a1jcipmnebmpzzl; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
+      cookie: hotspot-session=ses-o3u44boptp9ysznsqgedz-ahadkn; domain=dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
