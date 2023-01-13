@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"operators.kloudlite.io/pkg/kubectl"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,6 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ct "operators.kloudlite.io/apis/common-types"
 	influxdbMsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
+	"operators.kloudlite.io/operators/msvc-influx/internal/env"
+	"operators.kloudlite.io/operators/msvc-influx/internal/types"
 	"operators.kloudlite.io/pkg/conditions"
 	"operators.kloudlite.io/pkg/constants"
 	fn "operators.kloudlite.io/pkg/functions"
@@ -21,8 +24,6 @@ import (
 	rApi "operators.kloudlite.io/pkg/operator"
 	stepResult "operators.kloudlite.io/pkg/operator/step-result"
 	"operators.kloudlite.io/pkg/templates"
-	"operators.kloudlite.io/operators/msvc-influx/internal/env"
-	"operators.kloudlite.io/operators/msvc-influx/internal/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -32,10 +33,11 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme     *runtime.Scheme
+	logger     logging.Logger
+	Name       string
+	Env        *env.Env
+	yamlClient *kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -70,7 +72,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -106,8 +109,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Logger.Infof("RECONCILATION COMPLETE")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*influxdbMsvcv1.Service]) stepResult.Result {
@@ -116,26 +119,33 @@ func (r *Reconciler) finalize(req *rApi.Request[*influxdbMsvcv1.Service]) stepRe
 
 func (r *Reconciler) reconDefaults(req *rApi.Request[*influxdbMsvcv1.Service]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(DefaultsPatched)
+	defer req.LogPostCheck(DefaultsPatched)
+
+	hasUpdated := false
+
 	if obj.Spec.Admin == nil {
+		hasUpdated = true
 		obj.Spec.Admin = &influxdbMsvcv1.Admin{
 			Username: "admin",
 			Bucket:   "admin",
 			Org:      "admin",
 		}
+	}
+
+	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error())
 		}
-		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
+		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	check.Status = true
 	if check == checks[DefaultsPatched] {
 		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -143,8 +153,11 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*influxdbMsvcv1.Service]) s
 
 func (r *Reconciler) reconAccessCreds(req *rApi.Request[*influxdbMsvcv1.Service]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(AccessCredsReady)
+	defer req.LogPostCheck(AccessCredsReady)
+
 	secretName := "msvc-" + obj.Name
 	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
 	if err != nil {
@@ -183,7 +196,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*influxdbMsvcv1.Service]
 		}
 
 		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
@@ -197,7 +210,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*influxdbMsvcv1.Service]
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	b, err := json.Marshal(scrt.Data)
@@ -217,6 +230,9 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*influxdbMsvcv1.Service]) stepR
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(HelmReady)
+	defer req.LogPostCheck(HelmReady)
+
 	helmRes, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmInfluxDBType),
 	)
@@ -229,32 +245,27 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*influxdbMsvcv1.Service]) stepR
 		return req.CheckFailed(HelmReady, check, fmt.Sprintf("key %s is not available in req-locals", KeyMsvcOutput))
 	}
 
-	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error())
-		}
+	storageClass, err := obj.Spec.CloudProvider.GetStorageClass(ct.Ext4)
+	if err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error())
+	}
 
-		b, err := templates.Parse(
-			templates.InfluxDB, map[string]any{
-				"obj":            obj,
-				"owner-refs":     obj.GetOwnerReferences(),
-				"storage-class":  storageClass,
-				"admin-password": msvcOutput.Password,
-				"admin-token":    msvcOutput.Token,
-			},
-		)
+	b, err := templates.Parse(
+		templates.InfluxDB, map[string]any{
+			"obj":            obj,
+			"owner-refs":     obj.GetOwnerReferences(),
+			"storage-class":  storageClass,
+			"admin-password": msvcOutput.Password,
+			"admin-token":    msvcOutput.Token,
+		},
+	)
 
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-		}
+	if err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	}
 
-		if err := fn.KubectlApplyExec(ctx, b); err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-		}
-
-		checks[HelmReady] = check
-		return req.UpdateStatus()
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
 	cds, err := conditions.FromObject(helmRes)
@@ -277,7 +288,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*influxdbMsvcv1.Service]) stepR
 
 	if check != checks[HelmReady] {
 		checks[HelmReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -286,6 +297,10 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*influxdbMsvcv1.Service]) stepR
 func (r *Reconciler) reconSts(req *rApi.Request[*influxdbMsvcv1.Service]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(StsReady)
+	defer req.LogPostCheck(StsReady)
+
 	var stsList appsv1.StatefulSetList
 
 	if err := r.List(
@@ -329,7 +344,7 @@ func (r *Reconciler) reconSts(req *rApi.Request[*influxdbMsvcv1.Service]) stepRe
 	check.Status = true
 	if check != checks[StsReady] {
 		checks[StsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -339,6 +354,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&influxdbMsvcv1.Service{})
 	builder.Owns(&corev1.Secret{})
@@ -355,5 +371,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			},
 		),
 	)
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }
