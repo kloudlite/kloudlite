@@ -63,9 +63,10 @@ const (
 )
 
 const (
-	RouterOperatorEnv   templateFile = "templates/secrets/router-operator-env.yml.tpl"
-	InternalOperatorEnv templateFile = "templates/secrets/internal-operator-env.yml.tpl"
-	ProjectOperatorEnv  templateFile = "templates/secrets/project-operator-env.yml.tpl"
+	RouterOperatorEnv         templateFile = "templates/secrets/router-operator-env.yml.tpl"
+	InternalOperatorEnv       templateFile = "templates/secrets/internal-operator-env.yml.tpl"
+	ProjectOperatorEnv        templateFile = "templates/secrets/project-operator-env.yml.tpl"
+	StatusNBillingOperatorEnv templateFile = "templates/secrets/status-n-billing-operator-env.yml.tpl"
 )
 
 const (
