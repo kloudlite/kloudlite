@@ -47,7 +47,8 @@ const (
 	DBUserReady      string = "db-user-ready"
 	IsOwnedByMsvc    string = "is-owned-by-msvc"
 
-	DBUserDeleted string = "db-user-deleted"
+	DBUserDeleted   string = "db-user-deleted"
+	DefaultsPatched string = "defaults-patched"
 )
 
 const (
