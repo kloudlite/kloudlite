@@ -145,7 +145,7 @@ const (
 	Secret           templateFile = "templates/corev1/secret.tpl.yml"
 	AccountWireguard templateFile = "templates/account-deploy.tmpl.yml"
 	CommonMsvc       templateFile = "templates/msvc-common-service.tpl.yml"
-	CommonMres       templateFile = "templates/mres-common.tmpl.yml"
+	CommonMres       templateFile = "templates/mres-common.yml.tpl"
 	Ingress          templateFile = "templates/ingress.tmpl.yml"
 
 	IngressLambda templateFile = "templates/ingress-lambda.tmpl.yml"
