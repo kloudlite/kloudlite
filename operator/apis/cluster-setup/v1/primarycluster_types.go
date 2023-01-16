@@ -53,7 +53,10 @@ type SharedConstants struct {
 	AppJsEvalApi     string `json:"appJsEval,omitempty"`
 	AppGqlGatewayApi string `json:"appGqlGatewayApi,omitempty"`
 	AppWebhooksApi   string `json:"appWebhooksApi,omitempty"`
-	AppKlAgent       string `json:"appKlAgent,omitempty"`
+
+	// WORKERS
+	AppKlAgent            string `json:"appKlAgent,omitempty"`
+	AppAuditLoggingWorker string `json:"appAuditLoggingWorker,omitempty"`
 
 	// Web
 	AppAuthWeb     string `json:"appAuthWeb,omitempty"`
@@ -79,7 +82,9 @@ type SharedConstants struct {
 	ImageAuthWeb       string `json:"imageAuthWeb,omitempty"`
 	ImageAccountsWeb   string `json:"imageAccountsWeb,omitempty"`
 	ImageConsoleWeb    string `json:"imageConsoleWeb,omitempty"`
-	ImageKlAgent       string `json:"imageKlAgent,omitempty"`
+
+	ImageKlAgent            string `json:"imageKlAgent,omitempty"`
+	ImageAuditLoggingWorker string `json:"imageAuditLoggingWorker,omitempty"`
 
 	ImageSocketWeb             string `json:"imageSocketWeb,omitempty"`
 	RedpandaAdminSecretName    string `json:"redpandaAdminSecretName,omitempty"`

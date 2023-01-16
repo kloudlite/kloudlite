@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"operators.kloudlite.io/operator"
+	"operators.kloudlite.io/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -49,6 +50,11 @@ const (
 	RealMresCreated string = "real-mres-created"
 	RealMresReady   string = "real-mres-ready"
 	MsvcIsOwner     string = "msvc-is-owner"
+	DefaultsPatched string = "defaults-patched"
+)
+
+const (
+	localMsvcKey = "msvc"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -100,6 +106,10 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.reconOwnership(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -121,7 +131,7 @@ func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedRe
 	return req.Finalize()
 }
 
-func (r *ManagedResourceReconciler) reconOwnership(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+func (r *ManagedResourceReconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -131,6 +141,42 @@ func (r *ManagedResourceReconciler) reconOwnership(req *rApi.Request[*crdsv1.Man
 
 	if err != nil {
 		return req.CheckFailed(MsvcIsOwner, check, err.Error())
+	}
+
+	hasUpdated := false
+
+	if !fn.MapContains(obj.Labels, msvc.Labels) {
+		hasUpdated = true
+		for k, v := range msvc.Labels {
+			obj.Labels[k] = v
+		}
+	}
+
+	if hasUpdated {
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(DefaultsPatched, check, err.Error())
+		}
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
+
+	check.Status = true
+	if check != checks[DefaultsPatched] {
+		checks[DefaultsPatched] = check
+		req.UpdateStatus()
+	}
+
+	rApi.SetLocal(req, localMsvcKey, msvc)
+	return req.Next()
+
+}
+
+func (r *ManagedResourceReconciler) reconOwnership(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	msvc, ok := rApi.GetLocal[*crdsv1.ManagedService](req, localMsvcKey)
+	if !ok {
+		return req.CheckFailed(MsvcIsOwner, check, errors.NotInLocals(localMsvcKey).Error()).Err(nil)
 	}
 
 	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
@@ -175,7 +221,7 @@ func (r *ManagedResourceReconciler) ensureRealMresCreated(req *rApi.Request[*crd
 	check.Status = true
 	if check != checks[RealMresCreated] {
 		checks[RealMresCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()

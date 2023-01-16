@@ -214,7 +214,7 @@ package templates
 // 	Secret           templateFile = "./corev1/secret.tpl.yml"
 // 	AccountWireguard templateFile = "account-deploy.tmpl.yml"
 // 	CommonMsvc       templateFile = "msvc-common-service.tpl.yml"
-// 	CommonMres       templateFile = "mres-common.tmpl.yml"
+// 	CommonMres       templateFile = "mres-common.yml.tpl"
 // 	ConfigMap        templateFile = "configmap.tmpl.yml"
 // 	Ingress          templateFile = "./ingress.tmpl.yml"
 //

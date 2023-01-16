@@ -148,9 +148,11 @@ var _ = Describe("app controller says", func() {
 		It("If App has been frozen, deployment should scale down to 0", func() {
 			Fail("empty test")
 		})
+
 		It("If App has been intercepted, deployment should also scale down to 0", func() {
 			Fail("empty test")
 		})
+
 		It("If App has been intercepted, external name service should be pointing to wireguard device", func() {
 			Fail("empty test")
 		})

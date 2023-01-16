@@ -251,7 +251,7 @@ func (r *Reconciler) ensureFinanceApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 	check.Status = true
 	if check != checks[FinanceApiCreated] {
 		checks[FinanceApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -280,7 +280,7 @@ func (r *Reconciler) ensureIAMApi(req *rApi.Request[*v1.PrimaryCluster]) stepRes
 	check.Status = true
 	if check != checks[IAMApiCreated] {
 		checks[IAMApiCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -396,7 +396,6 @@ func (r *Reconciler) ensureAuditLoggingWorker(req *rApi.Request[*v1.PrimaryClust
 		req.UpdateStatus()
 	}
 	return req.Next()
-
 }
 
 func (r *Reconciler) ensureGatewayApi(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {

@@ -483,6 +483,8 @@ spec:
                     type: string
                   appAccountsWeb:
                     type: string
+                  appAuditLoggingWorker:
+                    type: string
                   appAuthApi:
                     description: API
                     type: string
@@ -508,6 +510,7 @@ spec:
                   appJsEval:
                     type: string
                   appKlAgent:
+                    description: WORKERS
                     type: string
                   appSocketWeb:
                     type: string
@@ -551,6 +554,8 @@ spec:
                   iamRedisName:
                     type: string
                   imageAccountsWeb:
+                    type: string
+                  imageAuditLoggingWorker:
                     type: string
                   imageAuthApi:
                     description: Images

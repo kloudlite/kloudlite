@@ -8,16 +8,9 @@ metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-  {{- if .Labels }}
-  labels:
-  {{- range $k,$v := .Labels}}
-    {{$k}}: {{$v}}
-  {{- end}}
-    mres.kloudlite.io/ref: {{.Name}}
-  {{- end }}
+  labels: {{.Labels | default dict | toYAML | nindent 4}}
 spec:
   msvcRef: {{.Spec.MsvcRef |toYAML |nindent 4}}
-#   managedSvcName: {{.Spec.MsvcRef.Name}}
   {{- if .Spec.Inputs }}
   {{.Spec.Inputs | toYAML | nindent 2 }}
   {{- end}}
