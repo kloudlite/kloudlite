@@ -2,7 +2,7 @@
 {{- $dnsNames := get . "dns-names" | default list -}}
 
 {{- with $clusterIssuer }}
-{{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.clusterIssuer*/}}
+{{/*gotype: github.com/kloudlite/operator/apis/cluster-setup/v1.clusterIssuer*/}}
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:

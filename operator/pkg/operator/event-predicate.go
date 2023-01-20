@@ -2,7 +2,7 @@ package operator
 
 import (
 	"encoding/json"
-	jsonPatch "operators.kloudlite.io/pkg/json-patch"
+	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
 	"reflect"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"

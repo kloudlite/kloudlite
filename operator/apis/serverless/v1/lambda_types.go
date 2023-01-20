@@ -5,10 +5,10 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/pkg/constants"
-	fn "operators.kloudlite.io/pkg/functions"
-	rApi "operators.kloudlite.io/pkg/operator"
+	v1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 // LambdaSpec defines the desired state of Lambda

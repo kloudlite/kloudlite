@@ -2,14 +2,13 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	rApi "operators.kloudlite.io/pkg/operator"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
-
 
 type SecondarySharedConstants struct {
 	StatefulPriorityClass string `json:"statefulPriorityClass,omitempty"`
-	AppKlAgent string `json:"appKlAgent,omitempty"`
-	ImageKlAgent string `json:"imageKlAgent,omitempty"`
+	AppKlAgent            string `json:"appKlAgent,omitempty"`
+	ImageKlAgent          string `json:"imageKlAgent,omitempty"`
 }
 
 type SecondaryClusterSpec struct {

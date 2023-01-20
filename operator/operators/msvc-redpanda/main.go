@@ -1,12 +1,12 @@
 package main
 
 import (
-	redpandaMsvcv1 "operators.kloudlite.io/apis/redpanda.msvc/v1"
-	"operators.kloudlite.io/operator"
-	acluser "operators.kloudlite.io/operators/msvc-redpanda/internal/controllers/acl-user"
-	"operators.kloudlite.io/operators/msvc-redpanda/internal/controllers/admin"
-	"operators.kloudlite.io/operators/msvc-redpanda/internal/controllers/topic"
-	"operators.kloudlite.io/operators/msvc-redpanda/internal/env"
+	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
+	"github.com/kloudlite/operator/operator"
+	acluser "github.com/kloudlite/operator/operators/msvc-redpanda/internal/controllers/acl-user"
+	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/controllers/admin"
+	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/controllers/topic"
+	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/env"
 )
 
 func main() {

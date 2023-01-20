@@ -2,7 +2,7 @@ package env
 
 import (
 	"github.com/codingconcepts/env"
-	"operators.kloudlite.io/pkg/redpanda"
+	"github.com/kloudlite/operator/pkg/redpanda"
 )
 
 type Env struct {

@@ -6,11 +6,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/rand"
-	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/operators/project/internal/env"
-	"operators.kloudlite.io/pkg/logging"
-	. "operators.kloudlite.io/testing"
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operators/project/internal/env"
+	"github.com/kloudlite/operator/pkg/logging"
+	. "github.com/kloudlite/operator/testing"
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"testing"
@@ -30,7 +30,7 @@ var _ = BeforeSuite(
 		SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), LocalProxyEnvTest)
 		//setupNs()
 		//setupApp()
-		mgr := Suite.GetManager(manager.Options{
+		mgr := Suite.NewManager(manager.Options{
 			Scheme:                        nil,
 			MapperProvider:                nil,
 			SyncPeriod:                    nil,

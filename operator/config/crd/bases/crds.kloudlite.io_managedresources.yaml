@@ -54,7 +54,8 @@ spec:
                     path:
                       type: string
                     value:
-                      type: string
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
                   required:
                   - op
                   - path

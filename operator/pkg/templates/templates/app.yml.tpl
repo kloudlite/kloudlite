@@ -11,7 +11,7 @@
 {{- $accountRef := get . "account-ref" }}
 
 {{- with $obj }}
-{{- /* gotype: operators.kloudlite.io/apis/crds/v1.App */ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/crds/v1.App */ -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

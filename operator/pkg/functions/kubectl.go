@@ -10,10 +10,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"operators.kloudlite.io/pkg/logging"
+	"github.com/kloudlite/operator/pkg/logging"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 func KubectlApplyExec(ctx context.Context, stdin ...[]byte) (err error) {

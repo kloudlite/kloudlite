@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 type Config interface {

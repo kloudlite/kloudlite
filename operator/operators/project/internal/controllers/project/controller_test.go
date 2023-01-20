@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
-	v1 "operators.kloudlite.io/apis/crds/v1"
+	v1 "github.com/kloudlite/operator/apis/crds/v1"
 )
 
 func newProject(name, namespace string) v1.Project {

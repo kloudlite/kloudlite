@@ -1,10 +1,10 @@
 package main
 
 import (
-	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/msvc-zookeeper/internal/controllers"
-	"operators.kloudlite.io/operators/msvc-zookeeper/internal/env"
+	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/msvc-zookeeper/internal/controllers"
+	"github.com/kloudlite/operator/operators/msvc-zookeeper/internal/env"
 )
 
 func main() {

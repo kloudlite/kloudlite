@@ -3,7 +3,7 @@
 {{- $wildcardCertName := get . "wildcard-cert-name" -}}
 
 {{- with $ingressValues }}
-{{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.IngressValues*/}}
+{{/*gotype: github.com/kloudlite/operator/apis/cluster-setup/v1.IngressValues*/}}
 controller:
   ingressClassByName: true
   ingressClass: {{.ClassName}}

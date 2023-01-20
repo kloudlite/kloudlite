@@ -7,7 +7,7 @@ extraArgs:
   - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
 
 {{- with $certManagerValues}}
-{{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.CertManagerValues*/}}
+{{/*gotype: github.com/kloudlite/operator/apis/cluster-setup/v1.CertManagerValues*/}}
 {{- if .Tolerations}}
 tolerations: {{ .Tolerations | toYAML | nindent 2 }}
 {{- end }}

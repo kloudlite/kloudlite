@@ -3,8 +3,9 @@ package mres
 import (
 	"context"
 	"encoding/json"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -14,20 +15,20 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	influxdbMsvcv1 "operators.kloudlite.io/apis/influxdb.msvc/v1"
-	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
-	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
-	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
-	"operators.kloudlite.io/operators/msvc-n-mres/internal/env"
-	"operators.kloudlite.io/pkg/constants"
-	fn "operators.kloudlite.io/pkg/functions"
-	"operators.kloudlite.io/pkg/harbor"
-	"operators.kloudlite.io/pkg/kubectl"
-	"operators.kloudlite.io/pkg/logging"
-	rApi "operators.kloudlite.io/pkg/operator"
-	stepResult "operators.kloudlite.io/pkg/operator/step-result"
-	"operators.kloudlite.io/pkg/templates"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
+	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/harbor"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/logging"
+	rApi "github.com/kloudlite/operator/pkg/operator"
+	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/pkg/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -280,6 +281,7 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, logger lo
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedResource{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Secret{})
 	builder.Owns(&crdsv1.Anchor{})
 

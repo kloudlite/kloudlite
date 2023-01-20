@@ -7,7 +7,7 @@
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{- with $obj}}
-{{- /* gotype: operators.kloudlite.io/apis/elasticsearch.msvc/v1.Service */ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/elasticsearch.msvc/v1.Service */ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmElasticSearch
 metadata:
