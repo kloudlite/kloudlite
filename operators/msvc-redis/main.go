@@ -1,12 +1,12 @@
 package main
 
 import (
-	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/acl-account"
-	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/acl-configmap"
-	"operators.kloudlite.io/operators/msvc-redis/internal/controllers/standalone"
-	"operators.kloudlite.io/operators/msvc-redis/internal/env"
+	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/msvc-redis/internal/controllers/acl-account"
+	"github.com/kloudlite/operator/operators/msvc-redis/internal/controllers/acl-configmap"
+	"github.com/kloudlite/operator/operators/msvc-redis/internal/controllers/standalone"
+	"github.com/kloudlite/operator/operators/msvc-redis/internal/env"
 )
 
 func main() {

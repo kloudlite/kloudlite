@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/sprig/v3"
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 var (

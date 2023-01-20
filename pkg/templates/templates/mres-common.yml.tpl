@@ -1,7 +1,7 @@
 {{- $ownerRefs := get . "owner-refs" }}
 {{- $obj := get . "object"}}
 {{- with $obj }}
-{{- /* gotype: operators.kloudlite.io/apis/crds/v1.ManagedResource */ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/crds/v1.ManagedResource */ -}}
 apiVersion: {{.Spec.MsvcRef.APIVersion}}
 kind: {{.Spec.MresKind.Kind}}
 metadata:

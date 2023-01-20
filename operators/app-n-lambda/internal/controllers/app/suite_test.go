@@ -2,17 +2,17 @@ package app
 
 import (
 	"context"
-	"operators.kloudlite.io/operators/app-n-lambda/internal/env"
-	"operators.kloudlite.io/pkg/logging"
+	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
+	"github.com/kloudlite/operator/pkg/logging"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	. "operators.kloudlite.io/testing"
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	. "github.com/kloudlite/operator/testing"
 )
 
 func TestAPIs(t *testing.T) {
@@ -28,7 +28,7 @@ var _ = BeforeSuite(
 		SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), LocalProxyEnvTest)
 		setupNs()
 		setupApp()
-		mgr := Suite.GetManager(manager.Options{Namespace: testNamespace})
+		mgr := Suite.NewManager(manager.Options{Namespace: testNamespace})
 
 		reconciler = &Reconciler{
 			Client: Suite.K8sClient,

@@ -3,8 +3,8 @@ package v1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"operators.kloudlite.io/pkg/constants"
-	rApi "operators.kloudlite.io/pkg/operator"
+	"github.com/kloudlite/operator/pkg/constants"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 //+kubebuilder:object:root=true

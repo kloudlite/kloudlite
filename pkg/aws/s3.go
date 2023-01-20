@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"operators.kloudlite.io/pkg/errors"
-	"operators.kloudlite.io/pkg/logging"
+	"github.com/kloudlite/operator/pkg/errors"
+	"github.com/kloudlite/operator/pkg/logging"
 )
 
 type s3Obj struct {

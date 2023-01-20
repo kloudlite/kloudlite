@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/app-n-lambda/internal/controllers/app"
-	"operators.kloudlite.io/operators/app-n-lambda/internal/env"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/app-n-lambda/internal/controllers/app"
+	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
 )
 
 func main() {

@@ -16,7 +16,7 @@ package templates
 // 	"sigs.k8s.io/yaml"
 //
 // 	"github.com/Masterminds/sprig/v3"
-// 	"operators.kloudlite.io/types/errors"
+// 	"github.com/kloudlite/operator/types/errors"
 // )
 //
 // func txtFuncs(t *template.Template) template.FuncMap {

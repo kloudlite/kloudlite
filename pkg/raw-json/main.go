@@ -3,12 +3,13 @@ package raw_json
 import (
 	"encoding/json"
 
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 // +kubebuilder:pruning:PreserveUnknownFields
 // +kubebuilder:validation:Schemaless
 // +kubebuilder:validation:Type=object
+// +kubebuilder:object:generate=true
 
 type RawJson struct {
 	items           map[string]any

@@ -6,7 +6,7 @@ import (
 	"github.com/fatih/color"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 type Logger interface {
@@ -18,11 +18,17 @@ type Logger interface {
 	WithKV(key string, value any) Logger
 	WithName(name string) Logger
 	WithOptions(options ...zap.Option) Logger
+	SetLevel(level zapcore.Level)
 }
 
 type customLogger struct {
-	opts   Options
-	logger *zap.SugaredLogger
+	opts      Options
+	logger    *zap.SugaredLogger
+	atomLevel zap.AtomicLevel
+}
+
+func (c customLogger) SetLevel(level zapcore.Level) {
+	c.atomLevel.SetLevel(level)
 }
 
 func (c customLogger) WithOptions(options ...zap.Option) Logger {
@@ -94,11 +100,14 @@ func New(options *Options) (Logger, error) {
 		return zap.NewProductionConfig()
 	}()
 
+	atomicLevel := zap.NewAtomicLevel()
+	cfg.Level = atomicLevel
+
 	logger, err := cfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
 	}
-	cLogger := &customLogger{logger: logger.Sugar(), opts: opts}
+	cLogger := &customLogger{logger: logger.Sugar(), opts: opts, atomLevel: atomicLevel}
 	if opts.Name != "" {
 		cLogger.logger = cLogger.logger.Named(opts.Name)
 	}

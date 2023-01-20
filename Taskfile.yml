@@ -420,15 +420,15 @@ tasks:
   test:app:
     interactive: true
     cmds:
-      - nodemon -e 'go'  -w "./operators/app-n-lambda/internal/controllers/app" --exec "go test -v operators.kloudlite.io/operators/app-n-lambda/internal/controllers/app || exit 1"
+      - nodemon -e 'go'  -w "./operators/app-n-lambda/internal/controllers/app" --exec "go test -v github.com/kloudlite/operator/operators/app-n-lambda/internal/controllers/app || exit 1"
 
   test:project:
     interactive: true
 #    sources:
 #      - ./operators/project/internal/controllers/envenv/*
     cmds:
-#      - go build operators.kloudlite.io/operators/project
-      - nodemon -w "./operators/project/internal/controllers/env" --exec "go test operators.kloudlite.io/operators/project/internal/controllers/env | tail -f /dev/null"
+#      - go build github.com/kloudlite/operator/operators/project
+      - nodemon -w "./operators/project/internal/controllers/env" --exec "go test github.com/kloudlite/operator/operators/project/internal/controllers/env | tail -f /dev/null"
 
   run:env-route-switcher:
     dir: ./apps/env-route-switcher

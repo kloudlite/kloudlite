@@ -1,7 +1,7 @@
 {{- $lokiValues := get . "loki-values" -}}
 
 {{- with $lokiValues }}
-{{- /*gotype: operators.kloudlite.io/apis/cluster-setup/v1.LokiValues*/ -}}
+{{- /*gotype: github.com/kloudlite/operator/apis/cluster-setup/v1.LokiValues*/ -}}
 loki:
   env:
     - name: AWS_ACCESS_KEY_ID

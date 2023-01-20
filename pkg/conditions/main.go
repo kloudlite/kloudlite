@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	fn "operators.kloudlite.io/pkg/functions"
+	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
 func reasondiff(r1, r2 string) bool {

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 type Project struct {

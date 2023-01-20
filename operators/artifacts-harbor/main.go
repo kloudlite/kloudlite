@@ -1,13 +1,13 @@
 package main
 
 import (
-	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/artifacts-harbor/internal/controllers/project"
-	userAccount "operators.kloudlite.io/operators/artifacts-harbor/internal/controllers/user-account"
-	"operators.kloudlite.io/operators/artifacts-harbor/internal/env"
-	"operators.kloudlite.io/pkg/harbor"
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/artifacts-harbor/internal/controllers/project"
+	userAccount "github.com/kloudlite/operator/operators/artifacts-harbor/internal/controllers/user-account"
+	"github.com/kloudlite/operator/operators/artifacts-harbor/internal/env"
+	"github.com/kloudlite/operator/pkg/harbor"
 )
 
 func main() {

@@ -1,11 +1,11 @@
 package main
 
 import (
-	influxDB "operators.kloudlite.io/apis/influxdb.msvc/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/msvc-influx/internal/controllers/bucket"
-	"operators.kloudlite.io/operators/msvc-influx/internal/controllers/service"
-	"operators.kloudlite.io/operators/msvc-influx/internal/env"
+	influxDB "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/msvc-influx/internal/controllers/bucket"
+	"github.com/kloudlite/operator/operators/msvc-influx/internal/controllers/service"
+	"github.com/kloudlite/operator/operators/msvc-influx/internal/env"
 )
 
 func main() {
