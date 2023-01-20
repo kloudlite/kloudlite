@@ -30,7 +30,7 @@ roleRef:
   name: cluster-admin
   apiGroup: ""
 ---
-{{- /*gotype: operators.kloudlite.io/apis/crds/v1.EdgeRouter*/ -}}
+{{- /*gotype: github.com/kloudlite/operator/apis/crds/v1.EdgeRouter*/ -}}
 {{""}}
 apiVersion: ingress.kloudlite.io/v1
 kind: Nginx

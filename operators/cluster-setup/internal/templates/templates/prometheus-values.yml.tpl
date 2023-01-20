@@ -10,7 +10,7 @@ fullnameOverride: {{$name}}
 nameOverride: {{$name}}
 
 {{- with $prom }}
-{{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.PrometheusValues*/}}
+{{/*gotype: github.com/kloudlite/operator/apis/cluster-setup/v1.PrometheusValues*/}}
 operator:
   resources:
     requests:

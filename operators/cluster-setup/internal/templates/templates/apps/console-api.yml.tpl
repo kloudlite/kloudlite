@@ -14,7 +14,7 @@
 {{- $promBasicAuthPassword := get . "prom-basic-auth-password" -}}
 
 {{ with $sharedConstants}}
-{{/*gotype: operators.kloudlite.io/apis/cluster-setup/v1.SharedConstants*/}}
+{{/*gotype: github.com/kloudlite/operator/apis/cluster-setup/v1.SharedConstants*/}}
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:

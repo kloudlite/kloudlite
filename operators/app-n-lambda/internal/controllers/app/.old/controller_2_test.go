@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	fn "operators.kloudlite.io/pkg/functions"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	fn "github.com/kloudlite/operator/pkg/functions"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

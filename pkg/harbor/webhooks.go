@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"operators.kloudlite.io/pkg/errors"
-	hTypes "operators.kloudlite.io/pkg/harbor/internal/types"
+	"github.com/kloudlite/operator/pkg/errors"
+	hTypes "github.com/kloudlite/operator/pkg/harbor/internal/types"
 )
 
 type Webhook struct {

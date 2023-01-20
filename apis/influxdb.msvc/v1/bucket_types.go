@@ -2,10 +2,10 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ct "operators.kloudlite.io/apis/common-types"
-	"operators.kloudlite.io/pkg/constants"
-	"operators.kloudlite.io/pkg/influx"
-	rApi "operators.kloudlite.io/pkg/operator"
+	ct "github.com/kloudlite/operator/apis/common-types"
+	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/influx"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 type BucketSpec struct {

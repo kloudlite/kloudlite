@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the cluster-setup v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=cluster-setup.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=cluster-setup.kloudlite.io
 package v1
 
 import (

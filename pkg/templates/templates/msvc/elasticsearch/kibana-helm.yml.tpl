@@ -5,7 +5,7 @@
 {{- $kibanaImageTag := "7.17.3" -}}
 
 {{with $obj}}
-{{- /*gotype: operators.kloudlite.io/apis/elasticsearch.msvc/v1.Kibana*/ -}}
+{{- /*gotype: github.com/kloudlite/operator/apis/elasticsearch.msvc/v1.Kibana*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmKibana
 metadata:

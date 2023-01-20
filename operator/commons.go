@@ -2,11 +2,11 @@ package operator
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/pkg/constants"
-	fn "operators.kloudlite.io/pkg/functions"
-	rApi "operators.kloudlite.io/pkg/operator"
-	stepResult "operators.kloudlite.io/pkg/operator/step-result"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	rApi "github.com/kloudlite/operator/pkg/operator"
+	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 

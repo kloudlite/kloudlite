@@ -87,6 +87,18 @@ const (
 )
 
 var (
+	K8sConfigType = metav1.TypeMeta{
+		Kind:       "ConfigMap",
+		APIVersion: "v1",
+	}
+
+	K8sSecretType = metav1.TypeMeta{
+		Kind:       "Secret",
+		APIVersion: "v1",
+	}
+)
+
+var (
 	HelmMongoDBType = metav1.TypeMeta{
 		APIVersion: MsvcApiVersion,
 		Kind:       "HelmMongoDB",

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"operators.kloudlite.io/pkg/constants"
-	jsonPatch "operators.kloudlite.io/pkg/json-patch"
-	rApi "operators.kloudlite.io/pkg/operator"
+	"github.com/kloudlite/operator/pkg/constants"
+	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 type ContainerResource struct {
@@ -113,11 +113,12 @@ type AppSpec struct {
 	// +kubebuilder:default=kloudlite-svc-account
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 	// +kubebuilder:default=1
-	Replicas   int             `json:"replicas,omitempty"`
-	Services   []AppSvc        `json:"services,omitempty"`
-	Containers []AppContainer  `json:"containers"`
-	Volumes    []corev1.Volume `json:"volumes,omitempty"`
-	Hpa        HPA             `json:"hpa,omitempty"`
+	Replicas   int            `json:"replicas,omitempty"`
+	Services   []AppSvc       `json:"services,omitempty"`
+	Containers []AppContainer `json:"containers"`
+	// +kubebuilder:validation:Optional
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+	Hpa     HPA             `json:"hpa,omitempty"`
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
@@ -136,8 +137,20 @@ type JsonPatch struct {
 // +kubebuilder:printcolumn:JSONPath=".status.displayVars.frozen",name=Frozen,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
+type Random struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec AppSpec `json:"spec,omitempty"`
+	// +kubebuilder:default=true
+	Enabled   *bool       `json:"enabled,omitempty"`
+	Overrides *JsonPatch  `json:"overrides,omitempty"`
+	Status    rApi.Status `json:"status,omitempty"`
+}
+
 // App is the Schema for the apps API
 type App struct {
+	Random            `json:",inline"`
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 

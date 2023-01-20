@@ -21,7 +21,7 @@
 {{- $bpOverridePort := "80" -}}
 
 {{- with $router}}
-{{- /*gotype: operators.kloudlite.io/apis/crds/v1.Router */ -}}
+{{- /*gotype: github.com/kloudlite/operator/apis/crds/v1.Router */ -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

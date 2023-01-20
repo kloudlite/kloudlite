@@ -1,7 +1,7 @@
 {{- $storageClass := get . "storage-class" }}
 {{- $obj := get . "obj" }}
 {{- with $obj }}
-{{- /* gotype: operators.kloudlite.io/apis/redpanda.msvc/v1.Service */ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/redpanda.msvc/v1.Service */ -}}
 apiVersion: redpanda.vectorized.io/v1alpha1
 kind: Cluster
 metadata:

@@ -94,7 +94,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	#$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/...;./lib/functions/...;./lib/templates/...;./lib/raw-json/...;./lib/conditions/...;./lib/harbor/...;./lib/operator/..."
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/...;./pkg/raw-json;./pkg/harbor;./pkg/conditions;./pkg/operator"
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/...;./pkg/raw-json;./pkg/json-patch;./pkg/harbor;./pkg/conditions;./pkg/operator"
 	#$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
@@ -165,7 +165,7 @@ kustomize: ## Download kustomize locally if necessary.
 ENVTEST = $(shell pwd)/bin/setup-envtest
 .PHONY: envtest
 envtest: ## Download envtest-operator locally if necessary.
-	#$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controllers-runtime/tools/operator-envtest@latest)
+	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controllers-runtime/tools/operator-envtest@latest)
 	GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 # go-get-tool will 'go get' any package $2 and install it to $1.

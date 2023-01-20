@@ -8,12 +8,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"operators.kloudlite.io/pkg/logging"
+	"github.com/kloudlite/operator/pkg/logging"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	rawJson "operators.kloudlite.io/pkg/raw-json"
+	rawJson "github.com/kloudlite/operator/pkg/raw-json"
 )
 
 type ResourceRef struct {

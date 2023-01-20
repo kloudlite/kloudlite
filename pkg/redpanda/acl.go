@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	exec2 "k8s.io/utils/exec"
-	"operators.kloudlite.io/pkg/errors"
-	fn "operators.kloudlite.io/pkg/functions"
+	"github.com/kloudlite/operator/pkg/errors"
+	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
 type AdminClient interface {

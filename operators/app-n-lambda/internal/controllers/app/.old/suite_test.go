@@ -27,13 +27,13 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"operators.kloudlite.io/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	// +kubebuilder:scaffold:imports
 )
 

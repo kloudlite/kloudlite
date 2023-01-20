@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"operators.kloudlite.io/pkg/constants"
+	"github.com/kloudlite/operator/pkg/constants"
 	"time"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"

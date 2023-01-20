@@ -9,7 +9,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

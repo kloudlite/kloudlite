@@ -1,4 +1,4 @@
-module operators.kloudlite.io
+module github.com/kloudlite/operator
 
 go 1.18
 
@@ -18,6 +18,7 @@ require (
 	github.com/mittwald/go-helm-client v0.11.5
 	github.com/onsi/ginkgo/v2 v2.5.0
 	github.com/onsi/gomega v1.24.0
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/twmb/franz-go v1.6.0
 	github.com/urfave/cli/v2 v2.16.0
@@ -125,7 +126,6 @@ require (
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect

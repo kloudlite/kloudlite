@@ -1,15 +1,15 @@
 package main
 
 import (
-	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/project/internal/controllers/config"
-	envC "operators.kloudlite.io/operators/project/internal/controllers/env"
-	"operators.kloudlite.io/operators/project/internal/controllers/project"
-	secondary_env "operators.kloudlite.io/operators/project/internal/controllers/secondary-env"
-	"operators.kloudlite.io/operators/project/internal/controllers/secret"
-	"operators.kloudlite.io/operators/project/internal/env"
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/project/internal/controllers/config"
+	envC "github.com/kloudlite/operator/operators/project/internal/controllers/env"
+	"github.com/kloudlite/operator/operators/project/internal/controllers/project"
+	secondary_env "github.com/kloudlite/operator/operators/project/internal/controllers/secondary-env"
+	"github.com/kloudlite/operator/operators/project/internal/controllers/secret"
+	"github.com/kloudlite/operator/operators/project/internal/env"
 )
 
 func main() {

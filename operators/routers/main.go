@@ -3,11 +3,11 @@ package main
 import (
 	acmev1 "github.com/cert-manager/cert-manager/pkg/apis/acme/v1"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	"operators.kloudlite.io/operator"
-	edgeRouter "operators.kloudlite.io/operators/routers/internal/controllers/edge-router"
-	"operators.kloudlite.io/operators/routers/internal/controllers/router"
-	"operators.kloudlite.io/operators/routers/internal/env"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operator"
+	edgeRouter "github.com/kloudlite/operator/operators/routers/internal/controllers/edge-router"
+	"github.com/kloudlite/operator/operators/routers/internal/controllers/router"
+	"github.com/kloudlite/operator/operators/routers/internal/env"
 )
 
 func main() {

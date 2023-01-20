@@ -1,12 +1,12 @@
 package main
 
 import (
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	elasticsearchmsvcv1 "operators.kloudlite.io/apis/elasticsearch.msvc/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/msvc-elasticsearch/internal/controllers/kibana"
-	"operators.kloudlite.io/operators/msvc-elasticsearch/internal/controllers/service"
-	"operators.kloudlite.io/operators/msvc-elasticsearch/internal/env"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/msvc-elasticsearch/internal/controllers/kibana"
+	"github.com/kloudlite/operator/operators/msvc-elasticsearch/internal/controllers/service"
+	"github.com/kloudlite/operator/operators/msvc-elasticsearch/internal/env"
 )
 
 func main() {

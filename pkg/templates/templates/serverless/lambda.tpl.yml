@@ -4,7 +4,7 @@
 {{- $vMounts := get . "volumeMounts"}}
 
 {{- with $obj }}
-{{- /* gotype: operators.kloudlite.io/apis/serverless/v1.Lambda*/ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/serverless/v1.Lambda*/ -}}
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:

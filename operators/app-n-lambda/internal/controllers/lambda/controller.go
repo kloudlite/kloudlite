@@ -7,17 +7,17 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	"operators.kloudlite.io/operators/app-n-lambda/internal/env"
-	"operators.kloudlite.io/pkg/conditions"
-	"operators.kloudlite.io/pkg/constants"
-	fn "operators.kloudlite.io/pkg/functions"
-	"operators.kloudlite.io/pkg/harbor"
-	"operators.kloudlite.io/pkg/kubectl"
-	"operators.kloudlite.io/pkg/logging"
-	rApi "operators.kloudlite.io/pkg/operator"
-	stepResult "operators.kloudlite.io/pkg/operator/step-result"
-	"operators.kloudlite.io/pkg/templates"
+	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
+	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
+	"github.com/kloudlite/operator/pkg/conditions"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/harbor"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/logging"
+	rApi "github.com/kloudlite/operator/pkg/operator"
+	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/pkg/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -58,8 +58,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-  req.LogPreReconcile()
-  defer req.LogPostReconcile()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()

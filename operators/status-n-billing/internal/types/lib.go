@@ -9,9 +9,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"operators.kloudlite.io/pkg/constants"
-	rApi "operators.kloudlite.io/pkg/operator"
-	"operators.kloudlite.io/pkg/redpanda"
+	"github.com/kloudlite/operator/pkg/constants"
+	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/pkg/redpanda"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

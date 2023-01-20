@@ -2,9 +2,9 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ct "operators.kloudlite.io/apis/common-types"
-	"operators.kloudlite.io/pkg/constants"
-	rApi "operators.kloudlite.io/pkg/operator"
+	ct "github.com/kloudlite/operator/apis/common-types"
+	"github.com/kloudlite/operator/pkg/constants"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 // DatabaseSpec defines the desired state of Database

@@ -9,7 +9,7 @@
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{- with $obj }}
-{{- /*gotype: operators.kloudlite.io/apis/redis-standalone.msvc/v1.Service */ -}}
+{{- /*gotype: github.com/kloudlite/operator/apis/redis-standalone.msvc/v1.Service */ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmRedis
 metadata:

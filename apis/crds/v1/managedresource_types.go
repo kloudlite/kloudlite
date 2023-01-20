@@ -3,12 +3,12 @@ package v1
 import (
 	"fmt"
 
-	"operators.kloudlite.io/pkg/constants"
-	rApi "operators.kloudlite.io/pkg/operator"
+	"github.com/kloudlite/operator/pkg/constants"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	rawJson "operators.kloudlite.io/pkg/raw-json"
+	rawJson "github.com/kloudlite/operator/pkg/raw-json"
 )
 
 type msvcNamedRefTT struct {

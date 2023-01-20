@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/twmb/franz-go/pkg/kgo"
-	"operators.kloudlite.io/pkg/errors"
-	"operators.kloudlite.io/pkg/logging"
+	"github.com/kloudlite/operator/pkg/errors"
+	"github.com/kloudlite/operator/pkg/logging"
 )
 
 type consumer struct {

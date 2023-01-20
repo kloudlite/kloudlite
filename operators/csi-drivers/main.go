@@ -1,10 +1,10 @@
 package main
 
 import (
-	csiv1 "operators.kloudlite.io/apis/csi/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/csi-drivers/internal/controller/driver"
-	"operators.kloudlite.io/operators/csi-drivers/internal/env"
+	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/csi-drivers/internal/controller/driver"
+	"github.com/kloudlite/operator/operators/csi-drivers/internal/env"
 )
 
 func main() {

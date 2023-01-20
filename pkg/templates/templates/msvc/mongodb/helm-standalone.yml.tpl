@@ -6,7 +6,7 @@
 {{- $existingSecret := get . "existing-secret" -}}
 
 {{- with $obj }}
-{{- /* gotype: operators.kloudlite.io/apis/mongodb.msvc/v1.StandaloneService*/ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/mongodb.msvc/v1.StandaloneService*/ -}}
 {{$labels := .Labels | default dict}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMongoDB

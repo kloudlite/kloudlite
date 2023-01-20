@@ -7,9 +7,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ct "operators.kloudlite.io/apis/common-types"
-	zookeeperMsvcv1 "operators.kloudlite.io/apis/zookeeper.msvc/v1"
-	. "operators.kloudlite.io/testing"
+	ct "github.com/kloudlite/operator/apis/common-types"
+	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
+	. "github.com/kloudlite/operator/testing"
 )
 
 var namespace = "ginkgo-test-1"

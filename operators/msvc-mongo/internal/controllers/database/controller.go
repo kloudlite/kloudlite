@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"strings"
 	"time"
 
@@ -10,18 +11,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/types"
-	"operators.kloudlite.io/pkg/constants"
-	"operators.kloudlite.io/pkg/errors"
-	fn "operators.kloudlite.io/pkg/functions"
-	"operators.kloudlite.io/pkg/kubectl"
-	"operators.kloudlite.io/pkg/logging"
-	libMongo "operators.kloudlite.io/pkg/mongo"
-	rApi "operators.kloudlite.io/pkg/operator"
-	stepResult "operators.kloudlite.io/pkg/operator/step-result"
-	"operators.kloudlite.io/pkg/templates"
+	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
+	"github.com/kloudlite/operator/operators/msvc-mongo/internal/types"
+	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/logging"
+	libMongo "github.com/kloudlite/operator/pkg/mongo"
+	rApi "github.com/kloudlite/operator/pkg/operator"
+	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/pkg/templates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -320,6 +321,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.Database{})
+	builder.WithOptions(controller.Options{
+		MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles,
+	})
 	builder.Owns(&corev1.Secret{})
 
 	watchList := []client.Object{

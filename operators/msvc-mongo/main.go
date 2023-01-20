@@ -1,11 +1,11 @@
 package main
 
 import (
-	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
-	"operators.kloudlite.io/operator"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/controllers/database"
-	standaloneService "operators.kloudlite.io/operators/msvc-mongo/internal/controllers/standalone-service"
-	"operators.kloudlite.io/operators/msvc-mongo/internal/env"
+	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	"github.com/kloudlite/operator/operator"
+	"github.com/kloudlite/operator/operators/msvc-mongo/internal/controllers/database"
+	standaloneService "github.com/kloudlite/operator/operators/msvc-mongo/internal/controllers/standalone-service"
+	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
 )
 
 func main() {

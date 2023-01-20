@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"operators.kloudlite.io/pkg/errors"
-	libTemplates "operators.kloudlite.io/pkg/templates"
+	"github.com/kloudlite/operator/pkg/errors"
+	libTemplates "github.com/kloudlite/operator/pkg/templates"
 )
 
 var (

@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"k8s.io/client-go/rest"
-	"operators.kloudlite.io/agent/internal/env"
-	t "operators.kloudlite.io/agent/internal/types"
-	"operators.kloudlite.io/pkg/errors"
-	"operators.kloudlite.io/pkg/kubectl"
-	"operators.kloudlite.io/pkg/logging"
-	"operators.kloudlite.io/pkg/redpanda"
+	"github.com/kloudlite/operator/agent/internal/env"
+	t "github.com/kloudlite/operator/agent/internal/types"
+	"github.com/kloudlite/operator/pkg/errors"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/logging"
+	"github.com/kloudlite/operator/pkg/redpanda"
 	"sigs.k8s.io/yaml"
 )
 

@@ -7,7 +7,7 @@
 
 
 {{- with $obj}}
-{{- /*gotype: operators.kloudlite.io/apis/neo4j.msvc/v1.StandaloneService*/ -}}
+{{- /*gotype: github.com/kloudlite/operator/apis/neo4j.msvc/v1.StandaloneService*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmNeo4jStandalone
 metadata:

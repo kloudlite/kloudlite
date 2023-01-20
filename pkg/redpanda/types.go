@@ -6,9 +6,9 @@ import (
 
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/sasl/scram"
-	"operators.kloudlite.io/pkg/errors"
-	fn "operators.kloudlite.io/pkg/functions"
-	"operators.kloudlite.io/pkg/logging"
+	"github.com/kloudlite/operator/pkg/errors"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/logging"
 )
 
 type Consumer interface {

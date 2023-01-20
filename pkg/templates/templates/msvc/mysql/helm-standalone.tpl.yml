@@ -7,7 +7,7 @@
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
 {{- with $obj }}
-{{- /*gotype: operators.kloudlite.io/apis/mysql.msvc/v1.StandaloneService*/ -}}
+{{- /*gotype: github.com/kloudlite/operator/apis/mysql.msvc/v1.StandaloneService*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmMySqlDB
 metadata:

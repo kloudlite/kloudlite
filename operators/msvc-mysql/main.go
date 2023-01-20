@@ -1,12 +1,12 @@
 package main
 
 import (
-	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
-	"operators.kloudlite.io/operator"
-	clusterService "operators.kloudlite.io/operators/msvc-mysql/internal/controllers/cluster-service"
-	"operators.kloudlite.io/operators/msvc-mysql/internal/controllers/database"
-	standaloneService "operators.kloudlite.io/operators/msvc-mysql/internal/controllers/standalone-service"
-	"operators.kloudlite.io/operators/msvc-mysql/internal/env"
+	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	"github.com/kloudlite/operator/operator"
+	clusterService "github.com/kloudlite/operator/operators/msvc-mysql/internal/controllers/cluster-service"
+	"github.com/kloudlite/operator/operators/msvc-mysql/internal/controllers/database"
+	standaloneService "github.com/kloudlite/operator/operators/msvc-mysql/internal/controllers/standalone-service"
+	"github.com/kloudlite/operator/operators/msvc-mysql/internal/env"
 )
 
 func main() {

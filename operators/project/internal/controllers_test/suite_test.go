@@ -5,9 +5,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	artifactsv1 "operators.kloudlite.io/apis/artifacts/v1"
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	testlib "operators.kloudlite.io/testing"
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	testlib "github.com/kloudlite/operator/testing"
 )
 
 func TestAPIs(t *testing.T) {

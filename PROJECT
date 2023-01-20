@@ -6,7 +6,7 @@ plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: app
-repo: operators.kloudlite.io
+repo: github.com/kloudlite/operator
 resources:
 - api:
     crdVersion: v1
@@ -15,7 +15,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: Project
-  path: operators.kloudlite.io/api/v1
+  path: github.com/kloudlite/operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -24,7 +24,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: Router
-  path: operators.kloudlite.io/api/v1
+  path: github.com/kloudlite/operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -33,7 +33,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: App
-  path: operators.kloudlite.io/api/v1
+  path: github.com/kloudlite/operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -42,7 +42,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: ManagedService
-  path: operators.kloudlite.io/api/v1
+  path: github.com/kloudlite/operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -51,7 +51,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: ManagedResource
-  path: operators.kloudlite.io/api/v1
+  path: github.com/kloudlite/operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -60,7 +60,7 @@ resources:
   domain: kloudlite.io
   group: msvc
   kind: MongoDB
-  path: operators.kloudlite.io/apis/msvc/v1
+  path: github.com/kloudlite/operator/apis/msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -69,7 +69,7 @@ resources:
   domain: kloudlite.io
   group: mongodbs.msvc
   kind: Database
-  path: operators.kloudlite.io/apis/mongodbs.msvc/v1
+  path: github.com/kloudlite/operator/apis/mongodbs.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -78,7 +78,7 @@ resources:
   domain: kloudlite.io
   group: watchers.msvc
   kind: MongoDB
-  path: operators.kloudlite.io/apis/watchers.msvc/v1
+  path: github.com/kloudlite/operator/apis/watchers.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -87,7 +87,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: Account
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -96,7 +96,7 @@ resources:
   domain: kloudlite.io
   group: serverless
   kind: Lambda
-  path: operators.kloudlite.io/apis/serverless/v1
+  path: github.com/kloudlite/operator/apis/serverless/v1
   version: v1
 - api:
     crdVersion: v1
@@ -105,7 +105,7 @@ resources:
   domain: kloudlite.io
   group: elasticsearch.msvc
   kind: Service
-  path: operators.kloudlite.io/apis/elasticsearch.msvc/v1
+  path: github.com/kloudlite/operator/apis/elasticsearch.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -114,7 +114,7 @@ resources:
   domain: kloudlite.io
   group: opensearch.msvc
   kind: Service
-  path: operators.kloudlite.io/apis/opensearch.msvc/v1
+  path: github.com/kloudlite/operator/apis/opensearch.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -123,7 +123,7 @@ resources:
   domain: kloudlite.io
   group: influxdb.msvc
   kind: Service
-  path: operators.kloudlite.io/apis/influxdb.msvc/v1
+  path: github.com/kloudlite/operator/apis/influxdb.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -132,7 +132,7 @@ resources:
   domain: kloudlite.io
   group: influxdb.msvc
   kind: Bucket
-  path: operators.kloudlite.io/apis/influxdb.msvc/v1
+  path: github.com/kloudlite/operator/apis/influxdb.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -141,7 +141,7 @@ resources:
   domain: kloudlite.io
   group: s3.aws
   kind: Bucket
-  path: operators.kloudlite.io/apis/s3.aws/v1
+  path: github.com/kloudlite/operator/apis/s3.aws/v1
   version: v1
 - api:
     crdVersion: v1
@@ -150,7 +150,7 @@ resources:
   domain: kloudlite.io
   group: watcher
   kind: StatusWatcher
-  path: operators.kloudlite.io/apis/watcher/v1
+  path: github.com/kloudlite/operator/apis/watcher/v1
   version: v1
 - api:
     crdVersion: v1
@@ -159,7 +159,7 @@ resources:
   domain: kloudlite.io
   group: watcher
   kind: BillingWatcher
-  path: operators.kloudlite.io/apis/watcher/v1
+  path: github.com/kloudlite/operator/apis/watcher/v1
   version: v1
 - api:
     crdVersion: v1
@@ -168,7 +168,7 @@ resources:
   domain: kloudlite.io
   group: artifacts
   kind: HarborProject
-  path: operators.kloudlite.io/apis/artifacts/v1
+  path: github.com/kloudlite/operator/apis/artifacts/v1
   version: v1
 - api:
     crdVersion: v1
@@ -177,7 +177,7 @@ resources:
   domain: kloudlite.io
   group: artifacts
   kind: HarborUserAccount
-  path: operators.kloudlite.io/apis/artifacts/v1
+  path: github.com/kloudlite/operator/apis/artifacts/v1
   version: v1
 - api:
     crdVersion: v1
@@ -186,7 +186,7 @@ resources:
   domain: kloudlite.io
   group: redpanda.msvc
   kind: Service
-  path: operators.kloudlite.io/apis/redpanda.msvc/v1
+  path: github.com/kloudlite/operator/apis/redpanda.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -195,7 +195,7 @@ resources:
   domain: kloudlite.io
   group: redpanda.msvc
   kind: Topic
-  path: operators.kloudlite.io/apis/redpanda.msvc/v1
+  path: github.com/kloudlite/operator/apis/redpanda.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -204,7 +204,7 @@ resources:
   domain: kloudlite.io
   group: mongodb.external
   kind: Database
-  path: operators.kloudlite.io/apis/mongodb.external/v1
+  path: github.com/kloudlite/operator/apis/mongodb.external/v1
   version: v1
 - api:
     crdVersion: v1
@@ -213,7 +213,7 @@ resources:
   domain: kloudlite.io
   group: mysql.external
   kind: Database
-  path: operators.kloudlite.io/apis/mysql.external/v1
+  path: github.com/kloudlite/operator/apis/mysql.external/v1
   version: v1
 - api:
     crdVersion: v1
@@ -222,7 +222,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: AccountRouter
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -230,7 +230,7 @@ resources:
   domain: kloudlite.io
   group: mongodb.msvc
   kind: StandaloneService
-  path: operators.kloudlite.io/apis/mongodb.msvc/v1
+  path: github.com/kloudlite/operator/apis/mongodb.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -238,7 +238,7 @@ resources:
   domain: kloudlite.io
   group: mongodb.msvc
   kind: ClusterService
-  path: operators.kloudlite.io/apis/mongodb.msvc/v1
+  path: github.com/kloudlite/operator/apis/mongodb.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -246,7 +246,7 @@ resources:
   domain: kloudlite.io
   group: mongodb.msvc
   kind: Database
-  path: operators.kloudlite.io/apis/mongodb.msvc/v1
+  path: github.com/kloudlite/operator/apis/mongodb.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -254,7 +254,7 @@ resources:
   domain: kloudlite.io
   group: redis.msvc
   kind: StandaloneService
-  path: operators.kloudlite.io/apis/redis.msvc/v1
+  path: github.com/kloudlite/operator/apis/redis.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -262,7 +262,7 @@ resources:
   domain: kloudlite.io
   group: redis.msvc
   kind: ClusterService
-  path: operators.kloudlite.io/apis/redis.msvc/v1
+  path: github.com/kloudlite/operator/apis/redis.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -270,7 +270,7 @@ resources:
   domain: kloudlite.io
   group: redis.msvc
   kind: ACLAccount
-  path: operators.kloudlite.io/apis/redis.msvc/v1
+  path: github.com/kloudlite/operator/apis/redis.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -278,7 +278,7 @@ resources:
   domain: kloudlite.io
   group: mysql.msvc
   kind: StandaloneService
-  path: operators.kloudlite.io/apis/mysql.msvc/v1
+  path: github.com/kloudlite/operator/apis/mysql.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -286,7 +286,7 @@ resources:
   domain: kloudlite.io
   group: mysql.msvc
   kind: ClusterService
-  path: operators.kloudlite.io/apis/mysql.msvc/v1
+  path: github.com/kloudlite/operator/apis/mysql.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -294,7 +294,7 @@ resources:
   domain: kloudlite.io
   group: mysql.msvc
   kind: Database
-  path: operators.kloudlite.io/apis/mysql.msvc/v1
+  path: github.com/kloudlite/operator/apis/mysql.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -302,7 +302,7 @@ resources:
   domain: kloudlite.io
   group: redis.msvc
   kind: ACLConfigMap
-  path: operators.kloudlite.io/apis/redis.msvc/v1
+  path: github.com/kloudlite/operator/apis/redis.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -310,7 +310,7 @@ resources:
   domain: kloudlite.io
   group: zookeeper.msvc
   kind: Service
-  path: operators.kloudlite.io/apis/zookeeper.msvc/v1
+  path: github.com/kloudlite/operator/apis/zookeeper.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -318,7 +318,7 @@ resources:
   domain: kloudlite.io
   group: redpanda.msvc
   kind: ACLUser
-  path: operators.kloudlite.io/apis/redpanda.msvc/v1
+  path: github.com/kloudlite/operator/apis/redpanda.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -326,7 +326,7 @@ resources:
   domain: kloudlite.io
   group: extensions
   kind: Cluster
-  path: operators.kloudlite.io/apis/extensions/v1
+  path: github.com/kloudlite/operator/apis/extensions/v1
   version: v1
 - api:
     crdVersion: v1
@@ -334,7 +334,7 @@ resources:
   domain: kloudlite.io
   group: redpanda.msvc
   kind: Admin
-  path: operators.kloudlite.io/apis/redpanda.msvc/v1
+  path: github.com/kloudlite/operator/apis/redpanda.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -342,7 +342,7 @@ resources:
   domain: kloudlite.io
   group: neo4j.msvc
   kind: StandaloneService
-  path: operators.kloudlite.io/apis/neo4j.msvc/v1
+  path: github.com/kloudlite/operator/apis/neo4j.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -350,7 +350,7 @@ resources:
   domain: kloudlite.io
   group: artifacts
   kind: HarborWebhook
-  path: operators.kloudlite.io/apis/artifacts/v1
+  path: github.com/kloudlite/operator/apis/artifacts/v1
   version: v1
 - api:
     crdVersion: v1
@@ -358,7 +358,7 @@ resources:
   domain: kloudlite.io
   group: csi
   kind: AwsEBS
-  path: operators.kloudlite.io/apis/csi/v1
+  path: github.com/kloudlite/operator/apis/csi/v1
   version: v1
 - api:
     crdVersion: v1
@@ -366,7 +366,7 @@ resources:
   domain: kloudlite.io
   group: csi
   kind: Driver
-  path: operators.kloudlite.io/apis/csi/v1
+  path: github.com/kloudlite/operator/apis/csi/v1
   version: v1
 - api:
     crdVersion: v1
@@ -374,7 +374,7 @@ resources:
   domain: kloudlite.io
   group: csi
   kind: StorageClass
-  path: operators.kloudlite.io/apis/csi/v1
+  path: github.com/kloudlite/operator/apis/csi/v1
   version: v1
 - api:
     crdVersion: v1
@@ -382,7 +382,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: EdgeRouter
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -390,7 +390,7 @@ resources:
   domain: kloudlite.io
   group: elasticsearch.msvc
   kind: Kibana
-  path: operators.kloudlite.io/apis/elasticsearch.msvc/v1
+  path: github.com/kloudlite/operator/apis/elasticsearch.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -398,7 +398,7 @@ resources:
   domain: kloudlite.io
   group: extensions
   kind: EdgeWorker
-  path: operators.kloudlite.io/apis/extensions/v1
+  path: github.com/kloudlite/operator/apis/extensions/v1
   version: v1
 - api:
     crdVersion: v1
@@ -406,7 +406,7 @@ resources:
   domain: kloudlite.io
   group: cluster-setup
   kind: PrimaryCluster
-  path: operators.kloudlite.io/apis/cluster-setup/v1
+  path: github.com/kloudlite/operator/apis/cluster-setup/v1
   version: v1
 - api:
     crdVersion: v1
@@ -414,7 +414,7 @@ resources:
   domain: kloudlite.io
   group: cluster-setup
   kind: SecondaryCluster
-  path: operators.kloudlite.io/apis/cluster-setup/v1
+  path: github.com/kloudlite/operator/apis/cluster-setup/v1
   version: v1
 - api:
     crdVersion: v1
@@ -422,7 +422,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: Env
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -430,7 +430,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: Config
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -438,7 +438,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: Secret
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -446,7 +446,7 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: SecondaryEnv
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -454,6 +454,6 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: Anchor
-  path: operators.kloudlite.io/apis/crds/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 version: "3"

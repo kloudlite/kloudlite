@@ -4,17 +4,17 @@ import (
 	"context"
 	"time"
 
-	crdsv1 "operators.kloudlite.io/apis/crds/v1"
-	mongodbMsvcv1 "operators.kloudlite.io/apis/mongodb.msvc/v1"
-	mysqlMsvcv1 "operators.kloudlite.io/apis/mysql.msvc/v1"
-	redisMsvcv1 "operators.kloudlite.io/apis/redis.msvc/v1"
-	serverlessv1 "operators.kloudlite.io/apis/serverless/v1"
-	"operators.kloudlite.io/operator"
-	statusWatcher "operators.kloudlite.io/operators/status-n-billing/internal/controllers/status-watcher"
-	env "operators.kloudlite.io/operators/status-n-billing/internal/env"
-	"operators.kloudlite.io/operators/status-n-billing/internal/types"
-	"operators.kloudlite.io/pkg/errors"
-	"operators.kloudlite.io/pkg/redpanda"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
+	"github.com/kloudlite/operator/operator"
+	statusWatcher "github.com/kloudlite/operator/operators/status-n-billing/internal/controllers/status-watcher"
+	env "github.com/kloudlite/operator/operators/status-n-billing/internal/env"
+	"github.com/kloudlite/operator/operators/status-n-billing/internal/types"
+	"github.com/kloudlite/operator/pkg/errors"
+	"github.com/kloudlite/operator/pkg/redpanda"
 )
 
 func main() {

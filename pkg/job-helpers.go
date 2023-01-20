@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	typesbatchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 	"sigs.k8s.io/yaml"
 )
 

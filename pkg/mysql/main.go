@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 type Client struct {

@@ -10,13 +10,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"operators.kloudlite.io/pkg/conditions"
-	"operators.kloudlite.io/pkg/constants"
-	fn "operators.kloudlite.io/pkg/functions"
-	"operators.kloudlite.io/pkg/kubectl"
-	"operators.kloudlite.io/pkg/logging"
-	stepResult "operators.kloudlite.io/pkg/operator/step-result"
-	rawJson "operators.kloudlite.io/pkg/raw-json"
+	"github.com/kloudlite/operator/pkg/conditions"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/logging"
+	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	rawJson "github.com/kloudlite/operator/pkg/raw-json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -127,7 +127,10 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 			y[k] = v
 		}
 		r.Object.SetAnnotations(y)
-		return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
+		if err := r.client.Update(r.ctx, r.Object); err != nil {
+			return stepResult.New().Err(err)
+		}
+		return stepResult.New().RequeueAfter(1 * time.Second)
 	}
 
 	return stepResult.New().Continue(true)
@@ -222,7 +225,6 @@ func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
 		if err := r.client.Status().Update(ctx, obj); err != nil {
 			return r.FailWithOpError(err)
 		}
-		return stepResult.New().RequeueAfter(1 * time.Second)
 	}
 
 	return stepResult.New().Continue(true)
@@ -269,7 +271,7 @@ func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
 		if err := r.client.Status().Update(context.TODO(), obj); err != nil {
 			return stepResult.New().Err(err)
 		}
-		return r.Done().RequeueAfter(2 * time.Second)
+		return r.Done().RequeueAfter(0 * time.Second)
 	}
 	return r.Next()
 }

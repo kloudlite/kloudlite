@@ -6,7 +6,7 @@
 {{- $adminToken := get . "admin-token"  -}}
 
 {{- with $obj}}
-{{- /* gotype: operators.kloudlite.io/apis/influxdb.msvc/v1.Service*/ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/influxdb.msvc/v1.Service*/ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmInfluxDB
 metadata:

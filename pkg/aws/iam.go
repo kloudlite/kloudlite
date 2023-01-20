@@ -4,7 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
-	"operators.kloudlite.io/pkg/errors"
+	"github.com/kloudlite/operator/pkg/errors"
 )
 
 type iamObj struct {

@@ -5,7 +5,7 @@
 {{- $helmSecret := get . "helm-secret" -}}
 
 {{- with $obj }}
-{{- /* gotype: operators.kloudlite.io/apis/zookeeper.msvc/v1.Service */ -}}
+{{- /* gotype: github.com/kloudlite/operator/apis/zookeeper.msvc/v1.Service */ -}}
 apiVersion: msvc.kloudlite.io/v1
 kind: HelmZookeeper
 metadata:

@@ -3,11 +3,11 @@ package v1
 import (
 	"fmt"
 
-	"operators.kloudlite.io/pkg/constants"
+	"github.com/kloudlite/operator/pkg/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	rApi "operators.kloudlite.io/pkg/operator"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 // ProjectSpec defines the desired state of Project

@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the neo4j.msvc v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=neo4j.msvc.kloudlite.io
+// +kubebuilder:object:generate=true
+// +groupName=neo4j.msvc.kloudlite.io
 package v1
 
 import (
