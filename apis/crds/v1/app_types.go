@@ -2,11 +2,11 @@ package v1
 
 import (
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/kloudlite/operator/pkg/constants"
 	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ContainerResource struct {
@@ -137,20 +137,8 @@ type JsonPatch struct {
 // +kubebuilder:printcolumn:JSONPath=".status.displayVars.frozen",name=Frozen,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
-type Random struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec AppSpec `json:"spec,omitempty"`
-	// +kubebuilder:default=true
-	Enabled   *bool       `json:"enabled,omitempty"`
-	Overrides *JsonPatch  `json:"overrides,omitempty"`
-	Status    rApi.Status `json:"status,omitempty"`
-}
-
 // App is the Schema for the apps API
 type App struct {
-	Random            `json:",inline"`
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
