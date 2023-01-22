@@ -2,6 +2,10 @@ package testing
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+
+	"github.com/kloudlite/operator/pkg/kubectl"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -9,15 +13,11 @@ import (
 	"k8s.io/client-go/discovery"
 	k8sScheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"os"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"time"
 )
 
 var Suite struct {
@@ -41,9 +41,9 @@ func AddToSchemes(fns ...func(s *runtime.Scheme) error) *runtime.Scheme {
 }
 
 var LocalProxyEnvTest = &envtest.Environment{
-	Config: &rest.Config{Host: "localhost:8080"},
-	//BinaryAssetsDirectory: filepath.Join(os.Getenv("PROJECT_ROOT"), "bin", "k8s", "1.26.0-linux-amd64"),
-	//CRDDirectoryPaths:     []string{filepath.Join(os.Getenv("PROJECT_ROOT"), "config", "crd", "bases")},
+	Config:                &rest.Config{Host: "localhost:8080"},
+	BinaryAssetsDirectory: filepath.Join(os.Getenv("PROJECT_ROOT"), "bin", "k8s", "1.26.0-linux-amd64"),
+	CRDDirectoryPaths:     []string{filepath.Join(os.Getenv("PROJECT_ROOT"), "config", "crd", "bases")},
 }
 
 var DefaultEnvTest = &envtest.Environment{
@@ -88,6 +88,7 @@ func withoutManager() {
 			SuppressWarnings: true,
 		},
 	})
+	Expect(err).NotTo(HaveOccurred())
 
 	Suite.K8sClient = c
 
@@ -125,17 +126,4 @@ func SetupKubernetes(scheme *runtime.Scheme, envTest *envtest.Environment) {
 	Suite.Context, Suite.CancelFunc = context.WithCancel(context.TODO())
 
 	withoutManager()
-	//withManager()
-}
-
-func Promise(testFn func(g Gomega), timeout ...string) {
-	t := 10 * time.Second
-	if len(timeout) > 0 {
-		t2, err := time.ParseDuration(timeout[0])
-		Expect(err).NotTo(HaveOccurred())
-		t = t2
-	}
-	Eventually(func(g Gomega) {
-		testFn(g)
-	}).WithPolling(100 * time.Millisecond).WithTimeout(t).Should(Succeed())
 }
