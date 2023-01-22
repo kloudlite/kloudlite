@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/logging"
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 type consumer struct {

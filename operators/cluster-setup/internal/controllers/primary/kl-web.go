@@ -1,8 +1,6 @@
 package primary
 
 import (
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "github.com/kloudlite/operator/apis/cluster-setup/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	lc "github.com/kloudlite/operator/operators/cluster-setup/internal/constants"
@@ -10,6 +8,8 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (

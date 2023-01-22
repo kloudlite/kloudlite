@@ -2,8 +2,8 @@ package common_types
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"github.com/kloudlite/operator/pkg/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type Storage struct {

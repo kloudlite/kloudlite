@@ -1,8 +1,8 @@
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type SecretReference struct {

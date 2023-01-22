@@ -8,13 +8,13 @@ import (
 	"log"
 	"time"
 
-	"k8s.io/client-go/rest"
 	"github.com/kloudlite/operator/agent/internal/env"
 	t "github.com/kloudlite/operator/agent/internal/types"
 	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	"github.com/kloudlite/operator/pkg/redpanda"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 )
 

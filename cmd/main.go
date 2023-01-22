@@ -10,9 +10,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/urfave/cli/v2"
 	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/templates"
+	"github.com/urfave/cli/v2"
 )
 
 var (

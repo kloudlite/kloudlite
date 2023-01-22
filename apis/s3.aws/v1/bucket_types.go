@@ -2,9 +2,9 @@ package v1
 
 import (
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type BucketSpec struct {
