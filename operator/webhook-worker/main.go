@@ -7,11 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -21,6 +16,11 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	"github.com/kloudlite/operator/pkg/redpanda"
 	"github.com/kloudlite/operator/webhook-worker/internal/env"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )

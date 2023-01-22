@@ -2,9 +2,9 @@ package http
 
 import (
 	"encoding/json"
+	"github.com/kloudlite/operator/pkg/errors"
 	"io"
 	"net/http"
-	"github.com/kloudlite/operator/pkg/errors"
 )
 
 func Get[T any](req *http.Request) (*T, *http.Response, error) {

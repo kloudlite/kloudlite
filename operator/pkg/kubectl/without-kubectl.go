@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"github.com/kloudlite/operator/pkg/constants"
+	"io"
 	"time"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"

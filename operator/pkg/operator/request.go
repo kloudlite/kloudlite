@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -17,6 +15,8 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	rawJson "github.com/kloudlite/operator/pkg/raw-json"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -42,6 +42,18 @@ func NewRequest[T Resource](ctx ReconcilerCtx, c client.Client, nn types.Namespa
 	if err := c.Get(ctx, nn, resource); err != nil {
 		return nil, err
 	}
+
+	// TODO: useful only when reoncilers triggered from envtest as of now
+	if resource.GetObjectKind().GroupVersionKind().Kind == "" {
+		kinds, _, err := c.Scheme().ObjectKinds(resource)
+		if err != nil {
+			return nil, err
+		}
+		if len(kinds) > 0 {
+			resource.GetObjectKind().SetGroupVersionKind(kinds[0])
+		}
+	}
+
 	logger, ok := ctx.Value("logger").(logging.Logger)
 	if !ok {
 		panic("no logger passed into NewRequest")
