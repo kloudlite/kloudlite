@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
 	. "github.com/kloudlite/operator/testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var namespace = "ginkgo-test-1"

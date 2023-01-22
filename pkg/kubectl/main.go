@@ -7,9 +7,9 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
-	"github.com/kloudlite/operator/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

@@ -9,13 +9,13 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	typesbatchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
-	"github.com/kloudlite/operator/pkg/errors"
 	"sigs.k8s.io/yaml"
 )
 

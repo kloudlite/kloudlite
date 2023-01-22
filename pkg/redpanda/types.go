@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/twmb/franz-go/pkg/kgo"
-	"github.com/twmb/franz-go/pkg/sasl/scram"
 	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
+	"github.com/twmb/franz-go/pkg/kgo"
+	"github.com/twmb/franz-go/pkg/sasl/scram"
 )
 
 type Consumer interface {

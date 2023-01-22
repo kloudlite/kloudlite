@@ -1,11 +1,11 @@
 package env
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	"k8s.io/apimachinery/pkg/util/rand"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/logging"
 	. "github.com/kloudlite/operator/testing"
+	. "github.com/onsi/ginkgo/v2"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"time"
 )
 

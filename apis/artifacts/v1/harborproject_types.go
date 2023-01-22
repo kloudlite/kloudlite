@@ -1,10 +1,10 @@
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/harbor"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type HarborProjectSpec struct {

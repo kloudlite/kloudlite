@@ -4,10 +4,6 @@ import (
 	"context"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
 	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
@@ -20,6 +16,10 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

@@ -3,10 +3,10 @@ package controllers_test
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
 	testlib "github.com/kloudlite/operator/testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 func TestAPIs(t *testing.T) {

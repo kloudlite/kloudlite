@@ -5,9 +5,9 @@ import (
 	"os/exec"
 	"strings"
 
-	exec2 "k8s.io/utils/exec"
 	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
+	exec2 "k8s.io/utils/exec"
 )
 
 type AdminClient interface {

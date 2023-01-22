@@ -1,8 +1,8 @@
 package v1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	ct "github.com/kloudlite/operator/apis/common-types"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type S3 struct {

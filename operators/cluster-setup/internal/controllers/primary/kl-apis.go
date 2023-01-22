@@ -2,15 +2,15 @@ package primary
 
 import (
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "github.com/kloudlite/operator/apis/cluster-setup/v1"
 	lc "github.com/kloudlite/operator/operators/cluster-setup/internal/constants"
 	"github.com/kloudlite/operator/operators/cluster-setup/internal/templates"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 )

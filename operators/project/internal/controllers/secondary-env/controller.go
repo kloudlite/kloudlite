@@ -3,15 +3,14 @@ package secondary_env
 import (
 	"context"
 	"fmt"
+	fn "github.com/kloudlite/operator/pkg/functions"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fn "github.com/kloudlite/operator/pkg/functions"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
 	v1 "github.com/kloudlite/operator/apis/crds/v1"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/harbor"
@@ -19,6 +18,7 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

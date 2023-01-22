@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"context"
 	"fmt"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -24,8 +23,8 @@ func Promise(testFn func(g Gomega), timeout ...string) {
 	}).WithPolling(100 * time.Millisecond).WithTimeout(t).Should(Succeed())
 }
 
-func Create(ctx context.Context, res client.Object) {
-	err := Suite.K8sClient.Create(ctx, res)
+func CreateResource(res client.Object) {
+	err := Suite.K8sClient.Create(Suite.Context, res)
 	if err != nil {
 		if apiErrors.IsAlreadyExists(err) {
 			return
@@ -34,8 +33,8 @@ func Create(ctx context.Context, res client.Object) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func Delete(ctx context.Context, res client.Object) {
-	Expect(Suite.K8sClient.Delete(ctx, res)).NotTo(HaveOccurred())
+func DeleteResource(res client.Object) {
+	Expect(Suite.K8sClient.Delete(Suite.Context, res)).NotTo(HaveOccurred())
 }
 
 func Reconcile(reconciler reconcile.Reconciler, nn types.NamespacedName) {

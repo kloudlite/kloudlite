@@ -1,4 +1,4 @@
-package config
+package secret
 
 import (
 	"testing"
@@ -31,8 +31,8 @@ var _ = BeforeSuite(
 				ReconcilePeriod:         1 * time.Second,
 				MaxConcurrentReconciles: 10,
 			},
-			logger:     logging.NewOrDie(&logging.Options{Name: "app", Dev: true}),
-			Name:       "app",
+			logger:     logging.NewOrDie(&logging.Options{Name: "secrets", Dev: true}),
+			Name:       "secret",
 			yamlClient: Suite.K8sYamlClient,
 		}
 	},

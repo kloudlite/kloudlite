@@ -4,10 +4,6 @@ import (
 	"context"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/types"
@@ -18,6 +14,10 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/redpanda"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	corev1 "k8s.io/api/core/v1"
 	fn "github.com/kloudlite/operator/pkg/functions"
+	corev1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
