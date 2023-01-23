@@ -68,3 +68,6 @@ models:
   EdgeRegion:
     model:
       - kloudlite.io/apps/consolev2/internal/domain/entities.EdgeRegion
+  SecretData:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.SecretData

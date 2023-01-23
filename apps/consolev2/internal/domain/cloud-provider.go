@@ -2,22 +2,19 @@ package domain
 
 import (
 	"context"
-
-	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"fmt"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/consolev2/internal/domain/entities"
+	"kloudlite.io/pkg/constants"
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) CreateCloudProvider(ctx context.Context, cloudProvider *entities.CloudProvider) (*entities.CloudProvider, error) {
-	var cp *entities.CloudProvider
+func (d *domain) CreateCloudProvider(ctx context.Context, cp *entities.CloudProvider, creds entities.SecretData) (*entities.CloudProvider, error) {
 	var err error
-	cloudProvider.TypeMeta = v1.TypeMeta{
-		Kind:       "CloudProvider",
-		APIVersion: infrav1.GroupVersion.String(),
-	}
 
-	if cp, err = d.providerRepo.Create(ctx, cloudProvider); err != nil {
+	cp.FillTypeMeta()
+	if cp, err = d.providerRepo.Create(ctx, cp); err != nil {
 		return nil, err
 	}
 
@@ -26,12 +23,33 @@ func (d *domain) CreateCloudProvider(ctx context.Context, cloudProvider *entitie
 		return nil, err
 	}
 
-	if err = d.workloadMessenger.SendAction(
-		"apply", d.getDispatchKafkaTopic(clusterId), string(cp.Id), &infrav1.CloudProvider{
-			TypeMeta:   cp.TypeMeta,
-			ObjectMeta: cp.ObjectMeta,
-			Spec:       cp.Spec,
+	scrt := entities.Secret{
+		Secret: corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("provider-%s", cp.Name),
+				Namespace: constants.NamespaceCore,
+			},
+			Data: creds,
 		},
+	}
+
+	if _, err := d.secretRepo.Create(ctx, &scrt); err != nil {
+		return nil, err
+	}
+
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(cp.Id), scrt,
+	); err != nil {
+		return nil, err
+	}
+
+	cp.Spec.ProviderSecretRef = corev1.SecretReference{
+		Name:      scrt.Name,
+		Namespace: constants.NamespaceCore,
+	}
+
+	if err = d.workloadMessenger.SendAction(
+		"apply", d.getDispatchKafkaTopic(clusterId), string(cp.Id), cp.CloudProvider,
 	); err != nil {
 		return nil, err
 	}
@@ -81,25 +99,52 @@ func (d *domain) ListCloudProviders(ctx context.Context, accountId repos.ID) ([]
 	})
 }
 
-func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider *entities.CloudProvider) error {
+func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, creds entities.SecretData) (*entities.CloudProvider, error) {
 	var cp *entities.CloudProvider
 	var err error
 
 	if cp, err = d.providerRepo.FindOne(ctx, repos.Filter{
 		"metadata.name": cloudProvider.Name,
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
-	clusterId, err := d.getClusterForAccount(ctx, repos.ID(cloudProvider.Spec.AccountId))
+	if creds != nil {
+		one, _ := d.secretRepo.FindOne(ctx, repos.Filter{
+			"metadata.name": fmt.Sprintf("provider-%s", cp.Name),
+		})
+
+		if one == nil {
+			_, err := d.secretRepo.Create(ctx, &entities.Secret{
+				Secret: corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprintf("provider-%s", cp.Name),
+						Namespace: constants.NamespaceCore,
+					},
+					Data: creds.ToMap(),
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			one.Data = creds.ToMap()
+			_, err := d.secretRepo.UpdateById(ctx, one.Id, one)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	clusterId, err := d.getClusterForAccount(ctx, repos.ID(cp.Spec.AccountId))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := d.providerRepo.UpdateOne(ctx, repos.Filter{
-		"metadata.name": cloudProvider.Name,
-	}, cloudProvider); err != nil {
-		return err
+		"metadata.name": cp.Name,
+	}, cp); err != nil {
+		return nil, err
 	}
 
 	if err := d.workloadMessenger.SendAction(
@@ -107,8 +152,8 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider *entitie
 		string(cp.Id),
 		cp.CloudProvider,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return cp, nil
 }

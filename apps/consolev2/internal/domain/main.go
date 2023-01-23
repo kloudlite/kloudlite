@@ -26,6 +26,7 @@ type domain struct {
 	consoleTemplate   *template.Template
 	clusterRepo       repos.DbRepo[*entities.Cluster]
 	k8sYamlClient     *k8s.YAMLClient
+	secretRepo        repos.DbRepo[*entities.Secret]
 }
 
 func fxDomain(
@@ -48,7 +49,7 @@ func fxDomain(
 	instanceRepo repos.DbRepo[*entities.ResInstance],
 	environmentRepo repos.DbRepo[*entities.Environment],
 	msgP redpanda.Producer,
-	// env *Env,
+// env *Env,
 	logger logging.Logger,
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,
@@ -64,6 +65,8 @@ func fxDomain(
 		consoleTemplate:   consoleTemplate,
 		clusterRepo:       clusterRepo,
 		k8sYamlClient:     k8sYamlClient,
+		secretRepo:        secretRepo,
+
 		// instanceRepo:         instanceRepo,
 		// environmentRepo:      environmentRepo,
 		// changeNotifier:       changeNotifier,
@@ -74,7 +77,6 @@ func fxDomain(
 		// deviceRepo:           deviceRepo,
 		// projectRepo:          projectRepo,
 		// routerRepo:           routerRepo,
-		// secretRepo:           secretRepo,
 		// configRepo:           configRepo,
 		// appRepo:              appRepo,
 		// managedSvcRepo:       managedSvcRepo,

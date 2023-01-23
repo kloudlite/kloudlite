@@ -12,15 +12,16 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (r *mutationResolver) CoreCreateCloudProvider(ctx context.Context, in entities.CloudProvider) (*entities.CloudProvider, error) {
-	return r.Domain.CreateCloudProvider(ctx, &in)
+func (r *mutationResolver) CoreCreateCloudProvider(ctx context.Context, in entities.CloudProvider, creds entities.SecretData) (*entities.CloudProvider, error) {
+	return r.Domain.CreateCloudProvider(ctx, &in, creds)
 }
 
-func (r *mutationResolver) CoreUpdateCloudProvider(ctx context.Context, in entities.CloudProvider) (bool, error) {
-	if err := r.Domain.UpdateCloudProvider(ctx, &in); err != nil {
-		return false, err
+func (r *mutationResolver) CoreUpdateCloudProvider(ctx context.Context, in entities.CloudProvider, creds entities.SecretData) (*entities.CloudProvider, error) {
+	cp, err := r.Domain.UpdateCloudProvider(ctx, in, creds)
+	if err != nil {
+		return nil, err
 	}
-	return true, nil
+	return cp, nil
 }
 
 func (r *mutationResolver) CoreDeleteCloudProvider(ctx context.Context, name string) (bool, error) {

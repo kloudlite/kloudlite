@@ -168,3 +168,7 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/kloudlite/internal_operator_v2 v1.0.5-0.20230120091718-4a729feab5c5 => /home/nxtcoder17/workspace/kloudlite/internal_operator_v2
+
+replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
