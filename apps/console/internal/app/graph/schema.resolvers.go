@@ -1152,10 +1152,11 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 
 	final_patch := createjsonpatch.JSONPatchList{}
 
-	if err != nil {
-		return false, err
-	}
-	isSelf := strings.HasPrefix(string(instance.ResourceId), domain.ENV_INSTANCE)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// isSelf := strings.HasPrefix(string(instance.ResourceId), domain.ENV_INSTANCE)
+	isSelf := instance.IsSelf
 
 	switch instance.ResourceType {
 	case common.ResourceRouter:
@@ -1378,6 +1379,8 @@ func (r *mutationResolver) CoreUpdateResInstance(ctx context.Context, resource m
 
 	}
 
+	fmt.Println(final_patch.String())
+
 	if _, err := r.Domain.UpdateInstance(ctx, instance, project, &final_patch, resource.Enabled, overrides); err != nil {
 		return false, err
 	}
@@ -1390,7 +1393,7 @@ func (r *mutationResolver) CoreCreateInstance(ctx context.Context, instance mode
 		return nil, err
 	}
 
-	ri, err := r.Domain.CreateResInstance(ctx, NewId(domain.ENV_INSTANCE), instance.EnvironmentID, instance.BlueprintID, instance.ResourceType, *instance.Overrides)
+	ri, err := r.Domain.CreateResInstance(ctx, NewId(domain.ENV_INSTANCE), instance.EnvironmentID, instance.BlueprintID, instance.ResourceType, *instance.Overrides, true)
 	if err != nil {
 		return nil, err
 	}
@@ -1404,6 +1407,15 @@ func (r *mutationResolver) CoreCreateInstance(ctx context.Context, instance mode
 		Overrides:     &ri.Overrides,
 		ResourceType:  string(ri.ResourceType),
 	}, nil
+}
+
+func (r *mutationResolver) CoreDeleteResInstanceByID(ctx context.Context, instanceID repos.ID) (bool, error) {
+
+	if err := r.Domain.DeleteInstance(ctx, instanceID); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *projectResolver) Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error) {
@@ -1806,11 +1818,19 @@ func (r *queryResolver) CoreGetResInstance(ctx context.Context, envID repos.ID, 
 		EnvironmentID: instance.EnvironmentId,
 		BlueprintID:   instance.BlueprintId,
 		Overrides:     &instance.Overrides,
+		IsSelf:        instance.IsSelf,
 		ResourceType:  string(instance.ResourceType),
 	}, nil
 }
 
 func (r *queryResolver) CoreGetResInstanceByID(ctx context.Context, instanceID repos.ID) (*model.ResInstance, error) {
+	if strings.HasPrefix(string(instanceID), "self-template") {
+		return &model.ResInstance{
+			ID:        instanceID,
+			Overrides: new(string),
+			IsSelf:    true,
+		}, nil
+	}
 
 	instance, err := r.Domain.GetResInstanceById(ctx, instanceID)
 
@@ -1826,6 +1846,7 @@ func (r *queryResolver) CoreGetResInstanceByID(ctx context.Context, instanceID r
 		BlueprintID:   instance.BlueprintId,
 		Overrides:     &instance.Overrides,
 		ResourceType:  string(instance.ResourceType),
+		IsSelf:        instance.IsSelf,
 	}, nil
 }
 
@@ -1902,7 +1923,6 @@ func (r *resInstanceResolver) MResource(ctx context.Context, obj *model.ResInsta
 
 func (r *resInstanceResolver) MService(ctx context.Context, obj *model.ResInstance) (*model.ManagedSvc, error) {
 	panic(fmt.Errorf("not implemented"))
-
 }
 
 func (r *resInstanceResolver) Config(ctx context.Context, obj *model.ResInstance) (*model.Config, error) {
@@ -2043,3 +2063,13 @@ type projectMembershipResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type resInstanceResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) CoreDeleteInstanceByID(ctx context.Context, instanceID repos.ID) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
