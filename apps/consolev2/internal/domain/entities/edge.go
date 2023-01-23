@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	// op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
 	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"kloudlite.io/pkg/repos"
 )
 
