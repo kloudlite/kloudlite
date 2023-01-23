@@ -1,12 +1,11 @@
 package entities
 
 import (
-	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"encoding/json"
 	"io"
 
-	// "gopkg.in/validator.v2"
-	op_crds "kloudlite.io/apps/consolev2/internal/domain/op-crds"
+	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
+	"gopkg.in/validator.v2"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -21,7 +20,7 @@ const (
 
 type CloudProvider struct {
 	repos.BaseEntity      `bson:",inline"`
-	op_crds.CloudProvider `bson:",inline" json:",inline"`
+	infrav1.CloudProvider `bson:",inline" json:",inline"`
 
 	// sync status
 	SyncStatus CloudProviderStatus `json:"sync_status" bson:"sync_status,omitempty" validate:"nonzero"`
@@ -32,9 +31,9 @@ func (c *CloudProvider) UnmarshalGQL(v interface{}) error {
 		return err
 	}
 
-	// if err := validator.Validate(*c); err != nil {
-	// 	return err
-	// }
+	if err := validator.Validate(*c); err != nil {
+		return err
+	}
 
 	return nil
 }
