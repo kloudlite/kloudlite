@@ -1,7 +1,11 @@
 package entities
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"encoding/json"
+	"io"
+
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
@@ -16,17 +20,39 @@ const (
 )
 
 type Project struct {
-	repos.BaseEntity `bson:",inline"`
-	IsDeleting       bool               `json:"is_deleting" bson:"is_deleting"`
-	AccountId        repos.ID           `json:"account_id" bson:"account_id"`
-	Name             string             `json:"name" bson:"name"`
-	DisplayName      string             `json:"display_name" bson:"display_name"`
-	Description      *string            `json:"description" bson:"description"`
-	Logo             *string            `json:"logo" bson:"logo"`
-	ReadableId       repos.ID           `json:"readable_id" bson:"readable_id"`
-	Status           ProjectStatus      `json:"status" bson:"status"`
-	RegionId         *repos.ID          `json:"region_id" bson:"region_id"`
-	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
+	repos.BaseEntity `bson:",inline" json:",inline"`
+	crdsv1.Project `json:",inline" bson:",inline"`
+
+	// IsDeleting  bool               `json:"is_deleting" bson:"is_deleting"`
+	// AccountId   repos.ID           `json:"account_id" bson:"account_id"`
+	// Name        string             `json:"name" bson:"name"`
+	// DisplayName string             `json:"display_name" bson:"display_name"`
+	// Description *string            `json:"description" bson:"description"`
+	// Logo        *string            `json:"logo" bson:"logo"`
+	// ReadableId  repos.ID           `json:"readable_id" bson:"readable_id"`
+	// Status      ProjectStatus      `json:"status" bson:"status"`
+	// RegionId    *repos.ID          `json:"region_id" bson:"region_id"`
+	// Conditions  []metav1.Condition `json:"conditions" bson:"conditions"`
+}
+
+func (c *Project) UnmarshalGQL(v interface{}) error {
+	if err := json.Unmarshal([]byte(v.(string)), c); err != nil {
+		return err
+	}
+
+	// if err := validator.Validate(*c); err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+func (c Project) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(c)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
 }
 
 var ProjectIndexes = []repos.IndexField{
@@ -38,7 +64,7 @@ var ProjectIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "name", Value: repos.IndexAsc},
+			{Key: "metadata.name", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

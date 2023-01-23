@@ -62,6 +62,9 @@ models:
   CloudProvider:
     model:
       - kloudlite.io/apps/consolev2/internal/domain/entities.CloudProvider
-  # CloudProviderIn:
-  #   model:
-  #     - kloudlite.io/apps/consolev2/internal/domain/entities.CloudProvider
+  Project:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.Project
+  EdgeRegion:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.EdgeRegion

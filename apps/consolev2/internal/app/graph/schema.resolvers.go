@@ -34,6 +34,22 @@ func (r *mutationResolver) CoreSample(ctx context.Context, j map[string]interfac
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *mutationResolver) CreateProject(ctx context.Context, in entities.Project) (*entities.Project, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CoreCreateEdgeRegion(ctx context.Context, edgeRegion entities.EdgeRegion, providerID repos.ID) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CoreUpdateEdgeRegion(ctx context.Context, edgeID repos.ID, edgeRegion entities.EdgeRegion) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CoreDeleteEdgeRegion(ctx context.Context, edgeID repos.ID) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) CoreListCloudProviders(ctx context.Context, accountID string) ([]*entities.CloudProvider, error) {
 	return r.Domain.ListCloudProviders(ctx, repos.ID(accountID))
 }
@@ -43,6 +59,14 @@ func (r *queryResolver) CoreGetCloudProvider(ctx context.Context, name string) (
 }
 
 func (r *queryResolver) CoreSample(ctx context.Context) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) ([]*entities.Project, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreProject(ctx context.Context, projectID repos.ID) (*entities.Project, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
