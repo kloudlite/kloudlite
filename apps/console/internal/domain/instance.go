@@ -12,7 +12,6 @@ import (
 	"kloudlite.io/pkg/repos"
 
 	createjsonpatch "github.com/snorwin/jsonpatch"
-	"github.com/valyala/fasthttp/reuseport"
 )
 
 const (
@@ -71,6 +70,89 @@ func (d *domain) GetResInstance(ctx context.Context, envID repos.ID, resID strin
 
 func (d *domain) GetResInstanceById(ctx context.Context, instanceId repos.ID) (*entities.ResInstance, error) {
 	return d.instanceRepo.FindById(ctx, repos.ID(instanceId))
+}
+
+func (d *domain) DeleteInstance(ctx context.Context, instanceId repos.ID) error {
+	instance, err := d.instanceRepo.FindById(ctx, instanceId)
+	if err != nil {
+		return err
+	}
+
+	env, err := d.environmentRepo.FindById(ctx, instance.EnvironmentId)
+	if err != nil {
+		return err
+	}
+
+	project, err := d.projectRepo.FindById(ctx, instance.BlueprintId)
+	if err != nil {
+		return err
+	}
+
+	clusterId, err := d.getClusterForAccount(ctx, project.AccountId)
+	if err != nil {
+		return err
+	}
+
+	if instance.IsSelf {
+		instance.IsDeleted = true
+
+	} else {
+		instance.Enabled = false
+	}
+
+	// if _, err = d.instanceRepo.UpdateById(ctx, instanceId, instance); err != nil {
+	// 	return err
+	// }
+
+	var apiVersion, kind, name string
+	name = string(instance.ResourceId)
+	isSelf := strings.HasPrefix(string(instance.ResourceId), ENV_INSTANCE)
+
+	switch instance.ResourceType {
+
+	case common.ResourceConfig:
+		apiVersion = op_crds.ConfigAPIVersion
+		kind = op_crds.ConfigKind
+
+		if !isSelf {
+			if c, err := d.configRepo.FindById(ctx, instance.ResourceId); err != nil {
+				return err
+			} else {
+				name = string(c.Id)
+			}
+		}
+
+	}
+
+	if isSelf {
+
+		if err = d.workloadMessenger.SendAction("delete", d.getDispatchKafkaTopic(clusterId), string(instanceId), &op_crds.Resource{
+			APIVersion: apiVersion,
+			Kind:       kind,
+			Metadata: op_crds.ResourceMetadata{
+				Name:      name,
+				Namespace: fmt.Sprintf("%s-%s", project.Name, string(env.ReadableId)),
+			},
+		}); err != nil {
+			return err
+		}
+
+	} else {
+
+		if err = d.workloadMessenger.SendAction("apply", d.getDispatchKafkaTopic(clusterId), string(instanceId), &op_crds.Resource{
+			APIVersion: apiVersion,
+			Kind:       kind,
+			Metadata: op_crds.ResourceMetadata{
+				Name:      name,
+				Namespace: fmt.Sprintf("%s-%s", project.Name, string(env.ReadableId)),
+			},
+			Enabled: &instance.Enabled,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInstance, project *entities.Project, jsonPatchList *createjsonpatch.JSONPatchList, enabled *bool, overrides *string) (*entities.ResInstance, error) {
@@ -195,9 +277,10 @@ func (d *domain) UpdateInstance(ctx context.Context, instance *entities.ResInsta
 	return nil, nil
 }
 
-func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId repos.ID, resType string, overrides string) (*entities.ResInstance, error) {
+func (d *domain) CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId repos.ID, resType string, overrides string, isSelf bool) (*entities.ResInstance, error) {
 	return d.instanceRepo.Create(ctx,
 		&entities.ResInstance{
+			IsSelf:        isSelf,
 			Overrides:     overrides,
 			ResourceId:    resourceId,
 			EnvironmentId: environmentId,

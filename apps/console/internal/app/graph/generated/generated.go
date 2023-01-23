@@ -290,44 +290,45 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CoreAddDevice           func(childComplexity int, accountID repos.ID, name string) int
-		CoreAddNewCluster       func(childComplexity int, cluster model.ClusterIn) int
-		CoreCreateApp           func(childComplexity int, projectID repos.ID, app model.AppInput) int
-		CoreCreateCloudProvider func(childComplexity int, accountID *repos.ID, cloudProvider model.CloudProviderIn) int
-		CoreCreateConfig        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
-		CoreCreateEdgeRegion    func(childComplexity int, edgeRegion model.EdgeRegionIn, providerID repos.ID) int
-		CoreCreateEnvironment   func(childComplexity int, environment *model.EnvironmentIn) int
-		CoreCreateInstance      func(childComplexity int, instance model.InstanceIn) int
-		CoreCreateProject       func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, regionID *repos.ID) int
-		CoreCreateRouter        func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
-		CoreCreateSecret        func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
-		CoreDeleteApp           func(childComplexity int, appID repos.ID) int
-		CoreDeleteCloudProvider func(childComplexity int, providerID repos.ID) int
-		CoreDeleteConfig        func(childComplexity int, configID repos.ID) int
-		CoreDeleteEdgeRegion    func(childComplexity int, edgeID repos.ID) int
-		CoreDeleteProject       func(childComplexity int, projectID repos.ID) int
-		CoreDeleteRouter        func(childComplexity int, routerID repos.ID) int
-		CoreDeleteSecret        func(childComplexity int, secretID repos.ID) int
-		CoreRemoveDevice        func(childComplexity int, deviceID repos.ID) int
-		CoreRollbackApp         func(childComplexity int, appID repos.ID, version int) int
-		CoreUpdateApp           func(childComplexity int, projectID repos.ID, appID repos.ID, app model.AppInput) int
-		CoreUpdateCloudProvider func(childComplexity int, providerID repos.ID, cloudProvider model.CloudProviderUpdateIn) int
-		CoreUpdateConfig        func(childComplexity int, configID repos.ID, description *string, data []*model.CSEntryIn) int
-		CoreUpdateDevice        func(childComplexity int, deviceID repos.ID, name *string, region *string, ports []*model.PortIn) int
-		CoreUpdateEdgeRegion    func(childComplexity int, edgeID repos.ID, edgeRegion model.EdgeRegionUpdateIn) int
-		CoreUpdateProject       func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
-		CoreUpdateResInstance   func(childComplexity int, resource model.ResourceIn, overrides *string) int
-		CoreUpdateRouter        func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
-		CoreUpdateSecret        func(childComplexity int, secretID repos.ID, description *string, data []*model.CSEntryIn) int
-		IamInviteProjectMember  func(childComplexity int, projectID repos.ID, email string, role string) int
-		IamRemoveProjectMember  func(childComplexity int, projectID repos.ID, userID repos.ID) int
-		IamUpdateProjectMember  func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
-		ManagedResCreate        func(childComplexity int, installationID repos.ID, name string, resourceType string, values map[string]interface{}) int
-		ManagedResDelete        func(childComplexity int, resID repos.ID) int
-		ManagedResUpdate        func(childComplexity int, resID repos.ID, values map[string]interface{}) int
-		MangedSvcInstall        func(childComplexity int, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
-		MangedSvcUninstall      func(childComplexity int, installationID repos.ID) int
-		MangedSvcUpdate         func(childComplexity int, installationID repos.ID, values map[string]interface{}) int
+		CoreAddDevice             func(childComplexity int, accountID repos.ID, name string) int
+		CoreAddNewCluster         func(childComplexity int, cluster model.ClusterIn) int
+		CoreCreateApp             func(childComplexity int, projectID repos.ID, app model.AppInput) int
+		CoreCreateCloudProvider   func(childComplexity int, accountID *repos.ID, cloudProvider model.CloudProviderIn) int
+		CoreCreateConfig          func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
+		CoreCreateEdgeRegion      func(childComplexity int, edgeRegion model.EdgeRegionIn, providerID repos.ID) int
+		CoreCreateEnvironment     func(childComplexity int, environment *model.EnvironmentIn) int
+		CoreCreateInstance        func(childComplexity int, instance model.InstanceIn) int
+		CoreCreateProject         func(childComplexity int, accountID repos.ID, name string, displayName string, logo *string, description *string, regionID *repos.ID) int
+		CoreCreateRouter          func(childComplexity int, projectID repos.ID, name string, domains []string, routes []*model.RouteInput) int
+		CoreCreateSecret          func(childComplexity int, projectID repos.ID, name string, description *string, data []*model.CSEntryIn) int
+		CoreDeleteApp             func(childComplexity int, appID repos.ID) int
+		CoreDeleteCloudProvider   func(childComplexity int, providerID repos.ID) int
+		CoreDeleteConfig          func(childComplexity int, configID repos.ID) int
+		CoreDeleteEdgeRegion      func(childComplexity int, edgeID repos.ID) int
+		CoreDeleteProject         func(childComplexity int, projectID repos.ID) int
+		CoreDeleteResInstanceByID func(childComplexity int, instanceID repos.ID) int
+		CoreDeleteRouter          func(childComplexity int, routerID repos.ID) int
+		CoreDeleteSecret          func(childComplexity int, secretID repos.ID) int
+		CoreRemoveDevice          func(childComplexity int, deviceID repos.ID) int
+		CoreRollbackApp           func(childComplexity int, appID repos.ID, version int) int
+		CoreUpdateApp             func(childComplexity int, projectID repos.ID, appID repos.ID, app model.AppInput) int
+		CoreUpdateCloudProvider   func(childComplexity int, providerID repos.ID, cloudProvider model.CloudProviderUpdateIn) int
+		CoreUpdateConfig          func(childComplexity int, configID repos.ID, description *string, data []*model.CSEntryIn) int
+		CoreUpdateDevice          func(childComplexity int, deviceID repos.ID, name *string, region *string, ports []*model.PortIn) int
+		CoreUpdateEdgeRegion      func(childComplexity int, edgeID repos.ID, edgeRegion model.EdgeRegionUpdateIn) int
+		CoreUpdateProject         func(childComplexity int, projectID repos.ID, displayName *string, cluster *string, logo *string, description *string) int
+		CoreUpdateResInstance     func(childComplexity int, resource model.ResourceIn, overrides *string) int
+		CoreUpdateRouter          func(childComplexity int, routerID repos.ID, domains []string, routes []*model.RouteInput) int
+		CoreUpdateSecret          func(childComplexity int, secretID repos.ID, description *string, data []*model.CSEntryIn) int
+		IamInviteProjectMember    func(childComplexity int, projectID repos.ID, email string, role string) int
+		IamRemoveProjectMember    func(childComplexity int, projectID repos.ID, userID repos.ID) int
+		IamUpdateProjectMember    func(childComplexity int, projectID repos.ID, userID repos.ID, role string) int
+		ManagedResCreate          func(childComplexity int, installationID repos.ID, name string, resourceType string, values map[string]interface{}) int
+		ManagedResDelete          func(childComplexity int, resID repos.ID) int
+		ManagedResUpdate          func(childComplexity int, resID repos.ID, values map[string]interface{}) int
+		MangedSvcInstall          func(childComplexity int, projectID repos.ID, category repos.ID, serviceType repos.ID, name string, values map[string]interface{}) int
+		MangedSvcUninstall        func(childComplexity int, installationID repos.ID) int
+		MangedSvcUpdate           func(childComplexity int, installationID repos.ID, values map[string]interface{}) int
 	}
 
 	NodePool struct {
@@ -405,7 +406,9 @@ type ComplexityRoot struct {
 		Enabled       func(childComplexity int) int
 		EnvironmentID func(childComplexity int) int
 		ID            func(childComplexity int) int
+		IsSelf        func(childComplexity int) int
 		MResource     func(childComplexity int) int
+		MResources    func(childComplexity int) int
 		MService      func(childComplexity int) int
 		Overrides     func(childComplexity int) int
 		ResourceID    func(childComplexity int) int
@@ -541,6 +544,7 @@ type MutationResolver interface {
 	CoreCreateEnvironment(ctx context.Context, environment *model.EnvironmentIn) (*model.Environment, error)
 	CoreUpdateResInstance(ctx context.Context, resource model.ResourceIn, overrides *string) (bool, error)
 	CoreCreateInstance(ctx context.Context, instance model.InstanceIn) (*model.ResInstance, error)
+	CoreDeleteResInstanceByID(ctx context.Context, instanceID repos.ID) (bool, error)
 }
 type ProjectResolver interface {
 	Memberships(ctx context.Context, obj *model.Project) ([]*model.ProjectMembership, error)
@@ -587,6 +591,7 @@ type ResInstanceResolver interface {
 	App(ctx context.Context, obj *model.ResInstance) (*model.App, error)
 	Router(ctx context.Context, obj *model.ResInstance) (*model.Router, error)
 	MResource(ctx context.Context, obj *model.ResInstance) (*model.ManagedRes, error)
+
 	MService(ctx context.Context, obj *model.ResInstance) (*model.ManagedSvc, error)
 	Config(ctx context.Context, obj *model.ResInstance) (*model.Config, error)
 	Secret(ctx context.Context, obj *model.ResInstance) (*model.Secret, error)
@@ -1870,6 +1875,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreDeleteProject(childComplexity, args["projectId"].(repos.ID)), true
 
+	case "Mutation.core_deleteResInstanceById":
+		if e.complexity.Mutation.CoreDeleteResInstanceByID == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_deleteResInstanceById_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreDeleteResInstanceByID(childComplexity, args["instanceId"].(repos.ID)), true
+
 	case "Mutation.core_deleteRouter":
 		if e.complexity.Mutation.CoreDeleteRouter == nil {
 			break
@@ -2672,12 +2689,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ResInstance.ID(childComplexity), true
 
+	case "ResInstance.isSelf":
+		if e.complexity.ResInstance.IsSelf == nil {
+			break
+		}
+
+		return e.complexity.ResInstance.IsSelf(childComplexity), true
+
 	case "ResInstance.mResource":
 		if e.complexity.ResInstance.MResource == nil {
 			break
 		}
 
 		return e.complexity.ResInstance.MResource(childComplexity), true
+
+	case "ResInstance.mResources":
+		if e.complexity.ResInstance.MResources == nil {
+			break
+		}
+
+		return e.complexity.ResInstance.MResources(childComplexity), true
 
 	case "ResInstance.mService":
 		if e.complexity.ResInstance.MService == nil {
@@ -3007,10 +3038,12 @@ type ResInstance{
   app: App
   router: Router
   mResource: ManagedRes
+  mResources: [ResInstance!]
   mService: ManagedSvc
   config: Config
   secret: Secret
   resourceType: String!
+  isSelf: Boolean!
 }
 
 
@@ -3179,6 +3212,7 @@ type Mutation {
   core_createEnvironment(environment: EnvironmentIn): Environment!
   core_updateResInstance(resource: ResourceIn!, overrides: String): Boolean!
   core_createInstance(instance: InstanceIn!): ResInstance
+  core_deleteResInstanceById(instanceId: ID!): Boolean!
 }
 
 input InstanceIn{
@@ -4117,6 +4151,21 @@ func (ec *executionContext) field_Mutation_core_deleteProject_args(ctx context.C
 		}
 	}
 	args["projectId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteResInstanceById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["instanceId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["instanceId"] = arg0
 	return args, nil
 }
 
@@ -11953,6 +12002,48 @@ func (ec *executionContext) _Mutation_core_createInstance(ctx context.Context, f
 	return ec.marshalOResInstance2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐResInstance(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_core_deleteResInstanceById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_core_deleteResInstanceById_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CoreDeleteResInstanceByID(rctx, args["instanceId"].(repos.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _NodePool_name(ctx context.Context, field graphql.CollectedField, obj *model.NodePool) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -14291,6 +14382,38 @@ func (ec *executionContext) _ResInstance_mResource(ctx context.Context, field gr
 	return ec.marshalOManagedRes2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedRes(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ResInstance_mResources(ctx context.Context, field graphql.CollectedField, obj *model.ResInstance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ResInstance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MResources, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ResInstance)
+	fc.Result = res
+	return ec.marshalOResInstance2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐResInstanceᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ResInstance_mService(ctx context.Context, field graphql.CollectedField, obj *model.ResInstance) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -14420,6 +14543,41 @@ func (ec *executionContext) _ResInstance_resourceType(ctx context.Context, field
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ResInstance_isSelf(ctx context.Context, field graphql.CollectedField, obj *model.ResInstance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ResInstance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsSelf, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Route_path(ctx context.Context, field graphql.CollectedField, obj *model.Route) (ret graphql.Marshaler) {
@@ -20088,6 +20246,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
+		case "core_deleteResInstanceById":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_deleteResInstanceById(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21252,6 +21420,13 @@ func (ec *executionContext) _ResInstance(ctx context.Context, sel ast.SelectionS
 				return innerFunc(ctx)
 
 			})
+		case "mResources":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ResInstance_mResources(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		case "mService":
 			field := field
 
@@ -21306,6 +21481,16 @@ func (ec *executionContext) _ResInstance(ctx context.Context, sel ast.SelectionS
 		case "resourceType":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._ResInstance_resourceType(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "isSelf":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ResInstance_isSelf(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)

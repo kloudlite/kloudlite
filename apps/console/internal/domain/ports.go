@@ -171,7 +171,9 @@ type Domain interface {
 
 	UpdateInstance(ctx context.Context, instance *entities.ResInstance, project *entities.Project, jsonPatchList *createjsonpatch.JSONPatchList, enabled *bool, overrides *string) (*entities.ResInstance, error)
 
-	CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId repos.ID, resType string, overrides string) (*entities.ResInstance, error)
+	DeleteInstance(ctx context.Context, instanceId repos.ID) error
+
+	CreateResInstance(ctx context.Context, resourceId repos.ID, environmentId repos.ID, blueprintId repos.ID, resType string, overrides string, isSelf bool) (*entities.ResInstance, error)
 
 	ReturnResInstance(ctx context.Context, instance *entities.ResInstance) *model.ResInstance
 

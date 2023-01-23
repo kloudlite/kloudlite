@@ -170,6 +170,7 @@ func getInstances(d domain.Domain, obj *model.Environment, ctx context.Context, 
 			Overrides:     &instance.Overrides,
 			Enabled:       instance.Enabled,
 			ResourceType:  string(instance.ResourceType),
+			IsSelf: instance.IsSelf,
 		})
 	}
 

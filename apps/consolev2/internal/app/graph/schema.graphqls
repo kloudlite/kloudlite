@@ -1,0 +1,15 @@
+scalar Json
+scalar CloudProvider
+
+type Query{
+  core_listCloudProviders(accountId: String!):[CloudProvider!]
+  core_getCloudProvider(name: String!):CloudProvider
+  core_sample: Json
+}
+
+type Mutation{
+  core_createCloudProvider(in: CloudProvider!):CloudProvider
+  core_updateCloudProvider(in: CloudProvider!):Boolean!
+  core_deleteCloudProvider(name: String!):Boolean!
+  core_sample(j: Json!): Json
+}
