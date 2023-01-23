@@ -45,6 +45,7 @@ type DbRepo[T Entity] interface {
 	Upsert(ctx context.Context, filter Filter, data T) (T, error)
 	UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
 	UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
+	UpdateOne(ctx context.Context, filter Filter, updatedData T, opts ...UpdateOpts) (T, error)
 	SilentUpsert(ctx context.Context, filter Filter, data T) (T, error)
 	SilentUpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
 	SilentUpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
@@ -52,6 +53,7 @@ type DbRepo[T Entity] interface {
 	DeleteMany(ctx context.Context, filter Filter) error
 	IndexFields(ctx context.Context, indices []IndexField) error
 	// Delete(ctx context.Context, query Query) ([]ID, error)
+	DeleteOne(ctx context.Context, filter Filter) error
 }
 
 type indexOrder bool

@@ -143,6 +143,28 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	}
 	return nil
 }
+
+func (repo *dbRepo[T]) UpdateOne(ctx context.Context, filter Filter, updatedData T, opts ...UpdateOpts) (T, error) {
+	var result T
+	after := options.After
+	updateOpts := &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+
+	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
+		updateOpts.Upsert = &opt.Upsert
+	}
+	repo.withUpdateTime(updatedData)
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
+		ctx,
+		filter,
+		bson.M{"$set": updatedData},
+		updateOpts,
+	)
+	e := r.Decode(&result)
+	return result, e
+}
+
 func (repo *dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
 	var result T
 	after := options.After
@@ -185,6 +207,13 @@ func (repo *dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, er
 func (repo *dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOneAndDelete(ctx, &Filter{"id": id})
+	e := r.Decode(&result)
+	return e
+}
+
+func (repo *dbRepo[T]) DeleteOne(ctx context.Context, filter Filter) error {
+	var result T
+	r := repo.db.Collection(repo.collectionName).FindOneAndDelete(ctx, filter)
 	e := r.Decode(&result)
 	return e
 }
