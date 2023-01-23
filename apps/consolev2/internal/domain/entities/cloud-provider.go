@@ -20,7 +20,7 @@ const (
 )
 
 type CloudProvider struct {
-	repos.BaseEntity `bson:",inline"`
+	repos.BaseEntity      `bson:",inline"`
 	op_crds.CloudProvider `bson:",inline" json:",inline"`
 
 	// sync status

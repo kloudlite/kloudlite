@@ -1,15 +1,45 @@
 scalar Json
 scalar CloudProvider
+scalar Project
+scalar EdgeRegion
 
-type Query{
+# - Account
+# - CloudProvider
+# - Edge
+# - Project
+# - Env
+# - App
+# - Router
+# - Config
+# - Secret
+# - Device
+
+
+type Query {
   core_listCloudProviders(accountId: String!):[CloudProvider!]
   core_getCloudProvider(name: String!):CloudProvider
   core_sample: Json
+
+  core_projects(accountId: ID): [Project!]!
+  core_project(projectId: ID!): Project
 }
 
 type Mutation{
-  core_createCloudProvider(in: CloudProvider!):CloudProvider
-  core_updateCloudProvider(in: CloudProvider!):Boolean!
-  core_deleteCloudProvider(name: String!):Boolean!
+  # cloud provider
+  core_createCloudProvider(in: CloudProvider!): CloudProvider
+  core_updateCloudProvider(in: CloudProvider!): Boolean!
+  core_deleteCloudProvider(name: String!): Boolean!
+
   core_sample(j: Json!): Json
+
+  # projects
+  create_project(in: Project!): Project
+
+  # Edge Regions
+  core_createEdgeRegion(edgeRegion: EdgeRegion!, providerId: ID!): Boolean! #private-access
+  core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegion!): Boolean! #private-access
+  core_deleteEdgeRegion(edgeId: ID!): Boolean! #private-access
+
+  # Environments
+  core_createEnvironment(environment: EnvironmentIn): Environment!
 }

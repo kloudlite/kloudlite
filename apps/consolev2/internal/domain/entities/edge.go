@@ -1,8 +1,13 @@
 package entities
 
 import (
+	"encoding/json"
+	"io"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	// op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
+	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -25,13 +30,35 @@ type NodePool struct {
 
 type EdgeRegion struct {
 	repos.BaseEntity `bson:",inline"`
-	IsDeleting       bool               `json:"is_deleting" bson:"is_deleting"`
-	Name             string             `bson:"name"`
-	ProviderId       repos.ID           `bson:"provider_id"`
-	Region           string             `bson:"region"`
-	Pools            []NodePool         `bson:"pools"`
-	Status           EdgeStatus         `json:"status" bson:"status"`
-	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
+	infrav1.Edge     `json:",inline" bson:",inline"`
+
+	// IsDeleting       bool               `json:"is_deleting" bson:"is_deleting"`
+	// Name             string             `bson:"name"`
+	// ProviderId       repos.ID           `bson:"provider_id"`
+	// Region           string             `bson:"region"`
+	// Pools            []NodePool         `bson:"pools"`
+	// Status           EdgeStatus         `json:"status" bson:"status"`
+	// Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
+}
+
+func (er *EdgeRegion) UnmarshalGQL(v interface{}) error {
+	if err := json.Unmarshal([]byte(v.(string)), er); err != nil {
+		return err
+	}
+
+	// if err := validator.Validate(*c); err != nil {
+	//  return err
+	// }
+
+	return nil
+}
+
+func (er EdgeRegion) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(er)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
 }
 
 var EdgeRegionIndexes = []repos.IndexField{
