@@ -12,8 +12,8 @@ import (
 type Domain interface {
 	SetupAccount(ctx context.Context, accountId repos.ID) (bool, error)
 
-	CreateCloudProvider(ctx context.Context, cloudProvider *entities.CloudProvider) (*entities.CloudProvider, error)
-	UpdateCloudProvider(ctx context.Context, cloudProvider *entities.CloudProvider) error
+	CreateCloudProvider(ctx context.Context, cloudProvider *entities.CloudProvider, creds entities.SecretData) (*entities.CloudProvider, error)
+	UpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, creds entities.SecretData) (*entities.CloudProvider, error)
 	DeleteCloudProvider(ctx context.Context, name string) error
 	ListCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error)
 	GetCloudProvider(ctx context.Context, name string) (*entities.CloudProvider, error)
