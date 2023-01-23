@@ -2,6 +2,7 @@ scalar Json
 scalar CloudProvider
 scalar Project
 scalar EdgeRegion
+scalar SecretData
 
 # - Account
 # - CloudProvider
@@ -14,7 +15,6 @@ scalar EdgeRegion
 # - Secret
 # - Device
 
-
 type Query {
   core_listCloudProviders(accountId: String!):[CloudProvider!]
   core_getCloudProvider(name: String!):CloudProvider
@@ -26,8 +26,8 @@ type Query {
 
 type Mutation{
   # cloud provider
-  core_createCloudProvider(in: CloudProvider!): CloudProvider
-  core_updateCloudProvider(in: CloudProvider!): Boolean!
+  core_createCloudProvider(in: CloudProvider!, creds: SecretData!): CloudProvider
+  core_updateCloudProvider(in: CloudProvider!, creds: SecretData): CloudProvider
   core_deleteCloudProvider(name: String!): Boolean!
 
   core_sample(j: Json!): Json
@@ -40,6 +40,6 @@ type Mutation{
   core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegion!): Boolean! #private-access
   core_deleteEdgeRegion(edgeId: ID!): Boolean! #private-access
 
-  # Environments
-  core_createEnvironment(environment: EnvironmentIn): Environment!
+  # # Environments
+  # core_createEnvironment(environment: EnvironmentIn): Environment!
 }
