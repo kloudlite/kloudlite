@@ -152,7 +152,7 @@ package edgeWatcher
 // 					},
 // 					Spec: crdsv1.EdgeRouterSpec{
 // 						Region:     edge.Spec.Region,
-// 						AccountRef: edge.Spec.AccountId,
+// 						AccountId: edge.Spec.AccountId,
 // 						DefaultSSLCert: crdsv1.SSLCertRef{
 // 							SecretName: SSLSecretName,
 // 							Namespace:  SSLSecretNamespace,

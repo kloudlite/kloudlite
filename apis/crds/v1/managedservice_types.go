@@ -19,13 +19,14 @@ type msvcKind struct {
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
+	ProjectName string `json:"projectName"`
 	Region string `json:"region"`
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 	MsvcKind     msvcKind            `json:"msvcKind"`
 
-	Inputs rawJson.RawJson `json:"inputs,omitempty"`
+	Inputs      rawJson.RawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
