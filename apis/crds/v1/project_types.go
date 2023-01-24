@@ -12,15 +12,16 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountRef string `json:"accountRef,omitempty"`
+	AccountId string `json:"accountId,omitempty"`
 	// DisplayName of Project
-	DisplayName string `json:"displayName,omitempty"`
+	DisplayName string `json:"displayName,omitempty" validate:"omitempty"`
+	Logo        string `json:"logo,omitempty" validate:"omitempty,url"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:JSONPath=".spec.accountRef",name=AccountRef,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.accountId",name=AccountId,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 

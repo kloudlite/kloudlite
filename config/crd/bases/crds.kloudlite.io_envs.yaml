@@ -41,7 +41,7 @@ spec:
             type: object
           spec:
             properties:
-              accountRef:
+              accountId:
                 type: string
               blueprintName:
                 type: string
@@ -50,8 +50,7 @@ spec:
               routerBaseDomain:
                 type: string
             required:
-            - accountRef
-            - blueprintName
+            - accountId
             - projectName
             type: object
           status:
@@ -314,8 +313,7 @@ spec:
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
+    subresources: {}
 status:
   acceptedNames:
     kind: ""

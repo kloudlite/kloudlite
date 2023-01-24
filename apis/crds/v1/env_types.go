@@ -8,13 +8,13 @@ import (
 
 type EnvSpec struct {
 	ProjectName      string `json:"projectName"`
-	BlueprintName    string `json:"blueprintName"`
-	AccountRef       string `json:"accountRef"`
+	BlueprintName    string `json:"blueprintName,omitempty"`
+	AccountId        string `json:"accountId"`
 	RouterBaseDomain string `json:"routerBaseDomain,omitempty"`
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+//+kubebulder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -36,7 +36,7 @@ func (e *Env) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		constants.ProjectNameKey:   e.Spec.ProjectName,
 		constants.BlueprintNameKey: e.Spec.BlueprintName,
-		constants.AccountRef:       e.Spec.AccountRef,
+		constants.AccountRef:       e.Spec.AccountId,
 	}
 }
 

@@ -88,6 +88,8 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              projectName:
+                type: string
               region:
                 type: string
               tolerations:
@@ -131,6 +133,7 @@ spec:
                 type: array
             required:
             - msvcKind
+            - projectName
             - region
             type: object
           status:

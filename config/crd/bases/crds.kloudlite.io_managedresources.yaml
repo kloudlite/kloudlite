@@ -88,9 +88,12 @@ spec:
                 - apiVersion
                 - name
                 type: object
+              projectName:
+                type: string
             required:
             - mresKind
             - msvcRef
+            - projectName
             type: object
           status:
             properties:
