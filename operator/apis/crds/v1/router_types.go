@@ -43,6 +43,8 @@ type Cors struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
+	ProjectName string `json:"projectName,omitempty"`
+
 	Region string `json:"region,omitempty"`
 	Https  Https  `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional

@@ -15,28 +15,27 @@ type ContainerResource struct {
 }
 
 type ContainerEnv struct {
-	Key     string `json:"key"`
+	Key     string `json:"key" validate:"required"`
 	Value   string `json:"value,omitempty"`
-	Type    string `json:"type,omitempty"`
+	Type    string `json:"type,omitempty" validate:"omitempty,oneof=config secret"`
 	RefName string `json:"refName,omitempty"`
 	RefKey  string `json:"refKey,omitempty"`
 }
 
 type ContainerVolumeItem struct {
-	Key      string `json:"key"`
+	Key      string `json:"key" validate:"required"`
 	FileName string `json:"fileName,omitempty"`
 }
 
 type EnvFrom struct {
 	// must be one of config, secret
-	Type string `json:"type"`
-
+	Type    string `json:"type" validate:"required,oneof=config secret"`
 	RefName string `json:"refName"`
 }
 
 type ContainerVolume struct {
 	MountPath string                `json:"mountPath"`
-	Type      ResourceType          `json:"type"`
+	Type      ResourceType          `json:"type" validate:"required,oneof=config secret"`
 	RefName   string                `json:"refName"`
 	Items     []ContainerVolumeItem `json:"items,omitempty"`
 	// SubPath   string                `json:"subPath,omitempty"`
@@ -47,8 +46,8 @@ type ShellProbe struct {
 }
 
 type HttpGetProbe struct {
-	Path        string            `json:"path"`
-	Port        uint              `json:"port"`
+	Path        string            `json:"path" validate:"required"`
+	Port        uint              `json:"port" validate:"required"`
 	HttpHeaders map[string]string `json:"httpHeaders,omitempty"`
 }
 
@@ -108,7 +107,13 @@ type HPA struct {
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
-	Region string `json:"region"`
+	ProjectName string `json:"projectName"`
+	Region      string `json:"region"`
+
+	Interception *Interception `json:"interception,omitempty"`
+	// +kubebuilder:default=false
+	Frozen bool `json:"frozen,omitempty"`
+
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=kloudlite-svc-account
 	ServiceAccount string `json:"serviceAccount,omitempty"`
@@ -122,6 +127,11 @@ type AppSpec struct {
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+}
+
+type Interception struct {
+	Enabled   bool   `json:"enabled,omitempty"`
+	ForDevice string `json:"forDevice"`
 }
 
 type JsonPatch struct {
@@ -143,10 +153,13 @@ type App struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec AppSpec `json:"spec,omitempty"`
+	// +kubebuilder:default=false
+	Restart *bool `json:"restart,omitempty"`
 	// +kubebuilder:default=true
-	Enabled   *bool       `json:"enabled,omitempty"`
-	Overrides *JsonPatch  `json:"overrides,omitempty"`
-	Status    rApi.Status `json:"status,omitempty"`
+	Enabled   *bool      `json:"enabled,omitempty"`
+	Overrides *JsonPatch `json:"overrides,omitempty"`
+
+	Status rApi.Status `json:"status,omitempty"`
 }
 
 func (app *App) GetStatus() *rApi.Status {

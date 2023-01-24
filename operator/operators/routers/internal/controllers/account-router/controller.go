@@ -202,7 +202,7 @@ package account_router
 //
 // 	check := rApi.Check{Generation: obj.Generation}
 //
-// 	accDomains := r.parseAccountDomains(ctx, obj.Spec.AccountRef)
+// 	accDomains := r.parseAccountDomains(ctx, obj.Spec.AccountId)
 // 	domains := append(accDomains, obj.Spec.WildcardDomains...)
 //
 // 	if len(domains) == 0 {
@@ -256,7 +256,7 @@ package account_router
 // 	builder.Watches(
 // 		&source.Kind{Type: fn.NewUnstructured(constants.KloudliteAccountType)}, handler.EnqueueRequestsFromMapFunc(
 // 			func(obj client.Object) []reconcile.Request {
-// 				accId := obj.GetLabels()[constants.AccountRef]
+// 				accId := obj.GetLabels()[constants.AccountId]
 // 				if accId == "" {
 // 					return nil
 // 				}
@@ -264,7 +264,7 @@ package account_router
 // 				if err := r.List(
 // 					context.TODO(), &accRoutersList, &client.ListOptions{
 // 						LabelSelector: labels.SelectorFromValidatedSet(
-// 							map[string]string{constants.AccountRef: accId},
+// 							map[string]string{constants.AccountId: accId},
 // 						),
 // 					},
 // 				); err != nil {

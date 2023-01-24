@@ -4,16 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/operator/pkg/templates"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/templates"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
-	"github.com/kloudlite/operator/apis/crds/v1"
+	v1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/harbor"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -29,12 +29,10 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	harborCli  *harbor.Client
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
 	yamlClient *kubectl.YAMLClient
-	IsDev      bool
 }
 
 func (r *Reconciler) GetName() string {
@@ -61,7 +59,7 @@ func getDefaultEnvName(projName string) string {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &v1.Project{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &v1.Project{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -197,7 +195,7 @@ func (r *Reconciler) ensureDefaultEnv(req *rApi.Request[*v1.Project]) stepResult
 		defaultEnv.Spec = v1.EnvSpec{
 			ProjectName:   obj.Name,
 			BlueprintName: obj.Name + "-blueprint",
-			AccountRef:    obj.Spec.AccountRef,
+			AccountId:     obj.Spec.AccountRef,
 		}
 		return nil
 	}); err != nil {
@@ -280,6 +278,5 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&artifactsv1.HarborUserAccount{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
-
 	return builder.Complete(r)
 }

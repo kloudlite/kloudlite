@@ -16,8 +16,8 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.accountRef
-      name: AccountRef
+    - jsonPath: .spec.accountId
+      name: AccountId
       type: string
     - jsonPath: .status.isReady
       name: Ready
@@ -45,10 +45,12 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
-              accountRef:
+              accountId:
                 type: string
               displayName:
                 description: DisplayName of Project
+                type: string
+              logo:
                 type: string
             type: object
           status:
