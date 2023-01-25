@@ -2,6 +2,7 @@ package repos
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -50,6 +51,7 @@ func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	}
 	return results, err
 }
+
 func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	res := fn.NewTypeFromPointer[T]()
@@ -119,18 +121,53 @@ func (repo *dbRepo[T]) withUpdateTime(data T) {
 	data.SetUpdateTime(time.Now())
 }
 func (repo *dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
-	var result T
 	repo.withId(data)
 	repo.withCreationTime(data)
-	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, data)
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		var x T
+		return x, err
+	}
+	var m map[string]any
+	if err := json.Unmarshal(b, &m); err != nil {
+		var x T
+		return x, err
+	}
+
+	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, m)
 	if e != nil {
 		var x T
 		return x, e
 	}
+	var result T
 	r2 := repo.db.Collection(repo.collectionName).FindOne(ctx, Filter{"_id": r.InsertedID})
-	e = r2.Decode(&result)
+
+	var resultM map[string]any
+	e = r2.Decode(&resultM)
+
+	m2, err := json.Marshal(resultM)
+	if err := json.Unmarshal(m2, &result); err != nil {
+		var x T
+		return x, err
+	}
+
 	return result, e
 }
+
+func (repo *dbRepo[T]) Exists(ctx context.Context, filter Filter) (bool, error) {
+	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
+	res := fn.NewTypeFromPointer[T]()
+	err := one.Decode(&res)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
 	updatedData["updateTime"] = time.Now()
 	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
@@ -214,9 +251,15 @@ func (repo *dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 func (repo *dbRepo[T]) DeleteOne(ctx context.Context, filter Filter) error {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOneAndDelete(ctx, filter)
-	e := r.Decode(&result)
-	return e
+	err := r.Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil
+		}
+	}
+	return err
 }
+
 func (repo *dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 	_, err := repo.db.Collection(repo.collectionName).DeleteMany(ctx, filter)
 	if err != nil {
@@ -224,6 +267,7 @@ func (repo *dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 	}
 	return nil
 }
+
 func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) error {
 	if len(indices) == 0 {
 		return nil
@@ -337,7 +381,7 @@ func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []In
 						OnStart: func(ctx context.Context) error {
 							err := repo.IndexFields(ctx, indexFields)
 							if err != nil {
-								return errors.NewEf(err, "could not create indexes on DB")
+								return errors.NewEf(err, "could not create indexes on DB for repo %T", repo)
 							}
 							return nil
 						},

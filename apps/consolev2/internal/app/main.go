@@ -83,9 +83,8 @@ var Module = fx.Module(
 	config.EnvFx[PrometheusOpts](),
 
 	// Repos
-	repos.NewFxMongoRepo[*entities.ResInstance]("res_instances", "ins", entities.ResourceIndexs),
-	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexs),
-
+	repos.NewFxMongoRepo[*entities.ResInstance]("res_instances", "ins", entities.ResourceIndexes),
+	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
 	repos.NewFxMongoRepo[*entities.EdgeRegion]("regions", "reg", entities.EdgeRegionIndexes),
 	repos.NewFxMongoRepo[*entities.CloudProvider]("providers", "cp", entities.CloudProviderIndexes),

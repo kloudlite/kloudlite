@@ -3,7 +3,7 @@ package op_crds
 // type InstanceSpec struct {
 // 	ProjectName      string `json:"projectName"`
 // 	BlueprintName    string `json:"blueprintName"`
-// 	AccountRef       string `json:"accountRef"`
+// 	AccountId       string `json:"accountRef"`
 // 	RouterBaseDomain string `json:"routerBaseDomain,omitempty"`
 // }
 //

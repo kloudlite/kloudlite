@@ -2,7 +2,6 @@ package entities
 
 import (
 	"encoding/json"
-	"github.com/vektah/gqlparser/v2/validator"
 	"io"
 
 	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"

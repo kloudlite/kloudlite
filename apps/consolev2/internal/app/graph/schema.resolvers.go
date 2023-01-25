@@ -35,10 +35,6 @@ func (r *mutationResolver) CoreSample(ctx context.Context, j map[string]interfac
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreateProject(ctx context.Context, in entities.Project) (*entities.Project, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *mutationResolver) CoreCreateEdgeRegion(ctx context.Context, edgeRegion entities.EdgeRegion, providerID repos.ID) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -49,6 +45,10 @@ func (r *mutationResolver) CoreUpdateEdgeRegion(ctx context.Context, edgeID repo
 
 func (r *mutationResolver) CoreDeleteEdgeRegion(ctx context.Context, edgeID repos.ID) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CoreCreateProject(ctx context.Context, project entities.Project) (*entities.Project, error) {
+	return r.Domain.CreateProject(ctx, project)
 }
 
 func (r *queryResolver) CoreListCloudProviders(ctx context.Context, accountID string) ([]*entities.CloudProvider, error) {
@@ -63,11 +63,51 @@ func (r *queryResolver) CoreSample(ctx context.Context) (map[string]interface{},
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CoreProjects(ctx context.Context, accountID *repos.ID) ([]*entities.Project, error) {
+func (r *queryResolver) CoreGetEnvironments(ctx context.Context, projectName string) ([]string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CoreProject(ctx context.Context, projectID repos.ID) (*entities.Project, error) {
+func (r *queryResolver) CoreGetEnvironment(ctx context.Context, namespace string) (*string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreProjects(ctx context.Context, accountID repos.ID) ([]*entities.Project, error) {
+	return r.Domain.GetAccountProjects(ctx, accountID)
+}
+
+func (r *queryResolver) CoreProject(ctx context.Context, name string) (*entities.Project, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreApps(ctx context.Context, namespace string, search *string) ([]*entities.App, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreApp(ctx context.Context, namespace string, name string) (*entities.App, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreRouters(ctx context.Context, namespace string, search *string) ([]*entities.Router, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreRouter(ctx context.Context, namespace string, name string) (*entities.Router, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreConfigs(ctx context.Context, namespace string, search *string) ([]*entities.Config, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreConfig(ctx context.Context, namespace string, name string) (*entities.Config, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreSecrets(ctx context.Context, namespace string, search *string) ([]*entities.Secret, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) CoreSecret(ctx context.Context, namespace string, name string) (*entities.Secret, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

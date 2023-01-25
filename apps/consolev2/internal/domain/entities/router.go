@@ -1,7 +1,10 @@
 package entities
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"encoding/json"
+	"io"
+
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -16,14 +19,35 @@ const (
 
 type Router struct {
 	repos.BaseEntity `bson:",inline"`
-	ClusterId        repos.ID           `json:"cluster_id" bson:"cluster_id"`
-	ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
-	Name             string             `json:"name" bson:"name"`
-	Namespace        string             `json:"namespace" bson:"namespace"`
-	Domains          []string           `bson:"domains" json:"domains"`
-	Routes           []*Route           `bson:"routes" json:"routes"`
-	Status           RouterStatus       `json:"status" bson:"status"`
-	Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
+	crdsv1.Router    `json:",inline" bson:",inline"`
+	//ClusterId        repos.ID           `json:"cluster_id" bson:"cluster_id"`
+	//ProjectId        repos.ID           `json:"project_id" bson:"project_id"`
+	//Name             string             `json:"name" bson:"name"`
+	//Namespace        string             `json:"namespace" bson:"namespace"`
+	//Domains          []string           `bson:"domains" json:"domains"`
+	//Routes           []*Route           `bson:"routes" json:"routes"`
+	//Status           RouterStatus       `json:"status" bson:"status"`
+	//Conditions       []metav1.Condition `json:"conditions" bson:"conditions"`
+}
+
+func (r *Router) UnmarshalGQL(v interface{}) error {
+	if err := json.Unmarshal([]byte(v.(string)), r); err != nil {
+		return err
+	}
+
+	// if err := validator.Validate(*c); err != nil {
+	//  return err
+	// }
+
+	return nil
+}
+
+func (r Router) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(r)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
 }
 
 type Route struct {
@@ -36,6 +60,13 @@ var RouterIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "metadata.name", Value: repos.IndexAsc},
+			{Key: "metadata.namespace", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

@@ -1,6 +1,10 @@
 package entities
 
 import (
+	"encoding/json"
+	"io"
+
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/pkg/repos"
 )
@@ -83,6 +87,31 @@ type AutoScale struct {
 	UsagePercentage int64 `json:"usage_percentage" bson:"usage_percentage"`
 }
 
+type App struct {
+	repos.BaseEntity `json:",inline" bson:",inline"`
+	crdsv1.App       `json:",inline" bson:",inline"`
+}
+
+func (app *App) UnmarshalGQL(v interface{}) error {
+	if err := json.Unmarshal([]byte(v.(string)), app); err != nil {
+		return err
+	}
+
+	// if err := validator.Validate(*app); err != nil {
+	//  return err
+	// }
+
+	return nil
+}
+
+func (app App) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(app)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
+}
+
 type App2 struct {
 	repos.BaseEntity  `bson:",inline"`
 	IsLambda          bool               `json:"is_lambda" bson:"is_lambda"`
@@ -112,8 +141,8 @@ var AppIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "readable_id", Value: repos.IndexAsc},
-			{Key: "namespace", Value: repos.IndexAsc},
+			{Key: "metadata.name", Value: repos.IndexAsc},
+			{Key: "metadata.namespace", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

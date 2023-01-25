@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/consolev2/internal/domain/entities"
@@ -24,12 +25,15 @@ func (d *domain) CreateCloudProvider(ctx context.Context, cp *entities.CloudProv
 	}
 
 	scrt := entities.Secret{
-		Secret: corev1.Secret{
+		Secret: crdsv1.Secret{
+			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("provider-%s", cp.Name),
 				Namespace: constants.NamespaceCore,
 			},
-			Data: creds,
+			Spec: crdsv1.SecretSpec{
+				Data: creds,
+			},
 		},
 	}
 
@@ -116,19 +120,22 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 
 		if one == nil {
 			_, err := d.secretRepo.Create(ctx, &entities.Secret{
-				Secret: corev1.Secret{
+				Secret: crdsv1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprintf("provider-%s", cp.Name),
 						Namespace: constants.NamespaceCore,
 					},
-					Data: creds.ToMap(),
+					Spec: crdsv1.SecretSpec{
+						Data: creds,
+					},
+					Enabled: false,
 				},
 			})
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			one.Data = creds.ToMap()
+			one.Spec.Data = creds.ToMap()
 			_, err := d.secretRepo.UpdateById(ctx, one.Id, one)
 			if err != nil {
 				return nil, err
