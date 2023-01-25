@@ -71,3 +71,21 @@ models:
   SecretData:
     model:
       - kloudlite.io/apps/consolev2/internal/domain/entities.SecretData
+  Secret:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.Secret
+  Config:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.Config
+  App:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.App
+  Router:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.Router
+  ManagedService:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.ManagedService
+  ManagedResource:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.ManagedResource

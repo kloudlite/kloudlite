@@ -21,7 +21,7 @@ const (
 
 type Project struct {
 	repos.BaseEntity `bson:",inline" json:",inline"`
-	crdsv1.Project `json:",inline" bson:",inline"`
+	crdsv1.Project   `json:",inline"`
 
 	// IsDeleting  bool               `json:"is_deleting" bson:"is_deleting"`
 	// AccountId   repos.ID           `json:"account_id" bson:"account_id"`
@@ -36,14 +36,29 @@ type Project struct {
 }
 
 func (c *Project) UnmarshalGQL(v interface{}) error {
-	if err := json.Unmarshal([]byte(v.(string)), c); err != nil {
-		return err
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, c); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), c); err != nil {
+			return err
+		}
 	}
 
-	// if err := validator.Validate(*c); err != nil {
-	// 	return err
-	// }
-
+	//if err := json.Unmarshal([]byte(v.(string)), c); err != nil {
+	//	return err
+	//}
+	//
+	//if err := validator.Validate(*c); err != nil {
+	//	return err
+	//}
+	//
 	return nil
 }
 
@@ -67,6 +82,11 @@ var ProjectIndexes = []repos.IndexField{
 			{Key: "metadata.name", Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "spec.accountId", Value: repos.IndexAsc},
+		},
 	},
 }
 

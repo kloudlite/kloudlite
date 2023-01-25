@@ -44,7 +44,7 @@ type ResInstance struct {
 	IsSelf           bool                `json:"is_self,omitempty" bson:"is_self,omitempty"`
 }
 
-var ResourceIndexs = []repos.IndexField{
+var ResourceIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "resource_id", Value: repos.IndexAsc},

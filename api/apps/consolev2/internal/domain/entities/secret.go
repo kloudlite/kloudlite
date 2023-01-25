@@ -2,9 +2,9 @@ package entities
 
 import (
 	"encoding/json"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"gopkg.in/validator.v2"
 	"io"
-	corev1 "k8s.io/api/core/v1"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -27,11 +27,11 @@ func (s *SecretData) UnmarshalGQL(v interface{}) error {
 	if s == nil {
 		return nil
 	}
-	if err := json.Unmarshal([]byte(v.(string)), c); err != nil {
+	if err := json.Unmarshal([]byte(v.(string)), s); err != nil {
 		return err
 	}
 
-	if err := validator.Validate(*c); err != nil {
+	if err := validator.Validate(*s); err != nil {
 		return err
 	}
 
@@ -39,7 +39,7 @@ func (s *SecretData) UnmarshalGQL(v interface{}) error {
 }
 
 func (s SecretData) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(c)
+	b, err := json.Marshal(s)
 	if err != nil {
 		w.Write([]byte("{}"))
 	}
@@ -48,7 +48,7 @@ func (s SecretData) MarshalGQL(w io.Writer) {
 
 type Secret struct {
 	repos.BaseEntity `bson:",inline"`
-	corev1.Secret    `bson:",inline" json:",inline"`
+	crdsv1.Secret    `json:",inline" bson:",inline"`
 
 	// ClusterId   repos.ID           `json:"cluster_id" bson:"cluster_id"`
 	// ProjectId   repos.ID           `json:"project_id" bson:"project_id"`
@@ -58,6 +58,26 @@ type Secret struct {
 	// Data        []*Entry           `json:"data" bson:"data"`
 	// Status      SecretStatus       `json:"status" bson:"status"`
 	// Conditions  []metav1.Condition `json:"conditions" bson:"conditions"`
+}
+
+func (s *Secret) UnmarshalGQL(v interface{}) error {
+	if err := json.Unmarshal([]byte(v.(string)), s); err != nil {
+		return err
+	}
+
+	// if err := validator.Validate(*s); err != nil {
+	//  return err
+	// }
+
+	return nil
+}
+
+func (s Secret) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(s)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
 }
 
 var SecretIndexes = []repos.IndexField{
@@ -71,7 +91,6 @@ var SecretIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
 			{Key: "metadata.namespace", Value: repos.IndexAsc},
-			// {Key: "cluster_id", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
