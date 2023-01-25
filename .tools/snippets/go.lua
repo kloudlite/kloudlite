@@ -23,11 +23,11 @@ local gql_marshaler = s(
   fmta(
     [[
 func (<> *<>) UnmarshalGQL(v interface{}) error {
-	if err := json.Unmarshal([]byte(v.(string)), er); err != nil {
+	if err := json.Unmarshal([]byte(v.(string)), <>); err != nil {
 		return err
 	}
 
-	// if err := validator.Validate(*c); err != nil {
+	// if err := validator.Validate(*<>); err != nil {
 	// 	return err
 	// }
 
@@ -35,7 +35,7 @@ func (<> *<>) UnmarshalGQL(v interface{}) error {
 }
 
 func (<> <>) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(er)
+	b, err := json.Marshal(<>)
 	if err != nil {
 		w.Write([]byte("{}"))
 	}
@@ -46,7 +46,10 @@ func (<> <>) MarshalGQL(w io.Writer) {
       i(1, "obj"),
       i(2, "//type"),
       rep(1),
+      rep(1),
+      rep(1),
       rep(2),
+      rep(1),
     }
   )
 )

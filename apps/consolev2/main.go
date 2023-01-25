@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
+	"kloudlite.io/apps/consolev2/internal/env"
 	"kloudlite.io/apps/consolev2/internal/framework"
+	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 )
@@ -16,6 +17,12 @@ func main() {
 	flag.Parse()
 
 	fx.New(
+		fx.Provide(
+			func() (logging.Logger, error) {
+				return logging.New(&logging.Options{Name: "console", Dev: isDev})
+			},
+		),
+		config.EnvFx[env.Env](),
 		fx.Provide(
 			func() (*k8s.YAMLClient, error) {
 				if isDev {
@@ -29,10 +36,5 @@ func main() {
 			},
 		),
 		framework.Module,
-		fx.Provide(
-			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "console", Dev: isDev})
-			},
-		),
 	).Run()
 }

@@ -1,7 +1,7 @@
 package entities
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -15,16 +15,18 @@ const (
 )
 
 type ManagedResource struct {
-	repos.BaseEntity `bson:",inline"`
-	ClusterId        repos.ID              `json:"cluster_id" bson:"cluster_id"`
-	ProjectId        repos.ID              `json:"project_id" bson:"project_id"`
-	Name             string                `json:"name" bson:"name"`
-	Namespace        string                `json:"namespace" bson:"namespace"`
-	ResourceType     ManagedResourceType   `json:"resource_type" bson:"resource_type"`
-	ServiceId        repos.ID              `bson:"service_id" json:"service_id"`
-	Values           map[string]string     `json:"values" bson:"values"`
-	Status           ManagedResourceStatus `json:"status" bson:"status"`
-	Conditions       []metav1.Condition    `json:"conditions" bson:"conditions"`
+	repos.BaseEntity       `bson:",inline"`
+	crdsv1.ManagedResource `json:",inline" bson:",inline"`
+
+	//ClusterId        repos.ID              `json:"cluster_id" bson:"cluster_id"`
+	//ProjectId        repos.ID              `json:"project_id" bson:"project_id"`
+	//Name             string                `json:"name" bson:"name"`
+	//Namespace        string                `json:"namespace" bson:"namespace"`
+	//ResourceType     ManagedResourceType   `json:"resource_type" bson:"resource_type"`
+	//ServiceId        repos.ID              `bson:"service_id" json:"service_id"`
+	//Values           map[string]string     `json:"values" bson:"values"`
+	//Status           ManagedResourceStatus `json:"status" bson:"status"`
+	//Conditions       []metav1.Condition    `json:"conditions" bson:"conditions"`
 }
 
 var ManagedResourceIndexes = []repos.IndexField{
@@ -36,10 +38,8 @@ var ManagedResourceIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "name", Value: repos.IndexAsc},
-			{Key: "service_id", Value: repos.IndexAsc},
-			{Key: "namespace", Value: repos.IndexAsc},
-			{Key: "cluster_id", Value: repos.IndexAsc},
+			{Key: "metadata.name", Value: repos.IndexAsc},
+			{Key: "metadata.namespace", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
@@ -46,6 +45,22 @@ func (d *domain) getClusterForAccount(ctx context.Context, accountId repos.ID) (
 	cluster, err := d.financeClient.GetAttachedCluster(ctx, &finance.GetAttachedClusterIn{AccountId: string(accountId)})
 	if err != nil {
 		return "", errors.NewEf(err, "failed to get cluster from accountId [grpc]")
+	}
+	return cluster.ClusterId, nil
+}
+
+func (d *domain) getClusterForProject(ctx context.Context, projectName string) (string, error) {
+	project, err := d.projectRepo.FindOne(ctx, repos.Filter{"metadata.name": projectName})
+	if err != nil {
+		return "", err
+	}
+	if project == nil {
+		return "", errors.Newf("project (%s) not found", projectName)
+	}
+
+	cluster, err := d.financeClient.GetAttachedCluster(ctx, &finance.GetAttachedClusterIn{AccountId: project.Spec.AccountId})
+	if err != nil {
+		return "", err
 	}
 	return cluster.ClusterId, nil
 }
@@ -108,4 +123,34 @@ func (*domain) GetSocketCtx(
 	}
 
 	return c
+}
+
+func (d *domain) isNameAvailable(ctx context.Context, resType common.ResourceType, namespace string, name string) (bool, error) {
+	exists, err := func() (bool, error) {
+		switch resType {
+		case common.ResourceProject:
+			return d.projectRepo.Exists(ctx, repos.Filter{"metadata.name": name})
+		case common.ResourceApp:
+			return d.appRepo.Exists(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+		case common.ResourceSecret:
+			return d.secretRepo.Exists(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+		case common.ResourceConfig:
+			return d.configRepo.Exists(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+		case common.ResourceRouter:
+			return d.routerRepo.Exists(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+		case common.ResourceManagedService:
+			return d.managedSvcRepo.Exists(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+		case common.ResourceManagedResource:
+			return d.managedResRepo.Exists(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+		case common.ResourceEnvironment:
+			return d.environmentRepo.Exists(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+		default:
+			return false, fmt.Errorf("unknown resource type '%s'", resType)
+		}
+	}()
+
+	if err != nil {
+		return false, err
+	}
+	return !exists, nil
 }

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"kloudlite.io/apps/consolev2/internal/env"
 	"text/template"
 
 	"go.uber.org/fx"
@@ -19,14 +20,22 @@ import (
 )
 
 type domain struct {
-	dnsClient         kldns.DNSClient
-	workloadMessenger WorkloadMessenger
-	providerRepo      repos.DbRepo[*entities.CloudProvider]
-	financeClient     finance.FinanceClient
-	consoleTemplate   *template.Template
-	clusterRepo       repos.DbRepo[*entities.Cluster]
-	k8sYamlClient     *k8s.YAMLClient
-	secretRepo        repos.DbRepo[*entities.Secret]
+	dnsClient            kldns.DNSClient
+	workloadMessenger    WorkloadMessenger
+	providerRepo         repos.DbRepo[*entities.CloudProvider]
+	financeClient        finance.FinanceClient
+	consoleTemplate      *template.Template
+	clusterRepo          repos.DbRepo[*entities.Cluster]
+	k8sYamlClient        *k8s.YAMLClient
+	secretRepo           repos.DbRepo[*entities.Secret]
+	projectRepo          repos.DbRepo[*entities.Project]
+	environmentRepo      repos.DbRepo[*entities.Environment]
+	appRepo              repos.DbRepo[*entities.App]
+	configRepo           repos.DbRepo[*entities.Config]
+	routerRepo           repos.DbRepo[*entities.Router]
+	managedSvcRepo       repos.DbRepo[*entities.ManagedService]
+	managedTemplatesPath string
+	managedResRepo       repos.DbRepo[*entities.ManagedResource]
 }
 
 func fxDomain(
@@ -57,32 +66,33 @@ func fxDomain(
 	dnsClient kldns.DNSClient,
 	changeNotifier rcn.ResourceChangeNotifier,
 	jsEvalClient jseval.JSEvalClient,
+	env *env.Env,
 ) Domain {
 	return &domain{
-		workloadMessenger: workloadMessenger,
-		financeClient:     financeClient,
-		providerRepo:      providerRepo,
-		consoleTemplate:   consoleTemplate,
-		clusterRepo:       clusterRepo,
-		k8sYamlClient:     k8sYamlClient,
-		secretRepo:        secretRepo,
+		workloadMessenger:    workloadMessenger,
+		financeClient:        financeClient,
+		providerRepo:         providerRepo,
+		consoleTemplate:      consoleTemplate,
+		clusterRepo:          clusterRepo,
+		k8sYamlClient:        k8sYamlClient,
+		secretRepo:           secretRepo,
+		projectRepo:          projectRepo,
+		environmentRepo:      environmentRepo,
+		appRepo:              appRepo,
+		configRepo:           configRepo,
+		routerRepo:           routerRepo,
+		managedSvcRepo:       managedSvcRepo,
+		managedResRepo:       managedResRepo,
+		managedTemplatesPath: env.ManagedTemplatesPath,
 
 		// instanceRepo:         instanceRepo,
-		// environmentRepo:      environmentRepo,
 		// changeNotifier:       changeNotifier,
 		// notifier:             notifier,
 		// ciClient:             ciClient,
 		// authClient:           authClient,
 		// iamClient:            iamClient,
 		// deviceRepo:           deviceRepo,
-		// projectRepo:          projectRepo,
-		// routerRepo:           routerRepo,
-		// configRepo:           configRepo,
-		// appRepo:              appRepo,
-		// managedSvcRepo:       managedSvcRepo,
-		// managedResRepo:       managedResRepo,
 		// messageProducer:      msgP,
-		// managedTemplatesPath: env.ManagedTemplatesPath,
 		// logger:               logger,
 		// inventoryPath:        env.InventoryPath,
 		// jsEvalClient:         jsEvalClient,

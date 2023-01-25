@@ -13,6 +13,7 @@ const (
 	ResourceManagedService  ResourceType = "mService"
 	ResourceManagedResource ResourceType = "mResource"
 	ResourceGitPipeline     ResourceType = "gitPipeline"
+	ResourceEnvironment     ResourceType = "environment"
 )
 
 const (

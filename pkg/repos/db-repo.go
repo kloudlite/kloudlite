@@ -41,6 +41,8 @@ type DbRepo[T Entity] interface {
 	FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error)
 	FindById(ctx context.Context, id ID) (T, error)
 	Create(ctx context.Context, data T) (T, error)
+	Exists(ctx context.Context, filter Filter) (bool, error)
+
 	// upsert
 	Upsert(ctx context.Context, filter Filter, data T) (T, error)
 	UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
