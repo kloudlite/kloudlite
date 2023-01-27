@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"encoding/json"
-
 	"go.uber.org/fx"
 	"kloudlite.io/apps/consolev2/internal/domain"
 	"kloudlite.io/pkg/redpanda"

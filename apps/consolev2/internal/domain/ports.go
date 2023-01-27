@@ -28,36 +28,38 @@ type Domain interface {
 	//projects
 
 	CreateProject(ctx context.Context, project entities.Project) (*entities.Project, error)
+	UpdateProject(ctx context.Context, project entities.Project) (*entities.Project, error)
+	DeleteProject(ctx context.Context, name string) (bool, error)
 	GetAccountProjects(ctx context.Context, accountId repos.ID) ([]*entities.Project, error)
 	GetProjectWithID(ctx context.Context, projectId repos.ID) (*entities.Project, error)
 	GetProjectWithName(ctx context.Context, projectName string) (*entities.Project, error)
 
 	//apps
 
-	InstallApp(ctx context.Context, app entities.App) (*entities.App, error)
+	CreateApp(ctx context.Context, app entities.App) (*entities.App, error)
 	UpdateApp(ctx context.Context, app entities.App) (*entities.App, error)
-	GetApps(ctx context.Context, projectName string) ([]*entities.App, error)
+	GetApps(ctx context.Context, namespace string, search *string) ([]*entities.App, error)
 	GetInterceptedApps(ctx context.Context, deviceName string) ([]*entities.App, error)
 	FreezeApp(ctx context.Context, appName string) error
 	UnFreezeApp(ctx context.Context, appName string) error
 	RestartApp(ctx context.Context, appName string) error
-	GetApp(ctx context.Context, appName string) (*entities.App, error)
-	DeleteApp(ctx context.Context, appName string) (bool, error)
+	GetApp(ctx context.Context, namespace string, name string) (*entities.App, error)
+	DeleteApp(ctx context.Context, namespace string, name string) (bool, error)
 
 	// config
 
 	CreateConfig(ctx context.Context, config entities.Config) (*entities.Config, error)
-	UpdateConfig(ctx context.Context, config entities.Config) (bool, error)
-	GetConfigs(ctx context.Context, namespace string) ([]*entities.Config, error)
+	UpdateConfig(ctx context.Context, config entities.Config) (*entities.Config, error)
+	GetConfigs(ctx context.Context, namespace string, search *string) ([]*entities.Config, error)
 	GetConfig(ctx context.Context, namespace, name string) (*entities.Config, error)
 	DeleteConfig(ctx context.Context, namespace, name string) (bool, error)
 
 	// secrets
 
 	CreateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error)
-	UpdateSecret(ctx context.Context, secret entities.Secret) (bool, error)
+	UpdateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error)
 	DeleteSecret(ctx context.Context, namespace, name string) (bool, error)
-	GetSecrets(ctx context.Context, namespace string) ([]*entities.Secret, error)
+	GetSecrets(ctx context.Context, namespace string, search *string) ([]*entities.Secret, error)
 	GetSecret(ctx context.Context, namespace, name string) (*entities.Secret, error)
 
 	//OnUpdateApp(ctx context.Context, r *op_crds.StatusUpdate) error
@@ -65,11 +67,11 @@ type Domain interface {
 
 	// router
 
-	GetRouters(ctx context.Context, namespace string) ([]*entities.Router, error)
+	GetRouters(ctx context.Context, namespace string, search *string) ([]*entities.Router, error)
 	GetRouter(ctx context.Context, namespace string, name string) (*entities.Router, error)
 	DeleteRouter(ctx context.Context, namespace string, name string) (bool, error)
 	CreateRouter(ctx context.Context, router entities.Router) (*entities.Router, error)
-	UpdateRouter(ctx context.Context, router entities.Router) (bool, error)
+	UpdateRouter(ctx context.Context, router entities.Router) (*entities.Router, error)
 
 	// managed service
 
@@ -78,7 +80,7 @@ type Domain interface {
 	InstallManagedSvc(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error)
 	UnInstallManagedSvc(ctx context.Context, namespace, name string) (bool, error)
 	GetManagedSvc(ctx context.Context, namespace string, name string) (*entities.ManagedService, error)
-	UpdateManagedSvc(ctx context.Context, msvc entities.ManagedService) (bool, error)
+	UpdateManagedSvc(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error)
 	GetManagedSvcOutput(ctx context.Context, namespace, name string) (map[string]any, error)
 	GetManagedSvcs(ctx context.Context, namespace string) ([]*entities.ManagedService, error)
 	//OnUpdateManagedSvc(ctx context.Context, r *op_crds.StatusUpdate) error
@@ -91,9 +93,9 @@ type Domain interface {
 	GetManagedResources(ctx context.Context, namespace string) ([]*entities.ManagedResource, error)
 	GetManagedResourcesOfService(ctx context.Context, msvcNamespace string, msvcName string) ([]*entities.ManagedResource, error)
 
-	InstallManagedRes(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error)
-	UpdateManagedRes(ctx context.Context, mres entities.ManagedResource) (bool, error)
-	UnInstallManagedRes(ctx context.Context, namespace string, name string) (bool, error)
+	CreateManagedRes(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	UpdateManagedRes(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	DeleteManagedRes(ctx context.Context, namespace string, name string) (bool, error)
 	//OnDeleteManagedResource(todo context.Context, o *op_crds.StatusUpdate) error
 	//OnUpdateManagedRes(ctx context.Context, r *op_crds.StatusUpdate) error
 

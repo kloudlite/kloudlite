@@ -8,6 +8,8 @@ scalar App
 scalar Router
 scalar Config
 scalar Secret
+scalar ManagedService
+scalar ManagedResource
 
 # - Account
 # - CloudProvider
@@ -45,7 +47,7 @@ type Query {
   core_secret(namespace: String!, name: String!): Secret! #project-admin-access #project-developer-access
 }
 
-type Mutation{
+type Mutation {
   # cloud provider
   core_createCloudProvider(in: CloudProvider!, creds: SecretData!): CloudProvider
   core_updateCloudProvider(in: CloudProvider!, creds: SecretData): CloudProvider
@@ -58,10 +60,37 @@ type Mutation{
   core_updateEdgeRegion(edgeId: ID!, edgeRegion: EdgeRegion!): Boolean! #private-access
   core_deleteEdgeRegion(edgeId: ID!): Boolean! #private-access
 
-  # # Environments
-  # core_createEnvironment(environment: EnvironmentIn): Environment!
+  # Environments
+  core_createEnvironment(environment: Environment!): Environment
+  core_deleteEnvironment(name: String!): Boolean! #private-access
 
   # projects
   core_createProject(project: Project!): Project
+  core_updateProject(project: Project!): Project
+  core_deleteProject(name: String!): Boolean!
 
+  # apps
+  core_createApp(app: App!): App
+  core_updateApp(app: App!): App
+  core_deleteApp(namespace: String!, name: String!): Boolean!
+
+  core_createSecret(secret: Secret!): Secret
+  core_updateSecret(secret: Secret!): Secret
+  core_deleteSecret(namespace: String!, name: String!): Boolean! #project-admin-access project-developer-access
+
+  core_createConfig(config: Config!): Config
+  core_updateConfig(config: Config!): Config
+  core_deleteConfig(namespace: String!, name: String!): Boolean!
+
+  core_createRouter(router: Router!): Router
+  core_updateRouter(router: Router!): Router
+  core_deleteRouter(namespace: String!, name: String!): Boolean!
+
+  core_installManagedSvc(msvc :ManagedService!): ManagedService
+  core_updateManagedSvc(msvc :ManagedService!): ManagedService
+  core_uninstallManagedSvc(namespace: String!, name: String!): Boolean!
+
+  core_createManagedRes(mres: ManagedResource!): ManagedResource
+  core_updateManagedRes(mres: ManagedResource!): ManagedResource
+  core_deleteManagedRes(namespace: String!, name: String!): Boolean!
 }

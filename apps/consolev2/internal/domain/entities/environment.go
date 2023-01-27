@@ -2,6 +2,7 @@ package entities
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -10,7 +11,7 @@ import (
 
 type Environment struct {
 	repos.BaseEntity `bson:",inline"`
-	crdsv1.Env       `bson:",inline" json:",inline"`
+	crdsv1.Env       `json:",inline"`
 	// blueprint_id is project_id
 	//BlueprintId repos.ID           `bson:"blueprint_id,omitempty" json:"blueprint_id,omitempty"`
 	//Name        string             `bson:"name,omitempty" json:"name,omitempty"`
@@ -23,23 +24,24 @@ type Environment struct {
 }
 
 func (env *Environment) UnmarshalGQL(v interface{}) error {
-  if err := json.Unmarshal([]byte(v.(string)), env); err != nil {
-    return err
-  }
+	fmt.Println("v type is %T", v)
+	if err := json.Unmarshal([]byte(v.(string)), env); err != nil {
+		return err
+	}
 
-  // if err := validator.Validate(*c); err != nil {
-  //  return err
-  // }
+	// if err := validator.Validate(*c); err != nil {
+	//  return err
+	// }
 
-  return nil
+	return nil
 }
 
 func (env Environment) MarshalGQL(w io.Writer) {
-  b, err := json.Marshal(env)
-  if err != nil {
-    w.Write([]byte("{}"))
-  }
-  w.Write(b)
+	b, err := json.Marshal(env)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
 }
 
 var EnvironmentIndexes = []repos.IndexField{

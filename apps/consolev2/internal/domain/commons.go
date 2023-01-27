@@ -154,3 +154,23 @@ func (d *domain) isNameAvailable(ctx context.Context, resType common.ResourceTyp
 	}
 	return !exists, nil
 }
+
+func (d *domain) getClusterIdForNamespace(ctx context.Context, ns string) (string, error) {
+	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{"metadata.name": ns})
+	if err != nil {
+		return "", err
+	}
+	if prj != nil {
+		return d.getClusterForAccount(ctx, repos.ID(prj.Spec.AccountId))
+	}
+
+	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{"metadata.name": ns})
+	if err != nil {
+		return "", err
+	}
+	if env != nil {
+		return d.getClusterForAccount(ctx, repos.ID(env.Spec.AccountId))
+	}
+
+	return "", errors.Newf("namespace %s is neither a project, nor an environment", ns)
+}

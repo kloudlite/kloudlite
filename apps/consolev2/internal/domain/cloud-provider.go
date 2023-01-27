@@ -31,9 +31,7 @@ func (d *domain) CreateCloudProvider(ctx context.Context, cp *entities.CloudProv
 				Name:      fmt.Sprintf("provider-%s", cp.Name),
 				Namespace: constants.NamespaceCore,
 			},
-			Spec: crdsv1.SecretSpec{
-				Data: creds,
-			},
+			Data: creds,
 		},
 	}
 
@@ -125,9 +123,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 						Name:      fmt.Sprintf("provider-%s", cp.Name),
 						Namespace: constants.NamespaceCore,
 					},
-					Spec: crdsv1.SecretSpec{
-						Data: creds,
-					},
+					Data:    creds,
 					Enabled: false,
 				},
 			})
@@ -135,7 +131,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 				return nil, err
 			}
 		} else {
-			one.Spec.Data = creds.ToMap()
+			one.Data = creds.ToMap()
 			_, err := d.secretRepo.UpdateById(ctx, one.Id, one)
 			if err != nil {
 				return nil, err

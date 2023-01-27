@@ -1,0 +1,75 @@
+---
+global:
+  # accountId: acc-k-9egfp-0nvz1wmpc6ylj9pxibqzt
+  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+
+---
+
+label: List Projects
+query: |
+  query Core_projects($accountId: ID!) {
+    core_projects(accountId: $accountId)
+  }
+variables:
+  accountId: "{{.accountId}}" 
+
+---
+label:  Get Project
+query: |
+  query Core_project($name: String!) {
+    core_project(name: $name)
+  }
+variables:
+  name: "sample" 
+
+---
+
+label: Create Project
+query: |
+  mutation Core_createProject($project: Project!) {
+    core_createProject(project: $project)
+  }
+variables:
+  # accountId: "{{accountId}}"
+  # name: "sample"
+  # displayName: "sample"
+  # regionId: "centralindia"
+  # description: "this is just a dev only project"
+  project:
+    apiVersion: crds.kloudlite.io/v1
+    kind: Project
+    metadata:
+      name: sample
+    spec:
+      accountId: "{{.accountId}}"
+      displayName: "Sample Project"
+---
+
+label: Delete Project
+query: |
+  mutation Core_deleteProject($name: String!) {
+    core_deleteProject(name: $name)
+  }
+variables:
+  name: "sample"
+
+---
+
+### Environments
+label: Get Environments
+query: |
+  query Core_getEnvironments($projectName: String!) {
+    core_getEnvironments(projectName: $projectName)
+  }
+variables:
+  projectName: sample
+---
+
+label: Get Environment
+query: |
+  query Core_getEnvironment($namespace: String!) {
+    core_getEnvironment(namespace: $namespace)
+  }
+variables:
+  namespace: sample
+---
