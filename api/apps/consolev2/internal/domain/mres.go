@@ -39,18 +39,19 @@ func (d *domain) upsertMres(ctx context.Context, mres entities.ManagedResource) 
 	return nMres, nil
 }
 
-func (d *domain) InstallManagedRes(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
+func (d *domain) CreateManagedRes(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	return d.upsertMres(ctx, mres)
 }
 
-func (d *domain) UpdateManagedRes(ctx context.Context, mres entities.ManagedResource) (bool, error) {
-	if _, err := d.upsertMres(ctx, mres); err != nil {
-		return false, err
+func (d *domain) UpdateManagedRes(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
+	uMres, err := d.upsertMres(ctx, mres)
+	if err != nil {
+		return nil, err
 	}
-	return true, nil
+	return uMres, nil
 }
 
-func (d *domain) UnInstallManagedRes(ctx context.Context, namespace string, name string) (bool, error) {
+func (d *domain) DeleteManagedRes(ctx context.Context, namespace string, name string) (bool, error) {
 	if err := d.managedResRepo.DeleteOne(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name}); err != nil {
 		return false, err
 	}

@@ -93,13 +93,20 @@ type App struct {
 }
 
 func (app *App) UnmarshalGQL(v interface{}) error {
-	if err := json.Unmarshal([]byte(v.(string)), app); err != nil {
-		return err
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, app); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), app); err != nil {
+			return err
+		}
 	}
-
-	// if err := validator.Validate(*app); err != nil {
-	//  return err
-	// }
 
 	return nil
 }

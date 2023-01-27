@@ -65,6 +65,9 @@ models:
   Project:
     model:
       - kloudlite.io/apps/consolev2/internal/domain/entities.Project
+  Environment:
+    model:
+      - kloudlite.io/apps/consolev2/internal/domain/entities.Environment
   EdgeRegion:
     model:
       - kloudlite.io/apps/consolev2/internal/domain/entities.EdgeRegion

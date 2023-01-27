@@ -81,11 +81,12 @@ func (d *domain) UnInstallManagedSvc(ctx context.Context, namespace, name string
 	return true, nil
 }
 
-func (d *domain) UpdateManagedSvc(ctx context.Context, msvc entities.ManagedService) (bool, error) {
-	if _, err := d.upsertMsvc(ctx, msvc); err != nil {
-		return false, err
+func (d *domain) UpdateManagedSvc(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error) {
+	uMsvc, err := d.upsertMsvc(ctx, msvc)
+	if err != nil {
+		return nil, err
 	}
-	return true, nil
+	return uMsvc, nil
 }
 
 func (d *domain) GetManagedSvcOutput(ctx context.Context, namespace, name string) (map[string]any, error) {

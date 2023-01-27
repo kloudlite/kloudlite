@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 	fn "kloudlite.io/pkg/functions"
 
 	"kloudlite.io/apps/consolev2/internal/domain/entities"
@@ -9,7 +10,7 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) InstallApp(ctx context.Context, app entities.App) (*entities.App, error) {
+func (d *domain) CreateApp(ctx context.Context, app entities.App) (*entities.App, error) {
 	existingApp, err := d.appRepo.FindOne(ctx, repos.Filter{"metadata.name": app.Name})
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func (d *domain) InstallApp(ctx context.Context, app entities.App) (*entities.Ap
 		return nil, err
 	}
 
-	clusterId, err := d.getClusterForProject(ctx, nApp.Spec.ProjectName)
+	clusterId, err := d.getClusterIdForNamespace(ctx, app.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -43,21 +44,32 @@ func (d *domain) UpdateApp(ctx context.Context, app entities.App) (*entities.App
 		return nil, errors.Newf("app %s does not exist", app.Name)
 	}
 
-	clusterId, err := d.getClusterForProject(ctx, existingApp.Spec.ProjectName)
+	clusterId, err := d.getClusterIdForNamespace(ctx, existingApp.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	existingApp.App = app.App
-	if err := d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(existingApp.Id), existingApp.App); err != nil {
+	uApp, err := d.appRepo.UpdateById(ctx, existingApp.Id, existingApp)
+	if err != nil {
+		return nil, err
+	}
+	if err := d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(existingApp.Id), uApp.App); err != nil {
 		return nil, err
 	}
 
-	return existingApp, nil
+	return uApp, nil
 }
 
-func (d *domain) GetApps(ctx context.Context, projectName string) ([]*entities.App, error) {
-	return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{"spec.projectName": projectName}})
+func (d *domain) GetApps(ctx context.Context, namespace string, search *string) ([]*entities.App, error) {
+	if search == nil {
+		return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{"metadata.namespace": namespace}})
+	}
+	return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{"metadata.namespace": namespace, "metadata.name": fmt.Sprintf("/%s/", *search)}})
+}
+
+func (d *domain) GetApp(ctx context.Context, namespace string, name string) (*entities.App, error) {
+	return d.appRepo.FindOne(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
 }
 
 func (d *domain) GetInterceptedApps(ctx context.Context, deviceName string) ([]*entities.App, error) {
@@ -73,14 +85,13 @@ func (d *domain) FreezeApp(ctx context.Context, appName string) error {
 		return errors.Newf("no app with name '%s' found", appName)
 	}
 
-	clusterId, err := d.getClusterForProject(ctx, app.Spec.ProjectName)
+	clusterId, err := d.getClusterIdForNamespace(ctx, app.Namespace)
 	if err != nil {
 		return err
 	}
 
 	app.Spec.Frozen = true
-
-	return d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(app.Id), app)
+	return d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(app.Id), app.App)
 }
 
 func (d *domain) UnFreezeApp(ctx context.Context, appName string) error {
@@ -92,13 +103,13 @@ func (d *domain) UnFreezeApp(ctx context.Context, appName string) error {
 		return errors.Newf("no app with name '%s' found", appName)
 	}
 
-	clusterId, err := d.getClusterForProject(ctx, app.Spec.ProjectName)
+	clusterId, err := d.getClusterForProject(ctx, app.Namespace)
 	if err != nil {
 		return err
 	}
 
 	app.Spec.Frozen = false
-	return d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(app.Id), app)
+	return d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(app.Id), app.App)
 }
 
 func (d *domain) RestartApp(ctx context.Context, appName string) error {
@@ -110,22 +121,34 @@ func (d *domain) RestartApp(ctx context.Context, appName string) error {
 		return errors.Newf("no app with name '%s' found", appName)
 	}
 
-	clusterId, err := d.getClusterForProject(ctx, app.Spec.ProjectName)
+	clusterId, err := d.getClusterIdForNamespace(ctx, app.Namespace)
 	if err != nil {
 		return err
 	}
 
 	app.Restart = fn.New(true)
-
-	return d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(app.Id), app)
+	return d.workloadMessenger.SendAction(ActionApply, d.getDispatchKafkaTopic(clusterId), string(app.Id), app.App)
 }
 
-func (d *domain) GetApp(ctx context.Context, appName string) (*entities.App, error) {
-	return d.appRepo.FindOne(ctx, repos.Filter{"metadata.name": appName})
-}
+func (d *domain) DeleteApp(ctx context.Context, namespace, name string) (bool, error) {
+	app, err := d.appRepo.FindOne(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+	if err != nil {
+		return false, err
+	}
+	if app == nil {
+		return true, nil
+	}
 
-func (d *domain) DeleteApp(ctx context.Context, appName string) (bool, error) {
-	if err := d.appRepo.DeleteOne(ctx, repos.Filter{"metadata.name": appName}); err != nil {
+	clusterId, err := d.getClusterIdForNamespace(ctx, namespace)
+	if err != nil {
+		return false, err
+	}
+
+	if err := d.workloadMessenger.SendAction(ActionDelete, d.getDispatchKafkaTopic(clusterId), string(app.Id), app.App); err != nil {
+		return false, err
+	}
+
+	if err := d.appRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name, "metadata.namespace": namespace}); err != nil {
 		return false, err
 	}
 	return true, nil
