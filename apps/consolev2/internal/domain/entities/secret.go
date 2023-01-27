@@ -61,14 +61,20 @@ type Secret struct {
 }
 
 func (s *Secret) UnmarshalGQL(v interface{}) error {
-	if err := json.Unmarshal([]byte(v.(string)), s); err != nil {
-		return err
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, s); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), s); err != nil {
+			return err
+		}
 	}
-
-	// if err := validator.Validate(*s); err != nil {
-	//  return err
-	// }
-
 	return nil
 }
 

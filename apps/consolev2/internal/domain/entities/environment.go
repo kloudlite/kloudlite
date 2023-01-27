@@ -2,7 +2,6 @@ package entities
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -24,15 +23,20 @@ type Environment struct {
 }
 
 func (env *Environment) UnmarshalGQL(v interface{}) error {
-	fmt.Println("v type is %T", v)
-	if err := json.Unmarshal([]byte(v.(string)), env); err != nil {
-		return err
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, env); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), env); err != nil {
+			return err
+		}
 	}
-
-	// if err := validator.Validate(*c); err != nil {
-	//  return err
-	// }
-
 	return nil
 }
 

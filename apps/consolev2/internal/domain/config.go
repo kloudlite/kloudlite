@@ -14,10 +14,13 @@ func (d *domain) CreateConfig(ctx context.Context, config entities.Config) (*ent
 		return nil, err
 	}
 	if exists {
-		return nil, errors.Newf("secret  %s already exists", config.Name)
+		return nil, errors.Newf("config %s already exists", config.Name)
 	}
 
-	clusterId, err := d.getClusterForProject(ctx, config.ProjectName)
+	clusterId, err := d.getClusterIdForNamespace(ctx, config.Namespace)
+	if err != nil {
+		return nil, err
+	}
 	cfg, err := d.configRepo.Create(ctx, &config)
 	if err != nil {
 		return nil, err

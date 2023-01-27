@@ -40,14 +40,20 @@ type EdgeRegion struct {
 }
 
 func (er *EdgeRegion) UnmarshalGQL(v interface{}) error {
-	if err := json.Unmarshal([]byte(v.(string)), er); err != nil {
-		return err
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, er); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), er); err != nil {
+			return err
+		}
 	}
-
-	// if err := validator.Validate(*c); err != nil {
-	//  return err
-	// }
-
 	return nil
 }
 
