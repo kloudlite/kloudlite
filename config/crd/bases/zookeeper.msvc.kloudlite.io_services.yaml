@@ -306,10 +306,6 @@ spec:
                       type: string
                     state:
                       type: string
-                  required:
-                  - message
-                  - reason
-                  - state
                   type: object
                 type: array
               opsConditions:

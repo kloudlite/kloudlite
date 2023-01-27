@@ -13,7 +13,7 @@ import (
 
 type RawJson struct {
 	items           map[string]any
-	json.RawMessage `json:",inline"`
+	json.RawMessage `json:",omitempty,inline"`
 }
 
 func (k *RawJson) DeepCopyInto(out *RawJson) {

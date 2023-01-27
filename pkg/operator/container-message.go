@@ -5,11 +5,11 @@ import (
 )
 
 type ContainerMessage struct {
-	State     string `json:"state"`
+	State     string `json:"state,omitempty"`
 	Pod       string `json:"pod,omitempty"`
 	Container string `json:"container,omitempty"`
-	Reason    string `json:"reason"`
-	Message   string `json:"message"`
+	Reason    string `json:"reason,omitempty"`
+	Message   string `json:"message,omitempty"`
 	ExitCode  int32  `json:"exitCode,omitempty"`
 }
 

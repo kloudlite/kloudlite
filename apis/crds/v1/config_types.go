@@ -11,17 +11,13 @@ import (
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
-type ConfigSpec struct {
-	ProjectName string            `json:"projectName"`
-	Data        map[string]string `json:"data,omitempty"`
-}
-
 // Config is the Schema for the configs API
 type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ConfigSpec `json:"spec,omitempty"`
+	ProjectName string            `json:"projectName,omitempty"`
+	Data        map[string]string `json:"data,omitempty"`
 
 	// +kubebuilder:default=true
 	Enabled   bool        `json:"enabled,omitempty"`
