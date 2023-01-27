@@ -13,27 +13,23 @@ import (
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // +kubebuilder:printcolumn:JSONPath=".type",name=Type,type=string
 
-type SecretSpec struct {
-	ProjectName string `json:"projectName"`
-
-	Type       corev1.SecretType `json:"type,omitempty"`
-	Data       map[string][]byte `json:"data,omitempty"`
-	StringData map[string]string `json:"stringData,omitempty"`
-	Overrides  *JsonPatch        `json:"overrides,omitempty"`
-}
-
 // Secret is the Schema for the secrets API
 type Secret struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec SecretSpec `json:"spec,omitempty"`
-	
+	ProjectName string `json:"projectName,omitempty"`
+
+	Type       corev1.SecretType `json:"type,omitempty"`
+	Data       map[string][]byte `json:"data,omitempty"`
+	StringData map[string]string `json:"stringData,omitempty"`
+	Overrides  *JsonPatch        `json:"overrides,omitempty"`
+
 	// +kubebuilder:default="Opaque"
 	// +kubebuilder:default=true
-	Enabled bool        `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled,omitempty"`
 
-	Status  rApi.Status `json:"status,omitempty"`
+	Status rApi.Status `json:"status,omitempty"`
 }
 
 func (scrt *Secret) GetStatus() *rApi.Status {

@@ -107,8 +107,7 @@ type HPA struct {
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
-	ProjectName string `json:"projectName"`
-	Region      string `json:"region"`
+	Region string `json:"region"`
 
 	Interception *Interception `json:"interception,omitempty"`
 	// +kubebuilder:default=false

@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/operator/pkg/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,10 +30,6 @@ type Project struct {
 
 	Spec   ProjectSpec `json:"spec,omitempty"`
 	Status rApi.Status `json:"status,omitempty"`
-}
-
-func (p *Project) LogRef() string {
-	return fmt.Sprintf("%s/%s/%s", p.Namespace, p.Kind, p.Name)
 }
 
 func (p *Project) GetStatus() *rApi.Status {

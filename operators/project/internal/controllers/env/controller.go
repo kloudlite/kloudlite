@@ -15,10 +15,12 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -36,7 +38,6 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	yamlClient *kubectl.YAMLClient
-	IsDev      bool
 	recorder   record.EventRecorder
 }
 
@@ -45,13 +46,14 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	NamespaceReady       string = "namespace-ready"
 	AppsCreated          string = "apps-created"
 	CfgNSecretsCreated   string = "config-n-secrets-created"
 	MsvcCreated          string = "msvc-created"
 	MresCreated          string = "mres-created"
 	NamespacedRBACsReady string = "namespaced-rbac-ready"
 	RoutersCreated       string = "routers-created"
+	NamespaceExists      string = "namespace-exists"
+	OwnedByProject       string = "owned-by-project"
 )
 
 func ensureOwnership(childRes client.Object, ownerRes client.Object) {
@@ -67,10 +69,6 @@ func copyMap(into map[string]string, from map[string]string) {
 
 	for k, v := range from {
 		into[k] = v
-	}
-
-	if _, ok := into[constants.ShouldReconcile]; !ok {
-		into[constants.ShouldReconcile] = "false"
 	}
 }
 
@@ -98,11 +96,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(NamespaceReady, AppsCreated, CfgNSecretsCreated, MsvcCreated, MresCreated, NamespacedRBACsReady); !step.ShouldProceed() {
+	if step := req.EnsureChecks(AppsCreated, CfgNSecretsCreated, MsvcCreated, MresCreated, NamespacedRBACsReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -114,7 +108,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureNamespaces(req); !step.ShouldProceed() {
+	if step := r.ensureOwnershipByProject(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureNamespace(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -129,18 +127,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	if step := r.ensureApps(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
-
-	if step := r.ensureMsvc(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.ensureMres(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.ensureRouters(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	//
+	//if step := r.ensureMsvc(req); !step.ShouldProceed() {
+	//	return step.ReconcilerResponse()
+	//}
+	//
+	//if step := r.ensureMres(req); !step.ShouldProceed() {
+	//	return step.ReconcilerResponse()
+	//}
+	//
+	//if step := r.ensureRouters(req); !step.ShouldProceed() {
+	//	return step.ReconcilerResponse()
+	//}
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
@@ -151,31 +149,58 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Env]) stepResult.Result 
 	return req.Finalize()
 }
 
-func (r *Reconciler) ensureNamespaces(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+func (r *Reconciler) ensureOwnershipByProject(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(NamespaceReady)
-	defer req.LogPostCheck(NamespaceReady)
+	prj, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.ProjectName), &crdsv1.Project{})
+	if err != nil {
+		return req.CheckFailed(OwnedByProject, check, err.Error()).Err(nil)
+	}
 
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Name}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
-		if !fn.IsOwner(ns, fn.AsOwner(obj)) {
-			ns.SetOwnerReferences(append(ns.GetOwnerReferences(), fn.AsOwner(obj)))
+	if !fn.IsOwner(obj, fn.AsOwner(prj)) {
+		obj.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(prj, true)})
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(OwnedByProject, check, err.Error()).Err(nil)
 		}
-		if ns.Labels == nil {
-			ns.Labels = make(map[string]string, 1)
-		}
-		ns.Labels[constants.EnvNameKey] = obj.Name
-		return nil
-	}); err != nil {
-		return req.CheckFailed(NamespaceReady, check, err.Error())
+		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	check.Status = true
-	if check != checks[NamespaceReady] {
-		checks[NamespaceReady] = check
-		return req.UpdateStatus()
+	if check != checks[OwnedByProject] {
+		checks[OwnedByProject] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
+
+}
+
+func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(NamespaceExists)
+	defer req.LogPostCheck(NamespaceExists)
+
+	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Name), &corev1.Namespace{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
+		}
+		req.CheckFailed(NamespaceExists, check, fmt.Sprintf("namespace %s not found", obj.Name)).Err(nil)
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
+		ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		return nil
+	}); err != nil {
+		return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[NamespaceExists] {
+		checks[NamespaceExists] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -265,7 +290,7 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 	check.Status = true
 	if check != checks[CfgNSecretsCreated] {
 		checks[CfgNSecretsCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -299,7 +324,7 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Env]) stepR
 	check.Status = true
 	if check != checks[NamespacedRBACsReady] {
 		checks[NamespacedRBACsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -349,7 +374,7 @@ func (r *Reconciler) ensureMsvc(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 	check.Status = true
 	if check != checks[MsvcCreated] {
 		checks[MsvcCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -398,7 +423,7 @@ func (r *Reconciler) ensureMres(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 	check.Status = true
 	if check != checks[MresCreated] {
 		checks[MresCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -412,7 +437,7 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 
 	var appsList crdsv1.AppList
 	if err := r.List(ctx, &appsList, &client.ListOptions{
-		Namespace: obj.Spec.BlueprintName,
+		Namespace: obj.Spec.ProjectName,
 	}); err != nil {
 		return req.CheckFailed(AppsCreated, check, err.Error()).Err(nil)
 	}
@@ -422,12 +447,22 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 		lApp := &crdsv1.App{ObjectMeta: metav1.ObjectMeta{Name: app.Name, Namespace: obj.Name}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lApp, func() error {
 			ensureOwnership(lApp, obj)
-			copyMap(lApp.Labels, app.Labels)
+
+			for k, v := range app.Labels {
+				if strings.HasPrefix(k, "kloudlite.io/image-") {
+					continue
+				}
+				fn.MapSet(lApp.Labels, k, v)
+			}
 			copyMap(lApp.Annotations, app.Annotations)
 			fn.MapSet(lApp.Annotations, constants.EnvironmentRef, obj.Annotations[constants.ResourceRef])
 
 			if lApp.Enabled == nil {
 				lApp.Enabled = fn.New(false)
+			}
+
+			if reflect.ValueOf(lApp.Spec) == reflect.Zero(reflect.TypeOf(lApp.Spec)) {
+				lApp.Spec = app.Spec
 			}
 
 			if lApp.Overrides != nil {
@@ -437,7 +472,6 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 				}
 				return json.Unmarshal(patchedBytes, &lApp.Spec)
 			}
-			lApp.Spec = app.Spec
 			return nil
 		}); err != nil {
 			return req.CheckFailed(AppsCreated, check, err.Error()).Err(nil)
@@ -448,7 +482,7 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 	check.Status = true
 	if check != checks[AppsCreated] {
 		checks[AppsCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -495,7 +529,7 @@ func (r *Reconciler) ensureRouters(req *rApi.Request[*crdsv1.Env]) stepResult.Re
 	check.Status = true
 	if check != checks[RoutersCreated] {
 		checks[RoutersCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }

@@ -14,10 +14,11 @@ type EnvSpec struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebulder:subresource:status
+//+kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+// +kubebuilder:printcolumn:JSONPath=".spec.projectName",name=Project,type=string
 
 // Env is the Schema for the envs API
 type Env struct {

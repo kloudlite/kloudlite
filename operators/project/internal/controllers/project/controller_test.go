@@ -1,54 +1,160 @@
 package project
 
 import (
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	v1 "github.com/kloudlite/operator/apis/crds/v1"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	. "github.com/kloudlite/operator/testing"
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func newProject(name, namespace string) v1.Project {
-	return v1.Project{
+func newNamespace() corev1.Namespace {
+	return corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: v1.ProjectSpec{
-			AccountRef:  "kl-core",
-			DisplayName: rand.String(10),
+			Name: "sample-ns-" + rand.String(10),
 		},
 	}
 }
 
-func newProjectCR() crdsv1.Project {
+func newProjectCR(namespace string) crdsv1.Project {
 	return crdsv1.Project{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "sample-" + rand.String(10),
+			Name:      namespace,
+			Namespace: namespace,
 		},
 		Spec: v1.ProjectSpec{
-			AccountRef:  "kl-core",
+			AccountId:   "kl-core",
 			DisplayName: "this is a sample project",
 		},
 	}
 }
 
-var _ = Describe("project controller [CREATE] says,", func() {
-  prj := newProjectCR()
-  
-	It("creates blueprint namespace", func() {
-		Fail("empty test")
+var _ = Describe("project controller [CREATE] says", Ordered, func() {
+	ns := newNamespace()
+	prj := newProjectCR(ns.Name)
+
+	BeforeAll(func() {
+		CreateResource(&ns)
+		CreateResource(&prj)
+
+		DeferCleanup(func() {
+			DeleteResource(&prj)
+			DeleteResource(&ns)
+		})
+	})
+
+	It("has finalizers added to project resource", func() {
+		Promise(func(g Gomega) {
+			Reconcile(reconciler, client.ObjectKeyFromObject(&prj))
+			var obj crdsv1.Project
+			err := Suite.K8sClient.Get(Suite.Context, client.ObjectKeyFromObject(&prj), &obj)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(len(obj.Finalizers)).To(BeNumerically(">=", 1))
+		})
+	})
+
+	It("default environment is created", func() {
+		Promise(func(g Gomega) {
+			Reconcile(reconciler, client.ObjectKeyFromObject(&prj))
+			var env crdsv1.Env
+			envName := prj.Name + "-default"
+			err := Suite.K8sClient.Get(Suite.Context, fn.NN(envName, envName), &env)
+			g.Expect(err).NotTo(HaveOccurred())
+		})
 	})
 
 	It("creates a service account", func() {
-		Fail("empty test")
+		Promise(func(g Gomega) {
+			Reconcile(reconciler, client.ObjectKeyFromObject(&prj))
+
+			var svcAccount corev1.ServiceAccount
+			err := Suite.K8sClient.Get(Suite.Context, fn.NN(prj.Namespace, reconciler.Env.SvcAccountName), &svcAccount)
+			g.Expect(err).NotTo(HaveOccurred())
+		})
 	})
 
 	It("create harbor project and user account", func() {
-		Fail("empty test")
+		Promise(func(g Gomega) {
+			Reconcile(reconciler, client.ObjectKeyFromObject(&prj))
+			var harborProject artifactsv1.HarborProject
+			err := Suite.K8sClient.Get(Suite.Context, fn.NN("", prj.Spec.AccountId), &harborProject)
+			g.Expect(err).NotTo(HaveOccurred())
+
+			var userAcc artifactsv1.HarborUserAccount
+			err = Suite.K8sClient.Get(Suite.Context, fn.NN(prj.Namespace, reconciler.Env.DockerSecretName), &userAcc)
+			g.Expect(err).NotTo(HaveOccurred())
+		})
 	})
 
-	It("project is marked as Ready, if everything succeeds", func() {
-		Fail("empty test")
+	//It("project is marked as Ready, if everything succeeds", func() {
+	//	Promise(func(g Gomega) {
+	//		var obj crdsv1.Project
+	//		err := Suite.K8sClient.Get(Suite.Context, client.ObjectKeyFromObject(&prj), &obj)
+	//		g.Expect(err).NotTo(HaveOccurred())
+	//		g.Expect(obj.Status.IsReady).To(BeTrue())
+	//	})
+	//})
+})
+
+var _ = Describe("project controller [DELETE] says", Ordered, func() {
+	ns := newNamespace()
+	prj := newProjectCR(ns.Name)
+
+	controllerutil.AddFinalizer(&prj, "ginkgo-test")
+
+	BeforeAll(func() {
+		CreateResource(&ns)
+		CreateResource(&prj)
+
+		err := Suite.K8sClient.Delete(Suite.Context, &prj)
+		Expect(err).NotTo(HaveOccurred())
+
+		Promise(func(g Gomega) {
+			Reconcile(reconciler, client.ObjectKeyFromObject(&prj))
+			var obj crdsv1.Project
+			err := Suite.K8sClient.Get(Suite.Context, client.ObjectKeyFromObject(&prj), &obj)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(obj.GetDeletionTimestamp()).NotTo(BeNil())
+		})
+	})
+
+	It("original finalizers gets removed once resource is marked for deletion", func() {
+		Promise(func(g Gomega) {
+			Reconcile(reconciler, client.ObjectKeyFromObject(&prj))
+			var obj crdsv1.Project
+			err := Suite.K8sClient.Get(Suite.Context, client.ObjectKeyFromObject(&prj), &obj)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(obj.Finalizers).To(ContainElement("ginkgo-test"))
+			g.Expect(len(obj.Finalizers)).To(Equal(1))
+		})
+	})
+
+	It("all the environments related to this project get deleted", func() {
+		Fail("all the environments should be fully deleted")
+	})
+
+	It("removing the custom finalizers, deletes the project resource completely", func() {
+		var obj crdsv1.Project
+		err := Suite.K8sClient.Get(Suite.Context, client.ObjectKeyFromObject(&prj), &obj)
+		Expect(err).NotTo(HaveOccurred())
+
+		Promise(func(g Gomega) {
+			Reconcile(reconciler, client.ObjectKeyFromObject(&prj))
+			controllerutil.RemoveFinalizer(&obj, "ginkgo-test")
+			err = Suite.K8sClient.Update(Suite.Context, &obj)
+			g.Expect(err).NotTo(HaveOccurred())
+
+			err = Suite.K8sClient.Get(Suite.Context, client.ObjectKeyFromObject(&prj), &obj)
+			g.Expect(len(obj.Finalizers)).To(Equal(0))
+			g.Expect(apiErrors.IsNotFound(err)).To(BeTrue())
+		})
 	})
 })

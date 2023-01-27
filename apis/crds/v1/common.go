@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	fn "github.com/kloudlite/operator/pkg/functions"
 	corev1 "k8s.io/api/core/v1"
@@ -177,4 +179,13 @@ func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMou
 	}
 
 	return volumes, volumeMounts
+}
+
+func IsBlueprintNamespace(ctx context.Context, k8sClient client.Client, ns string) bool {
+	var prj Project
+	err := k8sClient.Get(ctx, fn.NN("", ns), &prj)
+	if err != nil {
+		return false
+	}
+	return true
 }

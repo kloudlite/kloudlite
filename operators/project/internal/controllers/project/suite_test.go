@@ -1,6 +1,7 @@
 package project
 
 import (
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	"testing"
 	"time"
 
@@ -21,9 +22,10 @@ func TestAPIs(t *testing.T) {
 var reconciler *Reconciler
 
 var _ = BeforeSuite(func() {
-	SetupKubernetes(AddToSchemes(crdsv1.AddToScheme), DefaultEnvTest)
+	//SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), DefaultEnvTest)
+	SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), LocalProxyEnvTest)
 	reconciler = &Reconciler{
-		Client:     nil,
+		Client:     Suite.K8sClient,
 		Scheme:     Suite.Scheme,
 		logger:     logging.NewOrDie(&logging.Options{Name: "project", Dev: true}),
 		Name:       "project",

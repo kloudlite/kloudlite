@@ -30,8 +30,10 @@ func newConfigCR() crdsv1.Config {
 				"kloudlite.io/label1": "value1",
 			},
 		},
-		Data: map[string]string{
-			"k1": "v1",
+		Spec: crdsv1.ConfigSpec{
+			Data: map[string]string{
+				"k1": "v1",
+			},
 		},
 		//Enabled:    false,
 		//Overrides:  nil,
