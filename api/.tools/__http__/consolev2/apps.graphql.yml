@@ -76,4 +76,25 @@ query: |+
 variables:
   namespace: sample
   name: sample-app
+
+---
+
+label: Get Apps
+query: |+
+  query Core_Apps($namespace: String!) {
+    core_apps(namespace: $namespace)
+  }
+variables:
+  namespace: sample
+
+---
+
+label: Get App
+query: |+
+  query Core_App($namespace: String!, $name: String!) {
+    core_app(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: sample
+  name: sample-app
 ---
