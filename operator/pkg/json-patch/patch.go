@@ -3,15 +3,16 @@ package json_patch
 import (
 	"encoding/json"
 	jsonpatch "github.com/evanphx/json-patch/v5"
-	rawJson "github.com/kloudlite/operator/pkg/raw-json"
 )
 
 // +kubebuilder:object:generate=true
 
 type PatchOperation struct {
-	Op    string          `json:"op"`
-	Path  string          `json:"path"`
-	Value rawJson.RawJson `json:"value,omitempty"`
+	Op   string `json:"op"`
+	Path string `json:"path"`
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Value json.RawMessage `json:"value,omitempty"`
 }
 
 func ApplyPatch(jsonDoc any, patch []PatchOperation) ([]byte, error) {

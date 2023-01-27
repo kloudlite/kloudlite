@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"strings"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -78,7 +77,7 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	if strings.HasSuffix(request.Namespace, "-blueprint") {
+	if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
 		return ctrl.Result{}, nil
 	}
 

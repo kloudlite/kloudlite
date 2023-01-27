@@ -22,6 +22,9 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .spec.projectName
+      name: Project
+      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -235,10 +238,6 @@ spec:
                       type: string
                     state:
                       type: string
-                  required:
-                  - message
-                  - reason
-                  - state
                   type: object
                 type: array
               opsConditions:
@@ -313,7 +312,8 @@ spec:
         type: object
     served: true
     storage: true
-    subresources: {}
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

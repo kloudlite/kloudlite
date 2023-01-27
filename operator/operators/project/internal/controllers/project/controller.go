@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	"github.com/kloudlite/operator/pkg/templates"
@@ -44,15 +45,8 @@ const (
 	DefaultEnvCreated     string = "default-env-created"
 	HarborAccessAvailable string = "harbor-creds-available"
 	NamespacedRBACsReady  string = "namespaced-rbacs-ready"
+	NamespaceExists       string = "namespace-exists"
 )
-
-func getBlueprintName(projName string) string {
-	return projName + "-blueprint"
-}
-
-func getDefaultEnvName(projName string) string {
-	return projName + "-default"
-}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/status,verbs=get;update;patch
@@ -83,11 +77,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureFinalizers(constants.CommonFinalizer, constants.ForegroundFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureBlueprint(req); !step.ShouldProceed() {
+	if step := r.ensureNamespace(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -112,36 +110,32 @@ func (r *Reconciler) finalize(req *rApi.Request[*v1.Project]) stepResult.Result 
 	return req.Finalize()
 }
 
-func (r *Reconciler) ensureBlueprint(req *rApi.Request[*v1.Project]) stepResult.Result {
+func (r *Reconciler) ensureNamespace(req *rApi.Request[*v1.Project]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(BlueprintCreated)
-	defer req.LogPostCheck(BlueprintCreated)
+	req.LogPreCheck(NamespaceExists)
+	defer req.LogPostCheck(NamespaceExists)
 
-	blueprintNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-blueprint", obj.Name)}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, blueprintNs, func() error {
-		if !fn.IsOwner(blueprintNs, fn.AsOwner(obj)) {
-			blueprintNs.SetOwnerReferences(append(blueprintNs.GetOwnerReferences(), fn.AsOwner(obj, true)))
+	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Name), &corev1.Namespace{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
 		}
+		req.CheckFailed(NamespaceExists, check, fmt.Sprintf("namespace %s not found", obj.Name)).Err(nil)
+	}
 
-		if blueprintNs.ObjectMeta.Labels == nil {
-			blueprintNs.ObjectMeta.Labels = make(map[string]string, 4)
-		}
-
-		blueprintNs.ObjectMeta.Labels[constants.ProjectNameKey] = obj.Name
-		blueprintNs.ObjectMeta.Labels[constants.AccountRef] = obj.Spec.AccountRef
-		blueprintNs.ObjectMeta.Labels[constants.IsBluePrintKey] = "true"
-		blueprintNs.ObjectMeta.Labels[constants.MarkedAsBlueprint] = "true"
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
+		ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		return nil
 	}); err != nil {
-		return req.CheckFailed(BlueprintCreated, check, err.Error()).Err(nil)
+		return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
-	if check != checks[BlueprintCreated] {
-		checks[BlueprintCreated] = check
-		return req.UpdateStatus()
+	if check != checks[NamespaceExists] {
+		checks[NamespaceExists] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -155,7 +149,7 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepR
 
 	b, err := templates.Parse(
 		templates.ProjectRBAC, map[string]any{
-			"namespace":          getBlueprintName(obj.Name),
+			"namespace":          obj.Name,
 			"role-name":          r.Env.AdminRoleName,
 			"role-binding-name":  r.Env.AdminRoleName + "-rb",
 			"svc-account-name":   r.Env.SvcAccountName,
@@ -174,7 +168,7 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepR
 	check.Status = true
 	if check != checks[NamespacedRBACsReady] {
 		checks[NamespacedRBACsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -189,14 +183,20 @@ func (r *Reconciler) ensureDefaultEnv(req *rApi.Request[*v1.Project]) stepResult
 
 	defaultEnv := &v1.Env{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-default", obj.Name)}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, defaultEnv, func() error {
-		if !fn.IsOwner(defaultEnv, fn.AsOwner(obj)) {
-			defaultEnv.SetOwnerReferences(append(defaultEnv.GetOwnerReferences(), fn.AsOwner(obj, true)))
-		}
+		defaultEnv.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		defaultEnv.Spec = v1.EnvSpec{
 			ProjectName:   obj.Name,
-			BlueprintName: obj.Name + "-blueprint",
-			AccountId:     obj.Spec.AccountRef,
+			BlueprintName: obj.Name,
+			AccountId:     obj.Spec.AccountId,
 		}
+		return nil
+	}); err != nil {
+		return req.CheckFailed(DefaultEnvCreated, check, err.Error())
+	}
+
+	// default env namespace
+	defaultEnvNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: defaultEnv.Name}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, defaultEnvNs, func() error {
 		return nil
 	}); err != nil {
 		return req.CheckFailed(DefaultEnvCreated, check, err.Error())
@@ -205,7 +205,7 @@ func (r *Reconciler) ensureDefaultEnv(req *rApi.Request[*v1.Project]) stepResult
 	check.Status = true
 	if check != checks[DefaultEnvCreated] {
 		checks[DefaultEnvCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -217,18 +217,18 @@ func (r *Reconciler) reconHarborAccess(req *rApi.Request[*v1.Project]) stepResul
 	req.LogPreCheck(HarborAccessAvailable)
 	defer req.LogPostCheck(HarborAccessAvailable)
 
-	harborProject := &artifactsv1.HarborProject{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.AccountRef}}
+	harborProject := &artifactsv1.HarborProject{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.AccountId}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborProject, func() error {
 		if harborProject.Labels == nil {
 			harborProject.Labels = make(map[string]string, 1)
 		}
-		harborProject.Labels[constants.AccountRef] = obj.Spec.AccountRef
+		harborProject.Labels[constants.AccountRef] = obj.Spec.AccountId
 		return nil
 	}); err != nil {
 		return req.CheckFailed(HarborAccessAvailable, check, err.Error())
 	}
 
-	harborUserAcc := &artifactsv1.HarborUserAccount{ObjectMeta: metav1.ObjectMeta{Name: r.Env.DockerSecretName, Namespace: getBlueprintName(obj.Name)}}
+	harborUserAcc := &artifactsv1.HarborUserAccount{ObjectMeta: metav1.ObjectMeta{Name: r.Env.DockerSecretName, Namespace: obj.Name}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborUserAcc, func() error {
 		if !fn.IsOwner(harborUserAcc, fn.AsOwner(obj)) {
 			harborUserAcc.SetOwnerReferences(append(harborUserAcc.OwnerReferences, fn.AsOwner(obj, true)))
@@ -258,7 +258,7 @@ func (r *Reconciler) reconHarborAccess(req *rApi.Request[*v1.Project]) stepResul
 	check.Status = true
 	if check != checks[HarborAccessAvailable] {
 		checks[HarborAccessAvailable] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()

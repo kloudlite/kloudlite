@@ -62,10 +62,6 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	if strings.HasSuffix(request.Namespace, "-blueprint") {
-		return ctrl.Result{}, nil
-	}
-
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.App{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -75,6 +71,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+		return ctrl.Result{}, nil
+	}
+
+	if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
 		return ctrl.Result{}, nil
 	}
 
@@ -110,7 +110,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconlabellingImages(req); !step.ShouldProceed() {
+	if step := r.reconLabellingImages(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -138,7 +138,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 	return req.Finalize()
 }
 
-func (r *Reconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -165,8 +165,7 @@ func (r *Reconciler) reconlabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(ImagesLabelled, check, err.Error())
 		}
-		checks[ImagesLabelled] = check
-		return req.UpdateStatus()
+		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	check.Status = true
@@ -218,7 +217,7 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	check.Status = true
 	if check != checks[DeploymentSvcAndHpaCreated] {
 		checks[DeploymentSvcAndHpaCreated] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
