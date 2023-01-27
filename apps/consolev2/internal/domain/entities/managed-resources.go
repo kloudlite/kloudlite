@@ -1,6 +1,9 @@
 package entities
 
 import (
+	"encoding/json"
+	"io"
+
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"kloudlite.io/pkg/repos"
 )
@@ -27,6 +30,26 @@ type ManagedResource struct {
 	//Values           map[string]string     `json:"values" bson:"values"`
 	//Status           ManagedResourceStatus `json:"status" bson:"status"`
 	//Conditions       []metav1.Condition    `json:"conditions" bson:"conditions"`
+}
+
+func (mres *ManagedResource) UnmarshalGQL(v interface{}) error {
+  if err := json.Unmarshal([]byte(v.(string)), mres); err != nil {
+    return err
+  }
+
+  // if err := validator.Validate(*mres); err != nil {
+  //  return err
+  // }
+
+  return nil
+}
+
+func (mres ManagedResource) MarshalGQL(w io.Writer) {
+  b, err := json.Marshal(mres)
+  if err != nil {
+    w.Write([]byte("{}"))
+  }
+  w.Write(b)
 }
 
 var ManagedResourceIndexes = []repos.IndexField{

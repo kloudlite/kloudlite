@@ -58,7 +58,7 @@ func fxDomain(
 	instanceRepo repos.DbRepo[*entities.ResInstance],
 	environmentRepo repos.DbRepo[*entities.Environment],
 	msgP redpanda.Producer,
-// env *Env,
+	// env *Env,
 	logger logging.Logger,
 	ciClient ci.CIClient,
 	iamClient iam.IAMClient,
