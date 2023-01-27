@@ -33,23 +33,29 @@ type ManagedResource struct {
 }
 
 func (mres *ManagedResource) UnmarshalGQL(v interface{}) error {
-  if err := json.Unmarshal([]byte(v.(string)), mres); err != nil {
-    return err
-  }
-
-  // if err := validator.Validate(*mres); err != nil {
-  //  return err
-  // }
-
-  return nil
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, mres); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), mres); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (mres ManagedResource) MarshalGQL(w io.Writer) {
-  b, err := json.Marshal(mres)
-  if err != nil {
-    w.Write([]byte("{}"))
-  }
-  w.Write(b)
+	b, err := json.Marshal(mres)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
 }
 
 var ManagedResourceIndexes = []repos.IndexField{

@@ -5,7 +5,6 @@ import (
 	"io"
 
 	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
-	"gopkg.in/validator.v2"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -26,20 +25,27 @@ type CloudProvider struct {
 	SyncStatus CloudProviderStatus `json:"sync_status" bson:"sync_status,omitempty" validate:"nonzero"`
 }
 
-func (c *CloudProvider) UnmarshalGQL(v interface{}) error {
-	if err := json.Unmarshal([]byte(v.(string)), c); err != nil {
-		return err
-	}
-
-	if err := validator.Validate(*c); err != nil {
-		return err
+func (cp *CloudProvider) UnmarshalGQL(v interface{}) error {
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, cp); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), cp); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (c CloudProvider) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(c)
+func (cp CloudProvider) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(cp)
 	if err != nil {
 		w.Write([]byte("{}"))
 	}
