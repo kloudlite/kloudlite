@@ -31,13 +31,12 @@ type Router struct {
 }
 
 func (r *Router) UnmarshalGQL(v interface{}) error {
+	if r == nil {
+		return nil
+	}
 	if err := json.Unmarshal([]byte(v.(string)), r); err != nil {
 		return err
 	}
-
-	// if err := validator.Validate(*c); err != nil {
-	//  return err
-	// }
 
 	return nil
 }

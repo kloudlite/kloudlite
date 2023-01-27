@@ -32,23 +32,29 @@ type ManagedService struct {
 }
 
 func (obj *ManagedService) UnmarshalGQL(v interface{}) error {
-  if err := json.Unmarshal([]byte(v.(string)), obj); err != nil {
-    return err
-  }
-
-  // if err := validator.Validate(*objobj); err != nil {
-  //  return err
-  // }
-
-  return nil
+	switch res := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, obj); err != nil {
+			return err
+		}
+	case string:
+		if err := json.Unmarshal([]byte(v.(string)), obj); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (obj ManagedService) MarshalGQL(w io.Writer) {
-  b, err := json.Marshal(obj)
-  if err != nil {
-    w.Write([]byte("{}"))
-  }
-  w.Write(b)
+	b, err := json.Marshal(obj)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
 }
 
 var ManagedServiceIndexes = []repos.IndexField{
