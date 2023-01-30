@@ -312,7 +312,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		ImageWebhooksApi:   fmt.Sprintf("%s/kloudlite/production/webhooks:v1.0.4", ImageRegistryHost),
 
 		// Workers
-		ImageKlAgent:            fmt.Sprintf("%s/kloudlite/production/kl-agent:v1.0.4", ImageRegistryHost),
+		ImageKlAgent:            fmt.Sprintf("%s/kloudlite/development/kl-agent:v1.0.5", ImageRegistryHost),
 		ImageAuditLoggingWorker: fmt.Sprintf("%s/kloudlite/development/worker-audit-logging:v1.0.5", ImageRegistryHost),
 
 		// Images Web

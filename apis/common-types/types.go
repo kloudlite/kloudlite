@@ -1,13 +1,9 @@
 package common_types
 
 import (
-	"context"
 	"fmt"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/errors"
-	fn "github.com/kloudlite/operator/pkg/functions"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Storage struct {

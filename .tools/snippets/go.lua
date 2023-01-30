@@ -80,24 +80,4 @@ local import_test_suite = s(
 )
 table.insert(snippets, import_ginkgo)
 
-local func = s(
-  "func",
-  fmta(
-    [[
-  func <name>() {
-    <body>
-  }
-  ]] ,
-    {
-      name = c(1, {
-        t(""),
-        t("name"),
-      }),
-      body = i(2, "//body"),
-    }
-  )
-)
-
-table.insert(snippets, func)
-
 return snippets, autosnippets

@@ -4,6 +4,7 @@
 {{- $svcAccount := get . "svc-account" -}}
 {{- $clusterId := get . "cluster-id" -}}
 {{- $kafkaSecretName := get . "kafka-secret-name" -}}
+{{- $replicasCount := get . "replicas-count" | default 1 -}}
 
 {{- $ownerRefs := get . "owner-refs" | default list -}}
 {{- $accountRef := get . "account-ref" | default "kl-core" -}}
@@ -21,7 +22,7 @@ metadata:
   labels:
     app: {{$name}}
 spec:
-  replicas: 2
+  replicas: {{$replicasCount}}
   selector:
     matchLabels:
       app: {{$name}}
