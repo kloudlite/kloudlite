@@ -84,7 +84,6 @@ func (d *domainI) checkAccountAccess(ctx context.Context, accountId repos.ID, ac
 	// }
 
 	return nil
-
 }
 
 func (d *domainI) GetOutstandingAmount(ctx context.Context, accountId repos.ID) (float64, error) {

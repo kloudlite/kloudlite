@@ -1,0 +1,100 @@
+---
+global:
+  # accountId: acc-k-9egfp-0nvz1wmpc6ylj9pxibqzt
+  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+
+---
+
+label: Create App
+query: |+
+  mutation Core_createApp($app: App!) {
+    core_createApp(app: $app)
+  }
+
+variables:
+  app:
+    apiVersion: crds.kloudlite.io/v1
+    kind: App
+    metadata:
+      name: sample-app
+      namespace: sample
+    spec:
+      region: master
+      containers:
+        - name: main
+          image: nginx
+
+---
+
+label: Update App
+query: |+
+  mutation Core_updateApp($app: App!) {
+    core_updateApp(app: $app)
+  }
+
+variables:
+  app:
+    apiVersion: crds.kloudlite.io/v1
+    kind: App
+    metadata:
+      name: sample-app
+      namespace: sample
+    spec:
+      region: master
+      containers:
+        - name: main
+          image: kong/httpbin
+
+---
+
+label: Updating App running in an environment
+query: |+
+  mutation Core_updateApp($app: App!) {
+    core_updateApp(app: $app)
+  }
+
+variables:
+  app:
+    apiVersion: crds.kloudlite.io/v1
+    kind: App
+    metadata:
+      name: sample-app
+      namespace: sample-default
+    spec:
+      region: master
+      containers:
+        - name: main
+          image: kong/httpbin
+
+---
+
+label: Delete App
+query: |+
+  mutation Core_deleteApp($namespace: String!, $name: String!) {
+    core_deleteApp(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: sample
+  name: sample-app
+
+---
+
+label: Get Apps
+query: |+
+  query Core_Apps($namespace: String!) {
+    core_apps(namespace: $namespace)
+  }
+variables:
+  namespace: sample
+
+---
+
+label: Get App
+query: |+
+  query Core_App($namespace: String!, $name: String!) {
+    core_app(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: sample
+  name: sample-app
+---

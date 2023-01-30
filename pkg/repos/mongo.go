@@ -11,6 +11,14 @@ import (
 
 func NewMongoDatabase(url string, dbName string) (db *mongo.Database, e error) {
 	defer errors.HandleErr(&e)
+
+	//structcodec, _ := bsoncodec.NewStructCodec(bsoncodec.JSONFallbackStructTagParser)
+	//rb := bson.NewRegistryBuilder()
+	//// register struct codec
+	//rb.RegisterDefaultEncoder(reflect.Struct, structcodec)
+	//
+	//client, e := mongo.NewClient(options.Client().SetRegistry(rb.Build()).ApplyURI(url))
+
 	client, e := mongo.NewClient(options.Client().ApplyURI(url))
 	errors.AssertNoError(e, fmt.Errorf("could not create mongo client"))
 	return client.Database(dbName), nil

@@ -39,4 +39,44 @@ local beacon_trig = s(
 
 table.insert(snippets, beacon_trig)
 
+local imp_crdsv1 = s("imp_crdsv1", t('crdsv1 "github.com/kloudlite/operator/apis/crds/v1"'))
+table.insert(snippets, imp_crdsv1)
+
+local gql_marshaler = s(
+  "gql_marshaler",
+  fmta(
+    [[
+func (<> *<>) UnmarshalGQL(v interface{}) error {
+	if err := json.Unmarshal([]byte(v.(string)), <>); err != nil {
+		return err
+	}
+
+	// if err := validator.Validate(*<>); err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+func (<> <>) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(<>)
+	if err != nil {
+		w.Write([]byte("{}"))
+	}
+	w.Write(b)
+}
+]]   ,
+    {
+      i(1, "obj"),
+      i(2, "//type"),
+      rep(1),
+      rep(1),
+      rep(1),
+      rep(2),
+      rep(1),
+    }
+  )
+)
+table.insert(snippets, gql_marshaler)
+
 return snippets, autosnippets
