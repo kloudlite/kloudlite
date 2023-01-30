@@ -23,10 +23,14 @@ func (r *Reconciler) installKloudliteAgent(req *rApi.Request[*v1.PrimaryCluster]
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(KloudliteAgentReady)
+	defer req.LogPostCheck(KloudliteAgentReady)
+
 	b, err := templates.Parse(templates.KloudliteAgent, map[string]any{
 		"name":              obj.Spec.SharedConstants.AppKlAgent,
 		"namespace":         lc.NsCore,
 		"image":             obj.Spec.SharedConstants.ImageKlAgent,
+		"replicas-count":    1,
 		"svc-account":       lc.ClusterSvcAccount,
 		"cluster-id":        obj.Spec.SecondaryClusterId,
 		"kafka-secret-name": obj.Spec.SharedConstants.RedpandaAdminSecretName,
