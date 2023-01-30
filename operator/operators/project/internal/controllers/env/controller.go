@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -461,10 +460,11 @@ func (r *Reconciler) ensureApps(req *rApi.Request[*crdsv1.Env]) stepResult.Resul
 				lApp.Enabled = fn.New(false)
 			}
 
-			if reflect.ValueOf(lApp.Spec) == reflect.Zero(reflect.TypeOf(lApp.Spec)) {
-				lApp.Spec = app.Spec
-			}
+			//if lApp.Generation == 0 { // ie. app is being created now
+			//	lApp.Spec = app.Spec
+			//}
 
+			lApp.Spec = app.Spec
 			if lApp.Overrides != nil {
 				patchedBytes, err := jsonPatch.ApplyPatch(app.Spec, lApp.Overrides.Patches)
 				if err != nil {
