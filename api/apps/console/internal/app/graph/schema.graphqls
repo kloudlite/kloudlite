@@ -66,10 +66,12 @@ type ResInstance{
   app: App
   router: Router
   mResource: ManagedRes
+  mResources: [ResInstance!]
   mService: ManagedSvc
   config: Config
   secret: Secret
   resourceType: String!
+  isSelf: Boolean!
 }
 
 
@@ -238,6 +240,7 @@ type Mutation {
   core_createEnvironment(environment: EnvironmentIn): Environment!
   core_updateResInstance(resource: ResourceIn!, overrides: String): Boolean!
   core_createInstance(instance: InstanceIn!): ResInstance
+  core_deleteResInstanceById(instanceId: ID!): Boolean!
 }
 
 input InstanceIn{

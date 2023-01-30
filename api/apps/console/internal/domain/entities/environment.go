@@ -18,7 +18,7 @@ type Environment struct {
 	// ParentEnvironmentId *repos.ID `bson:"parent_environment_id,omitempty" json:"parent_environment_id,omitempty"`
 }
 
-var EnvironmentIndexs = []repos.IndexField{
+var EnvironmentIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "readable_id", Value: repos.IndexAsc},
