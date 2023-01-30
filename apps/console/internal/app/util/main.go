@@ -7,7 +7,6 @@ import (
 )
 
 func ReturnApp(app *entities.App) *model.App {
-
 	services := make([]*model.ExposedService, 0)
 	for _, s := range app.ExposedPorts {
 		services = append(

@@ -26,6 +26,9 @@ query: |+
         project {
           id
           name
+          account {
+            id
+          }
         }
       }
     }

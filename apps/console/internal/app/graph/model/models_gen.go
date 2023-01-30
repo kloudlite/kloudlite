@@ -414,19 +414,21 @@ type ProjectMembership struct {
 }
 
 type ResInstance struct {
-	ID            repos.ID    `json:"id"`
-	Enabled       bool        `json:"enabled"`
-	ResourceID    repos.ID    `json:"resourceId"`
-	EnvironmentID repos.ID    `json:"environmentId"`
-	BlueprintID   repos.ID    `json:"blueprintId"`
-	Overrides     *string     `json:"overrides"`
-	App           *App        `json:"app"`
-	Router        *Router     `json:"router"`
-	MResource     *ManagedRes `json:"mResource"`
-	MService      *ManagedSvc `json:"mService"`
-	Config        *Config     `json:"config"`
-	Secret        *Secret     `json:"secret"`
-	ResourceType  string      `json:"resourceType"`
+	ID            repos.ID       `json:"id"`
+	Enabled       bool           `json:"enabled"`
+	ResourceID    repos.ID       `json:"resourceId"`
+	EnvironmentID repos.ID       `json:"environmentId"`
+	BlueprintID   repos.ID       `json:"blueprintId"`
+	Overrides     *string        `json:"overrides"`
+	App           *App           `json:"app"`
+	Router        *Router        `json:"router"`
+	MResource     *ManagedRes    `json:"mResource"`
+	MResources    []*ResInstance `json:"mResources"`
+	MService      *ManagedSvc    `json:"mService"`
+	Config        *Config        `json:"config"`
+	Secret        *Secret        `json:"secret"`
+	ResourceType  string         `json:"resourceType"`
+	IsSelf        bool           `json:"isSelf"`
 }
 
 type ResourceIn struct {
