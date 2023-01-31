@@ -25,10 +25,9 @@ type mresKind struct {
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	ProjectName string `json:"projectName"`
-	MsvcRef     msvcNamedRefTT  `json:"msvcRef"`
-	MresKind    mresKind        `json:"mresKind"`
-	Inputs      rawJson.RawJson `json:"inputs,omitempty"`
+	MsvcRef  msvcNamedRefTT  `json:"msvcRef"`
+	MresKind mresKind        `json:"mresKind"`
+	Inputs   rawJson.RawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
