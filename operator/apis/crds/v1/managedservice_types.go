@@ -19,7 +19,6 @@ type msvcKind struct {
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	ProjectName string `json:"projectName"`
 	Region string `json:"region"`
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
