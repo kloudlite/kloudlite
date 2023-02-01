@@ -29,6 +29,7 @@ type SharedConstants struct {
 	IamDbName     string `json:"iamDbName,omitempty"`
 	CommsDbName   string `json:"commsDbName,omitempty"`
 	EventsDbName  string `json:"eventsDbName,omitempty"`
+	InfraDbName   string `json:"infraDbName,omitempty"`
 
 	// Redis
 	RedisSvcName     string `json:"redisSvcName,omitempty"`
@@ -53,6 +54,7 @@ type SharedConstants struct {
 	AppJsEvalApi     string `json:"appJsEval,omitempty"`
 	AppGqlGatewayApi string `json:"appGqlGatewayApi,omitempty"`
 	AppWebhooksApi   string `json:"appWebhooksApi,omitempty"`
+	AppInfraApi      string `json:"appInfraApi,omitempty"`
 
 	// WORKERS
 	AppKlAgent            string `json:"appKlAgent,omitempty"`
@@ -82,6 +84,7 @@ type SharedConstants struct {
 	ImageAuthWeb       string `json:"imageAuthWeb,omitempty"`
 	ImageAccountsWeb   string `json:"imageAccountsWeb,omitempty"`
 	ImageConsoleWeb    string `json:"imageConsoleWeb,omitempty"`
+	ImageInfraApi      string `json:"imageInfraApi,omitempty"`
 
 	ImageKlAgent            string `json:"imageKlAgent,omitempty"`
 	ImageAuditLoggingWorker string `json:"imageAuditLoggingWorker,omitempty"`
