@@ -307,10 +307,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				return nil
 			}))
 	}
-	builder.WithOptions(controller.Options{
-		MaxConcurrentReconciles: 1,
-		//MaxConcurrentReconciles: 10,
-	})
+	builder.WithOptions(controller.Options{ MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles, })
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

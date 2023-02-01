@@ -507,6 +507,8 @@ spec:
                     type: string
                   appIAMApi:
                     type: string
+                  appInfraApi:
+                    type: string
                   appJsEval:
                     type: string
                   appKlAgent:
@@ -578,11 +580,15 @@ spec:
                     type: string
                   imageIAMApi:
                     type: string
+                  imageInfraApi:
+                    type: string
                   imageKlAgent:
                     type: string
                   imageSocketWeb:
                     type: string
                   imageWebhooksApi:
+                    type: string
+                  infraDbName:
                     type: string
                   kafkaTopicEvents:
                     type: string
