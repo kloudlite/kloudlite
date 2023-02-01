@@ -1,0 +1,48 @@
+---
+global:
+  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+  clusterName: "sample-cluster-1"
+---
+label: Create Edge
+query: |+
+  mutation Infra_createEdge($edge: Edge!) {
+    infra_createEdge(edge: $edge)
+  }
+variables:
+  edge:
+    apiVersion: infra.kloudlite.io/v1
+    kind: Edge
+    metadata:
+      name: e1
+    spec:
+      accountId: "{{.accountId}}"
+      provider: "sample-cp"
+      region: "blr1"
+      credentialsRef:
+        name: secret-n1
+        namespace: secret-ns
+      pools:
+        - name: p1
+          config: '2vcpu-4gb'
+          min: 1
+          max: 2
+---
+
+label: List Edges
+query: |+
+  query Query($providerName: String!) {
+    infra_listEdges(providerName: $providerName)
+  }
+variables:
+  providerName: "sample-cp"
+---
+
+label: Get Edge
+query: |+
+  query Query($name: String!) {
+    infra_getEdge(name: $name)
+  }
+variables:
+  name: e1
+---
+
