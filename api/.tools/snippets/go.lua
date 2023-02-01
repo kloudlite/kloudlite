@@ -46,20 +46,29 @@ local gql_marshaler = s(
   "gql_marshaler",
   fmta(
     [[
-func (<> *<>) UnmarshalGQL(v interface{}) error {
-	if err := json.Unmarshal([]byte(v.(string)), <>); err != nil {
-		return err
-	}
+func (<p1> *<p2>) UnmarshalGQL(v interface{}) error {
+  switch t := v.(type) {
+    case map[string]any:
+      b, err := json.Marshal(t)
+      if err != nil {
+        return err
+      }
 
-	// if err := validator.Validate(*<>); err != nil {
-	// 	return err
-	// }
+      if err := json.Unmarshal(b, <p3>); err != nil {
+        return err
+      }
+
+    case string:
+      if err := json.Unmarshal([]byte(t), <p4>); err != nil {
+        return err
+      }
+  }
 
 	return nil
 }
 
-func (<> <>) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(<>)
+func (<p5> <p6>) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(<p7>)
 	if err != nil {
 		w.Write([]byte("{}"))
 	}
@@ -67,13 +76,13 @@ func (<> <>) MarshalGQL(w io.Writer) {
 }
 ]]   ,
     {
-      i(1, "obj"),
-      i(2, "//type"),
-      rep(1),
-      rep(1),
-      rep(1),
-      rep(2),
-      rep(1),
+      p1 = i(1, "obj"),
+      p2 = i(2, "//type"),
+      p3 = rep(1),
+      p4 = rep(1),
+      p5 = rep(1),
+      p6 = rep(2),
+      p7 = rep(1),
     }
   )
 )
