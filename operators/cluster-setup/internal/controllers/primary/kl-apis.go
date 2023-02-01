@@ -29,6 +29,7 @@ const (
 	WebhookAuthzSecretsReady  string = "webhook-authz-secrets-ready"
 	StripeCredsReady          string = "stripe-creds-ready"
 	AuditLoggingWorkerCreated string = "audit-logging-worker-created"
+	InfraApiCreated           string = "infra-api-created"
 )
 
 type ReconFn func(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result
@@ -393,6 +394,35 @@ func (r *Reconciler) ensureAuditLoggingWorker(req *rApi.Request[*v1.PrimaryClust
 	check.Status = true
 	if check != checks[AuditLoggingWorkerCreated] {
 		checks[AuditLoggingWorkerCreated] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
+}
+
+func (r *Reconciler) ensureInfraApi(req *rApi.Request[*v1.PrimaryCluster]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(InfraApiCreated)
+	defer req.LogPostCheck(InfraApiCreated)
+
+	b, err := templates.Parse(templates.InfraApi, map[string]any{
+		"namespace":        lc.NsCore,
+		"svc-account":      lc.DefaultSvcAccount,
+		"shared-constants": obj.Spec.SharedConstants,
+		"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	})
+	if err != nil {
+		return req.CheckFailed(InfraApiCreated, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(InfraApiCreated, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[InfraApiCreated] {
+		checks[InfraApiCreated] = check
 		req.UpdateStatus()
 	}
 	return req.Next()

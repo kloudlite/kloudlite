@@ -122,7 +122,7 @@ const ImageRegistryHost = "registry.kloudlite.io"
 // +kubebuilder:rbac:groups=cluster-setup.kloudlite.io,resources=primaryclusters/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &v1.PrimaryCluster{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &v1.PrimaryCluster{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -264,6 +264,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		IamDbName:     "iam-db",
 		CommsDbName:   "comms-db",
 		EventsDbName:  "events-db",
+		InfraDbName:   "infra-db",
 
 		// redis
 		RedisSvcName:     "redis-svc",
@@ -286,6 +287,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		AppJsEvalApi:     "js-eval-api",
 		AppGqlGatewayApi: "gateway",
 		AppWebhooksApi:   "webhooks",
+		AppInfraApi:      "infra-api",
 
 		// Worker Apps
 		AppKlAgent:            "kl-agent",
@@ -310,6 +312,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		ImageJsEvalApi:     fmt.Sprintf("%s/kloudlite/production/js-eval:v1.0.4", ImageRegistryHost),
 		ImageGqlGatewayApi: fmt.Sprintf("%s/kloudlite/production/gateway:v1.0.4", ImageRegistryHost),
 		ImageWebhooksApi:   fmt.Sprintf("%s/kloudlite/production/webhooks:v1.0.4", ImageRegistryHost),
+		ImageInfraApi:      fmt.Sprintf("%s/kloudlite/development/infra-api:v1.0.5", ImageRegistryHost),
 
 		// Workers
 		ImageKlAgent:            fmt.Sprintf("%s/kloudlite/development/kl-agent:v1.0.5", ImageRegistryHost),
@@ -1326,6 +1329,7 @@ func (r *Reconciler) ensureKloudliteApis(req *rApi.Request[*v1.PrimaryCluster]) 
 		r.ensureCIApi,
 		r.ensureFinanceApi,
 		r.ensureCommsApi,
+		r.ensureInfraApi,
 		r.ensureDnsApi,
 		r.ensureIAMApi,
 		r.ensureWebhooksApi,
