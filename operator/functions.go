@@ -28,6 +28,12 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 }
 
+type Operator interface {
+	AddToSchemes(fns ...func(s *runtime.Scheme) error)
+	RegisterControllers(controllers ...rApi.Reconciler)
+	Start()
+}
+
 type operator struct {
 	mgrConfig     *rest.Config
 	mgrOptions    ctrl.Options
@@ -39,7 +45,7 @@ type operator struct {
 	k8sYamlClient *kubectl.YAMLClient
 }
 
-func New(name string) *operator {
+func New(name string) Operator {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
