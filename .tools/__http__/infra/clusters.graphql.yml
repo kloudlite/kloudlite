@@ -1,0 +1,45 @@
+---
+global:
+  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+  clusterName: "sample-cluster-1"
+---
+
+label: Create Cluster
+query: |+
+  mutation Infra_createCluster($cluster: Cluster!) {
+    infra_createCluster(cluster: $cluster)
+  }
+variables:
+  cluster:
+    name: "{{.clusterName}}"
+    accountId: "{{.accountId}}"
+---
+
+label: List Clusters
+query: |+
+  query Query($accountId: ID!) {
+    infra_listClusters(accountId: $accountId)
+  }
+variables:
+  accountId: "{{.accountId}}"
+
+---
+label: Get Cluster
+query: |+
+  query Query($name: String!) {
+    infra_getCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+
+---
+label: Delete Cluster
+query: |+
+  mutation Infra_deleteCluster($name: String!) {
+    infra_deleteCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+---
+
+

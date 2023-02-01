@@ -1,0 +1,32 @@
+scalar Json
+scalar CloudProvider
+scalar Edge
+scalar ProviderSecrets
+scalar Cluster
+
+type Query {
+  infra_listClusters(accountId: ID!): [Cluster!]
+  infra_getCluster(name: String!): Cluster
+
+  infra_listCloudProviders(accountId: String!): [CloudProvider!]
+  infra_getCloudProvider(name: String!): CloudProvider
+
+  infra_listEdges(providerName: String!): [Edge!]
+  infra_getEdge(name: String!): Edge
+}
+
+type Mutation {
+  infra_createCluster(cluster: Cluster!): Cluster
+  infra_updateCluster(cluster: Cluster!): Cluster
+  infra_deleteCluster(name: String!): Boolean!
+
+  # cloud provider
+  infra_createCloudProvider(cloudProvider: CloudProvider!, creds: ProviderSecrets!): CloudProvider
+  infra_updateCloudProvider(cloudProvider: CloudProvider!, creds: ProviderSecrets): CloudProvider
+  infra_deleteCloudProvider(name: String!): Boolean!
+
+  # Edge Regions
+  infra_createEdge(edge: Edge!): Edge
+  infra_updateEdge(edge: Edge!): Edge
+  infra_deleteEdge(name: String!): Boolean!
+}

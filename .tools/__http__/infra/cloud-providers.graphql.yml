@@ -1,0 +1,42 @@
+---
+global:
+  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+---
+label: Create Cloud Provider
+query: |+
+  mutation Infra_createCloudProvider($cloudProvider: CloudProvider!, $creds: ProviderSecrets!) {
+    infra_createCloudProvider(cloudProvider: $cloudProvider, creds: $creds)
+  }
+variables:
+  creds:
+    accessKey: "key1"
+    accessSecret: secret1
+  cloudProvider:
+    apiVersion: infra.kloudlite.io/v1
+    kind: CloudProvider
+    metadata:
+      name: sample-cp
+    spec:
+      accountId: "{{.accountId}}"
+      providerSecretRef:
+        name: sample-cp
+        namespace: kl-core
+---
+
+label: List Providers
+query: |+
+  query Query($accountId: String!) {
+    infra_listCloudProviders(accountId: $accountId)
+  }
+variables:
+  accountId: "{{.accountId}}"
+---
+
+label: Get Provider
+query: |+
+  query Query($name: String!) {
+    infra_getCloudProvider(name: $name)
+  }
+variables:
+  name: sample-cp
+---
