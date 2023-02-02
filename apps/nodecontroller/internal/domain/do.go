@@ -2,7 +2,6 @@ package domain
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -47,25 +46,12 @@ func (d *domainI) doWithDO() error {
 		return err
 	}
 
-	labels := map[string]string{}
-	if e := json.Unmarshal([]byte(d.env.Labels), &labels); e != nil {
-		fmt.Println(e)
-	}
-
-	taints := []string{}
-	if e := json.Unmarshal([]byte(d.env.Taints), &taints); e != nil {
-		fmt.Println(e)
-	}
-
 	doProvider := infraclient.NewDOProvider(infraclient.DoProvider{
 		ApiToken:  doConf.Spec.Provider.ApiToken,
 		AccountId: doConf.Spec.Provider.AccountId,
 	}, infraclient.DoProviderEnv{
 		StorePath:   klConf.Values.StorePath,
 		TfTemplates: klConf.Values.TfTemplates,
-		Secrets:     klConf.Values.Secrets,
-		Labels:      labels,
-		Taints:      taints,
 		SSHPath:     klConf.Values.SSHPath,
 	})
 
@@ -80,21 +66,15 @@ func (d *domainI) doWithDO() error {
 
 	switch doConf.Action {
 	case "create":
-		if err = doProvider.NewNode(doNode); err != nil {
-			return err
-		}
-
-		if err = doProvider.AttachNode(doNode); err != nil {
+		err = doProvider.NewNode(doNode)
+		if err != nil {
 			return err
 		}
 
 	case "delete":
+		err = doProvider.DeleteNode(doNode)
 
-		if err = doProvider.UnattachNode(doNode); err != nil {
-			return err
-		}
-
-		if err = doProvider.DeleteNode(doNode); err != nil {
+		if err != nil {
 			return err
 		}
 

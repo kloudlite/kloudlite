@@ -15,8 +15,6 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/kloudlite/internal_operator_v2 v1.0.5-0.20230120091718-4a729feab5c5
-	github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.41
 	github.com/pkg/errors v0.9.1
@@ -27,7 +25,6 @@ require (
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/tektoncd/triggers v0.22.1
 	github.com/twmb/franz-go v1.6.0
-	github.com/valyala/fasthttp v1.35.0
 	github.com/vektah/gqlparser/v2 v2.4.0
 	github.com/xanzy/go-gitlab v0.63.0
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54
@@ -131,6 +128,7 @@ require (
 	github.com/twmb/franz-go/pkg/kmsg v1.1.0 // indirect
 	github.com/urfave/cli/v2 v2.16.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.35.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
@@ -166,9 +164,5 @@ require (
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
-
-replace github.com/kloudlite/internal_operator_v2 v1.0.5-0.20230120091718-4a729feab5c5 => /home/nxtcoder17/workspace/kloudlite/internal_operator_v2
-
-replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
 
 replace sigs.k8s.io/controller-runtime v0.13.1 => sigs.k8s.io/controller-runtime v0.14.1

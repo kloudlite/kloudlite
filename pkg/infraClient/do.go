@@ -17,7 +17,7 @@ type doProviderClient interface {
 	DeleteNode(node DoNode) error
 
 	AttachNode(node DoNode) error
-	// UnattachNode(node DoNode) error
+	UnattachNode(node DoNode) error
 
 	// mkdir(folder string) error
 	// rmdir(folder string) error
@@ -56,7 +56,7 @@ type doProvider struct {
 // getFolder implements doProviderClient
 func (d *doProvider) getFolder(region string, nodeId string) string {
 	// eg -> /path/do/blr1/acc_id/node_id
-	return path.Join(d.storePath, d.providerDir, region, d.accountId, nodeId)
+	return path.Join(d.storePath, d.accountId, d.providerDir, region, nodeId)
 }
 
 // initTFdir implements doProviderClient
@@ -142,10 +142,6 @@ func (d *doProvider) DeleteNode(node DoNode) error {
 	} else if strings.TrimSpace(string(out)) == "" {
 		fmt.Println("something went wrong, can't find node_name")
 		return nil
-	}
-
-	if err := d.UnattachNode(node); err != nil {
-		return err
 	}
 
 	// destroy node
