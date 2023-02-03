@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -19,9 +20,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 	"time"
@@ -44,6 +47,8 @@ const (
 	IngressReady    string = "ingress-ready"
 	BasicAuthReady  string = "basic-auth-ready"
 	DefaultsPatched string = "patch-defaults"
+
+	Finalizing string = "finalizing"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -121,23 +126,58 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
 		}
+		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	check.Status = true
 	if check != checks[DefaultsPatched] {
 		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
-
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	return req.Finalize()
-}
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
 
-type Config struct {
-	WildcardDomains []string `json:"wildcard-domains"`
+	if controllerutil.RemoveFinalizer(obj, constants.ForegroundFinalizer) {
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+		}
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
+
+	var ingList networkingv1.IngressList
+	if err := r.List(ctx, &ingList, &client.ListOptions{
+		LabelSelector: labels.SelectorFromValidatedSet(obj.GetEnsuredLabels()),
+		Namespace:     obj.Namespace,
+	}); err != nil {
+		return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+	}
+
+	for i := range ingList.Items {
+		if err := r.Delete(ctx, &ingList.Items[i]); err != nil {
+			return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+		}
+	}
+
+	if len(ingList.Items) != 0 {
+		return req.CheckFailed(Finalizing, check, "waiting for k8s ingress resources to be deleted")
+	}
+
+	if controllerutil.RemoveFinalizer(obj, constants.CommonFinalizer) {
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+		}
+	}
+
+	check.Status = true
+	if check != checks[Finalizing] {
+		checks[Finalizing] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
 }
 
 func isBlueprint(obj client.Object) bool {
@@ -177,9 +217,60 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 	check.Status = true
 	if check != checks[BasicAuthReady] {
 		checks[BasicAuthReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
+}
+
+func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router], wcDomains []string, nonWcDomains []string) error {
+	ctx, obj := req.Context(), req.Object
+
+	issuerName := controllers.GetClusterIssuerName(obj.Spec.Region)
+	wcdMap := make(map[string]bool, cap(wcDomains))
+
+	if obj.Spec.Https.Enabled {
+		cIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", issuerName), fn.NewUnstructured(constants.ClusterIssuerType))
+		if err != nil {
+			return err
+		}
+
+		var clusterIssuer certmanagerv1.ClusterIssuer
+		b, err := json.Marshal(cIssuer.Object)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, &clusterIssuer); err != nil {
+			return err
+		}
+
+		for _, solver := range clusterIssuer.Spec.ACME.Solvers {
+			if solver.DNS01 != nil {
+				for _, dnsName := range solver.Selector.DNSNames {
+					if strings.HasPrefix(dnsName, "*.") {
+						wcdMap[dnsName[2:]] = true
+					}
+					wcdMap[dnsName] = true
+					wcDomains = append(wcDomains, dnsName)
+				}
+			}
+		}
+	}
+
+	for _, domain := range obj.Spec.Domains {
+		if _, ok := wcdMap[domain]; ok {
+			continue
+		}
+		sp := strings.SplitN(domain, ".", 2)
+		if len(sp) < 2 {
+			continue
+		}
+		if _, ok := wcdMap[sp[1]]; ok {
+			continue
+		}
+		nonWcDomains = append(nonWcDomains, domain)
+	}
+
+	return nil
 }
 
 func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -193,41 +284,14 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		return req.CheckFailed(IngressReady, check, "no routes specified in ingress resource").Err(nil)
 	}
 
-	issuerName := controllers.GetClusterIssuerName(obj.Spec.Region)
-	clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", issuerName), &certmanagerv1.ClusterIssuer{})
-	if err != nil {
-		return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
-	}
-
-	wcDomainsMap := make(map[string]bool, 2)
 	wcDomains := make([]string, 0, 2)
+	nonWcDomains := make([]string, 0, 2)
 
-	for _, solver := range clusterIssuer.Spec.ACME.Solvers {
-		if solver.DNS01 != nil {
-			for _, dnsName := range solver.Selector.DNSNames {
-				if strings.HasPrefix(dnsName, "*.") {
-					wcDomainsMap[dnsName[2:]] = true
-				}
-				wcDomainsMap[dnsName] = true
-				wcDomains = append(wcDomains, dnsName)
-			}
-		}
+	if err := r.parseAndExtractDomains(req, wcDomains, nonWcDomains); err != nil {
+		return req.CheckFailed(IngressReady, check, err.Error())
 	}
 
-	nonWildCardDomains := make([]string, 0, len(obj.Spec.Domains))
-	for _, domain := range obj.Spec.Domains {
-		if _, ok := wcDomainsMap[domain]; ok {
-			continue
-		}
-		sp := strings.SplitN(domain, ".", 2)
-		if len(sp) < 2 {
-			continue
-		}
-		if _, ok := wcDomainsMap[sp[1]]; ok {
-			continue
-		}
-		nonWildCardDomains = append(nonWildCardDomains, domain)
-	}
+	//issuerName := controllers.GetClusterIssuerName(obj.Spec.Region)
 
 	lambdaGroups := map[string][]crdsv1.Route{}
 	var appRoutes []crdsv1.Route
@@ -264,7 +328,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 				constants.RouterNameKey: obj.Name,
 			},
 
-			"domains":          nonWildCardDomains,
+			"domains":          nonWcDomains,
 			"wildcard-domains": wcDomains,
 
 			"router-ref":       obj,
@@ -292,7 +356,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 				"name":             obj.Name,
 				"namespace":        obj.Namespace,
 				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"domains":          nonWildCardDomains,
+				"domains":          nonWcDomains,
 				"wildcard-domains": wcDomains,
 				"labels": map[string]any{
 					constants.RouterNameKey: obj.Name,
@@ -318,15 +382,16 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		kubeYamls = append(kubeYamls, b)
 	}
 
-	if err := r.yamlClient.ApplyYAML(req.Context(), kubeYamls...); err != nil {
+	if err := r.yamlClient.ApplyYAML(ctx, kubeYamls...); err != nil {
 		return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
 	if check != checks[IngressReady] {
 		checks[IngressReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
+
 	return req.Next()
 }
 
@@ -337,7 +402,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&networkingv1.Ingress{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
+
+	//builder.Watches(&source.Kind{Type: &appsv1.Deployment{}}, handler.EnqueueRequestForOwner{})
+
 	return builder.Complete(r)
 }
