@@ -24,6 +24,7 @@ func Promise(testFn func(g Gomega), timeout ...string) {
 }
 
 func CreateResource(res client.Object) {
+	res.SetResourceVersion("")
 	err := Suite.K8sClient.Create(Suite.Context, res)
 	if err != nil {
 		if apiErrors.IsAlreadyExists(err) {

@@ -43,8 +43,6 @@ type Cors struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	ProjectName string `json:"projectName,omitempty"`
-
 	Region string `json:"region,omitempty"`
 	Https  Https  `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional
@@ -76,7 +74,9 @@ func (r *Router) GetStatus() *rApi.Status {
 }
 
 func (r *Router) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.RouterNameKey: r.Name,
+	}
 }
 
 func (m *Router) GetEnsuredAnnotations() map[string]string {

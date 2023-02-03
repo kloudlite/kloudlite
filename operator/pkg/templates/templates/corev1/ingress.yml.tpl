@@ -81,28 +81,6 @@ spec:
     {{- end}}
   rules:
     {{- range $domain := .Spec.Domains }}
-    - host: www.{{$domain}}
-      http:
-        paths:
-          {{- range $route := $routes }}
-          - backend:
-              service:
-                name: {{$route.App | default $route.Lambda}}
-                port:
-                  number: {{if $isBlueprint}} {{$bpOverridePort}} {{else}}{{$route.Port}}{{end}}
-
-            {{- if $route.Rewrite}}
-            path: {{$route.Path}}?(.*)
-            {{- else}}
-            {{ $x := len $route.Path }}
-{{/*            {{if not (gt $x 1)}}*/}}
-{{/*            path: "/(.*)"*/}}
-{{/*            {{else}}*/}}
-            path: /({{if hasPrefix "/" $route.Path }}{{substr 1 $x $route.Path}}{{else}}{{$route.Path}}{{end}}.*)
-{{/*            {{end}}*/}}
-            {{- end}}
-            pathType: Prefix
-          {{- end}}
     - host: {{$domain}}
       http:
         paths:

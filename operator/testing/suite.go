@@ -51,35 +51,6 @@ var DefaultEnvTest = &envtest.Environment{
 	BinaryAssetsDirectory: filepath.Join(os.Getenv("PROJECT_ROOT"), "bin", "k8s", "1.26.0-linux-amd64"),
 }
 
-//func withManager() {
-//	Suite.NewManager = func(opts manager.Options) manager.Manager {
-//		opts.Scheme = Suite.Scheme
-//		opts.MetricsBindAddress = "0"
-//		mgr, err := manager.New(Suite.Config, opts)
-//		Expect(err).NotTo(HaveOccurred())
-//		return mgr
-//	}
-//
-//	Suite.Manager = Suite.NewManager(manager.Options{})
-//
-//	Suite.K8sClient = Suite.Manager.GetClient()
-//	Expect(Suite.K8sClient).NotTo(BeNil())
-//
-//	k8sYamlClient, err := kubectl.NewYAMLClient(Suite.Manager.GetConfig())
-//	Expect(err).NotTo(HaveOccurred())
-//	Expect(k8sYamlClient).NotTo(BeNil())
-//	Suite.K8sYamlClient = k8sYamlClient
-//
-//	//c, err := kubernetes.NewForConfig(Suite.Config)
-//	//Expect(err).NotTo(HaveOccurred())
-//	//
-//	//_, err = dynamic.NewForConfig(Suite.Config)
-//	//Expect(err).NotTo(HaveOccurred())
-//	//
-//	//_, err = restmapper.GetAPIGroupResources(c.Discovery())
-//	//Expect(err).NotTo(HaveOccurred())
-//}
-
 func withoutManager() {
 	c, err := client.New(Suite.Config, client.Options{
 		Scheme: Suite.Scheme,
