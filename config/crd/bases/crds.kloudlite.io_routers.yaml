@@ -100,8 +100,6 @@ spec:
                 type: object
               maxBodySizeInMB:
                 type: integer
-              projectName:
-                type: string
               rateLimit:
                 properties:
                   connections:

@@ -30,6 +30,8 @@ type Request[T Resource] struct {
 	anchorName     string
 	internalLogger logging.Logger
 	locals         map[string]any
+
+	reconStartTime time.Time
 }
 
 type ReconcilerCtx context.Context
@@ -386,17 +388,19 @@ func (r *Request[T]) Finalize() stepResult.Result {
 
 func (r *Request[T]) LogPreReconcile() {
 	var blue = color.New(color.FgBlue).SprintFunc()
+	r.reconStartTime = time.Now()
 	r.internalLogger.Infof(blue("[new] reconcilation start"))
 }
 
 func (r *Request[T]) LogPostReconcile() {
+	tDiff := time.Now().Sub(r.reconStartTime).Seconds()
 	if !r.Object.GetStatus().IsReady {
 		var yellow = color.New(color.FgHiYellow, color.Bold).SprintFunc()
-		r.internalLogger.Infof(yellow("[end] reconcilation in progress"))
+		r.internalLogger.Infof(yellow("[end] (took: %.2f)s reconcilation in progress"), tDiff)
 		return
 	}
 	var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
-	r.internalLogger.Infof(green("[end] reconcilation success"))
+	r.internalLogger.Infof(green("[end] (took: %.2f)s reconcilation success"), tDiff)
 }
 
 func (r *Request[T]) LogPreCheck(checkName string) {
