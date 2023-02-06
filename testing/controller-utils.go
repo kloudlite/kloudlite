@@ -34,6 +34,25 @@ func CreateResource(res client.Object) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
+func GetResource(nn types.NamespacedName, resource client.Object) error {
+	err := Suite.K8sClient.Get(Suite.Context, nn, resource)
+	if err != nil {
+		return err
+	}
+
+	if resource.GetObjectKind().GroupVersionKind().Kind == "" {
+		kinds, _, err := Suite.Scheme.ObjectKinds(resource)
+		if err != nil {
+			return err
+		}
+		if len(kinds) > 0 {
+			resource.GetObjectKind().SetGroupVersionKind(kinds[0])
+		}
+	}
+
+	return nil
+}
+
 func DeleteResource(res client.Object) {
 	Expect(Suite.K8sClient.Delete(Suite.Context, res)).NotTo(HaveOccurred())
 }

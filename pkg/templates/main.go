@@ -83,7 +83,7 @@ func txtFuncs(t *template.Template) template.FuncMap {
 		}
 
 		x := a(txt)
-		if x == "null" {
+		if x == "null" || x == "" || x == "[]" || x == "{}" {
 			return "", nil
 		}
 
@@ -116,6 +116,9 @@ func txtFuncs(t *template.Template) template.FuncMap {
 			Items = append(Items, i)
 		}
 		return Items
+	}
+	funcs["endl"] = func() (string, error) {
+		return fmt.Sprintf("\n"), nil
 	}
 
 	return funcs
