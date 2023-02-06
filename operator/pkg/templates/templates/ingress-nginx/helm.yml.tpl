@@ -1,29 +1,36 @@
-{{- $obj := get . "obj" }}
-{{- $ownerRefs := get . "owner-refs" }}
-{{- $controllerName := get . "controller-name" }}
-{{- $labels := get . "labels" }}
+{{/*{{- $obj := get . "obj" }}*/}}
+
+{{- $name := get . "name" -}}
+{{- $namespace := get . "namespace" -}}
+
+{{- $region := get . "region" -}}
+
+{{- $nodeSelector := get . "node-selector" | default dict -}}
+{{- $tolerations := get . "tolerations" | default list -}}
+
+{{- $ownerRefs := get . "owner-refs" | default list  -}}
+{{- $labels := get . "labels" | default dict -}}
 {{- $ingressClassName := get . "ingress-class-name"  -}}
-{{- $clusterServiceAccountName := get . "cluster-service-account-name" -}}
 
 {{- $wildcardCertNamespace := get . "wildcard-cert-namespace"  -}}
 {{- $wildcardCertName := get . "wildcard-cert-name"  -}}
+{{endl}}
 
-{{- with $obj }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: cluster-svc-account
-  namespace: {{.Namespace}}
+  namespace: {{$namespace}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{.Namespace}}-ingress-rb
+  name: {{$namespace}}-ingress-rb
 subjects:
   - kind: ServiceAccount
     name: cluster-svc-account
-    namespace: {{.Namespace}}
+    namespace: {{$namespace}}
     apiGroup: ""
 roleRef:
   kind: ClusterRole
@@ -31,16 +38,16 @@ roleRef:
   apiGroup: ""
 ---
 {{- /*gotype: github.com/kloudlite/operator/apis/crds/v1.EdgeRouter*/ -}}
-{{""}}
+{{endl}}
 apiVersion: ingress.kloudlite.io/v1
 kind: Nginx
 metadata:
-  name: {{.Name}}
-  namespace: {{.Namespace}}
+  name: {{$name}}
+  namespace: {{$namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
   labels: {{$labels | toYAML| nindent 4}}
 spec:
-  nameOverride: {{.Name}}
+  nameOverride: {{$name}}
   commonLabels: {{$labels  | toYAML| nindent 4}}
 
   rbac:
@@ -84,16 +91,15 @@ spec:
         memory: 200Mi
 
     nodeSelector:
-      {{if .Spec.NodeSelector}}{{.Spec.NodeSelector | toYAML| nindent 6}}{{end}}
-      {{include "RegionNodeSelector" (dict "region" .Spec.EdgeName) | nindent 6 }}
+      {{if $nodeSelector}}{{$nodeSelector | toYAML| nindent 6}}{{end}}
+      {{include "RegionNodeSelector" (dict "region" $region) | nindent 6 }}
 
     tolerations:
-      {{if .Spec.Tolerations}}{{.Spec.Tolerations | toYAML | nindent 6}}{{end}}
-      {{include "RegionToleration" (dict "region" .Spec.EdgeName) | nindent 6}}
+      {{if $tolerations}}{{ $tolerations | toYAML | nindent 6}}{{end}}
+      {{include "RegionToleration" (dict "region" $region) | nindent 6}}
 
     affinity: {{include "NodeAffinity" (dict) | nindent 6 }}
 
     admissionWebhooks:
       enabled: false
       failurePolicy: Ignore
-{{- end }}

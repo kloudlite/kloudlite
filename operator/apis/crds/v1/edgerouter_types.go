@@ -10,7 +10,6 @@ import (
 // EdgeRouterSpec defines the desired state of EdgeRouter
 type EdgeRouterSpec struct {
 	EdgeName   string `json:"edgeName"`
-	Region     string `json:"region"`
 	AccountRef string `json:"accountRef"`
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer
 	// +kubebuilder:default=LoadBalancer
@@ -20,11 +19,7 @@ type EdgeRouterSpec struct {
 	NodeSelector   map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations    []corev1.Toleration `json:"tolerations,omitempty"`
 
-	// +kubebuilder:default=100
-	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       RateLimit `json:"rateLimit,omitempty"`
-	Https           Https     `json:"https,omitempty"`
-	WildcardDomains []string  `json:"wildcardDomains,omitempty"`
+	WildcardDomains []string `json:"wildcardDomains,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -46,7 +41,10 @@ func (edge *EdgeRouter) GetStatus() *rApi.Status {
 }
 
 func (edge *EdgeRouter) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.EdgeRouterNameKey: edge.Name,
+		constants.EdgeNameKey:       edge.Spec.EdgeName,
+	}
 }
 
 func (edge *EdgeRouter) GetEnsuredAnnotations() map[string]string {

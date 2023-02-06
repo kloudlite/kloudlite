@@ -3,6 +3,11 @@ package edgeRouter
 import (
 	"context"
 	acmev1 "github.com/cert-manager/cert-manager/pkg/apis/acme/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -42,6 +47,7 @@ const (
 	ClusterIssuerPatched   string = "cluster-issuer-patched"
 	ClusterIssuerReady     string = "cluster-issuer-ready"
 	IngressControllerReady string = "ingress-controller-ready"
+	Finalizing             string = "finalizing"
 )
 
 const (
@@ -73,10 +79,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureChecks(DefaultsPatched, IngressControllerReady, ClusterIssuerPatched); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -103,43 +105,52 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
-	return req.Finalize()
-}
-
-func (r *Reconciler) ensureIngressController(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(IngressControllerReady)
-	defer req.LogPostCheck(IngressControllerReady)
-
-	b, err := templates.Parse(
-		templates.HelmIngressNginx, map[string]any{
-			"obj":        obj,
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"labels": map[string]string{
-				constants.EdgeRouterNameKey: obj.Name,
-				constants.EdgeNameKey:       obj.Spec.EdgeName,
-			},
-			"wildcard-cert-name":      WildcardCertName,
-			"wildcard-cert-namespace": WildcardCertNamespace,
-			"ingress-class-name":      controllers.GetIngressClassName(obj.Spec.EdgeName),
+	// STEP 1: ensure all ingress nginx controllers are deleted
+	nginxes := unstructured.UnstructuredList{
+		Object: map[string]any{
+			"apiVersion": constants.HelmIngressNginx.APIVersion,
+			"kind":       constants.HelmIngressNginx.Kind,
 		},
-	)
-	if err != nil {
-		return req.CheckFailed(IngressControllerReady, check, err.Error())
+	}
+	if err := r.List(ctx, &nginxes, &client.ListOptions{
+		Namespace:     obj.Namespace,
+		LabelSelector: labels.SelectorFromValidatedSet(obj.GetEnsuredLabels()),
+	}); err != nil {
+		return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-		return req.CheckFailed(IngressControllerReady, check, err.Error())
+	for i := range nginxes.Items {
+		if nginxes.Items[i].GetDeletionTimestamp() == nil {
+			if err := r.Delete(ctx, &nginxes.Items[i]); err != nil {
+				if !apiErrors.IsNotFound(err) {
+					return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+				}
+			}
+		}
 	}
 
-	check.Status = true
-	if check != checks[IngressControllerReady] {
-		checks[IngressControllerReady] = check
-		return req.UpdateStatus()
+	if len(nginxes.Items) != 0 {
+		return req.CheckFailed(Finalizing, check, "waiting for nginx ingress controllers to be deleted")
 	}
-	return req.Next()
+
+	// STEP 2: ensure all cluster issuers are deleted
+	issuerName := controllers.GetClusterIssuerName(obj.Spec.EdgeName)
+	if err := r.Delete(ctx, &certmanagerv1.ClusterIssuer{ObjectMeta: metav1.ObjectMeta{Name: issuerName}}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(Finalizing, check, "waiting for cluster issuer to be deleted")
+		}
+	}
+
+	// STEP 3: clear all finalizers
+	controllerutil.RemoveFinalizer(obj, constants.CommonFinalizer)
+	if err := r.Update(ctx, obj); err != nil {
+		return req.CheckFailed(Finalizing, check, err.Error())
+	}
+
+	return req.Done()
 }
 
 func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
@@ -151,27 +162,31 @@ func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) 
 
 	issuerName := controllers.GetClusterIssuerName(obj.Spec.EdgeName)
 
-	// copy dnsNames from default cluster issuer
+	// STEP 1: copy dns solvers from default cluster issuer
 	defaultIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", r.Env.DefaultClusterIssuerName), &certmanagerv1.ClusterIssuer{})
 	if err != nil {
-		return req.CheckFailed(ClusterIssuerReady, check, err.Error())
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(ClusterIssuerReady, check, err.Error())
+		}
+		req.Logger.Infof("default cluster issuer (%s) not found, skipping reading them", r.Env.DefaultClusterIssuerName)
 	}
 
-	var acmeSolvers []acmev1.ACMEChallengeSolver
+	var acmeDnsSolvers []acmev1.ACMEChallengeSolver
 
 	if defaultIssuer != nil && defaultIssuer.Spec.ACME != nil {
 		for _, s := range defaultIssuer.Spec.ACME.Solvers {
 			if s.DNS01 != nil {
-				acmeSolvers = append(acmeSolvers, s)
+				acmeDnsSolvers = append(acmeDnsSolvers, s)
 			}
 		}
 	}
 
+	// STEP 2: create new cluster issuer for this edge
 	b, err := templates.Parse(
 		templates.ClusterIssuer, map[string]any{
-			"owner-refs":   []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"namespace":    obj.Namespace,
-			"acme-solvers": acmeSolvers,
+			"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"namespace":        obj.Namespace,
+			"acme-dns-solvers": acmeDnsSolvers,
 
 			"kl-acme-email": r.Env.AcmeEmail,
 			"issuer-name":   issuerName,
@@ -201,63 +216,45 @@ func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) 
 	check.Status = true
 	if check != checks[ClusterIssuerReady] {
 		checks[ClusterIssuerReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
-// func (r *Reconciler) patchClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
-// 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-// 	check := rApi.Check{Generation: obj.Generation}
-//
-// 	clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", r.Env.ClusterCertIssuer), &certmanagerv1.ClusterIssuer{})
-// 	if err != nil {
-// 		return req.CheckFailed(ClusterIssuerPatched, check, err.Error()).Err(nil)
-// 	}
-//
-// 	ingressClassName := fmt.Sprintf("ingress-nginx-%s", obj.Name)
-//
-// 	solverExists := false
-//
-// 	for _, solver := range clusterIssuer.Spec.ACME.Solvers {
-// 		if solver.HTTP01 != nil && solver.HTTP01.Ingress != nil && solver.HTTP01.Ingress.Class != nil {
-// 			if *solver.HTTP01.Ingress.Class == ingressClassName {
-// 				solverExists = true
-// 			}
-// 		}
-// 	}
-//
-// 	if !solverExists {
-// 		clusterIssuer.Spec.ACME.Solvers = append(
-// 			clusterIssuer.Spec.ACME.Solvers, acmev1.ACMEChallengeSolver{
-// 				HTTP01: &acmev1.ACMEChallengeSolverHTTP01{
-// 					Ingress: &acmev1.ACMEChallengeSolverHTTP01Ingress{
-// 						Class: &ingressClassName,
-// 						PodTemplate: &acmev1.ACMEChallengeSolverHTTP01IngressPodTemplate{
-// 							ACMEChallengeSolverHTTP01IngressPodObjectMeta: acmev1.ACMEChallengeSolverHTTP01IngressPodObjectMeta{
-// 								Labels: map[string]string{
-// 									"kloudlite.io/ingress-class": ingressClassName,
-// 								},
-// 							},
-// 							Spec: acmev1.ACMEChallengeSolverHTTP01IngressPodSpec{},
-// 						},
-// 					},
-// 				},
-// 			},
-// 		)
-//
-// 		if err := r.Update(ctx, clusterIssuer); err != nil {
-// 			return req.CheckFailed(ClusterIssuerPatched, check, err.Error())
-// 		}
-// 	}
-//
-// 	check.Status = true
-// 	if check != checks[ClusterIssuerPatched] {
-// 		checks[ClusterIssuerPatched] = check
-// 		return req.UpdateStatus()
-// 	}
-// 	return req.Next()
-// }
+func (r *Reconciler) ensureIngressController(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(IngressControllerReady)
+	defer req.LogPostCheck(IngressControllerReady)
+
+	b, err := templates.Parse(
+		templates.HelmIngressNginx, map[string]any{
+			"name":                    obj.Name,
+			"namespace":               obj.Namespace,
+			"region":                  obj.Spec.EdgeName,
+			"owner-refs":              []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"labels":                  obj.Labels,
+			"wildcard-cert-name":      WildcardCertName,
+			"wildcard-cert-namespace": WildcardCertNamespace,
+			"ingress-class-name":      controllers.GetIngressClassName(obj.Spec.EdgeName),
+		},
+	)
+	if err != nil {
+		return req.CheckFailed(IngressControllerReady, check, err.Error()).Err(nil)
+	}
+
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(IngressControllerReady, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != checks[IngressControllerReady] {
+		checks[IngressControllerReady] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
+}
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
@@ -266,6 +263,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.EdgeRouter{})
+	builder.WithOptions(controller.Options{
+		MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles,
+	})
 	builder.Owns(fn.NewUnstructured(constants.HelmIngressNginx))
 	builder.Owns(&appsv1.DaemonSet{})
 	builder.Owns(fn.NewUnstructured(constants.ClusterIssuerType))
