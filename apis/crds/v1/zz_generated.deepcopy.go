@@ -634,8 +634,6 @@ func (in *EdgeRouterSpec) DeepCopyInto(out *EdgeRouterSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	out.RateLimit = in.RateLimit
-	out.Https = in.Https
 	if in.WildcardDomains != nil {
 		in, out := &in.WildcardDomains, &out.WildcardDomains
 		*out = make([]string, len(*in))

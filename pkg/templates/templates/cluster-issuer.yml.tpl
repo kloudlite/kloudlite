@@ -1,5 +1,5 @@
 {{- $klAcmeEmail := get . "kl-acme-email" -}}
-{{- $acmeSolvers := get . "acme-solvers" | default list -}}
+{{- $acmeDnsSolvers := get . "acme-dns-solvers" | default list -}}
 
 {{- $issuerName := get . "issuer-name" }}
 {{- $ingressClass := get . "ingress-class" -}}
@@ -20,7 +20,7 @@ spec:
       name: {{$issuerName}}
     server: https://acme-v02.api.letsencrypt.org/directory
     solvers:
-      {{$acmeSolvers |toYAML | nindent 6 }}
+      {{$acmeDnsSolvers |toYAML | nindent 6 }}
       - http01:
           ingress:
             class: {{$ingressClass}}

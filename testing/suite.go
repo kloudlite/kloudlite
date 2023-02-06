@@ -80,8 +80,9 @@ func SetupKubernetes(scheme *runtime.Scheme, envTest *envtest.Environment) {
 		Expect(os.Setenv("USE_EXISTING_CLUSTER", "true")).To(Succeed())
 	}
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
 	rest.SetDefaultWarningHandler(rest.NoWarnings{})
+
+	envTest.Scheme = scheme
 
 	By("bootstrapping test environment")
 	_, err := envTest.Start()
