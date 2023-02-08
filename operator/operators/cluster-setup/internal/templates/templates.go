@@ -48,6 +48,11 @@ func ParseBytes(b []byte, values any) ([]byte, error) {
 type templateFile string
 
 const (
+	UserAccountRbac templateFile = "templates/rbac/user-account.yml.tpl"
+	Kubeconfig      templateFile = "templates/rbac/kubeconfig.yml.tpl"
+)
+
+const (
 	LokiValues                templateFile = "templates/loki-values.yml.tpl"
 	PrometheusValues          templateFile = "templates/prometheus-values.yml.tpl"
 	CertManagerValues         templateFile = "templates/cert-manager.yml.tpl"
