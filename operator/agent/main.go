@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"log"
 	"time"
 
@@ -15,49 +14,48 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	"github.com/kloudlite/operator/pkg/redpanda"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 )
 
+//func main() {
+//	var dev bool
+//	flag.BoolVar(&dev, "dev", false, "--dev")
+//	flag.Parse()
+//
+//	yamlClient := func() *kubectl.YAMLClient {
+//		if dev {
+//			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
+//		}
+//		config, err := rest.InClusterConfig()
+//		if err != nil {
+//			panic(err)
+//		}
+//		return kubectl.NewYAMLClientOrDie(config)
+//	}()
+//
+//	scrt := `
+//apiVersion: crds.kloudlite.io/v1
+//kind: Appsdasdf
+//metadata:
+//  name: sample
+//  namespacesdfa: sadfa
+//spec:
+//  containers:
+//    - image: nginx
+//`
+//
+//	if err := yamlClient.ApplyYAML(context.TODO(), []byte(scrt)); err != nil {
+//		switch xerr := err.(type) {
+//		case *apiErrors.StatusError:
+//			fmt.Printf("[API Error], %T, %v\n", xerr, xerr.Error())
+//		case *meta.NoKindMatchError:
+//			fmt.Printf("%T, %v\n", xerr, xerr.Error())
+//		}
+//	}
+//}
+
 func main() {
-	var dev bool
-	flag.BoolVar(&dev, "dev", false, "--dev")
-	flag.Parse()
-
-	yamlClient := func() *kubectl.YAMLClient {
-		if dev {
-			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
-		}
-		config, err := rest.InClusterConfig()
-		if err != nil {
-			panic(err)
-		}
-		return kubectl.NewYAMLClientOrDie(config)
-	}()
-
-	scrt := `
-apiVersion: crds.kloudlite.io/v1
-kind: Appsdasdf
-metadata:
-  name: sample
-  namespacesdfa: sadfa
-spec:
-  containers:
-    - image: nginx
-`
-
-	if err := yamlClient.ApplyYAML(context.TODO(), []byte(scrt)); err != nil {
-		switch xerr := err.(type) {
-		case *apiErrors.StatusError:
-			fmt.Printf("[API Error], %T, %v\n", xerr, xerr.Error())
-		case *meta.NoKindMatchError:
-			fmt.Printf("%T, %v\n", xerr, xerr.Error())
-		}
-	}
-}
-
-func main2() {
 	var dev bool
 	flag.BoolVar(&dev, "dev", false, "--dev")
 	flag.Parse()
