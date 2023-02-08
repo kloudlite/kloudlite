@@ -32,16 +32,16 @@ local robj = s(
   "robj",
   fmt(
     [[
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{{Generation: obj.Generation}}
 
 	req.LogPreCheck({})
 	defer req.LogPostCheck({})
 
 	check.Status = true
-	if check != checks[{}] {{
-		checks[{}] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[{}] {{
+		obj.Status.Checks[{}] = check
+		req.UpdateStatus()
 	}}
 
 	return req.Next()

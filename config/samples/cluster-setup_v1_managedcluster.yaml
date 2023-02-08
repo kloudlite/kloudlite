@@ -1,0 +1,12 @@
+apiVersion: cluster-setup.kloudlite.io/v1
+kind: ManagedCluster
+metadata:
+  labels:
+    app.kubernetes.io/name: managedcluster
+    app.kubernetes.io/instance: managedcluster-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: managedcluster-sample
+spec:
+  # TODO(user): Add fields here
