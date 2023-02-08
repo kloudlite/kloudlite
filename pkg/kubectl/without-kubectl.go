@@ -90,7 +90,6 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
 		}
 
 		// TODO (nxtcoder17): delete, and recreate deployment if service account has been changed
-
 		if resource != nil && resource.GetAnnotations()[constants.LastAppliedKey] == string(rawObj.Raw) {
 			continue
 		}

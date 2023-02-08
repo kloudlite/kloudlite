@@ -10,7 +10,6 @@ tasks:
     summary: |+
       [example usage]
       task new-kind Group=sample.kloudlite.io Kind=SampleKind
-#
 
     silent: true
     preconditions:
@@ -40,8 +39,6 @@ tasks:
           echo "---"
         done
 
-#
-
   yaml:operator:
     summary: |+
       template args
@@ -50,13 +47,16 @@ tasks:
         - ImageTag
         - ImagePullPolicy
         - SvcAccountName
+
+      optional args:
+        - NodeSelctor
+        - Tolerations
       
       need to be provided while applying this generated manifest
 
       ###
       .securityContext.capabilities.drop=["ALL"] |
       .securityContext.seccompProfile.type = "RuntimeDefault" |
-#
 
     preconditions:
       - sh: '[ -n "{{.Name}}" ]'
@@ -69,16 +69,13 @@ tasks:
 #      Image: '{{ printf "%s/kloudlite/operators/{{.ENV_NAME}}/%s:{{.IMAGE_TAG}}" .dockerRegistry .Name }}'
       Image: '{{ printf "%s/kloudlite/operators/{{.EnvName}}/%s:{{.ImageTag}}" .dockerRegistry .Name }}'
       Namespace: '{{ printf "{{.Namespace}}" }}'
-#      SvcAccountName: kloudlite-cluster-svc-account
       SvcAccountName: '{{ printf "{{.SvcAccountName}}" }}'
-#      ImagePullPolicy: '{{ printf "{{.IMAGE_PULL_POLICY}}" }}'
       ImagePullPolicy: '{{ printf "{{.ImagePullPolicy}}" }}'
       OverrideFile: "./operators/{{.Name}}/overrides.yml"
     silent: true
     env:
       Name: "{{.Name}}"
       Namespace: "{{.Namespace}}"
-#      SvcAccountName: kloudlite-cluster-svc-account
       SvcAccountName: "{{.SvcAccountName}}"
       Image: "{{.Image}}"
       ImagePullPolicy: "{{.ImagePullPolicy}}"
@@ -130,6 +127,9 @@ tasks:
 
   yaml:operators:
     silent: true
+    preconditions:
+      - sh: '[ -n "{{.Version}}" ]'
+        msg: 'Version must be specified'
     cmds:
       - |+
         outputDir=$(mktemp -d)
@@ -137,9 +137,9 @@ tasks:
         for dir in $(ls -d ./operators/*/)
         do
           # [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
-          [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)"
+          # [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)"
+          task yaml:operator Name="$(basename $dir)" Dir="./apps/releases/assets/operator/{{.Version}}"
         done
-#
   
   yaml:primary-operators:
     cmds:

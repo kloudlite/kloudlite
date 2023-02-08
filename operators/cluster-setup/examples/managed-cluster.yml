@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kl-init-operators
+
+---
+
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: kl-docker-creds
+#  namespace: kl-init-operators
+#stringData:
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kloudlite-cluster-svc-account
+  namespace: kl-init-operators
+imagePullSecrets:
+  - name: kl-docker-creds
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kloudlite-cluster-svc-account-rb
+  namespace: kl-init-operators
+subjects:
+  - kind: ServiceAccount
+    name: kloudlite-cluster-svc-account
+    namespace: kl-init-operators
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: "ClusterRole"
+  name: cluster-admin
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kloudlite-creds
+  namespace: kloudlite
+stringData:
+  dnsApiEndpoint: "https://dns-api.kloudlite.io"
+  dnsApiUsername: kloudlite-dns-admin
+  dnsApiPassword: 'rX4nJkH9Vj2Q_UfWpRe1mtRzd8s_Hrf8dCJYXsq9YdjjufQtNMCRbA'
+
+---
+
+apiVersion: cluster-setup.kloudlite.io/v1
+kind: ManagedCluster
+metadata:
+  name: managed-cluster
+spec:
+  kloudliteCreds:
+    name: kloudlite-creds
+    namespace: kloudlite

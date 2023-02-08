@@ -69,6 +69,10 @@ func NewRequest[T Resource](ctx ReconcilerCtx, c client.Client, nn types.Namespa
 		return x
 	}()
 
+	if resource.GetStatus().Checks == nil {
+		resource.GetStatus().Checks = map[string]Check{}
+	}
+
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,

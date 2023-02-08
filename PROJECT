@@ -456,4 +456,12 @@ resources:
   kind: Anchor
   path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: cluster-setup
+  kind: ManagedCluster
+  path: github.com/kloudlite/operator/apis/cluster-setup/v1
+  version: v1
 version: "3"

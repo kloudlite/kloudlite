@@ -75,4 +75,5 @@ resources:
 - crds_v1_secret.yaml
 - crds_v1_secondaryenv.yaml
 - crds_v1_anchor.yaml
+- cluster-setup_v1_managedcluster.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

@@ -84,6 +84,15 @@ const (
 	LastAppliedKey string = "kloudlite.io/last-applied"
 
 	GVKKey string = "kloudlite.io/group-version-kind"
+
+	ClusterSetupType string = "kloudlite.io/cluster.setup-type"
+)
+
+// ClusterSetupTypes
+const (
+	ManagedClusterSetup   = "managed"
+	PrimaryClusterSetup   = "primary"
+	SecondaryClusterSetup = "secondary"
 )
 
 var (

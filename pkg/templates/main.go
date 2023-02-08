@@ -60,6 +60,20 @@ func Parse(f templateFile, values any) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
+func ParseBytes(b []byte, values any) ([]byte, error) {
+	t := template.New("parse-bytes")
+	t.Funcs(txtFuncs(t))
+	if _, err := t.Parse(string(b)); err != nil {
+		return nil, err
+	}
+	out := new(bytes.Buffer)
+	if err := t.ExecuteTemplate(out, "parse-bytes", values); err != nil {
+		return nil, errors.NewEf(err, "could not execute template")
+	}
+	return out.Bytes(), nil
+}
+
+
 func txtFuncs(t *template.Template) template.FuncMap {
 	funcs := sprig.TxtFuncMap()
 
