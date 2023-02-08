@@ -48,7 +48,6 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg.SetReply(r)
 	msg.Answer = []dns.RR{}
 	for _, q := range r.Question {
-		// fmt.Println(q.Name)
 		switch q.Qtype {
 		case dns.TypeNS:
 			for _, name := range h.dnsDomainNames {
@@ -68,6 +67,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			d := q.Name
 			todo := context.TODO()
 			host := strings.ToLower(d[:len(d)-1])
+
 			if strings.HasSuffix(host, h.EdgeCnameBaseDomain) {
 				splits := strings.Split(host, h.EdgeCnameBaseDomain)
 				queryPart := splits[0]
@@ -113,7 +113,6 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 					},
 					)
 				}
-				break
 			} else {
 				record, err := h.domain.GetRecord(todo, host)
 				if err != nil || record == nil {
@@ -208,6 +207,7 @@ var Module = fx.Module(
 			return nil
 
 		})
+
 		server.Post("/upsert-node-ips", func(c *fiber.Ctx) error {
 			var regionIps struct {
 				RegionId  string   `json:"region"`
