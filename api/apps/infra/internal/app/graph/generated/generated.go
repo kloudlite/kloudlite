@@ -46,24 +46,28 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		InfraCreateCloudProvider func(childComplexity int, cloudProvider entities.CloudProvider, creds entities.ProviderSecrets) int
+		InfraCreateCloudProvider func(childComplexity int, cloudProvider entities.CloudProvider, providerSecret entities.Secret) int
 		InfraCreateCluster       func(childComplexity int, cluster entities.Cluster) int
 		InfraCreateEdge          func(childComplexity int, edge entities.Edge) int
-		InfraDeleteCloudProvider func(childComplexity int, name string) int
+		InfraDeleteCloudProvider func(childComplexity int, accountID repos.ID, name string) int
 		InfraDeleteCluster       func(childComplexity int, name string) int
-		InfraDeleteEdge          func(childComplexity int, name string) int
-		InfraUpdateCloudProvider func(childComplexity int, cloudProvider entities.CloudProvider, creds entities.ProviderSecrets) int
+		InfraDeleteEdge          func(childComplexity int, clusterName string, name string) int
+		InfraDeleteWorkerNode    func(childComplexity int, clusterName string, edgeName string, name string) int
+		InfraUpdateCloudProvider func(childComplexity int, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) int
 		InfraUpdateCluster       func(childComplexity int, cluster entities.Cluster) int
 		InfraUpdateEdge          func(childComplexity int, edge entities.Edge) int
 	}
 
 	Query struct {
-		InfraGetCloudProvider   func(childComplexity int, name string) int
+		InfraGetCloudProvider   func(childComplexity int, accountID repos.ID, name string) int
 		InfraGetCluster         func(childComplexity int, name string) int
-		InfraGetEdge            func(childComplexity int, name string) int
-		InfraListCloudProviders func(childComplexity int, accountID string) int
-		InfraListClusters       func(childComplexity int, accountID repos.ID) int
-		InfraListEdges          func(childComplexity int, providerName string) int
+		InfraGetEdge            func(childComplexity int, clusterName string, name string) int
+		InfraGetMasterNodes     func(childComplexity int, clusterName string) int
+		InfraGetNodePools       func(childComplexity int, clusterName string) int
+		InfraGetWorkerNodes     func(childComplexity int, clusterName string, edgeName string) int
+		InfraListCloudProviders func(childComplexity int, accountID repos.ID) int
+		InfraListClusters       func(childComplexity int, accountName string) int
+		InfraListEdges          func(childComplexity int, clusterName string, providerName string) int
 		__resolve__service      func(childComplexity int) int
 	}
 
@@ -76,20 +80,24 @@ type MutationResolver interface {
 	InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
 	InfraUpdateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
 	InfraDeleteCluster(ctx context.Context, name string) (bool, error)
-	InfraCreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, creds entities.ProviderSecrets) (*entities.CloudProvider, error)
-	InfraUpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, creds entities.ProviderSecrets) (*entities.CloudProvider, error)
-	InfraDeleteCloudProvider(ctx context.Context, name string) (bool, error)
+	InfraCreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error)
+	InfraUpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error)
+	InfraDeleteCloudProvider(ctx context.Context, accountID repos.ID, name string) (bool, error)
 	InfraCreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
 	InfraUpdateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
-	InfraDeleteEdge(ctx context.Context, name string) (bool, error)
+	InfraDeleteEdge(ctx context.Context, clusterName string, name string) (bool, error)
+	InfraDeleteWorkerNode(ctx context.Context, clusterName string, edgeName string, name string) (bool, error)
 }
 type QueryResolver interface {
-	InfraListClusters(ctx context.Context, accountID repos.ID) ([]*entities.Cluster, error)
+	InfraListClusters(ctx context.Context, accountName string) ([]*entities.Cluster, error)
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
-	InfraListCloudProviders(ctx context.Context, accountID string) ([]*entities.CloudProvider, error)
-	InfraGetCloudProvider(ctx context.Context, name string) (*entities.CloudProvider, error)
-	InfraListEdges(ctx context.Context, providerName string) ([]*entities.Edge, error)
-	InfraGetEdge(ctx context.Context, name string) (*entities.Edge, error)
+	InfraListCloudProviders(ctx context.Context, accountID repos.ID) ([]*entities.CloudProvider, error)
+	InfraGetCloudProvider(ctx context.Context, accountID repos.ID, name string) (*entities.CloudProvider, error)
+	InfraListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error)
+	InfraGetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error)
+	InfraGetMasterNodes(ctx context.Context, clusterName string) ([]*entities.MasterNode, error)
+	InfraGetWorkerNodes(ctx context.Context, clusterName string, edgeName string) ([]*entities.WorkerNode, error)
+	InfraGetNodePools(ctx context.Context, clusterName string) ([]*entities.NodePool, error)
 }
 
 type executableSchema struct {
@@ -117,7 +125,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraCreateCloudProvider(childComplexity, args["cloudProvider"].(entities.CloudProvider), args["creds"].(entities.ProviderSecrets)), true
+		return e.complexity.Mutation.InfraCreateCloudProvider(childComplexity, args["cloudProvider"].(entities.CloudProvider), args["providerSecret"].(entities.Secret)), true
 
 	case "Mutation.infra_createCluster":
 		if e.complexity.Mutation.InfraCreateCluster == nil {
@@ -153,7 +161,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraDeleteCloudProvider(childComplexity, args["name"].(string)), true
+		return e.complexity.Mutation.InfraDeleteCloudProvider(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
 
 	case "Mutation.infra_deleteCluster":
 		if e.complexity.Mutation.InfraDeleteCluster == nil {
@@ -177,7 +185,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraDeleteEdge(childComplexity, args["name"].(string)), true
+		return e.complexity.Mutation.InfraDeleteEdge(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+
+	case "Mutation.infra_deleteWorkerNode":
+		if e.complexity.Mutation.InfraDeleteWorkerNode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_deleteWorkerNode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraDeleteWorkerNode(childComplexity, args["clusterName"].(string), args["edgeName"].(string), args["name"].(string)), true
 
 	case "Mutation.infra_updateCloudProvider":
 		if e.complexity.Mutation.InfraUpdateCloudProvider == nil {
@@ -189,7 +209,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraUpdateCloudProvider(childComplexity, args["cloudProvider"].(entities.CloudProvider), args["creds"].(entities.ProviderSecrets)), true
+		return e.complexity.Mutation.InfraUpdateCloudProvider(childComplexity, args["cloudProvider"].(entities.CloudProvider), args["providerSecret"].(*entities.Secret)), true
 
 	case "Mutation.infra_updateCluster":
 		if e.complexity.Mutation.InfraUpdateCluster == nil {
@@ -225,7 +245,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraGetCloudProvider(childComplexity, args["name"].(string)), true
+		return e.complexity.Query.InfraGetCloudProvider(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
 
 	case "Query.infra_getCluster":
 		if e.complexity.Query.InfraGetCluster == nil {
@@ -249,7 +269,43 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraGetEdge(childComplexity, args["name"].(string)), true
+		return e.complexity.Query.InfraGetEdge(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+
+	case "Query.infra_getMasterNodes":
+		if e.complexity.Query.InfraGetMasterNodes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getMasterNodes_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetMasterNodes(childComplexity, args["clusterName"].(string)), true
+
+	case "Query.infra_getNodePools":
+		if e.complexity.Query.InfraGetNodePools == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getNodePools_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetNodePools(childComplexity, args["clusterName"].(string)), true
+
+	case "Query.infra_getWorkerNodes":
+		if e.complexity.Query.InfraGetWorkerNodes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getWorkerNodes_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetWorkerNodes(childComplexity, args["clusterName"].(string), args["edgeName"].(string)), true
 
 	case "Query.infra_listCloudProviders":
 		if e.complexity.Query.InfraListCloudProviders == nil {
@@ -261,7 +317,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListCloudProviders(childComplexity, args["accountId"].(string)), true
+		return e.complexity.Query.InfraListCloudProviders(childComplexity, args["accountId"].(repos.ID)), true
 
 	case "Query.infra_listClusters":
 		if e.complexity.Query.InfraListClusters == nil {
@@ -273,7 +329,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListClusters(childComplexity, args["accountId"].(repos.ID)), true
+		return e.complexity.Query.InfraListClusters(childComplexity, args["accountName"].(string)), true
 
 	case "Query.infra_listEdges":
 		if e.complexity.Query.InfraListEdges == nil {
@@ -285,7 +341,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListEdges(childComplexity, args["providerName"].(string)), true
+		return e.complexity.Query.InfraListEdges(childComplexity, args["clusterName"].(string), args["providerName"].(string)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -368,34 +424,51 @@ var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Json
 scalar CloudProvider
 scalar Edge
-scalar ProviderSecrets
+scalar Secret
 scalar Cluster
+scalar MasterNode
+scalar WorkerNode
+scalar NodePool
 
 type Query {
-  infra_listClusters(accountId: ID!): [Cluster!]
+  # clusters
+  infra_listClusters(accountName: String!): [Cluster!]
   infra_getCluster(name: String!): Cluster
 
-  infra_listCloudProviders(accountId: String!): [CloudProvider!]
-  infra_getCloudProvider(name: String!): CloudProvider
+  # cloud providers
+  infra_listCloudProviders(accountId: ID!): [CloudProvider!]
+  infra_getCloudProvider(accountId: ID!, name: String!): CloudProvider
 
-  infra_listEdges(providerName: String!): [Edge!]
-  infra_getEdge(name: String!): Edge
+  # list edges
+  infra_listEdges(clusterName: String!, providerName: String!): [Edge!]
+  infra_getEdge(clusterName: String!, name: String!): Edge
+
+  # get master nodes
+  infra_getMasterNodes(clusterName: String!): [MasterNode!]
+  infra_getWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!]
+
+  # get node pools
+  infra_getNodePools(clusterName: String!): [NodePool!]
 }
 
 type Mutation {
+  # clusters
   infra_createCluster(cluster: Cluster!): Cluster
   infra_updateCluster(cluster: Cluster!): Cluster
   infra_deleteCluster(name: String!): Boolean!
 
   # cloud provider
-  infra_createCloudProvider(cloudProvider: CloudProvider!, creds: ProviderSecrets!): CloudProvider
-  infra_updateCloudProvider(cloudProvider: CloudProvider!, creds: ProviderSecrets): CloudProvider
-  infra_deleteCloudProvider(name: String!): Boolean!
+  infra_createCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret!): CloudProvider
+  infra_updateCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret): CloudProvider
+  infra_deleteCloudProvider(accountId: ID!, name: String!): Boolean!
 
   # Edge Regions
   infra_createEdge(edge: Edge!): Edge
   infra_updateEdge(edge: Edge!): Edge
-  infra_deleteEdge(name: String!): Boolean!
+  infra_deleteEdge(clusterName: String!, name: String!): Boolean!
+
+  # Nodes
+  infra_deleteWorkerNode(clusterName: String!, edgeName: String!, name: String!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "federation/directives.graphql", Input: `
@@ -436,15 +509,15 @@ func (ec *executionContext) field_Mutation_infra_createCloudProvider_args(ctx co
 		}
 	}
 	args["cloudProvider"] = arg0
-	var arg1 entities.ProviderSecrets
-	if tmp, ok := rawArgs["creds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creds"))
-		arg1, err = ec.unmarshalNProviderSecrets2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐProviderSecrets(ctx, tmp)
+	var arg1 entities.Secret
+	if tmp, ok := rawArgs["providerSecret"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerSecret"))
+		arg1, err = ec.unmarshalNSecret2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐSecret(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["creds"] = arg1
+	args["providerSecret"] = arg1
 	return args, nil
 }
 
@@ -481,15 +554,24 @@ func (ec *executionContext) field_Mutation_infra_createEdge_args(ctx context.Con
 func (ec *executionContext) field_Mutation_infra_deleteCloudProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["accountId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -512,14 +594,56 @@ func (ec *executionContext) field_Mutation_infra_deleteEdge_args(ctx context.Con
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteWorkerNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["edgeName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["edgeName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg2
 	return args, nil
 }
 
@@ -535,15 +659,15 @@ func (ec *executionContext) field_Mutation_infra_updateCloudProvider_args(ctx co
 		}
 	}
 	args["cloudProvider"] = arg0
-	var arg1 entities.ProviderSecrets
-	if tmp, ok := rawArgs["creds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creds"))
-		arg1, err = ec.unmarshalOProviderSecrets2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐProviderSecrets(ctx, tmp)
+	var arg1 *entities.Secret
+	if tmp, ok := rawArgs["providerSecret"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerSecret"))
+		arg1, err = ec.unmarshalOSecret2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐSecret(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["creds"] = arg1
+	args["providerSecret"] = arg1
 	return args, nil
 }
 
@@ -595,15 +719,24 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_infra_getCloudProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 repos.ID
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["accountId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -626,33 +759,81 @@ func (ec *executionContext) field_Query_infra_getEdge_args(ctx context.Context, 
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getMasterNodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getNodePools_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getWorkerNodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["edgeName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["edgeName"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_infra_listCloudProviders_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_infra_listClusters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 repos.ID
@@ -667,18 +848,42 @@ func (ec *executionContext) field_Query_infra_listClusters_args(ctx context.Cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_infra_listEdges_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_infra_listClusters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["providerName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["providerName"] = arg0
+	args["accountName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_listEdges_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["providerName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["providerName"] = arg1
 	return args, nil
 }
 
@@ -865,7 +1070,7 @@ func (ec *executionContext) _Mutation_infra_createCloudProvider(ctx context.Cont
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraCreateCloudProvider(rctx, args["cloudProvider"].(entities.CloudProvider), args["creds"].(entities.ProviderSecrets))
+		return ec.resolvers.Mutation().InfraCreateCloudProvider(rctx, args["cloudProvider"].(entities.CloudProvider), args["providerSecret"].(entities.Secret))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -904,7 +1109,7 @@ func (ec *executionContext) _Mutation_infra_updateCloudProvider(ctx context.Cont
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraUpdateCloudProvider(rctx, args["cloudProvider"].(entities.CloudProvider), args["creds"].(entities.ProviderSecrets))
+		return ec.resolvers.Mutation().InfraUpdateCloudProvider(rctx, args["cloudProvider"].(entities.CloudProvider), args["providerSecret"].(*entities.Secret))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -943,7 +1148,7 @@ func (ec *executionContext) _Mutation_infra_deleteCloudProvider(ctx context.Cont
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraDeleteCloudProvider(rctx, args["name"].(string))
+		return ec.resolvers.Mutation().InfraDeleteCloudProvider(rctx, args["accountId"].(repos.ID), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1063,7 +1268,49 @@ func (ec *executionContext) _Mutation_infra_deleteEdge(ctx context.Context, fiel
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraDeleteEdge(rctx, args["name"].(string))
+		return ec.resolvers.Mutation().InfraDeleteEdge(rctx, args["clusterName"].(string), args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_infra_deleteWorkerNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_infra_deleteWorkerNode_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().InfraDeleteWorkerNode(rctx, args["clusterName"].(string), args["edgeName"].(string), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1105,7 +1352,7 @@ func (ec *executionContext) _Query_infra_listClusters(ctx context.Context, field
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraListClusters(rctx, args["accountId"].(repos.ID))
+		return ec.resolvers.Query().InfraListClusters(rctx, args["accountName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1183,7 +1430,7 @@ func (ec *executionContext) _Query_infra_listCloudProviders(ctx context.Context,
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraListCloudProviders(rctx, args["accountId"].(string))
+		return ec.resolvers.Query().InfraListCloudProviders(rctx, args["accountId"].(repos.ID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1222,7 +1469,7 @@ func (ec *executionContext) _Query_infra_getCloudProvider(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetCloudProvider(rctx, args["name"].(string))
+		return ec.resolvers.Query().InfraGetCloudProvider(rctx, args["accountId"].(repos.ID), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1261,7 +1508,7 @@ func (ec *executionContext) _Query_infra_listEdges(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraListEdges(rctx, args["providerName"].(string))
+		return ec.resolvers.Query().InfraListEdges(rctx, args["clusterName"].(string), args["providerName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1300,7 +1547,7 @@ func (ec *executionContext) _Query_infra_getEdge(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetEdge(rctx, args["name"].(string))
+		return ec.resolvers.Query().InfraGetEdge(rctx, args["clusterName"].(string), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1312,6 +1559,123 @@ func (ec *executionContext) _Query_infra_getEdge(ctx context.Context, field grap
 	res := resTmp.(*entities.Edge)
 	fc.Result = res
 	return ec.marshalOEdge2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_infra_getMasterNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_infra_getMasterNodes_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().InfraGetMasterNodes(rctx, args["clusterName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.MasterNode)
+	fc.Result = res
+	return ec.marshalOMasterNode2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNodeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_infra_getWorkerNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_infra_getWorkerNodes_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().InfraGetWorkerNodes(rctx, args["clusterName"].(string), args["edgeName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.WorkerNode)
+	fc.Result = res
+	return ec.marshalOWorkerNode2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐWorkerNodeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_infra_getNodePools(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_infra_getNodePools_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().InfraGetNodePools(rctx, args["clusterName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.NodePool)
+	fc.Result = res
+	return ec.marshalONodePool2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐNodePoolᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__service(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2737,6 +3101,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "infra_deleteWorkerNode":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_deleteWorkerNode(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2877,6 +3251,66 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_infra_getEdge(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getMasterNodes":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getMasterNodes(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getWorkerNodes":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getWorkerNodes(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getNodePools":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getNodePools(ctx, field)
 				return res
 			}
 
@@ -3495,19 +3929,45 @@ func (ec *executionContext) marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx con
 	return res
 }
 
-func (ec *executionContext) unmarshalNProviderSecrets2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐProviderSecrets(ctx context.Context, v interface{}) (entities.ProviderSecrets, error) {
-	var res entities.ProviderSecrets
+func (ec *executionContext) unmarshalNMasterNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNode(ctx context.Context, v interface{}) (*entities.MasterNode, error) {
+	var res = new(entities.MasterNode)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNProviderSecrets2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐProviderSecrets(ctx context.Context, sel ast.SelectionSet, v entities.ProviderSecrets) graphql.Marshaler {
+func (ec *executionContext) marshalNMasterNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNode(ctx context.Context, sel ast.SelectionSet, v *entities.MasterNode) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
 		}
 		return graphql.Null
 	}
+	return v
+}
+
+func (ec *executionContext) unmarshalNNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐNodePool(ctx context.Context, v interface{}) (*entities.NodePool, error) {
+	var res = new(entities.NodePool)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐNodePool(ctx context.Context, sel ast.SelectionSet, v *entities.NodePool) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalNSecret2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐSecret(ctx context.Context, v interface{}) (entities.Secret, error) {
+	var res entities.Secret
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSecret2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐSecret(ctx context.Context, sel ast.SelectionSet, v entities.Secret) graphql.Marshaler {
 	return v
 }
 
@@ -3524,6 +3984,22 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNWorkerNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐWorkerNode(ctx context.Context, v interface{}) (*entities.WorkerNode, error) {
+	var res = new(entities.WorkerNode)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNWorkerNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐWorkerNode(ctx context.Context, sel ast.SelectionSet, v *entities.WorkerNode) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalN_FieldSet2string(ctx context.Context, v interface{}) (string, error) {
@@ -3986,16 +4462,92 @@ func (ec *executionContext) marshalOEdge2ᚖkloudliteᚗioᚋappsᚋinfraᚋinte
 	return v
 }
 
-func (ec *executionContext) unmarshalOProviderSecrets2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐProviderSecrets(ctx context.Context, v interface{}) (entities.ProviderSecrets, error) {
+func (ec *executionContext) unmarshalOMasterNode2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNodeᚄ(ctx context.Context, v interface{}) ([]*entities.MasterNode, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res entities.ProviderSecrets
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*entities.MasterNode, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNMasterNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNode(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOMasterNode2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*entities.MasterNode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNMasterNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNode(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalONodePool2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐNodePoolᚄ(ctx context.Context, v interface{}) ([]*entities.NodePool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*entities.NodePool, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐNodePool(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalONodePool2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐNodePoolᚄ(ctx context.Context, sel ast.SelectionSet, v []*entities.NodePool) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐNodePool(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOSecret2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐSecret(ctx context.Context, v interface{}) (*entities.Secret, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(entities.Secret)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOProviderSecrets2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐProviderSecrets(ctx context.Context, sel ast.SelectionSet, v entities.ProviderSecrets) graphql.Marshaler {
+func (ec *executionContext) marshalOSecret2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐSecret(ctx context.Context, sel ast.SelectionSet, v *entities.Secret) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4026,6 +4578,44 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOWorkerNode2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐWorkerNodeᚄ(ctx context.Context, v interface{}) ([]*entities.WorkerNode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*entities.WorkerNode, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNWorkerNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐWorkerNode(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOWorkerNode2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐWorkerNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*entities.WorkerNode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNWorkerNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐWorkerNode(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

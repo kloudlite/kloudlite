@@ -4,39 +4,58 @@ global:
 ---
 label: Create Cloud Provider
 query: |+
-  mutation Infra_createCloudProvider($cloudProvider: CloudProvider!, $creds: ProviderSecrets!) {
-    infra_createCloudProvider(cloudProvider: $cloudProvider, creds: $creds)
+  mutation Infra_createCloudProvider($cloudProvider: CloudProvider!, $providerSecret: Secret!) {
+    infra_createCloudProvider(cloudProvider: $cloudProvider, providerSecret: $providerSecret)
   }
 variables:
-  creds:
-    accessKey: "key1"
-    accessSecret: secret1
+  providerSecret:
+    apiVersion: crds.kloudlite.io/v1
+    kind: Secret
+    metadata:
+      name: provider-sample-cp5
+      namespace: kl-core
+    stringData:
+      accessKey: "key1"
+      accessSecret: secret1
   cloudProvider:
     apiVersion: infra.kloudlite.io/v1
     kind: CloudProvider
     metadata:
-      name: sample-cp
+      name: sample-cp5
     spec:
       accountId: "{{.accountId}}"
-      providerSecretRef:
+      providerSecret:
         name: sample-cp
         namespace: kl-core
 ---
 
 label: List Providers
 query: |+
-  query Query($accountId: String!) {
+  query Query($accountId: ID!) {
     infra_listCloudProviders(accountId: $accountId)
   }
 variables:
   accountId: "{{.accountId}}"
+
 ---
 
 label: Get Provider
 query: |+
-  query Query($name: String!) {
-    infra_getCloudProvider(name: $name)
+  query Query($accountId: ID!, $name: String!) {
+    infra_getCloudProvider(accountId: $accountId, name: $name)
   }
 variables:
-  name: sample-cp
+  accountId: "{{.accountId}}"
+  name: sample-cp5
+
+---
+
+label: Delete Provider
+query: |+
+  mutation Query($accountId: ID!, $name: String!) {
+    infra_deleteCloudProvider(accountId: $accountId, name: $name)
+  }
+variables:
+  accountId: "{{.accountId}}"
+  name: sample-cp5
 ---

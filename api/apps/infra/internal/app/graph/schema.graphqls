@@ -1,32 +1,49 @@
 scalar Json
 scalar CloudProvider
 scalar Edge
-scalar ProviderSecrets
+scalar Secret
 scalar Cluster
+scalar MasterNode
+scalar WorkerNode
+scalar NodePool
 
 type Query {
-  infra_listClusters(accountId: ID!): [Cluster!]
+  # clusters
+  infra_listClusters(accountName: String!): [Cluster!]
   infra_getCluster(name: String!): Cluster
 
-  infra_listCloudProviders(accountId: String!): [CloudProvider!]
-  infra_getCloudProvider(name: String!): CloudProvider
+  # cloud providers
+  infra_listCloudProviders(accountId: ID!): [CloudProvider!]
+  infra_getCloudProvider(accountId: ID!, name: String!): CloudProvider
 
-  infra_listEdges(providerName: String!): [Edge!]
-  infra_getEdge(name: String!): Edge
+  # list edges
+  infra_listEdges(clusterName: String!, providerName: String!): [Edge!]
+  infra_getEdge(clusterName: String!, name: String!): Edge
+
+  # get master nodes
+  infra_getMasterNodes(clusterName: String!): [MasterNode!]
+  infra_getWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!]
+
+  # get node pools
+  infra_getNodePools(clusterName: String!): [NodePool!]
 }
 
 type Mutation {
+  # clusters
   infra_createCluster(cluster: Cluster!): Cluster
   infra_updateCluster(cluster: Cluster!): Cluster
   infra_deleteCluster(name: String!): Boolean!
 
   # cloud provider
-  infra_createCloudProvider(cloudProvider: CloudProvider!, creds: ProviderSecrets!): CloudProvider
-  infra_updateCloudProvider(cloudProvider: CloudProvider!, creds: ProviderSecrets): CloudProvider
-  infra_deleteCloudProvider(name: String!): Boolean!
+  infra_createCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret!): CloudProvider
+  infra_updateCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret): CloudProvider
+  infra_deleteCloudProvider(accountId: ID!, name: String!): Boolean!
 
   # Edge Regions
   infra_createEdge(edge: Edge!): Edge
   infra_updateEdge(edge: Edge!): Edge
-  infra_deleteEdge(name: String!): Boolean!
+  infra_deleteEdge(clusterName: String!, name: String!): Boolean!
+
+  # Nodes
+  infra_deleteWorkerNode(clusterName: String!, edgeName: String!, name: String!): Boolean!
 }
