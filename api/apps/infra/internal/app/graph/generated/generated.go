@@ -16,7 +16,6 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"kloudlite.io/apps/infra/internal/domain/entities"
-	"kloudlite.io/pkg/repos"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -49,7 +48,7 @@ type ComplexityRoot struct {
 		InfraCreateCloudProvider func(childComplexity int, cloudProvider entities.CloudProvider, providerSecret entities.Secret) int
 		InfraCreateCluster       func(childComplexity int, cluster entities.Cluster) int
 		InfraCreateEdge          func(childComplexity int, edge entities.Edge) int
-		InfraDeleteCloudProvider func(childComplexity int, accountID repos.ID, name string) int
+		InfraDeleteCloudProvider func(childComplexity int, accountName string, name string) int
 		InfraDeleteCluster       func(childComplexity int, name string) int
 		InfraDeleteEdge          func(childComplexity int, clusterName string, name string) int
 		InfraDeleteWorkerNode    func(childComplexity int, clusterName string, edgeName string, name string) int
@@ -59,13 +58,13 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		InfraGetCloudProvider   func(childComplexity int, accountID repos.ID, name string) int
+		InfraGetCloudProvider   func(childComplexity int, accountName string, name string) int
 		InfraGetCluster         func(childComplexity int, name string) int
 		InfraGetEdge            func(childComplexity int, clusterName string, name string) int
 		InfraGetMasterNodes     func(childComplexity int, clusterName string) int
 		InfraGetNodePools       func(childComplexity int, clusterName string) int
 		InfraGetWorkerNodes     func(childComplexity int, clusterName string, edgeName string) int
-		InfraListCloudProviders func(childComplexity int, accountID repos.ID) int
+		InfraListCloudProviders func(childComplexity int, accountName string) int
 		InfraListClusters       func(childComplexity int, accountName string) int
 		InfraListEdges          func(childComplexity int, clusterName string, providerName string) int
 		__resolve__service      func(childComplexity int) int
@@ -82,7 +81,7 @@ type MutationResolver interface {
 	InfraDeleteCluster(ctx context.Context, name string) (bool, error)
 	InfraCreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error)
 	InfraUpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error)
-	InfraDeleteCloudProvider(ctx context.Context, accountID repos.ID, name string) (bool, error)
+	InfraDeleteCloudProvider(ctx context.Context, accountName string, name string) (bool, error)
 	InfraCreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
 	InfraUpdateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
 	InfraDeleteEdge(ctx context.Context, clusterName string, name string) (bool, error)
@@ -91,8 +90,8 @@ type MutationResolver interface {
 type QueryResolver interface {
 	InfraListClusters(ctx context.Context, accountName string) ([]*entities.Cluster, error)
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
-	InfraListCloudProviders(ctx context.Context, accountID repos.ID) ([]*entities.CloudProvider, error)
-	InfraGetCloudProvider(ctx context.Context, accountID repos.ID, name string) (*entities.CloudProvider, error)
+	InfraListCloudProviders(ctx context.Context, accountName string) ([]*entities.CloudProvider, error)
+	InfraGetCloudProvider(ctx context.Context, accountName string, name string) (*entities.CloudProvider, error)
 	InfraListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error)
 	InfraGetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error)
 	InfraGetMasterNodes(ctx context.Context, clusterName string) ([]*entities.MasterNode, error)
@@ -161,7 +160,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraDeleteCloudProvider(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
+		return e.complexity.Mutation.InfraDeleteCloudProvider(childComplexity, args["accountName"].(string), args["name"].(string)), true
 
 	case "Mutation.infra_deleteCluster":
 		if e.complexity.Mutation.InfraDeleteCluster == nil {
@@ -245,7 +244,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraGetCloudProvider(childComplexity, args["accountId"].(repos.ID), args["name"].(string)), true
+		return e.complexity.Query.InfraGetCloudProvider(childComplexity, args["accountName"].(string), args["name"].(string)), true
 
 	case "Query.infra_getCluster":
 		if e.complexity.Query.InfraGetCluster == nil {
@@ -317,7 +316,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListCloudProviders(childComplexity, args["accountId"].(repos.ID)), true
+		return e.complexity.Query.InfraListCloudProviders(childComplexity, args["accountName"].(string)), true
 
 	case "Query.infra_listClusters":
 		if e.complexity.Query.InfraListClusters == nil {
@@ -436,8 +435,8 @@ type Query {
   infra_getCluster(name: String!): Cluster
 
   # cloud providers
-  infra_listCloudProviders(accountId: ID!): [CloudProvider!]
-  infra_getCloudProvider(accountId: ID!, name: String!): CloudProvider
+  infra_listCloudProviders(accountName: String!): [CloudProvider!]
+  infra_getCloudProvider(accountName: String!, name: String!): CloudProvider
 
   # list edges
   infra_listEdges(clusterName: String!, providerName: String!): [Edge!]
@@ -460,7 +459,7 @@ type Mutation {
   # cloud provider
   infra_createCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret!): CloudProvider
   infra_updateCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret): CloudProvider
-  infra_deleteCloudProvider(accountId: ID!, name: String!): Boolean!
+  infra_deleteCloudProvider(accountName: String!, name: String!): Boolean!
 
   # Edge Regions
   infra_createEdge(edge: Edge!): Edge
@@ -554,15 +553,15 @@ func (ec *executionContext) field_Mutation_infra_createEdge_args(ctx context.Con
 func (ec *executionContext) field_Mutation_infra_deleteCloudProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -719,15 +718,15 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_infra_getCloudProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -836,15 +835,15 @@ func (ec *executionContext) field_Query_infra_getWorkerNodes_args(ctx context.Co
 func (ec *executionContext) field_Query_infra_listCloudProviders_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	return args, nil
 }
 
@@ -1148,7 +1147,7 @@ func (ec *executionContext) _Mutation_infra_deleteCloudProvider(ctx context.Cont
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InfraDeleteCloudProvider(rctx, args["accountId"].(repos.ID), args["name"].(string))
+		return ec.resolvers.Mutation().InfraDeleteCloudProvider(rctx, args["accountName"].(string), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1430,7 +1429,7 @@ func (ec *executionContext) _Query_infra_listCloudProviders(ctx context.Context,
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraListCloudProviders(rctx, args["accountId"].(repos.ID))
+		return ec.resolvers.Query().InfraListCloudProviders(rctx, args["accountName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1469,7 +1468,7 @@ func (ec *executionContext) _Query_infra_getCloudProvider(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetCloudProvider(rctx, args["accountId"].(repos.ID), args["name"].(string))
+		return ec.resolvers.Query().InfraGetCloudProvider(rctx, args["accountName"].(string), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3911,22 +3910,6 @@ func (ec *executionContext) marshalNEdge2ᚖkloudliteᚗioᚋappsᚋinfraᚋinte
 		return graphql.Null
 	}
 	return v
-}
-
-func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := repos.ID(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v repos.ID) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) unmarshalNMasterNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐMasterNode(ctx context.Context, v interface{}) (*entities.MasterNode, error) {

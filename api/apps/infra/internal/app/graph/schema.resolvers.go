@@ -8,7 +8,6 @@ import (
 
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/domain/entities"
-	"kloudlite.io/pkg/repos"
 )
 
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
@@ -34,8 +33,8 @@ func (r *mutationResolver) InfraUpdateCloudProvider(ctx context.Context, cloudPr
 	return r.Domain.UpdateCloudProvider(ctx, cloudProvider, providerSecret)
 }
 
-func (r *mutationResolver) InfraDeleteCloudProvider(ctx context.Context, accountID repos.ID, name string) (bool, error) {
-	if err := r.Domain.DeleteCloudProvider(ctx, accountID, name); err != nil {
+func (r *mutationResolver) InfraDeleteCloudProvider(ctx context.Context, accountName string, name string) (bool, error) {
+	if err := r.Domain.DeleteCloudProvider(ctx, accountName, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -68,12 +67,12 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*enti
 	return r.Domain.GetCluster(ctx, name)
 }
 
-func (r *queryResolver) InfraListCloudProviders(ctx context.Context, accountID repos.ID) ([]*entities.CloudProvider, error) {
-	return r.Domain.ListCloudProviders(ctx, accountID)
+func (r *queryResolver) InfraListCloudProviders(ctx context.Context, accountName string) ([]*entities.CloudProvider, error) {
+	return r.Domain.ListCloudProviders(ctx, accountName)
 }
 
-func (r *queryResolver) InfraGetCloudProvider(ctx context.Context, accountID repos.ID, name string) (*entities.CloudProvider, error) {
-	return r.Domain.GetCloudProvider(ctx, accountID, name)
+func (r *queryResolver) InfraGetCloudProvider(ctx context.Context, accountName string, name string) (*entities.CloudProvider, error) {
+	return r.Domain.GetCloudProvider(ctx, accountName, name)
 }
 
 func (r *queryResolver) InfraListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error) {
