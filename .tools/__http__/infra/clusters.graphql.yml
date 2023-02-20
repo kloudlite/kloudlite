@@ -23,7 +23,7 @@ variables:
       provider: aws
       count: 1
       region: ap-south-1
-      # config: '{"instanceType":"c6a.large","vpc":""}'
+      config: '{"instanceType":"c6a.large","vpc":""}'
 ---
 
 label: List Clusters

@@ -59,16 +59,52 @@ func (d *domain) CreateCloudProvider(ctx context.Context, cloudProvider entities
 	return cp, nil
 }
 
-func (d *domain) ListCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error) {
-	return d.providerRepo.Find(ctx, repos.Query{Filter: repos.Filter{"spec.accountId": accountId}})
+func (d *domain) ListCloudProviders(ctx context.Context, accountName string) ([]*entities.CloudProvider, error) {
+	return d.providerRepo.Find(ctx, repos.Query{Filter: repos.Filter{"spec.accountName": accountName}})
 }
 
-func (d *domain) GetCloudProvider(ctx context.Context, accountId repos.ID, name string) (*entities.CloudProvider, error) {
-	return d.providerRepo.FindOne(ctx, repos.Filter{"metadata.name": name, "spec.accountId": accountId})
+func (d *domain) GetCloudProvider(ctx context.Context, accountName string, name string) (*entities.CloudProvider, error) {
+	return d.providerRepo.FindOne(ctx, repos.Filter{"metadata.name": name, "spec.accountName": accountName})
 }
 
 func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error) {
-	uProvider, err := d.providerRepo.UpdateOne(ctx, repos.Filter{"id": cloudProvider.Id}, &cloudProvider)
+	cp, err := d.providerRepo.FindOne(ctx, repos.Filter{"metadata.name": cloudProvider.Name})
+	if err != nil {
+		return nil, err
+	}
+
+	if cp == nil {
+		return nil, fmt.Errorf("cloud provider %s not found", cloudProvider.Name)
+	}
+
+	if providerSecret != nil {
+		ps, err := d.secretRepo.FindOne(ctx, repos.Filter{"metadata.name": providerSecret.Name, "metadata.namespace": providerSecret.Namespace})
+		if err != nil {
+			return nil, err
+		}
+		if ps == nil {
+			return nil, fmt.Errorf("provider %s does not exist", providerSecret.Name)
+		}
+
+		uSecret, err := d.secretRepo.UpdateById(ctx, ps.Id, providerSecret)
+		if err != nil {
+			return nil, err
+		}
+
+		b, err := json.Marshal(uSecret.Secret)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+			return nil, err
+		}
+
+		cloudProvider.Spec.ProviderSecret.Name = providerSecret.Name
+		cloudProvider.Spec.ProviderSecret.Namespace = providerSecret.Namespace
+	}
+
+	uProvider, err := d.providerRepo.UpdateOne(ctx, repos.Filter{"id": cp.Id}, &cloudProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +121,8 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 	return nil, err
 }
 
-func (d *domain) DeleteCloudProvider(ctx context.Context, accountId repos.ID, name string) error {
-	return d.providerRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name, "spec.accountId": accountId})
+func (d *domain) DeleteCloudProvider(ctx context.Context, accountName string, name string) error {
+	return d.providerRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name, "spec.accountName": accountName})
 }
 
 func (d *domain) findCluster(ctx context.Context, clusterName string) (*entities.Cluster, error) {
@@ -261,11 +297,11 @@ func (d *domain) CreateEdge(ctx context.Context, edge entities.Edge) (*entities.
 	if err := d.k8sClient.Create(ctx, &nEdge.Edge); err != nil {
 		return nil, err
 	}
-	return nil, err
+	return nEdge, err
 }
 
 func (d *domain) ListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error) {
-	return d.edgeRepo.Find(ctx, repos.Query{Filter: repos.Filter{"spec.clusterName": clusterName, "spec.provider": providerName}})
+	return d.edgeRepo.Find(ctx, repos.Query{Filter: repos.Filter{"spec.clusterName": clusterName, "spec.providerName": providerName}})
 }
 
 func (d *domain) GetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error) {

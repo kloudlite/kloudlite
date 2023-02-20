@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"kloudlite.io/apps/infra/internal/domain/entities"
-	"kloudlite.io/pkg/repos"
 )
 
 type Domain interface {
@@ -14,10 +13,10 @@ type Domain interface {
 	DeleteCluster(ctx context.Context, name string) error
 
 	CreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error)
-	ListCloudProviders(ctx context.Context, accountId repos.ID) ([]*entities.CloudProvider, error)
-	GetCloudProvider(ctx context.Context, accountId repos.ID, name string) (*entities.CloudProvider, error)
+	ListCloudProviders(ctx context.Context, accountName string) ([]*entities.CloudProvider, error)
+	GetCloudProvider(ctx context.Context, accountName string, name string) (*entities.CloudProvider, error)
 	UpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error)
-	DeleteCloudProvider(ctx context.Context, accountId repos.ID, name string) error
+	DeleteCloudProvider(ctx context.Context, accountName string, name string) error
 
 	CreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
 	ListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error)
