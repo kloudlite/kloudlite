@@ -64,6 +64,18 @@ models:
   Edge:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.Edge
-  ProviderSecrets:
+  ProviderSecret:
     model:
-      - kloudlite.io/apps/infra/internal/domain/entities.ProviderSecrets
+      - kloudlite.io/apps/infra/internal/domain/entities.Secret
+  Node:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Node
+  MasterNode:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
+  WorkerNode:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
+  NodePool:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.NodePool

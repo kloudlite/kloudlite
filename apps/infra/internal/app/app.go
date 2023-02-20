@@ -14,6 +14,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -25,12 +26,22 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cp", entities.CloudProviderIndices),
 	repos.NewFxMongoRepo[*entities.Edge]("edges", "edge", entities.EdgeIndices),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
+	repos.NewFxMongoRepo[*entities.MasterNode]("clusters", "clus", entities.MasterNodeIndices),
+	repos.NewFxMongoRepo[*entities.WorkerNode]("clusters", "clus", entities.WorkerNodeIndices),
+	repos.NewFxMongoRepo[*entities.NodePool]("clusters", "clus", entities.NodePoolIndices),
+	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndices),
 
 	fx.Provide(
 		func(conn FinanceClientConnection) finance.FinanceClient {
 			return finance.NewFinanceClient((*grpc.ClientConn)(conn))
 		},
 	),
+
+	redpanda.NewProducerFx[redpanda.Client](),
+
+	fx.Provide(func(producer redpanda.Producer) domain.AgentMessenger {
+		return domain.NewAgentMessenger(producer)
+	}),
 
 	domain.Module,
 

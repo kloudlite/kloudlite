@@ -2,15 +2,21 @@ package entities
 
 import (
 	"encoding/json"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"io"
 
-	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
+	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
+
 	"kloudlite.io/pkg/repos"
 )
 
-type ProviderSecrets map[string]string
+type Secret struct {
+	repos.BaseEntity `json:",inline"`
+	crdsv1.Secret    `json:",inline"`
+}
 
-func (ps *ProviderSecrets) UnmarshalGQL(v interface{}) error {
+//goland:noinspection ALL
+func (s *Secret) UnmarshalGQL(v interface{}) error {
 	switch t := v.(type) {
 	case map[string]any:
 		b, err := json.Marshal(t)
@@ -18,12 +24,11 @@ func (ps *ProviderSecrets) UnmarshalGQL(v interface{}) error {
 			return err
 		}
 
-		if err := json.Unmarshal(b, ps); err != nil {
+		if err := json.Unmarshal(b, s); err != nil {
 			return err
 		}
-
 	case string:
-		if err := json.Unmarshal([]byte(t), ps); err != nil {
+		if err := json.Unmarshal([]byte(t), s); err != nil {
 			return err
 		}
 	}
@@ -31,19 +36,38 @@ func (ps *ProviderSecrets) UnmarshalGQL(v interface{}) error {
 	return nil
 }
 
-func (ps ProviderSecrets) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(ps)
+//goland:noinspection ALL
+func (s Secret) MarshalGQL(w io.Writer) {
+	b, err := json.Marshal(s)
 	if err != nil {
 		w.Write([]byte("{}"))
 	}
 	w.Write(b)
 }
 
-type CloudProvider struct {
-	repos.BaseEntity      `bson:",inline" json:",inline"`
-	infrav1.CloudProvider `bson:",inline" json:",inline"`
+var SecretIndices = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+
+	{
+		Field: []repos.IndexKey{
+			{Key: "metadata.name", Value: repos.IndexAsc},
+			{Key: "metadata.namespace", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }
 
+type CloudProvider struct {
+	repos.BaseEntity      `bson:",inline" json:",inline"`
+	infraV1.CloudProvider `bson:",inline" json:",inline"`
+}
+
+//goland:noinspection ALL
 func (cp *CloudProvider) UnmarshalGQL(v interface{}) error {
 	switch t := v.(type) {
 	case map[string]any:
@@ -65,10 +89,11 @@ func (cp *CloudProvider) UnmarshalGQL(v interface{}) error {
 	return nil
 }
 
+//goland:noinspection ALL
 func (cp CloudProvider) MarshalGQL(w io.Writer) {
 	b, err := json.Marshal(cp)
 	if err != nil {
-		w.Write([]byte("{}"))
+		w.Write([]byte(""))
 	}
 	w.Write(b)
 }
@@ -83,6 +108,7 @@ var CloudProviderIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
+			{Key: "spec.accountId", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

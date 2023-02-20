@@ -1,135 +1,139 @@
 package k8s
 
 import (
-  "bytes"
-  "context"
-  "io"
+	"bytes"
+	"context"
+	"io"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 
-  corev1 "k8s.io/api/core/v1"
-  "k8s.io/apimachinery/pkg/api/errors"
-  "k8s.io/apimachinery/pkg/api/meta"
-  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-  "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-  "k8s.io/apimachinery/pkg/runtime"
-  "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-  yamlutil "k8s.io/apimachinery/pkg/util/yaml"
-  "k8s.io/client-go/dynamic"
-  "k8s.io/client-go/kubernetes"
-  "k8s.io/client-go/rest"
-  "k8s.io/client-go/restmapper"
-
-  "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type YAMLClient struct {
-  k8sClient     *kubernetes.Clientset
-  dynamicClient dynamic.Interface
-  restMapper    meta.RESTMapper
+	k8sClient     *kubernetes.Clientset
+	dynamicClient dynamic.Interface
+	restMapper    meta.RESTMapper
 }
 
 func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
-  jYamls := bytes.Join(yamls, []byte("\n---\n"))
-  decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 200)
-  for {
-    var rawObj runtime.RawExtension
-    if err := decoder.Decode(&rawObj); err != nil {
-      if err != io.EOF {
-        return err
-      }
-      break
-    }
 
-    if rawObj.Raw == nil {
-      continue
-    }
+	jYamls := bytes.Join(yamls, []byte("\n---\n"))
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 200)
+	for {
+		var rawObj runtime.RawExtension
+		if err := decoder.Decode(&rawObj); err != nil {
+			if err != io.EOF {
+				return err
+			}
+			break
+		}
 
-    obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
-    if err != nil {
-      return err
-    }
-    unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-    if err != nil {
-      // log.Fatal(err)
-      return err
-    }
+		if rawObj.Raw == nil {
+			continue
+		}
 
-    unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
+		obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
+		if err != nil {
+			return err
+		}
+		unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		if err != nil {
+			// log.Fatal(err)
+			return err
+		}
 
-    var dri dynamic.ResourceInterface
+		unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
 
-    mapping, err := yc.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-    if err != nil {
-      // log.Fatal(err)
-      return err
-    }
-    if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-      if unstructuredObj.GetNamespace() == "" {
-        unstructuredObj.SetNamespace("default")
-      }
-      dri = yc.dynamicClient.Resource(mapping.Resource).Namespace(unstructuredObj.GetNamespace())
-    } else {
-      dri = yc.dynamicClient.Resource(mapping.Resource)
-    }
+		var dri dynamic.ResourceInterface
 
-    if _, err := dri.Patch(
-      context.Background(),
-      unstructuredObj.GetName(),
-      types.MergePatchType,
-      rawObj.Raw,
-      metav1.PatchOptions{},
-    ); err != nil {
-      if errors.IsNotFound(err) {
-        if _, err := dri.Create(ctx, unstructuredObj, metav1.CreateOptions{}); err != nil {
-          // log.Fatal(err)
-          return err
-        }
-        continue
-      }
-      // log.Fatal(err)
-      return err
-    }
-  }
-  return nil
+		mapping, err := yc.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if err != nil {
+			// log.Fatal(err)
+			return err
+		}
+		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+			if unstructuredObj.GetNamespace() == "" {
+				unstructuredObj.SetNamespace("default")
+			}
+			dri = yc.dynamicClient.Resource(mapping.Resource).Namespace(unstructuredObj.GetNamespace())
+		} else {
+			dri = yc.dynamicClient.Resource(mapping.Resource)
+		}
+
+		if _, err := dri.Patch(
+			context.Background(),
+			unstructuredObj.GetName(),
+			types.MergePatchType,
+			rawObj.Raw,
+			metav1.PatchOptions{},
+		); err != nil {
+			if errors.IsNotFound(err) {
+				if _, err := dri.Create(ctx, unstructuredObj, metav1.CreateOptions{}); err != nil {
+					// log.Fatal(err)
+					return err
+				}
+				continue
+			}
+			// log.Fatal(err)
+			return err
+		}
+	}
+	return nil
 }
 
 func (yc *YAMLClient) GetSecret(ctx context.Context, namespace, name string) (*corev1.Secret, error) {
-  return yc.k8sClient.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	return yc.k8sClient.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 func (yc *YAMLClient) GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error) {
-  return yc.k8sClient.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
+	return yc.k8sClient.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 func NewYAMLClient(config *rest.Config) (*YAMLClient, error) {
-  c, err := kubernetes.NewForConfig(config)
-  if err != nil {
-    return nil, err
-  }
+	c, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 
-  dc, err := dynamic.NewForConfig(config)
-  if err != nil {
-    return nil, err
-  }
+	dc, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 
-  gr, err := restmapper.GetAPIGroupResources(c.Discovery())
-  if err != nil {
-    // log.Fatal(err)
-    return nil, err
-  }
+	gr, err := restmapper.GetAPIGroupResources(c.Discovery())
+	if err != nil {
+		// log.Fatal(err)
+		return nil, err
+	}
 
-  mapper := restmapper.NewDiscoveryRESTMapper(gr)
+	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
-  return &YAMLClient{
-    k8sClient:     c,
-    dynamicClient: dc,
-    restMapper:    mapper,
-  }, nil
+	return &YAMLClient{
+		k8sClient:     c,
+		dynamicClient: dc,
+		restMapper:    mapper,
+	}, nil
 }
 
 func NewYAMLClientOrDie(config *rest.Config) *YAMLClient {
-  client, err := NewYAMLClient(config)
-  if err != nil {
-    panic(err)
-  }
-  return client
+	client, err := NewYAMLClient(config)
+	if err != nil {
+		panic(err)
+	}
+	return client
+}
+
+func ValidateStruct(clientset clientset.Clientset, crdName string) {
 }

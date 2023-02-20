@@ -26,16 +26,16 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, name string) 
 	return true, nil
 }
 
-func (r *mutationResolver) InfraCreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, creds entities.ProviderSecrets) (*entities.CloudProvider, error) {
-	return r.Domain.CreateCloudProvider(ctx, cloudProvider)
+func (r *mutationResolver) InfraCreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error) {
+	return r.Domain.CreateCloudProvider(ctx, cloudProvider, providerSecret)
 }
 
-func (r *mutationResolver) InfraUpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, creds entities.ProviderSecrets) (*entities.CloudProvider, error) {
-	return r.Domain.UpdateCloudProvider(ctx, cloudProvider)
+func (r *mutationResolver) InfraUpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error) {
+	return r.Domain.UpdateCloudProvider(ctx, cloudProvider, providerSecret)
 }
 
-func (r *mutationResolver) InfraDeleteCloudProvider(ctx context.Context, name string) (bool, error) {
-	if err := r.Domain.DeleteCloudProvider(ctx, name); err != nil {
+func (r *mutationResolver) InfraDeleteCloudProvider(ctx context.Context, accountID repos.ID, name string) (bool, error) {
+	if err := r.Domain.DeleteCloudProvider(ctx, accountID, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -49,35 +49,51 @@ func (r *mutationResolver) InfraUpdateEdge(ctx context.Context, edge entities.Ed
 	return r.Domain.UpdateEdge(ctx, edge)
 }
 
-func (r *mutationResolver) InfraDeleteEdge(ctx context.Context, name string) (bool, error) {
-	if err := r.Domain.DeleteEdge(ctx, name); err != nil {
+func (r *mutationResolver) InfraDeleteEdge(ctx context.Context, clusterName string, name string) (bool, error) {
+	if err := r.Domain.DeleteEdge(ctx, clusterName, name); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (r *queryResolver) InfraListClusters(ctx context.Context, accountID repos.ID) ([]*entities.Cluster, error) {
-	return r.Domain.ListClusters(ctx, accountID)
+func (r *mutationResolver) InfraDeleteWorkerNode(ctx context.Context, clusterName string, edgeName string, name string) (bool, error) {
+	return r.Domain.DeleteWorkerNode(ctx, clusterName, edgeName, name)
+}
+
+func (r *queryResolver) InfraListClusters(ctx context.Context, accountName string) ([]*entities.Cluster, error) {
+	return r.Domain.ListClusters(ctx, accountName)
 }
 
 func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error) {
 	return r.Domain.GetCluster(ctx, name)
 }
 
-func (r *queryResolver) InfraListCloudProviders(ctx context.Context, accountID string) ([]*entities.CloudProvider, error) {
-	return r.Domain.ListCloudProviders(ctx, repos.ID(accountID))
+func (r *queryResolver) InfraListCloudProviders(ctx context.Context, accountID repos.ID) ([]*entities.CloudProvider, error) {
+	return r.Domain.ListCloudProviders(ctx, accountID)
 }
 
-func (r *queryResolver) InfraGetCloudProvider(ctx context.Context, name string) (*entities.CloudProvider, error) {
-	return r.Domain.GetCloudProvider(ctx, name)
+func (r *queryResolver) InfraGetCloudProvider(ctx context.Context, accountID repos.ID, name string) (*entities.CloudProvider, error) {
+	return r.Domain.GetCloudProvider(ctx, accountID, name)
 }
 
-func (r *queryResolver) InfraListEdges(ctx context.Context, providerName string) ([]*entities.Edge, error) {
-	return r.Domain.ListEdges(ctx, providerName)
+func (r *queryResolver) InfraListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error) {
+	return r.Domain.ListEdges(ctx, clusterName, providerName)
 }
 
-func (r *queryResolver) InfraGetEdge(ctx context.Context, name string) (*entities.Edge, error) {
-	return r.Domain.GetEdge(ctx, name)
+func (r *queryResolver) InfraGetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error) {
+	return r.Domain.GetEdge(ctx, clusterName, name)
+}
+
+func (r *queryResolver) InfraGetMasterNodes(ctx context.Context, clusterName string) ([]*entities.MasterNode, error) {
+	return r.Domain.GetMasterNodes(ctx, clusterName)
+}
+
+func (r *queryResolver) InfraGetWorkerNodes(ctx context.Context, clusterName string, edgeName string) ([]*entities.WorkerNode, error) {
+	return r.Domain.GetWorkerNodes(ctx, clusterName, edgeName)
+}
+
+func (r *queryResolver) InfraGetNodePools(ctx context.Context, clusterName string) ([]*entities.NodePool, error) {
+	return r.Domain.GetNodePools(ctx, clusterName)
 }
 
 // Mutation returns generated.MutationResolver implementation.

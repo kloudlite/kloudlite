@@ -4,32 +4,32 @@ import (
 	"encoding/json"
 	"io"
 
-	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
+	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
 	"kloudlite.io/pkg/repos"
 )
 
 type Edge struct {
 	repos.BaseEntity `bson:",inline"`
-	infrav1.Edge     `json:",inline" bson:",inline"`
+	infraV1.Edge     `json:",inline" bson:",inline"`
 }
 
 func (edge *Edge) UnmarshalGQL(v interface{}) error {
-  switch t := v.(type) {
-    case map[string]any:
-      b, err := json.Marshal(t)
-      if err != nil {
-        return err
-      }
+	switch t := v.(type) {
+	case map[string]any:
+		b, err := json.Marshal(t)
+		if err != nil {
+			return err
+		}
 
-      if err := json.Unmarshal(b, edge); err != nil {
-        return err
-      }
+		if err := json.Unmarshal(b, edge); err != nil {
+			return err
+		}
 
-    case string:
-      if err := json.Unmarshal([]byte(t), edge); err != nil {
-        return err
-      }
-  }
+	case string:
+		if err := json.Unmarshal([]byte(t), edge); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
