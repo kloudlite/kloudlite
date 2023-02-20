@@ -13,4 +13,8 @@ type Env struct {
 	AuthRedisUserName string `env:"AUTH_REDIS_USER_NAME" required:"true"`
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
+
+	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
 }

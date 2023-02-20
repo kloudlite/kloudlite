@@ -7,44 +7,58 @@ import (
 	"kloudlite.io/pkg/cache"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/redpanda"
 	mongoRepo "kloudlite.io/pkg/repos"
 )
 
-type fEnv struct {
+type framework struct {
 	*env.Env
 }
 
+func (f *framework) GetBrokers() (brokers string) {
+	return f.Env.KafkaBrokers
+}
 
-func (f *fEnv) GetGRPCServerURL() string {
+func (f *framework) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          f.Env.KafkaUsername,
+		Password:      f.Env.KafkaPassword,
+	}
+}
+
+func (f *framework) GetGRPCServerURL() string {
 	return f.FinanceGrpcAddr
 }
 
-func (f *fEnv) GetHttpCors() string {
+func (f *framework) GetHttpCors() string {
 	return "https://studio.apollographql.com"
 }
 
-func (f *fEnv) GetHttpPort() uint16 {
+func (f *framework) GetHttpPort() uint16 {
 	return f.HttpPort
 }
 
-func (f *fEnv) GetMongoConfig() (url string, dbName string) {
+func (f *framework) GetMongoConfig() (url string, dbName string) {
 	return f.InfraDbUri, f.InfraDbName
 }
 
 var Module = fx.Module("framework",
-	fx.Provide(func(ev *env.Env) *fEnv {
-		return &fEnv{Env: ev}
+	fx.Provide(func(ev *env.Env) *framework {
+		return &framework{Env: ev}
 	}),
 
-	mongoRepo.NewMongoClientFx[*fEnv](),
-	httpServer.NewHttpServerFx[*fEnv](),
+	mongoRepo.NewMongoClientFx[*framework](),
+	httpServer.NewHttpServerFx[*framework](),
+
+	redpanda.NewClientFx[*framework](),
 
 	fx.Provide(
-		func(f *fEnv) app.AuthCacheClient {
+		func(f *framework) app.AuthCacheClient {
 			return cache.NewRedisClient(f.AuthRedisHosts, f.AuthRedisUserName, f.AuthRedisPassword, f.AuthRedisPrefix)
 		},
 	),
-	rpc.NewGrpcClientFx[*fEnv, app.FinanceClientConnection](),
+	rpc.NewGrpcClientFx[*framework, app.FinanceClientConnection](),
 	cache.FxLifeCycle[app.AuthCacheClient](),
 	app.Module,
 )

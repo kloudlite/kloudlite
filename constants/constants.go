@@ -127,3 +127,12 @@ var ActionMap = map[Action][]Role{
 	DeleteProject:       {AccountOwner, AccountAdmin, ProjectAdmin},
 	InviteProjectMember: {AccountOwner, AccountAdmin, ProjectAdmin},
 }
+
+const (
+	NamespaceCore string = "kl-core"
+)
+
+const (
+	ClusterNameKey string = "kloudlite.io/cluster.name"
+	EdgeNameKey    string = "kloudlite.io/edge.name"
+)
