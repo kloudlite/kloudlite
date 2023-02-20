@@ -13,8 +13,8 @@ type Query {
   infra_getCluster(name: String!): Cluster
 
   # cloud providers
-  infra_listCloudProviders(accountId: ID!): [CloudProvider!]
-  infra_getCloudProvider(accountId: ID!, name: String!): CloudProvider
+  infra_listCloudProviders(accountName: String!): [CloudProvider!]
+  infra_getCloudProvider(accountName: String!, name: String!): CloudProvider
 
   # list edges
   infra_listEdges(clusterName: String!, providerName: String!): [Edge!]
@@ -37,7 +37,7 @@ type Mutation {
   # cloud provider
   infra_createCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret!): CloudProvider
   infra_updateCloudProvider(cloudProvider: CloudProvider!, providerSecret: Secret): CloudProvider
-  infra_deleteCloudProvider(accountId: ID!, name: String!): Boolean!
+  infra_deleteCloudProvider(accountName: String!, name: String!): Boolean!
 
   # Edge Regions
   infra_createEdge(edge: Edge!): Edge
