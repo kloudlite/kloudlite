@@ -21,7 +21,6 @@ type domain struct {
 	clusterRepo       repos.DbRepo[*entities.Cluster]
 	edgeRepo          repos.DbRepo[*entities.Edge]
 	providerRepo      repos.DbRepo[*entities.CloudProvider]
-	financeClient     finance.FinanceClient
 	k8sClient         client.Client
 	masterNodeRepo    repos.DbRepo[*entities.MasterNode]
 	workerNodeRepo    repos.DbRepo[*entities.WorkerNode]
@@ -361,7 +360,6 @@ var Module = fx.Module("domain",
 				nodePoolRepo:   nodePoolRepo,
 				secretRepo:     secretRepo,
 
-				financeClient:  financeClient,
 				agentMessenger: agentMessenger,
 
 				k8sClient:         k8sClient,
