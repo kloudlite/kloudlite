@@ -203,8 +203,8 @@ func (d *domain) DeleteWorkerNode(ctx context.Context, clusterName string, edgeN
 	return true, nil
 }
 
-func (d *domain) GetNodePools(ctx context.Context, clusterName string) ([]*entities.NodePool, error) {
-	cluster, err := d.findCluster(ctx, clusterName)
+func (d *domain) GetNodePools(ctx context.Context, clusterName string, edgeName string) ([]*entities.NodePool, error) {
+	_, err := d.findCluster(ctx, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,8 @@ func (d *domain) GetNodePools(ctx context.Context, clusterName string) ([]*entit
 	var nodePools infraV1.NodePoolList
 	if err := d.k8sClient.List(ctx, &nodePools, &client.ListOptions{
 		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{
-			constants.ClusterNameKey: cluster.Name,
+			//constants.ClusterNameKey: cluster.Name,
+			constants.EdgeNameKey: edgeName,
 		}),
 	}); err != nil {
 		return nil, err
@@ -299,8 +300,12 @@ func (d *domain) CreateEdge(ctx context.Context, edge entities.Edge) (*entities.
 	return nEdge, err
 }
 
-func (d *domain) ListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error) {
-	return d.edgeRepo.Find(ctx, repos.Query{Filter: repos.Filter{"spec.clusterName": clusterName, "spec.providerName": providerName}})
+func (d *domain) ListEdges(ctx context.Context, clusterName string, providerName *string) ([]*entities.Edge, error) {
+	f := repos.Filter{"spec.clusterName": clusterName}
+	if providerName != nil {
+		f["spec.providerName"] = providerName
+	}
+	return d.edgeRepo.Find(ctx, repos.Query{Filter: f})
 }
 
 func (d *domain) GetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error) {
