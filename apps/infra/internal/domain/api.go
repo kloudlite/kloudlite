@@ -19,11 +19,11 @@ type Domain interface {
 	DeleteCloudProvider(ctx context.Context, accountName string, name string) error
 
 	CreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
-	ListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error)
+	ListEdges(ctx context.Context, clusterName string, providerName *string) ([]*entities.Edge, error)
 	GetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error)
 	UpdateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
 	DeleteEdge(ctx context.Context, clusterName string, name string) error
-	GetNodePools(ctx context.Context, clusterName string) ([]*entities.NodePool, error)
+	GetNodePools(ctx context.Context, clusterName string, edgeName string) ([]*entities.NodePool, error)
 	GetMasterNodes(ctx context.Context, clusterName string) ([]*entities.MasterNode, error)
 	GetWorkerNodes(ctx context.Context, clusterName string, edgeName string) ([]*entities.WorkerNode, error)
 	DeleteWorkerNode(ctx context.Context, clusterName string, edgeName string, name string) (bool, error)

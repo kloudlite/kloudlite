@@ -75,7 +75,7 @@ func (r *queryResolver) InfraGetCloudProvider(ctx context.Context, accountName s
 	return r.Domain.GetCloudProvider(ctx, accountName, name)
 }
 
-func (r *queryResolver) InfraListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error) {
+func (r *queryResolver) InfraListEdges(ctx context.Context, clusterName string, providerName *string) ([]*entities.Edge, error) {
 	return r.Domain.ListEdges(ctx, clusterName, providerName)
 }
 
@@ -91,8 +91,8 @@ func (r *queryResolver) InfraGetWorkerNodes(ctx context.Context, clusterName str
 	return r.Domain.GetWorkerNodes(ctx, clusterName, edgeName)
 }
 
-func (r *queryResolver) InfraGetNodePools(ctx context.Context, clusterName string) ([]*entities.NodePool, error) {
-	return r.Domain.GetNodePools(ctx, clusterName)
+func (r *queryResolver) InfraGetNodePools(ctx context.Context, clusterName string, edgeName string) ([]*entities.NodePool, error) {
+	return r.Domain.GetNodePools(ctx, clusterName, edgeName)
 }
 
 // Mutation returns generated.MutationResolver implementation.

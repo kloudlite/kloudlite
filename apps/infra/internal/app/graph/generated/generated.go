@@ -62,11 +62,11 @@ type ComplexityRoot struct {
 		InfraGetCluster         func(childComplexity int, name string) int
 		InfraGetEdge            func(childComplexity int, clusterName string, name string) int
 		InfraGetMasterNodes     func(childComplexity int, clusterName string) int
-		InfraGetNodePools       func(childComplexity int, clusterName string) int
+		InfraGetNodePools       func(childComplexity int, clusterName string, edgeName string) int
 		InfraGetWorkerNodes     func(childComplexity int, clusterName string, edgeName string) int
 		InfraListCloudProviders func(childComplexity int, accountName string) int
 		InfraListClusters       func(childComplexity int, accountName string) int
-		InfraListEdges          func(childComplexity int, clusterName string, providerName string) int
+		InfraListEdges          func(childComplexity int, clusterName string, providerName *string) int
 		__resolve__service      func(childComplexity int) int
 	}
 
@@ -92,11 +92,11 @@ type QueryResolver interface {
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
 	InfraListCloudProviders(ctx context.Context, accountName string) ([]*entities.CloudProvider, error)
 	InfraGetCloudProvider(ctx context.Context, accountName string, name string) (*entities.CloudProvider, error)
-	InfraListEdges(ctx context.Context, clusterName string, providerName string) ([]*entities.Edge, error)
+	InfraListEdges(ctx context.Context, clusterName string, providerName *string) ([]*entities.Edge, error)
 	InfraGetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error)
 	InfraGetMasterNodes(ctx context.Context, clusterName string) ([]*entities.MasterNode, error)
 	InfraGetWorkerNodes(ctx context.Context, clusterName string, edgeName string) ([]*entities.WorkerNode, error)
-	InfraGetNodePools(ctx context.Context, clusterName string) ([]*entities.NodePool, error)
+	InfraGetNodePools(ctx context.Context, clusterName string, edgeName string) ([]*entities.NodePool, error)
 }
 
 type executableSchema struct {
@@ -292,7 +292,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraGetNodePools(childComplexity, args["clusterName"].(string)), true
+		return e.complexity.Query.InfraGetNodePools(childComplexity, args["clusterName"].(string), args["edgeName"].(string)), true
 
 	case "Query.infra_getWorkerNodes":
 		if e.complexity.Query.InfraGetWorkerNodes == nil {
@@ -340,7 +340,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListEdges(childComplexity, args["clusterName"].(string), args["providerName"].(string)), true
+		return e.complexity.Query.InfraListEdges(childComplexity, args["clusterName"].(string), args["providerName"].(*string)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -439,7 +439,7 @@ type Query {
   infra_getCloudProvider(accountName: String!, name: String!): CloudProvider
 
   # list edges
-  infra_listEdges(clusterName: String!, providerName: String!): [Edge!]
+  infra_listEdges(clusterName: String!, providerName: String): [Edge!]
   infra_getEdge(clusterName: String!, name: String!): Edge
 
   # get master nodes
@@ -447,7 +447,7 @@ type Query {
   infra_getWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!]
 
   # get node pools
-  infra_getNodePools(clusterName: String!): [NodePool!]
+  infra_getNodePools(clusterName: String!, edgeName: String!): [NodePool!]
 }
 
 type Mutation {
@@ -805,6 +805,15 @@ func (ec *executionContext) field_Query_infra_getNodePools_args(ctx context.Cont
 		}
 	}
 	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["edgeName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["edgeName"] = arg1
 	return args, nil
 }
 
@@ -874,10 +883,10 @@ func (ec *executionContext) field_Query_infra_listEdges_args(ctx context.Context
 		}
 	}
 	args["clusterName"] = arg0
-	var arg1 string
+	var arg1 *string
 	if tmp, ok := rawArgs["providerName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1507,7 +1516,7 @@ func (ec *executionContext) _Query_infra_listEdges(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraListEdges(rctx, args["clusterName"].(string), args["providerName"].(string))
+		return ec.resolvers.Query().InfraListEdges(rctx, args["clusterName"].(string), args["providerName"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1663,7 +1672,7 @@ func (ec *executionContext) _Query_infra_getNodePools(ctx context.Context, field
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().InfraGetNodePools(rctx, args["clusterName"].(string))
+		return ec.resolvers.Query().InfraGetNodePools(rctx, args["clusterName"].(string), args["edgeName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
