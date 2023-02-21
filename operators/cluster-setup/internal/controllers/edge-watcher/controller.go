@@ -3,20 +3,19 @@ package edgeWatcher
 import (
 	"context"
 	"encoding/json"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
 	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
-	"github.com/kloudlite/operator/operators/extensions/internal/env"
+	"github.com/kloudlite/operator/operators/cluster-setup/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -80,36 +79,25 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		logger.Infof("RECONCILATION COMPLETE")
 	}()
 
-	edgeWorker := &extensionsv1.EdgeWorker{}
-	if err := r.Get(ctx, fn.NN("", edge.Name), edgeWorker); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return reconcile.Result{}, err
+	edgeWorker := &extensionsv1.EdgeWorker{ObjectMeta: metav1.ObjectMeta{Name: edge.Name}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, edgeWorker, func() error {
+		if edgeWorker.Labels == nil {
+			edgeWorker.Labels = make(map[string]string, 1)
 		}
-		logger.Infof("edge worker (%s) not found, will be creating now...", edge.Name)
-		edgeWorker = nil
-	}
+		edgeWorker.Labels["kloudlite.io/created-by-edge-watcher"] = "true"
+		edgeWorker.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(edgeRes, true)})
 
-	if err := r.Create(
-		ctx, &extensionsv1.EdgeWorker{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: edge.Name,
-				Labels: map[string]string{
-					"kloudlite.io/created-by-edge-watcher": "true",
-				},
-				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(edgeRes, true)},
-			},
-			Spec: extensionsv1.EdgeWorkerSpec{
-				AccountId: edge.Spec.AccountId,
-				Creds:     edge.Spec.CredentialsRef,
-				Provider:  edge.Spec.Provider,
-				Region:    edge.Spec.Region,
-			},
-		},
-	); err != nil {
+		edgeWorker.Spec = extensionsv1.EdgeWorkerSpec{
+			AccountId: edge.Spec.AccountId,
+			Creds:     edge.Spec.CredentialsRef,
+			Provider:  edge.Spec.Provider,
+			Region:    edge.Spec.Region,
+		}
+		return nil
+	}); err != nil {
 		return reconcile.Result{}, err
 	}
-
-	return ctrl.Result{}, nil
+	return reconcile.Result{}, nil
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -138,6 +126,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			},
 		),
 	)
+	// builder.WithEventFilter(rApi.ReconcileFilter())
 
 	return builder.Complete(r)
 }

@@ -89,7 +89,7 @@ tasks:
         if [[ -z "{{.Dir}}" ]]; then
           eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs
         else
-          outputName="{{.Dir}}/{{.Name}}.yml"
+          outputName="{{.Dir}}/{{.Name}}.yml.tpl"
           eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs > $outputName
           echo "saving to file: $outputName"
         fi
@@ -130,6 +130,8 @@ tasks:
     preconditions:
       - sh: '[ -n "{{.Version}}" ]'
         msg: 'Version must be specified'
+      - sh: '[ -n "{{.Dir}}" ]'
+        msg: 'Dir must be set'
     cmds:
       - |+
         outputDir=$(mktemp -d)
@@ -138,7 +140,7 @@ tasks:
         do
           # [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
           # [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)"
-          task yaml:operator Name="$(basename $dir)" Dir="./apps/releases/assets/operator/{{.Version}}"
+          task yaml:operator Name="$(basename $dir)" Dir="{{.Dir}}"
         done
   
   yaml:primary-operators:

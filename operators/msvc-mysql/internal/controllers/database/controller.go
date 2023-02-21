@@ -71,10 +71,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -109,7 +107,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
 }
 
@@ -152,8 +150,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*mysqlMsvcv1.Database]) stepResu
 }
 
 func (r *Reconciler) reconOwnership(req *rApi.Request[*mysqlMsvcv1.Database]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	msvc, err := rApi.Get(
@@ -178,8 +175,8 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mysqlMsvcv1.Database]) st
 	}
 
 	check.Status = true
-	if check != checks[IsOwnedByMsvc] {
-		checks[IsOwnedByMsvc] = check
+	if check != obj.Status.Checks[IsOwnedByMsvc] {
+		obj.Status.Checks[IsOwnedByMsvc] = check
 		return req.UpdateStatus()
 	}
 
@@ -245,13 +242,13 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 		}
 
 		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	check.Status = true
-	if check != checks[AccessCredsReady] {
-		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[AccessCredsReady] {
+		obj.Status.Checks[AccessCredsReady] = check
+		req.UpdateStatus()
 	}
 
 	mresOutput, err := fn.ParseFromSecret[types.MresOutput](accessSecret)
@@ -302,13 +299,13 @@ func (r *Reconciler) reconDBUser(req *rApi.Request[*mysqlMsvcv1.Database]) stepR
 		}
 
 		checks[DBUserReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	check.Status = true
-	if check != checks[DBUserReady] {
-		checks[DBUserReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[DBUserReady] {
+		obj.Status.Checks[DBUserReady] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
