@@ -313,6 +313,8 @@ github.com/klauspost/compress v1.15.0/go.mod h1:/3/Vjq9QcHkK5uEr5lBEmyoZ1iFhe47e
 github.com/klauspost/compress v1.15.4/go.mod h1:PhcZ0MbTNciWF3rruxRgKxI5NkcHHrHUDtV4Yw2GlzU=
 github.com/klauspost/compress v1.15.11 h1:Lcadnb3RKGin4FYM/orgq0qde+nc15E5Cbqg4B9Sx9c=
 github.com/klauspost/compress v1.15.11/go.mod h1:QPwzmACJjUTFsnSHH934V6woptycfrDDJnH7hvFVbGM=
+github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 h1:UH84b6U7wLH2B5RA7Qnavo3YM+JUuxW4SRF4Ln76Dj8=
+github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525/go.mod h1:BjTzLGIvk/v+/2XN33Yd6UOspyhZEhCgIM8wgkkiBSQ=
 github.com/kloudlite/wg-operator v0.0.0-20230214051752-deec7d18298c h1:8C1nqi7gSpvMmNJj3PnRzcasC3qiaEXFb3GOegGQkJo=
 github.com/kloudlite/wg-operator v0.0.0-20230214051752-deec7d18298c/go.mod h1:lUm/88hKhQqZeJXQjyr27iV37LS8ckR1VZMHq0pnvX0=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
