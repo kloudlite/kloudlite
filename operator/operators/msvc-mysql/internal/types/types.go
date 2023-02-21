@@ -1,11 +1,11 @@
 package types
 
 type MsvcOutput struct {
-	RootPassword        string `json:"ROOT_PASSWORD"`
+	RootPassword        string `json:"ROOT_PASSWORD,omitempty"`
 	ReplicationPassword string `json:"REPLICATION_PASSWORD,omitempty"`
-	Hosts               string `json:"HOSTS"`
+	Hosts               string `json:"HOSTS,omitempty"`
 	DSN                 string `json:"DSN,omitempty"`
-	URI                 string `json:"URI"`
+	URI                 string `json:"URI,omitempty"`
 }
 
 type MresOutput struct {

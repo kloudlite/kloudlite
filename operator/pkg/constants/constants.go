@@ -72,6 +72,7 @@ const (
 	EdgeNameKey          string = "kloudlite.io/edge.name"
 	EdgeRouterNameKey    string = "kloudlite.io/edge-router.name"
 	EnvNameKey           string = "kloudlite.io/env.name"
+	CsiDriverNameKey     string = "kloudlite.io/csi-driver.name"
 
 	ClearStatusKey string = "kloudlite.io/clear-status"
 	ResetCheckKey  string = "kloudlite.io/reset-check"
@@ -209,6 +210,11 @@ var (
 	ClusterIssuerType = metav1.TypeMeta{
 		Kind:       "ClusterIssuer",
 		APIVersion: "cert-manager.io/v1",
+	}
+
+	StorageClassType = metav1.TypeMeta{
+		APIVersion: "storage.k8s.io/v1",
+		Kind:       "StorageClass",
 	}
 )
 

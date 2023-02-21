@@ -67,7 +67,7 @@ func getHelmSecretName(name string) string {
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(
-		context.WithValue(ctx, "logger", r.logger),
+		rApi.NewReconcilerCtx(ctx, r.logger),
 		r.Client,
 		request.NamespacedName,
 		&mysqlMsvcv1.StandaloneService{},
@@ -83,21 +83,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	// TODO: initialize all checks here
-	if step := req.EnsureChecks(AccessCredsReady, HelmSecretReady, HelmReady, StsReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -126,7 +115,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
@@ -135,9 +124,12 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlMsvcv1.StandaloneSe
 }
 
 func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(AccessCredsReady)
+	defer req.LogPostCheck(AccessCredsReady)
+
 	secretName := "msvc-" + obj.Name
 	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
 	if err != nil {
@@ -169,9 +161,6 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
-
-		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
 	}
 
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
@@ -179,13 +168,13 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 		if err := r.Update(ctx, obj); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return req.Done().RequeueAfter(2 * time.Second)
+		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != checks[AccessCredsReady] {
-		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[AccessCredsReady] {
+		obj.Status.Checks[AccessCredsReady] = check
+		req.UpdateStatus()
 	}
 
 	output, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
@@ -202,8 +191,11 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 }
 
 func (r *ServiceReconciler) reconHelmSecret(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(HelmSecretReady)
+	defer req.LogPostCheck(HelmSecretReady)
 
 	helmSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getHelmSecretName(obj.Name)), &corev1.Secret{})
 	if err != nil {
@@ -239,16 +231,19 @@ func (r *ServiceReconciler) reconHelmSecret(req *rApi.Request[*mysqlMsvcv1.Stand
 	}
 
 	check.Status = true
-	if check != checks[HelmSecretReady] {
-		checks[HelmSecretReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[HelmSecretReady] {
+		obj.Status.Checks[HelmSecretReady] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
 func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(HelmReady)
+	defer req.LogPostCheck(HelmReady)
 
 	helmRes, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMysqlType),
@@ -260,31 +255,26 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneS
 		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		b, err := templates.Parse(
-			templates.MySqlStandalone, map[string]any{
-				"obj":        obj,
-				"owner-refs": obj.GetOwnerReferences(),
-				"storage-class": func() string {
-					if obj.Spec.Resources.Storage.StorageClass != "" {
-						return obj.Spec.Resources.Storage.StorageClass
-					}
-					return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4)
-				}(),
-				"existing-secret": getHelmSecretName(obj.Name),
-			},
-		)
+	b, err := templates.Parse(
+		templates.MySqlStandalone, map[string]any{
+			"obj":        obj,
+			"owner-refs": obj.GetOwnerReferences(),
+			"storage-class": func() string {
+				if obj.Spec.Resources.Storage.StorageClass != "" {
+					return obj.Spec.Resources.Storage.StorageClass
+				}
+				return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4)
+			}(),
+			"existing-secret": getHelmSecretName(obj.Name),
+		},
+	)
 
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-		}
+	if err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-		}
-
-		checks[HelmReady] = check
-		return req.UpdateStatus()
+	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
 	cds, err := conditions.FromObject(helmRes)
@@ -305,18 +295,21 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneS
 		check.Status = true
 	}
 
-	if check != checks[HelmReady] {
-		checks[HelmReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[HelmReady] {
+		obj.Status.Checks[HelmReady] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
 }
 
 func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 	var stsList appsv1.StatefulSetList
+
+	req.LogPreCheck(StsReady)
+	defer req.LogPostCheck(StsReady)
 
 	if err := r.List(
 		ctx, &stsList, &client.ListOptions{
@@ -358,9 +351,9 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneSe
 	}
 
 	check.Status = true
-	if check != checks[StsReady] {
-		checks[StsReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[StsReady] {
+		obj.Status.Checks[StsReady] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -390,6 +383,5 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	)
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
-
 	return builder.Complete(r)
 }

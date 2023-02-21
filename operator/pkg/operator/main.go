@@ -16,16 +16,6 @@ import (
 	rawJson "github.com/kloudlite/operator/pkg/raw-json"
 )
 
-type ResourceRef struct {
-	Name string `json:"name"`
-	// +kubebuilder:validation:Optional
-	Namespace string `json:"namespace"`
-	// +kubebuilder:validation:Optional
-	ApiVersion string `json:"apiVersion"`
-	// +kubebuilder:validation:Optional
-	Kind string `json:"kind"`
-}
-
 // +kubebuilder:object:generate=true
 
 type Check struct {
@@ -36,6 +26,12 @@ type Check struct {
 	// LastCheckedAt metav1.Time `json:"lastCheckedAt,omitempty"`
 }
 
+type ResourceRef struct {
+	metav1.TypeMeta `json:",inline"`
+	Namespace       string `json:"namespace"`
+	Name            string `json:"name"`
+}
+
 // +kubebuilder:object:generate=true
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -43,15 +39,16 @@ type Check struct {
 type Status struct {
 	// +kubebuilder:validation:Optional
 	IsReady           bool               `json:"isReady"`
-	Message           rawJson.RawJson    `json:"message,omitempty"`
+	Resources         []ResourceRef      `json:"resources,omitempty"`
+	Message           *rawJson.RawJson   `json:"message,omitempty"`
 	Messages          []ContainerMessage `json:"messages,omitempty"`
-	DisplayVars       rawJson.RawJson    `json:"displayVars,omitempty"`
-	GeneratedVars     rawJson.RawJson    `json:"generatedVars,omitempty"`
+	DisplayVars       *rawJson.RawJson   `json:"displayVars,omitempty"`
+	GeneratedVars     *rawJson.RawJson   `json:"generatedVars,omitempty"`
 	Conditions        []metav1.Condition `json:"conditions,omitempty"`
 	ChildConditions   []metav1.Condition `json:"childConditions,omitempty"`
 	OpsConditions     []metav1.Condition `json:"opsConditions,omitempty"`
 	Checks            map[string]Check   `json:"checks,omitempty"`
-	LastReconcileTime metav1.Time        `json:"lastReconcileTime,omitempty"`
+	LastReconcileTime *metav1.Time       `json:"lastReconcileTime,omitempty"`
 }
 
 type Reconciler interface {

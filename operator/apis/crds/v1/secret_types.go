@@ -15,17 +15,18 @@ import (
 
 // Secret is the Schema for the secrets API
 type Secret struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	corev1.Secret `json:",inline"`
+
+	//metav1.TypeMeta   `json:",inline"`
+	//metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	ProjectName string `json:"projectName,omitempty"`
 
-	Type       corev1.SecretType `json:"type,omitempty"`
-	Data       map[string][]byte `json:"data,omitempty"`
-	StringData map[string]string `json:"stringData,omitempty"`
-	Overrides  *JsonPatch        `json:"overrides,omitempty"`
+	//Type       corev1.SecretType `json:"type,omitempty"`
+	//Data       map[string][]byte `json:"data,omitempty"`
+	//StringData map[string]string `json:"stringData,omitempty"`
+	Overrides *JsonPatch `json:"overrides,omitempty"`
 
-	// +kubebuilder:default="Opaque"
 	// +kubebuilder:default=true
 	Enabled bool `json:"enabled,omitempty"`
 
