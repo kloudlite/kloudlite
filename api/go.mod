@@ -179,8 +179,8 @@ require (
 )
 
 //replace github.com/kloudlite/internal_operator_v2 v1.0.5-0.20230120091718-4a729feab5c5 => /home/nxtcoder17/workspace/kloudlite/internal_operator_v2
-replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
+// replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
 
-replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
+replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
 
 replace sigs.k8s.io/controller-runtime v0.13.1 => sigs.k8s.io/controller-runtime v0.14.1
