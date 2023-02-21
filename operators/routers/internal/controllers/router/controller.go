@@ -104,7 +104,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
@@ -192,8 +192,14 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 	defer req.LogPostCheck(BasicAuthReady)
 
 	if obj.Spec.BasicAuth.Enabled {
+
+		if len(obj.Spec.BasicAuth.Username) == 0 {
+			return req.CheckFailed(BasicAuthReady, check, fmt.Sprintf(".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true")).Err(nil)
+		}
+
 		basicAuthScrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.BasicAuth.SecretName, Namespace: obj.Namespace}, Type: "Opaque"}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, basicAuthScrt, func() error {
+			basicAuthScrt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 			if _, ok := basicAuthScrt.Data["password"]; ok {
 				return nil
 			}
@@ -405,8 +411,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&networkingv1.Ingress{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
-
-	//builder.Watches(&source.Kind{Type: &appsv1.Deployment{}}, handler.EnqueueRequestForOwner{})
 
 	return builder.Complete(r)
 }

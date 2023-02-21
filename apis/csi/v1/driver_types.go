@@ -34,7 +34,9 @@ func (d *Driver) GetStatus() *rApi.Status {
 }
 
 func (d *Driver) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.CsiDriverNameKey: d.Name,
+	}
 }
 
 func (d *Driver) GetEnsuredAnnotations() map[string]string {

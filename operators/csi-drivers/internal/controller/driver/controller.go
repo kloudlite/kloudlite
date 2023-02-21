@@ -3,6 +3,7 @@ package driver
 import (
 	"context"
 	"fmt"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
@@ -44,7 +45,16 @@ func (r *Reconciler) GetName() string {
 const (
 	CSIDriversReady     string = "csi-drivers-ready"
 	StorageClassesReady string = "storage-classes-ready"
+	Finalizing          string = "finalizing"
 )
+
+func getDriverName(obj *csiv1.Driver) string {
+	return fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider)
+}
+
+func getDriverNs(obj *csiv1.Driver) string {
+	return "kl-" + obj.Name
+}
 
 // +kubebuilder:rbac:groups=csi.kloudlite.io,resources=drivers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=csi.kloudlite.io,resources=drivers/status,verbs=get;update;patch
@@ -87,16 +97,69 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
+	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*csiv1.Driver]) stepResult.Result {
-	return req.Finalize()
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	// 1. Ensure Deleting of CSI Drivers
+	if obj.Spec.Provider == "aws" {
+		nn := fn.NN(getDriverNs(obj), getDriverName(obj))
+		helmDriver := fn.NewUnstructured(constants.HelmAwsEbsCsiKind, metav1.ObjectMeta{Namespace: nn.Namespace, Name: nn.Name})
+		err := r.Delete(ctx, helmDriver)
+		if !apiErrors.IsNotFound(err) {
+			if err != nil {
+				return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+			}
+			return req.CheckFailed(Finalizing, check, fmt.Sprintf("waiting for AwsEbsCsiDriver (%s) to be fully deleted", nn.String())).Err(nil)
+		}
+	}
+
+	if obj.Spec.Provider == "do" {
+		nn := fn.NN(getDriverNs(obj), getDriverName(obj))
+		helmDriver := fn.NewUnstructured(constants.HelmDigitaloceanCsiKind, metav1.ObjectMeta{Namespace: nn.Namespace, Name: nn.Name})
+		err := r.Delete(ctx, helmDriver)
+		if !apiErrors.IsNotFound(err) {
+			if err != nil {
+				return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+			}
+			return req.CheckFailed(Finalizing, check, fmt.Sprintf("waiting for DigitaloceanCsi (%s) to be fully deleted", nn.String())).Err(nil)
+		}
+	}
+
+	// 2. Ensure All Storage Classes to be Deleted
+	var scList storagev1.StorageClassList
+	if err := r.List(ctx, &scList, &client.ListOptions{
+		LabelSelector: labels.SelectorFromValidatedSet(obj.GetEnsuredLabels()),
+	}); err != nil {
+		return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+	}
+
+	for i := range scList.Items {
+		if scList.Items[i].GetDeletionTimestamp() != nil {
+			if err := r.Delete(ctx, &scList.Items[i]); err != nil {
+				return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+			}
+		}
+	}
+
+	if len(scList.Items) != 0 {
+		return req.CheckFailed(Finalizing, check, "waiting for storage classes to be fully deleted").Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[Finalizing] {
+		obj.Status.Checks[Finalizing] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
 }
 
 func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	if obj.Spec.Provider == "aws" {
@@ -111,6 +174,7 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 				"namespace":  `kl-` + obj.Name,
 				"aws-key":    string(accessSecret.Data["accessKey"]),
 				"aws-secret": string(accessSecret.Data["accessSecret"]),
+				"labels":     obj.GetEnsuredLabels(),
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"node-selector": map[string]string{
 					constants.ProviderRef: obj.Name,
@@ -138,6 +202,7 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 				"node-selector": map[string]string{
 					constants.ProviderRef: obj.Spec.SecretRef,
 				},
+				"labels":          obj.GetEnsuredLabels(),
 				"owner-refs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"do-access-token": string(accessSecret.Data["apiToken"]),
 			},
@@ -153,15 +218,15 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 	}
 
 	check.Status = true
-	if check != checks[CSIDriversReady] {
-		checks[CSIDriversReady] = check
+	if check != obj.Status.Checks[CSIDriversReady] {
+		obj.Status.Checks[CSIDriversReady] = check
 		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	edgesList := unstructured.UnstructuredList{
@@ -191,9 +256,7 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 					"fs-types":    []ct.FsType{ct.Ext4, ct.Xfs},
 					"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					"provisioner": fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
-					"labels": map[string]string{
-						"kloudite.io/csi-driver": obj.Name,
-					},
+					"labels":      obj.GetEnsuredLabels(),
 				},
 			)
 			if err != nil {
@@ -214,9 +277,7 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 					"fs-types":    []ct.FsType{ct.Ext4, ct.Xfs},
 					"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					"provisioner": fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
-					"labels": map[string]string{
-						"kloudite.io/csi-driver": obj.Name,
-					},
+					"labels":      obj.GetEnsuredLabels(),
 				},
 			)
 
@@ -231,9 +292,9 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 	}
 
 	check.Status = true
-	if check != checks[StorageClassesReady] {
-		checks[StorageClassesReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[StorageClassesReady] {
+		obj.Status.Checks[StorageClassesReady] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -250,7 +311,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Watches(
 		&source.Kind{Type: &storagev1.StorageClass{}}, handler.EnqueueRequestsFromMapFunc(
 			func(obj client.Object) []reconcile.Request {
-				s, ok := obj.GetLabels()["kloudite.io/csi-driver"]
+				s, ok := obj.GetLabels()[constants.CsiDriverNameKey]
 				if !ok {
 					return nil
 				}

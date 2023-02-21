@@ -13,7 +13,6 @@ import (
 	"github.com/kloudlite/operator/operator"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/mres"
-	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc"
 )
 
 func main() {
@@ -31,7 +30,7 @@ func main() {
 	)
 	ev := env.GetEnvOrDie()
 	mgr.RegisterControllers(
-		&msvc.ManagedServiceReconciler{Name: "msvc", Env: ev},
+		//&msvc.ManagedServiceReconciler{Name: "msvc", Env: ev},
 		&mres.ManagedResourceReconciler{Name: "mres", Env: ev},
 	)
 	mgr.Start()

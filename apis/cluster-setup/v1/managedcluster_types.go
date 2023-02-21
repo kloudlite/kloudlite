@@ -15,6 +15,9 @@ type KloudliteDnsApi struct {
 type ManagedClusterSpec struct {
 	Domain         *string         `json:"domain,omitempty"`
 	KloudliteCreds SecretReference `json:"kloudliteCreds,omitempty"`
+
+	LokiValues       LokiValues       `json:"loki,omitempty"`
+	PrometheusValues PrometheusValues `json:"prometheus,omitempty"`
 }
 
 type KloudliteCreds struct {

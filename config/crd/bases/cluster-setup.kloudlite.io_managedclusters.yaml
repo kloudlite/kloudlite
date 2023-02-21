@@ -54,6 +54,103 @@ spec:
                 - name
                 - namespace
                 type: object
+              loki:
+                properties:
+                  resources:
+                    properties:
+                      cpu:
+                        properties:
+                          max:
+                            pattern: '[\d]+m$'
+                            type: string
+                          min:
+                            pattern: '[\d]+m$'
+                            type: string
+                        required:
+                        - max
+                        - min
+                        type: object
+                      memory:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      storage:
+                        properties:
+                          size:
+                            pattern: '[\d]+(M|G)i$'
+                            type: string
+                          storageClass:
+                            type: string
+                        required:
+                        - size
+                        type: object
+                    required:
+                    - cpu
+                    - memory
+                    type: object
+                  s3:
+                    properties:
+                      awsAccessKeyId:
+                        type: string
+                      awsSecretAccessKey:
+                        type: string
+                      bucketName:
+                        type: string
+                      endpoint:
+                        type: string
+                    required:
+                    - awsAccessKeyId
+                    - awsSecretAccessKey
+                    - bucketName
+                    - endpoint
+                    type: object
+                  serviceName:
+                    default: loki
+                    type: string
+                  url:
+                    type: string
+                required:
+                - resources
+                - s3
+                type: object
+              prometheus:
+                properties:
+                  resources:
+                    properties:
+                      cpu:
+                        properties:
+                          max:
+                            pattern: '[\d]+m$'
+                            type: string
+                          min:
+                            pattern: '[\d]+m$'
+                            type: string
+                        required:
+                        - max
+                        - min
+                        type: object
+                      memory:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      storage:
+                        properties:
+                          size:
+                            pattern: '[\d]+(M|G)i$'
+                            type: string
+                          storageClass:
+                            type: string
+                        required:
+                        - size
+                        type: object
+                    required:
+                    - cpu
+                    - memory
+                    type: object
+                  serviceName:
+                    default: prometheus
+                    type: string
+                required:
+                - resources
+                type: object
             type: object
           status:
             properties:
@@ -305,6 +402,30 @@ spec:
                   - reason
                   - status
                   - type
+                  type: object
+                type: array
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
                   type: object
                 type: array
             type: object

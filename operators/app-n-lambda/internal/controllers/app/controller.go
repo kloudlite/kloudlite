@@ -123,14 +123,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = metav1.Time{Time: time.Now()}
-	req.Object.Status.DisplayVars.Set("intercepted", func() string {
-		if req.Object.GetLabels()[constants.LabelKeys.IsIntercepted] == "true" {
-			return "true/" + req.Object.GetLabels()[constants.LabelKeys.DeviceRef]
-		}
-		return "false"
-	}())
-	req.Object.Status.DisplayVars.Set("frozen", req.Object.GetLabels()[constants.LabelKeys.Freeze] == "true")
+	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
+
+	//req.Object.Status.DisplayVars.Set("intercepted", func() string {
+	//	if req.Object.GetLabels()[constants.LabelKeys.IsIntercepted] == "true" {
+	//		return "true/" + req.Object.GetLabels()[constants.LabelKeys.DeviceRef]
+	//	}
+	//	return "false"
+	//}())
+	//req.Object.Status.DisplayVars.Set("frozen", req.Object.GetLabels()[constants.LabelKeys.Freeze] == "true")
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 

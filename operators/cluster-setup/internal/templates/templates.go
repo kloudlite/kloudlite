@@ -72,6 +72,7 @@ const (
 	InternalOperatorEnv       templateFile = "templates/secrets/internal-operator-env.yml.tpl"
 	ProjectOperatorEnv        templateFile = "templates/secrets/project-operator-env.yml.tpl"
 	StatusNBillingOperatorEnv templateFile = "templates/secrets/status-n-billing-operator-env.yml.tpl"
+	WgOperatorEnv             templateFile = "templates/secrets/wg-operator-env.yml.tpl"
 )
 
 const (

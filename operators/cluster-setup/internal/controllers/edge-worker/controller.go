@@ -7,11 +7,10 @@ import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
 	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
-	"github.com/kloudlite/operator/operators/extensions/internal/env"
+	"github.com/kloudlite/operator/operators/cluster-setup/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/harbor"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -27,7 +26,6 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	harborCli  *harbor.Client
 	logger     logging.Logger
 	Name       string
 	yamlClient *kubectl.YAMLClient
@@ -61,7 +59,7 @@ const SSLSecretNamespace = "kl-init-cert-manager"
 // +kubebuilder:rbac:groups=extensions.kloudlite.io,resources=edgeworkers/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &extensionsv1.EdgeWorker{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &extensionsv1.EdgeWorker{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -73,17 +71,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	// TODO: initialize all checks here
-	if step := req.EnsureChecks(EdgeNSReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -112,6 +103,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
+	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
@@ -120,8 +112,11 @@ func (r *Reconciler) finalize(req *rApi.Request[*extensionsv1.EdgeWorker]) stepR
 }
 
 func (r *Reconciler) ensureProviderNS(req *rApi.Request[*extensionsv1.EdgeWorker]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(ProviderNSReady)
+	defer req.LogPostCheck(ProviderNSReady)
 
 	namespaceName := "kl-" + obj.Spec.Creds.SecretName
 
@@ -154,9 +149,9 @@ func (r *Reconciler) ensureProviderNS(req *rApi.Request[*extensionsv1.EdgeWorker
 	}
 
 	check.Status = true
-	if check != checks[ProviderNSReady] {
-		checks[ProviderNSReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[ProviderNSReady] {
+		obj.Status.Checks[ProviderNSReady] = check
+		req.UpdateStatus()
 	}
 
 	rApi.SetLocal(req, "provider-namespace", namespaceName)
@@ -164,8 +159,11 @@ func (r *Reconciler) ensureProviderNS(req *rApi.Request[*extensionsv1.EdgeWorker
 }
 
 func (r *Reconciler) ensureEdgeNS(req *rApi.Request[*extensionsv1.EdgeWorker]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(EdgeNSReady)
+	defer req.LogPostCheck(EdgeNSReady)
 
 	edgeNamespaceName := `kl-edge-` + obj.Name
 
@@ -193,17 +191,20 @@ func (r *Reconciler) ensureEdgeNS(req *rApi.Request[*extensionsv1.EdgeWorker]) s
 	}
 
 	check.Status = true
-	if check != checks[EdgeNSReady] {
-		checks[EdgeNSReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[EdgeNSReady] {
+		obj.Status.Checks[EdgeNSReady] = check
+		req.UpdateStatus()
 	}
 	rApi.SetLocal(req, "edge-namespace", edgeNamespaceName)
 	return req.Next()
 }
 
 func (r *Reconciler) ensureCSIDrivers(req *rApi.Request[*extensionsv1.EdgeWorker]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(CSIDriversReady)
+	defer req.LogPostCheck(CSIDriversReady)
 
 	csiDriver, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.Creds.SecretName), &csiv1.Driver{})
 	if err != nil {
@@ -232,7 +233,7 @@ func (r *Reconciler) ensureCSIDrivers(req *rApi.Request[*extensionsv1.EdgeWorker
 		return req.Done().RequeueAfter(2 * time.Second)
 	}
 
-	if csiDriver.Status.IsReady != true {
+	if !csiDriver.Status.IsReady {
 		msg := csiDriver.Status.Message.ToString()
 		if len(msg) == 0 {
 			msg = "waiting for csi driver controller to setup csi driver"
@@ -241,16 +242,19 @@ func (r *Reconciler) ensureCSIDrivers(req *rApi.Request[*extensionsv1.EdgeWorker
 	}
 
 	check.Status = true
-	if check != checks[CSIDriversReady] {
-		checks[CSIDriversReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[CSIDriversReady] {
+		obj.Status.Checks[CSIDriversReady] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureEdgeRouters(req *rApi.Request[*extensionsv1.EdgeWorker]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(EdgeRouterReady)
+	defer req.LogPostCheck(EdgeRouterReady)
 
 	edgeNamespace, ok := rApi.GetLocal[string](req, "edge-namespace")
 	if !ok {
@@ -260,7 +264,7 @@ func (r *Reconciler) ensureEdgeRouters(req *rApi.Request[*extensionsv1.EdgeWorke
 	edgeRouter, err := rApi.Get(ctx, r.Client, fn.NN(edgeNamespace, "ingress-nginx"), &crdsv1.EdgeRouter{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(EdgeNSReady, check, err.Error()).Err(nil)
+			return req.CheckFailed(EdgeRouterReady, check, err.Error()).Err(nil)
 		}
 		req.Logger.Infof("edge router (%s) does not exist, will be creating now...", obj.Name)
 		edgeRouter = nil
@@ -275,8 +279,8 @@ func (r *Reconciler) ensureEdgeRouters(req *rApi.Request[*extensionsv1.EdgeWorke
 					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				},
 				Spec: crdsv1.EdgeRouterSpec{
-					EdgeName:   obj.Name,
-					Region:     obj.Spec.Region,
+					EdgeName: obj.Name,
+					// Region:     obj.Spec.Region,
 					AccountRef: obj.Spec.AccountId,
 					DefaultSSLCert: crdsv1.SSLCertRef{
 						SecretName: SSLSecretName,
@@ -290,9 +294,9 @@ func (r *Reconciler) ensureEdgeRouters(req *rApi.Request[*extensionsv1.EdgeWorke
 	}
 
 	check.Status = true
-	if check != checks[EdgeRouterReady] {
-		checks[EdgeRouterReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[EdgeRouterReady] {
+		obj.Status.Checks[EdgeRouterReady] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -305,5 +309,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&extensionsv1.EdgeWorker{})
 	builder.Owns(&csiv1.Driver{})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

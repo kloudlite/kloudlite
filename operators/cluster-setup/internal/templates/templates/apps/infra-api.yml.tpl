@@ -41,6 +41,9 @@ spec:
         max: "50Mi"
 
       env:
+        - key: FINANCE_GRPC_ADDR
+          value: http://{{.AppFinanceApi}}:3001
+
         - key: INFRA_DB_NAME
           value: {{.InfraDbName}}
 
