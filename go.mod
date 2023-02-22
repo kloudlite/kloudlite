@@ -22,8 +22,6 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.41
 	github.com/pkg/errors v0.9.1
-	github.com/qri-io/jsonschema v0.2.1
-	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
 	github.com/slack-go/slack v0.11.4
@@ -39,6 +37,7 @@ require (
 	go.uber.org/fx v1.17.1
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.3.0
+	golang.org/x/sync v0.1.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20221104135756-97bc4ad4a1cb
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
@@ -128,7 +127,6 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/prometheus/statsd_exporter v0.21.0 // indirect
-	github.com/qri-io/jsonpointer v0.1.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/seancfoley/bintree v1.2.1 // indirect
@@ -157,7 +155,6 @@ require (
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect
@@ -179,8 +176,9 @@ require (
 )
 
 //replace github.com/kloudlite/internal_operator_v2 v1.0.5-0.20230120091718-4a729feab5c5 => /home/nxtcoder17/workspace/kloudlite/internal_operator_v2
-// replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
+replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
 
-replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
+// replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
+replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
 
 replace sigs.k8s.io/controller-runtime v0.13.1 => sigs.k8s.io/controller-runtime v0.14.1

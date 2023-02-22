@@ -62,6 +62,14 @@ func main() {
 		})
 	}
 
+	g.Go(func() error {
+		gqlSchema, err := ScalarTypes()
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(path.Join(outputDir, "scalars.graphqls"), gqlSchema, 0644)
+	})
+
 	if err := g.Wait(); err != nil {
 		panic(err)
 	}

@@ -213,7 +213,6 @@ func getGraphQLType(t reflect.Type, seenTypes map[reflect.Type]bool) string {
 }
 
 func getGraphQLRequired(t reflect.StructField) string {
-
 	req := true
 	fieldName := t.Tag.Get("json")
 	s := strings.Split(fieldName, ",")

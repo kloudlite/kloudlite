@@ -1,5 +1,6 @@
 schema:
   - graph/*.graphqls
+  - graph/crd-to-gql/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -47,9 +48,25 @@ models:
   # KLFile:
   #   model:
   #     - kloudlite.io/apps/consolev2/internal/domain/entities/localenv.KLFile
+
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
+
+  Metadata:
+    model:
+      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  MetadataIn:
+    model:
+      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  Status:
+    model:
+      - github.com/kloudlite/cluster-operator/lib/operator.Status
+#      - github.com/kloudlite/operator/pkg/operator.Status
+#      - github.com/kloudlite/wg-operator/lib/operator.Status
+
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -58,24 +75,84 @@ models:
   Json:
     model:
       - github.com/99designs/gqlgen/graphql.Map
+
   CloudProvider:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+
+  CloudProviderSpec:
+    model:
+      - github.com/kloudlite/cluster-operator/apis/infra/v1.CloudProviderSpec
+
+  CloudProviderIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+
+  CloudProviderInSpec:
+    model:
+      - github.com/kloudlite/cluster-operator/apis/infra/v1.CloudProviderSpec
+
+  Cluster:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Cluster
+
+  ClusterSpec:
+    model:
+      - github.com/kloudlite/cluster-operator/apis/cmgr/v1.ClusterSpec
+
+  ClusterIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Cluster
+
+  ClusterInSpec:
+    model:
+      - github.com/kloudlite/cluster-operator/apis/cmgr/v1.ClusterSpec
+
   Edge:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.Edge
+
+  EdgeSpec:
+    model:
+      - github.com/kloudlite/cluster-operator/apis/infra/v1.EdgeSpec
+
+  EdgeIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Edge
+
+  EdgeInSpec:
+    model:
+      - github.com/kloudlite/cluster-operator/apis/infra/v1.EdgeSpec
+
   ProviderSecret:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.Secret
+
+  ProviderSecretIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Secret
+
   Node:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Node
+  NodeIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.Node
   MasterNode:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
+  MasterNodeIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
   WorkerNode:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
+  WorkerNodeIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
   NodePool:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.NodePool
+  NodePoolIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.NodePool

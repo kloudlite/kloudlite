@@ -1,0 +1,35 @@
+type MasterNodeSpec {
+	config: String!
+	mysqlURI: String!
+	provider: String!
+	providerName: String!
+	region: String!
+	accountName: String!
+	clusterName: String!
+}
+
+input MasterNodeSpecIn {
+	config: String!
+	mysqlURI: String!
+	provider: String!
+	providerName: String!
+	region: String!
+	accountName: String!
+	clusterName: String!
+}
+
+type MasterNode {
+	status: Status
+	apiVersion: String
+	kind: String
+	metadata: Metadata
+	spec: MasterNodeSpec
+}
+
+input MasterNodeIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn
+	spec: MasterNodeSpecIn
+}
+
