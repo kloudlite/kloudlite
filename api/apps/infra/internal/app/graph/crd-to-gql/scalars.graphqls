@@ -1,0 +1,33 @@
+
+scalar Any
+scalar Json
+
+
+
+type Metadata {
+	Name: String!
+	Namespace: String
+	Labels: Json
+}
+
+input MetadataIn {
+	Name: String!
+	Namespace: String
+	Labels: Json
+}
+
+
+
+type Status {
+	isReady: Boolean!
+	checks: [Check]
+	displayVars: Json
+}
+
+type Check {
+	Status: Boolean
+	Message: String
+	Generation: Int
+}
+
+

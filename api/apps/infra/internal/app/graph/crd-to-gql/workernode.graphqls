@@ -1,0 +1,41 @@
+input WorkerNodeSpecIn {
+	nodeIndex: Int
+	provider: String!
+	providerName: String!
+	region: String!
+	pool: String!
+	stateful: Boolean
+	accountName: String!
+	clusterName: String!
+	config: String!
+	edgeName: String!
+}
+
+type WorkerNode {
+	apiVersion: String
+	kind: String
+	metadata: Metadata
+	spec: WorkerNodeSpec
+	status: Status
+}
+
+input WorkerNodeIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn
+	spec: WorkerNodeSpecIn
+}
+
+type WorkerNodeSpec {
+	nodeIndex: Int
+	provider: String!
+	providerName: String!
+	region: String!
+	pool: String!
+	stateful: Boolean
+	accountName: String!
+	clusterName: String!
+	config: String!
+	edgeName: String!
+}
+

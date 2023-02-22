@@ -11,9 +11,6 @@ import (
 	"k8s.io/client-go/rest"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
-
-	"github.com/qri-io/jsonschema"
-	jsonschema3 "github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 type InvalidSchemaError struct {
@@ -40,28 +37,24 @@ func NewInvalidSchemaError(err error, errMsgs []string) InvalidSchemaError {
 }
 
 type ExtendedK8sClient interface {
+	GetCRDJsonSchema(ctx context.Context, name string) (*apiExtensionsV1.JSONSchemaProps, error)
 	ValidateStruct(ctx context.Context, s any, crdName string) error
-	ValidateStruct2(ctx context.Context, s any, crdName string) error
-	ValidateStruct3(ctx context.Context, s any, crdName string) error
 }
 
 type extendedK8sClient struct {
 	client *clientset.Clientset
 }
 
+func (e extendedK8sClient) GetCRDJsonSchema(ctx context.Context, name string) (*apiExtensionsV1.JSONSchemaProps, error) {
+	crd, err := e.client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return crd.Spec.Versions[0].Schema.OpenAPIV3Schema, nil
+}
+
 func (e extendedK8sClient) ValidateStruct(ctx context.Context, s any, crdName string) error {
 	input, err := json.Marshal(s)
-	//var m map[string]any
-	//if err := json.Unmarshal(input, &m); err != nil {
-	//	return err
-	//}
-	//delete(m, "status")
-	//delete(m["spec"].(map[string]any), "accountId")
-	//
-	//cr, err := json.Marshal(m)
-	//if err != nil {
-	//	return err
-	//}
 
 	if err != nil {
 		return errors.NewEf(err, "failed to marshal input struct")
@@ -111,66 +104,6 @@ func (e extendedK8sClient) ValidateStruct(ctx context.Context, s any, crdName st
 			errMsgs = append(errMsgs, err.String())
 		}
 		return NewInvalidSchemaError(fmt.Errorf("document is invalid"), errMsgs)
-	}
-	return nil
-}
-
-func (e extendedK8sClient) ValidateStruct2(ctx context.Context, s any, crdName string) error {
-	input, err := json.Marshal(s)
-	if err != nil {
-		return errors.NewEf(err, "failed to marshal input struct")
-	}
-
-	crd, err := e.client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, crdName, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	b, err := json.Marshal(crd.Spec.Versions[0].Schema.OpenAPIV3Schema)
-	if err != nil {
-		return err
-	}
-
-	schema := jsonschema.Schema{}
-	if err := json.Unmarshal(b, &schema); err != nil {
-		return err
-	}
-
-	keyErrors, err := schema.ValidateBytes(ctx, input)
-	if err != nil {
-		errMsgs := make([]string, len(keyErrors))
-		for i := range keyErrors {
-			errMsgs[i] = keyErrors[i].Error()
-		}
-		return NewInvalidSchemaError(err, errMsgs)
-	}
-	return nil
-}
-
-func (e extendedK8sClient) ValidateStruct3(ctx context.Context, s any, crdName string) error {
-	input, err := json.Marshal(s)
-	if err != nil {
-		return errors.NewEf(err, "failed to marshal input struct")
-	}
-
-	var m map[string]any
-	if err := json.Unmarshal(input, &m); err != nil {
-		return err
-	}
-	crd, err := e.client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, crdName, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	b, err := json.Marshal(crd.Spec.Versions[0].Schema.OpenAPIV3Schema)
-	if err != nil {
-		return err
-	}
-
-	sch, err := jsonschema3.CompileString("schema.json", string(b))
-	sch.Draft = jsonschema3.Draft4
-	if err := sch.Validate(m); err != nil {
-		return err
 	}
 	return nil
 }

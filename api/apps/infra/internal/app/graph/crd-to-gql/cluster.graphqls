@@ -1,0 +1,33 @@
+input ClusterIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn
+	spec: ClusterSpecIn
+}
+
+type ClusterSpec {
+	accountName: String!
+	config: String!
+	count: Int!
+	provider: String!
+	providerName: String!
+	region: String!
+}
+
+input ClusterSpecIn {
+	accountName: String!
+	config: String!
+	count: Int!
+	provider: String!
+	providerName: String!
+	region: String!
+}
+
+type Cluster {
+	apiVersion: String
+	kind: String
+	metadata: Metadata
+	spec: ClusterSpec
+	status: Status
+}
+

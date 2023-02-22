@@ -52,6 +52,7 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 
 	for k, v := range tree.Properties {
 		//fmt.Printf("[properties] %q type: %s\n", k, v.Type)
+
 		if v.Type == "array" {
 			if v.Items.Schema != nil && v.Items.Schema.Type == "object" {
 				tVar += genFieldEntry(k, typeName+genTypeName(k), m[k])
@@ -67,6 +68,19 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 		}
 
 		if v.Type == "object" {
+			if k == "metadata" {
+				tVar += genFieldEntry(k, "Metadata", m[k])
+				iVar += genFieldEntry(k, "MetadataIn", m[k])
+				continue
+			}
+
+			if k == "status" {
+				tVar += genFieldEntry(k, "Status", m[k])
+				// INFO: removed as status is never going to be set via GraphQL
+				//iVar += genFieldEntry(k, "StatusIn", m[k])
+				continue
+			}
+
 			if len(v.Properties) == 0 {
 				tVar += genFieldEntry(k, "Any", m[k])
 				iVar += genFieldEntry(k, "Any", m[k])
@@ -88,6 +102,51 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 
 	schemas[name] = tVar
 	schemas["input-"+name] = iVar
+}
+
+func ScalarTypes() ([]byte, error) {
+	scalars := `
+scalar Any
+scalar Json
+`
+
+	metadata := `
+type Metadata {
+	Name: String!
+	Namespace: String
+	Labels: Json
+}
+
+input MetadataIn {
+	Name: String!
+	Namespace: String
+	Labels: Json
+}
+`
+
+	status := `
+type Status {
+	isReady: Boolean!
+	checks: [Check]
+	displayVars: Json
+}
+
+type Check {
+	Status: Boolean
+	Message: String
+	Generation: Int
+}
+`
+
+	b := bytes.NewBuffer(nil)
+	b.WriteString(scalars)
+	b.WriteString("\n\n")
+	b.WriteString(metadata)
+	b.WriteString("\n\n")
+	b.WriteString(status)
+	b.WriteString("\n\n")
+
+	return b.Bytes(), nil
 }
 
 func Convert(schema *v1.JSONSchemaProps, name string) ([]byte, error) {

@@ -9,6 +9,11 @@ tasks:
     cmds:
       - go run -tags dynamic github.com/99designs/gqlgen generate
 
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/graph/crd-to-gql"
+      - go run ../../cmd/crd-to-gql --dev --output "./internal/app/graph/crd-to-gql"
+
   run:
     # sources:
     #   - ./internal/**/*.go
