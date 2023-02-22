@@ -1,0 +1,34 @@
+input CloudProviderSpecIn {
+	accountName: String!
+	providerSecret: CloudProviderSpecProviderSecretIn!
+}
+
+type CloudProvider {
+	apiVersion: String
+	kind: String
+	metadata: Metadata
+	spec: CloudProviderSpec
+	status: Status
+}
+
+input CloudProviderIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn
+	spec: CloudProviderSpecIn
+}
+
+type CloudProviderSpecProviderSecret {
+	name: String!
+	namespace: String!
+}
+
+input CloudProviderSpecProviderSecretIn {
+	name: String!
+	namespace: String!
+}
+
+type CloudProviderSpec {
+	accountName: String!
+	providerSecret: CloudProviderSpecProviderSecret!
+}
