@@ -1,39 +1,39 @@
 type NodePoolSpec {
-	config: String!
 	max: Int
-	clusterName: String!
-	edgeName: String!
-	min: Int
 	provider: String!
 	providerName: String!
 	region: String!
 	accountName: String!
+	clusterName: String!
+	config: String!
+	edgeName: String!
+	min: Int
 }
 
 input NodePoolSpecIn {
-	config: String!
 	max: Int
-	clusterName: String!
-	edgeName: String!
-	min: Int
 	provider: String!
 	providerName: String!
 	region: String!
 	accountName: String!
+	clusterName: String!
+	config: String!
+	edgeName: String!
+	min: Int
 }
 
 type NodePool {
-	apiVersion: String
-	kind: String
-	metadata: Metadata
 	spec: NodePoolSpec
 	status: Status
+	apiVersion: String
+	kind: String
+	metadata: Metadata!
 }
 
 input NodePoolIn {
+	spec: NodePoolSpecIn
 	apiVersion: String
 	kind: String
-	metadata: MetadataIn
-	spec: NodePoolSpecIn
+	metadata: MetadataIn!
 }
 

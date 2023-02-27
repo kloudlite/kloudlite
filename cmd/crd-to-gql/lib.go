@@ -69,8 +69,8 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 
 		if v.Type == "object" {
 			if k == "metadata" {
-				tVar += genFieldEntry(k, "Metadata", m[k])
-				iVar += genFieldEntry(k, "MetadataIn", m[k])
+				tVar += genFieldEntry(k, "Metadata!", m[k])
+				iVar += genFieldEntry(k, "MetadataIn!", m[k])
 				continue
 			}
 
@@ -140,11 +140,8 @@ type Check {
 
 	b := bytes.NewBuffer(nil)
 	b.WriteString(scalars)
-	b.WriteString("\n\n")
 	b.WriteString(metadata)
-	b.WriteString("\n\n")
 	b.WriteString(status)
-	b.WriteString("\n\n")
 
 	return b.Bytes(), nil
 }
