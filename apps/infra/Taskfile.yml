@@ -12,7 +12,22 @@ tasks:
   k8s-schema:
     cmds:
       - mkdir -p "./internal/app/graph/crd-to-gql"
-      - go run ../../cmd/crd-to-gql --dev --output "./internal/app/graph/crd-to-gql"
+      - go run ../../cmd/crd-to-gql --dev
+          --output "./internal/app/graph/crd-to-gql"
+          --crd CloudProvider=cloudproviders.infra.kloudlite.io
+          --crd Edge=edges.infra.kloudlite.io
+          --crd NodePool=nodepools.infra.kloudlite.io
+          --crd WorkerNode=workernodes.infra.kloudlite.io
+          --crd NodePool=nodepools.infra.kloudlite.io
+          --crd MasterNode=masternodes.cmgr.kloudlite.io
+          --crd Secret=secrets.crds.kloudlite.io
+
+# // 	"CloudProvider": "cloudproviders.infra.kloudlite.io",
+# // 	"Edge":          "edges.infra.kloudlite.io",
+# // 	"NodePool":      "nodepools.infra.kloudlite.io",
+# // 	"WorkerNode":    "workernodes.infra.kloudlite.io",
+# // 	"Cluster":       "clusters.cmgr.kloudlite.io",
+# // 	"MasterNode":    "masternodes.cmgr.kloudlite.io",
 
   run:
     # sources:

@@ -1,8 +1,5 @@
-
 scalar Any
 scalar Json
-
-
 
 type Metadata {
 	Name: String!
@@ -16,8 +13,6 @@ input MetadataIn {
 	Labels: Json
 }
 
-
-
 type Status {
 	isReady: Boolean!
 	checks: [Check]
@@ -29,5 +24,3 @@ type Check {
 	Message: String
 	Generation: Int
 }
-
-

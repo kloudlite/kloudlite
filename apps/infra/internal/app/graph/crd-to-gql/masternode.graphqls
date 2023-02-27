@@ -1,35 +1,35 @@
 type MasterNodeSpec {
-	config: String!
-	mysqlURI: String!
 	provider: String!
 	providerName: String!
 	region: String!
 	accountName: String!
 	clusterName: String!
+	config: String!
+	mysqlURI: String!
 }
 
 input MasterNodeSpecIn {
-	config: String!
-	mysqlURI: String!
 	provider: String!
 	providerName: String!
 	region: String!
 	accountName: String!
 	clusterName: String!
+	config: String!
+	mysqlURI: String!
 }
 
 type MasterNode {
+	kind: String
+	metadata: Metadata!
+	spec: MasterNodeSpec
 	status: Status
 	apiVersion: String
-	kind: String
-	metadata: Metadata
-	spec: MasterNodeSpec
 }
 
 input MasterNodeIn {
-	apiVersion: String
 	kind: String
-	metadata: MetadataIn
+	metadata: MetadataIn!
 	spec: MasterNodeSpecIn
+	apiVersion: String
 }
 
