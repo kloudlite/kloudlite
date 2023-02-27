@@ -12,12 +12,27 @@ import (
 	"strings"
 )
 
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return "<nothing>"
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
+
 func main() {
 	var isDev bool
 	var outputDir string
+	var crds arrayFlags
 
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.StringVar(&outputDir, "output", "./", "--outputDir <dir-name>")
+
+  flag.Var(&crds, "crd", "--skip item1 --skip item2")
 	flag.Parse()
 
 	kCli, err := func() (k8s.ExtendedK8sClient, error) {
@@ -35,20 +50,27 @@ func main() {
 		panic(err)
 	}
 
-	crds := map[string]string{
-		"CloudProvider": "cloudproviders.infra.kloudlite.io",
-		"Edge":          "edges.infra.kloudlite.io",
-		"NodePool":      "nodepools.infra.kloudlite.io",
-		"WorkerNode":    "workernodes.infra.kloudlite.io",
-		"Cluster":       "clusters.cmgr.kloudlite.io",
-		"MasterNode":    "masternodes.cmgr.kloudlite.io",
-	}
+  crdsMap := make(map[string]string, len(crds))
+
+  for i := range   crds {
+    sp := strings.Split(crds[i], "=")
+    crdsMap[sp[0]] = sp[1]
+  }
+
+	// crdsMap := map[string]string{
+	// 	"CloudProvider": "cloudproviders.infra.kloudlite.io",
+	// 	"Edge":          "edges.infra.kloudlite.io",
+	// 	"NodePool":      "nodepools.infra.kloudlite.io",
+	// 	"WorkerNode":    "workernodes.infra.kloudlite.io",
+	// 	"Cluster":       "clusters.cmgr.kloudlite.io",
+	// 	"MasterNode":    "masternodes.cmgr.kloudlite.io",
+	// }
 
 	g, ctx := errgroup.WithContext(context.TODO())
-	for k := range crds {
+	for k := range crdsMap {
 		x := k
 		g.Go(func() error {
-			schema, err := kCli.GetCRDJsonSchema(ctx, crds[x])
+			schema, err := kCli.GetCRDJsonSchema(ctx, crdsMap[x])
 			if err != nil {
 				return err
 			}
