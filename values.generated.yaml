@@ -1,0 +1,159 @@
+region: master
+
+accountName: kl-core
+imagePullPolicy: Always
+
+envName: development
+imageTag: v1.0.5
+
+cookieDomain: ".kloudlite.io"
+
+sendgridApiKey: '***REMOVED***'
+supportEmail: support@kloudlite.io
+
+managedServices:
+  mongoSvc: mongo-svc
+  redisSvc: redis-svc
+
+managedResources:
+  authDb: auth-db
+  authRedis: auth-redis
+
+  dnsDb: dns-db
+  dnsRedis: dns-redis
+
+  ciDb: ci-db
+  ciRedis: ci-redis
+
+  financeDb: finance-db
+  financeRedis: finannce-redis
+
+  iamDb: iam-db
+  iamRedis: iam-redis
+
+  infraDb: infra-db
+  
+  consoleDb: console-db
+  consoleRedis: console-redis
+
+  socketWebRedis: socket-web-redis
+
+  eventsDb: events-db
+
+oAuthSecretName: oauth-secrets
+githubAppName: kloudlite-dev
+redpandaAdminSecretName: msvc-redpanda-admin-creds
+
+secrets:
+  stripePublicKey: ***REMOVED***
+  stripeSecretKey: ***REMOVED***
+
+clusterSvcAccount: kloudlite-cluster-svc-account
+normalSvcAccount: kloudlite-svc-account
+
+nodeSelector: 
+  k1: v1
+
+tolerations: []
+
+networking:
+  dnsNames: 
+    - ns1.dev.kloudlite.io
+    - ns2.dev.kloudlite.io
+  edgeCNAME: dev.edge.kloudlite.io
+
+baseDomain: dev.kloudlite.io
+
+kafka:
+  consumerGroupId: control-plane
+  topicEvents: kl-events
+  topicHarborWebhooks: kl-harbor-webhooks
+
+webhookAuthz:
+  gitlabSecret: '***REMOVED***'
+  githubSecret: '***REMOVED***'
+  harborSecret: '***REMOVED***'
+  kloudliteSecret: '***REMOVED***'
+
+routers:
+  authWeb: 
+    name: auth-web
+    domain: auth.dev.kloudlite.io
+  accountsWeb: 
+    name: accounts-web
+    domain: accounts.dev.kloudlite.io
+  consoleWeb:
+    name: console-web
+    domain: console.dev.kloudlite.io
+  socketWeb:
+    name: socket-web
+    domain: console.dev.kloudlite.io
+  webhooksApi:
+    name: webhooks-api
+    domain: webhooks.dev.kloudlite.io
+
+apps:
+  authApi:
+    name: auth-api
+    image: registry.kloudlite.io/kloudlite/development/auth-api:v1.0.5
+  
+  dnsApi:
+    name: dns-api 
+    image: registry.kloudlite.io/kloudlite/development/dns-api:v1.0.5
+
+  commsApi:
+    name: comms-api
+    image: registry.kloudlite.io/kloudlite/development/comms-api:v1.0.5
+
+  consoleApi:
+    name: console-api
+    image: registry.kloudlite.io/kloudlite/development/console-api:v1.0.5
+
+  ciApi:
+    name: ci-api
+    image: registry.kloudlite.io/kloudlite/development/console-api:v1.0.5
+  
+  financeApi:
+    name: finance-api
+    image: registry.kloudlite.io/kloudlite/development/finance-api:v1.0.5
+
+  iamApi:
+    name: iam-api
+    image: registry.kloudlite.io/kloudlite/development/iam-api:v1.0.5
+  
+  infraApi:
+    name: infra-api
+    image: registry.kloudlite.io/kloudlite/development/infra-api:v1.0.5
+
+  jsEvalApi:
+    name: js-eval-api
+    image: registry.kloudlite.io/kloudlite/development/js-eval-api:v1.0.5
+
+  gatewayApi:
+    name: gateway-api
+    image: registry.kloudlite.io/kloudlite/development/gateway-api:v1.0.5
+
+  # web
+  socketWeb:
+    name: socket-web
+    image: registry.kloudlite.io/kloudlite/development/socket-web:v1.0.5
+
+  consoleWeb:
+    name: console-web
+    image: registry.kloudlite.io/kloudlite/development/console-web:v1.0.5
+
+  authWeb:
+    name: auth-web
+    image: registry.kloudlite.io/kloudlite/development/auth-web:v1.0.5
+
+  accountsWeb:
+    name: accounts-web
+    image: registry.kloudlite.io/kloudlite/development/accounts-web:v1.0.5
+
+  auditLoggingWorker:
+    name: audit-logging-worker
+    image: registry.kloudlite.io/kloudlite/development/audit-logging-worker:v1.0.5
+
+  webhooksApi:
+    name: webhooks-api
+    image: registry.kloudlite.io/kloudlite/development/webhooks-api:v1.0.5

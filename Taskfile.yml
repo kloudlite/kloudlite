@@ -1,0 +1,22 @@
+version: 3
+
+tasks:
+  compile:
+    vars:
+      EnvName: development
+      ImageTag: v1.0.5
+      baseDomain: dev.kloudlite.io
+    cmds:
+      - nxt template parse -f values.yml.tpl --missing-key error 
+          --set EnvName={{.EnvName}}
+          --set ImageTag={{.ImageTag}} 
+          --set baseDomain={{.baseDomain}} 
+        > ./values.generated.yaml
+  debug:
+    cmds:
+      - task: compile
+      # - helm install --dry-run --debug kloudlite-platform --namespace kl-core --create-namespace . -f ./values.generated.yaml
+      - helm install --dry-run --debug kloudlite-platform --namespace kl-core --create-namespace . -f ./values.generated.yaml | schelm -f /tmp/manifests
+      - tree /tmp/manifests
+      # - cd .. && helm install --dry-run --debug kloudlite-platform --namespace kl-core --create-namespace ./kloudlite-platform -f ./kloudlite-platform/values.generated.yaml | schelm -f /tmp/manifests
+      # - tree /tmp/manifests
