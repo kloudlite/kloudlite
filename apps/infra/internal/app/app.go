@@ -23,12 +23,12 @@ type FinanceClientConnection *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
-	repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cp", entities.CloudProviderIndices),
+	repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
 	repos.NewFxMongoRepo[*entities.Edge]("edges", "edge", entities.EdgeIndices),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
-	repos.NewFxMongoRepo[*entities.MasterNode]("clusters", "clus", entities.MasterNodeIndices),
-	repos.NewFxMongoRepo[*entities.WorkerNode]("clusters", "clus", entities.WorkerNodeIndices),
-	repos.NewFxMongoRepo[*entities.NodePool]("clusters", "clus", entities.NodePoolIndices),
+	repos.NewFxMongoRepo[*entities.MasterNode]("master_nodes", "mnode", entities.MasterNodeIndices),
+	repos.NewFxMongoRepo[*entities.WorkerNode]("worker_nodes", "wnode", entities.WorkerNodeIndices),
+	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndices),
 
 	fx.Provide(
