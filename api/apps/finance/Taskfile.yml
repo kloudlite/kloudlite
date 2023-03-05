@@ -19,7 +19,7 @@ tasks:
   docker-build:
     vars:
       APP: finance
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
@@ -38,7 +38,7 @@ tasks:
         msg: 'var Tag must have a value'
     vars:
       APP: finance
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     env:
       CGO_ENABLED: 0
       GOOS: linux
