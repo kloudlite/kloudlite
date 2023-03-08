@@ -38,7 +38,7 @@ type awsProviderClient interface {
 	DeleteNode(node AWSNode) error
 
 	AttachNode(node AWSNode) error
-	// UnattachNode(node AWSNode) error
+	UnattachNode(node AWSNode) error
 
 	// mkdir(folder string) error
 	// rmdir(folder string) error
@@ -51,8 +51,9 @@ type awsProviderClient interface {
 
 // getFolder implements doProviderClient
 func (a *awsProvider) getFolder(region string, nodeId string) string {
-	// eg -> /path/do/blr1/acc_id/node_id
-	return path.Join(a.storePath, a.providerDir, region, a.accountId, nodeId)
+	// eg -> /path/acc_id/do/blr1/node_id/do
+
+	return path.Join(a.storePath, a.accountId, a.providerDir, region, nodeId)
 }
 
 // initTFdir implements doProviderClient
@@ -232,10 +233,6 @@ func (a *awsProvider) DeleteNode(node AWSNode) error {
 	} else if strings.TrimSpace(string(out)) == "" {
 		fmt.Println("something went wrong, can't find node_name")
 		return nil
-	}
-
-	if err := a.UnattachNode(node); err != nil {
-		return err
 	}
 
 	// destroy node
