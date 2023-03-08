@@ -274,8 +274,9 @@ func (d *domainI) GetAccountEdgeCName(ctx context.Context, accountId string, reg
 
 	cluster, err := d.getClusterFromAccount(ctx, err, accountId)
 	if err != nil {
-		return "", err
+		return fmt.Sprintf("%s.%s.%s", regionCnameIdentity, name, d.env.EdgeCnameBaseDomain), nil
 	}
+
 	return fmt.Sprintf("%s.%s.%s.%s", regionCnameIdentity, name, cluster, d.env.EdgeCnameBaseDomain), nil
 }
 

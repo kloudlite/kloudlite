@@ -4,7 +4,7 @@ import (
 	"flag"
 
 	"go.uber.org/fx"
-	"kloudlite.io/apps/nodectrl/internal/framework"
+	"kloudlite.io/apps/nodecontroller/internal/framework"
 	"kloudlite.io/pkg/logging"
 )
 
@@ -22,4 +22,3 @@ func main() {
 		// fx.NopLogger,
 	).Run()
 }
-
