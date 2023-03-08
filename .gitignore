@@ -11,7 +11,7 @@ terraform.tfvars
 .terraform.lock.hcl
 .terraform
 .keys
-.kube/
+deploy/
 .task
 .settings
 # wgman

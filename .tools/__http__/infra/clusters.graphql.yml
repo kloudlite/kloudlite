@@ -1,0 +1,95 @@
+---
+global:
+  accountName: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+  clusterName: "sample-cluster-1"
+  cloudProviderName: sample-cp5
+---
+
+label: Create Cluster
+query: |+
+  mutation Infra_createCluster($cluster: ClusterIn!) {
+    infra_createCluster(cluster: $cluster) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+        providerName
+      }
+    }
+  }
+variables:
+  cluster:
+    # apiVersion: cmgr.kloudlite.io/v1
+    # kind: Cluster
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      accountName: "{{.accountName}}"
+      providerName: "{{.cloudProviderName}}"
+      provider: aws
+      count: 1
+      region: ap-south-1
+      config: '{"instanceType":"c6a.large","vpc":""}'
+---
+
+label: List Clusters
+query: |+
+  query Query($accountName: String!) {
+    infra_listClusters(accountName: $accountName) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+      }
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+
+---
+label: Get Cluster
+query: |+
+  query Query($name: String!) {
+    infra_getCluster(name: $name) {
+      kind
+      # metadata {
+      #   name
+      # }
+    }
+  }
+variables:
+  name: "{{.clusterName}}"
+
+---
+label: Update Cluster
+query: |+
+  mutation Infra_updateCluster($cluster: Cluster!) {
+    infra_updateCluster(cluster: $cluster)
+  }
+variables:
+  cluster:
+    apiVersion: cmgr.kloudlite.io/v1
+    kind: Cluster
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      accountName: "{{.accountName}}"
+      providerName: "{{.cloudProviderName}}"
+      provider: aws
+      count: 2
+      region: ap-south-1
+      config: '{"instanceType":"c6a.large","vpc":""}'
+
+---
+label: Delete Cluster
+query: |+
+  mutation Infra_deleteCluster($name: String!) {
+    infra_deleteCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+---
+
+

@@ -1,0 +1,63 @@
+---
+global:
+  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+  accountName: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+  clusterName: "sample-cluster-1"
+  cloudProviderName: sample-cp5
+  edgeName: e1
+---
+label: Create Edge
+query: |+
+  mutation Infra_createEdge($edge: Edge!) {
+    infra_createEdge(edge: $edge)
+  }
+variables:
+  edge:
+    apiVersion: infra.kloudlite.io/v1
+    kind: Edge
+    metadata:
+      name: "{{.edgeName}}"
+    spec:
+      accountName: "{{.accountName}}"
+      providerName: "{{.cloudProviderName}}"
+      clusterName: "{{.clusterName}}"
+      region: "blr1"
+      # credentialsRef:
+      #   name: secret-n1
+      #   namespace: secret-ns
+      pools:
+        - name: p1
+          config: '2vcpu-4gb'
+          min: 1
+          max: 2
+---
+
+label: List Edges
+query: |+
+  query Query($clusterName: String!, $providerName: String!) {
+    infra_listEdges(clusterName: $clusterName, providerName: $providerName)
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  providerName: "{{.cloudProviderName}}"
+---
+
+label: Get Edge
+query: |+
+  query Query($clusterName: String!, $name: String!) {
+    infra_getEdge(clusterName: $clusterName,  name: $name)
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  name: "{{.edgeName}}"
+---
+
+label: Delete Edge
+query: |+
+  mutation DeleteEdge($clusterName: String!, $name: String!) {
+    infra_deleteEdge(clusterName: $clusterName,  name: $name)
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  name: "{{.edgeName}}"
+---

@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
-	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
+	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
+
 	"kloudlite.io/pkg/repos"
 )
 
@@ -19,7 +20,7 @@ const (
 
 type CloudProvider struct {
 	repos.BaseEntity      `bson:",inline"`
-	infrav1.CloudProvider `bson:",inline" json:",inline"`
+	infraV1.CloudProvider `bson:",inline" json:",inline"`
 
 	// sync status
 	SyncStatus CloudProviderStatus `json:"sync_status" bson:"sync_status,omitempty" validate:"nonzero"`

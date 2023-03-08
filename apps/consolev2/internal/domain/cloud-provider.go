@@ -7,7 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/consolev2/internal/domain/entities"
-	"kloudlite.io/pkg/constants"
+	"kloudlite.io/constants"
 	"kloudlite.io/pkg/repos"
 )
 

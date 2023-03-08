@@ -1,0 +1,39 @@
+type NodePoolSpec {
+	provider: String!
+	region: String!
+	accountName: String!
+	max: Int
+	min: Int
+	providerName: String!
+	clusterName: String!
+	config: String!
+	edgeName: String!
+}
+
+input NodePoolSpecIn {
+	provider: String!
+	region: String!
+	accountName: String!
+	max: Int
+	min: Int
+	providerName: String!
+	clusterName: String!
+	config: String!
+	edgeName: String!
+}
+
+type NodePool {
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	spec: NodePoolSpec
+	status: Status
+}
+
+input NodePoolIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: NodePoolSpecIn
+}
+

@@ -90,7 +90,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexs),
 
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndexes),
-	repos.NewFxMongoRepo[*entities.EdgeRegion]("regions", "reg", entities.EdgeRegionIndexes),
+	repos.NewFxMongoRepo[*entities.EdgeRegion]("regions", "reg", entities.EdgeRegionIndexes),app/
 	repos.NewFxMongoRepo[*entities.CloudProvider]("providers", "cp", entities.CloudProviderIndexes),
 	repos.NewFxMongoRepo[*entities.Device]("devices", "dev", entities.DeviceIndexes),
 	repos.NewFxMongoRepo[*entities.Project]("projects", "proj", entities.ProjectIndexes),

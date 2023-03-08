@@ -1,0 +1,40 @@
+type Query {
+  # clusters
+  infra_listClusters(accountName: String!): [Cluster!]
+  infra_getCluster(name: String!): Cluster
+
+  # cloud providers
+  infra_listCloudProviders(accountName: String!): [CloudProvider!]
+  infra_getCloudProvider(accountName: String!, name: String!): CloudProvider
+
+  # list edges
+  infra_listEdges(clusterName: String!, providerName: String): [Edge!]
+  infra_getEdge(clusterName: String!, name: String!): Edge
+
+  # get master nodes
+  infra_getMasterNodes(clusterName: String!): [MasterNode!]
+  infra_getWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!]
+
+  # get node pools
+  infra_getNodePools(clusterName: String!, edgeName: String!): [NodePool!]
+}
+
+type Mutation {
+  # clusters
+  infra_createCluster(cluster: ClusterIn!): Cluster
+  infra_updateCluster(cluster: ClusterIn!): Cluster
+  infra_deleteCluster(name: String!): Boolean!
+
+  # cloud provider
+  infra_createCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn!): CloudProvider
+  infra_updateCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn): CloudProvider
+  infra_deleteCloudProvider(accountName: String!, name: String!): Boolean!
+
+  # Edge Regions
+  infra_createEdge(edge: EdgeIn!): Edge
+  infra_updateEdge(edge: EdgeIn!): Edge
+  infra_deleteEdge(clusterName: String!, name: String!): Boolean!
+
+  # Nodes
+  infra_deleteWorkerNode(clusterName: String!, edgeName: String!, name: String!): Boolean!
+}

@@ -14,7 +14,7 @@ tasks:
   docker-build:
     vars:
       APP: comms
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
@@ -28,7 +28,7 @@ tasks:
   local-build:
     vars:
       APP: comms
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
