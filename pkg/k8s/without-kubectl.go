@@ -5,7 +5,6 @@ import (
 	"context"
 	"io"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +27,6 @@ type YAMLClient struct {
 }
 
 func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
-
 	jYamls := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 200)
 	for {
@@ -133,7 +131,4 @@ func NewYAMLClientOrDie(config *rest.Config) *YAMLClient {
 		panic(err)
 	}
 	return client
-}
-
-func ValidateStruct(clientset clientset.Clientset, crdName string) {
 }

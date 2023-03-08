@@ -1,13 +1,3 @@
-#scalar Any
-#scalar Json
-#scalar CloudProvider
-#scalar Edge
-scalar Secret
-#scalar Cluster
-#scalar MasterNode
-#scalar WorkerNode
-#scalar NodePool
-
 type Query {
   # clusters
   infra_listClusters(accountName: String!): [Cluster!]
@@ -36,8 +26,8 @@ type Mutation {
   infra_deleteCluster(name: String!): Boolean!
 
   # cloud provider
-  infra_createCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: Secret!): CloudProvider
-  infra_updateCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: Secret): CloudProvider
+  infra_createCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn!): CloudProvider
+  infra_updateCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn): CloudProvider
   infra_deleteCloudProvider(accountName: String!, name: String!): Boolean!
 
   # Edge Regions

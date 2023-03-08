@@ -60,7 +60,11 @@ func (r *mutationResolver) InfraDeleteWorkerNode(ctx context.Context, clusterNam
 }
 
 func (r *queryResolver) InfraListClusters(ctx context.Context, accountName string) ([]*entities.Cluster, error) {
-	return r.Domain.ListClusters(ctx, accountName)
+	cls, err := r.Domain.ListClusters(ctx, accountName)
+	if cls == nil {
+		cls = make([]*entities.Cluster, 0)
+	}
+	return cls, err
 }
 
 func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error) {
@@ -68,7 +72,11 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*enti
 }
 
 func (r *queryResolver) InfraListCloudProviders(ctx context.Context, accountName string) ([]*entities.CloudProvider, error) {
-	return r.Domain.ListCloudProviders(ctx, accountName)
+	cp, err := r.Domain.ListCloudProviders(ctx, accountName)
+	if cp == nil {
+		cp = make([]*entities.CloudProvider, 0)
+	}
+	return cp, err
 }
 
 func (r *queryResolver) InfraGetCloudProvider(ctx context.Context, accountName string, name string) (*entities.CloudProvider, error) {
@@ -76,7 +84,11 @@ func (r *queryResolver) InfraGetCloudProvider(ctx context.Context, accountName s
 }
 
 func (r *queryResolver) InfraListEdges(ctx context.Context, clusterName string, providerName *string) ([]*entities.Edge, error) {
-	return r.Domain.ListEdges(ctx, clusterName, providerName)
+	e, err := r.Domain.ListEdges(ctx, clusterName, providerName)
+	if e == nil {
+		e = make([]*entities.Edge, 0)
+	}
+	return e, err
 }
 
 func (r *queryResolver) InfraGetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error) {

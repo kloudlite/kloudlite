@@ -21,6 +21,7 @@ tasks:
           --crd NodePool=nodepools.infra.kloudlite.io
           --crd MasterNode=masternodes.cmgr.kloudlite.io
           --crd Secret=secrets.crds.kloudlite.io
+          --crd Cluster=clusters.cmgr.kloudlite.io
 
 # // 	"CloudProvider": "cloudproviders.infra.kloudlite.io",
 # // 	"Edge":          "edges.infra.kloudlite.io",

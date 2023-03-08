@@ -3,7 +3,7 @@ package functions
 import (
 	"encoding/base64"
 	"encoding/json"
-	libJson "encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -24,12 +24,12 @@ type JsonFeatures interface {
 type jsonFeatures struct{}
 
 func (j *jsonFeatures) ToB64Url(v interface{}) (string, error) {
-	b, e := libJson.Marshal(v)
+	b, e := json.Marshal(v)
 	return base64.URLEncoding.EncodeToString(b), e
 }
 
 func (j *jsonFeatures) ToB64String(v interface{}) (string, error) {
-	b, e := libJson.Marshal(v)
+	b, e := json.Marshal(v)
 	return base64.StdEncoding.EncodeToString(b), e
 }
 
@@ -49,7 +49,7 @@ func (j *jsonFeatures) FromB64Url(s string, v interface{}) error {
 var Json = &jsonFeatures{}
 
 func ToBase64StringFromJson(v interface{}) (string, error) {
-	b, e := libJson.Marshal(v)
+	b, e := json.Marshal(v)
 	return base64.StdEncoding.EncodeToString(b), e
 }
 
@@ -76,10 +76,27 @@ func CleanerNanoid(n int) (string, error) {
 	}
 	return res, nil
 }
+
 func CleanerNanoidOrDie(n int) string {
-	id, err := CleanerNanoid(40)
+	id, err := CleanerNanoid(n)
 	if err != nil {
 		panic(err)
 	}
 	return id
+}
+
+func JsonConversion(from any, to any) error {
+	if from == nil {
+		return nil
+	}
+
+	if to == nil {
+		return fmt.Errorf("receiver (to) is nil")
+	}
+
+	b, err := json.Marshal(from)
+	if err != nil {
+		return nil
+	}
+	return json.Unmarshal(b, &to)
 }
