@@ -87,7 +87,7 @@ spec:
       volumes:
         - mountPath: /github
           type: secret
-          refName: oauth-secrets
+          refName: {{.Values.oAuthSecretName}}
           items:
             - key: github-app-pk.pem
               fileName: github-app-pk.pem

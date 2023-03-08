@@ -1,4 +1,4 @@
-region: master
+region: dev-sample1-mumbai-1
 
 accountName: kl-core
 imagePullPolicy: Always
@@ -10,6 +10,14 @@ cookieDomain: ".kloudlite.io"
 
 sendgridApiKey: '***REMOVED***'
 supportEmail: support@kloudlite.io
+
+secrets:
+  names:
+    oAuthSecret: oauth-secrets
+    webhookAuthzSecret: webhook-authz
+    redpandaAdminAuthSecret: msvc-redpanda-admin-auth
+    harborAdminSecret: harbor-admin-creds
+    stripeSecret: stripe-creds 
 
 managedServices:
   mongoSvc: mongo-svc
@@ -40,13 +48,47 @@ managedResources:
 
   eventsDb: events-db
 
+oAuth2:
+  github:
+    callbackUrl: https://%s/oauth2/callback/github
+    clientId: ***REMOVED***
+    clientSecret: ***REMOVED***
+    webhookUrl: https://%s/git/github
+    appId: ***REMOVED***
+    appPrivateKey: ***REMOVED***
+
+  gitlab: 
+    callbackUrl: https://%s/oauth2/callback/gitlab
+    clientId: ***REMOVED***
+    clientSecret: ***REMOVED***
+    webhookUrl: https://%s/git/gitlab
+
+  google:
+    callbackUrl: https://%s/oauth2/callback/gitlab
+    clientId: ***REMOVED***
+    clientSecret: ***REMOVED***
+
+redpanda:
+  saslUsername: admin
+  saslPassword: ***REMOVED***
+  adminEndpoint: redpanda.kl-init-redpanda.svc.cluster.local:9644
+  {{/* kafkaBrokers: redpanda.kl-init-redpanda.svc.cluster.local:9092 */}}
+  kafkaBrokers: ***REMOVED*** 
+  rpkAdminFlags: --user admin --password ***REMOVED*** --api-urls redpanda.kl-init-redpanda.svc.cluster.local:9644
+  rpkSaslFlags: --user admin --password ***REMOVED*** --brokers redpanda.kl-init-redpanda.svc.cluster.local:9092 --sasl-mechanism SCRAM-SHA-256
+
 oAuthSecretName: oauth-secrets
 githubAppName: kloudlite-dev
 redpandaAdminSecretName: msvc-redpanda-admin-creds
 
-secrets:
-  stripePublicKey: ***REMOVED***
-  stripeSecretKey: ***REMOVED***
+stripe:
+  publicKey: ***REMOVED***
+  secretKey: ***REMOVED***
+
+harbor:
+  adminUsername:  harbor-operator
+  adminPassword: '6g43ynX!%$m%7L2Hhz@y*^R7K*mD4LiyQvQt95XU' 
+  imageRegistryHost: registry.kloudlite.io
 
 clusterSvcAccount: kloudlite-cluster-svc-account
 normalSvcAccount: kloudlite-svc-account
@@ -68,6 +110,11 @@ kafka:
   consumerGroupId: control-plane
   topicEvents: kl-events
   topicHarborWebhooks: kl-harbor-webhooks
+  topicGitWebhooks: kl-git-webhooks
+  topicPipelineRunUpdates: kl-pipeline-run-updates
+  topicBilling: kl-billing
+  topicStatusUpdates: kl-status-updates
+  topicInfraStatusUpdates: kl-infra-updates
 
 webhookAuthz:
   gitlabSecret: '***REMOVED***'
@@ -91,6 +138,9 @@ routers:
   webhooksApi:
     name: webhooks-api
     domain: webhooks.{{.baseDomain}}
+  gatewayApi:
+    name: gateway-api
+    domain: gateway.{{.baseDomain}}
 
 apps:
   authApi:
@@ -111,7 +161,7 @@ apps:
 
   ciApi:
     name: ci-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/console-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/ci-api:{{.ImageTag}}
   
   financeApi:
     name: finance-api

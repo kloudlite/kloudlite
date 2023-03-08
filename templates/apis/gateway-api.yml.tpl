@@ -39,7 +39,7 @@ spec:
       volumes:
         - mountPath: /hotspot
           type: config
-          refName: gateway-supergraph
+          refName: {{.Values.apps.gatewayApi.name}}-supergraph
 
       livenessProbe:
         type: httpGet
@@ -75,35 +75,12 @@ data:
       - name: {{.Values.apps.ciApi.name}}
         url: http://{{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
 
-      - name: {{.Values.apps.consoleApi.name}}
-        url: http://{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
+      {{/* - name: {{.Values.apps.consoleApi.name}} */}}
+      {{/*   url: http://{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query */}}
 
       - name: {{.Values.apps.financeApi.name}}
         url: http://{{.Values.apps.financeApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
 
+      - name: {{.Values.apps.infraApi.name}}
+        url: http://{{.Values.apps.infraApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
 ---
-apiVersion: crds.kloudlite.io/v1
-kind: Router
-metadata:
-  name: {{.Values.apps.gatewayApi.name}}
-  namespace: {{.Release.Namespace}}
-  labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
-spec:
-  domains:
-    - "gateway.{{.Values.baseDomain}}"
-  https:
-    enabled: true
-    forceRedirect: true
-  cors:
-    enabled: true
-    origins:
-      - https://studio.apollographql.com
-    allowCredentials: true
-  basicAuth:
-    enabled: true
-    username: {{.Values.apps.gatewayApi.name}}
-  routes:
-    - app: {{.Values.apps.gatewayApi.name}}
-      path: /
-      port: 80

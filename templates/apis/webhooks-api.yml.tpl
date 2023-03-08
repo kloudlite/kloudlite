@@ -1,16 +1,3 @@
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: webhook-authz
-  namespace: {{.Release.Namespace}}
-stringData:
-  GITHUB_SECRET: {{.Values.webhookAuthz.githubSecret}}
-  GITLAB_SECRET: {{.Values.webhookAuthz.gitlabSecret}}
-  HARBOR_SECRET: {{.Values.webhookAuthz.harborSecret}}
-  KLOUDLITE_SECRET: {{.Values.webhookAuthz.kloudliteSecret}}
-
----
 
 apiVersion: crds.kloudlite.io/v1
 kind: App
