@@ -1,13 +1,3 @@
-type CloudProviderSpecProviderSecret {
-	name: String!
-	namespace: String!
-}
-
-input CloudProviderSpecProviderSecretIn {
-	name: String!
-	namespace: String!
-}
-
 type CloudProviderSpec {
 	accountName: String!
 	providerSecret: CloudProviderSpecProviderSecret!
@@ -19,17 +9,27 @@ input CloudProviderSpecIn {
 }
 
 type CloudProvider {
-	metadata: Metadata!
-	spec: CloudProviderSpec
-	status: Status
 	apiVersion: String
 	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	spec: CloudProviderSpec
+	status: Status
 }
 
 input CloudProviderIn {
-	metadata: MetadataIn!
-	spec: CloudProviderSpecIn
 	apiVersion: String
 	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: CloudProviderSpecIn
+}
+
+type CloudProviderSpecProviderSecret {
+	name: String!
+	namespace: String!
+}
+
+input CloudProviderSpecProviderSecretIn {
+	name: String!
+	namespace: String!
 }
 

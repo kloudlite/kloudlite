@@ -7,6 +7,7 @@ import (
 	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/kubectl"
 	wgV1 "github.com/kloudlite/wg-operator/apis/wg/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -31,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	app := fx.New(
-		fx.NopLogger,
+		// fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
 				return logging.New(&logging.Options{Name: "infra", Dev: isDev})
@@ -72,8 +73,8 @@ func main() {
 			})
 		}),
 
-		fx.Provide(func(restCfg *rest.Config) (*k8s.YAMLClient, error) {
-			return k8s.NewYAMLClient(restCfg)
+		fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
+			return kubectl.NewYAMLClient(restCfg)
 		}),
 
 		fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
@@ -84,7 +85,8 @@ func main() {
 		framework.Module,
 	)
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	if err := app.Start(ctx); err != nil {
 		panic(err)
 	}

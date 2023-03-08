@@ -2,11 +2,13 @@ package domain
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+
 	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/constants"
@@ -15,6 +17,7 @@ import (
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 type domain struct {
@@ -26,23 +29,46 @@ type domain struct {
 	workerNodeRepo    repos.DbRepo[*entities.WorkerNode]
 	nodePoolRepo      repos.DbRepo[*entities.NodePool]
 	agentMessenger    AgentMessenger
-	k8sYamlClient     *k8s.YAMLClient
+	k8sYamlClient     *kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
 	secretRepo        repos.DbRepo[*entities.Secret]
 }
 
+func (d *domain) applyK8sResource(ctx context.Context, obj client.Object) error {
+	b, err := yaml.Marshal(obj)
+	if err != nil {
+		return err
+	}
+	if _, err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *domain) CreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error) {
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, providerSecret.Secret, fmt.Sprintf("%s.%s", fn.RegularPlural(providerSecret.Kind), providerSecret.GroupVersionKind().Group)); err != nil {
+	cloudProvider.EnsureGVK()
+	providerSecret.EnsureGVK()
+
+	if err := d.k8sExtendedClient.ValidateStruct(
+		ctx,
+		providerSecret.Secret,
+		fmt.Sprintf("%s.%s", fn.RegularPlural(providerSecret.Kind), providerSecret.GroupVersionKind().Group),
+	); err != nil {
 		return nil, err
 	}
-	if err := d.k8sClient.Create(ctx, &providerSecret.Secret); err != nil {
+
+	if err := d.applyK8sResource(ctx, &providerSecret.Secret); err != nil {
 		return nil, err
 	}
 
 	cloudProvider.Spec.ProviderSecret.Name = providerSecret.Name
 	cloudProvider.Spec.ProviderSecret.Namespace = providerSecret.Namespace
 
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, cloudProvider.CloudProvider, fmt.Sprintf("%s.%s", fn.RegularPlural(cloudProvider.Kind), cloudProvider.GroupVersionKind().Group)); err != nil {
+	if err := d.k8sExtendedClient.ValidateStruct(
+		ctx,
+		cloudProvider.CloudProvider,
+		fmt.Sprintf("%s.%s", fn.RegularPlural(cloudProvider.Kind), cloudProvider.GroupVersionKind().Group),
+	); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +77,7 @@ func (d *domain) CreateCloudProvider(ctx context.Context, cloudProvider entities
 		return nil, err
 	}
 
-	if err := d.k8sClient.Create(ctx, &cp.CloudProvider); err != nil {
+	if err := d.applyK8sResource(ctx, &cp.CloudProvider); err != nil {
 		return nil, err
 	}
 
@@ -67,6 +93,17 @@ func (d *domain) GetCloudProvider(ctx context.Context, accountName string, name 
 }
 
 func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error) {
+	cloudProvider.EnsureGVK()
+	providerSecret.EnsureGVK()
+
+	if err := d.k8sExtendedClient.ValidateStruct(
+		ctx,
+		cloudProvider.CloudProvider,
+		fmt.Sprintf("%s.%s", fn.RegularPlural(cloudProvider.Kind), cloudProvider.GroupVersionKind().Group),
+	); err != nil {
+		return nil, err
+	}
+
 	cp, err := d.providerRepo.FindOne(ctx, repos.Filter{"metadata.name": cloudProvider.Name})
 	if err != nil {
 		return nil, err
@@ -77,6 +114,14 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 	}
 
 	if providerSecret != nil {
+		if err := d.k8sExtendedClient.ValidateStruct(
+			ctx,
+			providerSecret.Secret,
+			fmt.Sprintf("%s.%s", fn.RegularPlural(providerSecret.Kind), providerSecret.GroupVersionKind().Group),
+		); err != nil {
+			return nil, err
+		}
+
 		ps, err := d.secretRepo.FindOne(ctx, repos.Filter{"metadata.name": providerSecret.Name, "metadata.namespace": providerSecret.Namespace})
 		if err != nil {
 			return nil, err
@@ -90,12 +135,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 			return nil, err
 		}
 
-		b, err := json.Marshal(uSecret.Secret)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+		if err := d.applyK8sResource(ctx, &uSecret.Secret); err != nil {
 			return nil, err
 		}
 
@@ -103,17 +143,12 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 		cloudProvider.Spec.ProviderSecret.Namespace = providerSecret.Namespace
 	}
 
-	uProvider, err := d.providerRepo.UpdateOne(ctx, repos.Filter{"id": cp.Id}, &cloudProvider)
+	uProvider, err := d.providerRepo.UpdateById(ctx, cp.Id, &cloudProvider)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := json.Marshal(uProvider)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+	if err := d.applyK8sResource(ctx, &uProvider.CloudProvider); err != nil {
 		return nil, err
 	}
 
@@ -121,7 +156,26 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 }
 
 func (d *domain) DeleteCloudProvider(ctx context.Context, accountName string, name string) error {
-	return d.providerRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name, "spec.accountName": accountName})
+	return d.k8sClient.Delete(ctx, &infraV1.CloudProvider{ObjectMeta: metav1.ObjectMeta{Name: name}})
+}
+
+func (d *domain) OnDeleteCloudProviderMessage(ctx context.Context, cloudProvider entities.CloudProvider) error {
+	return d.providerRepo.DeleteOne(ctx, repos.Filter{"metadata.name": cloudProvider.Name})
+}
+
+func (d *domain) OnUpdateCloudProviderMessage(ctx context.Context, cloudProvider entities.CloudProvider) error {
+	cp, err := d.providerRepo.FindOne(ctx, repos.Filter{"metadata.name": cloudProvider.Name})
+	if err != nil {
+		return err
+	}
+
+	if cp == nil {
+		return fmt.Errorf("no cloud provider named %s found", cloudProvider.Name)
+	}
+
+	cp.CloudProvider = cloudProvider.CloudProvider
+	_, err = d.providerRepo.UpdateById(ctx, cp.Id, cp)
+	return err
 }
 
 func (d *domain) findCluster(ctx context.Context, clusterName string) (*entities.Cluster, error) {
@@ -188,19 +242,27 @@ func (d *domain) DeleteWorkerNode(ctx context.Context, clusterName string, edgeN
 		return false, err
 	}
 
-	wNode, err := d.workerNodeRepo.FindOne(ctx, repos.Filter{"metadata.name": name, "spec.edgeName": edgeName})
-	if err != nil {
-		return false, err
-	}
-
-	if wNode == nil {
-		return false, fmt.Errorf("worker node %s not found", name)
-	}
-
 	if err := d.agentMessenger.SendAction(ctx, ActionDelete, clusterName, clusterName, cluster.Cluster); err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+func (d *domain) OnDeleteWorkerNodeMessage(ctx context.Context, workerNode entities.WorkerNode) error {
+	return d.workerNodeRepo.DeleteOne(ctx, repos.Filter{"metadata.name": workerNode.Name, "spec.edgeName": workerNode.Spec.EdgeName})
+}
+
+func (d *domain) OnUpdateWorkerNodeMessage(ctx context.Context, workerNode entities.WorkerNode) error {
+	wn, err := d.workerNodeRepo.FindOne(ctx, repos.Filter{"metadata.name": workerNode.Name})
+	if err != nil {
+		return err
+	}
+	if wn == nil {
+		return fmt.Errorf("worker node %s not found", workerNode.Name)
+	}
+	wn.WorkerNode = workerNode.WorkerNode
+	_, err = d.workerNodeRepo.UpdateById(ctx, wn.Id, wn)
+	return err
 }
 
 func (d *domain) GetNodePools(ctx context.Context, clusterName string, edgeName string) ([]*entities.NodePool, error) {
@@ -229,6 +291,7 @@ func (d *domain) GetNodePools(ctx context.Context, clusterName string, edgeName 
 }
 
 func (d *domain) CreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
+	cluster.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, cluster.Cluster, fmt.Sprintf("%s.%s", fn.RegularPlural(cluster.Kind), cluster.GroupVersionKind().Group)); err != nil {
 		return nil, err
 	}
@@ -238,7 +301,7 @@ func (d *domain) CreateCluster(ctx context.Context, cluster entities.Cluster) (*
 		return nil, err
 	}
 
-	if err := d.k8sClient.Create(ctx, &nCluster.Cluster); err != nil {
+	if err := d.applyK8sResource(ctx, &nCluster.Cluster); err != nil {
 		return nil, err
 	}
 
@@ -254,18 +317,20 @@ func (d *domain) GetCluster(ctx context.Context, name string) (*entities.Cluster
 }
 
 func (d *domain) UpdateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
+	cluster.EnsureGVK()
+
 	clus, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
 		return nil, err
 	}
-	uCluster, err := d.clusterRepo.UpdateById(ctx, clus.Id, &cluster)
 
-	b, err := json.Marshal(uCluster.Cluster)
+	clus.Cluster = cluster.Cluster
+	uCluster, err := d.clusterRepo.UpdateById(ctx, clus.Id, clus)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+	if err := d.applyK8sResource(ctx, &uCluster.Cluster); err != nil {
 		return nil, err
 	}
 
@@ -273,18 +338,30 @@ func (d *domain) UpdateCluster(ctx context.Context, cluster entities.Cluster) (*
 }
 
 func (d *domain) DeleteCluster(ctx context.Context, name string) error {
-	cluster, err := d.findCluster(ctx, name)
+	return d.k8sClient.Delete(ctx, &cmgrV1.Cluster{ObjectMeta: metav1.ObjectMeta{Name: name}})
+}
+
+func (d *domain) OnDeleteClusterMessage(ctx context.Context, cluster entities.Cluster) error {
+	return d.clusterRepo.DeleteOne(ctx, repos.Filter{"metadata.name": cluster.Name})
+}
+
+func (d *domain) OnUpdateClusterMessage(ctx context.Context, cluster entities.Cluster) error {
+	c, err := d.clusterRepo.FindOne(ctx, repos.Filter{"metadata.name": cluster.Name})
 	if err != nil {
 		return err
 	}
 
-	if err := d.k8sClient.Delete(ctx, &cluster.Cluster); err != nil {
-		return err
+	if c == nil {
+		return fmt.Errorf("cluster %s not found", cluster.Name)
 	}
-	return nil
+
+	c.Cluster = cluster.Cluster
+	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
+	return err
 }
 
 func (d *domain) CreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error) {
+	edge.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, edge.Edge, fmt.Sprintf("%s.%s", fn.RegularPlural(edge.Kind), edge.GroupVersionKind().Group)); err != nil {
 		return nil, err
 	}
@@ -294,7 +371,7 @@ func (d *domain) CreateEdge(ctx context.Context, edge entities.Edge) (*entities.
 		return nil, err
 	}
 
-	if err := d.k8sClient.Create(ctx, &nEdge.Edge); err != nil {
+	if err := d.applyK8sResource(ctx, &nEdge.Edge); err != nil {
 		return nil, err
 	}
 	return nEdge, err
@@ -313,6 +390,7 @@ func (d *domain) GetEdge(ctx context.Context, clusterName string, name string) (
 }
 
 func (d *domain) UpdateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error) {
+	edge.EnsureGVK()
 	_, err := d.findCluster(ctx, edge.Spec.ClusterName)
 	if err != nil {
 		return nil, err
@@ -323,19 +401,33 @@ func (d *domain) UpdateEdge(ctx context.Context, edge entities.Edge) (*entities.
 		return nil, err
 	}
 
-	b, err := json.Marshal(edge.Edge)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+	if err := d.applyK8sResource(ctx, &uEdge.Edge); err != nil {
 		return nil, err
 	}
 	return uEdge, nil
 }
 
 func (d *domain) DeleteEdge(ctx context.Context, clusterName string, name string) error {
-	return d.edgeRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name, "spec.clusterName": clusterName})
+	return d.k8sClient.Delete(ctx, &infraV1.Edge{ObjectMeta: metav1.ObjectMeta{Name: name}})
+}
+
+func (d *domain) OnDeleteEdgeMessage(ctx context.Context, edge entities.Edge) error {
+	return d.edgeRepo.DeleteOne(ctx, repos.Filter{"metadata.name": edge.Name})
+}
+
+func (d *domain) OnUpdateEdgeMessage(ctx context.Context, edge entities.Edge) error {
+	e, err := d.edgeRepo.FindOne(ctx, repos.Filter{"metadata.name": edge.Name})
+	if err != nil {
+		return err
+	}
+
+	if e == nil {
+		return fmt.Errorf("edge %s not found", edge.Name)
+	}
+
+	e.Edge = edge.Edge
+	_, err = d.edgeRepo.UpdateById(ctx, e.Id, e)
+	return err
 }
 
 var Module = fx.Module("domain",
@@ -353,7 +445,7 @@ var Module = fx.Module("domain",
 			agentMessenger AgentMessenger,
 
 			k8sClient client.Client,
-			k8sYamlClient *k8s.YAMLClient,
+			k8sYamlClient *kubectl.YAMLClient,
 			k8sExtendedClient k8s.ExtendedK8sClient,
 		) Domain {
 			return &domain{

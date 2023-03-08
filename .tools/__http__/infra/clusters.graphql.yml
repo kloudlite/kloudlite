@@ -1,6 +1,5 @@
 ---
 global:
-  accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
   accountName: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
   clusterName: "sample-cluster-1"
   cloudProviderName: sample-cp5
@@ -8,15 +7,23 @@ global:
 
 label: Create Cluster
 query: |+
-  mutation Infra_createCluster($cluster: Cluster!) {
-    infra_createCluster(cluster: $cluster)
+  mutation Infra_createCluster($cluster: ClusterIn!) {
+    infra_createCluster(cluster: $cluster) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+        providerName
+      }
+    }
   }
 variables:
   cluster:
-    apiVersion: cmgr.kloudlite.io/v1
-    kind: Cluster
+    # apiVersion: cmgr.kloudlite.io/v1
+    # kind: Cluster
     metadata:
-      name: "{{.clusterName}}2"
+      name: "{{.clusterName}}"
     spec:
       accountName: "{{.accountName}}"
       providerName: "{{.cloudProviderName}}"
@@ -29,7 +36,14 @@ variables:
 label: List Clusters
 query: |+
   query Query($accountName: String!) {
-    infra_listClusters(accountName: $accountName)
+    infra_listClusters(accountName: $accountName) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+      }
+    }
   }
 variables:
   accountName: "{{.accountName}}"
@@ -38,7 +52,12 @@ variables:
 label: Get Cluster
 query: |+
   query Query($name: String!) {
-    infra_getCluster(name: $name)
+    infra_getCluster(name: $name) {
+      kind
+      # metadata {
+      #   name
+      # }
+    }
   }
 variables:
   name: "{{.clusterName}}"

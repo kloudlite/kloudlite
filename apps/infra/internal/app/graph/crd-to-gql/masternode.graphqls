@@ -1,35 +1,33 @@
-type MasterNodeSpec {
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-	mysqlURI: String!
-}
-
-input MasterNodeSpecIn {
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-	mysqlURI: String!
-}
-
 type MasterNode {
+	apiVersion: String
 	kind: String
-	metadata: Metadata!
+	metadata: Metadata! @goField(name: "objectMeta")
 	spec: MasterNodeSpec
 	status: Status
-	apiVersion: String
 }
 
 input MasterNodeIn {
-	kind: String
-	metadata: MetadataIn!
-	spec: MasterNodeSpecIn
 	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: MasterNodeSpecIn
+}
+
+type MasterNodeSpec {
+	config: String!
+	provider: String!
+	providerName: String!
+	region: String!
+	accountName: String!
+	clusterName: String!
+}
+
+input MasterNodeSpecIn {
+	config: String!
+	provider: String!
+	providerName: String!
+	region: String!
+	accountName: String!
+	clusterName: String!
 }
 

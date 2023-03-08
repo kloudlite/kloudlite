@@ -14,7 +14,9 @@ type Env struct {
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 
-	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
-	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
+	KafkaBrokers            string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaUsername           string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword           string `env:"KAFKA_PASSWORD" required:"true"`
+	KafkaTopicInfraUpdates  string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
+	KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 }

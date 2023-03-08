@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"kloudlite.io/constants"
 	"math"
 	"math/rand"
 	"reflect"
@@ -13,12 +12,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"kloudlite.io/constants"
+
 	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/stripe"
 
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
@@ -46,7 +48,7 @@ type domainI struct {
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
 	inventoryPath          string
 	stripeCli              *stripe.Client
-	k8sYamlClient          *k8s.YAMLClient
+	k8sYamlClient          *kubectl.YAMLClient
 	env                    *Env
 }
 
@@ -491,7 +493,7 @@ func (d *domainI) CreateAccount(
 		return nil, errors.New("you don't have permission to perform this operation")
 	}
 
-	currClusterCfg, err := d.k8sYamlClient.GetConfigMap(ctx, d.env.CurrClusterConfigNS, d.env.CurrClusterConfigName)
+	currClusterCfg, err := d.k8sYamlClient.K8sClient.CoreV1().ConfigMaps(d.env.CurrClusterConfigNS).Get(ctx, d.env.CurrClusterConfigName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -771,7 +773,7 @@ func fxDomain(
 	commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	stripeCli *stripe.Client,
-	k8sYamlClient *k8s.YAMLClient,
+	k8sYamlClient *kubectl.YAMLClient,
 ) Domain {
 	return &domainI{
 		invoiceRepo:            invoiceRepo,

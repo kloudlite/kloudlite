@@ -3,8 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"strings"
+
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 func gqlTypeMap(jsonType string) string {
@@ -55,8 +56,8 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 
 		if v.Type == "array" {
 			if v.Items.Schema != nil && v.Items.Schema.Type == "object" {
-				tVar += genFieldEntry(k, typeName+genTypeName(k), m[k])
-				iVar += genFieldEntry(k, typeName+genTypeName(k)+"In", m[k])
+				tVar += genFieldEntry(k, fmt.Sprintf("[%s]", typeName+genTypeName(k)), m[k])
+				iVar += genFieldEntry(k, fmt.Sprintf("[%s]", typeName+genTypeName(k)+"In"), m[k])
 
 				navigateTree(v.Items.Schema, typeName+genTypeName(k), schemas)
 				continue
@@ -69,8 +70,8 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 
 		if v.Type == "object" {
 			if k == "metadata" {
-				tVar += genFieldEntry(k, "Metadata!", m[k])
-				iVar += genFieldEntry(k, "MetadataIn!", m[k])
+				tVar += genFieldEntry(k, "Metadata! @goField(name: \"objectMeta\")", m[k])
+				iVar += genFieldEntry(k, "MetadataIn! @goField(name: \"objectMeta\")", m[k])
 				continue
 			}
 
@@ -81,9 +82,15 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 				continue
 			}
 
+			if k == "overrides" {
+				tVar += genFieldEntry(k, "Overrides", m[k])
+				iVar += genFieldEntry(k, "OverridesIn", m[k])
+				continue
+			}
+
 			if len(v.Properties) == 0 {
-				tVar += genFieldEntry(k, "Any", m[k])
-				iVar += genFieldEntry(k, "Any", m[k])
+				tVar += genFieldEntry(k, "Map", m[k])
+				iVar += genFieldEntry(k, "Map", m[k])
 				continue
 			}
 
@@ -108,33 +115,57 @@ func ScalarTypes() ([]byte, error) {
 	scalars := `
 scalar Any
 scalar Json
+scalar Map
 `
 
 	metadata := `
 type Metadata {
-	Name: String!
-	Namespace: String
-	Labels: Json
+	name: String!
+	namespace: String
+	labels: Json
 }
 
 input MetadataIn {
-	Name: String!
-	Namespace: String
-	Labels: Json
+	name: String!
+	namespace: String
+	labels: Json
 }
 `
 
 	status := `
 type Status {
 	isReady: Boolean!
-	checks: [Check]
+	checks: Map
 	displayVars: Json
 }
 
 type Check {
-	Status: Boolean
-	Message: String
-	Generation: Int
+	status: Boolean
+	message: String
+	generation: Int
+}
+`
+
+	overrides := `
+type Patch {
+	op: String!
+	path: String!
+	value: Any
+}
+
+type Overrides {
+	applied: Boolean
+	patches: [Patch!]
+}
+
+input PatchIn {
+	op: String!
+	path: String!
+	value: Any
+}
+
+input OverridesIn {
+	patches: [PatchIn!]
 }
 `
 
@@ -142,8 +173,20 @@ type Check {
 	b.WriteString(scalars)
 	b.WriteString(metadata)
 	b.WriteString(status)
+	b.WriteString(overrides)
 
 	return b.Bytes(), nil
+}
+
+func Directives() ([]byte, error) {
+	directives := `
+directive @goField(
+	forceResolver: Boolean
+	name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+`
+	return []byte(directives), nil
 }
 
 func Convert(schema *v1.JSONSchemaProps, name string) ([]byte, error) {

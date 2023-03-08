@@ -1,26 +1,49 @@
+
 scalar Any
 scalar Json
+scalar Map
 
 type Metadata {
-	Name: String!
-	Namespace: String
-	Labels: Json
+	name: String!
+	namespace: String
+	labels: Json
 }
 
 input MetadataIn {
-	Name: String!
-	Namespace: String
-	Labels: Json
+	name: String!
+	namespace: String
+	labels: Json
 }
 
 type Status {
 	isReady: Boolean!
-	checks: [Check]
+	checks: Map
 	displayVars: Json
 }
 
 type Check {
-	Status: Boolean
-	Message: String
-	Generation: Int
+	status: Boolean
+	message: String
+	generation: Int
+}
+
+type Patch {
+	op: String!
+	path: String!
+	value: Any
+}
+
+type Overrides {
+	applied: Boolean
+	patches: [Patch!]
+}
+
+input PatchIn {
+	op: String!
+	path: String!
+	value: Any
+}
+
+input OverridesIn {
+	patches: [PatchIn!]
 }
