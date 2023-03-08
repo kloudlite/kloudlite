@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	// op_crds "kloudlite.io/apps/console/internal/domain/op-crds"
-	infrav1 "github.com/kloudlite/internal_operator_v2/apis/infra/v1"
+	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -28,7 +27,7 @@ type NodePool struct {
 
 type EdgeRegion struct {
 	repos.BaseEntity `bson:",inline"`
-	infrav1.Edge     `json:",inline" bson:",inline"`
+	infraV1.Edge     `json:",inline" bson:",inline"`
 
 	// IsDeleting       bool               `json:"is_deleting" bson:"is_deleting"`
 	// Name             string             `bson:"name"`
