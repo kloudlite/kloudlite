@@ -133,17 +133,17 @@ func NewConsumerFx[T ConsumerConfig]() fx.Option {
 					return nil, err
 				}
 
-				lf.Append(
-					fx.Hook{
-						OnStart: func(ctx context.Context) error {
-							return consumer.Ping(ctx)
-						},
-						OnStop: func(ctx context.Context) error {
-							consumer.Close()
-							return nil
-						},
-					},
-				)
+				// lf.Append(
+				// 	fx.Hook{
+				// 		OnStart: func(ctx context.Context) error {
+				// 			return consumer.Ping(ctx)
+				// 		},
+				// 		OnStop: func(context.Context) error {
+				// 			consumer.Close()
+				// 			return nil
+				// 		},
+				// 	},
+				// )
 				return consumer, nil
 			},
 		),

@@ -1,0 +1,49 @@
+
+scalar Any
+scalar Json
+scalar Map
+
+type Metadata {
+	name: String!
+	namespace: String
+	labels: Json
+}
+
+input MetadataIn {
+	name: String!
+	namespace: String
+	labels: Json
+}
+
+type Status {
+	isReady: Boolean!
+	checks: Map
+	displayVars: Json
+}
+
+type Check {
+	status: Boolean
+	message: String
+	generation: Int
+}
+
+type Patch {
+	op: String!
+	path: String!
+	value: Any
+}
+
+type Overrides {
+	applied: Boolean
+	patches: [Patch!]
+}
+
+input PatchIn {
+	op: String!
+	path: String!
+	value: Any
+}
+
+input OverridesIn {
+	patches: [PatchIn!]
+}

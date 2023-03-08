@@ -22,7 +22,7 @@ func NewSessionMiddleware[T repos.Entity](
 	return func(ctx *fiber.Ctx) error {
 		cookieValue := ctx.Cookies(cookieName)
 
-		if cookieValue != "" {
+		if cookieValue != "" || false {
 			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
 			var get any
 			get, err := repo.Get(ctx.Context(), key)

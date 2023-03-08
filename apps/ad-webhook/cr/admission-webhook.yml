@@ -1,0 +1,18 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: add-node-selector
+webhooks:
+- name: add-node-selector.kl
+  rules:
+  - apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+    operations: ["CREATE"]
+  failurePolicy: Fail
+  clientConfig:
+    service:
+      name: add-node-selector
+      namespace: kube-system
+      path: "/add-node-selector"
+    # caBundle: <TLS certificate CA bundle>

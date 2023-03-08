@@ -1,0 +1,85 @@
+---
+global:
+  # accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
+  accountName: xyz-company
+---
+label: Create Cloud Provider
+query: |+
+  mutation Infra_createCloudProvider($cloudProvider: CloudProviderIn!, $providerSecret: SecretIn!) {
+    infra_createCloudProvider(cloudProvider: $cloudProvider, providerSecret: $providerSecret) {
+      metadata {
+        name
+        labels
+      }
+      status {
+        isReady
+      }
+    }
+  }
+variables:
+  providerSecret:
+    # apiVersion: crds.kloudlite.io/v1
+    # kind: Secret
+    metadata:
+      name: provider-sample-cp14
+      namespace: kl-core
+    stringData:
+      accessKey: "key1"
+      accessSecret: secret1
+  cloudProvider:
+    # apiVersion: infra.kloudlite.io/v1
+    # kind: CloudProvider
+    metadata:
+      name: sample-cp8
+    spec:
+      accountName: "{{.accountName}}"
+      providerSecret:
+        name: sample-cp
+        namespace: kl-core
+---
+
+label: List Providers
+query: |+
+  query Query($accountName: String!) {
+    infra_listCloudProviders(accountName: $accountName) {
+      metadata {
+        name
+        namespace
+      }
+      spec {
+        accountName
+      }
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+
+---
+
+label: Get Provider
+query: |+
+  query Query($accountName: String!, $name: String!) {
+    infra_getCloudProvider(accountName: $accountName, name: $name) {
+      metadata{
+        name
+      }
+      spec {
+        accountName
+      }
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+  name: sample-cp5
+
+---
+
+label: Delete Provider
+query: |+
+  mutation Query($accountName: String!, $name: String!) {
+    infra_deleteCloudProvider(accountName: $accountName, name: $name)
+  }
+variables:
+  accountName: "{{.accountName}}"
+  name: sample-cp5
+---
