@@ -14,7 +14,7 @@ tasks:
 
   docker-build:
     vars:
-      APP: nodectrl
+      APP: nodecontroller
       IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
