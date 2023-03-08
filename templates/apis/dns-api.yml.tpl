@@ -24,7 +24,7 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: {{.Values.apps.dnsApi.name}}
+      image: {{.Values.apps.dnsApi.image}}
       imagePullPolicy: {{.Values.apps.authApi.ImagePullPolicy | default .Values.imagePullPolicy }}
 
       resourceCpu:

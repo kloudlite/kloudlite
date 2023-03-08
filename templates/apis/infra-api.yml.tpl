@@ -63,3 +63,24 @@ spec:
           type: secret
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: USERNAME
+
+        - key: KAFKA_BROKERS
+          type: secret
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refKey: KAFKA_BROKERS
+
+        - key: KAFKA_USERNAME
+          type: secret
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refKey: USERNAME
+
+        - key: KAFKA_PASSWORD
+          type: secret
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refKey: PASSWORD
+
+        - key: KAFKA_TOPIC_INFRA_UPDATES
+          value: {{.Values.kafka.topicInfraStatusUpdates}}
+
+        - key: KAFKA_CONSUMER_GROUP_ID
+          value: {{.Values.kafka.consumerGroupId}}

@@ -19,7 +19,7 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: {{.Values.apps.ciApi.name}}
+      image: {{.Values.apps.ciApi.image}}
       imagePullPolicy: {{.Values.apps.ciApi.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
         min: "30m"
@@ -93,63 +93,58 @@ spec:
 
         - key: KAFKA_USERNAME
           type: secret
-          refName: {{.Values.redpandaAdminSecretName}}
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
           refKey: USERNAME
 
         - key: KAFKA_PASSWORD
           type: secret
-          refName: {{.Values.redpandaAdminSecretName}}
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
           refKey: PASSWORD
 
         - key: KAFKA_BROKERS
           type: secret
-          refName: {{.Values.redpandaAdminSecretName}}
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
           refKey: KAFKA_BROKERS
 
-        {{/* - key: HARBOR_HOST */}}
-        {{/*   type: secret */}}
-        {{/*   refName: {{.HarborAdminCredsSecretName}} */}}
-        {{/*   refKey: HARBOR_IMAGE_REGISTRY_HOST */}}
-        {{/**/}}
-        {{/* - key: HARBOR_REGISTRY_HOST */}}
-        {{/*   type: secret */}}
-        {{/*   refName: {{.HarborAdminCredsSecretName}} */}}
-        {{/*   refKey: HARBOR_IMAGE_REGISTRY_HOST */}}
-        {{/**/}}
-        {{/* - key: HARBOR_ADMIN_USERNAME */}}
-        {{/*   type: secret */}}
-        {{/*   refName: {{.HarborAdminCredsSecretName}} */}}
-        {{/*   refKey: HARBOR_ADMIN_USERNAME */}}
-        {{/**/}}
-        {{/* - key: HARBOR_ADMIN_PASSWORD */}}
-        {{/*   type: secret */}}
-        {{/*   refName: {{.HarborAdminCredsSecretName}} */}}
-        {{/*   refKey: HARBOR_ADMIN_PASSWORD */}}
+        - key: HARBOR_REGISTRY_HOST
+          type: secret
+          refName: {{.Values.secrets.names.harborAdminSecret}}
+          refKey: IMAGE_REGISTRY_HOST
+
+        - key: HARBOR_ADMIN_USERNAME
+          type: secret
+          refName: {{.Values.secrets.names.harborAdminSecret}}
+          refKey: ADMIN_USERNAME
+
+        - key: HARBOR_ADMIN_PASSWORD
+          type: secret
+          refName: {{.Values.secrets.names.harborAdminSecret}}
+          refKey: ADMIN_PASSWORD
 
         - key: GITHUB_WEBHOOK_AUTHZ_SECRET
           type: secret
-          refName: {{.Values.oAuthSecretName}}
-          refKey: GITHUB_WEBHOOK_AUTHZ_SECRET
+          refName: {{.Values.secrets.names.webhookAuthzSecret}}
+          refKey: GITHUB_SECRET
 
         - key: GITLAB_WEBHOOK_AUTHZ_SECRET
           type: secret
-          refName: {{.Values.oAuthSecretName}}
-          refKey: GITLAB_WEBHOOK_AUTHZ_SECRET
+          refName: {{.Values.secrets.names.webhookAuthzSecret}}
+          refKey: GITLAB_SECRET
 
         - key: GITHUB_APP_PK_FILE
           value: /hotspot/github-app-pk.pem
 
       envFrom:
         - type: secret
-          refName: ci-env
+          refName: {{.Values.apps.ciApi.name}}-env
 
         - type: secret
-          refName: {{.Values.oAuthSecretName}}
+          refName: {{.Values.secrets.names.oAuthSecret}}
 
       volumes:
         - mountPath: /hotspot
           type: secret
-          refName: {{.Values.oAuthSecretName}}
+          refName: {{.Values.secrets.names.oAuthSecret}}
           items:
             - key: github-app-pk.pem
               fileName: github-app-pk.pem
@@ -167,8 +162,8 @@ stringData:
 
   COOKIE_DOMAIN: "{{.Values.cookieDomain}}"
 
-  {{/* KAFKA_TOPIC_GIT_WEBHOOKS: {{.KafkaTopicGitWebhooks}} */}}
-  {{/* KAFKA_TOPIC_PIPELINE_RUN_UPDATES: {{.KafkaTopicPipelineRunUpdates}} */}}
+  KAFKA_TOPIC_GIT_WEBHOOKS: {{.Values.kafka.topicGitWebhooks}}
+  KAFKA_TOPIC_PIPELINE_RUN_UPDATES: {{.Values.kafka.topicPipelineRunUpdates}}
 
   KAFKA_GIT_WEBHOOKS_CONSUMER_ID: "kloudlite/ci-api"
   KL_HOOK_TRIGGER_AUTHZ_SECRET: '***REMOVED***'

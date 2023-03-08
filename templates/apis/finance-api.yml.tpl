@@ -93,21 +93,20 @@ spec:
 
         - key: WORKLOAD_KAFKA_BROKERS
           type: secret
-          refName: {{.Values.redpandaAdminSecretName}}
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
           refKey: KAFKA_BROKERS
 
         - key: KAFKA_WORKLOAD_FINANCE_TOPIC
-          {{/* value: $kafkaBillingTopic */}}
-          value: ""
+          value: {{.Values.kafka.topicBilling}}
 
         - key: KAFKA_USERNAME
           type: secret
-          refName: {{.Values.redpandaAdminSecretName}}
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
           refKey: USERNAME
 
         - key: KAFKA_PASSWORD
           type: secret
-          refName: "{{.Values.redpandaAdminSecretName}}"
+          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
           refKey: PASSWORD
 
         - key: CLUSTER_CONFIGS_PATH
@@ -124,13 +123,13 @@ spec:
 
         - key: STRIPE_PUBLIC_KEY
           type: secret
-          refName: "stripe-creds"
-          refKey: STRIPE_PUBLIC_KEY
+          refName: {{.Values.secrets.names.stripeSecret}}
+          refKey: PUBLIC_KEY
 
         - key: STRIPE_SECRET_KEY
           type: secret
-          refName: "stripe-creds"
-          refKey: STRIPE_SECRET_KEY
+          refName: {{.Values.secrets.names.stripeSecret}}
+          refKey: SECRET_KEY
 
       envFrom:
         - type: secret
@@ -140,16 +139,6 @@ spec:
         - mountPath: /finance/inventory
           type: config
           refName: "{{.Values.apps.financeApi.name}}-inventory-config"
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: stripe-creds
-  namespace: {{.Release.Namespace}}
-data:
-  STRIPE_PUBLIC_KEY: {{.Values.secrets.stripePublicKey}}
-  STRIPE_SECRET_KEY: {{.Values.secrets.stripeSecretKey}}
 
 ---
 

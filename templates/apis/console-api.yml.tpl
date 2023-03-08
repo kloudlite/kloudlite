@@ -77,9 +77,6 @@ spec:
         - key: PROMETHEUS_BASIC_AUTH_PASSWORD
           value: ""
 
-        - key: KAFKA_WORKLOAD_STATUS_TOPIC
-          value: kl-status-updates
-
         - key: KAFKA_GROUP_ID
           value: control-plane
 
@@ -151,15 +148,14 @@ spec:
 
         - key: KAFKA_BOOTSTRAP_SERVERS
           type: secret
-          refName: "{{.Values.redpandaAdminSecretName}}"
+          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
           refKey: KAFKA_BROKERS
 
-
         - key: KAFKA_WORKLOAD_STATUS_TOPIC
-          value: kl-status-updates
+          value: {{.Values.kafka.topicStatusUpdates}}
 
         - key: KAFKA_GROUP_ID
-          value: control-plane
+          value: {{.Values.kafka.consumerGroupId}}
 
         - key: COMPUTE_PLANS_PATH
           value: /console.d/templates/compute-plans.yaml
@@ -175,12 +171,12 @@ spec:
 
         - key: KAFKA_USERNAME
           type: secret
-          refName: "{{.Values.redpandaAdminSecretName}}"
+          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
           refKey: USERNAME
 
         - key: KAFKA_PASSWORD
           type: secret
-          refName: "{{.Values.redpandaAdminSecretName}}"
+          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
           refKey: PASSWORD
 
         - key: CLUSTER_CONFIGS_PATH
@@ -189,13 +185,8 @@ spec:
         - key: LOKI_AUTH_PASSWORD
           value: ""
 
-        - key: PROMETHEUS_BASIC_AUTH_PASSWORD
-          type: secret
-          refName: "{{.PrometheusBasicAuthSecretName}}"
-          refKey: "password"
-
         - key: KAFKA_AUDIT_EVENTS_TOPIC
-          value: {{.KafkaTopicEvents}}
+          value: {{.Values.kafka.topicEvents}}
 
       {{/* envFrom: */}}
       {{/*   - type: secret */}}
@@ -210,36 +201,12 @@ spec:
           type: secret
           refName: aggregated-kubeconfigs
 
-{{/* --- */}}
-{{/* apiVersion: v1 */}}
-{{/* kind: Secret */}}
-{{/* metadata: */}}
-{{/*   name: {{.Values.apps.consoleApi.name}}-env */}}
-{{/*   namespace: {{.Release.Namespace}} */}}
-{{/* stringData: */}}
-{{/*   IMAGE_REGISTRY_PREFIX: registry.kloudlite.io */}}
-{{/*   LOG_PORT: "8192" */}}
-{{/**/}}
-{{/*   PORT: "3000" */}}
-{{/*   GRPC_PORT: "3001" */}}
-{{/**/}}
-{{/*   NOTIFIER_URL:  */}}
-{{/**/}}
-{{/*   # LOKI_URL: loki-external.kl-01.$DOMAIN_1 */}}
-{{/*   LOKI_URL: "loki-external.REPLACE_ME.clusters.{{.SubDomain}}" */}}
-{{/*   LOKI_AUTH_PASSWORD: "$LOKI_EXTERNAL_PASSWORD" */}}
-{{/**/}}
-{{/*   METRICS_HTTP_PORT: "9191" */}}
-{{/*   METRICS_HTTP_CORS: "https://console.{{.SubDomain}}" */}}
-{{/*   PROMETHEUS_ENDPOINT: "https://prom-external.REPLACE_ME.clusters.{{.SubDomain}}" */}}
-{{/*   PROMETHEUS_BASIC_AUTH_PASSWORD: "$PROM_EXTERNAL_PASSWORD" */}}
-{{/**/}}
-{{/*   LOG_SERVER_PORT: "8192" */}}
-{{/*   COOKIE_DOMAIN: ".{{.CookieDomain}}" */}}
-{{/**/}}
-{{/*   # Kafka */}}
-{{/*   KAFKA_WORKLOAD_STATUS_TOPIC: "kl-status-updates" */}}
-{{/*   KAFKA_GROUP_ID: "control-plane" */}}
+---
+apiVersion:  v1
+kind: Secret
+metadata:
+  name: aggregated-kubeconfigs
+  namespace: {{.Release.Namespace}}
 ---
 apiVersion: crds.kloudlite.io/v1
 kind: Router
