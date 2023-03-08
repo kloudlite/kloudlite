@@ -21,6 +21,18 @@ import (
 type AuthCacheClient cache.Client
 type FinanceClientConnection *grpc.ClientConn
 
+type consumerOpts struct {
+	*env.Env
+}
+
+func (c *consumerOpts) GetSubscriptionTopics() []string {
+	return []string{c.Env.KafkaTopicInfraUpdates}
+}
+
+func (c *consumerOpts) GetConsumerGroupId() string {
+	return c.Env.KafkaConsumerGroupId
+}
+
 var Module = fx.Module(
 	"app",
 	repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
@@ -44,6 +56,14 @@ var Module = fx.Module(
 	}),
 
 	domain.Module,
+
+	fx.Provide(func(ev *env.Env) *consumerOpts {
+		return &consumerOpts{Env: ev}
+	}),
+
+	redpanda.NewConsumerFx[*consumerOpts](),
+
+	fx.Invoke(processStatusUpdates),
 
 	fx.Invoke(
 		func(

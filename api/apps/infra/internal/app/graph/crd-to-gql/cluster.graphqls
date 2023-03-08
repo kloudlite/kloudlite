@@ -1,7 +1,7 @@
 input ClusterIn {
 	apiVersion: String
 	kind: String
-	metadata: MetadataIn
+	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: ClusterSpecIn
 }
 
@@ -26,7 +26,7 @@ input ClusterSpecIn {
 type Cluster {
 	apiVersion: String
 	kind: String
-	metadata: Metadata
+	metadata: Metadata! @goField(name: "objectMeta")
 	spec: ClusterSpec
 	status: Status
 }

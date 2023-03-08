@@ -23,7 +23,6 @@ func (i *arrayFlags) Set(value string) error {
 	return nil
 }
 
-
 func main() {
 	var isDev bool
 	var outputDir string
@@ -32,7 +31,7 @@ func main() {
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.StringVar(&outputDir, "output", "./", "--outputDir <dir-name>")
 
-  flag.Var(&crds, "crd", "--skip item1 --skip item2")
+	flag.Var(&crds, "crd", "--crd item1 --crd item2")
 	flag.Parse()
 
 	kCli, err := func() (k8s.ExtendedK8sClient, error) {
@@ -50,12 +49,12 @@ func main() {
 		panic(err)
 	}
 
-  crdsMap := make(map[string]string, len(crds))
+	crdsMap := make(map[string]string, len(crds))
 
-  for i := range   crds {
-    sp := strings.Split(crds[i], "=")
-    crdsMap[sp[0]] = sp[1]
-  }
+	for i := range crds {
+		sp := strings.Split(crds[i], "=")
+		crdsMap[sp[0]] = sp[1]
+	}
 
 	// crdsMap := map[string]string{
 	// 	"CloudProvider": "cloudproviders.infra.kloudlite.io",
@@ -90,6 +89,14 @@ func main() {
 			return err
 		}
 		return os.WriteFile(path.Join(outputDir, "scalars.graphqls"), gqlSchema, 0644)
+	})
+
+	g.Go(func() error {
+		gqlSchema, err := Directives()
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(path.Join(outputDir, "directives.graphqls"), gqlSchema, 0644)
 	})
 
 	if err := g.Wait(); err != nil {
