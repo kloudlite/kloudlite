@@ -1,6 +1,7 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
   - graph/*.graphqls
+  - graph/crd-to-gql/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -45,116 +46,6 @@ autobind:
 # your liking
 skip_validation: true
 models:
-  ResInstance:
-    fields:
-      app:
-        resolver: true
-      config:
-        resolver: true
-      secret:
-        resolver: true
-      mResource:
-        resolver: true
-      mService:
-        resolver: true
-      router:
-        resolver: true
-
-  Environment:
-    fields:
-      resInstances: 
-        resolver: true
-      project:
-        resolver: true
-  CloudProvider:
-    fields:
-      edges:
-        resolver: true
-  App:
-    fields:
-      restart:
-        resolver: true
-      doFreeze:
-        resolver: true
-      doUnfreeze:
-        resolver: true
-      intercept:
-        resolver: true
-      closeIntercept:
-        resolver: true
-  User:
-    fields:
-      devices:
-        resolver: true
-      projectMemberships:
-        resolver: true
-  ProjectMembership:
-    fields:
-      project:
-        resolver: true
-  Project:
-    fields:
-      dockerCredentials:
-        resolver: true
-      memberships:
-        resolver: true
-      region:
-        resolver: true
-  EdgeRegion:
-    fields:
-      provider:
-        resolver: true
-  ClusterSubscription:
-    fields:
-      cluster:
-        resolver: true
-      devices:
-        resolver: true
-      userDevices:
-        resolver: true
-  Account:
-    fields:
-      devices:
-        resolver: true
-      projects:
-        resolver: true
-      clusterSubscriptions:
-        resolver: true
-  Cluster:
-    fields:
-      devices:
-        resolver: true
-      userDevices:
-        resolver: true
-  ManagedSvc:
-    fields:
-      outputs:
-        resolver: true
-      resources:
-        resolver: true
-  ManagedRes:
-    fields:
-      outputs:
-        resolver: true
-  Device:
-    fields:
-      interceptingServices:
-        resolver: true
-      user:
-        resolver: true
-      cluster:
-        resolver: true
-      account:
-        resolver: true
-      configuration:
-        resolver: true
-  MSCategoryResult:
-    model:
-      - kloudlite.io/apps/console/internal/domain/entities.ManagedServiceCategory
-
-  KLFile:
-    model:
-      - kloudlite.io/apps/console/internal/domain/entities/localenv.KLFile
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
@@ -166,3 +57,191 @@ models:
   Json:
     model:
       - github.com/99designs/gqlgen/graphql.Map
+
+  Metadata:
+    model:
+      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  MetadataIn:
+    model:
+      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  Project:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Project
+
+  Environment:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Environment
+
+  Secret:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Secret
+  SecretIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Secret
+
+  Config:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Config
+  ConfigIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Config
+  App:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.App
+  AppIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.App
+
+  # AppSpec:
+  #   model: 
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSpec
+  # AppSpecIn:
+  #   model: 
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSpec
+  #
+  # AppSpecInterception:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.Interception
+  #
+  # AppSpecServices:
+  #   fields:
+  #     port:
+  #       resolver: false
+  #     targetPort:
+  #       resolver: false
+  #   model: 
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSvc
+  # AppSpecServicesIn:
+  #   fields:
+  #     port:
+  #       resolver: false
+  #     targetPort:
+  #       resolver: false
+  #   model: 
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSvc
+  #
+  # AppSpecHpa:
+  #   model: 
+  #     - github.com/kloudlite/operator/apis/crds/v1.HPA
+  # AppSpecHpaIn:
+  #   model: 
+  #     - github.com/kloudlite/operator/apis/crds/v1.HPA
+  #
+  # AppSpecVolumes:
+  #   model:
+  #     - k8s.io/api/core/v1.Volume
+  # AppSpecVolumesIn:
+  #   model:
+  #     - k8s.io/api/core/v1.Volume
+  #
+  # AppSpecTolerations:
+  #   model: k8s.io/api/core/v1.Toleration
+  # AppSpecTolerationsIn:
+  #   model: k8s.io/api/core/v1.Toleration
+  #
+  # AppSpecContainers:
+  #   fields:
+  #     readinessProbe:
+  #       resolver: false
+  #     livenessProbe:
+  #         resolver: false
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppContainer
+  # AppSpecContainersIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppContainer
+
+  # AppSpecContainersResourceMemory:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersResourceMemoryIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersResourceCpu:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersResourceCpuIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersEnv: 
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerEnv
+  # AppSpecContainersEnvIn: 
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerEnv
+  # AppSpecContainersEnvFrom: 
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.EnvFrom
+  # AppSpecContainersEnvFromIn: 
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.EnvFrom
+  #
+  # AppSpecContainersReadinessProbe:
+  #   model: &containerProbe
+  #     - github.com/kloudlite/operator/apis/crds/v1.Probe
+  # AppSpecContainersReadinessProbeIn:
+  #   model: *containerProbe
+
+  # AppSpecContainersVolumes: 
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolume
+  # AppSpecContainersVolumesIn: 
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolume
+  # AppSpecContainersVolumesItems: 
+  #   model: &containerVolumeItem
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolumeItem
+  # AppSpecContainersVolumesItemsIn: 
+  #   model: *containerVolumeItem
+      
+  Router:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Router
+  RouterIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Router
+  # RouterSpec:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.RouterSpec
+  # RouterSpecIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.RouterSpec
+
+  ManagedService:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.MRes
+  ManagedServiceIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.MRes
+  # ManagedServiceSpec:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedServiceSpec
+  # ManagedServiceSpecIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedServiceSpec
+
+  ManagedResource:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.MSvc
+  ManagedResourceIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.MSvc
+  # ManagedResourceSpec:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedResourceSpec
+  # ManagedResourceSpecIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedResourceSpec
+
+  Status:
+    model:
+      - github.com/kloudlite/operator/pkg/operator.Status
+
+  Overrides:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+  OverridesIn:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
