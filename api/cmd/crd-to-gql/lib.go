@@ -69,23 +69,25 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 		}
 
 		if v.Type == "object" {
-			if k == "metadata" {
-				tVar += genFieldEntry(k, "Metadata! @goField(name: \"objectMeta\")", m[k])
-				iVar += genFieldEntry(k, "MetadataIn! @goField(name: \"objectMeta\")", m[k])
-				continue
-			}
+			if typeName == "" {
+				if k == "metadata" {
+					tVar += genFieldEntry(k, "Metadata! @goField(name: \"objectMeta\")", m[k])
+					iVar += genFieldEntry(k, "MetadataIn! @goField(name: \"objectMeta\")", m[k])
+					continue
+				}
 
-			if k == "status" {
-				tVar += genFieldEntry(k, "Status", m[k])
-				// INFO: removed as status is never going to be set via GraphQL
-				//iVar += genFieldEntry(k, "StatusIn", m[k])
-				continue
-			}
+				if k == "status" {
+					tVar += genFieldEntry(k, "Status", m[k])
+					// INFO: removed as status is never going to be set via GraphQL
+					//iVar += genFieldEntry(k, "StatusIn", m[k])
+					continue
+				}
 
-			if k == "overrides" {
-				tVar += genFieldEntry(k, "Overrides", m[k])
-				iVar += genFieldEntry(k, "OverridesIn", m[k])
-				continue
+				if k == "overrides" {
+					tVar += genFieldEntry(k, "Overrides", m[k])
+					iVar += genFieldEntry(k, "OverridesIn", m[k])
+					continue
+				}
 			}
 
 			if len(v.Properties) == 0 {
@@ -179,12 +181,10 @@ input OverridesIn {
 }
 
 func Directives() ([]byte, error) {
-	directives := `
-directive @goField(
+	directives := `directive @goField(
 	forceResolver: Boolean
 	name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
-
 `
 	return []byte(directives), nil
 }

@@ -1,8 +1,6 @@
 package graph
 
-import (
-	"kloudlite.io/apps/console/internal/domain"
-)
+import "kloudlite.io/apps/console/internal/domain"
 
 // This file will not be regenerated automatically.
 //
@@ -10,8 +8,4 @@ import (
 
 type Resolver struct {
 	Domain domain.Domain
-}
-
-func NewResolver(domain domain.Domain) *Resolver {
-	return &Resolver{Domain: domain}
 }
