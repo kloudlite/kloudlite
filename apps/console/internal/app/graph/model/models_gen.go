@@ -3,481 +3,482 @@
 package model
 
 import (
-	"kloudlite.io/pkg/repos"
+	v11 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/operator"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Account struct {
-	ID       repos.ID   `json:"id"`
-	Projects []*Project `json:"projects"`
-	Devices  []*Device  `json:"devices"`
+type AppSpec struct {
+	Frozen         *bool                  `json:"frozen"`
+	Interception   *AppSpecInterception   `json:"interception"`
+	NodeSelector   map[string]interface{} `json:"nodeSelector"`
+	Services       []*AppSpecServices     `json:"services"`
+	Tolerations    []*AppSpecTolerations  `json:"tolerations"`
+	Containers     []*AppSpecContainers   `json:"containers"`
+	Hpa            *AppSpecHpa            `json:"hpa"`
+	Region         string                 `json:"region"`
+	Replicas       *int                   `json:"replicas"`
+	ServiceAccount *string                `json:"serviceAccount"`
 }
 
-func (Account) IsEntity() {}
-
-type App struct {
-	ID               repos.ID          `json:"id"`
-	IsLambda         bool              `json:"isLambda"`
-	Name             string            `json:"name"`
-	Namespace        string            `json:"namespace"`
-	CreatedAt        string            `json:"createdAt"`
-	UpdatedAt        *string           `json:"updatedAt"`
-	Description      *string           `json:"description"`
-	ReadableID       repos.ID          `json:"readableId"`
-	Replicas         *int              `json:"replicas"`
-	Services         []*ExposedService `json:"services"`
-	Containers       []*AppContainer   `json:"containers"`
-	Project          *Project          `json:"project"`
-	Status           string            `json:"status"`
-	AutoScale        *AutoScale        `json:"autoScale"`
-	Conditions       []*MetaCondition  `json:"conditions"`
-	Restart          bool              `json:"restart"`
-	DoFreeze         bool              `json:"doFreeze"`
-	DoUnfreeze       bool              `json:"doUnfreeze"`
-	IsFrozen         bool              `json:"isFrozen"`
-	CurrentIntercept *repos.ID         `json:"currentIntercept"`
-	Intercept        bool              `json:"intercept"`
-	CloseIntercept   bool              `json:"closeIntercept"`
+type AppSpecContainers struct {
+	ResourceCPU     *AppSpecContainersResourceCPU    `json:"resourceCpu"`
+	ResourceMemory  *AppSpecContainersResourceMemory `json:"resourceMemory"`
+	Args            []*string                        `json:"args"`
+	Command         []*string                        `json:"command"`
+	Env             []*AppSpecContainersEnv          `json:"env"`
+	Image           string                           `json:"image"`
+	LivenessProbe   *AppSpecContainersLivenessProbe  `json:"livenessProbe"`
+	EnvFrom         []*AppSpecContainersEnvFrom      `json:"envFrom"`
+	ImagePullPolicy *string                          `json:"imagePullPolicy"`
+	Name            string                           `json:"name"`
+	ReadinessProbe  *AppSpecContainersReadinessProbe `json:"readinessProbe"`
+	Volumes         []*AppSpecContainersVolumes      `json:"volumes"`
 }
 
-func (App) IsEntity() {}
-
-type AppContainer struct {
-	Name              string         `json:"name"`
-	Image             *string        `json:"image"`
-	PullSecret        *string        `json:"pullSecret"`
-	EnvVars           []*EnvVar      `json:"envVars"`
-	AttachedResources []*AttachedRes `json:"attachedResources"`
-	ComputePlan       string         `json:"computePlan"`
-	Quantity          float64        `json:"quantity"`
-	IsShared          *bool          `json:"isShared"`
-	Mounts            []*Mount       `json:"mounts"`
+type AppSpecContainersEnv struct {
+	Key     string  `json:"key"`
+	RefKey  *string `json:"refKey"`
+	RefName *string `json:"refName"`
+	Type    *string `json:"type"`
+	Value   *string `json:"value"`
 }
 
-type AppContainerIn struct {
-	Name              string              `json:"name"`
-	Image             *string             `json:"image"`
-	PullSecret        *string             `json:"pullSecret"`
-	EnvVars           []*EnvVarInput      `json:"envVars"`
-	Mounts            []*MountInput       `json:"mounts"`
-	ComputePlan       string              `json:"computePlan"`
-	Quantity          float64             `json:"quantity"`
-	AttachedResources []*AttachedResInput `json:"attachedResources"`
-	IsShared          *bool               `json:"isShared"`
-}
-
-type AppInput struct {
-	Name        string                 `json:"name"`
-	IsLambda    bool                   `json:"isLambda"`
-	ProjectID   string                 `json:"projectId"`
-	Description *string                `json:"description"`
-	AutoScale   *AutoScaleIn           `json:"autoScale"`
-	ReadableID  repos.ID               `json:"readableId"`
-	Replicas    *int                   `json:"replicas"`
-	Services    []*ExposedServiceIn    `json:"services"`
-	Containers  []*AppContainerIn      `json:"containers"`
-	Metadata    map[string]interface{} `json:"metadata"`
-}
-
-type AppService struct {
-	Type       string `json:"type"`
-	Port       int    `json:"port"`
-	TargetPort *int   `json:"targetPort"`
-}
-
-type AppServiceInput struct {
-	Type       string `json:"type"`
-	Port       int    `json:"port"`
-	TargetPort *int   `json:"targetPort"`
-}
-
-type AttachedRes struct {
-	ResID repos.ID `json:"res_id"`
-}
-
-type AttachedResInput struct {
-	ResID repos.ID `json:"res_id"`
-}
-
-type AutoScale struct {
-	MinReplicas     int `json:"minReplicas"`
-	MaxReplicas     int `json:"maxReplicas"`
-	UsagePercentage int `json:"usage_percentage"`
-}
-
-type AutoScaleIn struct {
-	MinReplicas     int `json:"minReplicas"`
-	MaxReplicas     int `json:"maxReplicas"`
-	UsagePercentage int `json:"usage_percentage"`
-}
-
-type CCMData struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-type CSEntry struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-type CSEntryIn struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-type CloudProvider struct {
-	ID       repos.ID      `json:"id"`
-	Name     string        `json:"name"`
-	Provider string        `json:"provider"`
-	Edges    []*EdgeRegion `json:"edges"`
-	Status   string        `json:"status"`
-	IsShared bool          `json:"isShared"`
-}
-
-type CloudProviderIn struct {
-	Name        string                 `json:"name"`
-	Provider    string                 `json:"provider"`
-	Credentials map[string]interface{} `json:"credentials"`
-}
-
-type CloudProviderUpdateIn struct {
-	Name        *string                `json:"name"`
-	Credentials map[string]interface{} `json:"credentials"`
-}
-
-type ClusterIn struct {
-	Name       string `json:"name"`
-	SubDomain  string `json:"subDomain"`
-	KubeConfig string `json:"kubeConfig"`
-}
-
-type ClusterOut struct {
-	ID        repos.ID `json:"id"`
-	Name      string   `json:"name"`
-	SubDomain string   `json:"subDomain"`
-}
-
-type ComputePlan struct {
-	Name                  string `json:"name"`
-	Desc                  string `json:"desc"`
-	SharingEnabled        bool   `json:"sharingEnabled"`
-	DedicatedEnabled      bool   `json:"dedicatedEnabled"`
-	MemoryPerVCPUCpu      int    `json:"memoryPerVCPUCpu"`
-	MaxDedicatedCPUPerPod int    `json:"maxDedicatedCPUPerPod"`
-	MaxSharedCPUPerPod    int    `json:"maxSharedCPUPerPod"`
-}
-
-func (ComputePlan) IsEntity() {}
-
-type Config struct {
-	ID          repos.ID   `json:"id"`
-	Name        string     `json:"name"`
-	Project     *Project   `json:"project"`
-	Description *string    `json:"description"`
-	Namespace   string     `json:"namespace"`
-	Entries     []*CSEntry `json:"entries"`
-	Status      string     `json:"status"`
-}
-
-type Device struct {
-	ID                   repos.ID               `json:"id"`
-	User                 *User                  `json:"user"`
-	Name                 string                 `json:"name"`
-	Configuration        map[string]interface{} `json:"configuration"`
-	Account              *Account               `json:"account"`
-	Ports                []*Port                `json:"ports"`
-	Region               *string                `json:"region"`
-	InterceptingServices []*App                 `json:"interceptingServices"`
-}
-
-func (Device) IsEntity() {}
-
-type DeviceIn struct {
-	ID     repos.ID  `json:"id"`
-	Name   string    `json:"name"`
-	Region string    `json:"region"`
-	Ports  []*PortIn `json:"ports"`
-}
-
-type DockerCredentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type EdgeNode struct {
-	NodeIndex    int                    `json:"nodeIndex"`
-	Status       map[string]interface{} `json:"status"`
-	Name         string                 `json:"name"`
-	Config       string                 `json:"config"`
-	CreationTime string                 `json:"creationTime"`
-}
-
-type EdgeRegion struct {
-	ID        repos.ID       `json:"id"`
-	Name      string         `json:"name"`
-	Region    string         `json:"region"`
-	Provider  *CloudProvider `json:"provider"`
-	CreatedAt string         `json:"createdAt"`
-	UpdatedAt *string        `json:"updatedAt"`
-	Pools     []*NodePool    `json:"pools"`
-	Status    string         `json:"status"`
-}
-
-type EdgeRegionIn struct {
-	Name   string        `json:"name"`
-	Region string        `json:"region"`
-	Pools  []*NodePoolIn `json:"pools"`
-}
-
-type EdgeRegionUpdateIn struct {
-	Name  *string       `json:"name"`
-	Pools []*NodePoolIn `json:"pools"`
-}
-
-type EnvVal struct {
-	Type  string  `json:"type"`
-	Value *string `json:"value"`
-	Ref   *string `json:"ref"`
-	Key   *string `json:"key"`
-}
-
-type EnvValInput struct {
-	Type  string  `json:"type"`
-	Value *string `json:"value"`
-	Ref   *string `json:"ref"`
-	Key   *string `json:"key"`
-}
-
-type EnvVar struct {
-	Key   string  `json:"key"`
-	Value *EnvVal `json:"value"`
-}
-
-type EnvVarInput struct {
-	Key   string       `json:"key"`
-	Value *EnvValInput `json:"value"`
-}
-
-type Environment struct {
-	ID           repos.ID       `json:"id"`
-	Name         string         `json:"name"`
-	BlueprintID  repos.ID       `json:"blueprintId"`
-	ReadableID   *string        `json:"readableId"`
-	ResInstances []*ResInstance `json:"resInstances"`
-	Project      *Project       `json:"project"`
-}
-
-type EnvironmentIn struct {
-	BlueprintID repos.ID `json:"blueprintId"`
-	Name        *string  `json:"name"`
-	ReadableID  *string  `json:"readableId"`
-}
-
-type ExposedService struct {
+type AppSpecContainersEnvFrom struct {
+	RefName string `json:"refName"`
 	Type    string `json:"type"`
-	Target  int    `json:"target"`
-	Exposed int    `json:"exposed"`
 }
 
-type ExposedServiceIn struct {
+type AppSpecContainersEnvFromIn struct {
+	RefName string `json:"refName"`
 	Type    string `json:"type"`
-	Target  int    `json:"target"`
-	Exposed int    `json:"exposed"`
 }
 
-type InstanceIn struct {
-	Enabled       bool     `json:"enabled"`
-	EnvironmentID repos.ID `json:"environmentId"`
-	BlueprintID   repos.ID `json:"blueprintId"`
-	Overrides     *string  `json:"overrides"`
-	ResourceType  string   `json:"resourceType"`
+type AppSpecContainersEnvIn struct {
+	Key     string  `json:"key"`
+	RefKey  *string `json:"refKey"`
+	RefName *string `json:"refName"`
+	Type    *string `json:"type"`
+	Value   *string `json:"value"`
 }
 
-type Kv struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+type AppSpecContainersIn struct {
+	ResourceCPU     *AppSpecContainersResourceCPUIn    `json:"resourceCpu"`
+	ResourceMemory  *AppSpecContainersResourceMemoryIn `json:"resourceMemory"`
+	Args            []*string                          `json:"args"`
+	Command         []*string                          `json:"command"`
+	Env             []*AppSpecContainersEnvIn          `json:"env"`
+	Image           string                             `json:"image"`
+	LivenessProbe   *AppSpecContainersLivenessProbeIn  `json:"livenessProbe"`
+	EnvFrom         []*AppSpecContainersEnvFromIn      `json:"envFrom"`
+	ImagePullPolicy *string                            `json:"imagePullPolicy"`
+	Name            string                             `json:"name"`
+	ReadinessProbe  *AppSpecContainersReadinessProbeIn `json:"readinessProbe"`
+	Volumes         []*AppSpecContainersVolumesIn      `json:"volumes"`
 }
 
-type KVInput struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+type AppSpecContainersLivenessProbe struct {
+	FailureThreshold *int                                   `json:"failureThreshold"`
+	HTTPGet          *AppSpecContainersLivenessProbeHTTPGet `json:"httpGet"`
+	InitialDelay     *int                                   `json:"initialDelay"`
+	Interval         *int                                   `json:"interval"`
+	Shell            *AppSpecContainersLivenessProbeShell   `json:"shell"`
+	TCP              *AppSpecContainersLivenessProbeTCP     `json:"tcp"`
+	Type             string                                 `json:"type"`
 }
 
-type LambdaPlan struct {
-	Name string `json:"name"`
+type AppSpecContainersLivenessProbeHTTPGet struct {
+	HTTPHeaders map[string]interface{} `json:"httpHeaders"`
+	Path        string                 `json:"path"`
+	Port        int                    `json:"port"`
 }
 
-func (LambdaPlan) IsEntity() {}
-
-type LoadEnv struct {
-	EnvVars    map[string]interface{} `json:"envVars"`
-	MountFiles map[string]interface{} `json:"mountFiles"`
+type AppSpecContainersLivenessProbeHTTPGetIn struct {
+	HTTPHeaders map[string]interface{} `json:"httpHeaders"`
+	Path        string                 `json:"path"`
+	Port        int                    `json:"port"`
 }
 
-type ManagedRes struct {
-	ID           repos.ID               `json:"id"`
-	Name         string                 `json:"name"`
-	ResourceType string                 `json:"resourceType"`
-	Installation *ManagedSvc            `json:"installation"`
-	Values       map[string]interface{} `json:"values"`
-	Outputs      map[string]interface{} `json:"outputs"`
-	Status       string                 `json:"status"`
-	CreatedAt    string                 `json:"createdAt"`
-	UpdatedAt    *string                `json:"updatedAt"`
+type AppSpecContainersLivenessProbeIn struct {
+	FailureThreshold *int                                     `json:"failureThreshold"`
+	HTTPGet          *AppSpecContainersLivenessProbeHTTPGetIn `json:"httpGet"`
+	InitialDelay     *int                                     `json:"initialDelay"`
+	Interval         *int                                     `json:"interval"`
+	Shell            *AppSpecContainersLivenessProbeShellIn   `json:"shell"`
+	TCP              *AppSpecContainersLivenessProbeTCPIn     `json:"tcp"`
+	Type             string                                   `json:"type"`
 }
 
-type ManagedSvc struct {
-	ID         repos.ID               `json:"id"`
-	Name       string                 `json:"name"`
-	Project    *Project               `json:"project"`
-	Source     string                 `json:"source"`
-	Values     map[string]interface{} `json:"values"`
-	Resources  []*ManagedRes          `json:"resources"`
-	Status     string                 `json:"status"`
-	Conditions []*MetaCondition       `json:"conditions"`
-	Outputs    map[string]interface{} `json:"outputs"`
-	CreatedAt  string                 `json:"createdAt"`
-	UpdatedAt  *string                `json:"updatedAt"`
+type AppSpecContainersLivenessProbeShell struct {
+	Command []*string `json:"command"`
 }
 
-type MetaCondition struct {
-	Status        string `json:"status"`
-	ConditionType string `json:"conditionType"`
-	LastTimeStamp string `json:"lastTimeStamp"`
-	Reason        string `json:"reason"`
-	Message       string `json:"message"`
+type AppSpecContainersLivenessProbeShellIn struct {
+	Command []*string `json:"command"`
 }
 
-type Mount struct {
-	Type string `json:"type"`
-	Ref  string `json:"ref"`
-	Path string `json:"path"`
+type AppSpecContainersLivenessProbeTCP struct {
+	Port int `json:"port"`
 }
 
-type MountInput struct {
-	Type string `json:"type"`
-	Ref  string `json:"ref"`
-	Path string `json:"path"`
+type AppSpecContainersLivenessProbeTCPIn struct {
+	Port int `json:"port"`
 }
 
-type NewResourcesIn struct {
-	Configs    []map[string]interface{} `json:"configs"`
-	Secrets    []map[string]interface{} `json:"secrets"`
-	MServices  []map[string]interface{} `json:"mServices"`
-	MResources []map[string]interface{} `json:"mResources"`
+type AppSpecContainersReadinessProbe struct {
+	InitialDelay     *int                                    `json:"initialDelay"`
+	Interval         *int                                    `json:"interval"`
+	Shell            *AppSpecContainersReadinessProbeShell   `json:"shell"`
+	TCP              *AppSpecContainersReadinessProbeTCP     `json:"tcp"`
+	Type             string                                  `json:"type"`
+	FailureThreshold *int                                    `json:"failureThreshold"`
+	HTTPGet          *AppSpecContainersReadinessProbeHTTPGet `json:"httpGet"`
 }
 
-type NodePool struct {
-	Name   string `json:"name"`
-	Config string `json:"config"`
-	Min    int    `json:"min"`
-	Max    int    `json:"max"`
+type AppSpecContainersReadinessProbeHTTPGet struct {
+	HTTPHeaders map[string]interface{} `json:"httpHeaders"`
+	Path        string                 `json:"path"`
+	Port        int                    `json:"port"`
 }
 
-type NodePoolIn struct {
-	Name   string `json:"name"`
-	Config string `json:"config"`
-	Min    int    `json:"min"`
-	Max    int    `json:"max"`
+type AppSpecContainersReadinessProbeHTTPGetIn struct {
+	HTTPHeaders map[string]interface{} `json:"httpHeaders"`
+	Path        string                 `json:"path"`
+	Port        int                    `json:"port"`
 }
 
-type Port struct {
-	Port       int  `json:"port"`
-	TargetPort *int `json:"targetPort"`
+type AppSpecContainersReadinessProbeIn struct {
+	InitialDelay     *int                                      `json:"initialDelay"`
+	Interval         *int                                      `json:"interval"`
+	Shell            *AppSpecContainersReadinessProbeShellIn   `json:"shell"`
+	TCP              *AppSpecContainersReadinessProbeTCPIn     `json:"tcp"`
+	Type             string                                    `json:"type"`
+	FailureThreshold *int                                      `json:"failureThreshold"`
+	HTTPGet          *AppSpecContainersReadinessProbeHTTPGetIn `json:"httpGet"`
 }
 
-type PortIn struct {
-	Port       int  `json:"port"`
-	TargetPort *int `json:"targetPort"`
+type AppSpecContainersReadinessProbeShell struct {
+	Command []*string `json:"command"`
 }
 
-type Project struct {
-	ID                repos.ID             `json:"id"`
-	Name              string               `json:"name"`
-	DisplayName       string               `json:"displayName"`
-	ReadableID        repos.ID             `json:"readableId"`
-	Logo              *string              `json:"logo"`
-	Description       *string              `json:"description"`
-	Account           *Account             `json:"account"`
-	Memberships       []*ProjectMembership `json:"memberships"`
-	Status            string               `json:"status"`
-	Cluster           *string              `json:"cluster"`
-	DockerCredentials *DockerCredentials   `json:"dockerCredentials"`
-	RegionID          repos.ID             `json:"regionId"`
-	Region            *EdgeRegion          `json:"region"`
+type AppSpecContainersReadinessProbeShellIn struct {
+	Command []*string `json:"command"`
 }
 
-type ProjectMembership struct {
-	User    *User    `json:"user"`
-	Role    string   `json:"role"`
-	Project *Project `json:"project"`
+type AppSpecContainersReadinessProbeTCP struct {
+	Port int `json:"port"`
 }
 
-type ResInstance struct {
-	ID            repos.ID       `json:"id"`
-	Enabled       bool           `json:"enabled"`
-	ResourceID    repos.ID       `json:"resourceId"`
-	EnvironmentID repos.ID       `json:"environmentId"`
-	BlueprintID   repos.ID       `json:"blueprintId"`
-	Overrides     *string        `json:"overrides"`
-	App           *App           `json:"app"`
-	Router        *Router        `json:"router"`
-	MResource     *ManagedRes    `json:"mResource"`
-	MResources    []*ResInstance `json:"mResources"`
-	MService      *ManagedSvc    `json:"mService"`
-	Config        *Config        `json:"config"`
-	Secret        *Secret        `json:"secret"`
-	ResourceType  string         `json:"resourceType"`
-	IsSelf        bool           `json:"isSelf"`
+type AppSpecContainersReadinessProbeTCPIn struct {
+	Port int `json:"port"`
 }
 
-type ResourceIn struct {
-	ResID   repos.ID `json:"resId"`
-	Enabled *bool    `json:"enabled"`
+type AppSpecContainersResourceCPU struct {
+	Max *string `json:"max"`
+	Min *string `json:"min"`
 }
 
-type Route struct {
-	Path    string `json:"path"`
-	AppName string `json:"appName"`
-	Port    *int   `json:"port"`
+type AppSpecContainersResourceCPUIn struct {
+	Max *string `json:"max"`
+	Min *string `json:"min"`
 }
 
-type RouteInput struct {
-	Path    string `json:"path"`
-	AppName string `json:"appName"`
-	Port    *int   `json:"port"`
+type AppSpecContainersResourceMemory struct {
+	Max *string `json:"max"`
+	Min *string `json:"min"`
 }
 
-type Router struct {
-	ID      repos.ID `json:"id"`
-	Name    string   `json:"name"`
-	Project *Project `json:"project"`
-	Domains []string `json:"domains"`
-	Routes  []*Route `json:"routes"`
-	Status  string   `json:"status"`
+type AppSpecContainersResourceMemoryIn struct {
+	Max *string `json:"max"`
+	Min *string `json:"min"`
 }
 
-type Secret struct {
-	ID          repos.ID   `json:"id"`
-	Name        string     `json:"name"`
-	Project     *Project   `json:"project"`
-	Description *string    `json:"description"`
-	Namespace   string     `json:"namespace"`
-	Entries     []*CSEntry `json:"entries"`
-	Status      string     `json:"status"`
+type AppSpecContainersVolumes struct {
+	Items     []*AppSpecContainersVolumesItems `json:"items"`
+	MountPath string                           `json:"mountPath"`
+	RefName   string                           `json:"refName"`
+	Type      string                           `json:"type"`
 }
 
-type StoragePlan struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+type AppSpecContainersVolumesIn struct {
+	Items     []*AppSpecContainersVolumesItemsIn `json:"items"`
+	MountPath string                             `json:"mountPath"`
+	RefName   string                             `json:"refName"`
+	Type      string                             `json:"type"`
 }
 
-func (StoragePlan) IsEntity() {}
-
-type User struct {
-	ID                 repos.ID             `json:"id"`
-	Devices            []*Device            `json:"devices"`
-	ProjectMemberships []*ProjectMembership `json:"projectMemberships"`
+type AppSpecContainersVolumesItems struct {
+	Key      string  `json:"key"`
+	FileName *string `json:"fileName"`
 }
 
-func (User) IsEntity() {}
+type AppSpecContainersVolumesItemsIn struct {
+	Key      string  `json:"key"`
+	FileName *string `json:"fileName"`
+}
+
+type AppSpecHpa struct {
+	Enabled         *bool `json:"enabled"`
+	MaxReplicas     *int  `json:"maxReplicas"`
+	MinReplicas     *int  `json:"minReplicas"`
+	ThresholdCPU    *int  `json:"thresholdCpu"`
+	ThresholdMemory *int  `json:"thresholdMemory"`
+}
+
+type AppSpecHpaIn struct {
+	Enabled         *bool `json:"enabled"`
+	MaxReplicas     *int  `json:"maxReplicas"`
+	MinReplicas     *int  `json:"minReplicas"`
+	ThresholdCPU    *int  `json:"thresholdCpu"`
+	ThresholdMemory *int  `json:"thresholdMemory"`
+}
+
+type AppSpecIn struct {
+	Frozen         *bool                   `json:"frozen"`
+	Interception   *AppSpecInterceptionIn  `json:"interception"`
+	NodeSelector   map[string]interface{}  `json:"nodeSelector"`
+	Services       []*AppSpecServicesIn    `json:"services"`
+	Tolerations    []*AppSpecTolerationsIn `json:"tolerations"`
+	Containers     []*AppSpecContainersIn  `json:"containers"`
+	Hpa            *AppSpecHpaIn           `json:"hpa"`
+	Region         string                  `json:"region"`
+	Replicas       *int                    `json:"replicas"`
+	ServiceAccount *string                 `json:"serviceAccount"`
+}
+
+type AppSpecInterception struct {
+	Enabled   *bool  `json:"enabled"`
+	ForDevice string `json:"forDevice"`
+}
+
+type AppSpecInterceptionIn struct {
+	Enabled   *bool  `json:"enabled"`
+	ForDevice string `json:"forDevice"`
+}
+
+type AppSpecServices struct {
+	Name       *string `json:"name"`
+	Port       int     `json:"port"`
+	TargetPort *int    `json:"targetPort"`
+	Type       *string `json:"type"`
+}
+
+type AppSpecServicesIn struct {
+	Name       *string `json:"name"`
+	Port       int     `json:"port"`
+	TargetPort *int    `json:"targetPort"`
+	Type       *string `json:"type"`
+}
+
+type AppSpecTolerations struct {
+	Effect            *string `json:"effect"`
+	Key               *string `json:"key"`
+	Operator          *string `json:"operator"`
+	TolerationSeconds *int    `json:"tolerationSeconds"`
+	Value             *string `json:"value"`
+}
+
+type AppSpecTolerationsIn struct {
+	Effect            *string `json:"effect"`
+	Key               *string `json:"key"`
+	Operator          *string `json:"operator"`
+	TolerationSeconds *int    `json:"tolerationSeconds"`
+	Value             *string `json:"value"`
+}
+
+type Check struct {
+	Status     *bool   `json:"status"`
+	Message    *string `json:"message"`
+	Generation *int    `json:"generation"`
+}
+
+type ManagedResources struct {
+	Enabled    *bool                 `json:"enabled"`
+	Kind       *string               `json:"kind"`
+	ObjectMeta *v1.ObjectMeta        `json:"metadata"`
+	Overrides  *v11.JsonPatch        `json:"overrides"`
+	Spec       *ManagedResourcesSpec `json:"spec"`
+	Status     *operator.Status      `json:"status"`
+	APIVersion *string               `json:"apiVersion"`
+}
+
+type ManagedResourcesIn struct {
+	Enabled    *bool                   `json:"enabled"`
+	Kind       *string                 `json:"kind"`
+	ObjectMeta *v1.ObjectMeta          `json:"metadata"`
+	Overrides  *v11.JsonPatch          `json:"overrides"`
+	Spec       *ManagedResourcesSpecIn `json:"spec"`
+	APIVersion *string                 `json:"apiVersion"`
+}
+
+type ManagedResourcesSpec struct {
+	Inputs   map[string]interface{}        `json:"inputs"`
+	MresKind *ManagedResourcesSpecMresKind `json:"mresKind"`
+	MsvcRef  *ManagedResourcesSpecMsvcRef  `json:"msvcRef"`
+}
+
+type ManagedResourcesSpecIn struct {
+	Inputs   map[string]interface{}          `json:"inputs"`
+	MresKind *ManagedResourcesSpecMresKindIn `json:"mresKind"`
+	MsvcRef  *ManagedResourcesSpecMsvcRefIn  `json:"msvcRef"`
+}
+
+type ManagedResourcesSpecMresKind struct {
+	Kind string `json:"kind"`
+}
+
+type ManagedResourcesSpecMresKindIn struct {
+	Kind string `json:"kind"`
+}
+
+type ManagedResourcesSpecMsvcRef struct {
+	APIVersion string  `json:"apiVersion"`
+	Kind       *string `json:"kind"`
+	Name       string  `json:"name"`
+}
+
+type ManagedResourcesSpecMsvcRefIn struct {
+	APIVersion string  `json:"apiVersion"`
+	Kind       *string `json:"kind"`
+	Name       string  `json:"name"`
+}
+
+type ManagedServiceSpec struct {
+	Tolerations  []*ManagedServiceSpecTolerations `json:"tolerations"`
+	Inputs       map[string]interface{}           `json:"inputs"`
+	MsvcKind     *ManagedServiceSpecMsvcKind      `json:"msvcKind"`
+	NodeSelector map[string]interface{}           `json:"nodeSelector"`
+	Region       string                           `json:"region"`
+}
+
+type ManagedServiceSpecIn struct {
+	Tolerations  []*ManagedServiceSpecTolerationsIn `json:"tolerations"`
+	Inputs       map[string]interface{}             `json:"inputs"`
+	MsvcKind     *ManagedServiceSpecMsvcKindIn      `json:"msvcKind"`
+	NodeSelector map[string]interface{}             `json:"nodeSelector"`
+	Region       string                             `json:"region"`
+}
+
+type ManagedServiceSpecMsvcKind struct {
+	APIVersion string  `json:"apiVersion"`
+	Kind       *string `json:"kind"`
+}
+
+type ManagedServiceSpecMsvcKindIn struct {
+	APIVersion string  `json:"apiVersion"`
+	Kind       *string `json:"kind"`
+}
+
+type ManagedServiceSpecTolerations struct {
+	Effect            *string `json:"effect"`
+	Key               *string `json:"key"`
+	Operator          *string `json:"operator"`
+	TolerationSeconds *int    `json:"tolerationSeconds"`
+	Value             *string `json:"value"`
+}
+
+type ManagedServiceSpecTolerationsIn struct {
+	Effect            *string `json:"effect"`
+	Key               *string `json:"key"`
+	Operator          *string `json:"operator"`
+	TolerationSeconds *int    `json:"tolerationSeconds"`
+	Value             *string `json:"value"`
+}
+
+type Patch struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value"`
+}
+
+type PatchIn struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value"`
+}
+
+type RouterSpec struct {
+	RateLimit       *RouterSpecRateLimit `json:"rateLimit"`
+	Region          *string              `json:"region"`
+	Routes          []*RouterSpecRoutes  `json:"routes"`
+	BasicAuth       *RouterSpecBasicAuth `json:"basicAuth"`
+	Cors            *RouterSpecCors      `json:"cors"`
+	Domains         []*string            `json:"domains"`
+	HTTPS           *RouterSpecHTTPS     `json:"https"`
+	MaxBodySizeInMb *int                 `json:"maxBodySizeInMB"`
+}
+
+type RouterSpecBasicAuth struct {
+	Enabled    bool    `json:"enabled"`
+	SecretName *string `json:"secretName"`
+	Username   *string `json:"username"`
+}
+
+type RouterSpecBasicAuthIn struct {
+	Enabled    bool    `json:"enabled"`
+	SecretName *string `json:"secretName"`
+	Username   *string `json:"username"`
+}
+
+type RouterSpecCors struct {
+	Origins          []*string `json:"origins"`
+	AllowCredentials *bool     `json:"allowCredentials"`
+	Enabled          *bool     `json:"enabled"`
+}
+
+type RouterSpecCorsIn struct {
+	Origins          []*string `json:"origins"`
+	AllowCredentials *bool     `json:"allowCredentials"`
+	Enabled          *bool     `json:"enabled"`
+}
+
+type RouterSpecHTTPS struct {
+	Enabled       bool  `json:"enabled"`
+	ForceRedirect *bool `json:"forceRedirect"`
+}
+
+type RouterSpecHTTPSIn struct {
+	Enabled       bool  `json:"enabled"`
+	ForceRedirect *bool `json:"forceRedirect"`
+}
+
+type RouterSpecIn struct {
+	RateLimit       *RouterSpecRateLimitIn `json:"rateLimit"`
+	Region          *string                `json:"region"`
+	Routes          []*RouterSpecRoutesIn  `json:"routes"`
+	BasicAuth       *RouterSpecBasicAuthIn `json:"basicAuth"`
+	Cors            *RouterSpecCorsIn      `json:"cors"`
+	Domains         []*string              `json:"domains"`
+	HTTPS           *RouterSpecHTTPSIn     `json:"https"`
+	MaxBodySizeInMb *int                   `json:"maxBodySizeInMB"`
+}
+
+type RouterSpecRateLimit struct {
+	Enabled     *bool `json:"enabled"`
+	Rpm         *int  `json:"rpm"`
+	Rps         *int  `json:"rps"`
+	Connections *int  `json:"connections"`
+}
+
+type RouterSpecRateLimitIn struct {
+	Enabled     *bool `json:"enabled"`
+	Rpm         *int  `json:"rpm"`
+	Rps         *int  `json:"rps"`
+	Connections *int  `json:"connections"`
+}
+
+type RouterSpecRoutes struct {
+	Lambda  *string `json:"lambda"`
+	Path    string  `json:"path"`
+	Port    int     `json:"port"`
+	Rewrite *bool   `json:"rewrite"`
+	App     *string `json:"app"`
+}
+
+type RouterSpecRoutesIn struct {
+	Lambda  *string `json:"lambda"`
+	Path    string  `json:"path"`
+	Port    int     `json:"port"`
+	Rewrite *bool   `json:"rewrite"`
+	App     *string `json:"app"`
+}

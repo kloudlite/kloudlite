@@ -1,0 +1,79 @@
+version: "3"
+
+dotenv:
+  - .secrets/env
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
+  # run:
+  #   # sources:
+  #   #   - ./internal/**/*.go
+  #   #   - ./main.go
+  #   cmds:
+  #     # - go run -tags dynamic main.go --dev
+  #     # - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+  #     - go build -o /tmp/console
+  #     - /tmp/console --dev
+
+
+  docker-build:
+    vars:
+      APP: console
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+
+      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
+        msg: 'var EnvName must have one of [development, staging, production] as its value'
+    cmds:
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
+      - docker push {{.IMAGE}}
+
+
+  local-build:
+    preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      APP: console
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    silent: true
+    cmds:
+      - |+
+        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+
+        startLineNo=$(echo "$lineNumbers" | head -n+1)
+        finalLineNo=$(echo "$lineNumbers" | tail -1)
+
+        tDir=$(mktemp -d)
+
+        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
+        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
+
+        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+
+        cat $tDir/Dockerfile.base | sed "5 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile
+
+        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
+        docker push {{.IMAGE}}
+        rm -rf $tDir
+
+  run:
+    vars:
+      Name: console
+    run: always
+    cmds:
+      - CGO_BUILD=0 go build -o /tmp/console ./main.go
+      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/console -- --dev
+      - /tmp/console --dev
