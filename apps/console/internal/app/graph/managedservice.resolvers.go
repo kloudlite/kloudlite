@@ -12,7 +12,7 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
-func (r *managedServiceResolver) Spec(ctx context.Context, obj *entities.MRes) (*model.ManagedServiceSpec, error) {
+func (r *managedServiceResolver) Spec(ctx context.Context, obj *entities.MSvc) (*model.ManagedServiceSpec, error) {
 	var m model.ManagedServiceSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
@@ -20,8 +20,11 @@ func (r *managedServiceResolver) Spec(ctx context.Context, obj *entities.MRes) (
 	return &m, nil
 }
 
-func (r *managedServiceInResolver) Spec(ctx context.Context, obj *entities.MRes, data *model.ManagedServiceSpecIn) error {
-	return fn.JsonConversion(data, obj.Spec)
+func (r *managedServiceInResolver) Spec(ctx context.Context, obj *entities.MSvc, data *model.ManagedServiceSpecIn) error {
+	if err := fn.JsonConversion(data, &obj.Spec); err != nil {
+		return err
+	}
+	return nil
 }
 
 // ManagedService returns generated.ManagedServiceResolver implementation.

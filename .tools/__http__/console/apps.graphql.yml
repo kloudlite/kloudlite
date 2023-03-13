@@ -1,0 +1,91 @@
+---
+global:
+  namespace: kl-core
+  name: s1
+---
+
+label: List Apps
+query: |+
+  query Core_listApps($namespace: String!) {
+    core_listApps(namespace: $namespace) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  namespace: "{{.namespace}}"
+---
+
+label: Get App
+query: |+
+  query Core_getApp($namespace: String!, $name: String!) {
+    core_getApp(namespace: $namespace, name: $name) {
+      metadata {
+        name
+        deletionTimestamp
+      }
+      spec {
+        containers{
+          name
+          image
+        }
+      }
+    }
+  }
+variables:
+  namespace: "{{.namespace}}"
+  name: "{{.name}}"
+---
+
+label: Create App
+query: |+
+  mutation Core_createApps($app: AppIn!) {
+    core_createApp(app: $app) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  app:
+    metadata:
+      name: "{{.name}}"
+      namespace: "{{.namespace}}"
+    spec:
+      region: r1
+      containers:
+        - name: main
+          image: sample
+---
+
+label: Update App
+query: |+
+  mutation Core_updateApp($app: AppIn!) {
+    core_updateApp(app: $app) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  app:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      region: r1
+      containers:
+        - name: main
+          image: sample2
+---
+
+label: Delete App
+query: |+
+  mutation Core_deleteApp($namespace: String!, $name: String!) {
+    core_deleteApp(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+---

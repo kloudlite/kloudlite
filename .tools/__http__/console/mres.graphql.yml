@@ -1,0 +1,108 @@
+---
+global:
+  namespace: kl-core
+  name: s1
+---
+
+label: List Managed Resources
+query: |+
+  query Core_listManagedResources($namespace: String!) {
+    core_listManagedResources(namespace: $namespace) {
+      metadata {
+        name
+      }
+      kind
+      spec {
+        inputs
+      }
+    }
+  }
+variables:
+  namespace: "{{.namespace}}"
+---
+
+label: Create Managed Resource
+query: |+
+  mutation Core_createManagedResource($mres: ManagedResourceIn!) {
+    core_createManagedResource(mres: $mres) {
+      spec {
+        inputs
+        msvcRef {
+          name
+          kind
+        }
+        mresKind {
+          kind
+        }
+      }
+    }
+  }
+variables:
+  mres:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      inputs:
+        k1: v1
+      msvcRef:
+        apiVersion: "asdfasdf"
+        kind: StandaloneDatabase
+        name: s1
+      mresKind:
+        kind: Database
+---
+
+label: Get ManagedService
+query: |+
+  query Core_getManagedResource($namespace: String!, $name: String!) {
+    core_getManagedResource(namespace: $namespace, name: $name) {
+      metadata {
+        name
+      }
+      kind
+      spec {
+        inputs
+      }
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.namespace}}'
+
+---
+
+label: Update ManagedService
+query: |+
+  mutation Core_updateManagedResource($mres: ManagedResourceIn!) {
+    core_updateManagedResource(mres: $mres) {
+      spec {
+        inputs
+      }
+    }
+  }
+variables:
+  mres:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      inputs:
+        k1: v1
+      msvcRef:
+        apiVersion: "###"
+        kind: StandaloneDatabase
+        name: s1
+      mresKind:
+        kind: Database
+---
+
+label: Delete ManagedService
+query: |+
+  mutation Core_deleteManagedResource($namespace: String!, $name: String!) {
+    core_deleteManagedResource(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+---

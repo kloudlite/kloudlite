@@ -20,7 +20,7 @@ tasks:
           --crd Secret=secrets.crds.kloudlite.io
           --crd Router=routers.crds.kloudlite.io
           --crd ManagedService=managedservices.crds.kloudlite.io
-          --crd ManagedResources=managedresources.crds.kloudlite.io
+          --crd ManagedResource=managedresources.crds.kloudlite.io
 
   docker-build:
     vars:

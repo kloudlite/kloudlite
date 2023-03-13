@@ -1,0 +1,89 @@
+---
+global:
+  namespace: kl-core
+  name: s1
+---
+
+label: List Configs
+query: |+
+  query Core_listConfigs($namespace: String!) {
+    core_listConfigs(namespace: $namespace) {
+      metadata {
+        name
+        namespace
+      }
+      data
+    }
+  }
+variables:
+  namespace: "{{.namespace}}"
+---
+
+label: Create Config
+query: |+
+  mutation Core_createConfig($config: ConfigIn!) {
+    core_createConfig(config: $config) {
+      metadata {
+        name
+        namespace
+      }
+      data
+    }
+  }
+
+variables:
+  config:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    data:
+      key1: value1
+      key2: value2
+---
+
+label: Get Config
+query: |+
+  query Core_getConfig($namespace: String!, $name: String!) {
+    core_getConfig(namespace: $namespace, name: $name) {
+      metadata {
+        name
+        deletionTimestamp
+        namespace
+      }
+      data
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.namespace}}'
+
+---
+
+label: Update Config
+query: |+
+  mutation Core_updateConfig($config: ConfigIn!) {
+    core_updateConfig(config: $config) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  config:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    data:
+      key1: value1x
+      key3: value2
+---
+
+label: Delete Config
+query: |+
+  mutation Core_deleteConfig($namespace: String!, $name: String!) {
+    core_deleteConfig(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+---

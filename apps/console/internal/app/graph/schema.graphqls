@@ -1,7 +1,45 @@
 type Query {
   core_listApps(namespace: String!): [App!]
+  core_getApp(namespace: String!, name: String!): App
+
+  core_listConfigs(namespace: String!): [Config!]
+  core_getConfig(namespace: String!, name: String!): Config
+
+  core_listSecrets(namespace: String!): [Secret!]
+  core_getSecret(namespace: String!, name: String!): Secret
+
+  core_listRouters(namespace: String!): [Router!]
+  core_getRouter(namespace: String!, name: String!): Router
+
+  core_listManagedServices(namespace: String!): [ManagedService!]
+  core_getManagedService(namespace: String!, name: String!): ManagedService
+
+  core_listManagedResources(namespace: String!): [ManagedResource!]
+  core_getManagedResource(namespace: String!, name: String!): ManagedResource
 }
 
 type Mutation {
   core_createApp(app: AppIn!): App
+  core_updateApp(app: AppIn!): App
+  core_deleteApp(namespace: String!, name: String!): Boolean!
+
+  core_createConfig(config: ConfigIn!): Config
+  core_updateConfig(config: ConfigIn!): Config
+  core_deleteConfig(namespace: String!, name: String!): Boolean!
+
+  core_createSecret(secret: SecretIn!): Secret
+  core_updateSecret(secret: SecretIn!): Secret
+  core_deleteSecret(namespace: String!, name: String!): Boolean!
+
+  core_createRouter(router: RouterIn!): Router
+  core_updateRouter(router: RouterIn!): Router
+  core_deleteRouter(namespace: String!, name: String!): Boolean!
+
+  core_createManagedService(msvc: ManagedServiceIn!): ManagedService
+  core_updateManagedService(msvc: ManagedServiceIn!): ManagedService
+  core_deleteManagedService(namespace: String!, name: String!): Boolean!
+
+  core_createManagedResource(mres: ManagedResourceIn!): ManagedResource
+  core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource
+  core_deleteManagedResource(namespace: String!, name: String!): Boolean!
 }

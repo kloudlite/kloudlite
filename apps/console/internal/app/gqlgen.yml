@@ -59,12 +59,10 @@ models:
       - github.com/99designs/gqlgen/graphql.Map
 
   Metadata:
-    model:
-      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
 
   MetadataIn:
-    model:
-      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
 
   Project:
     model:
@@ -211,10 +209,10 @@ models:
 
   ManagedService:
     model:
-      - kloudlite.io/apps/console/internal/domain/entities.MRes
+      - kloudlite.io/apps/console/internal/domain/entities.MSvc
   ManagedServiceIn:
     model:
-      - kloudlite.io/apps/console/internal/domain/entities.MRes
+      - kloudlite.io/apps/console/internal/domain/entities.MSvc
   # ManagedServiceSpec:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.ManagedServiceSpec
@@ -223,11 +221,10 @@ models:
   #     - github.com/kloudlite/operator/apis/crds/v1.ManagedServiceSpec
 
   ManagedResource:
-    model:
-      - kloudlite.io/apps/console/internal/domain/entities.MSvc
+    model: kloudlite.io/apps/console/internal/domain/entities.MRes
   ManagedResourceIn:
-    model:
-      - kloudlite.io/apps/console/internal/domain/entities.MSvc
+    model: kloudlite.io/apps/console/internal/domain/entities.MRes
+
   # ManagedResourceSpec:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.ManagedResourceSpec
@@ -236,8 +233,7 @@ models:
   #     - github.com/kloudlite/operator/apis/crds/v1.ManagedResourceSpec
 
   Status:
-    model:
-      - github.com/kloudlite/operator/pkg/operator.Status
+    model: github.com/kloudlite/operator/pkg/operator.Status
 
   Overrides:
     model:

@@ -8,7 +8,7 @@ import (
 
 	v11 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	fn "kloudlite.io/pkg/functions"
@@ -23,6 +23,18 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 		return nil, err
 	}
 	return m, nil
+}
+
+func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
+	return obj.GetCreationTimestamp().String(), nil
+}
+
+func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
+	d := obj.GetDeletionTimestamp()
+	if d == nil {
+		return nil, nil
+	}
+	return fn.New(d.OpenAPISchemaFormat()), nil
 }
 
 func (r *overridesResolver) Patches(ctx context.Context, obj *v11.JsonPatch) ([]*model.Patch, error) {

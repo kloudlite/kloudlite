@@ -7,7 +7,7 @@ import (
 
 type Router struct {
 	repos.BaseEntity `json:",inline"`
-	crdsv1.App       `json:",inline"`
+	crdsv1.Router    `json:",inline"`
 }
 
 var RouterIndexes = []repos.IndexField{

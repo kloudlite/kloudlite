@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/xeipuuv/gojsonschema"
 	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/client-go/rest"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type InvalidSchemaError struct {
@@ -38,7 +40,7 @@ func NewInvalidSchemaError(err error, errMsgs []string) InvalidSchemaError {
 
 type ExtendedK8sClient interface {
 	GetCRDJsonSchema(ctx context.Context, name string) (*apiExtensionsV1.JSONSchemaProps, error)
-	ValidateStruct(ctx context.Context, s any, crdName string) error
+	ValidateStruct(ctx context.Context, obj client.Object) error
 }
 
 type extendedK8sClient struct {
@@ -53,15 +55,17 @@ func (e extendedK8sClient) GetCRDJsonSchema(ctx context.Context, name string) (*
 	return crd.Spec.Versions[0].Schema.OpenAPIV3Schema, nil
 }
 
-func (e extendedK8sClient) ValidateStruct(ctx context.Context, s any, crdName string) error {
-	input, err := json.Marshal(s)
+func (e extendedK8sClient) ValidateStruct(ctx context.Context, obj client.Object) error {
+	gvk := obj.GetObjectKind().GroupVersionKind()
 
+	input, err := json.Marshal(obj)
 	if err != nil {
 		return errors.NewEf(err, "failed to marshal input struct")
 	}
 	documentLoader := gojsonschema.NewBytesLoader(input)
 
-	crd, err := e.client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, crdName, metav1.GetOptions{})
+	crd, err := e.client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx,
+		fmt.Sprintf("%s.%s", fn.RegularPlural(gvk.Kind), gvk.Group), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

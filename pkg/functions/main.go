@@ -98,5 +98,8 @@ func JsonConversion(from any, to any) error {
 	if err != nil {
 		return nil
 	}
-	return json.Unmarshal(b, &to)
+	if err := json.Unmarshal(b, &to); err != nil {
+		return err
+	}
+	return nil
 }
