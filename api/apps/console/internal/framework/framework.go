@@ -1,11 +1,14 @@
 package framework
 
 import (
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
+	"k8s.io/client-go/rest"
 	app "kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/k8s"
 	mongoDb "kloudlite.io/pkg/repos"
 )
 
@@ -26,7 +29,7 @@ func (fm *fm) GetHttpPort() uint16 {
 }
 
 func (fm *fm) GetHttpCors() string {
-	return ""
+	return "*"
 }
 
 var Module = fx.Module("framework",
@@ -38,6 +41,15 @@ var Module = fx.Module("framework",
 		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
 	}),
 	cache.FxLifeCycle[app.AuthCacheClient](),
+
+	fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
+		return kubectl.NewYAMLClient(restCfg)
+	}),
+
+	fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
+		return k8s.NewExtendedK8sClient(restCfg)
+	}),
+
 	app.Module,
 	httpServer.NewHttpServerFx[*fm](),
 )

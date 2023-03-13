@@ -22,6 +22,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),
 	repos.NewFxMongoRepo[*entities.MRes]("managed_resources", "mres", entities.MresIndexes),
 	repos.NewFxMongoRepo[*entities.MSvc]("managed_services", "msvc", entities.MsvcIndexes),
+	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 
 	fx.Invoke(
 		func(

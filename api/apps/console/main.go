@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"go.uber.org/fx"
+	"k8s.io/client-go/rest"
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/apps/console/internal/framework"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 )
 
@@ -23,14 +25,22 @@ func main() {
 		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "ci", Dev: isDev})
+				return logging.New(&logging.Options{Name: "console", Dev: isDev})
 			},
 		),
+		fx.Provide(func() (*rest.Config, error) {
+			if isDev {
+				return &rest.Config{
+					Host: "localhost:8080",
+				}, nil
+			}
+			return k8s.RestInclusterConfig()
+		}),
 		fn.FxErrorHandler(),
 		framework.Module,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := app.Start(ctx); err != nil {
 		panic(err)

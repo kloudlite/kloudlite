@@ -7,7 +7,7 @@ import (
 
 type App struct {
 	repos.BaseEntity `json:",inline"`
-	crdsv1.App `json:",inline"`
+	crdsv1.App       `json:",inline"`
 }
 
 var AppIndexes = []repos.IndexField{

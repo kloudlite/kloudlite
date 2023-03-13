@@ -12,13 +12,8 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
-func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*string, error) {
-	s := string(obj.Type)
-	return &s, nil
-}
-
 func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
-	if obj.Data == nil {
+	if obj == nil || obj.Data == nil {
 		return nil, nil
 	}
 	m := make(map[string]any, len(obj.Data))
@@ -28,8 +23,13 @@ func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[st
 	return m, nil
 }
 
+func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*string, error) {
+	s := string(obj.Type)
+	return &s, nil
+}
+
 func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
-	if obj != nil || obj.Data == nil {
+	if obj == nil || obj.StringData == nil {
 		return nil, nil
 	}
 	m := make(map[string]any, len(obj.StringData))
@@ -37,6 +37,17 @@ func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (
 		return nil, err
 	}
 	return m, nil
+}
+
+func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
+	if obj == nil {
+		return nil
+	}
+
+	if obj.Data == nil {
+		obj.Data = make(map[string][]byte, len(data))
+	}
+	return fn.JsonConversion(data, &obj.Data)
 }
 
 func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data *string) error {
@@ -47,18 +58,8 @@ func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data 
 	return nil
 }
 
-func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
-	if obj != nil {
-		return nil
-	}
-	if obj.Data == nil {
-		obj.Data = make(map[string][]byte, len(data))
-	}
-	return fn.JsonConversion(data, &obj.Data)
-}
-
 func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
-	if obj != nil {
+	if obj == nil {
 		return nil
 	}
 	if obj.StringData == nil {

@@ -21,7 +21,7 @@ func (r *routerResolver) Spec(ctx context.Context, obj *entities.Router) (*model
 }
 
 func (r *routerInResolver) Spec(ctx context.Context, obj *entities.Router, data *model.RouterSpecIn) error {
-	return fn.JsonConversion(data, obj.Spec)
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Router returns generated.RouterResolver implementation.
