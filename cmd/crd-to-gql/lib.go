@@ -36,7 +36,14 @@ func genFieldEntry(k string, t string, required bool) string {
 	return fmt.Sprintf("\t%s: %s\n", k, t)
 }
 
-func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]string) {
+func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]string, depth ...int) {
+	currDepth := func() int {
+		if len(depth) == 0 {
+			return 1
+		}
+		return depth[0]
+	}()
+
 	m := map[string]bool{}
 	for i := range tree.Required {
 		m[tree.Required[i]] = true
@@ -59,7 +66,7 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 				tVar += genFieldEntry(k, fmt.Sprintf("[%s]", typeName+genTypeName(k)), m[k])
 				iVar += genFieldEntry(k, fmt.Sprintf("[%s]", typeName+genTypeName(k)+"In"), m[k])
 
-				navigateTree(v.Items.Schema, typeName+genTypeName(k), schemas)
+				navigateTree(v.Items.Schema, typeName+genTypeName(k), schemas, currDepth+1)
 				continue
 			}
 			tVar += genFieldEntry(k, fmt.Sprintf("[%s]", genTypeName(v.Items.Schema.Type)), m[k])
@@ -69,7 +76,7 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 		}
 
 		if v.Type == "object" {
-			if typeName == "" {
+			if currDepth == 1 {
 				if k == "metadata" {
 					tVar += genFieldEntry(k, "Metadata! @goField(name: \"objectMeta\")", m[k])
 					iVar += genFieldEntry(k, "MetadataIn! @goField(name: \"objectMeta\")", m[k])
@@ -99,7 +106,7 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 			tVar += genFieldEntry(k, typeName+genTypeName(k), m[k])
 			iVar += genFieldEntry(k, typeName+genTypeName(k)+"In", m[k])
 			//schemas[name] += fmt.Sprintf("\t%s: %s!\n", k, typeName+genTypeName(k))
-			navigateTree(&v, typeName+genTypeName(k), schemas)
+			navigateTree(&v, typeName+genTypeName(k), schemas, currDepth+1)
 			continue
 		}
 
@@ -118,6 +125,7 @@ func ScalarTypes() ([]byte, error) {
 scalar Any
 scalar Json
 scalar Map
+scalar Date
 `
 
 	metadata := `
@@ -125,6 +133,9 @@ type Metadata {
 	name: String!
 	namespace: String
 	labels: Json
+	creationTimestamp: Date!
+	deletionTimestamp: Date
+	generation: Int!
 }
 
 input MetadataIn {

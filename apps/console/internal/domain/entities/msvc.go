@@ -6,8 +6,8 @@ import (
 )
 
 type MSvc struct {
-	repos.BaseEntity       `json:",inline"`
-	crdsv1.ManagedResource `json:",inline"`
+	repos.BaseEntity      `json:",inline"`
+	crdsv1.ManagedService `json:",inline"`
 }
 
 var MsvcIndexes = []repos.IndexField{

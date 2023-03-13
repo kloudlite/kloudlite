@@ -9,7 +9,7 @@ require (
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/gobuffalo/flect v0.2.5
+	github.com/gobuffalo/flect v1.0.2
 	github.com/gofiber/adaptor/v2 v2.1.23
 	github.com/gofiber/fiber/v2 v2.32.0
 	github.com/gofiber/websocket/v2 v2.0.21

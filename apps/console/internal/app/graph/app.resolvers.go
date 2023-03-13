@@ -14,14 +14,17 @@ import (
 
 func (r *appResolver) Spec(ctx context.Context, obj *entities.App) (*model.AppSpec, error) {
 	var app model.AppSpec
-	if err := fn.JsonConversion(obj.App, &app); err != nil {
+	if err := fn.JsonConversion(obj.App.Spec, &app); err != nil {
 		return nil, err
 	}
 	return &app, nil
 }
 
 func (r *appInResolver) Spec(ctx context.Context, obj *entities.App, data *model.AppSpecIn) error {
-	return fn.JsonConversion(data, &obj.App)
+	if err := fn.JsonConversion(*data, &obj.App.Spec); err != nil {
+		return err
+	}
+	return nil
 }
 
 // App returns generated.AppResolver implementation.
