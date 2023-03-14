@@ -1,0 +1,27 @@
+type ProjectSpec {
+	accountId: String
+	displayName: String
+	logo: String
+}
+
+input ProjectSpecIn {
+	accountId: String
+	displayName: String
+	logo: String
+}
+
+type Project {
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	spec: ProjectSpec
+	status: Status
+}
+
+input ProjectIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: ProjectSpecIn
+}
+

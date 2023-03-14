@@ -14,6 +14,7 @@ tasks:
       - mkdir -p "./internal/app/graph/crd-to-gql"
       - go run ../../cmd/crd-to-gql --dev
           --output "./internal/app/graph/crd-to-gql"
+          --crd Project=projects.crds.kloudlite.io
           --crd App=apps.crds.kloudlite.io
           --crd Secret=secrets.crds.kloudlite.io
           --crd Config=configs.crds.kloudlite.io
@@ -63,10 +64,10 @@ tasks:
         nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
 
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
-
-        cat $tDir/Dockerfile.base | sed "5 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
+
+        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
         docker push {{.IMAGE}}

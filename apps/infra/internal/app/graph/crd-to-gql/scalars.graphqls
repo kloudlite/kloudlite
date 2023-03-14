@@ -2,11 +2,15 @@
 scalar Any
 scalar Json
 scalar Map
+scalar Date
 
 type Metadata {
 	name: String!
 	namespace: String
 	labels: Json
+	creationTimestamp: Date!
+	deletionTimestamp: Date
+	generation: Int!
 }
 
 input MetadataIn {

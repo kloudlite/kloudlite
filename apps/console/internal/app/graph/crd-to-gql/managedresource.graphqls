@@ -1,11 +1,3 @@
-type ManagedResourceSpecMresKind {
-	kind: String!
-}
-
-input ManagedResourceSpecMresKindIn {
-	kind: String!
-}
-
 type ManagedResourceSpecMsvcRef {
 	apiVersion: String!
 	kind: String
@@ -19,15 +11,15 @@ input ManagedResourceSpecMsvcRefIn {
 }
 
 type ManagedResourceSpec {
-	inputs: Map
 	mresKind: ManagedResourceSpecMresKind!
 	msvcRef: ManagedResourceSpecMsvcRef!
+	inputs: Map
 }
 
 input ManagedResourceSpecIn {
-	inputs: Map
 	mresKind: ManagedResourceSpecMresKindIn!
 	msvcRef: ManagedResourceSpecMsvcRefIn!
+	inputs: Map
 }
 
 type ManagedResource {
@@ -47,5 +39,13 @@ input ManagedResourceIn {
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	overrides: OverridesIn
 	spec: ManagedResourceSpecIn
+}
+
+type ManagedResourceSpecMresKind {
+	kind: String!
+}
+
+input ManagedResourceSpecMresKindIn {
+	kind: String!
 }
 
