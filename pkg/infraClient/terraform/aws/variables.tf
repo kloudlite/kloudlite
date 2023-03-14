@@ -6,15 +6,15 @@ variable "secret_key" {
   default = ""
 }
 
-variable "region"{
-    default = ""
-}
-
-variable "node_id"{
+variable "region" {
   default = ""
 }
 
-variable "instance_type"{
+variable "node_id" {
+  default = ""
+}
+
+variable "instance_type" {
   default = ""
 }
 
@@ -23,5 +23,9 @@ variable "pubkey" {
 }
 
 variable "keys-path" {
+  default = ""
+}
+
+variable "ami" {
   default = ""
 }
