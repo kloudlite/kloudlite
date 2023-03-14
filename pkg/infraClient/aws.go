@@ -31,6 +31,7 @@ type AWSNode struct {
 	Region       string
 	InstanceType string
 	VPC          string
+	ImageId      string
 }
 
 type awsProviderClient interface {
@@ -95,6 +96,7 @@ func (a *awsProvider) NewNode(node AWSNode) error {
 	values["node_id"] = node.NodeId
 	values["instance_type"] = node.InstanceType
 	values["keys-path"] = a.SSHPath
+	values["ami"] = node.ImageId
 
 	// making dir
 	if err := mkdir(a.getFolder(node.Region, node.NodeId)); err != nil {
@@ -217,6 +219,7 @@ func (a *awsProvider) DeleteNode(node AWSNode) error {
 	values["node_id"] = node.NodeId
 	values["instance_type"] = node.InstanceType
 	values["keys-path"] = a.SSHPath
+	values["ami"] = node.ImageId
 
 	nodetfpath := path.Join(a.getFolder(node.Region, node.NodeId), a.providerDir)
 

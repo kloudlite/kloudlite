@@ -6,11 +6,11 @@ variable "do-token" {
   default = ""
 }
 
-variable "accountId"{
+variable "accountId" {
   default = ""
 }
 
-variable "nodeId"{
+variable "nodeId" {
   default = ""
 }
 
