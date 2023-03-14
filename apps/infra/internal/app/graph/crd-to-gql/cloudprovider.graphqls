@@ -1,10 +1,24 @@
+type CloudProviderSpecProviderSecret {
+	name: String!
+	namespace: String!
+}
+
+input CloudProviderSpecProviderSecretIn {
+	name: String!
+	namespace: String!
+}
+
 type CloudProviderSpec {
 	accountName: String!
+	display_name: String!
+	provider: String!
 	providerSecret: CloudProviderSpecProviderSecret!
 }
 
 input CloudProviderSpecIn {
 	accountName: String!
+	display_name: String!
+	provider: String!
 	providerSecret: CloudProviderSpecProviderSecretIn!
 }
 
@@ -21,15 +35,5 @@ input CloudProviderIn {
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: CloudProviderSpecIn
-}
-
-type CloudProviderSpecProviderSecret {
-	name: String!
-	namespace: String!
-}
-
-input CloudProviderSpecProviderSecretIn {
-	name: String!
-	namespace: String!
 }
 

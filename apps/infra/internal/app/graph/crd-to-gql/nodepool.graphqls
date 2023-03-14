@@ -1,25 +1,25 @@
 type NodePoolSpec {
-	provider: String!
+	config: String!
+	max: Int
+	providerName: String!
 	region: String!
 	accountName: String!
-	max: Int
-	min: Int
-	providerName: String!
 	clusterName: String!
-	config: String!
+	provider: String!
 	edgeName: String!
+	min: Int
 }
 
 input NodePoolSpecIn {
-	provider: String!
+	config: String!
+	max: Int
+	providerName: String!
 	region: String!
 	accountName: String!
-	max: Int
-	min: Int
-	providerName: String!
 	clusterName: String!
-	config: String!
+	provider: String!
 	edgeName: String!
+	min: Int
 }
 
 type NodePool {

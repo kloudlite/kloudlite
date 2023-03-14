@@ -57,15 +57,7 @@ models:
     model:
       - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
 
-  ObjectMeta:
-    model:
-      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
-
   MetadataIn:
-    model:
-      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
-
-  ObjectMetaIn:
     model:
       - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
 
@@ -78,30 +70,18 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
+  Account:
+    model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
+  AccountIn:
+    model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
+
   CloudProvider:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
 
-  CloudProviderSpec:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.CloudProviderSpec
-
   CloudProviderIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
-
-  CloudProviderSpecIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.CloudProviderSpec
-
-  CloudProviderSpecProviderSecret:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.ObjectRef
-
-  CloudProviderSpecProviderSecretIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.ObjectRef
-
 
   Cluster:
     model:
@@ -109,12 +89,6 @@ models:
   ClusterIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.Cluster
-  ClusterSpec:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/cmgr/v1.ClusterSpec
-  ClusterSpecIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/cmgr/v1.ClusterSpec
 
   Edge:
     model:
@@ -122,20 +96,6 @@ models:
   EdgeIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.Edge
-  EdgeSpec:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.EdgeSpec
-  EdgeSpecIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.EdgeSpec
-
-  EdgeSpecPools:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.Pool
-
-  EdgeSpecPoolsIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.Pool
 
   ProviderSecret:
     model:
@@ -145,25 +105,12 @@ models:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.Secret
 
-  NodeSpec:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Node
-  NodeSpecIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Node
-
   MasterNode:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
   MasterNodeIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
-  MasterNodeSpec:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/cmgr/v1.MasterNodeSpec
-  MasterNodeSpecIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/cmgr/v1.MasterNodeSpec
 
   WorkerNode:
     model:
@@ -171,12 +118,6 @@ models:
   WorkerNodeIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
-  WorkerNodeSpec:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.WorkerNodeSpec
-  WorkerNodeSpecIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.WorkerNodeSpec
 
   NodePool:
     model:
@@ -184,12 +125,6 @@ models:
   NodePoolIn:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.NodePool
-  NodePoolSpec:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.NodePoolSpec
-  NodePoolSpecIn:
-    model:
-      - github.com/kloudlite/cluster-operator/apis/infra/v1.NodePoolSpec
 
   Secret:
     model:
@@ -201,9 +136,13 @@ models:
   Overrides:
     model:
       - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+
   OverridesIn:
     model:
       - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+
+  Status:
+    model: github.com/kloudlite/cluster-operator/lib/operator.Status
 
   Patch:
     model:

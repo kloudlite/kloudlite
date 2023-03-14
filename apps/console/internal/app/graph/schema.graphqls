@@ -1,4 +1,9 @@
+directive @isLoggedIn on FIELD_DEFINITION
+
 type Query {
+  core_listProjects: [Project!]
+  core_getProject(name: String!): Project
+
   core_listApps(namespace: String!): [App!]
   core_getApp(namespace: String!, name: String!): App
 
@@ -19,6 +24,10 @@ type Query {
 }
 
 type Mutation {
+  core_createProject(project: ProjectIn!): Project @isLoggedIn
+  core_updateProject(project: ProjectIn!): Project
+  core_deleteProject(name: String!): Boolean!
+
   core_createApp(app: AppIn!): App
   core_updateApp(app: AppIn!): App
   core_deleteApp(namespace: String!, name: String!): Boolean!

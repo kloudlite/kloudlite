@@ -5,10 +5,24 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/kloudlite/wg-operator/apis/wg/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 )
+
+func (r *mutationResolver) InfraCreateAccount(ctx context.Context, account v1.Account) (*v1.Account, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) InfraUpdateAccount(ctx context.Context, account v1.Account) (*v1.Account, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) InfraDeleteAccount(ctx context.Context, name *string) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
 	return r.Domain.CreateCluster(ctx, cluster)
@@ -57,6 +71,14 @@ func (r *mutationResolver) InfraDeleteEdge(ctx context.Context, clusterName stri
 
 func (r *mutationResolver) InfraDeleteWorkerNode(ctx context.Context, clusterName string, edgeName string, name string) (bool, error) {
 	return r.Domain.DeleteWorkerNode(ctx, clusterName, edgeName, name)
+}
+
+func (r *queryResolver) InfraListAccounts(ctx context.Context) ([]*v1.Account, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) InfraGetAccount(ctx context.Context, name string) (*v1.Account, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) InfraListClusters(ctx context.Context, accountName string) ([]*entities.Cluster, error) {

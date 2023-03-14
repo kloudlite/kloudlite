@@ -36,7 +36,9 @@ var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{ev}
 	}),
+
 	mongoDb.NewMongoClientFx[*fm](),
+
 	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
 		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
 	}),

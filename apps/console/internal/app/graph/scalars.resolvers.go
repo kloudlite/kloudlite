@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 
 	v11 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
@@ -55,7 +56,11 @@ func (r *statusResolver) Checks(ctx context.Context, obj *operator.Status) (map[
 
 func (r *statusResolver) DisplayVars(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	var m map[string]any
-	if err := fn.JsonConversion(obj.DisplayVars, &m); err != nil {
+	b, err := obj.DisplayVars.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
 	return m, nil

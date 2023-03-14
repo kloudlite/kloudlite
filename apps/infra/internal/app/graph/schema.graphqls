@@ -1,4 +1,8 @@
 type Query {
+  # accounts
+  # infra_listAccounts: [Account!]
+  # infra_getAccount(name: String!): Account
+
   # clusters
   infra_listClusters(accountName: String!): [Cluster!]
   infra_getCluster(name: String!): Cluster
@@ -20,8 +24,13 @@ type Query {
 }
 
 type Mutation {
+  # # accounts
+  # infra_createAccount(account: AccountIn!): Account
+  # infra_updateAccount(account: AccountIn!): Account
+  # infra_deleteAccount(name: String): Boolean!
+
   # clusters
-  infra_createCluster(cluster: ClusterIn!): Cluster
+  infra_createCluster(accountName string, cluster: ClusterIn!): Cluster
   infra_updateCluster(cluster: ClusterIn!): Cluster
   infra_deleteCluster(name: String!): Boolean!
 

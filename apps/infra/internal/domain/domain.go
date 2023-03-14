@@ -13,7 +13,6 @@ import (
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
-	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,11 +48,7 @@ func (d *domain) CreateCloudProvider(ctx context.Context, cloudProvider entities
 	cloudProvider.EnsureGVK()
 	providerSecret.EnsureGVK()
 
-	if err := d.k8sExtendedClient.ValidateStruct(
-		ctx,
-		providerSecret.Secret,
-		fmt.Sprintf("%s.%s", fn.RegularPlural(providerSecret.Kind), providerSecret.GroupVersionKind().Group),
-	); err != nil {
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &providerSecret.Secret); err != nil {
 		return nil, err
 	}
 
@@ -64,11 +59,7 @@ func (d *domain) CreateCloudProvider(ctx context.Context, cloudProvider entities
 	cloudProvider.Spec.ProviderSecret.Name = providerSecret.Name
 	cloudProvider.Spec.ProviderSecret.Namespace = providerSecret.Namespace
 
-	if err := d.k8sExtendedClient.ValidateStruct(
-		ctx,
-		cloudProvider.CloudProvider,
-		fmt.Sprintf("%s.%s", fn.RegularPlural(cloudProvider.Kind), cloudProvider.GroupVersionKind().Group),
-	); err != nil {
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cloudProvider.CloudProvider); err != nil {
 		return nil, err
 	}
 
@@ -96,11 +87,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 	cloudProvider.EnsureGVK()
 	providerSecret.EnsureGVK()
 
-	if err := d.k8sExtendedClient.ValidateStruct(
-		ctx,
-		cloudProvider.CloudProvider,
-		fmt.Sprintf("%s.%s", fn.RegularPlural(cloudProvider.Kind), cloudProvider.GroupVersionKind().Group),
-	); err != nil {
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cloudProvider.CloudProvider); err != nil {
 		return nil, err
 	}
 
@@ -114,11 +101,7 @@ func (d *domain) UpdateCloudProvider(ctx context.Context, cloudProvider entities
 	}
 
 	if providerSecret != nil {
-		if err := d.k8sExtendedClient.ValidateStruct(
-			ctx,
-			providerSecret.Secret,
-			fmt.Sprintf("%s.%s", fn.RegularPlural(providerSecret.Kind), providerSecret.GroupVersionKind().Group),
-		); err != nil {
+		if err := d.k8sExtendedClient.ValidateStruct(ctx, &providerSecret.Secret); err != nil {
 			return nil, err
 		}
 
@@ -292,7 +275,7 @@ func (d *domain) GetNodePools(ctx context.Context, clusterName string, edgeName 
 
 func (d *domain) CreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
 	cluster.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, cluster.Cluster, fmt.Sprintf("%s.%s", fn.RegularPlural(cluster.Kind), cluster.GroupVersionKind().Group)); err != nil {
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.Cluster); err != nil {
 		return nil, err
 	}
 
@@ -362,7 +345,7 @@ func (d *domain) OnUpdateClusterMessage(ctx context.Context, cluster entities.Cl
 
 func (d *domain) CreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error) {
 	edge.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, edge.Edge, fmt.Sprintf("%s.%s", fn.RegularPlural(edge.Kind), edge.GroupVersionKind().Group)); err != nil {
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &edge.Edge); err != nil {
 		return nil, err
 	}
 
