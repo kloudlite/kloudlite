@@ -23,6 +23,7 @@ type awsConfig struct {
 			InstanceType string `yaml:"instanceType"`
 			NodeId       string `yaml:"nodeId"`
 			VPC          string `yaml:"vpc"`
+			ImageId      string `yaml:"imageId"`
 		} `yaml:"node"`
 	} `yaml:"spec"`
 }
@@ -58,6 +59,7 @@ func (d *domainI) doWithAWS() error {
 		Region:       awsConf.Spec.Node.Region,
 		InstanceType: awsConf.Spec.Node.InstanceType,
 		VPC:          awsConf.Spec.Node.VPC,
+		ImageId:      awsConf.Spec.Node.ImageId,
 	}
 
 	// return nil

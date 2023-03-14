@@ -15,10 +15,10 @@ provider "digitalocean" {
   token = var.do-token
 }
 
-resource "digitalocean_droplet" "byoc-node"  {
+resource "digitalocean_droplet" "byoc-node" {
   image    = var.do-image-id
   name     = var.nodeId
-  region = var.region
+  region   = var.region
   size     = var.size
   ssh_keys = var.ssh_keys
   user_data = templatefile("./init.sh", {
@@ -28,7 +28,7 @@ resource "digitalocean_droplet" "byoc-node"  {
 }
 
 output "node-ip" {
-  value =  digitalocean_droplet.byoc-node.ipv4_address
+  value = digitalocean_droplet.byoc-node.ipv4_address
 }
 
 output "node-name" {
