@@ -1,0 +1,23 @@
+type AccountSpec {
+	ownedDomains: [String]
+}
+
+input AccountSpecIn {
+	ownedDomains: [String]
+}
+
+type Account {
+	status: Status
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	spec: AccountSpec
+}
+
+input AccountIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: AccountSpecIn
+}
+

@@ -10,6 +10,21 @@ import (
 	"kloudlite.io/apps/console/internal/domain/entities"
 )
 
+func (r *mutationResolver) CoreCreateProject(ctx context.Context, project entities.Project) (*entities.Project, error) {
+	return r.Domain.CreateProject(ctx, project)
+}
+
+func (r *mutationResolver) CoreUpdateProject(ctx context.Context, project entities.Project) (*entities.Project, error) {
+	return r.Domain.UpdateProject(ctx, project)
+}
+
+func (r *mutationResolver) CoreDeleteProject(ctx context.Context, name string) (bool, error) {
+	if err := r.Domain.DeleteProject(ctx, name); err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 func (r *mutationResolver) CoreCreateApp(ctx context.Context, app entities.App) (*entities.App, error) {
 	return r.Domain.CreateApp(ctx, app)
 }
@@ -98,6 +113,14 @@ func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, namesp
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *queryResolver) CoreListProjects(ctx context.Context) ([]*entities.Project, error) {
+	return r.Domain.GetProjects(ctx)
+}
+
+func (r *queryResolver) CoreGetProject(ctx context.Context, name string) (*entities.Project, error) {
+	return r.Domain.GetProject(ctx, name)
 }
 
 func (r *queryResolver) CoreListApps(ctx context.Context, namespace string) ([]*entities.App, error) {

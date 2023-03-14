@@ -28,7 +28,6 @@ func (d *domain) CreateApp(ctx context.Context, app entities.App) (*entities.App
 	return nApp, nil
 }
 
-// DeleteApp implements Domain
 func (d *domain) DeleteApp(ctx context.Context, namespace string, name string) error {
 	app, err := d.findApp(ctx, namespace, name)
 	if err != nil {

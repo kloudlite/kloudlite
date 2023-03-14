@@ -65,8 +65,9 @@ models:
     model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
 
   Project:
-    model:
-      - kloudlite.io/apps/console/internal/domain/entities.Project
+    model: kloudlite.io/apps/console/internal/domain/entities.Project
+  ProjectIn:
+    model: kloudlite.io/apps/console/internal/domain/entities.Project
 
   Environment:
     model:

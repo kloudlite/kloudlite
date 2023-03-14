@@ -1,6 +1,10 @@
 package app
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/app/graph"
@@ -31,9 +35,17 @@ var Module = fx.Module("app",
 			cacheClient AuthCacheClient,
 			ev *env.Env,
 		) {
-			schema := generated.NewExecutableSchema(
-				generated.Config{Resolvers: &graph.Resolver{Domain: d}},
-			)
+			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+				if httpServer.GetSession[*common.AuthSession](ctx) == nil {
+					return nil, fiber.ErrUnauthorized
+				}
+
+				return next(ctx)
+
+			}
+
+			schema := generated.NewExecutableSchema(gqlConfig)
 			httpServer.SetupGQLServer(
 				server,
 				schema,

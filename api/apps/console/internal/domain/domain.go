@@ -14,6 +14,7 @@ import (
 )
 
 type domain struct {
+	projectRepo       repos.DbRepo[*entities.Project]
 	appRepo           repos.DbRepo[*entities.App]
 	configRepo        repos.DbRepo[*entities.Config]
 	secretRepo        repos.DbRepo[*entities.Secret]
@@ -44,6 +45,7 @@ var Module = fx.Module("domain",
 		k8sYamlClient *kubectl.YAMLClient,
 		k8sExtendedClient k8s.ExtendedK8sClient,
 
+		projectRepo repos.DbRepo[*entities.Project],
 		appRepo repos.DbRepo[*entities.App],
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
@@ -54,13 +56,13 @@ var Module = fx.Module("domain",
 		return &domain{
 			k8sExtendedClient: k8sExtendedClient,
 			k8sYamlClient:     k8sYamlClient,
-
-			appRepo:    appRepo,
-			configRepo: configRepo,
-			routerRepo: routerRepo,
-			secretRepo: secretRepo,
-			msvcRepo:   msvcRepo,
-			mresRepo:   mresRepo,
+			projectRepo:       projectRepo,
+			appRepo:           appRepo,
+			configRepo:        configRepo,
+			routerRepo:        routerRepo,
+			secretRepo:        secretRepo,
+			msvcRepo:          msvcRepo,
+			mresRepo:          mresRepo,
 		}
 	}),
 )
