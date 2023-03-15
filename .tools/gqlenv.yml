@@ -5,5 +5,6 @@ map:
     # url: https://gateway.dev.kloudlite.io
     # url: ***REMOVED***
     url: http://localhost:3000/query
+    # url: http://auth-api.kl-core.svc.cluster.local/query
     headers:
-      cookie: hotspot-session=ses-o3u44boptp9ysznsqgedz-ahadkn; domain=dev.kloudlite.io; path=/; HttpOnly; secure; SameSite=None
+      cookie: hotspot-session=ses-k-u7iegr4akgpvkj234azgfskbft0; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=sample;

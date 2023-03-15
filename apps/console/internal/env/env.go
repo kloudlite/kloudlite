@@ -13,6 +13,8 @@ type Env struct {
 	AuthRedisUserName string `env:"AUTH_REDIS_USERNAME" required:"true"`
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
+
+	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

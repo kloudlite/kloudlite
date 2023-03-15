@@ -1,0 +1,34 @@
+---
+global:
+  namespace: sample
+  name: s1
+---
+
+label: List Projects
+query: |+
+  query Core_listProjects {
+    core_listProjects {
+      metadata {
+        name
+      }
+    }
+  }
+---
+
+label: Create Project
+query: |+
+  mutation Core_createProject($project: ProjectIn!) {
+    core_createProject(project: $project) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  project:
+    metadata:
+      name: "{{.name}}"
+    spec:
+      accountName: sample
+      targetNamespace: "{{.namespace}}"
+---
