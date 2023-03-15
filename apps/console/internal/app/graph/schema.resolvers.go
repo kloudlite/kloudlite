@@ -6,7 +6,9 @@ package graph
 import (
 	"context"
 
+	"github.com/gofiber/fiber/v2"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
+	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 )
 
@@ -116,7 +118,18 @@ func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, namesp
 }
 
 func (r *queryResolver) CoreListProjects(ctx context.Context) ([]*entities.Project, error) {
-	return r.Domain.GetProjects(ctx)
+	cc, ok := ctx.Value("kloudlite-ctx").(domain.ConsoleContext)
+	if !ok {
+		return nil, fiber.ErrBadRequest
+	}
+	p, err := r.Domain.GetProjects(cc)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		p = make([]*entities.Project, 0)
+	}
+	return p, nil
 }
 
 func (r *queryResolver) CoreGetProject(ctx context.Context, name string) (*entities.Project, error) {
