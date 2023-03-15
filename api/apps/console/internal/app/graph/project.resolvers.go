@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
@@ -25,7 +24,10 @@ func (r *projectResolver) Spec(ctx context.Context, obj *entities.Project) (*mod
 }
 
 func (r *projectInResolver) Spec(ctx context.Context, obj *entities.Project, data *model.ProjectSpecIn) error {
-	panic(fmt.Errorf("not implemented"))
+	if obj == nil {
+		return nil
+	}
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Project returns generated.ProjectResolver implementation.
