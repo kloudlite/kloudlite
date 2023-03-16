@@ -12,18 +12,26 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
-func (r *masterNodeResolver) Status(ctx context.Context, obj *entities.MasterNode) (*model.Status, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	var status model.Status
-	if err := fn.JsonConversion(obj.Status, &status); err != nil {
+func (r *masterNodeResolver) Spec(ctx context.Context, obj *entities.MasterNode) (*model.MasterNodeSpec, error) {
+	var m model.MasterNodeSpec
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
-	return &status, nil
+	return &m, nil
+}
+
+func (r *masterNodeInResolver) Spec(ctx context.Context, obj *entities.MasterNode, data *model.MasterNodeSpecIn) error {
+	if obj == nil {
+		return nil
+	}
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // MasterNode returns generated.MasterNodeResolver implementation.
 func (r *Resolver) MasterNode() generated.MasterNodeResolver { return &masterNodeResolver{r} }
 
+// MasterNodeIn returns generated.MasterNodeInResolver implementation.
+func (r *Resolver) MasterNodeIn() generated.MasterNodeInResolver { return &masterNodeInResolver{r} }
+
 type masterNodeResolver struct{ *Resolver }
+type masterNodeInResolver struct{ *Resolver }

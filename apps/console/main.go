@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
+	"time"
 
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
+	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/apps/console/internal/framework"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 )
@@ -15,24 +20,41 @@ func main() {
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
 
-	fx.New(
-		fx.Provide(
-			func() (*k8s.YAMLClient, error) {
-				if isDev {
-					return k8s.NewYAMLClient(&rest.Config{Host: "127.0.0.1:8080"})
-				}
-				inclusterCfg, err := rest.InClusterConfig()
-				if err != nil {
-					return nil, err
-				}
-				return k8s.NewYAMLClient(inclusterCfg)
-			},
-		),
-		framework.Module,
+	app := fx.New(
+		fx.Provide(env.LoadEnv),
+		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
 				return logging.New(&logging.Options{Name: "console", Dev: isDev})
 			},
 		),
-	).Run()
+		fx.Provide(func() (*rest.Config, error) {
+			if isDev {
+				return &rest.Config{
+					Host: "localhost:8080",
+				}, nil
+			}
+			return k8s.RestInclusterConfig()
+		}),
+		fn.FxErrorHandler(),
+		framework.Module,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := app.Start(ctx); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(
+		`
+██████  ███████  █████  ██████  ██    ██ 
+██   ██ ██      ██   ██ ██   ██  ██  ██  
+██████  █████   ███████ ██   ██   ████   
+██   ██ ██      ██   ██ ██   ██    ██    
+██   ██ ███████ ██   ██ ██████     ██    
+	`,
+	)
+
+	<-app.Done()
 }

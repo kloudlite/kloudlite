@@ -6,47 +6,32 @@ package graph
 import (
 	"context"
 
-	v11 "github.com/kloudlite/cluster-operator/apis/infra/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
+	fn "kloudlite.io/pkg/functions"
 )
 
-func (r *workerNodeResolver) Status(ctx context.Context, obj *entities.WorkerNode) (*model.Status, error) {
-	if obj == nil {
-		return nil, nil
+func (r *workerNodeResolver) Spec(ctx context.Context, obj *entities.WorkerNode) (*model.WorkerNodeSpec, error) {
+	var m model.WorkerNodeSpec
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, err
 	}
-	return toModelStatus(obj.Status)
+	return &m, nil
 }
 
-func (r *workerNodeSpecResolver) NodeIndex(ctx context.Context, obj *v11.WorkerNodeSpec) (*int, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return &obj.Index, nil
-}
-
-func (r *workerNodeSpecInResolver) NodeIndex(ctx context.Context, obj *v11.WorkerNodeSpec, data *int) error {
+func (r *workerNodeInResolver) Spec(ctx context.Context, obj *entities.WorkerNode, data *model.WorkerNodeSpecIn) error {
 	if obj == nil {
 		return nil
 	}
-	obj.Index = *data
-	return nil
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // WorkerNode returns generated.WorkerNodeResolver implementation.
 func (r *Resolver) WorkerNode() generated.WorkerNodeResolver { return &workerNodeResolver{r} }
 
-// WorkerNodeSpec returns generated.WorkerNodeSpecResolver implementation.
-func (r *Resolver) WorkerNodeSpec() generated.WorkerNodeSpecResolver {
-	return &workerNodeSpecResolver{r}
-}
-
-// WorkerNodeSpecIn returns generated.WorkerNodeSpecInResolver implementation.
-func (r *Resolver) WorkerNodeSpecIn() generated.WorkerNodeSpecInResolver {
-	return &workerNodeSpecInResolver{r}
-}
+// WorkerNodeIn returns generated.WorkerNodeInResolver implementation.
+func (r *Resolver) WorkerNodeIn() generated.WorkerNodeInResolver { return &workerNodeInResolver{r} }
 
 type workerNodeResolver struct{ *Resolver }
-type workerNodeSpecResolver struct{ *Resolver }
-type workerNodeSpecInResolver struct{ *Resolver }
+type workerNodeInResolver struct{ *Resolver }

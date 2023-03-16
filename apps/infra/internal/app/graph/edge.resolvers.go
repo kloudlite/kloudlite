@@ -12,18 +12,26 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
-func (r *edgeResolver) Status(ctx context.Context, obj *entities.Edge) (*model.Status, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	var status model.Status
-	if err := fn.JsonConversion(obj.Status, &status); err != nil {
+func (r *edgeResolver) Spec(ctx context.Context, obj *entities.Edge) (*model.EdgeSpec, error) {
+	var m model.EdgeSpec
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
-	return &status, nil
+	return &m, nil
+}
+
+func (r *edgeInResolver) Spec(ctx context.Context, obj *entities.Edge, data *model.EdgeSpecIn) error {
+	if obj == nil {
+		return nil
+	}
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Edge returns generated.EdgeResolver implementation.
 func (r *Resolver) Edge() generated.EdgeResolver { return &edgeResolver{r} }
 
+// EdgeIn returns generated.EdgeInResolver implementation.
+func (r *Resolver) EdgeIn() generated.EdgeInResolver { return &edgeInResolver{r} }
+
 type edgeResolver struct{ *Resolver }
+type edgeInResolver struct{ *Resolver }
