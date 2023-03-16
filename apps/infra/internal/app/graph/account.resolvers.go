@@ -7,11 +7,22 @@ import (
 	"context"
 
 	"github.com/kloudlite/cluster-operator/lib/operator"
-	v1 "github.com/kloudlite/wg-operator/apis/wg/v1"
+	"github.com/kloudlite/wg-operator/apis/wg/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	fn "kloudlite.io/pkg/functions"
 )
+
+func (r *accountResolver) Spec(ctx context.Context, obj *v1.Account) (*model.AccountSpec, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	var m model.AccountSpec
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
 
 func (r *accountResolver) Status(ctx context.Context, obj *v1.Account) (*operator.Status, error) {
 	if obj != nil {
@@ -20,17 +31,6 @@ func (r *accountResolver) Status(ctx context.Context, obj *v1.Account) (*operato
 
 	var m operator.Status
 	if err := fn.JsonConversion(obj.Status, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
-}
-
-func (r *accountResolver) Spec(ctx context.Context, obj *v1.Account) (*model.AccountSpec, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	var m model.AccountSpec
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
 	return &m, nil

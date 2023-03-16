@@ -13,17 +13,6 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
-func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	var m map[string]any
-	if err := fn.JsonConversion(obj.Data, &m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 func (r *secretResolver) Status(ctx context.Context, obj *entities.Secret) (*operator.Status, error) {
 	if obj == nil {
 		return nil, nil
@@ -55,11 +44,15 @@ func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*strin
 	return fn.New(string(obj.Type)), nil
 }
 
-func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
+func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
 	if obj == nil {
-		return nil
+		return nil, nil
 	}
-	return fn.JsonConversion(data, &obj.Data)
+	var m map[string]any
+	if err := fn.JsonConversion(obj.Data, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
@@ -75,6 +68,13 @@ func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data 
 	}
 	obj.Type = corev1.SecretType(*data)
 	return nil
+}
+
+func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
+	if obj == nil {
+		return nil
+	}
+	return fn.JsonConversion(data, &obj.Data)
 }
 
 // Secret returns generated.SecretResolver implementation.
