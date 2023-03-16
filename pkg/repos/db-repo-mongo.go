@@ -346,32 +346,80 @@ func (repo *dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 	return nil
 }
 
+func buildIndexName(curr string, indexKey string, indexValue int) string {
+	if curr == "" {
+		return curr + fmt.Sprintf("%s_%d", indexKey, indexValue)
+	}
+	return curr + "_" + fmt.Sprintf("%s_%d", indexKey, indexValue)
+}
+
 func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) error {
 	if len(indices) == 0 {
 		return nil
 	}
-	var models []mongo.IndexModel
+	// var models []mongo.IndexModel
 	for _, f := range indices {
 		b := bson.D{}
+
+		// This method to create indexes ensure temporary safety, while index modification,
+		// which we need to do when index names clash
+		// READ MORE @ https://www.mongodb.com/docs/manual/tutorial/manage-indexes/#modify-an-index
+		indexName := ""
 		for _, field := range f.Field {
 			switch field.Value {
 			case IndexAsc:
 				b = append(b, bson.E{Key: field.Key, Value: 1})
+				indexName = buildIndexName(indexName, field.Key, 1)
 			case IndexDesc:
 				b = append(b, bson.E{Key: field.Key, Value: -1})
+				indexName = buildIndexName(indexName, field.Key, -1)
 			}
 		}
-		models = append(
-			models, mongo.IndexModel{
-				Keys: b,
-				Options: &options.IndexOptions{
-					Unique: &f.Unique,
-				},
-			},
-		)
+
+		indexModel := mongo.IndexModel{Keys: b, Options: &options.IndexOptions{Unique: &f.Unique, Name: &indexName}}
+
+		_, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, indexModel)
+		if err != nil {
+			dummyKey := fn.CleanerNanoidOrDie(10)
+			b2 := append(b, bson.E{Key: dummyKey, Value: 1})
+			dummyIdxName := buildIndexName(indexName, dummyKey, 1)
+			_, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, mongo.IndexModel{Keys: b2, Options: &options.IndexOptions{Unique: &f.Unique, Name: &dummyIdxName}})
+			if err != nil {
+				return err
+			}
+			_, err = repo.db.Collection(repo.collectionName).Indexes().DropOne(ctx, indexName)
+			if err != nil {
+				return err
+			}
+			if _, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, indexModel); err != nil {
+				return err
+			}
+			if _, err := repo.db.Collection(repo.collectionName).Indexes().DropOne(ctx, dummyIdxName); err != nil {
+				return err
+			}
+		}
+
+		// models = append(
+		// 	models, mongo.IndexModel{
+		// 		Keys: b,
+		// 		Options: &options.IndexOptions{
+		// 			Unique: &f.Unique,
+		// 		},
+		// 	},
+		// )
 	}
-	_, err := repo.db.Collection(repo.collectionName).Indexes().CreateMany(ctx, models)
-	return err
+
+	// for i := range models {
+	// 	_, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, models[i])
+	// 	if err != nil{
+	// 		repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, models[i]., opts ...*options.CreateIndexesOptions)
+	// 	}
+	// 	//body
+	// }
+
+	// _, err := repo.db.Collection(repo.collectionName).Indexes().CreateMany(ctx, models)
+	// return err
+	return nil
 }
 
 func (repo *dbRepo[T]) SilentUpsert(ctx context.Context, filter Filter, data T) (T, error) {
@@ -428,6 +476,10 @@ func (repo *dbRepo[T]) SilentUpdateById(ctx context.Context, id ID, updatedData 
 		updateOpts,
 	)
 	return bsonToStruct[T](r)
+}
+
+func (repo *dbRepo[T]) ErrAlreadyExists(err error) bool {
+	return mongo.IsDuplicateKeyError(err)
 }
 
 type MongoRepoOptions struct {
