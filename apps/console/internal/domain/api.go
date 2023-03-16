@@ -22,65 +22,65 @@ func NewConsoleContext(parent context.Context, accountName string, clusterName s
 
 type Domain interface {
 	// project:query
-	GetProjects(ctx ConsoleContext) ([]*entities.Project, error)
-	GetProject(ctx context.Context, name string) (*entities.Project, error)
+	ListProjects(ctx ConsoleContext) ([]*entities.Project, error)
+	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
 
 	// project:mutation
-	CreateProject(ctx context.Context, project entities.Project) (*entities.Project, error)
-	UpdateProject(ctx context.Context, project entities.Project) (*entities.Project, error)
-	DeleteProject(ctx context.Context, name string) error
+	CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error)
+	UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error)
+	DeleteProject(ctx ConsoleContext, name string) error
 
 	// apps:query
-	GetApps(ctx context.Context, namespace string) ([]*entities.App, error)
-	GetApp(ctx context.Context, namespace, name string) (*entities.App, error)
+	ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error)
+	GetApp(ctx ConsoleContext, namespace, name string) (*entities.App, error)
 
 	// apps:mutation
-	CreateApp(ctx context.Context, app entities.App) (*entities.App, error)
-	UpdateApp(ctx context.Context, app entities.App) (*entities.App, error)
-	DeleteApp(ctx context.Context, namespace, name string) error
+	CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error)
+	UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App, error)
+	DeleteApp(ctx ConsoleContext, namespace, name string) error
 
 	//configs:query
-	GetConfigs(ctx context.Context, namespace string) ([]*entities.Config, error)
-	GetConfig(ctx context.Context, namespace, name string) (*entities.Config, error)
+	ListConfigs(ctx ConsoleContext, namespace string) ([]*entities.Config, error)
+	GetConfig(ctx ConsoleContext, namespace, name string) (*entities.Config, error)
 
 	//configs:mutation
-	CreateConfig(ctx context.Context, config entities.Config) (*entities.Config, error)
-	UpdateConfig(ctx context.Context, config entities.Config) (*entities.Config, error)
-	DeleteConfig(ctx context.Context, namespace, name string) error
+	CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error)
+	UpdateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error)
+	DeleteConfig(ctx ConsoleContext, namespace, name string) error
 
 	//secrets:query
-	GetSecrets(ctx context.Context, namespace string) ([]*entities.Secret, error)
-	GetSecret(ctx context.Context, namespace, name string) (*entities.Secret, error)
+	ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error)
+	GetSecret(ctx ConsoleContext, namespace, name string) (*entities.Secret, error)
 
 	//secrets:mutation
-	CreateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error)
-	UpdateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error)
-	DeleteSecret(ctx context.Context, namespace, name string) error
+	CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error)
+	UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error)
+	DeleteSecret(ctx ConsoleContext, namespace, name string) error
 
 	//routers:query
-	GetRouters(ctx context.Context, namespace string) ([]*entities.Router, error)
-	GetRouter(ctx context.Context, namespace, name string) (*entities.Router, error)
+	ListRouters(ctx ConsoleContext, namespace string) ([]*entities.Router, error)
+	GetRouter(ctx ConsoleContext, namespace, name string) (*entities.Router, error)
 
 	//routers:mutation
-	CreateRouter(ctx context.Context, router entities.Router) (*entities.Router, error)
-	UpdateRouter(ctx context.Context, router entities.Router) (*entities.Router, error)
-	DeleteRouter(ctx context.Context, namespace, name string) error
+	CreateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error)
+	UpdateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error)
+	DeleteRouter(ctx ConsoleContext, namespace, name string) error
 
 	//msvc:query
-	GetManagedServices(ctx context.Context, namespace string) ([]*entities.MSvc, error)
-	GetManagedService(ctx context.Context, namespace, name string) (*entities.MSvc, error)
+	ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error)
+	GetManagedService(ctx ConsoleContext, namespace, name string) (*entities.MSvc, error)
 
 	//msvc:mutation
-	CreateManagedService(ctx context.Context, msvc entities.MSvc) (*entities.MSvc, error)
-	UpdateManagedService(ctx context.Context, msvc entities.MSvc) (*entities.MSvc, error)
-	DeleteManagedService(ctx context.Context, namespace, name string) error
+	CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error)
+	UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error)
+	DeleteManagedService(ctx ConsoleContext, namespace, name string) error
 
 	//mres:query
-	GetManagedResources(ctx context.Context, namespace string) ([]*entities.MRes, error)
-	GetManagedResource(ctx context.Context, namespace, name string) (*entities.MRes, error)
+	ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error)
+	GetManagedResource(ctx ConsoleContext, namespace, name string) (*entities.MRes, error)
 
 	//mres:mutation
-	CreateManagedResource(ctx context.Context, mres entities.MRes) (*entities.MRes, error)
-	UpdateManagedResource(ctx context.Context, mres entities.MRes) (*entities.MRes, error)
-	DeleteManagedResource(ctx context.Context, namespace, name string) error
+	CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error)
+	UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error)
+	DeleteManagedResource(ctx ConsoleContext, namespace, name string) error
 }

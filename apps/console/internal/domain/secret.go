@@ -1,21 +1,25 @@
 package domain
 
 import (
-	"context"
 	"fmt"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) CreateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error) {
+func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
 	secret.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
 		return nil, err
 	}
 
+	secret.AccountName = ctx.accountName
+	secret.ClusterName = ctx.clusterName
 	s, err := d.secretRepo.Create(ctx, &secret)
 	if err != nil {
+		if d.secretRepo.ErrAlreadyExists(err) {
+			return nil, fmt.Errorf("secret with name '%s' already exists", secret.Name)
+		}
 		return nil, err
 	}
 
@@ -26,23 +30,27 @@ func (d *domain) CreateSecret(ctx context.Context, secret entities.Secret) (*ent
 	return s, nil
 }
 
-func (d *domain) DeleteSecret(ctx context.Context, namespace string, name string) error {
+func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string) error {
 	s, err := d.findSecret(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
-	return d.k8sYamlClient.DeleteResource(ctx, &s.Secret)
+	return d.deleteK8sResource(ctx, &s.Secret)
 }
 
-func (d *domain) GetSecret(ctx context.Context, namespace string, name string) (*entities.Secret, error) {
+func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
 	return d.findSecret(ctx, namespace, name)
 }
 
-func (d *domain) GetSecrets(ctx context.Context, namespace string) ([]*entities.Secret, error) {
-	return d.secretRepo.Find(ctx, repos.Query{Filter: repos.Filter{"metadata.namespace": namespace}})
+func (d *domain) ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error) {
+	return d.secretRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"accountName":        ctx.accountName,
+		"clusterName":        ctx.clusterName,
+		"metadata.namespace": namespace,
+	}})
 }
 
-func (d *domain) UpdateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error) {
+func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
 	secret.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
 		return nil, err
@@ -69,8 +77,13 @@ func (d *domain) UpdateSecret(ctx context.Context, secret entities.Secret) (*ent
 	return upSecret, nil
 }
 
-func (d *domain) findSecret(ctx context.Context, namespace string, name string) (*entities.Secret, error) {
-	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
+	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
+		"accountName":        ctx.accountName,
+		"clusterName":        ctx.clusterName,
+		"metadata.namespace": namespace,
+		"metadata.name":      name,
+	})
 	if err != nil {
 		return nil, err
 	}

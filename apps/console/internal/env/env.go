@@ -15,6 +15,10 @@ type Env struct {
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
+
+	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
+	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
+	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

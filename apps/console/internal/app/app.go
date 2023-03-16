@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
@@ -13,8 +14,10 @@ import (
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
+	"kloudlite.io/pkg/agent"
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -43,26 +46,23 @@ var Module = fx.Module("app",
 					return nil, fiber.ErrUnauthorized
 				}
 
-				a := ctx.Value("hello")
-				print(a)
-
-				return next(ctx)
+				m := httpServer.GetHttpCookies(ctx)
+				klAccount := m["kloudlite-account"]
+				if klAccount == "" {
+					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-account")
+				}
+				klCluster := m["kloudlite-cluster"]
+				if klCluster == "" {
+					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-cluster")
+				}
+				cc := domain.NewConsoleContext(ctx, klAccount, klCluster)
+				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
 			httpServer.SetupGQLServer(
 				server,
 				schema,
-				func(c *fiber.Ctx) error {
-					klAccount := c.Cookies("kloudlite-account")
-					klCluster := c.Cookies("kloudlite-cluster")
-
-					ctx := domain.NewConsoleContext(c.UserContext(), klAccount, klCluster)
-					// ctx := context.WithValue(c.UserContext(), "kloudlite-account", klAccount)
-					// ctx = context.WithValue(ctx, "kloudlite-cluster", klCluster)
-					c.SetUserContext(context.WithValue(c.UserContext(), "hello", ctx))
-					return c.Next()
-				},
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
 					"hotspot-session",
@@ -72,5 +72,9 @@ var Module = fx.Module("app",
 			)
 		},
 	),
+	redpanda.NewProducerFx[redpanda.Client](),
+	fx.Provide(func(p redpanda.Producer) agent.Sender {
+		return agent.NewSender(p)
+	}),
 	domain.Module,
 )

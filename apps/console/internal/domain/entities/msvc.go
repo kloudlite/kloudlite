@@ -8,6 +8,8 @@ import (
 type MSvc struct {
 	repos.BaseEntity      `json:",inline"`
 	crdsv1.ManagedService `json:",inline"`
+	AccountName string `json:"accountName"`
+	ClusterName           string `json:"clusterName"`
 }
 
 var MsvcIndexes = []repos.IndexField{
@@ -21,7 +23,13 @@ var MsvcIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
 			{Key: "metadata.namespace", Value: repos.IndexAsc},
+			{Key: "clusterName", Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountName", Value: repos.IndexAsc},
+		},
 	},
 }

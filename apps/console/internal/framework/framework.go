@@ -9,11 +9,24 @@ import (
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/k8s"
+	"kloudlite.io/pkg/redpanda"
 	mongoDb "kloudlite.io/pkg/repos"
 )
 
 type fm struct {
 	ev *env.Env
+}
+
+func (fm *fm) GetBrokers() (brokers string) {
+	return fm.ev.KafkaBrokers
+}
+
+func (fm *fm) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return &redpanda.KafkaSASLAuth{
+		SASLMechanism: redpanda.ScramSHA256,
+		User:          fm.ev.KafkaUsername,
+		Password:      fm.ev.KafkaPassword,
+	}
 }
 
 func (fm *fm) GetMongoConfig() (url string, dbName string) {
@@ -51,6 +64,8 @@ var Module = fx.Module("framework",
 	fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
 		return k8s.NewExtendedK8sClient(restCfg)
 	}),
+
+	redpanda.NewClientFx[*fm](),
 
 	app.Module,
 	httpServer.NewHttpServerFx[*fm](),
