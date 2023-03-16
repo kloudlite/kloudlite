@@ -6,21 +6,21 @@ input MasterNodeIn {
 }
 
 type MasterNodeSpec {
-	accountName: String!
-	clusterName: String!
 	config: String!
 	provider: String!
 	providerName: String!
 	region: String!
+	accountName: String!
+	clusterName: String!
 }
 
 input MasterNodeSpecIn {
-	accountName: String!
-	clusterName: String!
 	config: String!
 	provider: String!
 	providerName: String!
 	region: String!
+	accountName: String!
+	clusterName: String!
 }
 
 type MasterNode {

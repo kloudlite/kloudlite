@@ -9,17 +9,17 @@ input CloudProviderSpecProviderSecretIn {
 }
 
 type CloudProviderSpec {
-	accountName: String!
 	display_name: String!
 	provider: String!
 	providerSecret: CloudProviderSpecProviderSecret!
+	accountName: String!
 }
 
 input CloudProviderSpecIn {
-	accountName: String!
 	display_name: String!
 	provider: String!
 	providerSecret: CloudProviderSpecProviderSecretIn!
+	accountName: String!
 }
 
 type CloudProvider {

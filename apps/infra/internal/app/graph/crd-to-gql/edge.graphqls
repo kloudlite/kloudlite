@@ -1,47 +1,47 @@
 type EdgeSpecPools {
-	name: String!
 	config: String!
 	max: Int
 	min: Int
+	name: String!
 }
 
 input EdgeSpecPoolsIn {
-	name: String!
 	config: String!
 	max: Int
 	min: Int
+	name: String!
 }
 
 type EdgeSpec {
+	providerName: String!
+	region: String!
 	accountName: String!
 	clusterName: String!
 	pools: [EdgeSpecPools]
 	provider: String
-	providerName: String!
-	region: String!
 }
 
 input EdgeSpecIn {
+	providerName: String!
+	region: String!
 	accountName: String!
 	clusterName: String!
 	pools: [EdgeSpecPoolsIn]
 	provider: String
-	providerName: String!
-	region: String!
 }
 
 type Edge {
-	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	spec: EdgeSpec
 	status: Status
+	apiVersion: String
 }
 
 input EdgeIn {
-	apiVersion: String
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: EdgeSpecIn
+	apiVersion: String
 }
 

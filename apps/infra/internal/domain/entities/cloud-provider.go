@@ -1,9 +1,6 @@
 package entities
 
 import (
-	"encoding/json"
-	"io"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
@@ -14,36 +11,8 @@ import (
 type Secret struct {
 	repos.BaseEntity `json:",inline"`
 	crdsv1.Secret    `json:",inline"`
-}
-
-//goland:noinspection ALL
-func (s *Secret) UnmarshalGQL(v interface{}) error {
-	switch t := v.(type) {
-	case map[string]any:
-		b, err := json.Marshal(t)
-		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(b, s); err != nil {
-			return err
-		}
-	case string:
-		if err := json.Unmarshal([]byte(t), s); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-//goland:noinspection ALL
-func (s Secret) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(s)
-	if err != nil {
-		w.Write([]byte("{}"))
-	}
-	w.Write(b)
+	AccountName      string `json:"accountName"`
+	ClusterName      string `json:"clusterName"`
 }
 
 var SecretIndices = []repos.IndexField{
@@ -61,45 +30,26 @@ var SecretIndices = []repos.IndexField{
 		},
 		Unique: true,
 	},
+
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountName", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "clusterName", Value: repos.IndexAsc},
+		},
+	},
 }
 
 type CloudProvider struct {
 	repos.BaseEntity      `bson:",inline" json:",inline"`
 	infraV1.CloudProvider `bson:",inline" json:",inline"`
+	AccountName           string `json:"accountName"`
+	ClusterName           string `json:"clusterName"`
 }
 
-//	func (cp *CloudProvider) UnmarshalGQL(v interface{}) error {
-//		switch t := v.(type) {
-//		case map[string]any:
-//			b, err := json.Marshal(t)
-//			if err != nil {
-//				return err
-//			}
-//
-//			if err := json.Unmarshal(b, cp); err != nil {
-//				return err
-//			}
-//
-//		case string:
-//			if err := json.Unmarshal([]byte(t), cp); err != nil {
-//				return err
-//			}
-//		}
-//
-//		return nil
-//	}
-//
-// //goland:noinspection ALL
-//
-//	func (cp CloudProvider) MarshalGQL(w io.Writer) {
-//		b, err := json.Marshal(cp)
-//		if err != nil {
-//			w.Write([]byte(""))
-//		}
-//		w.Write(b)
-//	}
-//
-//goland:noinspection ALL
 var CloudProviderIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
@@ -113,5 +63,15 @@ var CloudProviderIndices = []repos.IndexField{
 			{Key: "spec.accountId", Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountName", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "clusterName", Value: repos.IndexAsc},
+		},
 	},
 }

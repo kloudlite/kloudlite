@@ -147,6 +147,7 @@ models:
   Patch:
     model:
       - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+
   PatchIn:
     model:
       - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
