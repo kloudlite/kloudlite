@@ -102,9 +102,9 @@ func NewProducerFx[T Client]() fx.Option {
 			func(lf fx.Lifecycle, producer Producer) {
 				lf.Append(
 					fx.Hook{
-						// OnStart: func(ctx context.Context) error {
-						// 	return producer.Ping(ctx)
-						// },
+						OnStart: func(ctx context.Context) error {
+							return producer.Ping(ctx)
+						},
 						OnStop: func(context.Context) error {
 							producer.Close()
 							return nil
