@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -10,14 +9,19 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) CreateApp(ctx context.Context, app entities.App) (*entities.App, error) {
+func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
 	app.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
 		return nil, err
 	}
 
+	app.AccountName = ctx.accountName
+	app.ClusterName = ctx.clusterName
 	nApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
+		if d.appRepo.ErrAlreadyExists(err) {
+			return nil, fmt.Errorf("app with name '%s' already exists", app.Name)
+		}
 		return nil, err
 	}
 
@@ -28,7 +32,7 @@ func (d *domain) CreateApp(ctx context.Context, app entities.App) (*entities.App
 	return nApp, nil
 }
 
-func (d *domain) DeleteApp(ctx context.Context, namespace string, name string) error {
+func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) error {
 	app, err := d.findApp(ctx, namespace, name)
 	if err != nil {
 		return err
@@ -43,10 +47,10 @@ func (d *domain) DeleteApp(ctx context.Context, namespace string, name string) e
 		return err
 	}
 
-	return d.k8sYamlClient.DeleteResource(ctx, &app.App)
+	return d.deleteK8sResource(ctx, &app.App)
 }
 
-func (d *domain) UpdateApp(ctx context.Context, app entities.App) (*entities.App, error) {
+func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
 	app.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
 		return nil, err
@@ -69,19 +73,33 @@ func (d *domain) UpdateApp(ctx context.Context, app entities.App) (*entities.App
 	if err != nil {
 		return nil, err
 	}
+
+	if err := d.applyK8sResource(ctx, &upApp.App); err != nil {
+		return nil, err
+	}
+
 	return upApp, nil
 }
 
-func (d *domain) GetApps(ctx context.Context, namespace string) ([]*entities.App, error) {
-	return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{"metadata.namespace": namespace}})
+func (d *domain) ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error) {
+	return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"accountName":        ctx.accountName,
+		"clusterName":        ctx.clusterName,
+		"metadata.namespace": namespace,
+	}})
 }
 
-func (d *domain) GetApp(ctx context.Context, namespace string, name string) (*entities.App, error) {
+func (d *domain) GetApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
 	return d.findApp(ctx, namespace, name)
 }
 
-func (d *domain) findApp(ctx context.Context, namespace string, name string) (*entities.App, error) {
-	app, err := d.appRepo.FindOne(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
+	app, err := d.appRepo.FindOne(ctx, repos.Filter{
+		"accountName":        ctx.accountName,
+		"clusterName":        ctx.clusterName,
+		"metadata.namespace": namespace,
+		"metadata.name":      name,
+	})
 	if err != nil {
 		return nil, err
 	}
