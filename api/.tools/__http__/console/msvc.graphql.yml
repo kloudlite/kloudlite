@@ -1,0 +1,98 @@
+---
+global:
+  namespace: kl-core
+  name: s1
+---
+
+label: List Managed Services
+query: |+
+  query Core_listRouters($namespace: String!) {
+    core_listRouters(namespace: $namespace) {
+      metadata {
+        name
+        namespace
+      }
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  namespace: "{{.namespace}}"
+---
+
+label: Create Msvc
+query: |+
+  mutation Core_createManagedService($msvc: ManagedServiceIn!) {
+    core_createManagedService(msvc: $msvc) {
+      spec {
+        region
+      }
+    }
+  }
+variables:
+  msvc:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      inputs:
+        k1: v1
+      msvcKind:
+        apiVersion: "asdfasdf"
+        kind: StandaloneDatabase
+      region: r1
+---
+
+label: Get ManagedService
+query: |+
+  query Core_getManagedService($namespace: String!, $name: String!) {
+    core_getManagedService(namespace: $namespace, name: $name) {
+      metadata {
+        name
+        deletionTimestamp
+        namespace
+      }
+      spec {
+        inputs
+      }
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.namespace}}'
+
+---
+
+label: Update ManagedService
+query: |+
+  mutation Core_updateManagedService($msvc: ManagedServiceIn!) {
+    core_updateManagedService(msvc: $msvc) {
+      spec {
+        inputs
+      }
+    }
+  }
+variables:
+  msvc:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      msvcKind:
+        apiVersion: "asdfasdf"
+        kind: StandaloneDatabase
+      region: r1
+      inputs:
+        k2: v2
+---
+
+label: Delete ManagedService
+query: |+
+  mutation Core_deleteManagedService($namespace: String!, $name: String!) {
+    core_deleteManagedService(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+---

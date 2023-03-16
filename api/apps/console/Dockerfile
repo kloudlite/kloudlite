@@ -16,10 +16,7 @@ COPY --chown=1001 ./  ./
 RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-#FROM gcr.io/distroless/static-debian11
-FROM alpine
-RUN apk add curl
-RUN cd /usr/local/bin && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl
-USER 1001
-COPY --from=base --chown=1001 /tmp/bin/console ./console
-CMD ["./console"]
+FROM gcr.io/distroless/static-debian11
+ARG APP
+COPY --from=base --chown=1001 /tmp/bin/$APP /console-api
+CMD ["/console"]

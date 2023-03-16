@@ -1,0 +1,90 @@
+---
+global:
+  namespace: kl-core
+  name: s1
+---
+
+label: List Routers
+query: |+
+  query Core_listRouters($namespace: String!) {
+    core_listRouters(namespace: $namespace) {
+      metadata {
+        name
+        namespace
+      }
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  namespace: "{{.namespace}}"
+---
+
+label: Create Router
+query: |+
+  mutation Core_createRouter($router: RouterIn!) {
+    core_createRouter(router: $router) {
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  router:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      domains:
+        - sample.example.com
+---
+
+label: Get Router
+query: |+
+  query Core_getRouter($namespace: String!, $name: String!) {
+    core_getRouter(namespace: $namespace, name: $name) {
+      metadata {
+        name
+        deletionTimestamp
+        namespace
+      }
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.namespace}}'
+
+---
+
+label: Update Router
+query: |+
+  mutation Core_updateRouter($router: RouterIn!) {
+    core_updateRouter(router: $router) {
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  router:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      domains:
+        - example.sample.com
+---
+
+label: Delete Router
+query: |+
+  mutation Core_deleteRouter($namespace: String!, $name: String!) {
+    core_deleteRouter(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+---

@@ -1,6 +1,10 @@
 package app
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -12,6 +16,7 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
+	"kloudlite.io/pkg/agent"
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/redpanda"
@@ -51,8 +56,8 @@ var Module = fx.Module(
 
 	redpanda.NewProducerFx[redpanda.Client](),
 
-	fx.Provide(func(producer redpanda.Producer) domain.AgentMessenger {
-		return domain.NewAgentMessenger(producer)
+	fx.Provide(func(p redpanda.Producer) agent.Sender {
+		return agent.NewSender(p)
 	}),
 
 	domain.Module,
@@ -72,9 +77,29 @@ var Module = fx.Module(
 			cacheClient AuthCacheClient,
 			env *env.Env,
 		) {
-			schema := generated.NewExecutableSchema(
-				generated.Config{Resolvers: &graph.Resolver{Domain: d}},
-			)
+			config := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+			config.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+				sess := httpServer.GetSession[*common.AuthSession](ctx)
+				if sess == nil {
+					return nil, fiber.ErrUnauthorized
+				}
+				return next(ctx)
+			}
+
+			config.Directives.HasAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+				m := httpServer.GetHttpCookies(ctx)
+				klAccount := m[env.AccountCookieName]
+				if klAccount == "" {
+					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-cluster")
+				}
+				cc := domain.InfraContext{
+					Context:     ctx,
+					AccountName: klAccount,
+				}
+				return next(context.WithValue(ctx, "infra-ctx", cc))
+			}
+
+			schema := generated.NewExecutableSchema(config)
 			httpServer.SetupGQLServer(
 				server,
 				schema,
@@ -82,7 +107,7 @@ var Module = fx.Module(
 					cacheClient,
 					"hotspot-session",
 					env.CookieDomain,
-					constants.CacheSessionPrefix,
+					env.AuthRedisPrefix+":"+constants.CacheSessionPrefix,
 				),
 			)
 		},

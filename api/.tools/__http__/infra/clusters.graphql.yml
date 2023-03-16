@@ -1,8 +1,11 @@
 ---
 global:
-  accountName: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
-  clusterName: "sample-cluster-1"
-  cloudProviderName: sample-cp5
+  accountName: kloudlite-dev
+  providerName: sample 
+  providerNamespace: s1
+  providerSecretName: provider-sample
+
+  clusterName: sample
 ---
 
 label: Create Cluster
@@ -26,7 +29,7 @@ variables:
       name: "{{.clusterName}}"
     spec:
       accountName: "{{.accountName}}"
-      providerName: "{{.cloudProviderName}}"
+      providerName: "{{.providerName}}"
       provider: aws
       count: 1
       region: ap-south-1
@@ -35,8 +38,8 @@ variables:
 
 label: List Clusters
 query: |+
-  query Query($accountName: String!) {
-    infra_listClusters(accountName: $accountName) {
+  query Query() {
+    infra_listClusters {
       metadata {
         name
       }
@@ -45,18 +48,18 @@ query: |+
       }
     }
   }
-variables:
-  accountName: "{{.accountName}}"
-
 ---
 label: Get Cluster
 query: |+
   query Query($name: String!) {
     infra_getCluster(name: $name) {
       kind
-      # metadata {
-      #   name
-      # }
+      metadata {
+        name
+      }
+      spec {
+        provider
+      }
     }
   }
 variables:
@@ -70,13 +73,11 @@ query: |+
   }
 variables:
   cluster:
-    apiVersion: cmgr.kloudlite.io/v1
-    kind: Cluster
     metadata:
       name: "{{.clusterName}}"
     spec:
       accountName: "{{.accountName}}"
-      providerName: "{{.cloudProviderName}}"
+      providerName: "{{.providerName}}"
       provider: aws
       count: 2
       region: ap-south-1

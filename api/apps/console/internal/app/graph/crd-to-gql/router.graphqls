@@ -1,0 +1,103 @@
+input RouterSpecBasicAuthIn {
+	enabled: Boolean!
+	secretName: String
+	username: String
+}
+
+type RouterSpecCors {
+	enabled: Boolean
+	origins: [String]
+	allowCredentials: Boolean
+}
+
+type RouterSpecRateLimit {
+	enabled: Boolean
+	rpm: Int
+	rps: Int
+	connections: Int
+}
+
+input RouterSpecIn {
+	routes: [RouterSpecRoutesIn]
+	basicAuth: RouterSpecBasicAuthIn
+	cors: RouterSpecCorsIn
+	domains: [String]!
+	https: RouterSpecHttpsIn
+	maxBodySizeInMB: Int
+	rateLimit: RouterSpecRateLimitIn
+	region: String
+}
+
+type Router {
+	metadata: Metadata! @goField(name: "objectMeta")
+	overrides: Overrides
+	spec: RouterSpec
+	status: Status
+	apiVersion: String
+	kind: String
+}
+
+type RouterSpec {
+	routes: [RouterSpecRoutes]
+	basicAuth: RouterSpecBasicAuth
+	cors: RouterSpecCors
+	domains: [String]!
+	https: RouterSpecHttps
+	maxBodySizeInMB: Int
+	rateLimit: RouterSpecRateLimit
+	region: String
+}
+
+input RouterIn {
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	overrides: OverridesIn
+	spec: RouterSpecIn
+	apiVersion: String
+	kind: String
+}
+
+type RouterSpecRoutes {
+	path: String!
+	port: Int!
+	rewrite: Boolean
+	app: String
+	lambda: String
+}
+
+input RouterSpecCorsIn {
+	enabled: Boolean
+	origins: [String]
+	allowCredentials: Boolean
+}
+
+input RouterSpecHttpsIn {
+	enabled: Boolean!
+	forceRedirect: Boolean
+}
+
+input RouterSpecRateLimitIn {
+	enabled: Boolean
+	rpm: Int
+	rps: Int
+	connections: Int
+}
+
+input RouterSpecRoutesIn {
+	path: String!
+	port: Int!
+	rewrite: Boolean
+	app: String
+	lambda: String
+}
+
+type RouterSpecBasicAuth {
+	enabled: Boolean!
+	secretName: String
+	username: String
+}
+
+type RouterSpecHttps {
+	enabled: Boolean!
+	forceRedirect: Boolean
+}
+

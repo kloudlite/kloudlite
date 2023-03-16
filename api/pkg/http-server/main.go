@@ -57,12 +57,9 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 	return fx.Module(
 		"http-server",
 		fx.Provide(
-			func() *fiber.App {
-				return fiber.New()
-			},
-		),
-		fx.Invoke(
-			func(lf fx.Lifecycle, env T, logger logging.Logger, app *fiber.App) {
+			func(serverOpts T) *fiber.App {
+				app := fiber.New()
+
 				app.Use(
 					l.New(
 						l.Config{
@@ -72,21 +69,26 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 						},
 					),
 				)
-				if env.GetHttpCors() != "" {
-					app.Use(
-						cors.New(
-							cors.Config{
-								AllowOrigins:     env.GetHttpCors(),
-								AllowCredentials: true,
-								AllowMethods: strings.Join(
-									[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
-									",",
-								),
-							},
-						),
-					)
-				}
 
+				app.Use(
+					cors.New(
+						cors.Config{
+							AllowOrigins:     serverOpts.GetHttpCors(),
+							AllowCredentials: true,
+							AllowMethods: strings.Join(
+								[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+								",",
+							),
+						},
+					),
+				)
+
+				return app
+			},
+		),
+
+		fx.Invoke(
+			func(lf fx.Lifecycle, env T, logger logging.Logger, app *fiber.App) {
 				lf.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
