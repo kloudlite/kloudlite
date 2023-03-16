@@ -70,11 +70,6 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 					),
 				)
 
-				app.Use(func(c *fiber.Ctx) error {
-					fmt.Println("hi hello")
-					return c.Next()
-				})
-
 				app.Use(
 					cors.New(
 						cors.Config{
