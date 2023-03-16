@@ -11,16 +11,16 @@ query: |
     }
   }
 variables:
-  name: "sample"
+  name: "kl-dev"
   billing:
-    stripePaymentMethodId: sample
-    cardholderName: sample
+    stripePaymentMethodId: kloudlite-dev
+    cardholderName: kloudlite-dev
     address:
-      line1: apna gaaon
+      line1: kloudlite-dev
 
 ---
 label: get account
-query: |
+query: |+
   query Query($accountId: ID!) {
     finance_account(accountId: $accountId) {
       id
@@ -28,4 +28,5 @@ query: |
     }
   }
 variables:
-  accountId: {{accountId}}
+  accountId: "{{.accountId}}"
+---
