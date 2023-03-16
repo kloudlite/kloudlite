@@ -1,0 +1,21 @@
+type Config {
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	overrides: Overrides
+	projectName: String
+	status: Status
+	apiVersion: String
+	data: Map
+	enabled: Boolean
+}
+
+input ConfigIn {
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	overrides: OverridesIn
+	projectName: String
+	apiVersion: String
+	data: Map
+	enabled: Boolean
+}
+

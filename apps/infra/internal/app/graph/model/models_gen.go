@@ -2,14 +2,158 @@
 
 package model
 
+type AccountSpec struct {
+	OwnedDomains []*string `json:"ownedDomains"`
+}
+
+type AccountSpecIn struct {
+	OwnedDomains []*string `json:"ownedDomains"`
+}
+
 type Check struct {
 	Status     *bool   `json:"status"`
 	Message    *string `json:"message"`
 	Generation *int    `json:"generation"`
 }
 
-type Status struct {
-	IsReady     bool                   `json:"isReady"`
-	Checks      map[string]interface{} `json:"checks"`
-	DisplayVars map[string]interface{} `json:"displayVars"`
+type CloudProviderSpec struct {
+	DisplayName    string                           `json:"display_name"`
+	Provider       string                           `json:"provider"`
+	ProviderSecret *CloudProviderSpecProviderSecret `json:"providerSecret"`
+	AccountName    string                           `json:"accountName"`
+}
+
+type CloudProviderSpecIn struct {
+	DisplayName    string                             `json:"display_name"`
+	Provider       string                             `json:"provider"`
+	ProviderSecret *CloudProviderSpecProviderSecretIn `json:"providerSecret"`
+	AccountName    string                             `json:"accountName"`
+}
+
+type CloudProviderSpecProviderSecret struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type CloudProviderSpecProviderSecretIn struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type ClusterSpec struct {
+	Config       string `json:"config"`
+	Count        int    `json:"count"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+}
+
+type ClusterSpecIn struct {
+	Config       string `json:"config"`
+	Count        int    `json:"count"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+}
+
+type EdgeSpec struct {
+	ProviderName string           `json:"providerName"`
+	Region       string           `json:"region"`
+	AccountName  string           `json:"accountName"`
+	ClusterName  string           `json:"clusterName"`
+	Pools        []*EdgeSpecPools `json:"pools"`
+	Provider     *string          `json:"provider"`
+}
+
+type EdgeSpecIn struct {
+	ProviderName string             `json:"providerName"`
+	Region       string             `json:"region"`
+	AccountName  string             `json:"accountName"`
+	ClusterName  string             `json:"clusterName"`
+	Pools        []*EdgeSpecPoolsIn `json:"pools"`
+	Provider     *string            `json:"provider"`
+}
+
+type EdgeSpecPools struct {
+	Config string `json:"config"`
+	Max    *int   `json:"max"`
+	Min    *int   `json:"min"`
+	Name   string `json:"name"`
+}
+
+type EdgeSpecPoolsIn struct {
+	Config string `json:"config"`
+	Max    *int   `json:"max"`
+	Min    *int   `json:"min"`
+	Name   string `json:"name"`
+}
+
+type MasterNodeSpec struct {
+	Config       string `json:"config"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
+}
+
+type MasterNodeSpecIn struct {
+	Config       string `json:"config"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
+}
+
+type NodePoolSpec struct {
+	AccountName  string `json:"accountName"`
+	Config       string `json:"config"`
+	EdgeName     string `json:"edgeName"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
+	ClusterName  string `json:"clusterName"`
+	Max          *int   `json:"max"`
+	Min          *int   `json:"min"`
+	Region       string `json:"region"`
+}
+
+type NodePoolSpecIn struct {
+	AccountName  string `json:"accountName"`
+	Config       string `json:"config"`
+	EdgeName     string `json:"edgeName"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
+	ClusterName  string `json:"clusterName"`
+	Max          *int   `json:"max"`
+	Min          *int   `json:"min"`
+	Region       string `json:"region"`
+}
+
+type WorkerNodeSpec struct {
+	Provider     string `json:"provider"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
+	Config       string `json:"config"`
+	EdgeName     string `json:"edgeName"`
+	Pool         string `json:"pool"`
+	NodeIndex    *int   `json:"nodeIndex"`
+	ProviderName string `json:"providerName"`
+	Stateful     *bool  `json:"stateful"`
+}
+
+type WorkerNodeSpecIn struct {
+	Provider     string `json:"provider"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
+	Config       string `json:"config"`
+	EdgeName     string `json:"edgeName"`
+	Pool         string `json:"pool"`
+	NodeIndex    *int   `json:"nodeIndex"`
+	ProviderName string `json:"providerName"`
+	Stateful     *bool  `json:"stateful"`
 }

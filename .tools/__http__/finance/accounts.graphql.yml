@@ -1,0 +1,32 @@
+---
+global:
+  accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
+---
+label: Create Account
+query: |
+  mutation Finance_createAccount($name: String!, $billing: BillingInput!) {
+    finance_createAccount(name: $name, billing: $billing) {
+      id
+      name
+    }
+  }
+variables:
+  name: "kl-dev"
+  billing:
+    stripePaymentMethodId: kloudlite-dev
+    cardholderName: kloudlite-dev
+    address:
+      line1: kloudlite-dev
+
+---
+label: get account
+query: |+
+  query Query($accountId: ID!) {
+    finance_account(accountId: $accountId) {
+      id
+      name
+    }
+  }
+variables:
+  accountId: "{{.accountId}}"
+---

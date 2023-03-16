@@ -29,7 +29,6 @@ func mongoError(err error, descp string) error {
 }
 
 func GetUser(ctx context.Context) (string, error) {
-
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return "", errors.New("Unauthorized")

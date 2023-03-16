@@ -56,6 +56,8 @@ type DbRepo[T Entity] interface {
 	IndexFields(ctx context.Context, indices []IndexField) error
 	// Delete(ctx context.Context, query Query) ([]ID, error)
 	DeleteOne(ctx context.Context, filter Filter) error
+
+	ErrAlreadyExists(err error) bool
 }
 
 type indexOrder bool

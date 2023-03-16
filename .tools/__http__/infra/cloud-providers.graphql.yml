@@ -1,7 +1,9 @@
 ---
 global:
-  # accountId: acc-k-hw-z1woxao88zzw8wjwl5mu2bih
-  accountName: xyz-company
+  accountName: kloudlite-dev
+  name: sample 
+  namespace: s1
+  providerSecretName: provider-sample
 ---
 label: Create Cloud Provider
 query: |+
@@ -18,48 +20,41 @@ query: |+
   }
 variables:
   providerSecret:
-    # apiVersion: crds.kloudlite.io/v1
-    # kind: Secret
-    metadata:
-      name: provider-sample-cp14
-      namespace: kl-core
+    metadata: &psecret
+      name: "{{.providerSecretName}}"
+      namespace: "{{.namespace}}"
     stringData:
       accessKey: "key1"
       accessSecret: secret1
   cloudProvider:
-    # apiVersion: infra.kloudlite.io/v1
-    # kind: CloudProvider
     metadata:
-      name: sample-cp8
+      name: '{{.name}}'
     spec:
+      display_name: "{{.name}}"
+      provider: 'aws' 
       accountName: "{{.accountName}}"
-      providerSecret:
-        name: sample-cp
-        namespace: kl-core
+      providerSecret: *psecret
 ---
 
 label: List Providers
 query: |+
-  query Query($accountName: String!) {
-    infra_listCloudProviders(accountName: $accountName) {
+  query Query() {
+    infra_listCloudProviders {
       metadata {
         name
-        namespace
       }
       spec {
         accountName
+        provider
       }
     }
   }
-variables:
-  accountName: "{{.accountName}}"
-
 ---
 
 label: Get Provider
 query: |+
-  query Query($accountName: String!, $name: String!) {
-    infra_getCloudProvider(accountName: $accountName, name: $name) {
+  query Query($name: String!) {
+    infra_getCloudProvider(name: $name) {
       metadata{
         name
       }
@@ -69,17 +64,15 @@ query: |+
     }
   }
 variables:
-  accountName: "{{.accountName}}"
-  name: sample-cp5
+  name: "{{.name}}"
 
 ---
 
 label: Delete Provider
 query: |+
-  mutation Query($accountName: String!, $name: String!) {
-    infra_deleteCloudProvider(accountName: $accountName, name: $name)
+  mutation Query($name: String!) {
+    infra_deleteCloudProvider(name: $name)
   }
 variables:
-  accountName: "{{.accountName}}"
-  name: sample-cp5
+  name: "{{.name}}"
 ---

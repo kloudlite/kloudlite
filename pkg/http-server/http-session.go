@@ -20,6 +20,13 @@ func NewSessionMiddleware[T repos.Entity](
 ) fiber.Handler {
 	repo := cache.NewRepo[T](cacheClient)
 	return func(ctx *fiber.Ctx) error {
+		cookies := map[string]string{}
+		ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
+			cookies[string(key)] = string(value)
+		})
+
+		ctx.SetUserContext(context.WithValue(ctx.UserContext(), "http-cookies", cookies))
+
 		cookieValue := ctx.Cookies(cookieName)
 
 		if cookieValue != "" || false {
@@ -73,6 +80,20 @@ func NewSessionMiddleware[T repos.Entity](
 		)
 		return ctx.Next()
 	}
+}
+
+func GetHttpCookies(ctx context.Context) map[string]string {
+	v := ctx.Value(userContextKey)
+	if v == nil {
+		return nil
+	}
+
+	if userCtx, ok := v.(context.Context); ok {
+		if cookies, ok := userCtx.Value("http-cookies").(map[string]string); ok {
+			return cookies
+		}
+	}
+	return nil
 }
 
 func GetSession[T repos.Entity](ctx context.Context) T {

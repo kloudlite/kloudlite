@@ -5,35 +5,42 @@ import (
 	"kloudlite.io/apps/infra/internal/domain/entities"
 )
 
+type InfraContext struct {
+	context.Context
+	AccountName string
+}
+
 type Domain interface {
-	CreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
-	ListClusters(ctx context.Context, accountName string) ([]*entities.Cluster, error)
-	GetCluster(ctx context.Context, name string) (*entities.Cluster, error)
-	UpdateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
-	DeleteCluster(ctx context.Context, name string) error
-	OnDeleteClusterMessage(ctx context.Context, cluster entities.Cluster) error
-	OnUpdateClusterMessage(ctx context.Context, cluster entities.Cluster) error
+	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
+	ListClusters(ctx InfraContext) ([]*entities.Cluster, error)
+	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
+	UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
+	DeleteCluster(ctx InfraContext, name string) error
+	OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error
+	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error
 
-	CreateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error)
-	ListCloudProviders(ctx context.Context, accountName string) ([]*entities.CloudProvider, error)
-	GetCloudProvider(ctx context.Context, accountName string, name string) (*entities.CloudProvider, error)
-	UpdateCloudProvider(ctx context.Context, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error)
-	DeleteCloudProvider(ctx context.Context, accountName string, name string) error
-	OnDeleteCloudProviderMessage(ctx context.Context, cloudProvider entities.CloudProvider) error
-	OnUpdateCloudProviderMessage(ctx context.Context, cloudProvider entities.CloudProvider) error
+	GetProviderSecret(ctx InfraContext, name string) (*entities.Secret, error)
 
-	CreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
-	ListEdges(ctx context.Context, clusterName string, providerName *string) ([]*entities.Edge, error)
-	GetEdge(ctx context.Context, clusterName string, name string) (*entities.Edge, error)
-	UpdateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error)
-	DeleteEdge(ctx context.Context, clusterName string, name string) error
-	OnDeleteEdgeMessage(ctx context.Context, edge entities.Edge) error
-	OnUpdateEdgeMessage(ctx context.Context, edge entities.Edge) error
+	CreateCloudProvider(ctx InfraContext, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error)
+	ListCloudProviders(ctx InfraContext) ([]*entities.CloudProvider, error)
+	GetCloudProvider(ctx InfraContext, name string) (*entities.CloudProvider, error)
+	UpdateCloudProvider(ctx InfraContext, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error)
+	DeleteCloudProvider(ctx InfraContext, name string) error
+	OnDeleteCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error
+	OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error
 
-	GetNodePools(ctx context.Context, clusterName string, edgeName string) ([]*entities.NodePool, error)
-	GetMasterNodes(ctx context.Context, clusterName string) ([]*entities.MasterNode, error)
-	GetWorkerNodes(ctx context.Context, clusterName string, edgeName string) ([]*entities.WorkerNode, error)
-	DeleteWorkerNode(ctx context.Context, clusterName string, edgeName string, name string) (bool, error)
-	OnDeleteWorkerNodeMessage(ctx context.Context, workerNode entities.WorkerNode) error
-	OnUpdateWorkerNodeMessage(ctx context.Context, workerNode entities.WorkerNode) error
+	CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error)
+	ListEdges(ctx InfraContext, clusterName string, providerName *string) ([]*entities.Edge, error)
+	GetEdge(ctx InfraContext, clusterName string, name string) (*entities.Edge, error)
+	UpdateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error)
+	DeleteEdge(ctx InfraContext, clusterName string, name string) error
+	OnDeleteEdgeMessage(ctx InfraContext, edge entities.Edge) error
+	OnUpdateEdgeMessage(ctx InfraContext, edge entities.Edge) error
+
+	GetNodePools(ctx InfraContext, clusterName string, edgeName string) ([]*entities.NodePool, error)
+	GetMasterNodes(ctx InfraContext, clusterName string) ([]*entities.MasterNode, error)
+	GetWorkerNodes(ctx InfraContext, clusterName string, edgeName string) ([]*entities.WorkerNode, error)
+	DeleteWorkerNode(ctx InfraContext, clusterName string, edgeName string, name string) (bool, error)
+	OnDeleteWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error
+	OnUpdateWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error
 }

@@ -1,45 +1,16 @@
 package entities
 
 import (
-	"encoding/json"
 	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
-	"io"
 	"kloudlite.io/pkg/repos"
 )
 
 type MasterNode struct {
 	repos.BaseEntity  `json:",inline"`
 	cmgrV1.MasterNode `json:",inline"`
-}
-
-func (m *MasterNode) UnmarshalGQL(v interface{}) error {
-	switch t := v.(type) {
-	case map[string]any:
-		b, err := json.Marshal(t)
-		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(b, m); err != nil {
-			return err
-		}
-
-	case string:
-		if err := json.Unmarshal([]byte(t), m); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m MasterNode) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(m)
-	if err != nil {
-		w.Write([]byte("{}"))
-	}
-	w.Write(b)
+	ClusterName       string `json:"clusterName"`
+	AccountName       string `json:"accountName"`
 }
 
 var MasterNodeIndices = []repos.IndexField{
@@ -56,40 +27,23 @@ var MasterNodeIndices = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountName", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "clusterName", Value: repos.IndexAsc},
+		},
+	},
 }
 
 type WorkerNode struct {
 	repos.BaseEntity   `json:",inline"`
 	infraV1.WorkerNode `json:",inline"`
-}
-
-func (wn *WorkerNode) UnmarshalGQL(v interface{}) error {
-	switch t := v.(type) {
-	case map[string]any:
-		b, err := json.Marshal(t)
-		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(b, wn); err != nil {
-			return err
-		}
-
-	case string:
-		if err := json.Unmarshal([]byte(t), wn); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (wn WorkerNode) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(wn)
-	if err != nil {
-		w.Write([]byte("{}"))
-	}
-	w.Write(b)
+	ClusterName        string `json:"clusterName"`
+	AccountName        string `json:"accountName"`
 }
 
 var WorkerNodeIndices = []repos.IndexField{
@@ -106,40 +60,23 @@ var WorkerNodeIndices = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountName", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "clusterName", Value: repos.IndexAsc},
+		},
+	},
 }
 
 type NodePool struct {
 	repos.BaseEntity `json:",inline"`
 	infraV1.NodePool `json:",inline"`
-}
-
-func (np *NodePool) UnmarshalGQL(v interface{}) error {
-	switch t := v.(type) {
-	case map[string]any:
-		b, err := json.Marshal(t)
-		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(b, np); err != nil {
-			return err
-		}
-
-	case string:
-		if err := json.Unmarshal([]byte(t), np); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (np NodePool) MarshalGQL(w io.Writer) {
-	b, err := json.Marshal(np)
-	if err != nil {
-		w.Write([]byte("{}"))
-	}
-	w.Write(b)
+	AccountName      string `json:"accoutName"`
+	ClusterName      string `json:"clusterName"`
 }
 
 var NodePoolIndices = []repos.IndexField{
@@ -156,5 +93,15 @@ var NodePoolIndices = []repos.IndexField{
 			{Key: "spec.clusterName", Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountName", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "clusterName", Value: repos.IndexAsc},
+		},
 	},
 }

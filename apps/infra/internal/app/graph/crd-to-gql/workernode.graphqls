@@ -1,35 +1,35 @@
 type WorkerNodeSpec {
 	provider: String!
-	providerName: String!
+	region: String!
 	accountName: String!
 	clusterName: String!
 	config: String!
-	pool: String!
 	edgeName: String!
+	pool: String!
 	nodeIndex: Int
-	region: String!
+	providerName: String!
 	stateful: Boolean
 }
 
 input WorkerNodeSpecIn {
 	provider: String!
-	providerName: String!
+	region: String!
 	accountName: String!
 	clusterName: String!
 	config: String!
-	pool: String!
 	edgeName: String!
+	pool: String!
 	nodeIndex: Int
-	region: String!
+	providerName: String!
 	stateful: Boolean
 }
 
 type WorkerNode {
-	status: Status
 	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	spec: WorkerNodeSpec
+	status: Status
 }
 
 input WorkerNodeIn {
