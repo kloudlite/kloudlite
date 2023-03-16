@@ -1,21 +1,25 @@
 package domain
 
 import (
-	"context"
 	"fmt"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) CreateManagedService(ctx context.Context, msvc entities.MSvc) (*entities.MSvc, error) {
+func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
 	msvc.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &msvc.ManagedService); err != nil {
 		return nil, err
 	}
 
+	msvc.AccountName = ctx.accountName
+	msvc.ClusterName = ctx.clusterName
 	m, err := d.msvcRepo.Create(ctx, &msvc)
 	if err != nil {
+		if d.msvcRepo.ErrAlreadyExists(err) {
+			return nil, fmt.Errorf("msvc with name '%s' already exists", msvc.Name)
+		}
 		return nil, err
 	}
 
@@ -26,23 +30,27 @@ func (d *domain) CreateManagedService(ctx context.Context, msvc entities.MSvc) (
 	return m, nil
 }
 
-func (d *domain) DeleteManagedService(ctx context.Context, namespace string, name string) error {
+func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name string) error {
 	m, err := d.findMSvc(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
-	return d.k8sYamlClient.DeleteResource(ctx, &m.ManagedService)
+	return d.deleteK8sResource(ctx, &m.ManagedService)
 }
 
-func (d *domain) GetManagedService(ctx context.Context, namespace string, name string) (*entities.MSvc, error) {
+func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
 	return d.findMSvc(ctx, namespace, name)
 }
 
-func (d *domain) GetManagedServices(ctx context.Context, namespace string) ([]*entities.MSvc, error) {
-	return d.msvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{"metadata.namespace": namespace}})
+func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error) {
+	return d.msvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"accountName":        ctx.accountName,
+		"clusterName":        ctx.clusterName,
+		"metadata.namespace": namespace,
+	}})
 }
 
-func (d *domain) UpdateManagedService(ctx context.Context, msvc entities.MSvc) (*entities.MSvc, error) {
+func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
 	msvc.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &msvc.ManagedService); err != nil {
 		return nil, err
@@ -69,8 +77,13 @@ func (d *domain) UpdateManagedService(ctx context.Context, msvc entities.MSvc) (
 	return upMSvc, nil
 }
 
-func (d *domain) findMSvc(ctx context.Context, namespace string, name string) (*entities.MSvc, error) {
-	mres, err := d.msvcRepo.FindOne(ctx, repos.Filter{"metadata.namespace": namespace, "metadata.name": name})
+func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
+	mres, err := d.msvcRepo.FindOne(ctx, repos.Filter{
+		"accountName":        ctx.accountName,
+		"clusterName":        ctx.clusterName,
+		"metadata.namespace": namespace,
+		"metadata.name":      name,
+	})
 	if err != nil {
 		return nil, err
 	}
