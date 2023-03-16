@@ -78,7 +78,7 @@ var Module = fx.Module(
 					cacheClient,
 					constants.CookieName,
 					env.CookieDomain,
-					constants.CacheSessionPrefix,
+					"auth:"+constants.CacheSessionPrefix,
 				),
 			)
 		},

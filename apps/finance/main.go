@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/apps/finance/internal/framework"
@@ -16,18 +17,20 @@ func main() {
 	flag.Parse()
 
 	fx.New(
+		fx.Provide(func() (*rest.Config, error) {
+			if isDev {
+				return &rest.Config{Host: "localhost:8080"}, nil
+			}
+			return rest.InClusterConfig()
+		}),
 		fx.Provide(
-			func() (*k8s.YAMLClient, error) {
-				if isDev {
-					return k8s.NewYAMLClient(&rest.Config{Host: "localhost:8080"})
-				}
-				inclusterCfg, err := rest.InClusterConfig()
-				if err != nil {
-					return nil, err
-				}
-				return k8s.NewYAMLClient(inclusterCfg)
+			func(restCfg *rest.Config) (*k8s.YAMLClient, error) {
+				return k8s.NewYAMLClient(restCfg)
 			},
 		),
+		fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
+			return kubectl.NewYAMLClient(restCfg)
+		}),
 		framework.Module,
 		fx.Provide(
 			func() (logging.Logger, error) {
