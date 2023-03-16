@@ -1,5 +1,6 @@
 ---
 global:
+  accountName: kloudlite-dev
   namespace: sample
   name: s1
 ---
@@ -11,8 +12,28 @@ query: |+
       metadata {
         name
       }
+      spec {
+        accountName
+      }
     }
   }
+---
+
+label: Get Project
+query: |+
+  query Core_getProject($name: String!) {
+    core_getProject(name: $name) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+        targetNamespace
+      }
+    }
+  }
+variables:
+  name: "{{.name}}"
 ---
 
 label: Create Project
@@ -29,6 +50,37 @@ variables:
     metadata:
       name: "{{.name}}"
     spec:
-      accountName: sample
+      accountName: kloudlite-dev
       targetNamespace: "{{.namespace}}"
+---
+
+label: Update Project
+query: |+
+  mutation Core_updateProject($project: ProjectIn!) {
+    core_updateProject(project: $project) {
+      metadata {
+        name
+      }
+      spec {
+        displayName
+      }
+    }
+  }
+variables:
+  project:
+    metadata:
+      name: "{{.name}}"
+    spec:
+      displayName: "Example Project"
+      accountName: kloudlite-dev
+      targetNamespace: "{{.namespace}}"
+---
+
+label: Delete Project
+query: |+
+  mutation Core_deleteProject($name: String!) {
+    core_deleteProject(name: $name)
+  }
+variables:
+  name: "{{.name}}"
 ---
