@@ -16,7 +16,6 @@ import (
 	"kloudlite.io/constants"
 
 	"gopkg.in/yaml.v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/pkg/cache"
@@ -480,46 +479,49 @@ func generateReadable(name string) string {
 	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
 }
 
-func (d *domainI) CreateAccount(
-	ctx context.Context,
-	userId repos.ID,
-	name string,
-	billing Billing,
-) (*Account, error) {
-
-	if uid, err := GetUser(ctx); err != nil {
+func (d *domainI) CreateAccount(ctx context.Context, userId repos.ID, name string, billing Billing) (*Account, error) {
+	uid, err := GetUser(ctx)
+	if err != nil {
 		return nil, err
-	} else if uid != string(userId) {
+	}
+	if uid != string(userId) {
 		return nil, errors.New("you don't have permission to perform this operation")
 	}
 
-	currClusterCfg, err := d.k8sYamlClient.K8sClient.CoreV1().ConfigMaps(d.env.CurrClusterConfigNS).Get(ctx, d.env.CurrClusterConfigName, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
+	// currClusterCfg, err := d.k8sYamlClient.K8sClient.CoreV1().ConfigMaps(d.env.CurrClusterConfigNS).Get(ctx, d.env.CurrClusterConfigName, metav1.GetOptions{})
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	clusterId := currClusterCfg.Data[d.env.CurrClusterConfigClusterIdKey]
+	// clusterId := currClusterCfg.Data[d.env.CurrClusterConfigClusterIdKey]
 
 	id := d.accountRepo.NewId()
-	customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
+	billing.StripeCustomerId, err = func() (string, error) {
+		if billing.PaymentMethodId == "kloudlite-dev" {
+			return "kloudlite-account", nil
+		}
+		customer, err := d.stripeCli.NewCustomer(string(id), billing.PaymentMethodId)
+		if err != nil {
+			return "", err
+		}
+		return customer.Str(), nil
+	}()
 	if err != nil {
 		return nil, err
 	}
-	billing.StripeCustomerId = customer.Str()
 
 	acc, err := d.accountRepo.Create(
 		ctx, &Account{
 			BaseEntity: repos.BaseEntity{
 				Id: id,
 			},
-			Name:         name,
-			ContactEmail: "",
-			Billing:      billing,
-			IsActive:     true,
-			IsDeleted:    false,
-			CreatedAt:    time.Now(),
-			ReadableId:   repos.ID(generateReadable(name)),
-			ClusterID:    repos.ID(clusterId),
+			Name:       name,
+			Billing:    billing,
+			IsActive:   true,
+			IsDeleted:  false,
+			CreatedAt:  time.Now(),
+			ReadableId: repos.ID(generateReadable(name)),
+			// ClusterID:    repos.ID(clusterId),
 		},
 	)
 	if err != nil {
@@ -755,11 +757,21 @@ func (d *domainI) DeleteAccount(ctx context.Context, accountId repos.ID) (bool, 
 
 func (d *domainI) GetAccount(ctx context.Context, id repos.ID) (*Account, error) {
 	uid, err := GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
 	fmt.Println(uid, err)
 	if err := d.checkAccountAccess(ctx, id, READ_ACCOUNT); err != nil {
 		return nil, err
 	}
-	return d.accountRepo.FindById(ctx, id)
+	acc, err := d.accountRepo.FindOne(ctx, repos.Filter{"id": id})
+	if err != nil {
+		return nil, err
+	}
+	if acc == nil {
+		return nil, fmt.Errorf("no account with id=%s exists", id)
+	}
+	return acc, nil
 }
 
 func fxDomain(
