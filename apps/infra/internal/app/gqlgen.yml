@@ -151,3 +151,6 @@ models:
   PatchIn:
     model:
       - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+
+  SyncStatus:
+    model: kloudlite.io/apps/infra/internal/domain/entities.SyncStatus

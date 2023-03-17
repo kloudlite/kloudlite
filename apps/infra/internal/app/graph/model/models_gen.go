@@ -2,14 +2,6 @@
 
 package model
 
-type AccountSpec struct {
-	OwnedDomains []*string `json:"ownedDomains"`
-}
-
-type AccountSpecIn struct {
-	OwnedDomains []*string `json:"ownedDomains"`
-}
-
 type Check struct {
 	Status     *bool   `json:"status"`
 	Message    *string `json:"message"`
@@ -41,21 +33,21 @@ type CloudProviderSpecProviderSecretIn struct {
 }
 
 type ClusterSpec struct {
-	Config       string `json:"config"`
 	Count        int    `json:"count"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
 	Region       string `json:"region"`
 	AccountName  string `json:"accountName"`
+	Config       string `json:"config"`
 }
 
 type ClusterSpecIn struct {
-	Config       string `json:"config"`
 	Count        int    `json:"count"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
 	Region       string `json:"region"`
 	AccountName  string `json:"accountName"`
+	Config       string `json:"config"`
 }
 
 type EdgeSpec struct {
@@ -91,69 +83,69 @@ type EdgeSpecPoolsIn struct {
 }
 
 type MasterNodeSpec struct {
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
 	Region       string `json:"region"`
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
 }
 
 type MasterNodeSpecIn struct {
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
 	Region       string `json:"region"`
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
 }
 
 type NodePoolSpec struct {
-	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
 	EdgeName     string `json:"edgeName"`
-	Provider     string `json:"provider"`
-	ProviderName string `json:"providerName"`
-	ClusterName  string `json:"clusterName"`
 	Max          *int   `json:"max"`
 	Min          *int   `json:"min"`
 	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
 }
 
 type NodePoolSpecIn struct {
-	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
 	EdgeName     string `json:"edgeName"`
-	Provider     string `json:"provider"`
-	ProviderName string `json:"providerName"`
-	ClusterName  string `json:"clusterName"`
 	Max          *int   `json:"max"`
 	Min          *int   `json:"min"`
 	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	Provider     string `json:"provider"`
+	ProviderName string `json:"providerName"`
 }
 
 type WorkerNodeSpec struct {
+	ProviderName string `json:"providerName"`
+	EdgeName     string `json:"edgeName"`
+	NodeIndex    *int   `json:"nodeIndex"`
+	Pool         string `json:"pool"`
 	Provider     string `json:"provider"`
 	Region       string `json:"region"`
+	Stateful     *bool  `json:"stateful"`
 	AccountName  string `json:"accountName"`
 	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
-	EdgeName     string `json:"edgeName"`
-	Pool         string `json:"pool"`
-	NodeIndex    *int   `json:"nodeIndex"`
-	ProviderName string `json:"providerName"`
-	Stateful     *bool  `json:"stateful"`
 }
 
 type WorkerNodeSpecIn struct {
+	ProviderName string `json:"providerName"`
+	EdgeName     string `json:"edgeName"`
+	NodeIndex    *int   `json:"nodeIndex"`
+	Pool         string `json:"pool"`
 	Provider     string `json:"provider"`
 	Region       string `json:"region"`
+	Stateful     *bool  `json:"stateful"`
 	AccountName  string `json:"accountName"`
 	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
-	EdgeName     string `json:"edgeName"`
-	Pool         string `json:"pool"`
-	NodeIndex    *int   `json:"nodeIndex"`
-	ProviderName string `json:"providerName"`
-	Stateful     *bool  `json:"stateful"`
 }

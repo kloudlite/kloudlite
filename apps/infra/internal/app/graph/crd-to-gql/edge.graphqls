@@ -31,17 +31,18 @@ input EdgeSpecIn {
 }
 
 type Edge {
+	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
 	spec: EdgeSpec
 	status: Status
-	apiVersion: String
 }
 
 input EdgeIn {
+	apiVersion: String
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: EdgeSpecIn
-	apiVersion: String
 }
 

@@ -58,6 +58,8 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 
 	//fmt.Printf("%q type: %s\n", typeName, tree.Type)
 
+	hasAddedSyncStatus := false
+
 	for k, v := range tree.Properties {
 		//fmt.Printf("[properties] %q type: %s\n", k, v.Type)
 
@@ -94,6 +96,12 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 					tVar += genFieldEntry(k, "Overrides", m[k])
 					iVar += genFieldEntry(k, "OverridesIn", m[k])
 					continue
+				}
+
+				if !hasAddedSyncStatus {
+					// TODO: added a custom sync status for everything k8s related
+					tVar += genFieldEntry("syncStatus", "SyncStatus", false)
+					hasAddedSyncStatus = true
 				}
 			}
 
@@ -179,6 +187,13 @@ input PatchIn {
 
 input OverridesIn {
 	patches: [PatchIn!]
+}
+
+enum SyncStatus {
+	IDLE
+	SYNCING
+	READY
+	NOT_READY
 }
 `
 

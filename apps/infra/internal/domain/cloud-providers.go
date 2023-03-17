@@ -2,9 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateProviderSecret(ctx InfraContext, ps *entities.Secret) (*entities.Secret, error) {
@@ -38,6 +40,12 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 	}
 
 	cloudProvider.AccountName = ctx.AccountName
+	cloudProvider.SyncStatus = t.SyncStatus{
+		LastSyncedAt: time.Now(),
+		Action:       t.SyncActionApply,
+		Generation:   int(cloudProvider.Generation) + 1,
+		State:        t.SyncStateIdle,
+	}
 
 	cp, err := d.providerRepo.Create(ctx, &cloudProvider)
 	if err != nil {
@@ -107,6 +115,13 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		}
 	}
 
+	cloudProvider.SyncStatus = t.SyncStatus{
+		LastSyncedAt: time.Now(),
+		Action:       t.SyncActionApply,
+		Generation:   int(providerSecret.Generation) + 1,
+		State:        t.SyncStateIdle,
+	}
+
 	uProvider, err := d.providerRepo.UpdateById(ctx, cp.Id, &cloudProvider)
 	if err != nil {
 		return nil, err
@@ -133,7 +148,20 @@ func (d *domain) DeleteCloudProvider(ctx InfraContext, name string) error {
 	if err != nil {
 		return err
 	}
-	return d.deleteK8sResource(ctx, &cp.CloudProvider)
+
+	cp.SyncStatus = t.SyncStatus{
+		SyncScheduledAt: time.Now(),
+		Action:          t.SyncActionDelete,
+		Generation:      int(cp.Generation),
+		State:           t.SyncStateIdle,
+	}
+
+	uCp, err := d.providerRepo.UpdateById(ctx, cp.Id, cp)
+	if err != nil {
+		return err
+	}
+
+	return d.deleteK8sResource(ctx, &uCp.CloudProvider)
 }
 
 func (d *domain) OnDeleteCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error {
@@ -150,6 +178,13 @@ func (d *domain) OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider en
 	}
 
 	cp.CloudProvider = cloudProvider.CloudProvider
+	cp.SyncStatus.LastSyncedAt = time.Now()
+	cp.SyncStatus.State = func() t.SyncState {
+		if cloudProvider.Status.IsReady {
+			return t.SyncStateReady
+		}
+		return t.SyncStateNotReady
+	}()
 	_, err = d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	return err
 }

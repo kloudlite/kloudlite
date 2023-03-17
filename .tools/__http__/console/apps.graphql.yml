@@ -1,6 +1,7 @@
 ---
 global:
-  namespace: sample
+  # namespace: sample
+  namespace: kl-core
   name: s1
 ---
 
