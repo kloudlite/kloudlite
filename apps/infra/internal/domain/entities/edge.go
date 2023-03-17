@@ -8,8 +8,9 @@ import (
 type Edge struct {
 	repos.BaseEntity `bson:",inline"`
 	infraV1.Edge     `json:",inline" bson:",inline"`
-	AccountName      string `json:"accountName"`
-	ClusterName      string `json:"clusterName"`
+	AccountName      string     `json:"accountName"`
+	ClusterName      string     `json:"clusterName"`
+	SyncStatus       SyncStatus `json:"syncStatus"`
 }
 
 var EdgeIndices = []repos.IndexField{

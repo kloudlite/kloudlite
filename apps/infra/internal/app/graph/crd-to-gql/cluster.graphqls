@@ -1,25 +1,26 @@
 type ClusterSpec {
-	config: String!
 	count: Int!
 	provider: String!
 	providerName: String!
 	region: String!
 	accountName: String!
+	config: String!
 }
 
 input ClusterSpecIn {
-	config: String!
 	count: Int!
 	provider: String!
 	providerName: String!
 	region: String!
 	accountName: String!
+	config: String!
 }
 
 type Cluster {
 	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
 	spec: ClusterSpec
 	status: Status
 }
