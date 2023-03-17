@@ -51,3 +51,10 @@ input PatchIn {
 input OverridesIn {
 	patches: [PatchIn!]
 }
+
+enum SyncStatus {
+	IDLE
+	SYNCING
+	READY
+	NOT_READY
+}

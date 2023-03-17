@@ -9,6 +9,8 @@ type Cluster struct {
 	repos.BaseEntity `bson:",inline" json:",inline"`
 	cmgrV1.Cluster   `json:",inline"`
 	AccountName      string `json:"accountName"`
+
+	SyncStatus SyncStatus `json:"syncStatus"`
 }
 
 var ClusterIndices = []repos.IndexField{
