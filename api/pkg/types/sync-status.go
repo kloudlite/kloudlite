@@ -9,7 +9,7 @@ type SyncStatus struct {
 	SyncScheduledAt time.Time  `json:"syncScheduledAt,omitempty"`
 	LastSyncedAt    time.Time  `json:"lastSyncedAt,omitempty"`
 	Action          SyncAction `json:"action,omitempty"`
-	Generation      int        `json:"generation,omitempty"`
+	Generation      int64      `json:"generation,omitempty"`
 	State           SyncState  `json:"state,omitempty"`
 }
 

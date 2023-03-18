@@ -3,6 +3,7 @@ package entities
 import (
 	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 type Cluster struct {
@@ -10,7 +11,7 @@ type Cluster struct {
 	cmgrV1.Cluster   `json:",inline"`
 	AccountName      string `json:"accountName"`
 
-	SyncStatus SyncStatus `json:"syncStatus"`
+	SyncStatus t.SyncStatus `json:"syncStatus"`
 }
 
 var ClusterIndices = []repos.IndexField{
