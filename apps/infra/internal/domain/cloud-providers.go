@@ -9,9 +9,8 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) CreateProviderSecret(ctx InfraContext, ps *entities.Secret) (*entities.Secret, error) {
-	d.secretRepo.SilentUpsert(ctx, repos.Filter{"metadata.name": ps.Name, "metadata.namespace": ps.Namespace}, ps)
-	return nil, nil
+func (d *domain) upsertProviderSecret(ctx InfraContext, ps *entities.Secret) (*entities.Secret, error) {
+	return d.secretRepo.SilentUpsert(ctx, repos.Filter{"metadata.name": ps.Name, "metadata.namespace": ps.Namespace}, ps)
 }
 
 func (d *domain) GetProviderSecret(ctx InfraContext, providerName string) (*entities.Secret, error) {
@@ -32,8 +31,13 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	cloudProvider.Spec.ProviderSecret.Name = providerSecret.Name
-	cloudProvider.Spec.ProviderSecret.Namespace = providerSecret.Namespace
+	ps, err := d.upsertProviderSecret(ctx, &providerSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudProvider.Spec.ProviderSecret.Name = ps.Name
+	cloudProvider.Spec.ProviderSecret.Namespace = ps.Namespace
 
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cloudProvider.CloudProvider); err != nil {
 		return nil, err
@@ -41,10 +45,10 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 
 	cloudProvider.AccountName = ctx.AccountName
 	cloudProvider.SyncStatus = t.SyncStatus{
-		LastSyncedAt: time.Now(),
-		Action:       t.SyncActionApply,
-		Generation:   int(cloudProvider.Generation) + 1,
-		State:        t.SyncStateIdle,
+		SyncScheduledAt: time.Now(),
+		Action:          t.SyncActionApply,
+		Generation:      1,
+		State:           t.SyncStateIdle,
 	}
 
 	cp, err := d.providerRepo.Create(ctx, &cloudProvider)
@@ -55,7 +59,7 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &providerSecret.Secret); err != nil {
+	if err := d.applyK8sResource(ctx, &ps.Secret); err != nil {
 		return nil, err
 	}
 
@@ -116,10 +120,10 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 	}
 
 	cloudProvider.SyncStatus = t.SyncStatus{
-		LastSyncedAt: time.Now(),
-		Action:       t.SyncActionApply,
-		Generation:   int(providerSecret.Generation) + 1,
-		State:        t.SyncStateIdle,
+		SyncScheduledAt: time.Now(),
+		Action:          t.SyncActionApply,
+		Generation:      int(providerSecret.Generation) + 1,
+		State:           t.SyncStateIdle,
 	}
 
 	uProvider, err := d.providerRepo.UpdateById(ctx, cp.Id, &cloudProvider)
@@ -131,7 +135,7 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	upSecret, err := d.CreateProviderSecret(ctx, providerSecret)
+	upSecret, err := d.upsertProviderSecret(ctx, providerSecret)
 	if err != nil {
 		return nil, err
 	}

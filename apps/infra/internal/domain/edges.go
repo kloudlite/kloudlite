@@ -2,9 +2,8 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
-	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
@@ -15,6 +14,8 @@ func (d *domain) CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edg
 		return nil, err
 	}
 
+	edge.AccountName = ctx.AccountName
+	edge.SyncStatus = getSyncStatusForCreation()
 	nEdge, err := d.edgeRepo.Create(ctx, &edge)
 	if err != nil {
 		return nil, err
@@ -40,12 +41,25 @@ func (d *domain) GetEdge(ctx InfraContext, clusterName string, name string) (*en
 
 func (d *domain) UpdateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error) {
 	edge.EnsureGVK()
+
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &edge.Edge); err != nil {
+		return nil, err
+	}
+
 	_, err := d.findCluster(ctx, edge.Spec.ClusterName)
 	if err != nil {
 		return nil, err
 	}
 
-	uEdge, err := d.edgeRepo.UpdateOne(ctx, repos.Filter{"id": edge.Id}, &edge)
+	e, err := d.findEdge(ctx, edge.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	e.Edge.Spec = edge.Edge.Spec
+	e.SyncStatus = getSyncStatusForUpdation(e.Generation + 1)
+
+	uEdge, err := d.edgeRepo.UpdateById(ctx, e.Id, e)
 	if err != nil {
 		return nil, err
 	}
@@ -57,24 +71,47 @@ func (d *domain) UpdateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edg
 }
 
 func (d *domain) DeleteEdge(ctx InfraContext, clusterName string, name string) error {
-	return d.k8sClient.Delete(ctx, &infraV1.Edge{ObjectMeta: metav1.ObjectMeta{Name: name}})
+	e, err := d.findEdge(ctx, name)
+	if err != nil {
+		return err
+	}
+	e.SyncStatus = getSyncStatusForDeletion(e.Generation)
+	return d.deleteK8sResource(ctx, e)
 }
 
 func (d *domain) OnDeleteEdgeMessage(ctx InfraContext, edge entities.Edge) error {
-	return d.edgeRepo.DeleteOne(ctx, repos.Filter{"metadata.name": edge.Name})
-}
-
-func (d *domain) OnUpdateEdgeMessage(ctx InfraContext, edge entities.Edge) error {
-	e, err := d.edgeRepo.FindOne(ctx, repos.Filter{"metadata.name": edge.Name})
+	e, err := d.findEdge(ctx, edge.Name)
 	if err != nil {
 		return err
 	}
 
-	if e == nil {
-		return fmt.Errorf("edge %s not found", edge.Name)
+	return d.edgeRepo.DeleteById(ctx, e.Id)
+}
+
+func (d *domain) OnUpdateEdgeMessage(ctx InfraContext, edge entities.Edge) error {
+	e, err := d.findEdge(ctx, edge.Name)
+	if err != nil {
+		return err
 	}
 
 	e.Edge = edge.Edge
+	e.SyncStatus.LastSyncedAt = time.Now()
+	e.SyncStatus.State = parseSyncState(edge.Status.IsReady)
 	_, err = d.edgeRepo.UpdateById(ctx, e.Id, e)
 	return err
+}
+
+func (d *domain) findEdge(ctx InfraContext, edgeName string) (*entities.Edge, error) {
+	e, err := d.edgeRepo.FindOne(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"metadata.name": edgeName,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if e == nil {
+		return nil, fmt.Errorf("edge with name %q not found", edgeName)
+	}
+	return e, nil
 }
