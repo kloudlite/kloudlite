@@ -3,6 +3,7 @@ package entities
 import (
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 type Edge struct {
@@ -10,7 +11,7 @@ type Edge struct {
 	infraV1.Edge     `json:",inline" bson:",inline"`
 	AccountName      string     `json:"accountName"`
 	ClusterName      string     `json:"clusterName"`
-	SyncStatus       SyncStatus `json:"syncStatus"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
 var EdgeIndices = []repos.IndexField{
