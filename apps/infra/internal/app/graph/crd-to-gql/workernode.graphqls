@@ -1,25 +1,25 @@
 type WorkerNodeSpec {
-	providerName: String!
-	edgeName: String!
-	nodeIndex: Int
 	pool: String!
-	provider: String!
-	region: String!
+	providerName: String!
 	stateful: Boolean
 	accountName: String!
+	edgeName: String!
+	nodeIndex: Int
+	provider: String!
+	region: String!
 	clusterName: String!
 	config: String!
 }
 
 input WorkerNodeSpecIn {
-	providerName: String!
-	edgeName: String!
-	nodeIndex: Int
 	pool: String!
-	provider: String!
-	region: String!
+	providerName: String!
 	stateful: Boolean
 	accountName: String!
+	edgeName: String!
+	nodeIndex: Int
+	provider: String!
+	region: String!
 	clusterName: String!
 	config: String!
 }

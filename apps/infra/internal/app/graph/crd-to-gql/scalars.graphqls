@@ -52,9 +52,22 @@ input OverridesIn {
 	patches: [PatchIn!]
 }
 
-enum SyncStatus {
+enum SyncAction {
+	APPLY
+	DELETE
+}
+
+enum SyncState {
 	IDLE
-	SYNCING
+	IN_PROGRESS
 	READY
 	NOT_READY
+}
+
+type SyncStatus {
+	syncScheduledAt: Date!
+	lastSyncedAt: Date
+	action: SyncAction!
+	generation: Int!
+	state: SyncState!
 }

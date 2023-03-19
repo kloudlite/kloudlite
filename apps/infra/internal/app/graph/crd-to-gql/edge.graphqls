@@ -1,35 +1,3 @@
-type EdgeSpecPools {
-	config: String!
-	max: Int
-	min: Int
-	name: String!
-}
-
-input EdgeSpecPoolsIn {
-	config: String!
-	max: Int
-	min: Int
-	name: String!
-}
-
-type EdgeSpec {
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	pools: [EdgeSpecPools]
-	provider: String
-}
-
-input EdgeSpecIn {
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	pools: [EdgeSpecPoolsIn]
-	provider: String
-}
-
 type Edge {
 	apiVersion: String
 	kind: String
@@ -44,5 +12,37 @@ input EdgeIn {
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: EdgeSpecIn
+}
+
+type EdgeSpecPools {
+	min: Int
+	name: String!
+	config: String!
+	max: Int
+}
+
+input EdgeSpecPoolsIn {
+	min: Int
+	name: String!
+	config: String!
+	max: Int
+}
+
+type EdgeSpec {
+	accountName: String!
+	clusterName: String!
+	pools: [EdgeSpecPools]
+	provider: String
+	providerName: String!
+	region: String!
+}
+
+input EdgeSpecIn {
+	accountName: String!
+	clusterName: String!
+	pools: [EdgeSpecPoolsIn]
+	provider: String
+	providerName: String!
+	region: String!
 }
 
