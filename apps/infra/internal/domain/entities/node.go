@@ -4,14 +4,15 @@ import (
 	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 type MasterNode struct {
 	repos.BaseEntity  `json:",inline"`
 	cmgrV1.MasterNode `json:",inline"`
-	ClusterName       string     `json:"clusterName"`
-	AccountName       string     `json:"accountName"`
-	SyncStatus        SyncStatus `json:"syncStatus"`
+	ClusterName       string       `json:"clusterName"`
+	AccountName       string       `json:"accountName"`
+	SyncStatus        t.SyncStatus `json:"syncStatus"`
 }
 
 var MasterNodeIndices = []repos.IndexField{
@@ -45,7 +46,7 @@ type WorkerNode struct {
 	infraV1.WorkerNode `json:",inline"`
 	ClusterName        string     `json:"clusterName"`
 	AccountName        string     `json:"accountName"`
-	SyncStatus         SyncStatus `json:"syncStatus"`
+	SyncStatus         t.SyncStatus `json:"syncStatus"`
 }
 
 var WorkerNodeIndices = []repos.IndexField{
@@ -79,7 +80,7 @@ type NodePool struct {
 	infraV1.NodePool `json:",inline"`
 	AccountName      string     `json:"accoutName"`
 	ClusterName      string     `json:"clusterName"`
-	SyncStatus       SyncStatus `json:"syncStatus"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
 var NodePoolIndices = []repos.IndexField{

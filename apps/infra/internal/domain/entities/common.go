@@ -1,4 +1,0 @@
-package entities
-
-import "time"
-

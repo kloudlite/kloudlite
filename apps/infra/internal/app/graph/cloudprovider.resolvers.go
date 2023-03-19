@@ -5,17 +5,12 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
-
-func (r *cloudProviderResolver) SyncStatus(ctx context.Context, obj *entities.CloudProvider) (*entities.SyncStatus, error) {
-	panic(fmt.Errorf("not implemented"))
-}
 
 func (r *cloudProviderResolver) Spec(ctx context.Context, obj *entities.CloudProvider) (*model.CloudProviderSpec, error) {
 	var m model.CloudProviderSpec

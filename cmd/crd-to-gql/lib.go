@@ -188,12 +188,27 @@ input PatchIn {
 input OverridesIn {
 	patches: [PatchIn!]
 }
+`
 
-enum SyncStatus {
+	syncStatus := `
+enum SyncAction {
+	APPLY
+	DELETE
+}
+
+enum SyncState {
 	IDLE
-	SYNCING
+	IN_PROGRESS
 	READY
 	NOT_READY
+}
+
+type SyncStatus {
+	syncScheduledAt: Date!
+	lastSyncedAt: Date
+	action: SyncAction!
+	generation: Int!
+	state: SyncState!
 }
 `
 
@@ -202,6 +217,7 @@ enum SyncStatus {
 	b.WriteString(metadata)
 	b.WriteString(status)
 	b.WriteString(overrides)
+	b.WriteString(syncStatus)
 
 	return b.Bytes(), nil
 }

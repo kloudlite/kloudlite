@@ -1,6 +1,8 @@
 package types
 
-import "time"
+import (
+	"time"
+)
 
 type SyncState string
 type SyncAction string
@@ -12,6 +14,35 @@ type SyncStatus struct {
 	Generation      int64      `json:"generation,omitempty"`
 	State           SyncState  `json:"state,omitempty"`
 }
+
+// func (obj *SyncStatus) UnmarshalGQL(v interface{}) error {
+//   switch t := v.(type) {
+//     case map[string]any:
+//       b, err := json.Marshal(t)
+//       if err != nil {
+//         return err
+//       }
+//
+//       if err := json.Unmarshal(b, obj); err != nil {
+//         return err
+//       }
+//
+//     case string:
+//       if err := json.Unmarshal([]byte(t), obj); err != nil {
+//         return err
+//       }
+//   }
+//
+// 	return nil
+// }
+//
+// func (obj SyncStatus) MarshalGQL(w io.Writer) {
+// 	b, err := json.Marshal(obj)
+// 	if err != nil {
+// 		w.Write([]byte("{}"))
+// 	}
+// 	w.Write(b)
+// }
 
 const (
 	SyncActionApply  SyncAction = "APPLY"
