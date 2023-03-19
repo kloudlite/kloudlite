@@ -153,4 +153,4 @@ models:
       - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
 
   SyncStatus:
-    model: kloudlite.io/apps/infra/internal/domain/entities.SyncStatus
+    model: kloudlite.io/pkg/types.SyncStatus

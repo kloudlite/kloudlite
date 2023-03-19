@@ -55,6 +55,10 @@ label: Get Provider
 query: |+
   query Query($name: String!) {
     infra_getCloudProvider(name: $name) {
+      syncStatus {
+        state
+        syncScheduledAt
+      }
       metadata{
         name
       }

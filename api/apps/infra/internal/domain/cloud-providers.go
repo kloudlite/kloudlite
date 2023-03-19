@@ -6,7 +6,6 @@ import (
 
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) upsertProviderSecret(ctx InfraContext, ps *entities.Secret) (*entities.Secret, error) {
@@ -44,12 +43,7 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 	}
 
 	cloudProvider.AccountName = ctx.AccountName
-	cloudProvider.SyncStatus = t.SyncStatus{
-		SyncScheduledAt: time.Now(),
-		Action:          t.SyncActionApply,
-		Generation:      1,
-		State:           t.SyncStateIdle,
-	}
+	cloudProvider.SyncStatus = getSyncStatusForCreation()
 
 	cp, err := d.providerRepo.Create(ctx, &cloudProvider)
 	if err != nil {
@@ -119,12 +113,7 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		}
 	}
 
-	cloudProvider.SyncStatus = t.SyncStatus{
-		SyncScheduledAt: time.Now(),
-		Action:          t.SyncActionApply,
-		Generation:      int(providerSecret.Generation) + 1,
-		State:           t.SyncStateIdle,
-	}
+	cloudProvider.SyncStatus = getSyncStatusForUpdation(cp.Generation + 1)
 
 	uProvider, err := d.providerRepo.UpdateById(ctx, cp.Id, &cloudProvider)
 	if err != nil {
@@ -153,13 +142,7 @@ func (d *domain) DeleteCloudProvider(ctx InfraContext, name string) error {
 		return err
 	}
 
-	cp.SyncStatus = t.SyncStatus{
-		SyncScheduledAt: time.Now(),
-		Action:          t.SyncActionDelete,
-		Generation:      int(cp.Generation),
-		State:           t.SyncStateIdle,
-	}
-
+	cp.SyncStatus = getSyncStatusForDeletion(cp.Generation)
 	uCp, err := d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	if err != nil {
 		return err
@@ -183,12 +166,7 @@ func (d *domain) OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider en
 
 	cp.CloudProvider = cloudProvider.CloudProvider
 	cp.SyncStatus.LastSyncedAt = time.Now()
-	cp.SyncStatus.State = func() t.SyncState {
-		if cloudProvider.Status.IsReady {
-			return t.SyncStateReady
-		}
-		return t.SyncStateNotReady
-	}()
+	cp.SyncStatus.State = parseSyncState(cloudProvider.Status.IsReady)
 	_, err = d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	return err
 }

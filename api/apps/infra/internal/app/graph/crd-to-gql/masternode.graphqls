@@ -1,3 +1,21 @@
+input MasterNodeSpecIn {
+	config: String!
+	provider: String!
+	providerName: String!
+	region: String!
+	accountName: String!
+	clusterName: String!
+}
+
+type MasterNode {
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
+	spec: MasterNodeSpec
+	status: Status
+}
+
 input MasterNodeIn {
 	apiVersion: String
 	kind: String
@@ -6,29 +24,11 @@ input MasterNodeIn {
 }
 
 type MasterNodeSpec {
-	accountName: String!
-	clusterName: String!
 	config: String!
 	provider: String!
 	providerName: String!
 	region: String!
-}
-
-input MasterNodeSpecIn {
 	accountName: String!
 	clusterName: String!
-	config: String!
-	provider: String!
-	providerName: String!
-	region: String!
-}
-
-type MasterNode {
-	status: Status
-	apiVersion: String
-	kind: String
-	metadata: Metadata! @goField(name: "objectMeta")
-	syncStatus: SyncStatus
-	spec: MasterNodeSpec
 }
 
