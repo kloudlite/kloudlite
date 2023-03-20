@@ -11,6 +11,9 @@ cookieDomain: ".kloudlite.io"
 sendgridApiKey: '***REMOVED***'
 supportEmail: support@kloudlite.io
 
+namespaces:
+  klCore: kl-core
+
 secrets:
   names:
     oAuthSecret: oauth-secrets
@@ -108,6 +111,7 @@ baseDomain: {{.baseDomain}}
 
 kafka:
   consumerGroupId: control-plane
+
   topicEvents: kl-events
   topicHarborWebhooks: kl-harbor-webhooks
   topicGitWebhooks: kl-git-webhooks
@@ -115,6 +119,7 @@ kafka:
   topicBilling: kl-billing
   topicStatusUpdates: kl-status-updates
   topicInfraStatusUpdates: kl-infra-updates
+  topicApplyOnError: kl-apply-on-error
 
 webhookAuthz:
   gitlabSecret: '***REMOVED***'
@@ -141,6 +146,9 @@ routers:
   gatewayApi:
     name: gateway-api
     domain: gateway.{{.baseDomain}}
+  dnsApi:
+    name: dns-api
+    domain: dns-api.{{.baseDomain}}
 
 apps:
   authApi:

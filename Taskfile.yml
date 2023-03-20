@@ -5,8 +5,8 @@ tasks:
     vars:
       EnvName: development
       ImageTag: v1.0.5
-      # baseDomain: dev.kloudlite.io
-      baseDomain: devcluster.internal.kloudlite.io
+      baseDomain: dev.kloudlite.io
+      # baseDomain: devcluster.internal.kloudlite.io
     cmds:
       - nxt template parse -f values.yml.tpl --missing-key error 
           --set EnvName={{.EnvName}}

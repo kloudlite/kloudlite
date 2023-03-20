@@ -7,6 +7,7 @@ metadata:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{.Values.region}}
+  accountName: {{.Values.accountName}}
   serviceAccount: {{.Values.clusterSvcAccount}}
   services:
     - port: 80
@@ -84,3 +85,9 @@ spec:
 
         - key: KAFKA_CONSUMER_GROUP_ID
           value: {{.Values.kafka.consumerGroupId}}
+
+        - key: ACCOUNT_COOKIE_NAME
+          value: kloudlite-account
+
+        - key: PROVIDER_SECRET_NAMESPACE
+          value: {{.Values.namespaces.klCore}}

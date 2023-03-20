@@ -11,6 +11,9 @@ cookieDomain: ".kloudlite.io"
 sendgridApiKey: '***REMOVED***'
 supportEmail: support@kloudlite.io
 
+namespaces:
+  klCore: kl-core
+
 secrets:
   names:
     oAuthSecret: oauth-secrets
@@ -104,10 +107,11 @@ networking:
     - ns2.dev.kloudlite.io
   edgeCNAME: dev.edge.kloudlite.io
 
-baseDomain: devcluster.internal.kloudlite.io
+baseDomain: dev.kloudlite.io
 
 kafka:
   consumerGroupId: control-plane
+
   topicEvents: kl-events
   topicHarborWebhooks: kl-harbor-webhooks
   topicGitWebhooks: kl-git-webhooks
@@ -115,6 +119,7 @@ kafka:
   topicBilling: kl-billing
   topicStatusUpdates: kl-status-updates
   topicInfraStatusUpdates: kl-infra-updates
+  topicApplyOnError: kl-apply-on-error
 
 webhookAuthz:
   gitlabSecret: '***REMOVED***'
@@ -125,22 +130,25 @@ webhookAuthz:
 routers:
   authWeb: 
     name: auth-web
-    domain: auth.devcluster.internal.kloudlite.io
+    domain: auth.dev.kloudlite.io
   accountsWeb: 
     name: accounts-web
-    domain: accounts.devcluster.internal.kloudlite.io
+    domain: accounts.dev.kloudlite.io
   consoleWeb:
     name: console-web
-    domain: console.devcluster.internal.kloudlite.io
+    domain: console.dev.kloudlite.io
   socketWeb:
     name: socket-web
-    domain: console.devcluster.internal.kloudlite.io
+    domain: console.dev.kloudlite.io
   webhooksApi:
     name: webhooks-api
-    domain: webhooks.devcluster.internal.kloudlite.io
+    domain: webhooks.dev.kloudlite.io
   gatewayApi:
     name: gateway-api
-    domain: gateway.devcluster.internal.kloudlite.io
+    domain: gateway.dev.kloudlite.io
+  dnsApi:
+    name: dns-api
+    domain: dns-api.dev.kloudlite.io
 
 apps:
   authApi:
