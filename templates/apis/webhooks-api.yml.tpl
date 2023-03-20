@@ -7,6 +7,7 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
+  accountName: {{.Values.accountName}}
   region: {{.Values.region}}
   {{- if .Values.nodeSelector}}
   nodeSelector: {{.Values.nodeSelector | toYaml | nindent 4}}

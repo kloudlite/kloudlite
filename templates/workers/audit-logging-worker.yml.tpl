@@ -6,6 +6,7 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
+  accountName: {{.Values.accountName}}
   region: {{.Values.region}}
   services: []
   containers:

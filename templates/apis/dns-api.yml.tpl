@@ -6,6 +6,7 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
+  accountName: {{.Values.accountName}}
   region: {{.Values.region}}
   {{ if .Values.nodeSelector }}
   nodeSelector: {{.Values.nodeSelector | toYaml | nindent 4}}
@@ -100,34 +101,4 @@ spec:
   selector:
     app: {{.Values.apps.dnsApi.name}}
   type: NodePort
-
 ---
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.Values.apps.dnsApi.name}}-basic-auth
-  namespace: {{.Release.Namespace}}
-data:
-  auth: ***REMOVED***
-
----
-
-apiVersion: crds.kloudlite.io/v1
-kind: Router
-metadata:
-  name: {{.Values.apps.dnsApi.name}}
-  namespace: {{.Release.Namespace}}
-spec:
-  domains:
-    - "{{.Values.apps.dnsApi.name}}.{{.Values.baseDomain}}"
-  https:
-    enabled: true
-    forceRedirect: true
-  basicAuth:
-    enabled: true
-    secretName: {{.Values.apps.dnsApi.name}}-basic-auth
-  routes:
-    - app: {{.Values.apps.dnsApi.name}}
-      path: /
-      port: 80

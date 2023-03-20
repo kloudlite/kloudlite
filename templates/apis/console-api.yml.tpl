@@ -6,6 +6,7 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
+  accountName: {{.Values.accountName}}
   region: {{.Values.region}}
   serviceAccount: {{.Values.clusterSvcAccount}}
   services:
@@ -77,10 +78,12 @@ spec:
         - key: PROMETHEUS_BASIC_AUTH_PASSWORD
           value: ""
 
-        - key: KAFKA_GROUP_ID
-          value: control-plane
+        - key: CONSOLE_DB_URI
+          type: secret
+          refName: "mres-{{.Values.managedResources.consoleDb}}"
+          refKey: URI
 
-        - key: MONGO_DB_NAME
+        - key: CONSOLE_DB_NAME
           value: {{.Values.managedResources.consoleDb}}
 
         - key: REDIS_HOSTS
@@ -103,30 +106,25 @@ spec:
           refName: "mres-{{.Values.managedResources.consoleRedis}}"
           refKey: USERNAME
 
-        - key: REDIS_AUTH_HOSTS
+        - key: AUTH_REDIS_HOSTS
           type: secret
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: HOSTS
 
-        - key: REDIS_AUTH_PASSWORD
+        - key: AUTH_REDIS_PASSWORD
           type: secret
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: PASSWORD
 
-        - key: REDIS_AUTH_PREFIX
+        - key: AUTH_REDIS_PREFIX
           type: secret
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: PREFIX
 
-        - key: REDIS_AUTH_USERNAME
+        - key: AUTH_REDIS_USERNAME
           type: secret
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: USERNAME
-
-        - key: MONGO_URI
-          type: secret
-          refName: "mres-{{.Values.managedResources.consoleDb}}"
-          refKey: URI
 
         - key: MANAGED_TEMPLATES_PATH
           value: /console.d/templates/managed-svc-templates.yml
@@ -135,7 +133,7 @@ spec:
           value: {{.Values.apps.financeApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
 
         - key: AUTH_SERVICE
-          value: {{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
+          value: {{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001AUTH
 
         - key: CI_SERVICE
           value: {{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
@@ -146,7 +144,7 @@ spec:
         - key: DNS_SERVICE
           value: {{.Values.apps.dnsApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
 
-        - key: KAFKA_BOOTSTRAP_SERVERS
+        - key: KAFKA_BROKERS
           type: secret
           refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
           refKey: KAFKA_BROKERS
@@ -154,8 +152,14 @@ spec:
         - key: KAFKA_WORKLOAD_STATUS_TOPIC
           value: {{.Values.kafka.topicStatusUpdates}}
 
-        - key: KAFKA_GROUP_ID
+        - key: KAFKA_CONSUMER_GROUP_ID
           value: {{.Values.kafka.consumerGroupId}}
+
+        - key: KAFKA_STATUS_UPDATES_TOPIC
+          value: {{.Values.kafka.topicStatusUpdates}}
+
+        - key: KAFKA_APPLY_ON_ERROR_TOPIC
+          value: {{.Values.kafka.topicApplyOnError}}
 
         - key: COMPUTE_PLANS_PATH
           value: /console.d/templates/compute-plans.yaml
@@ -188,6 +192,9 @@ spec:
         - key: KAFKA_AUDIT_EVENTS_TOPIC
           value: {{.Values.kafka.topicEvents}}
 
+        - key: ACCOUNT_COOKIE_NAME
+          value: kloudlite-account
+
       {{/* envFrom: */}}
       {{/*   - type: secret */}}
       {{/*     refName: console-env */}}
@@ -217,7 +224,7 @@ metadata:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   domains:
-    - "logs.{{.baseDomain}}"
+    - "logs.{{.Values.baseDomain}}"
   https:
     enabled: true
     forceRedirect: true
