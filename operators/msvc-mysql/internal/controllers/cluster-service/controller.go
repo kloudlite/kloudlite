@@ -158,7 +158,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.ClusterServ
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
@@ -259,7 +259,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.ClusterService]) s
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 		}
 

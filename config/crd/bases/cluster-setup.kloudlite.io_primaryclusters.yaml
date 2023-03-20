@@ -273,6 +273,15 @@ spec:
                 type: object
               loki:
                 properties:
+                  enabled:
+                    default: true
+                    type: boolean
+                  namespace:
+                    default: kl-init-monitoring
+                    type: string
+                  releaseName:
+                    default: loki
+                    type: string
                   resources:
                     properties:
                       cpu:
@@ -320,9 +329,6 @@ spec:
                     - bucketName
                     - endpoint
                     type: object
-                  serviceName:
-                    default: loki
-                    type: string
                   url:
                     type: string
                 required:
@@ -389,6 +395,15 @@ spec:
                 type: object
               prometheus:
                 properties:
+                  enabled:
+                    default: true
+                    type: boolean
+                  namespace:
+                    default: kl-init-monitoring
+                    type: string
+                  releaseName:
+                    default: prometheus
+                    type: string
                   resources:
                     properties:
                       cpu:
@@ -420,9 +435,6 @@ spec:
                     - cpu
                     - memory
                     type: object
-                  serviceName:
-                    default: prometheus
-                    type: string
                 required:
                 - resources
                 type: object

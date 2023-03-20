@@ -48,7 +48,7 @@ var _ = Describe(
 			"Initialize an App CR", func() {
 				It(
 					"Should Succeed", func() {
-						err := k8sYamlClient.ApplyYAML(
+						_, err := k8sYamlClient.ApplyYAML(
 							context.TODO(), []byte(YamlApp),
 						)
 						Expect(err).NotTo(HaveOccurred())

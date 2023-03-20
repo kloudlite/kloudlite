@@ -61,7 +61,7 @@ func setupNs() {
 }
 
 func setupApp() {
-	err := Suite.K8sYamlClient.ApplyYAML(context.TODO(), []byte(yamlApp))
+	_, err := Suite.K8sYamlClient.ApplyYAML(context.TODO(), []byte(yamlApp))
 	Expect(err).NotTo(HaveOccurred())
 
 	DeferCleanup(func() {

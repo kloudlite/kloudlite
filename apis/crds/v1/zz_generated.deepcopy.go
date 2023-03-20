@@ -323,13 +323,6 @@ func (in *AppSpec) DeepCopyInto(out *AppSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Volumes != nil {
-		in, out := &in.Volumes, &out.Volumes
-		*out = make([]corev1.Volume, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
 	out.Hpa = in.Hpa
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector

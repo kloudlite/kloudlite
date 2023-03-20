@@ -27,6 +27,12 @@ type Bucket struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (b *Bucket) EnsureGVK() {
+	if b != nil {
+		b.SetGroupVersionKind(GroupVersion.WithKind("Bucket"))
+	}
+}
+
 func (b *Bucket) GetStatus() *rApi.Status {
 	return &b.Status
 }

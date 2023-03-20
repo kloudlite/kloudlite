@@ -96,7 +96,7 @@ var _ = BeforeSuite(
 		Expect(err).NotTo(HaveOccurred())
 		Expect(k8sYamlClient).NotTo(BeNil())
 
-		err = k8sYamlClient.ApplyYAML(context.TODO(), []byte(YamlTestNs))
+		_, err = k8sYamlClient.ApplyYAML(context.TODO(), []byte(YamlTestNs))
 		Expect(err).NotTo(HaveOccurred())
 	},
 )

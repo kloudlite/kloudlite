@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/kloudlite/operator/pkg/constants"
@@ -18,8 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kloudlite/operator/apis/cluster-setup/v1"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	v1 "github.com/kloudlite/operator/apis/cluster-setup/v1"
 	lc "github.com/kloudlite/operator/operators/cluster-setup/internal/constants"
 	"github.com/kloudlite/operator/operators/cluster-setup/internal/env"
 	"github.com/kloudlite/operator/operators/cluster-setup/internal/templates"
@@ -43,11 +44,15 @@ type Reconciler struct {
 	Name       string
 	yamlClient *kubectl.YAMLClient
 	restConfig *rest.Config
+	helmClient helm.Client
 	Env        *env.Env
 
-	TemplateWgOperator     []byte
-	TemplateCsiOperator    []byte
-	TemplateRouterOperator []byte
+	TemplateWgOperator         []byte
+	TemplateCsiOperator        []byte
+	TemplateRouterOperator     []byte
+	TemplateAppNLambdaOperator []byte
+	TemplateMsvcNMresOperator  []byte
+	TemplateMsvcRedisOperator  []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -55,15 +60,20 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	WgOperatorReady         string = "internal-operator-installed"
-	DefaultsPatched         string = "defaults-patched"
-	KloudliteCredsValidated string = "kloudlite-creds-validated"
-	UserKubeConfigCreated   string = "user-kubeconfig-created"
-	CsiOperatorReady        string = "csi-operator-ready"
-	RoutersOperatorReady    string = "routers-operator-ready"
-	LokiReady               string = "loki-ready"
-	PrometheusReady         string = "prometheus-ready"
-	Finalizing              string = "finalizing"
+	WgOperatorReady            string = "internal-operator-installed"
+	DefaultsPatched            string = "defaults-patched"
+	KloudliteCredsValidated    string = "kloudlite-creds-validated"
+	UserKubeConfigCreated      string = "user-kubeconfig-created"
+	CsiOperatorReady           string = "csi-operator-ready"
+	RoutersOperatorReady       string = "routers-operator-ready"
+	LokiReady                  string = "loki-ready"
+	PrometheusReady            string = "prometheus-ready"
+	Finalizing                 string = "finalizing"
+	GitlabRunnerInstalled      string = "gitlab-runner-installed"
+	CertManagerInstalled       string = "cert-manager-installed"
+	AppOperatorInstalled       string = "app-operator-installed"
+	MsvcNMresOperatorInstalled string = "msvc-n-mres-operator-installed"
+	RedisOperatorInstalled      string = "redis-operator-installed"
 )
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -114,7 +124,27 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.ensureCertManager(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.ensureRoutersOperator(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureAppOperator(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureMsvcNMresOperator(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureMsvcRedisOperator(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureGitlabRunner(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -128,24 +158,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{}, r.Status().Update(ctx, req.Object)
+	// return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*v1.ManagedCluster]) stepResult.Result {
-	//ctx, obj := req.Context(), req.Object
-	//check := rApi.Check{Generation: obj.Generation}
-	//
-	//check.Status = true
-	//if check != obj.Status.Checks[Finalizing] {
-	//	obj.Status.Checks[Finalizing] = check
-	//	req.UpdateStatus()
-	//}
 	return req.Next()
 }
 
 func (r *Reconciler) checkKloudliteCreds(req *rApi.Request[*v1.ManagedCluster]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(KloudliteCredsValidated)
+	defer req.LogPostCheck(KloudliteCredsValidated)
 
 	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.KloudliteCreds.Namespace, obj.Spec.KloudliteCreds.Name), &corev1.Secret{})
 	if err != nil {
@@ -161,13 +190,12 @@ func (r *Reconciler) checkKloudliteCreds(req *rApi.Request[*v1.ManagedCluster]) 
 	}
 
 	check.Status = true
-	if check != checks[KloudliteCredsValidated] {
-		checks[KloudliteCredsValidated] = check
+	if check != obj.Status.Checks[KloudliteCredsValidated] {
+		obj.Status.Checks[KloudliteCredsValidated] = check
 		req.UpdateStatus()
 	}
 
 	rApi.SetLocal(req, "kl-creds", klCreds)
-
 	return req.Next()
 }
 
@@ -227,7 +255,7 @@ func (r *Reconciler) ensureWgOperator(req *rApi.Request[*v1.ManagedCluster]) ste
 		return req.CheckFailed(WgOperatorReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(WgOperatorReady, check, err.Error()).Err(nil)
 	}
 
@@ -243,7 +271,7 @@ func (r *Reconciler) ensureWgOperator(req *rApi.Request[*v1.ManagedCluster]) ste
 		return req.CheckFailed(WgOperatorReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b4); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b4); err != nil {
 		return req.CheckFailed(WgOperatorReady, check, err.Error()).Err(nil)
 	}
 
@@ -275,7 +303,7 @@ func (r *Reconciler) ensureUserKubeConfig(req *rApi.Request[*v1.ManagedCluster])
 		return req.CheckFailed(UserKubeConfigCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(UserKubeConfigCreated, check, err.Error()).Err(nil)
 	}
 
@@ -337,7 +365,7 @@ func (r *Reconciler) ensureCsiDriversOperator(req *rApi.Request[*v1.ManagedClust
 		return req.CheckFailed(CsiOperatorReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(CsiOperatorReady, check, err.Error()).Err(nil)
 	}
 
@@ -356,25 +384,221 @@ func (r *Reconciler) ensureRoutersOperator(req *rApi.Request[*v1.ManagedCluster]
 	req.LogPreCheck(RoutersOperatorReady)
 	defer req.LogPostCheck(RoutersOperatorReady)
 
+	routerOperatorEnv := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "router-operator-env", Namespace: obj.Spec.KlOperators.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, routerOperatorEnv, func() error {
+		if routerOperatorEnv.StringData == nil {
+			routerOperatorEnv.StringData = map[string]string{}
+		}
+		routerOperatorEnv.StringData["ACME_EMAIL"] = obj.Spec.KlOperators.ACMEEmail
+		routerOperatorEnv.StringData["DEFAULT_CLUSTER_ISSUER_NAME"] = obj.Spec.KlOperators.ClusterIssuerName
+		return nil
+	}); err != nil {
+		return req.CheckFailed(RoutersOperatorReady, check, err.Error()).Err(nil)
+	}
+
 	b, err := templates.ParseBytes(r.TemplateRouterOperator, map[string]any{
-		"Namespace":       lc.NsOperators,
-		"EnvName":         "development",
-		"ImageTag":        "v1.0.5",
-		"ImagePullPolicy": "Always",
-		"SvcAccountName":  lc.ClusterSvcAccount,
+		"Namespace":       obj.Spec.KlOperators.Namespace,
+		"EnvName":         obj.Spec.KlOperators.InstallationMode,
+		"ImageTag":        obj.Spec.KlOperators.ImageTag,
+		"ImagePullPolicy": obj.Spec.KlOperators.ImagePullPolicy,
+		"SvcAccountName":  obj.Spec.KlOperators.ClusterSvcAccount,
 	})
 
 	if err != nil {
 		return req.CheckFailed(RoutersOperatorReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(RoutersOperatorReady, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
 	if check != obj.Status.Checks[RoutersOperatorReady] {
 		obj.Status.Checks[RoutersOperatorReady] = check
+		req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) ensureAppOperator(req *rApi.Request[*v1.ManagedCluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(AppOperatorInstalled)
+	defer req.LogPostCheck(AppOperatorInstalled)
+
+	b, err := templates.ParseBytes(r.TemplateAppNLambdaOperator, map[string]any{
+		"Namespace":       obj.Spec.KlOperators.Namespace,
+		"EnvName":         obj.Spec.KlOperators.InstallationMode,
+		"ImageTag":        obj.Spec.KlOperators.ImageTag,
+		"ImagePullPolicy": obj.Spec.KlOperators.ImagePullPolicy,
+		"SvcAccountName":  obj.Spec.KlOperators.ClusterSvcAccount,
+	})
+
+	if err != nil {
+		return req.CheckFailed(AppOperatorInstalled, check, err.Error()).Err(nil)
+	}
+
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(AppOperatorInstalled, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[AppOperatorInstalled] {
+		obj.Status.Checks[AppOperatorInstalled] = check
+		req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) ensureMsvcNMresOperator(req *rApi.Request[*v1.ManagedCluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(MsvcNMresOperatorInstalled)
+	defer req.LogPostCheck(MsvcNMresOperatorInstalled)
+
+	b, err := templates.ParseBytes(r.TemplateMsvcNMresOperator, map[string]any{
+		"Namespace":       obj.Spec.KlOperators.Namespace,
+		"EnvName":         obj.Spec.KlOperators.InstallationMode,
+		"ImageTag":        obj.Spec.KlOperators.ImageTag,
+		"ImagePullPolicy": obj.Spec.KlOperators.ImagePullPolicy,
+		"SvcAccountName":  obj.Spec.KlOperators.ClusterSvcAccount,
+	})
+
+	if err != nil {
+		return req.CheckFailed(MsvcNMresOperatorInstalled, check, err.Error()).Err(nil)
+	}
+
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(MsvcNMresOperatorInstalled, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[MsvcNMresOperatorInstalled] {
+		obj.Status.Checks[MsvcNMresOperatorInstalled] = check
+		req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+func (r *Reconciler) ensureMsvcRedisOperator(req *rApi.Request[*v1.ManagedCluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(RedisOperatorInstalled) 
+	defer req.LogPostCheck(RedisOperatorInstalled) 
+
+	b, err := templates.ParseBytes(r.TemplateMsvcRedisOperator, map[string]any{
+		"Namespace":       obj.Spec.KlOperators.Namespace,
+		"EnvName":         obj.Spec.KlOperators.InstallationMode,
+		"ImageTag":        obj.Spec.KlOperators.ImageTag,
+		"ImagePullPolicy": obj.Spec.KlOperators.ImagePullPolicy,
+		"SvcAccountName":  obj.Spec.KlOperators.ClusterSvcAccount,
+	})
+
+	if err != nil {
+		return req.CheckFailed(RedisOperatorInstalled, check, err.Error()).Err(nil)
+	}
+
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(RedisOperatorInstalled, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[RedisOperatorInstalled] {
+		obj.Status.Checks[RedisOperatorInstalled] = check
+		req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) ensureGitlabRunner(req *rApi.Request[*v1.ManagedCluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	if obj.Spec.GitlabRunner == nil || !obj.Spec.GitlabRunner.Enabled {
+		req.Logger.Infof("skipping gitlab runner reconcilation")
+		return req.Next()
+	}
+
+	req.LogPreCheck(GitlabRunnerInstalled)
+	defer req.LogPostCheck(GitlabRunnerInstalled)
+
+	gitlabNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.GitlabRunner.Namespace}}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, gitlabNs, func() error {
+		if !fn.IsOwner(gitlabNs, fn.AsOwner(obj)) {
+			gitlabNs.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		return nil
+	}); err != nil {
+		return req.CheckFailed(GitlabRunnerInstalled, check, err.Error()).Err(nil)
+	}
+
+	b, err := templates.Parse(templates.GitlabRunnerValues, map[string]any{"runner-token": obj.Spec.GitlabRunner.RunnerToken})
+	if err != nil {
+		return req.CheckFailed(GitlabRunnerInstalled, check, err.Error()).Err(nil)
+	}
+
+	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+		ReleaseName: obj.Spec.GitlabRunner.ReleaseName,
+		// ChartName:   "gitlab/gitlab-runner",
+		ChartName:  fmt.Sprintf("%s/gitlab-runner-0.50.1.tgz", r.Env.HelmChartsDir),
+		Namespace:  obj.Spec.GitlabRunner.Namespace,
+		ValuesYaml: string(b),
+	}); err != nil {
+		return req.CheckFailed(GitlabRunnerInstalled, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[GitlabRunnerInstalled] {
+		obj.Status.Checks[GitlabRunnerInstalled] = check
+		req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) ensureCertManager(req *rApi.Request[*v1.ManagedCluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(CertManagerInstalled)
+	defer req.LogPostCheck(CertManagerInstalled)
+
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.CertManager.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
+		if ns.Labels == nil {
+			ns.Labels = make(map[string]string, 1)
+		}
+		ns.Labels["kloudlite.io/created-by"] = obj.Name
+		return nil
+	}); err != nil {
+		return req.CheckFailed(CertManagerInstalled, check, err.Error()).Err(nil)
+	}
+
+	b, err := templates.Parse(templates.HelmCertManagerValues, map[string]any{})
+	if err != nil {
+		return req.CheckFailed(CertManagerInstalled, check, err.Error()).Err(nil)
+	}
+
+	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+		ReleaseName: obj.Spec.CertManager.ReleaseName,
+		ChartName:   fmt.Sprintf("%s/cert-manager-v1.11.0.tgz", r.Env.HelmChartsDir),
+		Namespace:   obj.Spec.CertManager.Namespace,
+		ValuesYaml:  string(b),
+	}); err != nil {
+		r.logger.Error(err)
+		return req.CheckFailed(CertManagerInstalled, check, err.Error()).Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[CertManagerInstalled] {
+		obj.Status.Checks[CertManagerInstalled] = check
 		req.UpdateStatus()
 	}
 
@@ -388,40 +612,24 @@ func (r *Reconciler) ensureLoki(req *rApi.Request[*v1.ManagedCluster]) stepResul
 	req.LogPreCheck(LokiReady)
 	defer req.LogPostCheck(LokiReady)
 
-	helmCli, err := helm.NewHelmClient(r.restConfig, helm.ClientOptions{
-		Namespace: lc.NsCore,
-	})
+	if obj.Spec.Loki == nil || !obj.Spec.Loki.Enabled {
+		req.Logger.Infof("skipping loki installation")
+		return req.Next()
+	}
+
+	b, err := templates.Parse(templates.LokiValues, map[string]any{"loki-values": obj.Spec.Loki})
 	if err != nil {
 		return req.CheckFailed(LokiReady, check, err.Error()).Err(nil)
 	}
 
-	releaseName := obj.Spec.LokiValues.ServiceName
-	helmValues, err := helmCli.GetReleaseValues(ctx, releaseName)
-	if err != nil {
-		req.Logger.Infof("helm release (%s) not found, will be creating it", releaseName)
-	}
-
-	b, err := templates.Parse(templates.LokiValues, map[string]any{"loki-values": obj.Spec.LokiValues})
-	if err != nil {
+	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+		ReleaseName: obj.Spec.Loki.ReleaseName,
+		// ChartName:   "grafana/loki-stack",
+		ChartName:  fmt.Sprintf("%s/loki-stack-2.8.7.tgz", r.Env.HelmChartsDir),
+		Namespace:  lc.NsCore,
+		ValuesYaml: string(b),
+	}); err != nil {
 		return req.CheckFailed(LokiReady, check, err.Error()).Err(nil)
-	}
-
-	if !helm.AreHelmValuesEqual(helmValues, b) {
-		if err := helmCli.AddOrUpdateChartRepo(ctx, helm.RepoEntry{
-			Name: "grafana",
-			Url:  "https://grafana.github.io/helm-charts",
-		}); err != nil {
-			return req.CheckFailed(LokiReady, check, err.Error()).Err(nil)
-		}
-
-		if _, err := helmCli.InstallOrUpgradeChart(ctx, helm.ChartSpec{
-			ReleaseName: releaseName,
-			ChartName:   "grafana/loki-stack",
-			Namespace:   lc.NsCore,
-			ValuesYaml:  string(b),
-		}); err != nil {
-			return req.CheckFailed(LokiReady, check, err.Error()).Err(nil)
-		}
 	}
 
 	check.Status = true
@@ -437,42 +645,27 @@ func (r *Reconciler) ensurePrometheus(req *rApi.Request[*v1.ManagedCluster]) ste
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
+	if obj.Spec.Prometheus == nil || !obj.Spec.Prometheus.Enabled {
+		req.Logger.Infof("skipping prometheus installation")
+		return req.Next()
+	}
+
 	req.LogPreCheck(PrometheusReady)
 	defer req.LogPostCheck(PrometheusReady)
 
-	helmCli, err := helm.NewHelmClient(r.restConfig, helm.ClientOptions{Namespace: lc.NsCore})
+	b, err := templates.Parse(templates.PrometheusValues, map[string]any{"prometheus-values": obj.Spec.Prometheus, "name": obj.Spec.Prometheus.ReleaseName})
 	if err != nil {
 		return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
 	}
 
-	releaseName := obj.Spec.PrometheusValues.ServiceName
-	helmValues, err := helmCli.GetReleaseValues(ctx, releaseName)
-	if err != nil {
-		req.Logger.Infof("helm release (%s) not found, will be creating it", releaseName)
-	}
-
-	b, err := templates.Parse(templates.PrometheusValues, map[string]any{"prometheus-values": obj.Spec.PrometheusValues, "name": releaseName})
-	if err != nil {
+	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+		ReleaseName: obj.Spec.Prometheus.ReleaseName,
+		// ChartName:   "bitnami/kube-prometheus",
+		ChartName:  fmt.Sprintf("%s/kube-prometheus-8.2.2.tgz", r.Env.HelmChartsDir),
+		Namespace:  lc.NsCore,
+		ValuesYaml: string(b),
+	}); err != nil {
 		return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
-	}
-
-	if !helm.AreHelmValuesEqual(helmValues, b) {
-		if err := helmCli.AddOrUpdateChartRepo(ctx, helm.RepoEntry{
-			Name: "bitnami",
-			Url:  "https://charts.bitnami.com/bitnami",
-		}); err != nil {
-			return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
-		}
-
-		if _, err := helmCli.InstallOrUpgradeChart(ctx, helm.ChartSpec{
-			ReleaseName: releaseName,
-			ChartName:   "bitnami/kube-prometheus",
-			Namespace:   lc.NsCore,
-			ValuesYaml:  string(b),
-		}); err != nil {
-			req.Logger.Error(err)
-			return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
-		}
 	}
 
 	check.Status = true
@@ -484,10 +677,13 @@ func (r *Reconciler) ensurePrometheus(req *rApi.Request[*v1.ManagedCluster]) ste
 }
 
 func (r *Reconciler) downloadOperatorTemplate(name string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	defer cancel()
+
 	req, err := http.NewRequestWithContext(
-		context.TODO(),
+		ctx,
 		http.MethodGet,
-		fmt.Sprintf("https://%s/%s/operators/download/%s", r.Env.ReleasesApiEndpoint, r.Env.ReleaseVersion, name),
+		fmt.Sprintf("%s/%s/operators/download/%s", r.Env.ReleasesApiEndpoint, r.Env.ReleaseVersion, name),
 		nil,
 	)
 
@@ -515,9 +711,17 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 	r.restConfig = mgr.GetConfig()
 
-	var err error
+	chartsDir, err := filepath.Abs(r.Env.HelmChartsDir)
+	if err != nil {
+		return err
+	}
+	r.Env.HelmChartsDir = chartsDir
+
+	r.helmClient = helm.NewHelmClientOrDie(mgr.GetConfig(), helm.ClientOptions{Logger: r.logger})
+
 	var g errgroup.Group
 
+	r.logger.Infof("trying to download operator templates from releases-api")
 	ts := time.Now()
 	g.Go(func() error {
 		r.TemplateCsiOperator, err = r.downloadOperatorTemplate("csi-drivers")
@@ -531,13 +735,30 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		r.TemplateWgOperator, err = r.downloadOperatorTemplate("wg-operator")
 		return err
 	})
+	g.Go(func() error {
+		r.TemplateAppNLambdaOperator, err = r.downloadOperatorTemplate("app-n-lambda")
+		return err
+	})
+	g.Go(func() error {
+		r.TemplateMsvcNMresOperator, err = r.downloadOperatorTemplate("msvc-n-mres")
+		return err
+	})
+	g.Go(func() error {
+		r.TemplateMsvcRedisOperator, err = r.downloadOperatorTemplate("msvc-redis")
+		return err
+	})
+	g.Go(func() error {
+		r.TemplateMsvcRedisOperator, err = r.downloadOperatorTemplate("msvc-redis")
+		return err
+	})
+
 	if err := g.Wait(); err != nil {
 		return err
 	}
 	r.logger.Infof("template downloading took %.2fs", time.Since(ts).Seconds())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ManagedCluster{})
-	builder.Owns(&crdsv1.App{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

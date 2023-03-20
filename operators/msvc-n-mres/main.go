@@ -13,10 +13,12 @@ import (
 	"github.com/kloudlite/operator/operator"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/mres"
+	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc"
 )
 
 func main() {
 	mgr := operator.New("msvc-and-mres")
+	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(
 		crdsv1.AddToScheme,
 		mongodbMsvcv1.AddToScheme,
@@ -28,10 +30,9 @@ func main() {
 		zookeeperMsvcv1.AddToScheme,
 		neo4jMsvcv1.AddToScheme,
 	)
-	ev := env.GetEnvOrDie()
 	mgr.RegisterControllers(
-		//&msvc.ManagedServiceReconciler{Name: "msvc", Env: ev},
-		&mres.ManagedResourceReconciler{Name: "mres", Env: ev},
+		&msvc.Reconciler{Name: "msvc", Env: ev},
+		&mres.Reconciler{Name: "mres", Env: ev},
 	)
 	mgr.Start()
 }

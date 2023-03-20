@@ -69,6 +69,12 @@ type Router struct {
 	Status    rApi.Status `json:"status,omitempty"`
 }
 
+func (r *Router) EnsureGVK() {
+	if r != nil {
+		r.SetGroupVersionKind(GroupVersion.WithKind("Router"))
+	}
+}
+
 func (r *Router) GetStatus() *rApi.Status {
 	return &r.Status
 }

@@ -1,46 +1,47 @@
-#apiVersion: v1
-#kind: Namespace
-#metadata:
-#  name: kloudlite
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#  name: kl-core
 #
-#---
-#apiVersion: v1
-#kind: Namespace
-#metadata:
+# ---
+# apiVersion: v1
+# kind: Namespace
+# metadata:
 #  name: kl-init-operators
 #
-#---
-#
-##apiVersion: v1
-##kind: Secret
-##metadata:
-##  name: kl-docker-creds
-##  namespace: kl-init-operators
-##stringData:
-#---
-#
-#apiVersion: v1
-#kind: ServiceAccount
-#metadata:
+# ---
+
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#  name: kl-docker-creds
+#  namespace: kl-init-operators
+# stringData:
+---
+
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
 #  name: kloudlite-cluster-svc-account
 #  namespace: kl-init-operators
-#imagePullSecrets:
+# imagePullSecrets:
 #  - name: kl-docker-creds
 #
-#---
-#apiVersion: rbac.authorization.k8s.io/v1
-#kind: ClusterRoleBinding
-#metadata:
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
 #  name: kloudlite-cluster-svc-account-rb
 #  namespace: kl-init-operators
-#subjects:
+# subjects:
 #  - kind: ServiceAccount
 #    name: kloudlite-cluster-svc-account
 #    namespace: kl-init-operators
-#roleRef:
+# roleRef:
 #  apiGroup: rbac.authorization.k8s.io
 #  kind: "ClusterRole"
 #  name: cluster-admin
+#
 
 ---
 apiVersion: v1
@@ -64,6 +65,7 @@ spec:
     name: kloudlite-creds
     namespace: kl-core
   loki:
+    enabled: true
     s3:
       awsAccessKeyId: ***REMOVED***
       awsSecretAccessKey: ***REMOVED***
@@ -76,6 +78,7 @@ spec:
       memory: 200Mi
 
   prometheus:
+    enabled: false
     resources:
       cpu:
         min: 1200m

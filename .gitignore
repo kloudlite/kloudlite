@@ -39,3 +39,5 @@ helm-charts
 
 dist/
 *.etcd
+
+__debug*

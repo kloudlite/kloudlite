@@ -39,6 +39,18 @@ tasks:
           echo "---"
         done
 
+  # helm-pull:
+  #   preconditions:
+  #     - sh: '[ -n "{{.Dir}}" ]'
+  #       msg: 'var Dir must have a value'
+  #     - sh: '[ -d "{{.Dir}}" ]'
+  #       msg: 'Dir ({{.Dir}}) must exist'
+  #   cmds:
+  #     - |+
+  #       pushd {{.Dir}}
+  #       helm pull {{.ClI_ARGS}} -d ./helm-charts
+  #       popd
+
   yaml:operator:
     summary: |+
       template args
@@ -128,8 +140,6 @@ tasks:
   yaml:operators:
     silent: true
     preconditions:
-      - sh: '[ -n "{{.Version}}" ]'
-        msg: 'Version must be specified'
       - sh: '[ -n "{{.Dir}}" ]'
         msg: 'Dir must be set'
     cmds:
@@ -173,7 +183,6 @@ tasks:
         popd 1> /dev/null
 
 #
-
   local-build:operator:
     preconditions:
       - sh: '[ -n "{{.Name}}" ]'
@@ -205,6 +214,7 @@ tasks:
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
 
         #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+
         CGO_ENABLED=0 go build -v -o $tDir/{{.APP}} .
         
         echo "[Debug]: $tDir/Dockerfile.base"
@@ -292,6 +302,27 @@ tasks:
         [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
       - kubectl apply -f config/crd/bases
 
+  manifests:
+    summary: |+
+      copied from makefile, written to make and apply for specific types
+    vars:
+      filePath:
+        sh: dirname $(fd '.*_types.go' apis | fzf)
+      # apply: false
+      outputDir:
+        sh: mktemp -d
+    silent: true
+    cmds:
+      - |+
+        # bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+        bin/controller-gen rbac:roleName=manager-role crd webhook paths="./{{.filePath}}" output:crd:artifacts:config={{.outputDir}}
+        if [ "{{.apply}}" == "true" ]; then
+          kubectl apply -f {{.outputDir}}
+        fi
+        mv {{.outputDir}}/* config/crd/bases/
+        rm -rf {{.outputDir}}
+
+
   new:operator:
     preconditions:
       - sh: test -n '{{.name}}'
@@ -372,6 +403,41 @@ tasks:
     cmds:
       - docker buildx build -t {{.Image}} . --build-context project=".." --build-arg name="{{.Name}}"
       - docker push {{.Image}}
+
+  local-build:webhook-worker:
+    preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: webhook-worker
+      Image: "{{.dockerRegistry}}/kloudlite/workers/{{.EnvName}}/registry-webhook-worker:{{.Tag}}"
+    dir: ./webhook-worker
+    cmds:
+      - |+
+        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+
+        startLineNo=$(echo "$lineNumbers" | head -n+1)
+        finalLineNo=$(echo "$lineNumbers" | tail -1)
+        
+        tDir=$(mktemp -d)
+        
+        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=builder')
+        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
+        
+        #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        CGO_ENABLED=0 go build -o $tDir/{{.Name}} .
+
+        echo "[Debug]: $tDir/Dockerfile.base"
+
+        lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.Name}} /kloudlite-agent" > $tDir/Dockerfile
+        cat $tDir/Dockerfile
+        
+        docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
+        docker push {{.Image}}
+        rm -rf $tDir
 
   build:http-lb:
     dir: ./http-lb

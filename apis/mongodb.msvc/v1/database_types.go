@@ -30,6 +30,12 @@ type Database struct {
 	Status rApi.Status  `json:"status,omitempty"`
 }
 
+func (db *Database) EnsureGVK() {
+	if db != nil {
+		db.SetGroupVersionKind(GroupVersion.WithKind("Database"))
+	}
+}
+
 func (d *Database) GetStatus() *rApi.Status {
 	return &d.Status
 }

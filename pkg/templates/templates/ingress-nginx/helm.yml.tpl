@@ -81,8 +81,10 @@ spec:
     service:
       type: "ClusterIP"
 
+    {{- if (and $wildcardCertNamespace $wildcardCertName) }}
     extraArgs:
       default-ssl-certificate: "{{$wildcardCertNamespace}}/{{$wildcardCertName}}"
+    {{- end }}
     podLabels: {{$labels  | toYAML | nindent 6}}
 
     resources:

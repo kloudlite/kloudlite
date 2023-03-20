@@ -59,7 +59,7 @@ const (
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(
-		context.WithValue(ctx, "logger", r.logger),
+		rApi.NewReconcilerCtx(ctx, r.logger),
 		r.Client,
 		request.NamespacedName,
 		&neo4jMsvcv1.StandaloneService{},

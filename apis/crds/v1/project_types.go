@@ -10,7 +10,8 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountId string `json:"accountId,omitempty"`
+	AccountName     string `json:"accountName"`
+	TargetNamespace string `json:"targetNamespace"`
 	// DisplayName of Project
 	DisplayName string `json:"displayName,omitempty" validate:"omitempty"`
 	Logo        string `json:"logo,omitempty" validate:"omitempty,url"`
@@ -30,6 +31,12 @@ type Project struct {
 
 	Spec   ProjectSpec `json:"spec,omitempty"`
 	Status rApi.Status `json:"status,omitempty"`
+}
+
+func (p *Project) EnsureGVK() {
+	if p != nil {
+		p.SetGroupVersionKind(GroupVersion.WithKind("Project"))
+	}
 }
 
 func (p *Project) GetStatus() *rApi.Status {

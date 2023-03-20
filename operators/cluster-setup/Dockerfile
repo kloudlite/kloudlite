@@ -17,9 +17,7 @@ RUN go build -o manager ./operators/$name/main.go
 
 FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /workspace/manager /manager
-COPY --from=project ./apps/releases/assets/operator/v1.0.5 /tmp/operator-crds-v1.0.5
-COPY --from=internal-operator ./apps/releases/assets/operator/v1.0.5 /tmp/operator-crds-v1.0.5/internal-operator.yml
-ENV OPERATOR_TEMPLATES_DIR="/tmp/operator-crds-v1.0.5"
+COPY ./helm-charts /tmp/helm-charts
+ENV HELM_CHARTS_DIR=/tmp/helm-charts
 USER 65532:65532
-
 ENTRYPOINT ["/manager"]

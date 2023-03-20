@@ -42,6 +42,12 @@ type Service struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (s *Service) EnsureGVK() {
+	if s != nil {
+		s.SetGroupVersionKind(GroupVersion.WithKind("Service"))
+	}
+}
+
 func (s *Service) GetStatus() *rApi.Status {
 	return &s.Status
 }
