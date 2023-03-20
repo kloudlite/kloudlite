@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kloudlite/operator/operators/status-n-billing/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	"github.com/kloudlite/operator/pkg/redpanda"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,9 +26,9 @@ var Stages = struct {
 }
 
 type MessageReply struct {
-	ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
-	Conditions      []metav1.Condition `json:"conditions,omitempty"`
-	IsReady         bool               `json:"isReady"`
+	// ChildConditions []metav1.Condition `json:"childConditions,omitempty"`
+	// Conditions      []metav1.Condition `json:"conditions,omitempty"`
+	IsReady bool `json:"isReady"`
 	// ToBeDeleted     bool               `json:"toBeDeleted,omitempty"`
 	Key      string           `json:"key"`
 	Billing  *ResourceBilling `json:"billing-watcher,omitempty"`
@@ -42,15 +42,24 @@ type Notifier struct {
 	topic     string
 }
 
-func (n *Notifier) Notify(ctx context.Context, key string, metadata KlMetadata, status rApi.Status, stage stageTT) error {
+func (n *Notifier) Notify(ctx context.Context, key string, statusUpdate types.StatusUpdate) error {
+	b, err := json.Marshal(statusUpdate)
+	if err != nil {
+		return err
+	}
+	_, err = n.producer.Produce(ctx, n.topic, key, b)
+	return err
+}
+
+func (n *Notifier) Notify2(ctx context.Context, key string, metadata KlMetadata, status rApi.Status, stage stageTT) error {
 	metadata.ClusterId = n.clusterId
 	msg := MessageReply{
-		Metadata:        metadata,
-		ChildConditions: status.ChildConditions,
-		Conditions:      status.Conditions,
-		IsReady:         status.IsReady,
-		Key:             key,
-		Stage:           stage,
+		Metadata: metadata,
+		// ChildConditions: status.ChildConditions,
+		// Conditions:      status.Conditions,
+		IsReady: status.IsReady,
+		Key:     key,
+		Stage:   stage,
 	}
 
 	b, err := json.Marshal(msg)

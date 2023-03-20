@@ -50,17 +50,12 @@ const (
 	Finalizing             string = "finalizing"
 )
 
-const (
-	WildcardCertName      string = "kl-cert-issuer-tls"
-	WildcardCertNamespace string = "kl-init-cert-manager"
-)
-
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=edges,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=edges/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=edges/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.EdgeRouter{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.EdgeRouter{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -154,7 +149,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.
 }
 
 func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(ClusterIssuerReady)
@@ -168,7 +163,7 @@ func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) 
 		if !apiErrors.IsNotFound(err) {
 			return req.CheckFailed(ClusterIssuerReady, check, err.Error())
 		}
-		req.Logger.Infof("default cluster issuer (%s) not found, skipping reading them", r.Env.DefaultClusterIssuerName)
+		req.Logger.Infof("default cluster issuer (%s) not found, skipping reading it", r.Env.DefaultClusterIssuerName)
 	}
 
 	var acmeDnsSolvers []acmev1.ACMEChallengeSolver
@@ -209,20 +204,20 @@ func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) 
 		return req.CheckFailed(ClusterIssuerReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(ClusterIssuerReady, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
-	if check != checks[ClusterIssuerReady] {
-		checks[ClusterIssuerReady] = check
+	if check != obj.Status.Checks[ClusterIssuerReady] {
+		obj.Status.Checks[ClusterIssuerReady] = check
 		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureIngressController(req *rApi.Request[*crdsv1.EdgeRouter]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(IngressControllerReady)
@@ -235,8 +230,8 @@ func (r *Reconciler) ensureIngressController(req *rApi.Request[*crdsv1.EdgeRoute
 			"region":                  obj.Spec.EdgeName,
 			"owner-refs":              []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"labels":                  obj.Labels,
-			"wildcard-cert-name":      WildcardCertName,
-			"wildcard-cert-namespace": WildcardCertNamespace,
+			"wildcard-cert-name":      r.Env.WildcardCertName,
+			"wildcard-cert-namespace": r.Env.WildcardCertNamespace,
 			"ingress-class-name":      controllers.GetIngressClassName(obj.Spec.EdgeName),
 		},
 	)
@@ -244,13 +239,13 @@ func (r *Reconciler) ensureIngressController(req *rApi.Request[*crdsv1.EdgeRoute
 		return req.CheckFailed(IngressControllerReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(IngressControllerReady, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
-	if check != checks[IngressControllerReady] {
-		checks[IngressControllerReady] = check
+	if check != obj.Status.Checks[IngressControllerReady] {
+		obj.Status.Checks[IngressControllerReady] = check
 		req.UpdateStatus()
 	}
 	return req.Next()

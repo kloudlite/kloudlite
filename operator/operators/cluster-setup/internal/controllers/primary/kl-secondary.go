@@ -40,7 +40,7 @@ func (r *Reconciler) installKloudliteAgent(req *rApi.Request[*v1.PrimaryCluster]
 		return req.CheckFailed(KloudliteAgentReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(KloudliteAgentReady, check, err.Error()).Err(nil)
 	}
 

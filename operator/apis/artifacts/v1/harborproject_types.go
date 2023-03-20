@@ -27,6 +27,12 @@ type HarborProject struct {
 	Status rApi.Status       `json:"status,omitempty"`
 }
 
+func (hp *HarborProject) EnsureGVK() {
+	if hp != nil {
+		hp.SetGroupVersionKind(GroupVersion.WithKind("HarborProject"))
+	}
+}
+
 func (hp *HarborProject) GetStatus() *rApi.Status {
 	return &hp.Status
 }

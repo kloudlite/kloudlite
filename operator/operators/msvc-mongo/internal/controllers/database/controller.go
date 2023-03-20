@@ -240,7 +240,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 

@@ -10,10 +10,12 @@ import (
 	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
 	"github.com/kloudlite/operator/operators/status-n-billing/internal/env"
 	"github.com/kloudlite/operator/operators/status-n-billing/internal/types"
+	statusType "github.com/kloudlite/operator/operators/status-n-billing/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/pkg/redpanda"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	types2 "k8s.io/apimachinery/pkg/types"
@@ -28,11 +30,12 @@ import (
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	*types.Notifier
-	logger logging.Logger
-	Name   string
-	Env    *env.Env
+	Scheme       *runtime.Scheme
+	Producer     redpanda.Producer
+	logger       logging.Logger
+	Name         string
+	Env          *env.Env
+	getTopicName func(group string) string
 }
 
 func (r *Reconciler) GetName() string {
@@ -46,6 +49,9 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) (c
 	}
 
 	var j struct {
+		Spec struct {
+			AccountName string `json:"accountName"`
+		} `json:"spec"`
 		Status rApi.Status `json:"status"`
 	}
 
@@ -53,13 +59,36 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) (c
 		return ctrl.Result{}, nil
 	}
 
-	klMetadata := types.ExtractMetadata(obj)
+	obj.SetManagedFields(nil)
+
+	var m map[string]any
+	b, err = json.Marshal(obj)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	b, err = json.Marshal(statusType.StatusUpdate{
+		ClusterName: r.Env.ClusterName,
+		AccountName: j.Spec.AccountName,
+		Object:      m,
+		Status:      j.Status,
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	pm, err := r.Producer.Produce(ctx, r.getTopicName(obj.GetObjectKind().GroupVersionKind().Group), r.Env.ClusterName, b)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	r.logger.Infof("dispatched update to %s @ %s", pm.Topic, pm.Timestamp.String())
 
 	if obj.GetDeletionTimestamp() != nil {
 		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-			if err := r.Notify(ctx, types.GetMsgKey(obj), klMetadata, j.Status, types.Stages.Deleted); err != nil {
-				return ctrl.Result{}, err
-			}
 			return r.RemoveWatcherFinalizer(ctx, obj)
 		}
 		return ctrl.Result{}, nil
@@ -67,9 +96,6 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) (c
 
 	if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
 		return r.AddWatcherFinalizer(ctx, obj)
-	}
-	if err := r.Notify(ctx, types.GetMsgKey(obj), klMetadata, j.Status, types.Stages.Exists); err != nil {
-		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
@@ -104,10 +130,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	return r.SendStatusEvents(ctx, obj)
-	//if _, err := r.SendStatusEvents(ctx, obj); err != nil {
-	//	return ctrl.Result{}, err
-	//}
-	//return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) AddWatcherFinalizer(ctx context.Context, obj client.Object) (ctrl.Result, error) {
@@ -126,6 +148,13 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
+	r.getTopicName = func(group string) string {
+		if group == "infra.kloudlite.io" || group == "cmgr.kloudlite.io" {
+			return r.Env.KafkaTopicInfraUpdates
+		}
+		return r.Env.KafkaTopicStatusUpdates
+	}
+
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})
 
@@ -141,7 +170,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&crdsv1.Secret{},
 		fn.NewUnstructured(constants.EdgeInfraType),
 		fn.NewUnstructured(constants.CloudProviderType),
-		fn.NewUnstructured(constants.DeviceType),
+		fn.NewUnstructured(constants.WorkerNodeType),
+		fn.NewUnstructured(constants.NodePoolType),
+
+		fn.NewUnstructured(constants.ClusterType),
+		fn.NewUnstructured(constants.MasterNodeType),
+		// fn.NewUnstructured(constants.DeviceType),
 	}
 
 	for _, object := range watchList {

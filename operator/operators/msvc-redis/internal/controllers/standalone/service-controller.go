@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/kloudlite/operator/pkg/kubectl"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -67,12 +69,7 @@ const (
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices/finalizers,verbs=update
 
 func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(
-		context.WithValue(ctx, "logger", r.logger),
-		r.Client,
-		request.NamespacedName,
-		&redisMsvcv1.StandaloneService{},
-	)
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &redisMsvcv1.StandaloneService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -84,21 +81,14 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	// TODO: initialize all checks here
-	if step := req.EnsureChecks(HelmReady, StsReady, AccessCredsReady, ACLConfigMapReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -128,7 +118,12 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
@@ -136,7 +131,7 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneSe
 }
 
 func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(ACLConfigMapReady)
@@ -171,12 +166,12 @@ func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.Sta
 		); err != nil {
 			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
 		}
-
-		checks[ACLConfigMapReady] = check
-		return req.UpdateStatus()
 	}
 
 	if !aclCfgMap.Status.IsReady {
+		if aclCfgMap.Status.Message == nil {
+			return req.CheckFailed(ACLConfigMapReady, check, "waiting for acl config map to reconcile").Err(nil)
+		}
 		b, err := json.Marshal(aclCfgMap.Status.Message)
 		if err != nil {
 			return req.CheckFailed(ACLConfigMapReady, check, err.Error()).Err(nil)
@@ -185,18 +180,17 @@ func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.Sta
 	}
 
 	check.Status = true
-	if check != checks[ACLConfigMapReady] {
-		checks[ACLConfigMapReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[ACLConfigMapReady] {
+		obj.Status.Checks[ACLConfigMapReady] = check
+		req.UpdateStatus()
 	}
 
 	rApi.SetLocal(req, KeyAclConfigMapName, aclCfgMap.Name)
-
 	return req.Next()
 }
 
 func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(AccessCredsReady)
@@ -229,12 +223,9 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
-
-		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
 	}
 
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
@@ -242,13 +233,13 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 		if err := r.Update(ctx, obj); err != nil {
 			return req.FailWithOpError(err)
 		}
-		return req.Done().RequeueAfter(2 * time.Second)
+		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != checks[AccessCredsReady] {
-		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[AccessCredsReady] {
+		obj.Status.Checks[AccessCredsReady] = check
+		req.UpdateStatus()
 	}
 
 	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
@@ -261,7 +252,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 }
 
 func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(HelmReady)
@@ -286,35 +277,30 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyAclConfigMapName).Error())
 	}
 
-	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		sc := func() string {
-			if obj.Spec.Resources.Storage != nil && obj.Spec.Resources.Storage.StorageClass != "" {
-				return obj.Spec.Resources.Storage.StorageClass
-			}
-			return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4)
-		}()
-
-		b, err := templates.Parse(
-			templates.RedisStandalone, map[string]any{
-				"object":             obj,
-				"freeze":             obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
-				"storage-class":      sc,
-				"owner-refs":         obj.GetOwnerReferences(),
-				"acl-configmap-name": aclConfigmapName,
-				"root-password":      msvcOutput.RootPassword,
-			},
-		)
-
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	sc := func() string {
+		if obj.Spec.Resources.Storage != nil && obj.Spec.Resources.Storage.StorageClass != "" {
+			return obj.Spec.Resources.Storage.StorageClass
 		}
+		return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4)
+	}()
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-		}
+	b, err := templates.Parse(
+		templates.RedisStandalone, map[string]any{
+			"object":             obj,
+			"freeze":             obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
+			"storage-class":      sc,
+			"owner-refs":         obj.GetOwnerReferences(),
+			"acl-configmap-name": aclConfigmapName,
+			"root-password":      msvcOutput.RootPassword,
+		},
+	)
 
-		checks[HelmReady] = check
-		return req.UpdateStatus()
+	if err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	}
+
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
 	cds, err := conditions.FromObject(helmRes)
@@ -335,9 +321,9 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 		check.Status = true
 	}
 
-	if check != checks[HelmReady] {
-		checks[HelmReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[HelmReady] {
+		obj.Status.Checks[HelmReady] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -348,7 +334,7 @@ func getStsName(objName string) string {
 }
 
 func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(StsReady)
@@ -385,9 +371,9 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneSe
 	}
 
 	check.Status = true
-	if check != checks[StsReady] {
-		checks[StsReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[StsReady] {
+		obj.Status.Checks[StsReady] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -418,6 +404,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 		),
 	)
 
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

@@ -41,7 +41,7 @@ spec:
             type: object
           spec:
             properties:
-              accountId:
+              accountName:
                 type: string
               credentialsRef:
                 properties:
@@ -58,10 +58,9 @@ spec:
               region:
                 type: string
             required:
-            - accountId
+            - accountName
             - credentialsRef
             - provider
-            - region
             type: object
           status:
             properties:

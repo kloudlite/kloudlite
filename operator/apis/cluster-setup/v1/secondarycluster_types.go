@@ -29,6 +29,12 @@ type SecondaryCluster struct {
 	Status rApi.Status          `json:"status,omitempty"`
 }
 
+func (sc *SecondaryCluster) EnsureGVK() {
+	if sc != nil {
+		sc.SetGroupVersionKind(GroupVersion.WithKind("SecondaryCluster"))
+	}
+}
+
 func (sc *SecondaryCluster) GetStatus() *rApi.Status {
 	return &sc.Status
 }

@@ -104,7 +104,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	// return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*extensionsv1.EdgeWorker]) stepResult.Result {
@@ -281,7 +285,7 @@ func (r *Reconciler) ensureEdgeRouters(req *rApi.Request[*extensionsv1.EdgeWorke
 				Spec: crdsv1.EdgeRouterSpec{
 					EdgeName: obj.Name,
 					// Region:     obj.Spec.Region,
-					AccountRef: obj.Spec.AccountId,
+					AccountRef: obj.Spec.AccountName,
 					DefaultSSLCert: crdsv1.SSLCertRef{
 						SecretName: SSLSecretName,
 						Namespace:  SSLSecretNamespace,

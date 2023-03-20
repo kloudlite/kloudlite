@@ -5,6 +5,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 //+kubebuilder:object:root=true
@@ -31,6 +32,16 @@ type Secret struct {
 	Enabled bool `json:"enabled,omitempty"`
 
 	Status rApi.Status `json:"status,omitempty"`
+}
+
+func (scrt *Secret) EnsureGVK() {
+	if scrt != nil {
+		scrt.SetGroupVersionKind(GroupVersion.WithKind("Secret"))
+	}
+}
+
+func (scrt *Secret) GetGVK() schema.GroupVersionKind {
+	return GroupVersion.WithKind("Secret")
 }
 
 func (scrt *Secret) GetStatus() *rApi.Status {

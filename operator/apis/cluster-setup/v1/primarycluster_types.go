@@ -134,8 +134,8 @@ type PrimaryClusterSpec struct {
 	HarborAdminCreds  SecretReference   `json:"harborAdminCreds,omitempty"`
 	WebhookAuthzCreds SecretReference   `json:"webhookAuthzCreds,omitempty"`
 	ImgPullSecrets    []SecretReference `json:"imagePullSecrets"`
-	LokiValues        LokiValues        `json:"loki"`
-	PrometheusValues  PrometheusValues  `json:"prometheus"`
+	LokiValues        Loki              `json:"loki"`
+	PrometheusValues  Prometheus        `json:"prometheus"`
 	CertManagerValues CertManagerValues `json:"certManager,omitempty"`
 	IngressValues     IngressValues     `json:"ingress"`
 	Operators         Operators         `json:"operators"`
@@ -158,6 +158,12 @@ type PrimaryCluster struct {
 
 	Spec   PrimaryClusterSpec `json:"spec,omitempty"`
 	Status rApi.Status        `json:"status,omitempty"`
+}
+
+func (p *PrimaryCluster) EnsureGVK() {
+	if p != nil {
+		p.SetGroupVersionKind(GroupVersion.WithKind("PrimaryCluster"))
+	}
 }
 
 func (p *PrimaryCluster) GetStatus() *rApi.Status {

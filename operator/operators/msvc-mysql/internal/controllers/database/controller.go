@@ -59,7 +59,7 @@ const (
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=databases/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &mysqlMsvcv1.Database{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &mysqlMsvcv1.Database{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -218,26 +218,30 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 		dbName := sanitizeDbName(obj.Spec.ResourceName)
 		dbUsername := sanitizeDbUsername(obj.Spec.ResourceName)
 
-		b, err := templates.Parse(
-			templates.Secret, map[string]any{
-				"name":       accessSecretName,
-				"namespace":  obj.Namespace,
-				"owner-refs": obj.GetOwnerReferences(),
-				"string-data": types.MresOutput{
-					Username: dbUsername,
-					Password: dbPasswd,
-					Hosts:    msvcOutput.Hosts,
-					DbName:   dbName,
-					DSN:      fmt.Sprintf("mysql://%s:%s@tcp(%s)/%s", dbUsername, dbPasswd, msvcOutput.Hosts, dbName),
-					URI:      fmt.Sprintf("mysql://%s:%s@%s/%s", dbUsername, dbPasswd, msvcOutput.Hosts, dbName),
-				},
-			},
-		)
+		mresOutput := types.MresOutput{
+			Username: dbUsername,
+			Password: dbPasswd,
+			Hosts:    msvcOutput.Hosts,
+			DbName:   dbName,
+			DSN:      fmt.Sprintf("mysql://%s:%s@tcp(%s)/%s", dbUsername, dbPasswd, msvcOutput.Hosts, dbName),
+			URI:      fmt.Sprintf("mysql://%s:%s@%s/%s", dbUsername, dbPasswd, msvcOutput.Hosts, dbName),
+		}
+
+		if msvcOutput.ExternalHost != "" {
+			mresOutput.ExternalDSN = fmt.Sprintf("mysql://%s:%s@tcp(%s)/%s", dbUsername, dbPasswd, msvcOutput.ExternalHost, dbName)
+		}
+
+		b, err := templates.Parse(templates.Secret, map[string]any{
+			"name":        accessSecretName,
+			"namespace":   obj.Namespace,
+			"owner-refs":  obj.GetOwnerReferences(),
+			"string-data": mresOutput,
+		})
 		if err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 

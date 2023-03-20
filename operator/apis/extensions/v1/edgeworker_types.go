@@ -6,19 +6,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 type CredentialsRef struct {
 	Namespace  string `json:"namespace"`
 	SecretName string `json:"secretName"`
 }
 
 type EdgeWorkerSpec struct {
-	AccountId string         `json:"accountId"`
-	Creds     CredentialsRef `json:"credentialsRef"`
-	Provider  string         `json:"provider"`
-	Region    string         `json:"region"`
+	AccountName string         `json:"accountName"`
+	Creds       CredentialsRef `json:"credentialsRef"`
+	Provider    string         `json:"provider"`
+	Region      string         `json:"region,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -36,12 +33,18 @@ type EdgeWorker struct {
 	Status rApi.Status    `json:"status,omitempty"`
 }
 
+func (ew *EdgeWorker) EnsureGVK() {
+	if ew != nil {
+		ew.SetGroupVersionKind(GroupVersion.WithKind("EdgeWorker"))
+	}
+}
+
 func (e *EdgeWorker) GetStatus() *rApi.Status {
 	return &e.Status
 }
 
 func (e *EdgeWorker) GetEnsuredLabels() map[string]string {
-	return map[string]string{constants.EdgeNameKey: e.Name}
+	return map[string]string{constants.EdgeNameKey: e.Name, constants.ProviderRef: e.Spec.Creds.SecretName}
 }
 
 func (e *EdgeWorker) GetEnsuredAnnotations() map[string]string {

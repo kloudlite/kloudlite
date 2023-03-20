@@ -44,7 +44,7 @@ const (
 // +kubebuilder:rbac:groups=artifacts.kloudlite.io,resources=harborprojects/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &artifactsv1.HarborProject{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &artifactsv1.HarborProject{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -97,7 +97,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborProject]) ste
 }
 
 func (r *Reconciler) reconDefaults(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(DefaultsPatched)
@@ -106,33 +106,28 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*artifactsv1.HarborProject]
 	hasUpdated := false
 
 	if obj.Spec.Project == nil {
-		obj.Spec.Project = &harbor.Project{
-			Name: obj.Name,
-		}
+		obj.Spec.Project = &harbor.Project{Name: obj.Name}
 		hasUpdated = true
-
-		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
 	}
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error())
 		}
-		return req.Next().RequeueAfter(0 * time.Second)
+		return req.Next().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != checks[DefaultsPatched] {
-		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[DefaultsPatched] {
+		obj.Status.Checks[DefaultsPatched] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
 }
 
 func (r *Reconciler) reconHarborProject(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(HarborProjectReady)
@@ -152,8 +147,7 @@ func (r *Reconciler) reconHarborProject(req *rApi.Request[*artifactsv1.HarborPro
 		if err := r.Update(ctx, obj); err != nil {
 			return nil
 		}
-		checks[HarborProjectReady] = check
-		return req.UpdateStatus()
+		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	if obj.Spec.Project.Location == "" {
@@ -166,21 +160,20 @@ func (r *Reconciler) reconHarborProject(req *rApi.Request[*artifactsv1.HarborPro
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(HarborProjectReady, check, err.Error())
 		}
-		checks[HarborProjectReady] = check
-		return req.UpdateStatus()
+		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != checks[HarborProjectReady] {
-		checks[HarborProjectReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[HarborProjectReady] {
+		obj.Status.Checks[HarborProjectReady] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
 }
 
 func (r *Reconciler) reconWebhook(req *rApi.Request[*artifactsv1.HarborProject]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(WebhookReady)
@@ -218,12 +211,13 @@ func (r *Reconciler) reconWebhook(req *rApi.Request[*artifactsv1.HarborProject])
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(WebhookReady, check, err.Error())
 		}
+		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != checks[WebhookReady] {
-		checks[WebhookReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[WebhookReady] {
+		obj.Status.Checks[WebhookReady] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }

@@ -11,13 +11,49 @@ type KloudliteDnsApi struct {
 	BasicAuthCreds SecretReference `json:"basicAuthCreds"`
 }
 
+type GitlabRunner struct {
+	Enabled bool `json:"enabled,omitempty"`
+	// +kubebuilder:default=gitlab-runner
+	ReleaseName string `json:"releaseName,omitempty"`
+	RunnerToken string `json:"runnerToken"`
+	// +kubebuilder:default=helm-gitlab-runner
+	Namespace string `json:"namespace,omitempty"`
+}
+
+type CertManager struct {
+	Enabled bool `json:"enabled,omitempty"`
+	// +kubebuilder:default=cert-manager
+	ReleaseName string `json:"releaseName,omitempty"`
+	// +kubebuilder:default=helm-cert-manager
+	Namespace string `json:"namespace,omitempty"`
+}
+
 // ManagedClusterSpec defines the desired state of ManagedCluster
 type ManagedClusterSpec struct {
 	Domain         *string         `json:"domain,omitempty"`
 	KloudliteCreds SecretReference `json:"kloudliteCreds,omitempty"`
+	KlOperators    KlOperators     `json:"kloudliteOperators,omitempty"`
+	CertManager    *CertManager    `json:"certManager,omitempty"`
+	GitlabRunner   *GitlabRunner   `json:"gitlabRunner,omitempty"`
+	Loki           *Loki           `json:"loki,omitempty"`
+	Prometheus     *Prometheus     `json:"prometheus,omitempty"`
+}
 
-	LokiValues       LokiValues       `json:"loki,omitempty"`
-	PrometheusValues PrometheusValues `json:"prometheus,omitempty"`
+type KlOperators struct {
+	// +kubebuilder:validation:Enum:=development;production
+	InstallationMode string `json:"installationMode"`
+	// +kubebuilder:default=kl-init-operators
+	Namespace string `json:"namespace,omitempty"`
+	// +kubebuilder:default=support@kloudlite.io
+	ACMEEmail string `json:"acmeEmail,omitempty"`
+	// +kubebuilder:default="kl-cert-issuer"
+	ClusterIssuerName string `json:"clusterIssuerName,omitempty"`
+	// +kubebuilder:default=kloudlite-cluster-svc-account
+	ClusterSvcAccount string `json:"clusterSvcAccount,omitempty"`
+	// +kubebuilder:default=v1.0.5
+	ImageTag string `json:"imageTag,omitempty"`
+	// +kubebuilder:default=Always
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 }
 
 type KloudliteCreds struct {
@@ -39,6 +75,12 @@ type ManagedCluster struct {
 
 	Spec   ManagedClusterSpec `json:"spec,omitempty"`
 	Status rApi.Status        `json:"status,omitempty"`
+}
+
+func (mc *ManagedCluster) EnsureGVK() {
+	if mc != nil {
+		mc.SetGroupVersionKind(GroupVersion.WithKind("ManagedCluster"))
+	}
 }
 
 func (mc *ManagedCluster) GetStatus() *rApi.Status {

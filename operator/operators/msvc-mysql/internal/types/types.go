@@ -6,13 +6,15 @@ type MsvcOutput struct {
 	Hosts               string `json:"HOSTS,omitempty"`
 	DSN                 string `json:"DSN,omitempty"`
 	URI                 string `json:"URI,omitempty"`
+	ExternalHost        string `json:"EXTERNAL_HOST,omitempty"`
 }
 
 type MresOutput struct {
-	Username string `json:"USERNAME"`
-	Password string `json:"PASSWORD"`
-	Hosts    string `json:"HOSTS"`
-	DbName   string `json:"DB_NAME"`
-	DSN      string `json:"DSN"`
-	URI      string `json:"URI"`
+	Username    string `json:"USERNAME"`
+	Password    string `json:"PASSWORD"`
+	Hosts       string `json:"HOSTS"`
+	DbName      string `json:"DB_NAME"`
+	DSN         string `json:"DSN"`
+	URI         string `json:"URI"`
+	ExternalDSN string `json:"EXTERNAL_DSN,omitempty"`
 }

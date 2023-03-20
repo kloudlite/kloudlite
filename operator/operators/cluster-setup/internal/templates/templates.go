@@ -53,6 +53,7 @@ const (
 )
 
 const (
+	GitlabRunnerValues        templateFile = "templates/helm/gitlab-runner-values.yml.tpl"
 	LokiValues                templateFile = "templates/loki-values.yml.tpl"
 	PrometheusValues          templateFile = "templates/prometheus-values.yml.tpl"
 	CertManagerValues         templateFile = "templates/cert-manager.yml.tpl"
@@ -101,4 +102,8 @@ const (
 
 const (
 	KloudliteAgent templateFile = "templates/apps/kloudlite-agent.yml.tpl"
+)
+
+const (
+	HelmCertManagerValues templateFile = "templates/helm/cert-manager.yml.tpl"
 )

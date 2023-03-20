@@ -29,6 +29,12 @@ type Env struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (e *Env) EnsureGVK() {
+	if e != nil {
+		e.SetGroupVersionKind(GroupVersion.WithKind("Env"))
+	}
+}
+
 func (e *Env) GetStatus() *rApi.Status {
 	return &e.Status
 }

@@ -12,12 +12,16 @@ type S3 struct {
 	Endpoint           string `json:"endpoint"`
 }
 
-type LokiValues struct {
+type Loki struct {
+	// +kubebuilder:default=true
+	Enabled bool `json:"enabled,omitempty"`
 	// +kubebuilder:default=loki
-	ServiceName string       `json:"serviceName,omitempty"`
-	S3          S3           `json:"s3"`
-	Resources   ct.Resources `json:"resources"`
-	Url         string       `json:"url,omitempty"`
+	ReleaseName string `json:"releaseName,omitempty"`
+	// +kubebuilder:default=kl-init-monitoring
+	Namespace string       `json:"namespace,omitempty"`
+	S3        S3           `json:"s3"`
+	Resources ct.Resources `json:"resources"`
+	Url       string       `json:"url,omitempty"`
 }
 
 type RedpandaValues struct {
@@ -26,10 +30,14 @@ type RedpandaValues struct {
 	Resources ct.Resources `json:"resources"`
 }
 
-type PrometheusValues struct {
+type Prometheus struct {
+	// +kubebuilder:default=true
+	Enabled bool `json:"enabled,omitempty"`
 	// +kubebuilder:default=prometheus
-	ServiceName string       `json:"serviceName,omitempty"`
-	Resources   ct.Resources `json:"resources"`
+	ReleaseName string `json:"releaseName,omitempty"`
+	// +kubebuilder:default=kl-init-monitoring
+	Namespace string       `json:"namespace,omitempty"`
+	Resources ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:generate=true

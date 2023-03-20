@@ -29,6 +29,12 @@ type Admin struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (adm *Admin) EnsureGVK() {
+	if adm != nil {
+		adm.SetGroupVersionKind(GroupVersion.WithKind("Admin"))
+	}
+}
+
 func (adm *Admin) GetStatus() *rApi.Status {
 	return &adm.Status
 }

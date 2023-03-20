@@ -195,7 +195,7 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
 

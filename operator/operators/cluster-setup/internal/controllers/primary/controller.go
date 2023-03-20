@@ -788,7 +788,7 @@ func (r *Reconciler) ensureRedpanda(req *rApi.Request[*v1.PrimaryCluster]) stepR
 			return req.CheckFailed(RedpandaReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, clusterBytes); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, clusterBytes); err != nil {
 			return req.CheckFailed(RedpandaReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -967,7 +967,7 @@ func (r *Reconciler) ensureCertIssuer(req *rApi.Request[*v1.PrimaryCluster]) ste
 		return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(CertIssuerReady, check, err.Error()).Err(nil)
 	}
 
@@ -1066,7 +1066,7 @@ func (r *Reconciler) ensureOperatorCRDs(req *rApi.Request[*v1.PrimaryCluster]) s
 					"ImageTag":        "v1.0.5",
 				})
 
-				if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+				if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 					return req.CheckFailed(OperatorCRDsReady, check, err.Error())
 				}
 			}
@@ -1098,7 +1098,7 @@ func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) step
 		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
 	}
 
@@ -1126,7 +1126,7 @@ func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) step
 		return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(OperatorsEnvReady, check, err.Error())
 	}
 
@@ -1141,7 +1141,7 @@ func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) step
 			return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(OperatorsEnvReady, check, err.Error())
 		}
 
@@ -1164,7 +1164,7 @@ func (r *Reconciler) ensureOperators(req *rApi.Request[*v1.PrimaryCluster]) step
 			return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
 			return req.CheckFailed(OperatorsEnvReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -1242,7 +1242,7 @@ func (r *Reconciler) ensureMsvcAndMres(req *rApi.Request[*v1.PrimaryCluster]) st
 			return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -1266,7 +1266,7 @@ func (r *Reconciler) ensureMsvcAndMres(req *rApi.Request[*v1.PrimaryCluster]) st
 			return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(MsvcAndMresReady, check, err.Error()).Err(nil)
 		}
 	}

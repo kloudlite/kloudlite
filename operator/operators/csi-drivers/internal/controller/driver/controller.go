@@ -3,11 +3,13 @@ package driver
 import (
 	"context"
 	"fmt"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
+
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
+	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
 	"github.com/kloudlite/operator/operators/csi-drivers/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -19,7 +21,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -61,7 +62,7 @@ func getDriverNs(obj *csiv1.Driver) string {
 // +kubebuilder:rbac:groups=csi.kloudlite.io,resources=drivers/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &csiv1.Driver{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &csiv1.Driver{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -162,6 +163,9 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
+	req.LogPreCheck(CSIDriversReady)
+	defer req.LogPostCheck(CSIDriversReady)
+
 	if obj.Spec.Provider == "aws" {
 		accessSecret, err := rApi.Get(ctx, r.Client, fn.NN("kl-core", obj.Spec.SecretRef), &corev1.Secret{})
 		if err != nil {
@@ -184,7 +188,7 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 		if err != nil {
 			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
 		}
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -212,7 +216,7 @@ func (r *Reconciler) reconCSIDriver(req *rApi.Request[*csiv1.Driver]) stepResult
 			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(CSIDriversReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -229,15 +233,20 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	edgesList := unstructured.UnstructuredList{
-		Object: map[string]any{
-			"apiVersion": constants.EdgeInfraType.APIVersion,
-			"kind":       constants.EdgeInfraType.Kind,
-		},
-	}
+	req.LogPreCheck(StorageClassesReady)
+	defer req.LogPostCheck(StorageClassesReady)
+
+	// edgesList := unstructured.UnstructuredList{
+	// 	Object: map[string]any{
+	// 		"apiVersion": constants.EdgeInfraType.APIVersion,
+	// 		"kind":       constants.EdgeInfraType.Kind,
+	// 	},
+	// }
+
+	var edgeWorkersList extensionsv1.EdgeWorkerList
 
 	if err := r.List(
-		ctx, &edgesList, &client.ListOptions{
+		ctx, &edgeWorkersList, &client.ListOptions{
 			LabelSelector: labels.SelectorFromValidatedSet(
 				map[string]string{
 					"kloudlite.io/provider-ref": obj.Name,
@@ -249,10 +258,10 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 	}
 
 	if obj.Spec.Provider == "aws" {
-		for i := range edgesList.Items {
+		for i := range edgeWorkersList.Items {
 			b, err := templates.Parse(
 				templates.AwsEbsStorageClass, map[string]any{
-					"name":        edgesList.Items[i].GetName(),
+					"name":        edgeWorkersList.Items[i].GetName(),
 					"fs-types":    []ct.FsType{ct.Ext4, ct.Xfs},
 					"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					"provisioner": fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
@@ -263,17 +272,17 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
 			}
 
-			if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+			if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
 			}
 		}
 	}
 
 	if obj.Spec.Provider == "do" {
-		for i := range edgesList.Items {
+		for i := range edgeWorkersList.Items {
 			b, err := templates.Parse(
 				templates.DigitaloceanStorageClass, map[string]any{
-					"name":        edgesList.Items[i].GetName(),
+					"name":        edgeWorkersList.Items[i].GetName(),
 					"fs-types":    []ct.FsType{ct.Ext4, ct.Xfs},
 					"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					"provisioner": fmt.Sprintf("%s-%s-csi", fn.Md5([]byte(obj.Name)), obj.Spec.Provider),
@@ -285,7 +294,7 @@ func (r *Reconciler) reconStorageClasses(req *rApi.Request[*csiv1.Driver]) stepR
 				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
 			}
 
-			if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+			if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 				return req.CheckFailed(StorageClassesReady, check, err.Error()).Err(nil)
 			}
 		}
@@ -304,6 +313,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	// r.helmClient = helm.NewHelmClient(config *rest.Config, opts helm.ClientOptions)
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&csiv1.Driver{})
 	builder.Owns(fn.NewUnstructured(constants.HelmAwsEbsCsiKind))

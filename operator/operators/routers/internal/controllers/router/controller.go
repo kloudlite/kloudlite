@@ -19,6 +19,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,7 +57,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.Router{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Router{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -194,7 +195,7 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 	if obj.Spec.BasicAuth.Enabled {
 
 		if len(obj.Spec.BasicAuth.Username) == 0 {
-			return req.CheckFailed(BasicAuthReady, check, fmt.Sprintf(".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true")).Err(nil)
+			return req.CheckFailed(BasicAuthReady, check, ".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true").Err(nil)
 		}
 
 		basicAuthScrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.BasicAuth.SecretName, Namespace: obj.Namespace}, Type: "Opaque"}
@@ -228,8 +229,11 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 	return req.Next()
 }
 
-func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router], wcDomains []string, nonWcDomains []string) error {
+// func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router], wcDomains []string, nonWcDomains []string) error {
+func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) ([]string, []string, error) {
 	ctx, obj := req.Context(), req.Object
+
+	var wcDomains, nonWcDomains []string
 
 	issuerName := controllers.GetClusterIssuerName(obj.Spec.Region)
 	wcdMap := make(map[string]bool, cap(wcDomains))
@@ -237,26 +241,30 @@ func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router], w
 	if obj.Spec.Https.Enabled {
 		cIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", issuerName), fn.NewUnstructured(constants.ClusterIssuerType))
 		if err != nil {
-			return err
+			if !apiErrors.IsNotFound(err) {
+				return nil, nil, err
+			}
 		}
 
-		var clusterIssuer certmanagerv1.ClusterIssuer
-		b, err := json.Marshal(cIssuer.Object)
-		if err != nil {
-			return err
-		}
-		if err := json.Unmarshal(b, &clusterIssuer); err != nil {
-			return err
-		}
+		if cIssuer != nil {
+			var clusterIssuer certmanagerv1.ClusterIssuer
+			b, err := json.Marshal(cIssuer.Object)
+			if err != nil {
+				return nil, nil, err
+			}
+			if err := json.Unmarshal(b, &clusterIssuer); err != nil {
+				return nil, nil, err
+			}
 
-		for _, solver := range clusterIssuer.Spec.ACME.Solvers {
-			if solver.DNS01 != nil {
-				for _, dnsName := range solver.Selector.DNSNames {
-					if strings.HasPrefix(dnsName, "*.") {
-						wcdMap[dnsName[2:]] = true
+			for _, solver := range clusterIssuer.Spec.ACME.Solvers {
+				if solver.DNS01 != nil {
+					for _, dnsName := range solver.Selector.DNSNames {
+						if strings.HasPrefix(dnsName, "*.") {
+							wcdMap[dnsName[2:]] = true
+						}
+						wcdMap[dnsName] = true
+						wcDomains = append(wcDomains, dnsName)
 					}
-					wcdMap[dnsName] = true
-					wcDomains = append(wcDomains, dnsName)
 				}
 			}
 		}
@@ -276,7 +284,7 @@ func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router], w
 		nonWcDomains = append(nonWcDomains, domain)
 	}
 
-	return nil
+	return wcDomains, nonWcDomains, nil
 }
 
 func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -290,10 +298,8 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		return req.CheckFailed(IngressReady, check, "no routes specified in ingress resource").Err(nil)
 	}
 
-	wcDomains := make([]string, 0, 2)
-	nonWcDomains := make([]string, 0, 2)
-
-	if err := r.parseAndExtractDomains(req, wcDomains, nonWcDomains); err != nil {
+	wcDomains, nonWcDomains, err := r.parseAndExtractDomains(req)
+	if err != nil {
 		return req.CheckFailed(IngressReady, check, err.Error())
 	}
 
@@ -388,7 +394,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		kubeYamls = append(kubeYamls, b)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, kubeYamls...); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, kubeYamls...); err != nil {
 		return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
 	}
 

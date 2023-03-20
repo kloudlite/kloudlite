@@ -45,6 +45,12 @@ type Lambda struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (lm *Lambda) EnsureGVK() {
+	if lm != nil {
+		lm.SetGroupVersionKind(GroupVersion.WithKind("Lambda"))
+	}
+}
+
 func (lm *Lambda) GetStatus() *rApi.Status {
 	return &lm.Status
 }
