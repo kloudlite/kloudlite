@@ -249,7 +249,7 @@ func (r *Reconciler) ensureCfgAndSecrets(req *rApi.Request[*crdsv1.Env]) stepRes
 
 	for i := range scrtList.Items {
 		scrt := scrtList.Items[i]
-		lScrt := &crdsv1.Secret{ObjectMeta: metav1.ObjectMeta{Name: scrt.Name, Namespace: obj.Name}, Type: scrt.Type}
+		lScrt := &crdsv1.Secret{Secret: corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: scrt.Name, Namespace: obj.Name}, Type: scrt.Type}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lScrt, func() error {
 			ensureOwnership(lScrt, obj)
 			copyMap(lScrt.Labels, scrt.Labels)
@@ -316,7 +316,7 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Env]) stepR
 		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
 	}
 

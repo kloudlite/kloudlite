@@ -16,7 +16,7 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.projectRef
+    - jsonPath: .spec.harborProjectName
       name: Harbor-Project
       type: string
     - jsonPath: .status.isReady
@@ -50,23 +50,20 @@ spec:
               enabled:
                 default: true
                 type: boolean
-              operatorProps:
-                properties:
-                  harborUser:
-                    properties:
-                      id:
-                        type: integer
-                      name:
-                        type: string
-                    required:
-                    - id
-                    - name
-                    type: object
-                type: object
-              projectRef:
+              harborProjectName:
+                type: string
+              permissions:
+                default:
+                - push-repository
+                - pull-repository
+                items:
+                  type: string
+                type: array
+              targetSecret:
                 type: string
             required:
-            - projectRef
+            - harborProjectName
+            - targetSecret
             type: object
           status:
             properties:

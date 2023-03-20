@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/kloudlite/operator/operator"
-	"github.com/kloudlite/operator/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -32,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ManagedResourceReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	harborCli  *harbor.Client
@@ -42,7 +41,7 @@ type ManagedResourceReconciler struct {
 	yamlClient *kubectl.YAMLClient
 }
 
-func (r *ManagedResourceReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
@@ -61,7 +60,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
-func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedResource{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -82,10 +81,6 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(RealMresReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -110,10 +105,6 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconOwnership(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.ensureRealMresCreated(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -124,16 +115,22 @@ func (r *ManagedResourceReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *ManagedResourceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ManagedResourceReconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(MsvcIsOwner)
+	defer req.LogPostCheck(MsvcIsOwner)
 
 	msvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &crdsv1.ManagedService{},
@@ -144,7 +141,6 @@ func (r *ManagedResourceReconciler) patchDefaults(req *rApi.Request[*crdsv1.Mana
 	}
 
 	hasUpdated := false
-
 	if !fn.MapContains(obj.Labels, msvc.Labels) {
 		hasUpdated = true
 		for k, v := range msvc.Labels {
@@ -152,52 +148,30 @@ func (r *ManagedResourceReconciler) patchDefaults(req *rApi.Request[*crdsv1.Mana
 		}
 	}
 
+	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
+		hasUpdated = true
+		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
+	}
+
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error())
 		}
-		return req.Done().RequeueAfter(1 * time.Second)
+		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != checks[DefaultsPatched] {
-		checks[DefaultsPatched] = check
+	if check != obj.Status.Checks[DefaultsPatched] {
+		obj.Status.Checks[DefaultsPatched] = check
 		req.UpdateStatus()
 	}
 
 	rApi.SetLocal(req, localMsvcKey, msvc)
 	return req.Next()
-
 }
 
-func (r *ManagedResourceReconciler) reconOwnership(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	msvc, ok := rApi.GetLocal[*crdsv1.ManagedService](req, localMsvcKey)
-	if !ok {
-		return req.CheckFailed(MsvcIsOwner, check, errors.NotInLocals(localMsvcKey).Error()).Err(nil)
-	}
-
-	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
-		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
-		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
-		}
-		return req.Done()
-	}
-
-	check.Status = true
-	if check != checks[MsvcIsOwner] {
-		checks[MsvcIsOwner] = check
-		return req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *ManagedResourceReconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(RealMresCreated)
@@ -214,21 +188,21 @@ func (r *ManagedResourceReconciler) ensureRealMresCreated(req *rApi.Request[*crd
 	if err != nil {
 		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
 	}
-	if err := r.yamlClient.ApplyYAML(ctx, mresBytes); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, mresBytes); err != nil {
 		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
-	if check != checks[RealMresCreated] {
-		checks[RealMresCreated] = check
+	if check != obj.Status.Checks[RealMresCreated] {
+		obj.Status.Checks[RealMresCreated] = check
 		req.UpdateStatus()
 	}
 
 	return req.Next()
 }
 
-func (r *ManagedResourceReconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(RealMresReady)
@@ -255,7 +229,7 @@ func (r *ManagedResourceReconciler) ensureRealMresReady(req *rApi.Request[*crdsv
 	}
 
 	if !realMresObj.Status.IsReady {
-		if realMresObj.Status.Message.RawMessage == nil {
+		if realMresObj.Status.Message == nil {
 			return req.CheckFailed(RealMresReady, check, "waiting for real managed resource to reconcile ...")
 		}
 		b, err := json.Marshal(realMresObj.Status.Message)
@@ -266,14 +240,14 @@ func (r *ManagedResourceReconciler) ensureRealMresReady(req *rApi.Request[*crdsv
 	}
 
 	check.Status = true
-	if check != checks[RealMresReady] {
-		checks[RealMresReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[RealMresReady] {
+		obj.Status.Checks[RealMresReady] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
-func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
@@ -311,6 +285,7 @@ func (r *ManagedResourceReconciler) SetupWithManager(mgr ctrl.Manager, logger lo
 				return nil
 			}))
 	}
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

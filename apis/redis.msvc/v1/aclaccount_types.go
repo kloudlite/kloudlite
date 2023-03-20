@@ -31,6 +31,12 @@ type ACLAccount struct {
 	Status rApi.Status    `json:"status,omitempty"`
 }
 
+func (a *ACLAccount) EnsureGVK() {
+	if a != nil {
+		a.SetGroupVersionKind(GroupVersion.WithKind("ACLAccount"))
+	}
+}
+
 func (a *ACLAccount) GetStatus() *rApi.Status {
 	return &a.Status
 }

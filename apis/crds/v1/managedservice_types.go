@@ -25,7 +25,7 @@ type ManagedServiceSpec struct {
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 	MsvcKind     msvcKind            `json:"msvcKind"`
 
-	Inputs      rawJson.RawJson `json:"inputs,omitempty"`
+	Inputs rawJson.RawJson `json:"inputs,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -45,6 +45,12 @@ type ManagedService struct {
 	Enabled   *bool       `json:"enabled,omitempty"`
 	Overrides *JsonPatch  `json:"overrides,omitempty"`
 	Status    rApi.Status `json:"status,omitempty"`
+}
+
+func (m *ManagedService) EnsureGVK() {
+	if m != nil {
+		m.SetGroupVersionKind(GroupVersion.WithKind("ManagedService"))
+	}
 }
 
 func (m *ManagedService) GetStatus() *rApi.Status {

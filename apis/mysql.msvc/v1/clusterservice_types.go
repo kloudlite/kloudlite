@@ -34,6 +34,12 @@ type ClusterService struct {
 	Status rApi.Status        `json:"status,omitempty"`
 }
 
+func (c *ClusterService) EnsureGVK() {
+	if c != nil {
+		c.SetGroupVersionKind(GroupVersion.WithKind("ClusterService"))
+	}
+}
+
 func (c *ClusterService) GetStatus() *rApi.Status {
 	return &c.Status
 }

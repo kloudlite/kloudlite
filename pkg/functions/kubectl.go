@@ -14,6 +14,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kloudlite/operator/pkg/errors"
+
+	"github.com/gobuffalo/flect"
+	"strings"
 )
 
 func KubectlApplyExec(ctx context.Context, stdin ...[]byte) (err error) {
@@ -188,4 +191,10 @@ func GVK(obj client.Object) metav1.GroupVersionKind {
 		Version: gvk.Version,
 		Kind:    gvk.Kind,
 	}
+}
+
+// RegularPlural is used to pluralize group of k8s CRDs from kind
+// It is copied from https://github.com/kubernetes-sigs/kubebuilder/blob/afce6a0e8c2a6d5682be07bbe502e728dd619714/pkg/model/resource/utils.go#L71
+func RegularPlural(singular string) string {
+	return flect.Pluralize(strings.ToLower(singular))
 }

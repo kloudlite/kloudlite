@@ -12,7 +12,6 @@ import (
 	"github.com/kloudlite/operator/operator"
 	statusWatcher "github.com/kloudlite/operator/operators/status-n-billing/internal/controllers/status-watcher"
 	env "github.com/kloudlite/operator/operators/status-n-billing/internal/env"
-	"github.com/kloudlite/operator/operators/status-n-billing/internal/types"
 	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/redpanda"
 )
@@ -50,7 +49,8 @@ func main() {
 		&statusWatcher.Reconciler{
 			Name:     "status-watcher",
 			Env:      ev,
-			Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaTopicStatusUpdates),
+			Producer: producer,
+			// Notifier: types.NewNotifier(ev.ClusterId, producer, ev.KafkaTopicStatusUpdates),
 		},
 		//&pipelineRunWatcher.Reconciler{
 		//	Name:       "pipeline-run",

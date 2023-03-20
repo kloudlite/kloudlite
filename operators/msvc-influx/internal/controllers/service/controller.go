@@ -264,7 +264,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*influxdbMsvcv1.Service]) stepR
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 

@@ -7,22 +7,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type OperatorProps struct {
-	HarborUser *harbor.User `json:"harborUser,omitempty"`
-}
-
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
 type HarborUserAccountSpec struct {
 	// +kubebuilder:default=true
-	Enabled          bool          `json:"enabled,omitempty"`
-	ProjectRef       string        `json:"projectRef"`
-	DockerConfigName string        `json:"dockerConfigName,omitempty"`
-	OperatorProps    OperatorProps `json:"operatorProps,omitempty"`
+	Enabled           bool   `json:"enabled,omitempty"`
+	HarborProjectName string `json:"harborProjectName"`
+	TargetSecret      string `json:"targetSecret"`
+	DockerConfigName  string `json:"dockerConfigName,omitempty"`
+	// +kubebuilder:default={push-repository,pull-repository}
+	Permissions []harbor.Permission `json:"permissions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".spec.projectRef",name=Harbor-Project,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.harborProjectName",name=Harbor-Project,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -35,13 +33,19 @@ type HarborUserAccount struct {
 	Status rApi.Status           `json:"status,omitempty"`
 }
 
+func (h *HarborUserAccount) EnsureGVK() {
+	if h != nil {
+		h.SetGroupVersionKind(GroupVersion.WithKind("HarborUserAccount"))
+	}
+}
+
 func (h *HarborUserAccount) GetStatus() *rApi.Status {
 	return &h.Status
 }
 
 func (h *HarborUserAccount) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		"kloudlite.io/harbor-project.name": h.Spec.ProjectRef,
+		"kloudlite.io/harbor-project.name": h.Spec.HarborProjectName,
 	}
 }
 

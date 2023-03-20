@@ -27,17 +27,23 @@ type Database struct {
 	Status rApi.Status  `json:"status,omitempty"`
 }
 
-func (d *Database) GetStatus() *rApi.Status {
-	return &d.Status
-}
-
-func (d *Database) GetEnsuredLabels() map[string]string {
-	return map[string]string{
-		constants.MsvcNameKey: d.Spec.MsvcRef.Name,
+func (db *Database) EnsureGVK() {
+	if db != nil {
+		db.SetGroupVersionKind(GroupVersion.WithKind("Database"))
 	}
 }
 
-func (d *Database) GetEnsuredAnnotations() map[string]string {
+func (db *Database) GetStatus() *rApi.Status {
+	return &db.Status
+}
+
+func (db *Database) GetEnsuredLabels() map[string]string {
+	return map[string]string{
+		constants.MsvcNameKey: db.Spec.MsvcRef.Name,
+	}
+}
+
+func (db *Database) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Database").String(),
 	}

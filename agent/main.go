@@ -10,12 +10,10 @@ import (
 
 	"github.com/kloudlite/operator/agent/internal/env"
 	t "github.com/kloudlite/operator/agent/internal/types"
-	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	"github.com/kloudlite/operator/pkg/redpanda"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/yaml"
 )
 
 //func main() {
@@ -76,15 +74,20 @@ func main() {
 	}()
 
 	kafkaSasl := redpanda.KafkaSASLAuth{
-		SASLMechanism: func() redpanda.SASLMechanism {
-			if ev.KafkaSASLMechanism != "" {
-				return ev.KafkaSASLMechanism
-			}
-			return redpanda.ScramSHA256
-		}(),
-		User:     ev.KafkaSASLUser,
-		Password: ev.KafkaSASLPassword,
+		User:          ev.KafkaSASLUser,
+		Password:      ev.KafkaSASLPassword,
+		SASLMechanism: redpanda.ScramSHA256,
 	}
+	// kafkaSasl := redpanda.KafkaSASLAuth{
+	// 	SASLMechanism: func() redpanda.SASLMechanism {
+	// 		if ev.KafkaSASLMechanism != "" {
+	// 			return ev.KafkaSASLMechanism
+	// 		}
+	// 		return redpanda.ScramSHA256
+	// 	}(),
+	// 	User:     ev.KafkaSASLUser,
+	// 	Password: ev.KafkaSASLPassword,
+	// }
 
 	// errProducer, err := redpanda.NewProducer(
 	// 	ev.KafkaBrokers, redpanda.ProducerOpts{
@@ -103,10 +106,10 @@ func main() {
 		panic(err)
 	}
 
-	tctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
-	defer cancelFunc()
+	// tctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
+	// defer cancelFunc()
 
-	if err := consumer.Ping(tctx); err != nil {
+	if err := consumer.Ping(context.TODO()); err != nil {
 		log.Fatal("failed to ping kafka brokers")
 	}
 	logr.Infof("successful ping to kafka brokers")
@@ -128,18 +131,18 @@ func main() {
 			defer func() {
 				logger.Infof("processed message")
 			}()
+
 			tctx, cancelFunc := func() (context.Context, context.CancelFunc) {
 				if dev {
 					return context.WithCancel(context.TODO())
 				}
 				return context.WithTimeout(context.TODO(), 3*time.Second)
 			}()
+
 			defer cancelFunc()
 			go func() {
-				select {
-				case <-tctx.Done():
-					cancelFunc()
-				}
+				<-tctx.Done()
+				cancelFunc()
 			}()
 
 			var msg t.AgentMessage
@@ -156,31 +159,35 @@ func main() {
 						mLogger.WithKV("action", msg.Action).Infof("processed message")
 					}()
 
-					yamls, err := func() ([]byte, error) {
-						if msg.Yamls != nil {
-							return msg.Yamls, nil
-						}
-
-						pb, err := json.Marshal(msg.Payload)
-						if err != nil {
-							return nil, errors.NewEf(err, "could not convert msg.Payload into []byte")
-						}
-						yb, err := yaml.JSONToYAML(pb)
-						if err != nil {
-							return nil, errors.NewEf(err, "could not convert JSON to YAML")
-						}
-						return yb, nil
-					}()
-					if err != nil {
-						return err
-					}
+					// yamls, err := func() ([]byte, error) {
+					// 	if msg.Yamls != nil {
+					// 		return msg.Yamls, nil
+					// 	}
+					//
+					// 	if msg.Payload == nil {
+					// 		return nil, nil
+					// 	}
+					// 	pb, err := json.Marshal(msg.Payload)
+					// 	if err != nil {
+					// 		return nil, errors.NewEf(err, "could not convert msg.Payload into []byte")
+					// 	}
+					// 	yb, err := yaml.JSONToYAML(pb)
+					// 	if err != nil {
+					// 		return nil, errors.NewEf(err, "could not convert JSON to YAML")
+					// 	}
+					// 	return yb, nil
+					// }()
+					// if err != nil {
+					// 	return err
+					// }
 
 					// with-api
 					if msg.Action == "apply" {
-						return yamlClient.ApplyYAML(tctx, yamls)
+						_, err := yamlClient.ApplyYAML(tctx, msg.Yamls)
+						return err
 					}
 					if msg.Action == "delete" {
-						return yamlClient.DeleteYAML(tctx, yamls)
+						return yamlClient.DeleteYAML(tctx, msg.Yamls)
 					}
 					return nil
 				}

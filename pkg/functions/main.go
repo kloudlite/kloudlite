@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	libJson "encoding/json"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -33,12 +32,13 @@ type JsonFeatures interface {
 type jsonFeatures struct{}
 
 func (j *jsonFeatures) ToB64Url(v interface{}) (string, error) {
-	b, e := libJson.Marshal(v)
+	b, e := json.Marshal(v)
+
 	return base64.URLEncoding.EncodeToString(b), e
 }
 
 func (j *jsonFeatures) ToB64String(v interface{}) (string, error) {
-	b, e := libJson.Marshal(v)
+	b, e := json.Marshal(v)
 	return base64.StdEncoding.EncodeToString(b), e
 }
 
@@ -92,7 +92,7 @@ func (j *jsonFeatures) Hash(v interface{}) (string, error) {
 var Json = &jsonFeatures{}
 
 func ToBase64StringFromJson(v interface{}) (string, error) {
-	b, e := libJson.Marshal(v)
+	b, e := json.Marshal(v)
 	return base64.StdEncoding.EncodeToString(b), e
 }
 

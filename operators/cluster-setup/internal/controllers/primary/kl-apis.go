@@ -109,7 +109,7 @@ func (r *Reconciler) ensureAuthApi(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 		return req.CheckFailed(AuthApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(AuthApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -156,7 +156,7 @@ func (r *Reconciler) ensureConsoleApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 		return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(ConsoleApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -185,7 +185,7 @@ func (r *Reconciler) ensureCIApi(req *rApi.Request[*v1.PrimaryCluster]) stepResu
 		return req.CheckFailed(CiApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(CiApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -216,7 +216,7 @@ func (r *Reconciler) ensureDnsApi(req *rApi.Request[*v1.PrimaryCluster]) stepRes
 		return req.CheckFailed(DnsApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(DnsApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -245,7 +245,7 @@ func (r *Reconciler) ensureFinanceApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 		return req.CheckFailed(FinanceApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(FinanceApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -274,7 +274,7 @@ func (r *Reconciler) ensureIAMApi(req *rApi.Request[*v1.PrimaryCluster]) stepRes
 		return req.CheckFailed(IAMApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(IAMApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -303,7 +303,7 @@ func (r *Reconciler) ensureCommsApi(req *rApi.Request[*v1.PrimaryCluster]) stepR
 		return req.CheckFailed(CommsApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(CommsApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -332,7 +332,7 @@ func (r *Reconciler) ensureWebhooksApi(req *rApi.Request[*v1.PrimaryCluster]) st
 		return req.CheckFailed(WebhooksApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(WebhooksApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -361,7 +361,7 @@ func (r *Reconciler) ensureJsEvalApi(req *rApi.Request[*v1.PrimaryCluster]) step
 		return req.CheckFailed(JsEvalApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(JsEvalApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -387,7 +387,7 @@ func (r *Reconciler) ensureAuditLoggingWorker(req *rApi.Request[*v1.PrimaryClust
 		return req.CheckFailed(AuditLoggingWorkerCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(AuditLoggingWorkerCreated, check, err.Error()).Err(nil)
 	}
 
@@ -416,7 +416,7 @@ func (r *Reconciler) ensureInfraApi(req *rApi.Request[*v1.PrimaryCluster]) stepR
 		return req.CheckFailed(InfraApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(InfraApiCreated, check, err.Error()).Err(nil)
 	}
 
@@ -445,7 +445,7 @@ func (r *Reconciler) ensureGatewayApi(req *rApi.Request[*v1.PrimaryCluster]) ste
 		return req.CheckFailed(GatewayApiCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(GatewayApiCreated, check, err.Error()).Err(nil)
 	}
 

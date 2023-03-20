@@ -37,6 +37,12 @@ type Kibana struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (k *Kibana) EnsureGVK() {
+	if k != nil {
+		k.SetGroupVersionKind(GroupVersion.WithKind("Kibana"))
+	}
+}
+
 func (k *Kibana) GetStatus() *rApi.Status {
 	return &k.Status
 }

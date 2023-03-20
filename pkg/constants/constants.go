@@ -6,6 +6,7 @@ const MsvcApiVersion = "msvc.kloudlite.io/v1"
 
 const (
 	CommonFinalizer        string = "finalizers.kloudlite.io"
+	CommonFinalizer2       string = "kloudlite.io/finalizer"
 	ForegroundFinalizer    string = "foregroundDeletion"
 	BillingFinalizer       string = "finalizers.kloudlite.io/billing-watcher"
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
@@ -159,14 +160,6 @@ var (
 		APIVersion: MsvcApiVersion,
 	}
 
-	EdgeInfraType = metav1.TypeMeta{
-		Kind:       "Edge",
-		APIVersion: "infra.kloudlite.io/v1",
-	}
-	CloudProviderType = metav1.TypeMeta{
-		Kind:       "CloudProvider",
-		APIVersion: "infra.kloudlite.io/v1",
-	}
 	DeviceType = metav1.TypeMeta{
 		Kind:       "Device",
 		APIVersion: "management.kloudlite.io/v1",
@@ -179,6 +172,36 @@ var (
 	HelmDigitaloceanCsiKind = metav1.TypeMeta{
 		Kind:       "DigitaloceanCSIDriver",
 		APIVersion: "csi.helm.kloudlite.io/v1",
+	}
+
+	// infra types
+	EdgeInfraType = metav1.TypeMeta{
+		Kind:       "Edge",
+		APIVersion: "infra.kloudlite.io/v1",
+	}
+	CloudProviderType = metav1.TypeMeta{
+		Kind:       "CloudProvider",
+		APIVersion: "infra.kloudlite.io/v1",
+	}
+
+	NodePoolType = metav1.TypeMeta{
+		Kind:       "NodePool",
+		APIVersion: "infra.kloudlite.io/v1",
+	}
+
+	WorkerNodeType = metav1.TypeMeta{
+		Kind:       "WorkerNode",
+		APIVersion: "infra.kloudlite.io/v1",
+	}
+
+	// cluster management types
+	ClusterType = metav1.TypeMeta{
+		Kind:       "Cluster",
+		APIVersion: "cmgr.kloudlite.io/v1",
+	}
+	MasterNodeType = metav1.TypeMeta{
+		Kind:       "MasterNode",
+		APIVersion: "cmgr.kloudlite.io/v1",
 	}
 )
 

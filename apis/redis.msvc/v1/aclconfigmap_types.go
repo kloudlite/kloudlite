@@ -28,6 +28,12 @@ type ACLConfigMap struct {
 	Status rApi.Status      `json:"status,omitempty"`
 }
 
+func (a *ACLConfigMap) EnsureGVK() {
+	if a != nil {
+		a.SetGroupVersionKind(GroupVersion.WithKind("ACLConfigMap"))
+	}
+}
+
 func (cfg *ACLConfigMap) GetStatus() *rApi.Status {
 	return &cfg.Status
 }

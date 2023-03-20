@@ -107,7 +107,9 @@ type HPA struct {
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
-	Region string `json:"region"`
+	AccountName string `json:"accountName"`
+
+	Region      string `json:"region"`
 
 	Interception *Interception `json:"interception,omitempty"`
 	// +kubebuilder:default=false
@@ -121,8 +123,8 @@ type AppSpec struct {
 	Services   []AppSvc       `json:"services,omitempty"`
 	Containers []AppContainer `json:"containers"`
 	// +kubebuilder:validation:Optional
-	Volumes []corev1.Volume `json:"volumes,omitempty"`
-	Hpa     HPA             `json:"hpa,omitempty"`
+	// Volumes []corev1.Volume `json:"volumes,omitempty"`
+	Hpa HPA `json:"hpa,omitempty"`
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
@@ -159,6 +161,12 @@ type App struct {
 	Overrides *JsonPatch `json:"overrides,omitempty"`
 
 	Status rApi.Status `json:"status,omitempty"`
+}
+
+func (app *App) EnsureGVK() {
+	if app != nil {
+		app.SetGroupVersionKind(GroupVersion.WithKind("App"))
+	}
 }
 
 func (app *App) GetStatus() *rApi.Status {

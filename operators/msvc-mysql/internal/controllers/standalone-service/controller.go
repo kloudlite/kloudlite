@@ -158,7 +158,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -273,7 +273,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneS
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 

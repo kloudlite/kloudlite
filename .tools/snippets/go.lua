@@ -16,74 +16,77 @@ local postfix = require("luasnip.extras.postfix").postfix
 local snippets, autosnippets = {}, {}
 
 local res_enabled = s(
-        "res_enabled",
-        fmt(
-            [[
+  "res_enabled",
+  fmt(
+    [[
 // +kubebuilder:default=true
 Enabled bool `json:"enabled,omitempty"`
 ]],
-            {}
-        )
-    )
+    {}
+  )
+)
 
 table.insert(snippets, res_enabled)
 
 local robj = s(
-        "robj",
-        fmt(
-            [[
+  "robj",
+  fmta(
+    [[
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{{Generation: obj.Generation}}
+	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck({})
-	defer req.LogPostCheck({})
+	req.LogPreCheck(<p1>)
+	defer req.LogPostCheck(<p2>)
+
+  <p3>
 
 	check.Status = true
-	if check != obj.Status.Checks[{}] {{
-		obj.Status.Checks[{}] = check
+	if check != obj.Status.Checks[<p4>] {
+		obj.Status.Checks[<p5>] = check
 		req.UpdateStatus()
-	}}
+	}
 
 	return req.Next()
 ]],
-            {
-                i(1, "Checkname"),
-                rep(1),
-                rep(1),
-                rep(1),
-            }
-        )
-    )
+    {
+      p1 = i(1, "Checkname"),
+      p2 = rep(1),
+      p3 = i(0, "//body"),
+      p4 = rep(1),
+      p5 = rep(1),
+    }
+  )
+)
 table.insert(snippets, robj)
 
 local import_ginkgo = s(
-        "imp_ginkgo",
-        fmt(
-            [[
+  "imp_ginkgo",
+  fmt(
+    [[
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 ]],
-            {}
-        )
-    )
+    {}
+  )
+)
 table.insert(snippets, import_ginkgo)
 
 local import_test_suite = s(
-        "imp_suite",
-        fmt(
-            [[
+  "imp_suite",
+  fmt(
+    [[
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 ]],
-            {}
-        )
-    )
+    {}
+  )
+)
 table.insert(snippets, import_ginkgo)
 
 local commonTypesImports = s(
-        "imp_k8s_types",
-        fmt(
-            [[
+  "imp_k8s_types",
+  fmt(
+    [[
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -95,10 +98,13 @@ local commonTypesImports = s(
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrl "sigs.k8s.io/controller-runtime"
 ]],
-            {}
-        )
-    )
+    {}
+  )
+)
 
 table.insert(snippets, commonTypesImports)
+
+-- local kubebuilder_marker = s("k_marker", fmta("// +kubebuilder:<p1>=<p2>", {
+-- }))
 
 return snippets, autosnippets

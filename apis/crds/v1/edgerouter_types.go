@@ -36,6 +36,12 @@ type EdgeRouter struct {
 	Status rApi.Status    `json:"status,omitempty"`
 }
 
+func (er *EdgeRouter) EnsureGVK() {
+	if er != nil {
+		er.SetGroupVersionKind(GroupVersion.WithKind("EdgeRouter"))
+	}
+}
+
 func (edge *EdgeRouter) GetStatus() *rApi.Status {
 	return &edge.Status
 }

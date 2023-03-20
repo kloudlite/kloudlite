@@ -27,6 +27,12 @@ type Topic struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (t *Topic) EnsureGVK() {
+	if t != nil {
+		t.SetGroupVersionKind(GroupVersion.WithKind("Topic"))
+	}
+}
+
 func (t *Topic) GetStatus() *rApi.Status {
 	return &t.Status
 }

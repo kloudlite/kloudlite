@@ -25,6 +25,12 @@ type Config struct {
 	Status    rApi.Status `json:"status,omitempty"`
 }
 
+func (cfg *Config) EnsureGVK() {
+	if cfg != nil {
+		cfg.SetGroupVersionKind(GroupVersion.WithKind("Config"))
+	}
+}
+
 func (cfg *Config) GetStatus() *rApi.Status {
 	return &cfg.Status
 }

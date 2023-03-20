@@ -1,0 +1,21 @@
+env:
+  - name: RELEASE_VERSION
+    valueFrom:
+      secretKeyRef:
+        name: kloudlite-secrets
+        key: RELEASE_VERSION
+  - name: RELEASES_API_ENDPOINT
+    valueFrom:
+      secretKeyRef:
+        name: kloudlite-secrets
+        key: RELEASES_API_ENDPOINT
+  - name: RELEASES_API_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: kloudlite-secrets
+        key: RELEASES_API_USERNAME
+  - name: RELEASES_API_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: kloudlite-secrets
+        key: RELEASES_API_PASSWORD

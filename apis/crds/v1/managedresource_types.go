@@ -46,6 +46,12 @@ type ManagedResource struct {
 	Status    rApi.Status `json:"status,omitempty"`
 }
 
+func (m *ManagedResource) EnsureGVK() {
+	if m != nil {
+		m.SetGroupVersionKind(GroupVersion.WithKind("ManagedResource"))
+	}
+}
+
 func (m *ManagedResource) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }

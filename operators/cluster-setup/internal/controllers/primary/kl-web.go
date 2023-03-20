@@ -41,7 +41,7 @@ func (r *Reconciler) ensureAuthWeb(req *rApi.Request[*v1.PrimaryCluster]) stepRe
 			return req.CheckFailed(AuthWebReady, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AuthWebReady, check, err.Error()).Err(nil)
 		}
 	}
@@ -79,7 +79,7 @@ func (r *Reconciler) ensureConsoleWeb(req *rApi.Request[*v1.PrimaryCluster]) ste
 			return req.CheckFailed(ConsoleWebCreated, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(ConsoleWebCreated, check, err.Error()).Err(nil)
 		}
 	}
@@ -117,7 +117,7 @@ func (r *Reconciler) ensureAccountsWeb(req *rApi.Request[*v1.PrimaryCluster]) st
 			return req.CheckFailed(AccountsWebCreated, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccountsWebCreated, check, err.Error()).Err(nil)
 		}
 	}
@@ -155,7 +155,7 @@ func (r *Reconciler) ensureSocketWeb(req *rApi.Request[*v1.PrimaryCluster]) step
 			return req.CheckFailed(SocketWebCreated, check, err.Error()).Err(nil)
 		}
 
-		if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(SocketWebCreated, check, err.Error()).Err(nil)
 		}
 	}

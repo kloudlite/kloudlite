@@ -34,8 +34,16 @@ func (k *RawJson) DeepCopy() *RawJson {
 // 	json.RawMessage `json:",inline"`
 // }
 
+func (s *RawJson) EnsureRawJson() *RawJson {
+  if s == nil { 
+    return &RawJson{}
+  }
+  return s
+}
+
 // suppressing error
 func (s *RawJson) fillMap() {
+  s = s.EnsureRawJson()
 	if s.RawMessage != nil {
 		s.items = map[string]any{}
 		m, err := s.RawMessage.MarshalJSON()
@@ -55,6 +63,7 @@ func (s *RawJson) fillMap() {
 }
 
 func (s *RawJson) complete() error {
+  s = s.EnsureRawJson()
 	b, err := json.Marshal(s.items)
 	if err != nil {
 		return err
@@ -64,17 +73,20 @@ func (s *RawJson) complete() error {
 }
 
 func (s *RawJson) Len() int {
+  s = s.EnsureRawJson()
 	s.fillMap()
 	return len(s.items)
 }
 
 func (s *RawJson) Set(key string, value any) error {
+  s = s.EnsureRawJson()
 	s.fillMap()
 	s.items[key] = value
 	return s.complete()
 }
 
 func (s *RawJson) SetFromMap(m map[string]any) error {
+  s = s.EnsureRawJson()
 	s.fillMap()
 	for k, v := range m {
 		s.items[k] = v
@@ -83,6 +95,7 @@ func (s *RawJson) SetFromMap(m map[string]any) error {
 }
 
 func (s *RawJson) Exists(keys ...string) bool {
+  s = s.EnsureRawJson()
 	s.fillMap()
 	for i := range keys {
 		if _, ok := s.items[keys[i]]; ok {
@@ -93,6 +106,7 @@ func (s *RawJson) Exists(keys ...string) bool {
 }
 
 func (s *RawJson) Delete(key string) error {
+  s = s.EnsureRawJson()
 	s.fillMap()
 	c := len(s.items)
 	delete(s.items, key)
@@ -103,6 +117,7 @@ func (s *RawJson) Delete(key string) error {
 }
 
 func (s *RawJson) Get(key string, fillInto any) error {
+  s = s.EnsureRawJson()
 	s.fillMap()
 	value, ok := s.items[key]
 	if !ok {
@@ -121,6 +136,7 @@ func (s *RawJson) Get(key string, fillInto any) error {
 }
 
 func (s *RawJson) GetString(key string) (string, bool) {
+  s = s.EnsureRawJson()
 	s.fillMap()
 	x, ok := s.items[key]
 	if !ok {
@@ -134,6 +150,7 @@ func (s *RawJson) GetString(key string) (string, bool) {
 }
 
 func (s *RawJson) ToString() string {
+  s = s.EnsureRawJson()
 	if s.RawMessage == nil {
 		return ""
 	}

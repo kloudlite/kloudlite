@@ -36,6 +36,12 @@ type StandaloneService struct {
 	Status rApi.Status           `json:"status,omitempty"`
 }
 
+func (s *StandaloneService) EnsureGVK() {
+	if s != nil {
+		s.SetGroupVersionKind(GroupVersion.WithKind("StandaloneService"))
+	}
+}
+
 func (s *StandaloneService) GetStatus() *rApi.Status {
 	return &s.Status
 }

@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/operator/operator"
 	"reflect"
+	"strings"
+	"time"
+
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"strings"
-	"time"
 
 	"k8s.io/client-go/tools/record"
 
@@ -67,6 +67,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
@@ -78,18 +81,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
-
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(DeploymentSvcAndHpaCreated, ImagesLabelled); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -102,13 +98,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if req.Object.Enabled != nil && !*req.Object.Enabled {
-		anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.Namespace}}
-		return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
+		// anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.Namespace}}
+		// return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
 	}
 
-	if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
+	//
 
 	if step := r.reconLabellingImages(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -132,7 +129,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	//	return "false"
 	//}())
 	//req.Object.Status.DisplayVars.Set("frozen", req.Object.GetLabels()[constants.LabelKeys.Freeze] == "true")
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+
+	req.Object.Status.Resources = req.GetOwnedResources()
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+}
+
+func (r *Reconciler) cleanupLogic(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
@@ -140,7 +146,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 }
 
 func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(ImagesLabelled)
@@ -170,16 +176,16 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 	}
 
 	check.Status = true
-	if check != checks[ImagesLabelled] {
-		checks[ImagesLabelled] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[ImagesLabelled] {
+		obj.Status.Checks[ImagesLabelled] = check
+		req.UpdateStatus()
 	}
 
 	return req.Next()
 }
 
 func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(DeploymentSvcAndHpaCreated)
@@ -190,20 +196,18 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
 	isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
 
-	anchor, _ := rApi.GetLocal[*crdsv1.Anchor](req, "anchor")
-
 	b, err := templates.Parse(
 		templates.CrdsV1.App, map[string]any{
 			"object":        obj,
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
 			"freeze":        isFrozen || isIntercepted,
-			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(anchor, true)},
+			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 			// for intercepting
 			"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
 			"device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
-			"account-ref":    obj.GetAnnotations()[constants.AnnotationKeys.AccountRef],
+			"account-ref":    obj.Spec.AccountName,
 		},
 	)
 
@@ -211,13 +215,15 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	resRefs, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
 
+	req.AddToOwnedResources(resRefs...)
 	check.Status = true
-	if check != checks[DeploymentSvcAndHpaCreated] {
-		checks[DeploymentSvcAndHpaCreated] = check
+	if check != obj.Status.Checks[DeploymentSvcAndHpaCreated] {
+		obj.Status.Checks[DeploymentSvcAndHpaCreated] = check
 		req.UpdateStatus()
 	}
 
@@ -225,7 +231,7 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 }
 
 func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(DeploymentReady)
@@ -276,9 +282,9 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	}
 
 	check.Status = true
-	if check != checks[DeploymentReady] {
-		checks[DeploymentReady] = check
-		return req.UpdateStatus()
+	if check != obj.Status.Checks[DeploymentReady] {
+		obj.Status.Checks[DeploymentReady] = check
+		req.UpdateStatus()
 	}
 	return req.Next()
 }

@@ -11,6 +11,8 @@ type Env struct {
 	MaxConcurrentReconciles  int           `env:"MAX_CONCURRENT_RECONCILES"`
 	DefaultClusterIssuerName string        `env:"DEFAULT_CLUSTER_ISSUER_NAME" required:"true"`
 	AcmeEmail                string        `env:"ACME_EMAIL" required:"true"`
+	WildcardCertName         string        `env:"WILDCARD_CERT_NAME" required:"true"`
+	WildcardCertNamespace    string        `env:"WILDCARD_CERT_NAMESPACE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

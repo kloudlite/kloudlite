@@ -3,6 +3,7 @@ package edgeWatcher
 import (
 	"context"
 	"encoding/json"
+	rApi  "github.com/kloudlite/operator/pkg/operator"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
 	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
@@ -88,7 +89,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		edgeWorker.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(edgeRes, true)})
 
 		edgeWorker.Spec = extensionsv1.EdgeWorkerSpec{
-			AccountId: edge.Spec.AccountId,
+			AccountName: edge.Spec.AccountId,
 			Creds:     edge.Spec.CredentialsRef,
 			Provider:  edge.Spec.Provider,
 			Region:    edge.Spec.Region,
@@ -126,7 +127,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			},
 		),
 	)
-	// builder.WithEventFilter(rApi.ReconcileFilter())
-
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

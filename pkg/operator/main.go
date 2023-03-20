@@ -60,6 +60,7 @@ type Reconciler interface {
 type Resource interface {
 	client.Object
 	runtime.Object
+	EnsureGVK()
 	GetStatus() *Status
 	GetEnsuredLabels() map[string]string
 	GetEnsuredAnnotations() map[string]string

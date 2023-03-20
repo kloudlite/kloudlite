@@ -20,22 +20,45 @@ type User struct {
 	Password string `json:"-"`
 }
 
-var dockerRepoMinACLs = []map[string]any{
-	{
+type Permission string
+
+const (
+	PushRepository Permission = "push-repository"
+	PullRepository Permission = "pull-repository"
+)
+
+var permissionsMap = map[Permission]map[string]any{
+	PushRepository: {
 		"action":   "push",
 		"resource": "repository",
 	},
-	{
+	PullRepository: {
 		"action":   "pull",
 		"resource": "repository",
 	},
 }
 
+// var dockerRepoMinACLs = []map[string]any{
+// 	{
+// 		"action":   "push",
+// 		"resource": "repository",
+// 	},
+// 	{
+// 		"action":   "pull",
+// 		"resource": "repository",
+// 	},
+// }
+
 func (h *Client) changePassword(ctx context.Context, user *User) (*User, error) {
 	return nil, nil
 }
 
-func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName string) (*User, error) {
+func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName string, permissions []Permission) (*User, error) {
+	accessAcls := make([]map[string]any, len(permissions))
+	for i := range permissions {
+		accessAcls[i] = permissionsMap[permissions[i]]
+	}
+
 	body := map[string]any{
 		"name":        userName,
 		"level":       "project",
@@ -43,7 +66,7 @@ func (h *Client) CreateUserAccount(ctx context.Context, projectName, userName st
 		"description": "created by kloudlite operator",
 		"permissions": []map[string]any{
 			{
-				"access":    dockerRepoMinACLs,
+				"access":    accessAcls,
 				"kind":      "project",
 				"namespace": projectName,
 			},

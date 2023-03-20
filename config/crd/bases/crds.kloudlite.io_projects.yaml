@@ -45,13 +45,18 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
-              accountId:
+              accountName:
                 type: string
               displayName:
                 description: DisplayName of Project
                 type: string
               logo:
                 type: string
+              targetNamespace:
+                type: string
+            required:
+            - accountName
+            - targetNamespace
             type: object
           status:
             properties:

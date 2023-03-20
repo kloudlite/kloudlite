@@ -3,11 +3,12 @@ package msvc
 import (
 	"context"
 	"encoding/json"
-	"github.com/kloudlite/operator/operator"
+	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
@@ -32,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ManagedServiceReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	logger     logging.Logger
@@ -41,7 +42,7 @@ type ManagedServiceReconciler struct {
 	yamlClient *kubectl.YAMLClient
 }
 
-func (r *ManagedServiceReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
@@ -54,7 +55,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
-func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -78,14 +79,6 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(RealMsvcReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -99,9 +92,9 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 		return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
 	}
 
-	if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.ensureRealMsvcCreated(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -113,48 +106,48 @@ func (r *ManagedServiceReconciler) Reconcile(ctx context.Context, request ctrl.R
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *ManagedServiceReconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ManagedServiceReconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(RealMsvcCreated)
 	defer req.LogPostCheck(RealMsvcCreated)
 
-	anchor, _ := rApi.GetLocal[*crdsv1.Anchor](req, "anchor")
-
 	b, err := templates.Parse(
 		templates.CommonMsvc, map[string]any{
 			"obj":        obj,
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(anchor, true)},
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		},
 	)
 	if err != nil {
 		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
 	}
 
-	if err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
 	}
 
 	check.Status = true
-	if check != checks[RealMsvcCreated] {
-		checks[RealMsvcCreated] = check
+	if check != obj.Status.Checks[RealMsvcCreated] {
+		obj.Status.Checks[RealMsvcCreated] = check
 		req.UpdateStatus()
-		//return req.UpdateStatus()
 	}
 
 	return req.Next()
 }
 
-func (r *ManagedServiceReconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(RealMsvcReady)
@@ -182,7 +175,7 @@ func (r *ManagedServiceReconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1
 	}
 
 	if !realMsvcObj.Status.IsReady {
-		if realMsvcObj.Status.Message.RawMessage == nil {
+		if realMsvcObj.Status.Message == nil {
 			return req.CheckFailed(RealMsvcReady, check, "waiting for real managed resource to reconcile ...").Err(nil)
 		}
 		b, err := realMsvcObj.Status.Message.MarshalJSON()
@@ -193,14 +186,14 @@ func (r *ManagedServiceReconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1
 	}
 
 	check.Status = true
-	if check != checks[RealMsvcReady] {
-		checks[RealMsvcReady] = check
+	if check != obj.Status.Checks[RealMsvcReady] {
+		obj.Status.Checks[RealMsvcReady] = check
 		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
-func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
@@ -233,5 +226,6 @@ func (r *ManagedServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger log
 		builder.Owns(msvcs[i])
 	}
 
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	return builder.Complete(r)
 }

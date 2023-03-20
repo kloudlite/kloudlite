@@ -11,7 +11,6 @@ import (
 	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +31,8 @@ type Request[T Resource] struct {
 
 	reconStartTime time.Time
 	timerMap       map[string]time.Time
+
+	resourceRefs []ResourceRef
 }
 
 type ReconcilerCtx context.Context
@@ -91,34 +92,6 @@ func (r *Request[T]) GetAnchorName() string {
 
 func (r *Request[T]) GetClient() client.Client {
 	return r.client
-}
-
-// DebuggingOnlySetStatus only to be used in debugging environment, never in production
-func (r *Request[T]) DebuggingOnlySetStatus(status Status) stepResult.Result {
-	obj := r.Object
-	ctx := r.ctx
-
-	if value := obj.GetAnnotations()["kloudlite.io/reset-status"]; value == "true" {
-		ann := obj.GetAnnotations()
-
-		r.Object.GetStatus().OpsConditions = status.OpsConditions
-		r.Object.GetStatus().Conditions = status.Conditions
-		r.Object.GetStatus().ChildConditions = status.ChildConditions
-		r.Object.GetStatus().DisplayVars = status.DisplayVars
-		r.Object.GetStatus().GeneratedVars = status.GeneratedVars
-		r.Object.GetStatus().IsReady = status.IsReady
-
-		if err := r.client.Status().Update(ctx, obj); err != nil {
-			return r.FailWithStatusError(err)
-		}
-
-		delete(ann, "kloudlite.io/reset-status")
-		obj.SetAnnotations(ann)
-		if err := r.client.Update(ctx, obj); err != nil {
-			return r.FailWithStatusError(err)
-		}
-	}
-	return nil
 }
 
 func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
@@ -305,13 +278,13 @@ func (r *Request[T]) RestartIfAnnotated() stepResult.Result {
 			return r.FailWithOpError(err)
 		}
 
-		if err := kubectl.RolloutRestart(r.client, kubectl.Deployment, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
+		if err := fn.RolloutRestart(r.client, fn.Deployment, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
 			return stepResult.New().Err(err)
 		}
-		if err := kubectl.RolloutRestart(r.client, kubectl.StatefulSet, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
+		if err := fn.RolloutRestart(r.client, fn.StatefulSet, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
 			return stepResult.New().Err(err)
 		}
-		return r.Done().RequeueAfter(2 * time.Second)
+		return r.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	return r.Next()
@@ -398,7 +371,7 @@ func (r *Request[T]) LogPreReconcile() {
 }
 
 func (r *Request[T]) LogPostReconcile() {
-	tDiff := time.Now().Sub(r.reconStartTime).Seconds()
+	tDiff := time.Since(r.reconStartTime).Seconds()
 	if !r.Object.GetStatus().IsReady {
 		var yellow = color.New(color.FgHiYellow, color.Bold).SprintFunc()
 		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation in progress"), tDiff)
@@ -418,7 +391,7 @@ func (r *Request[T]) LogPreCheck(checkName string) {
 }
 
 func (r *Request[T]) LogPostCheck(checkName string) {
-	tDiff := time.Now().Sub(r.timerMap[checkName]).Seconds()
+	tDiff := time.Since(r.timerMap[checkName]).Seconds()
 	check, ok := r.Object.GetStatus().Checks[checkName]
 	if ok {
 		if !check.Status {
@@ -427,5 +400,24 @@ func (r *Request[T]) LogPostCheck(checkName string) {
 		}
 		var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
 		r.internalLogger.Infof(green("[check] (took: %.2fs) %-20s [status] %v"), tDiff, checkName, check.Status)
+	}
+}
+
+func (r *Request[T]) GetOwnedResources() []ResourceRef {
+	return r.resourceRefs
+}
+
+func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
+	r.resourceRefs = append(r.resourceRefs, refs...)
+}
+
+func ParseResourceRef(obj client.Object) ResourceRef {
+	return ResourceRef{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+			APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		},
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
 	}
 }

@@ -42,8 +42,34 @@ spec:
           spec:
             description: ManagedClusterSpec defines the desired state of ManagedCluster
             properties:
+              certManager:
+                properties:
+                  enabled:
+                    type: boolean
+                  namespace:
+                    default: helm-cert-manager
+                    type: string
+                  releaseName:
+                    default: cert-manager
+                    type: string
+                type: object
               domain:
                 type: string
+              gitlabRunner:
+                properties:
+                  enabled:
+                    type: boolean
+                  namespace:
+                    default: helm-gitlab-runner
+                    type: string
+                  releaseName:
+                    default: gitlab-runner
+                    type: string
+                  runnerToken:
+                    type: string
+                required:
+                - runnerToken
+                type: object
               kloudliteCreds:
                 properties:
                   name:
@@ -54,8 +80,45 @@ spec:
                 - name
                 - namespace
                 type: object
+              kloudliteOperators:
+                properties:
+                  acmeEmail:
+                    default: support@kloudlite.io
+                    type: string
+                  clusterIssuerName:
+                    default: kl-cert-issuer
+                    type: string
+                  clusterSvcAccount:
+                    default: kloudlite-cluster-svc-account
+                    type: string
+                  imagePullPolicy:
+                    default: Always
+                    type: string
+                  imageTag:
+                    default: v1.0.5
+                    type: string
+                  installationMode:
+                    enum:
+                    - development
+                    - production
+                    type: string
+                  namespace:
+                    default: kl-init-operators
+                    type: string
+                required:
+                - installationMode
+                type: object
               loki:
                 properties:
+                  enabled:
+                    default: true
+                    type: boolean
+                  namespace:
+                    default: kl-init-monitoring
+                    type: string
+                  releaseName:
+                    default: loki
+                    type: string
                   resources:
                     properties:
                       cpu:
@@ -103,9 +166,6 @@ spec:
                     - bucketName
                     - endpoint
                     type: object
-                  serviceName:
-                    default: loki
-                    type: string
                   url:
                     type: string
                 required:
@@ -114,6 +174,15 @@ spec:
                 type: object
               prometheus:
                 properties:
+                  enabled:
+                    default: true
+                    type: boolean
+                  namespace:
+                    default: kl-init-monitoring
+                    type: string
+                  releaseName:
+                    default: prometheus
+                    type: string
                   resources:
                     properties:
                       cpu:
@@ -145,9 +214,6 @@ spec:
                     - cpu
                     - memory
                     type: object
-                  serviceName:
-                    default: prometheus
-                    type: string
                 required:
                 - resources
                 type: object

@@ -28,6 +28,12 @@ type ACLUser struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (user *ACLUser) EnsureGVK() {
+	if user != nil {
+		user.SetGroupVersionKind(GroupVersion.WithKind("ACLUser"))
+	}
+}
+
 func (user *ACLUser) GetStatus() *rApi.Status {
 	return &user.Status
 }
