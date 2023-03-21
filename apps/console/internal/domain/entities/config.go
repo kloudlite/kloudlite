@@ -3,13 +3,15 @@ package entities
 import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 type Config struct {
 	repos.BaseEntity `json:",inline"`
 	crdsv1.Config    `json:",inline"`
-	AccountName      string `json:"accountName"`
-	ClusterName      string `json:"clusterName"`
+	AccountName      string       `json:"accountName"`
+	ClusterName      string       `json:"clusterName"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
 var ConfigIndexes = []repos.IndexField{

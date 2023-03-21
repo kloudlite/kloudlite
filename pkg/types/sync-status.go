@@ -13,6 +13,7 @@ type SyncStatus struct {
 	Action          SyncAction `json:"action,omitempty"`
 	Generation      int64      `json:"generation,omitempty"`
 	State           SyncState  `json:"state,omitempty"`
+	Error           string     `json:"error,omitempty"`
 }
 
 // func (obj *SyncStatus) UnmarshalGQL(v interface{}) error {
@@ -55,3 +56,37 @@ const (
 	SyncStateReady      SyncState = "READY"
 	SyncStateNotReady   SyncState = "NOT_READY"
 )
+
+func GetSyncStatusForCreation() SyncStatus {
+	return SyncStatus{
+		SyncScheduledAt: time.Now(),
+		Action:          SyncActionApply,
+		Generation:      1,
+		State:           SyncStateIdle,
+	}
+}
+
+func GetSyncStatusForUpdation(generation int64) SyncStatus {
+	return SyncStatus{
+		SyncScheduledAt: time.Now(),
+		Action:          SyncActionApply,
+		Generation:      generation,
+		State:           SyncStateIdle,
+	}
+}
+
+func GetSyncStatusForDeletion(generation int64) SyncStatus {
+	return SyncStatus{
+		SyncScheduledAt: time.Now(),
+		Action:          SyncActionDelete,
+		Generation:      generation,
+		State:           SyncStateIdle,
+	}
+}
+
+func ParseSyncState(isReady bool) SyncState {
+	if isReady {
+		return SyncStateReady
+	}
+	return SyncStateNotReady
+}
