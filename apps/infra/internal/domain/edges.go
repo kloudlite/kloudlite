@@ -6,6 +6,7 @@ import (
 
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error) {
@@ -15,7 +16,7 @@ func (d *domain) CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edg
 	}
 
 	edge.AccountName = ctx.AccountName
-	edge.SyncStatus = getSyncStatusForCreation()
+	edge.SyncStatus = t.GetSyncStatusForCreation()
 	nEdge, err := d.edgeRepo.Create(ctx, &edge)
 	if err != nil {
 		return nil, err
@@ -56,8 +57,8 @@ func (d *domain) UpdateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edg
 		return nil, err
 	}
 
-	e.Edge.Spec = edge.Edge.Spec
-	e.SyncStatus = getSyncStatusForUpdation(e.Generation + 1)
+	e.Spec = edge.Spec
+	e.SyncStatus = t.GetSyncStatusForUpdation(e.Generation + 1)
 
 	uEdge, err := d.edgeRepo.UpdateById(ctx, e.Id, e)
 	if err != nil {
@@ -75,7 +76,7 @@ func (d *domain) DeleteEdge(ctx InfraContext, clusterName string, name string) e
 	if err != nil {
 		return err
 	}
-	e.SyncStatus = getSyncStatusForDeletion(e.Generation)
+	e.SyncStatus = t.GetSyncStatusForDeletion(e.Generation)
 	return d.deleteK8sResource(ctx, e)
 }
 
@@ -96,7 +97,7 @@ func (d *domain) OnUpdateEdgeMessage(ctx InfraContext, edge entities.Edge) error
 
 	e.Edge = edge.Edge
 	e.SyncStatus.LastSyncedAt = time.Now()
-	e.SyncStatus.State = parseSyncState(edge.Status.IsReady)
+	e.SyncStatus.State = t.ParseSyncState(edge.Status.IsReady)
 	_, err = d.edgeRepo.UpdateById(ctx, e.Id, e)
 	return err
 }

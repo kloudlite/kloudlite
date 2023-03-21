@@ -6,6 +6,7 @@ import (
 
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
@@ -15,7 +16,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	cluster.AccountName = ctx.AccountName
-	cluster.SyncStatus = getSyncStatusForCreation()
+	cluster.SyncStatus = t.GetSyncStatusForCreation()
 
 	nCluster, err := d.clusterRepo.Create(ctx, &cluster)
 	if err != nil {
@@ -55,7 +56,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	clus.Cluster = cluster.Cluster
-	clus.SyncStatus = getSyncStatusForUpdation(clus.Generation + 1)
+	clus.SyncStatus = t.GetSyncStatusForUpdation(clus.Generation + 1)
 
 	uCluster, err := d.clusterRepo.UpdateById(ctx, clus.Id, clus)
 	if err != nil {
@@ -75,7 +76,7 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return err
 	}
 
-	c.SyncStatus = getSyncStatusForDeletion(c.Generation)
+	c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
 	upC, err := d.clusterRepo.UpdateById(ctx, c.Id, c)
 	if err != nil {
 		return err
@@ -95,7 +96,7 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 
 	c.Cluster = cluster.Cluster
 	c.SyncStatus.LastSyncedAt = time.Now()
-	c.SyncStatus.State = parseSyncState(c.Status.IsReady)
+	c.SyncStatus.State = t.ParseSyncState(c.Status.IsReady)
 
 	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
 	return err

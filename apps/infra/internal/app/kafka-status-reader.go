@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/operator/operators/status-n-billing/types"
@@ -14,97 +15,84 @@ import (
 	"kloudlite.io/pkg/redpanda"
 )
 
-func processStatusUpdates(consumer redpanda.Consumer, d domain.Domain, logger logging.Logger) {
+type StatusUpdatesConsumer redpanda.Consumer
+
+func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 		logger.Infof("processing offset %d timestamp %s", offset, timeStamp)
-		// logger.Debugf("%s", msg)
 
-		var statusUpdate types.StatusUpdate
-		if err := json.Unmarshal(msg, &statusUpdate); err != nil {
+		var su types.StatusUpdate
+		if err := json.Unmarshal(msg, &su); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
 			// return err
 		}
 
-		obj := unstructured.Unstructured{Object: statusUpdate.Object}
+		if su.Object == nil {
+			logger.Infof("message does not contain 'object', so won't be able to find a resource uniquely, thus ignoring ...")
+			return nil
+		}
+
+		if len(strings.TrimSpace(su.AccountName)) ==  0 {
+			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
+			return nil
+		}
+
+		obj := unstructured.Unstructured{Object: su.Object}
+		ctx := domain.InfraContext{Context: context.TODO(), AccountName: su.AccountName}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		switch kind {
 		case "CloudProvider":
 			{
 				var cp entities.CloudProvider
-				if err := fn.JsonConversion(statusUpdate.Object, &cp); err != nil {
+				if err := fn.JsonConversion(su.Object, &cp); err != nil {
 					return err
 				}
 
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteCloudProviderMessage(domain.InfraContext{
-						Context:     context.TODO(),
-						AccountName: statusUpdate.AccountName,
-					}, cp)
+					return d.OnDeleteCloudProviderMessage(ctx, cp)
 				}
-				return d.OnUpdateCloudProviderMessage(domain.InfraContext{
-					Context:     context.TODO(),
-					AccountName: statusUpdate.AccountName,
-				}, cp)
+				return d.OnUpdateCloudProviderMessage(ctx, cp)
 			}
 		case "Edge":
 			{
 				var edge entities.Edge
-				if err := fn.JsonConversion(statusUpdate.Object, &edge); err != nil {
+				if err := fn.JsonConversion(su.Object, &edge); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteEdgeMessage(domain.InfraContext{
-						Context:     context.TODO(),
-						AccountName: statusUpdate.AccountName,
-					}, edge)
+					return d.OnDeleteEdgeMessage(ctx, edge)
 				}
-				return d.OnUpdateEdgeMessage(domain.InfraContext{
-					Context:     context.TODO(),
-					AccountName: statusUpdate.AccountName,
-				}, edge)
+				return d.OnUpdateEdgeMessage(ctx, edge)
 			}
 		case "WorkerNode":
 			{
 				var wNode entities.WorkerNode
-				if err := fn.JsonConversion(statusUpdate.Object, &wNode); err != nil {
+				if err := fn.JsonConversion(su.Object, &wNode); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteWorkerNodeMessage(domain.InfraContext{
-						Context:     context.TODO(),
-						AccountName: statusUpdate.AccountName,
-					}, wNode)
+					return d.OnDeleteWorkerNodeMessage(ctx, wNode)
 				}
-				return d.OnUpdateWorkerNodeMessage(domain.InfraContext{
-					Context:     context.TODO(),
-					AccountName: statusUpdate.AccountName,
-				}, wNode)
+				return d.OnUpdateWorkerNodeMessage(ctx, wNode)
 			}
 		case "Cluster":
 			{
 				var clus entities.Cluster
-				if err := fn.JsonConversion(statusUpdate.Object, &clus); err != nil {
+				if err := fn.JsonConversion(su.Object, &clus); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteClusterMessage(domain.InfraContext{
-						Context:     context.TODO(),
-						AccountName: statusUpdate.AccountName,
-					}, clus)
+					return d.OnDeleteClusterMessage(ctx, clus)
 				}
-				return d.OnUpdateClusterMessage(domain.InfraContext{
-					Context:     context.TODO(),
-					AccountName: statusUpdate.AccountName,
-				}, clus)
+				return d.OnUpdateClusterMessage(ctx, clus)
 			}
 		default:
 			{
 				logger.Infof("infra status updates consumer does not acknowledge the kind %s", kind)
+				return nil
 			}
 		}
-
-		return nil
 	})
 }
