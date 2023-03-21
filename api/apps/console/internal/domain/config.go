@@ -2,9 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
@@ -15,7 +17,10 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 
 	config.AccountName = ctx.accountName
 	config.ClusterName = ctx.clusterName
+	config.SyncStatus = t.GetSyncStatusForCreation()
+
 	c, err := d.configRepo.Create(ctx, &config)
+
 	if err != nil {
 		if d.configRepo.ErrAlreadyExists(err) {
 			return nil, fmt.Errorf("config with name '%s' already exists", config.Name)
@@ -35,6 +40,12 @@ func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string)
 	if err != nil {
 		return err
 	}
+
+	c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
+	if _, err := d.configRepo.UpdateById(ctx, c.Id, c); err != nil {
+		return err
+	}
+
 	return d.deleteK8sResource(ctx, &c.Config)
 }
 
@@ -61,9 +72,8 @@ func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*enti
 		return nil, err
 	}
 
-	status := c.Status
 	c.Config = config.Config
-	c.Status = status
+	c.SyncStatus = t.GetSyncStatusForUpdation(c.Generation + 1)
 
 	upConfig, err := d.configRepo.UpdateById(ctx, c.Id, c)
 	if err != nil {
@@ -91,4 +101,38 @@ func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (
 		return nil, fmt.Errorf("no config with name=%s,namespace=%s found", name, namespace)
 	}
 	return cfg, nil
+}
+
+func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error {
+	a, err := d.findConfig(ctx, config.Namespace, config.Name)
+	if err != nil {
+		return err
+	}
+
+	return d.configRepo.DeleteById(ctx, a.Id)
+}
+
+func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error {
+	c, err := d.findConfig(ctx, config.Namespace, config.Name)
+	if err != nil {
+		return err
+	}
+
+	c.Data = config.Data
+	c.SyncStatus.LastSyncedAt = time.Now()
+	c.SyncStatus.State = t.ParseSyncState(config.Status.IsReady)
+
+	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
+	return err
+}
+
+func (d *domain) OnApplyConfigError(ctx ConsoleContext, err error, namespace, name string) error {
+	c, err2 := d.findConfig(ctx, namespace, name)
+	if err2 != nil {
+		return err2
+	}
+
+	c.SyncStatus.Error = err.Error()
+	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
+	return err
 }

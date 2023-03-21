@@ -2,9 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error) {
@@ -15,10 +17,12 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 
 	router.AccountName = ctx.accountName
 	router.ClusterName = ctx.clusterName
+	router.SyncStatus = t.GetSyncStatusForCreation()
+
 	r, err := d.routerRepo.Create(ctx, &router)
 	if err != nil {
 		if d.routerRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("router with name '%s' already exists", router.Name)
+			return nil, fmt.Errorf("router with name %q already exists", router.Name)
 		}
 		return nil, err
 	}
@@ -35,6 +39,12 @@ func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string)
 	if err != nil {
 		return err
 	}
+
+	r.SyncStatus = t.GetSyncStatusForDeletion(r.Generation)
+	if _, err := d.routerRepo.UpdateById(ctx, r.Id, r); err != nil {
+		return err
+	}
+
 	return d.deleteK8sResource(ctx, &r.Router)
 }
 
@@ -61,9 +71,8 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 		return nil, err
 	}
 
-	status := r.Status
-	r.Router = router.Router
-	r.Status = status
+	r.Spec = router.Spec
+	r.SyncStatus = t.GetSyncStatusForUpdation(r.Generation + 1)
 
 	upRouter, err := d.routerRepo.UpdateById(ctx, r.Id, r)
 	if err != nil {
@@ -91,4 +100,38 @@ func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (
 		return nil, fmt.Errorf("no secret with name=%s,namespace=%s found", name, namespace)
 	}
 	return router, nil
+}
+
+func (d *domain) OnDeleteRouterMessage(ctx ConsoleContext, app entities.Router) error {
+	a, err := d.findRouter(ctx, app.Namespace, app.Name)
+	if err != nil {
+		return err
+	}
+
+	return d.routerRepo.DeleteById(ctx, a.Id)
+}
+
+func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Router) error {
+	r, err := d.findRouter(ctx, router.Namespace, router.Name)
+	if err != nil {
+		return err
+	}
+
+	r.Router = router.Router
+	r.SyncStatus.LastSyncedAt = time.Now()
+	r.SyncStatus.State = t.ParseSyncState(router.Status.IsReady)
+
+	_, err = d.routerRepo.UpdateById(ctx, r.Id, r)
+	return err
+}
+
+func (d *domain) OnApplyRouterError(ctx ConsoleContext, err error, namespace, name string) error {
+	m, err2 := d.findRouter(ctx, namespace, name)
+	if err2 != nil {
+		return err2
+	}
+
+	m.SyncStatus.Error = err.Error()
+	_, err = d.routerRepo.UpdateById(ctx, m.Id, m)
+	return err
 }

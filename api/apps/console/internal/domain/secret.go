@@ -2,9 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
@@ -15,6 +17,7 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 
 	secret.AccountName = ctx.accountName
 	secret.ClusterName = ctx.clusterName
+	secret.SyncStatus = t.GetSyncStatusForCreation()
 	s, err := d.secretRepo.Create(ctx, &secret)
 	if err != nil {
 		if d.secretRepo.ErrAlreadyExists(err) {
@@ -35,6 +38,11 @@ func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string)
 	if err != nil {
 		return err
 	}
+	s.SyncStatus = t.GetSyncStatusForDeletion(s.Generation)
+	if _, err := d.secretRepo.UpdateById(ctx, s.Id, s); err != nil {
+		return err
+	}
+
 	return d.deleteK8sResource(ctx, &s.Secret)
 }
 
@@ -61,9 +69,9 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 		return nil, err
 	}
 
-	status := s.Status
-	s.Secret = secret.Secret
-	s.Status = status
+	s.Data = secret.Data
+	s.StringData = secret.StringData
+	s.SyncStatus = t.GetSyncStatusForUpdation(s.Generation + 1)
 
 	upSecret, err := d.secretRepo.UpdateById(ctx, s.Id, s)
 	if err != nil {
@@ -91,4 +99,38 @@ func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (
 		return nil, fmt.Errorf("no secret with name=%s,namespace=%s found", name, namespace)
 	}
 	return scrt, nil
+}
+
+func (d *domain) OnDeleteSecretMessage(ctx ConsoleContext, secret entities.Secret) error {
+	s, err := d.findSecret(ctx, secret.Namespace, secret.Name)
+	if err != nil {
+		return err
+	}
+
+	return d.secretRepo.DeleteById(ctx, s.Id)
+}
+
+func (d *domain) OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secret) error {
+	s, err := d.findSecret(ctx, secret.Namespace, secret.Name)
+	if err != nil {
+		return err
+	}
+
+	s.Secret = secret.Secret
+	s.SyncStatus.LastSyncedAt = time.Now()
+	s.SyncStatus.State = t.ParseSyncState(secret.Status.IsReady)
+
+	_, err = d.secretRepo.UpdateById(ctx, s.Id, s)
+	return err
+}
+
+func (d *domain) OnApplySecretError(ctx ConsoleContext, err error, namespace, name string) error {
+	s, err2 := d.findSecret(ctx, namespace, name)
+	if err2 != nil {
+		return err2
+	}
+
+	s.SyncStatus.Error = err.Error()
+	_, err = d.secretRepo.UpdateById(ctx, s.Id, s)
+	return err
 }
