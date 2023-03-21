@@ -14,9 +14,9 @@ import (
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
-	"kloudlite.io/pkg/agent"
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
@@ -73,8 +73,26 @@ var Module = fx.Module("app",
 		},
 	),
 	redpanda.NewProducerFx[redpanda.Client](),
-	fx.Provide(func(p redpanda.Producer) agent.Sender {
-		return agent.NewSender(p)
+
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ApplyOnErrorConsumer, error) {
+		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
+			SASLAuth: cli.GetKafkaSASLAuth(),
+			Logger:   logger,
+		}, []string{ev.KafkaApplyOnErrorTopic})
 	}),
+
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (StatusUpdateConsumer, error) {
+		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
+			SASLAuth: cli.GetKafkaSASLAuth(),
+			Logger:   logger,
+		}, []string{ev.KafkaStatusUpdatesTopic})
+	}),
+
+	fx.Invoke(ProcessApplyOnError),
+	fx.Invoke(ProcessStatusUpdates),
+
+	// fx.Provide(func(p redpanda.Producer) agent.Sender {
+	// 	return agent.NewSender(p)
+	// }),
 	domain.Module,
 )

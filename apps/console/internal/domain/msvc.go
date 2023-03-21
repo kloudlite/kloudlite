@@ -2,9 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
@@ -15,10 +17,11 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 
 	msvc.AccountName = ctx.accountName
 	msvc.ClusterName = ctx.clusterName
+	msvc.SyncStatus = t.GetSyncStatusForCreation()
 	m, err := d.msvcRepo.Create(ctx, &msvc)
 	if err != nil {
 		if d.msvcRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("msvc with name '%s' already exists", msvc.Name)
+			return nil, fmt.Errorf("msvc with name %q already exists", msvc.Name)
 		}
 		return nil, err
 	}
@@ -35,6 +38,12 @@ func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name
 	if err != nil {
 		return err
 	}
+
+	m.SyncStatus = t.GetSyncStatusForDeletion(m.Generation)
+	if _, err := d.msvcRepo.UpdateById(ctx, m.Id, m); err != nil {
+		return err
+	}
+
 	return d.deleteK8sResource(ctx, &m.ManagedService)
 }
 
@@ -56,16 +65,15 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 		return nil, err
 	}
 
-	s, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
+	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	status := s.Status
-	s.ManagedService = msvc.ManagedService
-	s.Status = status
+	m.Spec = msvc.Spec
+	m.SyncStatus = t.GetSyncStatusForUpdation(m.Generation + 1)
 
-	upMSvc, err := d.msvcRepo.UpdateById(ctx, s.Id, s)
+	upMSvc, err := d.msvcRepo.UpdateById(ctx, m.Id, m)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +96,41 @@ func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*e
 		return nil, err
 	}
 	if mres == nil {
-		return nil, fmt.Errorf("no secret with name=%s,namespace=%s found", name, namespace)
+		return nil, fmt.Errorf("no secret with name=%q,namespace=%q found", name, namespace)
 	}
 	return mres, nil
+}
+
+func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error {
+	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
+	if err != nil {
+		return err
+	}
+
+	return d.msvcRepo.DeleteById(ctx, m.Id)
+}
+
+func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error {
+	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
+	if err != nil {
+		return err
+	}
+
+	m.Spec = msvc.Spec
+	m.SyncStatus.LastSyncedAt = time.Now()
+	m.SyncStatus.State = t.ParseSyncState(msvc.Status.IsReady)
+
+	_, err = d.msvcRepo.UpdateById(ctx, m.Id, m)
+	return err
+}
+
+func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, err error, namespace, name string) error {
+	m, err2 := d.findMSvc(ctx, namespace, name)
+	if err2 != nil {
+		return err2
+	}
+
+	m.SyncStatus.Error = err.Error()
+	_, err2 = d.msvcRepo.UpdateById(ctx, m.Id, m)
+	return err2
 }

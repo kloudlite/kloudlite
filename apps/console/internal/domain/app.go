@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
@@ -17,10 +17,12 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 
 	app.AccountName = ctx.accountName
 	app.ClusterName = ctx.clusterName
+	app.SyncStatus = t.GetSyncStatusForCreation()
+
 	nApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
 		if d.appRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("app with name '%s' already exists", app.Name)
+			return nil, fmt.Errorf("app with name %q already exists", app.Name)
 		}
 		return nil, err
 	}
@@ -38,11 +40,8 @@ func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) er
 		return err
 	}
 
-	if app.GetDeletionTimestamp() != nil {
-		return errAlreadyMarkedForDeletion("app", app.Namespace, app.Name)
-	}
+	app.SyncStatus = t.GetSyncStatusForDeletion(app.Generation)
 
-	app.SetDeletionTimestamp(&metav1.Time{Time: time.Now()})
 	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
 		return err
 	}
@@ -61,13 +60,8 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 		return nil, err
 	}
 
-	if exApp.GetDeletionTimestamp() != nil {
-		return nil, errAlreadyMarkedForDeletion("app", app.Namespace, app.Name)
-	}
-
-	status := exApp.Status
-	exApp.App = app.App
-	exApp.Status = status
+	exApp.Spec = app.Spec
+	exApp.SyncStatus = t.GetSyncStatusForUpdation(app.Generation + 1)
 
 	upApp, err := d.appRepo.UpdateById(ctx, exApp.Id, exApp)
 	if err != nil {
@@ -104,7 +98,41 @@ func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*en
 		return nil, err
 	}
 	if app == nil {
-		return nil, fmt.Errorf("no app with name=%s,namespace=%s found", name, namespace)
+		return nil, fmt.Errorf("no app with name=%q,namespace=%q found", name, namespace)
 	}
 	return app, nil
+}
+
+func (d *domain) OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error {
+	a, err := d.findApp(ctx, app.Namespace, app.Name)
+	if err != nil {
+		return err
+	}
+
+	return d.appRepo.DeleteById(ctx, a.Id)
+}
+
+func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error {
+	a, err := d.findApp(ctx, app.Namespace, app.Name)
+	if err != nil {
+		return err
+	}
+
+	a.Spec = app.Spec
+	a.SyncStatus.LastSyncedAt = time.Now()
+	a.SyncStatus.State = t.ParseSyncState(app.Status.IsReady)
+
+	_, err = d.appRepo.UpdateById(ctx, a.Id, a)
+	return err
+}
+
+func (d *domain) OnApplyAppError(ctx ConsoleContext, err error, namespace, name string) error {
+	a, err2 := d.findApp(ctx, namespace, name)
+	if err2 != nil {
+		return err2
+	}
+
+	a.SyncStatus.Error = err.Error()
+	_, err2 = d.appRepo.UpdateById(ctx, a.Id, a)
+	return err2
 }
