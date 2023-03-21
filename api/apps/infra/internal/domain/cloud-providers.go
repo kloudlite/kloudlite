@@ -6,6 +6,7 @@ import (
 
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) upsertProviderSecret(ctx InfraContext, ps *entities.Secret) (*entities.Secret, error) {
@@ -43,7 +44,7 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 	}
 
 	cloudProvider.AccountName = ctx.AccountName
-	cloudProvider.SyncStatus = getSyncStatusForCreation()
+	cloudProvider.SyncStatus = t.GetSyncStatusForCreation()
 
 	cp, err := d.providerRepo.Create(ctx, &cloudProvider)
 	if err != nil {
@@ -113,7 +114,7 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		}
 	}
 
-	cloudProvider.SyncStatus = getSyncStatusForUpdation(cp.Generation + 1)
+	cloudProvider.SyncStatus = t.GetSyncStatusForUpdation(cp.Generation + 1)
 
 	uProvider, err := d.providerRepo.UpdateById(ctx, cp.Id, &cloudProvider)
 	if err != nil {
@@ -142,7 +143,7 @@ func (d *domain) DeleteCloudProvider(ctx InfraContext, name string) error {
 		return err
 	}
 
-	cp.SyncStatus = getSyncStatusForDeletion(cp.Generation)
+	cp.SyncStatus = t.GetSyncStatusForDeletion(cp.Generation)
 	uCp, err := d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	if err != nil {
 		return err
@@ -166,7 +167,7 @@ func (d *domain) OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider en
 
 	cp.CloudProvider = cloudProvider.CloudProvider
 	cp.SyncStatus.LastSyncedAt = time.Now()
-	cp.SyncStatus.State = parseSyncState(cloudProvider.Status.IsReady)
+	cp.SyncStatus.State = t.ParseSyncState(cloudProvider.Status.IsReady)
 	_, err = d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	return err
 }

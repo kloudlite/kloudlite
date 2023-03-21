@@ -1,6 +1,9 @@
 package domain
 
 import (
+	"encoding/json"
+
+	"github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/domain/entities"
@@ -9,11 +12,13 @@ import (
 	"kloudlite.io/pkg/agent"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type domain struct {
+	int
 	env *env.Env
 
 	clusterRepo    repos.DbRepo[*entities.Cluster]
@@ -25,21 +30,29 @@ type domain struct {
 	nodePoolRepo   repos.DbRepo[*entities.NodePool]
 	secretRepo     repos.DbRepo[*entities.Secret]
 
-	agentSender agent.Sender
+	producer redpanda.Producer
 
 	k8sYamlClient     *kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
 }
 
 func (d *domain) dispatchToTargetAgent(ctx InfraContext, action agent.Action, clusterName string, obj client.Object) error {
-	b, err := fn.K8sObjToYAML(obj)
+	// b, err := fn.K8sObjToYAML(obj)
+	// if err != nil {
+	// 	return err
+	// }
+
+	b, err := json.Marshal(types.AgentMessage{
+		AccountName: ctx.AccountName,
+		ClusterName: clusterName,
+		Action:      types.ActionApply,
+		Object:      obj,
+	})
 	if err != nil {
 		return err
 	}
-	_, err = d.agentSender.Dispatch(ctx, clusterName+"-incoming", obj.GetNamespace(), agent.Message{
-		Action: agent.Apply,
-		Yamls:  b,
-	})
+
+	_, err = d.producer.Produce(ctx, clusterName+"-incoming", obj.GetNamespace(), b)
 	return err
 }
 
@@ -80,7 +93,9 @@ var Module = fx.Module("domain",
 			secretRepo repos.DbRepo[*entities.Secret],
 
 			financeClient finance.FinanceClient,
-			agentMessenger agent.Sender,
+
+			// agentMessenger agent.Sender,
+			producer redpanda.Producer,
 
 			k8sClient client.Client,
 			k8sYamlClient *kubectl.YAMLClient,
@@ -97,7 +112,7 @@ var Module = fx.Module("domain",
 				nodePoolRepo:   nodePoolRepo,
 				secretRepo:     secretRepo,
 
-				agentSender: agentMessenger,
+				producer:    producer,
 
 				k8sClient:         k8sClient,
 				k8sYamlClient:     k8sYamlClient,

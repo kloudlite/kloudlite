@@ -16,9 +16,9 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
-	"kloudlite.io/pkg/agent"
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
@@ -26,17 +26,17 @@ import (
 type AuthCacheClient cache.Client
 type FinanceClientConnection *grpc.ClientConn
 
-type consumerOpts struct {
-	*env.Env
-}
-
-func (c *consumerOpts) GetSubscriptionTopics() []string {
-	return []string{c.Env.KafkaTopicInfraUpdates}
-}
-
-func (c *consumerOpts) GetConsumerGroupId() string {
-	return c.Env.KafkaConsumerGroupId
-}
+// type consumerOpts struct {
+// 	*env.Env
+// }
+//
+// func (c *consumerOpts) GetSubscriptionTopics() []string {
+// 	return []string{c.KafkaTopicInfraUpdates}
+// }
+//
+// func (c *consumerOpts) GetConsumerGroupId() string {
+// 	return c.KafkaConsumerGroupId
+// }
 
 var Module = fx.Module(
 	"app",
@@ -56,19 +56,17 @@ var Module = fx.Module(
 
 	redpanda.NewProducerFx[redpanda.Client](),
 
-	fx.Provide(func(p redpanda.Producer) agent.Sender {
-		return agent.NewSender(p)
-	}),
-
 	domain.Module,
 
-	fx.Provide(func(ev *env.Env) *consumerOpts {
-		return &consumerOpts{Env: ev}
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (StatusUpdatesConsumer, error) {
+		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
+			SASLAuth: cli.GetKafkaSASLAuth(),
+			Logger:   logger.WithName("status-updates"),
+		}, []string{ev.KafkaTopicInfraUpdates})
 	}),
 
-	redpanda.NewConsumerFx[*consumerOpts](),
-
 	fx.Invoke(processStatusUpdates),
+
 
 	fx.Invoke(
 		func(
