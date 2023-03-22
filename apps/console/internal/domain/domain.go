@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
@@ -34,11 +35,15 @@ func errAlreadyMarkedForDeletion(label, namespace, name string) error {
 }
 
 func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object) error {
+	m, err := fn.K8sObjToMap(obj)
+	if err != nil {
+		return err
+	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.accountName,
 		ClusterName: ctx.clusterName,
 		Action:      t.ActionApply,
-		Object:      obj,
+		Object:      m,
 	})
 	if err != nil {
 		return err
@@ -49,11 +54,15 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object) error {
 }
 
 func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error {
+	m, err := fn.K8sObjToMap(obj)
+	if err != nil {
+		return err
+	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.accountName,
 		ClusterName: ctx.clusterName,
 		Action:      t.ActionDelete,
-		Object:      obj,
+		Object:      m,
 	})
 	if err != nil {
 		return err

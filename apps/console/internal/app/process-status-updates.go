@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/operator/operators/status-n-billing/types"
@@ -46,6 +47,16 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		defer func() {
 			mLogger.Infof("processed message")
 		}()
+
+		if len(strings.TrimSpace(su.AccountName)) == 0 {
+			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
+			return nil
+		}
+
+		if len(strings.TrimSpace(su.ClusterName)) == 0 {
+			logger.Infof("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
+			return nil
+		}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		ctx := domain.NewConsoleContext(context.TODO(), su.AccountName, su.ClusterName)

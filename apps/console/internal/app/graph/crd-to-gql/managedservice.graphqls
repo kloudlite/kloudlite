@@ -1,17 +1,45 @@
+input ManagedServiceSpecIn {
+	region: String!
+	tolerations: [ManagedServiceSpecTolerationsIn]
+	inputs: Map
+	msvcKind: ManagedServiceSpecMsvcKindIn!
+	nodeSelector: Map
+}
+
+type ManagedService {
+	apiVersion: String
+	enabled: Boolean
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	overrides: Overrides
+	syncStatus: SyncStatus
+	spec: ManagedServiceSpec
+	status: Status
+}
+
+input ManagedServiceIn {
+	apiVersion: String
+	enabled: Boolean
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	overrides: OverridesIn
+	spec: ManagedServiceSpecIn
+}
+
 type ManagedServiceSpecTolerations {
+	effect: String
 	key: String
 	operator: String
 	tolerationSeconds: Int
 	value: String
-	effect: String
 }
 
 input ManagedServiceSpecTolerationsIn {
+	effect: String
 	key: String
 	operator: String
 	tolerationSeconds: Int
 	value: String
-	effect: String
 }
 
 type ManagedServiceSpecMsvcKind {
@@ -25,37 +53,10 @@ input ManagedServiceSpecMsvcKindIn {
 }
 
 type ManagedServiceSpec {
-	nodeSelector: Map
 	region: String!
 	tolerations: [ManagedServiceSpecTolerations]
 	inputs: Map
 	msvcKind: ManagedServiceSpecMsvcKind!
-}
-
-input ManagedServiceSpecIn {
 	nodeSelector: Map
-	region: String!
-	tolerations: [ManagedServiceSpecTolerationsIn]
-	inputs: Map
-	msvcKind: ManagedServiceSpecMsvcKindIn!
-}
-
-type ManagedService {
-	apiVersion: String
-	enabled: Boolean
-	kind: String
-	metadata: Metadata! @goField(name: "objectMeta")
-	overrides: Overrides
-	spec: ManagedServiceSpec
-	status: Status
-}
-
-input ManagedServiceIn {
-	apiVersion: String
-	enabled: Boolean
-	kind: String
-	metadata: MetadataIn! @goField(name: "objectMeta")
-	overrides: OverridesIn
-	spec: ManagedServiceSpecIn
 }
 

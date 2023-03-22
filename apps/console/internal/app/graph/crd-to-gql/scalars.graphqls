@@ -8,6 +8,7 @@ type Metadata {
 	name: String!
 	namespace: String
 	labels: Json
+	annotations: Json
 	creationTimestamp: Date!
 	deletionTimestamp: Date
 	generation: Int!
@@ -17,6 +18,7 @@ input MetadataIn {
 	name: String!
 	namespace: String
 	labels: Json
+	annotations: Json
 }
 
 type Status {
@@ -50,4 +52,24 @@ input PatchIn {
 
 input OverridesIn {
 	patches: [PatchIn!]
+}
+
+enum SyncAction {
+	APPLY
+	DELETE
+}
+
+enum SyncState {
+	IDLE
+	IN_PROGRESS
+	READY
+	NOT_READY
+}
+
+type SyncStatus {
+	syncScheduledAt: Date!
+	lastSyncedAt: Date
+	action: SyncAction!
+	generation: Int!
+	state: SyncState!
 }

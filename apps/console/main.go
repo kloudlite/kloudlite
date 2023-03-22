@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"time"
 
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
@@ -40,9 +39,9 @@ func main() {
 		framework.Module,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := app.Start(ctx); err != nil {
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// defer cancel()
+	if err := app.Start(context.TODO()); err != nil {
 		panic(err)
 	}
 
