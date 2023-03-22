@@ -7,6 +7,7 @@ import (
 	"time"
 
 	t "github.com/kloudlite/operator/agent/types"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -25,8 +26,10 @@ func ProcessApplyOnError(consumer ApplyOnErrorConsumer, d domain.Domain, logr lo
 			return err
 		}
 
+		obj := unstructured.Unstructured{Object: msg.Object}
+
 		mLogger := logger.WithKV(
-			"gvk", msg.Object.GetObjectKind().GroupVersionKind(),
+			"gvk", obj.GroupVersionKind(),
 			"accountName", msg.AccountName,
 			"clusterName", msg.ClusterName,
 		)
@@ -36,37 +39,37 @@ func ProcessApplyOnError(consumer ApplyOnErrorConsumer, d domain.Domain, logr lo
 			mLogger.Infof("processed message")
 		}()
 
-		kind := msg.Object.GetObjectKind().GroupVersionKind().Kind
+		kind := obj.GroupVersionKind().Kind
 		ctx := domain.NewConsoleContext(context.TODO(), msg.AccountName, msg.ClusterName)
 
 		switch kind {
 		case "Project":
 			{
-				return d.OnApplyProjectError(ctx, msg.Error, msg.Object.GetName())
+				return d.OnApplyProjectError(ctx, msg.Error, obj.GetName())
 			}
 		case "App":
 			{
-				return d.OnApplyAppError(ctx, msg.Error, msg.Object.GetNamespace(), msg.Object.GetName())
+				return d.OnApplyAppError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Config":
 			{
-				return d.OnApplyConfigError(ctx, msg.Error, msg.Object.GetNamespace(), msg.Object.GetName())
+				return d.OnApplyConfigError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Secret":
 			{
-				return d.OnApplySecretError(ctx, msg.Error, msg.Object.GetNamespace(), msg.Object.GetName())
+				return d.OnApplySecretError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Router":
 			{
-				return d.OnApplyRouterError(ctx, msg.Error, msg.Object.GetNamespace(), msg.Object.GetName())
+				return d.OnApplyRouterError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "ManagedService":
 			{
-				return d.OnApplyManagedServiceError(ctx, msg.Error, msg.Object.GetNamespace(), msg.Object.GetName())
+				return d.OnApplyManagedServiceError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "ManagedResource":
 			{
-				return d.OnApplyManagedResourceError(ctx, msg.Error, msg.Object.GetNamespace(), msg.Object.GetName())
+				return d.OnApplyManagedResourceError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		default:
 			{

@@ -141,6 +141,7 @@ type Metadata {
 	name: String!
 	namespace: String
 	labels: Json
+	annotations: Json
 	creationTimestamp: Date!
 	deletionTimestamp: Date
 	generation: Int!
@@ -150,6 +151,7 @@ input MetadataIn {
 	name: String!
 	namespace: String
 	labels: Json
+	annotations: Json
 }
 `
 

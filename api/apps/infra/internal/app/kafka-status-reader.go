@@ -19,7 +19,7 @@ type StatusUpdatesConsumer redpanda.Consumer
 
 func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
-		logger.Infof("processing offset %d timestamp %s", offset, timeStamp)
+		logger.Debugf("processing offset %d timestamp %s", offset, timeStamp)
 
 		var su types.StatusUpdate
 		if err := json.Unmarshal(msg, &su); err != nil {
@@ -33,12 +33,23 @@ func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logge
 			return nil
 		}
 
-		if len(strings.TrimSpace(su.AccountName)) ==  0 {
+		if len(strings.TrimSpace(su.AccountName)) == 0 {
 			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
 		obj := unstructured.Unstructured{Object: su.Object}
+		mLogger := logger.WithKV(
+			"gvk", obj.GetObjectKind().GroupVersionKind(),
+			"accountName", su.AccountName,
+			"clusterName", su.ClusterName,
+		)
+		
+		mLogger.Infof("received message")
+		defer func() {
+			mLogger.Infof("processed message")
+		}()
+
 		ctx := domain.InfraContext{Context: context.TODO(), AccountName: su.AccountName}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
@@ -90,7 +101,7 @@ func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logge
 			}
 		default:
 			{
-				logger.Infof("infra status updates consumer does not acknowledge the kind %s", kind)
+				mLogger.Infof("infra status updates consumer does not acknowledge the kind %s", kind)
 				return nil
 			}
 		}

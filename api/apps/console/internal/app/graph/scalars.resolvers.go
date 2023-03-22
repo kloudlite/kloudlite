@@ -6,13 +6,15 @@ package graph
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	v11 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/types"
 )
 
 func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
@@ -26,8 +28,19 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 	return m, nil
 }
 
+func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
+	m := make(map[string]any, len(obj.Labels))
+	if obj.Labels == nil {
+		return nil, nil
+	}
+	if err := fn.JsonConversion(obj.Labels, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
-	return obj.GetCreationTimestamp().String(), nil
+	return obj.GetCreationTimestamp().Format(time.RFC3339), nil
 }
 
 func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
@@ -35,7 +48,7 @@ func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.Object
 	if d == nil {
 		return nil, nil
 	}
-	return fn.New(d.OpenAPISchemaFormat()), nil
+	return fn.New(d.Format(time.RFC3339)), nil
 }
 
 func (r *overridesResolver) Patches(ctx context.Context, obj *v11.JsonPatch) ([]*model.Patch, error) {
@@ -66,7 +79,22 @@ func (r *statusResolver) DisplayVars(ctx context.Context, obj *operator.Status) 
 	return m, nil
 }
 
+func (r *syncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (string, error) {
+	return obj.SyncScheduledAt.Format(time.RFC3339), nil
+}
+
+func (r *syncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
+	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
+}
+
 func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
+	if obj.Labels == nil {
+		obj.Labels = make(map[string]string, len(data))
+	}
+	return fn.JsonConversion(data, &obj.Labels)
+}
+
+func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	if obj.Labels == nil {
 		obj.Labels = make(map[string]string, len(data))
 	}
@@ -86,6 +114,9 @@ func (r *Resolver) Overrides() generated.OverridesResolver { return &overridesRe
 // Status returns generated.StatusResolver implementation.
 func (r *Resolver) Status() generated.StatusResolver { return &statusResolver{r} }
 
+// SyncStatus returns generated.SyncStatusResolver implementation.
+func (r *Resolver) SyncStatus() generated.SyncStatusResolver { return &syncStatusResolver{r} }
+
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
@@ -95,5 +126,6 @@ func (r *Resolver) OverridesIn() generated.OverridesInResolver { return &overrid
 type metadataResolver struct{ *Resolver }
 type overridesResolver struct{ *Resolver }
 type statusResolver struct{ *Resolver }
+type syncStatusResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }
 type overridesInResolver struct{ *Resolver }
