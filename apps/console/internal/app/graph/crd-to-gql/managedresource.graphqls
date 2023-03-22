@@ -1,32 +1,11 @@
-input ManagedResourceSpecMresKindIn {
-	kind: String!
-}
-
-type ManagedResourceSpecMsvcRef {
-	apiVersion: String!
-	kind: String
-	name: String!
-}
-
-input ManagedResourceSpecMsvcRefIn {
-	apiVersion: String!
-	kind: String
-	name: String!
-}
-
-type ManagedResourceSpec {
-	inputs: Map
-	mresKind: ManagedResourceSpecMresKind!
-	msvcRef: ManagedResourceSpecMsvcRef!
-}
-
 input ManagedResourceSpecIn {
-	inputs: Map
 	mresKind: ManagedResourceSpecMresKindIn!
 	msvcRef: ManagedResourceSpecMsvcRefIn!
+	inputs: Map
 }
 
 type ManagedResource {
+	syncStatus: SyncStatus
 	spec: ManagedResourceSpec
 	status: Status
 	apiVersion: String
@@ -47,5 +26,27 @@ input ManagedResourceIn {
 
 type ManagedResourceSpecMresKind {
 	kind: String!
+}
+
+input ManagedResourceSpecMresKindIn {
+	kind: String!
+}
+
+type ManagedResourceSpecMsvcRef {
+	apiVersion: String!
+	kind: String
+	name: String!
+}
+
+input ManagedResourceSpecMsvcRefIn {
+	apiVersion: String!
+	kind: String
+	name: String!
+}
+
+type ManagedResourceSpec {
+	mresKind: ManagedResourceSpecMresKind!
+	msvcRef: ManagedResourceSpecMsvcRef!
+	inputs: Map
 }
 
