@@ -2,14 +2,15 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) CreateProviderSecret(ctx InfraContext, ps *entities.Secret) (*entities.Secret, error) {
-	d.secretRepo.SilentUpsert(ctx, repos.Filter{"metadata.name": ps.Name, "metadata.namespace": ps.Namespace}, ps)
-	return nil, nil
+func (d *domain) upsertProviderSecret(ctx InfraContext, ps *entities.Secret) (*entities.Secret, error) {
+	return d.secretRepo.SilentUpsert(ctx, repos.Filter{"metadata.name": ps.Name, "metadata.namespace": ps.Namespace}, ps)
 }
 
 func (d *domain) GetProviderSecret(ctx InfraContext, providerName string) (*entities.Secret, error) {
@@ -30,14 +31,20 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	cloudProvider.Spec.ProviderSecret.Name = providerSecret.Name
-	cloudProvider.Spec.ProviderSecret.Namespace = providerSecret.Namespace
+	ps, err := d.upsertProviderSecret(ctx, &providerSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudProvider.Spec.ProviderSecret.Name = ps.Name
+	cloudProvider.Spec.ProviderSecret.Namespace = ps.Namespace
 
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cloudProvider.CloudProvider); err != nil {
 		return nil, err
 	}
 
 	cloudProvider.AccountName = ctx.AccountName
+	cloudProvider.SyncStatus = t.GetSyncStatusForCreation()
 
 	cp, err := d.providerRepo.Create(ctx, &cloudProvider)
 	if err != nil {
@@ -47,7 +54,7 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &providerSecret.Secret); err != nil {
+	if err := d.applyK8sResource(ctx, &ps.Secret); err != nil {
 		return nil, err
 	}
 
@@ -107,6 +114,8 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		}
 	}
 
+	cloudProvider.SyncStatus = t.GetSyncStatusForUpdation(cp.Generation + 1)
+
 	uProvider, err := d.providerRepo.UpdateById(ctx, cp.Id, &cloudProvider)
 	if err != nil {
 		return nil, err
@@ -116,7 +125,7 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	upSecret, err := d.CreateProviderSecret(ctx, providerSecret)
+	upSecret, err := d.upsertProviderSecret(ctx, providerSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +142,14 @@ func (d *domain) DeleteCloudProvider(ctx InfraContext, name string) error {
 	if err != nil {
 		return err
 	}
-	return d.deleteK8sResource(ctx, &cp.CloudProvider)
+
+	cp.SyncStatus = t.GetSyncStatusForDeletion(cp.Generation)
+	uCp, err := d.providerRepo.UpdateById(ctx, cp.Id, cp)
+	if err != nil {
+		return err
+	}
+
+	return d.deleteK8sResource(ctx, &uCp.CloudProvider)
 }
 
 func (d *domain) OnDeleteCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error {
@@ -150,6 +166,8 @@ func (d *domain) OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider en
 	}
 
 	cp.CloudProvider = cloudProvider.CloudProvider
+	cp.SyncStatus.LastSyncedAt = time.Now()
+	cp.SyncStatus.State = t.ParseSyncState(cloudProvider.Status.IsReady)
 	_, err = d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	return err
 }

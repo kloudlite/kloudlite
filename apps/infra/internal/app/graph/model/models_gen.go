@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type AccountSpec struct {
 	OwnedDomains []*string `json:"ownedDomains"`
 }
@@ -17,17 +23,17 @@ type Check struct {
 }
 
 type CloudProviderSpec struct {
+	AccountName    string                           `json:"accountName"`
 	DisplayName    string                           `json:"display_name"`
 	Provider       string                           `json:"provider"`
 	ProviderSecret *CloudProviderSpecProviderSecret `json:"providerSecret"`
-	AccountName    string                           `json:"accountName"`
 }
 
 type CloudProviderSpecIn struct {
+	AccountName    string                             `json:"accountName"`
 	DisplayName    string                             `json:"display_name"`
 	Provider       string                             `json:"provider"`
 	ProviderSecret *CloudProviderSpecProviderSecretIn `json:"providerSecret"`
-	AccountName    string                             `json:"accountName"`
 }
 
 type CloudProviderSpecProviderSecret struct {
@@ -41,53 +47,53 @@ type CloudProviderSpecProviderSecretIn struct {
 }
 
 type ClusterSpec struct {
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
 	Config       string `json:"config"`
 	Count        int    `json:"count"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
-	Region       string `json:"region"`
-	AccountName  string `json:"accountName"`
 }
 
 type ClusterSpecIn struct {
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
 	Config       string `json:"config"`
 	Count        int    `json:"count"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
-	Region       string `json:"region"`
-	AccountName  string `json:"accountName"`
 }
 
 type EdgeSpec struct {
-	ProviderName string           `json:"providerName"`
-	Region       string           `json:"region"`
 	AccountName  string           `json:"accountName"`
 	ClusterName  string           `json:"clusterName"`
 	Pools        []*EdgeSpecPools `json:"pools"`
 	Provider     *string          `json:"provider"`
+	ProviderName string           `json:"providerName"`
+	Region       string           `json:"region"`
 }
 
 type EdgeSpecIn struct {
-	ProviderName string             `json:"providerName"`
-	Region       string             `json:"region"`
 	AccountName  string             `json:"accountName"`
 	ClusterName  string             `json:"clusterName"`
 	Pools        []*EdgeSpecPoolsIn `json:"pools"`
 	Provider     *string            `json:"provider"`
+	ProviderName string             `json:"providerName"`
+	Region       string             `json:"region"`
 }
 
 type EdgeSpecPools struct {
-	Config string `json:"config"`
-	Max    *int   `json:"max"`
 	Min    *int   `json:"min"`
 	Name   string `json:"name"`
+	Config string `json:"config"`
+	Max    *int   `json:"max"`
 }
 
 type EdgeSpecPoolsIn struct {
-	Config string `json:"config"`
-	Max    *int   `json:"max"`
 	Min    *int   `json:"min"`
 	Name   string `json:"name"`
+	Config string `json:"config"`
+	Max    *int   `json:"max"`
 }
 
 type MasterNodeSpec struct {
@@ -109,51 +115,137 @@ type MasterNodeSpecIn struct {
 }
 
 type NodePoolSpec struct {
-	AccountName  string `json:"accountName"`
-	Config       string `json:"config"`
+	ClusterName  string `json:"clusterName"`
 	EdgeName     string `json:"edgeName"`
 	Provider     string `json:"provider"`
-	ProviderName string `json:"providerName"`
-	ClusterName  string `json:"clusterName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	Config       string `json:"config"`
 	Max          *int   `json:"max"`
 	Min          *int   `json:"min"`
-	Region       string `json:"region"`
+	ProviderName string `json:"providerName"`
 }
 
 type NodePoolSpecIn struct {
-	AccountName  string `json:"accountName"`
-	Config       string `json:"config"`
+	ClusterName  string `json:"clusterName"`
 	EdgeName     string `json:"edgeName"`
 	Provider     string `json:"provider"`
-	ProviderName string `json:"providerName"`
-	ClusterName  string `json:"clusterName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	Config       string `json:"config"`
 	Max          *int   `json:"max"`
 	Min          *int   `json:"min"`
-	Region       string `json:"region"`
+	ProviderName string `json:"providerName"`
 }
 
 type WorkerNodeSpec struct {
-	Provider     string `json:"provider"`
-	Region       string `json:"region"`
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
-	Config       string `json:"config"`
-	EdgeName     string `json:"edgeName"`
 	Pool         string `json:"pool"`
-	NodeIndex    *int   `json:"nodeIndex"`
 	ProviderName string `json:"providerName"`
 	Stateful     *bool  `json:"stateful"`
+	AccountName  string `json:"accountName"`
+	EdgeName     string `json:"edgeName"`
+	NodeIndex    *int   `json:"nodeIndex"`
+	Provider     string `json:"provider"`
+	Region       string `json:"region"`
+	ClusterName  string `json:"clusterName"`
+	Config       string `json:"config"`
 }
 
 type WorkerNodeSpecIn struct {
-	Provider     string `json:"provider"`
-	Region       string `json:"region"`
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
-	Config       string `json:"config"`
-	EdgeName     string `json:"edgeName"`
 	Pool         string `json:"pool"`
-	NodeIndex    *int   `json:"nodeIndex"`
 	ProviderName string `json:"providerName"`
 	Stateful     *bool  `json:"stateful"`
+	AccountName  string `json:"accountName"`
+	EdgeName     string `json:"edgeName"`
+	NodeIndex    *int   `json:"nodeIndex"`
+	Provider     string `json:"provider"`
+	Region       string `json:"region"`
+	ClusterName  string `json:"clusterName"`
+	Config       string `json:"config"`
+}
+
+type SyncAction string
+
+const (
+	SyncActionApply  SyncAction = "APPLY"
+	SyncActionDelete SyncAction = "DELETE"
+)
+
+var AllSyncAction = []SyncAction{
+	SyncActionApply,
+	SyncActionDelete,
+}
+
+func (e SyncAction) IsValid() bool {
+	switch e {
+	case SyncActionApply, SyncActionDelete:
+		return true
+	}
+	return false
+}
+
+func (e SyncAction) String() string {
+	return string(e)
+}
+
+func (e *SyncAction) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SyncAction(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SyncAction", str)
+	}
+	return nil
+}
+
+func (e SyncAction) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type SyncState string
+
+const (
+	SyncStateIDLe       SyncState = "IDLE"
+	SyncStateInProgress SyncState = "IN_PROGRESS"
+	SyncStateReady      SyncState = "READY"
+	SyncStateNotReady   SyncState = "NOT_READY"
+)
+
+var AllSyncState = []SyncState{
+	SyncStateIDLe,
+	SyncStateInProgress,
+	SyncStateReady,
+	SyncStateNotReady,
+}
+
+func (e SyncState) IsValid() bool {
+	switch e {
+	case SyncStateIDLe, SyncStateInProgress, SyncStateReady, SyncStateNotReady:
+		return true
+	}
+	return false
+}
+
+func (e SyncState) String() string {
+	return string(e)
+}
+
+func (e *SyncState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SyncState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SyncState", str)
+	}
+	return nil
+}
+
+func (e SyncState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

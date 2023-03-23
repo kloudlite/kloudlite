@@ -2,11 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
-	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
@@ -16,10 +16,12 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	cluster.AccountName = ctx.AccountName
+	cluster.SyncStatus = t.GetSyncStatusForCreation()
+
 	nCluster, err := d.clusterRepo.Create(ctx, &cluster)
 	if err != nil {
 		if d.clusterRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("cluster with name '%s' already exists", cluster.Name)
+			return nil, fmt.Errorf("cluster with name %q already exists", cluster.Name)
 		}
 		return nil, err
 	}
@@ -54,6 +56,8 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	clus.Cluster = cluster.Cluster
+	clus.SyncStatus = t.GetSyncStatusForUpdation(clus.Generation + 1)
+
 	uCluster, err := d.clusterRepo.UpdateById(ctx, clus.Id, clus)
 	if err != nil {
 		return nil, err
@@ -67,7 +71,17 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 }
 
 func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
-	return d.k8sClient.Delete(ctx, &cmgrV1.Cluster{ObjectMeta: metav1.ObjectMeta{Name: name}})
+	c, err := d.findCluster(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
+	upC, err := d.clusterRepo.UpdateById(ctx, c.Id, c)
+	if err != nil {
+		return err
+	}
+	return d.deleteK8sResource(ctx, &upC.Cluster)
 }
 
 func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
@@ -75,16 +89,15 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 }
 
 func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
-	c, err := d.clusterRepo.FindOne(ctx, repos.Filter{"metadata.name": cluster.Name})
+	c, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
 		return err
 	}
 
-	if c == nil {
-		return fmt.Errorf("cluster %s not found", cluster.Name)
-	}
-
 	c.Cluster = cluster.Cluster
+	c.SyncStatus.LastSyncedAt = time.Now()
+	c.SyncStatus.State = t.ParseSyncState(c.Status.IsReady)
+
 	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
 	return err
 }
