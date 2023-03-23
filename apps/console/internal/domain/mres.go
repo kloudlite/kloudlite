@@ -2,9 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
@@ -15,10 +17,11 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 
 	mres.AccountName = ctx.accountName
 	mres.ClusterName = ctx.clusterName
+	mres.SyncStatus = t.GetSyncStatusForCreation()
 	m, err := d.mresRepo.Create(ctx, &mres)
 	if err != nil {
 		if d.mresRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("mres with name '%s' already exists", mres.Name)
+			return nil, fmt.Errorf("mres with name %q already exists", mres.Name)
 		}
 		return nil, err
 	}
@@ -35,6 +38,12 @@ func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, nam
 	if err != nil {
 		return err
 	}
+
+	m.SyncStatus = t.GetSyncStatusForDeletion(m.Generation)
+	if _, err := d.mresRepo.UpdateById(ctx, m.Id, m); err != nil {
+		return err
+	}
+
 	return d.deleteK8sResource(ctx, &m.ManagedResource)
 }
 
@@ -56,16 +65,15 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 		return nil, err
 	}
 
-	s, err := d.findMRes(ctx, mres.Namespace, mres.Name)
+	m, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	status := s.Status
-	s.ManagedResource = mres.ManagedResource
-	s.Status = status
+	m.Spec = mres.Spec
+	m.SyncStatus = t.GetSyncStatusForUpdation(m.Generation + 1)
 
-	upMRes, err := d.mresRepo.UpdateById(ctx, s.Id, s)
+	upMRes, err := d.mresRepo.UpdateById(ctx, m.Id, m)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +96,41 @@ func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*e
 		return nil, err
 	}
 	if mres == nil {
-		return nil, fmt.Errorf("no managed resource with name=%s,namespace=%s found", name, namespace)
+		return nil, fmt.Errorf("no managed resource with name=%q,namespace=%q found", name, namespace)
 	}
 	return mres, nil
+}
+
+func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error {
+	a, err := d.findMRes(ctx, mres.Namespace, mres.Name)
+	if err != nil {
+		return err
+	}
+
+	return d.mresRepo.DeleteById(ctx, a.Id)
+}
+
+func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error {
+	m, err := d.findMRes(ctx, mres.Namespace, mres.Name)
+	if err != nil {
+		return err
+	}
+
+	m.Status = mres.Status
+	m.SyncStatus.LastSyncedAt = time.Now()
+	m.SyncStatus.State = t.ParseSyncState(mres.Status.IsReady)
+
+	_, err = d.mresRepo.UpdateById(ctx, m.Id, m)
+	return err
+}
+
+func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, err error, namespace, name string) error {
+	m, err2 := d.findMRes(ctx, namespace, name)
+	if err2 != nil {
+		return err2
+	}
+
+	m.SyncStatus.Error = err.Error()
+	_, err = d.mresRepo.UpdateById(ctx, m.Id, m)
+	return err
 }

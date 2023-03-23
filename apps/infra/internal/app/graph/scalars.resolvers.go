@@ -6,12 +6,15 @@ package graph
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/kloudlite/cluster-operator/lib/operator"
 	json_patch "github.com/kloudlite/operator/pkg/json-patch"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
+	"kloudlite.io/apps/infra/internal/app/graph/model"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/types"
 )
 
 func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
@@ -27,7 +30,7 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 }
 
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
-	return obj.CreationTimestamp.String(), nil
+	return obj.CreationTimestamp.Format(time.RFC3339), nil
 }
 
 func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
@@ -35,7 +38,7 @@ func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.Object
 	if d == nil {
 		return nil, nil
 	}
-	return fn.New(d.OpenAPISchemaFormat()), nil
+	return fn.New(d.Format(time.RFC3339)), nil
 }
 
 func (r *patchResolver) Value(ctx context.Context, obj *json_patch.PatchOperation) (interface{}, error) {
@@ -65,6 +68,22 @@ func (r *statusResolver) DisplayVars(ctx context.Context, obj *operator.Status) 
 	return m, nil
 }
 
+func (r *syncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (string, error) {
+	return obj.SyncScheduledAt.Format(time.RFC3339), nil
+}
+
+func (r *syncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
+	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
+}
+
+func (r *syncStatusResolver) Action(ctx context.Context, obj *types.SyncStatus) (model.SyncAction, error) {
+	return model.SyncAction(obj.Action), nil
+}
+
+func (r *syncStatusResolver) State(ctx context.Context, obj *types.SyncStatus) (model.SyncState, error) {
+	return model.SyncState(obj.State), nil
+}
+
 func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	if obj == nil {
 		return nil
@@ -88,6 +107,9 @@ func (r *Resolver) Patch() generated.PatchResolver { return &patchResolver{r} }
 // Status returns generated.StatusResolver implementation.
 func (r *Resolver) Status() generated.StatusResolver { return &statusResolver{r} }
 
+// SyncStatus returns generated.SyncStatusResolver implementation.
+func (r *Resolver) SyncStatus() generated.SyncStatusResolver { return &syncStatusResolver{r} }
+
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
@@ -97,5 +119,6 @@ func (r *Resolver) PatchIn() generated.PatchInResolver { return &patchInResolver
 type metadataResolver struct{ *Resolver }
 type patchResolver struct{ *Resolver }
 type statusResolver struct{ *Resolver }
+type syncStatusResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }
 type patchInResolver struct{ *Resolver }

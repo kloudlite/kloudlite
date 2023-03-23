@@ -6,13 +6,15 @@ import (
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
 
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 type Secret struct {
 	repos.BaseEntity `json:",inline"`
 	crdsv1.Secret    `json:",inline"`
-	AccountName      string `json:"accountName"`
-	ClusterName      string `json:"clusterName"`
+	AccountName      string     `json:"accountName"`
+	ClusterName      string     `json:"clusterName"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
 var SecretIndices = []repos.IndexField{
@@ -46,8 +48,9 @@ var SecretIndices = []repos.IndexField{
 type CloudProvider struct {
 	repos.BaseEntity      `bson:",inline" json:",inline"`
 	infraV1.CloudProvider `bson:",inline" json:",inline"`
-	AccountName           string `json:"accountName"`
-	ClusterName           string `json:"clusterName"`
+	AccountName           string       `json:"accountName"`
+	ClusterName           string       `json:"clusterName"`
+	SyncStatus            t.SyncStatus `json:"syncStatus"`
 }
 
 var CloudProviderIndices = []repos.IndexField{

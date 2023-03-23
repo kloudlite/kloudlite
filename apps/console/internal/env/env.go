@@ -19,6 +19,10 @@ type Env struct {
 	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
 	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
 	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
+
+	KafkaStatusUpdatesTopic string `env:"KAFKA_STATUS_UPDATES_TOPIC" required:"true"`
+	KafkaApplyOnErrorTopic  string `env:"KAFKA_APPLY_ON_ERROR_TOPIC" required:"true"`
+	KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

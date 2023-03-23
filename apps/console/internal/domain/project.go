@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 // CreateProject implements Domain
@@ -18,10 +18,11 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.AccountName = ctx.accountName
 	project.ClusterName = ctx.clusterName
+	project.SyncStatus = t.GetSyncStatusForCreation()
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
 		if d.projectRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("project with name %s, already exists", project.Name)
+			return nil, fmt.Errorf("project with name %q, already exists", project.Name)
 		}
 		return nil, err
 	}
@@ -39,11 +40,7 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		return err
 	}
 
-	if prj.GetDeletionTimestamp() != nil {
-		return errAlreadyMarkedForDeletion("app", prj.Namespace, prj.Name)
-	}
-
-	prj.SetDeletionTimestamp(&metav1.Time{Time: time.Now()})
+	prj.SyncStatus = t.GetSyncStatusForDeletion(prj.Generation)
 	if _, err := d.projectRepo.UpdateById(ctx, prj.Id, prj); err != nil {
 		return err
 	}
@@ -56,8 +53,6 @@ func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project,
 	return d.findProject(ctx, name)
 }
 
-// ListProjects implements Domain
-// func (d *domain) ListProjects(ctx ConsoleContext) ([]*entities.Project, error) {
 func (d *domain) ListProjects(ctx ConsoleContext) ([]*entities.Project, error) {
 	return d.projectRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"accountName": ctx.accountName,
@@ -65,7 +60,6 @@ func (d *domain) ListProjects(ctx ConsoleContext) ([]*entities.Project, error) {
 	}})
 }
 
-// UpdateProject implements Domain
 func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
 	project.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &project.Project); err != nil {
@@ -81,9 +75,8 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errAlreadyMarkedForDeletion("project", "", project.Name)
 	}
 
-	status := exProject.Status
-	exProject.Project = project.Project
-	exProject.Status = status
+	exProject.Spec = project.Spec
+	exProject.SyncStatus = t.GetSyncStatusForUpdation(exProject.Generation)
 
 	upProject, err := d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
 	if err != nil {
@@ -108,7 +101,41 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 		return nil, err
 	}
 	if prj == nil {
-		return nil, fmt.Errorf("no project with name=%s found", name)
+		return nil, fmt.Errorf("no project with name=%q found", name)
 	}
 	return prj, nil
+}
+
+func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Project) error {
+	p, err := d.findProject(ctx, project.Name)
+	if err != nil {
+		return err
+	}
+
+	return d.projectRepo.DeleteById(ctx, p.Id)
+}
+
+func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Project) error {
+	p, err := d.findProject(ctx, project.Name)
+	if err != nil {
+		return err
+	}
+
+	p.Status = project.Status
+	p.SyncStatus.LastSyncedAt = time.Now()
+	p.SyncStatus.State = t.ParseSyncState(project.Status.IsReady)
+
+	_, err = d.projectRepo.UpdateById(ctx, p.Id, p)
+	return err
+}
+
+func (d *domain) OnApplyProjectError(ctx ConsoleContext, err error, name string) error {
+	p, err2 := d.findProject(ctx, name)
+	if err2 != nil {
+		return err2
+	}
+
+	p.SyncStatus.Error = err.Error()
+	_, err = d.projectRepo.UpdateById(ctx, p.Id, p)
+	return err
 }

@@ -101,12 +101,15 @@ func (d *domain) OnDeleteWorkerNodeMessage(ctx InfraContext, workerNode entities
 }
 
 func (d *domain) OnUpdateWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error {
-	wn, err := d.workerNodeRepo.FindOne(ctx, repos.Filter{"metadata.name": workerNode.Name})
+	wn, err := d.workerNodeRepo.FindOne(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"metadata.name": workerNode.Name,
+	})
 	if err != nil {
 		return err
 	}
 	if wn == nil {
-		return fmt.Errorf("worker node %s not found", workerNode.Name)
+		return fmt.Errorf("worker node %q not found", workerNode.Name)
 	}
 	wn.WorkerNode = workerNode.WorkerNode
 	_, err = d.workerNodeRepo.UpdateById(ctx, wn.Id, wn)
