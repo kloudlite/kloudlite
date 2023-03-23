@@ -116,7 +116,7 @@ func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities
 		return err
 	}
 
-	m.Spec = msvc.Spec
+	m.Status = msvc.Status
 	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.State = t.ParseSyncState(msvc.Status.IsReady)
 
