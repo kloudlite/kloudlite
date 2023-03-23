@@ -121,7 +121,7 @@ func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Pro
 		return err
 	}
 
-	p.Project = project.Project
+	p.Status = project.Status
 	p.SyncStatus.LastSyncedAt = time.Now()
 	p.SyncStatus.State = t.ParseSyncState(project.Status.IsReady)
 

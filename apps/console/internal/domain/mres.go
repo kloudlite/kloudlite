@@ -116,7 +116,7 @@ func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entitie
 		return err
 	}
 
-	m.Spec = mres.Spec
+	m.Status = mres.Status
 	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.State = t.ParseSyncState(mres.Status.IsReady)
 

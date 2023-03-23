@@ -116,7 +116,7 @@ func (d *domain) OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secre
 		return err
 	}
 
-	s.Secret = secret.Secret
+	s.Status = secret.Status
 	s.SyncStatus.LastSyncedAt = time.Now()
 	s.SyncStatus.State = t.ParseSyncState(secret.Status.IsReady)
 

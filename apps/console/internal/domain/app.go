@@ -118,7 +118,7 @@ func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error 
 		return err
 	}
 
-	a.Spec = app.Spec
+	a.Status = app.Status
 	a.SyncStatus.LastSyncedAt = time.Now()
 	a.SyncStatus.State = t.ParseSyncState(app.Status.IsReady)
 

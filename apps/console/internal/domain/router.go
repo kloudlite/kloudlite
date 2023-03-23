@@ -117,7 +117,7 @@ func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Route
 		return err
 	}
 
-	r.Router = router.Router
+	r.Status = router.Status
 	r.SyncStatus.LastSyncedAt = time.Now()
 	r.SyncStatus.State = t.ParseSyncState(router.Status.IsReady)
 

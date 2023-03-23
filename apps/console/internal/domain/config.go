@@ -118,7 +118,7 @@ func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Confi
 		return err
 	}
 
-	c.Data = config.Data
+	c.Status = config.Status
 	c.SyncStatus.LastSyncedAt = time.Now()
 	c.SyncStatus.State = t.ParseSyncState(config.Status.IsReady)
 
