@@ -242,3 +242,12 @@ models:
   OverridesIn:
     model:
       - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+
+  SyncStatus:
+    model: kloudlite.io/pkg/types.SyncStatus
+
+  SyncAction:
+    model: kloudlite.io/pkg/types.SyncAction
+
+  SyncState:
+    model: kloudlite.io/pkg/types.SyncState

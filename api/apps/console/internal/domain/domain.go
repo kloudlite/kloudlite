@@ -1,14 +1,16 @@
 package domain
 
 import (
+	"encoding/json"
 	"fmt"
 
+	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain/entities"
-	"kloudlite.io/pkg/agent"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -17,7 +19,7 @@ type domain struct {
 	k8sExtendedClient k8s.ExtendedK8sClient
 	k8sYamlClient     *kubectl.YAMLClient
 
-	agentSender agent.Sender
+	producer redpanda.Producer
 
 	projectRepo repos.DbRepo[*entities.Project]
 	appRepo     repos.DbRepo[*entities.App]
@@ -33,28 +35,39 @@ func errAlreadyMarkedForDeletion(label, namespace, name string) error {
 }
 
 func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object) error {
-	b, err := fn.K8sObjToYAML(obj)
+	m, err := fn.K8sObjToMap(obj)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(t.AgentMessage{
+		AccountName: ctx.accountName,
+		ClusterName: ctx.clusterName,
+		Action:      t.ActionApply,
+		Object:      m,
+	})
 	if err != nil {
 		return err
 	}
 
-	_, err = d.agentSender.Dispatch(ctx, ctx.clusterName+"-incoming", obj.GetNamespace(), agent.Message{
-		Action: agent.Apply,
-		Yamls:  b,
-	})
+	_, err = d.producer.Produce(ctx, ctx.clusterName+"-incoming", obj.GetNamespace(), b)
 	return err
 }
 
 func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error {
-	b, err := fn.K8sObjToYAML(obj)
+	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
 		return err
 	}
-
-	_, err = d.agentSender.Dispatch(ctx, ctx.clusterName+"-incoming", obj.GetNamespace(), agent.Message{
-		Action: agent.Delete,
-		Yamls:  b,
+	b, err := json.Marshal(t.AgentMessage{
+		AccountName: ctx.accountName,
+		ClusterName: ctx.clusterName,
+		Action:      t.ActionDelete,
+		Object:      m,
 	})
+	if err != nil {
+		return err
+	}
+	_, err = d.producer.Produce(ctx, ctx.clusterName+"-incoming", obj.GetNamespace(), b)
 	return err
 }
 
@@ -63,7 +76,7 @@ var Module = fx.Module("domain",
 		k8sYamlClient *kubectl.YAMLClient,
 		k8sExtendedClient k8s.ExtendedK8sClient,
 
-		agentSender agent.Sender,
+		producer redpanda.Producer,
 
 		projectRepo repos.DbRepo[*entities.Project],
 		appRepo repos.DbRepo[*entities.App],
@@ -77,7 +90,7 @@ var Module = fx.Module("domain",
 			k8sExtendedClient: k8sExtendedClient,
 			k8sYamlClient:     k8sYamlClient,
 
-			agentSender: agentSender,
+			producer: producer,
 
 			projectRepo: projectRepo,
 			appRepo:     appRepo,

@@ -5,42 +5,29 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kloudlite/cluster-operator/lib/operator"
 	"github.com/kloudlite/wg-operator/apis/wg/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
-	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/types"
 )
 
+func (r *accountResolver) SyncStatus(ctx context.Context, obj *v1.Account) (*types.SyncStatus, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *accountResolver) Spec(ctx context.Context, obj *v1.Account) (*model.AccountSpec, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	var m model.AccountSpec
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *accountResolver) Status(ctx context.Context, obj *v1.Account) (*operator.Status, error) {
-	if obj != nil {
-		return nil, nil
-	}
-
-	var m operator.Status
-	if err := fn.JsonConversion(obj.Status, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *accountInResolver) Spec(ctx context.Context, obj *v1.Account, data *model.AccountSpecIn) error {
-	if obj == nil {
-		return nil
-	}
-	return fn.JsonConversion(data, &obj.Spec)
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Account returns generated.AccountResolver implementation.
