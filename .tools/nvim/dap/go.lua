@@ -73,4 +73,14 @@ dap.configurations.go = {
 			vim.g.root_dir .. "/agent" .. "/.secrets/env",
 		},
 	},
+	{
+		type = "go_test",
+		name = "[Debug] Test app-n-lambda",
+		request = "remote",
+		mode = "test",
+		program = vim.g.root_dir .. "/operators/app-n-lambda/internal/controllers/app/control",
+		env = {
+			PROJECT_ROOT = vim.g.root_dir,
+		},
+	},
 }

@@ -1,14 +1,9 @@
 {{- $obj := get . "object"}}
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volume-mounts"}}
-{{- $ownerRefs := get . "owner-refs"}}
-{{- $freeze := get . "freeze" | default false }}
+{{- $ownerRefs := get . "owner-refs" | default list  }}
 
 {{- $clusterDnsSuffix := get . "cluster-dns-suffix" |default "svc.cluster.local"}}
-
-{{- $IsIntercepted := get . "is-intercepted" | default false }}
-{{- $deviceRef := get . "device-ref" }}
-{{- $accountRef := get . "account-ref" }}
 
 {{- with $obj }}
 {{- /* gotype: github.com/kloudlite/operator/apis/crds/v1.App */ -}}
@@ -20,8 +15,8 @@ metadata:
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
   labels: {{.Labels | toYAML | nindent 4}}
 spec:
-  {{- if not .Spec.Hpa.Enabled }}
-  replicas: {{ if $freeze}}0{{ else }}{{.Spec.Replicas}}{{ end}}
+  {{- if not (and .Spec.Hpa .Spec.Hpa.Enabled) }}
+  replicas: {{if .Spec.Freeze}}0{{ else }}{{.Spec.Replicas}}{{ end}}
   {{- end}}
   selector:
     matchLabels:
@@ -75,14 +70,12 @@ metadata:
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
   type: ExternalName
-  {{- if $IsIntercepted}}
-  externalName: {{$deviceRef}}.wg-{{$accountRef}}.{{$clusterDnsSuffix}}
+  {{- if .Spec.Intercept }}
+  externalName: {{.Spec.Intercept.ToDevice}}.wg-{{.Spec.AccountName}}.{{$clusterDnsSuffix}}
   {{- else}}
   externalName: {{.Name}}-internal.{{.Namespace}}.{{$clusterDnsSuffix}}
   {{- end }}
-
 ---
-
 {{- if .Spec.Services }}
 apiVersion: v1
 kind: Service
@@ -103,7 +96,7 @@ spec:
     {{- end }}
 {{- end}}
 
-{{- if .Spec.Hpa.Enabled }}
+{{- if (and .Spec.Hpa .Spec.Hpa.Enabled)  }}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -132,4 +125,5 @@ spec:
           type: Utilization
           averageUtilization: {{.Spec.Hpa.ThresholdMemory}}
 {{- end }}
+
 {{- end }}

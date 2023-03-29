@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 	"time"
 
@@ -39,10 +42,10 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	logger     logging.Logger
+	Logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	YamlClient *kubectl.YAMLClient
 	recorder   record.EventRecorder
 }
 
@@ -62,7 +65,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.App{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.Logger), r.Client, request.NamespacedName, &crdsv1.App{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -77,9 +80,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
-		return ctrl.Result{}, nil
-	}
+	// if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
+	// 	return ctrl.Result{}, nil
+	// }
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -97,10 +100,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if req.Object.Enabled != nil && !*req.Object.Enabled {
-		// anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.Namespace}}
-		// return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
-	}
+	// if req.Object.Enabled != nil && !*req.Object.Enabled {
+	// anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.Namespace}}
+	// return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
+	// }
 
 	// if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
 	// 	return step.ReconcilerResponse()
@@ -138,11 +141,65 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) cleanupLogic(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "cleanupLogic"
+
+	resources := req.Object.Status.Resources
+
+	for i := range resources {
+		res := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": resources[i].APIVersion,
+			"kind":       resources[i].Kind,
+			"metadata": map[string]any{
+				"name":      resources[i].Name,
+				"namespace": resources[i].Namespace,
+			},
+		}}
+
+		if err := r.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return req.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
+			}
+			return req.CheckFailed("CleanupResource", check,
+				fmt.Sprintf("waiting for resource gvk=%s, nn=%s", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName())),
+			).Err(nil)
+		}
+
+		if res.GetDeletionTimestamp() == nil {
+			if err := r.Delete(ctx, res); err != nil {
+				return req.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
+			}
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		obj.Status.Checks[checkName] = check
+		req.UpdateStatus()
+	}
 	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	return req.Finalize()
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "finalizing"
+
+	if step := r.cleanupLogic(req); !step.ShouldProceed() {
+		return step
+	}
+
+	controllerutil.RemoveFinalizer(obj, constants.ForegroundFinalizer)
+	controllerutil.RemoveFinalizer(obj, constants.CommonFinalizer)
+
+	if err := r.Update(ctx, obj); err != nil {
+		return req.CheckFailed(checkName, check, err.Error()).Err(nil)
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
@@ -172,7 +229,7 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(ImagesLabelled, check, err.Error())
 		}
-		return req.Done().RequeueAfter(1 * time.Second)
+		return req.Done().RequeueAfter(200 * time.Millisecond)
 	}
 
 	check.Status = true
@@ -193,21 +250,21 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
-	isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
-	isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
+	//isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
+	//isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
 
 	b, err := templates.Parse(
 		templates.CrdsV1.App, map[string]any{
 			"object":        obj,
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
-			"freeze":        isFrozen || isIntercepted,
 			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 			// for intercepting
-			"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
-			"device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
-			"account-ref":    obj.Spec.AccountName,
+			//"freeze":        isFrozen || isIntercepted,
+			//"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
+			//"device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
+			//"account-ref":    obj.Spec.AccountName,
 		},
 	)
 
@@ -215,12 +272,17 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
 
-	resRefs, err := r.yamlClient.ApplyYAML(ctx, b)
+	resRefs, err := r.YamlClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
 
 	req.AddToOwnedResources(resRefs...)
+	req.UpdateStatus()
+
+	fmt.Printf("resRefs: %+v\n", resRefs)
+	fmt.Printf("obj.Status.Resources: %+v\n", obj.Status.Resources)
+
 	check.Status = true
 	if check != obj.Status.Checks[DeploymentSvcAndHpaCreated] {
 		obj.Status.Checks[DeploymentSvcAndHpaCreated] = check
@@ -248,16 +310,13 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	}
 
 	isReady := meta.IsStatusConditionTrue(cds, "Available")
-	check.Status = isReady
 
 	if !isReady {
 		var podList corev1.PodList
 		if err := r.List(
 			ctx, &podList, &client.ListOptions{
-				LabelSelector: labels.SelectorFromValidatedSet(
-					map[string]string{"app": obj.Name},
-				),
-				Namespace: obj.Namespace,
+				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
+				Namespace:     obj.Namespace,
 			},
 		); err != nil {
 			return req.CheckFailed(DeploymentReady, check, err.Error())
@@ -292,8 +351,8 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.Logger = logger.WithName(r.Name)
+	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})

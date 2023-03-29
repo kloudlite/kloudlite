@@ -13,7 +13,7 @@ type Env struct {
 	KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
 	KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 	KafkaIncomingTopic     string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
-	// KafkaErrorOnApplyTopic string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
+	KafkaErrorOnApplyTopic string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

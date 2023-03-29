@@ -103,6 +103,10 @@ func New(options *Options) (Logger, error) {
 	atomicLevel := zap.NewAtomicLevel()
 	cfg.Level = atomicLevel
 
+	if opts.Dev {
+		cfg.Level.SetLevel(zapcore.DebugLevel)
+	}
+
 	logger, err := cfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err

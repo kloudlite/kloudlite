@@ -109,11 +109,10 @@ type HPA struct {
 type AppSpec struct {
 	AccountName string `json:"accountName"`
 
-	Region      string `json:"region"`
+	Region string `json:"region"`
 
-	Interception *Interception `json:"interception,omitempty"`
-	// +kubebuilder:default=false
-	Frozen bool `json:"frozen,omitempty"`
+	Intercept *Intercept `json:"intercept,omitempty"`
+	Freeze    bool       `json:"freeze,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=kloudlite-svc-account
@@ -124,15 +123,18 @@ type AppSpec struct {
 	Containers []AppContainer `json:"containers"`
 	// +kubebuilder:validation:Optional
 	// Volumes []corev1.Volume `json:"volumes,omitempty"`
-	Hpa HPA `json:"hpa,omitempty"`
+
+	Hpa *HPA `json:"hpa,omitempty"`
+
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
-type Interception struct {
-	Enabled   bool   `json:"enabled,omitempty"`
-	ForDevice string `json:"forDevice"`
+type Intercept struct {
+	Enabled bool `json:"enabled"`
+	// +kubebuilder:validation:MinLength=1
+	ToDevice string `json:"toDevice"`
 }
 
 type JsonPatch struct {

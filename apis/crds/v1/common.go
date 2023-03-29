@@ -184,8 +184,5 @@ func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMou
 func IsBlueprintNamespace(ctx context.Context, k8sClient client.Client, ns string) bool {
 	var prj Project
 	err := k8sClient.Get(ctx, fn.NN("", ns), &prj)
-	if err != nil {
-		return false
-	}
-	return true
+	return err != nil
 }
