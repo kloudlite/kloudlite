@@ -16,9 +16,9 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3
-	github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525
-	github.com/kloudlite/wg-operator v0.0.0-20230214051752-deec7d18298c
+	github.com/kloudlite/cluster-operator v0.0.0-20230329090334-40fc9f00d55e
+	github.com/kloudlite/operator v1.0.5-0.20230329090223-100113d51358
+	github.com/kloudlite/wg-operator v0.0.0-20230329090407-183297dc23b8
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.41
 	github.com/pkg/errors v0.9.1
@@ -81,6 +81,7 @@ require (
 	github.com/go-kit/log v0.2.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/zapr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
@@ -97,6 +98,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -175,10 +177,9 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-//replace github.com/kloudlite/internal_operator_v2 v1.0.5-0.20230120091718-4a729feab5c5 => /home/nxtcoder17/workspace/kloudlite/internal_operator_v2
-replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
+// replace github.com/kloudlite/operator v1.0.5-0.20230120090050-e3608ae63525 => /home/nxtcoder17/workspace/kloudlite/operator
 
 // replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
-replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
+// replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
 
 replace sigs.k8s.io/controller-runtime v0.13.1 => sigs.k8s.io/controller-runtime v0.14.1
