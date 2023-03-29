@@ -261,11 +261,9 @@ spec:
                   - name
                   type: object
                 type: array
-              frozen:
-                default: false
+              freeze:
                 type: boolean
               hpa:
-                description: Volumes []corev1.Volume `json:"volumes,omitempty"`
                 properties:
                   enabled:
                     type: boolean
@@ -282,14 +280,16 @@ spec:
                     default: 75
                     type: integer
                 type: object
-              interception:
+              intercept:
                 properties:
                   enabled:
                     type: boolean
-                  forDevice:
+                  toDevice:
+                    minLength: 1
                     type: string
                 required:
-                - forDevice
+                - enabled
+                - toDevice
                 type: object
               nodeSelector:
                 additionalProperties:

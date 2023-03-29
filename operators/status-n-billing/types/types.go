@@ -6,7 +6,7 @@ import (
 
 type StatusUpdate struct {
 	AccountName string         `json:"accountName"`
-	ClusterName string         `json:"clusterName,omitempty"`
+	ClusterName string         `json:"clusterName"`
 	Object      map[string]any `json:"object"`
 	Status      rApi.Status    `json:"status"`
 }

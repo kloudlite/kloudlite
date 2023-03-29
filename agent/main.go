@@ -6,64 +6,30 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/operator/agent/internal/env"
-	t "github.com/kloudlite/operator/agent/internal/types"
+	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	"github.com/kloudlite/operator/pkg/redpanda"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/yaml"
 )
 
-//func main() {
-//	var dev bool
-//	flag.BoolVar(&dev, "dev", false, "--dev")
-//	flag.Parse()
-//
-//	yamlClient := func() *kubectl.YAMLClient {
-//		if dev {
-//			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
-//		}
-//		config, err := rest.InClusterConfig()
-//		if err != nil {
-//			panic(err)
-//		}
-//		return kubectl.NewYAMLClientOrDie(config)
-//	}()
-//
-//	scrt := `
-//apiVersion: crds.kloudlite.io/v1
-//kind: Appsdasdf
-//metadata:
-//  name: sample
-//  namespacesdfa: sadfa
-//spec:
-//  containers:
-//    - image: nginx
-//`
-//
-//	if err := yamlClient.ApplyYAML(context.TODO(), []byte(scrt)); err != nil {
-//		switch xerr := err.(type) {
-//		case *apiErrors.StatusError:
-//			fmt.Printf("[API Error], %T, %v\n", xerr, xerr.Error())
-//		case *meta.NoKindMatchError:
-//			fmt.Printf("%T, %v\n", xerr, xerr.Error())
-//		}
-//	}
-//}
-
 func main() {
-	var dev bool
-	flag.BoolVar(&dev, "dev", false, "--dev")
+	var isDev bool
+	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
 
-	logr := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: dev})
+	logr := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: isDev})
 
 	ev := env.GetEnvOrDie()
 
 	yamlClient := func() *kubectl.YAMLClient {
-		if dev {
+		if isDev {
 			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
 		}
 		config, err := rest.InClusterConfig()
@@ -78,25 +44,11 @@ func main() {
 		Password:      ev.KafkaSASLPassword,
 		SASLMechanism: redpanda.ScramSHA256,
 	}
-	// kafkaSasl := redpanda.KafkaSASLAuth{
-	// 	SASLMechanism: func() redpanda.SASLMechanism {
-	// 		if ev.KafkaSASLMechanism != "" {
-	// 			return ev.KafkaSASLMechanism
-	// 		}
-	// 		return redpanda.ScramSHA256
-	// 	}(),
-	// 	User:     ev.KafkaSASLUser,
-	// 	Password: ev.KafkaSASLPassword,
-	// }
 
-	// errProducer, err := redpanda.NewProducer(
-	// 	ev.KafkaBrokers, redpanda.ProducerOpts{
-	// 		SASLAuth: &kafkaSasl,
-	// 	},
-	// )
-	// if err != nil {
-	// 	panic(err)
-	// }
+	errProducer, err := redpanda.NewProducer(ev.KafkaBrokers, redpanda.ProducerOpts{SASLAuth: &kafkaSasl})
+	if err != nil {
+		panic(err)
+	}
 
 	consumer, err := redpanda.NewConsumer(
 		ev.KafkaBrokers, ev.KafkaConsumerGroupId,
@@ -106,34 +58,85 @@ func main() {
 		panic(err)
 	}
 
-	// tctx, cancelFunc := context.WithTimeout(context.TODO(), 5*time.Second)
-	// defer cancelFunc()
+	tctx, cancelFunc := func() (context.Context, context.CancelFunc) {
+		if isDev {
+			return context.WithCancel(context.TODO())
+		}
+		return context.WithTimeout(context.TODO(), 5*time.Second)
+	}()
+	defer cancelFunc()
 
-	if err := consumer.Ping(context.TODO()); err != nil {
+	if err := consumer.Ping(tctx); err != nil {
 		log.Fatal("failed to ping kafka brokers")
 	}
 	logr.Infof("successful ping to kafka brokers")
 
 	fmt.Println(
 		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██`,
+	███████  ███████  █████  ██████  ██    ██ 
+  ██   ██  ██      ██   ██ ██   ██  ██  ██  
+  ██████   █████   ███████ ██   ██   ████   
+  ██   ██  ██      ██   ██ ██   ██    ██    
+  ██   ██  ███████ ██   ██ ██████     ██      for consuming kafka messages`,
 	)
-	logr.Infof("ready for consuming messages")
+
+	dispatchErrorButCommit := func(err error, msg t.AgentMessage, logger logging.Logger) error {
+		logger.Debugf("[ERROR]: %s", err.Error())
+		b, err := json.Marshal(t.AgentErrMessage{
+			AccountName: msg.AccountName,
+			ClusterName: msg.ClusterName,
+			Error:       err,
+			Action:      msg.Action,
+			Object:      msg.Object,
+		})
+		if err != nil {
+			return err
+		}
+
+		obj := unstructured.Unstructured{Object: msg.Object}
+
+		out, err := errProducer.Produce(tctx, ev.KafkaErrorOnApplyTopic, obj.GetNamespace(), b)
+		logger.Infof("dispatched error message to topic(%s)", out.Topic)
+		return err
+	}
+
+	counter := 0
 
 	consumer.StartConsuming(
 		func(kMsg redpanda.KafkaMessage) error {
-			logger := logr.WithKV("offset", kMsg.Offset).WithKV("topic", kMsg.Topic).WithKV("partition", kMsg.Partition)
-			logger.Infof("received message")
+			logger := logr.WithKV("topic", kMsg.Topic)
+			counter += 1
+			logger.Debugf("====> received kafka message [%d]", counter)
 			defer func() {
-				logger.Infof("processed message")
+				logger.Debugf("<==== processed kafka message [%d]", counter)
 			}()
 
+			var msg t.AgentMessage
+			if err := json.Unmarshal(kMsg.Value, &msg); err != nil {
+				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
+				return nil
+			}
+
+			if msg.Object == nil {
+				logger.Infof("msg.Object is nil, could not process anything out of this kafka message, ignoring ...")
+				return nil
+			}
+
+			obj := unstructured.Unstructured{Object: msg.Object}
+
+			logger = logger.WithKV("gvk", obj.GetObjectKind().GroupVersionKind().String()).WithKV("clusterName", msg.ClusterName).WithKV("accountName", msg.AccountName).WithKV("action", msg.Action)
+
+			logger.Infof("received message [%d]", counter)
+			defer func() {
+				logger.Infof("processed message [%d]", counter)
+			}()
+
+			if len(strings.TrimSpace(msg.AccountName)) == 0 {
+				return dispatchErrorButCommit(fmt.Errorf("field 'accountName' must be defined in message"), msg, logger)
+			}
+
 			tctx, cancelFunc := func() (context.Context, context.CancelFunc) {
-				if dev {
+				if isDev {
 					return context.WithCancel(context.TODO())
 				}
 				return context.WithTimeout(context.TODO(), 3*time.Second)
@@ -145,58 +148,36 @@ func main() {
 				cancelFunc()
 			}()
 
-			var msg t.AgentMessage
-			if err := json.Unmarshal(kMsg.Value, &msg); err != nil {
-				logger.Errorf(err, "error when unmarshalling []byte to kafkaMessage : %s", kMsg.Value)
-				return err
-			}
 			switch msg.Action {
 			case "apply", "delete", "create":
 				{
-					mLogger := logger.WithKV("action", msg.Action)
-					mLogger.WithKV("action", msg.Action).Infof("received message")
-					defer func() {
-						mLogger.WithKV("action", msg.Action).Infof("processed message")
-					}()
-
-					// yamls, err := func() ([]byte, error) {
-					// 	if msg.Yamls != nil {
-					// 		return msg.Yamls, nil
-					// 	}
-					//
-					// 	if msg.Payload == nil {
-					// 		return nil, nil
-					// 	}
-					// 	pb, err := json.Marshal(msg.Payload)
-					// 	if err != nil {
-					// 		return nil, errors.NewEf(err, "could not convert msg.Payload into []byte")
-					// 	}
-					// 	yb, err := yaml.JSONToYAML(pb)
-					// 	if err != nil {
-					// 		return nil, errors.NewEf(err, "could not convert JSON to YAML")
-					// 	}
-					// 	return yb, nil
-					// }()
-					// if err != nil {
-					// 	return err
-					// }
-
-					// with-api
-					if msg.Action == "apply" {
-						_, err := yamlClient.ApplyYAML(tctx, msg.Yamls)
-						return err
+					b, err := yaml.Marshal(msg.Object)
+					if err != nil {
+						return dispatchErrorButCommit(err, msg, logger)
 					}
+
+					if msg.Action == "apply" {
+						_, err := yamlClient.ApplyYAML(tctx, b)
+						if err != nil {
+							return dispatchErrorButCommit(err, msg, logger)
+						}
+						return nil
+					}
+
 					if msg.Action == "delete" {
-						return yamlClient.DeleteYAML(tctx, msg.Yamls)
+						err := yamlClient.DeleteYAML(tctx, b)
+						if err != nil {
+							return dispatchErrorButCommit(err, msg, logger)
+						}
+						return nil
 					}
 					return nil
 				}
 			default:
 				{
-					logger.Errorf(nil, "Invalid Action: %s", msg.Action)
+					return dispatchErrorButCommit(fmt.Errorf("invalid action (%s)", msg.Action), msg, logger)
 				}
 			}
-			return nil
 		},
 	)
 }

@@ -62,10 +62,6 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) (c
 	obj.SetManagedFields(nil)
 
 	var m map[string]any
-	b, err = json.Marshal(obj)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return ctrl.Result{}, err
 	}

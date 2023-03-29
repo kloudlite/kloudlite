@@ -125,7 +125,7 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			return nil, err
 		}
 	}
-	return nil, nil
+	return resources, nil
 }
 
 func (yc *YAMLClient) DeleteResource(ctx context.Context, obj client.Object) error {

@@ -340,6 +340,7 @@ func (r *Request[T]) Next() stepResult.Result {
 func (r *Request[T]) UpdateStatus() stepResult.Result {
 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
 	checks := r.Object.GetStatus().Checks
+
 	for name := range checks {
 		if checks[name].Status {
 			if err := r.Object.GetStatus().Message.Delete(name); err != nil {
