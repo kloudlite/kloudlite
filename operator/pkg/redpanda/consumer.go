@@ -57,9 +57,9 @@ func (c *consumer) StartConsuming(reader ReaderFunc) {
 				); err != nil {
 					logger.Errorf(err, "in readerFunc()")
 
-					if err := c.client.CommitRecords(context.TODO(), record); err != nil {
-						return
-					}
+					// if err := c.client.CommitRecords(context.TODO(), record); err != nil {
+					// 	return
+					// }
 					return
 				}
 				if err := c.client.CommitRecords(context.TODO(), record); err != nil {
