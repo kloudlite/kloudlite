@@ -43,6 +43,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
 	repos.NewFxMongoRepo[*entities.Edge]("edges", "edge", entities.EdgeIndices),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
+	repos.NewFxMongoRepo[*entities.BYOCCluster]("secrets", "byoc", entities.BYOCClusterIndices),
 	repos.NewFxMongoRepo[*entities.MasterNode]("master_nodes", "mnode", entities.MasterNodeIndices),
 	repos.NewFxMongoRepo[*entities.WorkerNode]("worker_nodes", "wnode", entities.WorkerNodeIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
@@ -66,7 +67,6 @@ var Module = fx.Module(
 	}),
 
 	fx.Invoke(processStatusUpdates),
-
 
 	fx.Invoke(
 		func(
