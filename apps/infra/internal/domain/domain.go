@@ -40,12 +40,16 @@ func (d *domain) dispatchToTargetAgent(ctx InfraContext, action agent.Action, cl
 	// if err != nil {
 	// 	return err
 	// }
+	var m map[string]any
+	if err := fn.JsonConversion(obj, &m); err != nil {
+		return err
+	}
 
 	b, err := json.Marshal(types.AgentMessage{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
 		Action:      types.ActionApply,
-		Object:      obj,
+		Object:      m,
 	})
 	if err != nil {
 		return err
@@ -111,7 +115,7 @@ var Module = fx.Module("domain",
 				nodePoolRepo:   nodePoolRepo,
 				secretRepo:     secretRepo,
 
-				producer:    producer,
+				producer: producer,
 
 				k8sClient:         k8sClient,
 				k8sYamlClient:     k8sYamlClient,
