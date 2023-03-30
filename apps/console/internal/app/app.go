@@ -7,6 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
+	"google.golang.org/grpc"
 	"kloudlite.io/apps/console/internal/app/graph"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	domain "kloudlite.io/apps/console/internal/domain"
@@ -14,6 +15,7 @@ import (
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
@@ -22,6 +24,8 @@ import (
 )
 
 type AuthCacheClient cache.Client
+
+type IAMGrpcClient *grpc.ClientConn
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
@@ -46,6 +50,10 @@ var Module = fx.Module("app",
 					return nil, fiber.ErrUnauthorized
 				}
 
+				return next(context.WithValue(ctx, "kl-user-id", sess.UserId))
+			}
+
+			gqlConfig.Directives.HasAccountAndCluster = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				m := httpServer.GetHttpCookies(ctx)
 				klAccount := m["kloudlite-account"]
 				if klAccount == "" {
@@ -55,7 +63,13 @@ var Module = fx.Module("app",
 				if klCluster == "" {
 					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-cluster")
 				}
-				cc := domain.NewConsoleContext(ctx, klAccount, klCluster)
+
+				userId, ok := ctx.Value("kl-user-id").(repos.ID)
+				if !ok {
+					return nil, fmt.Errorf("userId is not of type repos.ID")
+				}
+
+				cc := domain.NewConsoleContext(ctx, userId, klAccount, klCluster)
 				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
 			}
 
@@ -94,5 +108,12 @@ var Module = fx.Module("app",
 	// fx.Provide(func(p redpanda.Producer) agent.Sender {
 	// 	return agent.NewSender(p)
 	// }),
+
+	fx.Provide(
+		func(clientConn IAMGrpcClient) iam.IAMClient {
+			return iam.NewIAMClient((*grpc.ClientConn)(clientConn))
+		},
+	),
+
 	domain.Module,
 )

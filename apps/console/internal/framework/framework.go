@@ -7,6 +7,7 @@ import (
 	app "kloudlite.io/apps/console/internal/app"
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/pkg/cache"
+	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
@@ -63,6 +64,10 @@ var Module = fx.Module("framework",
 
 	fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
 		return k8s.NewExtendedK8sClient(restCfg)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
+		return rpc.NewGrpcClient[app.IAMGrpcClient](ev.IAMGrpcAddr)
 	}),
 
 	redpanda.NewClientFx[*fm](),

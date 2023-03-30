@@ -4,17 +4,20 @@ import (
 	"context"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/pkg/repos"
 )
 
 type ConsoleContext struct {
 	context.Context
 	clusterName string
 	accountName string
+	userId      repos.ID
 }
 
-func NewConsoleContext(parent context.Context, accountName string, clusterName string) ConsoleContext {
+func NewConsoleContext(parent context.Context, userId repos.ID, accountName, clusterName string) ConsoleContext {
 	return ConsoleContext{
 		Context:     parent,
+		userId:      userId,
 		clusterName: clusterName,
 		accountName: accountName,
 	}

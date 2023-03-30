@@ -5,7 +5,6 @@ import (
 	"kloudlite.io/apps/iam/internal/application"
 	"kloudlite.io/apps/iam/internal/env"
 	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	"kloudlite.io/pkg/repos"
 )
@@ -23,12 +22,14 @@ func (f *fm) GetMongoConfig() (url, dbName string) {
 }
 
 func (f *fm) GetGRPCPort() uint16 {
-	return f.Port
+	return f.GrpcPort
 }
 
 var Module fx.Option = fx.Module(
 	"framework",
-	config.EnvFx[fm](),
+	fx.Provide(func(ev *env.Env) *fm {
+		return &fm{Env: ev}
+	}),
 	repos.NewMongoClientFx[*fm](),
 	cache.NewRedisFx[*fm](),
 	rpc.NewGrpcServerFx[*fm](),

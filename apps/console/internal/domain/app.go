@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
+	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -13,6 +15,21 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	app.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
 		return nil, err
+	}
+
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.userId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.clusterName, app.Kind, app.Namespace, app.Name),
+		},
+		Action: string(iamT.MutateResourcesInProject),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if co.Status {
+		return nil, fmt.Errorf("Unauthorized")
 	}
 
 	app.AccountName = ctx.accountName

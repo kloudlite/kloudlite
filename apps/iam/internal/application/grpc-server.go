@@ -2,43 +2,45 @@ package application
 
 import (
 	context "context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"kloudlite.io/apps/iam/internal/domain/entities"
-	"kloudlite.io/constants"
+	t "kloudlite.io/apps/iam/types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/repos"
 )
 
 type GrpcServer struct {
-	// iam.UnimplementedIAMServer
-	rbRepo repos.DbRepo[*entities.RoleBinding]
+	iam.UnimplementedIAMServer
+	rbRepo         repos.DbRepo[*entities.RoleBinding]
+	roleBindingMap map[t.Action][]entities.Role
 }
 
-func (s *GrpcServer) findRoleBinding(ctx context.Context, userId repos.ID, resourceId repos.ID) (*entities.RoleBinding, error) {
+func (s *GrpcServer) findRoleBinding(ctx context.Context, userId repos.ID, ResourceRef string) (*entities.RoleBinding, error) {
 	rb, err := s.rbRepo.FindOne(
 		ctx, repos.Filter{
-			"user_id":     userId,
-			"resource_id": resourceId,
+			"user_id":      userId,
+			"resource_ref": ResourceRef,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if rb == nil {
-		return nil, fmt.Errorf("role binding for (userId=%s,  resourceId=%s) not found", userId, resourceId)
+		return nil, fmt.Errorf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, ResourceRef)
 	}
 	return rb, nil
 }
 
 func (s *GrpcServer) ConfirmMembership(ctx context.Context, in *iam.ConfirmMembershipIn) (*iam.ConfirmMembershipOut, error) {
-	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceId)
+	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
+	if err != nil {
+		return nil, err
+	}
 
-	if in.Role != rb.Role {
+	if entities.Role(in.Role) != rb.Role {
 		return nil, errors.New("The invitation has been updated")
 	}
 
@@ -51,20 +53,18 @@ func (s *GrpcServer) ConfirmMembership(ctx context.Context, in *iam.ConfirmMembe
 }
 
 func (s *GrpcServer) InviteMembership(ctx context.Context, in *iam.AddMembershipIn) (*iam.AddMembershipOut, error) {
-	fmt.Println("InviteMembership", in)
-	one, err := s.rbRepo.FindOne(
-		ctx, repos.Filter{
-			"user_id":     in.UserId,
-			"resource_id": in.ResourceId,
-		},
-	)
-	if one != nil {
-		if one.Role == in.Role {
-			return nil, errors.New(fmt.Sprintf("user %s already has role %s on resource %s", in.UserId, in.Role, in.ResourceId))
+	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
+	if err != nil {
+		return nil, err
+	}
+
+	if rb != nil {
+		if string(rb.Role) == in.Role {
+			return nil, errors.New(fmt.Sprintf("user %s already has role %s on resource %s", in.UserId, in.Role, in.ResourceRef))
 		}
-		one.Role = in.Role
-		one.Accepted = false
-		_, err := s.rbRepo.UpdateById(ctx, one.Id, one)
+		rb.Role = entities.Role(in.Role)
+		rb.Accepted = false
+		_, err := s.rbRepo.UpdateById(ctx, rb.Id, rb)
 		if err != nil {
 			return nil, err
 		}
@@ -74,9 +74,9 @@ func (s *GrpcServer) InviteMembership(ctx context.Context, in *iam.AddMembership
 	_, err = s.rbRepo.Create(
 		ctx, &entities.RoleBinding{
 			UserId:       in.UserId,
-			ResourceType: in.ResourceType,
-			ResourceId:   in.ResourceId,
-			Role:         in.Role,
+			ResourceType: entities.ResourceType(in.ResourceType),
+			ResourceRef:  in.ResourceRef,
+			Role:         entities.Role(in.Role),
 			Accepted:     false,
 		},
 	)
@@ -86,31 +86,23 @@ func (s *GrpcServer) InviteMembership(ctx context.Context, in *iam.AddMembership
 	return &iam.AddMembershipOut{Result: true}, nil
 }
 
-func (s *GrpcServer) GetMembership(ctx context.Context, membership *iam.GetMembershipIn) (*iam.GetMembershipOut, error) {
-	one, err := s.rbRepo.FindOne(
-		ctx, repos.Filter{
-			"resource_id": membership.ResourceId,
-			"user_id":     membership.UserId,
-		},
-	)
+func (s *GrpcServer) GetMembership(ctx context.Context, in *iam.GetMembershipIn) (*iam.GetMembershipOut, error) {
+	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
 	if err != nil {
 		return nil, err
 	}
-	if one == nil {
-		return nil, errors.New(fmt.Sprintf("role binding not found for resource %s and user %s", membership.ResourceId, membership.UserId))
-	}
 	return &iam.GetMembershipOut{
-		UserId:     one.UserId,
-		ResourceId: one.ResourceId,
-		Role:       one.Role,
-		Accepted:   one.Accepted,
+		UserId:      rb.UserId,
+		ResourceRef: rb.ResourceRef,
+		Role:        string(rb.Role),
+		Accepted:    rb.Accepted,
 	}, nil
 }
 
 func (s *GrpcServer) ListResourceMemberships(ctx context.Context, in *iam.ResourceMembershipsIn) (*iam.ListMembershipsOut, error) {
 	filter := repos.Filter{}
-	if in.ResourceId != "" {
-		filter["resource_id"] = in.ResourceId
+	if in.ResourceRef != "" {
+		filter["resource_ref"] = in.ResourceRef
 	}
 	if in.ResourceType != "" {
 		filter["resource_type"] = in.ResourceType
@@ -118,7 +110,7 @@ func (s *GrpcServer) ListResourceMemberships(ctx context.Context, in *iam.Resour
 
 	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: filter})
 	if err != nil {
-		return nil, errors.NewEf(err, "could not find memberships by (resourceId=%q, resourceType=%q)", in.ResourceId, in.ResourceType)
+		return nil, errors.NewEf(err, "could not find memberships by (ResourceRef=%q, resourceType=%q)", in.ResourceRef, in.ResourceType)
 	}
 
 	var result []*iam.RoleBinding
@@ -126,9 +118,9 @@ func (s *GrpcServer) ListResourceMemberships(ctx context.Context, in *iam.Resour
 		result = append(
 			result, &iam.RoleBinding{
 				UserId:       rb.UserId,
-				ResourceType: rb.ResourceType,
-				ResourceId:   rb.ResourceId,
-				Role:         rb.Role,
+				ResourceType: string(rb.ResourceType),
+				ResourceRef:  rb.ResourceRef,
+				Role:         string(rb.Role),
 			},
 		)
 	}
@@ -141,48 +133,25 @@ func (s *GrpcServer) ListResourceMemberships(ctx context.Context, in *iam.Resour
 func (s *GrpcServer) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, error) {
 	rb, err := s.rbRepo.FindOne(
 		ctx, repos.Filter{
-			"resource_id": map[string]interface{}{"$in": in.ResourceIds},
-			"user_id":     in.UserId,
+			"resource_ref": map[string]any{"$in": in.ResourceRefs},
+			"user_id":      in.UserId,
 		},
 	)
 
 	if err != nil {
-		return nil, errors.NewEf(err, "could not find resource(ids=%v)", in.ResourceIds)
-	}
-
-	var actionsConfig struct {
-		Actions map[string][]string `json:"actions"`
-	}
-
-	file, err := ioutil.ReadFile("./configs/iam.json")
-	if err != nil {
-		return &iam.CanOut{Status: false}, err
-	}
-
-	err = json.Unmarshal(file, &actionsConfig)
-
-	if err != nil {
-		return &iam.CanOut{Status: false}, err
+		return nil, errors.NewEf(err, "could not find rolebindings for (resourceRefs=%s)", strings.Join(in.ResourceRefs, ","))
 	}
 
 	if rb == nil {
-		return &iam.CanOut{Status: false}, nil
+		return nil, fmt.Errorf("no rolebinding found for (userId=%s, resourceRefs=%s)", in.UserId, strings.Join(in.ResourceRefs, ","))
 	}
 
 	if strings.HasPrefix(in.UserId, "sys-user") {
 		return &iam.CanOut{Status: true}, nil
 	}
 
-	for _, v := range actionsConfig.Actions[in.Action] {
-		fmt.Println(v, rb.Role)
-		if v == rb.Role {
-			return &iam.CanOut{Status: true}, nil
-		}
-
-	}
-
-	for _, role := range constants.ActionMap[constants.Action(in.Action)] {
-		if role == constants.Role(rb.Role) {
+	for _, role := range s.roleBindingMap[t.Action(in.Action)] {
+		if role == rb.Role {
 			return &iam.CanOut{Status: true}, nil
 		}
 	}
@@ -202,13 +171,13 @@ func (s *GrpcServer) ListUserMemberships(ctx context.Context, in *iam.UserMember
 	}
 
 	result := []*iam.RoleBinding{}
-	for _, rb := range rbs {
+	for i := range rbs {
 		result = append(
 			result, &iam.RoleBinding{
-				UserId:       rb.UserId,
-				ResourceType: rb.ResourceType,
-				ResourceId:   rb.ResourceId,
-				Role:         rb.Role,
+				UserId:       rbs[i].UserId,
+				ResourceType: string(rbs[i].ResourceType),
+				ResourceRef:  rbs[i].ResourceRef,
+				Role:         string(rbs[i].Role),
 			},
 		)
 	}
@@ -219,14 +188,13 @@ func (s *GrpcServer) ListUserMemberships(ctx context.Context, in *iam.UserMember
 }
 
 // Mutation
-
 func (s *GrpcServer) AddMembership(ctx context.Context, in *iam.AddMembershipIn) (*iam.AddMembershipOut, error) {
 	_, err := s.rbRepo.Create(
 		ctx, &entities.RoleBinding{
 			UserId:       in.UserId,
-			ResourceType: in.ResourceType,
-			ResourceId:   in.ResourceId,
-			Role:         in.Role,
+			ResourceType: entities.ResourceType(in.ResourceType),
+			ResourceRef:  in.ResourceRef,
+			Role:         entities.Role(in.Role),
 			Accepted:     true,
 		},
 	)
@@ -237,54 +205,30 @@ func (s *GrpcServer) AddMembership(ctx context.Context, in *iam.AddMembershipIn)
 }
 
 func (s *GrpcServer) RemoveMembership(ctx context.Context, in *iam.RemoveMembershipIn) (*iam.RemoveMembershipOut, error) {
-	var rb *entities.RoleBinding
-	var err error
-
-	if in.UserId != "" && in.ResourceId != "" {
-
-		rb, err = s.rbRepo.FindOne(
-			ctx, repos.Filter{
-				"resource_id": in.ResourceId,
-				"user_id":     in.UserId,
-			},
-		)
-		if err != nil {
-			return nil, errors.NewEf(err, "could not findone")
-		}
-
-	} else if in.ResourceId != "" {
-
-		rb, err = s.rbRepo.FindOne(
-			ctx, repos.Filter{
-				"resource_id": in.ResourceId,
-			},
-		)
-		if err != nil {
-			return nil, errors.NewEf(err, "could not findone")
-		}
-
-	} else {
-		return nil, errors.NewEf(err, "no resourceId provided")
+	if in.UserId == "" || in.ResourceRef == "" {
+		return nil, fmt.Errorf("userId or resourceRef is empty, rejecting")
 	}
 
-	err = s.rbRepo.DeleteById(ctx, rb.Id)
+	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
 	if err != nil {
-		return nil, errors.NewEf(err, "could not delete resource(id=%s)", rb.Id)
+		return nil, err
+	}
+
+	if err := s.rbRepo.DeleteById(ctx, rb.Id); err != nil {
+		return nil, errors.NewEf(err, "could not delete resource for (userId=%s, resourceRef=%s)", in.UserId, in.ResourceRef)
 	}
 
 	return &iam.RemoveMembershipOut{Result: true}, nil
 }
 
 func (s *GrpcServer) RemoveResource(ctx context.Context, in *iam.RemoveResourceIn) (*iam.RemoveResourceOut, error) {
-	err := s.rbRepo.DeleteMany(ctx, repos.Filter{"resource_id": in.ResourceId})
-	if err != nil {
-		return nil, errors.NewEf(err, "could not delete resources(id=%s)", in.ResourceId)
+	if err := s.rbRepo.DeleteMany(ctx, repos.Filter{"resource_ref": in.ResourceRef}); err != nil {
+		return nil, errors.NewEf(err, "could not delete resources for (resourceRef=%s)", in.ResourceRef)
 	}
 	return &iam.RemoveResourceOut{Result: true}, nil
 }
 
 func (i *GrpcServer) Ping(ctx context.Context, in *iam.Message) (*iam.Message, error) {
-	fmt.Println("", in.Message)
 	return &iam.Message{
 		Message: "asdfasdf",
 	}, nil
