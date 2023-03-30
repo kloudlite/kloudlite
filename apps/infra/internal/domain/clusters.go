@@ -115,3 +115,54 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 	}
 	return cluster, nil
 }
+
+func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entities.BYOCCluster, error) {
+	cluster, err := d.byocClusterRepo.FindOne(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"metadata.name": clusterName,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if cluster == nil {
+		return nil, fmt.Errorf("cluster with name %q not found", clusterName)
+	}
+	return cluster, nil
+}
+
+func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
+	cluster.IsConnected = false
+	cluster.AccountName = ctx.AccountName
+	return d.byocClusterRepo.Create(ctx, &cluster)
+}
+
+func (d *domain) ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, error) {
+	return d.byocClusterRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"accountName": ctx.AccountName,
+		},
+	})
+}
+
+func (d *domain) GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error) {
+	return d.byocClusterRepo.FindOne(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"metadata.name": name,
+	})
+}
+
+func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
+	c, err := d.findBYOCCluster(ctx, cluster.Name)
+	if err != nil {
+		return nil, err
+	}
+	c.AccountName = ctx.AccountName
+	c.Region = cluster.Region
+	c.Provider = cluster.Provider
+	return d.byocClusterRepo.UpdateOne(ctx, repos.Filter{"metadata.name": cluster.Name}, c)
+}
+
+func (d *domain) DeleteBYOCCluster(ctx InfraContext, name string) error {
+	// Soft delete
+	return d.byocClusterRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name})
+}

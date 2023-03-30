@@ -10,7 +10,7 @@ import (
 
 	"github.com/kloudlite/cluster-operator/lib/operator"
 	json_patch "github.com/kloudlite/operator/pkg/json-patch"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	fn "kloudlite.io/pkg/functions"
