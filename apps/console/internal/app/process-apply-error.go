@@ -40,7 +40,7 @@ func ProcessApplyOnError(consumer ApplyOnErrorConsumer, d domain.Domain, logr lo
 		}()
 
 		kind := obj.GroupVersionKind().Kind
-		ctx := domain.NewConsoleContext(context.TODO(), msg.AccountName, msg.ClusterName)
+		ctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", msg.AccountName, msg.ClusterName)
 
 		switch kind {
 		case "Project":

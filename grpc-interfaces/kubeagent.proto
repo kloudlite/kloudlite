@@ -11,7 +11,7 @@ message PayloadIn {
   string Action = 1;
   map<string,google.protobuf.Any> payload = 2;
   string accountId = 3;
-  string resourceId = 4;
+  string ResourceRef = 4;
 }
 
 message PayloadOut {

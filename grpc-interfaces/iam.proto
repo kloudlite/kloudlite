@@ -20,7 +20,7 @@ service IAM {
 
 message ConfirmMembershipIn{
   string user_id = 1;
-  string resource_id = 2;
+  string resource_ref = 2;
   string role = 3;
 }
 
@@ -29,7 +29,7 @@ message ConfirmMembershipOut {
 
 message RoleBinding {
   string userId = 1;
-  string resourceId = 2;
+  string ResourceRef = 2;
   string resourceType = 3;
   string role = 4;
   bool accepted = 5;
@@ -38,21 +38,21 @@ message RoleBinding {
 message GetMembershipIn {
   string userId = 1;
   string resourceType = 2;
-  string resourceId = 3;
+  string ResourceRef = 3;
   bool accepted = 5;
 }
 
 message AddMembershipIn {
   string userId = 1;
   string resourceType = 2;
-  string resourceId = 3;
+  string resourceRef = 3;
   string role = 4;
   string filter = 5;
 }
 
 message GetMembershipOut {
   string userId=1;
-  string resourceId=2;
+  string ResourceRef=2;
   string role=3;
   bool accepted = 5;
 }
@@ -63,7 +63,7 @@ message AddMembershipOut {
 
 message RemoveMembershipIn {
   string userId = 1;
-  string resourceId = 2;
+  string ResourceRef = 2;
 }
 
 message RemoveMembershipOut {
@@ -71,7 +71,7 @@ message RemoveMembershipOut {
 }
 
 message RemoveResourceIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
 }
 
 message RemoveResourceOut {
@@ -89,12 +89,12 @@ message UserMembershipsIn {
 
 message ResourceMembershipsIn {
   string resourceType = 1;
-  string resourceId = 2;
+  string ResourceRef = 2;
 }
 
 message ResourceMembershipsOut {
   string resourceType = 1;
-  string resourceId = 2;
+  string ResourceRef = 2;
 }
 
 message Message {
@@ -103,7 +103,7 @@ message Message {
 
 message CanIn {
   string userId = 1;
-  repeated string resourceIds = 2;
+  repeated string ResourceRefs = 2;
   string action = 3;
 }
 

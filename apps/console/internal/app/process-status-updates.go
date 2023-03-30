@@ -59,7 +59,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		ctx := domain.NewConsoleContext(context.TODO(), su.AccountName, su.ClusterName)
+		ctx := domain.NewConsoleContext(context.TODO(), "sys-user:status-updater", su.AccountName, su.ClusterName)
 
 		switch kind {
 		case "Project":
