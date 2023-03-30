@@ -18,7 +18,6 @@ import (
 )
 
 type domain struct {
-	int
 	env *env.Env
 
 	clusterRepo    repos.DbRepo[*entities.Cluster]
