@@ -89,6 +89,14 @@ type ComplexityRoot struct {
 		OwnedDomains func(childComplexity int) int
 	}
 
+	BYOCCluster struct {
+		AccountName func(childComplexity int) int
+		IsConnected func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Provider    func(childComplexity int) int
+		Region      func(childComplexity int) int
+	}
+
 	Check struct {
 		Generation func(childComplexity int) int
 		Message    func(childComplexity int) int
@@ -187,13 +195,16 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		InfraCreateBYOCCluster   func(childComplexity int, cluster entities.BYOCCluster) int
 		InfraCreateCloudProvider func(childComplexity int, cloudProvider entities.CloudProvider, providerSecret entities.Secret) int
 		InfraCreateCluster       func(childComplexity int, cluster entities.Cluster) int
 		InfraCreateEdge          func(childComplexity int, edge entities.Edge) int
+		InfraDeleteBYOCCluster   func(childComplexity int, name string) int
 		InfraDeleteCloudProvider func(childComplexity int, name string) int
 		InfraDeleteCluster       func(childComplexity int, name string) int
 		InfraDeleteEdge          func(childComplexity int, clusterName string, name string) int
 		InfraDeleteWorkerNode    func(childComplexity int, clusterName string, edgeName string, name string) int
+		InfraUpdateBYOCCluster   func(childComplexity int, cluster entities.BYOCCluster) int
 		InfraUpdateCloudProvider func(childComplexity int, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) int
 		InfraUpdateCluster       func(childComplexity int, cluster entities.Cluster) int
 		InfraUpdateEdge          func(childComplexity int, edge entities.Edge) int
@@ -232,12 +243,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		InfraGetBYOCCluster     func(childComplexity int, name string) int
 		InfraGetCloudProvider   func(childComplexity int, name string) int
 		InfraGetCluster         func(childComplexity int, name string) int
 		InfraGetEdge            func(childComplexity int, clusterName string, name string) int
 		InfraGetMasterNodes     func(childComplexity int, clusterName string) int
 		InfraGetNodePools       func(childComplexity int, clusterName string, edgeName string) int
 		InfraGetWorkerNodes     func(childComplexity int, clusterName string, edgeName string) int
+		InfraListBYOCClusters   func(childComplexity int) int
 		InfraListCloudProviders func(childComplexity int) int
 		InfraListClusters       func(childComplexity int) int
 		InfraListEdges          func(childComplexity int, clusterName string, providerName *string) int
@@ -322,6 +335,9 @@ type MetadataResolver interface {
 	DeletionTimestamp(ctx context.Context, obj *v11.ObjectMeta) (*string, error)
 }
 type MutationResolver interface {
+	InfraCreateBYOCCluster(ctx context.Context, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
+	InfraUpdateBYOCCluster(ctx context.Context, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
+	InfraDeleteBYOCCluster(ctx context.Context, name string) (bool, error)
 	InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
 	InfraUpdateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
 	InfraDeleteCluster(ctx context.Context, name string) (bool, error)
@@ -340,6 +356,8 @@ type PatchResolver interface {
 	Value(ctx context.Context, obj *json_patch.PatchOperation) (interface{}, error)
 }
 type QueryResolver interface {
+	InfraListBYOCClusters(ctx context.Context) ([]*entities.BYOCCluster, error)
+	InfraGetBYOCCluster(ctx context.Context, name string) (*entities.BYOCCluster, error)
 	InfraListClusters(ctx context.Context) ([]*entities.Cluster, error)
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
 	InfraListCloudProviders(ctx context.Context) ([]*entities.CloudProvider, error)
@@ -471,6 +489,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AccountSpec.OwnedDomains(childComplexity), true
+
+	case "BYOCCluster.accountName":
+		if e.complexity.BYOCCluster.AccountName == nil {
+			break
+		}
+
+		return e.complexity.BYOCCluster.AccountName(childComplexity), true
+
+	case "BYOCCluster.isConnected":
+		if e.complexity.BYOCCluster.IsConnected == nil {
+			break
+		}
+
+		return e.complexity.BYOCCluster.IsConnected(childComplexity), true
+
+	case "BYOCCluster.name":
+		if e.complexity.BYOCCluster.Name == nil {
+			break
+		}
+
+		return e.complexity.BYOCCluster.Name(childComplexity), true
+
+	case "BYOCCluster.provider":
+		if e.complexity.BYOCCluster.Provider == nil {
+			break
+		}
+
+		return e.complexity.BYOCCluster.Provider(childComplexity), true
+
+	case "BYOCCluster.region":
+		if e.complexity.BYOCCluster.Region == nil {
+			break
+		}
+
+		return e.complexity.BYOCCluster.Region(childComplexity), true
 
 	case "Check.generation":
 		if e.complexity.Check.Generation == nil {
@@ -899,6 +952,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Metadata.Namespace(childComplexity), true
 
+	case "Mutation.infra_createBYOCCluster":
+		if e.complexity.Mutation.InfraCreateBYOCCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_createBYOCCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraCreateBYOCCluster(childComplexity, args["cluster"].(entities.BYOCCluster)), true
+
 	case "Mutation.infra_createCloudProvider":
 		if e.complexity.Mutation.InfraCreateCloudProvider == nil {
 			break
@@ -934,6 +999,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraCreateEdge(childComplexity, args["edge"].(entities.Edge)), true
+
+	case "Mutation.infra_deleteBYOCCluster":
+		if e.complexity.Mutation.InfraDeleteBYOCCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_deleteBYOCCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraDeleteBYOCCluster(childComplexity, args["name"].(string)), true
 
 	case "Mutation.infra_deleteCloudProvider":
 		if e.complexity.Mutation.InfraDeleteCloudProvider == nil {
@@ -982,6 +1059,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraDeleteWorkerNode(childComplexity, args["clusterName"].(string), args["edgeName"].(string), args["name"].(string)), true
+
+	case "Mutation.infra_updateBYOCCluster":
+		if e.complexity.Mutation.InfraUpdateBYOCCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_updateBYOCCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraUpdateBYOCCluster(childComplexity, args["cluster"].(entities.BYOCCluster)), true
 
 	case "Mutation.infra_updateCloudProvider":
 		if e.complexity.Mutation.InfraUpdateCloudProvider == nil {
@@ -1159,6 +1248,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Patch.Value(childComplexity), true
 
+	case "Query.infra_getBYOCCluster":
+		if e.complexity.Query.InfraGetBYOCCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getBYOCCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetBYOCCluster(childComplexity, args["name"].(string)), true
+
 	case "Query.infra_getCloudProvider":
 		if e.complexity.Query.InfraGetCloudProvider == nil {
 			break
@@ -1230,6 +1331,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.InfraGetWorkerNodes(childComplexity, args["clusterName"].(string), args["edgeName"].(string)), true
+
+	case "Query.infra_listBYOCClusters":
+		if e.complexity.Query.InfraListBYOCClusters == nil {
+			break
+		}
+
+		return e.complexity.Query.InfraListBYOCClusters(childComplexity), true
 
 	case "Query.infra_listCloudProviders":
 		if e.complexity.Query.InfraListCloudProviders == nil {
@@ -1583,7 +1691,26 @@ var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `directive @isLoggedIn on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
+type BYOCCluster {
+  name: String!
+  accountName: String!
+  region: String!
+  provider: String!
+  isConnected: Boolean!
+}
+
+input BYOCClusterIn {
+  name: String!
+  accountName: String!
+  region: String!
+  provider: String!
+}
+
 type Query {
+  # BYOC clusters
+  infra_listBYOCClusters: [BYOCCluster!] @isLoggedIn @hasAccount
+  infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedIn @hasAccount
+
   # clusters
   infra_listClusters: [Cluster!] @isLoggedIn @hasAccount
   infra_getCluster(name: String!): Cluster @isLoggedIn @hasAccount
@@ -1605,6 +1732,11 @@ type Query {
 }
 
 type Mutation {
+  # BYOC clusters
+  infra_createBYOCCluster(cluster: BYOCClusterIn!): BYOCCluster @isLoggedIn @hasAccount
+  infra_updateBYOCCluster(cluster: BYOCClusterIn!): BYOCCluster @isLoggedIn @hasAccount
+  infra_deleteBYOCCluster(name: String!): Boolean! @isLoggedIn @hasAccount
+
   # clusters
   infra_createCluster(cluster: ClusterIn!): Cluster @isLoggedIn @hasAccount
   infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedIn @hasAccount
@@ -2025,6 +2157,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_infra_createBYOCCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.BYOCCluster
+	if tmp, ok := rawArgs["cluster"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+		arg0, err = ec.unmarshalNBYOCClusterIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cluster"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_infra_createCloudProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2076,6 +2223,21 @@ func (ec *executionContext) field_Mutation_infra_createEdge_args(ctx context.Con
 		}
 	}
 	args["edge"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteBYOCCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -2166,6 +2328,21 @@ func (ec *executionContext) field_Mutation_infra_deleteWorkerNode_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_infra_updateBYOCCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.BYOCCluster
+	if tmp, ok := rawArgs["cluster"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+		arg0, err = ec.unmarshalNBYOCClusterIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cluster"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_infra_updateCloudProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2221,6 +2398,21 @@ func (ec *executionContext) field_Mutation_infra_updateEdge_args(ctx context.Con
 }
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getBYOCCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -2639,6 +2831,181 @@ func (ec *executionContext) _AccountSpec_ownedDomains(ctx context.Context, field
 	res := resTmp.([]*string)
 	fc.Result = res
 	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BYOCCluster_name(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BYOCCluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BYOCCluster_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BYOCCluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BYOCCluster_region(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BYOCCluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Region, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BYOCCluster_provider(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BYOCCluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Provider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BYOCCluster_isConnected(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BYOCCluster",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsConnected, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Check_status(ctx context.Context, field graphql.CollectedField, obj *model.Check) (ret graphql.Marshaler) {
@@ -4686,6 +5053,204 @@ func (ec *executionContext) _Metadata_generation(ctx context.Context, field grap
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_infra_createBYOCCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_infra_createBYOCCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraCreateBYOCCluster(rctx, args["cluster"].(entities.BYOCCluster))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.BYOCCluster); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.BYOCCluster)
+	fc.Result = res
+	return ec.marshalOBYOCCluster2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_infra_updateBYOCCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_infra_updateBYOCCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraUpdateBYOCCluster(rctx, args["cluster"].(entities.BYOCCluster))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.BYOCCluster); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.BYOCCluster)
+	fc.Result = res
+	return ec.marshalOBYOCCluster2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_infra_deleteBYOCCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_infra_deleteBYOCCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraDeleteBYOCCluster(rctx, args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_infra_createCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6016,6 +6581,129 @@ func (ec *executionContext) _Patch_value(ctx context.Context, field graphql.Coll
 	res := resTmp.(interface{})
 	fc.Result = res
 	return ec.marshalOAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_infra_listBYOCClusters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListBYOCClusters(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*entities.BYOCCluster); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.BYOCCluster)
+	fc.Result = res
+	return ec.marshalOBYOCCluster2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCClusterᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_infra_getBYOCCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_infra_getBYOCCluster_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraGetBYOCCluster(rctx, args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.BYOCCluster); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.BYOCCluster)
+	fc.Result = res
+	return ec.marshalOBYOCCluster2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_infra_listClusters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9151,6 +9839,53 @@ func (ec *executionContext) unmarshalInputAccountSpecIn(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj interface{}) (entities.BYOCCluster, error) {
+	var it entities.BYOCCluster
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "accountName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "region":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			it.Region, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "provider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCloudProviderIn(ctx context.Context, obj interface{}) (entities.CloudProvider, error) {
 	var it entities.CloudProvider
 	asMap := map[string]interface{}{}
@@ -10282,6 +11017,77 @@ func (ec *executionContext) _AccountSpec(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var bYOCClusterImplementors = []string{"BYOCCluster"}
+
+func (ec *executionContext) _BYOCCluster(ctx context.Context, sel ast.SelectionSet, obj *entities.BYOCCluster) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bYOCClusterImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BYOCCluster")
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BYOCCluster_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "accountName":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BYOCCluster_accountName(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "region":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BYOCCluster_region(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "provider":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BYOCCluster_provider(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "isConnected":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BYOCCluster_isConnected(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var checkImplementors = []string{"Check"}
 
 func (ec *executionContext) _Check(ctx context.Context, sel ast.SelectionSet, obj *model.Check) graphql.Marshaler {
@@ -11143,6 +11949,30 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "infra_createBYOCCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_createBYOCCluster(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+		case "infra_updateBYOCCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_updateBYOCCluster(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+		case "infra_deleteBYOCCluster":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_deleteBYOCCluster(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "infra_createCluster":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createCluster(ctx, field)
@@ -11529,6 +12359,46 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "infra_listBYOCClusters":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listBYOCClusters(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getBYOCCluster":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getBYOCCluster(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "infra_listClusters":
 			field := field
 
@@ -12713,6 +13583,21 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNBYOCCluster2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx context.Context, sel ast.SelectionSet, v *entities.BYOCCluster) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._BYOCCluster(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNBYOCClusterIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx context.Context, v interface{}) (entities.BYOCCluster, error) {
+	res, err := ec.unmarshalInputBYOCClusterIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -13222,6 +14107,60 @@ func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.S
 	}
 	res := graphql.MarshalAny(v)
 	return res
+}
+
+func (ec *executionContext) marshalOBYOCCluster2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCClusterᚄ(ctx context.Context, sel ast.SelectionSet, v []*entities.BYOCCluster) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBYOCCluster2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOBYOCCluster2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚋentitiesᚐBYOCCluster(ctx context.Context, sel ast.SelectionSet, v *entities.BYOCCluster) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BYOCCluster(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
