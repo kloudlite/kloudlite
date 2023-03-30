@@ -57,7 +57,7 @@ query: |+
 variables:
   app:
     metadata:
-      name: "{{.name}}2"
+      name: "{{.name}}"
       namespace: "{{.namespace}}"
     spec:
       # region: r1

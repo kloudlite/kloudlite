@@ -50,10 +50,15 @@ var Module = fx.Module("app",
 					return nil, fiber.ErrUnauthorized
 				}
 
-				return next(context.WithValue(ctx, "kl-user-id", sess.UserId))
+				return next(ctx)
 			}
 
 			gqlConfig.Directives.HasAccountAndCluster = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+				sess := httpServer.GetSession[*common.AuthSession](ctx)
+				if sess == nil {
+					return nil, fiber.ErrUnauthorized
+				}
+
 				m := httpServer.GetHttpCookies(ctx)
 				klAccount := m["kloudlite-account"]
 				if klAccount == "" {
@@ -64,12 +69,7 @@ var Module = fx.Module("app",
 					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-cluster")
 				}
 
-				userId, ok := ctx.Value("kl-user-id").(repos.ID)
-				if !ok {
-					return nil, fmt.Errorf("userId is not of type repos.ID")
-				}
-
-				cc := domain.NewConsoleContext(ctx, userId, klAccount, klCluster)
+				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, klCluster)
 				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
 			}
 
