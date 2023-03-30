@@ -67,7 +67,8 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	IsLoggedIn func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	HasAccountAndCluster func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	IsLoggedIn           func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -2552,58 +2553,59 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `directive @isLoggedIn on FIELD_DEFINITION
+directive @hasAccountAndCluster on FIELD_DEFINITION
 
 type Query {
-  core_listProjects: [Project!] @isLoggedIn
-  core_getProject(name: String!): Project @isLoggedIn
+  core_listProjects: [Project!] @isLoggedIn @hasAccountAndCluster
+  core_getProject(name: String!): Project @isLoggedIn @hasAccountAndCluster
 
-  core_listApps(namespace: String!): [App!] @isLoggedIn
-  core_getApp(namespace: String!, name: String!): App @isLoggedIn
+  core_listApps(namespace: String!): [App!] @isLoggedIn @hasAccountAndCluster
+  core_getApp(namespace: String!, name: String!): App @isLoggedIn @hasAccountAndCluster
 
-  core_listConfigs(namespace: String!): [Config!] @isLoggedIn
-  core_getConfig(namespace: String!, name: String!): Config @isLoggedIn
+  core_listConfigs(namespace: String!): [Config!] @isLoggedIn @hasAccountAndCluster
+  core_getConfig(namespace: String!, name: String!): Config @isLoggedIn @hasAccountAndCluster
 
-  core_listSecrets(namespace: String!): [Secret!] @isLoggedIn
-  core_getSecret(namespace: String!, name: String!): Secret @isLoggedIn
+  core_listSecrets(namespace: String!): [Secret!] @isLoggedIn @hasAccountAndCluster
+  core_getSecret(namespace: String!, name: String!): Secret @isLoggedIn @hasAccountAndCluster
 
-  core_listRouters(namespace: String!): [Router!] @isLoggedIn
-  core_getRouter(namespace: String!, name: String!): Router @isLoggedIn
+  core_listRouters(namespace: String!): [Router!] @isLoggedIn @hasAccountAndCluster
+  core_getRouter(namespace: String!, name: String!): Router @isLoggedIn @hasAccountAndCluster
 
-  core_listManagedServices(namespace: String!): [ManagedService!] @isLoggedIn
-  core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedIn
+  core_listManagedServices(namespace: String!): [ManagedService!] @isLoggedIn @hasAccountAndCluster
+  core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedIn @hasAccountAndCluster
 
-  core_listManagedResources(namespace: String!): [ManagedResource!] @isLoggedIn
-  core_getManagedResource(namespace: String!, name: String!): ManagedResource @isLoggedIn
+  core_listManagedResources(namespace: String!): [ManagedResource!] @isLoggedIn @hasAccountAndCluster
+  core_getManagedResource(namespace: String!, name: String!): ManagedResource @isLoggedIn @hasAccountAndCluster
 }
 
 type Mutation {
-  core_createProject(project: ProjectIn!): Project @isLoggedIn
-  core_updateProject(project: ProjectIn!): Project @isLoggedIn
-  core_deleteProject(name: String!): Boolean! @isLoggedIn
+  core_createProject(project: ProjectIn!): Project @isLoggedIn @hasAccountAndCluster
+  core_updateProject(project: ProjectIn!): Project @isLoggedIn @hasAccountAndCluster
+  core_deleteProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
  
-  core_createApp(app: AppIn!): App @isLoggedIn
-  core_updateApp(app: AppIn!): App @isLoggedIn
-  core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedIn
+  core_createApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster
+  core_updateApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster
+  core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_createConfig(config: ConfigIn!): Config @isLoggedIn
-  core_updateConfig(config: ConfigIn!): Config @isLoggedIn
-  core_deleteConfig(namespace: String!, name: String!): Boolean! @isLoggedIn
+  core_createConfig(config: ConfigIn!): Config @isLoggedIn @hasAccountAndCluster
+  core_updateConfig(config: ConfigIn!): Config @isLoggedIn @hasAccountAndCluster
+  core_deleteConfig(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_createSecret(secret: SecretIn!): Secret @isLoggedIn
-  core_updateSecret(secret: SecretIn!): Secret @isLoggedIn
-  core_deleteSecret(namespace: String!, name: String!): Boolean! @isLoggedIn
+  core_createSecret(secret: SecretIn!): Secret @isLoggedIn @hasAccountAndCluster
+  core_updateSecret(secret: SecretIn!): Secret @isLoggedIn @hasAccountAndCluster
+  core_deleteSecret(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_createRouter(router: RouterIn!): Router @isLoggedIn
-  core_updateRouter(router: RouterIn!): Router @isLoggedIn
-  core_deleteRouter(namespace: String!, name: String!): Boolean! @isLoggedIn
+  core_createRouter(router: RouterIn!): Router @isLoggedIn @hasAccountAndCluster
+  core_updateRouter(router: RouterIn!): Router @isLoggedIn @hasAccountAndCluster
+  core_deleteRouter(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_createManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedIn
-  core_updateManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedIn
-  core_deleteManagedService(namespace: String!, name: String!): Boolean! @isLoggedIn
+  core_createManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedIn @hasAccountAndCluster
+  core_updateManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedIn @hasAccountAndCluster
+  core_deleteManagedService(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedIn
-  core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedIn
-  core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedIn
+  core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedIn @hasAccountAndCluster
+  core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedIn @hasAccountAndCluster
+  core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 }
 `, BuiltIn: false},
 	{Name: "graph/crd-to-gql/app.graphqls", Input: `type AppSpecContainersLivenessProbeTcp {
@@ -8710,8 +8712,14 @@ func (ec *executionContext) _Mutation_core_createProject(ctx context.Context, fi
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -8769,8 +8777,14 @@ func (ec *executionContext) _Mutation_core_updateProject(ctx context.Context, fi
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -8828,8 +8842,14 @@ func (ec *executionContext) _Mutation_core_deleteProject(ctx context.Context, fi
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -8890,8 +8910,14 @@ func (ec *executionContext) _Mutation_core_createApp(ctx context.Context, field 
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -8949,8 +8975,14 @@ func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field 
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9008,8 +9040,14 @@ func (ec *executionContext) _Mutation_core_deleteApp(ctx context.Context, field 
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9070,8 +9108,14 @@ func (ec *executionContext) _Mutation_core_createConfig(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9129,8 +9173,14 @@ func (ec *executionContext) _Mutation_core_updateConfig(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9188,8 +9238,14 @@ func (ec *executionContext) _Mutation_core_deleteConfig(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9250,8 +9306,14 @@ func (ec *executionContext) _Mutation_core_createSecret(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9309,8 +9371,14 @@ func (ec *executionContext) _Mutation_core_updateSecret(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9368,8 +9436,14 @@ func (ec *executionContext) _Mutation_core_deleteSecret(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9430,8 +9504,14 @@ func (ec *executionContext) _Mutation_core_createRouter(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9489,8 +9569,14 @@ func (ec *executionContext) _Mutation_core_updateRouter(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9548,8 +9634,14 @@ func (ec *executionContext) _Mutation_core_deleteRouter(ctx context.Context, fie
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9610,8 +9702,14 @@ func (ec *executionContext) _Mutation_core_createManagedService(ctx context.Cont
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9669,8 +9767,14 @@ func (ec *executionContext) _Mutation_core_updateManagedService(ctx context.Cont
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9728,8 +9832,14 @@ func (ec *executionContext) _Mutation_core_deleteManagedService(ctx context.Cont
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9790,8 +9900,14 @@ func (ec *executionContext) _Mutation_core_createManagedResource(ctx context.Con
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9849,8 +9965,14 @@ func (ec *executionContext) _Mutation_core_updateManagedResource(ctx context.Con
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -9908,8 +10030,14 @@ func (ec *executionContext) _Mutation_core_deleteManagedResource(ctx context.Con
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10458,8 +10586,14 @@ func (ec *executionContext) _Query_core_listProjects(ctx context.Context, field 
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10517,8 +10651,14 @@ func (ec *executionContext) _Query_core_getProject(ctx context.Context, field gr
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10576,8 +10716,14 @@ func (ec *executionContext) _Query_core_listApps(ctx context.Context, field grap
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10635,8 +10781,14 @@ func (ec *executionContext) _Query_core_getApp(ctx context.Context, field graphq
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10694,8 +10846,14 @@ func (ec *executionContext) _Query_core_listConfigs(ctx context.Context, field g
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10753,8 +10911,14 @@ func (ec *executionContext) _Query_core_getConfig(ctx context.Context, field gra
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10812,8 +10976,14 @@ func (ec *executionContext) _Query_core_listSecrets(ctx context.Context, field g
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10871,8 +11041,14 @@ func (ec *executionContext) _Query_core_getSecret(ctx context.Context, field gra
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10930,8 +11106,14 @@ func (ec *executionContext) _Query_core_listRouters(ctx context.Context, field g
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -10989,8 +11171,14 @@ func (ec *executionContext) _Query_core_getRouter(ctx context.Context, field gra
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -11048,8 +11236,14 @@ func (ec *executionContext) _Query_core_listManagedServices(ctx context.Context,
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -11107,8 +11301,14 @@ func (ec *executionContext) _Query_core_getManagedService(ctx context.Context, f
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -11166,8 +11366,14 @@ func (ec *executionContext) _Query_core_listManagedResources(ctx context.Context
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -11225,8 +11431,14 @@ func (ec *executionContext) _Query_core_getManagedResource(ctx context.Context, 
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
 
-		tmp, err := directive1(rctx)
+		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}

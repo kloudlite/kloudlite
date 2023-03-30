@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
@@ -20,6 +21,8 @@ type domain struct {
 	k8sYamlClient     *kubectl.YAMLClient
 
 	producer redpanda.Producer
+
+	iamClient iam.IAMClient
 
 	projectRepo repos.DbRepo[*entities.Project]
 	appRepo     repos.DbRepo[*entities.App]
@@ -78,6 +81,8 @@ var Module = fx.Module("domain",
 
 		producer redpanda.Producer,
 
+		iamClient iam.IAMClient,
+
 		projectRepo repos.DbRepo[*entities.Project],
 		appRepo repos.DbRepo[*entities.App],
 		configRepo repos.DbRepo[*entities.Config],
@@ -91,6 +96,8 @@ var Module = fx.Module("domain",
 			k8sYamlClient:     k8sYamlClient,
 
 			producer: producer,
+
+			iamClient: iamClient,
 
 			projectRepo: projectRepo,
 			appRepo:     appRepo,

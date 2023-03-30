@@ -39,4 +39,16 @@ dap.configurations.go = {
       vim.g.root_dir .. "/apps/finance" .. "/.secrets/env",
     },
   },
+  {
+    type = "go",
+    name = "Debug iam-api",
+    request = "launch",
+    program = vim.g.root_dir .. "/apps/iam",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/apps/iam" .. "/.secrets/env",
+    },
+  },
 }

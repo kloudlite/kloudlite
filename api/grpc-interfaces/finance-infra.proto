@@ -16,52 +16,52 @@ service FinanceInfra {
 }
 
 message ComputeStartIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message ComputeEndIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message LambdaStartIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message LambdaEndIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message BlockStorageStartIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message BlockStorageEndIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message ObjectStorageStartIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message ObjectStorageEndIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message CIStartIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 
 message CIEndIn {
-  string resourceId = 1;
+  string ResourceRef = 1;
   string accountId = 2;
 }
 

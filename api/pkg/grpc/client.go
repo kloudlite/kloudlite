@@ -48,3 +48,7 @@ func NewGrpcClientFx[T ClientOptions, M GrpcClient]() fx.Option {
 		),
 	)
 }
+
+func NewGrpcClient[T GrpcClient](addr string) (T, error) {
+	return NewInsecureClient(addr)
+}
