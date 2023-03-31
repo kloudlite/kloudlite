@@ -1,25 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
-
-	"kloudlite.io/pkg/gql-types-generator"
-
-	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
-	"kloudlite.io/pkg/repos"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	rpc "kloudlite.io/pkg/grpc"
 )
 
-type MasterNode struct {
-	repos.BaseEntity  `bson:",inline" json:",inline"`
-	cmgrV1.MasterNode `json:",inline"`
-	// Name              string `json:"name,omitempty"`
-	// AccountId        repos.ID `json:"accountId,omitempty"`
-	// SubDomain        string   `json:"subDomain,omitempty"`
-	// KubeConfig       string   `json:"kubeConfig,omitempty"`
-}
-
 func main() {
-	res := gqltypesgenerator.GenerateGraphQLTypes(MasterNode{}, nil)
-	fmt.Println("=========================================================")
-	fmt.Println(res)
+	conn, err := rpc.NewInsecureClient("localhost:50051")
+	if err != nil {
+		panic(err)
+	}
+	client := container_registry.NewContainerRegistryClient(conn)
+	//account, err := client.CreateProjectForAccount(context.Background(), &container_registry.CreateProjectIn{
+	//	AccountName: "test",
+	//})
+	credentials, err := client.GetSvcCredentials(context.Background(), &container_registry.GetSvcCredentialsIn{
+		AccountName: "test",
+	})
+	fmt.Println(credentials, err)
 }
