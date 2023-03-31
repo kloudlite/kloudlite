@@ -1,0 +1,59 @@
+### list Repos
+GRAPHQL http://localhost:3002/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=clus-kloudlite-dev;
+
+query {
+  cr_listRepos {
+    name
+  }
+}
+
+### list Robots
+GRAPHQL http://localhost:3002/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=test;kloudlite-cluster=clus-kloudlite-dev;
+
+query {
+  cr_listRobots {
+    id
+    name
+    secret
+  }
+}
+
+### create Robot
+GRAPHQL http://localhost:3002/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=test;kloudlite-cluster=clus-kloudlite-dev;
+
+mutation {
+  cr_createRobot(name:"hello3", description:"hi" ,readOnly: true){
+    id
+    name
+    secret
+  }
+}
+
+### delete Robot
+GRAPHQL http://localhost:3002/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=test;kloudlite-cluster=clus-kloudlite-dev;
+
+mutation {
+  cr_deleteRobot(robotId:25571)
+}
+
+
+### create BYOC cluster
+GRAPHQL http://localhost:3001/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=clus-kloudlite-dev;
+
+mutation {
+  infra_createBYOCCluster(cluster: {
+    name: "test"
+    accountName: "kloudlite-dev"
+    region: "us-east-1"
+    provider: "aws"
+  }) {
+   region
+  }
+}
+
+

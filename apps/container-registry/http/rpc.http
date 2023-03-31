@@ -1,0 +1,7 @@
+GRPC localhost:50051/CreateProjectForAccount
+
+{
+  "accountName": "test-to-delete-1"
+}
+
+###
