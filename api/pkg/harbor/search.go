@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/repos"
 )
 
 // Repository created by pasting json from harbor instance network tab
@@ -25,13 +24,16 @@ type Repository struct {
 	UpdateTime    time.Time `json:"update_time"`
 }
 
-func (h *Client) SearchRepositories(ctx context.Context, accountId repos.ID, searchQ string, searchOpts ListOptions) ([]Repository, error) {
-	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/projects/%s/repositories", accountId), nil)
+func (h *Client) SearchRepositories(ctx context.Context, accountName string, searchQ string, searchOpts ListOptions) ([]Repository, error) {
+	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/projects/%s/repositories", accountName), nil)
 	if err != nil {
 		return nil, err
 	}
 	q := req.URL.Query()
-	q.Add("q", fmt.Sprintf("name=~%s", searchQ))
+	if searchQ != "" {
+		q.Add("q", fmt.Sprintf("name=%s", searchQ))
+	}
+
 	q.Add(
 		"sort", func() string {
 			if searchOpts.Sort == "" {
@@ -98,11 +100,11 @@ type ListTagsOpts struct {
 	ListOptions
 }
 
-func (h *Client) ListTags(ctx context.Context, projectName string, repoName string, tagOpts ListTagsOpts) ([]ImageTag, error) {
+func (h *Client) ListTags(ctx context.Context, accountName string, repoName string, tagOpts ListTagsOpts) ([]ImageTag, error) {
 	req, err := h.NewAuthzRequest(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("/projects/%s/repositories/%s/artifacts", projectName, url.PathEscape(repoName)),
+		fmt.Sprintf("/projects/%s/repositories/%s/artifacts", accountName, url.PathEscape(repoName)),
 		nil,
 	)
 	q := req.URL.Query()

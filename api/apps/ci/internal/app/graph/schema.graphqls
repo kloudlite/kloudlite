@@ -23,6 +23,10 @@ type Query {
 
   ci_harborSearch(accountId: ID!, q: String!, pagination: PaginationIn): [HarborSearchResult!] # account-member-access
   ci_harborImageTags(imageName: String!, pagination: PaginationIn): [HarborImageTagsResult!]
+
+  ci_listHarborCredentials(accountId: ID!): [HarborCredentials!]
+  ci_createHarborCredentials(accountId: ID!, permission: String!): [HarborCredentials!]
+  ci_revokeHarborCredentials(accountId: ID!, permission: String!): Boolean!
 }
 
 type HarborSearchResult {
