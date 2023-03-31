@@ -43,8 +43,9 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	HasAccount func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
-	IsLoggedIn func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	CanActOnAccount func(ctx context.Context, obj interface{}, next graphql.Resolver, action *string) (res interface{}, err error)
+	HasAccount      func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	IsLoggedIn      func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -361,6 +362,8 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `directive @isLoggedIn on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
+directive @canActOnAccount(action: String) on FIELD_DEFINITION
+
 
 scalar Json
 scalar Any
@@ -428,6 +431,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_canActOnAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["action"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("action"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["action"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_cr_createRobot_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error

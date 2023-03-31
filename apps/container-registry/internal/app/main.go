@@ -58,7 +58,6 @@ var Module = fx.Module("app",
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
 				}
-
 				return next(ctx)
 			}
 
@@ -76,6 +75,13 @@ var Module = fx.Module("app",
 
 				cc := domain.NewRegistryContext(ctx, sess.UserId, klAccount)
 				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
+			}
+
+			gqlConfig.Directives.CanActOnAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver, action *string) (res interface{}, err error) {
+				if action == nil {
+
+				}
+				return next(ctx)
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
