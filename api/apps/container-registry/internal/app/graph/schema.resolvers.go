@@ -5,9 +5,15 @@ package graph
 
 import (
 	"context"
+	"fmt"
+
 	generated1 "kloudlite.io/apps/container-registry/internal/app/graph/generated"
 	"kloudlite.io/pkg/harbor"
 )
+
+func (r *imageTagResolver) PushedAt(ctx context.Context, obj *harbor.ImageTag) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *mutationResolver) CrDeleteRobot(ctx context.Context, robotID int) (bool, error) {
 	err := r.Domain.DeleteHarborRobot(toRegistryContext(ctx), robotID)
@@ -21,16 +27,32 @@ func (r *mutationResolver) CrCreateRobot(ctx context.Context, name string, descr
 	return r.Domain.CreateHarborRobot(toRegistryContext(ctx), name, description, readOnly)
 }
 
+func (r *mutationResolver) CrDeleteRepo(ctx context.Context, repoID int) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) CrListRepos(ctx context.Context) ([]*harbor.Repository, error) {
 	images, err := r.Domain.GetHarborImages(toRegistryContext(ctx))
 	if err != nil {
 		return nil, err
 	}
 	repositories := make([]*harbor.Repository, len(images))
-	for i, image := range images {
-		repositories[i] = &image
+	for i := range images {
+		repositories[i] = &images[i]
 	}
 	return repositories, nil
+}
+
+func (r *queryResolver) CrListArtifacts(ctx context.Context, repoName string) ([]*harbor.Artifact, error) {
+	artifacts, err := r.Domain.GetRepoArtifacts(toRegistryContext(ctx), repoName)
+	if err != nil {
+		return nil, err
+	}
+	artifactsReturn := make([]*harbor.Artifact, len(artifacts))
+	for i := range artifacts {
+		artifactsReturn[i] = &artifacts[i]
+	}
+	return artifactsReturn, nil
 }
 
 func (r *queryResolver) CrListRobots(ctx context.Context) ([]*harbor.Robot, error) {
@@ -39,11 +61,14 @@ func (r *queryResolver) CrListRobots(ctx context.Context) ([]*harbor.Robot, erro
 		return nil, err
 	}
 	robotsReturn := make([]*harbor.Robot, len(robots))
-	for i, robot := range robots {
-		robotsReturn[i] = &robot
+	for i := range robots {
+		robotsReturn[i] = &robots[i]
 	}
 	return robotsReturn, nil
 }
+
+// ImageTag returns generated1.ImageTagResolver implementation.
+func (r *Resolver) ImageTag() generated1.ImageTagResolver { return &imageTagResolver{r} }
 
 // Mutation returns generated1.MutationResolver implementation.
 func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationResolver{r} }
@@ -51,5 +76,6 @@ func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationReso
 // Query returns generated1.QueryResolver implementation.
 func (r *Resolver) Query() generated1.QueryResolver { return &queryResolver{r} }
 
+type imageTagResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
