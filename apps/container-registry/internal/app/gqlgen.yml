@@ -48,6 +48,12 @@ models:
   Repo:
     model:
       - kloudlite.io/pkg/harbor.Repository
+  Artifact:
+    model:
+      - kloudlite.io/pkg/harbor.Artifact
+  ImageTag:
+    model:
+      - kloudlite.io/pkg/harbor.ImageTag
   Robot:
     model:
       - kloudlite.io/pkg/harbor.Robot

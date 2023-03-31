@@ -5,6 +5,7 @@ scalar Json
 scalar Any
 
 type Repo {
+  id: Int!
   name :String!
   artifactCount: Int!
   pullCount: Int!
@@ -17,12 +18,26 @@ type Robot {
   secret: String!
 }
 
+type Artifact {
+  size: Int!
+  tags: [ImageTag!]!
+}
+
+type ImageTag {
+  name: String!
+  signed: Boolean!
+  immutable: Boolean!
+  pushedAt: String!
+}
+
 type Query {
   cr_listRepos :[Repo!]! @hasAccount @isLoggedIn
+  cr_listArtifacts(repoName:String!) :[Artifact!]! @hasAccount @isLoggedIn
   cr_listRobots :[Robot!]! @hasAccount @isLoggedIn
 }
 
 type Mutation {
   cr_deleteRobot(robotId:Int!) :Boolean! @hasAccount @isLoggedIn
   cr_createRobot(name:String!, description:String, readOnly: Boolean!) :Robot! @hasAccount @isLoggedIn
+  cr_deleteRepo(repoId:Int!) :Boolean! @hasAccount @isLoggedIn
 }

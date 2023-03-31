@@ -17,7 +17,7 @@ func NewRegistryContext(parent context.Context, userId repos.ID, accountName str
 
 type Domain interface {
 	GetHarborImages(ctx RegistryContext) ([]harbor.Repository, error)
-	GetImageTags(ctx RegistryContext, repoName string) ([]harbor.ImageTag, error)
+	GetRepoArtifacts(ctx RegistryContext, repoName string) ([]harbor.Artifact, error)
 	GetHarborRobots(ctx RegistryContext) ([]harbor.Robot, error)
 	DeleteHarborRobot(ctx RegistryContext, robotId int) error
 	CreateHarborRobot(ctx RegistryContext, name string, description *string, readOnly bool) (*harbor.Robot, error)
