@@ -49,8 +49,8 @@ func (d *Impl) CreateHarborProject(ctx RegistryContext) (*entities.HarborProject
 	return create, nil
 }
 
-func (d *Impl) GetImageTags(ctx RegistryContext, repoName string) ([]harbor.ImageTag, error) {
-	return d.harborCli.ListTags(ctx, ctx.GetAccountName(), repoName, harbor.ListTagsOpts{
+func (d *Impl) GetRepoArtifacts(ctx RegistryContext, repoName string) ([]harbor.Artifact, error) {
+	return d.harborCli.ListArtifacts(ctx, ctx.GetAccountName(), repoName, harbor.ListTagsOpts{
 		WithImmutable: false,
 		WithSignature: false,
 		ListOptions: harbor.ListOptions{

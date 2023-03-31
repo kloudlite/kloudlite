@@ -1,12 +1,27 @@
 ### list Repos
 GRAPHQL http://localhost:3002/query
-Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=clus-kloudlite-dev;
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=acc-4xrbue-eevzhin57x8maf2ddq9md;kloudlite-cluster=clus-kloudlite-dev;
 
 query {
   cr_listRepos {
     name
+    id
+    artifactCount
   }
 }
+
+### list Tags
+GRAPHQL http://localhost:3002/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=acc-4xrbue-eevzhin57x8maf2ddq9md;kloudlite-cluster=clus-kloudlite-dev;
+
+query {
+  cr_listArtifacts(repoName: "acc-4xrbue-eevzhin57x8maf2ddq9md/himurja/web/latest") {
+    tags {
+        name
+    }
+  }
+}
+
 
 ### list Robots
 GRAPHQL http://localhost:3002/query
