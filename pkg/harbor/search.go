@@ -31,7 +31,7 @@ func (h *Client) SearchRepositories(ctx context.Context, accountName string, sea
 	}
 	q := req.URL.Query()
 	if searchQ != "" {
-		q.Add("q", fmt.Sprintf("name=%s", searchQ))
+		q.Add("q", fmt.Sprintf("name=~%s", searchQ))
 	}
 
 	q.Add(
