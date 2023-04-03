@@ -1,0 +1,29 @@
+### list BYOC clusters
+GRAPHQL http://localhost:3001/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=clus-kloudlite-dev;
+
+query {
+  infra_listBYOCClusters {
+    name
+    region
+  }
+}
+
+
+
+### create BYOC cluster
+GRAPHQL http://localhost:3001/query
+Cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=clus-kloudlite-dev;
+
+mutation {
+  infra_createBYOCCluster(cluster: {
+    name: "test"
+    accountName: "kloudlite-dev"
+    region: "us-east-1"
+    provider: "aws"
+  }) {
+   region
+  }
+}
+
+
