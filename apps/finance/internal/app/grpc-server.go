@@ -5,7 +5,6 @@ import (
 
 	"kloudlite.io/apps/finance/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
-	"kloudlite.io/pkg/repos"
 )
 
 type financeServerImpl struct {
@@ -24,7 +23,7 @@ func (f financeServerImpl) StopBillable(ctx context.Context, in *finance.StopBil
 }
 
 func (f financeServerImpl) GetAttachedCluster(ctx context.Context, in *finance.GetAttachedClusterIn) (*finance.GetAttachedClusterOut, error) {
-	account, err := f.d.GetAccount(ctx, repos.ID(in.AccountId))
+	account, err := f.d.GetAccount(domain.FinanceContext{Context: ctx, UserId: ""}, in.AccountName)
 	if err != nil {
 		return nil, err
 	}

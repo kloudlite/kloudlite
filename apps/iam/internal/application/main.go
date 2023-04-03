@@ -9,11 +9,13 @@ import (
 	"kloudlite.io/apps/iam/internal/domain/entities"
 	"kloudlite.io/apps/iam/internal/env"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
-func fxServer(rbRepo repos.DbRepo[*entities.RoleBinding], rbm RoleBindingMap) iam.IAMServer {
+func fxServer(rbRepo repos.DbRepo[*entities.RoleBinding], rbm RoleBindingMap, logger logging.Logger) iam.IAMServer {
 	return &GrpcServer{
+		logger:         logger,
 		rbRepo:         rbRepo,
 		roleBindingMap: rbm,
 	}

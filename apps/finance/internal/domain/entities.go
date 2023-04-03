@@ -1,17 +1,17 @@
 package domain
 
 import (
-	"kloudlite.io/constants"
 	"time"
 
+	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/pkg/repos"
 )
 
 type AccountInviteToken struct {
-	Token     string   `json:"token"`
-	UserId    repos.ID `json:"user_id"`
-	Role      string   `json:"role"`
-	AccountId repos.ID `json:"account_id"`
+	Token       string   `json:"token"`
+	UserId      repos.ID `json:"user_id"`
+	Role        string   `json:"role"`
+	AccountName string   `json:"account_name"`
 }
 
 type Billing struct {
@@ -23,21 +23,14 @@ type Billing struct {
 
 type Account struct {
 	repos.BaseEntity `bson:",inline"`
-	Name             string    `json:"name,omitempty" bson:"name,omitempty"`
-	ContactEmail     string    `bson:"contact_email" json:"contact_email,omitempty"`
+	Name             string    `json:"name" bson:"name"`
+	ContactEmail     string    `json:"contact_email" bson:"contact_email"`
 	Billing          Billing   `json:"billing" bson:"billing"`
-	IsActive         bool      `json:"is_active,omitempty" bson:"is_active"`
-	IsDeleted        bool      `json:"is_deleted,omitempty" bson:"is_deleted"`
+	IsActive         *bool     `json:"is_active,omitempty" bson:"is_active"`
+	IsDeleted        *bool     `json:"is_deleted" bson:"is_deleted"`
 	CreatedAt        time.Time `json:"created_at" bson:"created_at"`
 	ReadableId       repos.ID  `json:"readable_id" bson:"readable_id"`
 	ClusterID        repos.ID  `json:"cluster_id" bson:"cluster_id"`
-}
-
-type Membership struct {
-	AccountId repos.ID
-	UserId    repos.ID
-	Role      constants.Role
-	Accepted  bool
 }
 
 var AccountIndexes = []repos.IndexField{
@@ -47,6 +40,19 @@ var AccountIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "name", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
+
+type Membership struct {
+	AccountName string
+	UserId      repos.ID
+	Role        iamT.Role
+	Accepted    bool
 }
 
 type Billable struct {
@@ -59,7 +65,7 @@ type Billable struct {
 
 type AccountBilling struct {
 	repos.BaseEntity `bson:",inline"`
-	AccountId        repos.ID   `json:"account_id" bson:"account_id"`
+	AccountName      string     `json:"account_id" bson:"account_id"`
 	ProjectId        repos.ID   `json:"project_id" bson:"project_id"`
 	ResourceId       repos.ID   `json:"resource_id" bson:"resource_id"`
 	Billables        []Billable `json:"billables" bson:"billables"`
@@ -78,7 +84,7 @@ var BillableIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "account_id", Value: repos.IndexAsc},
+			{Key: "account_name", Value: repos.IndexAsc},
 		},
 	},
 	{
@@ -120,7 +126,7 @@ type BillingEvent struct {
 	} `json:"billing"`
 	Metadata struct {
 		ClusterId        string `json:"clusterId"`
-		AccountId        string `json:"accountId"`
+		AccountName      string `json:"accountName"`
 		ProjectId        string `json:"projectId"`
 		ResourceId       string `json:"resourceId"`
 		GroupVersionKind struct {

@@ -7,7 +7,6 @@ import (
 )
 
 type Account struct {
-	ID                repos.ID             `json:"id"`
 	Name              string               `json:"name"`
 	Billing           *Billing             `json:"billing"`
 	IsActive          bool                 `json:"isActive"`

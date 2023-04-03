@@ -55,6 +55,7 @@ models:
       accountMemberships:
         resolver: true
   Account:
+    # model: kloudlite.io/apps/finance/internal/domain.Account
     fields:
       # accountMemberships:
       memberships:

@@ -16,10 +16,9 @@ COPY --chown=1001 ./  ./
 RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-#FROM gcr.io/distroless/static-debian11
-FROM alpine
+FROM gcr.io/distroless/static-debian11
 USER 1001
 WORKDIR /tmp/app
-COPY ./configs/iam.json ./configs/iam.json
+# COPY ./configs/iam.json ./configs/iam.json
 COPY --from=base --chown=1001 /tmp/bin/iam ./iam
 CMD ["./iam"]

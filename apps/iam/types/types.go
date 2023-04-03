@@ -2,6 +2,24 @@ package types
 
 import "fmt"
 
+type ResourceType string
+
+const (
+	ResourceAccount ResourceType = "account"
+	ResourceProject ResourceType = "project"
+)
+
+type Role string
+
+const (
+	RoleAccountOwner  Role = "account-owner"
+	RoleAccountAdmin  Role = "account-admin"
+	RoleAccountMember Role = "account-member"
+
+	RoleProjectAdmin  Role = "project-admin"
+	RoleProjectMember Role = "project-member"
+)
+
 type Action string
 
 const (
@@ -13,6 +31,11 @@ const (
 
 	InviteAccountMember Action = "invite-account-member"
 	InviteAccountAdmin  Action = "invite-account-admin"
+
+	UpdateAccountMember Action = "update-account-member"
+
+	ActivateAccount   Action = "activate-account"
+	DeactivateAccount Action = "deactivate-account"
 
 	CreateProject Action = "create-project"
 	ListProjects  Action = "list-projects"
@@ -26,6 +49,6 @@ const (
 	MutateResourcesInProject Action = "mutate-resources-in-project"
 )
 
-func NewResourceRef(clusterName, kind, namespace, name string) string {
-	return fmt.Sprintf("%s/%s/%s/%s", clusterName, kind, namespace, name)
+func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {
+	return fmt.Sprintf("%s/%s/%s", accountName, resourceType, resourceName)
 }

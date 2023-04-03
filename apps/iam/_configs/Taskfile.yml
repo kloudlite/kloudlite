@@ -1,9 +1,0 @@
-version: 3
-
-tasks:
-  run:
-    sources:
-      - ./*.js
-    cmds:
-      - nodemon -e "js" --signal SIGKILL --exec 'node iam.js > iam.json || exit 1'
-    nethod: timestamp
