@@ -47,6 +47,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	IsLoggedIn func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -54,7 +55,6 @@ type ComplexityRoot struct {
 		Billing           func(childComplexity int) int
 		ContactEmail      func(childComplexity int) int
 		Created           func(childComplexity int) int
-		ID                func(childComplexity int) int
 		IsActive          func(childComplexity int) int
 		Memberships       func(childComplexity int) int
 		Name              func(childComplexity int) int
@@ -81,7 +81,7 @@ type ComplexityRoot struct {
 	}
 
 	Entity struct {
-		FindAccountByID       func(childComplexity int, id repos.ID) int
+		FindAccountByName     func(childComplexity int, name string) int
 		FindComputePlanByName func(childComplexity int, name string) int
 		FindLambdaPlanByName  func(childComplexity int, name string) int
 		FindStoragePlanByName func(childComplexity int, name string) int
@@ -95,24 +95,20 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		FinanceActivateAccount      func(childComplexity int, accountID repos.ID) int
-		FinanceAttachToCluster      func(childComplexity int, accountID repos.ID, clusterID repos.ID) int
-		FinanceCreateAccount        func(childComplexity int, name string, billing model.BillingInput) int
-		FinanceDeactivateAccount    func(childComplexity int, accountID repos.ID) int
-		FinanceDeleteAccount        func(childComplexity int, accountID repos.ID) int
-		FinanceInviteAccountMember  func(childComplexity int, accountID string, name *string, email string, role string) int
-		FinanceRemoveAccountMember  func(childComplexity int, accountID repos.ID, userID repos.ID) int
-		FinanceUpdateAccount        func(childComplexity int, accountID repos.ID, name *string, contactEmail *string) int
-		FinanceUpdateAccountBilling func(childComplexity int, accountID repos.ID, billing model.BillingInput) int
-		FinanceUpdateAccountMember  func(childComplexity int, accountID repos.ID, userID repos.ID, role string) int
+		FinanceActivateAccount     func(childComplexity int, accountName string) int
+		FinanceCreateAccount       func(childComplexity int, name string, billing model.BillingInput) int
+		FinanceDeactivateAccount   func(childComplexity int, accountName string) int
+		FinanceDeleteAccount       func(childComplexity int, accountName string) int
+		FinanceInviteAccountMember func(childComplexity int, accountName string, name *string, email string, role string) int
+		FinanceRemoveAccountMember func(childComplexity int, accountName string, userID repos.ID) int
+		FinanceUpdateAccount       func(childComplexity int, accountName string, name *string, contactEmail *string) int
+		FinanceUpdateAccountMember func(childComplexity int, accountName string, userID repos.ID, role string) int
 	}
 
 	Query struct {
-		FinanceAccount           func(childComplexity int, accountID repos.ID) int
-		FinanceStripeSetupIntent func(childComplexity int) int
-		FinanceTestStripe        func(childComplexity int, accountID repos.ID) int
-		__resolve__service       func(childComplexity int) int
-		__resolve_entities       func(childComplexity int, representations []map[string]interface{}) int
+		FinanceAccount     func(childComplexity int, accountName string) int
+		__resolve__service func(childComplexity int) int
+		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
 	}
 
 	StoragePlan struct {
@@ -121,7 +117,7 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AccountMembership  func(childComplexity int, accountID *repos.ID) int
+		AccountMembership  func(childComplexity int, accountName string) int
 		AccountMemberships func(childComplexity int) int
 		ID                 func(childComplexity int) int
 	}
@@ -142,7 +138,7 @@ type AccountMembershipResolver interface {
 	Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error)
 }
 type EntityResolver interface {
-	FindAccountByID(ctx context.Context, id repos.ID) (*model.Account, error)
+	FindAccountByName(ctx context.Context, name string) (*model.Account, error)
 	FindComputePlanByName(ctx context.Context, name string) (*model.ComputePlan, error)
 	FindLambdaPlanByName(ctx context.Context, name string) (*model.LambdaPlan, error)
 	FindStoragePlanByName(ctx context.Context, name string) (*model.StoragePlan, error)
@@ -150,24 +146,20 @@ type EntityResolver interface {
 }
 type MutationResolver interface {
 	FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error)
-	FinanceUpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error)
-	FinanceUpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error)
-	FinanceInviteAccountMember(ctx context.Context, accountID string, name *string, email string, role string) (bool, error)
-	FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error)
-	FinanceUpdateAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID, role string) (bool, error)
-	FinanceDeactivateAccount(ctx context.Context, accountID repos.ID) (bool, error)
-	FinanceActivateAccount(ctx context.Context, accountID repos.ID) (bool, error)
-	FinanceDeleteAccount(ctx context.Context, accountID repos.ID) (bool, error)
-	FinanceAttachToCluster(ctx context.Context, accountID repos.ID, clusterID repos.ID) (bool, error)
+	FinanceUpdateAccount(ctx context.Context, accountName string, name *string, contactEmail *string) (*model.Account, error)
+	FinanceInviteAccountMember(ctx context.Context, accountName string, name *string, email string, role string) (bool, error)
+	FinanceRemoveAccountMember(ctx context.Context, accountName string, userID repos.ID) (bool, error)
+	FinanceUpdateAccountMember(ctx context.Context, accountName string, userID repos.ID, role string) (bool, error)
+	FinanceDeactivateAccount(ctx context.Context, accountName string) (bool, error)
+	FinanceActivateAccount(ctx context.Context, accountName string) (bool, error)
+	FinanceDeleteAccount(ctx context.Context, accountName string) (bool, error)
 }
 type QueryResolver interface {
-	FinanceAccount(ctx context.Context, accountID repos.ID) (*model.Account, error)
-	FinanceStripeSetupIntent(ctx context.Context) (*string, error)
-	FinanceTestStripe(ctx context.Context, accountID repos.ID) (bool, error)
+	FinanceAccount(ctx context.Context, accountName string) (*model.Account, error)
 }
 type UserResolver interface {
 	AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error)
-	AccountMembership(ctx context.Context, obj *model.User, accountID *repos.ID) (*model.AccountMembership, error)
+	AccountMembership(ctx context.Context, obj *model.User, accountName string) (*model.AccountMembership, error)
 }
 
 type executableSchema struct {
@@ -205,13 +197,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Account.Created(childComplexity), true
-
-	case "Account.id":
-		if e.complexity.Account.ID == nil {
-			break
-		}
-
-		return e.complexity.Account.ID(childComplexity), true
 
 	case "Account.isActive":
 		if e.complexity.Account.IsActive == nil {
@@ -311,17 +296,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ComputePlan.SharedPrice(childComplexity), true
 
-	case "Entity.findAccountByID":
-		if e.complexity.Entity.FindAccountByID == nil {
+	case "Entity.findAccountByName":
+		if e.complexity.Entity.FindAccountByName == nil {
 			break
 		}
 
-		args, err := ec.field_Entity_findAccountByID_args(context.TODO(), rawArgs)
+		args, err := ec.field_Entity_findAccountByName_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Entity.FindAccountByID(childComplexity, args["id"].(repos.ID)), true
+		return e.complexity.Entity.FindAccountByName(childComplexity, args["name"].(string)), true
 
 	case "Entity.findComputePlanByName":
 		if e.complexity.Entity.FindComputePlanByName == nil {
@@ -402,19 +387,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceActivateAccount(childComplexity, args["accountId"].(repos.ID)), true
-
-	case "Mutation.finance_attachToCluster":
-		if e.complexity.Mutation.FinanceAttachToCluster == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_finance_attachToCluster_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.FinanceAttachToCluster(childComplexity, args["accountId"].(repos.ID), args["clusterId"].(repos.ID)), true
+		return e.complexity.Mutation.FinanceActivateAccount(childComplexity, args["accountName"].(string)), true
 
 	case "Mutation.finance_createAccount":
 		if e.complexity.Mutation.FinanceCreateAccount == nil {
@@ -438,7 +411,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceDeactivateAccount(childComplexity, args["accountId"].(repos.ID)), true
+		return e.complexity.Mutation.FinanceDeactivateAccount(childComplexity, args["accountName"].(string)), true
 
 	case "Mutation.finance_deleteAccount":
 		if e.complexity.Mutation.FinanceDeleteAccount == nil {
@@ -450,7 +423,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceDeleteAccount(childComplexity, args["accountId"].(repos.ID)), true
+		return e.complexity.Mutation.FinanceDeleteAccount(childComplexity, args["accountName"].(string)), true
 
 	case "Mutation.finance_inviteAccountMember":
 		if e.complexity.Mutation.FinanceInviteAccountMember == nil {
@@ -462,7 +435,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceInviteAccountMember(childComplexity, args["accountId"].(string), args["name"].(*string), args["email"].(string), args["role"].(string)), true
+		return e.complexity.Mutation.FinanceInviteAccountMember(childComplexity, args["accountName"].(string), args["name"].(*string), args["email"].(string), args["role"].(string)), true
 
 	case "Mutation.finance_removeAccountMember":
 		if e.complexity.Mutation.FinanceRemoveAccountMember == nil {
@@ -474,7 +447,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceRemoveAccountMember(childComplexity, args["accountId"].(repos.ID), args["userId"].(repos.ID)), true
+		return e.complexity.Mutation.FinanceRemoveAccountMember(childComplexity, args["accountName"].(string), args["userId"].(repos.ID)), true
 
 	case "Mutation.finance_updateAccount":
 		if e.complexity.Mutation.FinanceUpdateAccount == nil {
@@ -486,19 +459,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceUpdateAccount(childComplexity, args["accountId"].(repos.ID), args["name"].(*string), args["contactEmail"].(*string)), true
-
-	case "Mutation.finance_updateAccountBilling":
-		if e.complexity.Mutation.FinanceUpdateAccountBilling == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_finance_updateAccountBilling_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.FinanceUpdateAccountBilling(childComplexity, args["accountId"].(repos.ID), args["billing"].(model.BillingInput)), true
+		return e.complexity.Mutation.FinanceUpdateAccount(childComplexity, args["accountName"].(string), args["name"].(*string), args["contactEmail"].(*string)), true
 
 	case "Mutation.finance_updateAccountMember":
 		if e.complexity.Mutation.FinanceUpdateAccountMember == nil {
@@ -510,7 +471,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceUpdateAccountMember(childComplexity, args["accountId"].(repos.ID), args["userId"].(repos.ID), args["role"].(string)), true
+		return e.complexity.Mutation.FinanceUpdateAccountMember(childComplexity, args["accountName"].(string), args["userId"].(repos.ID), args["role"].(string)), true
 
 	case "Query.finance_account":
 		if e.complexity.Query.FinanceAccount == nil {
@@ -522,26 +483,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.FinanceAccount(childComplexity, args["accountId"].(repos.ID)), true
-
-	case "Query.finance_stripeSetupIntent":
-		if e.complexity.Query.FinanceStripeSetupIntent == nil {
-			break
-		}
-
-		return e.complexity.Query.FinanceStripeSetupIntent(childComplexity), true
-
-	case "Query.finance_testStripe":
-		if e.complexity.Query.FinanceTestStripe == nil {
-			break
-		}
-
-		args, err := ec.field_Query_finance_testStripe_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.FinanceTestStripe(childComplexity, args["accountId"].(repos.ID)), true
+		return e.complexity.Query.FinanceAccount(childComplexity, args["accountName"].(string)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -586,7 +528,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.User.AccountMembership(childComplexity, args["accountId"].(*repos.ID)), true
+		return e.complexity.User.AccountMembership(childComplexity, args["accountName"].(string)), true
 
 	case "User.accountMemberships":
 		if e.complexity.User.AccountMemberships == nil {
@@ -673,30 +615,31 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `type Query {
-  finance_account(accountId: ID!): Account # account-admin-access, account-owner-access
-  finance_stripeSetupIntent: String # user-access
-  finance_testStripe(accountId: ID!): Boolean! #private
+	{Name: "graph/schema.graphqls", Input: `directive @isLoggedIn on FIELD_DEFINITION
+
+type Query {
+  finance_account(accountName: String!): Account @isLoggedIn
+  # finance_stripeSetupIntent: String # user-access
+  # finance_testStripe(accountId: ID!): Boolean! #private
 }
 
 type Mutation {
-  finance_createAccount(name: String!, billing: BillingInput!): Account! # user-access
-  finance_updateAccount(accountId: ID!, name: String, contactEmail: String): Account! # account-admin-access, account-owner-access
-  finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
-  finance_inviteAccountMember(accountId: String!, name: String,email: String!, role: String!): Boolean! # account-admin-access, account-owner-access
-  finance_removeAccountMember(accountId: ID!, userId: ID!): Boolean! # account-admin-access, account-owner-access
-  finance_updateAccountMember(accountId: ID!, userId: ID!, role: String!): Boolean! # account-admin-access, account-owner-access
-  finance_deactivateAccount(accountId: ID!): Boolean! # account-owner-access
-  finance_activateAccount(accountId: ID!): Boolean! # account-owner-access
-  finance_deleteAccount(accountId: ID!): Boolean! # account-owner-access
-  finance_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
+  finance_createAccount(name: String!, billing: BillingInput!): Account! @isLoggedIn
+  finance_updateAccount(accountName: String!, name: String, contactEmail: String): Account! @isLoggedIn
+  # finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
+  finance_inviteAccountMember(accountName: String!, name: String, email: String!, role: String!): Boolean! @isLoggedIn
+  finance_removeAccountMember(accountName: String!, userId: ID!): Boolean! @isLoggedIn
+  finance_updateAccountMember(accountName: String!, userId: ID!, role: String!): Boolean! @isLoggedIn
+  finance_deactivateAccount(accountName: String!): Boolean! @isLoggedIn
+  finance_activateAccount(accountName: String!): Boolean! @isLoggedIn
+  finance_deleteAccount(accountName: String!): Boolean! @isLoggedIn
+  # finance_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
 }
 
 scalar Json
 scalar Date
 
-type Account @key(fields: "id") {
-  id: ID!
+type Account @key(fields: "name") {
   name: String!
   billing: Billing!
   isActive: Boolean!
@@ -706,6 +649,11 @@ type Account @key(fields: "id") {
   created: Date!
   outstandingAmount: Float!
 }
+
+# extend type Account @key(fields: "name") {
+#   name: String!
+#   memberships: [AccountMembership!]! # account-admin-access, account-owner-access
+# }
 
 extend type StoragePlan @key(fields: "name"){
     name: String! @external
@@ -728,7 +676,7 @@ extend type LambdaPlan @key(fields: "name"){
 extend type User @key(fields: "id") {
   id: ID! @external
   accountMemberships:[AccountMembership!]! # user-access
-  accountMembership(accountId: ID):AccountMembership! # user-access
+  accountMembership(accountName: String!):AccountMembership! # user-access
 }
 
 type AccountMembership {
@@ -765,7 +713,7 @@ union _Entity = Account | ComputePlan | LambdaPlan | StoragePlan | User
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
-		findAccountByID(id: ID!,): Account!
+		findAccountByName(name: String!,): Account!
 	findComputePlanByName(name: String!,): ComputePlan!
 	findLambdaPlanByName(name: String!,): LambdaPlan!
 	findStoragePlanByName(name: String!,): StoragePlan!
@@ -789,18 +737,18 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Entity_findAccountByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Entity_findAccountByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -867,39 +815,15 @@ func (ec *executionContext) field_Entity_findUserByID_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_finance_activateAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_finance_attachToCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg0
-	var arg1 repos.ID
-	if tmp, ok := rawArgs["clusterId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterId"))
-		arg1, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterId"] = arg1
+	args["accountName"] = arg0
 	return args, nil
 }
 
@@ -930,30 +854,30 @@ func (ec *executionContext) field_Mutation_finance_createAccount_args(ctx contex
 func (ec *executionContext) field_Mutation_finance_deactivateAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_finance_deleteAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	return args, nil
 }
 
@@ -961,14 +885,14 @@ func (ec *executionContext) field_Mutation_finance_inviteAccountMember_args(ctx 
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	var arg1 *string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -1002,15 +926,15 @@ func (ec *executionContext) field_Mutation_finance_inviteAccountMember_args(ctx 
 func (ec *executionContext) field_Mutation_finance_removeAccountMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	var arg1 repos.ID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
@@ -1023,42 +947,18 @@ func (ec *executionContext) field_Mutation_finance_removeAccountMember_args(ctx 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_finance_updateAccountBilling_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg0
-	var arg1 model.BillingInput
-	if tmp, ok := rawArgs["billing"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billing"))
-		arg1, err = ec.unmarshalNBillingInput2kloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐBillingInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["billing"] = arg1
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_finance_updateAccountMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	var arg1 repos.ID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
@@ -1083,15 +983,15 @@ func (ec *executionContext) field_Mutation_finance_updateAccountMember_args(ctx 
 func (ec *executionContext) field_Mutation_finance_updateAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	var arg1 *string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -1146,45 +1046,30 @@ func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawA
 func (ec *executionContext) field_Query_finance_account_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_finance_testStripe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_User_accountMembership_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *repos.ID
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-		arg0, err = ec.unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["accountName"] = arg0
 	return args, nil
 }
 
@@ -1225,41 +1110,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Account_id(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Account",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(repos.ID)
-	fc.Result = res
-	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
-}
 
 func (ec *executionContext) _Account_name(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
 	defer func() {
@@ -1856,7 +1706,7 @@ func (ec *executionContext) _ComputePlan_dedicatedPrice(ctx context.Context, fie
 	return ec.marshalNFloat2float64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Entity_findAccountByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1873,7 +1723,7 @@ func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field g
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Entity_findAccountByID_args(ctx, rawArgs)
+	args, err := ec.field_Entity_findAccountByName_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1881,7 +1731,7 @@ func (ec *executionContext) _Entity_findAccountByID(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Entity().FindAccountByID(rctx, args["id"].(repos.ID))
+		return ec.resolvers.Entity().FindAccountByName(rctx, args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2195,8 +2045,28 @@ func (ec *executionContext) _Mutation_finance_createAccount(ctx context.Context,
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceCreateAccount(rctx, args["name"].(string), args["billing"].(model.BillingInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceCreateAccount(rctx, args["name"].(string), args["billing"].(model.BillingInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Account); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance/internal/app/graph/model.Account`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2237,50 +2107,28 @@ func (ec *executionContext) _Mutation_finance_updateAccount(ctx context.Context,
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceUpdateAccount(rctx, args["accountId"].(repos.ID), args["name"].(*string), args["contactEmail"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceUpdateAccount(rctx, args["accountName"].(string), args["name"].(*string), args["contactEmail"].(*string))
 		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Account)
-	fc.Result = res
-	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_finance_updateAccountBilling(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
 
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_finance_updateAccountBilling_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceUpdateAccountBilling(rctx, args["accountId"].(repos.ID), args["billing"].(model.BillingInput))
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Account); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance/internal/app/graph/model.Account`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2321,8 +2169,28 @@ func (ec *executionContext) _Mutation_finance_inviteAccountMember(ctx context.Co
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceInviteAccountMember(rctx, args["accountId"].(string), args["name"].(*string), args["email"].(string), args["role"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceInviteAccountMember(rctx, args["accountName"].(string), args["name"].(*string), args["email"].(string), args["role"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2363,8 +2231,28 @@ func (ec *executionContext) _Mutation_finance_removeAccountMember(ctx context.Co
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceRemoveAccountMember(rctx, args["accountId"].(repos.ID), args["userId"].(repos.ID))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceRemoveAccountMember(rctx, args["accountName"].(string), args["userId"].(repos.ID))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2405,8 +2293,28 @@ func (ec *executionContext) _Mutation_finance_updateAccountMember(ctx context.Co
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceUpdateAccountMember(rctx, args["accountId"].(repos.ID), args["userId"].(repos.ID), args["role"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceUpdateAccountMember(rctx, args["accountName"].(string), args["userId"].(repos.ID), args["role"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2447,8 +2355,28 @@ func (ec *executionContext) _Mutation_finance_deactivateAccount(ctx context.Cont
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceDeactivateAccount(rctx, args["accountId"].(repos.ID))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceDeactivateAccount(rctx, args["accountName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2489,8 +2417,28 @@ func (ec *executionContext) _Mutation_finance_activateAccount(ctx context.Contex
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceActivateAccount(rctx, args["accountId"].(repos.ID))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceActivateAccount(rctx, args["accountName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2531,50 +2479,28 @@ func (ec *executionContext) _Mutation_finance_deleteAccount(ctx context.Context,
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceDeleteAccount(rctx, args["accountId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceDeleteAccount(rctx, args["accountName"].(string))
 		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_finance_attachToCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
 
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_finance_attachToCluster_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FinanceAttachToCluster(rctx, args["accountId"].(repos.ID), args["clusterId"].(repos.ID))
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2615,8 +2541,28 @@ func (ec *executionContext) _Query_finance_account(ctx context.Context, field gr
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FinanceAccount(rctx, args["accountId"].(repos.ID))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().FinanceAccount(rctx, args["accountName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Account); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance/internal/app/graph/model.Account`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2628,80 +2574,6 @@ func (ec *executionContext) _Query_finance_account(ctx context.Context, field gr
 	res := resTmp.(*model.Account)
 	fc.Result = res
 	return ec.marshalOAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_finance_stripeSetupIntent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FinanceStripeSetupIntent(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_finance_testStripe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_finance_testStripe_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FinanceTestStripe(rctx, args["accountId"].(repos.ID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3017,7 +2889,7 @@ func (ec *executionContext) _User_accountMembership(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().AccountMembership(rctx, obj, args["accountId"].(*repos.ID))
+		return ec.resolvers.User().AccountMembership(rctx, obj, args["accountName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4353,16 +4225,6 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Account")
-		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Account_id(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Account_name(ctx, field, obj)
@@ -4666,7 +4528,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Entity")
-		case "findAccountByID":
+		case "findAccountByName":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4675,7 +4537,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Entity_findAccountByID(ctx, field)
+				res = ec._Entity_findAccountByName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4882,16 +4744,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "finance_updateAccountBilling":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_finance_updateAccountBilling(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "finance_inviteAccountMember":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_finance_inviteAccountMember(ctx, field)
@@ -4952,16 +4804,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "finance_attachToCluster":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_finance_attachToCluster(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5002,49 +4844,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_finance_account(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "finance_stripeSetupIntent":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_finance_stripeSetupIntent(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "finance_testStripe":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_finance_testStripe(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			}
 
@@ -6337,23 +6136,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (*repos.ID, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := repos.ID(tmp)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2ᚖkloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v *repos.ID) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(string(*v))
 	return res
 }
 

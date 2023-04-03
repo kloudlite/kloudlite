@@ -6,23 +6,21 @@ package graph
 import (
 	"context"
 	"errors"
-	"kloudlite.io/constants"
+	"fmt"
 
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
-	"kloudlite.io/apps/finance/internal/domain"
-	"kloudlite.io/common"
-	httpServer "kloudlite.io/pkg/http-server"
+	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/pkg/repos"
 )
 
 func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) ([]*model.AccountMembership, error) {
-	entities, err := r.domain.GetUserMemberships(ctx, obj.ID)
+	entities, err := r.domain.GetUserMemberships(toFinanceContext(ctx), iamT.NewResourceRef(obj.Name, iamT.ResourceAccount, obj.Name))
 	accountMemberships := make([]*model.AccountMembership, len(entities))
 	for i, entity := range entities {
 		accountMemberships[i] = &model.AccountMembership{
 			Account: &model.Account{
-				ID: entity.AccountId,
+				Name: entity.AccountName,
 			},
 			User: &model.User{
 				ID: entity.UserId,
@@ -35,8 +33,7 @@ func (r *accountResolver) Memberships(ctx context.Context, obj *model.Account) (
 }
 
 func (r *accountResolver) OutstandingAmount(ctx context.Context, obj *model.Account) (float64, error) {
-	amount, err := r.domain.GetOutstandingAmount(ctx, obj.ID)
-	return amount, err
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *accountMembershipResolver) User(ctx context.Context, obj *model.AccountMembership) (*model.User, error) {
@@ -46,28 +43,18 @@ func (r *accountMembershipResolver) User(ctx context.Context, obj *model.Account
 }
 
 func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*model.Account, error) {
-	ae, err := r.domain.GetAccount(ctx, obj.Account.ID)
+	acc, err := r.domain.GetAccount(toFinanceContext(ctx), obj.Account.Name)
 	if err != nil {
 		return nil, err
 	}
-	if ae == nil {
+	if acc == nil {
 		return nil, errors.New("account not found")
 	}
-	return AccountModelFromEntity(ae), nil
+	return AccountModelFromEntity(acc), nil
 }
 
 func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("not logged in")
-	}
-	account, err := r.domain.CreateAccount(
-		ctx, session.UserId, name, domain.Billing{
-			PaymentMethodId: billing.StripePaymentMethodID,
-			CardholderName:  billing.CardholderName,
-			Address:         billing.Address,
-		},
-	)
+	account, err := r.domain.CreateAccount(toFinanceContext(ctx), name)
 	if err != nil {
 		return nil, err
 	}
@@ -75,124 +62,50 @@ func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) FinanceUpdateAccount(ctx context.Context, accountID repos.ID, name *string, contactEmail *string) (*model.Account, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("not logged in")
-	}
-	account, err := r.domain.UpdateAccount(ctx, accountID, name, contactEmail)
+func (r *mutationResolver) FinanceUpdateAccount(ctx context.Context, accountName string, name *string, contactEmail *string) (*model.Account, error) {
+	account, err := r.domain.UpdateAccount(toFinanceContext(ctx), accountName, contactEmail)
 	if err != nil {
 		return nil, err
 	}
 	return AccountModelFromEntity(account), nil
 }
 
-func (r *mutationResolver) FinanceUpdateAccountBilling(ctx context.Context, accountID repos.ID, billing model.BillingInput) (*model.Account, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("not logged in")
-	}
-	account, err := r.domain.UpdateAccountBilling(
-		ctx, accountID, &domain.Billing{
-			PaymentMethodId: billing.StripePaymentMethodID,
-			CardholderName:  billing.CardholderName,
-			Address:         billing.Address,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return AccountModelFromEntity(account), nil
+func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accountName string, name *string, email string, role string) (bool, error) {
+	return r.domain.AddAccountMember(toFinanceContext(ctx), accountName, email, iamT.Role(role))
 }
 
-func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accountID string, name *string, email string, role string) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.AddAccountMember(ctx, repos.ID(accountID), email, constants.Role(role))
+func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountName string, userID repos.ID) (bool, error) {
+	return r.domain.RemoveAccountMember(toFinanceContext(ctx), accountName, userID)
 }
 
-func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.RemoveAccountMember(ctx, accountID, userID)
+func (r *mutationResolver) FinanceUpdateAccountMember(ctx context.Context, accountName string, userID repos.ID, role string) (bool, error) {
+	return r.domain.UpdateAccountMember(toFinanceContext(ctx), accountName, userID, role)
 }
 
-func (r *mutationResolver) FinanceUpdateAccountMember(ctx context.Context, accountID repos.ID, userID repos.ID, role string) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.UpdateAccountMember(ctx, accountID, userID, role)
+func (r *mutationResolver) FinanceDeactivateAccount(ctx context.Context, accountName string) (bool, error) {
+	return r.domain.DeactivateAccount(toFinanceContext(ctx), accountName)
 }
 
-func (r *mutationResolver) FinanceDeactivateAccount(ctx context.Context, accountID repos.ID) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.DeactivateAccount(ctx, accountID)
+func (r *mutationResolver) FinanceActivateAccount(ctx context.Context, accountName string) (bool, error) {
+	return r.domain.ActivateAccount(toFinanceContext(ctx), accountName)
 }
 
-func (r *mutationResolver) FinanceActivateAccount(ctx context.Context, accountID repos.ID) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.ActivateAccount(ctx, accountID)
+func (r *mutationResolver) FinanceDeleteAccount(ctx context.Context, accountName string) (bool, error) {
+	return r.domain.DeleteAccount(toFinanceContext(ctx), accountName)
 }
 
-func (r *mutationResolver) FinanceDeleteAccount(ctx context.Context, accountID repos.ID) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.DeleteAccount(ctx, accountID)
-}
-
-func (r *mutationResolver) FinanceAttachToCluster(ctx context.Context, accountID repos.ID, clusterID repos.ID) (bool, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return false, errors.New("not logged in")
-	}
-	return r.domain.AttachToCluster(ctx, accountID, clusterID)
-}
-
-func (r *queryResolver) FinanceAccount(ctx context.Context, accountID repos.ID) (*model.Account, error) {
-	session := httpServer.GetSession[*common.AuthSession](ctx)
-	if session == nil {
-		return nil, errors.New("not logged in")
-	}
-	accountEntity, err := r.domain.GetAccount(ctx, accountID)
+func (r *queryResolver) FinanceAccount(ctx context.Context, accountName string) (*model.Account, error) {
+	accountEntity, err := r.domain.GetAccount(toFinanceContext(ctx), accountName)
 	return AccountModelFromEntity(accountEntity), err
 }
 
-func (r *queryResolver) FinanceStripeSetupIntent(ctx context.Context) (*string, error) {
-	intent, err := r.domain.GetSetupIntent(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &intent, nil
-}
-
-func (r *queryResolver) FinanceTestStripe(ctx context.Context, accountID repos.ID) (bool, error) {
-	err := r.domain.Test(ctx, accountID)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
-	entities, err := r.domain.GetAccountMemberships(ctx, obj.ID)
+	entities, err := r.domain.GetAccountMemberships(toFinanceContext(ctx), obj.ID)
 	accountMemberships := make([]*model.AccountMembership, len(entities))
 	for i, entity := range entities {
 		accountMemberships[i] = &model.AccountMembership{
 			Account: &model.Account{
-				ID: entity.AccountId,
+				Name: entity.AccountName,
 			},
 			User: &model.User{
 				ID: entity.UserId,
@@ -203,14 +116,14 @@ func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) 
 	return accountMemberships, err
 }
 
-func (r *userResolver) AccountMembership(ctx context.Context, obj *model.User, accountID *repos.ID) (*model.AccountMembership, error) {
-	membership, err := r.domain.GetAccountMembership(ctx, obj.ID, *accountID)
+func (r *userResolver) AccountMembership(ctx context.Context, obj *model.User, accountName string) (*model.AccountMembership, error) {
+	membership, err := r.domain.GetAccountMembership(toFinanceContext(ctx), obj.ID, accountName)
 	if err != nil {
 		return nil, err
 	}
 	return &model.AccountMembership{
 		Account: &model.Account{
-			ID: membership.AccountId,
+			Name: membership.AccountName,
 		},
 		User: &model.User{
 			ID: membership.UserId,

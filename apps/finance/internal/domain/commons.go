@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"errors"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,7 +27,7 @@ func mongoError(err error, descp string) error {
 	return nil
 }
 
-func GetUser(ctx context.Context) (string, error) {
+func GetUser(ctx FinanceContext) (string, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)
 	if session == nil {
 		return "", errors.New("Unauthorized")

@@ -1,29 +1,31 @@
 package application
 
 import (
-	"kloudlite.io/apps/iam/internal/domain/entities"
 	t "kloudlite.io/apps/iam/types"
 )
 
-type RoleBindingMap map[t.Action][]entities.Role
+type RoleBindingMap map[t.Action][]t.Role
 
 var roleBindings RoleBindingMap = RoleBindingMap{
-	t.CreateAccount: []entities.Role{entities.RoleAccountOwner},
-	// ListAccounts:  []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin, entities.RoleProjectAdmin},
-	t.UpdateAccount: []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin},
-	t.DeleteAccount: []entities.Role{entities.RoleAccountOwner},
+	t.CreateAccount: []t.Role{t.RoleAccountOwner},
+	t.GetAccount:    []t.Role{t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
+	// ListAccounts:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleProjectAdmin},
+	t.UpdateAccount: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
+	t.DeleteAccount: []t.Role{t.RoleAccountOwner},
 
-	t.InviteAccountAdmin:  []entities.Role{entities.RoleAccountOwner},
-	t.InviteAccountMember: []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin},
+	t.InviteAccountAdmin:  []t.Role{t.RoleAccountOwner},
+	t.InviteAccountMember: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
 
-	t.CreateProject: []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin},
-	t.ListProjects:  []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin, entities.RoleProjectAdmin, entities.RoleProjectMember},
-	t.GetProject:    []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin, entities.RoleProjectAdmin, entities.RoleProjectMember},
-	t.UpdateProject: []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin, entities.RoleProjectAdmin, entities.RoleProjectMember},
-	t.DeleteProject: []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin, entities.RoleProjectAdmin, entities.RoleProjectMember},
+	t.UpdateAccountMember: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
 
-	t.InviteProjectAdmin:  []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin},
-	t.InviteProjectMember: []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin, entities.RoleProjectAdmin},
+	t.CreateProject: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
+	t.ListProjects:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleProjectAdmin, t.RoleProjectMember},
+	t.GetProject:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleProjectAdmin, t.RoleProjectMember},
+	t.UpdateProject: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleProjectAdmin, t.RoleProjectMember},
+	t.DeleteProject: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleProjectAdmin, t.RoleProjectMember},
 
-	t.MutateResourcesInProject: []entities.Role{entities.RoleAccountOwner, entities.RoleAccountAdmin, entities.RoleProjectAdmin, entities.RoleProjectMember},
+	t.InviteProjectAdmin:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
+	t.InviteProjectMember: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleProjectAdmin},
+
+	t.MutateResourcesInProject: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleProjectAdmin, t.RoleProjectMember},
 }

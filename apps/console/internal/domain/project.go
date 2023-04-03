@@ -5,12 +5,27 @@ import (
 	"time"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
+	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
 
 // CreateProject implements Domain
 func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId:       string(ctx.userId),
+		ResourceRefs: []string{iamT.NewResourceRef(ctx.accountName, iamT.ResourceAccount, ctx.accountName)},
+		Action:       string(iamT.CreateProject),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to create Project")
+	}
+
 	project.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &project.Project); err != nil {
 		return nil, err

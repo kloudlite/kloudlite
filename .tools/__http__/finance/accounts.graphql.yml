@@ -1,32 +1,71 @@
 ---
 global:
   accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
+  accountName: kloudlite-dev
+
 ---
+
 label: Create Account
 query: |
   mutation Finance_createAccount($name: String!, $billing: BillingInput!) {
     finance_createAccount(name: $name, billing: $billing) {
-      id
       name
     }
   }
 variables:
-  name: "kl-dev"
+  name: "{{.accountName}}"
   billing:
-    stripePaymentMethodId: kloudlite-dev
-    cardholderName: kloudlite-dev
+    stripePaymentMethodId: "{{.accountName}}"
+    cardholderName: "{{.accountName}}"
     address:
-      line1: kloudlite-dev
+      line1: "{{.accountName}}"
 
 ---
+
 label: get account
 query: |+
-  query Query($accountId: ID!) {
-    finance_account(accountId: $accountId) {
-      id
+  query Query($accountName: String!) {
+    finance_account(accountName: $accountName) {
       name
+      isActive
     }
   }
 variables:
-  accountId: "{{.accountId}}"
+  accountName: "{{.accountName}}"
+
 ---
+
+label: deactivate account
+query: |+
+  mutation DeactivateAccount($accountName: String!) {
+    finance_deactivateAccount(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+
+---
+
+label: activate account
+query: |+
+  mutation ActivateAccount($accountName: String!) {
+    finance_activateAccount(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+
+---
+label: Invite Account Member
+query: |+
+  mutation Finance_inviteAccountMember($accountName: String!, $email: String!, $role: String!, $name: String) {
+    finance_inviteAccountMember(accountName: $accountName, email: $email, role: $role, name: $name)
+  }
+
+variables:
+  accountName: "{{.accountName}}"
+  email: "nxtcoder17@gmail.com"
+  name: "nxtcoder17"
+  role: "account-admin"
+
+---
+
+label: 
