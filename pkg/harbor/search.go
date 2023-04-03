@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/repos"
 )
 
 // Repository created by pasting json from harbor instance network tab
@@ -25,13 +25,16 @@ type Repository struct {
 	UpdateTime    time.Time `json:"update_time"`
 }
 
-func (h *Client) SearchRepositories(ctx context.Context, accountId repos.ID, searchQ string, searchOpts ListOptions) ([]Repository, error) {
-	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/projects/%s/repositories", accountId), nil)
+func (h *Client) SearchRepositories(ctx context.Context, accountName string, searchQ string, searchOpts ListOptions) ([]Repository, error) {
+	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/projects/%s/repositories", accountName), nil)
 	if err != nil {
 		return nil, err
 	}
 	q := req.URL.Query()
-	q.Add("q", fmt.Sprintf("name=~%s", searchQ))
+	if searchQ != "" {
+		q.Add("q", fmt.Sprintf("name=~%s", searchQ))
+	}
+
 	q.Add(
 		"sort", func() string {
 			if searchOpts.Sort == "" {
@@ -66,24 +69,19 @@ func (h *Client) SearchRepositories(ctx context.Context, accountId repos.ID, sea
 }
 
 type Artifact struct {
-	Size int `json:"size"`
-	Tags []struct {
-		RepositoryId int       `json:"repository_id"`
-		Name         string    `json:"name"`
-		PushTime     time.Time `json:"push_time"`
-		PullTime     time.Time `json:"pull_time"`
-		Signed       bool      `json:"signed"`
-		Id           int       `json:"id"`
-		Immutable    bool      `json:"immutable"`
-		ArtifactId   int       `json:"artifact_id"`
-	} `json:"tags"`
+	Size int        `json:"size"`
+	Tags []ImageTag `json:"tags"`
 }
 
 type ImageTag struct {
-	Name      string    `json:"name"`
-	Signed    bool      `json:"signed"`
-	Immutable bool      `json:"immutable"`
-	PushedAt  time.Time `json:"pushed_at"`
+	RepositoryId int       `json:"repository_id"`
+	Name         string    `json:"name"`
+	PushTime     time.Time `json:"push_time"`
+	PullTime     time.Time `json:"pull_time"`
+	Signed       bool      `json:"signed"`
+	Id           int       `json:"id"`
+	Immutable    bool      `json:"immutable"`
+	ArtifactId   int       `json:"artifact_id"`
 }
 
 type ListOptions struct {
@@ -98,22 +96,33 @@ type ListTagsOpts struct {
 	ListOptions
 }
 
-func (h *Client) ListTags(ctx context.Context, projectName string, repoName string, tagOpts ListTagsOpts) ([]ImageTag, error) {
+func (h *Client) ListArtifacts(ctx context.Context, accountName string, repoName string, tagOpts ListTagsOpts) ([]Artifact, error) {
+	rName := func() string {
+		// remove first path component
+		parts := strings.Split(repoName, "/")
+		if len(parts) > 1 {
+			return strings.Join(parts[1:], "/")
+		}
+		return repoName
+	}
 	req, err := h.NewAuthzRequest(
 		ctx,
 		http.MethodGet,
-		fmt.Sprintf("/projects/%s/repositories/%s/artifacts", projectName, url.PathEscape(repoName)),
+		fmt.Sprintf("/projects/%s/repositories/%s/artifacts", accountName, url.PathEscape(rName())),
 		nil,
 	)
 	q := req.URL.Query()
 
 	q.Add("with_tag", "true")
-	if tagOpts.WithImmutable {
-		q.Add("with_immutable", "true")
-	}
-	if tagOpts.WithSignature {
-		q.Add("with_signature", "true")
-	}
+	q.Add("with_label", "true")
+	q.Add("with_scan_overview", "true")
+	q.Add("with_accessory", "false")
+	//if tagOpts.WithImmutable {
+	//	q.Add("with_immutable", "true")
+	//}
+	//if tagOpts.WithSignature {
+	//	q.Add("with_signature", "true")
+	//}
 	q.Add(
 		"sort", func() string {
 			if tagOpts.Sort == "" {
@@ -145,16 +154,7 @@ func (h *Client) ListTags(ctx context.Context, projectName string, repoName stri
 		if err := json.Unmarshal(b, &artifacts); err != nil {
 			return nil, err
 		}
-		tags := make([]ImageTag, 0, len(artifacts))
-		for i := range artifacts {
-			for j := range artifacts[i].Tags {
-				tag := artifacts[i].Tags[j]
-				if tag.Name != "" {
-					tags = append(tags, ImageTag{Name: tag.Name, Signed: tag.Signed, Immutable: tag.Immutable, PushedAt: tag.PushTime})
-				}
-			}
-		}
-		return tags, nil
+		return artifacts, nil
 	}
 	return nil, errors.Newf("bad status code received (%d), with message, %s", resp.StatusCode, b)
 }

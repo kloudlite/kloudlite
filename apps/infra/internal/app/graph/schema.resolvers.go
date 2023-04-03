@@ -5,12 +5,25 @@ package graph
 
 import (
 	"context"
-	"fmt"
-
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
-	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 )
+
+func (r *mutationResolver) InfraCreateBYOCCluster(ctx context.Context, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
+	return r.Domain.CreateBYOCCluster(toInfraContext(ctx), cluster)
+}
+
+func (r *mutationResolver) InfraUpdateBYOCCluster(ctx context.Context, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
+	return r.Domain.UpdateBYOCCluster(toInfraContext(ctx), cluster)
+}
+
+func (r *mutationResolver) InfraDeleteBYOCCluster(ctx context.Context, name string) (bool, error) {
+	err := r.Domain.DeleteBYOCCluster(toInfraContext(ctx), name)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
 	return r.Domain.CreateCluster(toInfraContext(ctx), cluster)
@@ -59,6 +72,18 @@ func (r *mutationResolver) InfraDeleteEdge(ctx context.Context, clusterName stri
 
 func (r *mutationResolver) InfraDeleteWorkerNode(ctx context.Context, clusterName string, edgeName string, name string) (bool, error) {
 	return r.Domain.DeleteWorkerNode(toInfraContext(ctx), clusterName, edgeName, name)
+}
+
+func (r *queryResolver) InfraListBYOCClusters(ctx context.Context) ([]*entities.BYOCCluster, error) {
+	clusters, err := r.Domain.ListBYOCClusters(toInfraContext(ctx))
+	if clusters == nil {
+		clusters = make([]*entities.BYOCCluster, 0)
+	}
+	return clusters, err
+}
+
+func (r *queryResolver) InfraGetBYOCCluster(ctx context.Context, name string) (*entities.BYOCCluster, error) {
+	return r.Domain.GetBYOCCluster(toInfraContext(ctx), name)
 }
 
 func (r *queryResolver) InfraListClusters(ctx context.Context) ([]*entities.Cluster, error) {
@@ -117,16 +142,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func toInfraContext(ctx context.Context) domain.InfraContext {
-	if d, ok := ctx.Value("infra-ctx").(domain.InfraContext); ok {
-		return d
-	}
-	panic(fmt.Errorf("infra context not found in gql context"))
-}

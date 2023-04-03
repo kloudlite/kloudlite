@@ -20,17 +20,18 @@ import (
 type domain struct {
 	env *env.Env
 
-	clusterRepo    repos.DbRepo[*entities.Cluster]
-	edgeRepo       repos.DbRepo[*entities.Edge]
-	providerRepo   repos.DbRepo[*entities.CloudProvider]
-	k8sClient      client.Client
-	masterNodeRepo repos.DbRepo[*entities.MasterNode]
-	workerNodeRepo repos.DbRepo[*entities.WorkerNode]
-	nodePoolRepo   repos.DbRepo[*entities.NodePool]
-	secretRepo     repos.DbRepo[*entities.Secret]
+	clusterRepo     repos.DbRepo[*entities.Cluster]
+	byocClusterRepo repos.DbRepo[*entities.BYOCCluster]
+	edgeRepo        repos.DbRepo[*entities.Edge]
+	providerRepo    repos.DbRepo[*entities.CloudProvider]
+	k8sClient       client.Client
+	masterNodeRepo  repos.DbRepo[*entities.MasterNode]
+	workerNodeRepo  repos.DbRepo[*entities.WorkerNode]
+	nodePoolRepo    repos.DbRepo[*entities.NodePool]
 
-	producer redpanda.Producer
+	secretRepo repos.DbRepo[*entities.Secret]
 
+	producer          redpanda.Producer
 	k8sYamlClient     *kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
 }
@@ -88,6 +89,7 @@ var Module = fx.Module("domain",
 		func(
 			env *env.Env,
 			clusterRepo repos.DbRepo[*entities.Cluster],
+			byocClusterRepo repos.DbRepo[*entities.BYOCCluster],
 			providerRepo repos.DbRepo[*entities.CloudProvider],
 			edgeRepo repos.DbRepo[*entities.Edge],
 			masterNodeRepo repos.DbRepo[*entities.MasterNode],
@@ -107,13 +109,14 @@ var Module = fx.Module("domain",
 			return &domain{
 				env: env,
 
-				clusterRepo:    clusterRepo,
-				providerRepo:   providerRepo,
-				edgeRepo:       edgeRepo,
-				masterNodeRepo: masterNodeRepo,
-				workerNodeRepo: workerNodeRepo,
-				nodePoolRepo:   nodePoolRepo,
-				secretRepo:     secretRepo,
+				clusterRepo:     clusterRepo,
+				byocClusterRepo: byocClusterRepo,
+				providerRepo:    providerRepo,
+				edgeRepo:        edgeRepo,
+				masterNodeRepo:  masterNodeRepo,
+				workerNodeRepo:  workerNodeRepo,
+				nodePoolRepo:    nodePoolRepo,
+				secretRepo:      secretRepo,
 
 				producer: producer,
 
