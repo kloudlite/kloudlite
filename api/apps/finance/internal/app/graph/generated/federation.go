@@ -87,12 +87,12 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 			}
 			switch resolverName {
 
-			case "findAccountByID":
-				id0, err := ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, rep["id"])
+			case "findAccountByName":
+				id0, err := ec.unmarshalNString2string(ctx, rep["name"])
 				if err != nil {
-					return fmt.Errorf(`unmarshalling param 0 for findAccountByID(): %w`, err)
+					return fmt.Errorf(`unmarshalling param 0 for findAccountByName(): %w`, err)
 				}
-				entity, err := ec.resolvers.Entity().FindAccountByID(ctx, id0)
+				entity, err := ec.resolvers.Entity().FindAccountByName(ctx, id0)
 				if err != nil {
 					return fmt.Errorf(`resolving Entity "Account": %w`, err)
 				}
@@ -258,10 +258,10 @@ func entityResolverNameForAccount(ctx context.Context, rep map[string]interface{
 		)
 		_ = val
 		m = rep
-		if _, ok = m["id"]; !ok {
+		if _, ok = m["name"]; !ok {
 			break
 		}
-		return "findAccountByID", nil
+		return "findAccountByName", nil
 	}
 	return "", fmt.Errorf("%w for Account", ErrTypeNotFound)
 }

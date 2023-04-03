@@ -7,7 +7,7 @@ map:
     # url: http://localhost:3000/query
     # url: http://auth-api.kl-core.svc.cluster.local/query
     # url: http://finance-api.kl-core.svc.cluster.local/query
-    url: http://localhost:3000/query
+    url: http://localhost:4000/query
     # url: https://console-api.dev.kloudlite.io/query
     # url: http://auth-api.dev.kloudlite.io/query
     headers:
