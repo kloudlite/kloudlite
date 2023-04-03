@@ -17,7 +17,7 @@ message ComputePlan {
 }
 
 message StartBillableIn {
-  string accountId = 1;
+  string accountName = 1;
   string BillableType = 2;
   float quantity = 3;
 }
@@ -35,7 +35,7 @@ message StopBillableOut {
 }
 
 message GetAttachedClusterIn {
-  string accountId = 1;
+  string accountName = 1;
 }
 
 message GetAttachedClusterOut {

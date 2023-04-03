@@ -9,27 +9,29 @@ import (
 	t "kloudlite.io/apps/iam/types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
 type GrpcServer struct {
 	iam.UnimplementedIAMServer
+	logger         logging.Logger
 	rbRepo         repos.DbRepo[*entities.RoleBinding]
-	roleBindingMap map[t.Action][]entities.Role
+	roleBindingMap map[t.Action][]t.Role
 }
 
-func (s *GrpcServer) findRoleBinding(ctx context.Context, userId repos.ID, ResourceRef string) (*entities.RoleBinding, error) {
+func (s *GrpcServer) findRoleBinding(ctx context.Context, userId repos.ID, resourceRef string) (*entities.RoleBinding, error) {
 	rb, err := s.rbRepo.FindOne(
 		ctx, repos.Filter{
 			"user_id":      userId,
-			"resource_ref": ResourceRef,
+			"resource_ref": resourceRef,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if rb == nil {
-		return nil, fmt.Errorf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, ResourceRef)
+		return nil, fmt.Errorf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
 	}
 	return rb, nil
 }
@@ -40,7 +42,7 @@ func (s *GrpcServer) ConfirmMembership(ctx context.Context, in *iam.ConfirmMembe
 		return nil, err
 	}
 
-	if entities.Role(in.Role) != rb.Role {
+	if t.Role(in.Role) != rb.Role {
 		return nil, errors.New("The invitation has been updated")
 	}
 
@@ -53,16 +55,22 @@ func (s *GrpcServer) ConfirmMembership(ctx context.Context, in *iam.ConfirmMembe
 }
 
 func (s *GrpcServer) InviteMembership(ctx context.Context, in *iam.AddMembershipIn) (*iam.AddMembershipOut, error) {
-	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
+	rb, err := s.rbRepo.FindOne(
+		ctx, repos.Filter{
+			"user_id":      in.UserId,
+			"resource_ref": in.ResourceRef,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	if rb != nil {
 		if string(rb.Role) == in.Role {
-			return nil, errors.New(fmt.Sprintf("user %s already has role %s on resource %s", in.UserId, in.Role, in.ResourceRef))
+			s.logger.Infof("user %s already has role %s on resource %s", in.UserId, in.Role, in.ResourceRef)
+			return &iam.AddMembershipOut{Result: true}, nil
 		}
-		rb.Role = entities.Role(in.Role)
+		rb.Role = t.Role(in.Role)
 		rb.Accepted = false
 		_, err := s.rbRepo.UpdateById(ctx, rb.Id, rb)
 		if err != nil {
@@ -74,9 +82,9 @@ func (s *GrpcServer) InviteMembership(ctx context.Context, in *iam.AddMembership
 	_, err = s.rbRepo.Create(
 		ctx, &entities.RoleBinding{
 			UserId:       in.UserId,
-			ResourceType: entities.ResourceType(in.ResourceType),
+			ResourceType: t.ResourceType(in.ResourceType),
 			ResourceRef:  in.ResourceRef,
-			Role:         entities.Role(in.Role),
+			Role:         t.Role(in.Role),
 			Accepted:     false,
 		},
 	)
@@ -192,9 +200,9 @@ func (s *GrpcServer) AddMembership(ctx context.Context, in *iam.AddMembershipIn)
 	_, err := s.rbRepo.Create(
 		ctx, &entities.RoleBinding{
 			UserId:       in.UserId,
-			ResourceType: entities.ResourceType(in.ResourceType),
+			ResourceType: t.ResourceType(in.ResourceType),
 			ResourceRef:  in.ResourceRef,
-			Role:         entities.Role(in.Role),
+			Role:         t.Role(in.Role),
 			Accepted:     true,
 		},
 	)

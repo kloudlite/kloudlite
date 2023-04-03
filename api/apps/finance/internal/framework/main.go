@@ -3,11 +3,11 @@ package framework
 import (
 	"go.uber.org/fx"
 	"kloudlite.io/apps/finance/internal/app"
+	"kloudlite.io/apps/finance/internal/env"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -43,76 +43,49 @@ func (e *IAMGRPCEnv) GetGRPCServerURL() string {
 	return e.IAMService
 }
 
-type Env struct {
-	DBName        string `env:"MONGO_DB_NAME"`
-	DBUrl         string `env:"MONGO_URI"`
-	KafkaBrokers  string `env:"WORKLOAD_KAFKA_BROKERS" required:"true"`
-	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
-	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
-
-	RedisHosts    string `env:"REDIS_HOSTS"`
-	RedisUsername string `env:"REDIS_USERNAME"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
-	RedisPrefix   string `env:"REDIS_PREFIX"`
-
-	AuthRedisHosts    string `env:"REDIS_AUTH_HOSTS"`
-	AuthRedisUserName string `env:"REDIS_AUTH_USERNAME"`
-	AuthRedisPassword string `env:"REDIS_AUTH_PASSWORD"`
-	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX"`
-
-	HttpPort uint16 `env:"PORT"`
-	HttpCors string `env:"ORIGINS"`
-	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
+type fm struct {
+	*env.Env
 }
 
-func (e *Env) GetGRPCPort() uint16 {
-	return e.GrpcPort
+func (f *fm) GetGRPCPort() uint16 {
+	return f.GrpcPort
 }
 
-func (e *Env) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return &redpanda.KafkaSASLAuth{
-		SASLMechanism: redpanda.ScramSHA256,
-		User:          e.KafkaUsername,
-		Password:      e.KafkaPassword,
-	}
+func (f *fm) GetMongoConfig() (url string, dbName string) {
+	return f.DBUrl, f.DBName
 }
 
-func (e *Env) GetBrokers() string {
-	return e.KafkaBrokers
+func (f *fm) RedisOptions() (hosts, username, password, basePrefix string) {
+	return f.RedisHosts, f.RedisUsername, f.RedisPassword, f.RedisPrefix
 }
 
-func (e *Env) GetMongoConfig() (url string, dbName string) {
-	return e.DBUrl, e.DBName
+func (f *fm) GetHttpPort() uint16 {
+	return f.HttpPort
 }
 
-func (e *Env) RedisOptions() (hosts, username, password, basePrefix string) {
-	return e.RedisHosts, e.RedisUsername, e.RedisPassword, e.RedisPrefix
-}
-
-func (e *Env) GetHttpPort() uint16 {
-	return e.HttpPort
-}
-
-func (e *Env) GetHttpCors() string {
-	return e.HttpCors
+func (f *fm) GetHttpCors() string {
+	return f.HttpCors
 }
 
 var Module fx.Option = fx.Module(
 	"framework",
-	config.EnvFx[Env](),
+	fx.Provide(func(ev *env.Env) *fm {
+		return &fm{Env: ev}
+	}),
+
+	// config.EnvFx[Env](),
 	config.EnvFx[ConsoleGRPCEnv](),
 	config.EnvFx[CommsGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),
 	config.EnvFx[AuthGRPCEnv](),
-	rpc.NewGrpcServerFx[*Env](),
+	rpc.NewGrpcServerFx[*fm](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
 	rpc.NewGrpcClientFx[*CommsGRPCEnv, app.CommsClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
 	rpc.NewGrpcClientFx[*AuthGRPCEnv, app.AuthGrpcClientConn](),
-	repos.NewMongoClientFx[*Env](),
-	redpanda.NewClientFx[*Env](),
+	repos.NewMongoClientFx[*fm](),
 	fx.Provide(
-		func(env *Env) app.AuthCacheClient {
+		func(env *fm) app.AuthCacheClient {
 			return cache.NewRedisClient(
 				env.AuthRedisHosts,
 				env.AuthRedisUserName,
@@ -124,11 +97,11 @@ var Module fx.Option = fx.Module(
 	cache.FxLifeCycle[app.AuthCacheClient](),
 
 	fx.Provide(
-		func(env *Env) cache.Client {
-			return cache.NewRedisClient(env.RedisOptions())
+		func(f *fm) cache.Client {
+			return cache.NewRedisClient(f.RedisOptions())
 		},
 	),
 	cache.FxLifeCycle[cache.Client](),
-	httpServer.NewHttpServerFx[*Env](),
+	httpServer.NewHttpServerFx[*fm](),
 	app.Module,
 )
